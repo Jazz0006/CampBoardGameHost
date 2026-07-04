@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -46,6 +47,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -67,13 +70,17 @@ private enum class Screen {
     Game,
 }
 
-private enum class Role(val label: String) {
-    Civilian("平民"),
-    Undercover("卧底"),
-    Blank("白板"),
+private enum class Role {
+    Civilian,
+    Undercover,
+    Blank,
 }
 
-private data class WordPair(val civilianWord: String, val undercoverWord: String, val category: String)
+private data class WordPair(
+    val civilianWord: String,
+    val undercoverWord: String,
+    val category: String,
+)
 
 private data class PlayerCard(
     val name: String,
@@ -93,7 +100,7 @@ private data class GameOutcome(
     val reason: String,
 )
 
-private val wordPairs = listOf(
+private val chineseWordPairs = listOf(
     WordPair("帐篷", "天幕", "露营"),
     WordPair("营地灯", "手电筒", "露营"),
     WordPair("睡袋", "防潮垫", "露营"),
@@ -112,8 +119,41 @@ private val wordPairs = listOf(
     WordPair("老师", "教练", "职业"),
 )
 
+private val englishWordPairs = listOf(
+    WordPair("Tent", "Tarp", "Camping"),
+    WordPair("Lantern", "Flashlight", "Camping"),
+    WordPair("Sleeping bag", "Sleeping pad", "Camping"),
+    WordPair("Barbecue", "Hot pot", "Food"),
+    WordPair("Cola", "Lemon-lime soda", "Drink"),
+    WordPair("Coffee", "Milk tea", "Drink"),
+    WordPair("Apple", "Pear", "Fruit"),
+    WordPair("Watermelon", "Cantaloupe", "Fruit"),
+    WordPair("Toothbrush", "Towel", "Daily"),
+    WordPair("Umbrella", "Raincoat", "Daily"),
+    WordPair("High-speed train", "Subway", "Transport"),
+    WordPair("Airplane", "Hot air balloon", "Transport"),
+    WordPair("Cat", "Dog", "Animal"),
+    WordPair("Lion", "Tiger", "Animal"),
+    WordPair("Doctor", "Nurse", "Job"),
+    WordPair("Teacher", "Coach", "Job"),
+)
+
+private fun Context.playerName(number: Int): String = getString(R.string.default_player_name_format, number)
+
+private fun Role.labelResId(): Int = when (this) {
+    Role.Civilian -> R.string.role_civilian
+    Role.Undercover -> R.string.role_undercover
+    Role.Blank -> R.string.role_blank
+}
+
+private fun wordPairsFor(language: String): List<WordPair> {
+    return if (language == "en") englishWordPairs else chineseWordPairs
+}
+
 @Composable
 private fun CampBoardGameHostApp() {
+    val context = LocalContext.current
+    val language = context.resources.configuration.locales[0].language
     var screen by remember { mutableStateOf(Screen.Setup) }
     var playerCount by remember { mutableIntStateOf(6) }
     var undercoverCount by remember { mutableIntStateOf(1) }
@@ -123,13 +163,22 @@ private fun CampBoardGameHostApp() {
     var selectedElimination by remember { mutableStateOf<String?>(null) }
     var showResults by remember { mutableStateOf(false) }
     var gameOutcome by remember { mutableStateOf<GameOutcome?>(null) }
-    val playerNames = remember { mutableStateListOf("玩家 1", "玩家 2", "玩家 3", "玩家 4", "玩家 5", "玩家 6") }
+    val playerNames = remember {
+        mutableStateListOf(
+            context.playerName(1),
+            context.playerName(2),
+            context.playerName(3),
+            context.playerName(4),
+            context.playerName(5),
+            context.playerName(6),
+        )
+    }
     val cards = remember { mutableStateListOf<PlayerCard>() }
     val records = remember { mutableStateListOf<EliminationRecord>() }
 
     fun syncPlayerNames(count: Int) {
         while (playerNames.size < count) {
-            playerNames.add("玩家 ${playerNames.size + 1}")
+            playerNames.add(context.playerName(playerNames.size + 1))
         }
         while (playerNames.size > count) {
             playerNames.removeAt(playerNames.lastIndex)
@@ -137,7 +186,7 @@ private fun CampBoardGameHostApp() {
     }
 
     fun startGame() {
-        val pair = wordPairs.random()
+        val pair = wordPairsFor(language).random()
         val blankCount = if (includeBlank) 1 else 0
         val roles = buildList {
             repeat(undercoverCount) { add(Role.Undercover) }
@@ -151,9 +200,9 @@ private fun CampBoardGameHostApp() {
             val word = when (role) {
                 Role.Civilian -> pair.civilianWord
                 Role.Undercover -> pair.undercoverWord
-                Role.Blank -> "无词"
+                Role.Blank -> context.getString(R.string.blank_word)
             }
-            PlayerCard(name = name.ifBlank { "玩家 ${index + 1}" }, role = role, word = word)
+            PlayerCard(name = name.ifBlank { context.playerName(index + 1) }, role = role, word = word)
         })
         records.clear()
         currentDealIndex = 0
@@ -240,7 +289,7 @@ private fun CampBoardGameHostApp() {
                                 cards[index] = cards[index].copy(eliminatedRound = round)
                                 records.add(EliminationRecord(round, name))
                                 selectedElimination = null
-                                gameOutcome = evaluateGameOutcome(cards)
+                                gameOutcome = evaluateGameOutcome(context, cards)
                                 if (gameOutcome != null) {
                                     showResults = true
                                 }
@@ -250,9 +299,9 @@ private fun CampBoardGameHostApp() {
                     },
                     onShowResults = {
                         gameOutcome = gameOutcome ?: GameOutcome(
-                            title = "手动结束",
-                            summary = "本局已由主持人手动结束",
-                            reason = "当前局面还没有触发自动胜负条件。",
+                            title = context.getString(R.string.outcome_manual_title),
+                            summary = context.getString(R.string.outcome_manual_summary),
+                            reason = context.getString(R.string.outcome_manual_reason),
                         )
                         showResults = true
                     },
@@ -283,7 +332,7 @@ private fun CampBoardGameHostApp() {
     }
 }
 
-private fun evaluateGameOutcome(cards: List<PlayerCard>): GameOutcome? {
+private fun evaluateGameOutcome(context: Context, cards: List<PlayerCard>): GameOutcome? {
     val activeCards = cards.filter { it.eliminatedRound == null }
     val activeCivilians = activeCards.count { it.role == Role.Civilian }
     val activeUndercovers = activeCards.count { it.role == Role.Undercover }
@@ -291,21 +340,21 @@ private fun evaluateGameOutcome(cards: List<PlayerCard>): GameOutcome? {
 
     return when {
         activeUndercovers == 0 && activeBlanks == 0 -> GameOutcome(
-            title = "平民胜利",
-            summary = "所有卧底和白板都已出局",
-            reason = "场上剩余 $activeCivilians 名平民，隐藏阵营已全部淘汰。",
+            title = context.getString(R.string.outcome_civilian_title),
+            summary = context.getString(R.string.outcome_civilian_summary),
+            reason = context.getString(R.string.outcome_civilian_reason, activeCivilians),
         )
 
         activeUndercovers > 0 && activeUndercovers >= activeCivilians -> GameOutcome(
-            title = "卧底胜利",
-            summary = "卧底人数已经达到或超过平民人数",
-            reason = "场上剩余 $activeUndercovers 名卧底、$activeCivilians 名平民。",
+            title = context.getString(R.string.outcome_undercover_title),
+            summary = context.getString(R.string.outcome_undercover_summary),
+            reason = context.getString(R.string.outcome_undercover_reason, activeUndercovers, activeCivilians),
         )
 
         activeCivilians == 0 && activeUndercovers == 0 && activeBlanks > 0 -> GameOutcome(
-            title = "白板胜利",
-            summary = "白板活到了最后",
-            reason = "场上只剩 $activeBlanks 名白板。",
+            title = context.getString(R.string.outcome_blank_title),
+            summary = context.getString(R.string.outcome_blank_summary),
+            reason = context.getString(R.string.outcome_blank_reason, activeBlanks),
         )
 
         else -> null
@@ -333,8 +382,8 @@ private fun SetupScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item {
-            Text("露营桌游助手", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text("谁是卧底 · 离线 MVP", color = Color(0xFF5C6A63))
+            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.undercover_subtitle), color = Color(0xFF5C6A63))
         }
 
         item {
@@ -350,7 +399,7 @@ private fun SetupScreen(
         }
 
         item {
-            Text("玩家", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.players_section), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         }
 
         items(playerNames.indices.toList()) { index ->
@@ -358,7 +407,7 @@ private fun SetupScreen(
                 value = playerNames[index],
                 onValueChange = { onNameChange(index, it) },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("玩家 ${index + 1}") },
+                label = { Text(stringResource(R.string.player_name_format, index + 1)) },
                 singleLine = true,
             )
         }
@@ -371,7 +420,7 @@ private fun SetupScreen(
                     .height(52.dp),
                 shape = RoundedCornerShape(8.dp),
             ) {
-                Text("开始发牌")
+                Text(stringResource(R.string.start_dealing))
             }
         }
     }
@@ -397,20 +446,20 @@ private fun SettingsPanel(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             StepperRow(
-                label = "玩家人数",
+                label = stringResource(R.string.player_count),
                 value = playerCount,
                 range = 3..12,
                 onChange = onPlayerCountChange,
             )
             StepperRow(
-                label = "卧底人数",
+                label = stringResource(R.string.undercover_count),
                 value = undercoverCount,
                 range = 1..maxUndercover.coerceAtLeast(1),
                 onChange = onUndercoverCountChange,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(checked = includeBlank, onCheckedChange = onIncludeBlankChange)
-                Text("加入 1 名白板")
+                Text(stringResource(R.string.include_blank))
             }
         }
     }
@@ -467,9 +516,9 @@ private fun PassPhoneScreen(
 ) {
     FullScreenColumn {
         Text("$current / $total", color = Color(0xFF6F7B74))
-        Text("请把手机交给", style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.pass_phone_to), style = MaterialTheme.typography.titleLarge)
         Text(playerName, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-        Text("确认周围没人偷看后再查看身份", color = Color(0xFF5C6A63), textAlign = TextAlign.Center)
+        Text(stringResource(R.string.reveal_privacy_hint), color = Color(0xFF5C6A63), textAlign = TextAlign.Center)
         Button(
             onClick = onReveal,
             modifier = Modifier
@@ -477,7 +526,7 @@ private fun PassPhoneScreen(
                 .height(54.dp),
             shape = RoundedCornerShape(8.dp),
         ) {
-            Text("查看我的牌")
+            Text(stringResource(R.string.reveal_my_card))
         }
     }
 }
@@ -506,7 +555,7 @@ private fun RevealCardScreen(
             ) {
                 Text(card.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(card.word, style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Black)
-                Text("记住这个词，然后隐藏手机", color = Color(0xFF5C6A63))
+                Text(stringResource(R.string.remember_word_hint), color = Color(0xFF5C6A63))
             }
         }
         Button(
@@ -516,7 +565,7 @@ private fun RevealCardScreen(
                 .height(54.dp),
             shape = RoundedCornerShape(8.dp),
         ) {
-            Text(if (current == total) "全部看完，交给主持人" else "隐藏并交给下一位")
+            Text(if (current == total) stringResource(R.string.all_done_return_to_host) else stringResource(R.string.hide_and_next))
         }
     }
 }
@@ -547,11 +596,11 @@ private fun GameScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column {
-                    Text("主持人面板", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text(gameOutcome?.title ?: "第 $round 轮", color = Color(0xFF5C6A63))
+                    Text(stringResource(R.string.host_panel), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(gameOutcome?.title ?: stringResource(R.string.round_format, round), color = Color(0xFF5C6A63))
                 }
                 TextButton(onClick = onNewGame) {
-                    Text("新游戏")
+                    Text(stringResource(R.string.new_game))
                 }
             }
         }
@@ -578,7 +627,7 @@ private fun GameScreen(
         }
 
         item {
-            Text("选择本轮淘汰", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.select_elimination), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(8.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 cards.filter { it.eliminatedRound == null }.forEach { card ->
@@ -601,13 +650,13 @@ private fun GameScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
             ) {
-                Text("记录淘汰")
+                Text(stringResource(R.string.record_elimination))
             }
         }
 
         item {
             HorizontalDivider()
-            Text("玩家状态", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.player_status), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         }
 
         items(cards) { card ->
@@ -616,14 +665,14 @@ private fun GameScreen(
 
         item {
             HorizontalDivider()
-            Text("淘汰记录", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.elimination_records), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             if (records.isEmpty()) {
-                Text("还没有玩家被淘汰", color = Color(0xFF6F7B74))
+                Text(stringResource(R.string.no_eliminations), color = Color(0xFF6F7B74))
             }
         }
 
         items(records) { record ->
-            Text("第 ${record.round} 轮：${record.playerName}", modifier = Modifier.padding(vertical = 4.dp))
+            Text(stringResource(R.string.elimination_record_format, record.round, record.playerName), modifier = Modifier.padding(vertical = 4.dp))
         }
 
         item {
@@ -635,7 +684,7 @@ private fun GameScreen(
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
             ) {
-                Text(if (gameOutcome == null) "结束并查看答案" else "查看结果")
+                Text(if (gameOutcome == null) stringResource(R.string.end_and_reveal) else stringResource(R.string.view_results))
             }
         }
     }
@@ -656,7 +705,8 @@ private fun PlayerStatusRow(card: PlayerCard) {
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(card.name, fontWeight = FontWeight.SemiBold)
-            val status = card.eliminatedRound?.let { "第 $it 轮淘汰" } ?: "在场"
+            val status = card.eliminatedRound?.let { stringResource(R.string.eliminated_round_format, it) }
+                ?: stringResource(R.string.active_status)
             Text(status, color = if (card.eliminatedRound == null) Color(0xFF2F5D50) else Color(0xFF9A4B36))
         }
     }
@@ -671,7 +721,7 @@ private fun ResultsDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(outcome?.title ?: "身份结果") },
+        title = { Text(outcome?.title ?: stringResource(R.string.identity_results)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (outcome != null) {
@@ -680,18 +730,18 @@ private fun ResultsDialog(
                     HorizontalDivider()
                 }
                 cards.forEach { card ->
-                    Text("${card.name}：${card.role.label} · ${card.word}")
+                    Text(stringResource(R.string.result_card_format, card.name, stringResource(card.role.labelResId()), card.word))
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onNewGame) {
-                Text("再来一局")
+                Text(stringResource(R.string.play_again))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("返回")
+                Text(stringResource(R.string.back))
             }
         },
     )

@@ -1,0 +1,52 @@
+<resources>
+    <string name="app_name">Camp Board Game Host</string>
+    <string name="undercover_subtitle">Who Is Undercover · Offline MVP</string>
+    <string name="players_section">Players</string>
+    <string name="default_player_name_format">Player %1$d</string>
+    <string name="player_name_format">Player %1$d</string>
+    <string name="start_dealing">Start Dealing</string>
+    <string name="player_count">Players</string>
+    <string name="undercover_count">Undercovers</string>
+    <string name="include_blank">Add 1 blank player</string>
+    <string name="pass_phone_to">Pass the phone to</string>
+    <string name="reveal_privacy_hint">Make sure nobody is looking, then reveal your card</string>
+    <string name="reveal_my_card">Reveal My Card</string>
+    <string name="remember_word_hint">Remember this word, then hide the phone</string>
+    <string name="all_done_return_to_host">All done, return to host</string>
+    <string name="hide_and_next">Hide and pass to next player</string>
+    <string name="host_panel">Host Panel</string>
+    <string name="round_format">Round %1$d</string>
+    <string name="new_game">New Game</string>
+    <string name="select_elimination">Select eliminated player</string>
+    <string name="record_elimination">Record Elimination</string>
+    <string name="player_status">Player Status</string>
+    <string name="elimination_records">Elimination Records</string>
+    <string name="no_eliminations">No players have been eliminated yet</string>
+    <string name="elimination_record_format">Round %1$d: %2$s</string>
+    <string name="end_and_reveal">End and Reveal Answer</string>
+    <string name="view_results">View Results</string>
+    <string name="eliminated_round_format">Eliminated in round %1$d</string>
+    <string name="active_status">Active</string>
+    <string name="identity_results">Identity Results</string>
+    <string name="result_card_format">%1$s: %2$s · %3$s</string>
+    <string name="play_again">Play Again</string>
+    <string name="back">Back</string>
+    <string name="blank_word">No word</string>
+
+    <string name="role_civilian">Civilian</string>
+    <string name="role_undercover">Undercover</string>
+    <string name="role_blank">Blank</string>
+
+    <string name="outcome_manual_title">Ended Manually</string>
+    <string name="outcome_manual_summary">The host ended this game manually</string>
+    <string name="outcome_manual_reason">The current state has not triggered an automatic win condition.</string>
+    <string name="outcome_civilian_title">Civilians Win</string>
+    <string name="outcome_civilian_summary">All undercovers and blank players are out</string>
+    <string name="outcome_civilian_reason">%1$d civilians remain. The hidden team has been eliminated.</string>
+    <string name="outcome_undercover_title">Undercovers Win</string>
+    <string name="outcome_undercover_summary">Undercovers are equal to or greater than civilians</string>
+    <string name="outcome_undercover_reason">%1$d undercovers and %2$d civilians remain.</string>
+    <string name="outcome_blank_title">Blank Wins</string>
+    <string name="outcome_blank_summary">The blank player survived to the end</string>
+    <string name="outcome_blank_reason">Only %1$d blank players remain.</string>
+</resources>

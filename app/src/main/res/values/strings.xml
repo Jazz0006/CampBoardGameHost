@@ -1,3 +1,52 @@
 <resources>
     <string name="app_name">露营桌游助手</string>
+    <string name="undercover_subtitle">谁是卧底 · 离线 MVP</string>
+    <string name="players_section">玩家</string>
+    <string name="default_player_name_format">玩家 %1$d</string>
+    <string name="player_name_format">玩家 %1$d</string>
+    <string name="start_dealing">开始发牌</string>
+    <string name="player_count">玩家人数</string>
+    <string name="undercover_count">卧底人数</string>
+    <string name="include_blank">加入 1 名白板</string>
+    <string name="pass_phone_to">请把手机交给</string>
+    <string name="reveal_privacy_hint">确认周围没人偷看后再查看身份</string>
+    <string name="reveal_my_card">查看我的牌</string>
+    <string name="remember_word_hint">记住这个词，然后隐藏手机</string>
+    <string name="all_done_return_to_host">全部看完，交给主持人</string>
+    <string name="hide_and_next">隐藏并交给下一位</string>
+    <string name="host_panel">主持人面板</string>
+    <string name="round_format">第 %1$d 轮</string>
+    <string name="new_game">新游戏</string>
+    <string name="select_elimination">选择本轮淘汰</string>
+    <string name="record_elimination">记录淘汰</string>
+    <string name="player_status">玩家状态</string>
+    <string name="elimination_records">淘汰记录</string>
+    <string name="no_eliminations">还没有玩家被淘汰</string>
+    <string name="elimination_record_format">第 %1$d 轮：%2$s</string>
+    <string name="end_and_reveal">结束并查看答案</string>
+    <string name="view_results">查看结果</string>
+    <string name="eliminated_round_format">第 %1$d 轮淘汰</string>
+    <string name="active_status">在场</string>
+    <string name="identity_results">身份结果</string>
+    <string name="result_card_format">%1$s：%2$s · %3$s</string>
+    <string name="play_again">再来一局</string>
+    <string name="back">返回</string>
+    <string name="blank_word">无词</string>
+
+    <string name="role_civilian">平民</string>
+    <string name="role_undercover">卧底</string>
+    <string name="role_blank">白板</string>
+
+    <string name="outcome_manual_title">手动结束</string>
+    <string name="outcome_manual_summary">本局已由主持人手动结束</string>
+    <string name="outcome_manual_reason">当前局面还没有触发自动胜负条件。</string>
+    <string name="outcome_civilian_title">平民胜利</string>
+    <string name="outcome_civilian_summary">所有卧底和白板都已出局</string>
+    <string name="outcome_civilian_reason">场上剩余 %1$d 名平民，隐藏阵营已全部淘汰。</string>
+    <string name="outcome_undercover_title">卧底胜利</string>
+    <string name="outcome_undercover_summary">卧底人数已经达到或超过平民人数</string>
+    <string name="outcome_undercover_reason">场上剩余 %1$d 名卧底、%2$d 名平民。</string>
+    <string name="outcome_blank_title">白板胜利</string>
+    <string name="outcome_blank_summary">白板活到了最后</string>
+    <string name="outcome_blank_reason">场上只剩 %1$d 名白板。</string>
 </resources>
