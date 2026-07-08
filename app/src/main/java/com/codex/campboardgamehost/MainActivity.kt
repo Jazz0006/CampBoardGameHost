@@ -190,8 +190,35 @@ private enum class ClocktowerTeam {
 
 private enum class ClocktowerPhase {
     FirstNight,
+    Dawn,
     Day,
     Night,
+}
+
+private enum class ClocktowerDayMode {
+    Overview,
+    Nomination,
+    Vote,
+    EndConfirm,
+    ExecutionResult,
+}
+
+private enum class ClocktowerNightAction {
+    None,
+    RedHerring,
+    Poison,
+    FortuneTeller,
+    DemonKill,
+    Ravenkeeper,
+}
+
+private enum class ClocktowerDisplayKind {
+    None,
+    EitherOne,
+    Number,
+    YesNo,
+    RoleReveal,
+    Plain,
 }
 
 private data class ClocktowerRole(
@@ -1043,9 +1070,8 @@ private fun CampBoardGameHostApp() {
                             if (nightOutcome != null) {
                                 showResults = true
                             } else {
-                                clocktowerPhase = ClocktowerPhase.Day
+                                clocktowerPhase = ClocktowerPhase.Dawn
                             }
-                            clocktowerPendingNightDeath = null
                             clocktowerPoisonTarget = null
                             clocktowerFortuneTellerFirst = null
                             clocktowerFortuneTellerSecond = null
@@ -2548,41 +2574,48 @@ private fun WerewolfJudgeScreen(
         }
 
         item {
-            Card(
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(stringResource(currentStep.titleResId()), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text(stringResource(currentStep.instructionResId()), color = Color(0xFF5C6A63))
+            HostProgressCard(
+                title = stringResource(R.string.host_current_step),
+                subtitle = stringResource(currentStep.titleResId()),
+                progress = stringResource(R.string.host_step_progress_format, currentIndex + 1, steps.size),
+            )
+        }
 
+        item {
+            HostScriptCard(
+                title = stringResource(currentStep.titleResId()),
+                script = stringResource(currentStep.scriptResId()),
+                action = stringResource(currentStep.actionResId()),
+            ) {
                     when (currentStep) {
                         WerewolfJudgeStep.Wolves -> {
                             WerewolfRoleLine(roleName = stringResource(R.string.role_werewolf), players = roleCards(Role.Werewolf))
-                            Text(stringResource(R.string.werewolf_choose_night_death), fontWeight = FontWeight.SemiBold)
-                            SelectablePlayerChips(
-                                cards = aliveCards,
-                                selectedName = pendingNightDeath,
-                                onSelect = { onSelectNightDeath(if (pendingNightDeath == it) null else it) },
-                                enabled = gameOutcome == null,
-                            )
+                            HostActionSection(
+                                title = stringResource(R.string.werewolf_choose_night_death),
+                                helper = stringResource(R.string.host_choose_one_player_hint),
+                            ) {
+                                SelectablePlayerChips(
+                                    cards = aliveCards,
+                                    selectedName = pendingNightDeath,
+                                    onSelect = { onSelectNightDeath(if (pendingNightDeath == it) null else it) },
+                                    enabled = gameOutcome == null,
+                                )
+                            }
                         }
 
                         WerewolfJudgeStep.Seer -> {
                             WerewolfRoleLine(roleName = stringResource(R.string.role_seer), players = roleCards(Role.Seer))
-                            Text(stringResource(R.string.werewolf_choose_seer_check), fontWeight = FontWeight.SemiBold)
-                            SelectablePlayerChips(
-                                cards = aliveCards,
-                                selectedName = seerCheckTarget,
-                                onSelect = { onSelectSeerCheck(if (seerCheckTarget == it) null else it) },
-                                enabled = gameOutcome == null,
-                            )
+                            HostActionSection(
+                                title = stringResource(R.string.werewolf_choose_seer_check),
+                                helper = stringResource(R.string.host_choose_one_player_hint),
+                            ) {
+                                SelectablePlayerChips(
+                                    cards = aliveCards,
+                                    selectedName = seerCheckTarget,
+                                    onSelect = { onSelectSeerCheck(if (seerCheckTarget == it) null else it) },
+                                    enabled = gameOutcome == null,
+                                )
+                            }
                             seerCheckTarget?.let { targetName ->
                                 val target = cards.firstOrNull { it.name == targetName }
                                 val result = if (target?.role == Role.Werewolf) {
@@ -2596,10 +2629,12 @@ private fun WerewolfJudgeScreen(
 
                         WerewolfJudgeStep.Witch -> {
                             WerewolfRoleLine(roleName = stringResource(R.string.role_witch), players = roleCards(Role.Witch))
-                            Text(
-                                pendingNightDeath?.let { stringResource(R.string.werewolf_pending_death_format, it) }
+                            HostInstructionBlock(
+                                label = stringResource(R.string.host_current_result_label),
+                                text = pendingNightDeath?.let { stringResource(R.string.werewolf_pending_death_format, it) }
                                     ?: stringResource(R.string.werewolf_no_pending_death),
-                                color = Color(0xFF6F7B74),
+                                backgroundColor = Color(0xFFFFFCF6),
+                                textColor = Color(0xFF5C6A63),
                             )
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Checkbox(
@@ -2612,17 +2647,17 @@ private fun WerewolfJudgeScreen(
                                     color = if (witchSaveUsed) Color(0xFF9A4B36) else Color(0xFF1F2925),
                                 )
                             }
-                            Text(
-                                if (witchPoisonUsed) stringResource(R.string.witch_poison_used) else stringResource(R.string.witch_choose_poison),
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (witchPoisonUsed) Color(0xFF9A4B36) else Color(0xFF1F2925),
-                            )
-                            SelectablePlayerChips(
-                                cards = aliveCards.filter { it.name != pendingNightDeath || !witchSavedTonight },
-                                selectedName = witchPoisonTarget,
-                                onSelect = { onSelectWitchPoison(if (witchPoisonTarget == it) null else it) },
-                                enabled = !witchPoisonUsed && gameOutcome == null,
-                            )
+                            HostActionSection(
+                                title = if (witchPoisonUsed) stringResource(R.string.witch_poison_used) else stringResource(R.string.witch_choose_poison),
+                                helper = stringResource(R.string.host_optional_action_hint),
+                            ) {
+                                SelectablePlayerChips(
+                                    cards = aliveCards.filter { it.name != pendingNightDeath || !witchSavedTonight },
+                                    selectedName = witchPoisonTarget,
+                                    onSelect = { onSelectWitchPoison(if (witchPoisonTarget == it) null else it) },
+                                    enabled = !witchPoisonUsed && gameOutcome == null,
+                                )
+                            }
                         }
 
                         WerewolfJudgeStep.Hunter -> {
@@ -2632,21 +2667,31 @@ private fun WerewolfJudgeScreen(
 
                         WerewolfJudgeStep.Dawn -> {
                             if (nightDeathEvents.isEmpty()) {
-                                Text(stringResource(R.string.werewolf_no_final_death), color = Color(0xFF6F7B74))
+                                HostInstructionBlock(
+                                    label = stringResource(R.string.host_current_result_label),
+                                    text = stringResource(R.string.werewolf_no_final_death),
+                                    backgroundColor = Color(0xFFFFFCF6),
+                                    textColor = Color(0xFF5C6A63),
+                                )
                             } else {
-                                Text(stringResource(R.string.werewolf_final_deaths), fontWeight = FontWeight.SemiBold)
-                                nightDeathEvents.forEach { (name, note) ->
-                                    Text(stringResource(R.string.werewolf_death_event_format, name, note), color = Color(0xFF6F7B74))
+                                HostActionSection(title = stringResource(R.string.werewolf_final_deaths)) {
+                                    nightDeathEvents.forEach { (name, note) ->
+                                        Text(stringResource(R.string.werewolf_death_event_format, name, note), color = Color(0xFF6F7B74))
+                                    }
                                 }
                             }
                             if (hunterDiesTonight) {
-                                Text(stringResource(R.string.hunter_choose_shot), fontWeight = FontWeight.SemiBold)
-                                SelectablePlayerChips(
-                                    cards = aliveCards.filter { it.name !in nightDeathNames },
-                                    selectedName = hunterShotTarget,
-                                    onSelect = { onSelectHunterShot(if (hunterShotTarget == it) null else it) },
-                                    enabled = gameOutcome == null,
-                                )
+                                HostActionSection(
+                                    title = stringResource(R.string.hunter_choose_shot),
+                                    helper = stringResource(R.string.host_optional_action_hint),
+                                ) {
+                                    SelectablePlayerChips(
+                                        cards = aliveCards.filter { it.name !in nightDeathNames },
+                                        selectedName = hunterShotTarget,
+                                        onSelect = { onSelectHunterShot(if (hunterShotTarget == it) null else it) },
+                                        enabled = gameOutcome == null,
+                                    )
+                                }
                             }
                             Button(
                                 onClick = {
@@ -2662,21 +2707,29 @@ private fun WerewolfJudgeScreen(
                         }
 
                         WerewolfJudgeStep.DayVote -> {
-                            Text(stringResource(R.string.werewolf_choose_day_exile), fontWeight = FontWeight.SemiBold)
-                            SelectablePlayerChips(
-                                cards = aliveCards,
-                                selectedName = selectedDayExile,
-                                onSelect = { onSelectDayExile(if (selectedDayExile == it) null else it) },
-                                enabled = gameOutcome == null,
-                            )
-                            if (hunterCanShootAfterDayExile) {
-                                Text(stringResource(R.string.hunter_choose_shot), fontWeight = FontWeight.SemiBold)
+                            HostActionSection(
+                                title = stringResource(R.string.werewolf_choose_day_exile),
+                                helper = stringResource(R.string.host_skip_allowed_hint),
+                            ) {
                                 SelectablePlayerChips(
-                                    cards = aliveCards.filter { it.name != selectedDayExile },
-                                    selectedName = hunterShotTarget,
-                                    onSelect = { onSelectHunterShot(if (hunterShotTarget == it) null else it) },
+                                    cards = aliveCards,
+                                    selectedName = selectedDayExile,
+                                    onSelect = { onSelectDayExile(if (selectedDayExile == it) null else it) },
                                     enabled = gameOutcome == null,
                                 )
+                            }
+                            if (hunterCanShootAfterDayExile) {
+                                HostActionSection(
+                                    title = stringResource(R.string.hunter_choose_shot),
+                                    helper = stringResource(R.string.host_optional_action_hint),
+                                ) {
+                                    SelectablePlayerChips(
+                                        cards = aliveCards.filter { it.name != selectedDayExile },
+                                        selectedName = hunterShotTarget,
+                                        onSelect = { onSelectHunterShot(if (hunterShotTarget == it) null else it) },
+                                        enabled = gameOutcome == null,
+                                    )
+                                }
                             }
                             Button(
                                 onClick = onConfirmDayExile,
@@ -2707,7 +2760,6 @@ private fun WerewolfJudgeScreen(
                             Text(stringResource(R.string.next_step))
                         }
                     }
-                }
             }
         }
 
@@ -2765,6 +2817,124 @@ private fun WerewolfJudgeStep.instructionResId(): Int = when (this) {
     WerewolfJudgeStep.DayVote -> R.string.werewolf_step_day_vote_instruction
 }
 
+private fun WerewolfJudgeStep.scriptResId(): Int = when (this) {
+    WerewolfJudgeStep.Wolves -> R.string.werewolf_script_wolves
+    WerewolfJudgeStep.Seer -> R.string.werewolf_script_seer
+    WerewolfJudgeStep.Witch -> R.string.werewolf_script_witch
+    WerewolfJudgeStep.Hunter -> R.string.werewolf_script_hunter
+    WerewolfJudgeStep.Dawn -> R.string.werewolf_script_dawn
+    WerewolfJudgeStep.DayVote -> R.string.werewolf_script_day_vote
+}
+
+private fun WerewolfJudgeStep.actionResId(): Int = when (this) {
+    WerewolfJudgeStep.Wolves -> R.string.werewolf_action_wolves
+    WerewolfJudgeStep.Seer -> R.string.werewolf_action_seer
+    WerewolfJudgeStep.Witch -> R.string.werewolf_action_witch
+    WerewolfJudgeStep.Hunter -> R.string.werewolf_action_hunter
+    WerewolfJudgeStep.Dawn -> R.string.werewolf_action_dawn
+    WerewolfJudgeStep.DayVote -> R.string.werewolf_action_day_vote
+}
+
+@Composable
+private fun HostProgressCard(
+    title: String,
+    subtitle: String,
+    progress: String,
+) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF2EA)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(subtitle, color = Color(0xFF5C6A63))
+            }
+            Text(progress, color = Color(0xFF2F5D50), fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun HostScriptCard(
+    title: String,
+    script: String,
+    action: String,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            HostInstructionBlock(
+                label = stringResource(R.string.host_script_label),
+                text = script,
+                backgroundColor = Color(0xFFFFF4DC),
+                textColor = Color(0xFF1F2925),
+            )
+            HostInstructionBlock(
+                label = stringResource(R.string.host_action_label),
+                text = action,
+                backgroundColor = Color(0xFFEAF2EA),
+                textColor = Color(0xFF2F5D50),
+            )
+            content()
+        }
+    }
+}
+
+@Composable
+private fun HostInstructionBlock(
+    label: String,
+    text: String,
+    backgroundColor: Color,
+    textColor: Color,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor, RoundedCornerShape(8.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(label, color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+        Text(text, color = textColor, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun HostActionSection(
+    title: String,
+    helper: String? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(title, fontWeight = FontWeight.SemiBold)
+        helper?.let {
+            Text(it, color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
+        }
+        content()
+    }
+}
+
 @Composable
 private fun WerewolfRoleLine(roleName: String, players: List<PlayerCard>) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -2782,6 +2952,7 @@ private fun SelectablePlayerChips(
     cards: List<PlayerCard>,
     selectedName: String?,
     enabled: Boolean,
+    allCards: List<PlayerCard> = cards,
     onSelect: (String) -> Unit,
 ) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -2789,11 +2960,11 @@ private fun SelectablePlayerChips(
             val selected = selectedName == card.name
             if (selected) {
                 Button(onClick = { onSelect(card.name) }, enabled = enabled, shape = RoundedCornerShape(8.dp)) {
-                    Text(card.name)
+                    Text(card.seatLabel(allCards))
                 }
             } else {
                 OutlinedButton(onClick = { onSelect(card.name) }, enabled = enabled, shape = RoundedCornerShape(8.dp)) {
-                    Text(card.name)
+                    Text(card.seatLabel(allCards))
                 }
             }
         }
@@ -2837,6 +3008,12 @@ private fun PlayerCard.hostRoleLabel(context: Context, gameKind: GameKind): Stri
     GameKind.Undercover -> context.getString(role.labelResId())
 }
 
+private fun PlayerCard.seatLabel(cards: List<PlayerCard>): String =
+    "${cards.indexOfFirst { it.name == name } + 1}号 $name"
+
+private fun playerSeatLabel(cards: List<PlayerCard>, playerName: String?): String =
+    cards.firstOrNull { it.name == playerName }?.seatLabel(cards) ?: playerName.orEmpty()
+
 private fun isClocktowerEvil(card: PlayerCard): Boolean =
     card.clocktowerTeam == ClocktowerTeam.Minion || card.clocktowerTeam == ClocktowerTeam.Demon
 
@@ -2872,6 +3049,23 @@ private fun storytellerPairHint(
 
 private fun PlayerCard.clocktowerShownAsDifferentRole(): Boolean =
     clocktowerRole?.enName != null && clocktowerShownRole?.enName != null && clocktowerRole?.enName != clocktowerShownRole?.enName
+
+private data class ClocktowerNightStepUi(
+    val title: String,
+    val actor: PlayerCard?,
+    val isRealAction: Boolean,
+    val reason: String,
+    val storytellerAction: String,
+    val tellPlayer: String?,
+    val explanation: String,
+    val action: ClocktowerNightAction = ClocktowerNightAction.None,
+    val displayKind: ClocktowerDisplayKind = ClocktowerDisplayKind.None,
+    val displayTitle: String = title,
+    val displayPrimary: String? = null,
+    val displaySecondary: String? = null,
+    val displayFooter: String? = null,
+    val wakeText: String? = null,
+)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -2925,8 +3119,287 @@ private fun ClocktowerJudgeScreen(
     }
     val phaseTitle = when (phase) {
         ClocktowerPhase.FirstNight -> stringResource(R.string.clocktower_phase_first_night)
+        ClocktowerPhase.Dawn -> "天亮"
         ClocktowerPhase.Day -> stringResource(R.string.clocktower_phase_day, round)
         ClocktowerPhase.Night -> stringResource(R.string.clocktower_phase_night, round)
+    }
+    val phaseProgress = when (phase) {
+        ClocktowerPhase.FirstNight -> stringResource(R.string.clocktower_progress_first_night)
+        ClocktowerPhase.Dawn -> "天亮"
+        ClocktowerPhase.Day -> stringResource(R.string.clocktower_progress_day)
+        ClocktowerPhase.Night -> stringResource(R.string.clocktower_progress_night)
+    }
+    val phaseScript = when (phase) {
+        ClocktowerPhase.FirstNight -> stringResource(R.string.clocktower_script_first_night)
+        ClocktowerPhase.Dawn -> "天亮了，所有人睁眼。"
+        ClocktowerPhase.Day -> stringResource(R.string.clocktower_script_day)
+        ClocktowerPhase.Night -> stringResource(R.string.clocktower_script_night)
+    }
+    val phaseAction = when (phase) {
+        ClocktowerPhase.FirstNight -> stringResource(R.string.clocktower_action_first_night)
+        ClocktowerPhase.Dawn -> "宣布昨晚死亡，然后进入白天。"
+        ClocktowerPhase.Day -> stringResource(R.string.clocktower_action_day)
+        ClocktowerPhase.Night -> stringResource(R.string.clocktower_action_night)
+    }
+
+    var nightStarted by remember(phase, round) { mutableStateOf(false) }
+    var nightStepIndex by remember(phase, round) { mutableStateOf(0) }
+    var dayMode by remember(round) { mutableStateOf(ClocktowerDayMode.Overview) }
+    var nominatorName by remember(round) { mutableStateOf<String?>(null) }
+    var nomineeName by remember(round) { mutableStateOf<String?>(null) }
+    var currentVoteCount by remember(round) { mutableStateOf(0) }
+    var highestVoteName by remember(round) { mutableStateOf<String?>(null) }
+    var highestVoteCount by remember(round) { mutableStateOf(0) }
+    var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
+    val executionThreshold = (aliveCards.size / 2) + 1
+
+    fun roleActor(enName: String): PlayerCard? =
+        actualClocktowerRoleCards(cards, enName).firstOrNull { it.eliminatedRound == null }
+
+    fun roleMissingReason(enName: String): String {
+        val roleCard = actualClocktowerRoleCards(cards, enName).firstOrNull()
+        return when {
+            roleCard == null -> "本局没有这个角色。"
+            roleCard.eliminatedRound != null -> "${roleCard.seatLabel(cards)} 已经死亡，死亡后不再执行这个能力。"
+            else -> ""
+        }
+    }
+
+    fun infoStep(
+        roleName: String,
+        enName: String,
+        tellPlayer: String?,
+        explanation: String,
+        action: ClocktowerNightAction = ClocktowerNightAction.None,
+        displayKind: ClocktowerDisplayKind = ClocktowerDisplayKind.Plain,
+        displayPrimary: String? = tellPlayer,
+        displaySecondary: String? = null,
+        displayFooter: String? = explanation,
+    ): ClocktowerNightStepUi {
+        val actor = roleActor(enName)
+        val resolvedDisplayKind = when (enName) {
+            "Chef", "Empath" -> ClocktowerDisplayKind.Number
+            "Fortune Teller" -> ClocktowerDisplayKind.YesNo
+            "Ravenkeeper", "Undertaker" -> ClocktowerDisplayKind.RoleReveal
+            "Washerwoman", "Librarian", "Investigator" -> ClocktowerDisplayKind.EitherOne
+            else -> displayKind
+        }
+        return ClocktowerNightStepUi(
+            title = roleName,
+            actor = actor,
+            isRealAction = actor != null,
+            reason = roleMissingReason(enName),
+            storytellerAction = if (actor != null) {
+                "1. 轻拍 ${actor.seatLabel(cards)}，示意他睁眼。\n2. 告诉他下面的信息。\n3. 确认后示意他闭眼。"
+            } else {
+                "不要唤醒任何玩家。为了避免玩家通过流程判断角色是否在场，请停顿 2-3 秒，然后点击下一步。"
+            },
+            tellPlayer = tellPlayer,
+            explanation = explanation,
+            action = action,
+            displayKind = if (actor != null && !tellPlayer.isNullOrBlank()) resolvedDisplayKind else ClocktowerDisplayKind.None,
+            displayTitle = "$roleName 信息",
+            displayPrimary = displayPrimary ?: tellPlayer,
+            displaySecondary = displaySecondary,
+            displayFooter = displayFooter ?: explanation,
+        )
+    }
+
+    val washerwomanTarget = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Townsfolk && it.clocktowerRole?.enName != "Washerwoman" }
+    val washerwomanPair = washerwomanTarget?.let { storytellerPairHint(it, cards) }
+    val librarianTarget = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Outsider }
+    val librarianPair = librarianTarget?.let { storytellerPairHint(it, cards) }
+    val investigatorTarget = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Minion }
+    val investigatorPair = investigatorTarget?.let { storytellerPairHint(it, cards) }
+    val empathActor = roleActor("Empath")
+    val empathNeighbors = empathActor?.let { livingNeighbors(cards, it.name) }.orEmpty()
+    val chefNumber = chefEvilPairs(cards).toString()
+    val empathNumber = empathNeighbors.count(::isClocktowerEvil).toString()
+    val demonCard = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon }
+    val minionCards = cards.filter { it.clocktowerTeam == ClocktowerTeam.Minion }
+    val demonBluffs = troubleBrewingRoles
+        .filter { role -> role.team == ClocktowerTeam.Townsfolk && cards.none { it.clocktowerRole?.enName == role.enName } }
+        .take(3)
+    val minionInfoText = demonCard?.let { stringResource(R.string.clocktower_first_night_minion_info_format, it.seatLabel(cards)) }
+    val demonInfoText = buildList {
+        add(
+            if (minionCards.isEmpty()) {
+                stringResource(R.string.clocktower_first_night_demon_no_minions)
+            } else {
+                stringResource(
+                    R.string.clocktower_first_night_demon_minions_format,
+                    minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) },
+                )
+            },
+        )
+        add(
+            stringResource(
+                R.string.clocktower_first_night_demon_bluffs_format,
+                demonBluffs.joinToString(stringResource(R.string.name_separator)) { it.nameFor(language) },
+            ),
+        )
+    }.joinToString("\n")
+    val nightSteps = if (phase == ClocktowerPhase.FirstNight) {
+        listOf(
+            ClocktowerNightStepUi(
+                title = stringResource(R.string.clocktower_first_night_minion_title),
+                actor = minionCards.firstOrNull(),
+                isRealAction = minionCards.isNotEmpty(),
+                reason = if (minionCards.isEmpty()) stringResource(R.string.clocktower_first_night_no_minions_reason) else "",
+                storytellerAction = if (minionCards.isNotEmpty()) {
+                    stringResource(
+                        R.string.clocktower_first_night_minion_action_format,
+                        minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) },
+                    )
+                } else {
+                    stringResource(R.string.clocktower_first_night_placeholder_action)
+                },
+                tellPlayer = minionInfoText,
+                explanation = stringResource(R.string.clocktower_first_night_minion_explain),
+                displayKind = if (minionCards.isNotEmpty() && minionInfoText != null) ClocktowerDisplayKind.Plain else ClocktowerDisplayKind.None,
+                displayTitle = stringResource(R.string.clocktower_first_night_minion_title),
+                displayPrimary = minionInfoText,
+                displayFooter = stringResource(R.string.clocktower_first_night_minion_explain),
+                wakeText = if (minionCards.isNotEmpty()) {
+                    stringResource(
+                        R.string.clocktower_first_night_minion_wake_format,
+                        minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) },
+                    )
+                } else {
+                    null
+                },
+            ),
+            ClocktowerNightStepUi(
+                title = stringResource(R.string.clocktower_first_night_demon_title),
+                actor = demonCard,
+                isRealAction = demonCard != null,
+                reason = if (demonCard == null) stringResource(R.string.clocktower_first_night_no_demon_reason) else "",
+                storytellerAction = demonCard?.let {
+                    stringResource(R.string.clocktower_first_night_demon_action_format, it.seatLabel(cards))
+                } ?: stringResource(R.string.clocktower_first_night_placeholder_action),
+                tellPlayer = demonInfoText,
+                explanation = stringResource(R.string.clocktower_first_night_demon_explain),
+                displayKind = if (demonCard != null) ClocktowerDisplayKind.Plain else ClocktowerDisplayKind.None,
+                displayTitle = stringResource(R.string.clocktower_first_night_demon_title),
+                displayPrimary = demonInfoText,
+                displayFooter = stringResource(R.string.clocktower_first_night_demon_explain),
+            ),
+            ClocktowerNightStepUi(
+                title = "占卜师红鲱鱼",
+                actor = null,
+                isRealAction = actualClocktowerRoleCards(cards, "Fortune Teller").isNotEmpty(),
+                reason = if (actualClocktowerRoleCards(cards, "Fortune Teller").isEmpty()) "本局没有占卜师，此步骤只用于首夜配置。" else "",
+                storytellerAction = "不要公开说明这个选择。请选择一名好人玩家作为占卜师可能得到“是”的红鲱鱼。",
+                tellPlayer = redHerring?.let { "已选择：${playerSeatLabel(cards, it)}" },
+                explanation = "红鲱鱼是占卜师规则的一部分。占卜师查到恶魔或红鲱鱼时，都会得到“是”。",
+                action = ClocktowerNightAction.RedHerring,
+            ),
+            infoStep(
+                roleName = "洗衣妇",
+                enName = "Washerwoman",
+                tellPlayer = washerwomanTarget?.let { "${it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${it.seatLabel(cards)} / ${storytellerPairHint(it, cards)?.second?.seatLabel(cards).orEmpty()}" },
+                explanation = "洗衣妇会得知某个镇民在两名玩家之一中。",
+            ),
+            infoStep(
+                roleName = "图书管理员",
+                enName = "Librarian",
+                tellPlayer = librarianTarget?.let { "${it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${it.seatLabel(cards)} / ${storytellerPairHint(it, cards)?.second?.seatLabel(cards).orEmpty()}" } ?: "本局没有外来者。",
+                explanation = "图书管理员会得知某个外来者在两名玩家之一中，或得知没有外来者。",
+            ),
+            infoStep(
+                roleName = "调查员",
+                enName = "Investigator",
+                tellPlayer = investigatorTarget?.let { "${it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${it.seatLabel(cards)} / ${storytellerPairHint(it, cards)?.second?.seatLabel(cards).orEmpty()}" } ?: "本局没有爪牙。",
+                explanation = "调查员会得知某个爪牙在两名玩家之一中，或得知没有爪牙。",
+            ),
+            infoStep(
+                roleName = "厨师",
+                enName = "Chef",
+                tellPlayer = chefEvilPairs(cards).toString(),
+                explanation = "这个数字表示有几对邪恶玩家相邻而坐。",
+            ),
+            infoStep(
+                roleName = "共情者",
+                enName = "Empath",
+                tellPlayer = empathNeighbors.count(::isClocktowerEvil).toString(),
+                explanation = "这个数字表示共情者两个存活邻居中有几个邪恶玩家。",
+            ),
+            infoStep(
+                roleName = "占卜师",
+                enName = "Fortune Teller",
+                tellPlayer = fortuneTellerResult,
+                explanation = "让占卜师选择两名玩家。如果其中有恶魔或红鲱鱼，告诉他“是”。",
+                action = ClocktowerNightAction.FortuneTeller,
+            ),
+            infoStep(
+                roleName = "管家",
+                enName = "Butler",
+                tellPlayer = butlerMaster?.let { "今天的主人：${playerSeatLabel(cards, it)}" },
+                explanation = "管家每天选择一名主人，白天只能在主人投票时投票。",
+            ),
+            infoStep(
+                roleName = "间谍",
+                enName = "Spy",
+                tellPlayer = "让间谍查看完整魔典。",
+                explanation = "间谍可以查看所有玩家的真实身份。",
+            ),
+        )
+    } else {
+        listOf(
+            infoStep(
+                roleName = "投毒者",
+                enName = "Poisoner",
+                tellPlayer = poisonTarget?.let { "已选择：${playerSeatLabel(cards, it)}" },
+                explanation = "投毒者选择一名玩家，使其能力暂时失效。",
+                action = ClocktowerNightAction.Poison,
+            ),
+            infoStep(
+                roleName = "管家",
+                enName = "Butler",
+                tellPlayer = butlerMaster?.let { "今天的主人：${playerSeatLabel(cards, it)}" },
+                explanation = "管家每天选择一名主人。",
+            ),
+            infoStep(
+                roleName = "共情者",
+                enName = "Empath",
+                tellPlayer = empathNeighbors.count(::isClocktowerEvil).toString(),
+                explanation = "这个数字表示共情者两个存活邻居中有几个邪恶玩家。",
+            ),
+            infoStep(
+                roleName = "占卜师",
+                enName = "Fortune Teller",
+                tellPlayer = fortuneTellerResult,
+                explanation = "让占卜师选择两名玩家。如果其中有恶魔或红鲱鱼，告诉他“是”。",
+                action = ClocktowerNightAction.FortuneTeller,
+            ),
+            ClocktowerNightStepUi(
+                title = "恶魔行动",
+                actor = aliveCards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon },
+                isRealAction = aliveCards.any { it.clocktowerTeam == ClocktowerTeam.Demon },
+                reason = if (aliveCards.none { it.clocktowerTeam == ClocktowerTeam.Demon }) "当前没有存活恶魔。" else "",
+                storytellerAction = aliveCards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon }?.let {
+                    "1. 轻拍 ${it.seatLabel(cards)}，示意当前恶魔睁眼。\n2. 让他选择今晚要杀死的玩家。\n3. 在下方记录目标。\n4. 示意他闭眼。"
+                } ?: "不要唤醒任何玩家，停顿 2-3 秒后继续。",
+                tellPlayer = pendingNightDeath?.let { "已记录：今晚恶魔选择杀死 ${playerSeatLabel(cards, it)}。现在不要宣布死亡，等天亮统一宣布。" },
+                explanation = "恶魔选择的死亡目标会在天亮时统一公布。",
+                action = ClocktowerNightAction.DemonKill,
+            ),
+            infoStep(
+                roleName = "守鸦人",
+                enName = "Ravenkeeper",
+                tellPlayer = ravenkeeperTarget?.let { "${playerSeatLabel(cards, it)} 的真实角色是 ${cards.firstOrNull { card -> card.name == it }?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()}" },
+                explanation = "只有守鸦人夜晚死亡时才唤醒他，让他选择一名玩家并得知其角色。",
+                action = ClocktowerNightAction.Ravenkeeper,
+            ),
+        )
+    }
+
+    playerDisplayStep?.let { displayStep ->
+        ClocktowerPlayerDisplayCardLocalized(
+            step = displayStep,
+            onDismiss = { playerDisplayStep = null },
+        )
+        return
     }
 
     LazyColumn(
@@ -2951,21 +3424,337 @@ private fun ClocktowerJudgeScreen(
             }
         }
 
-        item {
-            Card(
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF4DC)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Text(stringResource(R.string.clocktower_storyteller_hint_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(stringResource(R.string.clocktower_storyteller_hint_body), color = Color(0xFF6F7B74))
+        if (phase == ClocktowerPhase.FirstNight || phase == ClocktowerPhase.Night) {
+            if (!nightStarted) {
+                item {
+                    HostScriptCard(
+                        title = "夜晚即将开始",
+                        script = "所有人请闭眼，低头，保持安静。",
+                        action = "如果需要唤醒某位玩家，请轻拍或轻声示意。尽量不要大声念出角色名称，避免泄露信息。",
+                    ) {
+                        Button(
+                            onClick = { nightStarted = true },
+                            enabled = gameOutcome == null,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                        ) {
+                            Text("开始夜晚流程")
+                        }
+                    }
                 }
+            } else {
+                val currentStep = nightSteps[nightStepIndex.coerceIn(0, nightSteps.lastIndex)]
+                item {
+                    HostProgressCard(
+                        title = if (phase == ClocktowerPhase.FirstNight) "第 1 夜" else "第 $round 夜",
+                        subtitle = "当前阶段：${currentStep.title}",
+                        progress = "步骤 ${nightStepIndex + 1} / ${nightSteps.size}",
+                    )
+                }
+                item {
+                    ClocktowerNightStepCardLocalized(
+                        cards = cards,
+                        aliveCards = aliveCards,
+                        step = currentStep,
+                        selectedName = when (currentStep.action) {
+                            ClocktowerNightAction.RedHerring -> redHerring
+                            ClocktowerNightAction.Poison -> poisonTarget
+                            ClocktowerNightAction.DemonKill -> pendingNightDeath
+                            ClocktowerNightAction.Ravenkeeper -> ravenkeeperTarget
+                            else -> null
+                        },
+                        fortuneTellerFirst = fortuneTellerFirst,
+                        fortuneTellerSecond = fortuneTellerSecond,
+                        onSelectName = { name ->
+                            when (currentStep.action) {
+                                ClocktowerNightAction.RedHerring -> onSelectRedHerring(if (redHerring == name) null else name)
+                                ClocktowerNightAction.Poison -> onSelectPoisonTarget(if (poisonTarget == name) null else name)
+                                ClocktowerNightAction.DemonKill -> onSelectNightDeath(if (pendingNightDeath == name) null else name)
+                                ClocktowerNightAction.Ravenkeeper -> onSelectRavenkeeperTarget(if (ravenkeeperTarget == name) null else name)
+                                else -> Unit
+                            }
+                        },
+                        onSelectFortuneTellerFirst = { onSelectFortuneTellerFirst(if (fortuneTellerFirst == it) null else it) },
+                        onSelectFortuneTellerSecond = { onSelectFortuneTellerSecond(if (fortuneTellerSecond == it) null else it) },
+                        onShowPlayerDisplay = { playerDisplayStep = currentStep },
+                        onNext = {
+                            if (nightStepIndex < nightSteps.lastIndex) {
+                                nightStepIndex += 1
+                            } else {
+                                onConfirmNight()
+                            }
+                        },
+                    )
+                }
+            }
+        } else if (phase == ClocktowerPhase.Dawn) {
+            val deathText = pendingNightDeath?.let { playerSeatLabel(cards, it) } ?: "无"
+            item {
+                HostScriptCard(
+                    title = "天亮了",
+                    script = "天亮了，所有人睁眼。",
+                    action = if (pendingNightDeath == null) {
+                        "请宣布：昨晚没有人死亡。"
+                    } else {
+                        "请宣布：昨晚，$deathText 死亡。"
+                    },
+                ) {
+                    HostInstructionBlock(
+                        label = "昨晚死亡",
+                        text = deathText,
+                        backgroundColor = Color(0xFFFFFCF6),
+                        textColor = Color(0xFF1F2925),
+                    )
+                    Button(
+                        onClick = {
+                            onSelectNightDeath(null)
+                            onAdvanceFromFirstNight()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                    ) {
+                        Text("进入白天")
+                    }
+                }
+            }
+        } else {
+            item {
+                HostProgressCard(
+                    title = "第 $round 天 白天",
+                    subtitle = "存活玩家：${aliveCards.size}，处决所需票数：$executionThreshold",
+                    progress = highestVoteName?.let { "最高票：${playerSeatLabel(cards, it)}，$highestVoteCount 票" } ?: "最高票：无",
+                )
+            }
+            when (dayMode) {
+                ClocktowerDayMode.Overview -> {
+                    item {
+                        HostScriptCard(
+                            title = "白天管理",
+                            script = "现在自由讨论。有人提名时，点击开始提名。",
+                            action = "管理提名、投票、处决。今天结束前会确认是否有人被处决。",
+                        ) {
+                            Button(
+                                onClick = {
+                                    nominatorName = null
+                                    nomineeName = null
+                                    dayMode = ClocktowerDayMode.Nomination
+                                },
+                                enabled = gameOutcome == null,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text("开始提名")
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    onSelectExecution(highestVoteName?.takeIf { highestVoteCount >= executionThreshold })
+                                    dayMode = ClocktowerDayMode.EndConfirm
+                                },
+                                enabled = gameOutcome == null,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text("结束白天")
+                            }
+                        }
+                    }
+                }
+
+                ClocktowerDayMode.Nomination -> {
+                    item {
+                        HostScriptCard(
+                            title = "提名",
+                            script = if (nominatorName != null && nomineeName != null) {
+                                "请宣布：${playerSeatLabel(cards, nominatorName)} 提名 ${playerSeatLabel(cards, nomineeName)}。然后请提名人说明理由，再请被提名人辩护。"
+                            } else {
+                                "选择提名人和被提名人。"
+                            },
+                            action = "两名玩家都选好后，进入投票。",
+                        ) {
+                            HostActionSection(title = "选择提名人") {
+                                SelectablePlayerChips(
+                                    cards = aliveCards,
+                                    selectedName = nominatorName,
+                                    enabled = gameOutcome == null,
+                                    allCards = cards,
+                                    onSelect = { nominatorName = if (nominatorName == it) null else it },
+                                )
+                            }
+                            HostActionSection(title = "选择被提名人") {
+                                SelectablePlayerChips(
+                                    cards = aliveCards,
+                                    selectedName = nomineeName,
+                                    enabled = gameOutcome == null,
+                                    allCards = cards,
+                                    onSelect = { nomineeName = if (nomineeName == it) null else it },
+                                )
+                            }
+                            Button(
+                                onClick = {
+                                    currentVoteCount = executionThreshold
+                                    dayMode = ClocktowerDayMode.Vote
+                                },
+                                enabled = nominatorName != null && nomineeName != null && gameOutcome == null,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text("开始投票")
+                            }
+                        }
+                    }
+                }
+
+                ClocktowerDayMode.Vote -> {
+                    item {
+                        HostScriptCard(
+                            title = "投票",
+                            script = "正在投票：是否处决 ${playerSeatLabel(cards, nomineeName)}。",
+                            action = "输入票数。达到 $executionThreshold 票才可能成为今天处决目标。",
+                        ) {
+                            StepperRow(
+                                label = "票数",
+                                value = currentVoteCount,
+                                range = 0..aliveCards.size,
+                                onChange = { currentVoteCount = it },
+                            )
+                            val reached = currentVoteCount >= executionThreshold
+                            HostInstructionBlock(
+                                label = "结果",
+                                text = if (reached) {
+                                    "${playerSeatLabel(cards, nomineeName)} 获得 $currentVoteCount 票，达到处决门槛。"
+                                } else {
+                                    "${playerSeatLabel(cards, nomineeName)} 获得 $currentVoteCount 票，未达到处决门槛。"
+                                },
+                                backgroundColor = if (reached) Color(0xFFEAF2EA) else Color(0xFFFFFCF6),
+                                textColor = if (reached) Color(0xFF2F5D50) else Color(0xFF6F7B74),
+                            )
+                            Button(
+                                onClick = {
+                                    if (reached && currentVoteCount >= highestVoteCount) {
+                                        highestVoteName = nomineeName
+                                        highestVoteCount = currentVoteCount
+                                    }
+                                    dayMode = ClocktowerDayMode.Overview
+                                },
+                                enabled = nomineeName != null && gameOutcome == null,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text("继续提名")
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    if (reached && currentVoteCount >= highestVoteCount) {
+                                        highestVoteName = nomineeName
+                                        highestVoteCount = currentVoteCount
+                                    }
+                                    onSelectExecution(highestVoteName?.takeIf { highestVoteCount >= executionThreshold })
+                                    dayMode = ClocktowerDayMode.EndConfirm
+                                },
+                                enabled = gameOutcome == null,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text("结束白天")
+                            }
+                        }
+                    }
+                }
+
+                ClocktowerDayMode.EndConfirm -> {
+                    item {
+                        val target = selectedExecution
+                        HostScriptCard(
+                            title = "准备结束白天",
+                            script = target?.let { "当前将被处决：${playerSeatLabel(cards, it)}，票数：$highestVoteCount。" } ?: "今天没有玩家被处决。",
+                            action = target?.let { "确认处决 ${playerSeatLabel(cards, it)} 吗？" } ?: "确认进入夜晚吗？",
+                        ) {
+                            Button(
+                                onClick = onConfirmDay,
+                                enabled = gameOutcome == null,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text(target?.let { "确认处决" } ?: "进入夜晚")
+                            }
+                            OutlinedButton(
+                                onClick = { dayMode = ClocktowerDayMode.Overview },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text("返回白天")
+                            }
+                        }
+                    }
+                }
+
+                ClocktowerDayMode.ExecutionResult -> Unit
+            }
+        }
+
+        item {
+            HorizontalDivider()
+            Text("说书人总览", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text("此区域包含真实身份，只给说书人看。", color = Color(0xFF9A4B36), style = MaterialTheme.typography.bodySmall)
+        }
+
+        items(cards) { card ->
+            ClocktowerPlayerStatusRow(card)
+        }
+
+        item {
+            Button(
+                onClick = onShowResults,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+            ) {
+                Text(if (gameOutcome == null) stringResource(R.string.end_and_reveal) else stringResource(R.string.view_results))
+            }
+        }
+    }
+
+    return
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.clocktower_judge_assistant), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(gameOutcome?.title ?: phaseTitle, color = Color(0xFF5C6A63))
+                }
+                TextButton(onClick = onNewGame) {
+                    Text(stringResource(R.string.new_game))
+                }
+            }
+        }
+
+        item {
+            HostProgressCard(
+                title = stringResource(R.string.host_current_stage),
+                subtitle = phaseTitle,
+                progress = phaseProgress,
+            )
+        }
+
+        item {
+            HostScriptCard(
+                title = phaseTitle,
+                script = phaseScript,
+                action = phaseAction,
+            ) {
+                Text(stringResource(R.string.clocktower_storyteller_hint_body), color = Color(0xFF6F7B74))
             }
         }
 
@@ -3112,6 +3901,8 @@ private fun ClocktowerJudgeScreen(
                     }
                 }
             }
+
+            ClocktowerPhase.Dawn -> Unit
 
             ClocktowerPhase.Day -> {
                 if (butlerPlayers.isNotEmpty()) {
@@ -3329,6 +4120,7 @@ private fun ClocktowerJudgeScreen(
                     onClick = {
                         when (phase) {
                             ClocktowerPhase.FirstNight -> Unit
+                            ClocktowerPhase.Dawn -> onPhaseChange(ClocktowerPhase.Night)
                             ClocktowerPhase.Day -> onPhaseChange(ClocktowerPhase.FirstNight)
                             ClocktowerPhase.Night -> onPhaseChange(ClocktowerPhase.Day)
                         }
@@ -3343,6 +4135,7 @@ private fun ClocktowerJudgeScreen(
                     onClick = {
                         when (phase) {
                             ClocktowerPhase.FirstNight -> onAdvanceFromFirstNight()
+                            ClocktowerPhase.Dawn -> onAdvanceFromFirstNight()
                             ClocktowerPhase.Day -> onPhaseChange(ClocktowerPhase.Night)
                             ClocktowerPhase.Night -> onPhaseChange(ClocktowerPhase.Day)
                         }
@@ -3388,6 +4181,522 @@ private fun ClocktowerJudgeScreen(
             ) {
                 Text(if (gameOutcome == null) stringResource(R.string.end_and_reveal) else stringResource(R.string.view_results))
             }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerPlayerDisplayCardLocalized(
+    step: ClocktowerNightStepUi,
+    onDismiss: () -> Unit,
+) {
+    val primary = step.displayPrimary ?: step.tellPlayer.orEmpty()
+    val secondary = step.displaySecondary
+    val footer = step.displayFooter ?: step.explanation
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color(0xFF1F2925),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                step.displayTitle,
+                color = Color(0xFFEAF2EA),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(22.dp),
+            ) {
+                when (step.displayKind) {
+                    ClocktowerDisplayKind.Number, ClocktowerDisplayKind.YesNo -> {
+                        Text(
+                            primary,
+                            color = Color(0xFFFFF4DC),
+                            fontSize = 88.sp,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text(
+                            footer,
+                            color = Color.White,
+                            style = MaterialTheme.typography.headlineSmall,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+
+                    ClocktowerDisplayKind.EitherOne -> {
+                        Text(
+                            primary,
+                            color = Color.White,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                        )
+                        secondary?.let {
+                            Text(
+                                it,
+                                color = Color(0xFFFFF4DC),
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.Black,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                        Text(
+                            footer,
+                            color = Color(0xFFEAF2EA),
+                            style = MaterialTheme.typography.titleLarge,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+
+                    ClocktowerDisplayKind.RoleReveal, ClocktowerDisplayKind.Plain -> {
+                        Text(
+                            primary,
+                            color = Color.White,
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center,
+                        )
+                        if (footer.isNotBlank()) {
+                            Text(
+                                footer,
+                                color = Color(0xFFEAF2EA),
+                                style = MaterialTheme.typography.titleLarge,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+
+                    ClocktowerDisplayKind.None -> Unit
+                }
+            }
+            OutlinedButton(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Text(stringResource(R.string.clocktower_display_close))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerPlayerDisplayCard(
+    step: ClocktowerNightStepUi,
+    onDismiss: () -> Unit,
+) {
+    val primary = step.displayPrimary ?: step.tellPlayer.orEmpty()
+    val secondary = step.displaySecondary
+    val footer = step.displayFooter ?: step.explanation
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color(0xFF1F2925),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                step.displayTitle,
+                color = Color(0xFFEAF2EA),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(22.dp),
+            ) {
+                when (step.displayKind) {
+                    ClocktowerDisplayKind.Number, ClocktowerDisplayKind.YesNo -> {
+                        Text(
+                            primary,
+                            color = Color(0xFFFFF4DC),
+                            fontSize = 88.sp,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text(
+                            footer,
+                            color = Color.White,
+                            style = MaterialTheme.typography.headlineSmall,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+
+                    ClocktowerDisplayKind.EitherOne -> {
+                        Text(
+                            primary,
+                            color = Color.White,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                        )
+                        secondary?.let {
+                            Text(
+                                it,
+                                color = Color(0xFFFFF4DC),
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.Black,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                        Text(
+                            footer,
+                            color = Color(0xFFEAF2EA),
+                            style = MaterialTheme.typography.titleLarge,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+
+                    ClocktowerDisplayKind.RoleReveal, ClocktowerDisplayKind.Plain -> {
+                        Text(
+                            primary,
+                            color = Color.White,
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center,
+                        )
+                        if (footer.isNotBlank()) {
+                            Text(
+                                footer,
+                                color = Color(0xFFEAF2EA),
+                                style = MaterialTheme.typography.titleLarge,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+
+                    ClocktowerDisplayKind.None -> Unit
+                }
+            }
+            OutlinedButton(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Text("关闭展示卡")
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerNightStepCardLocalized(
+    cards: List<PlayerCard>,
+    aliveCards: List<PlayerCard>,
+    step: ClocktowerNightStepUi,
+    selectedName: String?,
+    fortuneTellerFirst: String?,
+    fortuneTellerSecond: String?,
+    onSelectName: (String) -> Unit,
+    onSelectFortuneTellerFirst: (String) -> Unit,
+    onSelectFortuneTellerSecond: (String) -> Unit,
+    onShowPlayerDisplay: () -> Unit,
+    onNext: () -> Unit,
+) {
+    HostScriptCard(
+        title = stringResource(R.string.clocktower_host_current_step_format, step.title),
+        script = step.wakeText ?: step.actor?.let { stringResource(R.string.clocktower_host_wake_player_format, it.seatLabel(cards), step.title) }
+            ?: stringResource(R.string.clocktower_host_wake_no_player),
+        action = step.storytellerAction,
+    ) {
+        HostInstructionBlock(
+            label = stringResource(R.string.clocktower_host_real_action),
+            text = if (step.isRealAction) stringResource(R.string.clocktower_host_yes) else stringResource(R.string.clocktower_host_no),
+            backgroundColor = if (step.isRealAction) Color(0xFFEAF2EA) else Color(0xFFFFF4DC),
+            textColor = if (step.isRealAction) Color(0xFF2F5D50) else Color(0xFF9A4B36),
+        )
+        if (!step.isRealAction && step.reason.isNotBlank()) {
+            HostInstructionBlock(
+                label = stringResource(R.string.clocktower_host_reason),
+                text = step.reason,
+                backgroundColor = Color(0xFFFFFCF6),
+                textColor = Color(0xFF6F7B74),
+            )
+        }
+
+        when (step.action) {
+            ClocktowerNightAction.RedHerring -> {
+                HostActionSection(
+                    title = stringResource(R.string.clocktower_host_choose_red_herring),
+                    helper = stringResource(R.string.clocktower_host_choose_red_herring_hint),
+                ) {
+                    SelectablePlayerChips(
+                        cards = aliveCards.filter { it.clocktowerTeam != ClocktowerTeam.Demon },
+                        selectedName = selectedName,
+                        enabled = true,
+                        allCards = cards,
+                        onSelect = onSelectName,
+                    )
+                }
+            }
+
+            ClocktowerNightAction.Poison -> {
+                HostActionSection(title = stringResource(R.string.clocktower_host_choose_poison_target)) {
+                    SelectablePlayerChips(
+                        cards = aliveCards,
+                        selectedName = selectedName,
+                        enabled = step.isRealAction,
+                        allCards = cards,
+                        onSelect = onSelectName,
+                    )
+                }
+            }
+
+            ClocktowerNightAction.FortuneTeller -> {
+                HostActionSection(
+                    title = stringResource(R.string.clocktower_host_fortune_choose_two),
+                    helper = stringResource(R.string.clocktower_host_fortune_choose_two_hint),
+                ) {
+                    Text(stringResource(R.string.clocktower_choose_first_target), fontWeight = FontWeight.SemiBold)
+                    SelectablePlayerChips(
+                        cards = aliveCards,
+                        selectedName = fortuneTellerFirst,
+                        enabled = step.isRealAction,
+                        allCards = cards,
+                        onSelect = onSelectFortuneTellerFirst,
+                    )
+                    Text(stringResource(R.string.clocktower_choose_second_target), fontWeight = FontWeight.SemiBold)
+                    SelectablePlayerChips(
+                        cards = aliveCards.filter { it.name != fortuneTellerFirst },
+                        selectedName = fortuneTellerSecond,
+                        enabled = step.isRealAction,
+                        allCards = cards,
+                        onSelect = onSelectFortuneTellerSecond,
+                    )
+                }
+            }
+
+            ClocktowerNightAction.DemonKill -> {
+                HostActionSection(
+                    title = stringResource(R.string.clocktower_host_choose_night_death),
+                    helper = stringResource(R.string.clocktower_host_choose_night_death_hint),
+                ) {
+                    SelectablePlayerChips(
+                        cards = aliveCards,
+                        selectedName = selectedName,
+                        enabled = step.isRealAction,
+                        allCards = cards,
+                        onSelect = onSelectName,
+                    )
+                }
+            }
+
+            ClocktowerNightAction.Ravenkeeper -> {
+                HostActionSection(
+                    title = stringResource(R.string.clocktower_host_ravenkeeper_target),
+                    helper = stringResource(R.string.clocktower_host_ravenkeeper_target_hint),
+                ) {
+                    SelectablePlayerChips(
+                        cards = aliveCards.filter { it.name != step.actor?.name },
+                        selectedName = selectedName,
+                        enabled = step.isRealAction,
+                        allCards = cards,
+                        onSelect = onSelectName,
+                    )
+                }
+            }
+
+            ClocktowerNightAction.None -> Unit
+        }
+
+        step.tellPlayer?.takeIf { it.isNotBlank() }?.let {
+            HostInstructionBlock(
+                label = stringResource(R.string.clocktower_host_tell_player),
+                text = it,
+                backgroundColor = Color(0xFFEAF2EA),
+                textColor = Color(0xFF2F5D50),
+            )
+        }
+        if (step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None) {
+            Text(stringResource(R.string.clocktower_host_display_safety), color = Color(0xFF9A4B36), style = MaterialTheme.typography.bodySmall)
+            OutlinedButton(
+                onClick = onShowPlayerDisplay,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Text(stringResource(R.string.clocktower_host_show_to_player))
+            }
+        }
+        HostInstructionBlock(
+            label = stringResource(R.string.clocktower_host_newbie_explain),
+            text = step.explanation,
+            backgroundColor = Color(0xFFFFFCF6),
+            textColor = Color(0xFF5C6A63),
+        )
+        Button(
+            onClick = onNext,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(8.dp),
+        ) {
+            Text(stringResource(R.string.clocktower_host_finish_next))
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerNightStepCard(
+    cards: List<PlayerCard>,
+    aliveCards: List<PlayerCard>,
+    step: ClocktowerNightStepUi,
+    selectedName: String?,
+    fortuneTellerFirst: String?,
+    fortuneTellerSecond: String?,
+    onSelectName: (String) -> Unit,
+    onSelectFortuneTellerFirst: (String) -> Unit,
+    onSelectFortuneTellerSecond: (String) -> Unit,
+    onShowPlayerDisplay: () -> Unit,
+    onNext: () -> Unit,
+) {
+    HostScriptCard(
+        title = "当前步骤：${step.title}",
+        script = step.actor?.let { "请唤醒 ${it.seatLabel(cards)}。${it.seatLabel(cards)} 是 ${step.title}。" }
+            ?: "不要唤醒任何玩家。",
+        action = step.storytellerAction,
+    ) {
+        HostInstructionBlock(
+            label = "真实行动",
+            text = if (step.isRealAction) "是" else "否",
+            backgroundColor = if (step.isRealAction) Color(0xFFEAF2EA) else Color(0xFFFFF4DC),
+            textColor = if (step.isRealAction) Color(0xFF2F5D50) else Color(0xFF9A4B36),
+        )
+        if (!step.isRealAction && step.reason.isNotBlank()) {
+            HostInstructionBlock(
+                label = "原因",
+                text = step.reason,
+                backgroundColor = Color(0xFFFFFCF6),
+                textColor = Color(0xFF6F7B74),
+            )
+        }
+
+        when (step.action) {
+            ClocktowerNightAction.RedHerring -> {
+                HostActionSection(
+                    title = "选择红鲱鱼",
+                    helper = "请选择一名非恶魔玩家。这个选择只给说书人看。",
+                ) {
+                    SelectablePlayerChips(
+                        cards = aliveCards.filter { it.clocktowerTeam != ClocktowerTeam.Demon },
+                        selectedName = selectedName,
+                        enabled = true,
+                        allCards = cards,
+                        onSelect = onSelectName,
+                    )
+                }
+            }
+
+            ClocktowerNightAction.Poison -> {
+                HostActionSection(title = "选择中毒目标") {
+                    SelectablePlayerChips(
+                        cards = aliveCards,
+                        selectedName = selectedName,
+                        enabled = step.isRealAction,
+                        allCards = cards,
+                        onSelect = onSelectName,
+                    )
+                }
+            }
+
+            ClocktowerNightAction.FortuneTeller -> {
+                HostActionSection(
+                    title = "占卜师选择两名玩家",
+                    helper = "如果其中有恶魔或红鲱鱼，告诉占卜师“是”。",
+                ) {
+                    Text("第一个目标", fontWeight = FontWeight.SemiBold)
+                    SelectablePlayerChips(
+                        cards = aliveCards,
+                        selectedName = fortuneTellerFirst,
+                        enabled = step.isRealAction,
+                        allCards = cards,
+                        onSelect = onSelectFortuneTellerFirst,
+                    )
+                    Text("第二个目标", fontWeight = FontWeight.SemiBold)
+                    SelectablePlayerChips(
+                        cards = aliveCards.filter { it.name != fortuneTellerFirst },
+                        selectedName = fortuneTellerSecond,
+                        enabled = step.isRealAction,
+                        allCards = cards,
+                        onSelect = onSelectFortuneTellerSecond,
+                    )
+                }
+            }
+
+            ClocktowerNightAction.DemonKill -> {
+                HostActionSection(
+                    title = "请选择今晚死亡目标",
+                    helper = "现在只记录，不要宣布死亡。天亮时再统一公布。",
+                ) {
+                    SelectablePlayerChips(
+                        cards = aliveCards,
+                        selectedName = selectedName,
+                        enabled = step.isRealAction,
+                        allCards = cards,
+                        onSelect = onSelectName,
+                    )
+                }
+            }
+
+            ClocktowerNightAction.Ravenkeeper -> {
+                HostActionSection(
+                    title = "守鸦人查验目标",
+                    helper = "只有守鸦人今晚死亡时才需要选择。",
+                ) {
+                    SelectablePlayerChips(
+                        cards = aliveCards.filter { it.name != step.actor?.name },
+                        selectedName = selectedName,
+                        enabled = step.isRealAction,
+                        allCards = cards,
+                        onSelect = onSelectName,
+                    )
+                }
+            }
+
+            ClocktowerNightAction.None -> Unit
+        }
+
+        step.tellPlayer?.takeIf { it.isNotBlank() }?.let {
+            HostInstructionBlock(
+                label = "要告诉玩家",
+                text = it,
+                backgroundColor = Color(0xFFEAF2EA),
+                textColor = Color(0xFF2F5D50),
+            )
+        }
+        HostInstructionBlock(
+            label = "新手解释",
+            text = step.explanation,
+            backgroundColor = Color(0xFFFFFCF6),
+            textColor = Color(0xFF5C6A63),
+        )
+        if (step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None) {
+            Text("请确认只有被唤醒的玩家能看到屏幕。", color = Color(0xFF9A4B36), style = MaterialTheme.typography.bodySmall)
+            OutlinedButton(
+                onClick = onShowPlayerDisplay,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Text("全屏展示给玩家")
+            }
+        }
+        Button(
+            onClick = onNext,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(8.dp),
+        ) {
+            Text("完成，下一步")
         }
     }
 }
