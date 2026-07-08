@@ -1,16 +1,25 @@
 package com.codex.campboardgamehost
 
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateOffsetAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,21 +47,40 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.json.JSONArray
+import kotlin.math.PI
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.sin
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,16 +93,63 @@ class MainActivity : ComponentActivity() {
 
 private enum class Screen {
     Setup,
+    UndercoverSettings,
+    WerewolfSettings,
+    ClocktowerSettings,
+    Settings,
     PassPhone,
     RevealCard,
+    WerewolfJudge,
+    ClocktowerJudge,
     Game,
+}
+
+private enum class GameKind {
+    Undercover,
+    Werewolf,
+    Clocktower,
+}
+
+private enum class LanguageMode(val prefsValue: String) {
+    System("system"),
+    Chinese("zh"),
+    English("en"),
 }
 
 private enum class Role {
     Civilian,
     Undercover,
     Blank,
+    Villager,
+    Werewolf,
+    Seer,
+    Witch,
+    Hunter,
 }
+
+private enum class WerewolfJudgeStep {
+    Wolves,
+    Seer,
+    Witch,
+    Hunter,
+    Dawn,
+    DayVote,
+}
+
+private enum class LastWordsMode {
+    None,
+    FirstDay,
+    FirstTwoDays,
+    Always,
+}
+
+private data class WerewolfTemplate(
+    val playerCount: Int,
+    val werewolfCount: Int,
+    val includeSeer: Boolean,
+    val includeWitch: Boolean,
+    val includeHunter: Boolean,
+)
 
 private data class WordPair(
     val civilianWord: String,
@@ -86,18 +161,55 @@ private data class PlayerCard(
     val name: String,
     val role: Role,
     val word: String,
+    val roleLabel: String? = null,
+    val actualRoleLabel: String? = null,
+    val clocktowerTeam: ClocktowerTeam? = null,
+    val clocktowerRole: ClocktowerRole? = null,
+    val clocktowerShownRole: ClocktowerRole? = null,
     val eliminatedRound: Int? = null,
 )
 
 private data class EliminationRecord(
     val round: Int,
     val playerName: String,
+    val note: String? = null,
 )
 
 private data class GameOutcome(
     val title: String,
     val summary: String,
     val reason: String,
+)
+
+private enum class ClocktowerTeam {
+    Townsfolk,
+    Outsider,
+    Minion,
+    Demon,
+}
+
+private enum class ClocktowerPhase {
+    FirstNight,
+    Day,
+    Night,
+}
+
+private data class ClocktowerRole(
+    val team: ClocktowerTeam,
+    val zhName: String,
+    val enName: String,
+    val zhDescription: String,
+    val enDescription: String,
+)
+
+private sealed class DraggedPlayer {
+    data class Bench(val name: String) : DraggedPlayer()
+    data class Seated(val originalIndex: Int, val name: String) : DraggedPlayer()
+}
+
+private data class PlayerDragState(
+    val player: DraggedPlayer,
+    val center: Offset,
 )
 
 private val chineseWordPairs = listOf(
@@ -140,133 +252,580 @@ private val englishWordPairs = listOf(
 
 private fun Context.playerName(number: Int): String = getString(R.string.default_player_name_format, number)
 
+private const val PREFS_NAME = "camp_board_game_host"
+private const val COMMON_PLAYERS_KEY = "common_players"
+private const val LANGUAGE_MODE_KEY = "language_mode"
+private const val MIN_PLAYERS = 3
+private const val MIN_WEREWOLF_PLAYERS = 4
+private const val MIN_CLOCKTOWER_PLAYERS = 5
+private const val MAX_PLAYERS = 12
+
+private fun Context.localized(languageMode: LanguageMode): Context {
+    if (languageMode == LanguageMode.System) return this
+    val locale = Locale(languageMode.prefsValue)
+    val config = Configuration(resources.configuration)
+    config.setLocale(locale)
+    return createConfigurationContext(config)
+}
+
+private fun Context.loadLanguageMode(): LanguageMode {
+    val value = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .getString(LANGUAGE_MODE_KEY, LanguageMode.System.prefsValue)
+    return LanguageMode.entries.firstOrNull { it.prefsValue == value } ?: LanguageMode.System
+}
+
+private fun Context.saveLanguageMode(languageMode: LanguageMode) {
+    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .edit()
+        .putString(LANGUAGE_MODE_KEY, languageMode.prefsValue)
+        .apply()
+}
+
+private fun Context.loadCommonPlayers(): List<String> {
+    val raw = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(COMMON_PLAYERS_KEY, null) ?: return emptyList()
+    return runCatching {
+        val json = JSONArray(raw)
+        List(json.length()) { index -> json.getString(index) }
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+    }.getOrDefault(emptyList())
+}
+
+private fun Context.saveCommonPlayers(players: List<String>) {
+    val json = JSONArray()
+    players.map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .distinct()
+        .forEach { json.put(it) }
+    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .edit()
+        .putString(COMMON_PLAYERS_KEY, json.toString())
+        .apply()
+}
+
 private fun Role.labelResId(): Int = when (this) {
     Role.Civilian -> R.string.role_civilian
     Role.Undercover -> R.string.role_undercover
     Role.Blank -> R.string.role_blank
+    Role.Villager -> R.string.role_villager
+    Role.Werewolf -> R.string.role_werewolf
+    Role.Seer -> R.string.role_seer
+    Role.Witch -> R.string.role_witch
+    Role.Hunter -> R.string.role_hunter
+}
+
+private fun LanguageMode.labelResId(): Int = when (this) {
+    LanguageMode.System -> R.string.language_system
+    LanguageMode.Chinese -> R.string.language_chinese
+    LanguageMode.English -> R.string.language_english
 }
 
 private fun wordPairsFor(language: String): List<WordPair> {
     return if (language == "en") englishWordPairs else chineseWordPairs
 }
 
+private fun Role.werewolfDescription(context: Context): String = when (this) {
+    Role.Villager -> context.getString(R.string.role_villager_desc)
+    Role.Werewolf -> context.getString(R.string.role_werewolf_desc)
+    Role.Seer -> context.getString(R.string.role_seer_desc)
+    Role.Witch -> context.getString(R.string.role_witch_desc)
+    Role.Hunter -> context.getString(R.string.role_hunter_desc)
+    else -> ""
+}
+
+private fun werewolfRolesFor(
+    playerCount: Int,
+    werewolfCount: Int,
+    includeSeer: Boolean,
+    includeWitch: Boolean,
+    includeHunter: Boolean,
+): List<Role> {
+    val specialRoles = buildList {
+        if (includeSeer) add(Role.Seer)
+        if (includeWitch) add(Role.Witch)
+        if (includeHunter) add(Role.Hunter)
+    }
+    val villagerCount = (playerCount - werewolfCount - specialRoles.size).coerceAtLeast(0)
+    return buildList {
+        repeat(werewolfCount) { add(Role.Werewolf) }
+        addAll(specialRoles)
+        repeat(villagerCount) { add(Role.Villager) }
+    }.shuffled()
+}
+
+private val werewolfTemplates = listOf(
+    WerewolfTemplate(playerCount = 4, werewolfCount = 1, includeSeer = true, includeWitch = false, includeHunter = false),
+    WerewolfTemplate(playerCount = 5, werewolfCount = 1, includeSeer = true, includeWitch = true, includeHunter = false),
+    WerewolfTemplate(playerCount = 6, werewolfCount = 2, includeSeer = true, includeWitch = true, includeHunter = false),
+    WerewolfTemplate(playerCount = 7, werewolfCount = 2, includeSeer = true, includeWitch = true, includeHunter = false),
+    WerewolfTemplate(playerCount = 8, werewolfCount = 2, includeSeer = true, includeWitch = true, includeHunter = true),
+    WerewolfTemplate(playerCount = 9, werewolfCount = 3, includeSeer = true, includeWitch = true, includeHunter = true),
+    WerewolfTemplate(playerCount = 10, werewolfCount = 3, includeSeer = true, includeWitch = true, includeHunter = true),
+    WerewolfTemplate(playerCount = 11, werewolfCount = 3, includeSeer = true, includeWitch = true, includeHunter = true),
+    WerewolfTemplate(playerCount = 12, werewolfCount = 4, includeSeer = true, includeWitch = true, includeHunter = true),
+)
+
+private val troubleBrewingRoles = listOf(
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "洗衣妇", "Washerwoman", "得知某个镇民在两名玩家之一中。", "Learn that one of two players is a particular Townsfolk."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "图书管理员", "Librarian", "得知某个外来者在两名玩家之一中，或得知没有外来者。", "Learn that one of two players is a particular Outsider, or that there are no Outsiders."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "调查员", "Investigator", "得知某个爪牙在两名玩家之一中，或得知没有爪牙。", "Learn that one of two players is a particular Minion, or that there are no Minions."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "厨师", "Chef", "得知有多少对邪恶玩家相邻而坐。", "Learn how many pairs of evil players are sitting next to each other."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "共情者", "Empath", "每晚得知相邻存活玩家中有几名邪恶玩家。", "Each night, learn how many living neighbors are evil."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "占卜师", "Fortune Teller", "每晚选择两名玩家，得知其中是否有恶魔。", "Each night, choose two players and learn if either is the Demon."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "守鸦人", "Ravenkeeper", "若在夜晚死亡，选择一名玩家并得知其角色。", "If you die at night, choose a player and learn their character."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "士兵", "Soldier", "你不会因恶魔而死亡。", "You are safe from the Demon."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "市长", "Mayor", "若只剩三名玩家且无人被处决，好人获胜。", "If only three players live and no one is executed, good wins."),
+    ClocktowerRole(ClocktowerTeam.Outsider, "管家", "Butler", "每天选择一名主人，白天只能在主人投票时投票。", "Each day, choose a master. You may only vote if your master votes."),
+    ClocktowerRole(ClocktowerTeam.Outsider, "酒鬼", "Drunk", "你以为自己是镇民，但其实能力失效。", "You think you are a Townsfolk, but your ability is not working."),
+    ClocktowerRole(ClocktowerTeam.Outsider, "隐士", "Recluse", "你可能被侦测为邪恶或恶魔，即使死亡后也是。", "You might register as evil or as a Demon, even if dead."),
+    ClocktowerRole(ClocktowerTeam.Outsider, "圣徒", "Saint", "若你被处决，你的阵营失败。", "If you are executed, your team loses."),
+    ClocktowerRole(ClocktowerTeam.Minion, "投毒者", "Poisoner", "每晚选择一名玩家，使其能力暂时失效。", "Each night, choose a player. Their ability temporarily stops working."),
+    ClocktowerRole(ClocktowerTeam.Minion, "间谍", "Spy", "你可以查看说书人的魔典。", "You may look at the Storyteller grimoire."),
+    ClocktowerRole(ClocktowerTeam.Minion, "男爵", "Baron", "本局加入额外外来者。", "Extra Outsiders are in play."),
+    ClocktowerRole(ClocktowerTeam.Minion, "红唇女郎", "Scarlet Woman", "若恶魔在五人以上时死亡，你可能变成恶魔。", "If the Demon dies with five or more players alive, you may become the Demon."),
+    ClocktowerRole(ClocktowerTeam.Demon, "小恶魔", "Imp", "每晚选择一名玩家死亡；可选择自己并传递恶魔身份。", "Each night, choose a player to die. You may choose yourself to pass on the Demon role."),
+)
+
+private fun ClocktowerTeam.label(context: Context): String = when (this) {
+    ClocktowerTeam.Townsfolk -> context.getString(R.string.clocktower_team_townsfolk)
+    ClocktowerTeam.Outsider -> context.getString(R.string.clocktower_team_outsider)
+    ClocktowerTeam.Minion -> context.getString(R.string.clocktower_team_minion)
+    ClocktowerTeam.Demon -> context.getString(R.string.clocktower_team_demon)
+}
+
+private fun ClocktowerRole.nameFor(language: String): String = if (language == "en") enName else zhName
+
+private fun ClocktowerRole.descriptionFor(language: String): String = if (language == "en") enDescription else zhDescription
+
+private fun LastWordsMode.labelResId(): Int = when (this) {
+    LastWordsMode.None -> R.string.last_words_none
+    LastWordsMode.FirstDay -> R.string.last_words_first_day
+    LastWordsMode.FirstTwoDays -> R.string.last_words_first_two_days
+    LastWordsMode.Always -> R.string.last_words_always
+}
+
+private fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int> {
+    return when (playerCount) {
+        5, 6 -> mapOf(ClocktowerTeam.Townsfolk to 3, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
+        7 -> mapOf(ClocktowerTeam.Townsfolk to 5, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
+        8 -> mapOf(ClocktowerTeam.Townsfolk to 5, ClocktowerTeam.Outsider to 1, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
+        9 -> mapOf(ClocktowerTeam.Townsfolk to 5, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
+        10 -> mapOf(ClocktowerTeam.Townsfolk to 7, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 2, ClocktowerTeam.Demon to 1)
+        11 -> mapOf(ClocktowerTeam.Townsfolk to 7, ClocktowerTeam.Outsider to 1, ClocktowerTeam.Minion to 2, ClocktowerTeam.Demon to 1)
+        else -> mapOf(ClocktowerTeam.Townsfolk to 7, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 2, ClocktowerTeam.Demon to 1)
+    }
+}
+
+private fun clocktowerRolesFor(playerCount: Int): List<ClocktowerRole> {
+    val distribution = clocktowerDistribution(playerCount)
+    return distribution.flatMap { (team, count) ->
+        troubleBrewingRoles.filter { it.team == team }.shuffled().take(count)
+    }.shuffled()
+}
+
+private data class ClocktowerAssignment(
+    val actualRole: ClocktowerRole,
+    val shownRole: ClocktowerRole,
+)
+
+private fun generateClocktowerAssignments(playerCount: Int): List<ClocktowerAssignment> {
+    val baseDistribution = clocktowerDistribution(playerCount)
+    val demon = troubleBrewingRoles.filter { it.team == ClocktowerTeam.Demon }.random()
+    val minions = troubleBrewingRoles
+        .filter { it.team == ClocktowerTeam.Minion }
+        .shuffled()
+        .take(baseDistribution.getValue(ClocktowerTeam.Minion))
+    val includesBaron = minions.any { it.enName == "Baron" }
+    val outsiderCount = baseDistribution.getValue(ClocktowerTeam.Outsider) + if (includesBaron) 2 else 0
+    val townsfolkCount = (baseDistribution.getValue(ClocktowerTeam.Townsfolk) - if (includesBaron) 2 else 0).coerceAtLeast(0)
+    val outsiders = troubleBrewingRoles
+        .filter { it.team == ClocktowerTeam.Outsider }
+        .shuffled()
+        .take(outsiderCount)
+    val townsfolk = troubleBrewingRoles
+        .filter { it.team == ClocktowerTeam.Townsfolk }
+        .shuffled()
+        .take(townsfolkCount)
+    val actualRoles = (listOf(demon) + minions + outsiders + townsfolk).shuffled()
+    val townsfolkPool = troubleBrewingRoles.filter { it.team == ClocktowerTeam.Townsfolk }
+    return actualRoles.map { role ->
+        if (role.enName == "Drunk") {
+            val fakeRole = townsfolkPool
+                .firstOrNull { candidate -> candidate !in actualRoles }
+                ?: townsfolkPool.random()
+            ClocktowerAssignment(actualRole = role, shownRole = fakeRole)
+        } else {
+            ClocktowerAssignment(actualRole = role, shownRole = role)
+        }
+    }
+}
+
 @Composable
 private fun CampBoardGameHostApp() {
-    val context = LocalContext.current
+    val baseContext = LocalContext.current
+    var languageMode by remember { mutableStateOf(baseContext.loadLanguageMode()) }
+    val context = remember(languageMode) { baseContext.localized(languageMode) }
     val language = context.resources.configuration.locales[0].language
     var screen by remember { mutableStateOf(Screen.Setup) }
-    var playerCount by remember { mutableIntStateOf(6) }
-    var undercoverCount by remember { mutableIntStateOf(1) }
+    var currentGameKind by remember { mutableStateOf(GameKind.Undercover) }
+    var undercoverCount by remember { mutableStateOf(1) }
     var includeBlank by remember { mutableStateOf(false) }
-    var currentDealIndex by remember { mutableIntStateOf(0) }
-    var round by remember { mutableIntStateOf(1) }
+    var werewolfCount by remember { mutableStateOf(1) }
+    var includeSeer by remember { mutableStateOf(true) }
+    var includeWitch by remember { mutableStateOf(false) }
+    var includeHunter by remember { mutableStateOf(false) }
+    var lastWordsMode by remember { mutableStateOf(LastWordsMode.FirstDay) }
+    var lastWordsPromptNames by remember { mutableStateOf<List<String>>(emptyList()) }
+    var currentDealIndex by remember { mutableStateOf(0) }
+    var round by remember { mutableStateOf(1) }
     var selectedElimination by remember { mutableStateOf<String?>(null) }
+    var werewolfJudgeStepIndex by remember { mutableStateOf(0) }
+    var pendingNightDeath by remember { mutableStateOf<String?>(null) }
+    var seerCheckTarget by remember { mutableStateOf<String?>(null) }
+    var witchSaveUsed by remember { mutableStateOf(false) }
+    var witchPoisonUsed by remember { mutableStateOf(false) }
+    var witchSavedTonight by remember { mutableStateOf(false) }
+    var witchPoisonTarget by remember { mutableStateOf<String?>(null) }
+    var hunterShotTarget by remember { mutableStateOf<String?>(null) }
+    var selectedDayExile by remember { mutableStateOf<String?>(null) }
+    var clocktowerPhase by remember { mutableStateOf(ClocktowerPhase.FirstNight) }
+    var clocktowerPendingNightDeath by remember { mutableStateOf<String?>(null) }
+    var clocktowerSelectedExecution by remember { mutableStateOf<String?>(null) }
+    var clocktowerPoisonTarget by remember { mutableStateOf<String?>(null) }
+    var clocktowerFortuneTellerFirst by remember { mutableStateOf<String?>(null) }
+    var clocktowerFortuneTellerSecond by remember { mutableStateOf<String?>(null) }
+    var clocktowerRavenkeeperTarget by remember { mutableStateOf<String?>(null) }
+    var clocktowerRedHerring by remember { mutableStateOf<String?>(null) }
+    var clocktowerButlerMaster by remember { mutableStateOf<String?>(null) }
     var showResults by remember { mutableStateOf(false) }
     var gameOutcome by remember { mutableStateOf<GameOutcome?>(null) }
-    val playerNames = remember {
-        mutableStateListOf(
-            context.playerName(1),
-            context.playerName(2),
-            context.playerName(3),
-            context.playerName(4),
-            context.playerName(5),
-            context.playerName(6),
-        )
-    }
+    var newCommonPlayerName by remember { mutableStateOf("") }
+    val commonPlayers = remember { mutableStateListOf<String>().apply { addAll(baseContext.loadCommonPlayers()) } }
+    val playerNames = remember { mutableStateListOf<String>() }
     val cards = remember { mutableStateListOf<PlayerCard>() }
     val records = remember { mutableStateListOf<EliminationRecord>() }
+    val playerCount = playerNames.size
 
-    fun syncPlayerNames(count: Int) {
-        while (playerNames.size < count) {
-            playerNames.add(context.playerName(playerNames.size + 1))
-        }
-        while (playerNames.size > count) {
-            playerNames.removeAt(playerNames.lastIndex)
+    fun maxUndercoverFor(count: Int): Int {
+        return ((if (includeBlank) count - 2 else count - 1).coerceAtLeast(1))
+    }
+
+    fun clampUndercoverCount() {
+        undercoverCount = undercoverCount.coerceIn(1, maxUndercoverFor(playerNames.size))
+    }
+
+    fun maxWerewolfFor(count: Int): Int {
+        return (count - 1).coerceAtLeast(1)
+    }
+
+    fun clampWerewolfSettings() {
+        werewolfCount = werewolfCount.coerceIn(1, maxWerewolfFor(playerNames.size))
+        val selectedSpecials = listOf(includeSeer, includeWitch, includeHunter).count { it }
+        if (werewolfCount + selectedSpecials > playerNames.size) {
+            werewolfCount = (playerNames.size - selectedSpecials).coerceAtLeast(1)
         }
     }
 
-    fun startGame() {
-        val pair = wordPairsFor(language).random()
-        val blankCount = if (includeBlank) 1 else 0
-        val roles = buildList {
-            repeat(undercoverCount) { add(Role.Undercover) }
-            repeat(blankCount) { add(Role.Blank) }
-            repeat(playerCount - undercoverCount - blankCount) { add(Role.Civilian) }
-        }.shuffled()
+    fun shouldPromptLastWords(): Boolean = when (lastWordsMode) {
+        LastWordsMode.None -> false
+        LastWordsMode.FirstDay -> round <= 1
+        LastWordsMode.FirstTwoDays -> round <= 2
+        LastWordsMode.Always -> true
+    }
 
-        cards.clear()
-        cards.addAll(playerNames.take(playerCount).mapIndexed { index, name ->
-            val role = roles[index]
-            val word = when (role) {
-                Role.Civilian -> pair.civilianWord
-                Role.Undercover -> pair.undercoverWord
-                Role.Blank -> context.getString(R.string.blank_word)
-            }
-            PlayerCard(name = name.ifBlank { context.playerName(index + 1) }, role = role, word = word)
-        })
+    fun addCurrentPlayer(name: String) {
+        val trimmedName = name.trim()
+        if (trimmedName.isNotEmpty() && playerNames.size < MAX_PLAYERS && trimmedName !in playerNames) {
+            playerNames.add(trimmedName)
+            clampUndercoverCount()
+            clampWerewolfSettings()
+        }
+    }
+
+    fun removeCurrentPlayer(index: Int) {
+        if (index in playerNames.indices) {
+            playerNames.removeAt(index)
+            clampUndercoverCount()
+            clampWerewolfSettings()
+        }
+    }
+
+    fun moveCurrentPlayerTo(index: Int, insertIndex: Int) {
+        if (index !in playerNames.indices) return
+        val name = playerNames.removeAt(index)
+        val adjustedIndex = if (insertIndex > index) insertIndex - 1 else insertIndex
+        playerNames.add(adjustedIndex.coerceIn(0, playerNames.size), name)
+    }
+
+    fun addTemporaryPlayer() {
+        var nextNumber = playerNames.size + 1
+        var nextName = context.playerName(nextNumber)
+        while (nextName in playerNames) {
+            nextNumber += 1
+            nextName = context.playerName(nextNumber)
+        }
+        addCurrentPlayer(nextName)
+    }
+
+    fun addCommonPlayer() {
+        val trimmedName = newCommonPlayerName.trim()
+        if (trimmedName.isNotEmpty() && trimmedName !in commonPlayers) {
+            commonPlayers.add(trimmedName)
+            baseContext.saveCommonPlayers(commonPlayers)
+            newCommonPlayerName = ""
+        }
+    }
+
+    fun removeCommonPlayer(name: String) {
+        commonPlayers.remove(name)
+        baseContext.saveCommonPlayers(commonPlayers)
+    }
+
+    fun resetDealState(nextGameKind: GameKind) {
+        currentGameKind = nextGameKind
         records.clear()
         currentDealIndex = 0
         round = 1
         showResults = false
         gameOutcome = null
         selectedElimination = null
+        werewolfJudgeStepIndex = 0
+        lastWordsPromptNames = emptyList()
+        pendingNightDeath = null
+        seerCheckTarget = null
+        witchSaveUsed = false
+        witchPoisonUsed = false
+        witchSavedTonight = false
+        witchPoisonTarget = null
+        hunterShotTarget = null
+        selectedDayExile = null
+        clocktowerPhase = ClocktowerPhase.FirstNight
+        clocktowerPendingNightDeath = null
+        clocktowerSelectedExecution = null
+        clocktowerPoisonTarget = null
+        clocktowerFortuneTellerFirst = null
+        clocktowerFortuneTellerSecond = null
+        clocktowerRavenkeeperTarget = null
+        clocktowerRedHerring = null
+        clocktowerButlerMaster = null
         screen = Screen.PassPhone
     }
 
-    MaterialTheme(
-        colorScheme = androidx.compose.material3.lightColorScheme(
-            primary = Color(0xFF2F5D50),
-            secondary = Color(0xFFD96C3B),
-            background = Color(0xFFF8F6F0),
-            surface = Color(0xFFFFFCF6),
-            onPrimary = Color.White,
-            onSecondary = Color.White,
-            onBackground = Color(0xFF1F2925),
-            onSurface = Color(0xFF1F2925),
+    fun startUndercoverGame() {
+        if (playerNames.size < MIN_PLAYERS) return
+        val pair = wordPairsFor(language).random()
+        val blankCount = if (includeBlank) 1 else 0
+        val roles = buildList {
+            repeat(undercoverCount) { add(Role.Undercover) }
+            repeat(blankCount) { add(Role.Blank) }
+            repeat(playerNames.size - undercoverCount - blankCount) { add(Role.Civilian) }
+        }.shuffled()
+
+        cards.clear()
+        cards.addAll(playerNames.mapIndexed { index, name ->
+            val role = roles[index]
+            val word = when (role) {
+                Role.Civilian -> pair.civilianWord
+                Role.Undercover -> pair.undercoverWord
+                Role.Blank -> context.getString(R.string.blank_word)
+                else -> ""
+            }
+            PlayerCard(name = name.ifBlank { context.playerName(index + 1) }, role = role, word = word)
+        })
+        resetDealState(GameKind.Undercover)
+    }
+
+    fun startWerewolfGame() {
+        if (playerNames.size < MIN_WEREWOLF_PLAYERS) return
+        val roles = werewolfRolesFor(
+            playerCount = playerNames.size,
+            werewolfCount = werewolfCount,
+            includeSeer = includeSeer,
+            includeWitch = includeWitch,
+            includeHunter = includeHunter,
         )
-    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-            color = MaterialTheme.colorScheme.background,
+        cards.clear()
+        cards.addAll(playerNames.mapIndexed { index, name ->
+            val role = roles[index]
+            PlayerCard(
+                name = name.ifBlank { context.playerName(index + 1) },
+                role = role,
+                roleLabel = context.getString(role.labelResId()),
+                word = role.werewolfDescription(context),
+            )
+        })
+        resetDealState(GameKind.Werewolf)
+    }
+
+    fun startClocktowerGame() {
+        if (playerNames.size < MIN_CLOCKTOWER_PLAYERS) return
+        val assignments = generateClocktowerAssignments(playerNames.size)
+        cards.clear()
+        cards.addAll(playerNames.mapIndexed { index, name ->
+            val assignment = assignments[index]
+            val role = assignment.actualRole
+            val shownRole = assignment.shownRole
+            PlayerCard(
+                name = name.ifBlank { context.playerName(index + 1) },
+                role = Role.Civilian,
+                roleLabel = shownRole.nameFor(language),
+                actualRoleLabel = role.nameFor(language),
+                clocktowerTeam = role.team,
+                clocktowerRole = role,
+                clocktowerShownRole = shownRole,
+                word = context.getString(
+                    R.string.clocktower_card_desc_format,
+                    shownRole.team.label(context),
+                    shownRole.descriptionFor(language),
+                ),
+            )
+        })
+        resetDealState(GameKind.Clocktower)
+    }
+
+    fun setClocktowerActualRole(playerName: String, nextRole: ClocktowerRole) {
+        val index = cards.indexOfFirst { it.name == playerName }
+        if (index >= 0) {
+            cards[index] = cards[index].copy(
+                actualRoleLabel = nextRole.nameFor(language),
+                clocktowerTeam = nextRole.team,
+                clocktowerRole = nextRole,
+            )
+        }
+    }
+
+    fun promoteScarletWomanIfNeeded(): String? {
+        val alivePlayers = cards.filter { it.eliminatedRound == null }
+        if (alivePlayers.size < 5) return null
+        val scarletWoman = alivePlayers.firstOrNull { it.clocktowerRole?.enName == "Scarlet Woman" } ?: return null
+        val imp = troubleBrewingRoles.first { it.enName == "Imp" }
+        setClocktowerActualRole(scarletWoman.name, imp)
+        records.add(EliminationRecord(round, scarletWoman.name, context.getString(R.string.clocktower_record_scarlet_woman_promoted)))
+        return scarletWoman.name
+    }
+
+    CompositionLocalProvider(LocalContext provides context) {
+        MaterialTheme(
+            colorScheme = androidx.compose.material3.lightColorScheme(
+                primary = Color(0xFF2F5D50),
+                secondary = Color(0xFFD96C3B),
+                background = Color(0xFFF8F6F0),
+                surface = Color(0xFFFFFCF6),
+                onPrimary = Color.White,
+                onSecondary = Color.White,
+                onBackground = Color(0xFF1F2925),
+                onSurface = Color(0xFF1F2925),
+            )
         ) {
-            when (screen) {
-                Screen.Setup -> SetupScreen(
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                color = MaterialTheme.colorScheme.background,
+            ) {
+                when (screen) {
+                    Screen.Setup -> SetupScreen(
                     playerCount = playerCount,
-                    undercoverCount = undercoverCount,
-                    includeBlank = includeBlank,
+                    commonPlayers = commonPlayers,
                     playerNames = playerNames,
-                    onPlayerCountChange = { next ->
-                        val maxUndercover = if (includeBlank) next - 2 else next - 1
-                        playerCount = next
-                        syncPlayerNames(next)
-                        undercoverCount = undercoverCount.coerceIn(1, maxUndercover.coerceAtLeast(1))
-                    },
-                    onUndercoverCountChange = { undercoverCount = it },
-                    onIncludeBlankChange = { checked ->
-                        includeBlank = checked
-                        val maxUndercover = if (checked) playerCount - 2 else playerCount - 1
-                        undercoverCount = undercoverCount.coerceIn(1, maxUndercover.coerceAtLeast(1))
-                    },
-                    onNameChange = { index, value -> playerNames[index] = value },
-                    onStart = ::startGame,
+                    onAddCurrentPlayer = ::addCurrentPlayer,
+                    onAddTemporaryPlayer = ::addTemporaryPlayer,
+                    onRemoveCurrentPlayer = ::removeCurrentPlayer,
+                    onMoveCurrentPlayerTo = ::moveCurrentPlayerTo,
+                    onOpenSettings = { screen = Screen.Settings },
+                    onOpenUndercoverSettings = { screen = Screen.UndercoverSettings },
+                    onOpenWerewolfSettings = { screen = Screen.WerewolfSettings },
+                    onOpenClocktowerSettings = { screen = Screen.ClocktowerSettings },
                 )
 
-                Screen.PassPhone -> PassPhoneScreen(
+                    Screen.UndercoverSettings -> UndercoverSettingsScreen(
+                        playerCount = playerCount,
+                        undercoverCount = undercoverCount,
+                        includeBlank = includeBlank,
+                        onUndercoverCountChange = { undercoverCount = it },
+                        onIncludeBlankChange = { checked ->
+                            includeBlank = checked
+                            clampUndercoverCount()
+                        },
+                        onBack = { screen = Screen.Setup },
+                        onStart = ::startUndercoverGame,
+                    )
+
+                    Screen.WerewolfSettings -> WerewolfSettingsScreen(
+                        playerCount = playerCount,
+                        werewolfCount = werewolfCount,
+                        includeSeer = includeSeer,
+                        includeWitch = includeWitch,
+                        includeHunter = includeHunter,
+                        lastWordsMode = lastWordsMode,
+                        onWerewolfCountChange = { next ->
+                            werewolfCount = next
+                            clampWerewolfSettings()
+                        },
+                        onIncludeSeerChange = {
+                            includeSeer = it
+                            clampWerewolfSettings()
+                        },
+                        onIncludeWitchChange = {
+                            includeWitch = it
+                            clampWerewolfSettings()
+                        },
+                        onIncludeHunterChange = {
+                            includeHunter = it
+                            clampWerewolfSettings()
+                        },
+                        onLastWordsModeChange = { lastWordsMode = it },
+                        onApplyTemplate = { template ->
+                            werewolfCount = template.werewolfCount
+                            includeSeer = template.includeSeer
+                            includeWitch = template.includeWitch
+                            includeHunter = template.includeHunter
+                            clampWerewolfSettings()
+                        },
+                        onBack = { screen = Screen.Setup },
+                        onStart = ::startWerewolfGame,
+                    )
+
+                    Screen.ClocktowerSettings -> ClocktowerSettingsScreen(
+                        playerCount = playerCount,
+                        onBack = { screen = Screen.Setup },
+                        onStart = ::startClocktowerGame,
+                    )
+
+                    Screen.Settings -> SettingsScreen(
+                        languageMode = languageMode,
+                        commonPlayers = commonPlayers,
+                        newCommonPlayerName = newCommonPlayerName,
+                        onLanguageModeChange = { nextMode ->
+                            languageMode = nextMode
+                            baseContext.saveLanguageMode(nextMode)
+                        },
+                        onNewCommonPlayerNameChange = { newCommonPlayerName = it },
+                        onAddCommonPlayer = ::addCommonPlayer,
+                        onRemoveCommonPlayer = ::removeCommonPlayer,
+                        onBack = { screen = Screen.Setup },
+                    )
+
+                    Screen.PassPhone -> PassPhoneScreen(
                     playerName = cards[currentDealIndex].name,
                     current = currentDealIndex + 1,
                     total = cards.size,
                     onReveal = { screen = Screen.RevealCard },
                 )
 
-                Screen.RevealCard -> RevealCardScreen(
+                    Screen.RevealCard -> RevealCardScreen(
                     card = cards[currentDealIndex],
+                    gameKind = currentGameKind,
                     current = currentDealIndex + 1,
                     total = cards.size,
                     onHide = {
                         if (currentDealIndex == cards.lastIndex) {
-                            screen = Screen.Game
+                            screen = when (currentGameKind) {
+                                GameKind.Werewolf -> Screen.WerewolfJudge
+                                GameKind.Clocktower -> Screen.ClocktowerJudge
+                                GameKind.Undercover -> Screen.Game
+                            }
                         } else {
                             currentDealIndex += 1
                             screen = Screen.PassPhone
@@ -274,7 +833,251 @@ private fun CampBoardGameHostApp() {
                     },
                 )
 
-                Screen.Game -> GameScreen(
+                    Screen.WerewolfJudge -> WerewolfJudgeScreen(
+                        cards = cards,
+                        records = records,
+                        nightNumber = round,
+                        stepIndex = werewolfJudgeStepIndex,
+                        pendingNightDeath = pendingNightDeath,
+                        seerCheckTarget = seerCheckTarget,
+                        witchSaveUsed = witchSaveUsed,
+                        witchPoisonUsed = witchPoisonUsed,
+                        witchSavedTonight = witchSavedTonight,
+                        witchPoisonTarget = witchPoisonTarget,
+                        hunterShotTarget = hunterShotTarget,
+                        selectedDayExile = selectedDayExile,
+                        gameOutcome = gameOutcome,
+                        lastWordsPromptNames = lastWordsPromptNames,
+                        onStepIndexChange = { werewolfJudgeStepIndex = it },
+                        onSelectNightDeath = { pendingNightDeath = it },
+                        onSelectSeerCheck = { seerCheckTarget = it },
+                        onToggleWitchSave = { witchSavedTonight = it },
+                        onSelectWitchPoison = { witchPoisonTarget = it },
+                        onSelectHunterShot = { hunterShotTarget = it },
+                        onConfirmDawn = { deathEvents ->
+                            lastWordsPromptNames = emptyList()
+                            val eliminatedNames = mutableListOf<String>()
+                            deathEvents.distinctBy { it.first }.forEach { (deathName, note) ->
+                                val index = cards.indexOfFirst { it.name == deathName }
+                                if (index >= 0 && cards[index].eliminatedRound == null) {
+                                    cards[index] = cards[index].copy(eliminatedRound = round)
+                                    records.add(EliminationRecord(round, deathName, note))
+                                    eliminatedNames.add(deathName)
+                                }
+                            }
+                            val dawnOutcome = evaluateGameOutcome(context, cards, currentGameKind)
+                            gameOutcome = dawnOutcome
+                            if (dawnOutcome != null) showResults = true
+                            if (dawnOutcome == null && eliminatedNames.isNotEmpty() && shouldPromptLastWords()) {
+                                lastWordsPromptNames = eliminatedNames
+                            }
+                            if (witchSavedTonight) witchSaveUsed = true
+                            if (witchPoisonTarget != null) witchPoisonUsed = true
+                            pendingNightDeath = null
+                            seerCheckTarget = null
+                            witchSavedTonight = false
+                            witchPoisonTarget = null
+                            hunterShotTarget = null
+                        },
+                        onSelectDayExile = { selectedDayExile = it },
+                        onConfirmDayExile = {
+                            lastWordsPromptNames = emptyList()
+                            val exileName = selectedDayExile
+                            val eliminatedNames = mutableListOf<String>()
+                            var dayOutcome: GameOutcome? = null
+                            if (exileName != null) {
+                                val index = cards.indexOfFirst { it.name == exileName }
+                                val exiledRole = cards.getOrNull(index)?.role
+                                if (index >= 0 && cards[index].eliminatedRound == null) {
+                                    cards[index] = cards[index].copy(eliminatedRound = round)
+                                    records.add(EliminationRecord(round, exileName, context.getString(R.string.werewolf_record_day_exile)))
+                                    eliminatedNames.add(exileName)
+                                }
+                                val shotName = hunterShotTarget?.takeIf { exiledRole == Role.Hunter && it != exileName }
+                                if (shotName != null) {
+                                    val shotIndex = cards.indexOfFirst { it.name == shotName }
+                                    if (shotIndex >= 0 && cards[shotIndex].eliminatedRound == null) {
+                                        cards[shotIndex] = cards[shotIndex].copy(eliminatedRound = round)
+                                        records.add(EliminationRecord(round, shotName, context.getString(R.string.werewolf_record_hunter_shot)))
+                                        eliminatedNames.add(shotName)
+                                    }
+                                }
+                                dayOutcome = evaluateGameOutcome(context, cards, currentGameKind)
+                                gameOutcome = dayOutcome
+                                if (dayOutcome != null) showResults = true
+                            }
+                            selectedDayExile = null
+                            pendingNightDeath = null
+                            seerCheckTarget = null
+                            witchSavedTonight = false
+                            witchPoisonTarget = null
+                            hunterShotTarget = null
+                            if (dayOutcome == null) {
+                                if (eliminatedNames.isNotEmpty() && shouldPromptLastWords()) {
+                                    lastWordsPromptNames = eliminatedNames
+                                }
+                                werewolfJudgeStepIndex = 0
+                                round += 1
+                            }
+                        },
+                        onDismissLastWordsPrompt = { lastWordsPromptNames = emptyList() },
+                        onShowResults = {
+                            gameOutcome = gameOutcome ?: GameOutcome(
+                                title = context.getString(R.string.outcome_manual_title),
+                                summary = context.getString(R.string.outcome_manual_summary),
+                                reason = context.getString(R.string.outcome_manual_reason),
+                            )
+                            showResults = true
+                        },
+                        onNewGame = {
+                            screen = Screen.Setup
+                            cards.clear()
+                            records.clear()
+                            gameOutcome = null
+                            lastWordsPromptNames = emptyList()
+                            pendingNightDeath = null
+                            seerCheckTarget = null
+                            witchSaveUsed = false
+                            witchPoisonUsed = false
+                            witchSavedTonight = false
+                            witchPoisonTarget = null
+                            hunterShotTarget = null
+                            selectedDayExile = null
+                            werewolfJudgeStepIndex = 0
+                        },
+                    )
+
+                    Screen.ClocktowerJudge -> ClocktowerJudgeScreen(
+                        cards = cards,
+                        records = records,
+                        phase = clocktowerPhase,
+                        round = round,
+                        pendingNightDeath = clocktowerPendingNightDeath,
+                        selectedExecution = clocktowerSelectedExecution,
+                        poisonTarget = clocktowerPoisonTarget,
+                        fortuneTellerFirst = clocktowerFortuneTellerFirst,
+                        fortuneTellerSecond = clocktowerFortuneTellerSecond,
+                        ravenkeeperTarget = clocktowerRavenkeeperTarget,
+                        redHerring = clocktowerRedHerring,
+                        butlerMaster = clocktowerButlerMaster,
+                        gameOutcome = gameOutcome,
+                        onPhaseChange = { clocktowerPhase = it },
+                        onSelectNightDeath = { clocktowerPendingNightDeath = it },
+                        onSelectExecution = { clocktowerSelectedExecution = it },
+                        onSelectPoisonTarget = { clocktowerPoisonTarget = it },
+                        onSelectFortuneTellerFirst = { clocktowerFortuneTellerFirst = it },
+                        onSelectFortuneTellerSecond = { clocktowerFortuneTellerSecond = it },
+                        onSelectRavenkeeperTarget = { clocktowerRavenkeeperTarget = it },
+                        onSelectRedHerring = { clocktowerRedHerring = it },
+                        onSelectButlerMaster = { clocktowerButlerMaster = it },
+                        onAdvanceFromFirstNight = {
+                            clocktowerPhase = ClocktowerPhase.Day
+                        },
+                        onConfirmDay = {
+                            val aliveBeforeExecution = cards.filter { it.eliminatedRound == null }
+                            val executionName = clocktowerSelectedExecution
+                            var executionOutcome: GameOutcome? = null
+                            if (executionName != null) {
+                                val index = cards.indexOfFirst { it.name == executionName }
+                                val executedCard = cards.getOrNull(index)
+                                if (index >= 0 && executedCard != null && executedCard.eliminatedRound == null) {
+                                    cards[index] = executedCard.copy(eliminatedRound = round)
+                                    records.add(EliminationRecord(round, executionName, context.getString(R.string.clocktower_record_execution)))
+                                    if (executedCard.clocktowerRole?.enName == "Saint") {
+                                        executionOutcome = GameOutcome(
+                                            title = context.getString(R.string.outcome_clocktower_evil_title),
+                                            summary = context.getString(R.string.clocktower_outcome_saint_summary),
+                                            reason = context.getString(R.string.clocktower_outcome_saint_reason, executionName),
+                                        )
+                                    } else if (executedCard.clocktowerTeam == ClocktowerTeam.Demon) {
+                                        val promotedName = promoteScarletWomanIfNeeded()
+                                        executionOutcome = if (promotedName == null) {
+                                            evaluateGameOutcome(context, cards, currentGameKind)
+                                        } else {
+                                            null
+                                        }
+                                    } else {
+                                        executionOutcome = evaluateGameOutcome(context, cards, currentGameKind)
+                                    }
+                                }
+                            } else if (aliveBeforeExecution.size == 3 && aliveBeforeExecution.any { it.clocktowerRole?.enName == "Mayor" }) {
+                                executionOutcome = GameOutcome(
+                                    title = context.getString(R.string.outcome_clocktower_good_title),
+                                    summary = context.getString(R.string.clocktower_outcome_mayor_summary),
+                                    reason = context.getString(R.string.clocktower_outcome_mayor_reason),
+                                )
+                            }
+                            gameOutcome = executionOutcome
+                            if (executionOutcome != null) {
+                                showResults = true
+                            } else {
+                                round += 1
+                                clocktowerPhase = ClocktowerPhase.Night
+                            }
+                            clocktowerSelectedExecution = null
+                        },
+                        onConfirmNight = {
+                            val deathName = clocktowerPendingNightDeath
+                            if (deathName != null) {
+                                val index = cards.indexOfFirst { it.name == deathName }
+                                val nightDeathCard = cards.getOrNull(index)
+                                if (index >= 0 && nightDeathCard != null && nightDeathCard.eliminatedRound == null) {
+                                    cards[index] = nightDeathCard.copy(eliminatedRound = round)
+                                    records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
+                                    if (nightDeathCard.clocktowerRole?.enName == "Ravenkeeper" && clocktowerRavenkeeperTarget != null) {
+                                        records.add(
+                                            EliminationRecord(
+                                                round,
+                                                deathName,
+                                                context.getString(
+                                                    R.string.clocktower_record_ravenkeeper_check,
+                                                    clocktowerRavenkeeperTarget!!,
+                                                ),
+                                            ),
+                                        )
+                                    }
+                                }
+                            }
+                            val nightOutcome = evaluateGameOutcome(context, cards, currentGameKind)
+                            gameOutcome = nightOutcome
+                            if (nightOutcome != null) {
+                                showResults = true
+                            } else {
+                                clocktowerPhase = ClocktowerPhase.Day
+                            }
+                            clocktowerPendingNightDeath = null
+                            clocktowerPoisonTarget = null
+                            clocktowerFortuneTellerFirst = null
+                            clocktowerFortuneTellerSecond = null
+                            clocktowerRavenkeeperTarget = null
+                        },
+                        onShowResults = {
+                            gameOutcome = gameOutcome ?: GameOutcome(
+                                title = context.getString(R.string.outcome_manual_title),
+                                summary = context.getString(R.string.outcome_manual_summary),
+                                reason = context.getString(R.string.outcome_manual_reason),
+                            )
+                            showResults = true
+                        },
+                        onNewGame = {
+                            screen = Screen.Setup
+                            cards.clear()
+                            records.clear()
+                            gameOutcome = null
+                            clocktowerPhase = ClocktowerPhase.FirstNight
+                            clocktowerPendingNightDeath = null
+                            clocktowerSelectedExecution = null
+                            clocktowerPoisonTarget = null
+                            clocktowerFortuneTellerFirst = null
+                            clocktowerFortuneTellerSecond = null
+                            clocktowerRavenkeeperTarget = null
+                            clocktowerRedHerring = null
+                            clocktowerButlerMaster = null
+                        },
+                    )
+
+                    Screen.Game -> GameScreen(
+                    gameKind = currentGameKind,
                     cards = cards,
                     records = records,
                     round = round,
@@ -289,7 +1092,7 @@ private fun CampBoardGameHostApp() {
                                 cards[index] = cards[index].copy(eliminatedRound = round)
                                 records.add(EliminationRecord(round, name))
                                 selectedElimination = null
-                                gameOutcome = evaluateGameOutcome(context, cards)
+                                gameOutcome = evaluateGameOutcome(context, cards, currentGameKind)
                                 if (gameOutcome != null) {
                                     showResults = true
                                 }
@@ -312,28 +1115,69 @@ private fun CampBoardGameHostApp() {
                         gameOutcome = null
                     },
                 )
-            }
+                }
 
-            if (showResults) {
-                ResultsDialog(
-                    cards = cards,
-                    outcome = gameOutcome,
-                    onDismiss = { showResults = false },
-                    onNewGame = {
-                        showResults = false
-                        gameOutcome = null
-                        screen = Screen.Setup
-                        cards.clear()
-                        records.clear()
-                    },
-                )
+                if (showResults) {
+                    ResultsDialog(
+                        gameKind = currentGameKind,
+                        cards = cards,
+                        outcome = gameOutcome,
+                        onDismiss = { showResults = false },
+                        onNewGame = {
+                            showResults = false
+                            gameOutcome = null
+                            screen = Screen.Setup
+                            cards.clear()
+                            records.clear()
+                        },
+                    )
+                }
             }
         }
     }
 }
 
-private fun evaluateGameOutcome(context: Context, cards: List<PlayerCard>): GameOutcome? {
+private fun evaluateGameOutcome(context: Context, cards: List<PlayerCard>, gameKind: GameKind): GameOutcome? {
     val activeCards = cards.filter { it.eliminatedRound == null }
+    if (gameKind == GameKind.Clocktower) {
+        val activeDemons = activeCards.count { it.clocktowerTeam == ClocktowerTeam.Demon }
+        return when {
+            activeDemons == 0 -> GameOutcome(
+                title = context.getString(R.string.outcome_clocktower_good_title),
+                summary = context.getString(R.string.outcome_clocktower_good_summary),
+                reason = context.getString(R.string.outcome_clocktower_good_reason),
+            )
+
+            activeCards.size <= 2 -> GameOutcome(
+                title = context.getString(R.string.outcome_clocktower_evil_title),
+                summary = context.getString(R.string.outcome_clocktower_evil_summary),
+                reason = context.getString(R.string.outcome_clocktower_evil_reason, activeCards.size, activeDemons),
+            )
+
+            else -> null
+        }
+    }
+
+    if (gameKind == GameKind.Werewolf) {
+        val activeWerewolves = activeCards.count { it.role == Role.Werewolf }
+        val activeGoodPlayers = activeCards.size - activeWerewolves
+        return when {
+            activeWerewolves == 0 -> GameOutcome(
+                title = context.getString(R.string.outcome_good_title),
+                summary = context.getString(R.string.outcome_good_summary),
+                reason = context.getString(R.string.outcome_good_reason, activeGoodPlayers),
+            )
+
+            activeWerewolves >= activeGoodPlayers -> GameOutcome(
+                title = context.getString(R.string.outcome_werewolf_title),
+                summary = context.getString(R.string.outcome_werewolf_summary),
+                reason = context.getString(R.string.outcome_werewolf_reason, activeWerewolves, activeGoodPlayers),
+            )
+
+            else -> null
+        }
+    }
+
     val activeCivilians = activeCards.count { it.role == Role.Civilian }
     val activeUndercovers = activeCards.count { it.role == Role.Undercover }
     val activeBlanks = activeCards.count { it.role == Role.Blank }
@@ -361,19 +1205,24 @@ private fun evaluateGameOutcome(context: Context, cards: List<PlayerCard>): Game
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SetupScreen(
     playerCount: Int,
-    undercoverCount: Int,
-    includeBlank: Boolean,
+    commonPlayers: List<String>,
     playerNames: List<String>,
-    onPlayerCountChange: (Int) -> Unit,
-    onUndercoverCountChange: (Int) -> Unit,
-    onIncludeBlankChange: (Boolean) -> Unit,
-    onNameChange: (Int, String) -> Unit,
-    onStart: () -> Unit,
+    onAddCurrentPlayer: (String) -> Unit,
+    onAddTemporaryPlayer: () -> Unit,
+    onRemoveCurrentPlayer: (Int) -> Unit,
+    onMoveCurrentPlayerTo: (Int, Int) -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenUndercoverSettings: () -> Unit,
+    onOpenWerewolfSettings: () -> Unit,
+    onOpenClocktowerSettings: () -> Unit,
 ) {
-    val maxUndercover = if (includeBlank) playerCount - 2 else playerCount - 1
+    val canStartUndercover = playerCount >= MIN_PLAYERS
+    val canStartWerewolf = playerCount >= MIN_WEREWOLF_PLAYERS
+    val canStartClocktower = playerCount >= MIN_CLOCKTOWER_PLAYERS
 
     LazyColumn(
         modifier = Modifier
@@ -382,39 +1231,703 @@ private fun SetupScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item {
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text(stringResource(R.string.undercover_subtitle), color = Color(0xFF5C6A63))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.undercover_subtitle), color = Color(0xFF5C6A63))
+                }
+                TextButton(onClick = onOpenSettings) {
+                    Text(stringResource(R.string.settings))
+                }
+            }
         }
 
+        item {
+            RoundTableSetupEditor(
+                seatedPlayers = playerNames,
+                commonPlayers = commonPlayers,
+                canAddPlayer = playerCount < MAX_PLAYERS,
+                onAddCurrentPlayer = onAddCurrentPlayer,
+                onAddTemporaryPlayer = onAddTemporaryPlayer,
+                onRemoveCurrentPlayer = onRemoveCurrentPlayer,
+                onMoveCurrentPlayerTo = onMoveCurrentPlayerTo,
+            )
+        }
+
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(stringResource(R.string.choose_game), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Button(
+                    onClick = onOpenUndercoverSettings,
+                    enabled = canStartUndercover,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    Text(
+                        if (canStartUndercover) {
+                            stringResource(R.string.game_who_is_undercover)
+                        } else {
+                            stringResource(R.string.need_min_players, MIN_PLAYERS)
+                        }
+                    )
+                }
+                OutlinedButton(
+                    onClick = onOpenWerewolfSettings,
+                    enabled = canStartWerewolf,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    Text(
+                        if (canStartWerewolf) {
+                            stringResource(R.string.game_werewolf)
+                        } else {
+                            stringResource(R.string.need_werewolf_min_players, MIN_WEREWOLF_PLAYERS)
+                        }
+                    )
+                }
+                OutlinedButton(
+                    onClick = onOpenClocktowerSettings,
+                    enabled = canStartClocktower,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    Text(
+                        if (canStartClocktower) {
+                            stringResource(R.string.game_clocktower)
+                        } else {
+                            stringResource(R.string.need_clocktower_min_players, MIN_CLOCKTOWER_PLAYERS)
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RoundTableSetupEditor(
+    seatedPlayers: List<String>,
+    commonPlayers: List<String>,
+    canAddPlayer: Boolean,
+    onAddCurrentPlayer: (String) -> Unit,
+    onAddTemporaryPlayer: () -> Unit,
+    onRemoveCurrentPlayer: (Int) -> Unit,
+    onMoveCurrentPlayerTo: (Int, Int) -> Unit,
+) {
+    var dragState by remember { mutableStateOf<PlayerDragState?>(null) }
+    var hoverInsertIndex by remember { mutableStateOf<Int?>(null) }
+    val density = LocalDensity.current
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column {
+                Text(stringResource(R.string.current_players_section), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.current_players_count_format, seatedPlayers.size, MAX_PLAYERS), color = Color(0xFF6F7B74))
+            }
+            OutlinedButton(
+                onClick = onAddTemporaryPlayer,
+                enabled = canAddPlayer,
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Text(stringResource(R.string.add_temporary_player))
+            }
+        }
+
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(380.dp),
+            contentAlignment = Alignment.TopStart,
+        ) {
+            val widthPx = constraints.maxWidth.toFloat()
+            val heightPx = constraints.maxHeight.toFloat()
+            val useRectangularTable = seatedPlayers.size > 8
+            val avatarSizeDp = if (useRectangularTable) 52.dp else 64.dp
+            val center = Offset(widthPx / 2f, heightPx / 2f)
+            val avatarSizePx = with(density) { avatarSizeDp.toPx() }
+            val safeRadius = (min(widthPx, heightPx) - avatarSizePx * 2.2f) / 2f
+            val tableRadius = safeRadius.coerceAtLeast(avatarSizePx * 1.25f)
+            val seatRadius = tableRadius
+            val tableDropRadius = tableRadius + avatarSizePx * 1.2f
+            val tableLeft = avatarSizePx * 0.95f
+            val tableRight = widthPx - avatarSizePx * 0.95f
+            val tableTop = avatarSizePx * 1.05f
+            val tableBottom = heightPx - avatarSizePx * 1.65f
+            val tableWidth = tableRight - tableLeft
+            val tableHeight = tableBottom - tableTop
+
+            fun rectangularSideCounts(count: Int): IntArray {
+                return when (count) {
+                    0 -> intArrayOf(0, 0, 0, 0)
+                    1 -> intArrayOf(1, 0, 0, 0)
+                    2 -> intArrayOf(1, 0, 1, 0)
+                    3 -> intArrayOf(1, 1, 1, 0)
+                    4 -> intArrayOf(1, 1, 1, 1)
+                    5 -> intArrayOf(2, 1, 1, 1)
+                    6 -> intArrayOf(2, 1, 2, 1)
+                    7 -> intArrayOf(2, 2, 2, 1)
+                    8 -> intArrayOf(2, 2, 2, 2)
+                    9 -> intArrayOf(3, 2, 2, 2)
+                    10 -> intArrayOf(3, 2, 3, 2)
+                    11 -> intArrayOf(3, 3, 3, 2)
+                    12 -> intArrayOf(4, 2, 4, 2)
+                    else -> intArrayOf(4, 3, 4, (count - 11).coerceAtLeast(2))
+                }
+            }
+
+            fun rectangularSeatPosition(index: Int, count: Int): Offset {
+                if (count == 0) return center
+                val sideCounts = rectangularSideCounts(count)
+                var remainingIndex = index
+                val topCount = sideCounts[0]
+                if (remainingIndex < topCount) {
+                    val x = tableLeft + tableWidth * (remainingIndex + 1) / (topCount + 1)
+                    return Offset(x, tableTop)
+                }
+                remainingIndex -= topCount
+
+                val rightCount = sideCounts[1]
+                if (remainingIndex < rightCount) {
+                    val y = tableTop + tableHeight * (remainingIndex + 1) / (rightCount + 1)
+                    return Offset(tableRight, y)
+                }
+                remainingIndex -= rightCount
+
+                val bottomCount = sideCounts[2]
+                if (remainingIndex < bottomCount) {
+                    val x = tableRight - tableWidth * (remainingIndex + 1) / (bottomCount + 1)
+                    return Offset(x, tableBottom)
+                }
+                remainingIndex -= bottomCount
+
+                val leftCount = sideCounts[3].coerceAtLeast(1)
+                val y = tableBottom - tableHeight * (remainingIndex + 1) / (leftCount + 1)
+                return Offset(tableLeft, y)
+            }
+
+            fun circularSeatPosition(index: Int, count: Int): Offset {
+                if (count == 0) return center
+                val angle = (-PI / 2.0) + (2.0 * PI * index / count)
+                return Offset(
+                    x = center.x + (cos(angle) * seatRadius).toFloat(),
+                    y = center.y + (sin(angle) * seatRadius).toFloat(),
+                )
+            }
+
+            fun seatPosition(index: Int, count: Int): Offset {
+                return if (useRectangularTable) {
+                    rectangularSeatPosition(index, count)
+                } else {
+                    circularSeatPosition(index, count)
+                }
+            }
+
+            fun insertMarkerPosition(insertIndex: Int, count: Int): Offset {
+                if (count == 0) return center
+                if (!useRectangularTable) {
+                    val angle = (-PI / 2.0) + (2.0 * PI * (insertIndex - 0.5) / count)
+                    return Offset(
+                        x = center.x + (cos(angle) * seatRadius).toFloat(),
+                        y = center.y + (sin(angle) * seatRadius).toFloat(),
+                    )
+                }
+
+                val currentSeat = seatPosition(if (insertIndex == count) 0 else insertIndex.coerceIn(0, count - 1), count)
+                val previousSeat = seatPosition((insertIndex - 1 + count) % count, count)
+                return Offset(
+                    x = (previousSeat.x + currentSeat.x) / 2f,
+                    y = (previousSeat.y + currentSeat.y) / 2f,
+                )
+            }
+
+            fun insertIndexChangesOrder(insertIndex: Int, originalIndex: Int): Boolean {
+                val adjustedInsertIndex = if (insertIndex > originalIndex) insertIndex - 1 else insertIndex
+                return adjustedInsertIndex != originalIndex
+            }
+
+            fun nearestInsertIndex(point: Offset, count: Int): Int {
+                if (count == 0) return 0
+                if (useRectangularTable) {
+                    return (0..count)
+                        .minByOrNull { index -> insertMarkerPosition(index, count).let { marker -> (marker - point).getDistance() } }
+                        ?.coerceIn(0, count)
+                        ?: 0
+                }
+                val angle = atan2(point.y - center.y, point.x - center.x)
+                val normalized = ((angle + PI / 2.0 + 2.0 * PI) % (2.0 * PI))
+                return ((normalized / (2.0 * PI) * count).roundToInt()).coerceIn(0, count)
+            }
+
+            fun isInTable(point: Offset): Boolean {
+                if (useRectangularTable) {
+                    val margin = avatarSizePx * 1.5f
+                    return point.x in (tableLeft - margin)..(tableRight + margin) &&
+                        point.y in (tableTop - margin)..(tableBottom + margin)
+                }
+                return (point - center).getDistance() <= tableDropRadius
+            }
+
+            fun isRemoveDrop(point: Offset): Boolean {
+                if (useRectangularTable) {
+                    val margin = avatarSizePx * 2.1f
+                    val insideExpandedTable = point.x in (tableLeft - margin)..(tableRight + margin) &&
+                        point.y in (tableTop - margin)..(tableBottom + margin)
+                    return seatedPlayers.isNotEmpty() && !insideExpandedTable
+                }
+                return seatedPlayers.isNotEmpty() && (point - center).getDistance() > tableDropRadius + avatarSizePx
+            }
+
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                if (useRectangularTable) {
+                    val cornerRadius = 24.dp.toPx()
+                    drawRoundRect(
+                        color = Color(0xFFE6D8BD),
+                        topLeft = Offset(tableLeft, tableTop),
+                        size = Size(tableWidth, tableHeight),
+                        cornerRadius = CornerRadius(cornerRadius, cornerRadius),
+                    )
+                    drawRoundRect(
+                        color = Color(0xFF2F5D50),
+                        topLeft = Offset(tableLeft, tableTop),
+                        size = Size(tableWidth, tableHeight),
+                        cornerRadius = CornerRadius(cornerRadius, cornerRadius),
+                        style = Stroke(width = 5.dp.toPx()),
+                    )
+                    drawRoundRect(
+                        color = Color(0x332F5D50),
+                        topLeft = Offset(tableLeft, tableTop),
+                        size = Size(tableWidth, tableHeight),
+                        cornerRadius = CornerRadius(cornerRadius, cornerRadius),
+                        style = Stroke(width = 2.dp.toPx()),
+                    )
+                } else {
+                    drawCircle(
+                        color = Color(0xFFE6D8BD),
+                        radius = tableRadius,
+                        center = center,
+                    )
+                    drawCircle(
+                        color = Color(0xFF2F5D50),
+                        radius = tableRadius,
+                        center = center,
+                        style = Stroke(width = 5.dp.toPx()),
+                    )
+                    drawCircle(
+                        color = Color(0x332F5D50),
+                        radius = seatRadius,
+                        center = center,
+                        style = Stroke(width = 2.dp.toPx()),
+                    )
+                }
+            }
+
+            if (seatedPlayers.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 32.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(R.string.round_table_empty_hint),
+                        color = Color(0xFF5C6A63),
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
+
+            val draggedSeatedPlayer = dragState?.player as? DraggedPlayer.Seated
+            val previewInsertIndex = hoverInsertIndex
+                ?.takeIf { insertIndex ->
+                    draggedSeatedPlayer?.let { insertIndexChangesOrder(insertIndex, it.originalIndex) } == true
+                }
+                ?.coerceIn(0, seatedPlayers.size)
+
+            fun previewSeatIndex(originalIndex: Int): Int {
+                val draggedIndex = draggedSeatedPlayer?.originalIndex ?: return originalIndex
+                val insertIndex = previewInsertIndex ?: return originalIndex
+                val adjustedInsertIndex = if (insertIndex > draggedIndex) insertIndex - 1 else insertIndex
+                if (originalIndex == draggedIndex) return adjustedInsertIndex.coerceAtMost(seatedPlayers.lastIndex)
+
+                val indexAfterRemovingDraggedPlayer = if (originalIndex > draggedIndex) originalIndex - 1 else originalIndex
+                return if (indexAfterRemovingDraggedPlayer >= adjustedInsertIndex) {
+                    indexAfterRemovingDraggedPlayer + 1
+                } else {
+                    indexAfterRemovingDraggedPlayer
+                }
+            }
+
+            previewInsertIndex?.let { insertIndex ->
+                val marker = insertMarkerPosition(insertIndex, seatedPlayers.size)
+                Box(
+                    modifier = Modifier
+                        .offset {
+                            IntOffset(
+                                (marker.x - avatarSizePx / 2f).roundToInt(),
+                                (marker.y - avatarSizePx / 2f).roundToInt(),
+                            )
+                        }
+                        .size(avatarSizeDp)
+                        .background(Color(0x332F5D50), CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("+", color = Color(0xFF2F5D50), fontWeight = FontWeight.Bold, fontSize = 24.sp)
+                }
+            }
+
+            seatedPlayers.forEachIndexed { index, name ->
+                key(name) {
+                    val isDraggedPlayer = draggedSeatedPlayer?.originalIndex == index
+                    val position = if (isDraggedPlayer) {
+                        dragState?.center ?: seatPosition(index, seatedPlayers.size)
+                    } else {
+                        seatPosition(previewSeatIndex(index), seatedPlayers.size)
+                    }
+                    DraggableAvatar(
+                        name = name,
+                        badge = (index + 1).toString(),
+                        center = position,
+                        avatarSizePx = avatarSizePx,
+                        avatarSizeDp = avatarSizeDp,
+                        isDragging = isDraggedPlayer,
+                        enabled = dragState == null || (dragState?.player as? DraggedPlayer.Seated)?.originalIndex == index,
+                        onDragStart = {
+                            hoverInsertIndex = null
+                            dragState = PlayerDragState(DraggedPlayer.Seated(index, name), position)
+                        },
+                        onDrag = { centerPoint ->
+                            dragState = PlayerDragState(DraggedPlayer.Seated(index, name), centerPoint)
+                            hoverInsertIndex = if (isInTable(centerPoint)) nearestInsertIndex(centerPoint, seatedPlayers.size) else null
+                        },
+                        onDragEnd = { centerPoint ->
+                            val insertIndex = hoverInsertIndex
+                            when {
+                                isRemoveDrop(centerPoint) -> onRemoveCurrentPlayer(index)
+                                insertIndex != null && insertIndexChangesOrder(insertIndex, index) -> onMoveCurrentPlayerTo(index, insertIndex)
+                            }
+                            dragState = null
+                            hoverInsertIndex = null
+                        },
+                        onDragCancel = {
+                            dragState = null
+                            hoverInsertIndex = null
+                        },
+                    )
+                }
+            }
+        }
+
+        Text(stringResource(R.string.bench_area), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.bench_area_hint), color = Color(0xFF6F7B74))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (commonPlayers.isEmpty()) {
+                EmptyStateCard(text = stringResource(R.string.no_common_players_setup))
+            } else {
+                commonPlayers.forEach { name ->
+                    val alreadyJoined = name in seatedPlayers
+                    BenchPlayerChip(
+                        name = name,
+                        enabled = !alreadyJoined && canAddPlayer,
+                        label = if (alreadyJoined) stringResource(R.string.common_player_joined_format, name) else name,
+                        onClick = { onAddCurrentPlayer(name) },
+                    )
+                }
+            }
+            BenchPlayerChip(
+                name = stringResource(R.string.add_temporary_player),
+                enabled = canAddPlayer,
+                label = stringResource(R.string.add_temporary_player),
+                onClick = onAddTemporaryPlayer,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DraggableAvatar(
+    name: String,
+    badge: String,
+    center: Offset,
+    avatarSizePx: Float,
+    avatarSizeDp: Dp,
+    isDragging: Boolean,
+    enabled: Boolean,
+    onDragStart: () -> Unit,
+    onDrag: (Offset) -> Unit,
+    onDragEnd: (Offset) -> Unit,
+    onDragCancel: () -> Unit,
+) {
+    var dragCenter by remember { mutableStateOf(center) }
+    val animatedCenter by animateOffsetAsState(
+        targetValue = center,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow,
+        ),
+        label = "seat-position",
+    )
+    val displayedCenter = if (isDragging) dragCenter else animatedCenter
+    val latestDisplayedCenter by rememberUpdatedState(displayedCenter)
+    val latestCenter by rememberUpdatedState(center)
+    Column(
+        modifier = Modifier
+            .zIndex(if (isDragging) 2f else 1f)
+            .offset {
+                IntOffset(
+                    (displayedCenter.x - avatarSizePx / 2f).roundToInt(),
+                    (displayedCenter.y - avatarSizePx / 2f).roundToInt(),
+                )
+            }
+            .width(avatarSizeDp)
+            .pointerInput(enabled) {
+                if (!enabled) return@pointerInput
+                detectDragGesturesAfterLongPress(
+                    onDragStart = {
+                        dragCenter = latestDisplayedCenter
+                        onDragStart()
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        dragCenter += dragAmount
+                        onDrag(dragCenter)
+                    },
+                    onDragEnd = {
+                        onDragEnd(dragCenter)
+                        dragCenter = latestCenter
+                    },
+                    onDragCancel = {
+                        dragCenter = latestCenter
+                        onDragCancel()
+                    },
+                )
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(avatarSizeDp)
+                .background(Color(0xFF2F5D50), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(badge, color = Color.White, fontWeight = FontWeight.Black)
+        }
+        Text(
+            text = name,
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelMedium,
+        )
+    }
+}
+
+@Composable
+private fun BenchPlayerChip(
+    name: String,
+    enabled: Boolean,
+    label: String,
+    onClick: () -> Unit,
+) {
+    var dragDistance by remember { mutableStateOf(Offset.Zero) }
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.pointerInput(enabled, name) {
+            if (!enabled) return@pointerInput
+            detectDragGestures(
+                onDrag = { change, dragAmount ->
+                    change.consume()
+                    dragDistance += dragAmount
+                },
+                onDragEnd = {
+                    if (dragDistance.y < -80f) onClick()
+                    dragDistance = Offset.Zero
+                },
+                onDragCancel = { dragDistance = Offset.Zero },
+            )
+        },
+        shape = RoundedCornerShape(8.dp),
+    ) {
+        Text(label)
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SettingsScreen(
+    languageMode: LanguageMode,
+    commonPlayers: List<String>,
+    newCommonPlayerName: String,
+    onLanguageModeChange: (LanguageMode) -> Unit,
+    onNewCommonPlayerNameChange: (String) -> Unit,
+    onAddCommonPlayer: () -> Unit,
+    onRemoveCommonPlayer: (String) -> Unit,
+    onBack: () -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.settings), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_subtitle), color = Color(0xFF5C6A63))
+                }
+                TextButton(onClick = onBack) {
+                    Text(stringResource(R.string.back))
+                }
+            }
+        }
+
+        item {
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text(stringResource(R.string.language_settings), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    LanguageMode.entries.forEach { mode ->
+                        val selected = mode == languageMode
+                        if (selected) {
+                            Button(
+                                onClick = { onLanguageModeChange(mode) },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text(stringResource(mode.labelResId()))
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = { onLanguageModeChange(mode) },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text(stringResource(mode.labelResId()))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(stringResource(R.string.common_players_management), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = newCommonPlayerName,
+                            onValueChange = onNewCommonPlayerNameChange,
+                            modifier = Modifier.weight(1f),
+                            label = { Text(stringResource(R.string.player_name_input_label)) },
+                            singleLine = true,
+                        )
+                        Button(
+                            onClick = onAddCommonPlayer,
+                            enabled = newCommonPlayerName.trim().isNotEmpty() && newCommonPlayerName.trim() !in commonPlayers,
+                            shape = RoundedCornerShape(8.dp),
+                        ) {
+                            Text(stringResource(R.string.add))
+                        }
+                    }
+
+                    if (commonPlayers.isEmpty()) {
+                        EmptyStateCard(text = stringResource(R.string.no_common_players_settings))
+                    } else {
+                        commonPlayers.forEach { name ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Text(name, modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+                                TextButton(onClick = { onRemoveCommonPlayer(name) }) {
+                                    Text(stringResource(R.string.remove))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UndercoverSettingsScreen(
+    playerCount: Int,
+    undercoverCount: Int,
+    includeBlank: Boolean,
+    onUndercoverCountChange: (Int) -> Unit,
+    onIncludeBlankChange: (Boolean) -> Unit,
+    onBack: () -> Unit,
+    onStart: () -> Unit,
+) {
+    val maxUndercover = if (includeBlank) playerCount - 2 else playerCount - 1
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        item {
+            GameSettingsHeader(
+                title = stringResource(R.string.game_who_is_undercover),
+                subtitle = stringResource(R.string.game_settings_subtitle, playerCount),
+                onBack = onBack,
+            )
+        }
         item {
             SettingsPanel(
                 playerCount = playerCount,
                 undercoverCount = undercoverCount,
                 includeBlank = includeBlank,
                 maxUndercover = maxUndercover,
-                onPlayerCountChange = onPlayerCountChange,
                 onUndercoverCountChange = onUndercoverCountChange,
                 onIncludeBlankChange = onIncludeBlankChange,
             )
         }
-
-        item {
-            Text(stringResource(R.string.players_section), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        }
-
-        items(playerNames.indices.toList()) { index ->
-            OutlinedTextField(
-                value = playerNames[index],
-                onValueChange = { onNameChange(index, it) },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.player_name_format, index + 1)) },
-                singleLine = true,
-            )
-        }
-
         item {
             Button(
                 onClick = onStart,
+                enabled = playerCount >= MIN_PLAYERS,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
@@ -426,13 +1939,325 @@ private fun SetupScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun WerewolfSettingsScreen(
+    playerCount: Int,
+    werewolfCount: Int,
+    includeSeer: Boolean,
+    includeWitch: Boolean,
+    includeHunter: Boolean,
+    lastWordsMode: LastWordsMode,
+    onWerewolfCountChange: (Int) -> Unit,
+    onIncludeSeerChange: (Boolean) -> Unit,
+    onIncludeWitchChange: (Boolean) -> Unit,
+    onIncludeHunterChange: (Boolean) -> Unit,
+    onLastWordsModeChange: (LastWordsMode) -> Unit,
+    onApplyTemplate: (WerewolfTemplate) -> Unit,
+    onBack: () -> Unit,
+    onStart: () -> Unit,
+) {
+    val specialCount = listOf(includeSeer, includeWitch, includeHunter).count { it }
+    val villagerCount = playerCount - werewolfCount - specialCount
+    val roleTotal = werewolfCount + specialCount + villagerCount.coerceAtLeast(0)
+    val canStart = playerCount >= MIN_WEREWOLF_PLAYERS && villagerCount >= 0
+    val recommendedTemplates = werewolfTemplates.filter { it.playerCount == playerCount }
+    val otherTemplates = werewolfTemplates.filter { it.playerCount != playerCount }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        item {
+            GameSettingsHeader(
+                title = stringResource(R.string.game_werewolf),
+                subtitle = stringResource(R.string.game_settings_subtitle, playerCount),
+                onBack = onBack,
+            )
+        }
+        item {
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(stringResource(R.string.werewolf_template_settings), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.werewolf_template_hint), color = Color(0xFF6F7B74))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        recommendedTemplates.forEach { template ->
+                            Button(
+                                onClick = { onApplyTemplate(template) },
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text(templateLabel(template))
+                            }
+                        }
+                        otherTemplates.forEach { template ->
+                            OutlinedButton(
+                                onClick = { onApplyTemplate(template) },
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text(templateLabel(template))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        item {
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Text(stringResource(R.string.werewolf_role_settings), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.werewolf_role_summary, roleTotal, playerCount, villagerCount.coerceAtLeast(0)), color = Color(0xFF6F7B74))
+                    StepperRow(
+                        label = stringResource(R.string.role_werewolf),
+                        value = werewolfCount,
+                        range = 1..(playerCount - specialCount).coerceAtLeast(1),
+                        onChange = onWerewolfCountChange,
+                    )
+                    RoleToggleRow(
+                        roleName = stringResource(R.string.role_seer),
+                        description = stringResource(R.string.role_seer_desc),
+                        checked = includeSeer,
+                        onCheckedChange = onIncludeSeerChange,
+                    )
+                    RoleToggleRow(
+                        roleName = stringResource(R.string.role_witch),
+                        description = stringResource(R.string.role_witch_desc),
+                        checked = includeWitch,
+                        onCheckedChange = onIncludeWitchChange,
+                    )
+                    RoleToggleRow(
+                        roleName = stringResource(R.string.role_hunter),
+                        description = stringResource(R.string.role_hunter_desc),
+                        checked = includeHunter,
+                        onCheckedChange = onIncludeHunterChange,
+                    )
+                    HorizontalDivider()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column {
+                            Text(stringResource(R.string.role_villager), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.villager_auto_fill_hint), color = Color(0xFF6F7B74))
+                        }
+                        Text(villagerCount.coerceAtLeast(0).toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+        item {
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(stringResource(R.string.last_words_settings), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.last_words_settings_hint), color = Color(0xFF6F7B74))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        LastWordsMode.entries.forEach { mode ->
+                            if (mode == lastWordsMode) {
+                                Button(
+                                    onClick = { onLastWordsModeChange(mode) },
+                                    shape = RoundedCornerShape(8.dp),
+                                ) {
+                                    Text(stringResource(mode.labelResId()))
+                                }
+                            } else {
+                                OutlinedButton(
+                                    onClick = { onLastWordsModeChange(mode) },
+                                    shape = RoundedCornerShape(8.dp),
+                                ) {
+                                    Text(stringResource(mode.labelResId()))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        item {
+            Button(
+                onClick = onStart,
+                enabled = canStart,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Text(if (canStart) stringResource(R.string.start_dealing) else stringResource(R.string.werewolf_roles_invalid))
+            }
+        }
+    }
+}
+
+@Composable
+private fun templateLabel(template: WerewolfTemplate): String {
+    val specials = buildList {
+        if (template.includeSeer) add(stringResource(R.string.role_seer_short))
+        if (template.includeWitch) add(stringResource(R.string.role_witch_short))
+        if (template.includeHunter) add(stringResource(R.string.role_hunter_short))
+    }.joinToString("")
+        .ifBlank { stringResource(R.string.no_special_roles_short) }
+    return stringResource(R.string.werewolf_template_label_format, template.playerCount, template.werewolfCount, specials)
+}
+
+@Composable
+private fun ClocktowerSettingsScreen(
+    playerCount: Int,
+    onBack: () -> Unit,
+    onStart: () -> Unit,
+) {
+    val distribution = clocktowerDistribution(playerCount)
+    val canStart = playerCount >= MIN_CLOCKTOWER_PLAYERS
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        item {
+            GameSettingsHeader(
+                title = stringResource(R.string.game_clocktower),
+                subtitle = stringResource(R.string.game_settings_subtitle, playerCount),
+                onBack = onBack,
+            )
+        }
+        item {
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(stringResource(R.string.clocktower_script), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.clocktower_first_version_hint), color = Color(0xFF6F7B74))
+                    HorizontalDivider()
+                    ClocktowerTeam.entries.forEach { team ->
+                        val count = distribution[team] ?: 0
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(team.label(LocalContext.current), fontWeight = FontWeight.SemiBold)
+                            Text(count.toString(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+        item {
+            Text(stringResource(R.string.clocktower_role_pool), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        }
+        ClocktowerTeam.entries.forEach { team ->
+            item {
+                Text(team.label(LocalContext.current), color = Color(0xFF5C6A63), fontWeight = FontWeight.SemiBold)
+            }
+            items(troubleBrewingRoles.filter { it.team == team }) { role ->
+                Card(
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        val language = LocalContext.current.resources.configuration.locales[0].language
+                        Text(role.nameFor(language), fontWeight = FontWeight.SemiBold)
+                        Text(role.descriptionFor(language), color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+        }
+        item {
+            Button(
+                onClick = onStart,
+                enabled = canStart,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Text(if (canStart) stringResource(R.string.start_dealing) else stringResource(R.string.need_clocktower_min_players, MIN_CLOCKTOWER_PLAYERS))
+            }
+        }
+    }
+}
+
+@Composable
+private fun GameSettingsHeader(
+    title: String,
+    subtitle: String,
+    onBack: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text(subtitle, color = Color(0xFF5C6A63))
+        }
+        TextButton(onClick = onBack) {
+            Text(stringResource(R.string.back))
+        }
+    }
+}
+
+@Composable
+private fun RoleToggleRow(
+    roleName: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Checkbox(checked = checked, onCheckedChange = onCheckedChange)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(roleName, fontWeight = FontWeight.SemiBold)
+            Text(description, color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
 @Composable
 private fun SettingsPanel(
     playerCount: Int,
     undercoverCount: Int,
     includeBlank: Boolean,
     maxUndercover: Int,
-    onPlayerCountChange: (Int) -> Unit,
     onUndercoverCountChange: (Int) -> Unit,
     onIncludeBlankChange: (Boolean) -> Unit,
 ) {
@@ -445,12 +2270,8 @@ private fun SettingsPanel(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            StepperRow(
-                label = stringResource(R.string.player_count),
-                value = playerCount,
-                range = 3..12,
-                onChange = onPlayerCountChange,
-            )
+            Text(stringResource(R.string.game_settings), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.player_count_summary, playerCount), color = Color(0xFF6F7B74))
             StepperRow(
                 label = stringResource(R.string.undercover_count),
                 value = undercoverCount,
@@ -462,6 +2283,23 @@ private fun SettingsPanel(
                 Text(stringResource(R.string.include_blank))
             }
         }
+    }
+}
+
+@Composable
+private fun EmptyStateCard(text: String) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFCF6)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            color = Color(0xFF6F7B74),
+        )
     }
 }
 
@@ -534,6 +2372,7 @@ private fun PassPhoneScreen(
 @Composable
 private fun RevealCardScreen(
     card: PlayerCard,
+    gameKind: GameKind,
     current: Int,
     total: Int,
     onHide: () -> Unit,
@@ -554,8 +2393,14 @@ private fun RevealCardScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(card.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(card.word, style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Black)
-                Text(stringResource(R.string.remember_word_hint), color = Color(0xFF5C6A63))
+                if (gameKind == GameKind.Werewolf || gameKind == GameKind.Clocktower) {
+                    Text(card.roleLabel ?: stringResource(card.role.labelResId()), style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Black)
+                    Text(card.word, color = Color(0xFF5C6A63), textAlign = TextAlign.Center)
+                    Text(stringResource(R.string.remember_role_hint), color = Color(0xFF5C6A63))
+                } else {
+                    Text(card.word, style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Black)
+                    Text(stringResource(R.string.remember_word_hint), color = Color(0xFF5C6A63))
+                }
             }
         }
         Button(
@@ -572,7 +2417,1045 @@ private fun RevealCardScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
+private fun WerewolfJudgeScreen(
+    cards: List<PlayerCard>,
+    records: List<EliminationRecord>,
+    nightNumber: Int,
+    stepIndex: Int,
+    pendingNightDeath: String?,
+    seerCheckTarget: String?,
+    witchSaveUsed: Boolean,
+    witchPoisonUsed: Boolean,
+    witchSavedTonight: Boolean,
+    witchPoisonTarget: String?,
+    hunterShotTarget: String?,
+    selectedDayExile: String?,
+    gameOutcome: GameOutcome?,
+    lastWordsPromptNames: List<String>,
+    onStepIndexChange: (Int) -> Unit,
+    onSelectNightDeath: (String?) -> Unit,
+    onSelectSeerCheck: (String?) -> Unit,
+    onToggleWitchSave: (Boolean) -> Unit,
+    onSelectWitchPoison: (String?) -> Unit,
+    onSelectHunterShot: (String?) -> Unit,
+    onConfirmDawn: (List<Pair<String, String>>) -> Unit,
+    onSelectDayExile: (String?) -> Unit,
+    onConfirmDayExile: () -> Unit,
+    onDismissLastWordsPrompt: () -> Unit,
+    onShowResults: () -> Unit,
+    onNewGame: () -> Unit,
+) {
+    val steps = buildList {
+        add(WerewolfJudgeStep.Wolves)
+        if (cards.any { it.role == Role.Seer }) add(WerewolfJudgeStep.Seer)
+        if (cards.any { it.role == Role.Witch }) add(WerewolfJudgeStep.Witch)
+        if (cards.any { it.role == Role.Hunter }) add(WerewolfJudgeStep.Hunter)
+        add(WerewolfJudgeStep.Dawn)
+        add(WerewolfJudgeStep.DayVote)
+    }
+    val currentIndex = stepIndex.coerceIn(0, steps.lastIndex)
+    val currentStep = steps[currentIndex]
+    val aliveCards = cards.filter { it.eliminatedRound == null }
+    val wolfAttackDeath = pendingNightDeath?.takeUnless { witchSavedTonight }
+    val baseNightDeathEvents = buildList {
+        if (wolfAttackDeath != null) add(wolfAttackDeath to stringResource(R.string.werewolf_record_night_death))
+        if (witchPoisonTarget != null) add(witchPoisonTarget to stringResource(R.string.werewolf_record_witch_poison))
+    }.distinctBy { it.first }
+    val baseNightDeathNames = baseNightDeathEvents.map { it.first }
+    val hunterDiesTonight = baseNightDeathNames.any { name -> cards.firstOrNull { it.name == name }?.role == Role.Hunter }
+    val selectedDayExileCard = cards.firstOrNull { it.name == selectedDayExile }
+    val hunterCanShootAfterDayExile = selectedDayExileCard?.role == Role.Hunter
+    val hunterShotEvent = hunterShotTarget
+        ?.takeIf { hunterDiesTonight || hunterCanShootAfterDayExile }
+        ?.let { it to stringResource(R.string.werewolf_record_hunter_shot) }
+    val nightDeathEvents = (baseNightDeathEvents + listOfNotNull(hunterShotEvent)).distinctBy { it.first }
+    val nightDeathNames = nightDeathEvents.map { it.first }
+
+    fun roleCards(role: Role): List<PlayerCard> = cards.filter { it.role == role }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.werewolf_judge_assistant), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(
+                        gameOutcome?.title ?: stringResource(R.string.werewolf_night_format, nightNumber),
+                        color = Color(0xFF5C6A63),
+                    )
+                }
+                TextButton(onClick = onNewGame) {
+                    Text(stringResource(R.string.new_game))
+                }
+            }
+        }
+
+        if (lastWordsPromptNames.isNotEmpty()) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF4DC)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(stringResource(R.string.last_words_prompt_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.last_words_prompt_names, lastWordsPromptNames.joinToString(stringResource(R.string.name_separator))))
+                        Text(stringResource(R.string.last_words_prompt_hint), color = Color(0xFF6F7B74))
+                        Button(
+                            onClick = onDismissLastWordsPrompt,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                        ) {
+                            Text(stringResource(R.string.got_it))
+                        }
+                    }
+                }
+            }
+        }
+
+        if (gameOutcome != null) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF2EA)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(gameOutcome.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(gameOutcome.summary)
+                        Text(gameOutcome.reason, color = Color(0xFF5C6A63))
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(stringResource(currentStep.titleResId()), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(stringResource(currentStep.instructionResId()), color = Color(0xFF5C6A63))
+
+                    when (currentStep) {
+                        WerewolfJudgeStep.Wolves -> {
+                            WerewolfRoleLine(roleName = stringResource(R.string.role_werewolf), players = roleCards(Role.Werewolf))
+                            Text(stringResource(R.string.werewolf_choose_night_death), fontWeight = FontWeight.SemiBold)
+                            SelectablePlayerChips(
+                                cards = aliveCards,
+                                selectedName = pendingNightDeath,
+                                onSelect = { onSelectNightDeath(if (pendingNightDeath == it) null else it) },
+                                enabled = gameOutcome == null,
+                            )
+                        }
+
+                        WerewolfJudgeStep.Seer -> {
+                            WerewolfRoleLine(roleName = stringResource(R.string.role_seer), players = roleCards(Role.Seer))
+                            Text(stringResource(R.string.werewolf_choose_seer_check), fontWeight = FontWeight.SemiBold)
+                            SelectablePlayerChips(
+                                cards = aliveCards,
+                                selectedName = seerCheckTarget,
+                                onSelect = { onSelectSeerCheck(if (seerCheckTarget == it) null else it) },
+                                enabled = gameOutcome == null,
+                            )
+                            seerCheckTarget?.let { targetName ->
+                                val target = cards.firstOrNull { it.name == targetName }
+                                val result = if (target?.role == Role.Werewolf) {
+                                    stringResource(R.string.seer_result_werewolf)
+                                } else {
+                                    stringResource(R.string.seer_result_good)
+                                }
+                                Text(stringResource(R.string.seer_result_format, targetName, result), color = Color(0xFF2F5D50), fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
+                        WerewolfJudgeStep.Witch -> {
+                            WerewolfRoleLine(roleName = stringResource(R.string.role_witch), players = roleCards(Role.Witch))
+                            Text(
+                                pendingNightDeath?.let { stringResource(R.string.werewolf_pending_death_format, it) }
+                                    ?: stringResource(R.string.werewolf_no_pending_death),
+                                color = Color(0xFF6F7B74),
+                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(
+                                    checked = witchSavedTonight,
+                                    onCheckedChange = onToggleWitchSave,
+                                    enabled = !witchSaveUsed && pendingNightDeath != null && gameOutcome == null,
+                                )
+                                Text(
+                                    if (witchSaveUsed) stringResource(R.string.witch_save_used) else stringResource(R.string.witch_use_save),
+                                    color = if (witchSaveUsed) Color(0xFF9A4B36) else Color(0xFF1F2925),
+                                )
+                            }
+                            Text(
+                                if (witchPoisonUsed) stringResource(R.string.witch_poison_used) else stringResource(R.string.witch_choose_poison),
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (witchPoisonUsed) Color(0xFF9A4B36) else Color(0xFF1F2925),
+                            )
+                            SelectablePlayerChips(
+                                cards = aliveCards.filter { it.name != pendingNightDeath || !witchSavedTonight },
+                                selectedName = witchPoisonTarget,
+                                onSelect = { onSelectWitchPoison(if (witchPoisonTarget == it) null else it) },
+                                enabled = !witchPoisonUsed && gameOutcome == null,
+                            )
+                        }
+
+                        WerewolfJudgeStep.Hunter -> {
+                            WerewolfRoleLine(roleName = stringResource(R.string.role_hunter), players = roleCards(Role.Hunter))
+                            Text(stringResource(R.string.hunter_status_hint), color = Color(0xFF6F7B74))
+                        }
+
+                        WerewolfJudgeStep.Dawn -> {
+                            if (nightDeathEvents.isEmpty()) {
+                                Text(stringResource(R.string.werewolf_no_final_death), color = Color(0xFF6F7B74))
+                            } else {
+                                Text(stringResource(R.string.werewolf_final_deaths), fontWeight = FontWeight.SemiBold)
+                                nightDeathEvents.forEach { (name, note) ->
+                                    Text(stringResource(R.string.werewolf_death_event_format, name, note), color = Color(0xFF6F7B74))
+                                }
+                            }
+                            if (hunterDiesTonight) {
+                                Text(stringResource(R.string.hunter_choose_shot), fontWeight = FontWeight.SemiBold)
+                                SelectablePlayerChips(
+                                    cards = aliveCards.filter { it.name !in nightDeathNames },
+                                    selectedName = hunterShotTarget,
+                                    onSelect = { onSelectHunterShot(if (hunterShotTarget == it) null else it) },
+                                    enabled = gameOutcome == null,
+                                )
+                            }
+                            Button(
+                                onClick = {
+                                    onConfirmDawn(nightDeathEvents)
+                                    onStepIndexChange((currentIndex + 1).coerceAtMost(steps.lastIndex))
+                                },
+                                enabled = gameOutcome == null,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text(stringResource(R.string.werewolf_confirm_dawn))
+                            }
+                        }
+
+                        WerewolfJudgeStep.DayVote -> {
+                            Text(stringResource(R.string.werewolf_choose_day_exile), fontWeight = FontWeight.SemiBold)
+                            SelectablePlayerChips(
+                                cards = aliveCards,
+                                selectedName = selectedDayExile,
+                                onSelect = { onSelectDayExile(if (selectedDayExile == it) null else it) },
+                                enabled = gameOutcome == null,
+                            )
+                            if (hunterCanShootAfterDayExile) {
+                                Text(stringResource(R.string.hunter_choose_shot), fontWeight = FontWeight.SemiBold)
+                                SelectablePlayerChips(
+                                    cards = aliveCards.filter { it.name != selectedDayExile },
+                                    selectedName = hunterShotTarget,
+                                    onSelect = { onSelectHunterShot(if (hunterShotTarget == it) null else it) },
+                                    enabled = gameOutcome == null,
+                                )
+                            }
+                            Button(
+                                onClick = onConfirmDayExile,
+                                enabled = gameOutcome == null,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text(if (selectedDayExile == null) stringResource(R.string.werewolf_no_exile_next_night) else stringResource(R.string.werewolf_confirm_day_exile))
+                            }
+                        }
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { onStepIndexChange((currentIndex - 1).coerceAtLeast(0)) },
+                            enabled = currentIndex > 0,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp),
+                        ) {
+                            Text(stringResource(R.string.previous_step))
+                        }
+                        Button(
+                            onClick = { onStepIndexChange((currentIndex + 1).coerceAtMost(steps.lastIndex)) },
+                            enabled = currentIndex < steps.lastIndex,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp),
+                        ) {
+                            Text(stringResource(R.string.next_step))
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            HorizontalDivider()
+            Text(stringResource(R.string.player_status), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        }
+
+        items(cards) { card ->
+            WerewolfPlayerStatusRow(card)
+        }
+
+        item {
+            HorizontalDivider()
+            Text(stringResource(R.string.elimination_records), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            if (records.isEmpty()) {
+                Text(stringResource(R.string.no_eliminations), color = Color(0xFF6F7B74))
+            }
+        }
+
+        items(records) { record ->
+            Text(record.displayText(), modifier = Modifier.padding(vertical = 4.dp))
+        }
+
+        item {
+            Button(
+                onClick = onShowResults,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+            ) {
+                Text(if (gameOutcome == null) stringResource(R.string.end_and_reveal) else stringResource(R.string.view_results))
+            }
+        }
+    }
+}
+
+private fun WerewolfJudgeStep.titleResId(): Int = when (this) {
+    WerewolfJudgeStep.Wolves -> R.string.werewolf_step_wolves_title
+    WerewolfJudgeStep.Seer -> R.string.werewolf_step_seer_title
+    WerewolfJudgeStep.Witch -> R.string.werewolf_step_witch_title
+    WerewolfJudgeStep.Hunter -> R.string.werewolf_step_hunter_title
+    WerewolfJudgeStep.Dawn -> R.string.werewolf_step_dawn_title
+    WerewolfJudgeStep.DayVote -> R.string.werewolf_step_day_vote_title
+}
+
+private fun WerewolfJudgeStep.instructionResId(): Int = when (this) {
+    WerewolfJudgeStep.Wolves -> R.string.werewolf_step_wolves_instruction
+    WerewolfJudgeStep.Seer -> R.string.werewolf_step_seer_instruction
+    WerewolfJudgeStep.Witch -> R.string.werewolf_step_witch_instruction
+    WerewolfJudgeStep.Hunter -> R.string.werewolf_step_hunter_instruction
+    WerewolfJudgeStep.Dawn -> R.string.werewolf_step_dawn_instruction
+    WerewolfJudgeStep.DayVote -> R.string.werewolf_step_day_vote_instruction
+}
+
+@Composable
+private fun WerewolfRoleLine(roleName: String, players: List<PlayerCard>) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(roleName, fontWeight = FontWeight.SemiBold)
+        Text(
+            text = if (players.isEmpty()) stringResource(R.string.no_role_players) else players.joinToString { it.name },
+            color = Color(0xFF6F7B74),
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SelectablePlayerChips(
+    cards: List<PlayerCard>,
+    selectedName: String?,
+    enabled: Boolean,
+    onSelect: (String) -> Unit,
+) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        cards.forEach { card ->
+            val selected = selectedName == card.name
+            if (selected) {
+                Button(onClick = { onSelect(card.name) }, enabled = enabled, shape = RoundedCornerShape(8.dp)) {
+                    Text(card.name)
+                }
+            } else {
+                OutlinedButton(onClick = { onSelect(card.name) }, enabled = enabled, shape = RoundedCornerShape(8.dp)) {
+                    Text(card.name)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WerewolfPlayerStatusRow(card: PlayerCard) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(card.name, fontWeight = FontWeight.SemiBold)
+                Text(card.roleLabel ?: stringResource(card.role.labelResId()), color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
+            }
+            val status = card.eliminatedRound?.let { stringResource(R.string.eliminated_round_format, it) }
+                ?: stringResource(R.string.active_status)
+            Text(status, color = if (card.eliminatedRound == null) Color(0xFF2F5D50) else Color(0xFF9A4B36))
+        }
+    }
+}
+
+@Composable
+private fun EliminationRecord.displayText(): String {
+    val base = stringResource(R.string.elimination_record_format, round, playerName)
+    return note?.let { stringResource(R.string.elimination_record_with_note_format, base, it) } ?: base
+}
+
+private fun PlayerCard.hostRoleLabel(context: Context, gameKind: GameKind): String = when (gameKind) {
+    GameKind.Clocktower -> actualRoleLabel ?: roleLabel ?: context.getString(role.labelResId())
+    GameKind.Werewolf -> roleLabel ?: context.getString(role.labelResId())
+    GameKind.Undercover -> context.getString(role.labelResId())
+}
+
+private fun isClocktowerEvil(card: PlayerCard): Boolean =
+    card.clocktowerTeam == ClocktowerTeam.Minion || card.clocktowerTeam == ClocktowerTeam.Demon
+
+private fun actualClocktowerRoleCards(cards: List<PlayerCard>, enName: String): List<PlayerCard> =
+    cards.filter { it.clocktowerRole?.enName == enName }
+
+private fun chefEvilPairs(cards: List<PlayerCard>): Int {
+    if (cards.size < 2) return 0
+    return cards.indices.count { index ->
+        val next = cards[(index + 1) % cards.size]
+        isClocktowerEvil(cards[index]) && isClocktowerEvil(next)
+    }
+}
+
+private fun livingNeighbors(cards: List<PlayerCard>, playerName: String): List<PlayerCard> {
+    val aliveCards = cards.filter { it.eliminatedRound == null }
+    if (aliveCards.size <= 1) return emptyList()
+    val index = aliveCards.indexOfFirst { it.name == playerName }
+    if (index < 0) return emptyList()
+    val left = aliveCards[(index - 1 + aliveCards.size) % aliveCards.size]
+    val right = aliveCards[(index + 1) % aliveCards.size]
+    return listOf(left, right).distinctBy { it.name }
+}
+
+private fun storytellerPairHint(
+    target: PlayerCard,
+    cards: List<PlayerCard>,
+    fallbackPool: List<PlayerCard> = cards,
+): Pair<PlayerCard, PlayerCard>? {
+    val decoy = fallbackPool.firstOrNull { it.name != target.name } ?: return null
+    return target to decoy
+}
+
+private fun PlayerCard.clocktowerShownAsDifferentRole(): Boolean =
+    clocktowerRole?.enName != null && clocktowerShownRole?.enName != null && clocktowerRole?.enName != clocktowerShownRole?.enName
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ClocktowerJudgeScreen(
+    cards: List<PlayerCard>,
+    records: List<EliminationRecord>,
+    phase: ClocktowerPhase,
+    round: Int,
+    pendingNightDeath: String?,
+    selectedExecution: String?,
+    poisonTarget: String?,
+    fortuneTellerFirst: String?,
+    fortuneTellerSecond: String?,
+    ravenkeeperTarget: String?,
+    redHerring: String?,
+    butlerMaster: String?,
+    gameOutcome: GameOutcome?,
+    onPhaseChange: (ClocktowerPhase) -> Unit,
+    onSelectNightDeath: (String?) -> Unit,
+    onSelectExecution: (String?) -> Unit,
+    onSelectPoisonTarget: (String?) -> Unit,
+    onSelectFortuneTellerFirst: (String?) -> Unit,
+    onSelectFortuneTellerSecond: (String?) -> Unit,
+    onSelectRavenkeeperTarget: (String?) -> Unit,
+    onSelectRedHerring: (String?) -> Unit,
+    onSelectButlerMaster: (String?) -> Unit,
+    onAdvanceFromFirstNight: () -> Unit,
+    onConfirmDay: () -> Unit,
+    onConfirmNight: () -> Unit,
+    onShowResults: () -> Unit,
+    onNewGame: () -> Unit,
+) {
+    val context = LocalContext.current
+    val language = context.resources.configuration.locales[0].language
+    val aliveCards = cards.filter { it.eliminatedRound == null }
+    val firstNightWasherwoman = actualClocktowerRoleCards(cards, "Washerwoman").firstOrNull()
+    val firstNightLibrarian = actualClocktowerRoleCards(cards, "Librarian").firstOrNull()
+    val firstNightInvestigator = actualClocktowerRoleCards(cards, "Investigator").firstOrNull()
+    val chefPlayer = actualClocktowerRoleCards(cards, "Chef").firstOrNull()
+    val empathPlayers = actualClocktowerRoleCards(cards, "Empath").filter { it.eliminatedRound == null }
+    val fortuneTellerPlayers = actualClocktowerRoleCards(cards, "Fortune Teller").filter { it.eliminatedRound == null }
+    val poisonerPlayers = actualClocktowerRoleCards(cards, "Poisoner").filter { it.eliminatedRound == null }
+    val butlerPlayers = actualClocktowerRoleCards(cards, "Butler").filter { it.eliminatedRound == null }
+    val ravenkeeperNightDeath = pendingNightDeath?.let { name -> cards.firstOrNull { it.name == name && it.clocktowerRole?.enName == "Ravenkeeper" } }
+    val fortuneTellerResult = if (fortuneTellerFirst != null && fortuneTellerSecond != null) {
+        val targets = setOf(fortuneTellerFirst, fortuneTellerSecond)
+        val matched = aliveCards.any { it.name in targets && (it.clocktowerTeam == ClocktowerTeam.Demon || it.name == redHerring) }
+        if (matched) stringResource(R.string.clocktower_yes) else stringResource(R.string.clocktower_no)
+    } else {
+        null
+    }
+    val phaseTitle = when (phase) {
+        ClocktowerPhase.FirstNight -> stringResource(R.string.clocktower_phase_first_night)
+        ClocktowerPhase.Day -> stringResource(R.string.clocktower_phase_day, round)
+        ClocktowerPhase.Night -> stringResource(R.string.clocktower_phase_night, round)
+    }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.clocktower_judge_assistant), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(gameOutcome?.title ?: phaseTitle, color = Color(0xFF5C6A63))
+                }
+                TextButton(onClick = onNewGame) {
+                    Text(stringResource(R.string.new_game))
+                }
+            }
+        }
+
+        item {
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF4DC)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(stringResource(R.string.clocktower_storyteller_hint_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.clocktower_storyteller_hint_body), color = Color(0xFF6F7B74))
+                }
+            }
+        }
+
+        if (gameOutcome != null) {
+            item {
+                Card(
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF2EA)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(gameOutcome.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(gameOutcome.summary)
+                        Text(gameOutcome.reason, color = Color(0xFF5C6A63))
+                    }
+                }
+            }
+        }
+
+        when (phase) {
+            ClocktowerPhase.FirstNight -> {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Text(stringResource(R.string.clocktower_red_herring_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.clocktower_red_herring_hint), color = Color(0xFF6F7B74))
+                            SelectablePlayerChips(
+                                cards = aliveCards.filter { it.clocktowerTeam != ClocktowerTeam.Demon },
+                                selectedName = redHerring,
+                                onSelect = { onSelectRedHerring(if (redHerring == it) null else it) },
+                                enabled = gameOutcome == null,
+                            )
+                        }
+                    }
+                }
+                firstNightWasherwoman?.let { washerwoman ->
+                    val target = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Townsfolk && it.name != washerwoman.name }
+                    val pair = target?.let { storytellerPairHint(it, cards) }
+                    if (pair != null && target.clocktowerRole != null) {
+                        item {
+                            ClocktowerInfoCard(
+                                title = stringResource(R.string.clocktower_role_info_format, washerwoman.name, washerwoman.hostRoleLabel(context, GameKind.Clocktower)),
+                                body = stringResource(
+                                    R.string.clocktower_washerwoman_info,
+                                    target.clocktowerRole!!.nameFor(language),
+                                    pair.first.name,
+                                    pair.second.name,
+                                ),
+                            )
+                        }
+                    }
+                }
+                firstNightLibrarian?.let { librarian ->
+                    val outsider = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Outsider }
+                    item {
+                        ClocktowerInfoCard(
+                            title = stringResource(R.string.clocktower_role_info_format, librarian.name, librarian.hostRoleLabel(context, GameKind.Clocktower)),
+                            body = if (outsider?.clocktowerRole != null) {
+                                val pair = storytellerPairHint(outsider, cards)
+                                if (pair != null) {
+                                    stringResource(
+                                        R.string.clocktower_librarian_info,
+                                        outsider.clocktowerRole!!.nameFor(language),
+                                        pair.first.name,
+                                        pair.second.name,
+                                    )
+                                } else {
+                                    stringResource(R.string.clocktower_no_info)
+                                }
+                            } else {
+                                stringResource(R.string.clocktower_librarian_none)
+                            },
+                        )
+                    }
+                }
+                firstNightInvestigator?.let { investigator ->
+                    val minion = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Minion }
+                    item {
+                        ClocktowerInfoCard(
+                            title = stringResource(R.string.clocktower_role_info_format, investigator.name, investigator.hostRoleLabel(context, GameKind.Clocktower)),
+                            body = if (minion?.clocktowerRole != null) {
+                                val pair = storytellerPairHint(minion, cards)
+                                if (pair != null) {
+                                    stringResource(
+                                        R.string.clocktower_investigator_info,
+                                        minion.clocktowerRole!!.nameFor(language),
+                                        pair.first.name,
+                                        pair.second.name,
+                                    )
+                                } else {
+                                    stringResource(R.string.clocktower_no_info)
+                                }
+                            } else {
+                                stringResource(R.string.clocktower_investigator_none)
+                            },
+                        )
+                    }
+                }
+                chefPlayer?.let { chef ->
+                    item {
+                        ClocktowerInfoCard(
+                            title = stringResource(R.string.clocktower_role_info_format, chef.name, chef.hostRoleLabel(context, GameKind.Clocktower)),
+                            body = stringResource(R.string.clocktower_chef_info, chefEvilPairs(cards)),
+                        )
+                    }
+                }
+                if (actualClocktowerRoleCards(cards, "Spy").isNotEmpty() || actualClocktowerRoleCards(cards, "Baron").isNotEmpty()) {
+                    item {
+                        ClocktowerInfoCard(
+                            title = stringResource(R.string.clocktower_special_reminders_title),
+                            body = buildList {
+                                if (actualClocktowerRoleCards(cards, "Spy").isNotEmpty()) {
+                                    add(stringResource(R.string.clocktower_spy_hint))
+                                }
+                                if (actualClocktowerRoleCards(cards, "Baron").isNotEmpty()) {
+                                    add(stringResource(R.string.clocktower_baron_hint))
+                                }
+                            }.joinToString("\n"),
+                        )
+                    }
+                }
+                item {
+                    Button(
+                        onClick = onAdvanceFromFirstNight,
+                        enabled = gameOutcome == null,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                    ) {
+                        Text(stringResource(R.string.clocktower_start_day_one))
+                    }
+                }
+            }
+
+            ClocktowerPhase.Day -> {
+                if (butlerPlayers.isNotEmpty()) {
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                Text(stringResource(R.string.clocktower_butler_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.clocktower_butler_hint), color = Color(0xFF6F7B74))
+                                SelectablePlayerChips(
+                                    cards = aliveCards.filter { it.name !in butlerPlayers.map(PlayerCard::name) },
+                                    selectedName = butlerMaster,
+                                    onSelect = { onSelectButlerMaster(if (butlerMaster == it) null else it) },
+                                    enabled = gameOutcome == null,
+                                )
+                            }
+                        }
+                    }
+                }
+                item {
+                    Card(
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Text(stringResource(R.string.clocktower_execution_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.clocktower_execution_hint), color = Color(0xFF6F7B74))
+                            SelectablePlayerChips(
+                                cards = aliveCards,
+                                selectedName = selectedExecution,
+                                onSelect = { onSelectExecution(if (selectedExecution == it) null else it) },
+                                enabled = gameOutcome == null,
+                            )
+                            Button(
+                                onClick = onConfirmDay,
+                                enabled = gameOutcome == null,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text(
+                                    if (selectedExecution == null) {
+                                        stringResource(R.string.clocktower_no_execution)
+                                    } else {
+                                        stringResource(R.string.clocktower_confirm_execution)
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            ClocktowerPhase.Night -> {
+                if (poisonerPlayers.isNotEmpty()) {
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                Text(stringResource(R.string.clocktower_poisoner_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.clocktower_poisoner_hint), color = Color(0xFF6F7B74))
+                                SelectablePlayerChips(
+                                    cards = aliveCards,
+                                    selectedName = poisonTarget,
+                                    onSelect = { onSelectPoisonTarget(if (poisonTarget == it) null else it) },
+                                    enabled = gameOutcome == null,
+                                )
+                            }
+                        }
+                    }
+                }
+                empathPlayers.forEach { empath ->
+                    val neighbors = livingNeighbors(cards, empath.name)
+                    item {
+                        ClocktowerInfoCard(
+                            title = stringResource(R.string.clocktower_role_info_format, empath.name, empath.hostRoleLabel(context, GameKind.Clocktower)),
+                            body = stringResource(
+                                R.string.clocktower_empath_info,
+                                neighbors.joinToString(stringResource(R.string.name_separator)) { it.name },
+                                neighbors.count(::isClocktowerEvil),
+                            ),
+                        )
+                    }
+                }
+                fortuneTellerPlayers.forEach { fortuneTeller ->
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                Text(
+                                    stringResource(R.string.clocktower_role_info_format, fortuneTeller.name, fortuneTeller.hostRoleLabel(context, GameKind.Clocktower)),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Text(stringResource(R.string.clocktower_fortune_teller_hint), color = Color(0xFF6F7B74))
+                                Text(stringResource(R.string.clocktower_choose_first_target), fontWeight = FontWeight.SemiBold)
+                                SelectablePlayerChips(
+                                    cards = aliveCards,
+                                    selectedName = fortuneTellerFirst,
+                                    onSelect = { onSelectFortuneTellerFirst(if (fortuneTellerFirst == it) null else it) },
+                                    enabled = gameOutcome == null,
+                                )
+                                Text(stringResource(R.string.clocktower_choose_second_target), fontWeight = FontWeight.SemiBold)
+                                SelectablePlayerChips(
+                                    cards = aliveCards.filter { it.name != fortuneTellerFirst },
+                                    selectedName = fortuneTellerSecond,
+                                    onSelect = { onSelectFortuneTellerSecond(if (fortuneTellerSecond == it) null else it) },
+                                    enabled = gameOutcome == null,
+                                )
+                                fortuneTellerResult?.let { result ->
+                                    Text(
+                                        stringResource(
+                                            R.string.clocktower_fortune_teller_result,
+                                            fortuneTellerFirst ?: "",
+                                            fortuneTellerSecond ?: "",
+                                            result,
+                                        ),
+                                        color = Color(0xFF2F5D50),
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                item {
+                    Card(
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Text(stringResource(R.string.clocktower_demon_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.clocktower_demon_hint), color = Color(0xFF6F7B74))
+                            SelectablePlayerChips(
+                                cards = aliveCards,
+                                selectedName = pendingNightDeath,
+                                onSelect = { onSelectNightDeath(if (pendingNightDeath == it) null else it) },
+                                enabled = gameOutcome == null,
+                            )
+                            ravenkeeperNightDeath?.let {
+                                Text(stringResource(R.string.clocktower_ravenkeeper_hint), fontWeight = FontWeight.SemiBold)
+                                SelectablePlayerChips(
+                                    cards = aliveCards.filter { card -> card.name != ravenkeeperNightDeath.name },
+                                    selectedName = ravenkeeperTarget,
+                                    onSelect = { onSelectRavenkeeperTarget(if (ravenkeeperTarget == it) null else it) },
+                                    enabled = gameOutcome == null,
+                                )
+                                ravenkeeperTarget?.let { targetName ->
+                                    val target = cards.firstOrNull { it.name == targetName }
+                                    if (target != null) {
+                                        Text(
+                                            stringResource(
+                                                R.string.clocktower_ravenkeeper_result,
+                                                target.name,
+                                                target.hostRoleLabel(context, GameKind.Clocktower),
+                                            ),
+                                            color = Color(0xFF2F5D50),
+                                            fontWeight = FontWeight.SemiBold,
+                                        )
+                                    }
+                                }
+                            }
+                            Button(
+                                onClick = onConfirmNight,
+                                enabled = gameOutcome == null,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text(stringResource(R.string.clocktower_confirm_night))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = {
+                        when (phase) {
+                            ClocktowerPhase.FirstNight -> Unit
+                            ClocktowerPhase.Day -> onPhaseChange(ClocktowerPhase.FirstNight)
+                            ClocktowerPhase.Night -> onPhaseChange(ClocktowerPhase.Day)
+                        }
+                    },
+                    enabled = phase != ClocktowerPhase.FirstNight,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    Text(stringResource(R.string.previous_step))
+                }
+                Button(
+                    onClick = {
+                        when (phase) {
+                            ClocktowerPhase.FirstNight -> onAdvanceFromFirstNight()
+                            ClocktowerPhase.Day -> onPhaseChange(ClocktowerPhase.Night)
+                            ClocktowerPhase.Night -> onPhaseChange(ClocktowerPhase.Day)
+                        }
+                    },
+                    enabled = gameOutcome == null,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    Text(stringResource(R.string.next_step))
+                }
+            }
+        }
+
+        item {
+            HorizontalDivider()
+            Text(stringResource(R.string.player_status), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        }
+
+        items(cards) { card ->
+            ClocktowerPlayerStatusRow(card)
+        }
+
+        item {
+            HorizontalDivider()
+            Text(stringResource(R.string.elimination_records), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            if (records.isEmpty()) {
+                Text(stringResource(R.string.no_eliminations), color = Color(0xFF6F7B74))
+            }
+        }
+
+        items(records) { record ->
+            Text(record.displayText(), modifier = Modifier.padding(vertical = 4.dp))
+        }
+
+        item {
+            Button(
+                onClick = onShowResults,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+            ) {
+                Text(if (gameOutcome == null) stringResource(R.string.end_and_reveal) else stringResource(R.string.view_results))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerInfoCard(
+    title: String,
+    body: String,
+) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(body, color = Color(0xFF5C6A63))
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerPlayerStatusRow(card: PlayerCard) {
+    val context = LocalContext.current
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(card.name, fontWeight = FontWeight.SemiBold)
+                    Text(card.hostRoleLabel(context, GameKind.Clocktower), color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
+                }
+                val status = card.eliminatedRound?.let { stringResource(R.string.eliminated_round_format, it) }
+                    ?: stringResource(R.string.active_status)
+                Text(status, color = if (card.eliminatedRound == null) Color(0xFF2F5D50) else Color(0xFF9A4B36))
+            }
+            if (card.clocktowerShownAsDifferentRole() && card.clocktowerShownRole != null) {
+                Text(
+                    stringResource(R.string.clocktower_shown_role_format, card.clocktowerShownRole.nameFor(context.resources.configuration.locales[0].language)),
+                    color = Color(0xFF9A4B36),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
 private fun GameScreen(
+    gameKind: GameKind,
     cards: List<PlayerCard>,
     records: List<EliminationRecord>,
     round: Int,
@@ -597,7 +3480,12 @@ private fun GameScreen(
             ) {
                 Column {
                     Text(stringResource(R.string.host_panel), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text(gameOutcome?.title ?: stringResource(R.string.round_format, round), color = Color(0xFF5C6A63))
+                    val gameName = when (gameKind) {
+                        GameKind.Werewolf -> stringResource(R.string.game_werewolf)
+                        GameKind.Clocktower -> stringResource(R.string.game_clocktower)
+                        GameKind.Undercover -> stringResource(R.string.game_who_is_undercover)
+                    }
+                    Text("$gameName · ${gameOutcome?.title ?: stringResource(R.string.round_format, round)}", color = Color(0xFF5C6A63))
                 }
                 TextButton(onClick = onNewGame) {
                     Text(stringResource(R.string.new_game))
@@ -714,14 +3602,22 @@ private fun PlayerStatusRow(card: PlayerCard) {
 
 @Composable
 private fun ResultsDialog(
+    gameKind: GameKind,
     cards: List<PlayerCard>,
     outcome: GameOutcome?,
     onDismiss: () -> Unit,
     onNewGame: () -> Unit,
 ) {
+    val defaultTitle = if (gameKind == GameKind.Werewolf) {
+        stringResource(R.string.werewolf_role_results)
+    } else if (gameKind == GameKind.Clocktower) {
+        stringResource(R.string.clocktower_role_results)
+    } else {
+        stringResource(R.string.identity_results)
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(outcome?.title ?: stringResource(R.string.identity_results)) },
+        title = { Text(outcome?.title ?: defaultTitle) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (outcome != null) {
@@ -730,7 +3626,20 @@ private fun ResultsDialog(
                     HorizontalDivider()
                 }
                 cards.forEach { card ->
-                    Text(stringResource(R.string.result_card_format, card.name, stringResource(card.role.labelResId()), card.word))
+                    if (gameKind == GameKind.Werewolf || gameKind == GameKind.Clocktower) {
+                        val roleText = if (gameKind == GameKind.Clocktower && card.clocktowerShownAsDifferentRole() && card.clocktowerShownRole != null) {
+                            stringResource(
+                                R.string.clocktower_result_role_format,
+                                card.hostRoleLabel(LocalContext.current, GameKind.Clocktower),
+                                card.clocktowerShownRole.nameFor(LocalContext.current.resources.configuration.locales[0].language),
+                            )
+                        } else {
+                            card.hostRoleLabel(LocalContext.current, gameKind)
+                        }
+                        Text(stringResource(R.string.result_role_format, card.name, roleText))
+                    } else {
+                        Text(stringResource(R.string.result_card_format, card.name, stringResource(card.role.labelResId()), card.word))
+                    }
                 }
             }
         },
