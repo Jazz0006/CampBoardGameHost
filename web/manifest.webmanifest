@@ -1,0 +1,17 @@
+{
+  "name": "Camp Board Game Host",
+  "short_name": "Host Helper",
+  "description": "Offline board-game host assistant for Undercover, Werewolf, and Blood on the Clocktower.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6efe1",
+  "theme_color": "#16342f",
+  "icons": [
+    {
+      "src": "./app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
