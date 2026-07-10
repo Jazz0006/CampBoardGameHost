@@ -295,11 +295,16 @@
     <string name="clocktower_first_night_demon_bluffs_format">可用伪装身份：%1$s</string>
     <string name="clocktower_first_night_no_minions_reason">本局没有爪牙。保留这个步骤用于维持首夜节奏。</string>
     <string name="clocktower_first_night_no_demon_reason">当前没有恶魔。通常只有结算后才会出现这种情况。</string>
-    <string name="clocktower_first_night_minion_wake_format">请唤醒所有爪牙：%1$s。</string>
-    <string name="clocktower_first_night_minion_action_format">1. 轻拍所有爪牙：%1$s。\n2. 示意他们互相确认。\n3. 告诉他们恶魔是谁。\n4. 确认后示意他们闭眼。</string>
-    <string name="clocktower_first_night_demon_action_format">1. 轻拍 %1$s，示意当前恶魔睁眼。\n2. 告诉他爪牙是谁。\n3. 告诉他本局可用伪装身份。\n4. 确认后示意他闭眼。</string>
+    <string name="clocktower_first_night_minion_wake_format">请轻拍并唤醒：%1$s。不要大声念出“爪牙”。</string>
+    <string name="clocktower_first_night_minion_action_format">轻拍 %1$s，示意睁眼。若有多名爪牙，先让他们互相确认；然后点“全屏展示给玩家”，只给已唤醒的玩家看。</string>
+    <string name="clocktower_first_night_demon_action_format">轻拍 %1$s，示意睁眼。点“全屏展示给玩家”，只给恶魔看爪牙和伪装身份；看完后收回手机，示意闭眼。</string>
     <string name="clocktower_first_night_placeholder_action">不要唤醒任何玩家。为了避免泄露信息，请停顿 2-3 秒，然后点击下一步。</string>
     <string name="clocktower_first_night_minion_explain">首夜爪牙需要知道恶魔是谁，并确认彼此身份。</string>
     <string name="clocktower_first_night_demon_explain">首夜恶魔需要知道爪牙是谁，并获得几个可以伪装的身份。首夜不进行击杀。</string>
     <string name="clocktower_display_close">关闭展示卡</string>
+    <string name="clocktower_host_choose_monk_protect">选择僧侣保护目标</string>
+    <string name="clocktower_host_choose_monk_protect_hint">请选择除僧侣自己以外的一名玩家。若恶魔今晚攻击该目标，天亮时宣布无人死亡。</string>
+    <string name="clocktower_record_imp_passed">小恶魔自杀，继承为新的恶魔</string>
+    <string name="clocktower_record_monk_protected">恶魔攻击被僧侣保护，未死亡</string>
+    <string name="clocktower_record_soldier_safe">士兵免疫恶魔攻击，未死亡</string>
 </resources>

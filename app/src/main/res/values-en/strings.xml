@@ -295,11 +295,16 @@
     <string name="clocktower_first_night_demon_bluffs_format">Bluff characters: %1$s</string>
     <string name="clocktower_first_night_no_minions_reason">There are no Minions in play. Keep this step to preserve first-night rhythm.</string>
     <string name="clocktower_first_night_no_demon_reason">There is no Demon right now. This usually only happens after resolution effects.</string>
-    <string name="clocktower_first_night_minion_wake_format">Wake all Minions: %1$s.</string>
-    <string name="clocktower_first_night_minion_action_format">1. Tap all Minions: %1$s.\n2. Let them recognize each other.\n3. Tell them who the Demon is.\n4. After they confirm, signal them to close their eyes.</string>
-    <string name="clocktower_first_night_demon_action_format">1. Tap %1$s and signal the Demon to wake.\n2. Tell them who the Minions are.\n3. Tell them the available bluff characters.\n4. After they confirm, signal them to close their eyes.</string>
+    <string name="clocktower_first_night_minion_wake_format">Quietly tap and wake: %1$s. Do not say “Minion” out loud.</string>
+    <string name="clocktower_first_night_minion_action_format">Tap %1$s and signal them to open their eyes. If there are multiple Minions, let them recognize each other first; then tap “Show full screen to player” and show the phone only to the awakened player(s).</string>
+    <string name="clocktower_first_night_demon_action_format">Tap %1$s and signal the Demon to open their eyes. Tap “Show full screen to player” and show only the Demon their Minions and bluff characters; then take the phone back and signal them to close their eyes.</string>
     <string name="clocktower_first_night_placeholder_action">Do not wake any player. Pause for 2-3 seconds, then tap next.</string>
     <string name="clocktower_first_night_minion_explain">On the first night, Minions learn who the Demon is and recognize each other.</string>
     <string name="clocktower_first_night_demon_explain">On the first night, the Demon learns who the Minions are and receives bluff characters. The Demon does not kill on night 1.</string>
     <string name="clocktower_display_close">Close display card</string>
+    <string name="clocktower_host_choose_monk_protect">Choose Monk protection target</string>
+    <string name="clocktower_host_choose_monk_protect_hint">Choose one player other than the Monk. If the Demon attacks that player tonight, announce no death at dawn.</string>
+    <string name="clocktower_record_imp_passed">Imp killed itself; a Minion became the new Demon</string>
+    <string name="clocktower_record_monk_protected">Demon attack was stopped by Monk protection</string>
+    <string name="clocktower_record_soldier_safe">Soldier is safe from the Demon and did not die</string>
 </resources>

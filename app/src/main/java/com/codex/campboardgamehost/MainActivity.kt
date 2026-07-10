@@ -207,6 +207,7 @@ private enum class ClocktowerNightAction {
     None,
     RedHerring,
     Poison,
+    MonkProtect,
     FortuneTeller,
     DemonKill,
     Ravenkeeper,
@@ -414,6 +415,13 @@ private val troubleBrewingRoles = listOf(
     ClocktowerRole(ClocktowerTeam.Demon, "小恶魔", "Imp", "每晚选择一名玩家死亡；可选择自己并传递恶魔身份。", "Each night, choose a player to die. You may choose yourself to pass on the Demon role."),
 )
 
+private val completeTroubleBrewingRoles = (troubleBrewingRoles + listOf(
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "送葬者", "Undertaker", "每个夜晚，得知今天被处决玩家的角色。", "Each night, learn which character died by execution today."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "僧侣", "Monk", "每个夜晚，选择除自己以外的一名玩家，使其免受恶魔伤害。", "Each night, choose a player other than yourself: they are safe from the Demon tonight."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "处女", "Virgin", "首次被镇民提名时，提名者立即被处决。", "The first time you are nominated by a Townsfolk, the nominator is executed immediately."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "猎手", "Slayer", "每局一次，白天选择一名玩家；若其是恶魔，该玩家死亡。", "Once per game during the day, choose a player: if they are the Demon, they die."),
+)).distinctBy { it.enName }
+
 private fun ClocktowerTeam.label(context: Context): String = when (this) {
     ClocktowerTeam.Townsfolk -> context.getString(R.string.clocktower_team_townsfolk)
     ClocktowerTeam.Outsider -> context.getString(R.string.clocktower_team_outsider)
@@ -434,7 +442,8 @@ private fun LastWordsMode.labelResId(): Int = when (this) {
 
 private fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int> {
     return when (playerCount) {
-        5, 6 -> mapOf(ClocktowerTeam.Townsfolk to 3, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
+        5 -> mapOf(ClocktowerTeam.Townsfolk to 3, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
+        6 -> mapOf(ClocktowerTeam.Townsfolk to 4, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
         7 -> mapOf(ClocktowerTeam.Townsfolk to 5, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
         8 -> mapOf(ClocktowerTeam.Townsfolk to 5, ClocktowerTeam.Outsider to 1, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
         9 -> mapOf(ClocktowerTeam.Townsfolk to 5, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
@@ -447,7 +456,7 @@ private fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int> {
 private fun clocktowerRolesFor(playerCount: Int): List<ClocktowerRole> {
     val distribution = clocktowerDistribution(playerCount)
     return distribution.flatMap { (team, count) ->
-        troubleBrewingRoles.filter { it.team == team }.shuffled().take(count)
+        completeTroubleBrewingRoles.filter { it.team == team }.shuffled().take(count)
     }.shuffled()
 }
 
@@ -458,24 +467,26 @@ private data class ClocktowerAssignment(
 
 private fun generateClocktowerAssignments(playerCount: Int): List<ClocktowerAssignment> {
     val baseDistribution = clocktowerDistribution(playerCount)
-    val demon = troubleBrewingRoles.filter { it.team == ClocktowerTeam.Demon }.random()
-    val minions = troubleBrewingRoles
+    val demon = completeTroubleBrewingRoles.filter { it.team == ClocktowerTeam.Demon }.random()
+    val baseOutsiderCount = baseDistribution.getValue(ClocktowerTeam.Outsider)
+    val minions = completeTroubleBrewingRoles
         .filter { it.team == ClocktowerTeam.Minion }
+        .filter { baseOutsiderCount > 0 || it.enName != "Baron" }
         .shuffled()
         .take(baseDistribution.getValue(ClocktowerTeam.Minion))
     val includesBaron = minions.any { it.enName == "Baron" }
-    val outsiderCount = baseDistribution.getValue(ClocktowerTeam.Outsider) + if (includesBaron) 2 else 0
+    val outsiderCount = baseOutsiderCount + if (includesBaron) 2 else 0
     val townsfolkCount = (baseDistribution.getValue(ClocktowerTeam.Townsfolk) - if (includesBaron) 2 else 0).coerceAtLeast(0)
-    val outsiders = troubleBrewingRoles
+    val outsiders = completeTroubleBrewingRoles
         .filter { it.team == ClocktowerTeam.Outsider }
         .shuffled()
         .take(outsiderCount)
-    val townsfolk = troubleBrewingRoles
+    val townsfolk = completeTroubleBrewingRoles
         .filter { it.team == ClocktowerTeam.Townsfolk }
         .shuffled()
         .take(townsfolkCount)
     val actualRoles = (listOf(demon) + minions + outsiders + townsfolk).shuffled()
-    val townsfolkPool = troubleBrewingRoles.filter { it.team == ClocktowerTeam.Townsfolk }
+    val townsfolkPool = completeTroubleBrewingRoles.filter { it.team == ClocktowerTeam.Townsfolk }
     return actualRoles.map { role ->
         if (role.enName == "Drunk") {
             val fakeRole = townsfolkPool
@@ -525,6 +536,7 @@ private fun CampBoardGameHostApp() {
     var clocktowerRavenkeeperTarget by remember { mutableStateOf<String?>(null) }
     var clocktowerRedHerring by remember { mutableStateOf<String?>(null) }
     var clocktowerButlerMaster by remember { mutableStateOf<String?>(null) }
+    var clocktowerMonkProtectedTarget by remember { mutableStateOf<String?>(null) }
     var showResults by remember { mutableStateOf(false) }
     var gameOutcome by remember { mutableStateOf<GameOutcome?>(null) }
     var newCommonPlayerName by remember { mutableStateOf("") }
@@ -636,6 +648,7 @@ private fun CampBoardGameHostApp() {
         clocktowerRavenkeeperTarget = null
         clocktowerRedHerring = null
         clocktowerButlerMaster = null
+        clocktowerMonkProtectedTarget = null
         screen = Screen.PassPhone
     }
 
@@ -688,6 +701,7 @@ private fun CampBoardGameHostApp() {
     fun startClocktowerGame() {
         if (playerNames.size < MIN_CLOCKTOWER_PLAYERS) return
         val assignments = generateClocktowerAssignments(playerNames.size)
+        if (assignments.size != playerNames.size) return
         cards.clear()
         cards.addAll(playerNames.mapIndexed { index, name ->
             val assignment = assignments[index]
@@ -726,10 +740,23 @@ private fun CampBoardGameHostApp() {
         val alivePlayers = cards.filter { it.eliminatedRound == null }
         if (alivePlayers.size < 5) return null
         val scarletWoman = alivePlayers.firstOrNull { it.clocktowerRole?.enName == "Scarlet Woman" } ?: return null
-        val imp = troubleBrewingRoles.first { it.enName == "Imp" }
+        val imp = completeTroubleBrewingRoles.first { it.enName == "Imp" }
         setClocktowerActualRole(scarletWoman.name, imp)
         records.add(EliminationRecord(round, scarletWoman.name, context.getString(R.string.clocktower_record_scarlet_woman_promoted)))
         return scarletWoman.name
+    }
+
+    fun promoteDemonSuccessorIfNeeded(impDeathWasSelfChosen: Boolean): String? {
+        promoteScarletWomanIfNeeded()?.let { return it }
+        if (!impDeathWasSelfChosen) return null
+        val imp = completeTroubleBrewingRoles.first { it.enName == "Imp" }
+        val minion = cards
+            .filter { it.eliminatedRound == null }
+            .firstOrNull { it.clocktowerTeam == ClocktowerTeam.Minion }
+            ?: return null
+        setClocktowerActualRole(minion.name, imp)
+        records.add(EliminationRecord(round, minion.name, context.getString(R.string.clocktower_record_imp_passed)))
+        return minion.name
     }
 
     CompositionLocalProvider(LocalContext provides context) {
@@ -987,6 +1014,7 @@ private fun CampBoardGameHostApp() {
                         ravenkeeperTarget = clocktowerRavenkeeperTarget,
                         redHerring = clocktowerRedHerring,
                         butlerMaster = clocktowerButlerMaster,
+                        monkProtectedTarget = clocktowerMonkProtectedTarget,
                         gameOutcome = gameOutcome,
                         onPhaseChange = { clocktowerPhase = it },
                         onSelectNightDeath = { clocktowerPendingNightDeath = it },
@@ -997,6 +1025,7 @@ private fun CampBoardGameHostApp() {
                         onSelectRavenkeeperTarget = { clocktowerRavenkeeperTarget = it },
                         onSelectRedHerring = { clocktowerRedHerring = it },
                         onSelectButlerMaster = { clocktowerButlerMaster = it },
+                        onSelectMonkProtectedTarget = { clocktowerMonkProtectedTarget = it },
                         onAdvanceFromFirstNight = {
                             clocktowerPhase = ClocktowerPhase.Day
                         },
@@ -1017,7 +1046,7 @@ private fun CampBoardGameHostApp() {
                                             reason = context.getString(R.string.clocktower_outcome_saint_reason, executionName),
                                         )
                                     } else if (executedCard.clocktowerTeam == ClocktowerTeam.Demon) {
-                                        val promotedName = promoteScarletWomanIfNeeded()
+                                        val promotedName = promoteDemonSuccessorIfNeeded(impDeathWasSelfChosen = false)
                                         executionOutcome = if (promotedName == null) {
                                             evaluateGameOutcome(context, cards, currentGameKind)
                                         } else {
@@ -1049,9 +1078,25 @@ private fun CampBoardGameHostApp() {
                                 val index = cards.indexOfFirst { it.name == deathName }
                                 val nightDeathCard = cards.getOrNull(index)
                                 if (index >= 0 && nightDeathCard != null && nightDeathCard.eliminatedRound == null) {
-                                    cards[index] = nightDeathCard.copy(eliminatedRound = round)
-                                    records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
-                                    if (nightDeathCard.clocktowerRole?.enName == "Ravenkeeper" && clocktowerRavenkeeperTarget != null) {
+                                    val protectedByMonk = clocktowerMonkProtectedTarget == deathName
+                                    val protectedBySoldier = nightDeathCard.clocktowerRole?.enName == "Soldier"
+                                    if (protectedByMonk || protectedBySoldier) {
+                                        val note = if (protectedBySoldier) {
+                                            context.getString(R.string.clocktower_record_soldier_safe)
+                                        } else {
+                                            context.getString(R.string.clocktower_record_monk_protected)
+                                        }
+                                        records.add(EliminationRecord(round, deathName, note))
+                                        clocktowerPendingNightDeath = null
+                                    } else {
+                                        val impSelfChosen = nightDeathCard.clocktowerTeam == ClocktowerTeam.Demon
+                                        cards[index] = nightDeathCard.copy(eliminatedRound = round)
+                                        records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
+                                        if (impSelfChosen) {
+                                            promoteDemonSuccessorIfNeeded(impDeathWasSelfChosen = true)
+                                        }
+                                    }
+                                    if (!protectedByMonk && !protectedBySoldier && nightDeathCard.clocktowerRole?.enName == "Ravenkeeper" && clocktowerRavenkeeperTarget != null) {
                                         records.add(
                                             EliminationRecord(
                                                 round,
@@ -1076,6 +1121,7 @@ private fun CampBoardGameHostApp() {
                             clocktowerFortuneTellerFirst = null
                             clocktowerFortuneTellerSecond = null
                             clocktowerRavenkeeperTarget = null
+                            clocktowerMonkProtectedTarget = null
                         },
                         onShowResults = {
                             gameOutcome = gameOutcome ?: GameOutcome(
@@ -1099,6 +1145,7 @@ private fun CampBoardGameHostApp() {
                             clocktowerRavenkeeperTarget = null
                             clocktowerRedHerring = null
                             clocktowerButlerMaster = null
+                            clocktowerMonkProtectedTarget = null
                         },
                     )
 
@@ -2180,7 +2227,6 @@ private fun ClocktowerSettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(stringResource(R.string.clocktower_script), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    Text(stringResource(R.string.clocktower_first_version_hint), color = Color(0xFF6F7B74))
                     HorizontalDivider()
                     ClocktowerTeam.entries.forEach { team ->
                         val count = distribution[team] ?: 0
@@ -2192,32 +2238,6 @@ private fun ClocktowerSettingsScreen(
                             Text(team.label(LocalContext.current), fontWeight = FontWeight.SemiBold)
                             Text(count.toString(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         }
-                    }
-                }
-            }
-        }
-        item {
-            Text(stringResource(R.string.clocktower_role_pool), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        }
-        ClocktowerTeam.entries.forEach { team ->
-            item {
-                Text(team.label(LocalContext.current), color = Color(0xFF5C6A63), fontWeight = FontWeight.SemiBold)
-            }
-            items(troubleBrewingRoles.filter { it.team == team }) { role ->
-                Card(
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        val language = LocalContext.current.resources.configuration.locales[0].language
-                        Text(role.nameFor(language), fontWeight = FontWeight.SemiBold)
-                        Text(role.descriptionFor(language), color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -3082,6 +3102,7 @@ private fun ClocktowerJudgeScreen(
     ravenkeeperTarget: String?,
     redHerring: String?,
     butlerMaster: String?,
+    monkProtectedTarget: String?,
     gameOutcome: GameOutcome?,
     onPhaseChange: (ClocktowerPhase) -> Unit,
     onSelectNightDeath: (String?) -> Unit,
@@ -3092,6 +3113,7 @@ private fun ClocktowerJudgeScreen(
     onSelectRavenkeeperTarget: (String?) -> Unit,
     onSelectRedHerring: (String?) -> Unit,
     onSelectButlerMaster: (String?) -> Unit,
+    onSelectMonkProtectedTarget: (String?) -> Unit,
     onAdvanceFromFirstNight: () -> Unit,
     onConfirmDay: () -> Unit,
     onConfirmNight: () -> Unit,
@@ -3151,7 +3173,7 @@ private fun ClocktowerJudgeScreen(
     var highestVoteName by remember(round) { mutableStateOf<String?>(null) }
     var highestVoteCount by remember(round) { mutableStateOf(0) }
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
-    val executionThreshold = (aliveCards.size / 2) + 1
+    val executionThreshold = (aliveCards.size + 1) / 2
 
     fun roleActor(enName: String): PlayerCard? =
         actualClocktowerRoleCards(cards, enName).firstOrNull { it.eliminatedRound == null }
@@ -3175,6 +3197,7 @@ private fun ClocktowerJudgeScreen(
         displayPrimary: String? = tellPlayer,
         displaySecondary: String? = null,
         displayFooter: String? = explanation,
+        hostInstruction: String? = null,
     ): ClocktowerNightStepUi {
         val actor = roleActor(enName)
         val resolvedDisplayKind = when (enName) {
@@ -3190,7 +3213,7 @@ private fun ClocktowerJudgeScreen(
             isRealAction = actor != null,
             reason = roleMissingReason(enName),
             storytellerAction = if (actor != null) {
-                "1. 轻拍 ${actor.seatLabel(cards)}，示意他睁眼。\n2. 告诉他下面的信息。\n3. 确认后示意他闭眼。"
+                hostInstruction ?: "轻拍 ${actor.seatLabel(cards)}，示意睁眼。把本步骤信息只给他看；看完后收回手机，示意闭眼。"
             } else {
                 "不要唤醒任何玩家。为了避免玩家通过流程判断角色是否在场，请停顿 2-3 秒，然后点击下一步。"
             },
@@ -3217,7 +3240,7 @@ private fun ClocktowerJudgeScreen(
     val empathNumber = empathNeighbors.count(::isClocktowerEvil).toString()
     val demonCard = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon }
     val minionCards = cards.filter { it.clocktowerTeam == ClocktowerTeam.Minion }
-    val demonBluffs = troubleBrewingRoles
+    val demonBluffs = completeTroubleBrewingRoles
         .filter { role -> role.team == ClocktowerTeam.Townsfolk && cards.none { it.clocktowerRole?.enName == role.enName } }
         .take(3)
     val minionInfoText = demonCard?.let { stringResource(R.string.clocktower_first_night_minion_info_format, it.seatLabel(cards)) }
@@ -3299,30 +3322,35 @@ private fun ClocktowerJudgeScreen(
                 enName = "Washerwoman",
                 tellPlayer = washerwomanTarget?.let { "${it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${it.seatLabel(cards)} / ${storytellerPairHint(it, cards)?.second?.seatLabel(cards).orEmpty()}" },
                 explanation = "洗衣妇会得知某个镇民在两名玩家之一中。",
+                hostInstruction = "轻拍洗衣妇，示意睁眼。点击“全屏展示给玩家”，只给她看；看完后收回手机，示意闭眼。",
             ),
             infoStep(
                 roleName = "图书管理员",
                 enName = "Librarian",
                 tellPlayer = librarianTarget?.let { "${it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${it.seatLabel(cards)} / ${storytellerPairHint(it, cards)?.second?.seatLabel(cards).orEmpty()}" } ?: "本局没有外来者。",
                 explanation = "图书管理员会得知某个外来者在两名玩家之一中，或得知没有外来者。",
+                hostInstruction = "轻拍图书管理员，示意睁眼。把结果只给他看；如果显示“没有外来者”，也只告诉他本人。",
             ),
             infoStep(
                 roleName = "调查员",
                 enName = "Investigator",
                 tellPlayer = investigatorTarget?.let { "${it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${it.seatLabel(cards)} / ${storytellerPairHint(it, cards)?.second?.seatLabel(cards).orEmpty()}" } ?: "本局没有爪牙。",
                 explanation = "调查员会得知某个爪牙在两名玩家之一中，或得知没有爪牙。",
+                hostInstruction = "轻拍调查员，示意睁眼。把结果只给他看；不要让其他玩家看到被点名的两人。",
             ),
             infoStep(
                 roleName = "厨师",
                 enName = "Chef",
                 tellPlayer = chefEvilPairs(cards).toString(),
                 explanation = "这个数字表示有几对邪恶玩家相邻而坐。",
+                hostInstruction = "轻拍厨师，示意睁眼。把数字只给他看；确认后收回手机，示意闭眼。",
             ),
             infoStep(
                 roleName = "共情者",
                 enName = "Empath",
                 tellPlayer = empathNeighbors.count(::isClocktowerEvil).toString(),
                 explanation = "这个数字表示共情者两个存活邻居中有几个邪恶玩家。",
+                hostInstruction = "轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。",
             ),
             infoStep(
                 roleName = "占卜师",
@@ -3330,18 +3358,22 @@ private fun ClocktowerJudgeScreen(
                 tellPlayer = fortuneTellerResult,
                 explanation = "让占卜师选择两名玩家。如果其中有恶魔或红鲱鱼，告诉他“是”。",
                 action = ClocktowerNightAction.FortuneTeller,
+                hostInstruction = "轻拍占卜师，示意睁眼。让他依次指两名玩家，在下面记录；结果出现后只告诉他“是”或“否”。",
             ),
             infoStep(
                 roleName = "管家",
                 enName = "Butler",
                 tellPlayer = butlerMaster?.let { "今天的主人：${playerSeatLabel(cards, it)}" },
                 explanation = "管家每天选择一名主人，白天只能在主人投票时投票。",
+                displayKind = ClocktowerDisplayKind.None,
+                hostInstruction = "轻拍管家，示意睁眼。让他指一名玩家作为今天的主人；记在心里，白天投票时提醒自己核对。",
             ),
             infoStep(
                 roleName = "间谍",
                 enName = "Spy",
                 tellPlayer = "让间谍查看完整魔典。",
                 explanation = "间谍可以查看所有玩家的真实身份。",
+                hostInstruction = "轻拍间谍，示意睁眼。把说书人总览给他短暂查看；收回手机后示意闭眼。",
             ),
         )
     } else {
@@ -3352,18 +3384,23 @@ private fun ClocktowerJudgeScreen(
                 tellPlayer = poisonTarget?.let { "已选择：${playerSeatLabel(cards, it)}" },
                 explanation = "投毒者选择一名玩家，使其能力暂时失效。",
                 action = ClocktowerNightAction.Poison,
+                displayKind = ClocktowerDisplayKind.None,
+                hostInstruction = "轻拍投毒者，示意睁眼。让他指一名玩家，在下面记录为今晚中毒目标。",
             ),
             infoStep(
                 roleName = "管家",
                 enName = "Butler",
                 tellPlayer = butlerMaster?.let { "今天的主人：${playerSeatLabel(cards, it)}" },
                 explanation = "管家每天选择一名主人。",
+                displayKind = ClocktowerDisplayKind.None,
+                hostInstruction = "轻拍管家，示意睁眼。让他指今天的主人；白天投票时用这个记录提醒自己。",
             ),
             infoStep(
                 roleName = "共情者",
                 enName = "Empath",
                 tellPlayer = empathNeighbors.count(::isClocktowerEvil).toString(),
                 explanation = "这个数字表示共情者两个存活邻居中有几个邪恶玩家。",
+                hostInstruction = "轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。",
             ),
             infoStep(
                 roleName = "占卜师",
@@ -3371,6 +3408,16 @@ private fun ClocktowerJudgeScreen(
                 tellPlayer = fortuneTellerResult,
                 explanation = "让占卜师选择两名玩家。如果其中有恶魔或红鲱鱼，告诉他“是”。",
                 action = ClocktowerNightAction.FortuneTeller,
+                hostInstruction = "轻拍占卜师，示意睁眼。让他依次指两名玩家，在下面记录；结果出现后只告诉他“是”或“否”。",
+            ),
+            infoStep(
+                roleName = "僧侣",
+                enName = "Monk",
+                tellPlayer = monkProtectedTarget?.let { "已选择保护：${playerSeatLabel(cards, it)}。如果恶魔今晚选择该玩家，他不会死亡。" },
+                explanation = "僧侣每晚选择除自己以外的一名玩家。若恶魔今晚攻击被保护的玩家，天亮时宣布无人死亡；不要透露是僧侣保护导致。",
+                action = ClocktowerNightAction.MonkProtect,
+                displayKind = ClocktowerDisplayKind.None,
+                hostInstruction = "轻拍僧侣，示意睁眼。让他指一名除自己以外的玩家，在下面记录为今晚保护目标。",
             ),
             ClocktowerNightStepUi(
                 title = "恶魔行动",
@@ -3378,7 +3425,7 @@ private fun ClocktowerJudgeScreen(
                 isRealAction = aliveCards.any { it.clocktowerTeam == ClocktowerTeam.Demon },
                 reason = if (aliveCards.none { it.clocktowerTeam == ClocktowerTeam.Demon }) "当前没有存活恶魔。" else "",
                 storytellerAction = aliveCards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon }?.let {
-                    "1. 轻拍 ${it.seatLabel(cards)}，示意当前恶魔睁眼。\n2. 让他选择今晚要杀死的玩家。\n3. 在下方记录目标。\n4. 示意他闭眼。"
+                    "轻拍 ${it.seatLabel(cards)}，示意睁眼。让他指今晚要杀死的玩家，在下面记录；记录后示意闭眼。"
                 } ?: "不要唤醒任何玩家，停顿 2-3 秒后继续。",
                 tellPlayer = pendingNightDeath?.let { "已记录：今晚恶魔选择杀死 ${playerSeatLabel(cards, it)}。现在不要宣布死亡，等天亮统一宣布。" },
                 explanation = "恶魔选择的死亡目标会在天亮时统一公布。",
@@ -3390,6 +3437,7 @@ private fun ClocktowerJudgeScreen(
                 tellPlayer = ravenkeeperTarget?.let { "${playerSeatLabel(cards, it)} 的真实角色是 ${cards.firstOrNull { card -> card.name == it }?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()}" },
                 explanation = "只有守鸦人夜晚死亡时才唤醒他，让他选择一名玩家并得知其角色。",
                 action = ClocktowerNightAction.Ravenkeeper,
+                hostInstruction = "如果今晚死的是守鸦人，轻拍他睁眼。让他指一名玩家，在下面记录后把该玩家角色只给他看。",
             ),
         )
     }
@@ -3459,6 +3507,7 @@ private fun ClocktowerJudgeScreen(
                         selectedName = when (currentStep.action) {
                             ClocktowerNightAction.RedHerring -> redHerring
                             ClocktowerNightAction.Poison -> poisonTarget
+                            ClocktowerNightAction.MonkProtect -> monkProtectedTarget
                             ClocktowerNightAction.DemonKill -> pendingNightDeath
                             ClocktowerNightAction.Ravenkeeper -> ravenkeeperTarget
                             else -> null
@@ -3469,6 +3518,7 @@ private fun ClocktowerJudgeScreen(
                             when (currentStep.action) {
                                 ClocktowerNightAction.RedHerring -> onSelectRedHerring(if (redHerring == name) null else name)
                                 ClocktowerNightAction.Poison -> onSelectPoisonTarget(if (poisonTarget == name) null else name)
+                                ClocktowerNightAction.MonkProtect -> onSelectMonkProtectedTarget(if (monkProtectedTarget == name) null else name)
                                 ClocktowerNightAction.DemonKill -> onSelectNightDeath(if (pendingNightDeath == name) null else name)
                                 ClocktowerNightAction.Ravenkeeper -> onSelectRavenkeeperTarget(if (ravenkeeperTarget == name) null else name)
                                 else -> Unit
@@ -3477,6 +3527,12 @@ private fun ClocktowerJudgeScreen(
                         onSelectFortuneTellerFirst = { onSelectFortuneTellerFirst(if (fortuneTellerFirst == it) null else it) },
                         onSelectFortuneTellerSecond = { onSelectFortuneTellerSecond(if (fortuneTellerSecond == it) null else it) },
                         onShowPlayerDisplay = { playerDisplayStep = currentStep },
+                        canGoPrevious = nightStepIndex > 0,
+                        onPrevious = {
+                            if (nightStepIndex > 0) {
+                                nightStepIndex -= 1
+                            }
+                        },
                         onNext = {
                             if (nightStepIndex < nightSteps.lastIndex) {
                                 nightStepIndex += 1
@@ -4405,28 +4461,52 @@ private fun ClocktowerNightStepCardLocalized(
     onSelectFortuneTellerFirst: (String) -> Unit,
     onSelectFortuneTellerSecond: (String) -> Unit,
     onShowPlayerDisplay: () -> Unit,
+    canGoPrevious: Boolean,
+    onPrevious: () -> Unit,
     onNext: () -> Unit,
 ) {
-    HostScriptCard(
-        title = stringResource(R.string.clocktower_host_current_step_format, step.title),
-        script = step.wakeText ?: step.actor?.let { stringResource(R.string.clocktower_host_wake_player_format, it.seatLabel(cards), step.title) }
-            ?: stringResource(R.string.clocktower_host_wake_no_player),
-        action = step.storytellerAction,
+    val wakeText = step.wakeText
+        ?: step.actor?.let { stringResource(R.string.clocktower_host_wake_player_format, it.seatLabel(cards), step.title) }
+        ?: stringResource(R.string.clocktower_host_wake_no_player)
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
-        HostInstructionBlock(
-            label = stringResource(R.string.clocktower_host_real_action),
-            text = if (step.isRealAction) stringResource(R.string.clocktower_host_yes) else stringResource(R.string.clocktower_host_no),
-            backgroundColor = if (step.isRealAction) Color(0xFFEAF2EA) else Color(0xFFFFF4DC),
-            textColor = if (step.isRealAction) Color(0xFF2F5D50) else Color(0xFF9A4B36),
-        )
-        if (!step.isRealAction && step.reason.isNotBlank()) {
-            HostInstructionBlock(
-                label = stringResource(R.string.clocktower_host_reason),
-                text = step.reason,
-                backgroundColor = Color(0xFFFFFCF6),
-                textColor = Color(0xFF6F7B74),
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(stringResource(R.string.clocktower_host_current_step_format, step.title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(
+                wakeText,
+                color = if (step.isRealAction) Color(0xFF1F2925) else Color(0xFF9A4B36),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
             )
-        }
+            Text(
+                if (step.isRealAction) {
+                    step.storytellerAction
+                } else {
+                    listOf(step.reason, step.storytellerAction)
+                        .filter { it.isNotBlank() }
+                        .joinToString("\n")
+                },
+                color = Color(0xFF5C6A63),
+            )
+
+            if (step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None) {
+                Text(stringResource(R.string.clocktower_host_display_safety), color = Color(0xFF9A4B36), style = MaterialTheme.typography.bodySmall)
+                OutlinedButton(
+                    onClick = onShowPlayerDisplay,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    Text(stringResource(R.string.clocktower_host_show_to_player))
+                }
+            }
 
         when (step.action) {
             ClocktowerNightAction.RedHerring -> {
@@ -4448,6 +4528,21 @@ private fun ClocktowerNightStepCardLocalized(
                 HostActionSection(title = stringResource(R.string.clocktower_host_choose_poison_target)) {
                     SelectablePlayerChips(
                         cards = aliveCards,
+                        selectedName = selectedName,
+                        enabled = step.isRealAction,
+                        allCards = cards,
+                        onSelect = onSelectName,
+                    )
+                }
+            }
+
+            ClocktowerNightAction.MonkProtect -> {
+                HostActionSection(
+                    title = stringResource(R.string.clocktower_host_choose_monk_protect),
+                    helper = stringResource(R.string.clocktower_host_choose_monk_protect_hint),
+                ) {
+                    SelectablePlayerChips(
+                        cards = aliveCards.filter { it.name != step.actor?.name },
                         selectedName = selectedName,
                         enabled = step.isRealAction,
                         allCards = cards,
@@ -4510,39 +4605,34 @@ private fun ClocktowerNightStepCardLocalized(
                 }
             }
 
-            ClocktowerNightAction.None -> Unit
+            else -> Unit
         }
 
-        step.tellPlayer?.takeIf { it.isNotBlank() }?.let {
-            HostInstructionBlock(
-                label = stringResource(R.string.clocktower_host_tell_player),
-                text = it,
-                backgroundColor = Color(0xFFEAF2EA),
-                textColor = Color(0xFF2F5D50),
-            )
-        }
-        if (step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None) {
-            Text(stringResource(R.string.clocktower_host_display_safety), color = Color(0xFF9A4B36), style = MaterialTheme.typography.bodySmall)
-            OutlinedButton(
-                onClick = onShowPlayerDisplay,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
-            ) {
-                Text(stringResource(R.string.clocktower_host_show_to_player))
+            step.tellPlayer
+                ?.takeIf { it.isNotBlank() && step.displayKind == ClocktowerDisplayKind.None }
+                ?.let {
+                    Text(it, color = Color(0xFF2F5D50), fontWeight = FontWeight.SemiBold)
+                }
+
+            Text(step.explanation, color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = onPrevious,
+                    enabled = canGoPrevious,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    Text(stringResource(R.string.previous_step))
+                }
+                Button(
+                    onClick = onNext,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    Text(stringResource(R.string.clocktower_host_finish_next))
+                }
             }
-        }
-        HostInstructionBlock(
-            label = stringResource(R.string.clocktower_host_newbie_explain),
-            text = step.explanation,
-            backgroundColor = Color(0xFFFFFCF6),
-            textColor = Color(0xFF5C6A63),
-        )
-        Button(
-            onClick = onNext,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-        ) {
-            Text(stringResource(R.string.clocktower_host_finish_next))
         }
     }
 }
@@ -4664,7 +4754,7 @@ private fun ClocktowerNightStepCard(
                 }
             }
 
-            ClocktowerNightAction.None -> Unit
+            else -> Unit
         }
 
         step.tellPlayer?.takeIf { it.isNotBlank() }?.let {
