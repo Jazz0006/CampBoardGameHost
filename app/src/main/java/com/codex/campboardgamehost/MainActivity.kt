@@ -3245,6 +3245,7 @@ private fun ClocktowerJudgeScreen(
     val poisonerPlayers = actualClocktowerRoleCards(cards, "Poisoner").filter { it.eliminatedRound == null }
     val butlerPlayers = actualClocktowerRoleCards(cards, "Butler").filter { it.eliminatedRound == null }
     val ravenkeeperNightDeath = pendingNightDeath?.let { name -> cards.firstOrNull { it.name == name && it.clocktowerRole?.enName == "Ravenkeeper" } }
+    val ravenkeeperTrigger = ravenkeeperNightDeath?.takeUnless { monkProtectedTarget == it.name }
     val fortuneTellerResult = if (fortuneTellerFirst != null && fortuneTellerSecond != null) {
         val targets = setOf(fortuneTellerFirst, fortuneTellerSecond)
         val matched = aliveCards.any { it.name in targets && (it.clocktowerTeam == ClocktowerTeam.Demon || it.name == redHerring) }
@@ -3578,16 +3579,21 @@ private fun ClocktowerJudgeScreen(
                 action = ClocktowerNightAction.DemonKill,
             ),
             )
-            add(
-            infoStep(
-                roleName = "守鸦人",
-                enName = "Ravenkeeper",
-                tellPlayer = ravenkeeperTarget?.let { "${playerSeatLabel(cards, it)} 的真实角色是 ${cards.firstOrNull { card -> card.name == it }?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()}" },
-                explanation = "只有守鸦人夜晚死亡时才唤醒他，让他选择一名玩家并得知其角色。",
-                action = ClocktowerNightAction.Ravenkeeper,
-                hostInstruction = "如果今晚死的是守鸦人，轻拍他睁眼。让他指一名玩家，在下面记录后把该玩家角色只给他看。",
-            ),
-            )
+            if (ravenkeeperTrigger != null) {
+                add(
+                    ClocktowerNightStepUi(
+                        title = "守鸦人",
+                        actor = ravenkeeperTrigger,
+                        isRealAction = true,
+                        reason = "",
+                        storytellerAction = "轻拍 ${ravenkeeperTrigger.seatLabel(cards)}，示意睁眼。让他指一名玩家，在下面记录后把该玩家角色只给他看。",
+                        tellPlayer = ravenkeeperTarget?.let { "${playerSeatLabel(cards, it)} 的真实角色是 ${cards.firstOrNull { card -> card.name == it }?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()}" },
+                        explanation = "守鸦人只有在夜晚死亡时才会当晚醒来，选择一名玩家并得知其真实身份。",
+                        action = ClocktowerNightAction.Ravenkeeper,
+                        displayKind = if (ravenkeeperTarget != null) ClocktowerDisplayKind.RoleReveal else ClocktowerDisplayKind.None,
+                    ),
+                )
+            }
         }
     }
 
@@ -4360,10 +4366,10 @@ private fun ClocktowerJudgeScreen(
                                 onSelect = { onSelectNightDeath(if (pendingNightDeath == it) null else it) },
                                 enabled = gameOutcome == null,
                             )
-                            ravenkeeperNightDeath?.let {
+                            ravenkeeperTrigger?.let {
                                 Text(stringResource(R.string.clocktower_ravenkeeper_hint), fontWeight = FontWeight.SemiBold)
                                 SelectablePlayerChips(
-                                    cards = aliveCards.filter { card -> card.name != ravenkeeperNightDeath.name },
+                                    cards = aliveCards.filter { card -> card.name != ravenkeeperTrigger.name },
                                     selectedName = ravenkeeperTarget,
                                     onSelect = { onSelectRavenkeeperTarget(if (ravenkeeperTarget == it) null else it) },
                                     enabled = gameOutcome == null,
