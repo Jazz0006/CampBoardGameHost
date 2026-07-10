@@ -222,6 +222,8 @@
     <string name="clocktower_record_night_death">Night death</string>
     <string name="clocktower_record_ravenkeeper_check">Ravenkeeper checked %1$s</string>
     <string name="clocktower_record_scarlet_woman_promoted">Scarlet Woman became the Demon</string>
+    <string name="clocktower_record_virgin_execution">Virgin ability: executed immediately after nominating %1$s</string>
+    <string name="clocktower_record_virgin_spent">Virgin was first nominated by %1$s; the nominator was not a real Townsfolk, so no execution</string>
     <string name="clocktower_outcome_saint_summary">The Saint was executed</string>
     <string name="clocktower_outcome_saint_reason">%1$s was the Saint, so good loses immediately.</string>
     <string name="clocktower_outcome_mayor_summary">No execution with 3 players alive</string>

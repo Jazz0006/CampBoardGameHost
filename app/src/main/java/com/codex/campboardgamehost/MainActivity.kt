@@ -220,6 +220,7 @@ private enum class ClocktowerDisplayKind {
     YesNo,
     RoleReveal,
     Plain,
+    Grimoire,
 }
 
 private data class ClocktowerRole(
@@ -537,6 +538,7 @@ private fun CampBoardGameHostApp() {
     var clocktowerRedHerring by remember { mutableStateOf<String?>(null) }
     var clocktowerButlerMaster by remember { mutableStateOf<String?>(null) }
     var clocktowerMonkProtectedTarget by remember { mutableStateOf<String?>(null) }
+    var clocktowerVirginUsed by remember { mutableStateOf(false) }
     var showResults by remember { mutableStateOf(false) }
     var gameOutcome by remember { mutableStateOf<GameOutcome?>(null) }
     var newCommonPlayerName by remember { mutableStateOf("") }
@@ -649,6 +651,7 @@ private fun CampBoardGameHostApp() {
         clocktowerRedHerring = null
         clocktowerButlerMaster = null
         clocktowerMonkProtectedTarget = null
+        clocktowerVirginUsed = false
         screen = Screen.PassPhone
     }
 
@@ -1015,6 +1018,7 @@ private fun CampBoardGameHostApp() {
                         redHerring = clocktowerRedHerring,
                         butlerMaster = clocktowerButlerMaster,
                         monkProtectedTarget = clocktowerMonkProtectedTarget,
+                        virginUsed = clocktowerVirginUsed,
                         gameOutcome = gameOutcome,
                         onPhaseChange = { clocktowerPhase = it },
                         onSelectNightDeath = { clocktowerPendingNightDeath = it },
@@ -1026,6 +1030,46 @@ private fun CampBoardGameHostApp() {
                         onSelectRedHerring = { clocktowerRedHerring = it },
                         onSelectButlerMaster = { clocktowerButlerMaster = it },
                         onSelectMonkProtectedTarget = { clocktowerMonkProtectedTarget = it },
+                        onVirginNomination = { nominatorName, nomineeName, executeNominator ->
+                            clocktowerVirginUsed = true
+                            if (executeNominator) {
+                                val index = cards.indexOfFirst { it.name == nominatorName }
+                                val nominatorCard = cards.getOrNull(index)
+                                if (index >= 0 && nominatorCard != null && nominatorCard.eliminatedRound == null) {
+                                    cards[index] = nominatorCard.copy(eliminatedRound = round)
+                                    records.add(
+                                        EliminationRecord(
+                                            round,
+                                            nominatorName,
+                                            context.getString(
+                                                R.string.clocktower_record_virgin_execution,
+                                                playerSeatLabel(cards, nomineeName),
+                                            ),
+                                        ),
+                                    )
+                                }
+                                val outcome = evaluateGameOutcome(context, cards, currentGameKind)
+                                gameOutcome = outcome
+                                if (outcome != null) {
+                                    showResults = true
+                                } else {
+                                    round += 1
+                                    clocktowerPhase = ClocktowerPhase.Night
+                                }
+                                clocktowerSelectedExecution = null
+                            } else {
+                                records.add(
+                                    EliminationRecord(
+                                        round,
+                                        nomineeName,
+                                        context.getString(
+                                            R.string.clocktower_record_virgin_spent,
+                                            playerSeatLabel(cards, nominatorName),
+                                        ),
+                                    ),
+                                )
+                            }
+                        },
                         onAdvanceFromFirstNight = {
                             clocktowerPhase = ClocktowerPhase.Day
                         },
@@ -1146,6 +1190,7 @@ private fun CampBoardGameHostApp() {
                             clocktowerRedHerring = null
                             clocktowerButlerMaster = null
                             clocktowerMonkProtectedTarget = null
+                            clocktowerVirginUsed = false
                         },
                     )
 
@@ -3103,6 +3148,7 @@ private fun ClocktowerJudgeScreen(
     redHerring: String?,
     butlerMaster: String?,
     monkProtectedTarget: String?,
+    virginUsed: Boolean,
     gameOutcome: GameOutcome?,
     onPhaseChange: (ClocktowerPhase) -> Unit,
     onSelectNightDeath: (String?) -> Unit,
@@ -3114,6 +3160,7 @@ private fun ClocktowerJudgeScreen(
     onSelectRedHerring: (String?) -> Unit,
     onSelectButlerMaster: (String?) -> Unit,
     onSelectMonkProtectedTarget: (String?) -> Unit,
+    onVirginNomination: (String, String, Boolean) -> Unit,
     onAdvanceFromFirstNight: () -> Unit,
     onConfirmDay: () -> Unit,
     onConfirmNight: () -> Unit,
@@ -3197,6 +3244,7 @@ private fun ClocktowerJudgeScreen(
         displayPrimary: String? = tellPlayer,
         displaySecondary: String? = null,
         displayFooter: String? = explanation,
+        displayTitle: String = "$roleName 信息",
         hostInstruction: String? = null,
     ): ClocktowerNightStepUi {
         val actor = roleActor(enName)
@@ -3221,7 +3269,7 @@ private fun ClocktowerJudgeScreen(
             explanation = explanation,
             action = action,
             displayKind = if (actor != null && !tellPlayer.isNullOrBlank()) resolvedDisplayKind else ClocktowerDisplayKind.None,
-            displayTitle = "$roleName 信息",
+            displayTitle = displayTitle,
             displayPrimary = displayPrimary ?: tellPlayer,
             displaySecondary = displaySecondary,
             displayFooter = displayFooter ?: explanation,
@@ -3371,8 +3419,11 @@ private fun ClocktowerJudgeScreen(
             infoStep(
                 roleName = "间谍",
                 enName = "Spy",
-                tellPlayer = "让间谍查看完整魔典。",
+                tellPlayer = cards.joinToString("\n") { "${it.seatLabel(cards)}：${it.hostRoleLabel(context, GameKind.Clocktower)}" },
                 explanation = "间谍可以查看所有玩家的真实身份。",
+                displayKind = ClocktowerDisplayKind.Grimoire,
+                displayTitle = "魔典",
+                displayFooter = "这些是所有玩家的真实身份。只给间谍短暂查看。",
                 hostInstruction = "轻拍间谍，示意睁眼。把说书人总览给他短暂查看；收回手机后示意闭眼。",
             ),
         )
@@ -3618,6 +3669,10 @@ private fun ClocktowerJudgeScreen(
 
                 ClocktowerDayMode.Nomination -> {
                     item {
+                        val nominatorCard = cards.firstOrNull { it.name == nominatorName }
+                        val nomineeCard = cards.firstOrNull { it.name == nomineeName }
+                        val virginFirstNomination = nomineeCard?.clocktowerRole?.enName == "Virgin" && !virginUsed
+                        val virginExecutes = virginFirstNomination && nominatorCard?.clocktowerTeam == ClocktowerTeam.Townsfolk
                         HostScriptCard(
                             title = "提名",
                             script = if (nominatorName != null && nomineeName != null) {
@@ -3625,7 +3680,11 @@ private fun ClocktowerJudgeScreen(
                             } else {
                                 "选择提名人和被提名人。"
                             },
-                            action = "两名玩家都选好后，进入投票。",
+                            action = when {
+                                virginExecutes -> "这是处女第一次被镇民提名。不要投票，直接处决提名者。"
+                                virginFirstNomination -> "这是处女第一次被提名，但提名者不是真实镇民。处女能力用过，继续正常投票。"
+                                else -> "两名玩家都选好后，进入投票。"
+                            },
                         ) {
                             HostActionSection(title = "选择提名人") {
                                 SelectablePlayerChips(
@@ -3645,16 +3704,41 @@ private fun ClocktowerJudgeScreen(
                                     onSelect = { nomineeName = if (nomineeName == it) null else it },
                                 )
                             }
+                            if (virginFirstNomination) {
+                                HostInstructionBlock(
+                                    label = "处女能力",
+                                    text = if (virginExecutes) {
+                                        "${playerSeatLabel(cards, nomineeName)} 第一次被真实镇民提名。${playerSeatLabel(cards, nominatorName)} 立即被处决，本次提名不进入投票，白天结束。"
+                                    } else {
+                                        "${playerSeatLabel(cards, nomineeName)} 第一次被提名，但 ${playerSeatLabel(cards, nominatorName)} 不是真实镇民。不要处决提名者；记录处女能力已用过，然后继续投票。"
+                                    },
+                                    backgroundColor = if (virginExecutes) Color(0xFFFFF4DC) else Color(0xFFFFFCF6),
+                                    textColor = if (virginExecutes) Color(0xFF9A4B36) else Color(0xFF5C6A63),
+                                )
+                            }
                             Button(
                                 onClick = {
-                                    currentVoteCount = executionThreshold
-                                    dayMode = ClocktowerDayMode.Vote
+                                    val chosenNominator = nominatorName
+                                    val chosenNominee = nomineeName
+                                    if (chosenNominator != null && chosenNominee != null && virginFirstNomination) {
+                                        onVirginNomination(chosenNominator, chosenNominee, virginExecutes)
+                                    }
+                                    if (!virginExecutes) {
+                                        currentVoteCount = executionThreshold
+                                        dayMode = ClocktowerDayMode.Vote
+                                    }
                                 },
                                 enabled = nominatorName != null && nomineeName != null && gameOutcome == null,
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
                             ) {
-                                Text("开始投票")
+                                Text(
+                                    when {
+                                        virginExecutes -> "处决提名者"
+                                        virginFirstNomination -> "记录处女已用过，开始投票"
+                                        else -> "开始投票"
+                                    },
+                                )
                             }
                         }
                     }
@@ -4332,6 +4416,51 @@ private fun ClocktowerPlayerDisplayCardLocalized(
                         }
                     }
 
+                    ClocktowerDisplayKind.Grimoire -> {
+                        val lines = primary.lines().filter { it.isNotBlank() }
+                        val rowFontSize = if (lines.size >= 10) 14.sp else 16.sp
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(5.dp),
+                        ) {
+                            lines.forEach { line ->
+                                val parts = line.split("：", limit = 2)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color(0xFF2B3833), RoundedCornerShape(6.dp))
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        parts.firstOrNull().orEmpty(),
+                                        color = Color.White,
+                                        fontSize = rowFontSize,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.weight(1.35f),
+                                    )
+                                    Text(
+                                        parts.getOrNull(1).orEmpty(),
+                                        color = Color(0xFFFFF4DC),
+                                        fontSize = rowFontSize,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.End,
+                                        modifier = Modifier.weight(0.85f),
+                                    )
+                                }
+                            }
+                        }
+                        if (footer.isNotBlank()) {
+                            Text(
+                                footer,
+                                color = Color(0xFFEAF2EA),
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+
                     ClocktowerDisplayKind.None -> Unit
                 }
             }
@@ -4431,6 +4560,51 @@ private fun ClocktowerPlayerDisplayCard(
                                 footer,
                                 color = Color(0xFFEAF2EA),
                                 style = MaterialTheme.typography.titleLarge,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+
+                    ClocktowerDisplayKind.Grimoire -> {
+                        val lines = primary.lines().filter { it.isNotBlank() }
+                        val rowFontSize = if (lines.size >= 10) 14.sp else 16.sp
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(5.dp),
+                        ) {
+                            lines.forEach { line ->
+                                val parts = line.split("：", limit = 2)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color(0xFF2B3833), RoundedCornerShape(6.dp))
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        parts.firstOrNull().orEmpty(),
+                                        color = Color.White,
+                                        fontSize = rowFontSize,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.weight(1.35f),
+                                    )
+                                    Text(
+                                        parts.getOrNull(1).orEmpty(),
+                                        color = Color(0xFFFFF4DC),
+                                        fontSize = rowFontSize,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.End,
+                                        modifier = Modifier.weight(0.85f),
+                                    )
+                                }
+                            }
+                        }
+                        if (footer.isNotBlank()) {
+                            Text(
+                                footer,
+                                color = Color(0xFFEAF2EA),
+                                style = MaterialTheme.typography.bodyMedium,
                                 textAlign = TextAlign.Center,
                             )
                         }
