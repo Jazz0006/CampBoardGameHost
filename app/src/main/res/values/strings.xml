@@ -224,6 +224,10 @@
     <string name="clocktower_record_scarlet_woman_promoted">红唇女郎继承为恶魔</string>
     <string name="clocktower_record_virgin_execution">处女能力：提名 %1$s 后立即被处决</string>
     <string name="clocktower_record_virgin_spent">处女首次被 %1$s 提名，提名者不是真实镇民，未处决</string>
+    <string name="clocktower_record_slayer_hit">%1$s 的猎手能力命中恶魔</string>
+    <string name="clocktower_record_slayer_miss">猎手选择了 %1$s，未造成死亡</string>
+    <string name="clocktower_record_slayer_fake">公开声称猎手行动，选择了 %1$s，未造成死亡</string>
+    <string name="clocktower_record_slayer_already_used">猎手能力已经用过，选择了 %1$s，未造成死亡</string>
     <string name="clocktower_outcome_saint_summary">圣徒被处决</string>
     <string name="clocktower_outcome_saint_reason">%1$s 是圣徒，被处决后好人立即失败。</string>
     <string name="clocktower_outcome_mayor_summary">三人生还且无人处决</string>
@@ -281,7 +285,8 @@
     <string name="clocktower_host_display_safety">请确认只有被唤醒的玩家能看到屏幕。</string>
     <string name="clocktower_host_show_to_player">全屏展示给玩家</string>
     <string name="clocktower_host_choose_red_herring">选择红鲱鱼</string>
-    <string name="clocktower_host_choose_red_herring_hint">请选择一名非恶魔玩家。这个选择只给说书人看。</string>
+    <string name="clocktower_host_choose_red_herring_hint">请选择一名好人玩家，不能选择占卜师本人。这个选择只给说书人看。</string>
+    <string name="clocktower_host_no_red_herring_candidates">当前没有合适的红鲱鱼候选人。继续下一步即可。</string>
     <string name="clocktower_host_choose_poison_target">选择中毒目标</string>
     <string name="clocktower_host_fortune_choose_two">占卜师选择两名玩家</string>
     <string name="clocktower_host_fortune_choose_two_hint">如果其中有恶魔或红鲱鱼，告诉占卜师“是”。</string>

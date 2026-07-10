@@ -539,6 +539,8 @@ private fun CampBoardGameHostApp() {
     var clocktowerButlerMaster by remember { mutableStateOf<String?>(null) }
     var clocktowerMonkProtectedTarget by remember { mutableStateOf<String?>(null) }
     var clocktowerVirginUsed by remember { mutableStateOf(false) }
+    var clocktowerSlayerUsed by remember { mutableStateOf(false) }
+    var clocktowerLastExecutedName by remember { mutableStateOf<String?>(null) }
     var showResults by remember { mutableStateOf(false) }
     var gameOutcome by remember { mutableStateOf<GameOutcome?>(null) }
     var newCommonPlayerName by remember { mutableStateOf("") }
@@ -652,6 +654,8 @@ private fun CampBoardGameHostApp() {
         clocktowerButlerMaster = null
         clocktowerMonkProtectedTarget = null
         clocktowerVirginUsed = false
+        clocktowerSlayerUsed = false
+        clocktowerLastExecutedName = null
         screen = Screen.PassPhone
     }
 
@@ -1019,6 +1023,8 @@ private fun CampBoardGameHostApp() {
                         butlerMaster = clocktowerButlerMaster,
                         monkProtectedTarget = clocktowerMonkProtectedTarget,
                         virginUsed = clocktowerVirginUsed,
+                        slayerUsed = clocktowerSlayerUsed,
+                        lastExecutedName = clocktowerLastExecutedName,
                         gameOutcome = gameOutcome,
                         onPhaseChange = { clocktowerPhase = it },
                         onSelectNightDeath = { clocktowerPendingNightDeath = it },
@@ -1030,6 +1036,47 @@ private fun CampBoardGameHostApp() {
                         onSelectRedHerring = { clocktowerRedHerring = it },
                         onSelectButlerMaster = { clocktowerButlerMaster = it },
                         onSelectMonkProtectedTarget = { clocktowerMonkProtectedTarget = it },
+                        onSlayerShot = { claimantName, targetName ->
+                            val claimantCard = cards.firstOrNull { it.name == claimantName }
+                            val targetIndex = cards.indexOfFirst { it.name == targetName }
+                            val targetCard = cards.getOrNull(targetIndex)
+                            val isRealSlayer = claimantCard?.clocktowerRole?.enName == "Slayer"
+                            val canUseSlayerAbility = isRealSlayer && !clocktowerSlayerUsed
+                            var shotOutcome: GameOutcome? = null
+                            if (canUseSlayerAbility) {
+                                clocktowerSlayerUsed = true
+                            }
+                            if (canUseSlayerAbility && targetIndex >= 0 && targetCard != null && targetCard.eliminatedRound == null && targetCard.clocktowerTeam == ClocktowerTeam.Demon) {
+                                cards[targetIndex] = targetCard.copy(eliminatedRound = round)
+                                records.add(
+                                    EliminationRecord(
+                                        round,
+                                        targetName,
+                                        context.getString(R.string.clocktower_record_slayer_hit, playerSeatLabel(cards, claimantName)),
+                                    ),
+                                )
+                                val promotedName = promoteDemonSuccessorIfNeeded(impDeathWasSelfChosen = false)
+                                shotOutcome = if (promotedName == null) {
+                                    evaluateGameOutcome(context, cards, currentGameKind)
+                                } else {
+                                    null
+                                }
+                            } else {
+                                val recordText = when {
+                                    isRealSlayer && clocktowerSlayerUsed && !canUseSlayerAbility ->
+                                        context.getString(R.string.clocktower_record_slayer_already_used, playerSeatLabel(cards, targetName))
+                                    canUseSlayerAbility ->
+                                        context.getString(R.string.clocktower_record_slayer_miss, playerSeatLabel(cards, targetName))
+                                    else ->
+                                        context.getString(R.string.clocktower_record_slayer_fake, playerSeatLabel(cards, targetName))
+                                }
+                                records.add(EliminationRecord(round, claimantName, recordText))
+                            }
+                            gameOutcome = shotOutcome
+                            if (shotOutcome != null) {
+                                showResults = true
+                            }
+                        },
                         onVirginNomination = { nominatorName, nomineeName, executeNominator ->
                             clocktowerVirginUsed = true
                             if (executeNominator) {
@@ -1048,6 +1095,7 @@ private fun CampBoardGameHostApp() {
                                         ),
                                     )
                                 }
+                                clocktowerLastExecutedName = nominatorName
                                 val outcome = evaluateGameOutcome(context, cards, currentGameKind)
                                 gameOutcome = outcome
                                 if (outcome != null) {
@@ -1083,6 +1131,7 @@ private fun CampBoardGameHostApp() {
                                 if (index >= 0 && executedCard != null && executedCard.eliminatedRound == null) {
                                     cards[index] = executedCard.copy(eliminatedRound = round)
                                     records.add(EliminationRecord(round, executionName, context.getString(R.string.clocktower_record_execution)))
+                                    clocktowerLastExecutedName = executionName
                                     if (executedCard.clocktowerRole?.enName == "Saint") {
                                         executionOutcome = GameOutcome(
                                             title = context.getString(R.string.outcome_clocktower_evil_title),
@@ -1100,7 +1149,10 @@ private fun CampBoardGameHostApp() {
                                         executionOutcome = evaluateGameOutcome(context, cards, currentGameKind)
                                     }
                                 }
-                            } else if (aliveBeforeExecution.size == 3 && aliveBeforeExecution.any { it.clocktowerRole?.enName == "Mayor" }) {
+                            } else {
+                                clocktowerLastExecutedName = null
+                            }
+                            if (executionName == null && aliveBeforeExecution.size == 3 && aliveBeforeExecution.any { it.clocktowerRole?.enName == "Mayor" }) {
                                 executionOutcome = GameOutcome(
                                     title = context.getString(R.string.outcome_clocktower_good_title),
                                     summary = context.getString(R.string.clocktower_outcome_mayor_summary),
@@ -1191,6 +1243,8 @@ private fun CampBoardGameHostApp() {
                             clocktowerButlerMaster = null
                             clocktowerMonkProtectedTarget = null
                             clocktowerVirginUsed = false
+                            clocktowerSlayerUsed = false
+                            clocktowerLastExecutedName = null
                         },
                     )
 
@@ -3082,6 +3136,15 @@ private fun playerSeatLabel(cards: List<PlayerCard>, playerName: String?): Strin
 private fun isClocktowerEvil(card: PlayerCard): Boolean =
     card.clocktowerTeam == ClocktowerTeam.Minion || card.clocktowerTeam == ClocktowerTeam.Demon
 
+private fun clocktowerRedHerringCandidates(cards: List<PlayerCard>, aliveCards: List<PlayerCard>): List<PlayerCard> {
+    val fortuneTellerName = actualClocktowerRoleCards(cards, "Fortune Teller").firstOrNull()?.name
+    return aliveCards.filter { card ->
+        card.clocktowerTeam != ClocktowerTeam.Minion &&
+            card.clocktowerTeam != ClocktowerTeam.Demon &&
+            card.name != fortuneTellerName
+    }
+}
+
 private fun actualClocktowerRoleCards(cards: List<PlayerCard>, enName: String): List<PlayerCard> =
     cards.filter { it.clocktowerRole?.enName == enName }
 
@@ -3149,6 +3212,8 @@ private fun ClocktowerJudgeScreen(
     butlerMaster: String?,
     monkProtectedTarget: String?,
     virginUsed: Boolean,
+    slayerUsed: Boolean,
+    lastExecutedName: String?,
     gameOutcome: GameOutcome?,
     onPhaseChange: (ClocktowerPhase) -> Unit,
     onSelectNightDeath: (String?) -> Unit,
@@ -3160,6 +3225,7 @@ private fun ClocktowerJudgeScreen(
     onSelectRedHerring: (String?) -> Unit,
     onSelectButlerMaster: (String?) -> Unit,
     onSelectMonkProtectedTarget: (String?) -> Unit,
+    onSlayerShot: (String, String) -> Unit,
     onVirginNomination: (String, String, Boolean) -> Unit,
     onAdvanceFromFirstNight: () -> Unit,
     onConfirmDay: () -> Unit,
@@ -3219,6 +3285,8 @@ private fun ClocktowerJudgeScreen(
     var currentVoteCount by remember(round) { mutableStateOf(0) }
     var highestVoteName by remember(round) { mutableStateOf<String?>(null) }
     var highestVoteCount by remember(round) { mutableStateOf(0) }
+    var slayerClaimantName by remember(round) { mutableStateOf<String?>(null) }
+    var slayerTargetName by remember(round) { mutableStateOf<String?>(null) }
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
     val executionThreshold = (aliveCards.size + 1) / 2
 
@@ -3265,14 +3333,14 @@ private fun ClocktowerJudgeScreen(
             } else {
                 "不要唤醒任何玩家。为了避免玩家通过流程判断角色是否在场，请停顿 2-3 秒，然后点击下一步。"
             },
-            tellPlayer = tellPlayer,
+            tellPlayer = if (actor != null) tellPlayer else null,
             explanation = explanation,
             action = action,
             displayKind = if (actor != null && !tellPlayer.isNullOrBlank()) resolvedDisplayKind else ClocktowerDisplayKind.None,
             displayTitle = displayTitle,
-            displayPrimary = displayPrimary ?: tellPlayer,
-            displaySecondary = displaySecondary,
-            displayFooter = displayFooter ?: explanation,
+            displayPrimary = if (actor != null) displayPrimary ?: tellPlayer else null,
+            displaySecondary = if (actor != null) displaySecondary else null,
+            displayFooter = if (actor != null) displayFooter ?: explanation else null,
         )
     }
 
@@ -3325,12 +3393,12 @@ private fun ClocktowerJudgeScreen(
                 } else {
                     stringResource(R.string.clocktower_first_night_placeholder_action)
                 },
-                tellPlayer = minionInfoText,
+                tellPlayer = if (minionCards.isNotEmpty()) minionInfoText else null,
                 explanation = stringResource(R.string.clocktower_first_night_minion_explain),
                 displayKind = if (minionCards.isNotEmpty() && minionInfoText != null) ClocktowerDisplayKind.Plain else ClocktowerDisplayKind.None,
                 displayTitle = stringResource(R.string.clocktower_first_night_minion_title),
-                displayPrimary = minionInfoText,
-                displayFooter = stringResource(R.string.clocktower_first_night_minion_explain),
+                displayPrimary = if (minionCards.isNotEmpty()) minionInfoText else null,
+                displayFooter = if (minionCards.isNotEmpty()) stringResource(R.string.clocktower_first_night_minion_explain) else null,
                 wakeText = if (minionCards.isNotEmpty()) {
                     stringResource(
                         R.string.clocktower_first_night_minion_wake_format,
@@ -3348,19 +3416,19 @@ private fun ClocktowerJudgeScreen(
                 storytellerAction = demonCard?.let {
                     stringResource(R.string.clocktower_first_night_demon_action_format, it.seatLabel(cards))
                 } ?: stringResource(R.string.clocktower_first_night_placeholder_action),
-                tellPlayer = demonInfoText,
+                tellPlayer = if (demonCard != null) demonInfoText else null,
                 explanation = stringResource(R.string.clocktower_first_night_demon_explain),
                 displayKind = if (demonCard != null) ClocktowerDisplayKind.Plain else ClocktowerDisplayKind.None,
                 displayTitle = stringResource(R.string.clocktower_first_night_demon_title),
-                displayPrimary = demonInfoText,
-                displayFooter = stringResource(R.string.clocktower_first_night_demon_explain),
+                displayPrimary = if (demonCard != null) demonInfoText else null,
+                displayFooter = if (demonCard != null) stringResource(R.string.clocktower_first_night_demon_explain) else null,
             ),
             ClocktowerNightStepUi(
                 title = "占卜师红鲱鱼",
                 actor = null,
                 isRealAction = actualClocktowerRoleCards(cards, "Fortune Teller").isNotEmpty(),
                 reason = if (actualClocktowerRoleCards(cards, "Fortune Teller").isEmpty()) "本局没有占卜师，此步骤只用于首夜配置。" else "",
-                storytellerAction = "不要公开说明这个选择。请选择一名好人玩家作为占卜师可能得到“是”的红鲱鱼。",
+                storytellerAction = "不要公开说明这个选择。请选择一名好人玩家作为红鲱鱼，不要选择占卜师本人。",
                 tellPlayer = redHerring?.let { "已选择：${playerSeatLabel(cards, it)}" },
                 explanation = "红鲱鱼是占卜师规则的一部分。占卜师查到恶魔或红鲱鱼时，都会得到“是”。",
                 action = ClocktowerNightAction.RedHerring,
@@ -3428,7 +3496,8 @@ private fun ClocktowerJudgeScreen(
             ),
         )
     } else {
-        listOf(
+        buildList {
+            add(
             infoStep(
                 roleName = "投毒者",
                 enName = "Poisoner",
@@ -3438,6 +3507,8 @@ private fun ClocktowerJudgeScreen(
                 displayKind = ClocktowerDisplayKind.None,
                 hostInstruction = "轻拍投毒者，示意睁眼。让他指一名玩家，在下面记录为今晚中毒目标。",
             ),
+            )
+            add(
             infoStep(
                 roleName = "管家",
                 enName = "Butler",
@@ -3446,6 +3517,8 @@ private fun ClocktowerJudgeScreen(
                 displayKind = ClocktowerDisplayKind.None,
                 hostInstruction = "轻拍管家，示意睁眼。让他指今天的主人；白天投票时用这个记录提醒自己。",
             ),
+            )
+            add(
             infoStep(
                 roleName = "共情者",
                 enName = "Empath",
@@ -3453,6 +3526,8 @@ private fun ClocktowerJudgeScreen(
                 explanation = "这个数字表示共情者两个存活邻居中有几个邪恶玩家。",
                 hostInstruction = "轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。",
             ),
+            )
+            add(
             infoStep(
                 roleName = "占卜师",
                 enName = "Fortune Teller",
@@ -3461,6 +3536,20 @@ private fun ClocktowerJudgeScreen(
                 action = ClocktowerNightAction.FortuneTeller,
                 hostInstruction = "轻拍占卜师，示意睁眼。让他依次指两名玩家，在下面记录；结果出现后只告诉他“是”或“否”。",
             ),
+            )
+            if (lastExecutedName != null) {
+                add(
+                    infoStep(
+                        roleName = "送葬者",
+                        enName = "Undertaker",
+                        tellPlayer = "${playerSeatLabel(cards, lastExecutedName)} 的真实身份是 ${cards.firstOrNull { it.name == lastExecutedName }?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()}",
+                        explanation = "送葬者每晚得知今天被处决玩家的真实身份。",
+                        displayKind = ClocktowerDisplayKind.RoleReveal,
+                        hostInstruction = "轻拍送葬者，示意睁眼。把今天被处决玩家的真实身份只给他看；看完后收回手机，示意闭眼。",
+                    ),
+                )
+            }
+            add(
             infoStep(
                 roleName = "僧侣",
                 enName = "Monk",
@@ -3470,6 +3559,8 @@ private fun ClocktowerJudgeScreen(
                 displayKind = ClocktowerDisplayKind.None,
                 hostInstruction = "轻拍僧侣，示意睁眼。让他指一名除自己以外的玩家，在下面记录为今晚保护目标。",
             ),
+            )
+            add(
             ClocktowerNightStepUi(
                 title = "恶魔行动",
                 actor = aliveCards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon },
@@ -3478,10 +3569,16 @@ private fun ClocktowerJudgeScreen(
                 storytellerAction = aliveCards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon }?.let {
                     "轻拍 ${it.seatLabel(cards)}，示意睁眼。让他指今晚要杀死的玩家，在下面记录；记录后示意闭眼。"
                 } ?: "不要唤醒任何玩家，停顿 2-3 秒后继续。",
-                tellPlayer = pendingNightDeath?.let { "已记录：今晚恶魔选择杀死 ${playerSeatLabel(cards, it)}。现在不要宣布死亡，等天亮统一宣布。" },
+                tellPlayer = if (aliveCards.any { it.clocktowerTeam == ClocktowerTeam.Demon }) {
+                    pendingNightDeath?.let { "已记录：今晚恶魔选择杀死 ${playerSeatLabel(cards, it)}。现在不要宣布死亡，等天亮统一宣布。" }
+                } else {
+                    null
+                },
                 explanation = "恶魔选择的死亡目标会在天亮时统一公布。",
                 action = ClocktowerNightAction.DemonKill,
             ),
+            )
+            add(
             infoStep(
                 roleName = "守鸦人",
                 enName = "Ravenkeeper",
@@ -3490,7 +3587,8 @@ private fun ClocktowerJudgeScreen(
                 action = ClocktowerNightAction.Ravenkeeper,
                 hostInstruction = "如果今晚死的是守鸦人，轻拍他睁眼。让他指一名玩家，在下面记录后把该玩家角色只给他看。",
             ),
-        )
+            )
+        }
     }
 
     playerDisplayStep?.let { displayStep ->
@@ -3640,6 +3738,51 @@ private fun ClocktowerJudgeScreen(
                             script = "现在自由讨论。有人提名时，点击开始提名。",
                             action = "管理提名、投票、处决。今天结束前会确认是否有人被处决。",
                         ) {
+                            HostActionSection(
+                                title = "公开声称猎手行动",
+                                helper = "任何存活玩家都可能公开声称自己是猎手。选择声称者和目标，说书人配合结算；只有真实猎手首次使用且目标是真实恶魔时，目标才会死亡。",
+                            ) {
+                                Text("声称者", fontWeight = FontWeight.SemiBold)
+                                SelectablePlayerChips(
+                                    cards = aliveCards,
+                                    selectedName = slayerClaimantName,
+                                    enabled = gameOutcome == null,
+                                    allCards = cards,
+                                    onSelect = { slayerClaimantName = if (slayerClaimantName == it) null else it },
+                                )
+                                Text("目标", fontWeight = FontWeight.SemiBold)
+                                SelectablePlayerChips(
+                                    cards = aliveCards,
+                                    selectedName = slayerTargetName,
+                                    enabled = gameOutcome == null,
+                                    allCards = cards,
+                                    onSelect = { slayerTargetName = if (slayerTargetName == it) null else it },
+                                )
+                                Button(
+                                    onClick = {
+                                        val claimantName = slayerClaimantName
+                                        val targetName = slayerTargetName
+                                        if (claimantName != null && targetName != null) {
+                                            onSlayerShot(claimantName, targetName)
+                                            slayerClaimantName = null
+                                            slayerTargetName = null
+                                        }
+                                    },
+                                    enabled = slayerClaimantName != null && slayerTargetName != null && gameOutcome == null,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(8.dp),
+                                ) {
+                                    Text("结算公开射击")
+                                }
+                            }
+                            if (slayerUsed) {
+                                HostInstructionBlock(
+                                    label = "猎手",
+                                    text = "真实猎手能力本局已经使用过。之后仍可记录公开声称猎手行动，但不会再造成真实猎手命中。",
+                                    backgroundColor = Color(0xFFFFFCF6),
+                                    textColor = Color(0xFF6F7B74),
+                                )
+                            }
                             Button(
                                 onClick = {
                                     nominatorName = null
@@ -4684,17 +4827,28 @@ private fun ClocktowerNightStepCardLocalized(
 
         when (step.action) {
             ClocktowerNightAction.RedHerring -> {
-                HostActionSection(
-                    title = stringResource(R.string.clocktower_host_choose_red_herring),
-                    helper = stringResource(R.string.clocktower_host_choose_red_herring_hint),
-                ) {
-                    SelectablePlayerChips(
-                        cards = aliveCards.filter { it.clocktowerTeam != ClocktowerTeam.Demon },
-                        selectedName = selectedName,
-                        enabled = true,
-                        allCards = cards,
-                        onSelect = onSelectName,
-                    )
+                if (step.isRealAction) {
+                    val candidates = clocktowerRedHerringCandidates(cards, aliveCards)
+                    HostActionSection(
+                        title = stringResource(R.string.clocktower_host_choose_red_herring),
+                        helper = stringResource(R.string.clocktower_host_choose_red_herring_hint),
+                    ) {
+                        if (candidates.isEmpty()) {
+                            Text(
+                                stringResource(R.string.clocktower_host_no_red_herring_candidates),
+                                color = Color(0xFF6F7B74),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        } else {
+                            SelectablePlayerChips(
+                                cards = candidates,
+                                selectedName = selectedName,
+                                enabled = true,
+                                allCards = cards,
+                                onSelect = onSelectName,
+                            )
+                        }
+                    }
                 }
             }
 
@@ -4783,7 +4937,7 @@ private fun ClocktowerNightStepCardLocalized(
         }
 
             step.tellPlayer
-                ?.takeIf { it.isNotBlank() && step.displayKind == ClocktowerDisplayKind.None }
+                ?.takeIf { step.isRealAction && it.isNotBlank() && step.displayKind == ClocktowerDisplayKind.None }
                 ?.let {
                     Text(it, color = Color(0xFF2F5D50), fontWeight = FontWeight.SemiBold)
                 }
@@ -4848,17 +5002,24 @@ private fun ClocktowerNightStepCard(
 
         when (step.action) {
             ClocktowerNightAction.RedHerring -> {
-                HostActionSection(
-                    title = "选择红鲱鱼",
-                    helper = "请选择一名非恶魔玩家。这个选择只给说书人看。",
-                ) {
-                    SelectablePlayerChips(
-                        cards = aliveCards.filter { it.clocktowerTeam != ClocktowerTeam.Demon },
-                        selectedName = selectedName,
-                        enabled = true,
-                        allCards = cards,
-                        onSelect = onSelectName,
-                    )
+                if (step.isRealAction) {
+                    val candidates = clocktowerRedHerringCandidates(cards, aliveCards)
+                    HostActionSection(
+                        title = "选择红鲱鱼",
+                        helper = "请选择一名好人玩家，不能选择占卜师本人。这个选择只给说书人看。",
+                    ) {
+                        if (candidates.isEmpty()) {
+                            Text("当前没有合适的红鲱鱼候选人。继续下一步即可。", color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            SelectablePlayerChips(
+                                cards = candidates,
+                                selectedName = selectedName,
+                                enabled = true,
+                                allCards = cards,
+                                onSelect = onSelectName,
+                            )
+                        }
+                    }
                 }
             }
 
@@ -4931,7 +5092,7 @@ private fun ClocktowerNightStepCard(
             else -> Unit
         }
 
-        step.tellPlayer?.takeIf { it.isNotBlank() }?.let {
+        step.tellPlayer?.takeIf { step.isRealAction && step.action != ClocktowerNightAction.RedHerring && it.isNotBlank() }?.let {
             HostInstructionBlock(
                 label = "要告诉玩家",
                 text = it,

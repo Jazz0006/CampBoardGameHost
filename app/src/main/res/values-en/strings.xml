@@ -224,6 +224,10 @@
     <string name="clocktower_record_scarlet_woman_promoted">Scarlet Woman became the Demon</string>
     <string name="clocktower_record_virgin_execution">Virgin ability: executed immediately after nominating %1$s</string>
     <string name="clocktower_record_virgin_spent">Virgin was first nominated by %1$s; the nominator was not a real Townsfolk, so no execution</string>
+    <string name="clocktower_record_slayer_hit">%1$s hit the Demon with the Slayer ability</string>
+    <string name="clocktower_record_slayer_miss">Slayer chose %1$s; no one died</string>
+    <string name="clocktower_record_slayer_fake">Public Slayer claim chose %1$s; no one died</string>
+    <string name="clocktower_record_slayer_already_used">Slayer ability was already used and chose %1$s; no one died</string>
     <string name="clocktower_outcome_saint_summary">The Saint was executed</string>
     <string name="clocktower_outcome_saint_reason">%1$s was the Saint, so good loses immediately.</string>
     <string name="clocktower_outcome_mayor_summary">No execution with 3 players alive</string>
@@ -281,7 +285,8 @@
     <string name="clocktower_host_display_safety">Make sure only the awakened player can see the screen.</string>
     <string name="clocktower_host_show_to_player">Show full screen to player</string>
     <string name="clocktower_host_choose_red_herring">Choose red herring</string>
-    <string name="clocktower_host_choose_red_herring_hint">Choose a non-Demon player. Only the Storyteller should see this choice.</string>
+    <string name="clocktower_host_choose_red_herring_hint">Choose a good player, but not the Fortune Teller. Only the Storyteller should see this choice.</string>
+    <string name="clocktower_host_no_red_herring_candidates">There is no suitable red herring candidate right now. Continue to the next step.</string>
     <string name="clocktower_host_choose_poison_target">Choose poison target</string>
     <string name="clocktower_host_fortune_choose_two">Fortune Teller chooses two players</string>
     <string name="clocktower_host_fortune_choose_two_hint">If either target is the Demon or red herring, tell the Fortune Teller “yes”.</string>
