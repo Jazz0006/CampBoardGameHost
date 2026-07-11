@@ -1,6 +1,13 @@
 <resources>
     <string name="app_name">露营桌游助手</string>
     <string name="undercover_subtitle">离线桌游主持助手</string>
+    <string name="resume_saved_game">发现未完成的一局</string>
+    <string name="continue_saved_game">继续上一局</string>
+    <string name="discard_saved_game">放弃上一局</string>
+    <string name="saved_game_summary_format">%1$s · %2$s · %3$d 人</string>
+    <string name="saved_game_stage_dealing">发牌中</string>
+    <string name="saved_game_stage_dawn">天亮</string>
+    <string name="saved_game_stage_results">结果页</string>
     <string name="players_section">玩家</string>
     <string name="current_players_section">本局玩家</string>
     <string name="current_players_count_format">%1$d / %2$d 人</string>
@@ -221,13 +228,13 @@
     <string name="clocktower_record_execution">白天处决</string>
     <string name="clocktower_record_night_death">夜晚死亡</string>
     <string name="clocktower_record_ravenkeeper_check">守鸦人查验了 %1$s</string>
-    <string name="clocktower_record_scarlet_woman_promoted">红唇女郎继承为恶魔</string>
-    <string name="clocktower_record_virgin_execution">处女能力：提名 %1$s 后立即被处决</string>
-    <string name="clocktower_record_virgin_spent">处女首次被 %1$s 提名，提名者不是真实镇民，未处决</string>
-    <string name="clocktower_record_slayer_hit">%1$s 的猎手能力命中恶魔</string>
-    <string name="clocktower_record_slayer_miss">猎手选择了 %1$s，未造成死亡</string>
-    <string name="clocktower_record_slayer_fake">公开声称猎手行动，选择了 %1$s，未造成死亡</string>
-    <string name="clocktower_record_slayer_already_used">猎手能力已经用过，选择了 %1$s，未造成死亡</string>
+    <string name="clocktower_record_scarlet_woman_promoted">猩红女巫继承为恶魔</string>
+    <string name="clocktower_record_virgin_execution">圣女能力：提名 %1$s 后立即被处决</string>
+    <string name="clocktower_record_virgin_spent">圣女首次被 %1$s 提名，提名者不是真实镇民，未处决</string>
+    <string name="clocktower_record_slayer_hit">%1$s 的杀手能力命中恶魔</string>
+    <string name="clocktower_record_slayer_miss">杀手选择了 %1$s，未造成死亡</string>
+    <string name="clocktower_record_slayer_fake">公开声称杀手行动，选择了 %1$s，未造成死亡</string>
+    <string name="clocktower_record_slayer_already_used">杀手能力已经用过，选择了 %1$s，未造成死亡</string>
     <string name="clocktower_outcome_saint_summary">圣徒被处决</string>
     <string name="clocktower_outcome_saint_reason">%1$s 是圣徒，被处决后好人立即失败。</string>
     <string name="clocktower_outcome_mayor_summary">三人生还且无人处决</string>
@@ -302,6 +309,8 @@
     <string name="clocktower_first_night_demon_bluffs_format">可用伪装身份：%1$s</string>
     <string name="clocktower_first_night_no_minions_reason">本局没有爪牙。保留这个步骤用于维持首夜节奏。</string>
     <string name="clocktower_first_night_no_demon_reason">当前没有恶魔。通常只有结算后才会出现这种情况。</string>
+    <string name="clocktower_first_night_small_game_no_evil_info_reason">5/6 人局不提供首夜邪恶互认和恶魔伪装身份。保留这个步骤用于维持首夜节奏。</string>
+    <string name="clocktower_first_night_small_game_no_evil_info_explain">小人数局中，爪牙和恶魔不会在首夜互相得知身份，恶魔也不会获得 3 个伪装身份。</string>
     <string name="clocktower_first_night_minion_wake_format">请轻拍并唤醒：%1$s。不要大声念出“爪牙”。</string>
     <string name="clocktower_first_night_minion_action_format">轻拍 %1$s，示意睁眼。若有多名爪牙，先让他们互相确认；然后点“全屏展示给玩家”，只给已唤醒的玩家看。</string>
     <string name="clocktower_first_night_demon_action_format">轻拍 %1$s，示意睁眼。点“全屏展示给玩家”，只给恶魔看爪牙和伪装身份；看完后收回手机，示意闭眼。</string>

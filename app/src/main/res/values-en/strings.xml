@@ -1,6 +1,13 @@
 <resources>
     <string name="app_name">Camp Board Game Host</string>
     <string name="undercover_subtitle">Offline board game host</string>
+    <string name="resume_saved_game">Unfinished game found</string>
+    <string name="continue_saved_game">Continue Game</string>
+    <string name="discard_saved_game">Discard Game</string>
+    <string name="saved_game_summary_format">%1$s · %2$s · %3$d players</string>
+    <string name="saved_game_stage_dealing">Dealing</string>
+    <string name="saved_game_stage_dawn">Dawn</string>
+    <string name="saved_game_stage_results">Results</string>
     <string name="players_section">Players</string>
     <string name="current_players_section">This Game</string>
     <string name="current_players_count_format">%1$d / %2$d players</string>
@@ -302,6 +309,8 @@
     <string name="clocktower_first_night_demon_bluffs_format">Bluff characters: %1$s</string>
     <string name="clocktower_first_night_no_minions_reason">There are no Minions in play. Keep this step to preserve first-night rhythm.</string>
     <string name="clocktower_first_night_no_demon_reason">There is no Demon right now. This usually only happens after resolution effects.</string>
+    <string name="clocktower_first_night_small_game_no_evil_info_reason">In 5/6-player games, evil players do not receive first-night evil team info or Demon bluffs. Keep this step to preserve first-night rhythm.</string>
+    <string name="clocktower_first_night_small_game_no_evil_info_explain">In small games, Minions and the Demon do not learn each other on the first night, and the Demon does not receive 3 bluff characters.</string>
     <string name="clocktower_first_night_minion_wake_format">Quietly tap and wake: %1$s. Do not say “Minion” out loud.</string>
     <string name="clocktower_first_night_minion_action_format">Tap %1$s and signal them to open their eyes. If there are multiple Minions, let them recognize each other first; then tap “Show full screen to player” and show the phone only to the awakened player(s).</string>
     <string name="clocktower_first_night_demon_action_format">Tap %1$s and signal the Demon to open their eyes. Tap “Show full screen to player” and show only the Demon their Minions and bluff characters; then take the phone back and signal them to close their eyes.</string>

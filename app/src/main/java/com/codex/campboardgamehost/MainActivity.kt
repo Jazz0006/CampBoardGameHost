@@ -48,6 +48,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
@@ -68,12 +71,16 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import org.json.JSONArray
+import org.json.JSONObject
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -181,6 +188,11 @@ private data class GameOutcome(
     val reason: String,
 )
 
+private data class SavedGamePreview(
+    val title: String,
+    val subtitle: String,
+)
+
 private enum class ClocktowerTeam {
     Townsfolk,
     Outsider,
@@ -284,6 +296,8 @@ private fun Context.playerName(number: Int): String = getString(R.string.default
 private const val PREFS_NAME = "camp_board_game_host"
 private const val COMMON_PLAYERS_KEY = "common_players"
 private const val LANGUAGE_MODE_KEY = "language_mode"
+private const val ACTIVE_GAME_STATE_KEY = "active_game_state"
+private const val ACTIVE_GAME_STATE_VERSION = 1
 private const val MIN_PLAYERS = 3
 private const val MIN_WEREWOLF_PLAYERS = 4
 private const val MIN_CLOCKTOWER_PLAYERS = 5
@@ -331,6 +345,211 @@ private fun Context.saveCommonPlayers(players: List<String>) {
         .edit()
         .putString(COMMON_PLAYERS_KEY, json.toString())
         .apply()
+}
+
+private fun Screen.isActiveGameScreen(): Boolean = when (this) {
+    Screen.PassPhone,
+    Screen.RevealCard,
+    Screen.WerewolfJudge,
+    Screen.ClocktowerJudge,
+    Screen.Game -> true
+    Screen.Setup,
+    Screen.UndercoverSettings,
+    Screen.WerewolfSettings,
+    Screen.ClocktowerSettings,
+    Screen.Settings -> false
+}
+
+private fun Context.saveActiveGameState(snapshot: JSONObject) {
+    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .edit()
+        .putString(ACTIVE_GAME_STATE_KEY, snapshot.toString())
+        .commit()
+}
+
+private fun Context.loadActiveGameStateJson(): JSONObject? {
+    val raw = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .getString(ACTIVE_GAME_STATE_KEY, null)
+        ?: return null
+    return runCatching { JSONObject(raw) }.getOrNull()
+}
+
+private fun Context.clearActiveGameState() {
+    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .edit()
+        .remove(ACTIVE_GAME_STATE_KEY)
+        .commit()
+}
+
+private fun Context.loadSavedGamePreview(localizedContext: Context): SavedGamePreview? {
+    val json = loadActiveGameStateJson() ?: return null
+    val preview = runCatching { savedGamePreviewFromJson(localizedContext, json) }
+        .getOrElse {
+            clearActiveGameState()
+            null
+        }
+    if (preview == null) {
+        clearActiveGameState()
+    }
+    return preview
+}
+
+private inline fun <reified T : Enum<T>> enumByName(name: String?): T? {
+    if (name.isNullOrBlank()) return null
+    return runCatching { enumValueOf<T>(name) }.getOrNull()
+}
+
+private fun JSONObject.putNullableString(key: String, value: String?) {
+    put(key, value ?: JSONObject.NULL)
+}
+
+private fun JSONObject.putNullableInt(key: String, value: Int?) {
+    put(key, value ?: JSONObject.NULL)
+}
+
+private fun JSONObject.optNullableString(key: String): String? {
+    return if (has(key) && !isNull(key)) optString(key) else null
+}
+
+private fun JSONObject.optNullableInt(key: String): Int? {
+    return if (has(key) && !isNull(key)) optInt(key) else null
+}
+
+private fun stringsToJsonArray(values: List<String>): JSONArray {
+    val json = JSONArray()
+    values.forEach { json.put(it) }
+    return json
+}
+
+private fun JSONArray.toStringList(): List<String> = buildList {
+    for (index in 0 until length()) {
+        optString(index).takeIf { it.isNotBlank() }?.let(::add)
+    }
+}
+
+private fun clocktowerRoleByName(enName: String?): ClocktowerRole? {
+    if (enName.isNullOrBlank()) return null
+    return completeTroubleBrewingRoles.firstOrNull { it.enName == enName }
+}
+
+private fun PlayerCard.toJson(): JSONObject = JSONObject().apply {
+    put("name", name)
+    put("role", role.name)
+    put("word", word)
+    putNullableString("roleLabel", roleLabel)
+    putNullableString("actualRoleLabel", actualRoleLabel)
+    putNullableString("clocktowerTeam", clocktowerTeam?.name)
+    putNullableString("clocktowerRole", clocktowerRole?.enName)
+    putNullableString("clocktowerShownRole", clocktowerShownRole?.enName)
+    putNullableInt("eliminatedRound", eliminatedRound)
+}
+
+private fun playerCardFromJson(json: JSONObject): PlayerCard? {
+    val name = json.optString("name").takeIf { it.isNotBlank() } ?: return null
+    val role = enumByName<Role>(json.optNullableString("role")) ?: return null
+    val clocktowerRole = clocktowerRoleByName(json.optNullableString("clocktowerRole"))
+    val clocktowerShownRole = clocktowerRoleByName(json.optNullableString("clocktowerShownRole"))
+    val clocktowerTeam = enumByName<ClocktowerTeam>(json.optNullableString("clocktowerTeam"))
+        ?: clocktowerRole?.team
+    return PlayerCard(
+        name = name,
+        role = role,
+        word = json.optString("word"),
+        roleLabel = json.optNullableString("roleLabel"),
+        actualRoleLabel = json.optNullableString("actualRoleLabel"),
+        clocktowerTeam = clocktowerTeam,
+        clocktowerRole = clocktowerRole,
+        clocktowerShownRole = clocktowerShownRole,
+        eliminatedRound = json.optNullableInt("eliminatedRound"),
+    )
+}
+
+private fun playerCardsToJsonArray(cards: List<PlayerCard>): JSONArray {
+    val json = JSONArray()
+    cards.forEach { json.put(it.toJson()) }
+    return json
+}
+
+private fun JSONArray.toPlayerCards(): List<PlayerCard> = buildList {
+    for (index in 0 until length()) {
+        optJSONObject(index)?.let { playerCardFromJson(it)?.let(::add) }
+    }
+}
+
+private fun EliminationRecord.toJson(): JSONObject = JSONObject().apply {
+    put("round", round)
+    put("playerName", playerName)
+    putNullableString("note", note)
+}
+
+private fun eliminationRecordFromJson(json: JSONObject): EliminationRecord? {
+    val playerName = json.optString("playerName").takeIf { it.isNotBlank() } ?: return null
+    return EliminationRecord(
+        round = json.optInt("round", 1),
+        playerName = playerName,
+        note = json.optNullableString("note"),
+    )
+}
+
+private fun eliminationRecordsToJsonArray(records: List<EliminationRecord>): JSONArray {
+    val json = JSONArray()
+    records.forEach { json.put(it.toJson()) }
+    return json
+}
+
+private fun JSONArray.toEliminationRecords(): List<EliminationRecord> = buildList {
+    for (index in 0 until length()) {
+        optJSONObject(index)?.let { eliminationRecordFromJson(it)?.let(::add) }
+    }
+}
+
+private fun GameOutcome.toJson(): JSONObject = JSONObject().apply {
+    put("title", title)
+    put("summary", summary)
+    put("reason", reason)
+}
+
+private fun gameOutcomeFromJson(json: JSONObject?): GameOutcome? {
+    if (json == null) return null
+    val title = json.optString("title").takeIf { it.isNotBlank() } ?: return null
+    return GameOutcome(
+        title = title,
+        summary = json.optString("summary"),
+        reason = json.optString("reason"),
+    )
+}
+
+private fun savedGamePreviewFromJson(context: Context, json: JSONObject): SavedGamePreview? {
+    if (json.optInt("version", 0) != ACTIVE_GAME_STATE_VERSION) return null
+    val gameKind = enumByName<GameKind>(json.optNullableString("currentGameKind")) ?: return null
+    val screen = enumByName<Screen>(json.optNullableString("screen")) ?: return null
+    val playerCount = json.optJSONArray("cards")?.length() ?: 0
+    if (playerCount == 0) return null
+    val round = json.optInt("round", 1)
+    val gameName = when (gameKind) {
+        GameKind.Undercover -> context.getString(R.string.game_who_is_undercover)
+        GameKind.Werewolf -> context.getString(R.string.game_werewolf)
+        GameKind.Clocktower -> context.getString(R.string.game_clocktower)
+    }
+    val stage = when {
+        json.optBoolean("showResults", false) || json.optJSONObject("gameOutcome") != null ->
+            context.getString(R.string.saved_game_stage_results)
+        screen == Screen.PassPhone || screen == Screen.RevealCard ->
+            context.getString(R.string.saved_game_stage_dealing)
+        gameKind == GameKind.Clocktower -> {
+            when (enumByName<ClocktowerPhase>(json.optNullableString("clocktowerPhase")) ?: ClocktowerPhase.FirstNight) {
+                ClocktowerPhase.FirstNight -> context.getString(R.string.clocktower_phase_first_night)
+                ClocktowerPhase.Dawn -> context.getString(R.string.saved_game_stage_dawn)
+                ClocktowerPhase.Day -> context.getString(R.string.clocktower_phase_day, round)
+                ClocktowerPhase.Night -> context.getString(R.string.clocktower_phase_night, round)
+            }
+        }
+        else -> context.getString(R.string.round_format, round)
+    }
+    return SavedGamePreview(
+        title = context.getString(R.string.resume_saved_game),
+        subtitle = context.getString(R.string.saved_game_summary_format, gameName, stage, playerCount),
+    )
 }
 
 private fun Role.labelResId(): Int = when (this) {
@@ -412,15 +631,15 @@ private val troubleBrewingRoles = listOf(
     ClocktowerRole(ClocktowerTeam.Minion, "投毒者", "Poisoner", "每晚选择一名玩家，使其能力暂时失效。", "Each night, choose a player. Their ability temporarily stops working."),
     ClocktowerRole(ClocktowerTeam.Minion, "间谍", "Spy", "你可以查看说书人的魔典。", "You may look at the Storyteller grimoire."),
     ClocktowerRole(ClocktowerTeam.Minion, "男爵", "Baron", "本局加入额外外来者。", "Extra Outsiders are in play."),
-    ClocktowerRole(ClocktowerTeam.Minion, "红唇女郎", "Scarlet Woman", "若恶魔在五人以上时死亡，你可能变成恶魔。", "If the Demon dies with five or more players alive, you may become the Demon."),
+    ClocktowerRole(ClocktowerTeam.Minion, "猩红女巫", "Scarlet Woman", "若恶魔在五人以上时死亡，你可能变成恶魔。", "If the Demon dies with five or more players alive, you may become the Demon."),
     ClocktowerRole(ClocktowerTeam.Demon, "小恶魔", "Imp", "每晚选择一名玩家死亡；可选择自己并传递恶魔身份。", "Each night, choose a player to die. You may choose yourself to pass on the Demon role."),
 )
 
 private val completeTroubleBrewingRoles = (troubleBrewingRoles + listOf(
     ClocktowerRole(ClocktowerTeam.Townsfolk, "送葬者", "Undertaker", "每个夜晚，得知今天被处决玩家的角色。", "Each night, learn which character died by execution today."),
     ClocktowerRole(ClocktowerTeam.Townsfolk, "僧侣", "Monk", "每个夜晚，选择除自己以外的一名玩家，使其免受恶魔伤害。", "Each night, choose a player other than yourself: they are safe from the Demon tonight."),
-    ClocktowerRole(ClocktowerTeam.Townsfolk, "处女", "Virgin", "首次被镇民提名时，提名者立即被处决。", "The first time you are nominated by a Townsfolk, the nominator is executed immediately."),
-    ClocktowerRole(ClocktowerTeam.Townsfolk, "猎手", "Slayer", "每局一次，白天选择一名玩家；若其是恶魔，该玩家死亡。", "Once per game during the day, choose a player: if they are the Demon, they die."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "圣女", "Virgin", "首次被镇民提名时，提名者立即被处决。", "The first time you are nominated by a Townsfolk, the nominator is executed immediately."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "杀手", "Slayer", "每局一次，白天选择一名玩家；若其是恶魔，该玩家死亡。", "Once per game during the day, choose a player: if they are the Demon, they die."),
 )).distinctBy { it.enName }
 
 private fun ClocktowerTeam.label(context: Context): String = when (this) {
@@ -444,7 +663,7 @@ private fun LastWordsMode.labelResId(): Int = when (this) {
 private fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int> {
     return when (playerCount) {
         5 -> mapOf(ClocktowerTeam.Townsfolk to 3, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
-        6 -> mapOf(ClocktowerTeam.Townsfolk to 4, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
+        6 -> mapOf(ClocktowerTeam.Townsfolk to 3, ClocktowerTeam.Outsider to 1, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
         7 -> mapOf(ClocktowerTeam.Townsfolk to 5, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
         8 -> mapOf(ClocktowerTeam.Townsfolk to 5, ClocktowerTeam.Outsider to 1, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
         9 -> mapOf(ClocktowerTeam.Townsfolk to 5, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
@@ -472,7 +691,6 @@ private fun generateClocktowerAssignments(playerCount: Int): List<ClocktowerAssi
     val baseOutsiderCount = baseDistribution.getValue(ClocktowerTeam.Outsider)
     val minions = completeTroubleBrewingRoles
         .filter { it.team == ClocktowerTeam.Minion }
-        .filter { baseOutsiderCount > 0 || it.enName != "Baron" }
         .shuffled()
         .take(baseDistribution.getValue(ClocktowerTeam.Minion))
     val includesBaron = minions.any { it.enName == "Baron" }
@@ -503,11 +721,13 @@ private fun generateClocktowerAssignments(playerCount: Int): List<ClocktowerAssi
 @Composable
 private fun CampBoardGameHostApp() {
     val baseContext = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     var languageMode by remember { mutableStateOf(baseContext.loadLanguageMode()) }
     val context = remember(languageMode) { baseContext.localized(languageMode) }
     val language = context.resources.configuration.locales[0].language
     var screen by remember { mutableStateOf(Screen.Setup) }
     var currentGameKind by remember { mutableStateOf(GameKind.Undercover) }
+    var savedGamePreview by remember(context) { mutableStateOf(baseContext.loadSavedGamePreview(context)) }
     var undercoverCount by remember { mutableStateOf(1) }
     var includeBlank by remember { mutableStateOf(false) }
     var werewolfCount by remember { mutableStateOf(1) }
@@ -548,7 +768,222 @@ private fun CampBoardGameHostApp() {
     val playerNames = remember { mutableStateListOf<String>() }
     val cards = remember { mutableStateListOf<PlayerCard>() }
     val records = remember { mutableStateListOf<EliminationRecord>() }
+    val clocktowerNightStartedState = remember { mutableStateOf(false) }
+    val clocktowerNightStepIndexState = remember { mutableStateOf(0) }
+    val clocktowerDayModeState = remember { mutableStateOf(ClocktowerDayMode.Overview) }
+    val clocktowerNominatorNameState = remember { mutableStateOf<String?>(null) }
+    val clocktowerNomineeNameState = remember { mutableStateOf<String?>(null) }
+    val clocktowerCurrentVoteCountState = remember { mutableStateOf(0) }
+    val clocktowerHighestVoteNameState = remember { mutableStateOf<String?>(null) }
+    val clocktowerHighestVoteCountState = remember { mutableStateOf(0) }
+    val clocktowerSlayerClaimantNameState = remember { mutableStateOf<String?>(null) }
+    val clocktowerSlayerTargetNameState = remember { mutableStateOf<String?>(null) }
     val playerCount = playerNames.size
+
+    fun resetClocktowerNightFlow() {
+        clocktowerNightStartedState.value = false
+        clocktowerNightStepIndexState.value = 0
+    }
+
+    fun resetClocktowerDayFlow() {
+        clocktowerDayModeState.value = ClocktowerDayMode.Overview
+        clocktowerNominatorNameState.value = null
+        clocktowerNomineeNameState.value = null
+        clocktowerCurrentVoteCountState.value = 0
+        clocktowerHighestVoteNameState.value = null
+        clocktowerHighestVoteCountState.value = 0
+        clocktowerSlayerClaimantNameState.value = null
+        clocktowerSlayerTargetNameState.value = null
+    }
+
+    fun resetClocktowerFlow() {
+        resetClocktowerNightFlow()
+        resetClocktowerDayFlow()
+    }
+
+    fun clearSavedGameState() {
+        baseContext.clearActiveGameState()
+        savedGamePreview = null
+    }
+
+    fun localizedRestoredCard(card: PlayerCard): PlayerCard {
+        if (card.clocktowerRole == null || card.clocktowerShownRole == null) return card
+        return card.copy(
+            roleLabel = card.clocktowerShownRole.nameFor(language),
+            actualRoleLabel = card.clocktowerRole.nameFor(language),
+            word = context.getString(
+                R.string.clocktower_card_desc_format,
+                card.clocktowerShownRole.team.label(context),
+                card.clocktowerShownRole.descriptionFor(language),
+            ),
+        )
+    }
+
+    fun activeGameSnapshotJson(): JSONObject = JSONObject().apply {
+        put("version", ACTIVE_GAME_STATE_VERSION)
+        put("screen", screen.name)
+        put("currentGameKind", currentGameKind.name)
+        put("undercoverCount", undercoverCount)
+        put("includeBlank", includeBlank)
+        put("werewolfCount", werewolfCount)
+        put("includeSeer", includeSeer)
+        put("includeWitch", includeWitch)
+        put("includeHunter", includeHunter)
+        put("lastWordsMode", lastWordsMode.name)
+        put("lastWordsPromptNames", stringsToJsonArray(lastWordsPromptNames))
+        put("currentDealIndex", currentDealIndex)
+        put("round", round)
+        putNullableString("selectedElimination", selectedElimination)
+        put("werewolfJudgeStepIndex", werewolfJudgeStepIndex)
+        putNullableString("pendingNightDeath", pendingNightDeath)
+        putNullableString("seerCheckTarget", seerCheckTarget)
+        put("witchSaveUsed", witchSaveUsed)
+        put("witchPoisonUsed", witchPoisonUsed)
+        put("witchSavedTonight", witchSavedTonight)
+        putNullableString("witchPoisonTarget", witchPoisonTarget)
+        putNullableString("hunterShotTarget", hunterShotTarget)
+        putNullableString("selectedDayExile", selectedDayExile)
+        put("clocktowerPhase", clocktowerPhase.name)
+        putNullableString("clocktowerPendingNightDeath", clocktowerPendingNightDeath)
+        putNullableString("clocktowerSelectedExecution", clocktowerSelectedExecution)
+        putNullableString("clocktowerPoisonTarget", clocktowerPoisonTarget)
+        putNullableString("clocktowerFortuneTellerFirst", clocktowerFortuneTellerFirst)
+        putNullableString("clocktowerFortuneTellerSecond", clocktowerFortuneTellerSecond)
+        putNullableString("clocktowerRavenkeeperTarget", clocktowerRavenkeeperTarget)
+        putNullableString("clocktowerRedHerring", clocktowerRedHerring)
+        putNullableString("clocktowerButlerMaster", clocktowerButlerMaster)
+        putNullableString("clocktowerMonkProtectedTarget", clocktowerMonkProtectedTarget)
+        put("clocktowerVirginUsed", clocktowerVirginUsed)
+        put("clocktowerSlayerUsed", clocktowerSlayerUsed)
+        putNullableString("clocktowerLastExecutedName", clocktowerLastExecutedName)
+        put("clocktowerNightStarted", clocktowerNightStartedState.value)
+        put("clocktowerNightStepIndex", clocktowerNightStepIndexState.value)
+        put("clocktowerDayMode", clocktowerDayModeState.value.name)
+        putNullableString("clocktowerNominatorName", clocktowerNominatorNameState.value)
+        putNullableString("clocktowerNomineeName", clocktowerNomineeNameState.value)
+        put("clocktowerCurrentVoteCount", clocktowerCurrentVoteCountState.value)
+        putNullableString("clocktowerHighestVoteName", clocktowerHighestVoteNameState.value)
+        put("clocktowerHighestVoteCount", clocktowerHighestVoteCountState.value)
+        putNullableString("clocktowerSlayerClaimantName", clocktowerSlayerClaimantNameState.value)
+        putNullableString("clocktowerSlayerTargetName", clocktowerSlayerTargetNameState.value)
+        put("showResults", showResults)
+        if (gameOutcome == null) {
+            put("gameOutcome", JSONObject.NULL)
+        } else {
+            put("gameOutcome", gameOutcome!!.toJson())
+        }
+        put("playerNames", stringsToJsonArray(playerNames))
+        put("cards", playerCardsToJsonArray(cards))
+        put("records", eliminationRecordsToJsonArray(records))
+    }
+
+    fun persistActiveGameStateIfNeeded() {
+        if (screen.isActiveGameScreen() && cards.isNotEmpty()) {
+            baseContext.saveActiveGameState(activeGameSnapshotJson())
+        }
+    }
+
+    fun restoreSavedGame() {
+        val json = baseContext.loadActiveGameStateJson() ?: return
+        val restored = runCatching {
+            if (json.optInt("version", 0) != ACTIVE_GAME_STATE_VERSION) {
+                error("Unsupported active game state version")
+            }
+            val restoredGameKind = enumByName<GameKind>(json.optNullableString("currentGameKind"))
+                ?: error("Missing game kind")
+            val restoredCards = json.optJSONArray("cards")?.toPlayerCards().orEmpty()
+            if (restoredCards.isEmpty()) error("Missing player cards")
+            val localizedRestoredCards = restoredCards.map(::localizedRestoredCard)
+            val restoredScreen = enumByName<Screen>(json.optNullableString("screen"))
+                ?.takeIf { it.isActiveGameScreen() }
+                ?: when (restoredGameKind) {
+                    GameKind.Undercover -> Screen.Game
+                    GameKind.Werewolf -> Screen.WerewolfJudge
+                    GameKind.Clocktower -> Screen.ClocktowerJudge
+                }
+            val restoredPlayerNames = json.optJSONArray("playerNames")
+                ?.toStringList()
+                .orEmpty()
+                .ifEmpty { localizedRestoredCards.map { it.name } }
+
+            playerNames.clear()
+            playerNames.addAll(restoredPlayerNames)
+            cards.clear()
+            cards.addAll(localizedRestoredCards)
+            records.clear()
+            records.addAll(json.optJSONArray("records")?.toEliminationRecords().orEmpty())
+
+            currentGameKind = restoredGameKind
+            undercoverCount = json.optInt("undercoverCount", 1).coerceAtLeast(1)
+            includeBlank = json.optBoolean("includeBlank", false)
+            werewolfCount = json.optInt("werewolfCount", 1).coerceAtLeast(1)
+            includeSeer = json.optBoolean("includeSeer", true)
+            includeWitch = json.optBoolean("includeWitch", false)
+            includeHunter = json.optBoolean("includeHunter", false)
+            lastWordsMode = enumByName<LastWordsMode>(json.optNullableString("lastWordsMode")) ?: LastWordsMode.FirstDay
+            lastWordsPromptNames = json.optJSONArray("lastWordsPromptNames")?.toStringList().orEmpty()
+            currentDealIndex = json.optInt("currentDealIndex", 0).coerceIn(0, localizedRestoredCards.lastIndex)
+            round = json.optInt("round", 1).coerceAtLeast(1)
+            selectedElimination = json.optNullableString("selectedElimination")
+            werewolfJudgeStepIndex = json.optInt("werewolfJudgeStepIndex", 0).coerceAtLeast(0)
+            pendingNightDeath = json.optNullableString("pendingNightDeath")
+            seerCheckTarget = json.optNullableString("seerCheckTarget")
+            witchSaveUsed = json.optBoolean("witchSaveUsed", false)
+            witchPoisonUsed = json.optBoolean("witchPoisonUsed", false)
+            witchSavedTonight = json.optBoolean("witchSavedTonight", false)
+            witchPoisonTarget = json.optNullableString("witchPoisonTarget")
+            hunterShotTarget = json.optNullableString("hunterShotTarget")
+            selectedDayExile = json.optNullableString("selectedDayExile")
+            clocktowerPhase = enumByName<ClocktowerPhase>(json.optNullableString("clocktowerPhase")) ?: ClocktowerPhase.FirstNight
+            clocktowerPendingNightDeath = json.optNullableString("clocktowerPendingNightDeath")
+            clocktowerSelectedExecution = json.optNullableString("clocktowerSelectedExecution")
+            clocktowerPoisonTarget = json.optNullableString("clocktowerPoisonTarget")
+            clocktowerFortuneTellerFirst = json.optNullableString("clocktowerFortuneTellerFirst")
+            clocktowerFortuneTellerSecond = json.optNullableString("clocktowerFortuneTellerSecond")
+            clocktowerRavenkeeperTarget = json.optNullableString("clocktowerRavenkeeperTarget")
+            clocktowerRedHerring = json.optNullableString("clocktowerRedHerring")
+            clocktowerButlerMaster = json.optNullableString("clocktowerButlerMaster")
+            clocktowerMonkProtectedTarget = json.optNullableString("clocktowerMonkProtectedTarget")
+            clocktowerVirginUsed = json.optBoolean("clocktowerVirginUsed", false)
+            clocktowerSlayerUsed = json.optBoolean("clocktowerSlayerUsed", false)
+            clocktowerLastExecutedName = json.optNullableString("clocktowerLastExecutedName")
+            clocktowerNightStartedState.value = json.optBoolean("clocktowerNightStarted", false)
+            clocktowerNightStepIndexState.value = json.optInt("clocktowerNightStepIndex", 0).coerceAtLeast(0)
+            clocktowerDayModeState.value = enumByName<ClocktowerDayMode>(json.optNullableString("clocktowerDayMode"))
+                ?: ClocktowerDayMode.Overview
+            clocktowerNominatorNameState.value = json.optNullableString("clocktowerNominatorName")
+            clocktowerNomineeNameState.value = json.optNullableString("clocktowerNomineeName")
+            clocktowerCurrentVoteCountState.value = json.optInt("clocktowerCurrentVoteCount", 0).coerceAtLeast(0)
+            clocktowerHighestVoteNameState.value = json.optNullableString("clocktowerHighestVoteName")
+            clocktowerHighestVoteCountState.value = json.optInt("clocktowerHighestVoteCount", 0).coerceAtLeast(0)
+            clocktowerSlayerClaimantNameState.value = json.optNullableString("clocktowerSlayerClaimantName")
+            clocktowerSlayerTargetNameState.value = json.optNullableString("clocktowerSlayerTargetName")
+            gameOutcome = gameOutcomeFromJson(json.optJSONObject("gameOutcome"))
+            showResults = json.optBoolean("showResults", false)
+            screen = restoredScreen
+        }
+        if (restored.isFailure) {
+            clearSavedGameState()
+        }
+    }
+
+    val latestPersistActiveGameState by rememberUpdatedState { persistActiveGameStateIfNeeded() }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_PAUSE || event == Lifecycle.Event.ON_STOP) {
+                latestPersistActiveGameState()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    SideEffect {
+        persistActiveGameStateIfNeeded()
+    }
 
     fun maxUndercoverFor(count: Int): Int {
         return ((if (includeBlank) count - 2 else count - 1).coerceAtLeast(1))
@@ -626,6 +1061,7 @@ private fun CampBoardGameHostApp() {
     }
 
     fun resetDealState(nextGameKind: GameKind) {
+        clearSavedGameState()
         currentGameKind = nextGameKind
         records.clear()
         currentDealIndex = 0
@@ -656,7 +1092,9 @@ private fun CampBoardGameHostApp() {
         clocktowerVirginUsed = false
         clocktowerSlayerUsed = false
         clocktowerLastExecutedName = null
+        resetClocktowerFlow()
         screen = Screen.PassPhone
+        persistActiveGameStateIfNeeded()
     }
 
     fun startUndercoverGame() {
@@ -788,12 +1226,15 @@ private fun CampBoardGameHostApp() {
                 when (screen) {
                     Screen.Setup -> SetupScreen(
                     playerCount = playerCount,
+                    savedGamePreview = savedGamePreview,
                     commonPlayers = commonPlayers,
                     playerNames = playerNames,
                     onAddCurrentPlayer = ::addCurrentPlayer,
                     onAddTemporaryPlayer = ::addTemporaryPlayer,
                     onRemoveCurrentPlayer = ::removeCurrentPlayer,
                     onMoveCurrentPlayerTo = ::moveCurrentPlayerTo,
+                    onResumeSavedGame = ::restoreSavedGame,
+                    onDiscardSavedGame = ::clearSavedGameState,
                     onOpenSettings = { screen = Screen.Settings },
                     onOpenUndercoverSettings = { screen = Screen.UndercoverSettings },
                     onOpenWerewolfSettings = { screen = Screen.WerewolfSettings },
@@ -991,6 +1432,7 @@ private fun CampBoardGameHostApp() {
                             showResults = true
                         },
                         onNewGame = {
+                            clearSavedGameState()
                             screen = Screen.Setup
                             cards.clear()
                             records.clear()
@@ -1025,8 +1467,26 @@ private fun CampBoardGameHostApp() {
                         virginUsed = clocktowerVirginUsed,
                         slayerUsed = clocktowerSlayerUsed,
                         lastExecutedName = clocktowerLastExecutedName,
+                        nightStartedState = clocktowerNightStartedState,
+                        nightStepIndexState = clocktowerNightStepIndexState,
+                        dayModeState = clocktowerDayModeState,
+                        nominatorNameState = clocktowerNominatorNameState,
+                        nomineeNameState = clocktowerNomineeNameState,
+                        currentVoteCountState = clocktowerCurrentVoteCountState,
+                        highestVoteNameState = clocktowerHighestVoteNameState,
+                        highestVoteCountState = clocktowerHighestVoteCountState,
+                        slayerClaimantNameState = clocktowerSlayerClaimantNameState,
+                        slayerTargetNameState = clocktowerSlayerTargetNameState,
                         gameOutcome = gameOutcome,
-                        onPhaseChange = { clocktowerPhase = it },
+                        onPhaseChange = { nextPhase ->
+                            clocktowerPhase = nextPhase
+                            if (nextPhase == ClocktowerPhase.FirstNight || nextPhase == ClocktowerPhase.Night) {
+                                resetClocktowerNightFlow()
+                            }
+                            if (nextPhase == ClocktowerPhase.Day) {
+                                resetClocktowerDayFlow()
+                            }
+                        },
                         onSelectNightDeath = { clocktowerPendingNightDeath = it },
                         onSelectExecution = { clocktowerSelectedExecution = it },
                         onSelectPoisonTarget = { clocktowerPoisonTarget = it },
@@ -1103,6 +1563,8 @@ private fun CampBoardGameHostApp() {
                                 } else {
                                     round += 1
                                     clocktowerPhase = ClocktowerPhase.Night
+                                    resetClocktowerDayFlow()
+                                    resetClocktowerNightFlow()
                                 }
                                 clocktowerSelectedExecution = null
                             } else {
@@ -1120,6 +1582,8 @@ private fun CampBoardGameHostApp() {
                         },
                         onAdvanceFromFirstNight = {
                             clocktowerPhase = ClocktowerPhase.Day
+                            resetClocktowerNightFlow()
+                            resetClocktowerDayFlow()
                         },
                         onConfirmDay = {
                             val aliveBeforeExecution = cards.filter { it.eliminatedRound == null }
@@ -1165,6 +1629,8 @@ private fun CampBoardGameHostApp() {
                             } else {
                                 round += 1
                                 clocktowerPhase = ClocktowerPhase.Night
+                                resetClocktowerDayFlow()
+                                resetClocktowerNightFlow()
                             }
                             clocktowerSelectedExecution = null
                         },
@@ -1212,6 +1678,7 @@ private fun CampBoardGameHostApp() {
                                 showResults = true
                             } else {
                                 clocktowerPhase = ClocktowerPhase.Dawn
+                                resetClocktowerNightFlow()
                             }
                             clocktowerPoisonTarget = null
                             clocktowerFortuneTellerFirst = null
@@ -1228,6 +1695,7 @@ private fun CampBoardGameHostApp() {
                             showResults = true
                         },
                         onNewGame = {
+                            clearSavedGameState()
                             screen = Screen.Setup
                             cards.clear()
                             records.clear()
@@ -1245,6 +1713,7 @@ private fun CampBoardGameHostApp() {
                             clocktowerVirginUsed = false
                             clocktowerSlayerUsed = false
                             clocktowerLastExecutedName = null
+                            resetClocktowerFlow()
                         },
                     )
 
@@ -1281,6 +1750,7 @@ private fun CampBoardGameHostApp() {
                         showResults = true
                     },
                     onNewGame = {
+                        clearSavedGameState()
                         screen = Screen.Setup
                         cards.clear()
                         records.clear()
@@ -1296,11 +1766,13 @@ private fun CampBoardGameHostApp() {
                         outcome = gameOutcome,
                         onDismiss = { showResults = false },
                         onNewGame = {
+                            clearSavedGameState()
                             showResults = false
                             gameOutcome = null
                             screen = Screen.Setup
                             cards.clear()
                             records.clear()
+                            resetClocktowerFlow()
                         },
                     )
                 }
@@ -1381,12 +1853,15 @@ private fun evaluateGameOutcome(context: Context, cards: List<PlayerCard>, gameK
 @Composable
 private fun SetupScreen(
     playerCount: Int,
+    savedGamePreview: SavedGamePreview?,
     commonPlayers: List<String>,
     playerNames: List<String>,
     onAddCurrentPlayer: (String) -> Unit,
     onAddTemporaryPlayer: () -> Unit,
     onRemoveCurrentPlayer: (Int) -> Unit,
     onMoveCurrentPlayerTo: (Int, Int) -> Unit,
+    onResumeSavedGame: () -> Unit,
+    onDiscardSavedGame: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenUndercoverSettings: () -> Unit,
     onOpenWerewolfSettings: () -> Unit,
@@ -1414,6 +1889,42 @@ private fun SetupScreen(
                 }
                 TextButton(onClick = onOpenSettings) {
                     Text(stringResource(R.string.settings))
+                }
+            }
+        }
+
+        savedGamePreview?.let { preview ->
+            item {
+                Card(
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF2EA)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Text(preview.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(preview.subtitle, color = Color(0xFF5C6A63))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = onResumeSavedGame,
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text(stringResource(R.string.continue_saved_game))
+                            }
+                            OutlinedButton(
+                                onClick = onDiscardSavedGame,
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text(stringResource(R.string.discard_saved_game))
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -3214,6 +3725,16 @@ private fun ClocktowerJudgeScreen(
     virginUsed: Boolean,
     slayerUsed: Boolean,
     lastExecutedName: String?,
+    nightStartedState: MutableState<Boolean>,
+    nightStepIndexState: MutableState<Int>,
+    dayModeState: MutableState<ClocktowerDayMode>,
+    nominatorNameState: MutableState<String?>,
+    nomineeNameState: MutableState<String?>,
+    currentVoteCountState: MutableState<Int>,
+    highestVoteNameState: MutableState<String?>,
+    highestVoteCountState: MutableState<Int>,
+    slayerClaimantNameState: MutableState<String?>,
+    slayerTargetNameState: MutableState<String?>,
     gameOutcome: GameOutcome?,
     onPhaseChange: (ClocktowerPhase) -> Unit,
     onSelectNightDeath: (String?) -> Unit,
@@ -3278,16 +3799,16 @@ private fun ClocktowerJudgeScreen(
         ClocktowerPhase.Night -> stringResource(R.string.clocktower_action_night)
     }
 
-    var nightStarted by remember(phase, round) { mutableStateOf(false) }
-    var nightStepIndex by remember(phase, round) { mutableStateOf(0) }
-    var dayMode by remember(round) { mutableStateOf(ClocktowerDayMode.Overview) }
-    var nominatorName by remember(round) { mutableStateOf<String?>(null) }
-    var nomineeName by remember(round) { mutableStateOf<String?>(null) }
-    var currentVoteCount by remember(round) { mutableStateOf(0) }
-    var highestVoteName by remember(round) { mutableStateOf<String?>(null) }
-    var highestVoteCount by remember(round) { mutableStateOf(0) }
-    var slayerClaimantName by remember(round) { mutableStateOf<String?>(null) }
-    var slayerTargetName by remember(round) { mutableStateOf<String?>(null) }
+    var nightStarted by nightStartedState
+    var nightStepIndex by nightStepIndexState
+    var dayMode by dayModeState
+    var nominatorName by nominatorNameState
+    var nomineeName by nomineeNameState
+    var currentVoteCount by currentVoteCountState
+    var highestVoteName by highestVoteNameState
+    var highestVoteCount by highestVoteCountState
+    var slayerClaimantName by slayerClaimantNameState
+    var slayerTargetName by slayerTargetNameState
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
     val executionThreshold = (aliveCards.size + 1) / 2
 
@@ -3357,6 +3878,7 @@ private fun ClocktowerJudgeScreen(
     val empathNumber = empathNeighbors.count(::isClocktowerEvil).toString()
     val demonCard = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon }
     val minionCards = cards.filter { it.clocktowerTeam == ClocktowerTeam.Minion }
+    val shouldGiveFirstNightEvilInfo = cards.size >= 7
     val demonBluffs = completeTroubleBrewingRoles
         .filter { role -> role.team == ClocktowerTeam.Townsfolk && cards.none { it.clocktowerRole?.enName == role.enName } }
         .take(3)
@@ -3383,10 +3905,14 @@ private fun ClocktowerJudgeScreen(
         listOf(
             ClocktowerNightStepUi(
                 title = stringResource(R.string.clocktower_first_night_minion_title),
-                actor = minionCards.firstOrNull(),
-                isRealAction = minionCards.isNotEmpty(),
-                reason = if (minionCards.isEmpty()) stringResource(R.string.clocktower_first_night_no_minions_reason) else "",
-                storytellerAction = if (minionCards.isNotEmpty()) {
+                actor = minionCards.firstOrNull().takeIf { shouldGiveFirstNightEvilInfo },
+                isRealAction = minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo,
+                reason = when {
+                    !shouldGiveFirstNightEvilInfo -> stringResource(R.string.clocktower_first_night_small_game_no_evil_info_reason)
+                    minionCards.isEmpty() -> stringResource(R.string.clocktower_first_night_no_minions_reason)
+                    else -> ""
+                },
+                storytellerAction = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
                     stringResource(
                         R.string.clocktower_first_night_minion_action_format,
                         minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) },
@@ -3394,13 +3920,17 @@ private fun ClocktowerJudgeScreen(
                 } else {
                     stringResource(R.string.clocktower_first_night_placeholder_action)
                 },
-                tellPlayer = if (minionCards.isNotEmpty()) minionInfoText else null,
-                explanation = stringResource(R.string.clocktower_first_night_minion_explain),
-                displayKind = if (minionCards.isNotEmpty() && minionInfoText != null) ClocktowerDisplayKind.Plain else ClocktowerDisplayKind.None,
+                tellPlayer = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) minionInfoText else null,
+                explanation = if (shouldGiveFirstNightEvilInfo) {
+                    stringResource(R.string.clocktower_first_night_minion_explain)
+                } else {
+                    stringResource(R.string.clocktower_first_night_small_game_no_evil_info_explain)
+                },
+                displayKind = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo && minionInfoText != null) ClocktowerDisplayKind.Plain else ClocktowerDisplayKind.None,
                 displayTitle = stringResource(R.string.clocktower_first_night_minion_title),
-                displayPrimary = if (minionCards.isNotEmpty()) minionInfoText else null,
-                displayFooter = if (minionCards.isNotEmpty()) stringResource(R.string.clocktower_first_night_minion_explain) else null,
-                wakeText = if (minionCards.isNotEmpty()) {
+                displayPrimary = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) minionInfoText else null,
+                displayFooter = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) stringResource(R.string.clocktower_first_night_minion_explain) else null,
+                wakeText = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
                     stringResource(
                         R.string.clocktower_first_night_minion_wake_format,
                         minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) },
@@ -3411,18 +3941,28 @@ private fun ClocktowerJudgeScreen(
             ),
             ClocktowerNightStepUi(
                 title = stringResource(R.string.clocktower_first_night_demon_title),
-                actor = demonCard,
-                isRealAction = demonCard != null,
-                reason = if (demonCard == null) stringResource(R.string.clocktower_first_night_no_demon_reason) else "",
-                storytellerAction = demonCard?.let {
-                    stringResource(R.string.clocktower_first_night_demon_action_format, it.seatLabel(cards))
-                } ?: stringResource(R.string.clocktower_first_night_placeholder_action),
-                tellPlayer = if (demonCard != null) demonInfoText else null,
-                explanation = stringResource(R.string.clocktower_first_night_demon_explain),
-                displayKind = if (demonCard != null) ClocktowerDisplayKind.Plain else ClocktowerDisplayKind.None,
+                actor = demonCard.takeIf { shouldGiveFirstNightEvilInfo },
+                isRealAction = demonCard != null && shouldGiveFirstNightEvilInfo,
+                reason = when {
+                    !shouldGiveFirstNightEvilInfo -> stringResource(R.string.clocktower_first_night_small_game_no_evil_info_reason)
+                    demonCard == null -> stringResource(R.string.clocktower_first_night_no_demon_reason)
+                    else -> ""
+                },
+                storytellerAction = if (demonCard != null && shouldGiveFirstNightEvilInfo) {
+                    stringResource(R.string.clocktower_first_night_demon_action_format, demonCard.seatLabel(cards))
+                } else {
+                    stringResource(R.string.clocktower_first_night_placeholder_action)
+                },
+                tellPlayer = if (demonCard != null && shouldGiveFirstNightEvilInfo) demonInfoText else null,
+                explanation = if (shouldGiveFirstNightEvilInfo) {
+                    stringResource(R.string.clocktower_first_night_demon_explain)
+                } else {
+                    stringResource(R.string.clocktower_first_night_small_game_no_evil_info_explain)
+                },
+                displayKind = if (demonCard != null && shouldGiveFirstNightEvilInfo) ClocktowerDisplayKind.Plain else ClocktowerDisplayKind.None,
                 displayTitle = stringResource(R.string.clocktower_first_night_demon_title),
-                displayPrimary = if (demonCard != null) demonInfoText else null,
-                displayFooter = if (demonCard != null) stringResource(R.string.clocktower_first_night_demon_explain) else null,
+                displayPrimary = if (demonCard != null && shouldGiveFirstNightEvilInfo) demonInfoText else null,
+                displayFooter = if (demonCard != null && shouldGiveFirstNightEvilInfo) stringResource(R.string.clocktower_first_night_demon_explain) else null,
             ),
             ClocktowerNightStepUi(
                 title = "占卜师红鲱鱼",
@@ -3745,8 +4285,8 @@ private fun ClocktowerJudgeScreen(
                             action = "管理提名、投票、处决。今天结束前会确认是否有人被处决。",
                         ) {
                             HostActionSection(
-                                title = "公开声称猎手行动",
-                                helper = "任何存活玩家都可能公开声称自己是猎手。选择声称者和目标，说书人配合结算；只有真实猎手首次使用且目标是真实恶魔时，目标才会死亡。",
+                                title = "公开声称杀手行动",
+                                helper = "任何存活玩家都可能公开声称自己是杀手。选择声称者和目标，说书人配合结算；只有真实杀手首次使用且目标是真实恶魔时，目标才会死亡。",
                             ) {
                                 Text("声称者", fontWeight = FontWeight.SemiBold)
                                 SelectablePlayerChips(
@@ -3783,8 +4323,8 @@ private fun ClocktowerJudgeScreen(
                             }
                             if (slayerUsed) {
                                 HostInstructionBlock(
-                                    label = "猎手",
-                                    text = "真实猎手能力本局已经使用过。之后仍可记录公开声称猎手行动，但不会再造成真实猎手命中。",
+                                    label = "杀手",
+                                    text = "真实杀手能力本局已经使用过。之后仍可记录公开声称杀手行动，但不会再造成真实杀手命中。",
                                     backgroundColor = Color(0xFFFFFCF6),
                                     textColor = Color(0xFF6F7B74),
                                 )
@@ -3830,8 +4370,8 @@ private fun ClocktowerJudgeScreen(
                                 "选择提名人和被提名人。"
                             },
                             action = when {
-                                virginExecutes -> "这是处女第一次被镇民提名。不要投票，直接处决提名者。"
-                                virginFirstNomination -> "这是处女第一次被提名，但提名者不是真实镇民。处女能力用过，继续正常投票。"
+                                virginExecutes -> "这是圣女第一次被镇民提名。不要投票，直接处决提名者。"
+                                virginFirstNomination -> "这是圣女第一次被提名，但提名者不是真实镇民。圣女能力用过，继续正常投票。"
                                 else -> "两名玩家都选好后，进入投票。"
                             },
                         ) {
@@ -3855,11 +4395,11 @@ private fun ClocktowerJudgeScreen(
                             }
                             if (virginFirstNomination) {
                                 HostInstructionBlock(
-                                    label = "处女能力",
+                                    label = "圣女能力",
                                     text = if (virginExecutes) {
                                         "${playerSeatLabel(cards, nomineeName)} 第一次被真实镇民提名。${playerSeatLabel(cards, nominatorName)} 立即被处决，本次提名不进入投票，白天结束。"
                                     } else {
-                                        "${playerSeatLabel(cards, nomineeName)} 第一次被提名，但 ${playerSeatLabel(cards, nominatorName)} 不是真实镇民。不要处决提名者；记录处女能力已用过，然后继续投票。"
+                                        "${playerSeatLabel(cards, nomineeName)} 第一次被提名，但 ${playerSeatLabel(cards, nominatorName)} 不是真实镇民。不要处决提名者；记录圣女能力已用过，然后继续投票。"
                                     },
                                     backgroundColor = if (virginExecutes) Color(0xFFFFF4DC) else Color(0xFFFFFCF6),
                                     textColor = if (virginExecutes) Color(0xFF9A4B36) else Color(0xFF5C6A63),
@@ -3884,7 +4424,7 @@ private fun ClocktowerJudgeScreen(
                                 Text(
                                     when {
                                         virginExecutes -> "处决提名者"
-                                        virginFirstNomination -> "记录处女已用过，开始投票"
+                                        virginFirstNomination -> "记录圣女已用过，开始投票"
                                         else -> "开始投票"
                                     },
                                 )
