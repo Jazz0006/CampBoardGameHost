@@ -305,7 +305,7 @@ textarea {
 
 .step-card {
   display: grid;
-  gap: 14px;
+  gap: 16px;
   padding: clamp(18px, 4vw, 28px);
   border: 2px solid rgba(47, 93, 80, 0.18);
   border-radius: 28px;
@@ -316,6 +316,53 @@ textarea {
 
 .step-card h2 {
   margin: 0;
+}
+
+.host-step {
+  gap: 18px;
+}
+
+.step-kicker {
+  width: fit-content;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: #fff8eb;
+  background: var(--moss);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.host-command {
+  max-width: 12ch;
+  font-size: clamp(2.4rem, 10vw, 5.2rem);
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+
+.step-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.button-row > button {
+  flex: 1 1 180px;
+}
+
+.step-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(0.95rem, 2.2vw, 1.08rem);
+  line-height: 1.55;
+}
+
+.step-note.warn {
+  color: #8c4b20;
 }
 
 .instruction {
@@ -350,6 +397,49 @@ textarea {
   text-align: center;
 }
 
+.fortune-control {
+  display: grid;
+  gap: 12px;
+}
+
+.number-picker {
+  padding: 12px;
+  border-radius: 20px;
+  background: #fff8eb;
+  border: 1px solid var(--line);
+}
+
+.number-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(54px, 1fr));
+  gap: 8px;
+}
+
+.number-chip {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  min-height: 54px;
+  border-radius: 16px;
+  color: var(--ink);
+  background: #fffaf1;
+  border: 1px solid var(--line);
+  font-size: clamp(1.25rem, 6vw, 2rem);
+  font-weight: 950;
+}
+
+.number-chip.selected {
+  color: #fff8eb;
+  background: var(--clay);
+  border-color: var(--clay);
+}
+
+.query-button {
+  min-height: 58px;
+  font-size: 1.12rem;
+  font-weight: 900;
+}
+
 .display-overlay {
   position: fixed;
   inset: 0;
@@ -361,19 +451,29 @@ textarea {
 }
 
 .display-card {
+  position: relative;
   width: min(760px, 100%);
-  min-height: min(760px, 86vh);
+  height: min(760px, calc(100vh - 36px));
   display: grid;
-  grid-template-rows: auto 1fr auto auto;
-  gap: 18px;
+  grid-template-rows: auto auto auto 1fr auto auto;
+  gap: 8px;
   place-items: center;
-  padding: clamp(24px, 8vw, 56px);
+  padding: clamp(18px, 5vw, 36px);
   border-radius: 34px;
   color: #fff8eb;
   background:
     radial-gradient(circle at top, rgba(247, 198, 106, 0.25), transparent 24rem),
     linear-gradient(160deg, #193a35, #081210);
   text-align: center;
+}
+
+.display-card > button {
+  position: absolute;
+  top: clamp(12px, 3vw, 22px);
+  right: clamp(12px, 3vw, 22px);
+  min-height: 36px;
+  padding: 8px 11px;
+  opacity: 0.78;
 }
 
 .display-title {
@@ -384,9 +484,35 @@ textarea {
 
 .display-primary {
   font-family: var(--font-display);
-  font-size: clamp(3.2rem, 17vw, 9rem);
+  font-size: clamp(3.4rem, 17vw, 8rem);
   line-height: 0.95;
-  letter-spacing: -0.08em;
+  letter-spacing: 0;
+}
+
+.display-subhead {
+  color: rgba(255, 248, 235, 0.8);
+  font-size: clamp(1rem, 4vw, 1.55rem);
+  font-weight: 800;
+}
+
+.display-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(14px, 6vw, 34px);
+}
+
+.display-numbers span {
+  display: grid;
+  place-items: center;
+  min-width: clamp(80px, 20vw, 130px);
+  aspect-ratio: 1;
+  border-radius: 28px;
+  color: #081210;
+  background: var(--amber);
+  font-size: clamp(3.2rem, 14vw, 7rem);
+  line-height: 1;
+  font-weight: 950;
 }
 
 .display-secondary {

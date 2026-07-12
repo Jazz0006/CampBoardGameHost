@@ -419,30 +419,20 @@ function renderClocktowerNight() {
 }
 
 function renderNightStep(step) {
+  const note = !step.real && step.reason ? step.reason : step.tip || step.explain || step.reason || "";
   return `
-    <div class="step-card">
-      <h2>${state.language === "en" ? "Current step" : "当前步骤"}：${htmlEscape(step.title)}</h2>
-      <div class="instruction ${step.real ? "" : "warn"}">
-        <strong>${tr("realAction")}</strong>
-        ${step.real ? tr("yes") : tr("no")}
+    <div class="step-card host-step">
+      <div class="step-kicker">${htmlEscape(step.title)} · ${step.real ? tr("realAction") : (state.language === "en" ? "Placeholder" : "占位")}</div>
+      <h2 class="host-command">${htmlEscape(step.headline || ctStepHeadline(step))}</h2>
+      <div class="step-actions">
+        ${renderClocktowerActionControl(step)}
+        ${step.tell ? `<div class="big-answer">${nl(step.tell)}</div>` : ""}
+        <div class="button-row">
+          ${step.display && step.control !== "fortune" ? `<button class="ghost" data-action="show-display" data-card="${htmlEscape(encodeURIComponent(JSON.stringify(step.display)))}">${tr("showToPlayer")}</button>` : ""}
+          <button class="primary" data-action="ct-next-night">${tr("doneNext")}</button>
+        </div>
       </div>
-      ${!step.real && step.reason ? `<div class="instruction warn"><strong>${tr("reason")}</strong>${htmlEscape(step.reason)}</div>` : ""}
-      <div class="instruction">
-        <strong>${tr("wake")}</strong>
-        ${htmlEscape(step.wakeText)}
-      </div>
-      <div class="instruction">
-        <strong>${tr("action")}</strong>
-        ${nl(step.actionText)}
-      </div>
-      ${step.tell ? `<div class="big-answer">${nl(step.tell)}</div>` : ""}
-      <div class="instruction">
-        <strong>${tr("explain")}</strong>
-        ${nl(step.explain)}
-      </div>
-      ${renderClocktowerActionControl(step)}
-      ${step.display ? `<button class="ghost" data-action="show-display" data-card="${htmlEscape(encodeURIComponent(JSON.stringify(step.display)))}">${tr("showToPlayer")}</button>` : ""}
-      <button class="primary" data-action="ct-next-night">${tr("doneNext")}</button>
+      ${note ? `<p class="step-note ${step.real ? "" : "warn"}">${nl(note)}</p>` : ""}
     </div>
   `;
 }
@@ -451,6 +441,7 @@ function renderClocktowerActionControl(step) {
   if (!step.control) return "";
   const alive = ctAlive();
   if (step.control === "redHerring") {
+    if (!step.real) return "";
     return renderChipPicker("ct-select", "redHerring", ctPlayers().filter((p) => ctTeam(p) !== "demon"), state.clocktower.redHerring);
   }
   if (step.control === "poisonTarget") return renderChipPicker("ct-select", "poisonTarget", alive, state.clocktower.poisonTarget, step.real);
@@ -458,17 +449,33 @@ function renderClocktowerActionControl(step) {
   if (step.control === "nightDeath") return renderChipPicker("ct-select", "pendingNightDeath", alive, state.clocktower.pendingNightDeath, step.real);
   if (step.control === "ravenkeeperTarget") return renderChipPicker("ct-select", "ravenkeeperTarget", alive.filter((p) => p.id !== step.actorId), state.clocktower.ravenkeeperTarget, step.real);
   if (step.control === "fortune") {
+    const ready = state.clocktower.fortuneFirst && state.clocktower.fortuneSecond;
     return `
-      <div class="instruction">
-        <strong>${state.language === "en" ? "Fortune Teller chooses two players" : "占卜师选择两名玩家"}</strong>
-        <div class="label">${state.language === "en" ? "First target" : "第一名玩家"}</div>
-        ${renderChipPicker("ct-select", "fortuneFirst", alive, state.clocktower.fortuneFirst, step.real)}
-        <div class="label">${state.language === "en" ? "Second target" : "第二名玩家"}</div>
-        ${renderChipPicker("ct-select", "fortuneSecond", alive.filter((p) => p.id !== state.clocktower.fortuneFirst), state.clocktower.fortuneSecond, step.real)}
+      <div class="fortune-control">
+        <div class="number-picker">
+          ${renderNumberPicker("ct-select", "fortuneFirst", alive, state.clocktower.fortuneFirst, step.real)}
+        </div>
+        <div class="number-picker">
+          ${renderNumberPicker("ct-select", "fortuneSecond", alive.filter((p) => p.id !== state.clocktower.fortuneFirst), state.clocktower.fortuneSecond, step.real)}
+        </div>
+        <button class="primary query-button" data-action="ct-show-fortune" ${ready && step.real ? "" : "disabled"}>
+          ${state.language === "en" ? "Check and show" : "查询并展示"}
+        </button>
       </div>
     `;
   }
   return "";
+}
+
+function ctStepHeadline(step) {
+  if (!step.real) {
+    return state.language === "en" ? `${step.title} placeholder` : `${step.title} 的占位操作`;
+  }
+  if (step.actorId) {
+    const actor = ctPlayers().find((p) => p.id === step.actorId);
+    if (actor) return state.language === "en" ? `Wake ${ctSeatLabel(actor)}` : `唤醒 ${ctSeatLabel(actor)}`;
+  }
+  return step.wakeText || step.actionText || step.title;
 }
 
 function renderChipPicker(action, field, players, selected, enabled = true) {
@@ -477,6 +484,18 @@ function renderChipPicker(action, field, players, selected, enabled = true) {
       ${players.map((p) => `
         <button class="chip ${selected === p.id ? "selected" : ""}" data-action="${action}" data-field="${field}" data-id="${p.id}" ${enabled ? "" : "disabled"}>
           ${ctSeatLabel(p)}
+        </button>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderNumberPicker(action, field, players, selected, enabled = true) {
+  return `
+    <div class="number-grid">
+      ${players.map((p) => `
+        <button class="number-chip ${selected === p.id ? "selected" : ""}" data-action="${action}" data-field="${field}" data-id="${p.id}" ${enabled ? "" : "disabled"} aria-label="${htmlEscape(ctSeatLabel(p))}">
+          ${p.seat}
         </button>
       `).join("")}
     </div>
@@ -728,6 +747,8 @@ function renderDisplayCard() {
       <section class="display-card">
         <div class="display-title">${htmlEscape(card.title)}</div>
         <div class="display-primary">${nl(card.primary || "")}</div>
+        ${card.subhead ? `<div class="display-subhead">${nl(card.subhead)}</div>` : ""}
+        ${card.numbers ? `<div class="display-numbers">${card.numbers.map((n) => `<span>${htmlEscape(n)}</span>`).join("")}</div>` : ""}
         ${card.secondary ? `<div class="display-secondary">${nl(card.secondary)}</div>` : ""}
         ${card.footer ? `<div class="display-footer">${nl(card.footer)}</div>` : ""}
         <button class="ghost" data-action="close-display">${tr("closeDisplay")}</button>
@@ -819,6 +840,11 @@ function ctSeatLabelById(id) {
   return player ? ctSeatLabel(player) : tr("noDeath");
 }
 
+function ctSeatNumberById(id) {
+  const player = ctPlayers().find((p) => p.id === id);
+  return player ? String(player.seat) : "";
+}
+
 function teamLabel(team) {
   const map = {
     townsfolk: state.language === "en" ? "Townsfolk" : "镇民",
@@ -848,7 +874,7 @@ function ctNightSteps() {
   return state.clocktower.phase === "firstNight" ? ctFirstNightSteps() : ctLaterNightSteps();
 }
 
-function ctStep({ title, actor, real, reason, wakeText, actionText, tell, explain, control, display }) {
+function ctStep({ title, actor, real, reason, wakeText, actionText, tell, explain, control, display, headline, tip }) {
   return {
     title,
     actorId: actor ? actor.id : null,
@@ -860,6 +886,8 @@ function ctStep({ title, actor, real, reason, wakeText, actionText, tell, explai
     explain,
     control,
     display,
+    headline,
+    tip,
   };
 }
 
@@ -876,11 +904,13 @@ function ctFirstNightSteps() {
       real: minions.length > 0,
       reason: minions.length ? "" : (state.language === "en" ? "No Minions are in play." : "本局没有爪牙。"),
       wakeText: minions.length ? `${state.language === "en" ? "Wake all Minions" : "请唤醒所有爪牙"}：${minionNames}。` : "",
+      headline: minions.length ? (state.language === "en" ? "Wake all Minions" : "唤醒所有爪牙") : (state.language === "en" ? "Minion placeholder" : "爪牙信息的占位操作"),
       actionText: state.language === "en"
         ? `Let the Minions recognize each other.\nTell them the Demon is ${demon ? ctSeatLabel(demon) : "unknown"}.\nSignal them to close their eyes.`
         : `示意爪牙互相确认。\n告诉他们恶魔是 ${demon ? ctSeatLabel(demon) : "未知"}。\n确认后示意他们闭眼。`,
       tell: demon ? `${state.language === "en" ? "The Demon is" : "恶魔是"}：\n${ctSeatLabel(demon)}` : null,
       explain: state.language === "en" ? "On the first night, Minions learn who the Demon is." : "首夜爪牙需要知道恶魔是谁，并确认彼此身份。",
+      tip: state.language === "en" ? "Show the Demon seat, then close their eyes." : "展示恶魔座位，确认后让他们闭眼。",
       display: demon ? { title: state.language === "en" ? "Minion info" : "爪牙信息", primary: state.language === "en" ? "Demon" : "恶魔", secondary: ctSeatLabel(demon), footer: state.language === "en" ? "This player is the Demon." : "这名玩家是恶魔。" } : null,
     }),
     ctStep({
@@ -888,11 +918,13 @@ function ctFirstNightSteps() {
       actor: demon,
       real: !!demon,
       reason: demon ? "" : (state.language === "en" ? "There is no Demon right now." : "当前没有恶魔。"),
+      headline: demon ? (state.language === "en" ? `Wake ${ctSeatLabel(demon)}` : `唤醒 ${ctSeatLabel(demon)}`) : (state.language === "en" ? "Demon placeholder" : "恶魔信息的占位操作"),
       actionText: state.language === "en"
         ? `Tell the Demon who the Minions are.\nTell the Demon the three bluff characters.\nThe Demon does not kill on night 1.`
         : `告诉恶魔爪牙是谁。\n告诉恶魔本局可用伪装身份。\n首夜恶魔不进行击杀。`,
       tell: `${state.language === "en" ? "Minions" : "爪牙"}：${minionNames}\n${state.language === "en" ? "Bluffs" : "可用伪装身份"}：${bluffNames}`,
       explain: state.language === "en" ? "The Demon receives Minion info and bluffs, but does not kill on night 1." : "首夜恶魔需要知道爪牙是谁，并获得 3 个伪装身份。首夜不进行击杀。",
+      tip: state.language === "en" ? "Show Minions and bluffs. No kill tonight." : "展示爪牙和伪装身份，首夜不杀人。",
       display: demon ? { title: state.language === "en" ? "Demon info" : "恶魔信息", primary: state.language === "en" ? "Minions" : "爪牙", secondary: `${minionNames}\n\n${state.language === "en" ? "Bluffs" : "伪装"}：${bluffNames}`, footer: state.language === "en" ? "No kill on night 1." : "首夜不进行击杀。" } : null,
     }),
     ctRedHerringStep(),
@@ -919,7 +951,7 @@ function ctLaterNightSteps() {
   ];
 }
 
-function ctInfoStep(roleId, tell, explain, display, control) {
+function ctInfoStep(roleId, tell, explain, display, control, options = {}) {
   const actor = ctRoleActor(roleId);
   const title = nameOfRole(roleId);
   return ctStep({
@@ -934,6 +966,8 @@ function ctInfoStep(roleId, tell, explain, display, control) {
     explain,
     display: actor && display ? display : null,
     control,
+    headline: options.headline,
+    tip: options.tip,
   });
 }
 
@@ -945,9 +979,11 @@ function ctRedHerringStep() {
     real: !!actor,
     reason: actor ? "" : (state.language === "en" ? "No Fortune Teller is in play." : "本局没有占卜师，此步骤只用于首夜配置。"),
     wakeText: state.language === "en" ? "Do not wake any player." : "不要唤醒任何玩家。",
+    headline: actor ? (state.language === "en" ? "Choose the red herring" : "选择占卜师红鲱鱼") : (state.language === "en" ? "Fortune Teller placeholder" : "占卜师红鲱鱼的占位操作"),
     actionText: state.language === "en" ? "Choose a good player who may register as a Demon to the Fortune Teller." : "请选择一名好人玩家作为占卜师可能得到“是”的红鲱鱼。这个信息只给说书人看。",
     tell: state.clocktower.redHerring ? `${state.language === "en" ? "Selected" : "已选择"}：${ctSeatLabelById(state.clocktower.redHerring)}` : null,
     explain: state.language === "en" ? "This is private Storyteller setup. Do not show it to players." : "红鲱鱼是占卜师规则的一部分。不要公开给玩家。",
+    tip: state.language === "en" ? "Private setup only. Do not show players." : "只给说书人看，不公开。",
     control: "redHerring",
   });
 }
@@ -957,7 +993,7 @@ function ctWasherwomanStep() {
   const pair = target ? ctPair(target) : null;
   const roleName = target ? nameOfRole(target.actualRole) : "";
   const tell = target && pair ? `${roleName}\n${ctSeatLabel(target)} / ${ctSeatLabel(pair)}` : null;
-  return ctInfoStep("washerwoman", tell, state.language === "en" ? "The Washerwoman learns one of two players is a specific Townsfolk." : "洗衣妇会得知某个镇民在两名玩家之一中。", target && pair ? { title: state.language === "en" ? "Washerwoman info" : "洗衣妇信息", primary: roleName, secondary: `${ctSeatLabel(target)} / ${ctSeatLabel(pair)}`, footer: state.language === "en" ? `One of these players is the ${roleName}.` : `其中一人是${roleName}。` } : null);
+  return ctInfoStep("washerwoman", tell, state.language === "en" ? "The Washerwoman learns one of two players is a specific Townsfolk." : "洗衣妇会得知某个镇民在两名玩家之一中。", target && pair ? { title: state.language === "en" ? "Washerwoman info" : "洗衣妇信息", primary: roleName, subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中", numbers: [target.seat, pair.seat], footer: "" } : null);
 }
 
 function ctLibrarianStep() {
@@ -965,7 +1001,7 @@ function ctLibrarianStep() {
   const pair = target ? ctPair(target) : null;
   const roleName = target ? nameOfRole(target.actualRole) : "";
   const tell = target && pair ? `${roleName}\n${ctSeatLabel(target)} / ${ctSeatLabel(pair)}` : (state.language === "en" ? "No Outsiders." : "没有异乡人。");
-  return ctInfoStep("librarian", tell, state.language === "en" ? "The Librarian learns an Outsider is one of two players, or that there are no Outsiders." : "图书管理员会得知某个异乡人在两名玩家之一中，或得知没有异乡人。", target && pair ? { title: state.language === "en" ? "Librarian info" : "图书管理员信息", primary: roleName, secondary: `${ctSeatLabel(target)} / ${ctSeatLabel(pair)}`, footer: state.language === "en" ? `One of these players is the ${roleName}.` : `其中一人是${roleName}。` } : { title: state.language === "en" ? "Librarian info" : "图书管理员信息", primary: state.language === "en" ? "No Outsiders" : "没有异乡人", footer: "" });
+  return ctInfoStep("librarian", tell, state.language === "en" ? "The Librarian learns an Outsider is one of two players, or that there are no Outsiders." : "图书管理员会得知某个异乡人在两名玩家之一中，或得知没有异乡人。", target && pair ? { title: state.language === "en" ? "Librarian info" : "图书管理员信息", primary: roleName, subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中", numbers: [target.seat, pair.seat], footer: "" } : { title: state.language === "en" ? "Librarian info" : "图书管理员信息", primary: state.language === "en" ? "No Outsiders" : "没有异乡人", footer: "" });
 }
 
 function ctInvestigatorStep() {
@@ -973,7 +1009,7 @@ function ctInvestigatorStep() {
   const pair = target ? ctPair(target) : null;
   const roleName = target ? nameOfRole(target.actualRole) : "";
   const tell = target && pair ? `${roleName}\n${ctSeatLabel(target)} / ${ctSeatLabel(pair)}` : (state.language === "en" ? "No Minions." : "没有爪牙。");
-  return ctInfoStep("investigator", tell, state.language === "en" ? "The Investigator learns a Minion is one of two players, or that there are no Minions." : "调查员会得知某个爪牙在两名玩家之一中，或得知没有爪牙。", target && pair ? { title: state.language === "en" ? "Investigator info" : "调查员信息", primary: roleName, secondary: `${ctSeatLabel(target)} / ${ctSeatLabel(pair)}`, footer: state.language === "en" ? `One of these players is the ${roleName}.` : `其中一人是${roleName}。` } : { title: state.language === "en" ? "Investigator info" : "调查员信息", primary: state.language === "en" ? "No Minions" : "没有爪牙", footer: "" });
+  return ctInfoStep("investigator", tell, state.language === "en" ? "The Investigator learns a Minion is one of two players, or that there are no Minions." : "调查员会得知某个爪牙在两名玩家之一中，或得知没有爪牙。", target && pair ? { title: state.language === "en" ? "Investigator info" : "调查员信息", primary: roleName, subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中", numbers: [target.seat, pair.seat], footer: "" } : { title: state.language === "en" ? "Investigator info" : "调查员信息", primary: state.language === "en" ? "No Minions" : "没有爪牙", footer: "" });
 }
 
 function ctChefStep() {
@@ -988,9 +1024,22 @@ function ctEmpathStep() {
 }
 
 function ctFortuneTellerStep() {
-  const c = state.clocktower;
-  const result = c.fortuneFirst && c.fortuneSecond ? (ctFortuneResult() ? (state.language === "en" ? "Yes" : "是") : (state.language === "en" ? "No" : "否")) : null;
-  return ctInfoStep("fortuneTeller", result, state.language === "en" ? "If either chosen player is the Demon or red herring, answer Yes." : "让占卜师选择两名玩家。如果其中有恶魔或红鲱鱼，告诉他“是”。", result ? { title: state.language === "en" ? "Fortune Teller info" : "占卜师信息", primary: result, footer: result === (state.language === "en" ? "Yes" : "是") ? (state.language === "en" ? "At least one chosen player registers as Demon." : "你选择的两名玩家中至少有一人被判定为恶魔。") : (state.language === "en" ? "Neither chosen player registers as Demon." : "你选择的两名玩家中没有人被判定为恶魔。") } : null, "fortune");
+  const actor = ctRoleActor("fortuneTeller");
+  return ctInfoStep("fortuneTeller", null, state.language === "en" ? "If either chosen player is the Demon or red herring, answer Yes." : "让占卜师选择两名玩家。如果其中有恶魔或红鲱鱼，告诉他“是”。", null, "fortune", {
+    headline: actor ? (state.language === "en" ? `Wake ${ctSeatLabel(actor)}` : `唤醒占卜师：${ctSeatLabel(actor)}`) : undefined,
+    tip: state.language === "en" ? "Let them point at two seats. Tap Check and show." : "让他选择两名玩家，点查询后直接展示结果。",
+  });
+}
+
+function ctFortuneDisplayCard() {
+  const result = ctFortuneResult() ? (state.language === "en" ? "Yes" : "是") : (state.language === "en" ? "No" : "否");
+  return {
+    title: state.language === "en" ? "Fortune Teller" : "占卜师",
+    primary: result,
+    subhead: state.language === "en" ? "for these two players" : "查询这两名玩家",
+    numbers: [ctSeatNumberById(state.clocktower.fortuneFirst), ctSeatNumberById(state.clocktower.fortuneSecond)].filter(Boolean),
+    footer: "",
+  };
 }
 
 function ctButlerStep() {
@@ -1023,20 +1072,25 @@ function ctUndertakerStep() {
 
 function ctDemonKillStep() {
   const demon = ctAlive().find((p) => ctTeam(p) === "demon");
+  const demonPoisoned = ctDemonPoisonedTonight();
   return ctStep({
     title: state.language === "en" ? "Demon action" : "恶魔行动",
     actor: demon,
     real: !!demon,
     reason: demon ? "" : (state.language === "en" ? "There is no living Demon." : "当前没有存活恶魔。"),
     actionText: demon ? (state.language === "en" ? "Wake the Demon. Let them choose tonight's death target. Record it, but do not announce now." : `轻拍 ${ctSeatLabel(demon)}，示意当前恶魔睁眼。\n让他选择今晚要杀死的玩家。\n在下方记录目标，但不要现在宣布死亡。`) : (state.language === "en" ? "Pause briefly, then continue." : "不要唤醒任何玩家，停顿 2-3 秒后继续。"),
-    tell: state.clocktower.pendingNightDeath ? `${state.language === "en" ? "Recorded" : "已记录"}：${ctSeatLabelById(state.clocktower.pendingNightDeath)}` : null,
-    explain: state.language === "en" ? "Announce deaths only at dawn." : "恶魔选择的死亡目标会在天亮时统一宣布。",
+    tell: demonPoisoned
+      ? (state.language === "en" ? "The Demon is poisoned. Tonight's kill will fail." : "恶魔已中毒，今晚杀人会失效。")
+      : (state.clocktower.pendingNightDeath ? `${state.language === "en" ? "Recorded" : "已记录"}：${ctSeatLabelById(state.clocktower.pendingNightDeath)}` : null),
+    explain: demonPoisoned
+      ? (state.language === "en" ? "You may record the Demon choice, but no one dies from it at dawn." : "可以记录恶魔选择，但天亮不会因此死亡。")
+      : (state.language === "en" ? "Announce deaths only at dawn." : "恶魔选择的死亡目标会在天亮时统一宣布。"),
     control: "nightDeath",
   });
 }
 
 function ctRavenkeeperStep() {
-  const death = state.clocktower.pendingNightDeath ? ctPlayers().find((p) => p.id === state.clocktower.pendingNightDeath) : null;
+  const death = !ctDemonPoisonedTonight() && state.clocktower.pendingNightDeath ? ctPlayers().find((p) => p.id === state.clocktower.pendingNightDeath) : null;
   const actor = death && death.actualRole === "ravenkeeper" ? death : null;
   const target = state.clocktower.ravenkeeperTarget ? ctPlayers().find((p) => p.id === state.clocktower.ravenkeeperTarget) : null;
   const tell = target ? `${ctSeatLabel(target)} ${state.language === "en" ? "is" : "的角色是"}：\n${nameOfRole(target.actualRole)}` : null;
@@ -1051,6 +1105,11 @@ function ctRavenkeeperStep() {
     control: "ravenkeeperTarget",
     display: target ? { title: state.language === "en" ? "Ravenkeeper info" : "守鸦人信息", primary: ctSeatLabel(target), secondary: nameOfRole(target.actualRole), footer: state.language === "en" ? "This player's character." : "该玩家的角色。" } : null,
   });
+}
+
+function ctDemonPoisonedTonight() {
+  const poisonTarget = state.clocktower.poisonTarget ? ctPlayers().find((p) => p.id === state.clocktower.poisonTarget) : null;
+  return !!poisonTarget && poisonTarget.alive && ctTeam(poisonTarget) === "demon";
 }
 
 function ctPair(target) {
@@ -1101,8 +1160,9 @@ function finishClocktowerNight() {
     c.phase = "dawn";
     return;
   }
-  c.lastNightDeath = c.pendingNightDeath;
-  if (c.pendingNightDeath) {
+  const demonPoisoned = ctDemonPoisonedTonight();
+  c.lastNightDeath = demonPoisoned ? null : c.pendingNightDeath;
+  if (!demonPoisoned && c.pendingNightDeath) {
     const target = ctPlayers().find((p) => p.id === c.pendingNightDeath);
     if (target && target.alive) ctKill(target, state.language === "en" ? "night death" : "夜晚死亡");
   }
@@ -1279,6 +1339,9 @@ document.addEventListener("click", (event) => {
     const field = target.dataset.field;
     const id = target.dataset.id;
     state.clocktower[field] = state.clocktower[field] === id ? null : id;
+    if (field === "fortuneFirst" && state.clocktower.fortuneSecond === state.clocktower.fortuneFirst) {
+      state.clocktower.fortuneSecond = null;
+    }
   }
   if (action === "ct-day-mode") {
     state.clocktower.dayMode = target.dataset.mode;
@@ -1298,6 +1361,7 @@ document.addEventListener("click", (event) => {
   if (action === "ct-confirm-day") confirmClocktowerDay();
   if (action === "ct-fire-slayer") fireSlayer();
   if (action === "show-display") state.displayCard = JSON.parse(decodeURIComponent(target.dataset.card));
+  if (action === "ct-show-fortune") state.displayCard = ctFortuneDisplayCard();
   if (action === "close-display") state.displayCard = null;
   if (action === "start-werewolf") startWerewolf();
   if (action === "werewolf-select") state.werewolf[target.dataset.field] = state.werewolf[target.dataset.field] === target.dataset.id ? null : target.dataset.id;

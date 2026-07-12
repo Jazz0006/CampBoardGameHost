@@ -1,4 +1,4 @@
-const CACHE_NAME = "camp-board-game-host-web-v1";
+const CACHE_NAME = "camp-board-game-host-web-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
