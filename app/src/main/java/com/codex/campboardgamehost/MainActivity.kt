@@ -3978,13 +3978,25 @@ private fun storytellerPairHint(
     target: PlayerCard,
     cards: List<PlayerCard>,
     fallbackPool: List<PlayerCard> = cards,
+    excludeNames: Set<String> = emptySet(),
 ): Pair<PlayerCard, PlayerCard>? {
-    val decoy = fallbackPool.firstOrNull { it.name != target.name } ?: return null
+    val decoy = fallbackPool.firstOrNull { it.name != target.name && it.name !in excludeNames }
+        ?: fallbackPool.firstOrNull { it.name != target.name }
+        ?: return null
     return target to decoy
 }
 
 private fun PlayerCard.clocktowerShownAsDifferentRole(): Boolean =
     clocktowerRole?.enName != null && clocktowerShownRole?.enName != null && clocktowerRole?.enName != clocktowerShownRole?.enName
+
+private data class ClocktowerDisplayOption(
+    val label: String,
+    val displayKind: ClocktowerDisplayKind,
+    val displayTitle: String,
+    val displayPrimary: String?,
+    val displaySecondary: String?,
+    val displayFooter: String?,
+)
 
 private data class ClocktowerNightStepUi(
     val title: String,
@@ -4000,6 +4012,7 @@ private data class ClocktowerNightStepUi(
     val displayPrimary: String? = null,
     val displaySecondary: String? = null,
     val displayFooter: String? = null,
+    val displayOptions: List<ClocktowerDisplayOption> = emptyList(),
     val wakeText: String? = null,
     val roleEnName: String? = null,
 )
@@ -4187,6 +4200,46 @@ private fun ClocktowerJudgeScreen(
         }
     }
 
+    fun stableIndex(key: String, size: Int): Int = if (size <= 0) 0 else Math.floorMod(key.hashCode(), size)
+    fun actorIsPoisoned(actor: PlayerCard?): Boolean = actor != null && actor.eliminatedRound == null && poisonTarget == actor.name
+    fun actorIsUnreliable(enName: String, actor: PlayerCard?): Boolean =
+        actor != null && ((actor.clocktowerRole?.enName == "Drunk" && actor.clocktowerShownRole?.enName == enName) || actorIsPoisoned(actor))
+    fun orderedPair(first: PlayerCard?, second: PlayerCard?, key: String): Pair<PlayerCard, PlayerCard>? =
+        if (first == null || second == null) null else if (stableIndex(key, 2) == 0) first to second else second to first
+    fun seatNumberFor(card: PlayerCard): String = ((cards.indexOf(card) + 1).takeIf { it > 0 } ?: 0).toString()
+    fun seatNumbersText(pair: Pair<PlayerCard, PlayerCard>?): String? =
+        pair?.let { "${seatNumberFor(it.first)}   ${seatNumberFor(it.second)}" }
+    fun pickTwoPlayers(pool: List<PlayerCard>, key: String): Pair<PlayerCard, PlayerCard>? {
+        if (pool.size < 2) return null
+        val sorted = pool.sortedBy { cards.indexOf(it).takeIf { index -> index >= 0 } ?: Int.MAX_VALUE }
+        val start = stableIndex(key, sorted.size)
+        return sorted[start] to sorted[(start + 1) % sorted.size]
+    }
+    fun displayOption(label: String, kind: ClocktowerDisplayKind, title: String, primary: String?, secondary: String? = null, footer: String? = null) =
+        ClocktowerDisplayOption(label, kind, title, primary, secondary, footer)
+    fun fakeEitherOneOptions(enName: String, team: ClocktowerTeam, title: String, emptyText: String, actor: PlayerCard, trueTarget: PlayerCard?): List<ClocktowerDisplayOption> {
+        val rolePool = clocktowerRolesForScript(script).filter { it.team == team }
+        val roleA = rolePool.getOrNull(stableIndex("$enName-role-a", rolePool.size))
+        val roleB = rolePool.getOrNull(stableIndex("$enName-role-b", rolePool.size))
+        val basePool = cards.filter { it.name != actor.name && it.name != trueTarget?.name }
+        val fallbackPool = cards.filter { it.name != actor.name }
+        val pool = if (basePool.size >= 2) basePool else fallbackPool
+        val pairA = pickTwoPlayers(pool, "$enName-fake-a-${actor.name}")
+        val pairB = pickTwoPlayers(pool.reversed(), "$enName-fake-b-${actor.name}")
+        return listOf(
+            displayOption("展示选项 A", ClocktowerDisplayKind.EitherOne, title, roleA?.nameFor(language) ?: emptyText, seatNumbersText(pairA), if (pairA == null) "" else "在下面两位玩家之中"),
+            displayOption("展示选项 B", ClocktowerDisplayKind.EitherOne, title, roleB?.nameFor(language) ?: emptyText, seatNumbersText(pairB), if (pairB == null) "" else "在下面两位玩家之中"),
+        )
+    }
+    fun fakeNumberOptions(title: String, trueValue: Int, maxValue: Int, footer: String): List<ClocktowerDisplayOption> {
+        val values = (0..maxOf(0, maxValue)).filter { it != trueValue }
+        val fallback = values.ifEmpty { listOf(trueValue) }
+        return listOf(
+            displayOption("展示选项 A", ClocktowerDisplayKind.Number, title, fallback.first().toString(), footer = footer),
+            displayOption("展示选项 B", ClocktowerDisplayKind.Number, title, fallback.last().toString(), footer = footer),
+        )
+    }
+
     fun infoStep(
         roleName: String,
         enName: String,
@@ -4199,14 +4252,18 @@ private fun ClocktowerJudgeScreen(
         displayFooter: String? = explanation,
         displayTitle: String = "$roleName 信息",
         hostInstruction: String? = null,
+        displayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
     ): ClocktowerNightStepUi {
         val actor = roleActor(enName)
         val actorIsDrunkShownRole = actor?.clocktowerRole?.enName == "Drunk" && actor.clocktowerShownRole?.enName == enName
         val hostUnreliableNote = if (actorIsDrunkShownRole) {
             "注意：这名玩家真实身份是酒鬼，显示为$roleName。请照常唤醒并给信息，但信息可以不可靠或完全错误。"
+        } else if (actorIsPoisoned(actor)) {
+            "注意：这名玩家今晚中毒，能力信息可以不可靠或错误。"
         } else {
             null
         }
+        val unreliableOptions = if (actor != null && actorIsUnreliable(enName, actor)) displayOptions(actor) else emptyList()
         val resolvedDisplayKind = when (enName) {
             "Chef", "Empath", "Clockmaker", "Chambermaid" -> ClocktowerDisplayKind.Number
             "Fortune Teller" -> ClocktowerDisplayKind.YesNo
@@ -4227,29 +4284,39 @@ private fun ClocktowerJudgeScreen(
             } else {
                 "不要唤醒任何玩家。为了避免玩家通过流程判断角色是否在场，请停顿 2-3 秒，然后点击下一步。"
             },
-            tellPlayer = if (actor != null) tellPlayer else null,
+            tellPlayer = if (actor != null && unreliableOptions.isEmpty()) tellPlayer else null,
             explanation = listOfNotNull(explanation, hostUnreliableNote).joinToString("\n"),
             action = action,
-            displayKind = if (actor != null && !tellPlayer.isNullOrBlank()) resolvedDisplayKind else ClocktowerDisplayKind.None,
+            displayKind = if (actor != null && unreliableOptions.isEmpty() && !tellPlayer.isNullOrBlank()) resolvedDisplayKind else ClocktowerDisplayKind.None,
             displayTitle = displayTitle,
-            displayPrimary = if (actor != null) displayPrimary ?: tellPlayer else null,
-            displaySecondary = if (actor != null) displaySecondary else null,
-            displayFooter = if (actor != null) displayFooter ?: explanation else null,
+            displayPrimary = if (actor != null && unreliableOptions.isEmpty()) displayPrimary ?: tellPlayer else null,
+            displaySecondary = if (actor != null && unreliableOptions.isEmpty()) displaySecondary else null,
+            displayFooter = if (actor != null && unreliableOptions.isEmpty()) displayFooter ?: explanation else null,
+            displayOptions = unreliableOptions,
             roleEnName = enName,
         )
     }
 
+    val washerwomanActor = roleActor("Washerwoman")
     val washerwomanTarget = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Townsfolk && it.clocktowerRole?.enName != "Washerwoman" }
-    val washerwomanPair = washerwomanTarget?.let { storytellerPairHint(it, cards) }
+    val washerwomanPair = washerwomanTarget?.let { storytellerPairHint(it, cards, excludeNames = setOfNotNull(washerwomanActor?.name)) }
+    val washerwomanOrderedPair = orderedPair(washerwomanPair?.first, washerwomanPair?.second, "Washerwoman-${washerwomanPair?.first?.name}-${washerwomanPair?.second?.name}")
+    val librarianActor = roleActor("Librarian")
     val librarianTarget = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Outsider }
-    val librarianPair = librarianTarget?.let { storytellerPairHint(it, cards) }
+    val librarianPair = librarianTarget?.let { storytellerPairHint(it, cards, excludeNames = setOfNotNull(librarianActor?.name)) }
+    val librarianOrderedPair = orderedPair(librarianPair?.first, librarianPair?.second, "Librarian-${librarianPair?.first?.name}-${librarianPair?.second?.name}")
+    val investigatorActor = roleActor("Investigator")
     val investigatorTarget = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Minion }
-    val investigatorPair = investigatorTarget?.let { storytellerPairHint(it, cards) }
-    val clockmakerNumber = clockmakerNumber().toString()
+    val investigatorPair = investigatorTarget?.let { storytellerPairHint(it, cards, excludeNames = setOfNotNull(investigatorActor?.name)) }
+    val investigatorOrderedPair = orderedPair(investigatorPair?.first, investigatorPair?.second, "Investigator-${investigatorPair?.first?.name}-${investigatorPair?.second?.name}")
+    val clockmakerValue = clockmakerNumber()
+    val clockmakerNumber = clockmakerValue.toString()
     val empathActor = roleActor("Empath")
     val empathNeighbors = empathActor?.let { livingNeighbors(cards, it.name) }.orEmpty()
-    val chefNumber = chefEvilPairs(cards).toString()
-    val empathNumber = empathNeighbors.count(::isClocktowerEvil).toString()
+    val chefValue = chefEvilPairs(cards)
+    val chefNumber = chefValue.toString()
+    val empathValue = empathNeighbors.count(::isClocktowerEvil)
+    val empathNumber = empathValue.toString()
     val demonCard = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon }
     val sageNightDeath = pendingNightDeath
         ?.takeUnless { demonPoisonedTonight }
@@ -4366,50 +4433,56 @@ private fun ClocktowerJudgeScreen(
                 explanation = "这个数字表示恶魔到最近爪牙相隔几步。",
                 displayFooter = "恶魔到最近爪牙的距离",
                 hostInstruction = "轻拍钟表匠，示意睁眼。把数字只给他看；确认后收回手机，示意闭眼。",
+                displayOptions = { fakeNumberOptions("钟表匠信息", clockmakerValue, cards.size / 2, "恶魔到最近爪牙的距离") },
             ),
             infoStep(
                 roleName = "洗衣妇",
                 enName = "Washerwoman",
-                tellPlayer = washerwomanTarget?.let { "${it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${it.seatLabel(cards)} / ${storytellerPairHint(it, cards)?.second?.seatLabel(cards).orEmpty()}" },
+                tellPlayer = washerwomanTarget?.let { "${it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${washerwomanOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${washerwomanOrderedPair?.second?.seatLabel(cards).orEmpty()}" },
                 explanation = "洗衣妇会得知某个镇民在两名玩家之一中。",
                 displayPrimary = washerwomanTarget?.clocktowerRole?.nameFor(language),
-                displaySecondary = twoSeatNumbers(washerwomanTarget, washerwomanPair?.second),
+                displaySecondary = seatNumbersText(washerwomanOrderedPair),
                 displayFooter = "在下面两位玩家之中",
                 hostInstruction = "轻拍洗衣妇，示意睁眼。点击“全屏展示给玩家”，只给她看；看完后收回手机，示意闭眼。",
+                displayOptions = { actor -> fakeEitherOneOptions("Washerwoman", ClocktowerTeam.Townsfolk, "洗衣妇信息", "没有镇民", actor, washerwomanTarget) },
             ),
             infoStep(
                 roleName = "图书管理员",
                 enName = "Librarian",
-                tellPlayer = librarianTarget?.let { "${it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${it.seatLabel(cards)} / ${storytellerPairHint(it, cards)?.second?.seatLabel(cards).orEmpty()}" } ?: "本局没有外来者。",
+                tellPlayer = librarianTarget?.let { "${it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${librarianOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${librarianOrderedPair?.second?.seatLabel(cards).orEmpty()}" } ?: "本局没有外来者。",
                 explanation = "图书管理员会得知某个外来者在两名玩家之一中，或得知没有外来者。",
                 displayPrimary = librarianTarget?.clocktowerRole?.nameFor(language) ?: "没有外来者",
-                displaySecondary = twoSeatNumbers(librarianTarget, librarianPair?.second),
+                displaySecondary = seatNumbersText(librarianOrderedPair),
                 displayFooter = if (librarianTarget == null) "" else "在下面两位玩家之中",
                 hostInstruction = "轻拍图书管理员，示意睁眼。把结果只给他看；如果显示“没有外来者”，也只告诉他本人。",
+                displayOptions = { actor -> fakeEitherOneOptions("Librarian", ClocktowerTeam.Outsider, "图书管理员信息", "没有外来者", actor, librarianTarget) },
             ),
             infoStep(
                 roleName = "调查员",
                 enName = "Investigator",
-                tellPlayer = investigatorTarget?.let { "${it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${it.seatLabel(cards)} / ${storytellerPairHint(it, cards)?.second?.seatLabel(cards).orEmpty()}" } ?: "本局没有爪牙。",
+                tellPlayer = investigatorTarget?.let { "${it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${investigatorOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${investigatorOrderedPair?.second?.seatLabel(cards).orEmpty()}" } ?: "本局没有爪牙。",
                 explanation = "调查员会得知某个爪牙在两名玩家之一中，或得知没有爪牙。",
                 displayPrimary = investigatorTarget?.clocktowerRole?.nameFor(language) ?: "没有爪牙",
-                displaySecondary = twoSeatNumbers(investigatorTarget, investigatorPair?.second),
+                displaySecondary = seatNumbersText(investigatorOrderedPair),
                 displayFooter = if (investigatorTarget == null) "" else "在下面两位玩家之中",
                 hostInstruction = "轻拍调查员，示意睁眼。把结果只给他看；不要让其他玩家看到被点名的两人。",
+                displayOptions = { actor -> fakeEitherOneOptions("Investigator", ClocktowerTeam.Minion, "调查员信息", "没有爪牙", actor, investigatorTarget) },
             ),
             infoStep(
                 roleName = "厨师",
                 enName = "Chef",
-                tellPlayer = chefEvilPairs(cards).toString(),
+                tellPlayer = chefNumber,
                 explanation = "这个数字表示有几对邪恶玩家相邻而坐。",
                 hostInstruction = "轻拍厨师，示意睁眼。把数字只给他看；确认后收回手机，示意闭眼。",
+                displayOptions = { fakeNumberOptions("厨师信息", chefValue, cards.size, "邪恶玩家相邻对数") },
             ),
             infoStep(
                 roleName = "共情者",
                 enName = "Empath",
-                tellPlayer = empathNeighbors.count(::isClocktowerEvil).toString(),
+                tellPlayer = empathNumber,
                 explanation = "这个数字表示共情者两个存活邻居中有几个邪恶玩家。",
                 hostInstruction = "轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。",
+                displayOptions = { fakeNumberOptions("共情者信息", empathValue, 2, "邪恶存活邻居数量") },
             ),
             infoStep(
                 roleName = "侍女",
@@ -4483,9 +4556,10 @@ private fun ClocktowerJudgeScreen(
             infoStep(
                 roleName = "共情者",
                 enName = "Empath",
-                tellPlayer = empathNeighbors.count(::isClocktowerEvil).toString(),
+                tellPlayer = empathNumber,
                 explanation = "这个数字表示共情者两个存活邻居中有几个邪恶玩家。",
                 hostInstruction = "轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。",
+                displayOptions = { fakeNumberOptions("共情者信息", empathValue, 2, "邪恶存活邻居数量") },
             ),
             )
             add(
@@ -4694,7 +4768,7 @@ private fun ClocktowerJudgeScreen(
                         onSelectFortuneTellerSecond = { onSelectFortuneTellerSecond(if (fortuneTellerSecond == it) null else it) },
                         onSelectChambermaidFirst = { onSelectChambermaidFirst(if (chambermaidFirst == it) null else it) },
                         onSelectChambermaidSecond = { onSelectChambermaidSecond(if (chambermaidSecond == it) null else it) },
-                        onShowPlayerDisplay = { playerDisplayStep = currentStep },
+                        onShowPlayerDisplay = { displayStep -> playerDisplayStep = displayStep },
                         canGoPrevious = nightStepIndex > 0,
                         onPrevious = {
                             if (nightStepIndex > 0) {
@@ -5934,7 +6008,7 @@ private fun ClocktowerNightStepCardLocalized(
     onSelectFortuneTellerSecond: (String) -> Unit,
     onSelectChambermaidFirst: (String) -> Unit,
     onSelectChambermaidSecond: (String) -> Unit,
-    onShowPlayerDisplay: () -> Unit,
+    onShowPlayerDisplay: (ClocktowerNightStepUi) -> Unit,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
@@ -6054,7 +6128,7 @@ private fun ClocktowerNightStepCardLocalized(
                         onSelect = onSelectFortuneTellerSecond,
                     )
                     Button(
-                        onClick = onShowPlayerDisplay,
+                        onClick = { onShowPlayerDisplay(step) },
                         enabled = step.isRealAction && fortuneTellerFirst != null && fortuneTellerSecond != null,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
@@ -6082,7 +6156,7 @@ private fun ClocktowerNightStepCardLocalized(
                         onSelect = onSelectChambermaidSecond,
                     )
                     Button(
-                        onClick = onShowPlayerDisplay,
+                        onClick = { onShowPlayerDisplay(step) },
                         enabled = step.isRealAction && chambermaidFirst != null && chambermaidSecond != null,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
@@ -6131,9 +6205,32 @@ private fun ClocktowerNightStepCardLocalized(
                     Text(it, color = Color(0xFF2F5D50), fontWeight = FontWeight.SemiBold)
                 }
 
-            if (step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
+            if (step.displayOptions.isNotEmpty()) {
+                Text("能力不可靠：请选择一个结果展示。", color = Color(0xFF8C4B20), fontWeight = FontWeight.Bold)
+                step.displayOptions.forEach { option ->
+                    OutlinedButton(
+                        onClick = {
+                            onShowPlayerDisplay(
+                                step.copy(
+                                    tellPlayer = option.displayPrimary,
+                                    displayKind = option.displayKind,
+                                    displayTitle = option.displayTitle,
+                                    displayPrimary = option.displayPrimary,
+                                    displaySecondary = option.displaySecondary,
+                                    displayFooter = option.displayFooter,
+                                    displayOptions = emptyList(),
+                                ),
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                    ) {
+                        Text(option.label)
+                    }
+                }
+            } else if (step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
                 OutlinedButton(
-                    onClick = onShowPlayerDisplay,
+                    onClick = { onShowPlayerDisplay(step) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                 ) {

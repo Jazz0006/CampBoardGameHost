@@ -468,6 +468,9 @@ function renderClocktowerNight() {
 
 function renderNightStep(step) {
   const note = !step.real && step.reason ? step.reason : step.tip || step.explain || step.reason || "";
+  const displayButtons = step.displayOptions && step.displayOptions.length
+    ? step.displayOptions.map((option, index) => `<button class="ghost display-choice" data-action="show-display" data-card="${htmlEscape(encodeURIComponent(JSON.stringify(option.display)))}">${htmlEscape(option.label || `${state.language === "en" ? "Show option" : "展示选项"} ${index + 1}`)}</button>`).join("")
+    : (step.display && step.control !== "fortune" ? `<button class="ghost" data-action="show-display" data-card="${htmlEscape(encodeURIComponent(JSON.stringify(step.display)))}">${tr("showToPlayer")}</button>` : "");
   return `
     <div class="step-card host-step">
       <div class="step-kicker">${htmlEscape(step.title)} · ${step.real ? tr("realAction") : (state.language === "en" ? "Placeholder" : "占位")}</div>
@@ -475,8 +478,9 @@ function renderNightStep(step) {
       <div class="step-actions">
         ${renderClocktowerActionControl(step)}
         ${step.tell ? `<div class="big-answer">${nl(step.tell)}</div>` : ""}
+        ${step.displayOptions && step.displayOptions.length ? `<div class="option-hint">${state.language === "en" ? "Unreliable ability: choose one result to show." : "能力不可靠：请选择一个结果展示。"}</div>` : ""}
         <div class="button-row">
-          ${step.display && step.control !== "fortune" ? `<button class="ghost" data-action="show-display" data-card="${htmlEscape(encodeURIComponent(JSON.stringify(step.display)))}">${tr("showToPlayer")}</button>` : ""}
+          ${displayButtons}
           <button class="primary" data-action="ct-next-night">${tr("doneNext")}</button>
         </div>
       </div>
@@ -1033,7 +1037,7 @@ function ctNightSteps() {
   return state.clocktower.phase === "firstNight" ? ctFirstNightSteps() : ctLaterNightSteps();
 }
 
-function ctStep({ title, actor, real, reason, wakeText, actionText, tell, explain, control, display, headline, tip, roleId }) {
+function ctStep({ title, actor, real, reason, wakeText, actionText, tell, explain, control, display, displayOptions, headline, tip, roleId }) {
   return {
     title,
     actorId: actor ? actor.id : null,
@@ -1045,6 +1049,7 @@ function ctStep({ title, actor, real, reason, wakeText, actionText, tell, explai
     explain,
     control,
     display,
+    displayOptions: displayOptions || [],
     headline,
     tip,
     roleId,
@@ -1129,11 +1134,16 @@ function ctLaterNightSteps() {
 function ctInfoStep(roleId, tell, explain, display, control, options = {}) {
   const actor = ctRoleActor(roleId);
   const title = nameOfRole(roleId);
+  const poisonedNote = actor && ctActorIsPoisoned(actor)
+    ? (state.language === "en" ? "Note: this player is poisoned. Their ability may give unreliable or false information." : "注意：这名玩家中毒，能力信息可以不可靠或错误。")
+    : "";
   const drunkShownNote = actor && actor.actualRole === "drunk" && actor.shownRole === roleId
     ? (state.language === "en"
       ? `Note: this player is the Drunk shown as ${title}. Wake them normally, but the information may be unreliable or completely false.`
       : `注意：这名玩家真实身份是酒鬼，显示为${title}。请照常唤醒并给信息，但信息可以不可靠或完全错误。`)
     : "";
+  const unreliable = actor && ctRoleUnreliable(roleId, actor);
+  const displayOptions = unreliable && options.unreliableOptions ? options.unreliableOptions(actor) : [];
   return ctStep({
     title,
     actor,
@@ -1143,11 +1153,13 @@ function ctInfoStep(roleId, tell, explain, display, control, options = {}) {
       ? [
         state.language === "en" ? `Wake ${ctSeatLabel(actor)}. Give the information, then signal them to close their eyes.` : `轻拍 ${ctSeatLabel(actor)}，示意他睁眼。\n给出今晚的信息。\n确认后示意他闭眼。`,
         drunkShownNote,
+        poisonedNote,
       ].filter(Boolean).join("\n")
       : (state.language === "en" ? "Pause briefly to preserve the night rhythm, then continue." : "为了避免泄露信息，请停顿 2-3 秒，然后点击下一步。"),
-    tell: actor ? tell : null,
-    explain: [explain, drunkShownNote].filter(Boolean).join("\n"),
-    display: actor && display ? display : null,
+    tell: actor && !displayOptions.length ? tell : null,
+    explain: [explain, drunkShownNote, poisonedNote].filter(Boolean).join("\n"),
+    display: actor && !displayOptions.length && display ? display : null,
+    displayOptions,
     control,
     headline: options.headline,
     tip: options.tip,
@@ -1173,44 +1185,161 @@ function ctRedHerringStep() {
   });
 }
 
+function ctStableHash(value) {
+  return Array.from(String(value)).reduce((hash, ch) => ((hash * 31) + ch.charCodeAt(0)) >>> 0, 7);
+}
+
+function ctActorIsPoisoned(actor) {
+  return !!actor && actor.alive && state.clocktower.poisonTarget === actor.id;
+}
+
+function ctRoleUnreliable(roleId, actor) {
+  return !!actor && ((actor.actualRole === "drunk" && actor.shownRole === roleId) || ctActorIsPoisoned(actor));
+}
+
+function ctOrderedPair(first, second, key) {
+  if (!first || !second) return [];
+  return ctStableHash(key) % 2 === 0 ? [first, second] : [second, first];
+}
+
+function ctSeatNumbers(players) {
+  return players.map((player) => player.seat);
+}
+
+function ctPairLabel(players) {
+  return players.map(ctSeatLabel).join(" / ");
+}
+
+function ctScriptRoleIdsByTeam(team) {
+  return clocktowerRolesForScript(state.clocktower.scriptId || "troubleBrewing")
+    .filter((role) => role.team === team)
+    .map((role) => role.id);
+}
+
+function ctDisplayChoice(label, display) {
+  return { label, display };
+}
+
+function ctPickTwoPlayers(pool, key) {
+  if (pool.length < 2) return [];
+  const sorted = [...pool].sort((a, b) => a.seat - b.seat);
+  const start = ctStableHash(key) % sorted.length;
+  return [sorted[start], sorted[(start + 1) % sorted.length]];
+}
+
+function ctFakeEitherOneOptions({ roleId, team, title, emptyText, actor, trueTarget }) {
+  const roleIds = ctScriptRoleIdsByTeam(team);
+  const roleA = roleIds[ctStableHash(`${roleId}-role-a`) % Math.max(roleIds.length, 1)] || roleId;
+  const roleB = roleIds[(ctStableHash(`${roleId}-role-b`) + 1) % Math.max(roleIds.length, 1)] || roleA;
+  const basePool = ctPlayers().filter((p) => p.id !== actor.id && p.id !== trueTarget?.id);
+  const fallbackPool = ctPlayers().filter((p) => p.id !== actor.id);
+  const pool = basePool.length >= 2 ? basePool : fallbackPool;
+  const pairA = ctPickTwoPlayers(pool, `${roleId}-fake-a-${actor.id}`);
+  const pairB = ctPickTwoPlayers([...pool].reverse(), `${roleId}-fake-b-${actor.id}`);
+  const makeDisplay = (fakeRoleId, pair) => pair.length === 2
+    ? {
+      title,
+      primary: nameOfRole(fakeRoleId),
+      subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中",
+      numbers: ctSeatNumbers(pair),
+      footer: "",
+    }
+    : {
+      title,
+      primary: emptyText,
+      footer: "",
+    };
+  return [
+    ctDisplayChoice(state.language === "en" ? "Show option A" : "展示选项 A", makeDisplay(roleA, pairA)),
+    ctDisplayChoice(state.language === "en" ? "Show option B" : "展示选项 B", makeDisplay(roleB, pairB)),
+  ];
+}
+
+function ctFakeNumberOptions({ title, trueValue, maxValue, footer }) {
+  const max = Math.max(0, maxValue);
+  const values = Array.from({ length: max + 1 }, (_, index) => index).filter((value) => value !== Number(trueValue));
+  const fallback = values.length ? values : [Number(trueValue)];
+  const first = fallback[0];
+  const second = fallback.length > 1 ? fallback[fallback.length - 1] : fallback[0];
+  return [
+    ctDisplayChoice(state.language === "en" ? "Show option A" : "展示选项 A", { title, primary: String(first), footer }),
+    ctDisplayChoice(state.language === "en" ? "Show option B" : "展示选项 B", { title, primary: String(second), footer }),
+  ];
+}
+
 function ctWasherwomanStep() {
+  const actor = ctRoleActor("washerwoman");
   const target = ctPlayers().find((p) => teamOfRole(p.actualRole) === "townsfolk" && p.actualRole !== "washerwoman");
-  const pair = target ? ctPair(target) : null;
+  const pair = target ? ctPair(target, actor ? [actor.id] : []) : null;
+  const ordered = target && pair ? ctOrderedPair(target, pair, `washerwoman-${target.id}-${pair.id}`) : [];
   const roleName = target ? nameOfRole(target.actualRole) : "";
-  const tell = target && pair ? `${roleName}\n${ctSeatLabel(target)} / ${ctSeatLabel(pair)}` : null;
-  return ctInfoStep("washerwoman", tell, state.language === "en" ? "The Washerwoman learns one of two players is a specific Townsfolk." : "洗衣妇会得知某个镇民在两名玩家之一中。", target && pair ? { title: state.language === "en" ? "Washerwoman info" : "洗衣妇信息", primary: roleName, subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中", numbers: [target.seat, pair.seat], footer: "" } : null);
+  const title = state.language === "en" ? "Washerwoman info" : "洗衣妇信息";
+  const explain = state.language === "en" ? "The Washerwoman learns one of two players is a specific Townsfolk." : "洗衣妇会得知某个镇民在两名玩家之一中。";
+  const tell = ordered.length ? `${roleName}\n${ctPairLabel(ordered)}` : null;
+  return ctInfoStep("washerwoman", tell, explain, ordered.length ? { title, primary: roleName, subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中", numbers: ctSeatNumbers(ordered), footer: "" } : null, null, {
+    unreliableOptions: (stepActor) => ctFakeEitherOneOptions({ roleId: "washerwoman", team: "townsfolk", title, emptyText: state.language === "en" ? "No Townsfolk" : "没有镇民", actor: stepActor, trueTarget: target }),
+  });
 }
 
 function ctLibrarianStep() {
+  const actor = ctRoleActor("librarian");
   const target = ctPlayers().find((p) => teamOfRole(p.actualRole) === "outsider");
-  const pair = target ? ctPair(target) : null;
+  const pair = target ? ctPair(target, actor ? [actor.id] : []) : null;
+  const ordered = target && pair ? ctOrderedPair(target, pair, `librarian-${target.id}-${pair.id}`) : [];
   const roleName = target ? nameOfRole(target.actualRole) : "";
-  const tell = target && pair ? `${roleName}\n${ctSeatLabel(target)} / ${ctSeatLabel(pair)}` : (state.language === "en" ? "No Outsiders." : "没有异乡人。");
-  return ctInfoStep("librarian", tell, state.language === "en" ? "The Librarian learns an Outsider is one of two players, or that there are no Outsiders." : "图书管理员会得知某个异乡人在两名玩家之一中，或得知没有异乡人。", target && pair ? { title: state.language === "en" ? "Librarian info" : "图书管理员信息", primary: roleName, subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中", numbers: [target.seat, pair.seat], footer: "" } : { title: state.language === "en" ? "Librarian info" : "图书管理员信息", primary: state.language === "en" ? "No Outsiders" : "没有异乡人", footer: "" });
+  const title = state.language === "en" ? "Librarian info" : "图书管理员信息";
+  const none = state.language === "en" ? "No Outsiders" : "没有异乡人";
+  const explain = state.language === "en" ? "The Librarian learns an Outsider is one of two players, or that there are no Outsiders." : "图书管理员会得知某个异乡人在两名玩家之一中，或得知没有异乡人。";
+  const tell = ordered.length ? `${roleName}\n${ctPairLabel(ordered)}` : `${none}.`;
+  return ctInfoStep("librarian", tell, explain, ordered.length ? { title, primary: roleName, subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中", numbers: ctSeatNumbers(ordered), footer: "" } : { title, primary: none, footer: "" }, null, {
+    unreliableOptions: (stepActor) => ctFakeEitherOneOptions({ roleId: "librarian", team: "outsider", title, emptyText: none, actor: stepActor, trueTarget: target }),
+  });
 }
 
 function ctInvestigatorStep() {
+  const actor = ctRoleActor("investigator");
   const target = ctPlayers().find((p) => teamOfRole(p.actualRole) === "minion");
-  const pair = target ? ctPair(target) : null;
+  const pair = target ? ctPair(target, actor ? [actor.id] : []) : null;
+  const ordered = target && pair ? ctOrderedPair(target, pair, `investigator-${target.id}-${pair.id}`) : [];
   const roleName = target ? nameOfRole(target.actualRole) : "";
-  const tell = target && pair ? `${roleName}\n${ctSeatLabel(target)} / ${ctSeatLabel(pair)}` : (state.language === "en" ? "No Minions." : "没有爪牙。");
-  return ctInfoStep("investigator", tell, state.language === "en" ? "The Investigator learns a Minion is one of two players, or that there are no Minions." : "调查员会得知某个爪牙在两名玩家之一中，或得知没有爪牙。", target && pair ? { title: state.language === "en" ? "Investigator info" : "调查员信息", primary: roleName, subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中", numbers: [target.seat, pair.seat], footer: "" } : { title: state.language === "en" ? "Investigator info" : "调查员信息", primary: state.language === "en" ? "No Minions" : "没有爪牙", footer: "" });
+  const title = state.language === "en" ? "Investigator info" : "调查员信息";
+  const none = state.language === "en" ? "No Minions" : "没有爪牙";
+  const explain = state.language === "en" ? "The Investigator learns a Minion is one of two players, or that there are no Minions." : "调查员会得知某个爪牙在两名玩家之一中，或得知没有爪牙。";
+  const tell = ordered.length ? `${roleName}\n${ctPairLabel(ordered)}` : `${none}.`;
+  return ctInfoStep("investigator", tell, explain, ordered.length ? { title, primary: roleName, subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中", numbers: ctSeatNumbers(ordered), footer: "" } : { title, primary: none, footer: "" }, null, {
+    unreliableOptions: (stepActor) => ctFakeEitherOneOptions({ roleId: "investigator", team: "minion", title, emptyText: none, actor: stepActor, trueTarget: target }),
+  });
 }
 
 function ctClockmakerStep() {
-  const num = String(ctClockmakerNumber());
-  return ctInfoStep("clockmaker", num, state.language === "en" ? "This number is the distance from the Demon to the nearest Minion." : "这个数字表示恶魔到最近爪牙相隔几步。", { title: state.language === "en" ? "Clockmaker info" : "钟表匠信息", primary: num, footer: state.language === "en" ? "Distance to the nearest Minion." : "恶魔到最近爪牙的距离。" });
+  const value = ctClockmakerNumber();
+  const num = String(value);
+  const title = state.language === "en" ? "Clockmaker info" : "钟表匠信息";
+  const footer = state.language === "en" ? "Distance to the nearest Minion." : "恶魔到最近爪牙的距离。";
+  return ctInfoStep("clockmaker", num, state.language === "en" ? "This number is the distance from the Demon to the nearest Minion." : "这个数字表示恶魔到最近爪牙相隔几步。", { title, primary: num, footer }, null, {
+    unreliableOptions: () => ctFakeNumberOptions({ title, trueValue: value, maxValue: Math.floor(ctPlayers().length / 2), footer }),
+  });
 }
 
 function ctChefStep() {
-  const num = String(ctChefPairs());
-  return ctInfoStep("chef", num, state.language === "en" ? "This number is how many pairs of evil players are sitting next to each other." : "这个数字表示有几对邪恶玩家相邻而坐。", { title: state.language === "en" ? "Chef info" : "厨师信息", primary: num, footer: state.language === "en" ? `There are ${num} adjacent evil pairs.` : `有 ${num} 对邪恶玩家相邻。` });
+  const value = ctChefPairs();
+  const num = String(value);
+  const title = state.language === "en" ? "Chef info" : "厨师信息";
+  const footer = state.language === "en" ? "Adjacent evil pairs." : "邪恶玩家相邻对数。";
+  return ctInfoStep("chef", num, state.language === "en" ? "This number is how many pairs of evil players are sitting next to each other." : "这个数字表示有几对邪恶玩家相邻而坐。", { title, primary: num, footer: state.language === "en" ? `There are ${num} adjacent evil pairs.` : `有 ${num} 对邪恶玩家相邻。` }, null, {
+    unreliableOptions: () => ctFakeNumberOptions({ title, trueValue: value, maxValue: ctPlayers().length, footer }),
+  });
 }
 
 function ctEmpathStep() {
   const actor = ctRoleActor("empath");
-  const num = actor ? String(ctLivingNeighbors(actor).filter(ctIsEvil).length) : "";
-  return ctInfoStep("empath", num, state.language === "en" ? "This number is how many of the Empath's two living neighbors are evil." : "这个数字表示共情者两个存活邻居中有几个邪恶玩家。", actor ? { title: state.language === "en" ? "Empath info" : "共情者信息", primary: num, footer: state.language === "en" ? `Your two living neighbors include ${num} evil players.` : `你的两个存活邻居中有 ${num} 个邪恶玩家。` } : null);
+  const value = actor ? ctLivingNeighbors(actor).filter(ctIsEvil).length : 0;
+  const num = actor ? String(value) : "";
+  const title = state.language === "en" ? "Empath info" : "共情者信息";
+  const footer = state.language === "en" ? "Evil living neighbors." : "邪恶存活邻居数量。";
+  return ctInfoStep("empath", num, state.language === "en" ? "This number is how many of the Empath's two living neighbors are evil." : "这个数字表示共情者两个存活邻居中有几个邪恶玩家。", actor ? { title, primary: num, footer: state.language === "en" ? `Your two living neighbors include ${num} evil players.` : `你的两个存活邻居中有 ${num} 个邪恶玩家。` } : null, null, {
+    unreliableOptions: () => ctFakeNumberOptions({ title, trueValue: value, maxValue: 2, footer }),
+  });
 }
 
 function ctChambermaidStep() {
@@ -1341,8 +1470,10 @@ function ctDemonPoisonedTonight() {
   return !!poisonTarget && poisonTarget.alive && ctTeam(poisonTarget) === "demon";
 }
 
-function ctPair(target) {
-  const players = ctPlayers().filter((p) => p.id !== target.id);
+function ctPair(target, excludeIds = []) {
+  const blocked = new Set([target.id, ...excludeIds]);
+  let players = ctPlayers().filter((p) => !blocked.has(p.id));
+  if (!players.length) players = ctPlayers().filter((p) => p.id !== target.id);
   const index = players.findIndex((p) => p.seat > target.seat);
   return players[index >= 0 ? index : 0];
 }

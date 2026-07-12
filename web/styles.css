@@ -354,6 +354,16 @@ textarea {
   flex: 1 1 180px;
 }
 
+.option-hint {
+  color: var(--moss);
+  font-weight: 800;
+}
+
+.display-choice {
+  border-color: #c96f3a;
+  background: #fff8eb;
+}
+
 .step-note {
   margin: 0;
   color: var(--muted);
