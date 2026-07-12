@@ -75,6 +75,11 @@ const GAMES = [
   { id: "undercover", zh: "谁是卧底", en: "Undercover" },
 ];
 
+const CLOCKTOWER_SCRIPTS = [
+  { id: "noGreaterJoy", zh: "No Greater Joy", en: "No Greater Joy", enabled: true },
+  { id: "troubleBrewing", zh: "暗流涌动", en: "Trouble Brewing", enabled: true },
+];
+
 const TB_ROLES = [
   ["washerwoman", "townsfolk", "洗衣妇", "Washerwoman"],
   ["librarian", "townsfolk", "图书管理员", "Librarian"],
@@ -89,8 +94,13 @@ const TB_ROLES = [
   ["slayer", "townsfolk", "猎手", "Slayer"],
   ["soldier", "townsfolk", "士兵", "Soldier"],
   ["mayor", "townsfolk", "市长", "Mayor"],
+  ["clockmaker", "townsfolk", "钟表匠", "Clockmaker"],
+  ["chambermaid", "townsfolk", "侍女", "Chambermaid"],
+  ["artist", "townsfolk", "艺术家", "Artist"],
+  ["sage", "townsfolk", "贤者", "Sage"],
   ["butler", "outsider", "管家", "Butler"],
   ["drunk", "outsider", "酒鬼", "Drunk"],
+  ["klutz", "outsider", "呆瓜", "Klutz"],
   ["recluse", "outsider", "隐士", "Recluse"],
   ["saint", "outsider", "圣徒", "Saint"],
   ["poisoner", "minion", "投毒者", "Poisoner"],
@@ -100,12 +110,25 @@ const TB_ROLES = [
   ["imp", "demon", "小恶魔", "Imp"],
 ].map(([id, team, zh, en]) => ({ id, team, zh, en }));
 
+const TROUBLE_BREWING_ROLE_IDS = [
+  "washerwoman", "librarian", "investigator", "chef", "empath", "fortuneTeller",
+  "undertaker", "monk", "ravenkeeper", "virgin", "slayer", "soldier", "mayor",
+  "butler", "drunk", "recluse", "saint",
+  "poisoner", "spy", "baron", "scarletWoman", "imp",
+];
+
+const NO_GREATER_JOY_ROLE_IDS = [
+  "clockmaker", "investigator", "empath", "chambermaid", "artist", "sage",
+  "drunk", "klutz", "baron", "scarletWoman", "imp",
+];
+
 const state = loadState();
 
 function defaultState() {
   return {
     language: "zh",
     selectedGame: "clocktower",
+    selectedClocktowerScript: null,
     commonPlayers: [
       { id: uid(), name: "A" },
       { id: uid(), name: "B" },
@@ -134,6 +157,8 @@ function freshClocktower() {
     poisonTarget: null,
     fortuneFirst: null,
     fortuneSecond: null,
+    chambermaidFirst: null,
+    chambermaidSecond: null,
     butlerMaster: null,
     pendingNightDeath: null,
     lastNightDeath: null,
@@ -146,8 +171,16 @@ function freshClocktower() {
     highestVoteName: null,
     highestVoteCount: 0,
     selectedExecution: null,
+    pendingKlutz: null,
+    klutzChoice: null,
+    klutzReturnToDawn: false,
     slayerTarget: null,
+    slayerClaimant: null,
+    slayerClaimantsUsed: [],
     slayerUsed: false,
+    artistClaimant: null,
+    artistClaimantsUsed: [],
+    artistUsed: false,
     outcome: null,
     log: [],
   };
@@ -202,13 +235,13 @@ function tr(key) {
 }
 
 function nameOfRole(roleId) {
-  const role = TB_ROLES.find((item) => item.id === roleId);
+  const role = getRole(roleId);
   if (!role) return roleId || "";
   return state.language === "en" ? role.en : role.zh;
 }
 
 function teamOfRole(roleId) {
-  return (TB_ROLES.find((item) => item.id === roleId) || {}).team;
+  return (getRole(roleId) || {}).team;
 }
 
 function gameName(id) {
@@ -340,16 +373,31 @@ function renderGamePanel() {
 function renderClocktower() {
   const c = state.clocktower;
   if (!c.started) {
+    const scriptId = effectiveClocktowerScript();
+    const showScriptChoice = state.seats.length === 5 || state.seats.length === 6;
+    const canStart = state.seats.length >= 5 && canStartClocktowerScript(scriptId);
     return `
       <div class="stack">
         <div class="instruction">
-          <strong>血染钟楼：暗流涌动</strong>
+          <strong>${state.language === "en" ? "Clocktower script" : "血染钟楼剧本"}：${clocktowerScriptName(scriptId)}</strong>
           ${state.language === "en"
-            ? "This first web build supports Trouble Brewing setup, first-night guidance, player display cards, day nominations, voting, executions, Slayer ability, Demon kills, and basic win checks."
-            : "第一版 Web 已支持暗流涌动开局、首夜导航、玩家展示卡、白天提名投票、处决、猎手能力、恶魔夜杀和基础胜负检查。"}
+            ? (showScriptChoice ? "For 5-6 players, No Greater Joy is selected by default. You can switch to Trouble Brewing." : "For 7+ players, Trouble Brewing is used automatically.")
+            : (showScriptChoice ? "5–6 人默认选择 No Greater Joy。可切换到暗流涌动。" : "7 人及以上自动使用暗流涌动。")}
         </div>
-        <button class="primary" data-action="start-clocktower" ${state.seats.length < 5 ? "disabled" : ""}>
-          ${tr("start")} ${state.seats.length < 5 ? `(${state.language === "en" ? "needs 5+" : "至少 5 人"})` : ""}
+        ${showScriptChoice ? `
+          <div class="game-pills">
+            ${CLOCKTOWER_SCRIPTS.map((script) => `
+              <button class="pill ${scriptId === script.id ? "active" : ""}" data-action="select-clocktower-script" data-script="${script.id}">
+                ${clocktowerScriptName(script.id)}
+              </button>
+            `).join("")}
+          </div>
+        ` : ""}
+        ${scriptId === "noGreaterJoy" ? `<div class="step-note">${state.language === "en" ? "Default for 5-6 players. You can switch back to Trouble Brewing." : "5–6 人默认使用 No Greater Joy；可切换回暗流涌动。"}</div>` : ""}
+        <button class="primary" data-action="start-clocktower" ${canStart ? "" : "disabled"}>
+          ${state.seats.length < 5
+            ? `${tr("start")} (${state.language === "en" ? "needs 5+" : "至少 5 人"})`
+            : tr("start")}
         </button>
       </div>
     `;
@@ -437,6 +485,29 @@ function renderNightStep(step) {
   `;
 }
 
+function clocktowerScriptName(id) {
+  const script = CLOCKTOWER_SCRIPTS.find((item) => item.id === id);
+  return script ? (state.language === "en" ? script.en : script.zh) : id;
+}
+
+function defaultClocktowerScriptFor(count) {
+  return count === 5 || count === 6 ? "noGreaterJoy" : "troubleBrewing";
+}
+
+function effectiveClocktowerScript() {
+  const count = state.seats.length;
+  return count === 5 || count === 6 ? (state.selectedClocktowerScript || "noGreaterJoy") : "troubleBrewing";
+}
+
+function canStartClocktowerScript(scriptId) {
+  return CLOCKTOWER_SCRIPTS.some((script) => script.id === scriptId && script.enabled);
+}
+
+function clocktowerRolesForScript(scriptId) {
+  const ids = scriptId === "noGreaterJoy" ? NO_GREATER_JOY_ROLE_IDS : TROUBLE_BREWING_ROLE_IDS;
+  return ids.map(getRole).filter(Boolean);
+}
+
 function renderClocktowerActionControl(step) {
   if (!step.control) return "";
   const alive = ctAlive();
@@ -459,6 +530,24 @@ function renderClocktowerActionControl(step) {
           ${renderNumberPicker("ct-select", "fortuneSecond", alive.filter((p) => p.id !== state.clocktower.fortuneFirst), state.clocktower.fortuneSecond, step.real)}
         </div>
         <button class="primary query-button" data-action="ct-show-fortune" ${ready && step.real ? "" : "disabled"}>
+          ${state.language === "en" ? "Check and show" : "查询并展示"}
+        </button>
+      </div>
+    `;
+  }
+  if (step.control === "chambermaid") {
+    const actor = ctPlayers().find((p) => p.id === step.actorId);
+    const candidates = alive.filter((p) => p.id !== actor?.id);
+    const ready = state.clocktower.chambermaidFirst && state.clocktower.chambermaidSecond;
+    return `
+      <div class="fortune-control">
+        <div class="number-picker">
+          ${renderNumberPicker("ct-select", "chambermaidFirst", candidates, state.clocktower.chambermaidFirst, step.real)}
+        </div>
+        <div class="number-picker">
+          ${renderNumberPicker("ct-select", "chambermaidSecond", candidates.filter((p) => p.id !== state.clocktower.chambermaidFirst), state.clocktower.chambermaidSecond, step.real)}
+        </div>
+        <button class="primary query-button" data-action="ct-show-chambermaid" ${ready && step.real ? "" : "disabled"}>
           ${state.language === "en" ? "Check and show" : "查询并展示"}
         </button>
       </div>
@@ -530,6 +619,9 @@ function renderClocktowerDawn() {
 function renderClocktowerDay() {
   const c = state.clocktower;
   if (c.dayMode === "nomination") return renderNomination();
+  if (c.dayMode === "slayer") return renderSlayerAbility();
+  if (c.dayMode === "artist") return renderArtistQuestion();
+  if (c.dayMode === "klutz") return renderKlutzChoice();
   if (c.dayMode === "vote") return renderVote();
   if (c.dayMode === "endConfirm") return renderEndDay();
   return renderDayOverview();
@@ -537,7 +629,10 @@ function renderClocktowerDay() {
 
 function renderDayOverview() {
   const c = state.clocktower;
-  const slayer = ctAlive().find((p) => p.actualRole === "slayer");
+  const scriptHasSlayer = clocktowerRolesForScript(c.scriptId || "troubleBrewing").some((role) => role.id === "slayer");
+  const scriptHasArtist = clocktowerRolesForScript(c.scriptId || "troubleBrewing").some((role) => role.id === "artist");
+  const slayerClaimants = ctAlive().filter((p) => !(c.slayerClaimantsUsed || []).includes(p.id) && !(c.slayerUsed && p.actualRole === "slayer"));
+  const artistClaimants = ctAlive().filter((p) => !(c.artistClaimantsUsed || []).includes(p.id) && !(c.artistUsed && p.actualRole === "artist"));
   return `
     <div class="step-card">
       <h2>${state.language === "en" ? `Day ${c.round}` : `第 ${c.round} 天 白天`}</h2>
@@ -546,20 +641,77 @@ function renderDayOverview() {
           ? "Manage nominations, votes, execution, dead votes, one-use abilities, and win checks."
           : "管理提名、投票、处决、亡者票、一次性能力和胜负检查。"}
       </div>
-      ${slayer && !c.slayerUsed ? renderSlayerAbility(slayer) : ""}
       <button class="primary" data-action="ct-day-mode" data-mode="nomination">${state.language === "en" ? "Start nomination" : "开始提名"}</button>
+      ${scriptHasSlayer ? `<button class="danger" data-action="ct-day-mode" data-mode="slayer" ${slayerClaimants.length ? "" : "disabled"}>${state.language === "en" ? "Slayer action" : "杀手行动"}</button>` : ""}
+      ${scriptHasArtist ? `<button class="ghost" data-action="ct-day-mode" data-mode="artist" ${artistClaimants.length ? "" : "disabled"}>${state.language === "en" ? "Artist question" : "艺术家提问"}</button>` : ""}
       <button class="ghost" data-action="ct-day-mode" data-mode="endConfirm">${state.language === "en" ? "End day" : "结束白天"}</button>
     </div>
   `;
 }
 
-function renderSlayerAbility(slayer) {
+function renderSlayerAbility() {
+  const c = state.clocktower;
+  const claimants = ctAlive().filter((p) => !(c.slayerClaimantsUsed || []).includes(p.id) && !(c.slayerUsed && p.actualRole === "slayer"));
+  const targets = ctAlive().filter((p) => p.id !== c.slayerClaimant);
   return `
-    <div class="instruction danger-note">
-      <strong>${state.language === "en" ? "Available ability" : "可发动能力"}</strong>
-      ${ctSeatLabel(slayer)} ${state.language === "en" ? "is the Slayer. Once per game, choose a player. If they are the Demon, they die." : "是猎手。猎手可以在白天选择一名玩家；如果目标是恶魔，目标死亡。"}
-      ${renderChipPicker("ct-select", "slayerTarget", ctAlive().filter((p) => p.id !== slayer.id), state.clocktower.slayerTarget)}
-      <button class="danger" data-action="ct-fire-slayer" ${state.clocktower.slayerTarget ? "" : "disabled"}>${state.language === "en" ? "Use Slayer ability" : "发动猎手能力"}</button>
+    <div class="step-card">
+      <h2>${state.language === "en" ? "Slayer action" : "杀手行动"}</h2>
+      <div class="instruction">
+        ${state.language === "en"
+          ? "Choose the player publicly claiming Slayer, then choose the target. Used claimants will not appear again."
+          : "选择公开声称自己是杀手的玩家，再选择目标。已经声称过的人不会再出现。"}
+      </div>
+      <div class="instruction">
+        <strong>${state.language === "en" ? "Claimant" : "声称者"}</strong>
+        ${claimants.length ? renderChipPicker("ct-select", "slayerClaimant", claimants, c.slayerClaimant) : `<div class="muted">${state.language === "en" ? "No available claimants." : "没有可选声称者。"}</div>`}
+      </div>
+      <div class="instruction">
+        <strong>${state.language === "en" ? "Target" : "目标"}</strong>
+        ${renderChipPicker("ct-select", "slayerTarget", targets, c.slayerTarget)}
+      </div>
+      <button class="danger" data-action="ct-fire-slayer" ${c.slayerClaimant && c.slayerTarget ? "" : "disabled"}>${state.language === "en" ? "Resolve Slayer action" : "结算杀手行动"}</button>
+      <button class="ghost" data-action="ct-day-mode" data-mode="overview">${state.language === "en" ? "Back to day" : "返回白天"}</button>
+    </div>
+  `;
+}
+
+function renderArtistQuestion() {
+  const c = state.clocktower;
+  const claimants = ctAlive().filter((p) => !(c.artistClaimantsUsed || []).includes(p.id) && !(c.artistUsed && p.actualRole === "artist"));
+  return `
+    <div class="step-card">
+      <h2>${state.language === "en" ? "Artist question" : "艺术家提问"}</h2>
+      <div class="instruction">
+        ${state.language === "en"
+          ? "Choose the player claiming Artist. If this is the real Artist's first question, answer one yes/no question privately."
+          : "选择声称自己是艺术家的玩家。如果是真艺术家首次提问，请私下回答一个是/否问题。"}
+      </div>
+      <div class="instruction">
+        <strong>${state.language === "en" ? "Claimant" : "提问者"}</strong>
+        ${claimants.length ? renderChipPicker("ct-select", "artistClaimant", claimants, c.artistClaimant) : `<div class="muted">${state.language === "en" ? "No available claimants." : "没有可选提问者。"}</div>`}
+      </div>
+      <button class="primary" data-action="ct-confirm-artist" ${c.artistClaimant ? "" : "disabled"}>${state.language === "en" ? "Record Artist question" : "记录艺术家提问"}</button>
+      <button class="ghost" data-action="ct-day-mode" data-mode="overview">${state.language === "en" ? "Back to day" : "返回白天"}</button>
+    </div>
+  `;
+}
+
+function renderKlutzChoice() {
+  const c = state.clocktower;
+  const klutz = c.pendingKlutz ? ctPlayers().find((p) => p.id === c.pendingKlutz) : null;
+  return `
+    <div class="step-card">
+      <h2>${state.language === "en" ? "Klutz choice" : "呆瓜选择"}</h2>
+      <div class="instruction">
+        ${klutz ? ctSeatLabel(klutz) : ""} ${state.language === "en"
+          ? "is the Klutz. After learning they died, they must publicly choose a living player."
+          : "是呆瓜。得知自己死亡后，必须公开选择一名存活玩家。"}
+      </div>
+      <div class="instruction">
+        <strong>${state.language === "en" ? "Chosen player" : "选择玩家"}</strong>
+        ${renderChipPicker("ct-select", "klutzChoice", ctAlive(), c.klutzChoice)}
+      </div>
+      <button class="danger" data-action="ct-confirm-klutz" ${c.klutzChoice ? "" : "disabled"}>${state.language === "en" ? "Confirm Klutz choice" : "确认呆瓜选择"}</button>
     </div>
   `;
 }
@@ -777,19 +929,23 @@ function ctDistribution(count) {
 
 function startClocktower() {
   const count = state.seats.length;
+  const scriptId = effectiveClocktowerScript();
+  if (!canStartClocktowerScript(scriptId)) return;
+  const scriptRoles = clocktowerRolesForScript(scriptId);
   const dist = ctDistribution(count);
   const demon = getRole("imp");
-  const minions = takeRandom(TB_ROLES.filter((r) => r.team === "minion"), dist.minion);
+  const minions = takeRandom(scriptRoles.filter((r) => r.team === "minion"), dist.minion);
   const hasBaron = minions.some((r) => r.id === "baron");
-  const outsiderCount = dist.outsider + (hasBaron ? 2 : 0);
-  const townsfolkCount = Math.max(0, dist.townsfolk - (hasBaron ? 2 : 0));
-  const outsiders = takeRandom(TB_ROLES.filter((r) => r.team === "outsider"), outsiderCount);
-  const townsfolk = takeRandom(TB_ROLES.filter((r) => r.team === "townsfolk"), townsfolkCount);
+  const baronOutsiderIncrease = hasBaron ? (scriptId === "noGreaterJoy" ? Math.max(0, Math.min(2, 2 - dist.outsider)) : 2) : 0;
+  const outsiderCount = dist.outsider + baronOutsiderIncrease;
+  const townsfolkCount = Math.max(0, dist.townsfolk - baronOutsiderIncrease);
+  const outsiders = takeRandom(scriptRoles.filter((r) => r.team === "outsider"), outsiderCount);
+  const townsfolk = takeRandom(scriptRoles.filter((r) => r.team === "townsfolk"), townsfolkCount);
   const actualRoles = shuffle([demon, ...minions, ...outsiders, ...townsfolk]);
   const actualIds = new Set(actualRoles.map((r) => r.id));
-  const outOfPlayGood = TB_ROLES.filter((r) => ["townsfolk", "outsider"].includes(r.team) && !actualIds.has(r.id));
+  const outOfPlayGood = scriptRoles.filter((r) => ["townsfolk", "outsider"].includes(r.team) && !actualIds.has(r.id));
   const bluffs = takeRandom(outOfPlayGood, 3).map((r) => r.id);
-  const fakeDrunkRoles = TB_ROLES.filter((r) => r.team === "townsfolk" && !actualIds.has(r.id));
+  const fakeDrunkRoles = scriptRoles.filter((r) => r.team === "townsfolk" && !actualIds.has(r.id));
   const players = state.seats.map((seat, index) => {
     const actual = actualRoles[index];
     const fake = actual.id === "drunk" ? (takeRandom(fakeDrunkRoles, 1)[0] || getRole("washerwoman")) : actual;
@@ -805,9 +961,10 @@ function startClocktower() {
   state.clocktower = {
     ...freshClocktower(),
     started: true,
+    scriptId,
     players,
     bluffs,
-    log: [state.language === "en" ? "Game started." : "血染钟楼已开局。"],
+    log: [state.language === "en" ? `${clocktowerScriptName(scriptId)} started.` : `${clocktowerScriptName(scriptId)} 已开局。`],
   };
 }
 
@@ -856,7 +1013,7 @@ function teamLabel(team) {
 }
 
 function ctRoleActor(roleId) {
-  return ctAlive().find((p) => p.actualRole === roleId);
+  return ctAlive().find((p) => p.actualRole === roleId || (p.actualRole === "drunk" && p.shownRole === roleId));
 }
 
 function ctAnyRole(roleId) {
@@ -865,6 +1022,8 @@ function ctAnyRole(roleId) {
 
 function ctMissingReason(roleId) {
   const role = ctAnyRole(roleId);
+  const drunkShownAsRole = ctPlayers().find((p) => p.actualRole === "drunk" && p.shownRole === roleId);
+  if (!role && drunkShownAsRole) return "";
   if (!role) return state.language === "en" ? "This character is not in play." : "本局没有这个角色。";
   if (!role.alive) return state.language === "en" ? `${ctSeatLabel(role)} is dead and no longer acts.` : `${ctSeatLabel(role)} 已经死亡，死亡后不再执行这个能力。`;
   return "";
@@ -874,7 +1033,7 @@ function ctNightSteps() {
   return state.clocktower.phase === "firstNight" ? ctFirstNightSteps() : ctLaterNightSteps();
 }
 
-function ctStep({ title, actor, real, reason, wakeText, actionText, tell, explain, control, display, headline, tip }) {
+function ctStep({ title, actor, real, reason, wakeText, actionText, tell, explain, control, display, headline, tip, roleId }) {
   return {
     title,
     actorId: actor ? actor.id : null,
@@ -888,7 +1047,18 @@ function ctStep({ title, actor, real, reason, wakeText, actionText, tell, explai
     display,
     headline,
     tip,
+    roleId,
   };
+}
+
+function ctFilterNightSteps(steps) {
+  const scriptId = state.clocktower.scriptId || "troubleBrewing";
+  const roleIds = new Set(clocktowerRolesForScript(scriptId).map((role) => role.id));
+  return steps.filter((step) => {
+    const roleAllowed = !step.roleId || roleIds.has(step.roleId);
+    const smallGameEvilInfo = scriptId === "noGreaterJoy" && ["Minion info", "Demon info", "爪牙信息", "恶魔信息"].includes(step.title);
+    return roleAllowed && !smallGameEvilInfo;
+  });
 }
 
 function ctFirstNightSteps() {
@@ -897,77 +1067,91 @@ function ctFirstNightSteps() {
   const minions = ctPlayers().filter((p) => ctTeam(p) === "minion");
   const minionNames = minions.map(ctSeatLabel).join("、") || (state.language === "en" ? "none" : "无");
   const bluffNames = c.bluffs.map(nameOfRole).join(" / ");
-  return [
+  const shouldGiveFirstNightEvilInfo = ctPlayers().length >= 7;
+  return ctFilterNightSteps([
     ctStep({
       title: state.language === "en" ? "Minion info" : "爪牙信息",
-      actor: minions[0],
-      real: minions.length > 0,
-      reason: minions.length ? "" : (state.language === "en" ? "No Minions are in play." : "本局没有爪牙。"),
-      wakeText: minions.length ? `${state.language === "en" ? "Wake all Minions" : "请唤醒所有爪牙"}：${minionNames}。` : "",
-      headline: minions.length ? (state.language === "en" ? "Wake all Minions" : "唤醒所有爪牙") : (state.language === "en" ? "Minion placeholder" : "爪牙信息的占位操作"),
+      actor: shouldGiveFirstNightEvilInfo ? minions[0] : null,
+      real: minions.length > 0 && shouldGiveFirstNightEvilInfo,
+      reason: !shouldGiveFirstNightEvilInfo ? (state.language === "en" ? "In 5-6 player games, evil players do not receive first-night info." : "5–6 人局首夜不给邪恶方互认和伪装信息。") : (minions.length ? "" : (state.language === "en" ? "No Minions are in play." : "本局没有爪牙。")),
+      wakeText: minions.length && shouldGiveFirstNightEvilInfo ? `${state.language === "en" ? "Wake all Minions" : "请唤醒所有爪牙"}：${minionNames}。` : "",
+      headline: minions.length && shouldGiveFirstNightEvilInfo ? (state.language === "en" ? "Wake all Minions" : "唤醒所有爪牙") : (state.language === "en" ? "Minion placeholder" : "爪牙信息的占位操作"),
       actionText: state.language === "en"
         ? `Let the Minions recognize each other.\nTell them the Demon is ${demon ? ctSeatLabel(demon) : "unknown"}.\nSignal them to close their eyes.`
         : `示意爪牙互相确认。\n告诉他们恶魔是 ${demon ? ctSeatLabel(demon) : "未知"}。\n确认后示意他们闭眼。`,
-      tell: demon ? `${state.language === "en" ? "The Demon is" : "恶魔是"}：\n${ctSeatLabel(demon)}` : null,
-      explain: state.language === "en" ? "On the first night, Minions learn who the Demon is." : "首夜爪牙需要知道恶魔是谁，并确认彼此身份。",
+      tell: demon && shouldGiveFirstNightEvilInfo ? `${state.language === "en" ? "The Demon is" : "恶魔是"}：\n${ctSeatLabel(demon)}` : null,
+      explain: shouldGiveFirstNightEvilInfo ? (state.language === "en" ? "On the first night, Minions learn who the Demon is." : "首夜爪牙需要知道恶魔是谁，并确认彼此身份。") : (state.language === "en" ? "Small games skip first-night evil info." : "小局跳过首夜邪恶方信息。"),
       tip: state.language === "en" ? "Show the Demon seat, then close their eyes." : "展示恶魔座位，确认后让他们闭眼。",
-      display: demon ? { title: state.language === "en" ? "Minion info" : "爪牙信息", primary: state.language === "en" ? "Demon" : "恶魔", secondary: ctSeatLabel(demon), footer: state.language === "en" ? "This player is the Demon." : "这名玩家是恶魔。" } : null,
+      display: demon && shouldGiveFirstNightEvilInfo ? { title: state.language === "en" ? "Minion info" : "爪牙信息", primary: state.language === "en" ? "Demon" : "恶魔", secondary: ctSeatLabel(demon), footer: state.language === "en" ? "This player is the Demon." : "这名玩家是恶魔。" } : null,
     }),
     ctStep({
       title: state.language === "en" ? "Demon info" : "恶魔信息",
-      actor: demon,
-      real: !!demon,
-      reason: demon ? "" : (state.language === "en" ? "There is no Demon right now." : "当前没有恶魔。"),
-      headline: demon ? (state.language === "en" ? `Wake ${ctSeatLabel(demon)}` : `唤醒 ${ctSeatLabel(demon)}`) : (state.language === "en" ? "Demon placeholder" : "恶魔信息的占位操作"),
+      actor: shouldGiveFirstNightEvilInfo ? demon : null,
+      real: !!demon && shouldGiveFirstNightEvilInfo,
+      reason: !shouldGiveFirstNightEvilInfo ? (state.language === "en" ? "In 5-6 player games, the Demon does not receive bluffs." : "5–6 人局恶魔不获得伪装身份。") : (demon ? "" : (state.language === "en" ? "There is no Demon right now." : "当前没有恶魔。")),
+      headline: demon && shouldGiveFirstNightEvilInfo ? (state.language === "en" ? `Wake ${ctSeatLabel(demon)}` : `唤醒 ${ctSeatLabel(demon)}`) : (state.language === "en" ? "Demon placeholder" : "恶魔信息的占位操作"),
       actionText: state.language === "en"
         ? `Tell the Demon who the Minions are.\nTell the Demon the three bluff characters.\nThe Demon does not kill on night 1.`
         : `告诉恶魔爪牙是谁。\n告诉恶魔本局可用伪装身份。\n首夜恶魔不进行击杀。`,
-      tell: `${state.language === "en" ? "Minions" : "爪牙"}：${minionNames}\n${state.language === "en" ? "Bluffs" : "可用伪装身份"}：${bluffNames}`,
-      explain: state.language === "en" ? "The Demon receives Minion info and bluffs, but does not kill on night 1." : "首夜恶魔需要知道爪牙是谁，并获得 3 个伪装身份。首夜不进行击杀。",
+      tell: shouldGiveFirstNightEvilInfo ? `${state.language === "en" ? "Minions" : "爪牙"}：${minionNames}\n${state.language === "en" ? "Bluffs" : "可用伪装身份"}：${bluffNames}` : null,
+      explain: shouldGiveFirstNightEvilInfo ? (state.language === "en" ? "The Demon receives Minion info and bluffs, but does not kill on night 1." : "首夜恶魔需要知道爪牙是谁，并获得 3 个伪装身份。首夜不进行击杀。") : (state.language === "en" ? "Small games skip first-night Demon info." : "小局跳过首夜恶魔信息。"),
       tip: state.language === "en" ? "Show Minions and bluffs. No kill tonight." : "展示爪牙和伪装身份，首夜不杀人。",
-      display: demon ? { title: state.language === "en" ? "Demon info" : "恶魔信息", primary: state.language === "en" ? "Minions" : "爪牙", secondary: `${minionNames}\n\n${state.language === "en" ? "Bluffs" : "伪装"}：${bluffNames}`, footer: state.language === "en" ? "No kill on night 1." : "首夜不进行击杀。" } : null,
+      display: demon && shouldGiveFirstNightEvilInfo ? { title: state.language === "en" ? "Demon info" : "恶魔信息", primary: state.language === "en" ? "Minions" : "爪牙", secondary: `${minionNames}\n\n${state.language === "en" ? "Bluffs" : "伪装"}：${bluffNames}`, footer: state.language === "en" ? "No kill on night 1." : "首夜不进行击杀。" } : null,
     }),
     ctRedHerringStep(),
     ctWasherwomanStep(),
     ctLibrarianStep(),
     ctInvestigatorStep(),
+    ctClockmakerStep(),
     ctChefStep(),
     ctEmpathStep(),
+    ctChambermaidStep(),
     ctFortuneTellerStep(),
     ctButlerStep(),
     ctSpyStep(),
-  ];
+  ]);
 }
 
 function ctLaterNightSteps() {
-  return [
+  return ctFilterNightSteps([
     ctPoisonerStep(),
     ctUndertakerStep(),
     ctButlerStep(),
     ctEmpathStep(),
+    ctChambermaidStep(),
     ctFortuneTellerStep(),
     ctDemonKillStep(),
+    ctSageStep(),
     ctRavenkeeperStep(),
-  ];
+  ]);
 }
 
 function ctInfoStep(roleId, tell, explain, display, control, options = {}) {
   const actor = ctRoleActor(roleId);
   const title = nameOfRole(roleId);
+  const drunkShownNote = actor && actor.actualRole === "drunk" && actor.shownRole === roleId
+    ? (state.language === "en"
+      ? `Note: this player is the Drunk shown as ${title}. Wake them normally, but the information may be unreliable or completely false.`
+      : `注意：这名玩家真实身份是酒鬼，显示为${title}。请照常唤醒并给信息，但信息可以不可靠或完全错误。`)
+    : "";
   return ctStep({
     title,
     actor,
     real: !!actor,
     reason: ctMissingReason(roleId),
     actionText: actor
-      ? (state.language === "en" ? `Wake ${ctSeatLabel(actor)}. Give the information, then signal them to close their eyes.` : `轻拍 ${ctSeatLabel(actor)}，示意他睁眼。\n给出今晚的信息。\n确认后示意他闭眼。`)
+      ? [
+        state.language === "en" ? `Wake ${ctSeatLabel(actor)}. Give the information, then signal them to close their eyes.` : `轻拍 ${ctSeatLabel(actor)}，示意他睁眼。\n给出今晚的信息。\n确认后示意他闭眼。`,
+        drunkShownNote,
+      ].filter(Boolean).join("\n")
       : (state.language === "en" ? "Pause briefly to preserve the night rhythm, then continue." : "为了避免泄露信息，请停顿 2-3 秒，然后点击下一步。"),
     tell: actor ? tell : null,
-    explain,
+    explain: [explain, drunkShownNote].filter(Boolean).join("\n"),
     display: actor && display ? display : null,
     control,
     headline: options.headline,
     tip: options.tip,
+    roleId,
   });
 }
 
@@ -985,6 +1169,7 @@ function ctRedHerringStep() {
     explain: state.language === "en" ? "This is private Storyteller setup. Do not show it to players." : "红鲱鱼是占卜师规则的一部分。不要公开给玩家。",
     tip: state.language === "en" ? "Private setup only. Do not show players." : "只给说书人看，不公开。",
     control: "redHerring",
+    roleId: "fortuneTeller",
   });
 }
 
@@ -1012,6 +1197,11 @@ function ctInvestigatorStep() {
   return ctInfoStep("investigator", tell, state.language === "en" ? "The Investigator learns a Minion is one of two players, or that there are no Minions." : "调查员会得知某个爪牙在两名玩家之一中，或得知没有爪牙。", target && pair ? { title: state.language === "en" ? "Investigator info" : "调查员信息", primary: roleName, subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中", numbers: [target.seat, pair.seat], footer: "" } : { title: state.language === "en" ? "Investigator info" : "调查员信息", primary: state.language === "en" ? "No Minions" : "没有爪牙", footer: "" });
 }
 
+function ctClockmakerStep() {
+  const num = String(ctClockmakerNumber());
+  return ctInfoStep("clockmaker", num, state.language === "en" ? "This number is the distance from the Demon to the nearest Minion." : "这个数字表示恶魔到最近爪牙相隔几步。", { title: state.language === "en" ? "Clockmaker info" : "钟表匠信息", primary: num, footer: state.language === "en" ? "Distance to the nearest Minion." : "恶魔到最近爪牙的距离。" });
+}
+
 function ctChefStep() {
   const num = String(ctChefPairs());
   return ctInfoStep("chef", num, state.language === "en" ? "This number is how many pairs of evil players are sitting next to each other." : "这个数字表示有几对邪恶玩家相邻而坐。", { title: state.language === "en" ? "Chef info" : "厨师信息", primary: num, footer: state.language === "en" ? `There are ${num} adjacent evil pairs.` : `有 ${num} 对邪恶玩家相邻。` });
@@ -1021,6 +1211,14 @@ function ctEmpathStep() {
   const actor = ctRoleActor("empath");
   const num = actor ? String(ctLivingNeighbors(actor).filter(ctIsEvil).length) : "";
   return ctInfoStep("empath", num, state.language === "en" ? "This number is how many of the Empath's two living neighbors are evil." : "这个数字表示共情者两个存活邻居中有几个邪恶玩家。", actor ? { title: state.language === "en" ? "Empath info" : "共情者信息", primary: num, footer: state.language === "en" ? `Your two living neighbors include ${num} evil players.` : `你的两个存活邻居中有 ${num} 个邪恶玩家。` } : null);
+}
+
+function ctChambermaidStep() {
+  const actor = ctRoleActor("chambermaid");
+  return ctInfoStep("chambermaid", null, state.language === "en" ? "The Chambermaid chooses two players and learns how many woke tonight due to their ability." : "侍女选择两名玩家，得知其中有几人今晚因自己的能力醒来。", null, "chambermaid", {
+    headline: actor ? (state.language === "en" ? `Wake ${ctSeatLabel(actor)}` : `唤醒侍女：${ctSeatLabel(actor)}`) : undefined,
+    tip: state.language === "en" ? "Let her point at two seats. Tap Check and show." : "让她选择两名玩家，点查询后直接展示数字。",
+  });
 }
 
 function ctFortuneTellerStep() {
@@ -1042,6 +1240,16 @@ function ctFortuneDisplayCard() {
   };
 }
 
+function ctChambermaidDisplayCard() {
+  return {
+    title: state.language === "en" ? "Chambermaid" : "侍女",
+    primary: String(ctChambermaidResult()),
+    subhead: state.language === "en" ? "among these two players" : "在下面两位玩家之中",
+    numbers: [ctSeatNumberById(state.clocktower.chambermaidFirst), ctSeatNumberById(state.clocktower.chambermaidSecond)].filter(Boolean),
+    footer: "",
+  };
+}
+
 function ctButlerStep() {
   const c = state.clocktower;
   const tell = c.butlerMaster ? `${state.language === "en" ? "Today's master" : "今天的主人"}：${ctSeatLabelById(c.butlerMaster)}` : null;
@@ -1057,6 +1265,7 @@ function ctSpyStep() {
     reason: ctMissingReason("spy"),
     actionText: actor ? (state.language === "en" ? "Let the Spy inspect the full grimoire, then signal them to close their eyes." : "让间谍查看完整魔典，确认后示意他闭眼。") : (state.language === "en" ? "Pause briefly, then continue." : "停顿 2-3 秒，然后点击下一步。"),
     explain: state.language === "en" ? "The Spy may see all true identities." : "间谍可以查看所有玩家的真实身份。",
+    roleId: "spy",
   });
 }
 
@@ -1089,6 +1298,25 @@ function ctDemonKillStep() {
   });
 }
 
+function ctSageStep() {
+  const demonPoisoned = ctDemonPoisonedTonight();
+  const death = !demonPoisoned && state.clocktower.pendingNightDeath ? ctPlayers().find((p) => p.id === state.clocktower.pendingNightDeath) : null;
+  const actor = death && death.actualRole === "sage" ? death : null;
+  const demon = ctPlayers().find((p) => ctTeam(p) === "demon");
+  const pair = demon ? ctPair(demon) : null;
+  return ctStep({
+    title: nameOfRole("sage"),
+    actor,
+    real: !!actor && !!demon && !!pair,
+    reason: actor ? "" : (state.language === "en" ? "The Sage was not killed by the Demon tonight." : "贤者今晚没有被恶魔杀死。"),
+    actionText: actor ? (state.language === "en" ? "Wake the Sage. Show two players, one of whom is the Demon." : "唤醒贤者。展示两名玩家，其中一名是恶魔。") : (state.language === "en" ? "Pause briefly, then continue." : "停顿 2-3 秒，然后继续。"),
+    tell: actor && demon && pair ? `${ctSeatLabel(demon)} / ${ctSeatLabel(pair)}` : null,
+    explain: state.language === "en" ? "If the Demon kills the Sage, the Sage learns the Demon is one of two players." : "贤者被恶魔杀死时，得知恶魔是两名玩家之一。",
+    display: actor && demon && pair ? { title: state.language === "en" ? "Sage info" : "贤者信息", primary: state.language === "en" ? "Demon" : "恶魔", subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中", numbers: [demon.seat, pair.seat], footer: "" } : null,
+    roleId: "sage",
+  });
+}
+
 function ctRavenkeeperStep() {
   const death = !ctDemonPoisonedTonight() && state.clocktower.pendingNightDeath ? ctPlayers().find((p) => p.id === state.clocktower.pendingNightDeath) : null;
   const actor = death && death.actualRole === "ravenkeeper" ? death : null;
@@ -1104,6 +1332,7 @@ function ctRavenkeeperStep() {
     explain: state.language === "en" ? "Only wake the Ravenkeeper if they died at night." : "只有守鸦人夜晚死亡时才唤醒他。",
     control: "ravenkeeperTarget",
     display: target ? { title: state.language === "en" ? "Ravenkeeper info" : "守鸦人信息", primary: ctSeatLabel(target), secondary: nameOfRole(target.actualRole), footer: state.language === "en" ? "This player's character." : "该玩家的角色。" } : null,
+    roleId: "ravenkeeper",
   });
 }
 
@@ -1129,6 +1358,18 @@ function ctChefPairs() {
   return pairs;
 }
 
+function ctClockmakerNumber() {
+  const players = ctPlayers().sort((a, b) => a.seat - b.seat);
+  const demonIndex = players.findIndex((p) => ctTeam(p) === "demon");
+  const minionIndexes = players.map((p, index) => ctTeam(p) === "minion" ? index : -1).filter((index) => index >= 0);
+  if (demonIndex < 0 || !minionIndexes.length) return 0;
+  return Math.min(...minionIndexes.map((index) => {
+    const clockwise = (index - demonIndex + players.length) % players.length;
+    const counterClockwise = (demonIndex - index + players.length) % players.length;
+    return Math.min(clockwise, counterClockwise);
+  }));
+}
+
 function ctLivingNeighbors(player) {
   const players = ctPlayers().sort((a, b) => a.seat - b.seat);
   const index = players.findIndex((p) => p.id === player.id);
@@ -1151,6 +1392,25 @@ function ctFortuneResult() {
   return targets.some((p) => ctTeam(p) === "demon" || p.id === c.redHerring);
 }
 
+function ctChambermaidWakeRoles() {
+  if (state.clocktower.phase === "firstNight") {
+    return new Set(["clockmaker", "investigator", "empath", "chambermaid"]);
+  }
+  const roles = new Set(["chambermaid", "empath", "poisoner", "fortuneTeller", "butler", "monk", "imp"]);
+  if (state.clocktower.lastExecuted) roles.add("undertaker");
+  const death = !ctDemonPoisonedTonight() && state.clocktower.pendingNightDeath ? ctPlayers().find((p) => p.id === state.clocktower.pendingNightDeath) : null;
+  if (death?.actualRole === "ravenkeeper") roles.add("ravenkeeper");
+  return roles;
+}
+
+function ctChambermaidResult() {
+  const c = state.clocktower;
+  const wakeRoles = ctChambermaidWakeRoles();
+  return [c.chambermaidFirst, c.chambermaidSecond]
+    .map((id) => ctPlayers().find((p) => p.id === id))
+    .filter((p) => p && wakeRoles.has(p.actualRole)).length;
+}
+
 function finishClocktowerNight() {
   const c = state.clocktower;
   c.nightStarted = false;
@@ -1165,12 +1425,21 @@ function finishClocktowerNight() {
   if (!demonPoisoned && c.pendingNightDeath) {
     const target = ctPlayers().find((p) => p.id === c.pendingNightDeath);
     if (target && target.alive) ctKill(target, state.language === "en" ? "night death" : "夜晚死亡");
+    if (target && target.actualRole === "klutz" && !c.outcome) {
+      c.pendingKlutz = target.id;
+      c.klutzChoice = null;
+      c.klutzReturnToDawn = true;
+      c.phase = "day";
+      c.dayMode = "klutz";
+    }
   }
   c.poisonTarget = null;
   c.fortuneFirst = null;
   c.fortuneSecond = null;
+  c.chambermaidFirst = null;
+  c.chambermaidSecond = null;
   c.ravenkeeperTarget = null;
-  if (!c.outcome) c.phase = "dawn";
+  if (!c.outcome && !c.pendingKlutz) c.phase = "dawn";
 }
 
 function ctKill(player, cause) {
@@ -1221,8 +1490,51 @@ function confirmClocktowerDay() {
       return;
     }
     ctKill(target, state.language === "en" ? "executed" : "被处决");
+    if (target.actualRole === "klutz" && !c.outcome) {
+      c.pendingKlutz = target.id;
+      c.klutzChoice = null;
+      c.klutzReturnToDawn = false;
+      c.dayMode = "klutz";
+      return;
+    }
   }
   if (!c.outcome) startNextClocktowerNight();
+}
+
+function confirmKlutzChoice() {
+  const c = state.clocktower;
+  const choice = c.klutzChoice ? ctPlayers().find((p) => p.id === c.klutzChoice) : null;
+  const klutz = c.pendingKlutz ? ctPlayers().find((p) => p.id === c.pendingKlutz) : null;
+  if (!choice || !klutz) return;
+  if (ctIsEvil(choice)) {
+    c.outcome = {
+      winner: state.language === "en" ? "Evil wins" : "邪恶阵营获胜",
+      reason: state.language === "en"
+        ? `${ctSeatLabel(klutz)} chose an evil player: ${ctSeatLabel(choice)}.`
+        : `${ctSeatLabel(klutz)} 选择了邪恶玩家 ${ctSeatLabel(choice)}，善良阵营失败。`,
+    };
+    return;
+  }
+  c.pendingKlutz = null;
+  c.klutzChoice = null;
+  if (c.klutzReturnToDawn) {
+    c.klutzReturnToDawn = false;
+    c.phase = "dawn";
+    c.dayMode = "overview";
+  } else {
+    startNextClocktowerNight();
+  }
+}
+
+function confirmArtistQuestion() {
+  const c = state.clocktower;
+  const claimant = c.artistClaimant ? ctPlayers().find((p) => p.id === c.artistClaimant) : null;
+  if (!claimant) return;
+  c.artistClaimantsUsed = Array.from(new Set([...(c.artistClaimantsUsed || []), claimant.id]));
+  if (claimant.actualRole === "artist" && !c.artistUsed) c.artistUsed = true;
+  c.log.unshift(`${ctSeatLabel(claimant)} ${state.language === "en" ? "asked an Artist question." : "进行了艺术家提问。"}`);
+  c.artistClaimant = null;
+  c.dayMode = "overview";
 }
 
 function startNextClocktowerNight() {
@@ -1238,18 +1550,25 @@ function startNextClocktowerNight() {
   c.selectedExecution = null;
   c.pendingNightDeath = null;
   c.lastNightDeath = null;
+  c.artistClaimant = null;
 }
 
 function fireSlayer() {
   const c = state.clocktower;
+  const claimant = ctPlayers().find((p) => p.id === c.slayerClaimant);
   const target = ctPlayers().find((p) => p.id === c.slayerTarget);
-  c.slayerUsed = true;
-  if (target && ctTeam(target) === "demon") {
+  if (!claimant || !target) return;
+  c.slayerClaimantsUsed = Array.from(new Set([...(c.slayerClaimantsUsed || []), claimant.id]));
+  const realFirstUse = claimant.actualRole === "slayer" && !c.slayerUsed;
+  if (realFirstUse) c.slayerUsed = true;
+  if (realFirstUse && ctTeam(target) === "demon") {
     ctKill(target, state.language === "en" ? "shot by Slayer" : "被猎手击杀");
-  } else if (target) {
-    c.log.unshift(`${ctSeatLabel(target)} ${state.language === "en" ? "was not the Demon. No one died." : "不是恶魔，没有玩家死亡。"}`);
+  } else {
+    c.log.unshift(`${ctSeatLabel(claimant)} ${state.language === "en" ? "claimed Slayer against" : "声称杀手行动，目标"} ${ctSeatLabel(target)}。${state.language === "en" ? "No one died." : "没有玩家死亡。"}`);
   }
+  c.slayerClaimant = null;
   c.slayerTarget = null;
+  c.dayMode = "overview";
 }
 
 function startWerewolf() {
@@ -1321,6 +1640,7 @@ document.addEventListener("click", (event) => {
   if (action === "move-seat") moveSeat(target.dataset.id, Number(target.dataset.dir));
   if (action === "clear-seats") state.seats = [];
   if (action === "select-game") state.selectedGame = target.dataset.game;
+  if (action === "select-clocktower-script") state.selectedClocktowerScript = target.dataset.script;
   if (action === "start-clocktower") startClocktower();
   if (action === "reset-clocktower") state.clocktower = freshClocktower();
   if (action === "ct-start-night") state.clocktower.nightStarted = true;
@@ -1342,6 +1662,12 @@ document.addEventListener("click", (event) => {
     if (field === "fortuneFirst" && state.clocktower.fortuneSecond === state.clocktower.fortuneFirst) {
       state.clocktower.fortuneSecond = null;
     }
+    if (field === "chambermaidFirst" && state.clocktower.chambermaidSecond === state.clocktower.chambermaidFirst) {
+      state.clocktower.chambermaidSecond = null;
+    }
+    if (field === "slayerClaimant" && state.clocktower.slayerTarget === state.clocktower.slayerClaimant) {
+      state.clocktower.slayerTarget = null;
+    }
   }
   if (action === "ct-day-mode") {
     state.clocktower.dayMode = target.dataset.mode;
@@ -1359,9 +1685,12 @@ document.addEventListener("click", (event) => {
     c.dayMode = action === "ct-save-vote" ? "overview" : "endConfirm";
   }
   if (action === "ct-confirm-day") confirmClocktowerDay();
+  if (action === "ct-confirm-klutz") confirmKlutzChoice();
+  if (action === "ct-confirm-artist") confirmArtistQuestion();
   if (action === "ct-fire-slayer") fireSlayer();
   if (action === "show-display") state.displayCard = JSON.parse(decodeURIComponent(target.dataset.card));
   if (action === "ct-show-fortune") state.displayCard = ctFortuneDisplayCard();
+  if (action === "ct-show-chambermaid") state.displayCard = ctChambermaidDisplayCard();
   if (action === "close-display") state.displayCard = null;
   if (action === "start-werewolf") startWerewolf();
   if (action === "werewolf-select") state.werewolf[target.dataset.field] = state.werewolf[target.dataset.field] === target.dataset.id ? null : target.dataset.id;
