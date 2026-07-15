@@ -344,6 +344,48 @@ textarea {
   gap: 12px;
 }
 
+.spy-registration {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+  border: 2px solid rgba(82, 103, 170, 0.34);
+  border-radius: 18px;
+  background: rgba(239, 242, 255, 0.92);
+}
+
+.spy-registration > div:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.spy-registration span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.spy-registration select {
+  width: 100%;
+}
+
+.spy-registration.disabled {
+  border-color: rgba(201, 111, 58, 0.34);
+  background: #fff1dc;
+}
+
+.registration-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.registration-modes .selected {
+  color: #fff;
+  background: #33457f;
+  border-color: #33457f;
+}
+
 .button-row {
   display: flex;
   flex-wrap: wrap;

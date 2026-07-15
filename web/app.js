@@ -161,6 +161,7 @@ function freshClocktower() {
     chambermaidSecond: null,
     butlerMaster: null,
     pendingNightDeath: null,
+    impSuccessor: null,
     lastNightDeath: null,
     ravenkeeperTarget: null,
     lastExecuted: null,
@@ -188,6 +189,7 @@ function freshClocktower() {
     testMode: false,
     testLabOpen: false,
     testNotice: "",
+    registrationDecisions: {},
     eventCounter: 0,
     events: [],
     log: [],
@@ -539,6 +541,11 @@ function renderClocktowerTestLab() {
     return `<button class="test-lab-toggle" data-action="ct-test-toggle">🧪 ${state.language === "en" ? "Open test lab controls" : "展开测试实验室控制台"}</button>`;
   }
   const scenarios = [
+    ["spy-chef", state.language === "en" ? "Spy registration · Chef" : "间谍登记 · 厨师"],
+    ["spy-virgin", state.language === "en" ? "Spy registration · Virgin" : "间谍登记 · 处女"],
+    ["spy-undertaker", state.language === "en" ? "Dead Spy · Undertaker" : "死亡间谍 · 送葬者"],
+    ["spy-klutz", state.language === "en" ? "Spy registration · Klutz" : "间谍登记 · 呆瓜"],
+    ["poison-spy", state.language === "en" ? "Poisoned Spy" : "中毒间谍"],
     ["poison-empath", state.language === "en" ? "Poisoned Empath" : "中毒共情者"],
     ["poison-demon", state.language === "en" ? "Poisoned Demon" : "中毒恶魔"],
     ["poison-slayer", state.language === "en" ? "Poisoned Slayer" : "中毒猎手"],
@@ -664,17 +671,20 @@ function renderNightStep(step) {
   const displayButtons = step.displayOptions && step.displayOptions.length
     ? step.displayOptions.map((option, index) => `<button class="ghost display-choice" data-action="show-display" data-card="${htmlEscape(encodeURIComponent(JSON.stringify(option.display)))}">${htmlEscape(option.label || `${state.language === "en" ? "Show option" : "展示选项"} ${index + 1}`)}</button>`).join("")
     : (step.display && step.control !== "fortune" ? `<button class="ghost" data-action="show-display" data-card="${htmlEscape(encodeURIComponent(JSON.stringify(step.display)))}">${tr("showToPlayer")}</button>` : "");
+  const chosenNightTarget = state.clocktower.pendingNightDeath ? ctPlayers().find((player) => player.id === state.clocktower.pendingNightDeath) : null;
+  const needsImpSuccessor = step.control === "nightDeath" && chosenNightTarget && ctTeam(chosenNightTarget) === "demon" && ctAlive().some((player) => ctTeam(player) === "minion");
   return `
     <div class="step-card host-step">
       <div class="step-kicker">${htmlEscape(step.title)} · ${step.real ? tr("realAction") : (state.language === "en" ? "Placeholder" : "占位")}</div>
       <h2 class="host-command">${htmlEscape(step.headline || ctStepHeadline(step))}</h2>
       <div class="step-actions">
+        ${renderSpyRegistrationControl(step.registration)}
         ${renderClocktowerActionControl(step)}
         ${step.tell ? `<div class="big-answer">${nl(step.tell)}</div>` : ""}
         ${step.displayOptions && step.displayOptions.length ? `<div class="option-hint">${state.language === "en" ? "Unreliable ability: choose one result to show." : "能力不可靠：请选择一个结果展示。"}</div>` : ""}
         <div class="button-row">
           ${displayButtons}
-          <button class="primary" data-action="ct-next-night">${tr("doneNext")}</button>
+          <button class="primary" data-action="ct-next-night" ${needsImpSuccessor && !state.clocktower.impSuccessor ? "disabled" : ""}>${tr("doneNext")}</button>
         </div>
       </div>
       ${note ? `<p class="step-note ${step.real ? "" : "warn"}">${nl(note)}</p>` : ""}
@@ -710,11 +720,23 @@ function renderClocktowerActionControl(step) {
   const alive = ctAlive();
   if (step.control === "redHerring") {
     if (!step.real) return "";
-    return renderChipPicker("ct-select", "redHerring", ctPlayers().filter((p) => ctTeam(p) !== "demon"), state.clocktower.redHerring);
+    return renderChipPicker("ct-select", "redHerring", ctRedHerringCandidates(step.registration?.key), state.clocktower.redHerring);
   }
   if (step.control === "poisonTarget") return renderChipPicker("ct-select", "poisonTarget", alive, state.clocktower.poisonTarget, step.real);
   if (step.control === "butlerMaster") return renderChipPicker("ct-select", "butlerMaster", alive, state.clocktower.butlerMaster, step.real);
-  if (step.control === "nightDeath") return renderChipPicker("ct-select", "pendingNightDeath", alive, state.clocktower.pendingNightDeath, step.real);
+  if (step.control === "nightDeath") {
+    const chosen = state.clocktower.pendingNightDeath ? ctPlayers().find((player) => player.id === state.clocktower.pendingNightDeath) : null;
+    const successors = alive.filter((player) => ctTeam(player) === "minion");
+    return `
+      ${renderChipPicker("ct-select", "pendingNightDeath", alive, state.clocktower.pendingNightDeath, step.real)}
+      ${chosen && ctTeam(chosen) === "demon" && successors.length ? `
+        <div class="instruction warn">
+          <strong>${state.language === "en" ? "Imp self-kill: choose the new Imp" : "小恶魔自杀：选择继任恶魔"}</strong>
+          ${renderChipPicker("ct-select", "impSuccessor", successors, state.clocktower.impSuccessor, step.real)}
+        </div>
+      ` : ""}
+    `;
+  }
   if (step.control === "ravenkeeperTarget") return renderChipPicker("ct-select", "ravenkeeperTarget", alive.filter((p) => p.id !== step.actorId), state.clocktower.ravenkeeperTarget, step.real);
   if (step.control === "fortune") {
     const ready = state.clocktower.fortuneFirst && state.clocktower.fortuneSecond;
@@ -751,6 +773,35 @@ function renderClocktowerActionControl(step) {
     `;
   }
   return "";
+}
+
+function renderSpyRegistrationControl(registration) {
+  if (!registration) return "";
+  const spy = ctPlayers().find((player) => player.id === registration.spyId);
+  if (!spy) return "";
+  const decision = ctRegistrationDecision(registration.key);
+  const disabled = !ctSpyCanRegister(spy);
+  const teams = registration.roleTeams || [];
+  const roles = teams.flatMap((team) => ctScriptRoleIdsByTeam(team)).filter((roleId) => roleId !== "spy");
+  return `
+    <div class="spy-registration ${disabled ? "disabled" : ""}">
+      <div>
+        <strong>${state.language === "en" ? "Private Storyteller ruling" : "说书人私密裁定"}</strong>
+        <span>${htmlEscape(ctSeatLabel(spy))} · ${state.language === "en" ? "this interaction only" : "仅影响本次交互"}</span>
+      </div>
+      ${disabled ? `<div class="step-note warn">${state.language === "en" ? "The Spy is poisoned, so registration cannot change for this interaction." : "间谍已中毒，本次交互不能改变登记身份。"}</div>` : `
+        <div class="registration-modes">
+          <button class="mini ${decision.mode === "actual" ? "selected" : ""}" data-action="ct-registration-mode" data-key="${htmlEscape(registration.key)}" data-mode="actual">${state.language === "en" ? "Actual identity" : "按真实身份"}</button>
+          <button class="mini ${decision.mode === "good" ? "selected" : ""}" data-action="ct-registration-mode" data-key="${htmlEscape(registration.key)}" data-mode="good">${state.language === "en" ? "Register as good" : "登记为善良"}</button>
+        </div>
+        ${decision.mode === "good" && roles.length ? `
+          <select data-change="ct-registration-role" data-key="${htmlEscape(registration.key)}" aria-label="${state.language === "en" ? "Registered character" : "登记角色"}">
+            ${roles.map((roleId) => `<option value="${roleId}" ${decision.roleId === roleId ? "selected" : ""}>${htmlEscape(nameOfRole(roleId))} · ${teamLabel(teamOfRole(roleId))}</option>`).join("")}
+          </select>
+        ` : ""}
+      `}
+    </div>
+  `;
 }
 
 function ctStepHeadline(step) {
@@ -896,6 +947,8 @@ function renderArtistQuestion() {
 function renderKlutzChoice() {
   const c = state.clocktower;
   const klutz = c.pendingKlutz ? ctPlayers().find((p) => p.id === c.pendingKlutz) : null;
+  const choice = c.klutzChoice ? ctPlayers().find((p) => p.id === c.klutzChoice) : null;
+  const registration = choice?.actualRole === "spy" ? ctRegistrationFor("klutz", ["townsfolk", "outsider"], choice.id) : null;
   return `
     <div class="step-card">
       <h2>${state.language === "en" ? "Klutz choice" : "呆瓜选择"}</h2>
@@ -908,6 +961,7 @@ function renderKlutzChoice() {
         <strong>${state.language === "en" ? "Chosen player" : "选择玩家"}</strong>
         ${renderChipPicker("ct-select", "klutzChoice", ctAlive(), c.klutzChoice)}
       </div>
+      ${renderSpyRegistrationControl(registration)}
       <button class="danger" data-action="ct-confirm-klutz" ${c.klutzChoice ? "" : "disabled"}>${state.language === "en" ? "Confirm Klutz choice" : "确认呆瓜选择"}</button>
     </div>
   `;
@@ -915,6 +969,11 @@ function renderKlutzChoice() {
 
 function renderNomination() {
   const c = state.clocktower;
+  const nominator = c.nominator ? ctPlayers().find((player) => player.id === c.nominator) : null;
+  const nominee = c.nominee ? ctPlayers().find((player) => player.id === c.nominee) : null;
+  const registration = nominator?.actualRole === "spy" && nominee?.actualRole === "virgin"
+    ? ctRegistrationFor("virgin-nomination", ["townsfolk"], nominator.id)
+    : null;
   return `
     <div class="step-card">
       <h2>${state.language === "en" ? "Nomination" : "提名"}</h2>
@@ -927,6 +986,7 @@ function renderNomination() {
         ${renderChipPicker("ct-select", "nominee", ctAlive(), c.nominee)}
       </div>
       ${c.nominator && c.nominee ? `<div class="instruction"><strong>${state.language === "en" ? "Announce" : "请宣布"}</strong>${ctSeatLabelById(c.nominator)} ${state.language === "en" ? "nominates" : "提名"} ${ctSeatLabelById(c.nominee)}。</div>` : ""}
+      ${renderSpyRegistrationControl(registration)}
       <button class="primary" data-action="ct-day-mode" data-mode="vote" ${c.nominator && c.nominee ? "" : "disabled"}>${state.language === "en" ? "Start vote" : "开始投票"}</button>
     </div>
   `;
@@ -1002,7 +1062,7 @@ function ctEventPhaseLabel(event) {
 
 function ctEventTypeClass(type) {
   if (["death", "execution", "gameEnd"].includes(type)) return "danger";
-  if (["roleAction", "infoShown", "roleChange"].includes(type)) return "action";
+  if (["roleAction", "infoShown", "roleChange", "registration"].includes(type)) return "action";
   if (["nomination", "vote"].includes(type)) return "vote";
   if (type === "phase") return "phase";
   return "system";
@@ -1017,6 +1077,7 @@ function ctEventIcon(type) {
     death: "×",
     execution: "×",
     roleChange: "⇄",
+    registration: "◎",
     nomination: "◇",
     vote: "#",
     gameEnd: "!",
@@ -1370,10 +1431,64 @@ function ctLoadTestScenario(scenarioId) {
     "poison-slayer": "slayer",
     "poison-virgin": "virgin",
     "poison-ravenkeeper": "ravenkeeper",
+    "poison-spy": "spy",
   };
-  const roleId = roleByScenario[scenarioId] || "empath";
+  const roleId = roleByScenario[scenarioId] || (scenarioId.startsWith("spy-") ? "spy" : "empath");
   ctStartTestGame(roleId);
   const c = state.clocktower;
+  const spy = ctPlayers().find((player) => player.actualRole === "spy");
+  const setTestRole = (player, nextRole) => {
+    if (!player) return;
+    player.actualRole = nextRole;
+    player.shownRole = nextRole;
+  };
+  if (scenarioId === "spy-chef") {
+    setTestRole(ctPlayers().find((player) => player.id !== spy?.id && teamOfRole(player.actualRole) === "townsfolk"), "chef");
+    c.phase = "firstNight";
+    c.nightIndex = ctFirstNightSteps().findIndex((step) => step.roleId === "chef");
+    c.testNotice = state.language === "en" ? "Toggle the Spy registration and confirm the Chef number changes." : "切换间谍登记身份，确认厨师数字随之变化。";
+    return;
+  }
+  if (scenarioId === "poison-spy") {
+    c.poisonTarget = spy?.id || null;
+    c.phase = "firstNight";
+    c.nightIndex = ctFirstNightSteps().findIndex((step) => step.roleId === "spy");
+    c.testNotice = state.language === "en" ? "The Spy still wakes, but the true Grimoire must not be available." : "间谍仍应被唤醒，但不能出现真实魔典展示按钮。";
+    return;
+  }
+  if (scenarioId === "spy-virgin") {
+    const virgin = ctPlayers().find((player) => player.actualRole === "virgin");
+    c.phase = "day";
+    c.nightStarted = false;
+    c.dayMode = "nomination";
+    c.nominator = spy?.id || null;
+    c.nominee = virgin?.id || null;
+    c.testNotice = state.language === "en" ? "Register the Spy as Townsfolk to trigger the Virgin." : "把间谍登记为镇民后，处女能力应触发。";
+    return;
+  }
+  if (scenarioId === "spy-undertaker") {
+    const undertaker = ctPlayers().find((player) => player.id !== spy?.id && teamOfRole(player.actualRole) === "townsfolk");
+    setTestRole(undertaker, "undertaker");
+    if (spy) spy.alive = false;
+    c.lastExecuted = spy?.id || null;
+    c.phase = "night";
+    c.round = 2;
+    c.nightIndex = ctLaterNightSteps().findIndex((step) => step.roleId === "undertaker");
+    c.testNotice = state.language === "en" ? "A dead Spy may still register as a good character to the Undertaker." : "死亡间谍仍可向送葬者登记为善良角色。";
+    return;
+  }
+  if (scenarioId === "spy-klutz") {
+    const klutz = ctPlayers().find((player) => player.id !== spy?.id && teamOfRole(player.actualRole) === "townsfolk");
+    setTestRole(klutz, "klutz");
+    if (klutz) klutz.alive = false;
+    c.phase = "day";
+    c.nightStarted = false;
+    c.dayMode = "klutz";
+    c.pendingKlutz = klutz?.id || null;
+    c.klutzChoice = spy?.id || null;
+    c.testNotice = state.language === "en" ? "Register the Spy as good to prevent the Klutz loss." : "把间谍登记为善良后，呆瓜不应导致善良失败。";
+    return;
+  }
   if (scenarioId === "vote-tie") {
     const threshold = ctExecutionThreshold();
     c.phase = "day";
@@ -1465,6 +1580,7 @@ function ctOutcome(winner, reason) {
 function ctRecordNightStep(step) {
   if (!step || !step.real) return;
   const c = state.clocktower;
+  ctRecordRegistration(step.registration);
   const actor = step.actorId ? ctPlayers().find((p) => p.id === step.actorId) : null;
   const actorLabel = actor ? ctSeatLabel(actor) : step.title;
   const eventBase = {
@@ -1511,9 +1627,10 @@ function ctRecordNightStep(step) {
   }
   if (step.control === "ravenkeeperTarget" && c.ravenkeeperTarget) {
     const target = ctPlayers().find((p) => p.id === c.ravenkeeperTarget);
+    const revealedRole = target ? ctRegisteredRole(target, step.registration?.key) : null;
     ctAddEvent({
       ...eventBase,
-      detail: target ? `${actorLabel} → ${ctSeatLabel(target)} · ${nameOfRole(target.actualRole)}` : "",
+      detail: target ? `${actorLabel} → ${ctSeatLabel(target)} · ${nameOfRole(revealedRole)}` : "",
       playerIds: [...eventBase.playerIds, c.ravenkeeperTarget],
     });
     return;
@@ -1535,6 +1652,24 @@ function ctRecordNightStep(step) {
     });
     return;
   }
+}
+
+function ctRecordRegistration(registration) {
+  if (!registration) return;
+  const decision = ctRegistrationDecision(registration.key);
+  const spy = ctPlayers().find((player) => player.id === registration.spyId);
+  if (!spy || decision.mode !== "good" || !ctSpyCanRegister(spy)) return;
+  const alreadyRecorded = (state.clocktower.events || []).some((event) => event.type === "registration" && event.meta?.key === registration.key);
+  if (alreadyRecorded) return;
+  ctAddEvent({
+    type: "registration",
+    title: state.language === "en" ? "Spy registration" : "间谍登记裁定",
+    detail: `${ctSeatLabel(spy)} → ${decision.roleId ? nameOfRole(decision.roleId) : (state.language === "en" ? "good" : "善良")}`,
+    playerIds: [spy.id],
+    phase: state.clocktower.phase,
+    round: state.clocktower.round,
+    meta: { key: registration.key, roleId: decision.roleId || null },
+  });
 }
 
 function ctRecordDisplayShown(display) {
@@ -1581,7 +1716,7 @@ function ctNightSteps() {
   return state.clocktower.phase === "firstNight" ? ctFirstNightSteps() : ctLaterNightSteps();
 }
 
-function ctStep({ title, actor, real, reason, wakeText, actionText, tell, explain, control, display, displayOptions, headline, tip, roleId }) {
+function ctStep({ title, actor, real, reason, wakeText, actionText, tell, explain, control, display, displayOptions, headline, tip, roleId, registration }) {
   return {
     title,
     actorId: actor ? actor.id : null,
@@ -1597,6 +1732,7 @@ function ctStep({ title, actor, real, reason, wakeText, actionText, tell, explai
     headline,
     tip,
     roleId,
+    registration,
   };
 }
 
@@ -1673,6 +1809,7 @@ function ctLaterNightSteps() {
     ctDemonKillStep(),
     ctSageStep(),
     ctRavenkeeperStep(),
+    ctSpyStep(),
   ]);
 }
 
@@ -1709,11 +1846,13 @@ function ctInfoStep(roleId, tell, explain, display, control, options = {}) {
     headline: options.headline,
     tip: options.tip,
     roleId,
+    registration: options.registration,
   });
 }
 
 function ctRedHerringStep() {
   const actor = ctAnyRole("fortuneTeller");
+  const registration = actor ? ctRegistrationFor("fortune-red-herring", ["townsfolk", "outsider"]) : null;
   return ctStep({
     title: state.language === "en" ? "Fortune Teller red herring" : "占卜师红鲱鱼",
     actor: null,
@@ -1727,6 +1866,7 @@ function ctRedHerringStep() {
     tip: state.language === "en" ? "Private setup only. Do not show players." : "只给说书人看，不公开。",
     control: "redHerring",
     roleId: "fortuneTeller",
+    registration,
   });
 }
 
@@ -1736,6 +1876,58 @@ function ctStableHash(value) {
 
 function ctActorIsPoisoned(actor) {
   return !!actor && state.clocktower.poisonTarget === actor.id;
+}
+
+function ctSpyPlayer() {
+  return ctPlayers().find((player) => player.actualRole === "spy");
+}
+
+function ctSpyCanRegister(spy = ctSpyPlayer()) {
+  return !!spy && spy.actualRole === "spy" && !ctActorIsPoisoned(spy);
+}
+
+function ctRegistrationKey(ability, subjectId = "spy") {
+  const c = state.clocktower;
+  return `${c.phase}:${c.round}:${ability}:${subjectId}`;
+}
+
+function ctRegistrationDecision(key) {
+  const decisions = state.clocktower.registrationDecisions || (state.clocktower.registrationDecisions = {});
+  return decisions[key] || { mode: "actual", roleId: null };
+}
+
+function ctRegistrationFor(ability, roleTeams = [], subjectId = "spy") {
+  const spy = ctSpyPlayer();
+  if (!spy) return null;
+  const key = ctRegistrationKey(ability, subjectId);
+  const decision = ctRegistrationDecision(key);
+  if (decision.mode === "good" && !decision.roleId && roleTeams.length) {
+    decision.roleId = ctScriptRoleIdsByTeam(roleTeams[0]).find((roleId) => roleId !== "spy") || null;
+    state.clocktower.registrationDecisions[key] = decision;
+  }
+  return { key, spyId: spy.id, roleTeams };
+}
+
+function ctSpyRegistersGood(key) {
+  const spy = ctSpyPlayer();
+  return ctSpyCanRegister(spy) && !!key && ctRegistrationDecision(key).mode === "good";
+}
+
+function ctRegisteredRole(player, key) {
+  if (!player || player.actualRole !== "spy" || !ctSpyRegistersGood(key)) return player?.actualRole || null;
+  return ctRegistrationDecision(key).roleId || "washerwoman";
+}
+
+function ctRegisteredIsEvil(player, key) {
+  return player?.actualRole === "spy" && ctSpyRegistersGood(key) ? false : ctIsEvil(player);
+}
+
+function ctRedHerringCandidates(key) {
+  return ctPlayers().filter((player) => {
+    const team = teamOfRole(player.actualRole);
+    if (team === "townsfolk" || team === "outsider") return true;
+    return player.actualRole === "spy" && ctSpyRegistersGood(key);
+  });
 }
 
 function ctRoleUnreliable(roleId, actor) {
@@ -1849,36 +2041,50 @@ function ctFakeDemonPairOptions(actor, title) {
 
 function ctWasherwomanStep() {
   const actor = ctRoleActor("washerwoman");
-  const target = ctPlayers().find((p) => teamOfRole(p.actualRole) === "townsfolk" && p.actualRole !== "washerwoman");
+  const registration = actor ? ctRegistrationFor("washerwoman", ["townsfolk"]) : null;
+  const spy = ctSpyPlayer();
+  const target = spy && ctSpyRegistersGood(registration?.key)
+    ? spy
+    : ctPlayers().find((p) => teamOfRole(p.actualRole) === "townsfolk" && p.actualRole !== "washerwoman");
   const pair = target ? ctPair(target, actor ? [actor.id] : []) : null;
   const ordered = target && pair ? ctOrderedPair(target, pair, `washerwoman-${target.id}-${pair.id}`) : [];
-  const roleName = target ? nameOfRole(target.actualRole) : "";
+  const roleName = target ? nameOfRole(ctRegisteredRole(target, registration?.key)) : "";
   const title = state.language === "en" ? "Washerwoman info" : "洗衣妇信息";
   const explain = state.language === "en" ? "The Washerwoman learns one of two players is a specific Townsfolk." : "洗衣妇会得知某个镇民在两名玩家之一中。";
   const tell = ordered.length ? `${roleName}\n${ctPairLabel(ordered)}` : null;
   return ctInfoStep("washerwoman", tell, explain, ordered.length ? { title, primary: roleName, subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中", numbers: ctSeatNumbers(ordered), footer: "" } : null, null, {
     unreliableOptions: (stepActor) => ctFakeEitherOneOptions({ roleId: "washerwoman", team: "townsfolk", title, emptyText: state.language === "en" ? "No Townsfolk" : "没有镇民", actor: stepActor, trueTarget: target }),
+    registration,
   });
 }
 
 function ctLibrarianStep() {
   const actor = ctRoleActor("librarian");
-  const target = ctPlayers().find((p) => teamOfRole(p.actualRole) === "outsider");
+  const registration = actor ? ctRegistrationFor("librarian", ["outsider"]) : null;
+  const spy = ctSpyPlayer();
+  const target = spy && ctSpyRegistersGood(registration?.key)
+    ? spy
+    : ctPlayers().find((p) => teamOfRole(p.actualRole) === "outsider");
   const pair = target ? ctPair(target, actor ? [actor.id] : []) : null;
   const ordered = target && pair ? ctOrderedPair(target, pair, `librarian-${target.id}-${pair.id}`) : [];
-  const roleName = target ? nameOfRole(target.actualRole) : "";
+  const roleName = target ? nameOfRole(ctRegisteredRole(target, registration?.key)) : "";
   const title = state.language === "en" ? "Librarian info" : "图书管理员信息";
   const none = state.language === "en" ? "No Outsiders" : "没有异乡人";
   const explain = state.language === "en" ? "The Librarian learns an Outsider is one of two players, or that there are no Outsiders." : "图书管理员会得知某个异乡人在两名玩家之一中，或得知没有异乡人。";
   const tell = ordered.length ? `${roleName}\n${ctPairLabel(ordered)}` : `${none}.`;
   return ctInfoStep("librarian", tell, explain, ordered.length ? { title, primary: roleName, subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中", numbers: ctSeatNumbers(ordered), footer: "" } : { title, primary: none, footer: "" }, null, {
     unreliableOptions: (stepActor) => ctFakeEitherOneOptions({ roleId: "librarian", team: "outsider", title, emptyText: none, actor: stepActor, trueTarget: target }),
+    registration,
   });
 }
 
 function ctInvestigatorStep() {
   const actor = ctRoleActor("investigator");
-  const target = ctPlayers().find((p) => teamOfRole(p.actualRole) === "minion");
+  const registration = actor ? ctRegistrationFor("investigator", ["townsfolk", "outsider"]) : null;
+  const spy = ctSpyPlayer();
+  const target = spy && !ctSpyRegistersGood(registration?.key)
+    ? spy
+    : ctPlayers().find((p) => teamOfRole(p.actualRole) === "minion" && p.actualRole !== "spy");
   const pair = target ? ctPair(target, actor ? [actor.id] : []) : null;
   const ordered = target && pair ? ctOrderedPair(target, pair, `investigator-${target.id}-${pair.id}`) : [];
   const roleName = target ? nameOfRole(target.actualRole) : "";
@@ -1888,6 +2094,7 @@ function ctInvestigatorStep() {
   const tell = ordered.length ? `${roleName}\n${ctPairLabel(ordered)}` : `${none}.`;
   return ctInfoStep("investigator", tell, explain, ordered.length ? { title, primary: roleName, subhead: state.language === "en" ? "is one of these two players" : "在下面两位玩家之中", numbers: ctSeatNumbers(ordered), footer: "" } : { title, primary: none, footer: "" }, null, {
     unreliableOptions: (stepActor) => ctFakeEitherOneOptions({ roleId: "investigator", team: "minion", title, emptyText: none, actor: stepActor, trueTarget: target }),
+    registration,
   });
 }
 
@@ -1902,23 +2109,29 @@ function ctClockmakerStep() {
 }
 
 function ctChefStep() {
-  const value = ctChefPairs();
+  const registration = ctRoleActor("chef") ? ctRegistrationFor("chef", ["townsfolk", "outsider"]) : null;
+  const value = ctChefPairs(registration?.key);
   const num = String(value);
   const title = state.language === "en" ? "Chef info" : "厨师信息";
   const footer = state.language === "en" ? "Adjacent evil pairs." : "邪恶玩家相邻对数。";
   return ctInfoStep("chef", num, state.language === "en" ? "This number is how many pairs of evil players are sitting next to each other." : "这个数字表示有几对邪恶玩家相邻而坐。", { title, primary: num, footer: state.language === "en" ? `There are ${num} adjacent evil pairs.` : `有 ${num} 对邪恶玩家相邻。` }, null, {
     unreliableOptions: () => ctFakeNumberOptions({ title, trueValue: value, maxValue: ctPlayers().length, footer }),
+    registration,
   });
 }
 
 function ctEmpathStep() {
   const actor = ctRoleActor("empath");
-  const value = actor ? ctLivingNeighbors(actor).filter(ctIsEvil).length : 0;
+  const spy = ctSpyPlayer();
+  const spyIsNeighbor = actor && spy && ctLivingNeighbors(actor).some((player) => player.id === spy.id);
+  const registration = spyIsNeighbor ? ctRegistrationFor(`empath-${actor.id}`, ["townsfolk", "outsider"], actor.id) : null;
+  const value = actor ? ctLivingNeighbors(actor).filter((player) => ctRegisteredIsEvil(player, registration?.key)).length : 0;
   const num = actor ? String(value) : "";
   const title = state.language === "en" ? "Empath info" : "共情者信息";
   const footer = state.language === "en" ? "Evil living neighbors." : "邪恶存活邻居数量。";
   return ctInfoStep("empath", num, state.language === "en" ? "This number is how many of the Empath's two living neighbors are evil." : "这个数字表示共情者两个存活邻居中有几个邪恶玩家。", actor ? { title, primary: num, footer: state.language === "en" ? `Your two living neighbors include ${num} evil players.` : `你的两个存活邻居中有 ${num} 个邪恶玩家。` } : null, null, {
     unreliableOptions: () => ctFakeNumberOptions({ title, trueValue: value, maxValue: 2, footer }),
+    registration,
   });
 }
 
@@ -1967,13 +2180,25 @@ function ctButlerStep() {
 
 function ctSpyStep() {
   const actor = ctRoleActor("spy");
+  const poisoned = actor && ctActorIsPoisoned(actor);
+  const grimoire = actor && !poisoned ? {
+    title: state.language === "en" ? "Grimoire" : "魔典",
+    primary: state.language === "en" ? "True identities" : "真实身份",
+    secondary: ctPlayers().sort((a, b) => a.seat - b.seat).map((player) => `${ctSeatLabel(player)} · ${nameOfRole(player.actualRole)} · ${player.alive ? (state.language === "en" ? "alive" : "存活") : (state.language === "en" ? "dead" : "死亡")}`).join("\n"),
+    footer: state.language === "en" ? "Return the device to the Storyteller when finished." : "查看完毕后把设备交还说书人。",
+  } : null;
   return ctStep({
     title: nameOfRole("spy"),
     actor,
     real: !!actor,
     reason: ctMissingReason("spy"),
-    actionText: actor ? (state.language === "en" ? "Let the Spy inspect the full grimoire, then signal them to close their eyes." : "让间谍查看完整魔典，确认后示意他闭眼。") : (state.language === "en" ? "Pause briefly, then continue." : "停顿 2-3 秒，然后点击下一步。"),
-    explain: state.language === "en" ? "The Spy may see all true identities." : "间谍可以查看所有玩家的真实身份。",
+    actionText: actor ? (poisoned
+      ? (state.language === "en" ? "Wake the Spy normally, but do not reveal the true grimoire. Their ability is poisoned." : "照常唤醒间谍，但不要展示真实魔典；其能力已中毒。")
+      : (state.language === "en" ? "Let the Spy inspect the full grimoire, then signal them to close their eyes." : "让间谍查看完整魔典，确认后示意他闭眼。")) : (state.language === "en" ? "Pause briefly, then continue." : "停顿 2-3 秒，然后点击下一步。"),
+    explain: poisoned
+      ? (state.language === "en" ? "A poisoned Spy wakes as normal but must not receive reliable Grimoire information or use registration." : "中毒间谍仍照常被唤醒，但不能获得可靠魔典信息，也不能改变登记身份。")
+      : (state.language === "en" ? "The living Spy sees the true Grimoire every night." : "存活间谍每晚查看真实魔典。"),
+    display: grimoire,
     roleId: "spy",
   });
 }
@@ -1984,8 +2209,10 @@ function ctPoisonerStep() {
 
 function ctUndertakerStep() {
   const executed = state.clocktower.lastExecuted ? ctPlayers().find((p) => p.id === state.clocktower.lastExecuted) : null;
-  const tell = executed ? `${ctSeatLabel(executed)} ${state.language === "en" ? "was" : "的角色是"}：\n${nameOfRole(executed.actualRole)}` : null;
-  return ctInfoStep("undertaker", tell, state.language === "en" ? "The Undertaker learns the character of the player executed today." : "送葬者会得知今天被处决玩家的角色。", executed ? { title: state.language === "en" ? "Undertaker info" : "送葬者信息", primary: ctSeatLabel(executed), secondary: nameOfRole(executed.actualRole), footer: state.language === "en" ? "This was the executed player's character." : "这是被处决玩家的角色。" } : null);
+  const registration = executed?.actualRole === "spy" ? ctRegistrationFor("undertaker", ["townsfolk", "outsider"], executed.id) : null;
+  const revealedRole = executed ? ctRegisteredRole(executed, registration?.key) : null;
+  const tell = executed ? `${ctSeatLabel(executed)} ${state.language === "en" ? "was" : "的角色是"}：\n${nameOfRole(revealedRole)}` : null;
+  return ctInfoStep("undertaker", tell, state.language === "en" ? "The Undertaker learns the character of the player executed today." : "送葬者会得知今天被处决玩家的角色。", executed ? { title: state.language === "en" ? "Undertaker info" : "送葬者信息", primary: ctSeatLabel(executed), secondary: nameOfRole(revealedRole), footer: state.language === "en" ? "This was the executed player's character." : "这是被处决玩家的角色。" } : null, null, { registration });
 }
 
 function ctDemonKillStep() {
@@ -2034,9 +2261,11 @@ function ctRavenkeeperStep() {
   const death = !ctDemonPoisonedTonight() && state.clocktower.pendingNightDeath ? ctPlayers().find((p) => p.id === state.clocktower.pendingNightDeath) : null;
   const actor = death && death.actualRole === "ravenkeeper" ? death : null;
   const target = state.clocktower.ravenkeeperTarget ? ctPlayers().find((p) => p.id === state.clocktower.ravenkeeperTarget) : null;
+  const registration = target?.actualRole === "spy" ? ctRegistrationFor("ravenkeeper", ["townsfolk", "outsider"], target.id) : null;
+  const revealedRole = target ? ctRegisteredRole(target, registration?.key) : null;
   const unreliable = actor && ctActorIsPoisoned(actor);
   const displayOptions = unreliable ? ctFakeRoleRevealOptions(target, state.language === "en" ? "Ravenkeeper info" : "守鸦人信息") : [];
-  const tell = target ? `${ctSeatLabel(target)} ${state.language === "en" ? "is" : "的角色是"}：\n${nameOfRole(target.actualRole)}` : null;
+  const tell = target ? `${ctSeatLabel(target)} ${state.language === "en" ? "is" : "的角色是"}：\n${nameOfRole(revealedRole)}` : null;
   return ctStep({
     title: nameOfRole("ravenkeeper"),
     actor,
@@ -2046,9 +2275,10 @@ function ctRavenkeeperStep() {
     tell: unreliable ? null : tell,
     explain: state.language === "en" ? "Only wake the Ravenkeeper if they died at night." : "只有守鸦人夜晚死亡时才唤醒他。",
     control: "ravenkeeperTarget",
-    display: target && !unreliable ? { title: state.language === "en" ? "Ravenkeeper info" : "守鸦人信息", primary: ctSeatLabel(target), secondary: nameOfRole(target.actualRole), footer: state.language === "en" ? "This player's character." : "该玩家的角色。" } : null,
+    display: target && !unreliable ? { title: state.language === "en" ? "Ravenkeeper info" : "守鸦人信息", primary: ctSeatLabel(target), secondary: nameOfRole(revealedRole), footer: state.language === "en" ? "This player's character." : "该玩家的角色。" } : null,
     displayOptions,
     roleId: "ravenkeeper",
+    registration,
   });
 }
 
@@ -2065,13 +2295,13 @@ function ctPair(target, excludeIds = []) {
   return players[index >= 0 ? index : 0];
 }
 
-function ctChefPairs() {
+function ctChefPairs(registrationKey = null) {
   const players = ctPlayers().sort((a, b) => a.seat - b.seat);
   let pairs = 0;
   for (let i = 0; i < players.length; i += 1) {
     const current = players[i];
     const next = players[(i + 1) % players.length];
-    if (ctIsEvil(current) && ctIsEvil(next)) pairs += 1;
+    if (ctRegisteredIsEvil(current, registrationKey) && ctRegisteredIsEvil(next, registrationKey)) pairs += 1;
   }
   return pairs;
 }
@@ -2112,9 +2342,9 @@ function ctFortuneResult() {
 
 function ctChambermaidWakeRoles() {
   if (state.clocktower.phase === "firstNight") {
-    return new Set(["clockmaker", "investigator", "empath", "chambermaid"]);
+    return new Set(["clockmaker", "investigator", "empath", "chambermaid", "spy"]);
   }
-  const roles = new Set(["chambermaid", "empath", "poisoner", "fortuneTeller", "butler", "monk", "imp"]);
+  const roles = new Set(["chambermaid", "empath", "poisoner", "fortuneTeller", "butler", "monk", "imp", "spy"]);
   if (state.clocktower.lastExecuted) roles.add("undertaker");
   const death = !ctDemonPoisonedTonight() && state.clocktower.pendingNightDeath ? ctPlayers().find((p) => p.id === state.clocktower.pendingNightDeath) : null;
   if (death?.actualRole === "ravenkeeper") roles.add("ravenkeeper");
@@ -2146,6 +2376,7 @@ function finishClocktowerNight() {
       type: "death",
       title: state.language === "en" ? "Night death" : "夜晚死亡",
       detail: ctSeatLabel(target),
+      impSuccessor: ctTeam(target) === "demon" ? c.impSuccessor : null,
     });
     if (target && target.actualRole === "klutz" && !c.outcome) {
       c.pendingKlutz = target.id;
@@ -2167,6 +2398,7 @@ function finishClocktowerNight() {
   c.fortuneSecond = null;
   c.chambermaidFirst = null;
   c.chambermaidSecond = null;
+  c.impSuccessor = null;
   c.ravenkeeperTarget = null;
   if (!c.outcome && !c.pendingKlutz) c.phase = "dawn";
 }
@@ -2196,6 +2428,21 @@ function ctKill(player, cause, options = {}) {
     });
   }
   if (ctTeam(player) === "demon") {
+    const successor = options.impSuccessor ? ctAlive().find((candidate) => candidate.id === options.impSuccessor && ctTeam(candidate) === "minion") : null;
+    if (successor) {
+      successor.actualRole = "imp";
+      successor.shownRole = "imp";
+      ctAddEvent({
+        type: "roleChange",
+        title: state.language === "en" ? "A Minion becomes the Imp" : "爪牙继任小恶魔",
+        detail: `${ctSeatLabel(successor)} ${state.language === "en" ? "became the new Imp." : "成为新的小恶魔。"}`,
+        playerIds: [successor.id],
+        phase: c.phase,
+        round: c.round,
+      });
+      ctCheckOutcome();
+      return;
+    }
     const aliveAfter = ctAlive().length;
     const scarlet = ctAlive().find((p) => p.actualRole === "scarletWoman");
     if (scarlet && aliveAfter >= 5) {
@@ -2239,7 +2486,10 @@ function ctResolveVirginNomination() {
   const nominator = c.nominator ? ctPlayers().find((p) => p.id === c.nominator) : null;
   if (!nominee || !nominator || nominee.actualRole !== "virgin" || c.virginUsed) return false;
   c.virginUsed = true;
-  if (ctActorIsPoisoned(nominee) || teamOfRole(nominator.actualRole) !== "townsfolk") return false;
+  const registration = nominator.actualRole === "spy" ? ctRegistrationFor("virgin-nomination", ["townsfolk"], nominator.id) : null;
+  ctRecordRegistration(registration);
+  const registeredRole = ctRegisteredRole(nominator, registration?.key);
+  if (ctActorIsPoisoned(nominee) || teamOfRole(registeredRole) !== "townsfolk") return false;
 
   c.lastExecuted = nominator.id;
   if (nominator.actualRole === "saint") {
@@ -2333,6 +2583,8 @@ function confirmKlutzChoice() {
   const choice = c.klutzChoice ? ctPlayers().find((p) => p.id === c.klutzChoice) : null;
   const klutz = c.pendingKlutz ? ctPlayers().find((p) => p.id === c.pendingKlutz) : null;
   if (!choice || !klutz) return;
+  const registration = choice.actualRole === "spy" ? ctRegistrationFor("klutz", ["townsfolk", "outsider"], choice.id) : null;
+  ctRecordRegistration(registration);
   ctAddEvent({
     type: "roleAction",
     title: state.language === "en" ? "Klutz choice" : "呆瓜选择",
@@ -2341,7 +2593,7 @@ function confirmKlutzChoice() {
     phase: "day",
     round: c.round,
   });
-  if (ctIsEvil(choice)) {
+  if (ctRegisteredIsEvil(choice, registration?.key)) {
     ctOutcome(
       state.language === "en" ? "Evil wins" : "邪恶阵营获胜",
       state.language === "en"
@@ -2393,6 +2645,7 @@ function startNextClocktowerNight() {
   c.highestVoteNames = [];
   c.selectedExecution = null;
   c.pendingNightDeath = null;
+  c.impSuccessor = null;
   c.lastNightDeath = null;
   c.artistClaimant = null;
 }
@@ -2535,6 +2788,15 @@ document.addEventListener("click", (event) => {
     state.clocktower.poisonTarget = state.clocktower.poisonTarget === id ? null : id;
   }
   if (action === "ct-test-exit") state.clocktower = freshClocktower();
+  if (action === "ct-registration-mode") {
+    const key = target.dataset.key;
+    const current = ctRegistrationDecision(key);
+    state.clocktower.registrationDecisions[key] = { ...current, mode: target.dataset.mode === "good" ? "good" : "actual" };
+    const spy = ctSpyPlayer();
+    if (target.dataset.mode !== "good" && spy && state.clocktower.redHerring === spy.id && key.includes("fortune-red-herring")) {
+      state.clocktower.redHerring = null;
+    }
+  }
   if (action === "ct-toggle-grimoire") state.clocktower.grimoireOpen = state.clocktower.grimoireOpen === false;
   if (action === "ct-start-night") {
     const c = state.clocktower;
@@ -2557,6 +2819,10 @@ document.addEventListener("click", (event) => {
     const field = target.dataset.field;
     const id = target.dataset.id;
     state.clocktower[field] = state.clocktower[field] === id ? null : id;
+    if (field === "pendingNightDeath") {
+      const chosen = state.clocktower.pendingNightDeath ? ctPlayers().find((player) => player.id === state.clocktower.pendingNightDeath) : null;
+      if (!chosen || ctTeam(chosen) !== "demon") state.clocktower.impSuccessor = null;
+    }
     if (field === "fortuneFirst" && state.clocktower.fortuneSecond === state.clocktower.fortuneFirst) {
       state.clocktower.fortuneSecond = null;
     }
@@ -2670,6 +2936,10 @@ document.addEventListener("change", (event) => {
       player.shownRole = target.value === "drunk" ? "empath" : target.value;
       state.clocktower.outcome = null;
     }
+  }
+  if (target.dataset.change === "ct-registration-role") {
+    const key = target.dataset.key;
+    state.clocktower.registrationDecisions[key] = { ...ctRegistrationDecision(key), mode: "good", roleId: target.value };
   }
   saveState();
   render();
