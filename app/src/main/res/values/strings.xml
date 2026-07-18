@@ -293,7 +293,7 @@
     <string name="clocktower_host_display_safety">请确认只有被唤醒的玩家能看到屏幕。</string>
     <string name="clocktower_host_show_to_player">全屏展示给玩家</string>
     <string name="clocktower_host_choose_red_herring">选择红鲱鱼</string>
-    <string name="clocktower_host_choose_red_herring_hint">选择一名善良玩家，不能选择占卜师本人。</string>
+    <string name="clocktower_host_choose_red_herring_hint">选择一名实际属于善良阵营的玩家；可以选择占卜师本人。</string>
     <string name="clocktower_host_no_red_herring_candidates">当前没有合适的红鲱鱼候选人。继续下一步即可。</string>
     <string name="clocktower_host_choose_poison_target">选择中毒目标</string>
     <string name="clocktower_host_fortune_choose_two">占卜师选择两名玩家</string>
