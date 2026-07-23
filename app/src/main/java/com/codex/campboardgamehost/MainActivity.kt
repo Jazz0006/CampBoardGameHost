@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -79,6 +80,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
@@ -243,6 +246,7 @@ private data class ClocktowerEvent(
 private data class SavedGamePreview(
     val title: String,
     val subtitle: String,
+    val savedAtLabel: String?,
 )
 
 internal enum class ClocktowerTeam {
@@ -648,6 +652,13 @@ private fun savedGamePreviewFromJson(context: Context, json: JSONObject): SavedG
     return SavedGamePreview(
         title = context.getString(R.string.resume_saved_game),
         subtitle = context.getString(R.string.saved_game_summary_format, gameName, stage, playerCount),
+        savedAtLabel = json.optLong("savedAtMillis", 0L)
+            .takeIf { it > 0L }
+            ?.let { savedAtMillis ->
+                val locale = context.resources.configuration.locales[0]
+                val pattern = if (locale.language == "en") "MMM d, HH:mm" else "M月d日 HH:mm"
+                java.text.SimpleDateFormat(pattern, locale).format(java.util.Date(savedAtMillis))
+            },
     )
 }
 
@@ -1018,6 +1029,7 @@ private fun CampBoardGameHostApp() {
 
     fun activeGameSnapshotJson(): JSONObject = JSONObject().apply {
         put("version", ACTIVE_GAME_STATE_VERSION)
+        put("savedAtMillis", System.currentTimeMillis())
         put("screen", screen.name)
         put("currentGameKind", currentGameKind.name)
         put("undercoverCount", undercoverCount)
@@ -1591,6 +1603,7 @@ private fun CampBoardGameHostApp() {
 
                     Screen.ClocktowerSettings -> ClocktowerSettingsScreen(
                         playerCount = playerCount,
+                        playerNames = playerNames,
                         selectedScript = selectedClocktowerScript ?: defaultClocktowerScriptFor(playerCount),
                         onScriptChange = { selectedClocktowerScript = it },
                         onBack = { screen = Screen.Setup },
@@ -1613,6 +1626,7 @@ private fun CampBoardGameHostApp() {
 
                     Screen.PassPhone -> PassPhoneScreen(
                     playerName = cards[currentDealIndex].name,
+                    gameKind = currentGameKind,
                     current = currentDealIndex + 1,
                     total = cards.size,
                     onReveal = { screen = Screen.RevealCard },
@@ -2341,21 +2355,38 @@ private fun CampBoardGameHostApp() {
                 }
 
                 if (showResults) {
-                    ResultsDialog(
-                        gameKind = currentGameKind,
-                        cards = cards,
-                        outcome = gameOutcome,
-                        onDismiss = { showResults = false },
-                        onNewGame = {
-                            clearSavedGameState()
-                            showResults = false
-                            gameOutcome = null
-                            screen = Screen.Setup
-                            cards.clear()
-                            records.clear()
-                            resetClocktowerFlow()
-                        },
-                    )
+                    if (currentGameKind == GameKind.Clocktower) {
+                        ClocktowerResultsDialog(
+                            cards = cards,
+                            outcome = gameOutcome,
+                            onDismiss = { showResults = false },
+                            onNewGame = {
+                                clearSavedGameState()
+                                showResults = false
+                                gameOutcome = null
+                                screen = Screen.Setup
+                                cards.clear()
+                                records.clear()
+                                resetClocktowerFlow()
+                            },
+                        )
+                    } else {
+                        ResultsDialog(
+                            gameKind = currentGameKind,
+                            cards = cards,
+                            outcome = gameOutcome,
+                            onDismiss = { showResults = false },
+                            onNewGame = {
+                                clearSavedGameState()
+                                showResults = false
+                                gameOutcome = null
+                                screen = Screen.Setup
+                                cards.clear()
+                                records.clear()
+                                resetClocktowerFlow()
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -2451,56 +2482,124 @@ private fun SetupScreen(
     val canStartUndercover = playerCount >= MIN_PLAYERS
     val canStartWerewolf = playerCount >= MIN_WEREWOLF_PLAYERS
     val canStartClocktower = playerCount >= MIN_CLOCKTOWER_PLAYERS
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                    Text(stringResource(R.string.undercover_subtitle), color = Color(0xFF5C6A63))
-                }
-                TextButton(onClick = onOpenSettings) {
-                    Text(stringResource(R.string.settings))
+    ClocktowerDarkTheme {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 18.dp),
+            contentPadding = PaddingValues(top = 18.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            item {
+                val heroRingColor = MaterialTheme.colorScheme.primary
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
+                        .padding(22.dp),
+                ) {
+                    Canvas(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .size(144.dp),
+                    ) {
+                        drawCircle(
+                            color = heroRingColor.copy(alpha = 0.08f),
+                            radius = size.minDimension * 0.46f,
+                            center = Offset(size.width * 0.62f, size.height * 0.36f),
+                        )
+                        drawCircle(
+                            color = heroRingColor.copy(alpha = 0.28f),
+                            radius = size.minDimension * 0.34f,
+                            center = Offset(size.width * 0.62f, size.height * 0.36f),
+                            style = Stroke(width = 1.dp.toPx()),
+                        )
+                    }
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = text("说书人控制台", "STORYTELLER CONSOLE"),
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.4.sp,
+                            )
+                            TextButton(onClick = onOpenSettings) {
+                                Text(stringResource(R.string.settings))
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(18.dp))
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Black,
+                        )
+                        Text(
+                            text = text(
+                                "离线桌游主持工具，让夜晚的每一步都清晰、克制、可靠。",
+                                "An offline host companion for clear, focused, reliable game nights.",
+                            ),
+                            modifier = Modifier.fillMaxWidth(0.82f),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                    }
                 }
             }
-        }
 
-        savedGamePreview?.let { preview ->
-            item {
-                Card(
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF2EA)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
+            savedGamePreview?.let { preview ->
+                item {
+                    Card(
+                        shape = RoundedCornerShape(22.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)),
                     ) {
-                        Text(preview.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text(preview.subtitle, color = Color(0xFF5C6A63))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Text(
+                                text = text("进行中的游戏", "GAME IN PROGRESS"),
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.2.sp,
+                            )
+                            Text(preview.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                            Text(preview.subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                text = preview.savedAtLabel?.let {
+                                    text("最后保存：$it", "Last saved: $it")
+                                } ?: text("已安全保存在本机", "Safely stored on this device"),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
                             Button(
                                 onClick = onResumeSavedGame,
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(54.dp),
+                                shape = RoundedCornerShape(14.dp),
                             ) {
-                                Text(stringResource(R.string.continue_saved_game))
+                                Text(stringResource(R.string.continue_saved_game), fontWeight = FontWeight.Bold)
                             }
-                            OutlinedButton(
+                            TextButton(
                                 onClick = onDiscardSavedGame,
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
                             ) {
                                 Text(stringResource(R.string.discard_saved_game))
                             }
@@ -2508,70 +2607,93 @@ private fun SetupScreen(
                     }
                 }
             }
-        }
 
-        item {
-            RoundTableSetupEditor(
-                seatedPlayers = playerNames,
-                commonPlayers = commonPlayers,
-                canAddPlayer = playerCount < MAX_PLAYERS,
-                onAddCurrentPlayer = onAddCurrentPlayer,
-                onAddTemporaryPlayer = onAddTemporaryPlayer,
-                onRemoveCurrentPlayer = onRemoveCurrentPlayer,
-                onMoveCurrentPlayerTo = onMoveCurrentPlayerTo,
-            )
-        }
-
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(stringResource(R.string.choose_game), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Button(
-                    onClick = onOpenUndercoverSettings,
-                    enabled = canStartUndercover,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(8.dp),
-                ) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        if (canStartUndercover) {
-                            stringResource(R.string.game_who_is_undercover)
-                        } else {
-                            stringResource(R.string.need_min_players, MIN_PLAYERS)
-                        }
+                        text = text("创建新游戏", "CREATE A NEW GAME"),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp,
+                    )
+                    Text(
+                        text = text("先安排围桌玩家，再选择本局游戏。", "Seat the players first, then choose a game."),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                OutlinedButton(
-                    onClick = onOpenWerewolfSettings,
-                    enabled = canStartWerewolf,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(8.dp),
+            }
+
+            item {
+                Card(
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 ) {
-                    Text(
-                        if (canStartWerewolf) {
-                            stringResource(R.string.game_werewolf)
-                        } else {
-                            stringResource(R.string.need_werewolf_min_players, MIN_WEREWOLF_PLAYERS)
-                        }
+                    RoundTableSetupEditor(
+                        seatedPlayers = playerNames,
+                        commonPlayers = commonPlayers,
+                        canAddPlayer = playerCount < MAX_PLAYERS,
+                        onAddCurrentPlayer = onAddCurrentPlayer,
+                        onAddTemporaryPlayer = onAddTemporaryPlayer,
+                        onRemoveCurrentPlayer = onRemoveCurrentPlayer,
+                        onMoveCurrentPlayerTo = onMoveCurrentPlayerTo,
+                        modifier = Modifier.padding(18.dp),
                     )
                 }
-                OutlinedButton(
-                    onClick = onOpenClocktowerSettings,
-                    enabled = canStartClocktower,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(8.dp),
-                ) {
-                    Text(
-                        if (canStartClocktower) {
-                            stringResource(R.string.game_clocktower)
-                        } else {
-                            stringResource(R.string.need_clocktower_min_players, MIN_CLOCKTOWER_PLAYERS)
-                        }
-                    )
+            }
+
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(stringResource(R.string.choose_game), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Button(
+                        onClick = onOpenClocktowerSettings,
+                        enabled = canStartClocktower,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(
+                            if (canStartClocktower) {
+                                stringResource(R.string.game_clocktower)
+                            } else {
+                                stringResource(R.string.need_clocktower_min_players, MIN_CLOCKTOWER_PLAYERS)
+                            },
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = onOpenUndercoverSettings,
+                        enabled = canStartUndercover,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(
+                            if (canStartUndercover) {
+                                stringResource(R.string.game_who_is_undercover)
+                            } else {
+                                stringResource(R.string.need_min_players, MIN_PLAYERS)
+                            }
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = onOpenWerewolfSettings,
+                        enabled = canStartWerewolf,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(
+                            if (canStartWerewolf) {
+                                stringResource(R.string.game_werewolf)
+                            } else {
+                                stringResource(R.string.need_werewolf_min_players, MIN_WEREWOLF_PLAYERS)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -2588,12 +2710,16 @@ private fun RoundTableSetupEditor(
     onAddTemporaryPlayer: () -> Unit,
     onRemoveCurrentPlayer: (Int) -> Unit,
     onMoveCurrentPlayerTo: (Int, Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var dragState by remember { mutableStateOf<PlayerDragState?>(null) }
     var hoverInsertIndex by remember { mutableStateOf<Int?>(null) }
     val density = LocalDensity.current
+    val tableFillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
+    val tableStrokeColor = MaterialTheme.colorScheme.primary
+    val tableGuideColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.24f)
 
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -2601,12 +2727,15 @@ private fun RoundTableSetupEditor(
         ) {
             Column {
                 Text(stringResource(R.string.current_players_section), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(stringResource(R.string.current_players_count_format, seatedPlayers.size, MAX_PLAYERS), color = Color(0xFF6F7B74))
+                Text(
+                    stringResource(R.string.current_players_count_format, seatedPlayers.size, MAX_PLAYERS),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             OutlinedButton(
                 onClick = onAddTemporaryPlayer,
                 enabled = canAddPlayer,
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(12.dp),
             ) {
                 Text(stringResource(R.string.add_temporary_player))
             }
@@ -2760,20 +2889,20 @@ private fun RoundTableSetupEditor(
                 if (useRectangularTable) {
                     val cornerRadius = 24.dp.toPx()
                     drawRoundRect(
-                        color = Color(0xFFE6D8BD),
+                        color = tableFillColor,
                         topLeft = Offset(tableLeft, tableTop),
                         size = Size(tableWidth, tableHeight),
                         cornerRadius = CornerRadius(cornerRadius, cornerRadius),
                     )
                     drawRoundRect(
-                        color = Color(0xFF2F5D50),
+                        color = tableStrokeColor,
                         topLeft = Offset(tableLeft, tableTop),
                         size = Size(tableWidth, tableHeight),
                         cornerRadius = CornerRadius(cornerRadius, cornerRadius),
                         style = Stroke(width = 5.dp.toPx()),
                     )
                     drawRoundRect(
-                        color = Color(0x332F5D50),
+                        color = tableGuideColor,
                         topLeft = Offset(tableLeft, tableTop),
                         size = Size(tableWidth, tableHeight),
                         cornerRadius = CornerRadius(cornerRadius, cornerRadius),
@@ -2781,18 +2910,18 @@ private fun RoundTableSetupEditor(
                     )
                 } else {
                     drawCircle(
-                        color = Color(0xFFE6D8BD),
+                        color = tableFillColor,
                         radius = tableRadius,
                         center = center,
                     )
                     drawCircle(
-                        color = Color(0xFF2F5D50),
+                        color = tableStrokeColor,
                         radius = tableRadius,
                         center = center,
                         style = Stroke(width = 5.dp.toPx()),
                     )
                     drawCircle(
-                        color = Color(0x332F5D50),
+                        color = tableGuideColor,
                         radius = seatRadius,
                         center = center,
                         style = Stroke(width = 2.dp.toPx()),
@@ -2809,7 +2938,7 @@ private fun RoundTableSetupEditor(
                 ) {
                     Text(
                         text = stringResource(R.string.round_table_empty_hint),
-                        color = Color(0xFF5C6A63),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                     )
                 }
@@ -2847,10 +2976,10 @@ private fun RoundTableSetupEditor(
                             )
                         }
                         .size(avatarSizeDp)
-                        .background(Color(0x332F5D50), CircleShape),
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.20f), CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("+", color = Color(0xFF2F5D50), fontWeight = FontWeight.Bold, fontSize = 24.sp)
+                    Text("+", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 24.sp)
                 }
             }
 
@@ -2897,7 +3026,7 @@ private fun RoundTableSetupEditor(
         }
 
         Text(stringResource(R.string.bench_area), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        Text(stringResource(R.string.bench_area_hint), color = Color(0xFF6F7B74))
+        Text(stringResource(R.string.bench_area_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (commonPlayers.isEmpty()) {
                 EmptyStateCard(text = stringResource(R.string.no_common_players_setup))
@@ -2986,10 +3115,10 @@ private fun DraggableAvatar(
         Box(
             modifier = Modifier
                 .size(avatarSizeDp)
-                .background(Color(0xFF2F5D50), CircleShape),
+                .background(MaterialTheme.colorScheme.primary, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Text(badge, color = Color.White, fontWeight = FontWeight.Black)
+            Text(badge, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Black)
         }
         Text(
             text = name,
@@ -3025,7 +3154,7 @@ private fun BenchPlayerChip(
                 onDragCancel = { dragDistance = Offset.Zero },
             )
         },
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(12.dp),
     ) {
         Text(label)
     }
@@ -3385,111 +3514,373 @@ private fun templateLabel(template: WerewolfTemplate): String {
     return stringResource(R.string.werewolf_template_label_format, template.playerCount, template.werewolfCount, specials)
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ClocktowerSettingsScreen(
     playerCount: Int,
+    playerNames: List<String>,
     selectedScript: ClocktowerScript,
     onScriptChange: (ClocktowerScript) -> Unit,
     onBack: () -> Unit,
     onStart: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
+    val context = LocalContext.current
+    var step by remember(playerCount) { mutableStateOf(0) }
     val distribution = clocktowerDistribution(playerCount)
     val showScriptChoice = playerCount in 5..6
     val effectiveScript = if (showScriptChoice) selectedScript else ClocktowerScript.TroubleBrewing
     val canStart = playerCount >= MIN_CLOCKTOWER_PLAYERS && canStartClocktowerScript(effectiveScript)
+    val rolesByTeam = clocktowerRolesForScript(effectiveScript).groupBy { it.team }
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    val stepTitles = listOf(
+        text("确认玩家", "Confirm players"),
+        text("选择剧本", "Choose script"),
+        text("角色配置", "Role setup"),
+        text("开局确认", "Final review"),
+    )
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        item {
-            GameSettingsHeader(
-                title = stringResource(R.string.game_clocktower),
-                subtitle = stringResource(R.string.game_settings_subtitle, playerCount),
-                onBack = onBack,
-            )
-        }
-        item {
-            Card(
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(stringResource(R.string.clocktower_script), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    if (showScriptChoice) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            ClocktowerScript.entries.forEach { script ->
-                                if (script == effectiveScript) {
-                                    Button(
-                                        onClick = { onScriptChange(script) },
-                                        shape = RoundedCornerShape(8.dp),
+    ClocktowerDarkTheme {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 18.dp),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TextButton(onClick = { if (step == 0) onBack() else step -= 1 }) {
+                            Text(stringResource(R.string.back))
+                        }
+                        Text(
+                            text = text("配置游戏", "GAME SETUP"),
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.2.sp,
+                        )
+                        Text(
+                            text = "${step + 1} / 4",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        repeat(4) { index ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(4.dp)
+                                    .background(
+                                        if (index <= step) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceVariant,
+                                        RoundedCornerShape(50),
+                                    ),
+                            )
+                        }
+                    }
+                    Text(
+                        text = stepTitles[step],
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Black,
+                    )
+                    Text(
+                        text = when (step) {
+                            0 -> text("核对围桌顺序。座位号将用于整局主持。", "Check the seating order. Seat numbers stay with the game.")
+                            1 -> text("剧本决定本局可出现的角色和夜间流程。", "The script defines the character pool and night order.")
+                            2 -> text("系统会按官方人数分布自动抽取角色。", "Characters are drawn automatically using the standard distribution.")
+                            else -> text("最后核对一次；开始后将进入逐人发牌。", "Review everything once more before dealing begins.")
+                        },
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            when (step) {
+                0 -> item {
+                    Card(
+                        shape = RoundedCornerShape(22.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Text(
+                                text = text("$playerCount 名玩家", "$playerCount players"),
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            playerNames.forEachIndexed { index, name ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f), CircleShape),
+                                        contentAlignment = Alignment.Center,
                                     ) {
-                                        Text(script.nameFor(language))
+                                        Text(
+                                            text = (index + 1).toString(),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.Bold,
+                                        )
                                     }
-                                } else {
-                                    OutlinedButton(
-                                        onClick = { onScriptChange(script) },
-                                        shape = RoundedCornerShape(8.dp),
+                                    Text(name, modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+                                }
+                                if (index < playerNames.lastIndex) {
+                                    HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                1 -> item {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        if (showScriptChoice) {
+                            ClocktowerScript.entries.forEach { script ->
+                                Card(
+                                    onClick = { onScriptChange(script) },
+                                    shape = RoundedCornerShape(20.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (script == effectiveScript) {
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                                        } else {
+                                            MaterialTheme.colorScheme.surface
+                                        },
+                                    ),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (script == effectiveScript) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceVariant,
+                                    ),
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(18.dp),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp),
                                     ) {
-                                        Text(script.nameFor(language))
+                                        Text(script.nameFor(language), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                        Text(
+                                            text = when (script) {
+                                                ClocktowerScript.TroubleBrewing ->
+                                                    text("经典入门剧本，角色互动完整，适合标准人数。", "The classic introductory script with the full core interaction set.")
+                                                ClocktowerScript.NoGreaterJoy ->
+                                                    text("为 5–6 人小局准备的精简角色组合。", "A focused character set designed for 5–6 players.")
+                                            },
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                        if (script == effectiveScript) {
+                                            Text(
+                                                text = text("已选择", "SELECTED"),
+                                                color = MaterialTheme.colorScheme.primary,
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            Card(
+                                shape = RoundedCornerShape(20.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)),
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(18.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    Text(effectiveScript.nameFor(language), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        text = text(
+                                            "7 人及以上固定使用暗流涌动，确保角色数量和夜间流程完整。",
+                                            "Games with 7 or more players use Trouble Brewing for the complete distribution and night flow.",
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                2 -> item {
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        Card(
+                            shape = RoundedCornerShape(22.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(18.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                Text(text("本局阵营分布", "Team distribution"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                ClocktowerTeam.entries.forEach { team ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Text(team.label(context), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(
+                                            text = (distribution[team] ?: 0).toString(),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Black,
+                                        )
                                     }
                                 }
                             }
                         }
-                    } else {
-                        Text(
-                            "7 人及以上使用 ${ClocktowerScript.TroubleBrewing.nameFor(language)}。",
-                            color = Color(0xFF6F7B74),
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                    if (effectiveScript == ClocktowerScript.NoGreaterJoy) {
-                        Text(
-                            "5–6 人默认使用 No Greater Joy；可切换回暗流涌动。",
-                            color = Color(0xFF6F7B74),
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                    HorizontalDivider()
-                    ClocktowerTeam.entries.forEach { team ->
-                        val count = distribution[team] ?: 0
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
+                        Card(
+                            shape = RoundedCornerShape(22.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         ) {
-                            Text(team.label(LocalContext.current), fontWeight = FontWeight.SemiBold)
-                            Text(count.toString(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(18.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp),
+                            ) {
+                                Text(text("剧本角色池", "Script character pool"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                ClocktowerTeam.entries.forEach { team ->
+                                    val roles = rolesByTeam[team].orEmpty()
+                                    if (roles.isNotEmpty()) {
+                                        Text(
+                                            text = "${team.label(context)} · ${roles.size}",
+                                            color = MaterialTheme.colorScheme.primary,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.Bold,
+                                        )
+                                        FlowRow(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        ) {
+                                            roles.forEach { role ->
+                                                Surface(
+                                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                                    shape = RoundedCornerShape(50),
+                                                ) {
+                                                    Text(
+                                                        text = role.nameFor(language),
+                                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                else -> item {
+                    Card(
+                        shape = RoundedCornerShape(22.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            Text(text("准备就绪", "Ready to begin"), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
+                            ClocktowerSetupSummaryRow(text("玩家", "Players"), text("$playerCount 人", "$playerCount"))
+                            ClocktowerSetupSummaryRow(text("剧本", "Script"), effectiveScript.nameFor(language))
+                            ClocktowerSetupSummaryRow(
+                                text("阵营", "Teams"),
+                                ClocktowerTeam.entries.joinToString(" · ") { team ->
+                                    "${team.label(context)} ${distribution[team] ?: 0}"
+                                },
+                            )
+                            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                            Text(
+                                text = text(
+                                    "点击开始后才会随机生成角色并保存本局。返回上一步不会丢失当前选择。",
+                                    "Characters are randomized and saved only after you start. Going back keeps your choices.",
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
                         }
                     }
                 }
             }
-        }
-        item {
-            Button(
-                onClick = onStart,
-                enabled = canStart,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(8.dp),
-            ) {
-                Text(
-                    when {
-                        playerCount < MIN_CLOCKTOWER_PLAYERS -> stringResource(R.string.need_clocktower_min_players, MIN_CLOCKTOWER_PLAYERS)
-                        else -> stringResource(R.string.start_dealing)
+
+            item {
+                Button(
+                    onClick = {
+                        if (step < 3) step += 1 else onStart()
+                    },
+                    enabled = if (step == 3) canStart else true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Text(
+                        text = if (step < 3) {
+                            text("下一步", "Continue")
+                        } else if (canStart) {
+                            stringResource(R.string.start_dealing)
+                        } else {
+                            stringResource(R.string.need_clocktower_min_players, MIN_CLOCKTOWER_PLAYERS)
+                        },
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                if (step == 0) {
+                    TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+                        Text(text("返回首页修改玩家", "Edit players on home screen"))
                     }
-                )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun ClocktowerSetupSummaryRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top,
+    ) {
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            text = value,
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 20.dp),
+            textAlign = TextAlign.End,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 
@@ -3630,10 +4021,20 @@ private fun StepperRow(
 @Composable
 private fun PassPhoneScreen(
     playerName: String,
+    gameKind: GameKind,
     current: Int,
     total: Int,
     onReveal: () -> Unit,
 ) {
+    if (gameKind == GameKind.Clocktower) {
+        ClocktowerDealHandoffScreen(
+            playerName = playerName,
+            current = current,
+            total = total,
+            onReveal = onReveal,
+        )
+        return
+    }
     FullScreenColumn {
         Text("$current / $total", color = Color(0xFF6F7B74))
         Text(stringResource(R.string.pass_phone_to), style = MaterialTheme.typography.titleLarge)
@@ -3659,6 +4060,15 @@ private fun RevealCardScreen(
     total: Int,
     onHide: () -> Unit,
 ) {
+    if (gameKind == GameKind.Clocktower) {
+        ClocktowerPlayerRoleRevealScreen(
+            card = card,
+            current = current,
+            total = total,
+            onHide = onHide,
+        )
+        return
+    }
     FullScreenColumn {
         Text("$current / $total", color = Color(0xFF6F7B74))
         Card(
@@ -4122,6 +4532,1169 @@ private fun HostProgressCard(
 }
 
 @Composable
+private fun ClocktowerDarkTheme(content: @Composable () -> Unit) {
+    val typography = MaterialTheme.typography
+    MaterialTheme(
+        colorScheme = androidx.compose.material3.darkColorScheme(
+            primary = Color(0xFFC5A56A),
+            onPrimary = Color(0xFF17120A),
+            secondary = Color(0xFF61798A),
+            onSecondary = Color(0xFFF7F1E6),
+            background = Color(0xFF0B0D10),
+            onBackground = Color(0xFFF1EADC),
+            surface = Color(0xFF14171C),
+            onSurface = Color(0xFFF1EADC),
+            surfaceVariant = Color(0xFF1B1F25),
+            onSurfaceVariant = Color(0xFFAAA397),
+            error = Color(0xFF9C3035),
+            onError = Color(0xFFF7F1E6),
+        ),
+        typography = typography,
+        content = content,
+    )
+}
+
+@Composable
+private fun ClocktowerNightActiveScreen(
+    title: String,
+    subtitle: String,
+    progress: String,
+    canGoPrevious: Boolean,
+    nextEnabled: Boolean,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    ClocktowerDarkTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 8.dp,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(3.dp),
+                    ) {
+                        Text(
+                            title,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Black,
+                        )
+                        Text(
+                            subtitle,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                    Text(
+                        progress,
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black,
+                    )
+                }
+            }
+
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                item { content() }
+            }
+
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 12.dp,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    OutlinedButton(
+                        onClick = onPrevious,
+                        enabled = canGoPrevious,
+                        modifier = Modifier
+                            .weight(0.78f)
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(stringResource(R.string.previous_step))
+                    }
+                    Button(
+                        onClick = onNext,
+                        enabled = nextEnabled,
+                        modifier = Modifier
+                            .weight(1.22f)
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(stringResource(R.string.clocktower_host_finish_next))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerDayPlayerRow(
+    seatNumber: Int,
+    card: PlayerCard,
+    isPoisoned: Boolean,
+    language: String,
+) {
+    val isAlive = card.eliminatedRound == null
+    val stateColor = if (isAlive) Color(0xFF5D8B72) else MaterialTheme.colorScheme.onSurfaceVariant
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                modifier = Modifier.size(44.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.background,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        seatNumber.toString(),
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Black,
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    card.name,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    when {
+                        isAlive && language == "en" -> "Alive · may vote"
+                        isAlive -> "存活 · 可投票"
+                        language == "en" -> "Dead · confirm ghost vote manually"
+                        else -> "死亡 · 亡者票待确认"
+                    },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                Surface(
+                    color = stateColor.copy(alpha = 0.18f),
+                    shape = RoundedCornerShape(50),
+                ) {
+                    Text(
+                        if (isAlive) {
+                            if (language == "en") "ALIVE" else "存活"
+                        } else {
+                            if (language == "en") "DEAD" else "死亡"
+                        },
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                        color = stateColor,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Black,
+                    )
+                }
+                if (isPoisoned) {
+                    Surface(
+                        color = Color(0xFF927AB4).copy(alpha = 0.2f),
+                        shape = RoundedCornerShape(50),
+                    ) {
+                        Text(
+                            if (language == "en") "POISONED" else "中毒",
+                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                            color = Color(0xFFCBBBE1),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Black,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerDayOverviewScreen(
+    round: Int,
+    cards: List<PlayerCard>,
+    aliveCount: Int,
+    executionThreshold: Int,
+    highestVoteText: String,
+    poisonTarget: String?,
+    showSlayerAction: Boolean,
+    slayerActionEnabled: Boolean,
+    showArtistAction: Boolean,
+    artistActionEnabled: Boolean,
+    actionsEnabled: Boolean,
+    onStartNomination: () -> Unit,
+    onOpenSlayer: () -> Unit,
+    onOpenArtist: () -> Unit,
+    onEndDay: () -> Unit,
+) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+
+    ClocktowerDarkTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 8.dp,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column {
+                            Text(
+                                text("第 $round 天", "Day $round"),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Black,
+                            )
+                            Text(
+                                text("白天管理", "Day management"),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                        Text(
+                            highestVoteText,
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.End,
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Surface(
+                            color = Color(0xFF5D8B72).copy(alpha = 0.16f),
+                            shape = RoundedCornerShape(50),
+                        ) {
+                            Text(
+                                text("$aliveCount 人存活", "$aliveCount alive"),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                color = Color(0xFFA6D8BA),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                        Surface(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
+                            shape = RoundedCornerShape(50),
+                        ) {
+                            Text(
+                                text("$executionThreshold 票可处决", "$executionThreshold to execute"),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                }
+            }
+
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                item {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                        shape = RoundedCornerShape(16.dp),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(
+                                text("自由讨论", "Open discussion"),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                text(
+                                    "有人提名时开始提名流程。身份默认隐藏，避免玩家窥屏。",
+                                    "Start nominations when someone nominates. Roles remain hidden to prevent leaks.",
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                }
+
+                item {
+                    Text(
+                        text("玩家状态", "Player status"),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black,
+                    )
+                }
+
+                items(cards) { card ->
+                    ClocktowerDayPlayerRow(
+                        seatNumber = cards.indexOf(card) + 1,
+                        card = card,
+                        isPoisoned = card.name == poisonTarget,
+                        language = language,
+                    )
+                }
+
+                if (showSlayerAction || showArtistAction) {
+                    item {
+                        Column(
+                            modifier = Modifier.padding(top = 6.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                text("公开特殊能力", "Public abilities"),
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Black,
+                            )
+                            if (showSlayerAction) {
+                                OutlinedButton(
+                                    onClick = onOpenSlayer,
+                                    enabled = actionsEnabled && slayerActionEnabled,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(52.dp),
+                                    shape = RoundedCornerShape(14.dp),
+                                ) {
+                                    Text(text("杀手行动", "Slayer action"))
+                                }
+                            }
+                            if (showArtistAction) {
+                                OutlinedButton(
+                                    onClick = onOpenArtist,
+                                    enabled = actionsEnabled && artistActionEnabled,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(52.dp),
+                                    shape = RoundedCornerShape(14.dp),
+                                ) {
+                                    Text(text("艺术家提问", "Artist question"))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 12.dp,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Button(
+                        onClick = onStartNomination,
+                        enabled = actionsEnabled,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(text("开始提名", "Start nomination"))
+                    }
+                    TextButton(
+                        onClick = onEndDay,
+                        enabled = actionsEnabled,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp),
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    ) {
+                        Text(text("结束白天", "End day"), fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerDawnSummaryScreen(
+    round: Int,
+    cards: List<PlayerCard>,
+    events: List<ClocktowerEvent>,
+    pendingNightDeath: String?,
+    onEnterDay: () -> Unit,
+) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    var showPublicAnnouncement by remember(round, pendingNightDeath) { mutableStateOf(false) }
+    val deathLabel = pendingNightDeath?.let { playerSeatLabel(cards, it) }
+    val privateEvents = events
+        .filter { event ->
+            event.round == round &&
+                event.phase in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
+                event.type in setOf(
+                    ClocktowerEventType.RoleAction,
+                    ClocktowerEventType.Death,
+                    ClocktowerEventType.RoleChange,
+                )
+        }
+        .takeLast(8)
+
+    ClocktowerDarkTheme {
+        if (showPublicAnnouncement) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text("天亮了", "DAWN"),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 2.sp,
+                )
+                Spacer(modifier = Modifier.height(28.dp))
+                Text(
+                    text = deathLabel?.let {
+                        text("昨晚，$it 死亡。", "$it died last night.")
+                    } ?: text("昨晚，没有人死亡。", "Nobody died last night."),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Black,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(modifier = Modifier.height(36.dp))
+                OutlinedButton(
+                    onClick = { showPublicAnnouncement = false },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Text(text("收回手机", "Return to host"))
+                }
+            }
+            return@ClocktowerDarkTheme
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+        ) {
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text("夜晚已结算", "NIGHT RESOLVED"),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp,
+                    )
+                    Text(
+                        text("第 $round 天 · 天亮", "Day $round · Dawn"),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Black,
+                    )
+                    Text(
+                        text("先私下复核结算，再向所有玩家播报。", "Review the private resolution before making the public announcement."),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.28f)),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text("说书人私密复核", "HOST-ONLY REVIEW"),
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Black,
+                                )
+                                Text(
+                                    text("不要展示给玩家", "PRIVATE"),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                            }
+                            if (privateEvents.isEmpty()) {
+                                Text(
+                                    text("没有需要额外复核的夜间事件。", "No additional night events need review."),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            } else {
+                                privateEvents.forEachIndexed { index, event ->
+                                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                        Text(event.title, fontWeight = FontWeight.Bold)
+                                        if (event.detail.isNotBlank()) {
+                                            Text(
+                                                event.detail,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                style = MaterialTheme.typography.bodySmall,
+                                            )
+                                        }
+                                    }
+                                    if (index < privateEvents.lastIndex) {
+                                        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                        ),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.32f)),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Text(
+                                text("公开播报", "PUBLIC ANNOUNCEMENT"),
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Black,
+                            )
+                            Text(
+                                text = deathLabel?.let {
+                                    text("天亮了。昨晚，$it 死亡。", "Dawn has arrived. $it died last night.")
+                                } ?: text("天亮了。昨晚，没有人死亡。", "Dawn has arrived. Nobody died last night."),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                text(
+                                    "只播报死亡结果，不说明保护、中毒、转移或具体角色。",
+                                    "Announce only the death result. Do not reveal protection, poison, redirects, or roles.",
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            OutlinedButton(
+                                onClick = { showPublicAnnouncement = true },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                shape = RoundedCornerShape(14.dp),
+                            ) {
+                                Text(text("全屏展示播报内容", "Show announcement full screen"))
+                            }
+                        }
+                    }
+                }
+            }
+
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
+                Button(
+                    onClick = onEnterDay,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .height(54.dp),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Text(text("已完成播报，进入白天", "Announcement complete — enter day"), fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerNominationScreen(
+    round: Int,
+    cards: List<PlayerCard>,
+    aliveCards: List<PlayerCard>,
+    executionThreshold: Int,
+    nominatorName: String?,
+    nomineeName: String?,
+    specialNotice: String?,
+    specialNoticeIsDanger: Boolean,
+    continueLabel: String,
+    actionsEnabled: Boolean,
+    onSelectNominator: (String) -> Unit,
+    onSelectNominee: (String) -> Unit,
+    onContinue: () -> Unit,
+    onCancel: () -> Unit,
+    specialContent: @Composable ColumnScope.() -> Unit = {},
+) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+
+    ClocktowerDarkTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+        ) {
+            ClocktowerDayActionHeader(
+                round = round,
+                currentStep = 0,
+                executionThreshold = executionThreshold,
+                title = text("记录提名", "Record nomination"),
+            )
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            Text(
+                                text("谁发起提名？", "Who is nominating?"),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            SelectablePlayerChips(
+                                cards = aliveCards,
+                                selectedName = nominatorName,
+                                enabled = actionsEnabled,
+                                allCards = cards,
+                                onSelect = onSelectNominator,
+                            )
+                            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                            Text(
+                                text("谁被提名？", "Who is nominated?"),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            SelectablePlayerChips(
+                                cards = aliveCards,
+                                selectedName = nomineeName,
+                                enabled = actionsEnabled,
+                                allCards = cards,
+                                onSelect = onSelectNominee,
+                            )
+                        }
+                    }
+                }
+                if (nominatorName != null && nomineeName != null) {
+                    item {
+                        Surface(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                            shape = RoundedCornerShape(18.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.30f)),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                Text(
+                                    text("提名关系", "NOMINATION"),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Text(
+                                    "${playerSeatLabel(cards, nominatorName)}  →  ${playerSeatLabel(cards, nomineeName)}",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Black,
+                                )
+                                Text(
+                                    text("请让提名人陈述理由，再让被提名人辩护。", "Let the nominator speak, then allow the nominee to defend."),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
+                        }
+                    }
+                }
+                if (specialNotice != null) {
+                    item {
+                        Surface(
+                            color = if (specialNoticeIsDanger) {
+                                MaterialTheme.colorScheme.error.copy(alpha = 0.16f)
+                            } else {
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+                            },
+                            shape = RoundedCornerShape(18.dp),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                Text(
+                                    text("角色能力检查", "ABILITY CHECK"),
+                                    color = if (specialNoticeIsDanger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Text(specialNotice, color = MaterialTheme.colorScheme.onSurface)
+                                specialContent()
+                            }
+                        }
+                    }
+                }
+            }
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Button(
+                        onClick = onContinue,
+                        enabled = actionsEnabled && nominatorName != null && nomineeName != null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(continueLabel, fontWeight = FontWeight.Bold)
+                    }
+                    TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
+                        Text(text("取消并返回白天", "Cancel and return to day"))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerVoteScreen(
+    round: Int,
+    cards: List<PlayerCard>,
+    aliveCount: Int,
+    executionThreshold: Int,
+    nominatorName: String?,
+    nomineeName: String?,
+    voteCount: Int,
+    highestVoteText: String,
+    actionsEnabled: Boolean,
+    onVoteCountChange: (Int) -> Unit,
+    onRecordAndContinue: () -> Unit,
+    onRecordAndEndDay: () -> Unit,
+    onBack: () -> Unit,
+) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    val reached = voteCount >= executionThreshold
+
+    ClocktowerDarkTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+        ) {
+            ClocktowerDayActionHeader(
+                round = round,
+                currentStep = 1,
+                executionThreshold = executionThreshold,
+                title = text("记录投票", "Record vote"),
+            )
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                item {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                        shape = RoundedCornerShape(18.dp),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(5.dp),
+                        ) {
+                            Text(
+                                text("本次提名", "CURRENT NOMINATION"),
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                "${playerSeatLabel(cards, nominatorName)}  →  ${playerSeatLabel(cards, nomineeName)}",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Black,
+                            )
+                        }
+                    }
+                }
+                item {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            StepperRow(
+                                label = text("实际票数", "Votes cast"),
+                                value = voteCount,
+                                range = 0..aliveCount,
+                                onChange = onVoteCountChange,
+                            )
+                            Surface(
+                                color = if (reached) {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceVariant
+                                },
+                                shape = RoundedCornerShape(16.dp),
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(14.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    Text(
+                                        text = if (reached) text("达到处决门槛", "Threshold reached")
+                                        else text("尚未达到门槛", "Below threshold"),
+                                        color = if (reached) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Text(
+                                        text = text(
+                                            "$voteCount 票 / 需要 $executionThreshold 票",
+                                            "$voteCount votes / $executionThreshold required",
+                                        ),
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        fontWeight = FontWeight.Black,
+                                    )
+                                }
+                            }
+                            Text(
+                                highestVoteText,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                }
+            }
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Button(
+                        onClick = onRecordAndContinue,
+                        enabled = actionsEnabled && nomineeName != null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(text("记录投票，继续提名", "Record vote and continue"), fontWeight = FontWeight.Bold)
+                    }
+                    OutlinedButton(
+                        onClick = onRecordAndEndDay,
+                        enabled = actionsEnabled && nomineeName != null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(text("记录投票并结束白天", "Record vote and end day"))
+                    }
+                    TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+                        Text(text("返回修改提名", "Back to nomination"))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerExecutionConfirmScreen(
+    round: Int,
+    cards: List<PlayerCard>,
+    executionThreshold: Int,
+    selectedExecution: String?,
+    highestVoteCount: Int,
+    actionsEnabled: Boolean,
+    onConfirm: () -> Unit,
+    onBack: () -> Unit,
+) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    val targetLabel = selectedExecution?.let { playerSeatLabel(cards, it) }
+
+    ClocktowerDarkTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+        ) {
+            ClocktowerDayActionHeader(
+                round = round,
+                currentStep = 2,
+                executionThreshold = executionThreshold,
+                title = text("结束白天", "Resolve the day"),
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Surface(
+                    color = if (targetLabel != null) {
+                        MaterialTheme.colorScheme.error.copy(alpha = 0.16f)
+                    } else {
+                        MaterialTheme.colorScheme.surface
+                    },
+                    shape = RoundedCornerShape(24.dp),
+                    border = BorderStroke(
+                        1.dp,
+                        if (targetLabel != null) MaterialTheme.colorScheme.error.copy(alpha = 0.55f)
+                        else MaterialTheme.colorScheme.surfaceVariant,
+                    ),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Text(
+                            text = if (targetLabel != null) text("即将记录处决", "EXECUTION TO RECORD")
+                            else text("今日无人被处决", "NO EXECUTION TODAY"),
+                            color = if (targetLabel != null) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Black,
+                        )
+                        Text(
+                            text = targetLabel ?: text("进入夜晚", "Continue to night"),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text(
+                            text = if (targetLabel != null) {
+                                text("最高票 $highestVoteCount；确认后将立即结算角色能力与胜负。", "Highest vote: $highestVoteCount. Confirming resolves abilities and victory.")
+                            } else {
+                                text("确认后将结束今天并进入夜晚。", "Confirm to close the day and continue to night.")
+                            },
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+            }
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Button(
+                        onClick = onConfirm,
+                        enabled = actionsEnabled,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = if (targetLabel != null) {
+                            ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onError,
+                            )
+                        } else {
+                            ButtonDefaults.buttonColors()
+                        },
+                    ) {
+                        Text(
+                            text = if (targetLabel != null) text("确认处决 $targetLabel", "Confirm execution: $targetLabel")
+                            else text("确认无人被处决，进入夜晚", "Confirm no execution and continue"),
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = onBack,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(text("返回白天检查", "Return to day"))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerDayActionHeader(
+    round: Int,
+    currentStep: Int,
+    executionThreshold: Int,
+    title: String,
+) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column {
+                    Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                    Text(
+                        text("第 $round 天 · $executionThreshold 票可处决", "Day $round · $executionThreshold votes to execute"),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                Text(
+                    "${currentStep + 1} / 3",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                repeat(3) { index ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(4.dp)
+                            .background(
+                                if (index <= currentStep) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surfaceVariant,
+                                RoundedCornerShape(50),
+                            ),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun HostScriptCard(
     title: String,
     script: String,
@@ -4183,7 +5756,7 @@ private fun HostActionSection(
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(title, fontWeight = FontWeight.SemiBold)
         helper?.let {
-            Text(it, color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
+            Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         }
         content()
     }
@@ -4225,6 +5798,289 @@ private fun SelectablePlayerChips(
     }
 }
 
+@Composable
+private fun ClocktowerDealHandoffScreen(
+    playerName: String,
+    current: Int,
+    total: Int,
+    onReveal: () -> Unit,
+) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+
+    ClocktowerDarkTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+        ) {
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(9.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text("秘密发牌", "PRIVATE DEAL"),
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.2.sp,
+                        )
+                        Text(
+                            "$current / $total",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        repeat(total) { index ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(4.dp)
+                                    .background(
+                                        if (index < current) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceVariant,
+                                        RoundedCornerShape(50),
+                                    ),
+                            )
+                        }
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(96.dp)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = current.toString(),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Black,
+                    )
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text("请把手机交给", "Pass the phone to"),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    playerName,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Black,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(18.dp),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(5.dp),
+                    ) {
+                        Text(
+                            text("隐私确认", "PRIVACY CHECK"),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Black,
+                        )
+                        Text(
+                            text(
+                                "确认只有 $playerName 能看到屏幕后，再查看身份。",
+                                "Make sure only $playerName can see the screen before revealing.",
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+            }
+
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
+                Button(
+                    onClick = onReveal,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .height(54.dp),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Text(text("我是 $playerName，查看身份", "I am $playerName — reveal my role"), fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerPlayerRoleRevealScreen(
+    card: PlayerCard,
+    current: Int,
+    total: Int,
+    onHide: () -> Unit,
+) {
+    val context = LocalContext.current
+    val language = context.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    val shownRole = card.clocktowerShownRole
+    val roleName = shownRole?.nameFor(language) ?: card.roleLabel ?: stringResource(card.role.labelResId())
+    val team = shownRole?.team
+    val teamName = team?.label(context)
+    val description = shownRole?.descriptionFor(language) ?: card.word
+    val accentColor = when (team) {
+        ClocktowerTeam.Townsfolk -> Color(0xFF8FB6D6)
+        ClocktowerTeam.Outsider -> Color(0xFF9AAEC0)
+        ClocktowerTeam.Minion -> Color(0xFFD09A6A)
+        ClocktowerTeam.Demon -> Color(0xFFD96B70)
+        null -> Color(0xFFC5A56A)
+    }
+
+    ClocktowerDarkTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+        ) {
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column {
+                        Text(
+                            text("仅供你查看", "FOR YOUR EYES ONLY"),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.2.sp,
+                        )
+                        Text(card.name, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Text(
+                        "$current / $total",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Surface(
+                    color = accentColor.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(28.dp),
+                    border = BorderStroke(1.dp, accentColor.copy(alpha = 0.48f)),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 22.dp, vertical = 28.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        teamName?.let {
+                            Surface(
+                                color = accentColor.copy(alpha = 0.18f),
+                                shape = RoundedCornerShape(50),
+                            ) {
+                                Text(
+                                    text = it,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                                    color = accentColor,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Black,
+                                )
+                            }
+                        }
+                        Text(
+                            roleName,
+                            color = accentColor,
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center,
+                        )
+                        HorizontalDivider(color = accentColor.copy(alpha = 0.28f))
+                        Text(
+                            text("你的能力", "YOUR ABILITY"),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            description,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.titleMedium,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text(
+                        "记住角色和能力。不要讨论身份，隐藏页面后把手机交回说书人或下一位玩家。",
+                        "Remember your character and ability. Hide this screen before passing the phone back.",
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
+                Button(
+                    onClick = onHide,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .height(54.dp),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Text(
+                        text = if (current == total) {
+                            text("隐藏身份，交回说书人", "Hide role and return to host")
+                        } else {
+                            text("隐藏身份，交给下一位玩家", "Hide role and pass to next player")
+                        },
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SelectableSeatNumbers(
@@ -4239,9 +6095,12 @@ private fun SelectableSeatNumbers(
             val selected = selectedName == card.name
             val seatNumber = (allCards.indexOfFirst { it.name == card.name } + 1).takeIf { it > 0 } ?: 0
             val colors = if (selected) {
-                ButtonDefaults.buttonColors(containerColor = Color(0xFFD94F38), contentColor = Color.White)
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                )
             } else {
-                ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF1F2925))
+                ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
             }
             if (selected) {
                 Button(
@@ -6088,6 +7947,402 @@ private fun ClocktowerJudgeScreen(
         return
     }
 
+    if (phase == ClocktowerPhase.Dawn) {
+        ClocktowerDawnSummaryScreen(
+            round = round,
+            cards = cards,
+            events = events,
+            pendingNightDeath = pendingNightDeath,
+            onEnterDay = onAdvanceFromFirstNight,
+        )
+        return
+    }
+
+    if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Overview) {
+        val highestVoteText = when {
+            highestVoteName != null -> text(
+                "最高票 · ${playerSeatLabel(cards, highestVoteName)} · $highestVoteCount 票",
+                "Highest · ${playerSeatLabel(cards, highestVoteName)} · $highestVoteCount",
+            )
+            highestVoteCount >= executionThreshold -> text(
+                "最高票 · 平票 $highestVoteCount 票",
+                "Highest · tie at $highestVoteCount",
+            )
+            else -> text("最高票 · 无", "Highest · none")
+        }
+        ClocktowerDayOverviewScreen(
+            round = round,
+            cards = cards,
+            aliveCount = aliveCards.size,
+            executionThreshold = executionThreshold,
+            highestVoteText = highestVoteText,
+            poisonTarget = poisonTarget,
+            showSlayerAction = scriptHasSlayer,
+            slayerActionEnabled = slayerClaimantCandidates.isNotEmpty(),
+            showArtistAction = scriptHasArtist,
+            artistActionEnabled = artistClaimantCandidates.isNotEmpty(),
+            actionsEnabled = gameOutcome == null,
+            onStartNomination = {
+                nominatorName = null
+                nomineeName = null
+                dayMode = ClocktowerDayMode.Nomination
+            },
+            onOpenSlayer = {
+                slayerClaimantName = null
+                slayerTargetName = null
+                slayerRecluseRegistersDemon = false
+                dayMode = ClocktowerDayMode.Slayer
+            },
+            onOpenArtist = {
+                onSelectArtistClaimant(null)
+                dayMode = ClocktowerDayMode.Artist
+            },
+            onEndDay = {
+                onSelectExecution(highestVoteName?.takeIf { highestVoteCount >= executionThreshold })
+                dayMode = ClocktowerDayMode.EndConfirm
+            },
+        )
+        return
+    }
+
+    if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Nomination) {
+        val nominatorCard = cards.firstOrNull { it.name == nominatorName }
+        val nomineeCard = cards.firstOrNull { it.name == nomineeName }
+        val virginFirstNomination = nomineeCard?.clocktowerRole?.enName == "Virgin" && !virginUsed
+        val virginAbilityWorks = virginFirstNomination && poisonTarget != nomineeCard?.name
+        val virginRegistrationKey = nominatorCard
+            ?.takeIf { it.name == spyCard?.name && virginFirstNomination }
+            ?.let { registrationKey("Virgin", it.name) }
+        val virginExecutes = virginAbilityWorks &&
+            (nominatorCard?.clocktowerTeam == ClocktowerTeam.Townsfolk || spyRegistersGood(virginRegistrationKey))
+        val specialNotice = when {
+            virginExecutes -> text(
+                "${playerSeatLabel(cards, nomineeName)} 首次被真实镇民提名：不进行投票，提名者将立即被处决。",
+                "${playerSeatLabel(cards, nomineeName)} was first nominated by a Townsfolk: skip voting and execute the nominator.",
+            )
+            virginFirstNomination -> text(
+                "这是圣女第一次被提名，但能力不会处决提名者；记录能力已用过后继续投票。",
+                "This is the Virgin's first nomination, but the ability does not execute the nominator. Mark it spent and continue.",
+            )
+            else -> null
+        }
+        ClocktowerNominationScreen(
+            round = round,
+            cards = cards,
+            aliveCards = aliveCards,
+            executionThreshold = executionThreshold,
+            nominatorName = nominatorName,
+            nomineeName = nomineeName,
+            specialNotice = specialNotice,
+            specialNoticeIsDanger = virginExecutes,
+            continueLabel = when {
+                virginExecutes -> text("确认并处决提名者", "Confirm and execute nominator")
+                virginFirstNomination -> text("记录能力，进入投票", "Record ability and continue")
+                else -> text("确认提名，进入投票", "Confirm nomination and vote")
+            },
+            actionsEnabled = gameOutcome == null,
+            onSelectNominator = { nominatorName = if (nominatorName == it) null else it },
+            onSelectNominee = { nomineeName = if (nomineeName == it) null else it },
+            onContinue = {
+                val chosenNominator = nominatorName
+                val chosenNominee = nomineeName
+                if (chosenNominator != null && chosenNominee != null && virginFirstNomination) {
+                    recordSpyRegistration(virginRegistrationKey, listOf(ClocktowerTeam.Townsfolk))
+                    onVirginNomination(chosenNominator, chosenNominee, virginExecutes)
+                }
+                if (chosenNominator != null && chosenNominee != null && virginExecutes) {
+                    onRecordEvent(
+                        ClocktowerEventType.Nomination,
+                        text("提名", "Nomination"),
+                        "${playerSeatLabel(cards, chosenNominator)} → ${playerSeatLabel(cards, chosenNominee)}",
+                        listOf(chosenNominator, chosenNominee),
+                    )
+                }
+                if (!virginExecutes) {
+                    currentVoteCount = 0
+                    dayMode = ClocktowerDayMode.Vote
+                }
+            },
+            onCancel = {
+                nominatorName = null
+                nomineeName = null
+                currentVoteCount = 0
+                dayMode = ClocktowerDayMode.Overview
+            },
+            specialContent = {
+                if (virginRegistrationKey != null && spyCard != null) {
+                    SpyRegistrationPanel(
+                        cards = cards,
+                        spy = spyCard,
+                        teams = listOf(ClocktowerTeam.Townsfolk),
+                        registersGood = spyRegistersGood(virginRegistrationKey),
+                        registeredRoleEnName = spyRegistrationRole[virginRegistrationKey],
+                        enabled = spyCanRegister(),
+                        onRegistersGoodChange = { good ->
+                            spyRegistrationGood[virginRegistrationKey] = good
+                            if (good && spyRegistrationRole[virginRegistrationKey] == null) {
+                                spyRegistrationRole[virginRegistrationKey] = "Washerwoman"
+                            }
+                        },
+                        onRoleChange = { spyRegistrationRole[virginRegistrationKey] = it },
+                    )
+                }
+            },
+        )
+        return
+    }
+
+    if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Vote) {
+        val highestVoteText = when {
+            highestVoteName != null -> text(
+                "当前最高：${playerSeatLabel(cards, highestVoteName)} · $highestVoteCount 票",
+                "Current highest: ${playerSeatLabel(cards, highestVoteName)} · $highestVoteCount",
+            )
+            highestVoteCount >= executionThreshold -> text(
+                "当前最高为平票：$highestVoteCount 票；暂时无人被处决。",
+                "Current high vote is tied at $highestVoteCount; nobody is set for execution.",
+            )
+            else -> text("当前还没有达到门槛的最高票。", "No qualifying high vote has been recorded yet.")
+        }
+        val recordVoteEvent = {
+            onRecordEvent(
+                ClocktowerEventType.Vote,
+                text("提名与投票", "Nomination and vote"),
+                "${playerSeatLabel(cards, nominatorName)} → ${playerSeatLabel(cards, nomineeName)} · $currentVoteCount/$executionThreshold",
+                listOfNotNull(nominatorName, nomineeName),
+            )
+        }
+        ClocktowerVoteScreen(
+            round = round,
+            cards = cards,
+            aliveCount = aliveCards.size,
+            executionThreshold = executionThreshold,
+            nominatorName = nominatorName,
+            nomineeName = nomineeName,
+            voteCount = currentVoteCount,
+            highestVoteText = highestVoteText,
+            actionsEnabled = gameOutcome == null,
+            onVoteCountChange = { currentVoteCount = it },
+            onRecordAndContinue = {
+                recordVoteEvent()
+                recordCurrentVote()
+                nominatorName = null
+                nomineeName = null
+                currentVoteCount = 0
+                dayMode = ClocktowerDayMode.Overview
+            },
+            onRecordAndEndDay = {
+                recordVoteEvent()
+                onSelectExecution(recordCurrentVote())
+                dayMode = ClocktowerDayMode.EndConfirm
+            },
+            onBack = {
+                currentVoteCount = 0
+                dayMode = ClocktowerDayMode.Nomination
+            },
+        )
+        return
+    }
+
+    if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.EndConfirm) {
+        ClocktowerExecutionConfirmScreen(
+            round = round,
+            cards = cards,
+            executionThreshold = executionThreshold,
+            selectedExecution = selectedExecution,
+            highestVoteCount = highestVoteCount,
+            actionsEnabled = gameOutcome == null,
+            onConfirm = onConfirmDay,
+            onBack = { dayMode = ClocktowerDayMode.Overview },
+        )
+        return
+    }
+
+    if ((phase == ClocktowerPhase.FirstNight || phase == ClocktowerPhase.Night) && nightStarted && nightSteps.isNotEmpty()) {
+        val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
+        val currentStep = nightSteps[currentStepIndex]
+        val selectedNightName = when (currentStep.action) {
+            ClocktowerNightAction.RedHerring -> redHerring
+            ClocktowerNightAction.Poison -> poisonTarget
+            ClocktowerNightAction.ButlerMaster -> butlerMaster
+            ClocktowerNightAction.MonkProtect -> monkProtectedTarget
+            ClocktowerNightAction.DemonKill -> pendingNightDeath
+            ClocktowerNightAction.MayorRedirect -> mayorRedirectTarget
+            ClocktowerNightAction.Ravenkeeper -> ravenkeeperTarget
+            else -> null
+        }
+        val advanceNightStep = {
+            recordSpyRegistration(
+                currentStep.spyRegistrationKey,
+                currentStep.spyRegistrationTeams,
+                currentStep.spyRegistrationDetail,
+            )
+            recordRecluseRegistration(currentStep.recluseRegistrationKey, currentStep.recluseRegistrationTeams)
+            recordNightStep(currentStep)
+            if (currentStepIndex < nightSteps.lastIndex) {
+                nightStepIndex = currentStepIndex + 1
+            } else {
+                onConfirmNight()
+            }
+        }
+
+        ClocktowerNightActiveScreen(
+            title = if (phase == ClocktowerPhase.FirstNight) {
+                text("第 1 夜", "Night 1")
+            } else {
+                text("第 $round 夜", "Night $round")
+            },
+            subtitle = text("当前阶段：${currentStep.title}", "Current: ${currentStep.title}"),
+            progress = text("步骤 ${currentStepIndex + 1} / ${nightSteps.size}", "Step ${currentStepIndex + 1} / ${nightSteps.size}"),
+            canGoPrevious = currentStepIndex > 0,
+            nextEnabled = currentStep.action != ClocktowerNightAction.MayorRedirect || selectedNightName != null,
+            onPrevious = {
+                if (currentStepIndex > 0) {
+                    nightStepIndex = currentStepIndex - 1
+                }
+            },
+            onNext = advanceNightStep,
+        ) {
+            ClocktowerNightStepCardLocalized(
+                cards = cards,
+                aliveCards = aliveCards,
+                step = currentStep,
+                spyCard = spyCard,
+                spyRegistrationGood = spyRegistersGood(currentStep.spyRegistrationKey),
+                spyRegisteredRoleEnName = currentStep.spyRegistrationKey?.let { spyRegistrationRole[it] },
+                spyCanRegister = spyCanRegister(),
+                onSpyRegistrationGoodChange = { good ->
+                    currentStep.spyRegistrationKey?.let { key ->
+                        spyRegistrationGood[key] = good
+                        if (good && currentStep.spyRegistrationDetail == ClocktowerRegistrationDetail.Role && spyRegistrationRole[key] == null) {
+                            spyRegistrationRole[key] = completeTroubleBrewingRoles
+                                .firstOrNull { it.team in currentStep.spyRegistrationTeams && it.enName != "Spy" }
+                                ?.enName
+                                .orEmpty()
+                        }
+                        if (!good && redHerring == spyCard?.name && currentStep.action == ClocktowerNightAction.RedHerring) {
+                            onSelectRedHerring(null)
+                        }
+                    }
+                },
+                onSpyRegistrationRoleChange = { roleName ->
+                    currentStep.spyRegistrationKey?.let { spyRegistrationRole[it] = roleName }
+                },
+                recluseCard = recluseCard,
+                recluseRegistrationEvil = recluseRegistersEvil(currentStep.recluseRegistrationKey),
+                recluseRegisteredRoleEnName = currentStep.recluseRegistrationKey?.let { recluseRegistrationRole[it] },
+                recluseCanRegister = recluseCanRegister(),
+                onRecluseRegistrationEvilChange = { evil ->
+                    currentStep.recluseRegistrationKey?.let { key ->
+                        recluseRegistrationEvil[key] = evil
+                        if (evil && currentStep.recluseRegistrationTeams.isNotEmpty() && recluseRegistrationRole[key] == null) {
+                            recluseRegistrationRole[key] = completeTroubleBrewingRoles
+                                .firstOrNull { it.team in currentStep.recluseRegistrationTeams }
+                                ?.enName
+                                .orEmpty()
+                        }
+                    }
+                },
+                onRecluseRegistrationRoleChange = { roleName ->
+                    currentStep.recluseRegistrationKey?.let { recluseRegistrationRole[it] = roleName }
+                },
+                selectedName = selectedNightName,
+                fortuneTellerFirst = fortuneTellerFirst,
+                fortuneTellerSecond = fortuneTellerSecond,
+                chambermaidFirst = chambermaidFirst,
+                chambermaidSecond = chambermaidSecond,
+                onSelectName = { name ->
+                    when (currentStep.action) {
+                        ClocktowerNightAction.RedHerring -> onSelectRedHerring(if (redHerring == name) null else name)
+                        ClocktowerNightAction.Poison -> onSelectPoisonTarget(if (poisonTarget == name) null else name)
+                        ClocktowerNightAction.ButlerMaster -> onSelectButlerMaster(if (butlerMaster == name) null else name)
+                        ClocktowerNightAction.MonkProtect -> onSelectMonkProtectedTarget(if (monkProtectedTarget == name) null else name)
+                        ClocktowerNightAction.DemonKill -> onSelectNightDeath(if (pendingNightDeath == name) null else name)
+                        ClocktowerNightAction.MayorRedirect -> onSelectMayorRedirectTarget(if (mayorRedirectTarget == name) null else name)
+                        ClocktowerNightAction.Ravenkeeper -> onSelectRavenkeeperTarget(if (ravenkeeperTarget == name) null else name)
+                        else -> Unit
+                    }
+                },
+                onSelectFortuneTellerFirst = {
+                    onSelectFortuneTellerFirst(if (fortuneTellerFirst == it) null else it)
+                },
+                onSelectFortuneTellerSecond = {
+                    onSelectFortuneTellerSecond(if (fortuneTellerSecond == it) null else it)
+                },
+                onSelectChambermaidFirst = {
+                    onSelectChambermaidFirst(if (chambermaidFirst == it) null else it)
+                },
+                onSelectChambermaidSecond = {
+                    onSelectChambermaidSecond(if (chambermaidSecond == it) null else it)
+                },
+                onApplyRecommendedDisplayOption = { option ->
+                    currentStep.spyRegistrationKey?.let { key ->
+                        option.spyRegistersGood?.let { good ->
+                            spyRegistrationGood[key] = good
+                            if (good) {
+                                option.spyRegisteredRoleEnName?.let { spyRegistrationRole[key] = it }
+                            } else {
+                                spyRegistrationRole.remove(key)
+                            }
+                        }
+                    }
+                    currentStep.recluseRegistrationKey?.let { key ->
+                        option.recluseRegistersEvil?.let { evil ->
+                            recluseRegistrationEvil[key] = evil
+                            if (evil) {
+                                option.recluseRegisteredRoleEnName?.let { recluseRegistrationRole[key] = it }
+                            } else {
+                                recluseRegistrationRole.remove(key)
+                            }
+                        }
+                    }
+                    recordSpyRegistration(
+                        currentStep.spyRegistrationKey,
+                        currentStep.spyRegistrationTeams,
+                        currentStep.spyRegistrationDetail,
+                    )
+                    recordRecluseRegistration(
+                        currentStep.recluseRegistrationKey,
+                        currentStep.recluseRegistrationTeams,
+                    )
+                },
+                onShowPlayerDisplay = { displayStep ->
+                    val actor = displayStep.actor
+                    val unreliable = actor?.clocktowerRole?.enName == "Drunk" || actor?.name == poisonTarget
+                    val shownInformation = listOfNotNull(
+                        displayStep.displayPrimary ?: displayStep.tellPlayer,
+                        displayStep.displaySecondary,
+                        displayStep.displayFooter,
+                    ).filter { it.isNotBlank() }.joinToString(" · ")
+                    val referencedPlayerNames = InformationReferenceExtractor.extractSeatNumbers(
+                        values = listOf(displayStep.displaySecondary, displayStep.displayFooter),
+                        maximumSeat = cards.size,
+                    ).mapNotNull { seat -> cards.getOrNull(seat - 1)?.name }
+                    onRecordEvent(
+                        if (unreliable) ClocktowerEventType.UnreliableInformation else ClocktowerEventType.Information,
+                        if (unreliable) {
+                            text("${displayStep.displayTitle}（不可靠）", "${displayStep.displayTitle} (unreliable)")
+                        } else {
+                            displayStep.displayTitle
+                        },
+                        "${actor?.seatLabel(cards).orEmpty()}：$shownInformation",
+                        (listOfNotNull(actor?.name) + referencedPlayerNames).distinct(),
+                    )
+                    playerDisplayStep = displayStep
+                },
+                canGoPrevious = currentStepIndex > 0,
+                onPrevious = {
+                    if (currentStepIndex > 0) {
+                        nightStepIndex = currentStepIndex - 1
+                    }
+                },
+                onNext = advanceNightStep,
+                showNavigationActions = false,
+            )
+        }
+        return
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -7777,7 +10032,7 @@ private fun ClocktowerPlayerDisplayCardLocalized(
     val footer = step.displayFooter ?: step.explanation
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF1F2925),
+        color = Color(0xFF0B0D10),
     ) {
         Column(
             modifier = Modifier
@@ -7788,7 +10043,7 @@ private fun ClocktowerPlayerDisplayCardLocalized(
         ) {
             Text(
                 step.displayTitle,
-                color = Color(0xFFEAF2EA),
+                color = Color(0xFFF1EADC),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -7802,7 +10057,7 @@ private fun ClocktowerPlayerDisplayCardLocalized(
                     ClocktowerDisplayKind.Number, ClocktowerDisplayKind.YesNo -> {
                         Text(
                             primary,
-                            color = Color(0xFFFFF4DC),
+                            color = Color(0xFFC5A56A),
                             fontSize = 88.sp,
                             fontWeight = FontWeight.Black,
                             textAlign = TextAlign.Center,
@@ -7810,7 +10065,7 @@ private fun ClocktowerPlayerDisplayCardLocalized(
                         secondary?.takeIf { it.isNotBlank() }?.let {
                             Text(
                                 it,
-                                color = Color.White,
+                                color = Color(0xFFF7F1E6),
                                 fontSize = 64.sp,
                                 fontWeight = FontWeight.Black,
                                 textAlign = TextAlign.Center,
@@ -7818,7 +10073,7 @@ private fun ClocktowerPlayerDisplayCardLocalized(
                         }
                         Text(
                             footer,
-                            color = Color.White,
+                            color = Color(0xFFF1EADC),
                             style = MaterialTheme.typography.headlineSmall,
                             textAlign = TextAlign.Center,
                         )
@@ -7827,7 +10082,7 @@ private fun ClocktowerPlayerDisplayCardLocalized(
                     ClocktowerDisplayKind.EitherOne -> {
                         Text(
                             primary,
-                            color = Color.White,
+                            color = Color(0xFFF7F1E6),
                             style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
@@ -7835,7 +10090,7 @@ private fun ClocktowerPlayerDisplayCardLocalized(
                         if (footer.isNotBlank()) {
                             Text(
                                 footer,
-                                color = Color(0xFFEAF2EA),
+                                color = Color(0xFFAAA397),
                                 style = MaterialTheme.typography.titleLarge,
                                 textAlign = TextAlign.Center,
                             )
@@ -7843,7 +10098,7 @@ private fun ClocktowerPlayerDisplayCardLocalized(
                         secondary?.let {
                             Text(
                                 it,
-                                color = Color(0xFFFFF4DC),
+                                color = Color(0xFFC5A56A),
                                 fontSize = 64.sp,
                                 fontWeight = FontWeight.Black,
                                 textAlign = TextAlign.Center,
@@ -7856,7 +10111,7 @@ private fun ClocktowerPlayerDisplayCardLocalized(
                     ClocktowerDisplayKind.RoleReveal, ClocktowerDisplayKind.Plain -> {
                         Text(
                             primary,
-                            color = Color.White,
+                            color = Color(0xFFF7F1E6),
                             style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.Black,
                             textAlign = TextAlign.Center,
@@ -7864,7 +10119,7 @@ private fun ClocktowerPlayerDisplayCardLocalized(
                         if (footer.isNotBlank()) {
                             Text(
                                 footer,
-                                color = Color(0xFFEAF2EA),
+                                color = Color(0xFFAAA397),
                                 style = MaterialTheme.typography.titleLarge,
                                 textAlign = TextAlign.Center,
                             )
@@ -7883,21 +10138,21 @@ private fun ClocktowerPlayerDisplayCardLocalized(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(Color(0xFF2B3833), RoundedCornerShape(6.dp))
+                                        .background(Color(0xFF1B1F25), RoundedCornerShape(10.dp))
                                         .padding(horizontal = 10.dp, vertical = 6.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(
                                         parts.firstOrNull().orEmpty(),
-                                        color = Color.White,
+                                        color = Color(0xFFF1EADC),
                                         fontSize = rowFontSize,
                                         fontWeight = FontWeight.SemiBold,
                                         modifier = Modifier.weight(1.35f),
                                     )
                                     Text(
                                         parts.getOrNull(1).orEmpty(),
-                                        color = Color(0xFFFFF4DC),
+                                        color = Color(0xFFC5A56A),
                                         fontSize = rowFontSize,
                                         fontWeight = FontWeight.Bold,
                                         textAlign = TextAlign.End,
@@ -7909,7 +10164,7 @@ private fun ClocktowerPlayerDisplayCardLocalized(
                         if (footer.isNotBlank()) {
                             Text(
                                 footer,
-                                color = Color(0xFFEAF2EA),
+                                color = Color(0xFFAAA397),
                                 style = MaterialTheme.typography.bodyMedium,
                                 textAlign = TextAlign.Center,
                             )
@@ -7921,7 +10176,11 @@ private fun ClocktowerPlayerDisplayCardLocalized(
             }
             OutlinedButton(
                 onClick = onDismiss,
-                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFC5A56A)),
             ) {
                 Text(stringResource(R.string.clocktower_display_close))
             }
@@ -8099,15 +10358,28 @@ private fun SpyRegistrationPanel(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (enabled) Color(0xFFF0F2FF) else Color(0xFFFFF1DC), RoundedCornerShape(8.dp))
+            .background(
+                if (enabled) {
+                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.16f)
+                } else {
+                    MaterialTheme.colorScheme.error.copy(alpha = 0.12f)
+                },
+                RoundedCornerShape(14.dp),
+            )
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(if (language == "en") "Private Storyteller ruling" else "说书人私密裁定", fontWeight = FontWeight.Black)
-        Text("${spy.seatLabel(cards)} · ${if (language == "en") "this interaction only" else "仅影响本次交互"}", color = Color(0xFF5C6A63))
-        hint?.let { Text(it, color = Color(0xFF445F55), style = MaterialTheme.typography.bodySmall) }
+        Text(
+            "${spy.seatLabel(cards)} · ${if (language == "en") "this interaction only" else "仅影响本次交互"}",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        hint?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
         if (!enabled) {
-            Text(if (language == "en") "The Spy is poisoned; registration cannot change." else "间谍已中毒，本次不能改变登记身份。", color = Color(0xFF9A4B36))
+            Text(
+                if (language == "en") "The Spy is poisoned; registration cannot change." else "间谍已中毒，本次不能改变登记身份。",
+                color = MaterialTheme.colorScheme.error,
+            )
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (registersGood) {
@@ -8158,14 +10430,27 @@ private fun RecluseRegistrationPanel(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (enabled) Color(0xFFFFF1DC) else Color(0xFFF2F2F2), RoundedCornerShape(8.dp))
+            .background(
+                if (enabled) {
+                    MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
+                } else {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
+                },
+                RoundedCornerShape(14.dp),
+            )
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(if (language == "en") "Recluse registration" else "隐士登记裁定", fontWeight = FontWeight.Black)
-        Text("${recluse.seatLabel(cards)} · ${if (language == "en") "this interaction only" else "仅影响本次交互"}", color = Color(0xFF5C6A63))
+        Text(
+            "${recluse.seatLabel(cards)} · ${if (language == "en") "this interaction only" else "仅影响本次交互"}",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         if (!enabled) {
-            Text(if (language == "en") "The Recluse is poisoned and must register normally." else "隐士已中毒，本次只能按真实身份登记。", color = Color(0xFF9A4B36))
+            Text(
+                if (language == "en") "The Recluse is poisoned and must register normally." else "隐士已中毒，本次只能按真实身份登记。",
+                color = MaterialTheme.colorScheme.error,
+            )
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (!registersEvil) {
@@ -8226,7 +10511,9 @@ private fun ClocktowerNightStepCardLocalized(
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
+    showNavigationActions: Boolean = true,
 ) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
     val command = when {
         step.wakeText != null -> step.wakeText
         step.action == ClocktowerNightAction.FortuneTeller && step.actor != null -> "唤醒占卜师：${step.actor.seatLabel(cards)}"
@@ -8247,9 +10534,9 @@ private fun ClocktowerNightStepCardLocalized(
         else -> step.explanation
     }
     Card(
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
             modifier = Modifier
@@ -8258,10 +10545,20 @@ private fun ClocktowerNightStepCardLocalized(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
+                if (step.actor != null) {
+                    if (language == "en") "CURRENT PLAYER" else "当前玩家"
+                } else {
+                    if (language == "en") "CURRENT STEP" else "当前步骤"
+                },
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Black,
+            )
+            Text(
                 command.orEmpty(),
-                color = Color(0xFF1F2925),
-                fontSize = 34.sp,
-                lineHeight = 38.sp,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 30.sp,
+                lineHeight = 36.sp,
                 fontWeight = FontWeight.Black,
             )
 
@@ -8495,12 +10792,16 @@ private fun ClocktowerNightStepCardLocalized(
             step.tellPlayer
                 ?.takeIf { step.isRealAction && it.isNotBlank() && step.displayKind == ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid }
                 ?.let {
-                    Text(it, color = Color(0xFF2F5D50), fontWeight = FontWeight.SemiBold)
+                    Text(it, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                 }
 
             if (step.recommendedDisplayOptions.isNotEmpty()) {
-                Text("推荐给说书人的完整信息", color = Color(0xFF2F5D50), fontWeight = FontWeight.Bold)
-                Text("平衡方案适合直接采用；其他方案提供不同压力。选择后会同步本次间谍或隐士登记。", color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
+                Text("推荐给说书人的完整信息", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                Text(
+                    "平衡方案适合直接采用；其他方案提供不同压力。选择后会同步本次间谍或隐士登记。",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
                 step.recommendedDisplayOptions
                     .sortedBy { if (it.isDefaultRecommendation) 0 else 1 }
                     .forEach { option ->
@@ -8547,7 +10848,7 @@ private fun ClocktowerNightStepCardLocalized(
             }
 
             if (step.displayOptions.isNotEmpty()) {
-                Text("能力不可靠：请选择一个结果展示。", color = Color(0xFF8C4B20), fontWeight = FontWeight.Bold)
+                Text("能力不可靠：请选择一个结果展示。", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                 step.displayOptions.forEach { option ->
                     OutlinedButton(
                         onClick = {
@@ -8579,26 +10880,50 @@ private fun ClocktowerNightStepCardLocalized(
                 }
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
-                    onClick = onPrevious,
-                    enabled = canGoPrevious,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(8.dp),
-                ) {
-                    Text(stringResource(R.string.previous_step))
-                }
-                Button(
-                    onClick = onNext,
-                    enabled = step.action != ClocktowerNightAction.MayorRedirect || selectedName != null,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(8.dp),
-                ) {
-                    Text(stringResource(R.string.clocktower_host_finish_next))
+            if (showNavigationActions) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = onPrevious,
+                        enabled = canGoPrevious,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(stringResource(R.string.previous_step))
+                    }
+                    Button(
+                        onClick = onNext,
+                        enabled = step.action != ClocktowerNightAction.MayorRedirect || selectedName != null,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(stringResource(R.string.clocktower_host_finish_next))
+                    }
                 }
             }
 
-            Text(helper, color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
+            Surface(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(14.dp),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        if (language == "en") "STEP NOTE" else "步骤提示",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        helper,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
         }
     }
 }
@@ -8943,6 +11268,355 @@ private fun PlayerStatusRow(card: PlayerCard) {
             val status = card.eliminatedRound?.let { stringResource(R.string.eliminated_round_format, it) }
                 ?: stringResource(R.string.active_status)
             Text(status, color = if (card.eliminatedRound == null) Color(0xFF2F5D50) else Color(0xFF9A4B36))
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerResultsDialog(
+    cards: List<PlayerCard>,
+    outcome: GameOutcome?,
+    onDismiss: () -> Unit,
+    onNewGame: () -> Unit,
+) {
+    val context = LocalContext.current
+    val language = context.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    var rolesRevealed by remember(cards) { mutableStateOf(false) }
+    var confirmNewGame by remember { mutableStateOf(false) }
+    val resultTitle = outcome?.title ?: text("游戏结束", "Game over")
+    val goodWon = resultTitle.contains("好人") || resultTitle.contains("Good", ignoreCase = true)
+    val evilWon = resultTitle.contains("邪恶") || resultTitle.contains("Evil", ignoreCase = true)
+    val accentColor = when {
+        goodWon -> Color(0xFF8FB6D6)
+        evilWon -> Color(0xFFD96B70)
+        else -> Color(0xFFC5A56A)
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = false,
+            usePlatformDefaultWidth = false,
+        ),
+    ) {
+        ClocktowerDarkTheme {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background,
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 18.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column {
+                                Text(
+                                    text = if (rolesRevealed) text("角色揭晓", "ROLE REVEAL") else text("游戏结束", "GAME OVER"),
+                                    color = accentColor,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.2.sp,
+                                )
+                                Text(
+                                    text = if (rolesRevealed) text("完整魔典", "Final grimoire") else text("胜负结算", "Game result"),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
+                            TextButton(onClick = onDismiss) {
+                                Text(text("返回主持界面", "Back to host"))
+                            }
+                        }
+                    }
+
+                    if (!rolesRevealed) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Surface(
+                                color = accentColor.copy(alpha = 0.13f),
+                                shape = RoundedCornerShape(26.dp),
+                                border = BorderStroke(1.dp, accentColor.copy(alpha = 0.45f)),
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    Text(
+                                        text = resultTitle,
+                                        color = accentColor,
+                                        style = MaterialTheme.typography.headlineLarge,
+                                        fontWeight = FontWeight.Black,
+                                        textAlign = TextAlign.Center,
+                                    )
+                                    outcome?.let {
+                                        Text(
+                                            text = it.summary,
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center,
+                                        )
+                                        Text(
+                                            text = it.reason,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            textAlign = TextAlign.Center,
+                                        )
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(18.dp))
+                            Surface(
+                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(18.dp),
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(5.dp),
+                                ) {
+                                    Text(
+                                        text("角色仍然隐藏", "ROLES ARE STILL HIDDEN"),
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Black,
+                                    )
+                                    Text(
+                                        text(
+                                            "确认所有玩家都准备好后，再揭晓真实角色和伪装角色。",
+                                            "Reveal only when every player is ready to see actual and shown characters.",
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        }
+                        Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                Button(
+                                    onClick = { rolesRevealed = true },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(54.dp),
+                                    shape = RoundedCornerShape(14.dp),
+                                ) {
+                                    Text(text("确认并揭晓全部角色", "Confirm and reveal all roles"), fontWeight = FontWeight.Bold)
+                                }
+                                TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                                    Text(text("暂不揭晓", "Not yet"))
+                                }
+                            }
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            item {
+                                Surface(
+                                    color = accentColor.copy(alpha = 0.12f),
+                                    shape = RoundedCornerShape(18.dp),
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(5.dp),
+                                    ) {
+                                        Text(resultTitle, color = accentColor, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                                        outcome?.let {
+                                            Text(it.summary, fontWeight = FontWeight.SemiBold)
+                                            Text(it.reason, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
+                                }
+                            }
+                            item {
+                                Text(
+                                    text("全部玩家与真实角色", "All players and actual roles"),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Black,
+                                )
+                            }
+                            items(cards) { card ->
+                                ClocktowerResultPlayerRow(
+                                    card = card,
+                                    cards = cards,
+                                    context = context,
+                                    language = language,
+                                )
+                            }
+                            if (confirmNewGame) {
+                                item {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.14f),
+                                        shape = RoundedCornerShape(18.dp),
+                                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.45f)),
+                                    ) {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        ) {
+                                            Text(
+                                                text("确认开始新游戏？", "Start a new game?"),
+                                                color = MaterialTheme.colorScheme.error,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Black,
+                                            )
+                                            Text(
+                                                text(
+                                                    "当前游戏存档和记录将被清除。",
+                                                    "The current saved game and its records will be cleared.",
+                                                ),
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                            Button(
+                                                onClick = onNewGame,
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(50.dp),
+                                                shape = RoundedCornerShape(14.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = MaterialTheme.colorScheme.error,
+                                                    contentColor = MaterialTheme.colorScheme.onError,
+                                                ),
+                                            ) {
+                                                Text(text("清除并开始新游戏", "Clear and start new game"), fontWeight = FontWeight.Bold)
+                                            }
+                                            TextButton(
+                                                onClick = { confirmNewGame = false },
+                                                modifier = Modifier.fillMaxWidth(),
+                                            ) {
+                                                Text(text("取消", "Cancel"))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                if (!confirmNewGame) {
+                                    OutlinedButton(
+                                        onClick = { confirmNewGame = true },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(50.dp),
+                                        shape = RoundedCornerShape(14.dp),
+                                    ) {
+                                        Text(text("结束收尾，开始新游戏", "Finish and start a new game"))
+                                    }
+                                }
+                                TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                                    Text(text("返回主持界面", "Back to host"))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerResultPlayerRow(
+    card: PlayerCard,
+    cards: List<PlayerCard>,
+    context: Context,
+    language: String,
+) {
+    val team = card.clocktowerTeam
+    val teamColor = when (team) {
+        ClocktowerTeam.Townsfolk -> Color(0xFF8FB6D6)
+        ClocktowerTeam.Outsider -> Color(0xFF9AAEC0)
+        ClocktowerTeam.Minion -> Color(0xFFD09A6A)
+        ClocktowerTeam.Demon -> Color(0xFFD96B70)
+        null -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    val actualRole = card.hostRoleLabel(context, GameKind.Clocktower)
+    val shownRole = card.clocktowerShownRole
+        ?.takeIf { card.clocktowerShownAsDifferentRole() }
+        ?.nameFor(language)
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(teamColor.copy(alpha = 0.17f), CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = (cards.indexOfFirst { it.name == card.name } + 1).toString(),
+                    color = teamColor,
+                    fontWeight = FontWeight.Black,
+                )
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
+                Text(card.name, fontWeight = FontWeight.Bold)
+                Text(
+                    text = listOfNotNull(team?.label(context), actualRole).joinToString(" · "),
+                    color = teamColor,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                shownRole?.let {
+                    Text(
+                        text = if (language == "en") "Shown to player: $it" else "对玩家展示为：$it",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+            Text(
+                text = card.eliminatedRound?.let {
+                    if (language == "en") "Dead · day $it" else "死亡 · 第 $it 天"
+                } ?: if (language == "en") "Alive" else "存活",
+                color = if (card.eliminatedRound == null) Color(0xFFA6D8BA) else MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+            )
         }
     }
 }

@@ -1,0 +1,137 @@
+:root {
+  color-scheme: dark;
+
+  /* Primitive palette */
+  --color-obsidian-950: #080a0d;
+  --color-obsidian-900: #0b0d10;
+  --color-obsidian-850: #101318;
+  --color-obsidian-800: #14171c;
+  --color-obsidian-750: #181c22;
+  --color-obsidian-700: #1b1f25;
+  --color-obsidian-650: #242930;
+  --color-ivory-100: #f7f1e6;
+  --color-ivory-200: #f1eadc;
+  --color-ivory-300: #ded5c5;
+  --color-stone-400: #aaa397;
+  --color-stone-500: #8c877f;
+  --color-stone-600: #716d66;
+  --color-brass-300: #ddc38d;
+  --color-brass-400: #c5a56a;
+  --color-brass-500: #a8874f;
+  --color-blood-400: #b54248;
+  --color-blood-500: #9c3035;
+  --color-blood-600: #772329;
+  --color-moss-400: #6fa085;
+  --color-moss-500: #5d8b72;
+  --color-slate-400: #7891a2;
+  --color-slate-500: #61798a;
+  --color-violet-400: #927ab4;
+
+  /* Semantic color */
+  --color-bg: var(--color-obsidian-900);
+  --color-bg-deep: var(--color-obsidian-950);
+  --color-surface-1: var(--color-obsidian-800);
+  --color-surface-2: var(--color-obsidian-700);
+  --color-surface-3: var(--color-obsidian-650);
+  --color-surface-raised: #20242b;
+  --color-text-primary: var(--color-ivory-200);
+  --color-text-strong: var(--color-ivory-100);
+  --color-text-secondary: var(--color-stone-400);
+  --color-text-muted: var(--color-stone-600);
+  --color-border: rgba(241, 234, 220, 0.12);
+  --color-border-strong: rgba(241, 234, 220, 0.22);
+  --color-focus: var(--color-brass-300);
+  --color-primary: var(--color-brass-400);
+  --color-primary-hover: var(--color-brass-300);
+  --color-primary-active: var(--color-brass-500);
+  --color-on-primary: #17120a;
+  --color-danger: var(--color-blood-500);
+  --color-danger-hover: var(--color-blood-400);
+  --color-danger-active: var(--color-blood-600);
+  --color-on-danger: var(--color-ivory-100);
+  --color-success: var(--color-moss-500);
+  --color-info: var(--color-slate-500);
+  --color-special: var(--color-violet-400);
+  --color-disabled-bg: #202329;
+  --color-disabled-text: #67645f;
+  --overlay-scrim: rgba(3, 4, 6, 0.78);
+
+  /* Typography */
+  --font-display: "Iowan Old Style", "Palatino Linotype", "Songti SC", "STSong",
+    "Noto Serif CJK SC", serif;
+  --font-body: "Inter", "SF Pro Text", "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  --font-mono: "SFMono-Regular", "Cascadia Code", "Roboto Mono", monospace;
+  --font-size-display: clamp(2rem, 9vw, 3.25rem);
+  --font-size-title: clamp(1.5rem, 6vw, 2rem);
+  --font-size-section: 1.125rem;
+  --font-size-body-lg: 1.125rem;
+  --font-size-body: 1rem;
+  --font-size-meta: 0.8125rem;
+  --line-height-display: 1.02;
+  --line-height-title: 1.15;
+  --line-height-body: 1.55;
+  --letter-spacing-display: -0.035em;
+  --letter-spacing-label: 0.08em;
+  --weight-regular: 400;
+  --weight-medium: 560;
+  --weight-semibold: 650;
+  --weight-bold: 760;
+
+  /* Spacing */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 2.5rem;
+  --space-8: 3rem;
+  --space-9: 4rem;
+
+  /* Shape and elevation */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+  --radius-pill: 999px;
+  --border-width: 1px;
+  --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.22);
+  --shadow-md: 0 18px 50px rgba(0, 0, 0, 0.34);
+  --shadow-gold: 0 10px 30px rgba(197, 165, 106, 0.16);
+
+  /* Controls and layout */
+  --control-height-sm: 2.75rem;
+  --control-height: 3.25rem;
+  --control-height-lg: 3.75rem;
+  --touch-target: 3rem;
+  --page-gutter: clamp(1rem, 4vw, 1.5rem);
+  --content-width: 72rem;
+  --reading-width: 42rem;
+  --mobile-preview-width: 24.375rem;
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+
+  /* Motion */
+  --motion-fast: 160ms;
+  --motion-normal: 220ms;
+  --motion-slow: 360ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Layers */
+  --z-sticky: 10;
+  --z-toast: 30;
+  --z-modal: 40;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-normal: 0ms;
+    --motion-slow: 0ms;
+  }
+}

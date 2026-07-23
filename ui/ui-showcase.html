@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0d10" />
+    <meta
+      name="description"
+      content="血染钟楼说书人助手的暗黑黄铜设计系统和移动端组件展示。"
+    />
+    <title>血染钟楼说书人助手｜UI 组件展示</title>
+    <link rel="stylesheet" href="./components.css" />
+  </head>
+  <body>
+    <div class="showcase-shell">
+      <header class="showcase-header">
+        <div class="version-row">
+          <span class="badge badge--protected">设计系统 0.1</span>
+          <span class="badge badge--alive">移动端优先</span>
+        </div>
+        <div class="showcase-header__copy">
+          <p class="eyebrow">Blood on the Clocktower · Storyteller UI</p>
+          <h1 class="display-title">暗黑黄铜剧院</h1>
+          <p class="lead">
+            高级、神秘、克制的夜间主持界面。气氛服务于判断速度，
+            让说书人在三秒内确认当前阶段、当前玩家和下一步操作。
+          </p>
+        </div>
+      </header>
+
+      <div class="showcase-grid">
+        <nav class="showcase-nav" aria-label="组件展示目录">
+          <a href="#principles">原则</a>
+          <a href="#colors">色彩</a>
+          <a href="#typography">字体</a>
+          <a href="#buttons">按钮</a>
+          <a href="#status">状态</a>
+          <a href="#players">玩家卡片</a>
+          <a href="#roles">角色卡</a>
+          <a href="#night-action">夜间行动</a>
+          <a href="#safe-display">玩家展示</a>
+          <a href="#feedback">反馈与异常</a>
+        </nav>
+
+        <main class="showcase-main">
+          <section class="showcase-section" id="principles">
+            <div class="section-heading">
+              <p class="eyebrow">Foundation</p>
+              <h2 class="section-title">交互原则</h2>
+              <p class="section-description">
+                所有组件都围绕暗光环境、单手持机、敏感信息保护和流程可恢复设计。
+              </p>
+            </div>
+            <ol class="principle-list">
+              <li>
+                <strong>效率优先</strong>
+                <span>一个页面只突出一个主任务。</span>
+              </li>
+              <li>
+                <strong>状态持续可见</strong>
+                <span>天数、阶段、玩家与进度不会随滚动消失。</span>
+              </li>
+              <li>
+                <strong>不只依赖颜色</strong>
+                <span>图标、文字和颜色共同表达状态。</span>
+              </li>
+              <li>
+                <strong>保护隐藏信息</strong>
+                <span>玩家展示模式只渲染对方可见内容。</span>
+              </li>
+              <li>
+                <strong>危险操作可辨认</strong>
+                <span>处决和结束游戏使用独立危险语义。</span>
+              </li>
+              <li>
+                <strong>错误可以恢复</strong>
+                <span>返回、撤销、记录和恢复入口始终明确。</span>
+              </li>
+            </ol>
+          </section>
+
+          <section class="showcase-section" id="colors">
+            <div class="section-heading">
+              <p class="eyebrow">Color</p>
+              <h2 class="section-title">语义色彩</h2>
+              <p class="section-description">
+                深黑和炭灰承载长时间操作；黄铜用于当前步骤，暗红只用于危险与邪恶。
+              </p>
+            </div>
+            <div class="swatch-grid">
+              <article class="swatch">
+                <div class="swatch__color" style="--swatch: var(--color-bg)"></div>
+                <div class="swatch__label">
+                  <strong>页面背景</strong>
+                  <code>#0B0D10</code>
+                </div>
+              </article>
+              <article class="swatch">
+                <div class="swatch__color" style="--swatch: var(--color-surface-1)"></div>
+                <div class="swatch__label">
+                  <strong>一级表面</strong>
+                  <code>#14171C</code>
+                </div>
+              </article>
+              <article class="swatch">
+                <div class="swatch__color" style="--swatch: var(--color-primary)"></div>
+                <div class="swatch__label">
+                  <strong>黄铜主色</strong>
+                  <code>#C5A56A</code>
+                </div>
+              </article>
+              <article class="swatch">
+                <div class="swatch__color" style="--swatch: var(--color-danger)"></div>
+                <div class="swatch__label">
+                  <strong>危险暗红</strong>
+                  <code>#9C3035</code>
+                </div>
+              </article>
+              <article class="swatch">
+                <div class="swatch__color" style="--swatch: var(--color-text-primary)"></div>
+                <div class="swatch__label">
+                  <strong>主要文字</strong>
+                  <code>#F1EADC</code>
+                </div>
+              </article>
+              <article class="swatch">
+                <div class="swatch__color" style="--swatch: var(--color-text-secondary)"></div>
+                <div class="swatch__label">
+                  <strong>次要文字</strong>
+                  <code>#AAA397</code>
+                </div>
+              </article>
+              <article class="swatch">
+                <div class="swatch__color" style="--swatch: var(--color-success)"></div>
+                <div class="swatch__label">
+                  <strong>存活与成功</strong>
+                  <code>#5D8B72</code>
+                </div>
+              </article>
+              <article class="swatch">
+                <div class="swatch__color" style="--swatch: var(--color-info)"></div>
+                <div class="swatch__label">
+                  <strong>信息蓝灰</strong>
+                  <code>#61798A</code>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="showcase-section" id="typography">
+            <div class="section-heading">
+              <p class="eyebrow">Typography</p>
+              <h2 class="section-title">字体层级</h2>
+              <p class="section-description">
+                标题使用克制的衬线字体营造仪式感，正文和操作使用清晰的系统无衬线字体。
+              </p>
+            </div>
+            <div class="specimen">
+              <div class="type-sample">
+                <span class="type-sample__meta">Display · 32–52</span>
+                <span class="type-display">夜幕降临</span>
+              </div>
+              <div class="type-sample">
+                <span class="type-sample__meta">Page title · 24–32</span>
+                <span class="type-page-title">第 1 夜</span>
+              </div>
+              <div class="type-sample">
+                <span class="type-sample__meta">Section · 18</span>
+                <span class="type-section">选择中毒目标</span>
+              </div>
+              <div class="type-sample">
+                <span class="type-sample__meta">Body · 16</span>
+                <span class="type-body">唤醒 6 号 Jay，让他选择一名仍然存活的玩家。</span>
+              </div>
+              <div class="type-sample">
+                <span class="type-sample__meta">Meta · 13</span>
+                <span class="type-meta">步骤 3 / 6 · 投毒者</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="showcase-section" id="buttons">
+            <div class="section-heading">
+              <p class="eyebrow">Actions</p>
+              <h2 class="section-title">按钮</h2>
+              <p class="section-description">
+                每页最多一个黄铜色主按钮；危险操作使用暗红，并且需要确认。
+              </p>
+            </div>
+            <div class="specimen-grid">
+              <article class="specimen">
+                <h3 class="specimen-title">主要层级</h3>
+                <div class="stack">
+                  <button class="btn btn--primary" type="button">确认并继续</button>
+                  <button class="btn btn--secondary" type="button">返回上一步</button>
+                  <button class="btn btn--text" type="button">查看详细规则</button>
+                </div>
+              </article>
+              <article class="specimen">
+                <h3 class="specimen-title">危险与不可用</h3>
+                <div class="stack">
+                  <button class="btn btn--danger" type="button" data-open-dialog>
+                    确认处决
+                  </button>
+                  <button class="btn btn--primary" type="button" disabled>
+                    请先选择目标
+                  </button>
+                  <button
+                    class="btn btn--secondary btn--icon"
+                    type="button"
+                    aria-label="关闭"
+                  >
+                    ×
+                  </button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="showcase-section" id="status">
+            <div class="section-heading">
+              <p class="eyebrow">Status</p>
+              <h2 class="section-title">状态标签</h2>
+              <p class="section-description">
+                标签同时使用文字、圆点和颜色，适用于玩家列表、历史记录和行动结果。
+              </p>
+            </div>
+            <div class="specimen">
+              <div class="cluster">
+                <span class="badge badge--alive">存活</span>
+                <span class="badge badge--dead">死亡</span>
+                <span class="badge badge--poisoned">中毒</span>
+                <span class="badge badge--drunk">醉酒</span>
+                <span class="badge badge--protected">受保护</span>
+                <span class="badge badge--danger">待处决</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="showcase-section" id="players">
+            <div class="section-heading">
+              <p class="eyebrow">Players</p>
+              <h2 class="section-title">玩家卡片</h2>
+              <p class="section-description">
+                座位号与姓名是第一层级；真实身份只在说书人需要时显示。
+              </p>
+            </div>
+            <div class="specimen-grid">
+              <article class="player-card player-card--selected">
+                <span class="seat-token">4</span>
+                <div class="player-card__body">
+                  <p class="player-card__name">Tim</p>
+                  <p class="player-card__meta">小恶魔 · 存活</p>
+                </div>
+                <span class="status-icon" aria-label="已选择">✓</span>
+              </article>
+              <article class="player-card">
+                <span class="seat-token">6</span>
+                <div class="player-card__body">
+                  <p class="player-card__name">Jay</p>
+                  <p class="player-card__meta">投毒者 · 中毒目标未选择</p>
+                </div>
+                <span class="badge badge--poisoned">中毒</span>
+              </article>
+              <article class="player-card player-card--dead">
+                <span class="seat-token">1</span>
+                <div class="player-card__body">
+                  <p class="player-card__name">William</p>
+                  <p class="player-card__meta">守鸦人 · 保留亡者票</p>
+                </div>
+                <span class="badge badge--dead">死亡</span>
+              </article>
+              <article class="player-card">
+                <span class="seat-token">5</span>
+                <div class="player-card__body">
+                  <p class="player-card__name">Shan Shan</p>
+                  <p class="player-card__meta">身份默认隐藏</p>
+                </div>
+                <span class="badge badge--protected">保护</span>
+              </article>
+            </div>
+          </section>
+
+          <section class="showcase-section" id="roles">
+            <div class="section-heading">
+              <p class="eyebrow">Roles</p>
+              <h2 class="section-title">角色卡片</h2>
+              <p class="section-description">
+                阵营、角色名和能力说明保持稳定结构；邪恶阵营不只依靠红色识别。
+              </p>
+            </div>
+            <div class="specimen-grid">
+              <article class="role-card" data-team="镇民 · 好人">
+                <h3 class="role-card__name">调查员</h3>
+                <p class="role-card__ability">
+                  首夜得知两名玩家，其中一位是特定爪牙。
+                </p>
+              </article>
+              <article class="role-card role-card--evil" data-team="恶魔 · 邪恶">
+                <h3 class="role-card__name">小恶魔</h3>
+                <p class="role-card__ability">
+                  每晚选择一名玩家死亡；可选择自己以传位给爪牙。
+                </p>
+              </article>
+            </div>
+          </section>
+
+          <section class="showcase-section" id="night-action">
+            <div class="section-heading">
+              <p class="eyebrow">Critical flow</p>
+              <h2 class="section-title">夜间行动面板</h2>
+              <p class="section-description">
+                核心信息在单屏内完成，阶段栏和操作栏保持可见，完整魔典不会出现在玩家展示路径中。
+              </p>
+            </div>
+            <div class="specimen specimen--full">
+              <div class="mobile-stage">
+                <div class="mobile-stage__content">
+                  <header class="stage-bar">
+                    <div>
+                      <p class="stage-bar__phase">第 1 夜</p>
+                      <p class="stage-bar__meta">当前阶段 · 投毒者</p>
+                    </div>
+                    <span class="stage-progress">3 / 6</span>
+                  </header>
+
+                  <div class="night-action">
+                    <p class="action-kicker">当前玩家</p>
+                    <h3 class="action-title">唤醒 6号 Jay</h3>
+                    <div class="instruction-card">
+                      <p class="instruction-card__label">本步操作</p>
+                      <p>让他选择一名仍然存活的玩家作为今晚的中毒目标。</p>
+                    </div>
+                    <div>
+                      <p class="type-section">选择中毒目标</p>
+                      <div class="choice-grid" data-choice-group>
+                        <button class="choice" type="button" aria-pressed="false">1号 William</button>
+                        <button class="choice" type="button" aria-pressed="false">2号 Maggie</button>
+                        <button class="choice" type="button" aria-pressed="false">3号 Yan</button>
+                        <button class="choice" type="button" aria-pressed="true">4号 Tim</button>
+                      </div>
+                    </div>
+                    <button class="btn btn--text" type="button">展开详细规则</button>
+                  </div>
+
+                  <footer class="bottom-actions">
+                    <button class="btn btn--secondary" type="button">上一步</button>
+                    <button class="btn btn--primary" type="button">确认并继续</button>
+                  </footer>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="showcase-section" id="safe-display">
+            <div class="section-heading">
+              <p class="eyebrow">Privacy</p>
+              <h2 class="section-title">给玩家的安全展示</h2>
+              <p class="section-description">
+                只显示目标玩家应看到的内容；候选座位带“号”标识，退出操作保持清晰可见。
+              </p>
+            </div>
+            <div class="specimen specimen--full">
+              <article class="safe-display">
+                <p class="safe-display__label">调查员信息 · 玩家可见</p>
+                <div class="safe-display__answer">
+                  <h3 class="safe-display__role">猩红女郎</h3>
+                  <p class="safe-display__instruction">在下面两位玩家之中</p>
+                  <div class="seat-pair" aria-label="候选玩家">
+                    <span>5号</span>
+                    <span>2号</span>
+                  </div>
+                </div>
+                <button class="btn btn--secondary safe-display__close" type="button">
+                  关闭展示并返回
+                </button>
+              </article>
+            </div>
+          </section>
+
+          <section class="showcase-section" id="feedback">
+            <div class="section-heading">
+              <p class="eyebrow">Feedback</p>
+              <h2 class="section-title">反馈、空状态与错误</h2>
+              <p class="section-description">
+                完成、错误和恢复都有即时反馈，不让主持人猜测操作是否成功。
+              </p>
+            </div>
+            <div class="specimen-grid specimen-grid--three">
+              <article class="state-card">
+                <span class="state-symbol" aria-hidden="true">○</span>
+                <h3>暂无游戏记录</h3>
+                <p>完成或跳过步骤后，记录会出现在这里。</p>
+              </article>
+              <article class="state-card state-card--error">
+                <span class="state-symbol" aria-hidden="true">!</span>
+                <h3>状态保存失败</h3>
+                <p>当前操作尚未丢失，请重新尝试保存。</p>
+                <button class="btn btn--secondary" type="button">重新尝试</button>
+              </article>
+              <article class="state-card">
+                <span class="spinner" role="status" aria-label="正在恢复游戏"></span>
+                <h3>正在恢复游戏</h3>
+                <p>第 2 夜 · 投毒者步骤</p>
+              </article>
+            </div>
+            <div class="specimen-grid" style="margin-top: var(--space-4)">
+              <article class="specimen">
+                <h3 class="specimen-title">Toast</h3>
+                <button class="btn btn--secondary" type="button" data-show-toast>
+                  显示完成反馈
+                </button>
+              </article>
+              <article class="specimen">
+                <h3 class="specimen-title">危险确认弹窗</h3>
+                <button class="btn btn--danger" type="button" data-open-dialog>
+                  打开处决确认
+                </button>
+              </article>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <footer class="showcase-footer">
+        <span>血染钟楼说书人助手 · UI Design System 0.1</span>
+        <span>验收视口：375 × 812 / 390 × 844</span>
+      </footer>
+    </div>
+
+    <div class="dialog-backdrop" data-dialog hidden>
+      <section
+        class="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="execution-dialog-title"
+        aria-describedby="execution-dialog-description"
+      >
+        <span class="dialog__icon" aria-hidden="true">!</span>
+        <h3 id="execution-dialog-title">确认处决 1号 William？</h3>
+        <p id="execution-dialog-description">
+          该玩家将被标记为死亡，并立即进行胜负条件检查。
+        </p>
+        <div class="dialog__actions">
+          <button class="btn btn--secondary" type="button" data-close-dialog>
+            返回白天
+          </button>
+          <button class="btn btn--danger" type="button" data-confirm-dialog>
+            确认处决
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <div class="toast" role="status" aria-live="polite" data-toast hidden>
+      <span class="toast__icon" aria-hidden="true">✓</span>
+      <p>投毒者步骤已完成，正在进入下一步。</p>
+      <button class="btn btn--text btn--icon" type="button" data-close-toast aria-label="关闭通知">
+        ×
+      </button>
+    </div>
+
+    <script src="./ui-showcase.js"></script>
+  </body>
+</html>
