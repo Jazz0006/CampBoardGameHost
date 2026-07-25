@@ -249,6 +249,23 @@ private data class SavedGamePreview(
     val savedAtLabel: String?,
 )
 
+private data class ArchivedGameReview(
+    val id: Long,
+    val archivedAtMillis: Long,
+    val gameKind: GameKind,
+    val round: Int,
+    val cards: List<PlayerCard>,
+    val records: List<EliminationRecord>,
+    val events: List<ClocktowerEvent>,
+    val outcome: GameOutcome?,
+)
+
+private enum class HostToolTab {
+    Roles,
+    Records,
+    History,
+}
+
 internal enum class ClocktowerTeam {
     Townsfolk,
     Outsider,
@@ -365,7 +382,9 @@ private const val PREFS_NAME = "camp_board_game_host"
 private const val COMMON_PLAYERS_KEY = "common_players"
 private const val LANGUAGE_MODE_KEY = "language_mode"
 private const val ACTIVE_GAME_STATE_KEY = "active_game_state"
+private const val GAME_HISTORY_KEY = "game_history"
 private const val ACTIVE_GAME_STATE_VERSION = 1
+private const val MAX_GAME_HISTORY = 20
 private const val MIN_PLAYERS = 3
 private const val MIN_WEREWOLF_PLAYERS = 4
 private const val MIN_CLOCKTOWER_PLAYERS = 5
@@ -498,6 +517,56 @@ private fun JSONArray.toStringList(): List<String> = buildList {
 private fun clocktowerRoleByName(enName: String?): ClocktowerRole? {
     if (enName.isNullOrBlank()) return null
     return completeClocktowerRoles.firstOrNull { it.enName == enName }
+}
+
+private fun archivedGameReviewFromJson(entry: JSONObject): ArchivedGameReview? {
+    val snapshot = entry.optJSONObject("snapshot") ?: return null
+    val gameKind = enumByName<GameKind>(snapshot.optNullableString("currentGameKind")) ?: return null
+    val cards = snapshot.optJSONArray("cards")?.toPlayerCards().orEmpty()
+    if (cards.isEmpty()) return null
+    return ArchivedGameReview(
+        id = entry.optLong("id", entry.optLong("archivedAtMillis", 0L)),
+        archivedAtMillis = entry.optLong("archivedAtMillis", 0L),
+        gameKind = gameKind,
+        round = snapshot.optInt("round", 1).coerceAtLeast(1),
+        cards = cards,
+        records = snapshot.optJSONArray("records")?.toEliminationRecords().orEmpty(),
+        events = snapshot.optJSONArray("clocktowerEvents")?.toClocktowerEvents().orEmpty(),
+        outcome = gameOutcomeFromJson(snapshot.optJSONObject("gameOutcome")),
+    )
+}
+
+private fun Context.loadGameHistory(): List<ArchivedGameReview> {
+    val raw = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .getString(GAME_HISTORY_KEY, null)
+        ?: return emptyList()
+    return runCatching {
+        val array = JSONArray(raw)
+        buildList {
+            for (index in 0 until array.length()) {
+                array.optJSONObject(index)?.let { archivedGameReviewFromJson(it)?.let(::add) }
+            }
+        }
+    }.getOrDefault(emptyList())
+}
+
+private fun Context.archiveGame(snapshot: JSONObject): List<ArchivedGameReview> {
+    if (snapshot.optJSONArray("cards")?.length() == 0) return loadGameHistory()
+    val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val existing = runCatching { JSONArray(prefs.getString(GAME_HISTORY_KEY, "[]")) }.getOrDefault(JSONArray())
+    val archivedAt = System.currentTimeMillis()
+    val next = JSONArray().apply {
+        put(JSONObject().apply {
+            put("id", archivedAt)
+            put("archivedAtMillis", archivedAt)
+            put("snapshot", JSONObject(snapshot.toString()))
+        })
+        for (index in 0 until minOf(existing.length(), MAX_GAME_HISTORY - 1)) {
+            existing.optJSONObject(index)?.let(::put)
+        }
+    }
+    prefs.edit().putString(GAME_HISTORY_KEY, next.toString()).commit()
+    return loadGameHistory()
 }
 
 private fun PlayerCard.toJson(): JSONObject = JSONObject().apply {
@@ -884,6 +953,10 @@ private fun CampBoardGameHostApp() {
     var screen by remember { mutableStateOf(Screen.Setup) }
     var currentGameKind by remember { mutableStateOf(GameKind.Undercover) }
     var savedGamePreview by remember(context) { mutableStateOf(baseContext.loadSavedGamePreview(context)) }
+    var gameHistory by remember { mutableStateOf(baseContext.loadGameHistory()) }
+    var showHostTools by remember { mutableStateOf(false) }
+    var hostToolTab by remember { mutableStateOf(HostToolTab.Roles) }
+    var showNewGameConfirmation by remember { mutableStateOf(false) }
     var undercoverCount by remember { mutableStateOf(1) }
     var includeBlank by remember { mutableStateOf(false) }
     var werewolfCount by remember { mutableStateOf(1) }
@@ -1455,6 +1528,19 @@ private fun CampBoardGameHostApp() {
         resetDealState(GameKind.Clocktower, script)
     }
 
+    fun archiveAndStartNewGame() {
+        if (cards.isEmpty()) return
+        gameHistory = baseContext.archiveGame(activeGameSnapshotJson())
+        showNewGameConfirmation = false
+        showHostTools = false
+        showResults = false
+        when (currentGameKind) {
+            GameKind.Undercover -> startUndercoverGame()
+            GameKind.Werewolf -> startWerewolfGame()
+            GameKind.Clocktower -> startClocktowerGame()
+        }
+    }
+
     fun setClocktowerActualRole(playerName: String, nextRole: ClocktowerRole) {
         val index = cards.indexOfFirst { it.name == playerName }
         if (index >= 0) {
@@ -1535,7 +1621,23 @@ private fun CampBoardGameHostApp() {
                     .background(MaterialTheme.colorScheme.background),
                 color = MaterialTheme.colorScheme.background,
             ) {
-                when (screen) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    if (
+                        !showResults && (
+                            screen == Screen.WerewolfJudge ||
+                            screen == Screen.ClocktowerJudge ||
+                            screen == Screen.Game
+                        )
+                    ) {
+                        HostToolsTopBar(
+                            onOpen = {
+                                hostToolTab = HostToolTab.Roles
+                                showHostTools = true
+                            },
+                        )
+                    }
+                    Box(modifier = Modifier.weight(1f)) {
+                        when (screen) {
                     Screen.Setup -> SetupScreen(
                     playerCount = playerCount,
                     savedGamePreview = savedGamePreview,
@@ -1746,23 +1848,6 @@ private fun CampBoardGameHostApp() {
                                 reason = context.getString(R.string.outcome_manual_reason),
                             )
                             showResults = true
-                        },
-                        onNewGame = {
-                            clearSavedGameState()
-                            screen = Screen.Setup
-                            cards.clear()
-                            records.clear()
-                            gameOutcome = null
-                            lastWordsPromptNames = emptyList()
-                            pendingNightDeath = null
-                            seerCheckTarget = null
-                            witchSaveUsed = false
-                            witchPoisonUsed = false
-                            witchSavedTonight = false
-                            witchPoisonTarget = null
-                            hunterShotTarget = null
-                            selectedDayExile = null
-                            werewolfJudgeStepIndex = 0
                         },
                     )
 
@@ -2026,6 +2111,7 @@ private fun CampBoardGameHostApp() {
                                     clocktowerPhase = ClocktowerPhase.Night
                                     resetClocktowerDayFlow()
                                     resetClocktowerNightFlow()
+                                    clocktowerNightStartedState.value = true
                                 }
                                 clocktowerSelectedExecution = null
                             } else {
@@ -2118,6 +2204,7 @@ private fun CampBoardGameHostApp() {
                                 clocktowerPhase = ClocktowerPhase.Night
                                 resetClocktowerDayFlow()
                                 resetClocktowerNightFlow()
+                                clocktowerNightStartedState.value = true
                             }
                             clocktowerSelectedExecution = null
                         },
@@ -2277,39 +2364,6 @@ private fun CampBoardGameHostApp() {
                             showResults = true
                             addOutcomeEvent(gameOutcome)
                         },
-                        onNewGame = {
-                            clearSavedGameState()
-                            screen = Screen.Setup
-                            cards.clear()
-                            records.clear()
-                            gameOutcome = null
-                            clocktowerPhase = ClocktowerPhase.FirstNight
-                            currentClocktowerScript = ClocktowerScript.TroubleBrewing
-                            clocktowerPendingNightDeath = null
-                            clocktowerSelectedExecution = null
-                            clocktowerPoisonTarget = null
-                            clocktowerFortuneTellerFirst = null
-                            clocktowerFortuneTellerSecond = null
-                            clocktowerChambermaidFirst = null
-                            clocktowerChambermaidSecond = null
-                            clocktowerRavenkeeperTarget = null
-                            clocktowerRedHerring = null
-                            clocktowerButlerMaster = null
-                            clocktowerMonkProtectedTarget = null
-                            clocktowerMayorRedirectTarget = null
-                            clocktowerPendingNewDemonName = null
-                            clocktowerVirginUsed = false
-                            clocktowerSlayerUsed = false
-                            clocktowerSlayerClaimedNames = emptyList()
-                            clocktowerArtistUsed = false
-                            clocktowerArtistClaimedNames = emptyList()
-                            clocktowerArtistClaimantName = null
-                            clocktowerLastExecutedName = null
-                            clocktowerPendingKlutzName = null
-                            clocktowerKlutzChoiceName = null
-                            clocktowerKlutzReturnToDawn = false
-                            resetClocktowerFlow()
-                        },
                     )
 
                     Screen.Game -> GameScreen(
@@ -2344,14 +2398,9 @@ private fun CampBoardGameHostApp() {
                         )
                         showResults = true
                     },
-                    onNewGame = {
-                        clearSavedGameState()
-                        screen = Screen.Setup
-                        cards.clear()
-                        records.clear()
-                        gameOutcome = null
-                    },
                 )
+                        }
+                    }
                 }
 
                 if (showResults) {
@@ -2360,15 +2409,12 @@ private fun CampBoardGameHostApp() {
                             cards = cards,
                             outcome = gameOutcome,
                             onDismiss = { showResults = false },
-                            onNewGame = {
-                                clearSavedGameState()
+                            onReview = {
                                 showResults = false
-                                gameOutcome = null
-                                screen = Screen.Setup
-                                cards.clear()
-                                records.clear()
-                                resetClocktowerFlow()
+                                hostToolTab = HostToolTab.Records
+                                showHostTools = true
                             },
+                            onNewGame = { showNewGameConfirmation = true },
                         )
                     } else {
                         ResultsDialog(
@@ -2376,17 +2422,38 @@ private fun CampBoardGameHostApp() {
                             cards = cards,
                             outcome = gameOutcome,
                             onDismiss = { showResults = false },
-                            onNewGame = {
-                                clearSavedGameState()
+                            onReview = {
                                 showResults = false
-                                gameOutcome = null
-                                screen = Screen.Setup
-                                cards.clear()
-                                records.clear()
-                                resetClocktowerFlow()
+                                hostToolTab = HostToolTab.Records
+                                showHostTools = true
                             },
+                            onNewGame = { showNewGameConfirmation = true },
                         )
                     }
+                }
+
+                if (showHostTools) {
+                    HostGameToolsDialog(
+                        gameKind = currentGameKind,
+                        cards = cards,
+                        records = records,
+                        events = clocktowerEvents,
+                        history = gameHistory,
+                        initialTab = hostToolTab,
+                        onDismiss = { showHostTools = false },
+                        onNewGame = {
+                            showHostTools = false
+                            showNewGameConfirmation = true
+                        },
+                    )
+                }
+
+                if (showNewGameConfirmation) {
+                    NewGameConfirmationDialog(
+                        gameKind = currentGameKind,
+                        onDismiss = { showNewGameConfirmation = false },
+                        onConfirm = ::archiveAndStartNewGame,
+                    )
                 }
             }
         }
@@ -2556,6 +2623,7 @@ private fun SetupScreen(
                         )
                     }
                 }
+
             }
 
             savedGamePreview?.let { preview ->
@@ -2695,6 +2763,7 @@ private fun SetupScreen(
                         )
                     }
                 }
+
             }
         }
     }
@@ -3531,12 +3600,10 @@ private fun ClocktowerSettingsScreen(
     val showScriptChoice = playerCount in 5..6
     val effectiveScript = if (showScriptChoice) selectedScript else ClocktowerScript.TroubleBrewing
     val canStart = playerCount >= MIN_CLOCKTOWER_PLAYERS && canStartClocktowerScript(effectiveScript)
-    val rolesByTeam = clocktowerRolesForScript(effectiveScript).groupBy { it.team }
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val stepTitles = listOf(
         text("确认玩家", "Confirm players"),
         text("选择剧本", "Choose script"),
-        text("角色配置", "Role setup"),
         text("开局确认", "Final review"),
     )
 
@@ -3567,13 +3634,13 @@ private fun ClocktowerSettingsScreen(
                             letterSpacing = 1.2.sp,
                         )
                         Text(
-                            text = "${step + 1} / 4",
+                            text = "${step + 1} / 3",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.labelLarge,
                         )
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        repeat(4) { index ->
+                        repeat(3) { index ->
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -3595,7 +3662,6 @@ private fun ClocktowerSettingsScreen(
                         text = when (step) {
                             0 -> text("核对围桌顺序。座位号将用于整局主持。", "Check the seating order. Seat numbers stay with the game.")
                             1 -> text("剧本决定本局可出现的角色和夜间流程。", "The script defines the character pool and night order.")
-                            2 -> text("系统会按官方人数分布自动抽取角色。", "Characters are drawn automatically using the standard distribution.")
                             else -> text("最后核对一次；开始后将进入逐人发牌。", "Review everything once more before dealing begins.")
                         },
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -3724,80 +3790,6 @@ private fun ClocktowerSettingsScreen(
                     }
                 }
 
-                2 -> item {
-                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                        Card(
-                            shape = RoundedCornerShape(22.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(18.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                Text(text("本局阵营分布", "Team distribution"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                ClocktowerTeam.entries.forEach { team ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        Text(team.label(context), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text(
-                                            text = (distribution[team] ?: 0).toString(),
-                                            color = MaterialTheme.colorScheme.primary,
-                                            style = MaterialTheme.typography.titleLarge,
-                                            fontWeight = FontWeight.Black,
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        Card(
-                            shape = RoundedCornerShape(22.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(18.dp),
-                                verticalArrangement = Arrangement.spacedBy(14.dp),
-                            ) {
-                                Text(text("剧本角色池", "Script character pool"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                ClocktowerTeam.entries.forEach { team ->
-                                    val roles = rolesByTeam[team].orEmpty()
-                                    if (roles.isNotEmpty()) {
-                                        Text(
-                                            text = "${team.label(context)} · ${roles.size}",
-                                            color = MaterialTheme.colorScheme.primary,
-                                            style = MaterialTheme.typography.labelLarge,
-                                            fontWeight = FontWeight.Bold,
-                                        )
-                                        FlowRow(
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                                        ) {
-                                            roles.forEach { role ->
-                                                Surface(
-                                                    color = MaterialTheme.colorScheme.surfaceVariant,
-                                                    shape = RoundedCornerShape(50),
-                                                ) {
-                                                    Text(
-                                                        text = role.nameFor(language),
-                                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
                 else -> item {
                     Card(
                         shape = RoundedCornerShape(22.dp),
@@ -3836,16 +3828,16 @@ private fun ClocktowerSettingsScreen(
             item {
                 Button(
                     onClick = {
-                        if (step < 3) step += 1 else onStart()
+                        if (step < 2) step += 1 else onStart()
                     },
-                    enabled = if (step == 3) canStart else true,
+                    enabled = if (step == 2) canStart else true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
                     shape = RoundedCornerShape(14.dp),
                 ) {
                     Text(
-                        text = if (step < 3) {
+                        text = if (step < 2) {
                             text("下一步", "Continue")
                         } else if (canStart) {
                             stringResource(R.string.start_dealing)
@@ -4135,7 +4127,6 @@ private fun WerewolfJudgeScreen(
     onConfirmDayExile: () -> Unit,
     onDismissLastWordsPrompt: () -> Unit,
     onShowResults: () -> Unit,
-    onNewGame: () -> Unit,
 ) {
     val steps = buildList {
         add(WerewolfJudgeStep.Wolves)
@@ -4183,9 +4174,6 @@ private fun WerewolfJudgeScreen(
                         gameOutcome?.title ?: stringResource(R.string.werewolf_night_format, nightNumber),
                         color = Color(0xFF5C6A63),
                     )
-                }
-                TextButton(onClick = onNewGame) {
-                    Text(stringResource(R.string.new_game))
                 }
             }
         }
@@ -4546,7 +4534,7 @@ private fun ClocktowerDarkTheme(content: @Composable () -> Unit) {
             onSurface = Color(0xFFF1EADC),
             surfaceVariant = Color(0xFF1B1F25),
             onSurfaceVariant = Color(0xFFAAA397),
-            error = Color(0xFF9C3035),
+            error = Color(0xFFC9574A),
             onError = Color(0xFFF7F1E6),
         ),
         typography = typography,
@@ -6345,7 +6333,6 @@ private fun ClocktowerJudgeScreen(
     onConfirmDay: () -> Unit,
     onConfirmNight: () -> Unit,
     onShowResults: () -> Unit,
-    onNewGame: () -> Unit,
 ) {
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
@@ -8158,7 +8145,39 @@ private fun ClocktowerJudgeScreen(
         return
     }
 
-    if ((phase == ClocktowerPhase.FirstNight || phase == ClocktowerPhase.Night) && nightStarted && nightSteps.isNotEmpty()) {
+    if (phase == ClocktowerPhase.FirstNight && !nightStarted) {
+        ClocktowerStorytellerRecommendationScreen(
+            onStartNight = { nightStarted = true },
+        ) {
+            StorytellerRecommendationCard(
+                state = recommendationUiState,
+                selectedStyle = selectedRecommendationStyle,
+                appliedStyle = appliedRecommendationStyle,
+                cards = cards,
+                script = script,
+                language = language,
+                lockedDecisions = lockedRecommendationDecisions,
+                onSelectStyle = { selectedRecommendationStyle = it },
+                onApply = { plan ->
+                    onApplyRecommendation(plan)
+                    appliedRecommendationStyle = plan.style
+                },
+                onReevaluate = { nextLockedDecisions ->
+                    lockedRecommendationDecisions = nextLockedDecisions
+                    selectedRecommendationStyle = RecommendationStyle.BALANCED
+                    appliedRecommendationStyle = null
+                },
+                onClearLocks = {
+                    lockedRecommendationDecisions = emptyList()
+                    selectedRecommendationStyle = RecommendationStyle.BALANCED
+                },
+            )
+        }
+        return
+    }
+
+    val nightFlowActive = nightStarted || phase == ClocktowerPhase.Night
+    if ((phase == ClocktowerPhase.FirstNight || phase == ClocktowerPhase.Night) && nightFlowActive && nightSteps.isNotEmpty()) {
         val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
         val currentStep = nightSteps[currentStepIndex]
         val selectedNightName = when (currentStep.action) {
@@ -8359,61 +8378,11 @@ private fun ClocktowerJudgeScreen(
                     Text(stringResource(R.string.clocktower_judge_assistant), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     Text(gameOutcome?.title ?: phaseTitle, color = Color(0xFF5C6A63))
                 }
-                TextButton(onClick = onNewGame) {
-                    Text(stringResource(R.string.new_game))
-                }
-            }
-        }
-
-        if (phase == ClocktowerPhase.FirstNight && !nightStarted) {
-            item {
-                StorytellerRecommendationCard(
-                    state = recommendationUiState,
-                    selectedStyle = selectedRecommendationStyle,
-                    appliedStyle = appliedRecommendationStyle,
-                    cards = cards,
-                    script = script,
-                    language = language,
-                    lockedDecisions = lockedRecommendationDecisions,
-                    onSelectStyle = { selectedRecommendationStyle = it },
-                    onApply = { plan ->
-                        onApplyRecommendation(plan)
-                        appliedRecommendationStyle = plan.style
-                    },
-                    onReevaluate = { nextLockedDecisions ->
-                        lockedRecommendationDecisions = nextLockedDecisions
-                        selectedRecommendationStyle = RecommendationStyle.BALANCED
-                        appliedRecommendationStyle = null
-                    },
-                    onClearLocks = {
-                        lockedRecommendationDecisions = emptyList()
-                        selectedRecommendationStyle = RecommendationStyle.BALANCED
-                    },
-                )
             }
         }
 
         if (phase == ClocktowerPhase.FirstNight || phase == ClocktowerPhase.Night) {
-            if (!nightStarted) {
-                item {
-                    HostScriptCard(
-                        title = "夜晚即将开始",
-                        script = "所有人请闭眼。",
-                        action = "如果需要唤醒某位玩家，轻拍他。不要泄露信息而被其他玩家察觉。",
-                    ) {
-                        Button(
-                            onClick = {
-                                nightStarted = true
-                            },
-                            enabled = gameOutcome == null,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                        ) {
-                            Text("开始夜晚流程")
-                        }
-                    }
-                }
-            } else {
+            if (nightStarted) {
                 val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
                 val currentStep = nightSteps[currentStepIndex]
                 item {
@@ -9092,9 +9061,6 @@ private fun ClocktowerJudgeScreen(
                     Text(stringResource(R.string.clocktower_judge_assistant), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                     Text(gameOutcome?.title ?: phaseTitle, color = Color(0xFF5C6A63))
                 }
-                TextButton(onClick = onNewGame) {
-                    Text(stringResource(R.string.new_game))
-                }
             }
         }
 
@@ -9582,6 +9548,89 @@ private fun EvilInfoDisplay(
     }
 }
 
+@Composable
+private fun ClocktowerStorytellerRecommendationScreen(
+    onStartNight: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+
+    ClocktowerDarkTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+        ) {
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text("说书人开局准备", "STORYTELLER SETUP"),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.2.sp,
+                    )
+                    Text(
+                        text("首夜裁定推荐", "First-night recommendations"),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Black,
+                    )
+                    Text(
+                        text(
+                            "这是说书人私密页面。确认推荐与裁定后，直接进入首夜流程。",
+                            "This is a private Storyteller screen. Review the plan, then begin the first night.",
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                item {
+                    Surface(
+                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.10f),
+                        shape = RoundedCornerShape(16.dp),
+                    ) {
+                        Text(
+                            text(
+                                "不要向玩家展示推荐、真实角色或说书人裁定。",
+                                "Do not show recommendations, actual roles, or Storyteller rulings to players.",
+                            ),
+                            modifier = Modifier.padding(14.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+                item { content() }
+            }
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
+                Button(
+                    onClick = onStartNight,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .height(54.dp),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Text(text("确认裁定，开始首夜", "Confirm plan and begin first night"), fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun StorytellerRecommendationCard(
@@ -9636,17 +9685,23 @@ private fun StorytellerRecommendationCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF2F7F4)),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.30f)),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text(text("说书人首夜推荐", "Storyteller first-night recommendation"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            Text(
+                text("说书人首夜推荐", "Storyteller first-night recommendation"),
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Black,
+                style = MaterialTheme.typography.titleMedium,
+            )
             Text(
                 text("默认选择平衡方案；熟练说书人可比较三种风格。", "Balanced is the default; experienced Storytellers can compare all three styles."),
-                color = Color(0xFF5C6A63),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
             )
             if (lockedDecisions.isNotEmpty()) {
@@ -9657,7 +9712,7 @@ private fun StorytellerRecommendationCard(
                 ) {
                     Text(
                         text("已锁定 ${lockedDecisions.size} 项裁定", "${lockedDecisions.size} decision(s) locked"),
-                        color = Color(0xFF2F5D50),
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold,
                     )
                     TextButton(onClick = onClearLocks) { Text(text("解除全部", "Clear all")) }
@@ -9696,15 +9751,15 @@ private fun StorytellerRecommendationCard(
             }
 
             when (state) {
-                RecommendationUiState.Loading -> Text(text("正在计算高质量线索…", "Calculating high-quality information…"), color = Color(0xFF5C6A63))
-                RecommendationUiState.Empty -> Text(text("当前配置没有找到合法推荐，请使用下方手动流程。", "No legal recommendation was found; use the manual flow below."), color = Color(0xFF8C4B20))
+                RecommendationUiState.Loading -> Text(text("正在计算高质量线索…", "Calculating high-quality information…"), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                RecommendationUiState.Empty -> Text(text("当前配置没有找到合法推荐，请使用首夜手动流程。", "No legal recommendation was found; use the manual first-night flow."), color = MaterialTheme.colorScheme.secondary)
                 is RecommendationUiState.InvalidLocks -> {
-                    Text(text("锁定的裁定不合法或互相冲突，请解除锁定后重试。", "The locked decisions are illegal or incompatible. Clear the locks and try again."), color = Color(0xFF9A3428))
+                    Text(text("锁定的裁定不合法或互相冲突，请解除锁定后重试。", "The locked decisions are illegal or incompatible. Clear the locks and try again."), color = MaterialTheme.colorScheme.error)
                     Button(onClick = onClearLocks, modifier = Modifier.fillMaxWidth()) {
                         Text(text("解除锁定并恢复推荐", "Clear locks and restore recommendations"))
                     }
                 }
-                is RecommendationUiState.Error -> Text(text("推荐暂时不可用：", "Recommendation unavailable: ") + state.message, color = Color(0xFF9A3428))
+                is RecommendationUiState.Error -> Text(text("推荐暂时不可用：", "Recommendation unavailable: ") + state.message, color = MaterialTheme.colorScheme.error)
                 is RecommendationUiState.Ready -> selectedPlan?.let { plan ->
                     val drunkPlayer = cards.firstOrNull { it.clocktowerRole?.enName == "Drunk" }
                     val actionLines = plan.decisions.map { decision ->
@@ -9749,7 +9804,7 @@ private fun StorytellerRecommendationCard(
                     }
                     Text(
                         text("质量：", "Quality: ") + qualityLabel,
-                        color = if (plan.qualityTier == QualityTier.RECOMMENDED) Color(0xFF2F5D50) else Color(0xFF8C4B20),
+                        color = if (plan.qualityTier == QualityTier.RECOMMENDED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
                         fontWeight = FontWeight.SemiBold,
                     )
 
@@ -9760,10 +9815,10 @@ private fun StorytellerRecommendationCard(
                             .take(6)
                             .forEach { item ->
                                 val sign = if (item.delta >= 0) "+" else ""
-                                Text("$sign${item.delta} · ${scoreReason(item.ruleId)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF5C6A63))
+                                Text("$sign${item.delta} · ${scoreReason(item.ruleId)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         plan.warnings.forEach { warning ->
-                            Text(text("注意：", "Warning: ") + scoreReason(warning.ruleId), color = Color(0xFF8C4B20), style = MaterialTheme.typography.bodySmall)
+                            Text(text("注意：", "Warning: ") + scoreReason(warning.ruleId), color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.bodySmall)
                         }
                     }
 
@@ -9781,7 +9836,7 @@ private fun StorytellerRecommendationCard(
                     }
                     Text(
                         text("采用后仍可在下方首夜步骤中手动修改具体裁定。", "After applying, you can still edit individual decisions in the first-night steps below."),
-                        color = Color(0xFF6F7B74),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
@@ -9832,14 +9887,14 @@ private fun RecommendationDecisionEditor(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        shape = RoundedCornerShape(16.dp),
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text(text("修改后，该项会被锁定；其他项目将重新计算。", "Changed items will be locked; all other items will be recalculated."), color = Color(0xFF5C6A63), style = MaterialTheme.typography.bodySmall)
+            Text(text("修改后，该项会被锁定；其他项目将重新计算。", "Changed items will be locked; all other items will be recalculated."), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
 
             redHerring?.let { current ->
                 Text(text("红鲱鱼", "Red herring"), fontWeight = FontWeight.Bold)
@@ -9955,7 +10010,7 @@ private fun RecommendationDecisionEditor(
                     }
                 }
                 if (drunkInfo.candidateSeats.size != 2) {
-                    Text(text("必须选择正好两名玩家。", "Select exactly two players."), color = Color(0xFF9A3428), style = MaterialTheme.typography.bodySmall)
+                    Text(text("必须选择正好两名玩家。", "Select exactly two players."), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
                 HorizontalDivider()
             }
@@ -9999,7 +10054,7 @@ private fun RecommendationDecisionEditor(
                     }
                 }
                 if (current.roles.size != 3) {
-                    Text(text("必须选择正好三个伪装角色。", "Select exactly three bluff roles."), color = Color(0xFF9A3428), style = MaterialTheme.typography.bodySmall)
+                    Text(text("必须选择正好三个伪装角色。", "Select exactly three bluff roles."), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
             }
 
@@ -11136,7 +11191,6 @@ private fun GameScreen(
     onSelectElimination: (String) -> Unit,
     onConfirmElimination: () -> Unit,
     onShowResults: () -> Unit,
-    onNewGame: () -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier
@@ -11158,9 +11212,6 @@ private fun GameScreen(
                         GameKind.Undercover -> stringResource(R.string.game_who_is_undercover)
                     }
                     Text("$gameName · ${gameOutcome?.title ?: stringResource(R.string.round_format, round)}", color = Color(0xFF5C6A63))
-                }
-                TextButton(onClick = onNewGame) {
-                    Text(stringResource(R.string.new_game))
                 }
             }
         }
@@ -11277,6 +11328,7 @@ private fun ClocktowerResultsDialog(
     cards: List<PlayerCard>,
     outcome: GameOutcome?,
     onDismiss: () -> Unit,
+    onReview: () -> Unit,
     onNewGame: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -11424,6 +11476,9 @@ private fun ClocktowerResultsDialog(
                                 TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
                                     Text(text("暂不揭晓", "Not yet"))
                                 }
+                                TextButton(onClick = onReview, modifier = Modifier.fillMaxWidth()) {
+                                    Text(text("复盘操作记录", "Review game log"))
+                                }
                             }
                         }
                     } else {
@@ -11489,8 +11544,8 @@ private fun ClocktowerResultsDialog(
                                             )
                                             Text(
                                                 text(
-                                                    "当前游戏存档和记录将被清除。",
-                                                    "The current saved game and its records will be cleared.",
+                                                    "当前角色和记录会保存到历史复盘，然后使用相同玩家重新发牌。",
+                                                    "Current roles and records will be saved to history, then roles will be dealt again to the same players.",
                                                 ),
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
@@ -11505,7 +11560,7 @@ private fun ClocktowerResultsDialog(
                                                     contentColor = MaterialTheme.colorScheme.onError,
                                                 ),
                                             ) {
-                                                Text(text("清除并开始新游戏", "Clear and start new game"), fontWeight = FontWeight.Bold)
+                                                Text(text("保存并开始新游戏", "Save and start new game"), fontWeight = FontWeight.Bold)
                                             }
                                             TextButton(
                                                 onClick = { confirmNewGame = false },
@@ -11526,6 +11581,15 @@ private fun ClocktowerResultsDialog(
                                 verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
                                 if (!confirmNewGame) {
+                                    OutlinedButton(
+                                        onClick = onReview,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(50.dp),
+                                        shape = RoundedCornerShape(14.dp),
+                                    ) {
+                                        Text(text("复盘本局记录", "Review this game"))
+                                    }
                                     OutlinedButton(
                                         onClick = { confirmNewGame = true },
                                         modifier = Modifier
@@ -11627,6 +11691,7 @@ private fun ResultsDialog(
     cards: List<PlayerCard>,
     outcome: GameOutcome?,
     onDismiss: () -> Unit,
+    onReview: () -> Unit,
     onNewGame: () -> Unit,
 ) {
     val defaultTitle = if (gameKind == GameKind.Werewolf) {
@@ -11665,8 +11730,13 @@ private fun ResultsDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onNewGame) {
-                Text(stringResource(R.string.play_again))
+            Row {
+                TextButton(onClick = onReview) {
+                    Text(if (LocalContext.current.resources.configuration.locales[0].language == "en") "Review log" else "复盘记录")
+                }
+                TextButton(onClick = onNewGame) {
+                    Text(stringResource(R.string.play_again))
+                }
             }
         },
         dismissButton = {
@@ -11675,6 +11745,504 @@ private fun ResultsDialog(
             }
         },
     )
+}
+
+@Composable
+private fun HostToolsTopBar(onOpen: () -> Unit) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    ClocktowerDarkTheme {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color(0xFF14171C),
+            shadowElevation = 5.dp,
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 7.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Text(
+                        text("主持模式", "HOST MODE"),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp,
+                    )
+                    Text(
+                        text("私密操作入口", "Private controls"),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+                OutlinedButton(
+                    onClick = onOpen,
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.72f)),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                ) {
+                    Text(
+                        text("主持工具", "Host tools"),
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Black,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NewGameConfirmationDialog(
+    gameKind: GameKind,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    val context = LocalContext.current
+    val language = context.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    val gameName = when (gameKind) {
+        GameKind.Undercover -> stringResource(R.string.game_who_is_undercover)
+        GameKind.Werewolf -> stringResource(R.string.game_werewolf)
+        GameKind.Clocktower -> stringResource(R.string.game_clocktower)
+    }
+    ClocktowerDarkTheme {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(text("结束当前游戏，立即开始新一局？", "End this game and start a new one?")) },
+            text = {
+                Text(
+                    text(
+                        "“$gameName”的角色身份和操作记录会保存到历史复盘。保留当前玩家与规则配置，并重新随机分配身份。",
+                        "Roles and game records for $gameName will be saved to history. Current players and rules stay the same, and roles will be dealt again.",
+                    ),
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = onConfirm,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC9574A)),
+                ) {
+                    Text(text("结束并开新局", "End & start new"))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text(text("继续当前游戏", "Continue game"))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun HostGameToolsDialog(
+    gameKind: GameKind,
+    cards: List<PlayerCard>,
+    records: List<EliminationRecord>,
+    events: List<ClocktowerEvent>,
+    history: List<ArchivedGameReview>,
+    initialTab: HostToolTab,
+    onDismiss: () -> Unit,
+    onNewGame: () -> Unit,
+) {
+    val context = LocalContext.current
+    val language = context.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    var selectedTab by remember(initialTab) { mutableStateOf(initialTab) }
+    var selectedHistoryId by remember { mutableStateOf<Long?>(null) }
+    val selectedHistory = history.firstOrNull { it.id == selectedHistoryId }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = false,
+            usePlatformDefaultWidth = false,
+        ),
+    ) {
+        ClocktowerDarkTheme {
+            Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 24.dp),
+            color = MaterialTheme.colorScheme.background,
+            shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column {
+                        Text(
+                            text("私密 · 仅主持人", "PRIVATE · HOST ONLY"),
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp,
+                        )
+                        Text(
+                            text("主持工具", "Host tools"),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Black,
+                        )
+                    }
+                    TextButton(onClick = onDismiss) {
+                        Text(text("关闭", "Close"))
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    HostToolTab.entries.forEach { tab ->
+                        val label = when (tab) {
+                            HostToolTab.Roles -> text("角色身份", "Roles")
+                            HostToolTab.Records -> text("操作记录", "Game log")
+                            HostToolTab.History -> text("历史复盘 ${history.size}", "History ${history.size}")
+                        }
+                        if (selectedTab == tab) {
+                            Button(
+                                onClick = {
+                                    selectedTab = tab
+                                    selectedHistoryId = null
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp),
+                            ) {
+                                Text(label, maxLines = 1)
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    selectedTab = tab
+                                    selectedHistoryId = null
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp),
+                            ) {
+                                Text(label, maxLines = 1)
+                            }
+                        }
+                    }
+                }
+                HorizontalDivider(modifier = Modifier.padding(top = 12.dp))
+
+                when (selectedTab) {
+                    HostToolTab.Roles -> HostRolesList(
+                        gameKind = gameKind,
+                        cards = cards,
+                        modifier = Modifier.weight(1f),
+                    )
+                    HostToolTab.Records -> HostRecordsList(
+                        gameKind = gameKind,
+                        records = records,
+                        events = events,
+                        modifier = Modifier.weight(1f),
+                    )
+                    HostToolTab.History -> {
+                        if (selectedHistory == null) {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth(),
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                if (history.isEmpty()) {
+                                    item {
+                                        Text(
+                                            text("结束一局后，角色和记录会保存在这里。", "Finished games will be saved here."),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                                items(history, key = { it.id }) { review ->
+                                    ArchivedGameCard(
+                                        review = review,
+                                        onClick = { selectedHistoryId = review.id },
+                                    )
+                                }
+                            }
+                        } else {
+                            ArchivedGameReviewContent(
+                                review = selectedHistory,
+                                onBack = { selectedHistoryId = null },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                }
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 10.dp,
+                ) {
+                    TextButton(
+                        onClick = onNewGame,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                    ) {
+                        Text(
+                            text("结束当前游戏并开始新一局", "End current game and start a new one"),
+                            color = Color(0xFFC9574A),
+                            fontWeight = FontWeight.Black,
+                        )
+                    }
+                }
+            }
+        }
+        }
+    }
+}
+
+@Composable
+private fun HostRolesList(
+    gameKind: GameKind,
+    cards: List<PlayerCard>,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val language = context.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    LazyColumn(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item {
+            Text(
+                text("请确认屏幕仅对主持人可见。", "Make sure only the host can see this screen."),
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        items(cards) { card ->
+            val role = card.hostRoleLabel(context, gameKind)
+            val shown = if (
+                gameKind == GameKind.Clocktower &&
+                card.clocktowerShownAsDifferentRole() &&
+                card.clocktowerShownRole != null
+            ) {
+                text(
+                    " · 展示为 ${card.clocktowerShownRole.nameFor(language)}",
+                    " · shown as ${card.clocktowerShownRole.nameFor(language)}",
+                )
+            } else {
+                ""
+            }
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Surface(
+                        modifier = Modifier.size(38.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                (cards.indexOf(card) + 1).toString(),
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Black,
+                            )
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(card.name, fontWeight = FontWeight.Bold)
+                        Text(role + shown, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Text(
+                        card.eliminatedRound?.let { text("死亡", "Dead") } ?: text("存活", "Alive"),
+                        color = if (card.eliminatedRound == null) Color(0xFF2F7A57) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HostRecordsList(
+    gameKind: GameKind,
+    records: List<EliminationRecord>,
+    events: List<ClocktowerEvent>,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val language = context.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    val visibleEvents = events.filterNot { it.type == ClocktowerEventType.System }
+    LazyColumn(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        if (gameKind == GameKind.Clocktower) {
+            if (visibleEvents.isEmpty()) {
+                item { Text(text("还没有操作记录。", "No game records yet."), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
+            items(visibleEvents, key = { it.sequence }) { event ->
+                GameRecordRow(
+                    title = event.title,
+                    detail = event.detail,
+                    phase = when (event.phase) {
+                        ClocktowerPhase.FirstNight -> text("第 1 夜", "Night 1")
+                        ClocktowerPhase.Dawn -> text("天亮", "Dawn")
+                        ClocktowerPhase.Day -> text("第 ${event.round} 天", "Day ${event.round}")
+                        ClocktowerPhase.Night -> text("第 ${event.round} 夜", "Night ${event.round}")
+                    },
+                )
+            }
+        } else {
+            if (records.isEmpty()) {
+                item { Text(text("还没有操作记录。", "No game records yet."), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
+            items(records) { record ->
+                GameRecordRow(
+                    title = record.playerName,
+                    detail = record.note.orEmpty(),
+                    phase = text("第 ${record.round} 轮", "Round ${record.round}"),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GameRecordRow(title: String, detail: String, phase: String) {
+    Card(
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            Text(phase, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+            Text(title, fontWeight = FontWeight.Bold)
+            if (detail.isNotBlank()) Text(detail, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun ArchivedGameCard(review: ArchivedGameReview, onClick: () -> Unit) {
+    val context = LocalContext.current
+    val language = context.resources.configuration.locales[0].language
+    val gameName = when (review.gameKind) {
+        GameKind.Undercover -> stringResource(R.string.game_who_is_undercover)
+        GameKind.Werewolf -> stringResource(R.string.game_werewolf)
+        GameKind.Clocktower -> stringResource(R.string.game_clocktower)
+    }
+    val pattern = if (language == "en") "MMM d, HH:mm" else "M月d日 HH:mm"
+    val date = java.text.SimpleDateFormat(pattern, context.resources.configuration.locales[0])
+        .format(java.util.Date(review.archivedAtMillis))
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        contentPadding = PaddingValues(14.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(horizontalAlignment = Alignment.Start) {
+                Text(gameName, fontWeight = FontWeight.Black)
+                Text(
+                    "$date · ${if (language == "en") "Round ${review.round}" else "第 ${review.round} 轮"}",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            Text("›", style = MaterialTheme.typography.headlineSmall)
+        }
+    }
+}
+
+@Composable
+private fun ArchivedGameReviewContent(
+    review: ArchivedGameReview,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val language = context.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    LazyColumn(
+        modifier = modifier
+            .fillMaxWidth()
+            .fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        item {
+            TextButton(onClick = onBack) {
+                Text("← ${text("全部历史对局", "All past games")}")
+            }
+        }
+        review.outcome?.let { outcome ->
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.11f)),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(outcome.title, fontWeight = FontWeight.Black)
+                        Text(outcome.summary)
+                        Text(outcome.reason, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
+        item { Text(text("角色身份", "Roles"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) }
+        items(review.cards) { card ->
+            val role = card.hostRoleLabel(context, review.gameKind)
+            GameRecordRow(
+                title = "${review.cards.indexOf(card) + 1}号 ${card.name}",
+                detail = role,
+                phase = card.eliminatedRound?.let { text("死亡", "Dead") } ?: text("存活", "Alive"),
+            )
+        }
+        item { Text(text("操作记录", "Game log"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) }
+        if (review.gameKind == GameKind.Clocktower) {
+            items(review.events.filterNot { it.type == ClocktowerEventType.System }) { event ->
+                GameRecordRow(event.title, event.detail, text("第 ${event.round} 轮", "Round ${event.round}"))
+            }
+        } else {
+            items(review.records) { record ->
+                GameRecordRow(record.playerName, record.note.orEmpty(), text("第 ${record.round} 轮", "Round ${record.round}"))
+            }
+        }
+        if (review.events.isEmpty() && review.records.isEmpty()) {
+            item { Text(text("本局没有操作记录。", "This game has no records."), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
+    }
 }
 
 @Composable
