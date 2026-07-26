@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateOffsetAsState
@@ -23,9 +24,12 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -43,6 +47,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -74,6 +79,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.platform.LocalContext
@@ -408,7 +414,7 @@ private const val MAX_GAME_HISTORY = 20
 private const val MIN_PLAYERS = 3
 private const val MIN_WEREWOLF_PLAYERS = 4
 private const val MIN_CLOCKTOWER_PLAYERS = 5
-private const val MAX_PLAYERS = 12
+private const val MAX_PLAYERS = 15
 
 private fun Context.localized(languageMode: LanguageMode): Context {
     if (languageMode == LanguageMode.System) return this
@@ -928,7 +934,10 @@ private fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int> {
         9 -> mapOf(ClocktowerTeam.Townsfolk to 5, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
         10 -> mapOf(ClocktowerTeam.Townsfolk to 7, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 2, ClocktowerTeam.Demon to 1)
         11 -> mapOf(ClocktowerTeam.Townsfolk to 7, ClocktowerTeam.Outsider to 1, ClocktowerTeam.Minion to 2, ClocktowerTeam.Demon to 1)
-        else -> mapOf(ClocktowerTeam.Townsfolk to 7, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 2, ClocktowerTeam.Demon to 1)
+        12 -> mapOf(ClocktowerTeam.Townsfolk to 7, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 2, ClocktowerTeam.Demon to 1)
+        13 -> mapOf(ClocktowerTeam.Townsfolk to 9, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 3, ClocktowerTeam.Demon to 1)
+        14 -> mapOf(ClocktowerTeam.Townsfolk to 9, ClocktowerTeam.Outsider to 1, ClocktowerTeam.Minion to 3, ClocktowerTeam.Demon to 1)
+        else -> mapOf(ClocktowerTeam.Townsfolk to 9, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 3, ClocktowerTeam.Demon to 1)
     }
 }
 
@@ -1423,16 +1432,6 @@ private fun CampBoardGameHostApp() {
         playerNames.add(adjustedIndex.coerceIn(0, playerNames.size), name)
     }
 
-    fun addTemporaryPlayer() {
-        var nextNumber = playerNames.size + 1
-        var nextName = context.playerName(nextNumber)
-        while (nextName in playerNames) {
-            nextNumber += 1
-            nextName = context.playerName(nextNumber)
-        }
-        addCurrentPlayer(nextName)
-    }
-
     fun addCommonPlayer() {
         val trimmedName = newCommonPlayerName.trim()
         if (trimmedName.isNotEmpty() && trimmedName !in commonPlayers) {
@@ -1704,7 +1703,11 @@ private fun CampBoardGameHostApp() {
                     .background(MaterialTheme.colorScheme.background),
                 color = MaterialTheme.colorScheme.background,
             ) {
-                Column(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .safeDrawingPadding(),
+                ) {
                     if (
                         !showResults && (
                             screen == Screen.WerewolfJudge ||
@@ -1733,7 +1736,7 @@ private fun CampBoardGameHostApp() {
                     commonPlayers = commonPlayers,
                     playerNames = playerNames,
                     onAddCurrentPlayer = ::addCurrentPlayer,
-                    onAddTemporaryPlayer = ::addTemporaryPlayer,
+                    onAddTemporaryPlayer = ::addCurrentPlayer,
                     onRemoveCurrentPlayer = ::removeCurrentPlayer,
                     onMoveCurrentPlayerTo = ::moveCurrentPlayerTo,
                     onResumeSavedGame = ::restoreSavedGame,
@@ -2559,7 +2562,7 @@ private fun CampBoardGameHostApp() {
                 }
 
                 if (showHostTools) {
-                    HostGameToolsDialog(
+                    HostGameToolsScreen(
                         gameKind = currentGameKind,
                         cards = cards,
                         records = records,
@@ -2820,7 +2823,7 @@ private fun SetupScreen(
     commonPlayers: List<String>,
     playerNames: List<String>,
     onAddCurrentPlayer: (String) -> Unit,
-    onAddTemporaryPlayer: () -> Unit,
+    onAddTemporaryPlayer: (String) -> Unit,
     onRemoveCurrentPlayer: (Int) -> Unit,
     onMoveCurrentPlayerTo: (Int, Int) -> Unit,
     onResumeSavedGame: () -> Unit,
@@ -2835,6 +2838,21 @@ private fun SetupScreen(
     val canStartClocktower = playerCount >= MIN_CLOCKTOWER_PLAYERS
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
+    var showTemporaryPlayerDialog by remember { mutableStateOf(false) }
+    var temporaryPlayerName by remember { mutableStateOf("") }
+    var temporaryPlayerNameWasEdited by remember { mutableStateOf(false) }
+    val trimmedTemporaryPlayerName = temporaryPlayerName.trim()
+    val temporaryPlayerNameExists = trimmedTemporaryPlayerName in playerNames
+
+    fun nextTemporaryPlayerName(): String {
+        var number = 1
+        var candidate = text("临时玩家$number", "Temp Player $number")
+        while (candidate in playerNames) {
+            number += 1
+            candidate = text("临时玩家$number", "Temp Player $number")
+        }
+        return candidate
+    }
 
     ClocktowerDarkTheme {
         LazyColumn(
@@ -2845,71 +2863,6 @@ private fun SetupScreen(
             contentPadding = PaddingValues(top = 18.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            item {
-                val heroRingColor = MaterialTheme.colorScheme.primary
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
-                        .padding(22.dp),
-                ) {
-                    Canvas(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .size(144.dp),
-                    ) {
-                        drawCircle(
-                            color = heroRingColor.copy(alpha = 0.08f),
-                            radius = size.minDimension * 0.46f,
-                            center = Offset(size.width * 0.62f, size.height * 0.36f),
-                        )
-                        drawCircle(
-                            color = heroRingColor.copy(alpha = 0.28f),
-                            radius = size.minDimension * 0.34f,
-                            center = Offset(size.width * 0.62f, size.height * 0.36f),
-                            style = Stroke(width = 1.dp.toPx()),
-                        )
-                    }
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = text("说书人控制台", "STORYTELLER CONSOLE"),
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.4.sp,
-                            )
-                            TextButton(onClick = onOpenSettings) {
-                                Text(stringResource(R.string.settings))
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(18.dp))
-                        Text(
-                            text = stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Black,
-                        )
-                        Text(
-                            text = text(
-                                "离线桌游主持工具，让夜晚的每一步都清晰、克制、可靠。",
-                                "An offline host companion for clear, focused, reliable game nights.",
-                            ),
-                            modifier = Modifier.fillMaxWidth(0.82f),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    }
-                }
-
-            }
-
             savedGamePreview?.let { preview ->
                 item {
                     Card(
@@ -2961,22 +2914,6 @@ private fun SetupScreen(
             }
 
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = text("创建新游戏", "CREATE A NEW GAME"),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp,
-                    )
-                    Text(
-                        text = text("先安排围桌玩家，再选择本局游戏。", "Seat the players first, then choose a game."),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            item {
                 Card(
                     shape = RoundedCornerShape(22.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -2986,7 +2923,12 @@ private fun SetupScreen(
                         commonPlayers = commonPlayers,
                         canAddPlayer = playerCount < MAX_PLAYERS,
                         onAddCurrentPlayer = onAddCurrentPlayer,
-                        onAddTemporaryPlayer = onAddTemporaryPlayer,
+                        onAddTemporaryPlayer = {
+                            temporaryPlayerName = nextTemporaryPlayerName()
+                            temporaryPlayerNameWasEdited = false
+                            showTemporaryPlayerDialog = true
+                        },
+                        onOpenSettings = onOpenSettings,
                         onRemoveCurrentPlayer = onRemoveCurrentPlayer,
                         onMoveCurrentPlayerTo = onMoveCurrentPlayerTo,
                         modifier = Modifier.padding(18.dp),
@@ -3050,6 +2992,56 @@ private fun SetupScreen(
 
             }
         }
+
+        if (showTemporaryPlayerDialog) {
+            AlertDialog(
+                onDismissRequest = { showTemporaryPlayerDialog = false },
+                title = { Text(text("添加临时玩家", "Add temporary player")) },
+                text = {
+                    OutlinedTextField(
+                        value = temporaryPlayerName,
+                        onValueChange = {
+                            temporaryPlayerName = it
+                            temporaryPlayerNameWasEdited = true
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused && !temporaryPlayerNameWasEdited) {
+                                    temporaryPlayerName = ""
+                                    temporaryPlayerNameWasEdited = true
+                                }
+                            },
+                        label = { Text(stringResource(R.string.player_name_input_label)) },
+                        singleLine = true,
+                        isError = temporaryPlayerNameExists,
+                        supportingText = if (temporaryPlayerNameExists) {
+                            { Text(text("该名字已在本局玩家中", "This name is already in the game")) }
+                        } else {
+                            null
+                        },
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            onAddTemporaryPlayer(trimmedTemporaryPlayerName)
+                            showTemporaryPlayerDialog = false
+                        },
+                        enabled = trimmedTemporaryPlayerName.isNotEmpty() &&
+                            !temporaryPlayerNameExists &&
+                            playerNames.size < MAX_PLAYERS,
+                    ) {
+                        Text(stringResource(R.string.add))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showTemporaryPlayerDialog = false }) {
+                        Text(text("取消", "Cancel"))
+                    }
+                },
+            )
+        }
     }
 }
 
@@ -3061,6 +3053,7 @@ private fun RoundTableSetupEditor(
     canAddPlayer: Boolean,
     onAddCurrentPlayer: (String) -> Unit,
     onAddTemporaryPlayer: () -> Unit,
+    onOpenSettings: () -> Unit,
     onRemoveCurrentPlayer: (Int) -> Unit,
     onMoveCurrentPlayerTo: (Int, Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -3068,6 +3061,8 @@ private fun RoundTableSetupEditor(
     var dragState by remember { mutableStateOf<PlayerDragState?>(null) }
     var hoverInsertIndex by remember { mutableStateOf<Int?>(null) }
     val density = LocalDensity.current
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
     val tableFillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
     val tableStrokeColor = MaterialTheme.colorScheme.primary
     val tableGuideColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.24f)
@@ -3081,16 +3076,32 @@ private fun RoundTableSetupEditor(
             Column {
                 Text(stringResource(R.string.current_players_section), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Text(
-                    stringResource(R.string.current_players_count_format, seatedPlayers.size, MAX_PLAYERS),
+                    if (seatedPlayers.size >= MAX_PLAYERS) {
+                        text("当前 ${seatedPlayers.size} 人 · 已达上限", "${seatedPlayers.size} players · Maximum reached")
+                    } else {
+                        text("当前 ${seatedPlayers.size} 人", "${seatedPlayers.size} players")
+                    },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            OutlinedButton(
-                onClick = onAddTemporaryPlayer,
-                enabled = canAddPlayer,
-                shape = RoundedCornerShape(12.dp),
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(stringResource(R.string.add_temporary_player))
+                OutlinedButton(
+                    onClick = onAddTemporaryPlayer,
+                    enabled = canAddPlayer,
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Text(stringResource(R.string.add_temporary_player))
+                }
+                IconButton(onClick = onOpenSettings) {
+                    Text(
+                        text = "⚙",
+                        fontSize = 24.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
 
@@ -3103,7 +3114,11 @@ private fun RoundTableSetupEditor(
             val widthPx = constraints.maxWidth.toFloat()
             val heightPx = constraints.maxHeight.toFloat()
             val useRectangularTable = seatedPlayers.size > 8
-            val avatarSizeDp = if (useRectangularTable) 52.dp else 64.dp
+            val avatarSizeDp = when {
+                seatedPlayers.size >= 13 -> 46.dp
+                useRectangularTable -> 52.dp
+                else -> 64.dp
+            }
             val center = Offset(widthPx / 2f, heightPx / 2f)
             val avatarSizePx = with(density) { avatarSizeDp.toPx() }
             val safeRadius = (min(widthPx, heightPx) - avatarSizePx * 2.2f) / 2f
@@ -3394,12 +3409,6 @@ private fun RoundTableSetupEditor(
                     )
                 }
             }
-            BenchPlayerChip(
-                name = stringResource(R.string.add_temporary_player),
-                enabled = canAddPlayer,
-                label = stringResource(R.string.add_temporary_player),
-                onClick = onAddTemporaryPlayer,
-            )
         }
     }
 }
@@ -12407,11 +12416,14 @@ private fun ClocktowerResultsDialog(
             dismissOnBackPress = true,
             dismissOnClickOutside = false,
             usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
         ),
     ) {
         ClocktowerDarkTheme {
             Surface(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .safeDrawingPadding(),
                 color = MaterialTheme.colorScheme.background,
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
@@ -12858,7 +12870,7 @@ private fun NewGameConfirmationDialog(
 }
 
 @Composable
-private fun HostGameToolsDialog(
+private fun HostGameToolsScreen(
     gameKind: GameKind,
     cards: List<PlayerCard>,
     records: List<EliminationRecord>,
@@ -12875,21 +12887,14 @@ private fun HostGameToolsDialog(
     var selectedHistoryId by remember { mutableStateOf<Long?>(null) }
     val selectedHistory = history.firstOrNull { it.id == selectedHistoryId }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = false,
-            usePlatformDefaultWidth = false,
-        ),
-    ) {
-        ClocktowerDarkTheme {
-            Surface(
+    BackHandler(onBack = onDismiss)
+
+    ClocktowerDarkTheme {
+        Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 24.dp),
+                .safeDrawingPadding(),
             color = MaterialTheme.colorScheme.background,
-            shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Row(
@@ -13004,7 +13009,8 @@ private fun HostGameToolsDialog(
                     }
                 }
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth(),
                     color = MaterialTheme.colorScheme.surface,
                     shadowElevation = 10.dp,
                 ) {
@@ -13022,7 +13028,6 @@ private fun HostGameToolsDialog(
                     }
                 }
             }
-        }
         }
     }
 }
