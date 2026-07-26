@@ -35,6 +35,10 @@ body {
   font-family: var(--font-body);
 }
 
+#app {
+  min-height: 100vh;
+}
+
 button,
 input,
 select,
@@ -50,6 +54,229 @@ button {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
+}
+
+.launch-screen {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+  color: #f3efe5;
+  background-color: #030911;
+  background-image: url("./assets/clocktower-launch-hero.png");
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: auto 100%;
+}
+
+.launch-shade {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(2, 7, 13, 0.4) 0%, rgba(2, 7, 13, 0.05) 30%, rgba(2, 7, 13, 0.18) 60%, rgba(2, 7, 13, 0.94) 100%),
+    radial-gradient(circle at 50% 17%, rgba(6, 13, 22, 0.05), rgba(2, 7, 13, 0.52) 70%);
+}
+
+.launch-content {
+  width: min(100%, 560px);
+  min-height: 100vh;
+  min-height: 100svh;
+  margin: 0 auto;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding:
+    max(18px, env(safe-area-inset-top))
+    clamp(24px, 7vw, 42px)
+    max(28px, calc(env(safe-area-inset-bottom) + 18px));
+}
+
+.launch-language {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 4px 8px;
+  border: 1px solid rgba(190, 157, 96, 0.2);
+  border-radius: 999px;
+  background: rgba(3, 9, 17, 0.42);
+  backdrop-filter: blur(12px);
+}
+
+.launch-language button {
+  min-width: 28px;
+  min-height: 26px;
+  padding: 0 5px;
+  border-radius: 999px;
+  color: rgba(225, 226, 224, 0.5);
+  background: transparent;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.launch-language button.active {
+  color: #d4b579;
+}
+
+.launch-language > span {
+  width: 1px;
+  height: 13px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.launch-copy {
+  align-self: start;
+  padding-top: clamp(44px, 8.5vh, 96px);
+  text-align: center;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.7);
+}
+
+.launch-mark {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 14px;
+  border: 1px solid rgba(205, 173, 109, 0.65);
+  border-radius: 50%;
+}
+
+.launch-mark::before,
+.launch-mark::after,
+.launch-mark span::before,
+.launch-mark span::after {
+  content: "";
+  position: absolute;
+  background: #b89a63;
+}
+
+.launch-mark::before {
+  width: 1px;
+  height: 12px;
+  top: 5px;
+  left: 20px;
+}
+
+.launch-mark::after {
+  width: 9px;
+  height: 1px;
+  top: 20px;
+  left: 20px;
+  transform: rotate(-36deg);
+  transform-origin: left center;
+}
+
+.launch-mark span::before,
+.launch-mark span::after {
+  width: 1px;
+  height: 5px;
+  top: -3px;
+  left: 20px;
+}
+
+.launch-mark span::after {
+  top: 39px;
+}
+
+.launch-kicker {
+  margin: 0 0 12px;
+  color: #bda16b;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.26em;
+}
+
+.launch-copy h1 {
+  max-width: 12em;
+  margin: 0 auto;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 8vw, 3.35rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  text-wrap: balance;
+}
+
+.launch-subtitle {
+  max-width: 26em;
+  margin: 15px auto 0;
+  color: rgba(224, 226, 225, 0.72);
+  font-size: clamp(0.88rem, 3.3vw, 1rem);
+  line-height: 1.6;
+  letter-spacing: 0.025em;
+}
+
+.launch-actions {
+  display: grid;
+  gap: 11px;
+  width: 100%;
+}
+
+.launch-primary,
+.launch-secondary {
+  width: 100%;
+  min-height: 56px;
+  border-radius: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.launch-primary {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 20px;
+  color: #101319;
+  background: linear-gradient(180deg, #d8bc82, #b9975e);
+  border: 1px solid rgba(255, 232, 176, 0.42);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.32), inset 0 1px rgba(255, 255, 255, 0.28);
+}
+
+.launch-primary > span:first-child {
+  grid-column: 2;
+}
+
+.launch-arrow {
+  grid-column: 3;
+  justify-self: end;
+  font-size: 1.18rem;
+}
+
+.launch-secondary {
+  color: rgba(239, 237, 229, 0.9);
+  background: rgba(6, 13, 22, 0.68);
+  border: 1px solid rgba(202, 170, 106, 0.42);
+  backdrop-filter: blur(14px);
+}
+
+.launch-primary:active,
+.launch-secondary:active {
+  transform: scale(0.985);
+}
+
+.launch-primary:focus-visible,
+.launch-secondary:focus-visible,
+.launch-language button:focus-visible {
+  outline: 2px solid #e0c58e;
+  outline-offset: 3px;
+}
+
+.launch-secondary:disabled {
+  color: rgba(221, 221, 217, 0.35);
+  border-color: rgba(181, 160, 119, 0.18);
+  background: rgba(6, 13, 22, 0.48);
+}
+
+.launch-status {
+  min-height: 1.2em;
+  margin: -2px 0 0;
+  color: rgba(205, 208, 207, 0.45);
+  font-size: 0.75rem;
+  text-align: center;
 }
 
 .app-shell {
@@ -1047,4 +1274,21 @@ textarea {
     grid-row: 2;
   }
 
+}
+
+@media (min-aspect-ratio: 3 / 4) {
+  .launch-screen {
+    background-size: auto 116%;
+  }
+
+  .launch-copy {
+    padding-top: clamp(26px, 5vh, 54px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launch-primary,
+  .launch-secondary {
+    transition: none;
+  }
 }

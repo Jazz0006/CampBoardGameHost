@@ -1,8 +1,9 @@
 <resources>
     <style name="Theme.CampBoardGameHost" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:navigationBarColor">#F8F6F0</item>
-        <item name="android:statusBarColor">#F8F6F0</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:navigationBarColor">#030911</item>
+        <item name="android:statusBarColor">#030911</item>
     </style>
 </resources>

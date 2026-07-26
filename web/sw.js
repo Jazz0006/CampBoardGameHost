@@ -1,4 +1,4 @@
-const CACHE_NAME = "camp-board-game-host-web-v2";
+const CACHE_NAME = "camp-board-game-host-web-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -6,6 +6,7 @@ const APP_SHELL = [
   "./app.js",
   "./manifest.webmanifest",
   "./app-icon.svg",
+  "./assets/clocktower-launch-hero.png",
 ];
 
 self.addEventListener("install", (event) => {

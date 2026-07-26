@@ -123,6 +123,7 @@ const NO_GREATER_JOY_ROLE_IDS = [
 ];
 
 const state = loadState();
+let currentPage = "landing";
 
 function defaultState() {
   return {
@@ -357,9 +358,63 @@ function takeRandom(list, count) {
   return shuffle(list).slice(0, Math.max(0, count));
 }
 
+function activeGameId() {
+  const started = {
+    clocktower: Boolean(state.clocktower?.started),
+    werewolf: Boolean(state.werewolf?.started),
+    undercover: Boolean(state.undercover?.started),
+  };
+  if (started[state.selectedGame]) return state.selectedGame;
+  return GAMES.find((game) => started[game.id])?.id || null;
+}
+
+function renderLanding() {
+  const hasSavedGame = Boolean(activeGameId());
+  const title = state.language === "en" ? "Clocktower Storyteller Assistant" : "血染钟楼说书人助手";
+  const subtitle = state.language === "en"
+    ? "An offline host toolkit for every part of storytelling."
+    : "离线主持工具，解决说书的所有问题。";
+  return `
+    <main class="launch-screen">
+      <div class="launch-shade" aria-hidden="true"></div>
+      <div class="launch-content">
+        <div class="launch-language" aria-label="${state.language === "en" ? "Language" : "语言"}">
+          <button class="${state.language === "zh" ? "active" : ""}" data-action="set-language" data-lang="zh">中</button>
+          <span aria-hidden="true"></span>
+          <button class="${state.language === "en" ? "active" : ""}" data-action="set-language" data-lang="en">EN</button>
+        </div>
+
+        <header class="launch-copy">
+          <div class="launch-mark" aria-hidden="true">
+            <span></span>
+          </div>
+          <p class="launch-kicker">${state.language === "en" ? "STORYTELLER CONSOLE" : "说书人专用控制台"}</p>
+          <h1>${title}</h1>
+          <p class="launch-subtitle">${subtitle}</p>
+        </header>
+
+        <div class="launch-actions">
+          <button class="launch-primary" data-action="open-player-management">
+            <span>${state.language === "en" ? "Start game" : "开始游戏"}</span>
+            <span class="launch-arrow" aria-hidden="true">→</span>
+          </button>
+          <button class="launch-secondary" data-action="continue-game" ${hasSavedGame ? "" : "disabled"}>
+            ${state.language === "en" ? "Continue last game" : "继续上次游戏"}
+          </button>
+          ${hasSavedGame ? "" : `<p class="launch-status">${state.language === "en" ? "No game in progress" : "暂无进行中的游戏"}</p>`}
+        </div>
+      </div>
+    </main>
+  `;
+}
+
 function render() {
   document.documentElement.lang = state.language === "en" ? "en" : "zh-CN";
   const app = document.querySelector("#app");
+  if (currentPage === "landing") {
+    app.innerHTML = renderLanding();
+    return;
+  }
   app.innerHTML = `
     <main class="app-shell">
       <section class="hero">
@@ -368,7 +423,10 @@ function render() {
             <button class="pill ${state.language === "zh" ? "active" : ""}" data-action="set-language" data-lang="zh">中文</button>
             <button class="pill ${state.language === "en" ? "active" : ""}" data-action="set-language" data-lang="en">English</button>
           </div>
-          <button class="ghost" data-action="export-state">${state.language === "en" ? "Export backup" : "导出备份"}</button>
+          <div class="nav-pills">
+            <button class="ghost" data-action="go-home">${state.language === "en" ? "Home" : "首页"}</button>
+            <button class="ghost" data-action="export-state">${state.language === "en" ? "Export backup" : "导出备份"}</button>
+          </div>
         </div>
         <h1>${tr("appTitle")}</h1>
         <p>${tr("appSubtitle")}</p>
@@ -2735,6 +2793,15 @@ document.addEventListener("click", (event) => {
   const action = target.dataset.action;
 
   if (action === "set-language") state.language = target.dataset.lang;
+  if (action === "open-player-management") currentPage = "workspace";
+  if (action === "continue-game") {
+    const gameId = activeGameId();
+    if (gameId) {
+      state.selectedGame = gameId;
+      currentPage = "workspace";
+    }
+  }
+  if (action === "go-home") currentPage = "landing";
   if (action === "add-common") {
     const input = document.querySelector("#commonName");
     const name = input.value.trim();

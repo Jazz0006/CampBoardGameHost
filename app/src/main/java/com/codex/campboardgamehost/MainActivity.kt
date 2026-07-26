@@ -11,6 +11,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -68,14 +69,17 @@ import androidx.compose.ui.zIndex
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -105,6 +109,7 @@ import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendatio
 import com.codex.campboardgamehost.clocktower.history.InformationReferenceExtractor
 import com.codex.campboardgamehost.clocktower.recommendation.RecommendationService
 import com.codex.campboardgamehost.clocktower.recommendation.RecommendationUiState
+import com.codex.campboardgamehost.clocktower.recommendation.AutomaticStorytellerSelector
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationRecommender
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationRegistration
@@ -142,6 +147,7 @@ class MainActivity : ComponentActivity() {
 }
 
 private enum class Screen {
+    Landing,
     Setup,
     UndercoverSettings,
     WerewolfSettings,
@@ -465,6 +471,7 @@ private fun Screen.isActiveGameScreen(): Boolean = when (this) {
     Screen.WerewolfJudge,
     Screen.ClocktowerJudge,
     Screen.Game -> true
+    Screen.Landing,
     Screen.Setup,
     Screen.UndercoverSettings,
     Screen.WerewolfSettings,
@@ -984,7 +991,7 @@ private fun CampBoardGameHostApp() {
     var automaticStorytellerInfo by remember { mutableStateOf(baseContext.loadAutomaticStorytellerInfo()) }
     val context = remember(languageMode) { baseContext.localized(languageMode) }
     val language = context.resources.configuration.locales[0].language
-    var screen by remember { mutableStateOf(Screen.Setup) }
+    var screen by remember { mutableStateOf(Screen.Landing) }
     var currentGameKind by remember { mutableStateOf(GameKind.Undercover) }
     var savedGamePreview by remember(context) { mutableStateOf(baseContext.loadSavedGamePreview(context)) }
     var gameHistory by remember { mutableStateOf(baseContext.loadGameHistory()) }
@@ -1714,6 +1721,12 @@ private fun CampBoardGameHostApp() {
                     }
                     Box(modifier = Modifier.weight(1f)) {
                         when (screen) {
+                    Screen.Landing -> ClocktowerLandingScreen(
+                        hasSavedGame = savedGamePreview != null,
+                        onStartGame = { screen = Screen.Setup },
+                        onContinueGame = ::restoreSavedGame,
+                    )
+
                     Screen.Setup -> SetupScreen(
                     playerCount = playerCount,
                     savedGamePreview = savedGamePreview,
@@ -2639,6 +2652,163 @@ private fun evaluateGameOutcome(context: Context, cards: List<PlayerCard>, gameK
         )
 
         else -> null
+    }
+}
+
+@Composable
+private fun ClocktowerLandingScreen(
+    hasSavedGame: Boolean,
+    onStartGame: () -> Unit,
+    onContinueGame: () -> Unit,
+) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    val brass = Color(0xFFC4A469)
+    val warmWhite = Color(0xFFF3EFE5)
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF030911)),
+    ) {
+        Image(
+            painter = painterResource(R.drawable.clocktower_launch_hero),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0f to Color(0xA6030911),
+                            0.28f to Color(0x16030911),
+                            0.58f to Color(0x32030911),
+                            1f to Color(0xF5030911),
+                        ),
+                    ),
+                ),
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 28.dp, vertical = 28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(modifier = Modifier.height(54.dp))
+            Canvas(modifier = Modifier.size(42.dp)) {
+                val stroke = 1.dp.toPx()
+                drawCircle(
+                    color = brass.copy(alpha = 0.75f),
+                    radius = size.minDimension * 0.46f,
+                    style = Stroke(width = stroke),
+                )
+                drawLine(
+                    color = brass,
+                    start = center,
+                    end = Offset(center.x, center.y - size.height * 0.27f),
+                    strokeWidth = stroke,
+                )
+                drawLine(
+                    color = brass,
+                    start = center,
+                    end = Offset(center.x + size.width * 0.19f, center.y - size.height * 0.13f),
+                    strokeWidth = stroke,
+                )
+                drawLine(
+                    color = brass,
+                    start = Offset(center.x, 0f),
+                    end = Offset(center.x, size.height * 0.1f),
+                    strokeWidth = stroke,
+                )
+                drawLine(
+                    color = brass,
+                    start = Offset(center.x, size.height * 0.9f),
+                    end = Offset(center.x, size.height),
+                    strokeWidth = stroke,
+                )
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            Text(
+                text = text("说书人专用控制台", "STORYTELLER CONSOLE"),
+                color = brass,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 2.2.sp,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = text("血染钟楼说书人助手", "Clocktower Storyteller Assistant"),
+                color = warmWhite,
+                fontSize = 30.sp,
+                lineHeight = 38.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = text(
+                    "离线主持工具，解决说书的所有问题。",
+                    "An offline host toolkit for every part of storytelling.",
+                ),
+                color = warmWhite.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Button(
+                onClick = onStartGame,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(15.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = brass,
+                    contentColor = Color(0xFF101319),
+                ),
+            ) {
+                Text(
+                    text("开始游戏", "Start game"),
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 0.5.sp,
+                )
+            }
+            Spacer(modifier = Modifier.height(11.dp))
+            OutlinedButton(
+                onClick = onContinueGame,
+                enabled = hasSavedGame,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(15.dp),
+                border = BorderStroke(1.dp, brass.copy(alpha = if (hasSavedGame) 0.62f else 0.22f)),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = warmWhite.copy(alpha = 0.9f),
+                    disabledContentColor = warmWhite.copy(alpha = 0.3f),
+                    containerColor = Color(0xA8060D16),
+                    disabledContainerColor = Color(0x78060D16),
+                ),
+            ) {
+                Text(
+                    text("继续上次游戏", "Continue last game"),
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            if (!hasSavedGame) {
+                Text(
+                    text = text("暂无进行中的游戏", "No game in progress"),
+                    modifier = Modifier.padding(top = 8.dp),
+                    color = warmWhite.copy(alpha = 0.38f),
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            } else {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
     }
 }
 
@@ -4800,95 +4970,206 @@ private fun ClocktowerNightActiveScreen(
 }
 
 @Composable
-private fun ClocktowerDayPlayerRow(
+private fun ClocktowerNewDemonConfirmationScreen(
+    newDemonLabel: String,
+    hasNewDemon: Boolean,
+    onShowPlayerDisplay: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+
+    ClocktowerDarkTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 8.dp,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
+                ) {
+                    Text(
+                        text("小恶魔自杀", "Imp self-kill"),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Black,
+                    )
+                    Text(
+                        text("恶魔传承 · 私密操作", "Demon succession · Private action"),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.36f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        Text(
+                            text("告知新恶魔", "INFORM THE NEW DEMON"),
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.2.sp,
+                        )
+                        Text(
+                            newDemonLabel,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 30.sp,
+                            lineHeight = 36.sp,
+                            fontWeight = FontWeight.Black,
+                        )
+                        Surface(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(16.dp),
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                Text(
+                                    text("说书人操作", "STORYTELLER ACTION"),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Black,
+                                )
+                                Text(
+                                    text(
+                                        "轻拍并唤醒这名玩家，只向他展示新的身份。确认看完后收回手机，并示意闭眼。",
+                                        "Wake this player and show the new identity privately. Take back the phone and signal them to close their eyes.",
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            }
+                        }
+                        Surface(
+                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(14.dp),
+                        ) {
+                            Text(
+                                text(
+                                    "不要向其他玩家宣布恶魔已经更换。",
+                                    "Do not announce the Demon change to other players.",
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                }
+            }
+
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 12.dp,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    OutlinedButton(
+                        onClick = onShowPlayerDisplay,
+                        enabled = hasNewDemon,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(stringResource(R.string.clocktower_host_show_to_player))
+                    }
+                    Button(
+                        onClick = onConfirm,
+                        enabled = hasNewDemon,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(
+                            text("已告知，进入天亮", "Informed, continue to dawn"),
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerDayPlayerTile(
     seatNumber: Int,
     card: PlayerCard,
-    isPoisoned: Boolean,
-    language: String,
 ) {
     val isAlive = card.eliminatedRound == null
-    val stateColor = if (isAlive) Color(0xFF5D8B72) else MaterialTheme.colorScheme.onSurfaceVariant
+    val stateColor = if (isAlive) Color(0xFF5D8B72) else Color(0xFF777D79)
     Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = stateColor.copy(alpha = 0.14f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(horizontal = 12.dp, vertical = 11.dp),
+            horizontalArrangement = Arrangement.spacedBy(9.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Surface(
-                modifier = Modifier.size(44.dp),
+                modifier = Modifier.size(34.dp),
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.background,
+                color = stateColor,
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         seatNumber.toString(),
-                        color = MaterialTheme.colorScheme.primary,
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Black,
                     )
                 }
             }
-            Column(
+            Text(
+                card.name,
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Text(
-                    card.name,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    when {
-                        isAlive && language == "en" -> "Alive · may vote"
-                        isAlive -> "存活 · 可投票"
-                        language == "en" -> "Dead · confirm ghost vote manually"
-                        else -> "死亡 · 亡者票待确认"
-                    },
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(5.dp),
-            ) {
-                Surface(
-                    color = stateColor.copy(alpha = 0.18f),
-                    shape = RoundedCornerShape(50),
-                ) {
-                    Text(
-                        if (isAlive) {
-                            if (language == "en") "ALIVE" else "存活"
-                        } else {
-                            if (language == "en") "DEAD" else "死亡"
-                        },
-                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
-                        color = stateColor,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Black,
-                    )
-                }
-                if (isPoisoned) {
-                    Surface(
-                        color = Color(0xFF927AB4).copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(50),
-                    ) {
-                        Text(
-                            if (language == "en") "POISONED" else "中毒",
-                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
-                            color = Color(0xFFCBBBE1),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Black,
-                        )
-                    }
-                }
-            }
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+            )
         }
     }
 }
@@ -4900,7 +5181,6 @@ private fun ClocktowerDayOverviewScreen(
     aliveCount: Int,
     executionThreshold: Int,
     highestVoteText: String,
-    poisonTarget: String?,
     showSlayerAction: Boolean,
     slayerActionEnabled: Boolean,
     showArtistAction: Boolean,
@@ -5029,13 +5309,23 @@ private fun ClocktowerDayOverviewScreen(
                     )
                 }
 
-                items(cards) { card ->
-                    ClocktowerDayPlayerRow(
-                        seatNumber = cards.indexOf(card) + 1,
-                        card = card,
-                        isPoisoned = card.name == poisonTarget,
-                        language = language,
-                    )
+                items(cards.chunked(2)) { rowCards ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        rowCards.forEach { card ->
+                            Box(modifier = Modifier.weight(1f)) {
+                                ClocktowerDayPlayerTile(
+                                    seatNumber = cards.indexOf(card) + 1,
+                                    card = card,
+                                )
+                            }
+                        }
+                        if (rowCards.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
                 }
 
                 if (showSlayerAction || showArtistAction) {
@@ -6784,7 +7074,11 @@ private fun ClocktowerJudgeScreen(
         if (automaticStorytellerInfo && appliedRecommendationStyle != RecommendationStyle.BALANCED) {
             val balancedPlan = (recommendationUiState as? RecommendationUiState.Ready)
                 ?.plans
-                ?.firstOrNull { it.style == RecommendationStyle.BALANCED }
+                ?.let { plans ->
+                    AutomaticStorytellerSelector.select(plans) {
+                        it.style == RecommendationStyle.BALANCED
+                    }
+                }
             if (balancedPlan != null) {
                 onApplyRecommendation(balancedPlan)
                 selectedRecommendationStyle = RecommendationStyle.BALANCED
@@ -6843,8 +7137,23 @@ private fun ClocktowerJudgeScreen(
     fun seatNumberFor(card: PlayerCard): String = ((cards.indexOf(card) + 1).takeIf { it > 0 } ?: 0).toString()
     fun seatNumbersText(pair: Pair<PlayerCard, PlayerCard>?): String? =
         pair?.let { "${seatNumberFor(it.first)}   ${seatNumberFor(it.second)}" }
-    fun displayOption(label: String, kind: ClocktowerDisplayKind, title: String, primary: String?, secondary: String? = null, footer: String? = null) =
-        ClocktowerDisplayOption(label, kind, title, primary, secondary, footer)
+    fun displayOption(
+        label: String,
+        kind: ClocktowerDisplayKind,
+        title: String,
+        primary: String?,
+        secondary: String? = null,
+        footer: String? = null,
+        isDefaultRecommendation: Boolean = false,
+    ) = ClocktowerDisplayOption(
+        label = label,
+        displayKind = kind,
+        displayTitle = title,
+        displayPrimary = primary,
+        displaySecondary = secondary,
+        displayFooter = footer,
+        isDefaultRecommendation = isDefaultRecommendation,
+    )
     fun recommendedDrunkInvestigatorOption(actor: PlayerCard): ClocktowerDisplayOption? {
         if (actor.clocktowerRole?.enName != "Drunk" || actor.clocktowerShownRole?.enName != "Investigator") return null
         val minionRole = recommendedDrunkInvestigatorRoleName
@@ -6860,6 +7169,7 @@ private fun ClocktowerJudgeScreen(
             primary = minionRole.nameFor(language),
             secondary = recommendedDrunkInvestigatorSeats.joinToString("   "),
             footer = text("在下面两位玩家之中", "One of these two players"),
+            isDefaultRecommendation = true,
         )
     }
     fun previousUnreliableNumber(title: String, actor: PlayerCard): Int? = events
@@ -6913,6 +7223,7 @@ private fun ClocktowerJudgeScreen(
                 primary = recommendation.value.toString(),
                 secondary = secondary,
                 footer = footer,
+                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
             )
         }
     }
@@ -6939,6 +7250,7 @@ private fun ClocktowerJudgeScreen(
                 primary = value,
                 secondary = secondary,
                 footer = footer,
+                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
             )
         }
     }
@@ -6971,6 +7283,7 @@ private fun ClocktowerJudgeScreen(
                 title = title,
                 primary = role.nameFor(language),
                 footer = footer,
+                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
             )
         }
     }
@@ -7015,6 +7328,7 @@ private fun ClocktowerJudgeScreen(
                 primary = text("恶魔", "Demon"),
                 secondary = seats,
                 footer = text("在下面两位玩家之中", "One of these two players"),
+                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
             )
         }
     }
@@ -7467,6 +7781,7 @@ private fun ClocktowerJudgeScreen(
                 primary = roleText,
                 secondary = seats,
                 footer = if (seats == null) "" else text("在下面两位玩家之中", "One of these two players"),
+                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
             )
         }
     }
@@ -7504,6 +7819,11 @@ private fun ClocktowerJudgeScreen(
         val actorAbilityUnreliable = actor != null && actorIsUnreliable(enName, actor)
         val unreliableOptions = actor?.takeIf { actorAbilityUnreliable }?.let(displayOptions).orEmpty()
         val reliableRecommendations = actor?.takeUnless { actorAbilityUnreliable }?.let(reliableDisplayOptions).orEmpty()
+        val automaticRecommendations = when {
+            !automaticStorytellerInfo -> reliableRecommendations
+            actorAbilityUnreliable -> unreliableOptions
+            else -> reliableRecommendations
+        }
         val resolvedDisplayKind = when (enName) {
             "Chef", "Empath", "Clockmaker", "Chambermaid" -> ClocktowerDisplayKind.Number
             "Fortune Teller" -> ClocktowerDisplayKind.YesNo
@@ -7532,8 +7852,8 @@ private fun ClocktowerJudgeScreen(
             displayPrimary = if (actor != null && unreliableOptions.isEmpty()) displayPrimary ?: tellPlayer else null,
             displaySecondary = if (actor != null && unreliableOptions.isEmpty()) displaySecondary else null,
             displayFooter = if (actor != null && unreliableOptions.isEmpty()) displayFooter ?: explanation else null,
-            displayOptions = unreliableOptions,
-            recommendedDisplayOptions = reliableRecommendations,
+            displayOptions = if (automaticStorytellerInfo) emptyList() else unreliableOptions,
+            recommendedDisplayOptions = automaticRecommendations,
             roleEnName = enName,
             spyRegistrationKey = RegistrationInteractionRules.effectiveRegistrationKey(
                 spyRegistrationKey,
@@ -7720,7 +8040,7 @@ private fun ClocktowerJudgeScreen(
                 wakeText = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
                     stringResource(
                         R.string.clocktower_first_night_minion_wake_format,
-                        minionCards.joinToString(stringResource(R.string.name_separator)) { "${cards.indexOf(it) + 1}号" },
+                        minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) },
                     )
                 } else {
                     null
@@ -8298,44 +8618,12 @@ private fun ClocktowerJudgeScreen(
             displayPrimary = text("你现在是小恶魔", "You are now the Imp"),
             displayFooter = "",
         )
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            item {
-                Text(
-                    text("小恶魔自杀", "Imp self-kill"),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-            item {
-                HostScriptCard(
-                    title = text("告知新恶魔", "Inform the new Demon"),
-                    script = text("唤醒 ${newDemon?.seatLabel(cards).orEmpty()}。", "Wake ${newDemon?.seatLabel(cards).orEmpty()}.") ,
-                    action = text("展示信息给玩家。", "Show the information to the player."),
-                ) {
-                    Button(
-                        onClick = { playerDisplayStep = newDemonStep },
-                        enabled = newDemon != null,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Text(stringResource(R.string.clocktower_host_show_to_player))
-                    }
-                    Button(
-                        onClick = onConfirmNewDemon,
-                        enabled = newDemon != null,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Text(text("已告知，进入天亮", "Informed, continue to dawn"))
-                    }
-                }
-            }
-        }
+        ClocktowerNewDemonConfirmationScreen(
+            newDemonLabel = newDemon?.seatLabel(cards).orEmpty(),
+            hasNewDemon = newDemon != null,
+            onShowPlayerDisplay = { playerDisplayStep = newDemonStep },
+            onConfirm = onConfirmNewDemon,
+        )
         return
     }
 
@@ -8368,7 +8656,6 @@ private fun ClocktowerJudgeScreen(
             aliveCount = aliveCards.size,
             executionThreshold = executionThreshold,
             highestVoteText = highestVoteText,
-            poisonTarget = poisonTarget,
             showSlayerAction = scriptHasSlayer,
             slayerActionEnabled = slayerClaimantCandidates.isNotEmpty(),
             showArtistAction = scriptHasArtist,
@@ -9248,9 +9535,10 @@ private fun ClocktowerJudgeScreen(
                                         )
                                     }
                                 }
-                                val automaticArtistAnswer = answerRecommendations
-                                    .firstOrNull { it.first == RecommendationStyle.BALANCED }
-                                    ?.second
+                                val automaticArtistRecommendation = AutomaticStorytellerSelector.select(answerRecommendations) {
+                                    it.first == RecommendationStyle.BALANCED
+                                }
+                                val automaticArtistAnswer = automaticArtistRecommendation?.second
                                 LaunchedEffect(automaticStorytellerInfo, artistClaimantName, artistTruthfulAnswer, automaticArtistAnswer) {
                                     if (automaticStorytellerInfo && automaticArtistAnswer != null && artistShownAnswer != automaticArtistAnswer) {
                                         onSelectArtistShownAnswer(automaticArtistAnswer)
@@ -9267,7 +9555,7 @@ private fun ClocktowerJudgeScreen(
                                     },
                                 ) {
                                     answerRecommendations
-                                        .filter { !automaticStorytellerInfo || it.first == RecommendationStyle.BALANCED }
+                                        .filter { !automaticStorytellerInfo || it == automaticArtistRecommendation }
                                         .forEach { (style, answer, warning) ->
                                         val answerLabel = if (answer) text("是", "Yes") else text("否", "No")
                                         val label = if (artistReliable) {
@@ -10993,7 +11281,9 @@ private fun SpyRegistrationPanel(
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     val roles = completeTroubleBrewingRoles.filter { it.team in teams && it.enName != "Spy" }
-    val automaticRecommendation = recommendations.firstOrNull { it.isDefaultRecommendation }
+    val automaticRecommendation = AutomaticStorytellerSelector.select(recommendations) {
+        it.isDefaultRecommendation
+    }
     LaunchedEffect(automaticStorytellerInfo, enabled, automaticRecommendation) {
         if (automaticStorytellerInfo && enabled && automaticRecommendation != null) {
             onRegistersGoodChange(automaticRecommendation.usesSpecialRegistration)
@@ -11114,7 +11404,9 @@ private fun RecluseRegistrationPanel(
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     val roles = completeTroubleBrewingRoles.filter { it.team in teams }
-    val automaticRecommendation = recommendations.firstOrNull { it.isDefaultRecommendation }
+    val automaticRecommendation = AutomaticStorytellerSelector.select(recommendations) {
+        it.isDefaultRecommendation
+    }
     LaunchedEffect(automaticStorytellerInfo, enabled, automaticRecommendation) {
         if (automaticStorytellerInfo && enabled && automaticRecommendation != null) {
             onRegistersEvilChange(automaticRecommendation.usesSpecialRegistration)
@@ -11251,7 +11543,12 @@ private fun ClocktowerNightStepCardLocalized(
     showNavigationActions: Boolean = true,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
-    val automaticDecision = step.decisionOptions.firstOrNull { it.isDefaultRecommendation }
+    val automaticDecision = AutomaticStorytellerSelector.select(step.decisionOptions) {
+        it.isDefaultRecommendation
+    }
+    val automaticDisplayOption = AutomaticStorytellerSelector.select(step.recommendedDisplayOptions) {
+        it.isDefaultRecommendation
+    }
     LaunchedEffect(automaticStorytellerInfo, step.title, automaticDecision?.targetName) {
         if (automaticStorytellerInfo && automaticDecision != null && selectedName != automaticDecision.targetName) {
             onSelectName(automaticDecision.targetName)
@@ -11348,12 +11645,12 @@ private fun ClocktowerNightStepCardLocalized(
                     },
                 ) {
                     step.decisionOptions
-                        .filter { !automaticStorytellerInfo || it.isDefaultRecommendation }
+                        .filter { !automaticStorytellerInfo || it == automaticDecision }
                         .forEach { option ->
                         if (automaticStorytellerInfo) {
                             Text(option.label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         } else
-                        if (option.isDefaultRecommendation) {
+                        if (automaticStorytellerInfo || option.isDefaultRecommendation) {
                             Button(
                                 onClick = { onSelectName(option.targetName) },
                                 modifier = Modifier.fillMaxWidth(),
@@ -11612,7 +11909,7 @@ private fun ClocktowerNightStepCardLocalized(
                     style = MaterialTheme.typography.bodySmall,
                 )
                 step.recommendedDisplayOptions
-                    .filter { !automaticStorytellerInfo || it.isDefaultRecommendation }
+                    .filter { !automaticStorytellerInfo || it == automaticDisplayOption }
                     .sortedBy { if (it.isDefaultRecommendation) 0 else 1 }
                     .forEach { option ->
                         val onClick = {
@@ -11636,7 +11933,7 @@ private fun ClocktowerNightStepCardLocalized(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
                             ) {
-                                Text("默认 · ${option.label}")
+                                Text("${if (automaticStorytellerInfo) "自动" else "默认"} · ${option.label}")
                             }
                         } else {
                             OutlinedButton(
@@ -12547,13 +12844,15 @@ private fun NewGameConfirmationDialog(
                     ) {
                         Text(text("原班人马快速再来一局", "Quick restart with same players"))
                     }
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(text("继续当前游戏", "Continue game"))
+                    }
                 }
             },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(text("继续当前游戏", "Continue game"))
-                }
-            },
+            dismissButton = {},
         )
     }
 }
