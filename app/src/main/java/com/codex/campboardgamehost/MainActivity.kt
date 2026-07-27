@@ -5,6 +5,9 @@ import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.spring
@@ -19,6 +22,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -29,6 +34,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -50,7 +56,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
@@ -90,10 +95,29 @@ import kotlin.math.sin
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
             CampBoardGameHostApp()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        enterImmersiveMode()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) enterImmersiveMode()
+    }
+
+    private fun enterImmersiveMode() {
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
 }
@@ -398,7 +422,7 @@ private fun Context.saveActiveGameState(snapshot: JSONObject) {
     getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         .edit()
         .putString(ACTIVE_GAME_STATE_KEY, snapshot.toString())
-        .commit()
+        .apply()
 }
 
 private fun Context.loadActiveGameStateJson(): JSONObject? {
@@ -412,7 +436,7 @@ private fun Context.clearActiveGameState() {
     getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         .edit()
         .remove(ACTIVE_GAME_STATE_KEY)
-        .commit()
+        .apply()
 }
 
 private fun Context.loadSavedGamePreview(localizedContext: Context): SavedGamePreview? {
@@ -759,9 +783,6 @@ private fun ClocktowerScript.nameFor(language: String): String = when (this) {
 private fun defaultClocktowerScriptFor(playerCount: Int): ClocktowerScript =
     if (playerCount in 5..6) ClocktowerScript.NoGreaterJoy else ClocktowerScript.TroubleBrewing
 
-private fun canStartClocktowerScript(script: ClocktowerScript): Boolean =
-    script == ClocktowerScript.TroubleBrewing || script == ClocktowerScript.NoGreaterJoy
-
 private fun LastWordsMode.labelResId(): Int = when (this) {
     LastWordsMode.None -> R.string.last_words_none
     LastWordsMode.FirstDay -> R.string.last_words_first_day
@@ -778,15 +799,9 @@ private fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int> {
         9 -> mapOf(ClocktowerTeam.Townsfolk to 5, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
         10 -> mapOf(ClocktowerTeam.Townsfolk to 7, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 2, ClocktowerTeam.Demon to 1)
         11 -> mapOf(ClocktowerTeam.Townsfolk to 7, ClocktowerTeam.Outsider to 1, ClocktowerTeam.Minion to 2, ClocktowerTeam.Demon to 1)
+        12 -> mapOf(ClocktowerTeam.Townsfolk to 7, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 2, ClocktowerTeam.Demon to 1)
         else -> mapOf(ClocktowerTeam.Townsfolk to 7, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 2, ClocktowerTeam.Demon to 1)
     }
-}
-
-private fun clocktowerRolesFor(playerCount: Int): List<ClocktowerRole> {
-    val distribution = clocktowerDistribution(playerCount)
-    return distribution.flatMap { (team, count) ->
-        completeTroubleBrewingRoles.filter { it.team == team }.shuffled().take(count)
-    }.shuffled()
 }
 
 private data class ClocktowerAssignment(
@@ -930,8 +945,6 @@ private fun CampBoardGameHostApp() {
         )
     }
 
-    fun localizedText(zh: String, en: String): String = if (language == "en") en else zh
-
     fun addOutcomeEvent(outcome: GameOutcome?) {
         if (outcome == null || clocktowerEvents.lastOrNull()?.type == ClocktowerEventType.GameEnd) return
         addClocktowerEvent(
@@ -966,6 +979,50 @@ private fun CampBoardGameHostApp() {
     fun clearSavedGameState() {
         baseContext.clearActiveGameState()
         savedGamePreview = null
+    }
+
+    fun resetToSetup() {
+        clearSavedGameState()
+        screen = Screen.Setup
+        cards.clear()
+        records.clear()
+        clocktowerEvents.clear()
+        gameOutcome = null
+        showResults = false
+        lastWordsPromptNames = emptyList()
+        pendingNightDeath = null
+        seerCheckTarget = null
+        witchSaveUsed = false
+        witchPoisonUsed = false
+        witchSavedTonight = false
+        witchPoisonTarget = null
+        hunterShotTarget = null
+        selectedDayExile = null
+        werewolfJudgeStepIndex = 0
+        clocktowerPhase = ClocktowerPhase.FirstNight
+        currentClocktowerScript = ClocktowerScript.TroubleBrewing
+        clocktowerPendingNightDeath = null
+        clocktowerSelectedExecution = null
+        clocktowerPoisonTarget = null
+        clocktowerFortuneTellerFirst = null
+        clocktowerFortuneTellerSecond = null
+        clocktowerChambermaidFirst = null
+        clocktowerChambermaidSecond = null
+        clocktowerRavenkeeperTarget = null
+        clocktowerRedHerring = null
+        clocktowerButlerMaster = null
+        clocktowerMonkProtectedTarget = null
+        clocktowerVirginUsed = false
+        clocktowerSlayerUsed = false
+        clocktowerSlayerClaimedNames = emptyList()
+        clocktowerArtistUsed = false
+        clocktowerArtistClaimedNames = emptyList()
+        clocktowerArtistClaimantName = null
+        clocktowerLastExecutedName = null
+        clocktowerPendingKlutzName = null
+        clocktowerKlutzChoiceName = null
+        clocktowerKlutzReturnToDawn = false
+        resetClocktowerFlow()
     }
 
     fun localizedRestoredCard(card: PlayerCard): PlayerCard {
@@ -1039,11 +1096,7 @@ private fun CampBoardGameHostApp() {
         putNullableString("clocktowerSlayerClaimantName", clocktowerSlayerClaimantNameState.value)
         putNullableString("clocktowerSlayerTargetName", clocktowerSlayerTargetNameState.value)
         put("showResults", showResults)
-        if (gameOutcome == null) {
-            put("gameOutcome", JSONObject.NULL)
-        } else {
-            put("gameOutcome", gameOutcome!!.toJson())
-        }
+        put("gameOutcome", gameOutcome?.toJson() ?: JSONObject.NULL)
         put("playerNames", stringsToJsonArray(playerNames))
         put("cards", playerCardsToJsonArray(cards))
         put("records", eliminationRecordsToJsonArray(records))
@@ -1180,9 +1233,6 @@ private fun CampBoardGameHostApp() {
         }
     }
 
-    SideEffect {
-        persistActiveGameStateIfNeeded()
-    }
 
     fun maxUndercoverFor(count: Int): Int {
         return ((if (includeBlank) count - 2 else count - 1).coerceAtLeast(1))
@@ -1361,7 +1411,6 @@ private fun CampBoardGameHostApp() {
         } else {
             ClocktowerScript.TroubleBrewing
         }
-        if (!canStartClocktowerScript(script)) return
         val assignments = generateClocktowerAssignments(playerNames.size, script)
         if (assignments.size != playerNames.size) return
         cards.clear()
@@ -1407,8 +1456,8 @@ private fun CampBoardGameHostApp() {
         records.add(EliminationRecord(round, scarletWoman.name, context.getString(R.string.clocktower_record_scarlet_woman_promoted)))
         addClocktowerEvent(
             ClocktowerEventType.RoleChange,
-            localizedText("角色变化", "Role changed"),
-            localizedText("${playerSeatLabel(cards, scarletWoman.name)} 成为新的恶魔。", "${playerSeatLabel(cards, scarletWoman.name)} became the new Demon."),
+            context.getString(R.string.clocktower_event_role_changed),
+            context.getString(R.string.clocktower_event_scarlet_woman_became_demon_format, playerSeatLabel(cards, scarletWoman.name, language)),
             listOf(scarletWoman.name),
         )
         return scarletWoman.name
@@ -1441,11 +1490,14 @@ private fun CampBoardGameHostApp() {
             )
         ) {
             Surface(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
+                modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background,
             ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.displayCutout),
+                ) {
                 when (screen) {
                     Screen.Setup -> SetupScreen(
                     playerCount = playerCount,
@@ -1656,23 +1708,7 @@ private fun CampBoardGameHostApp() {
                             )
                             showResults = true
                         },
-                        onNewGame = {
-                            clearSavedGameState()
-                            screen = Screen.Setup
-                            cards.clear()
-                            records.clear()
-                            gameOutcome = null
-                            lastWordsPromptNames = emptyList()
-                            pendingNightDeath = null
-                            seerCheckTarget = null
-                            witchSaveUsed = false
-                            witchPoisonUsed = false
-                            witchSavedTonight = false
-                            witchPoisonTarget = null
-                            hunterShotTarget = null
-                            selectedDayExile = null
-                            werewolfJudgeStepIndex = 0
-                        },
+                        onNewGame = { resetToSetup() },
                     )
 
                     Screen.ClocktowerJudge -> ClocktowerJudgeScreen(
@@ -1742,7 +1778,7 @@ private fun CampBoardGameHostApp() {
                             if (choice != null) {
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
-                                    localizedText("呆瓜选择", "Klutz choice"),
+                                    context.getString(R.string.clocktower_event_klutz_choice),
                                     "${playerSeatLabel(cards, clocktowerPendingKlutzName)} → ${playerSeatLabel(cards, choice)}",
                                     listOfNotNull(clocktowerPendingKlutzName, choice),
                                 )
@@ -1750,8 +1786,8 @@ private fun CampBoardGameHostApp() {
                                 if (chosenCard != null && isClocktowerEvil(chosenCard)) {
                                     gameOutcome = GameOutcome(
                                         title = context.getString(R.string.outcome_clocktower_evil_title),
-                                        summary = "呆瓜选择了邪恶玩家，善良阵营失败。",
-                                        reason = "${playerSeatLabel(cards, clocktowerPendingKlutzName)} 选择了 ${playerSeatLabel(cards, choice)}。",
+                                        summary = context.getString(R.string.clocktower_outcome_klutz_summary),
+                                        reason = context.getString(R.string.clocktower_outcome_klutz_reason_format, playerSeatLabel(cards, clocktowerPendingKlutzName), playerSeatLabel(cards, choice)),
                                     )
                                     showResults = true
                                     addOutcomeEvent(gameOutcome)
@@ -1781,10 +1817,10 @@ private fun CampBoardGameHostApp() {
                                 if (claimantCard?.clocktowerRole?.enName == "Artist" && !clocktowerArtistUsed) {
                                     clocktowerArtistUsed = true
                                 }
-                                records.add(EliminationRecord(round, claimantName, "艺术家提问已处理"))
+                                records.add(EliminationRecord(round, claimantName, context.getString(R.string.clocktower_event_artist_question_recorded)))
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
-                                    localizedText("艺术家提问", "Artist question"),
+                                    context.getString(R.string.clocktower_event_artist_question),
                                     playerSeatLabel(cards, claimantName),
                                     listOf(claimantName),
                                 )
@@ -1822,8 +1858,8 @@ private fun CampBoardGameHostApp() {
                                 }
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
-                                    localizedText("杀手命中", "Slayer hit"),
-                                    localizedText("${playerSeatLabel(cards, claimantName)} 击杀了 ${playerSeatLabel(cards, targetName)}。", "${playerSeatLabel(cards, claimantName)} killed ${playerSeatLabel(cards, targetName)}."),
+                                    context.getString(R.string.clocktower_event_slayer_hit),
+                                    context.getString(R.string.clocktower_event_slayer_hit_detail_format, playerSeatLabel(cards, claimantName), playerSeatLabel(cards, targetName)),
                                     listOf(claimantName, targetName),
                                 )
                             } else {
@@ -1838,7 +1874,7 @@ private fun CampBoardGameHostApp() {
                                 records.add(EliminationRecord(round, claimantName, recordText))
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
-                                    localizedText("杀手行动", "Slayer claim"),
+                                    context.getString(R.string.clocktower_event_slayer_claim),
                                     recordText,
                                     listOf(claimantName, targetName),
                                 )
@@ -1868,7 +1904,7 @@ private fun CampBoardGameHostApp() {
                                     )
                                     addClocktowerEvent(
                                         ClocktowerEventType.Execution,
-                                        localizedText("圣女能力处决", "Virgin execution"),
+                                        context.getString(R.string.clocktower_event_virgin_execution),
                                         playerSeatLabel(cards, nominatorName),
                                         listOf(nominatorName, nomineeName),
                                     )
@@ -1899,8 +1935,8 @@ private fun CampBoardGameHostApp() {
                                 )
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
-                                    localizedText("圣女能力已触发", "Virgin ability spent"),
-                                    localizedText("${playerSeatLabel(cards, nomineeName)} 的能力已使用，但提名人未被处决。", "${playerSeatLabel(cards, nomineeName)} spent the ability without executing the nominator."),
+                                    context.getString(R.string.clocktower_event_virgin_spent),
+                                    context.getString(R.string.clocktower_event_virgin_spent_detail_format, playerSeatLabel(cards, nomineeName)),
                                     listOf(nominatorName, nomineeName),
                                 )
                             }
@@ -1922,7 +1958,7 @@ private fun CampBoardGameHostApp() {
                                     records.add(EliminationRecord(round, executionName, context.getString(R.string.clocktower_record_execution)))
                                     addClocktowerEvent(
                                         ClocktowerEventType.Execution,
-                                        localizedText("处决", "Execution"),
+                                        context.getString(R.string.clocktower_event_execution),
                                     playerSeatLabel(cards, executionName),
                                         listOf(executionName),
                                     )
@@ -1955,7 +1991,7 @@ private fun CampBoardGameHostApp() {
                                 clocktowerLastExecutedName = null
                                 addClocktowerEvent(
                                     ClocktowerEventType.Execution,
-                                    localizedText("无人被处决", "No execution"),
+                                    context.getString(R.string.clocktower_event_no_execution),
                                     "",
                                 )
                             }
@@ -1987,8 +2023,8 @@ private fun CampBoardGameHostApp() {
                             if (demonPoisonedTonight) {
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
-                                    localizedText("恶魔中毒", "Demon poisoned"),
-                                    localizedText("恶魔能力失效，今晚无人因恶魔选择死亡。", "The Demon's ability failed; no one died from the Demon's choice."),
+                                    context.getString(R.string.clocktower_event_demon_poisoned),
+                                    context.getString(R.string.clocktower_event_demon_poisoned_detail),
                                     listOfNotNull(clocktowerPoisonTarget, clocktowerPendingNightDeath),
                                 )
                                 clocktowerPendingNightDeath = null
@@ -2008,7 +2044,7 @@ private fun CampBoardGameHostApp() {
                                         records.add(EliminationRecord(round, deathName, note))
                                         addClocktowerEvent(
                                             ClocktowerEventType.RoleAction,
-                                            localizedText("避免死亡", "Death prevented"),
+                                            context.getString(R.string.clocktower_event_death_prevented),
                                             "${playerSeatLabel(cards, deathName)} · $note",
                                             listOf(deathName),
                                         )
@@ -2019,7 +2055,7 @@ private fun CampBoardGameHostApp() {
                                         records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
                                         addClocktowerEvent(
                                             ClocktowerEventType.Death,
-                                            localizedText("夜晚死亡", "Night death"),
+                                            context.getString(R.string.clocktower_event_night_death),
                                             playerSeatLabel(cards, deathName),
                                             listOf(deathName),
                                         )
@@ -2046,7 +2082,7 @@ private fun CampBoardGameHostApp() {
                             } else if (!demonPoisonedTonight && clocktowerPhase != ClocktowerPhase.FirstNight) {
                                 addClocktowerEvent(
                                     ClocktowerEventType.Death,
-                                    localizedText("平安夜", "No night death"),
+                                    context.getString(R.string.clocktower_event_no_night_death),
                                     "",
                                 )
                             }
@@ -2083,37 +2119,7 @@ private fun CampBoardGameHostApp() {
                             showResults = true
                             addOutcomeEvent(gameOutcome)
                         },
-                        onNewGame = {
-                            clearSavedGameState()
-                            screen = Screen.Setup
-                            cards.clear()
-                            records.clear()
-                            gameOutcome = null
-                            clocktowerPhase = ClocktowerPhase.FirstNight
-                            currentClocktowerScript = ClocktowerScript.TroubleBrewing
-                            clocktowerPendingNightDeath = null
-                            clocktowerSelectedExecution = null
-                            clocktowerPoisonTarget = null
-                            clocktowerFortuneTellerFirst = null
-                            clocktowerFortuneTellerSecond = null
-                            clocktowerChambermaidFirst = null
-                            clocktowerChambermaidSecond = null
-                            clocktowerRavenkeeperTarget = null
-                            clocktowerRedHerring = null
-                            clocktowerButlerMaster = null
-                            clocktowerMonkProtectedTarget = null
-                            clocktowerVirginUsed = false
-                            clocktowerSlayerUsed = false
-                            clocktowerSlayerClaimedNames = emptyList()
-                            clocktowerArtistUsed = false
-                            clocktowerArtistClaimedNames = emptyList()
-                            clocktowerArtistClaimantName = null
-                            clocktowerLastExecutedName = null
-                            clocktowerPendingKlutzName = null
-                            clocktowerKlutzChoiceName = null
-                            clocktowerKlutzReturnToDawn = false
-                            resetClocktowerFlow()
-                        },
+                        onNewGame = { resetToSetup() },
                     )
 
                     Screen.Game -> GameScreen(
@@ -2148,13 +2154,7 @@ private fun CampBoardGameHostApp() {
                         )
                         showResults = true
                     },
-                    onNewGame = {
-                        clearSavedGameState()
-                        screen = Screen.Setup
-                        cards.clear()
-                        records.clear()
-                        gameOutcome = null
-                    },
+                    onNewGame = { resetToSetup() },
                 )
                 }
 
@@ -2164,17 +2164,10 @@ private fun CampBoardGameHostApp() {
                         cards = cards,
                         outcome = gameOutcome,
                         onDismiss = { showResults = false },
-                        onNewGame = {
-                            clearSavedGameState()
-                            showResults = false
-                            gameOutcome = null
-                            screen = Screen.Setup
-                            cards.clear()
-                            records.clear()
-                            resetClocktowerFlow()
-                        },
+                        onNewGame = { resetToSetup() },
                     )
                 }
+                } // Box (displayCutout inset)
             }
         }
     }
@@ -3215,7 +3208,7 @@ private fun ClocktowerSettingsScreen(
     val distribution = clocktowerDistribution(playerCount)
     val showScriptChoice = playerCount in 5..6
     val effectiveScript = if (showScriptChoice) selectedScript else ClocktowerScript.TroubleBrewing
-    val canStart = playerCount >= MIN_CLOCKTOWER_PLAYERS && canStartClocktowerScript(effectiveScript)
+    val canStart = playerCount >= MIN_CLOCKTOWER_PLAYERS
 
     LazyColumn(
         modifier = Modifier
@@ -4029,16 +4022,17 @@ private fun SelectablePlayerChips(
     allCards: List<PlayerCard> = cards,
     onSelect: (String) -> Unit,
 ) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         cards.forEach { card ->
             val selected = selectedName == card.name
             if (selected) {
                 Button(onClick = { onSelect(card.name) }, enabled = enabled, shape = RoundedCornerShape(8.dp)) {
-                    Text(card.seatLabel(allCards))
+                    Text(card.seatLabel(allCards, language))
                 }
             } else {
                 OutlinedButton(onClick = { onSelect(card.name) }, enabled = enabled, shape = RoundedCornerShape(8.dp)) {
-                    Text(card.seatLabel(allCards))
+                    Text(card.seatLabel(allCards, language))
                 }
             }
         }
@@ -4127,11 +4121,13 @@ private fun PlayerCard.hostRoleLabel(context: Context, gameKind: GameKind): Stri
     GameKind.Undercover -> context.getString(role.labelResId())
 }
 
-private fun PlayerCard.seatLabel(cards: List<PlayerCard>): String =
-    "${cards.indexOfFirst { it.name == name } + 1}号 $name"
+private fun PlayerCard.seatLabel(cards: List<PlayerCard>, language: String = "zh"): String {
+    val seat = cards.indexOfFirst { it.name == name } + 1
+    return if (language == "en") "$seat — $name" else "${seat}号 $name"
+}
 
-private fun playerSeatLabel(cards: List<PlayerCard>, playerName: String?): String =
-    cards.firstOrNull { it.name == playerName }?.seatLabel(cards) ?: playerName.orEmpty()
+private fun playerSeatLabel(cards: List<PlayerCard>, playerName: String?, language: String = "zh"): String =
+    cards.firstOrNull { it.name == playerName }?.seatLabel(cards, language) ?: playerName.orEmpty()
 
 private fun isClocktowerEvil(card: PlayerCard): Boolean =
     card.clocktowerTeam == ClocktowerTeam.Minion || card.clocktowerTeam == ClocktowerTeam.Demon
@@ -4277,15 +4273,15 @@ private fun ClocktowerJudgeScreen(
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
-    val aliveCards = cards.filter { it.eliminatedRound == null }
-    val firstNightWasherwoman = actualClocktowerRoleCards(cards, "Washerwoman").firstOrNull()
-    val firstNightLibrarian = actualClocktowerRoleCards(cards, "Librarian").firstOrNull()
-    val firstNightInvestigator = actualClocktowerRoleCards(cards, "Investigator").firstOrNull()
-    val chefPlayer = actualClocktowerRoleCards(cards, "Chef").firstOrNull()
-    val empathPlayers = actualClocktowerRoleCards(cards, "Empath").filter { it.eliminatedRound == null }
-    val fortuneTellerPlayers = actualClocktowerRoleCards(cards, "Fortune Teller").filter { it.eliminatedRound == null }
-    val poisonerPlayers = actualClocktowerRoleCards(cards, "Poisoner").filter { it.eliminatedRound == null }
-    val butlerPlayers = actualClocktowerRoleCards(cards, "Butler").filter { it.eliminatedRound == null }
+    val aliveCards = remember(cards) { cards.filter { it.eliminatedRound == null } }
+    val firstNightWasherwoman = remember(cards) { actualClocktowerRoleCards(cards, "Washerwoman").firstOrNull() }
+    val firstNightLibrarian = remember(cards) { actualClocktowerRoleCards(cards, "Librarian").firstOrNull() }
+    val firstNightInvestigator = remember(cards) { actualClocktowerRoleCards(cards, "Investigator").firstOrNull() }
+    val chefPlayer = remember(cards) { actualClocktowerRoleCards(cards, "Chef").firstOrNull() }
+    val empathPlayers = remember(cards) { actualClocktowerRoleCards(cards, "Empath").filter { it.eliminatedRound == null } }
+    val fortuneTellerPlayers = remember(cards) { actualClocktowerRoleCards(cards, "Fortune Teller").filter { it.eliminatedRound == null } }
+    val poisonerPlayers = remember(cards) { actualClocktowerRoleCards(cards, "Poisoner").filter { it.eliminatedRound == null } }
+    val butlerPlayers = remember(cards) { actualClocktowerRoleCards(cards, "Butler").filter { it.eliminatedRound == null } }
     val demonPoisonedTonight = poisonTarget?.let { name ->
         cards.firstOrNull { it.name == name && it.eliminatedRound == null }?.clocktowerTeam == ClocktowerTeam.Demon
     } == true
@@ -4361,25 +4357,25 @@ private fun ClocktowerJudgeScreen(
     }
     val phaseTitle = when (phase) {
         ClocktowerPhase.FirstNight -> stringResource(R.string.clocktower_phase_first_night)
-        ClocktowerPhase.Dawn -> "天亮"
+        ClocktowerPhase.Dawn -> stringResource(R.string.clocktower_phase_dawn)
         ClocktowerPhase.Day -> stringResource(R.string.clocktower_phase_day, round)
         ClocktowerPhase.Night -> stringResource(R.string.clocktower_phase_night, round)
     }
     val phaseProgress = when (phase) {
         ClocktowerPhase.FirstNight -> stringResource(R.string.clocktower_progress_first_night)
-        ClocktowerPhase.Dawn -> "天亮"
+        ClocktowerPhase.Dawn -> stringResource(R.string.clocktower_progress_dawn)
         ClocktowerPhase.Day -> stringResource(R.string.clocktower_progress_day)
         ClocktowerPhase.Night -> stringResource(R.string.clocktower_progress_night)
     }
     val phaseScript = when (phase) {
         ClocktowerPhase.FirstNight -> stringResource(R.string.clocktower_script_first_night)
-        ClocktowerPhase.Dawn -> "天亮了，所有人睁眼。"
+        ClocktowerPhase.Dawn -> stringResource(R.string.clocktower_script_dawn)
         ClocktowerPhase.Day -> stringResource(R.string.clocktower_script_day)
         ClocktowerPhase.Night -> stringResource(R.string.clocktower_script_night)
     }
     val phaseAction = when (phase) {
         ClocktowerPhase.FirstNight -> stringResource(R.string.clocktower_action_first_night)
-        ClocktowerPhase.Dawn -> "宣布昨晚死亡，然后进入白天。"
+        ClocktowerPhase.Dawn -> stringResource(R.string.clocktower_action_dawn)
         ClocktowerPhase.Day -> stringResource(R.string.clocktower_action_day)
         ClocktowerPhase.Night -> stringResource(R.string.clocktower_action_night)
     }
@@ -4480,9 +4476,9 @@ private fun ClocktowerJudgeScreen(
         val actor = roleActor(enName)
         val actorIsDrunkShownRole = actor?.clocktowerRole?.enName == "Drunk" && actor.clocktowerShownRole?.enName == enName
         val hostUnreliableNote = if (actorIsDrunkShownRole) {
-            "注意：这名玩家真实身份是酒鬼，显示为$roleName。请照常唤醒并给信息，但信息可以不可靠或完全错误。"
+            context.getString(R.string.clocktower_host_unreliable_drunk_format, roleName)
         } else if (actorIsPoisoned(actor)) {
-            "注意：这名玩家今晚中毒，能力信息可以不可靠或错误。"
+            context.getString(R.string.clocktower_host_unreliable_poisoned)
         } else {
             null
         }
@@ -4939,9 +4935,9 @@ private fun ClocktowerJudgeScreen(
             if (!nightStarted) {
                 item {
                     HostScriptCard(
-                        title = "夜晚即将开始",
-                        script = "所有人请闭眼，低头，保持安静。",
-                        action = "如果需要唤醒某位玩家，请轻拍或轻声示意。尽量不要大声念出角色名称，避免泄露信息。",
+                        title = stringResource(R.string.clocktower_host_night_ready_title),
+                        script = stringResource(R.string.clocktower_host_night_ready_script),
+                        action = stringResource(R.string.clocktower_host_night_ready_action),
                     ) {
                         Button(
                             onClick = {
@@ -4951,7 +4947,7 @@ private fun ClocktowerJudgeScreen(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(8.dp),
                         ) {
-                            Text("开始夜晚流程")
+                            Text(stringResource(R.string.clocktower_host_start_night_flow))
                         }
                     }
                 }
@@ -4959,9 +4955,9 @@ private fun ClocktowerJudgeScreen(
                 val currentStep = nightSteps[nightStepIndex.coerceIn(0, nightSteps.lastIndex)]
                 item {
                     HostProgressCard(
-                        title = if (phase == ClocktowerPhase.FirstNight) "第 1 夜" else "第 $round 夜",
-                        subtitle = "当前阶段：${currentStep.title}",
-                        progress = "步骤 ${nightStepIndex + 1} / ${nightSteps.size}",
+                        title = if (phase == ClocktowerPhase.FirstNight) stringResource(R.string.clocktower_host_first_night_title) else stringResource(R.string.clocktower_host_night_title_format, round),
+                        subtitle = stringResource(R.string.clocktower_current_step_format, currentStep.title),
+                        progress = stringResource(R.string.clocktower_step_count_format, nightStepIndex + 1, nightSteps.size),
                     )
                 }
                 item {
@@ -5028,19 +5024,15 @@ private fun ClocktowerJudgeScreen(
                 }
             }
         } else if (phase == ClocktowerPhase.Dawn) {
-            val deathText = pendingNightDeath?.let { playerSeatLabel(cards, it) } ?: "无"
+            val deathText = pendingNightDeath?.let { playerSeatLabel(cards, it) } ?: stringResource(R.string.clocktower_dawn_no_death)
             item {
                 HostScriptCard(
-                    title = "天亮了",
-                    script = "天亮了，所有人睁眼。",
-                    action = if (pendingNightDeath == null) {
-                        "请宣布：昨晚没有人死亡。"
-                    } else {
-                        "请宣布：昨晚，$deathText 死亡。"
-                    },
+                    title = stringResource(R.string.clocktower_dawn_title),
+                    script = stringResource(R.string.clocktower_script_dawn),
+                    action = stringResource(R.string.clocktower_action_dawn),
                 ) {
                     HostInstructionBlock(
-                        label = "昨晚死亡",
+                        label = stringResource(R.string.clocktower_dawn_last_death_label),
                         text = deathText,
                         backgroundColor = Color(0xFFFFFCF6),
                         textColor = Color(0xFF1F2925),
@@ -5053,25 +5045,25 @@ private fun ClocktowerJudgeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
                     ) {
-                        Text("进入白天")
+                        Text(stringResource(R.string.clocktower_enter_day))
                     }
                 }
             }
         } else {
             item {
                 HostProgressCard(
-                    title = "第 $round 天 白天",
-                    subtitle = "存活玩家：${aliveCards.size}，处决所需票数：$executionThreshold",
-                    progress = highestVoteName?.let { "最高票：${playerSeatLabel(cards, it)}，$highestVoteCount 票" } ?: "最高票：无",
+                    title = stringResource(R.string.clocktower_day_title_format, round),
+                    subtitle = stringResource(R.string.clocktower_day_alive_execution_format, aliveCards.size, executionThreshold),
+                    progress = highestVoteName?.let { stringResource(R.string.clocktower_day_highest_vote_format, playerSeatLabel(cards, it), highestVoteCount) } ?: stringResource(R.string.clocktower_day_no_highest_vote),
                 )
             }
             when (dayMode) {
                 ClocktowerDayMode.Overview -> {
                     item {
                         HostScriptCard(
-                            title = "白天管理",
-                            script = "现在自由讨论。有人提名时，点击开始提名。",
-                            action = "管理提名、投票、处决。今天结束前会确认是否有人被处决。",
+                            title = stringResource(R.string.clocktower_script_day_overview_title),
+                            script = stringResource(R.string.clocktower_script_day_overview_script),
+                            action = stringResource(R.string.clocktower_script_day_overview_action),
                         ) {
                             Button(
                                 onClick = {
@@ -5083,7 +5075,7 @@ private fun ClocktowerJudgeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
                             ) {
-                                Text("开始提名")
+                                Text(stringResource(R.string.clocktower_start_nomination))
                             }
                             if (scriptHasSlayer) {
                                 OutlinedButton(
@@ -5096,7 +5088,7 @@ private fun ClocktowerJudgeScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(8.dp),
                                 ) {
-                                    Text("杀手行动")
+                                    Text(stringResource(R.string.clocktower_slayer_action))
                                 }
                             }
                             if (scriptHasArtist) {
@@ -5109,7 +5101,7 @@ private fun ClocktowerJudgeScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(8.dp),
                                 ) {
-                                    Text("艺术家提问")
+                                    Text(stringResource(R.string.clocktower_artist_question))
                                 }
                             }
                             OutlinedButton(
@@ -5121,7 +5113,7 @@ private fun ClocktowerJudgeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
                             ) {
-                                Text("结束白天")
+                                Text(stringResource(R.string.clocktower_end_day))
                             }
                         }
                     }
@@ -5130,21 +5122,21 @@ private fun ClocktowerJudgeScreen(
                 ClocktowerDayMode.Slayer -> {
                     item {
                         HostScriptCard(
-                            title = "杀手行动",
-                            script = "选择公开声称自己是杀手的玩家，再选择目标。",
-                            action = "只有真实杀手首次使用且目标是真实恶魔时，目标才会死亡。",
+                            title = stringResource(R.string.clocktower_slayer_action),
+                            script = stringResource(R.string.clocktower_slayer_script),
+                            action = stringResource(R.string.clocktower_slayer_action_hint),
                         ) {
                             if (slayerClaimantCandidates.isEmpty()) {
                                 HostInstructionBlock(
-                                    label = "杀手",
-                                    text = "所有存活玩家都已经声称过杀手行动，本局不再提供声称者。",
+                                    label = stringResource(R.string.clocktower_slayer_label),
+                                    text = stringResource(R.string.clocktower_slayer_all_claimed),
                                     backgroundColor = Color(0xFFFFFCF6),
                                     textColor = Color(0xFF6F7B74),
                                 )
                             } else {
                                 HostActionSection(
-                                    title = "选择声称者",
-                                    helper = "已经声称过杀手行动的玩家不会再出现。",
+                                    title = stringResource(R.string.clocktower_slayer_choose_claimant),
+                                    helper = stringResource(R.string.clocktower_slayer_claimed_hint),
                                 ) {
                                     SelectablePlayerChips(
                                         cards = slayerClaimantCandidates,
@@ -5157,7 +5149,7 @@ private fun ClocktowerJudgeScreen(
                                         },
                                     )
                                 }
-                                HostActionSection(title = "选择目标") {
+                                HostActionSection(title = stringResource(R.string.clocktower_slayer_choose_target)) {
                                     SelectablePlayerChips(
                                         cards = aliveCards.filter { it.name != slayerClaimantName },
                                         selectedName = slayerTargetName,
@@ -5181,7 +5173,7 @@ private fun ClocktowerJudgeScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(8.dp),
                                 ) {
-                                    Text("结算杀手行动")
+                                    Text(stringResource(R.string.clocktower_slayer_resolve))
                                 }
                             }
                             OutlinedButton(
@@ -5193,7 +5185,7 @@ private fun ClocktowerJudgeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
                             ) {
-                                Text("返回白天")
+                                Text(stringResource(R.string.clocktower_back_to_day))
                             }
                         }
                     }
@@ -5202,13 +5194,13 @@ private fun ClocktowerJudgeScreen(
                 ClocktowerDayMode.Artist -> {
                     item {
                         HostScriptCard(
-                            title = "艺术家提问",
-                            script = "选择公开声称自己是艺术家的玩家。艺术家每局一次，可以私下问说书人一个是/否问题。",
-                            action = "如果是真艺术家首次提问，请根据魔典回答是/否；如果是酒鬼或假声称，可以给不可靠回答。",
+                            title = stringResource(R.string.clocktower_artist_question),
+                            script = stringResource(R.string.clocktower_artist_script),
+                            action = stringResource(R.string.clocktower_artist_action),
                         ) {
                             HostActionSection(
-                                title = "选择提问者",
-                                helper = "已经提问过或声称提问过的玩家不会再出现。",
+                                title = stringResource(R.string.clocktower_artist_choose_claimant),
+                                helper = stringResource(R.string.clocktower_artist_claimed_hint),
                             ) {
                                 SelectablePlayerChips(
                                     cards = artistClaimantCandidates,
@@ -5224,7 +5216,7 @@ private fun ClocktowerJudgeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
                             ) {
-                                Text("记录艺术家提问")
+                                Text(stringResource(R.string.clocktower_artist_record))
                             }
                             OutlinedButton(
                                 onClick = {
@@ -5234,7 +5226,7 @@ private fun ClocktowerJudgeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
                             ) {
-                                Text("返回白天")
+                                Text(stringResource(R.string.clocktower_back_to_day))
                             }
                         }
                     }
@@ -5243,11 +5235,11 @@ private fun ClocktowerJudgeScreen(
                 ClocktowerDayMode.Klutz -> {
                     item {
                         HostScriptCard(
-                            title = "呆瓜选择",
-                            script = "${playerSeatLabel(cards, pendingKlutzName)} 是呆瓜，得知自己死亡后必须公开选择一名存活玩家。",
-                            action = "如果他选择邪恶玩家，善良阵营失败；选择善良玩家则游戏继续。",
+                            title = stringResource(R.string.clocktower_event_klutz_choice),
+                            script = stringResource(R.string.clocktower_klutz_script_format, playerSeatLabel(cards, pendingKlutzName)),
+                            action = stringResource(R.string.clocktower_klutz_action),
                         ) {
-                            HostActionSection(title = "选择呆瓜公开指定的玩家") {
+                            HostActionSection(title = stringResource(R.string.clocktower_klutz_choose_player)) {
                                 SelectablePlayerChips(
                                     cards = aliveCards.filter { it.name != pendingKlutzName },
                                     selectedName = klutzChoiceName,
@@ -5262,7 +5254,7 @@ private fun ClocktowerJudgeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
                             ) {
-                                Text("确认呆瓜选择")
+                                Text(stringResource(R.string.clocktower_klutz_confirm))
                             }
                         }
                     }
@@ -5275,19 +5267,19 @@ private fun ClocktowerJudgeScreen(
                         val virginFirstNomination = nomineeCard?.clocktowerRole?.enName == "Virgin" && !virginUsed
                         val virginExecutes = virginFirstNomination && nominatorCard?.clocktowerTeam == ClocktowerTeam.Townsfolk
                         HostScriptCard(
-                            title = "提名",
+                            title = stringResource(R.string.clocktower_nomination_title),
                             script = if (nominatorName != null && nomineeName != null) {
-                                "请宣布：${playerSeatLabel(cards, nominatorName)} 提名 ${playerSeatLabel(cards, nomineeName)}。然后请提名人说明理由，再请被提名人辩护。"
+                                stringResource(R.string.clocktower_nomination_script_format, playerSeatLabel(cards, nominatorName), playerSeatLabel(cards, nomineeName))
                             } else {
-                                "选择提名人和被提名人。"
+                                stringResource(R.string.clocktower_nomination_script_empty)
                             },
                             action = when {
-                                virginExecutes -> "这是圣女第一次被镇民提名。不要投票，直接处决提名者。"
-                                virginFirstNomination -> "这是圣女第一次被提名，但提名者不是真实镇民。圣女能力用过，继续正常投票。"
-                                else -> "两名玩家都选好后，进入投票。"
+                                virginExecutes -> stringResource(R.string.clocktower_nomination_virgin_executes_action)
+                                virginFirstNomination -> stringResource(R.string.clocktower_nomination_virgin_spent_action)
+                                else -> stringResource(R.string.clocktower_nomination_normal_action)
                             },
                         ) {
-                            HostActionSection(title = "选择提名人") {
+                            HostActionSection(title = stringResource(R.string.clocktower_nomination_choose_nominator)) {
                                 SelectablePlayerChips(
                                     cards = aliveCards,
                                     selectedName = nominatorName,
@@ -5296,7 +5288,7 @@ private fun ClocktowerJudgeScreen(
                                     onSelect = { nominatorName = if (nominatorName == it) null else it },
                                 )
                             }
-                            HostActionSection(title = "选择被提名人") {
+                            HostActionSection(title = stringResource(R.string.clocktower_nomination_choose_nominee)) {
                                 SelectablePlayerChips(
                                     cards = aliveCards,
                                     selectedName = nomineeName,
@@ -5307,11 +5299,11 @@ private fun ClocktowerJudgeScreen(
                             }
                             if (virginFirstNomination) {
                                 HostInstructionBlock(
-                                    label = "圣女能力",
+                                    label = stringResource(R.string.clocktower_nomination_virgin_label),
                                     text = if (virginExecutes) {
-                                        "${playerSeatLabel(cards, nomineeName)} 第一次被真实镇民提名。${playerSeatLabel(cards, nominatorName)} 立即被处决，本次提名不进入投票，白天结束。"
+                                        stringResource(R.string.clocktower_nomination_virgin_executes_detail, playerSeatLabel(cards, nomineeName), playerSeatLabel(cards, nominatorName))
                                     } else {
-                                        "${playerSeatLabel(cards, nomineeName)} 第一次被提名，但 ${playerSeatLabel(cards, nominatorName)} 不是真实镇民。不要处决提名者；记录圣女能力已用过，然后继续投票。"
+                                        stringResource(R.string.clocktower_nomination_virgin_spent_detail, playerSeatLabel(cards, nomineeName), playerSeatLabel(cards, nominatorName))
                                     },
                                     backgroundColor = if (virginExecutes) Color(0xFFFFF4DC) else Color(0xFFFFFCF6),
                                     textColor = if (virginExecutes) Color(0xFF9A4B36) else Color(0xFF5C6A63),
@@ -5343,9 +5335,9 @@ private fun ClocktowerJudgeScreen(
                             ) {
                                 Text(
                                     when {
-                                        virginExecutes -> "处决提名者"
-                                        virginFirstNomination -> "记录圣女已用过，开始投票"
-                                        else -> "开始投票"
+                                        virginExecutes -> stringResource(R.string.clocktower_nomination_execute_nominator)
+                                        virginFirstNomination -> stringResource(R.string.clocktower_nomination_virgin_spent_start_vote)
+                                        else -> stringResource(R.string.clocktower_nomination_start_vote)
                                     },
                                 )
                             }
@@ -5356,23 +5348,23 @@ private fun ClocktowerJudgeScreen(
                 ClocktowerDayMode.Vote -> {
                     item {
                         HostScriptCard(
-                            title = "投票",
-                            script = "正在投票：是否处决 ${playerSeatLabel(cards, nomineeName)}。",
-                            action = "输入票数。达到 $executionThreshold 票才可能成为今天处决目标。",
+                            title = stringResource(R.string.clocktower_vote_title),
+                            script = stringResource(R.string.clocktower_vote_script_format, playerSeatLabel(cards, nomineeName)),
+                            action = stringResource(R.string.clocktower_vote_action_format, executionThreshold),
                         ) {
                             StepperRow(
-                                label = "票数",
+                                label = stringResource(R.string.clocktower_vote_count_label),
                                 value = currentVoteCount,
                                 range = 0..aliveCards.size,
                                 onChange = { currentVoteCount = it },
                             )
                             val reached = currentVoteCount >= executionThreshold
                             HostInstructionBlock(
-                                label = "结果",
+                                label = stringResource(R.string.clocktower_vote_result_label),
                                 text = if (reached) {
-                                    "${playerSeatLabel(cards, nomineeName)} 获得 $currentVoteCount 票，达到处决门槛。"
+                                    stringResource(R.string.clocktower_vote_reached_format, playerSeatLabel(cards, nomineeName), currentVoteCount)
                                 } else {
-                                    "${playerSeatLabel(cards, nomineeName)} 获得 $currentVoteCount 票，未达到处决门槛。"
+                                    stringResource(R.string.clocktower_vote_not_reached_format, playerSeatLabel(cards, nomineeName), currentVoteCount)
                                 },
                                 backgroundColor = if (reached) Color(0xFFEAF2EA) else Color(0xFFFFFCF6),
                                 textColor = if (reached) Color(0xFF2F5D50) else Color(0xFF6F7B74),
@@ -5395,7 +5387,7 @@ private fun ClocktowerJudgeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
                             ) {
-                                Text("继续提名")
+                                Text(stringResource(R.string.clocktower_vote_continue_nomination))
                             }
                             OutlinedButton(
                                 onClick = {
@@ -5410,7 +5402,7 @@ private fun ClocktowerJudgeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
                             ) {
-                                Text("结束白天")
+                                Text(stringResource(R.string.clocktower_end_day))
                             }
                         }
                     }
@@ -5420,9 +5412,9 @@ private fun ClocktowerJudgeScreen(
                     item {
                         val target = selectedExecution
                         HostScriptCard(
-                            title = "准备结束白天",
-                            script = target?.let { "当前将被处决：${playerSeatLabel(cards, it)}，票数：$highestVoteCount。" } ?: "今天没有玩家被处决。",
-                            action = target?.let { "确认处决 ${playerSeatLabel(cards, it)} 吗？" } ?: "确认进入夜晚吗？",
+                            title = stringResource(R.string.clocktower_end_confirm_title),
+                            script = target?.let { stringResource(R.string.clocktower_end_confirm_script_execution, playerSeatLabel(cards, it), highestVoteCount) } ?: stringResource(R.string.clocktower_end_confirm_script_no_execution),
+                            action = target?.let { stringResource(R.string.clocktower_end_confirm_action_execution, playerSeatLabel(cards, it)) } ?: stringResource(R.string.clocktower_end_confirm_action_no_execution),
                         ) {
                             Button(
                                 onClick = onConfirmDay,
@@ -5430,14 +5422,14 @@ private fun ClocktowerJudgeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
                             ) {
-                                Text(target?.let { "确认处决" } ?: "进入夜晚")
+                                Text(target?.let { stringResource(R.string.clocktower_end_confirm_execute) } ?: stringResource(R.string.clocktower_end_confirm_enter_night))
                             }
                             OutlinedButton(
                                 onClick = { dayMode = ClocktowerDayMode.Overview },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
                             ) {
-                                Text("返回白天")
+                                Text(stringResource(R.string.clocktower_back_to_day))
                             }
                         }
                     }

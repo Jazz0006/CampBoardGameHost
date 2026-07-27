@@ -1,8 +1,10 @@
 <resources>
-    <style name="Theme.CampBoardGameHost" parent="android:style/Theme.Material.Light.NoActionBar">
+    <style name="Theme.CampBoardGameHost" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
+        <!-- Bars are hidden in immersive mode; make them transparent for the
+             brief transient-reveal moment so no colour flash appears. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:navigationBarColor">#F8F6F0</item>
-        <item name="android:statusBarColor">#F8F6F0</item>
     </style>
 </resources>
