@@ -41,21 +41,18 @@ internal object DemonSuccessorRecommender {
         if (candidates.size == 1) {
             return listOf(evaluate(request, candidates.single(), RecommendationStyle.BALANCED, alivePlayers.size))
         }
-        val selectedSeats = mutableSetOf<Int>()
         return listOf(
             RecommendationStyle.BALANCED,
             RecommendationStyle.GENTLE,
             RecommendationStyle.AGGRESSIVE,
-        ).mapNotNull { style ->
+        ).map { style ->
             candidates
                 .map { evaluate(request, it, style, alivePlayers.size) }
                 .sortedWith(
                     compareByDescending<DynamicDecisionRecommendation> { it.totalScore }
                         .thenBy { (it.candidate.choice as DynamicStorytellerChoice.DemonSuccessor).targetSeat },
                 )
-                .firstOrNull {
-                    selectedSeats.add((it.candidate.choice as DynamicStorytellerChoice.DemonSuccessor).targetSeat)
-                }
+                .first()
         }
     }
 
@@ -112,6 +109,22 @@ internal object DemonSuccessorRecommender {
                     ),
                 )
             }
+            val continuingPower = when (target.actualRole.value) {
+                "Poisoner" -> 4
+                "Spy" -> 3
+                "Scarlet Woman" -> 2
+                "Baron" -> 0
+                else -> 1
+            }
+            add(
+                ScoreItem(
+                    ruleId = "global-balance",
+                    category = ScoreCategory.EVIL_PRESSURE,
+                    delta = (-request.state.evilAdvantage * continuingPower / 15).coerceIn(-24, 24),
+                    messageKey = "recommendation.global-balance",
+                    affectedSeats = listOf(target.seat),
+                ),
+            )
         }
         val mandatoryScarletWoman = aliveCount >= 5 && target.actualRole == scarletWomanRole && !target.poisoned
         val warnings = buildList {

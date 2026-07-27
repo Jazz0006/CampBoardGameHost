@@ -36,6 +36,8 @@ data class DynamicGameState(
     val informationPressureBySeat: Map<Int, Int> = emptyMap(),
     val specialRegistrationCountBySeat: Map<Int, Int> = emptyMap(),
     val publicBalanceHint: PublicBalanceHint = PublicBalanceHint.UNKNOWN,
+    /** Positive means evil is ahead; negative means good is ahead. */
+    val evilAdvantage: Int = 0,
 ) {
     init {
         require(round > 0)
@@ -45,6 +47,7 @@ data class DynamicGameState(
         require(specialRegistrationCountBySeat.keys.all { game.playerAt(it) != null })
         require(informationPressureBySeat.values.all { it >= 0 })
         require(specialRegistrationCountBySeat.values.all { it >= 0 })
+        require(evilAdvantage in -100..100)
     }
 }
 

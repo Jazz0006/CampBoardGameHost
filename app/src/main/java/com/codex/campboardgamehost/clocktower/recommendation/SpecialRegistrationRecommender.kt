@@ -28,6 +28,8 @@ internal data class SpecialRegistrationContext(
     val canMisregister: Boolean,
     val outcomeDiscussionValue: Int = 0,
     val outcomeMisinformationPressure: Int = 0,
+    /** +1 when the special registration helps evil, -1 when it helps good. */
+    val specialRegistrationBalanceImpact: Int = 0,
 )
 
 internal object SpecialRegistrationRecommender {
@@ -76,12 +78,14 @@ internal object SpecialRegistrationRecommender {
             }
         }
         val candidates = listOf(actual) + special
-        val selectedKeys = mutableSetOf<String>()
+        if (candidates.size == 1) {
+            return listOf(evaluate(request, context, actual, RecommendationStyle.BALANCED))
+        }
         return listOf(
             RecommendationStyle.BALANCED,
             RecommendationStyle.GENTLE,
             RecommendationStyle.AGGRESSIVE,
-        ).mapNotNull { style ->
+        ).map { style ->
             candidates
                 .map { evaluate(request, context, it, style) }
                 .sortedWith(
@@ -89,7 +93,7 @@ internal object SpecialRegistrationRecommender {
                         .thenByDescending { it.totalScore }
                         .thenBy { it.registrationKey() },
                 )
-                .firstOrNull { selectedKeys.add(it.registrationKey()) }
+                .first()
         }
     }
 
@@ -109,6 +113,14 @@ internal object SpecialRegistrationRecommender {
                     if (special) "special-registration" else "actual-registration",
                     ScoreCategory.BEGINNER_SAFETY,
                     registrationBaseScore(style, special),
+                    choice.subjectSeat,
+                ),
+            )
+            add(
+                score(
+                    "stable-variation",
+                    ScoreCategory.DIVERSITY,
+                    stableVariation(request, choice, style),
                     choice.subjectSeat,
                 ),
             )
@@ -139,6 +151,20 @@ internal object SpecialRegistrationRecommender {
                         ),
                     )
                 }
+                if (context.specialRegistrationBalanceImpact != 0) {
+                    add(
+                        score(
+                            "global-balance",
+                            ScoreCategory.EVIL_PRESSURE,
+                            globalBalanceScore(
+                                evilAdvantage = request.state.evilAdvantage,
+                                impact = context.specialRegistrationBalanceImpact,
+                                style = style,
+                            ),
+                            choice.subjectSeat,
+                        ),
+                    )
+                }
             }
         }
         val warnings = buildList {
@@ -149,7 +175,10 @@ internal object SpecialRegistrationRecommender {
             if (special && history >= 2) add(warning("repeated-special-registration", choice.subjectSeat))
         }
         val tier = when {
-            warnings.any { it.ruleId == "high-information-pressure" } -> QualityTier.ACCEPTABLE_WITH_WARNING
+            warnings.any { it.ruleId == "high-information-pressure" } &&
+                style != RecommendationStyle.AGGRESSIVE &&
+                request.state.evilAdvantage * context.specialRegistrationBalanceImpact > -25 ->
+                QualityTier.ACCEPTABLE_WITH_WARNING
             warnings.any { it.ruleId == "repeated-special-registration" } && style != RecommendationStyle.AGGRESSIVE ->
                 QualityTier.ACCEPTABLE_WITH_WARNING
             else -> QualityTier.RECOMMENDED
@@ -181,6 +210,39 @@ internal object SpecialRegistrationRecommender {
         RecommendationStyle.GENTLE -> -history * 4
         RecommendationStyle.BALANCED -> -history * 2
         RecommendationStyle.AGGRESSIVE -> history
+    }
+
+    private fun globalBalanceScore(
+        evilAdvantage: Int,
+        impact: Int,
+        style: RecommendationStyle,
+    ): Int {
+        val strength = when (style) {
+            RecommendationStyle.GENTLE -> 2
+            RecommendationStyle.BALANCED -> 3
+            RecommendationStyle.AGGRESSIVE -> 4
+        }
+        return (-evilAdvantage * impact * strength / 10).coerceIn(-32, 32)
+    }
+
+    private fun stableVariation(
+        request: DynamicDecisionRequest,
+        choice: DynamicStorytellerChoice.Registration,
+        style: RecommendationStyle,
+    ): Int {
+        val radius = when (style) {
+            RecommendationStyle.GENTLE -> 1
+            RecommendationStyle.BALANCED -> 4
+            RecommendationStyle.AGGRESSIVE -> 7
+        }
+        val mixed = listOf(
+            request.state.game.seed,
+            request.id.hashCode().toLong(),
+            choice.subjectSeat.toLong(),
+            choice.registeredRole.value.hashCode().toLong(),
+            style.ordinal.toLong(),
+        ).fold(17L) { acc, value -> acc * 31L + value }
+        return Math.floorMod(mixed, (radius * 2 + 1).toLong()).toInt() - radius
     }
 
     private fun score(ruleId: String, category: ScoreCategory, delta: Int, seat: Int) = ScoreItem(

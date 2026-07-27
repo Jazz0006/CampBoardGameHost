@@ -49,6 +49,9 @@ internal object UnreliableNumberInformationRecommender {
                 ?: ranked.first()
             selected += diverse
         }
+        if (selected.none { it.value == context.trueValue }) {
+            selected += evaluate(context, context.trueValue, RecommendationStyle.GENTLE)
+        }
         return selected
     }
 

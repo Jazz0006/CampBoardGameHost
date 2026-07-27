@@ -42,7 +42,7 @@ internal object PairInformationRecommender {
         val distinctCandidates = candidates.distinctBy(PairInformationCandidate::id)
         if (distinctCandidates.isEmpty()) return emptyList()
         val selectedIds = mutableSetOf<String>()
-        return listOf(
+        val selected = listOf(
             RecommendationStyle.GENTLE,
             RecommendationStyle.BALANCED,
             RecommendationStyle.AGGRESSIVE,
@@ -54,6 +54,12 @@ internal object PairInformationRecommender {
                         .thenBy(PairInformationRecommendation::candidateId),
                 )
                 .firstOrNull { selectedIds.add(it.candidateId) }
+        }
+        val truthful = distinctCandidates.firstOrNull { it.isTruthful }
+        return if (truthful != null && selected.none { it.candidateId == truthful.id }) {
+            selected + evaluate(truthful, RecommendationStyle.GENTLE)
+        } else {
+            selected
         }
     }
 

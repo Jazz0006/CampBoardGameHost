@@ -51,6 +51,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -105,6 +106,7 @@ import com.codex.campboardgamehost.clocktower.domain.DynamicStorytellerChoice
 import com.codex.campboardgamehost.clocktower.domain.PredictedDecisionOutcome
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionType
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.domain.StorytellerAutomationMode
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionKind
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
@@ -116,6 +118,9 @@ import com.codex.campboardgamehost.clocktower.history.InformationReferenceExtrac
 import com.codex.campboardgamehost.clocktower.recommendation.RecommendationService
 import com.codex.campboardgamehost.clocktower.recommendation.RecommendationUiState
 import com.codex.campboardgamehost.clocktower.recommendation.AutomaticStorytellerSelector
+import com.codex.campboardgamehost.clocktower.recommendation.AutomaticInformationPolicy
+import com.codex.campboardgamehost.clocktower.recommendation.GameBalanceEvaluator
+import com.codex.campboardgamehost.clocktower.recommendation.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationRecommender
 import com.codex.campboardgamehost.clocktower.recommendation.PairInformationRegistration
@@ -428,6 +433,7 @@ private const val PREFS_NAME = "camp_board_game_host"
 private const val COMMON_PLAYERS_KEY = "common_players"
 private const val LANGUAGE_MODE_KEY = "language_mode"
 private const val AUTOMATIC_STORYTELLER_INFO_KEY = "automatic_storyteller_info"
+private const val STORYTELLER_AUTOMATION_MODE_KEY = "storyteller_automation_mode"
 private const val ACTIVE_GAME_STATE_KEY = "active_game_state"
 private const val GAME_HISTORY_KEY = "game_history"
 private const val ACTIVE_GAME_STATE_VERSION = 1
@@ -458,14 +464,22 @@ private fun Context.saveLanguageMode(languageMode: LanguageMode) {
         .apply()
 }
 
-private fun Context.loadAutomaticStorytellerInfo(): Boolean =
-    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        .getBoolean(AUTOMATIC_STORYTELLER_INFO_KEY, false)
+private fun Context.loadStorytellerAutomationMode(): StorytellerAutomationMode {
+    val preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val stored = preferences.getString(STORYTELLER_AUTOMATION_MODE_KEY, null)
+    return StorytellerAutomationMode.entries.firstOrNull { it.prefsValue == stored }
+        ?: if (preferences.getBoolean(AUTOMATIC_STORYTELLER_INFO_KEY, false)) {
+            StorytellerAutomationMode.AUTO_BALANCED
+        } else {
+            StorytellerAutomationMode.MANUAL
+        }
+}
 
-private fun Context.saveAutomaticStorytellerInfo(enabled: Boolean) {
+private fun Context.saveStorytellerAutomationMode(mode: StorytellerAutomationMode) {
     getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         .edit()
-        .putBoolean(AUTOMATIC_STORYTELLER_INFO_KEY, enabled)
+        .putString(STORYTELLER_AUTOMATION_MODE_KEY, mode.prefsValue)
+        .remove(AUTOMATIC_STORYTELLER_INFO_KEY)
         .apply()
 }
 
@@ -1018,7 +1032,8 @@ private fun CampBoardGameHostApp() {
     val baseContext = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var languageMode by remember { mutableStateOf(baseContext.loadLanguageMode()) }
-    var automaticStorytellerInfo by remember { mutableStateOf(baseContext.loadAutomaticStorytellerInfo()) }
+    var storytellerAutomationMode by remember { mutableStateOf(baseContext.loadStorytellerAutomationMode()) }
+    val automaticStorytellerInfo = storytellerAutomationMode.isAutomatic
     val context = remember(languageMode) { baseContext.localized(languageMode) }
     val language = context.resources.configuration.locales[0].language
     var screen by remember { mutableStateOf(Screen.Landing) }
@@ -1826,16 +1841,16 @@ private fun CampBoardGameHostApp() {
 
                     Screen.Settings -> SettingsScreen(
                         languageMode = languageMode,
-                        automaticStorytellerInfo = automaticStorytellerInfo,
+                        storytellerAutomationMode = storytellerAutomationMode,
                         commonPlayers = commonPlayers,
                         newCommonPlayerName = newCommonPlayerName,
                         onLanguageModeChange = { nextMode ->
                             languageMode = nextMode
                             baseContext.saveLanguageMode(nextMode)
                         },
-                        onAutomaticStorytellerInfoChange = { enabled ->
-                            automaticStorytellerInfo = enabled
-                            baseContext.saveAutomaticStorytellerInfo(enabled)
+                        onStorytellerAutomationModeChange = { mode ->
+                            storytellerAutomationMode = mode
+                            baseContext.saveStorytellerAutomationMode(mode)
                         },
                         onNewCommonPlayerNameChange = { newCommonPlayerName = it },
                         onAddCommonPlayer = ::addCommonPlayer,
@@ -1970,6 +1985,7 @@ private fun CampBoardGameHostApp() {
 
                     Screen.ClocktowerJudge -> ClocktowerJudgeScreen(
                         automaticStorytellerInfo = automaticStorytellerInfo,
+                        automaticStorytellerStyle = storytellerAutomationMode.style ?: RecommendationStyle.BALANCED,
                         cards = cards,
                         records = records,
                         events = clocktowerEvents,
@@ -3546,11 +3562,11 @@ private fun BenchPlayerChip(
 @Composable
 private fun SettingsScreen(
     languageMode: LanguageMode,
-    automaticStorytellerInfo: Boolean,
+    storytellerAutomationMode: StorytellerAutomationMode,
     commonPlayers: List<String>,
     newCommonPlayerName: String,
     onLanguageModeChange: (LanguageMode) -> Unit,
-    onAutomaticStorytellerInfoChange: (Boolean) -> Unit,
+    onStorytellerAutomationModeChange: (StorytellerAutomationMode) -> Unit,
     onNewCommonPlayerNameChange: (String) -> Unit,
     onAddCommonPlayer: () -> Unit,
     onRemoveCommonPlayer: (String) -> Unit,
@@ -3585,36 +3601,70 @@ private fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onAutomaticStorytellerInfoChange(!automaticStorytellerInfo) }
                         .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Checkbox(
-                        checked = automaticStorytellerInfo,
-                        onCheckedChange = onAutomaticStorytellerInfoChange,
-                    )
                     Column(
-                        modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         Text(
-                            if (language == "en") "Automatic Storyteller information" else "全自动说书人信息",
+                            if (language == "en") "Storyteller decisions" else "说书人判定方式",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                         )
                         Text(
                             if (language == "en") {
-                                "Automatically applies the balanced recommendation during play and hides alternative rulings."
+                                "Choose manual control or an automatic style. Automatic rulings also consider the global game balance."
                             } else {
-                                "游戏中自动采用平衡推荐，不再显示其他信息与裁定选项。"
+                                "选择手动控制或全自动风格；自动裁定还会结合全局局势。"
                             },
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall,
                         )
+                    }
+                    val automationModes = listOf(
+                        StorytellerAutomationMode.MANUAL to (
+                            if (language == "en") "Manual" to "Show legal recommendations and let the Storyteller decide."
+                            else "手动" to "显示合法建议，由说书人自行决定。"
+                        ),
+                        StorytellerAutomationMode.AUTO_BALANCED to (
+                            if (language == "en") "Automatic · Balanced" to "Moderate information, risk, and assistance to the trailing team."
+                            else "全自动－均衡" to "适度控制信息、风险，并帮助当前落后的一方。"
+                        ),
+                        StorytellerAutomationMode.AUTO_AGGRESSIVE to (
+                            if (language == "en") "Automatic · Aggressive" to "Allows more deception and high-impact rulings while preserving balance."
+                            else "全自动－激进" to "允许更多误导和高影响裁定，同时保持局势平衡。"
+                        ),
+                        StorytellerAutomationMode.AUTO_GENTLE to (
+                            if (language == "en") "Automatic · Gentle" to "Prefers clear, low-risk, and less disruptive rulings."
+                            else "全自动－稳健" to "优先清晰、低风险、较少改变局势的裁定。"
+                        ),
+                    )
+                    automationModes.forEach { (mode, copy) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onStorytellerAutomationModeChange(mode) }
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = storytellerAutomationMode == mode,
+                                onClick = { onStorytellerAutomationModeChange(mode) },
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(copy.first, fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    copy.second,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -4853,9 +4903,12 @@ private fun HostProgressCard(
     progress: String,
 ) {
     Card(
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF2EA)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Row(
             modifier = Modifier
@@ -4869,9 +4922,9 @@ private fun HostProgressCard(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text(subtitle, color = Color(0xFF5C6A63))
+                Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Text(progress, color = Color(0xFF2F5D50), fontWeight = FontWeight.Bold)
+            Text(progress, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -5597,6 +5650,7 @@ private fun ClocktowerDawnSummaryScreen(
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                            contentColor = MaterialTheme.colorScheme.onSurface,
                         ),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.32f)),
                     ) {
@@ -5616,6 +5670,7 @@ private fun ClocktowerDawnSummaryScreen(
                                 text = deathLabel?.let {
                                     text("天亮了。昨晚，$it 死亡。", "Dawn has arrived. $it died last night.")
                                 } ?: text("天亮了。昨晚，没有人死亡。", "Dawn has arrived. Nobody died last night."),
+                                color = MaterialTheme.colorScheme.onSurface,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                             )
@@ -5740,6 +5795,7 @@ private fun ClocktowerNominationScreen(
                     item {
                         Surface(
                             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                            contentColor = MaterialTheme.colorScheme.onSurface,
                             shape = RoundedCornerShape(18.dp),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.30f)),
                         ) {
@@ -5757,6 +5813,7 @@ private fun ClocktowerNominationScreen(
                                 )
                                 Text(
                                     "${playerSeatLabel(cards, nominatorName)}  →  ${playerSeatLabel(cards, nomineeName)}",
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Black,
                                 )
@@ -5866,6 +5923,7 @@ private fun ClocktowerVoteScreen(
                 item {
                     Surface(
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                        contentColor = MaterialTheme.colorScheme.onSurface,
                         shape = RoundedCornerShape(18.dp),
                     ) {
                         Column(
@@ -5882,6 +5940,7 @@ private fun ClocktowerVoteScreen(
                             )
                             Text(
                                 "${playerSeatLabel(cards, nominatorName)}  →  ${playerSeatLabel(cards, nomineeName)}",
+                                color = MaterialTheme.colorScheme.onSurface,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Black,
                             )
@@ -6022,6 +6081,7 @@ private fun ClocktowerExecutionConfirmScreen(
                     } else {
                         MaterialTheme.colorScheme.surface
                     },
+                    contentColor = MaterialTheme.colorScheme.onSurface,
                     shape = RoundedCornerShape(24.dp),
                     border = BorderStroke(
                         1.dp,
@@ -6046,6 +6106,7 @@ private fun ClocktowerExecutionConfirmScreen(
                         )
                         Text(
                             text = targetLabel ?: text("进入夜晚", "Continue to night"),
+                            color = MaterialTheme.colorScheme.onSurface,
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Black,
                             textAlign = TextAlign.Center,
@@ -6099,6 +6160,93 @@ private fun ClocktowerExecutionConfirmScreen(
                         shape = RoundedCornerShape(14.dp),
                     ) {
                         Text(text("返回白天检查", "Return to day"))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClocktowerSpecialDayActionScreen(
+    round: Int,
+    title: String,
+    primaryLabel: String,
+    primaryEnabled: Boolean,
+    onPrimary: () -> Unit,
+    onBack: (() -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    ClocktowerDarkTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+        ) {
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                    Text(
+                        text("第 $round 天", "Day $round"),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                        ),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            content = content,
+                        )
+                    }
+                }
+            }
+            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Button(
+                        onClick = onPrimary,
+                        enabled = primaryEnabled,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(primaryLabel, fontWeight = FontWeight.Bold)
+                    }
+                    onBack?.let { back ->
+                        TextButton(
+                            onClick = back,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(text("返回白天", "Return to day"))
+                        }
                     }
                 }
             }
@@ -6167,9 +6315,12 @@ private fun HostScriptCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
             modifier = Modifier
@@ -6185,8 +6336,8 @@ private fun HostScriptCard(
             HostInstructionBlock(
                 label = stringResource(R.string.host_instruction_label),
                 text = instruction,
-                backgroundColor = Color(0xFFFFF4DC),
-                textColor = Color(0xFF1F2925),
+                backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                textColor = MaterialTheme.colorScheme.onSurface,
             )
             content()
         }
@@ -6207,7 +6358,7 @@ private fun HostInstructionBlock(
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(label, color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+        Text(label, color = textColor.copy(alpha = 0.72f), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
         Text(text, color = textColor, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
     }
 }
@@ -6699,6 +6850,9 @@ private data class ClocktowerDisplayOption(
     val spyRegisteredRoleEnName: String? = null,
     val recluseRegistersEvil: Boolean? = null,
     val recluseRegisteredRoleEnName: String? = null,
+    val recommendationStyle: RecommendationStyle = RecommendationStyle.BALANCED,
+    val isTruthful: Boolean = true,
+    val misinformationPressure: Int = 0,
     val isDefaultRecommendation: Boolean = false,
 )
 
@@ -6706,6 +6860,7 @@ private data class ClocktowerDecisionOption(
     val label: String,
     val targetName: String,
     val explanation: String,
+    val recommendationStyle: RecommendationStyle = RecommendationStyle.BALANCED,
     val isDefaultRecommendation: Boolean = false,
 )
 
@@ -6713,6 +6868,7 @@ private data class ClocktowerRegistrationRecommendationOption(
     val label: String,
     val usesSpecialRegistration: Boolean,
     val registeredRoleEnName: String?,
+    val style: RecommendationStyle,
     val isDefaultRecommendation: Boolean = false,
 )
 
@@ -6746,6 +6902,9 @@ private data class ClocktowerNightStepUi(
     val decisionOptions: List<ClocktowerDecisionOption> = emptyList(),
     val wakeText: String? = null,
     val roleEnName: String? = null,
+    val informationReliability: InformationReliability = InformationReliability.RELIABLE,
+    val recentMisinformationStreak: Int = 0,
+    val selectedInformationTruthful: Boolean? = null,
     val spyRegistrationKey: String? = null,
     val spyRegistrationTeams: List<ClocktowerTeam> = emptyList(),
     val spyRegistrationDetail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,
@@ -6758,6 +6917,7 @@ private data class ClocktowerNightStepUi(
 @Composable
 private fun ClocktowerJudgeScreen(
     automaticStorytellerInfo: Boolean,
+    automaticStorytellerStyle: RecommendationStyle,
     cards: List<PlayerCard>,
     records: List<EliminationRecord>,
     events: List<ClocktowerEvent>,
@@ -7099,19 +7259,21 @@ private fun ClocktowerJudgeScreen(
             },
         )
     }
-    LaunchedEffect(automaticStorytellerInfo, recommendationUiState) {
-        if (automaticStorytellerInfo && appliedRecommendationStyle != RecommendationStyle.BALANCED) {
-            val balancedPlan = (recommendationUiState as? RecommendationUiState.Ready)
+    LaunchedEffect(automaticStorytellerInfo, automaticStorytellerStyle, recommendationUiState) {
+        if (automaticStorytellerInfo && appliedRecommendationStyle != automaticStorytellerStyle) {
+            val automaticPlan = (recommendationUiState as? RecommendationUiState.Ready)
                 ?.plans
                 ?.let { plans ->
-                    AutomaticStorytellerSelector.select(plans) {
-                        it.style == RecommendationStyle.BALANCED
-                    }
+                    AutomaticStorytellerSelector.selectStyle(
+                        plans,
+                        automaticStorytellerStyle,
+                        RecommendationPlan::style,
+                    )
                 }
-            if (balancedPlan != null) {
-                onApplyRecommendation(balancedPlan)
-                selectedRecommendationStyle = RecommendationStyle.BALANCED
-                appliedRecommendationStyle = RecommendationStyle.BALANCED
+            if (automaticPlan != null) {
+                onApplyRecommendation(automaticPlan)
+                selectedRecommendationStyle = automaticPlan.style
+                appliedRecommendationStyle = automaticPlan.style
             }
         }
     }
@@ -7173,6 +7335,9 @@ private fun ClocktowerJudgeScreen(
         primary: String?,
         secondary: String? = null,
         footer: String? = null,
+        recommendationStyle: RecommendationStyle = RecommendationStyle.BALANCED,
+        isTruthful: Boolean = true,
+        misinformationPressure: Int = 0,
         isDefaultRecommendation: Boolean = false,
     ) = ClocktowerDisplayOption(
         label = label,
@@ -7181,6 +7346,9 @@ private fun ClocktowerJudgeScreen(
         displayPrimary = primary,
         displaySecondary = secondary,
         displayFooter = footer,
+        recommendationStyle = recommendationStyle,
+        isTruthful = isTruthful,
+        misinformationPressure = misinformationPressure,
         isDefaultRecommendation = isDefaultRecommendation,
     )
     fun recommendedDrunkInvestigatorOption(actor: PlayerCard): ClocktowerDisplayOption? {
@@ -7252,6 +7420,10 @@ private fun ClocktowerJudgeScreen(
                 primary = recommendation.value.toString(),
                 secondary = secondary,
                 footer = footer,
+                recommendationStyle = recommendation.style,
+                isTruthful = recommendation.value == trueValue,
+                misinformationPressure = kotlin.math.abs(recommendation.value - trueValue)
+                    .coerceIn(0, 5),
                 isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
             )
         }
@@ -7270,6 +7442,7 @@ private fun ClocktowerJudgeScreen(
             UnreliableCategoricalCandidate("no", isTruthful = !truthfulYes, misinformationPressure = if (truthfulYes) 3 else 0),
         )
         return UnreliableCategoricalInformationRecommender.recommend(candidates).map { recommendation ->
+            val candidate = candidates.first { it.id == recommendation.candidateId }
             val value = if (recommendation.candidateId == "yes") yesText else noText
             val warning = if (recommendation.warningIds.isNotEmpty()) text(" ⚠ 高压", " ⚠ high pressure") else ""
             displayOption(
@@ -7279,6 +7452,9 @@ private fun ClocktowerJudgeScreen(
                 primary = value,
                 secondary = secondary,
                 footer = footer,
+                recommendationStyle = recommendation.style,
+                isTruthful = candidate.isTruthful,
+                misinformationPressure = candidate.misinformationPressure,
                 isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
             )
         }
@@ -7304,6 +7480,7 @@ private fun ClocktowerJudgeScreen(
             )
         }
         return UnreliableCategoricalInformationRecommender.recommend(candidates).mapNotNull { recommendation ->
+            val candidate = candidates.first { it.id == recommendation.candidateId }
             val role = roles.firstOrNull { it.enName == recommendation.candidateId } ?: return@mapNotNull null
             val warning = if (recommendation.warningIds.isNotEmpty()) text(" ⚠ 高压", " ⚠ high pressure") else ""
             displayOption(
@@ -7312,6 +7489,9 @@ private fun ClocktowerJudgeScreen(
                 title = title,
                 primary = role.nameFor(language),
                 footer = footer,
+                recommendationStyle = recommendation.style,
+                isTruthful = candidate.isTruthful,
+                misinformationPressure = candidate.misinformationPressure,
                 isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
             )
         }
@@ -7347,6 +7527,7 @@ private fun ClocktowerJudgeScreen(
             )
         }.filter { !truthfulOnly || it.isTruthful }
         return UnreliableCategoricalInformationRecommender.recommend(candidates).mapNotNull { recommendation ->
+            val candidate = candidates.first { it.id == recommendation.candidateId }
             val pair = byId[recommendation.candidateId] ?: return@mapNotNull null
             val seats = "${seatNumberFor(pair.first)}   ${seatNumberFor(pair.second)}"
             val warning = if (recommendation.warningIds.isNotEmpty()) text(" ⚠ 高压", " ⚠ high pressure") else ""
@@ -7357,6 +7538,9 @@ private fun ClocktowerJudgeScreen(
                 primary = text("恶魔", "Demon"),
                 secondary = seats,
                 footer = text("在下面两位玩家之中", "One of these two players"),
+                recommendationStyle = recommendation.style,
+                isTruthful = candidate.isTruthful,
+                misinformationPressure = candidate.misinformationPressure,
                 isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
             )
         }
@@ -7378,18 +7562,51 @@ private fun ClocktowerJudgeScreen(
         }
     }
 
+    fun recentMisinformationStreak(card: PlayerCard?): Int {
+        if (card == null) return 0
+        return events.asReversed()
+            .filter { event ->
+                event.type in setOf(ClocktowerEventType.Information, ClocktowerEventType.UnreliableInformation) &&
+                    event.playerNames.firstOrNull() == card.name
+            }
+            .takeWhile { event ->
+                event.title.contains("misleading", ignoreCase = true) || event.title.contains("误导")
+            }
+            .count()
+    }
+
     fun dynamicStorytellerState(): DynamicGameState {
         val spentRoleNames = buildSet {
             if (virginUsed) add("Virgin")
             if (slayerUsed) add("Slayer")
             if (artistUsed) add("Artist")
         }
+        val gameState = cards.toClocktowerGameState(
+            script = script,
+            seed = recommendationKey.hashCode().toLong(),
+            poisonedPlayerName = poisonTarget,
+        )
+        val spentAbilitySeats = cards.mapIndexedNotNull { index, card ->
+            (index + 1).takeIf { card.clocktowerRole?.enName in spentRoleNames }
+        }.toSet()
+        val informationPressureBySeat = cards.mapIndexed { index, card ->
+            (index + 1) to informationHistoryPressure(card)
+        }.toMap()
+        val specialRegistrationCountBySeat = cards.mapIndexedNotNull { index, card ->
+            val count = events.count { event ->
+                card.name in event.playerNames &&
+                    (event.title.contains("registration", ignoreCase = true) || event.title.contains("登记"))
+            }
+            (index + 1 to count).takeIf { count > 0 }
+        }.toMap()
+        val balance = GameBalanceEvaluator.evaluate(
+            game = gameState,
+            round = round,
+            spentAbilitySeats = spentAbilitySeats,
+            informationPressureBySeat = informationPressureBySeat,
+        )
         return DynamicGameState(
-            game = cards.toClocktowerGameState(
-                script = script,
-                seed = recommendationKey.hashCode().toLong(),
-                poisonedPlayerName = poisonTarget,
-            ),
+            game = gameState,
             phase = when (phase) {
                 ClocktowerPhase.FirstNight -> StorytellerPhase.FIRST_NIGHT
                 ClocktowerPhase.Dawn -> StorytellerPhase.DAWN
@@ -7402,14 +7619,18 @@ private fun ClocktowerJudgeScreen(
                     ?.let { name -> cards.indexOfFirst { it.name == name } + 1 }
                     ?.takeIf { it > 0 },
             ),
-            spentAbilitySeats = cards.mapIndexedNotNull { index, card ->
-                (index + 1).takeIf { card.clocktowerRole?.enName in spentRoleNames }
-            }.toSet(),
-            informationPressureBySeat = cards.mapIndexed { index, card ->
-                (index + 1) to informationHistoryPressure(card)
-            }.toMap(),
+            spentAbilitySeats = spentAbilitySeats,
+            informationPressureBySeat = informationPressureBySeat,
+            specialRegistrationCountBySeat = specialRegistrationCountBySeat,
+            publicBalanceHint = balance.hint,
+            evilAdvantage = balance.evilAdvantage,
         )
     }
+    val currentDynamicStorytellerState = dynamicStorytellerState()
+    val automaticInformationStyle = GameBalanceEvaluator.adjustInformationStyle(
+        configured = automaticStorytellerStyle,
+        evilAdvantage = currentDynamicStorytellerState.evilAdvantage,
+    )
 
     fun registrationRecommendationOptions(
         key: String?,
@@ -7420,6 +7641,7 @@ private fun ClocktowerJudgeScreen(
         isSpy: Boolean,
         suppressForJointRecommendation: Boolean = false,
         outcomeMisinformationPressure: Int = 0,
+        specialRegistrationBalanceImpact: Int = 0,
     ): List<ClocktowerRegistrationRecommendationOption> {
         if (subject == null || suppressForJointRecommendation) return emptyList()
         if (key == null || teams.isEmpty()) return emptyList()
@@ -7449,6 +7671,7 @@ private fun ClocktowerJudgeScreen(
                 },
                 canMisregister = subject.name != poisonTarget,
                 outcomeMisinformationPressure = outcomeMisinformationPressure,
+                specialRegistrationBalanceImpact = specialRegistrationBalanceImpact,
             ),
         ).map { recommendation ->
             val choice = recommendation.candidate.choice as DynamicStorytellerChoice.Registration
@@ -7468,6 +7691,7 @@ private fun ClocktowerJudgeScreen(
                 label = "${recommendationStyleLabel(recommendation.style)} · $decisionText$warning",
                 usesSpecialRegistration = choice.usesSpecialAbility,
                 registeredRoleEnName = choice.registeredRole.value.takeIf { choice.usesSpecialAbility },
+                style = recommendation.style,
                 isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
             )
         }
@@ -7485,6 +7709,7 @@ private fun ClocktowerJudgeScreen(
         subject = subject,
         isSpy = isSpy,
         suppressForJointRecommendation = step.recommendedDisplayOptions.isNotEmpty(),
+        specialRegistrationBalanceImpact = 1,
     )
 
     fun mayorDecisionOptions(mayor: PlayerCard): List<ClocktowerDecisionOption> {
@@ -7510,6 +7735,7 @@ private fun ClocktowerJudgeScreen(
                 label = "${recommendationStyleLabel(recommendation.style)} · $result$warning",
                 targetName = target.name,
                 explanation = result,
+                recommendationStyle = recommendation.style,
                 isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
             )
         }
@@ -7538,6 +7764,7 @@ private fun ClocktowerJudgeScreen(
                     "${target.seatLabel(cards)} 成为新的小恶魔",
                     "${target.seatLabel(cards)} becomes the new Imp",
                 ),
+                recommendationStyle = recommendation.style,
                 isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
             )
         }
@@ -7658,6 +7885,7 @@ private fun ClocktowerJudgeScreen(
         }
         val effectsById = targetEffects.associateBy(PairInformationEffect::id)
         return PairInformationRecommender.recommend(candidates).mapNotNull { recommendation ->
+            val candidate = candidates.first { it.id == recommendation.candidateId }
             val effect = effectsById[recommendation.candidateId] ?: return@mapNotNull null
             val roleText = effect.shownRole?.nameFor(language) ?: text("没有外来者", "No Outsiders")
             val seats = if (effect.target != null && effect.decoy != null) {
@@ -7701,6 +7929,9 @@ private fun ClocktowerJudgeScreen(
                 },
                 recluseRegisteredRoleEnName = effect.shownRole?.enName
                     ?.takeIf { effect.registration == PairInformationRegistration.RECLUSE_AS_EVIL_ROLE },
+                recommendationStyle = recommendation.style,
+                isTruthful = candidate.isTruthful,
+                misinformationPressure = candidate.misinformationPressure,
                 isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
             )
         }
@@ -7786,6 +8017,7 @@ private fun ClocktowerJudgeScreen(
         }
         val effectsById = effects.associateBy(PairInformationEffect::id)
         return PairInformationRecommender.recommend(candidates).mapNotNull { recommendation ->
+            val candidate = candidates.first { it.id == recommendation.candidateId }
             val effect = effectsById[recommendation.candidateId] ?: return@mapNotNull null
             val noRoleText = when (ability) {
                 ClocktowerPairInformationAbility.Librarian -> text("没有外来者", "No Outsiders")
@@ -7810,6 +8042,9 @@ private fun ClocktowerJudgeScreen(
                 primary = roleText,
                 secondary = seats,
                 footer = if (seats == null) "" else text("在下面两位玩家之中", "One of these two players"),
+                recommendationStyle = recommendation.style,
+                isTruthful = candidate.isTruthful,
+                misinformationPressure = candidate.misinformationPressure,
                 isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
             )
         }
@@ -7838,6 +8073,11 @@ private fun ClocktowerJudgeScreen(
     ): ClocktowerNightStepUi {
         val actor = roleActor(enName)
         val actorIsDrunkShownRole = actor?.clocktowerRole?.enName == "Drunk" && actor.clocktowerShownRole?.enName == enName
+        val informationReliability = when {
+            actorIsPoisoned(actor) -> InformationReliability.POISONED
+            actorIsDrunkShownRole -> InformationReliability.DRUNK
+            else -> InformationReliability.RELIABLE
+        }
         val hostUnreliableNote = if (actorIsDrunkShownRole) {
             "注意：这名玩家真实身份是酒鬼，显示为$roleName。请照常唤醒并给信息，但信息可以不可靠或完全错误。"
         } else if (actorIsPoisoned(actor)) {
@@ -7884,6 +8124,8 @@ private fun ClocktowerJudgeScreen(
             displayOptions = if (automaticStorytellerInfo) emptyList() else unreliableOptions,
             recommendedDisplayOptions = automaticRecommendations,
             roleEnName = enName,
+            informationReliability = informationReliability,
+            recentMisinformationStreak = recentMisinformationStreak(actor),
             spyRegistrationKey = RegistrationInteractionRules.effectiveRegistrationKey(
                 spyRegistrationKey,
                 informationAbilityReliable = !actorAbilityUnreliable,
@@ -8781,6 +9023,7 @@ private fun ClocktowerJudgeScreen(
                 if (virginRegistrationKey != null && spyCard != null) {
                     SpyRegistrationPanel(
                         automaticStorytellerInfo = automaticStorytellerInfo,
+                        automaticStorytellerStyle = automaticStorytellerStyle,
                         cards = cards,
                         spy = spyCard,
                         teams = listOf(ClocktowerTeam.Townsfolk),
@@ -8876,6 +9119,366 @@ private fun ClocktowerJudgeScreen(
         return
     }
 
+    if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Slayer) {
+        val slayerTargetCard = cards.firstOrNull { it.name == slayerTargetName }
+        val slayerRecluseRecommendations = slayerTargetCard
+            ?.takeIf { it.clocktowerRole?.enName == "Recluse" }
+            ?.let { recluse ->
+                registrationRecommendationOptions(
+                    key = registrationKey("SlayerRecluse", recluse.name),
+                    roleEnName = "Slayer",
+                    teams = listOf(ClocktowerTeam.Demon),
+                    detail = ClocktowerRegistrationDetail.Role,
+                    subject = recluse,
+                    isSpy = false,
+                    outcomeMisinformationPressure = 4,
+                    specialRegistrationBalanceImpact = 1,
+                )
+            }
+            .orEmpty()
+        val automaticSlayerRecluseRegistration = AutomaticStorytellerSelector.selectStyle(
+            slayerRecluseRecommendations,
+            automaticStorytellerStyle,
+            ClocktowerRegistrationRecommendationOption::style,
+        )
+        ClocktowerSpecialDayActionScreen(
+            round = round,
+            title = text("杀手行动", "Slayer action"),
+            primaryLabel = text("结算杀手行动", "Resolve Slayer action"),
+            primaryEnabled = slayerClaimantName != null && slayerTargetName != null && gameOutcome == null,
+            onPrimary = {
+                val claimantName = slayerClaimantName
+                val targetName = slayerTargetName
+                if (claimantName != null && targetName != null) {
+                    val targetIsHealthyRecluse =
+                        slayerTargetCard?.clocktowerRole?.enName == "Recluse" &&
+                            poisonTarget != targetName
+                    val recluseRegistersDemon = if (
+                        automaticStorytellerInfo &&
+                        targetIsHealthyRecluse &&
+                        automaticSlayerRecluseRegistration != null
+                    ) {
+                        automaticSlayerRecluseRegistration.usesSpecialRegistration
+                    } else {
+                        slayerRecluseRegistersDemon
+                    }
+                    onSlayerShot(claimantName, targetName, recluseRegistersDemon)
+                    slayerClaimantName = null
+                    slayerTargetName = null
+                    slayerRecluseRegistersDemon = false
+                    dayMode = ClocktowerDayMode.Overview
+                }
+            },
+            onBack = {
+                slayerClaimantName = null
+                slayerTargetName = null
+                slayerRecluseRegistersDemon = false
+                dayMode = ClocktowerDayMode.Overview
+            },
+        ) {
+            if (slayerClaimantCandidates.isEmpty()) {
+                Text(
+                    text("没有可用的杀手声称者", "No eligible Slayer claimant"),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                HostActionSection(title = text("谁声称发动杀手能力？", "Who claims the Slayer ability?")) {
+                    SelectablePlayerChips(
+                        cards = slayerClaimantCandidates,
+                        selectedName = slayerClaimantName,
+                        enabled = gameOutcome == null,
+                        allCards = cards,
+                        onSelect = {
+                            slayerClaimantName = if (slayerClaimantName == it) null else it
+                            if (slayerTargetName == it) slayerTargetName = null
+                        },
+                    )
+                }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
+                HostActionSection(title = text("选择目标", "Choose target")) {
+                    SelectablePlayerChips(
+                        cards = aliveCards.filter { it.name != slayerClaimantName },
+                        selectedName = slayerTargetName,
+                        enabled = gameOutcome == null,
+                        allCards = cards,
+                        onSelect = {
+                            slayerTargetName = if (slayerTargetName == it) null else it
+                            slayerRecluseRegistersDemon = false
+                        },
+                    )
+                }
+                if (slayerClaimantName != null && slayerTargetName != null) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Text(
+                            "${playerSeatLabel(cards, slayerClaimantName)} → ${playerSeatLabel(cards, slayerTargetName)}",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+                if (slayerTargetCard?.clocktowerRole?.enName == "Recluse") {
+                    val slayerRecluse = slayerTargetCard
+                    RecluseRegistrationPanel(
+                        automaticStorytellerInfo = automaticStorytellerInfo,
+                        automaticStorytellerStyle = automaticStorytellerStyle,
+                        cards = cards,
+                        recluse = slayerRecluse,
+                        teams = listOf(ClocktowerTeam.Demon),
+                        registersEvil = slayerRecluseRegistersDemon,
+                        registeredRoleEnName = if (slayerRecluseRegistersDemon) "Imp" else null,
+                        recommendations = slayerRecluseRecommendations,
+                        enabled = poisonTarget != slayerTargetName,
+                        onRegistersEvilChange = { slayerRecluseRegistersDemon = it },
+                        onRoleChange = {},
+                    )
+                }
+            }
+        }
+        return
+    }
+
+    if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Artist) {
+        val artistClaimant = cards.firstOrNull { it.name == artistClaimantName }
+        val artistReliable = artistClaimant?.let {
+            it.clocktowerRole?.enName == "Artist" && it.name != poisonTarget
+        } == true
+        val answerRecommendations = if (artistClaimant != null && artistTruthfulAnswer != null) {
+            if (artistReliable) {
+                listOf(Triple(RecommendationStyle.BALANCED, artistTruthfulAnswer, false))
+            } else {
+                UnreliableCategoricalInformationRecommender.recommend(
+                    listOf(
+                        UnreliableCategoricalCandidate(
+                            id = "yes",
+                            isTruthful = artistTruthfulAnswer,
+                            misinformationPressure = if (artistTruthfulAnswer) 0 else 3,
+                        ),
+                        UnreliableCategoricalCandidate(
+                            id = "no",
+                            isTruthful = !artistTruthfulAnswer,
+                            misinformationPressure = if (artistTruthfulAnswer) 3 else 0,
+                        ),
+                    ),
+                ).map { recommendation ->
+                    Triple(
+                        recommendation.style,
+                        recommendation.candidateId == "yes",
+                        recommendation.warningIds.isNotEmpty(),
+                    )
+                }
+            }
+        } else {
+            emptyList()
+        }
+        val artistInformationReliability = when {
+            artistClaimant?.name == poisonTarget -> InformationReliability.POISONED
+            artistClaimant?.clocktowerRole?.enName == "Drunk" &&
+                artistClaimant.clocktowerShownRole?.enName == "Artist" ->
+                InformationReliability.DRUNK
+            else -> InformationReliability.RELIABLE
+        }
+        val automaticArtistRecommendation = if (artistInformationReliability != InformationReliability.RELIABLE) {
+            AutomaticInformationPolicy.select(
+                options = answerRecommendations,
+                reliability = artistInformationReliability,
+                style = automaticStorytellerStyle,
+                evilAdvantage = currentDynamicStorytellerState.evilAdvantage,
+                stableKey = "$recommendationKey:artist:$round:${artistClaimant?.name}",
+                recentMisinformationStreak = recentMisinformationStreak(artistClaimant),
+                isTruthful = { it.second == artistTruthfulAnswer },
+                misinformationPressure = { if (it.second == artistTruthfulAnswer) 0 else 3 },
+                styleOf = { it.first },
+            )
+        } else {
+            AutomaticStorytellerSelector.selectStyle(
+                answerRecommendations,
+                automaticInformationStyle,
+            ) { it.first }
+        }
+        val automaticArtistAnswer = automaticArtistRecommendation?.second
+        LaunchedEffect(automaticStorytellerInfo, artistClaimantName, artistTruthfulAnswer, automaticArtistAnswer) {
+            if (automaticStorytellerInfo && automaticArtistAnswer != null && artistShownAnswer != automaticArtistAnswer) {
+                onSelectArtistShownAnswer(automaticArtistAnswer)
+            }
+        }
+        ClocktowerSpecialDayActionScreen(
+            round = round,
+            title = text("艺术家提问", "Artist question"),
+            primaryLabel = text("记录艺术家提问", "Record Artist question"),
+            primaryEnabled = artistClaimantName != null &&
+                artistTruthfulAnswer != null &&
+                artistShownAnswer != null &&
+                gameOutcome == null,
+            onPrimary = onConfirmArtistQuestion,
+            onBack = {
+                onSelectArtistClaimant(null)
+                dayMode = ClocktowerDayMode.Overview
+            },
+        ) {
+            HostActionSection(title = text("选择提问者", "Choose claimant")) {
+                SelectablePlayerChips(
+                    cards = artistClaimantCandidates,
+                    selectedName = artistClaimantName,
+                    enabled = gameOutcome == null,
+                    allCards = cards,
+                    onSelect = { onSelectArtistClaimant(if (artistClaimantName == it) null else it) },
+                )
+            }
+            if (artistClaimant != null) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
+                HostActionSection(title = text("问题的真实答案", "Truthful answer")) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(true, false).forEach { answer ->
+                            val label = if (answer) text("是", "Yes") else text("否", "No")
+                            if (artistTruthfulAnswer == answer) {
+                                Button(
+                                    onClick = { onSelectArtistTruthfulAnswer(answer) },
+                                    modifier = Modifier.weight(1f),
+                                ) { Text(label) }
+                            } else {
+                                OutlinedButton(
+                                    onClick = { onSelectArtistTruthfulAnswer(answer) },
+                                    modifier = Modifier.weight(1f),
+                                ) { Text(label) }
+                            }
+                        }
+                    }
+                }
+            }
+            if (artistClaimant != null && artistTruthfulAnswer != null) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
+                HostActionSection(title = text("告诉玩家的答案", "Answer to show")) {
+                    answerRecommendations
+                        .filter { !automaticStorytellerInfo || it == automaticArtistRecommendation }
+                        .forEach { (style, answer, warning) ->
+                            val answerLabel = if (answer) text("是", "Yes") else text("否", "No")
+                            val label = if (artistReliable) {
+                                answerLabel
+                            } else {
+                                "${recommendationStyleLabel(style)} · $answerLabel${if (warning) text(" · 高影响", " · high impact") else ""}"
+                            }
+                            if (automaticStorytellerInfo) {
+                                Text(label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            } else if (artistShownAnswer == answer) {
+                                Button(
+                                    onClick = { onSelectArtistShownAnswer(answer) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) { Text(label) }
+                            } else {
+                                OutlinedButton(
+                                    onClick = { onSelectArtistShownAnswer(answer) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) { Text(label) }
+                            }
+                        }
+                }
+            }
+        }
+        return
+    }
+
+    if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Klutz) {
+        val klutzChoiceCard = cards.firstOrNull { it.name == klutzChoiceName }
+        val klutzRegistrationKey = klutzChoiceCard
+            ?.takeIf { it.name == spyCard?.name }
+            ?.let { registrationKey("Klutz", it.name) }
+        val klutzSpyRecommendations = if (klutzRegistrationKey != null && spyCard != null) {
+            registrationRecommendationOptions(
+                key = klutzRegistrationKey,
+                roleEnName = "Klutz",
+                teams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
+                detail = ClocktowerRegistrationDetail.Role,
+                subject = spyCard,
+                isSpy = true,
+                outcomeMisinformationPressure = 5,
+                specialRegistrationBalanceImpact = -1,
+            )
+        } else {
+            emptyList()
+        }
+        val automaticKlutzSpyRegistration = AutomaticStorytellerSelector.selectStyle(
+            klutzSpyRecommendations,
+            automaticStorytellerStyle,
+            ClocktowerRegistrationRecommendationOption::style,
+        )
+        ClocktowerSpecialDayActionScreen(
+            round = round,
+            title = text("呆瓜选择", "Klutz choice"),
+            primaryLabel = text("确认呆瓜选择", "Confirm Klutz choice"),
+            primaryEnabled = klutzChoiceName != null && gameOutcome == null,
+            onPrimary = {
+                if (
+                    automaticStorytellerInfo &&
+                    spyCanRegister() &&
+                    klutzRegistrationKey != null &&
+                    automaticKlutzSpyRegistration != null
+                ) {
+                    spyRegistrationGood[klutzRegistrationKey] =
+                        automaticKlutzSpyRegistration.usesSpecialRegistration
+                    if (automaticKlutzSpyRegistration.usesSpecialRegistration) {
+                        automaticKlutzSpyRegistration.registeredRoleEnName?.let {
+                            spyRegistrationRole[klutzRegistrationKey] = it
+                        }
+                    }
+                }
+                recordSpyRegistration(klutzRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider))
+                onConfirmKlutzChoice(spyRegistersGood(klutzRegistrationKey))
+            },
+        ) {
+            pendingKlutzName?.let { klutzName ->
+                Surface(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Text(
+                        playerSeatLabel(cards, klutzName),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+            HostActionSection(title = text("选择一名存活玩家", "Choose a living player")) {
+                SelectablePlayerChips(
+                    cards = aliveCards.filter { it.name != pendingKlutzName },
+                    selectedName = klutzChoiceName,
+                    enabled = gameOutcome == null,
+                    allCards = cards,
+                    onSelect = { onSelectKlutzChoice(if (klutzChoiceName == it) null else it) },
+                )
+            }
+            if (klutzRegistrationKey != null && spyCard != null) {
+                SpyRegistrationPanel(
+                    automaticStorytellerInfo = automaticStorytellerInfo,
+                    automaticStorytellerStyle = automaticStorytellerStyle,
+                    cards = cards,
+                    spy = spyCard,
+                    teams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
+                    registersGood = spyRegistersGood(klutzRegistrationKey),
+                    registeredRoleEnName = spyRegistrationRole[klutzRegistrationKey],
+                    recommendations = klutzSpyRecommendations,
+                    enabled = spyCanRegister(),
+                    onRegistersGoodChange = { good ->
+                        spyRegistrationGood[klutzRegistrationKey] = good
+                        if (good && spyRegistrationRole[klutzRegistrationKey] == null) {
+                            spyRegistrationRole[klutzRegistrationKey] = "Washerwoman"
+                        }
+                    },
+                    onRoleChange = { spyRegistrationRole[klutzRegistrationKey] = it },
+                )
+            }
+        }
+        return
+    }
+
     if (phase == ClocktowerPhase.FirstNight && !nightStarted) {
         ClocktowerStorytellerRecommendationScreen(
             onStartNight = { nightStarted = true },
@@ -8960,6 +9563,9 @@ private fun ClocktowerJudgeScreen(
         ) {
             ClocktowerNightStepCardLocalized(
                 automaticStorytellerInfo = automaticStorytellerInfo,
+                automaticStorytellerStyle = automaticStorytellerStyle,
+                evilAdvantage = currentDynamicStorytellerState.evilAdvantage,
+                informationDecisionKey = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}",
                 cards = cards,
                 aliveCards = aliveCards,
                 step = currentStep,
@@ -9080,7 +9686,11 @@ private fun ClocktowerJudgeScreen(
                     onRecordEvent(
                         if (unreliable) ClocktowerEventType.UnreliableInformation else ClocktowerEventType.Information,
                         if (unreliable) {
-                            text("${displayStep.displayTitle}（不可靠）", "${displayStep.displayTitle} (unreliable)")
+                            if (displayStep.selectedInformationTruthful == false) {
+                                text("${displayStep.displayTitle}（误导）", "${displayStep.displayTitle} (misleading)")
+                            } else {
+                                text("${displayStep.displayTitle}（不可靠）", "${displayStep.displayTitle} (unreliable)")
+                            }
                         } else {
                             displayStep.displayTitle
                         },
@@ -9102,12 +9712,14 @@ private fun ClocktowerJudgeScreen(
         return
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
+    ClocktowerDarkTheme {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            contentPadding = PaddingValues(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -9116,7 +9728,7 @@ private fun ClocktowerJudgeScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.clocktower_judge_assistant), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text(gameOutcome?.title ?: phaseTitle, color = Color(0xFF5C6A63))
+                    Text(gameOutcome?.title ?: phaseTitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -9135,6 +9747,9 @@ private fun ClocktowerJudgeScreen(
                 item {
                     ClocktowerNightStepCardLocalized(
                         automaticStorytellerInfo = automaticStorytellerInfo,
+                        automaticStorytellerStyle = automaticStorytellerStyle,
+                        evilAdvantage = currentDynamicStorytellerState.evilAdvantage,
+                        informationDecisionKey = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}",
                         cards = cards,
                         aliveCards = aliveCards,
                         step = currentStep,
@@ -9401,8 +10016,8 @@ private fun ClocktowerJudgeScreen(
                                 HostInstructionBlock(
                                     label = "杀手",
                                     text = "所有存活玩家都已经声称过杀手行动，本局不再提供声称者。",
-                                    backgroundColor = Color(0xFFFFFCF6),
-                                    textColor = Color(0xFF6F7B74),
+                                    backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    textColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             } else {
                                 HostActionSection(
@@ -9436,6 +10051,7 @@ private fun ClocktowerJudgeScreen(
                                     val slayerRecluse = cards.first { it.name == slayerTargetName }
                                     RecluseRegistrationPanel(
                                         automaticStorytellerInfo = automaticStorytellerInfo,
+                                        automaticStorytellerStyle = automaticStorytellerStyle,
                                         cards = cards,
                                         recluse = slayerRecluse,
                                         teams = listOf(ClocktowerTeam.Demon),
@@ -9663,6 +10279,7 @@ private fun ClocktowerJudgeScreen(
                             if (klutzRegistrationKey != null && spyCard != null) {
                                 SpyRegistrationPanel(
                                     automaticStorytellerInfo = automaticStorytellerInfo,
+                                    automaticStorytellerStyle = automaticStorytellerStyle,
                                     cards = cards,
                                     spy = spyCard,
                                     teams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
@@ -9742,6 +10359,7 @@ private fun ClocktowerJudgeScreen(
                             if (virginRegistrationKey != null && spyCard != null) {
                                 SpyRegistrationPanel(
                                     automaticStorytellerInfo = automaticStorytellerInfo,
+                                    automaticStorytellerStyle = automaticStorytellerStyle,
                                     cards = cards,
                                     spy = spyCard,
                                     teams = listOf(ClocktowerTeam.Townsfolk),
@@ -9928,6 +10546,7 @@ private fun ClocktowerJudgeScreen(
                 Text(if (gameOutcome == null) stringResource(R.string.end_and_reveal) else stringResource(R.string.view_results))
             }
         }
+    }
     }
 
     return
@@ -10730,7 +11349,7 @@ private fun StorytellerRecommendationCard(
                     }
                     Text(
                         if (automaticStorytellerInfo) {
-                            text("以下首夜步骤将直接使用这套平衡信息。", "The first-night steps below will use this balanced information automatically.")
+                            text("以下首夜步骤将直接使用当前自动模式的信息。", "The first-night steps below will use the selected automatic style.")
                         } else {
                             text("采用后仍可在下方首夜步骤中手动修改具体裁定。", "After applying, you can still edit individual decisions in the first-night steps below.")
                         },
@@ -11304,14 +11923,22 @@ private fun SpyRegistrationPanel(
     hint: String? = null,
     recommendations: List<ClocktowerRegistrationRecommendationOption> = emptyList(),
     automaticStorytellerInfo: Boolean = false,
+    automaticStorytellerStyle: RecommendationStyle = RecommendationStyle.BALANCED,
     enabled: Boolean,
     onRegistersGoodChange: (Boolean) -> Unit,
     onRoleChange: (String) -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     val roles = completeTroubleBrewingRoles.filter { it.team in teams && it.enName != "Spy" }
-    val automaticRecommendation = AutomaticStorytellerSelector.select(recommendations) {
-        it.isDefaultRecommendation
+    val automaticRecommendation = AutomaticStorytellerSelector.selectStyle(
+        recommendations,
+        automaticStorytellerStyle,
+        ClocktowerRegistrationRecommendationOption::style,
+    )
+    val automaticStyleLabel = when (automaticStorytellerStyle) {
+        RecommendationStyle.GENTLE -> if (language == "en") "gentle" else "稳健"
+        RecommendationStyle.BALANCED -> if (language == "en") "balanced" else "均衡"
+        RecommendationStyle.AGGRESSIVE -> if (language == "en") "aggressive" else "激进"
     }
     LaunchedEffect(automaticStorytellerInfo, enabled, automaticRecommendation) {
         if (automaticStorytellerInfo && enabled && automaticRecommendation != null) {
@@ -11349,7 +11976,7 @@ private fun SpyRegistrationPanel(
         } else {
             if (automaticStorytellerInfo && automaticRecommendation != null) {
                 Text(
-                    if (language == "en") "Automatic balanced ruling" else "已自动采用平衡裁定",
+                    if (language == "en") "Automatic $automaticStyleLabel ruling" else "已自动采用${automaticStyleLabel}裁定",
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                 )
@@ -11427,14 +12054,22 @@ private fun RecluseRegistrationPanel(
     registeredRoleEnName: String?,
     recommendations: List<ClocktowerRegistrationRecommendationOption> = emptyList(),
     automaticStorytellerInfo: Boolean = false,
+    automaticStorytellerStyle: RecommendationStyle = RecommendationStyle.BALANCED,
     enabled: Boolean,
     onRegistersEvilChange: (Boolean) -> Unit,
     onRoleChange: (String) -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     val roles = completeTroubleBrewingRoles.filter { it.team in teams }
-    val automaticRecommendation = AutomaticStorytellerSelector.select(recommendations) {
-        it.isDefaultRecommendation
+    val automaticRecommendation = AutomaticStorytellerSelector.selectStyle(
+        recommendations,
+        automaticStorytellerStyle,
+        ClocktowerRegistrationRecommendationOption::style,
+    )
+    val automaticStyleLabel = when (automaticStorytellerStyle) {
+        RecommendationStyle.GENTLE -> if (language == "en") "gentle" else "稳健"
+        RecommendationStyle.BALANCED -> if (language == "en") "balanced" else "均衡"
+        RecommendationStyle.AGGRESSIVE -> if (language == "en") "aggressive" else "激进"
     }
     LaunchedEffect(automaticStorytellerInfo, enabled, automaticRecommendation) {
         if (automaticStorytellerInfo && enabled && automaticRecommendation != null) {
@@ -11471,7 +12106,7 @@ private fun RecluseRegistrationPanel(
         } else {
             if (automaticStorytellerInfo && automaticRecommendation != null) {
                 Text(
-                    if (language == "en") "Automatic balanced ruling" else "已自动采用平衡裁定",
+                    if (language == "en") "Automatic $automaticStyleLabel ruling" else "已自动采用${automaticStyleLabel}裁定",
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                 )
@@ -11537,6 +12172,9 @@ private fun RecluseRegistrationPanel(
 @Composable
 private fun ClocktowerNightStepCardLocalized(
     automaticStorytellerInfo: Boolean,
+    automaticStorytellerStyle: RecommendationStyle,
+    evilAdvantage: Int,
+    informationDecisionKey: String,
     cards: List<PlayerCard>,
     aliveCards: List<PlayerCard>,
     step: ClocktowerNightStepUi,
@@ -11572,12 +12210,22 @@ private fun ClocktowerNightStepCardLocalized(
     showNavigationActions: Boolean = true,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
-    val automaticDecision = AutomaticStorytellerSelector.select(step.decisionOptions) {
-        it.isDefaultRecommendation
-    }
-    val automaticDisplayOption = AutomaticStorytellerSelector.select(step.recommendedDisplayOptions) {
-        it.isDefaultRecommendation
-    }
+    val automaticDecision = AutomaticStorytellerSelector.selectStyle(
+        step.decisionOptions,
+        automaticStorytellerStyle,
+        ClocktowerDecisionOption::recommendationStyle,
+    )
+    val automaticDisplayOption = AutomaticInformationPolicy.select(
+        options = step.recommendedDisplayOptions,
+        reliability = step.informationReliability,
+        style = automaticStorytellerStyle,
+        evilAdvantage = evilAdvantage,
+        stableKey = informationDecisionKey,
+        recentMisinformationStreak = step.recentMisinformationStreak,
+        isTruthful = ClocktowerDisplayOption::isTruthful,
+        misinformationPressure = ClocktowerDisplayOption::misinformationPressure,
+        styleOf = ClocktowerDisplayOption::recommendationStyle,
+    )
     LaunchedEffect(automaticStorytellerInfo, step.title, automaticDecision?.targetName) {
         if (automaticStorytellerInfo && automaticDecision != null && selectedName != automaticDecision.targetName) {
             onSelectName(automaticDecision.targetName)
@@ -11651,6 +12299,7 @@ private fun ClocktowerNightStepCardLocalized(
             if (step.recluseRegistrationKey != null && recluseCard != null) {
                 RecluseRegistrationPanel(
                     automaticStorytellerInfo = automaticStorytellerInfo,
+                    automaticStorytellerStyle = automaticStorytellerStyle,
                     cards = cards,
                     recluse = recluseCard,
                     teams = step.recluseRegistrationTeams,
@@ -11666,7 +12315,7 @@ private fun ClocktowerNightStepCardLocalized(
                 HostActionSection(
                     title = if (language == "en") "Recommended ruling" else "推荐裁定",
                     helper = if (automaticStorytellerInfo) {
-                        if (language == "en") "The balanced ruling has been applied automatically." else "已自动采用平衡裁定。"
+                        if (language == "en") "The selected automatic ruling has been applied." else "已采用当前自动模式的裁定。"
                     } else if (language == "en") {
                         "The balanced option is the beginner default. You can still choose manually below."
                     } else {
@@ -11930,7 +12579,7 @@ private fun ClocktowerNightStepCardLocalized(
                 Text("推荐给说书人的完整信息", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 Text(
                     if (automaticStorytellerInfo) {
-                        "已自动选定平衡信息；点击下方按钮即可向玩家展示。"
+                        "已按当前自动模式选定信息；点击下方按钮即可向玩家展示。"
                     } else {
                         "平衡方案适合直接采用；其他方案提供不同压力。选择后会同步本次间谍或隐士登记。"
                     },
@@ -11951,6 +12600,7 @@ private fun ClocktowerNightStepCardLocalized(
                                     displayPrimary = option.displayPrimary,
                                     displaySecondary = option.displaySecondary,
                                     displayFooter = option.displayFooter,
+                                    selectedInformationTruthful = option.isTruthful,
                                     displayOptions = emptyList(),
                                     recommendedDisplayOptions = emptyList(),
                                 ),
@@ -11998,6 +12648,7 @@ private fun ClocktowerNightStepCardLocalized(
                                     displayPrimary = option.displayPrimary,
                                     displaySecondary = option.displaySecondary,
                                     displayFooter = option.displayFooter,
+                                    selectedInformationTruthful = option.isTruthful,
                                     displayOptions = emptyList(),
                                 ),
                             )
@@ -12485,6 +13136,7 @@ private fun ClocktowerResultsDialog(
                         ) {
                             Surface(
                                 color = accentColor.copy(alpha = 0.13f),
+                                contentColor = MaterialTheme.colorScheme.onSurface,
                                 shape = RoundedCornerShape(26.dp),
                                 border = BorderStroke(1.dp, accentColor.copy(alpha = 0.45f)),
                             ) {
@@ -12505,6 +13157,7 @@ private fun ClocktowerResultsDialog(
                                     outcome?.let {
                                         Text(
                                             text = it.summary,
+                                            color = MaterialTheme.colorScheme.onSurface,
                                             style = MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.Bold,
                                             textAlign = TextAlign.Center,
@@ -12579,6 +13232,7 @@ private fun ClocktowerResultsDialog(
                             item {
                                 Surface(
                                     color = accentColor.copy(alpha = 0.12f),
+                                    contentColor = MaterialTheme.colorScheme.onSurface,
                                     shape = RoundedCornerShape(18.dp),
                                 ) {
                                     Column(
@@ -12589,7 +13243,7 @@ private fun ClocktowerResultsDialog(
                                     ) {
                                         Text(resultTitle, color = accentColor, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                                         outcome?.let {
-                                            Text(it.summary, fontWeight = FontWeight.SemiBold)
+                                            Text(it.summary, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
                                             Text(it.reason, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                                         }
                                     }
@@ -13251,12 +13905,15 @@ private fun ArchivedGameReviewContent(
         review.outcome?.let { outcome ->
             item {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.11f)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.11f),
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                     shape = RoundedCornerShape(14.dp),
                 ) {
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(outcome.title, fontWeight = FontWeight.Black)
-                        Text(outcome.summary)
+                        Text(outcome.title, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Black)
+                        Text(outcome.summary, color = MaterialTheme.colorScheme.onSurface)
                         Text(outcome.reason, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }

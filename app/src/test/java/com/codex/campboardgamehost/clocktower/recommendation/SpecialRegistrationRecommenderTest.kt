@@ -74,11 +74,83 @@ class SpecialRegistrationRecommenderTest {
             ),
         )
 
-        assertEquals(2, recommendations.size)
+        assertEquals(RecommendationStyle.entries.toSet(), recommendations.map { it.style }.toSet())
         assertEquals(2, recommendations.map { it.choice().registeredAlignment }.toSet().size)
     }
 
-    private fun request() = DynamicDecisionRequest(
+    @Test
+    fun `global balance discourages killing Recluse when evil is ahead`() {
+        val recommendations = SpecialRegistrationRecommender.recommend(
+            request = request(evilAdvantage = 70),
+            context = SpecialRegistrationContext(
+                subjectSeat = 1,
+                allowedRoles = listOf(role("Imp", CharacterType.DEMON)),
+                detail = RegistrationDetail.ROLE,
+                canMisregister = true,
+                outcomeMisinformationPressure = 4,
+                specialRegistrationBalanceImpact = 1,
+            ),
+        )
+
+        assertFalse(recommendations.first { it.style == RecommendationStyle.BALANCED }.choice().usesSpecialAbility)
+    }
+
+    @Test
+    fun `global balance can register Recluse as demon when good is well ahead`() {
+        val recommendations = SpecialRegistrationRecommender.recommend(
+            request = request(evilAdvantage = -70),
+            context = SpecialRegistrationContext(
+                subjectSeat = 1,
+                allowedRoles = listOf(role("Imp", CharacterType.DEMON)),
+                detail = RegistrationDetail.ROLE,
+                canMisregister = true,
+                outcomeMisinformationPressure = 4,
+                specialRegistrationBalanceImpact = 1,
+            ),
+        )
+
+        assertTrue(recommendations.first { it.style == RecommendationStyle.BALANCED }.choice().usesSpecialAbility)
+    }
+
+    @Test
+    fun `configured styles remain distinct in a neutral high impact ruling`() {
+        val recommendations = SpecialRegistrationRecommender.recommend(
+            request = request(),
+            context = SpecialRegistrationContext(
+                subjectSeat = 1,
+                allowedRoles = listOf(role("Imp", CharacterType.DEMON)),
+                detail = RegistrationDetail.ROLE,
+                canMisregister = true,
+                outcomeMisinformationPressure = 4,
+                specialRegistrationBalanceImpact = 1,
+            ),
+        )
+
+        assertFalse(recommendations.first { it.style == RecommendationStyle.GENTLE }.choice().usesSpecialAbility)
+        assertFalse(recommendations.first { it.style == RecommendationStyle.BALANCED }.choice().usesSpecialAbility)
+        assertTrue(recommendations.first { it.style == RecommendationStyle.AGGRESSIVE }.choice().usesSpecialAbility)
+    }
+
+    @Test
+    fun `stable variation is reproducible for the same decision`() {
+        val context = SpecialRegistrationContext(
+            subjectSeat = 1,
+            allowedRoles = listOf(
+                role("Washerwoman", CharacterType.TOWNSFOLK),
+                role("Virgin", CharacterType.TOWNSFOLK),
+            ),
+            detail = RegistrationDetail.ROLE,
+            canMisregister = true,
+            outcomeMisinformationPressure = 2,
+        )
+
+        assertEquals(
+            SpecialRegistrationRecommender.recommend(request(), context),
+            SpecialRegistrationRecommender.recommend(request(), context),
+        )
+    }
+
+    private fun request(evilAdvantage: Int = 0) = DynamicDecisionRequest(
         id = "night-1-empath-spy",
         type = StorytellerDecisionType.SPECIAL_REGISTRATION,
         sourceAbility = RoleId("Empath"),
@@ -98,6 +170,7 @@ class SpecialRegistrationRecommenderTest {
             ),
             phase = StorytellerPhase.NIGHT,
             round = 1,
+            evilAdvantage = evilAdvantage,
         ),
     )
 

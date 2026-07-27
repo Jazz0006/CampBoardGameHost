@@ -27,7 +27,7 @@ internal object UnreliableCategoricalInformationRecommender {
         val distinctCandidates = candidates.distinctBy(UnreliableCategoricalCandidate::id)
         require(distinctCandidates.isNotEmpty())
         val selectedIds = mutableSetOf<String>()
-        return listOf(
+        val selected = listOf(
             RecommendationStyle.GENTLE,
             RecommendationStyle.BALANCED,
             RecommendationStyle.AGGRESSIVE,
@@ -39,6 +39,12 @@ internal object UnreliableCategoricalInformationRecommender {
                         .thenBy(UnreliableCategoricalRecommendation::candidateId),
                 )
                 .firstOrNull { selectedIds.add(it.candidateId) }
+        }
+        val truthful = distinctCandidates.firstOrNull { it.isTruthful }
+        return if (truthful != null && selected.none { it.candidateId == truthful.id }) {
+            selected + evaluate(truthful, RecommendationStyle.GENTLE)
+        } else {
+            selected
         }
     }
 
