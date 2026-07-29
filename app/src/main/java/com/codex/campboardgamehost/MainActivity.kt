@@ -7141,7 +7141,8 @@ private fun ClocktowerJudgeScreen(
         null
     }
     fun recordNightStep(step: ClocktowerNightStepUi) {
-        if (!step.isRealAction || step.action == ClocktowerNightAction.None || step.action == ClocktowerNightAction.DemonKill) return
+        if (!step.isRealAction || step.action == ClocktowerNightAction.DemonKill) return
+        if (step.action == ClocktowerNightAction.None && step.tellPlayer.isNullOrBlank()) return
         val names = when (step.action) {
             ClocktowerNightAction.RedHerring -> listOfNotNull(redHerring)
             ClocktowerNightAction.Poison -> listOfNotNull(step.actor?.name, poisonTarget)
@@ -8262,6 +8263,24 @@ private fun ClocktowerJudgeScreen(
     val sageNightDeath = resolvedNightDeathCard
         ?.takeIf { nightDeathWillOccur && it.clocktowerRole?.enName == "Sage" }
     val sagePair = demonCard?.let { storytellerPairHint(it, cards) }
+    val spyDelta: String? = run {
+        if (spyCard == null || phase == ClocktowerPhase.FirstNight) return@run null
+        val prevRound = round - 1
+        val excludedTitles = setOf(
+            text("间谍登记裁定", "Spy registration"),
+            text("今日主人", "Master"),
+            text("红鲱鱼", "Red herring"),
+        )
+        val deltaEvents = events.filter { e ->
+            e.type == ClocktowerEventType.RoleAction &&
+                e.title !in excludedTitles &&
+                ((e.phase == ClocktowerPhase.Night && e.round == prevRound) ||
+                    (e.phase == ClocktowerPhase.FirstNight && prevRound == 0) ||
+                    (e.phase == ClocktowerPhase.Day && e.round == prevRound))
+        }
+        if (deltaEvents.isEmpty()) null
+        else deltaEvents.joinToString("\n") { "• ${it.title}：${it.detail}" }
+    }
     val minionCards = cards.filter { it.clocktowerTeam == ClocktowerTeam.Minion }
     fun seatNumberText(card: PlayerCard): String = ((cards.indexOf(card) + 1).takeIf { it > 0 } ?: 0).toString()
     fun twoSeatNumbers(first: PlayerCard?, second: PlayerCard?): String? =
@@ -8541,7 +8560,10 @@ private fun ClocktowerJudgeScreen(
             infoStep(
                 roleName = "间谍",
                 enName = "Spy",
-                tellPlayer = if (poisonTarget == spyCard?.name) null else cards.joinToString("\n") { "${it.seatLabel(cards)}：${it.hostRoleLabel(context, GameKind.Clocktower)}" },
+                tellPlayer = if (poisonTarget == spyCard?.name) null else {
+                    val grimoire = cards.joinToString("\n") { "${it.seatLabel(cards)}：${it.hostRoleLabel(context, GameKind.Clocktower)}" }
+                    listOfNotNull(spyDelta, grimoire).joinToString("\n\n")
+                },
                 explanation = if (poisonTarget == spyCard?.name) "间谍已中毒：仍照常唤醒，但不要展示真实魔典，也不能改变登记身份。" else "存活间谍每晚可以查看所有玩家的真实身份。",
                 displayKind = ClocktowerDisplayKind.Grimoire,
                 displayTitle = "魔典",
@@ -8829,7 +8851,10 @@ private fun ClocktowerJudgeScreen(
                 infoStep(
                     roleName = "间谍",
                     enName = "Spy",
-                    tellPlayer = if (poisonTarget == spyCard?.name) null else cards.joinToString("\n") { "${it.seatLabel(cards)}：${it.hostRoleLabel(context, GameKind.Clocktower)}" },
+                    tellPlayer = if (poisonTarget == spyCard?.name) null else {
+                        val grimoire = cards.joinToString("\n") { "${it.seatLabel(cards)}：${it.hostRoleLabel(context, GameKind.Clocktower)}" }
+                        listOfNotNull(spyDelta, grimoire).joinToString("\n\n")
+                    },
                     explanation = if (poisonTarget == spyCard?.name) "间谍已中毒：仍照常唤醒，但不要展示真实魔典，也不能改变登记身份。" else "存活间谍每晚查看真实魔典。",
                     displayKind = ClocktowerDisplayKind.Grimoire,
                     displayTitle = "魔典",
