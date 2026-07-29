@@ -7155,21 +7155,36 @@ private fun ClocktowerJudgeScreen(
             ClocktowerNightAction.Ravenkeeper -> listOfNotNull(step.actor?.name, ravenkeeperTarget)
             ClocktowerNightAction.None -> listOfNotNull(step.actor?.name)
         }
-        val selected = names.drop(if (step.actor != null) 1 else 0).joinToString { playerSeatLabel(cards, it) }
         val detail = when (step.action) {
-            ClocktowerNightAction.RedHerring -> playerSeatLabel(cards, redHerring)
-            ClocktowerNightAction.Poison -> playerSeatLabel(cards, poisonTarget)
-            ClocktowerNightAction.ButlerMaster -> playerSeatLabel(cards, butlerMaster)
-            ClocktowerNightAction.MonkProtect -> playerSeatLabel(cards, monkProtectedTarget)
-            ClocktowerNightAction.FortuneTeller -> "$selected · $fortuneTellerResult"
-            ClocktowerNightAction.Chambermaid -> "$selected · $chambermaidResult"
-            ClocktowerNightAction.DemonKill -> playerSeatLabel(cards, pendingNightDeath)
+            ClocktowerNightAction.RedHerring ->
+                text("红鲱鱼：${playerSeatLabel(cards, redHerring)}", "Red herring: ${playerSeatLabel(cards, redHerring)}")
+            ClocktowerNightAction.Poison ->
+                text("中毒目标：${playerSeatLabel(cards, poisonTarget)}", "Poisoned: ${playerSeatLabel(cards, poisonTarget)}")
+            ClocktowerNightAction.ButlerMaster ->
+                text("今日主人：${playerSeatLabel(cards, butlerMaster)}", "Master: ${playerSeatLabel(cards, butlerMaster)}")
+            ClocktowerNightAction.MonkProtect ->
+                text("保护目标：${playerSeatLabel(cards, monkProtectedTarget)}", "Protected: ${playerSeatLabel(cards, monkProtectedTarget)}")
+            ClocktowerNightAction.FortuneTeller -> {
+                val targets = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).joinToString(" + ") { playerSeatLabel(cards, it) }
+                text("查验 $targets：$fortuneTellerResult", "Checked $targets: $fortuneTellerResult")
+            }
+            ClocktowerNightAction.Chambermaid -> {
+                val targets = listOfNotNull(chambermaidFirst, chambermaidSecond).joinToString(" + ") { playerSeatLabel(cards, it) }
+                text("查验 $targets：$chambermaidResult 人今晚醒来", "Checked $targets: $chambermaidResult woke tonight")
+            }
+            ClocktowerNightAction.DemonKill ->
+                text("击杀目标：${playerSeatLabel(cards, pendingNightDeath)}", "Kill target: ${playerSeatLabel(cards, pendingNightDeath)}")
             ClocktowerNightAction.MayorRedirect -> mayorRedirectTarget?.let { target ->
                 val mayor = cards.firstOrNull { it.clocktowerRole?.enName == "Mayor" }
-                if (target == mayor?.name) "市长死亡" else "死亡转移给 ${playerSeatLabel(cards, target)}"
+                if (target == mayor?.name)
+                    text("市长死亡", "Mayor dies")
+                else
+                    text("死亡转移给 ${playerSeatLabel(cards, target)}", "Death redirected to ${playerSeatLabel(cards, target)}")
             }.orEmpty()
-            ClocktowerNightAction.DemonSuccessor -> playerSeatLabel(cards, demonSuccessorTarget)
-            ClocktowerNightAction.Ravenkeeper -> playerSeatLabel(cards, ravenkeeperTarget)
+            ClocktowerNightAction.DemonSuccessor ->
+                text("新恶魔：${playerSeatLabel(cards, demonSuccessorTarget)}", "New Demon: ${playerSeatLabel(cards, demonSuccessorTarget)}")
+            ClocktowerNightAction.Ravenkeeper ->
+                text("查验：${playerSeatLabel(cards, ravenkeeperTarget)}", "Checked: ${playerSeatLabel(cards, ravenkeeperTarget)}")
             ClocktowerNightAction.None -> step.tellPlayer ?: step.storytellerAction
         }
         onRecordEvent(ClocktowerEventType.RoleAction, step.title, detail, names)
@@ -9698,11 +9713,28 @@ private fun ClocktowerJudgeScreen(
                 onShowPlayerDisplay = { displayStep ->
                     val actor = displayStep.actor
                     val unreliable = actor?.clocktowerRole?.enName == "Drunk" || actor?.name == poisonTarget
-                    val shownInformation = listOfNotNull(
-                        displayStep.displayPrimary ?: displayStep.tellPlayer,
-                        displayStep.displaySecondary,
-                        displayStep.displayFooter,
-                    ).filter { it.isNotBlank() }.joinToString(" · ")
+                    val primary = displayStep.displayPrimary ?: displayStep.tellPlayer
+                    val secondary = displayStep.displaySecondary
+                    val recordDetail = when (displayStep.displayKind) {
+                        ClocktowerDisplayKind.EitherOne ->
+                            if (primary != null && secondary != null)
+                                text("$primary 在 ${secondary.trim().replace("   ", " / ")} 号之中", "$primary: seats ${secondary.trim().replace("   ", " / ")}")
+                            else primary.orEmpty()
+                        ClocktowerDisplayKind.Number ->
+                            if (primary != null)
+                                text("${displayStep.displayFooter.orEmpty()}：$primary", "${displayStep.displayFooter.orEmpty()}: $primary")
+                            else primary.orEmpty()
+                        ClocktowerDisplayKind.YesNo ->
+                            if (secondary != null && primary != null)
+                                text("查验 ${secondary.trim().replace("   ", " + ")} 号：$primary", "Checked seats ${secondary.trim().replace("   ", " + ")}: $primary")
+                            else primary.orEmpty()
+                        ClocktowerDisplayKind.RoleReveal ->
+                            primary.orEmpty()
+                        ClocktowerDisplayKind.Grimoire ->
+                            text("间谍查看了魔典", "Spy viewed the grimoire")
+                        else ->
+                            primary.orEmpty()
+                    }
                     val referencedPlayerNames = InformationReferenceExtractor.extractSeatNumbers(
                         values = listOf(displayStep.displaySecondary, displayStep.displayFooter),
                         maximumSeat = cards.size,
@@ -9718,7 +9750,7 @@ private fun ClocktowerJudgeScreen(
                         } else {
                             displayStep.displayTitle
                         },
-                        "${actor?.seatLabel(cards).orEmpty()}：$shownInformation",
+                        recordDetail,
                         (listOfNotNull(actor?.name) + referencedPlayerNames).distinct(),
                     )
                     playerDisplayStep = displayStep
@@ -12811,7 +12843,8 @@ private fun ClocktowerGameRecordPanel(
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val visibleEvents = events
         .filterNot { it.type == ClocktowerEventType.System || it.type == ClocktowerEventType.Phase }
-        .sortedByDescending { it.sequence }
+        .filter { it.phase != ClocktowerPhase.Dawn }
+        .sortedBy { it.sequence }
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         HorizontalDivider()
@@ -12842,11 +12875,15 @@ private fun ClocktowerGameRecordPanel(
             if (visibleEvents.isEmpty()) {
                 Text(text("暂无记录", "No events yet"), color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
             } else {
+                val grouped = visibleEvents
+                    .groupBy { clocktowerEventPhaseLabel(it, language) }
+                    .entries
+                    .sortedBy { (_, g) -> g.first().sequence }
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    visibleEvents.groupBy { it.phase to it.round }.values.forEach { group ->
+                    grouped.forEach { (label, group) ->
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                clocktowerEventPhaseLabel(group.first(), language),
+                                label,
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Black,
                                 color = Color(0xFF6F7B74),
@@ -12901,12 +12938,13 @@ private fun ClocktowerGameRecordPanel(
 }
 
 private fun clocktowerEventPhaseLabel(event: ClocktowerEvent, language: String): String = when (event.phase) {
-    ClocktowerPhase.FirstNight -> if (language == "en") "First night" else "第一夜"
-    ClocktowerPhase.Dawn -> if (language == "en") "Dawn" else "天亮"
+    ClocktowerPhase.FirstNight -> if (language == "en") "Night 1" else "第 1 夜"
+    ClocktowerPhase.Dawn -> if (language == "en") "Day ${event.round}" else "第 ${event.round} 天"
     ClocktowerPhase.Day -> if (language == "en") "Day ${event.round}" else "第 ${event.round} 天"
     ClocktowerPhase.Night -> if (language == "en") "Night ${event.round}" else "第 ${event.round} 夜"
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ClocktowerTimelineRow(event: ClocktowerEvent) {
     val accent = when (event.type) {
@@ -12927,10 +12965,27 @@ private fun ClocktowerTimelineRow(event: ClocktowerEvent) {
                 .size(10.dp)
                 .background(accent, CircleShape),
         )
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(event.title, fontWeight = FontWeight.SemiBold)
             if (event.detail.isNotBlank()) {
                 Text(event.detail, style = MaterialTheme.typography.bodySmall, color = Color(0xFF5C6A63))
+            }
+            if (event.playerNames.isNotEmpty()) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    event.playerNames.forEach { name ->
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = accent.copy(alpha = 0.12f),
+                        ) {
+                            Text(
+                                name,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = accent,
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -13847,7 +13902,10 @@ private fun HostRecordsList(
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
-    val visibleEvents = events.filterNot { it.type == ClocktowerEventType.System }
+    val visibleEvents = events
+        .filterNot { it.type == ClocktowerEventType.System }
+        .filter { it.phase != ClocktowerPhase.Dawn }
+        .sortedBy { it.sequence }
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(16.dp),
@@ -13856,18 +13914,28 @@ private fun HostRecordsList(
         if (gameKind == GameKind.Clocktower) {
             if (visibleEvents.isEmpty()) {
                 item { Text(text("还没有操作记录。", "No game records yet."), color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            }
-            items(visibleEvents, key = { it.sequence }) { event ->
-                GameRecordRow(
-                    title = event.title,
-                    detail = event.detail,
-                    phase = when (event.phase) {
-                        ClocktowerPhase.FirstNight -> text("第 1 夜", "Night 1")
-                        ClocktowerPhase.Dawn -> text("天亮", "Dawn")
-                        ClocktowerPhase.Day -> text("第 ${event.round} 天", "Day ${event.round}")
-                        ClocktowerPhase.Night -> text("第 ${event.round} 夜", "Night ${event.round}")
-                    },
-                )
+            } else {
+                val grouped = visibleEvents
+                    .groupBy { clocktowerEventPhaseLabel(it, language) }
+                    .entries
+                    .sortedBy { (_, g) -> g.first().sequence }
+                grouped.forEach { (label, group) ->
+                    item {
+                        Text(
+                            label,
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.padding(top = 6.dp, bottom = 2.dp),
+                        )
+                    }
+                    items(group, key = { it.sequence }) { event ->
+                        GameRecordRow(
+                            title = event.title,
+                            detail = event.detail,
+                        )
+                    }
+                }
             }
         } else {
             if (records.isEmpty()) {
@@ -13885,7 +13953,7 @@ private fun HostRecordsList(
 }
 
 @Composable
-private fun GameRecordRow(title: String, detail: String, phase: String) {
+private fun GameRecordRow(title: String, detail: String, phase: String? = null) {
     Card(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -13896,7 +13964,9 @@ private fun GameRecordRow(title: String, detail: String, phase: String) {
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
-            Text(phase, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+            if (phase != null) {
+                Text(phase, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+            }
             Text(title, fontWeight = FontWeight.Bold)
             if (detail.isNotBlank()) Text(detail, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
