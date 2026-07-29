@@ -7007,6 +7007,7 @@ private fun ClocktowerJudgeScreen(
     val recluseRegistrationEvil = remember { mutableStateMapOf<String, Boolean>() }
     val recluseRegistrationRole = remember { mutableStateMapOf<String, String>() }
     val recordedRecluseRegistrations = remember { mutableStateMapOf<String, Boolean>() }
+    val recordedNightSteps = remember { mutableStateMapOf<String, Boolean>() }
     fun registrationKey(ability: String, subject: String = "spy") = "${phase.name}:$round:$ability:$subject"
     fun spyCanRegister(): Boolean = spyCard != null && poisonTarget != spyCard.name
     fun spyRegistersGood(key: String?): Boolean = key != null && spyCanRegister() && spyRegistrationGood[key] == true
@@ -7142,7 +7143,33 @@ private fun ClocktowerJudgeScreen(
     }
     fun recordNightStep(step: ClocktowerNightStepUi) {
         if (!step.isRealAction || step.action == ClocktowerNightAction.DemonKill) return
-        if (step.action == ClocktowerNightAction.None && step.tellPlayer.isNullOrBlank()) return
+        // Information shown to a player is recorded by onShowPlayerDisplay with the
+        // final displayed result. Unreliable roles (including the Drunk) keep
+        // displayKind=None until an option is chosen, so also identify them by
+        // their information action/options.
+        if (
+            step.action == ClocktowerNightAction.None ||
+            step.action in setOf(
+                ClocktowerNightAction.FortuneTeller,
+                ClocktowerNightAction.Chambermaid,
+                ClocktowerNightAction.Ravenkeeper,
+            ) ||
+            step.displayKind != ClocktowerDisplayKind.None ||
+            step.displayOptions.isNotEmpty() ||
+            step.recommendedDisplayOptions.isNotEmpty()
+        ) return
+        val recordKey = "${phase.name}:$round:${step.action.name}:${step.actor?.name.orEmpty()}:${step.title}"
+        val alreadyRecorded = recordedNightSteps[recordKey] == true || events.any { event ->
+            event.type == ClocktowerEventType.RoleAction &&
+                event.phase == phase &&
+                event.round == round &&
+                event.title == step.title &&
+                (step.actor == null || step.actor.name in event.playerNames)
+        }
+        if (alreadyRecorded) {
+            recordedNightSteps[recordKey] = true
+            return
+        }
         val names = when (step.action) {
             ClocktowerNightAction.RedHerring -> listOfNotNull(redHerring)
             ClocktowerNightAction.Poison -> listOfNotNull(step.actor?.name, poisonTarget)
@@ -7189,6 +7216,7 @@ private fun ClocktowerJudgeScreen(
             ClocktowerNightAction.None -> step.tellPlayer ?: step.storytellerAction
         }
         onRecordEvent(ClocktowerEventType.RoleAction, step.title, detail, names)
+        recordedNightSteps[recordKey] = true
     }
     val phaseTitle = when (phase) {
         ClocktowerPhase.FirstNight -> stringResource(R.string.clocktower_phase_first_night)
@@ -8259,7 +8287,9 @@ private fun ClocktowerJudgeScreen(
     val ravenkeeperTargetCard = ravenkeeperTarget?.let { name -> cards.firstOrNull { it.name == name } }
     val ravenkeeperRegistrationKey = ravenkeeperTargetCard?.takeIf { it.name == spyCard?.name }?.let { registrationKey("Ravenkeeper", it.name) }
     val ravenkeeperRecluseRegistrationKey = ravenkeeperTargetCard?.takeIf { it.name == recluseCard?.name }?.let { registrationKey("RavenkeeperRecluse", it.name) }
-    val demonCard = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon }
+    // Evil-team introductions always use true identities. Registration choices
+    // for the Spy/Recluse only affect abilities that explicitly allow them.
+    val demonCard = cards.firstOrNull { it.clocktowerRole?.team == ClocktowerTeam.Demon }
     val sageNightDeath = resolvedNightDeathCard
         ?.takeIf { nightDeathWillOccur && it.clocktowerRole?.enName == "Sage" }
     val sagePair = demonCard?.let { storytellerPairHint(it, cards) }
@@ -8270,18 +8300,27 @@ private fun ClocktowerJudgeScreen(
             text("间谍登记裁定", "Spy registration"),
             text("今日主人", "Master"),
             text("红鲱鱼", "Red herring"),
+            text("魔典", "Grimoire"),
+            text("爪牙信息", "Minion info"),
+            text("恶魔信息", "Demon info"),
+            text("杀手行动", "Slayer claim"),
+            text("杀手命中", "Slayer hit"),
         )
         val deltaEvents = events.filter { e ->
-            e.type == ClocktowerEventType.RoleAction &&
+            e.type in setOf(
+                ClocktowerEventType.RoleAction,
+                ClocktowerEventType.Information,
+                ClocktowerEventType.UnreliableInformation,
+            ) &&
                 e.title !in excludedTitles &&
                 ((e.phase == ClocktowerPhase.Night && e.round == prevRound) ||
-                    (e.phase == ClocktowerPhase.FirstNight && prevRound == 0) ||
+                    (e.phase == ClocktowerPhase.FirstNight && e.round == prevRound) ||
                     (e.phase == ClocktowerPhase.Day && e.round == prevRound))
         }
         if (deltaEvents.isEmpty()) null
         else deltaEvents.joinToString("\n") { "• ${it.title}：${it.detail}" }
     }
-    val minionCards = cards.filter { it.clocktowerTeam == ClocktowerTeam.Minion }
+    val minionCards = cards.filter { it.clocktowerRole?.team == ClocktowerTeam.Minion }
     fun seatNumberText(card: PlayerCard): String = ((cards.indexOf(card) + 1).takeIf { it > 0 } ?: 0).toString()
     fun twoSeatNumbers(first: PlayerCard?, second: PlayerCard?): String? =
         if (first != null && second != null) "${seatNumberText(first)}   ${seatNumberText(second)}" else null
@@ -11136,7 +11175,6 @@ private fun EvilInfoDisplay(
 }
 
 @Composable
-@Composable
 private fun ClocktowerNightReadyCard() {
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
@@ -13930,7 +13968,7 @@ private fun HostRecordsList(
     val visibleEvents = events
         .filterNot { it.type == ClocktowerEventType.System }
         .filter { it.phase != ClocktowerPhase.Dawn }
-        .sortedBy { it.sequence }
+        .sortedByDescending { it.sequence }
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(16.dp),
@@ -13943,7 +13981,7 @@ private fun HostRecordsList(
                 val grouped = visibleEvents
                     .groupBy { clocktowerEventPhaseLabel(it, language) }
                     .entries
-                    .sortedBy { (_, g) -> g.first().sequence }
+                    .sortedByDescending { (_, g) -> g.first().sequence }
                 grouped.forEach { (label, group) ->
                     item {
                         Text(
@@ -13966,7 +14004,7 @@ private fun HostRecordsList(
             if (records.isEmpty()) {
                 item { Text(text("还没有操作记录。", "No game records yet."), color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
-            items(records) { record ->
+            items(records.asReversed()) { record ->
                 GameRecordRow(
                     title = record.playerName,
                     detail = record.note.orEmpty(),
