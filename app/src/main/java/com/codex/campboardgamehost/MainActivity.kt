@@ -2173,6 +2173,7 @@ private fun CampBoardGameHostApp() {
                             val targetIndex = cards.indexOfFirst { it.name == targetName }
                             val targetCard = cards.getOrNull(targetIndex)
                             val isRealSlayer = claimantCard?.clocktowerRole?.enName == "Slayer"
+                            val slayerPoisoned = isRealSlayer && clocktowerPoisonTarget == claimantName
                             val canUseSlayerAbility = isRealSlayer && !clocktowerSlayerUsed
                             val targetRegistersAsDemon = targetCard?.clocktowerTeam == ClocktowerTeam.Demon ||
                                 (targetCard?.clocktowerRole?.enName == "Recluse" && recluseRegistersAsDemon)
@@ -2191,7 +2192,7 @@ private fun CampBoardGameHostApp() {
                             if (canUseSlayerAbility) {
                                 clocktowerSlayerUsed = true
                             }
-                            if (canUseSlayerAbility && targetIndex >= 0 && targetCard != null && targetCard.eliminatedRound == null && targetRegistersAsDemon) {
+                            if (canUseSlayerAbility && !slayerPoisoned && targetIndex >= 0 && targetCard != null && targetCard.eliminatedRound == null && targetRegistersAsDemon) {
                                 cards[targetIndex] = targetCard.copy(eliminatedRound = round)
                                 records.add(
                                     EliminationRecord(
@@ -2215,6 +2216,8 @@ private fun CampBoardGameHostApp() {
                                 )
                             } else {
                                 val recordText = when {
+                                    canUseSlayerAbility && slayerPoisoned ->
+                                        context.getString(R.string.clocktower_record_slayer_poisoned, playerSeatLabel(cards, targetName))
                                     isRealSlayer && clocktowerSlayerUsed && !canUseSlayerAbility ->
                                         context.getString(R.string.clocktower_record_slayer_already_used, playerSeatLabel(cards, targetName))
                                     canUseSlayerAbility ->
@@ -2272,7 +2275,6 @@ private fun CampBoardGameHostApp() {
                                     clocktowerPhase = ClocktowerPhase.Night
                                     resetClocktowerDayFlow()
                                     resetClocktowerNightFlow()
-                                    clocktowerNightStartedState.value = true
                                 }
                                 clocktowerSelectedExecution = null
                             } else {
@@ -2365,7 +2367,6 @@ private fun CampBoardGameHostApp() {
                                 clocktowerPhase = ClocktowerPhase.Night
                                 resetClocktowerDayFlow()
                                 resetClocktowerNightFlow()
-                                clocktowerNightStartedState.value = true
                             }
                             clocktowerSelectedExecution = null
                         },
@@ -2418,7 +2419,8 @@ private fun CampBoardGameHostApp() {
                                 val nightDeathCard = cards.getOrNull(index)
                                 if (index >= 0 && nightDeathCard != null && nightDeathCard.eliminatedRound == null) {
                                     val protectedByMonk = clocktowerMonkProtectedTarget == deathName
-                                    val protectedBySoldier = nightDeathCard.clocktowerRole?.enName == "Soldier"
+                                    val soldierPoisoned = clocktowerPoisonTarget == deathName
+                                    val protectedBySoldier = nightDeathCard.clocktowerRole?.enName == "Soldier" && !soldierPoisoned
                                     if (protectedByMonk || protectedBySoldier) {
                                         val note = if (protectedBySoldier) {
                                             context.getString(R.string.clocktower_record_soldier_safe)
@@ -7084,7 +7086,7 @@ private fun ClocktowerJudgeScreen(
             !demonPoisonedTonight &&
             resolvedNightDeathCard.eliminatedRound == null &&
             resolvedNightDeathCard.name != monkProtectedTarget &&
-            resolvedNightDeathCard.clocktowerRole?.enName != "Soldier"
+            !(resolvedNightDeathCard.clocktowerRole?.enName == "Soldier" && poisonTarget != resolvedNightDeathName)
     val ravenkeeperTrigger = resolvedNightDeathCard
         ?.takeIf { nightDeathWillOccur && it.clocktowerRole?.enName == "Ravenkeeper" }
 
@@ -9481,6 +9483,13 @@ private fun ClocktowerJudgeScreen(
 
     if (phase == ClocktowerPhase.FirstNight && !nightStarted) {
         ClocktowerStorytellerRecommendationScreen(
+            title = text("说书人开局准备", "STORYTELLER SETUP"),
+            subtitle = text("首夜裁定推荐", "First-night recommendations"),
+            description = text(
+                "这是说书人私密页面。确认推荐与裁定后，直接进入首夜流程。",
+                "This is a private Storyteller screen. Review the plan, then begin the first night.",
+            ),
+            buttonLabel = text("确认裁定，开始首夜", "Confirm plan and begin first night"),
             onStartNight = { nightStarted = true },
         ) {
             StorytellerRecommendationCard(
@@ -9511,8 +9520,23 @@ private fun ClocktowerJudgeScreen(
         return
     }
 
-    val nightFlowActive = nightStarted || phase == ClocktowerPhase.Night
-    if ((phase == ClocktowerPhase.FirstNight || phase == ClocktowerPhase.Night) && nightFlowActive && nightSteps.isNotEmpty()) {
+    if (phase == ClocktowerPhase.Night && !nightStarted) {
+        ClocktowerStorytellerRecommendationScreen(
+            title = text("说书人", "STORYTELLER"),
+            subtitle = text("第 $round 夜即将开始", "Night $round is about to begin"),
+            description = text(
+                "这是说书人私密页面。准备好后开始夜晚流程。",
+                "This is a private Storyteller screen. Begin the night flow when ready.",
+            ),
+            buttonLabel = text("开始第 $round 夜流程", "Begin night $round"),
+            onStartNight = { nightStarted = true },
+        ) {
+            ClocktowerNightReadyCard()
+        }
+        return
+    }
+
+    if ((phase == ClocktowerPhase.FirstNight || phase == ClocktowerPhase.Night) && nightStarted && nightSteps.isNotEmpty()) {
         val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
         val currentStep = nightSteps[currentStepIndex]
         val selectedNightName = when (currentStep.action) {
@@ -11055,7 +11079,44 @@ private fun EvilInfoDisplay(
 }
 
 @Composable
+@Composable
+private fun ClocktowerNightReadyCard() {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                text("夜晚准备", "Night preparation"),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text(
+                    "所有人请闭眼，低头，保持安静。如果需要唤醒某位玩家，轻拍他。不要泄露信息。",
+                    "Everyone close your eyes, look down, and stay quiet. Tap a player to wake them. Do not reveal information.",
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
 private fun ClocktowerStorytellerRecommendationScreen(
+    title: String,
+    subtitle: String,
+    description: String,
+    buttonLabel: String,
     onStartNight: () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -11076,22 +11137,19 @@ private fun ClocktowerStorytellerRecommendationScreen(
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Text(
-                        text("说书人开局准备", "STORYTELLER SETUP"),
+                        title,
                         color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.2.sp,
                     )
                     Text(
-                        text("首夜裁定推荐", "First-night recommendations"),
+                        subtitle,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Black,
                     )
                     Text(
-                        text(
-                            "这是说书人私密页面。确认推荐与裁定后，直接进入首夜流程。",
-                            "This is a private Storyteller screen. Review the plan, then begin the first night.",
-                        ),
+                        description,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -11130,7 +11188,7 @@ private fun ClocktowerStorytellerRecommendationScreen(
                         .height(54.dp),
                     shape = RoundedCornerShape(14.dp),
                 ) {
-                    Text(text("确认裁定，开始首夜", "Confirm plan and begin first night"), fontWeight = FontWeight.Bold)
+                    Text(buttonLabel, fontWeight = FontWeight.Bold)
                 }
             }
         }

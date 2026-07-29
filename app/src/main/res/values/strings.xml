@@ -235,6 +235,7 @@
     <string name="clocktower_record_slayer_miss">杀手选择了 %1$s，未造成死亡</string>
     <string name="clocktower_record_slayer_fake">公开声称杀手行动，选择了 %1$s，未造成死亡</string>
     <string name="clocktower_record_slayer_already_used">杀手能力已经用过，选择了 %1$s，未造成死亡</string>
+    <string name="clocktower_record_slayer_poisoned">杀手今晚中毒，能力失效；选择了 %1$s，未造成死亡，能力永久消耗</string>
     <string name="clocktower_outcome_saint_summary">圣徒被处决</string>
     <string name="clocktower_outcome_saint_reason">%1$s 是圣徒，被处决后好人立即失败。</string>
     <string name="clocktower_outcome_mayor_summary">三人生还且无人处决</string>

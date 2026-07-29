@@ -235,6 +235,7 @@
     <string name="clocktower_record_slayer_miss">Slayer chose %1$s; no one died</string>
     <string name="clocktower_record_slayer_fake">Public Slayer claim chose %1$s; no one died</string>
     <string name="clocktower_record_slayer_already_used">Slayer ability was already used and chose %1$s; no one died</string>
+    <string name="clocktower_record_slayer_poisoned">Slayer was poisoned tonight — ability failed; chose %1$s, no one died, ability permanently spent</string>
     <string name="clocktower_outcome_saint_summary">The Saint was executed</string>
     <string name="clocktower_outcome_saint_reason">%1$s was the Saint, so good loses immediately.</string>
     <string name="clocktower_outcome_mayor_summary">No execution with 3 players alive</string>
