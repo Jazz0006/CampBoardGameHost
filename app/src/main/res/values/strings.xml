@@ -299,6 +299,11 @@
     <string name="clocktower_host_choose_poison_target">选择中毒目标</string>
     <string name="clocktower_host_fortune_choose_two">占卜师选择两名玩家</string>
     <string name="clocktower_host_fortune_choose_two_hint">如果其中有恶魔或红鲱鱼，展示“有”；否则展示“没有”。</string>
+    <string name="clocktower_fortune_must_select_two">必须选择两名玩家</string>
+    <string name="clocktower_fortune_cannot_select_more_than_two">不能选择多于两名玩家</string>
+    <string name="clocktower_fortune_show_result">显示结果</string>
+    <string name="clocktower_fortune_unreliable_choose_result">能力不可靠：请在下方选择最终展示结果。</string>
+    <string name="clocktower_player_dead_format">%1$s（已死亡）</string>
     <string name="clocktower_host_choose_night_death">请选择今晚死亡目标</string>
     <string name="clocktower_host_choose_night_death_hint">现在只记录，不要宣布死亡。天亮时再统一公布。</string>
     <string name="clocktower_host_ravenkeeper_target">守鸦人查验目标</string>

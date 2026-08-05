@@ -299,6 +299,11 @@
     <string name="clocktower_host_choose_poison_target">Choose poison target</string>
     <string name="clocktower_host_fortune_choose_two">Fortune Teller chooses two players</string>
     <string name="clocktower_host_fortune_choose_two_hint">Show DEMON if either target is the Demon or red herring; otherwise show NO DEMON.</string>
+    <string name="clocktower_fortune_must_select_two">You must select two players</string>
+    <string name="clocktower_fortune_cannot_select_more_than_two">You cannot select more than two players</string>
+    <string name="clocktower_fortune_show_result">Show result</string>
+    <string name="clocktower_fortune_unreliable_choose_result">This ability is unreliable. Choose the result to show below.</string>
+    <string name="clocktower_player_dead_format">%1$s (dead)</string>
     <string name="clocktower_host_choose_night_death">Choose tonight’s death target</string>
     <string name="clocktower_host_choose_night_death_hint">Record it only. Do not announce the death until dawn.</string>
     <string name="clocktower_host_ravenkeeper_target">Ravenkeeper check target</string>
