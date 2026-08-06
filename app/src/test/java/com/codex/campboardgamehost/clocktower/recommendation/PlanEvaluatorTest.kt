@@ -59,6 +59,32 @@ class PlanEvaluatorTest {
         assertEquals(evaluated.scoreItems.sumOf { it.delta }, evaluated.totalScore)
     }
 
+    @Test
+    fun `non investigator drunk roles remain in the recommended tier`() {
+        val fullRoles = TroubleBrewingFixtures.fullRoleDefinitions()
+        val shownRoles = listOf("Washerwoman", "Librarian", "Monk").map(::RoleId)
+
+        shownRoles.forEach { shownRole ->
+            val evaluated = PlanEvaluator.evaluate(
+                game = game,
+                roleDefinitions = fullRoles,
+                candidate = CandidatePlan(
+                    decisions = listOf(
+                        StorytellerDecision.RedHerring(5),
+                        StorytellerDecision.DrunkShownRole(shownRole),
+                        StorytellerDecision.DemonBluffs(
+                            listOf(RoleId("Investigator"), RoleId("Soldier"), RoleId("Slayer")),
+                        ),
+                    ),
+                ),
+                profile = RecommendationProfiles.balanced,
+            )
+
+            assertEquals("shownRole=$shownRole", QualityTier.RECOMMENDED, evaluated.qualityTier)
+            assertTrue(evaluated.warnings.none { it.ruleId == "drunk-non-information-role" })
+        }
+    }
+
     private fun plan(candidateSeats: List<Int>): CandidatePlan = CandidatePlan(
         decisions = listOf(
             StorytellerDecision.RedHerring(5),

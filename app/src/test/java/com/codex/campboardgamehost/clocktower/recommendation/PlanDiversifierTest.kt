@@ -6,7 +6,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class PlanDiversifierTest {
+class CandidatePoolDiversityTest {
     @Test
     fun `identical effect signatures have maximum similarity`() {
         val signature = PlanEffectSignature(
@@ -17,7 +17,7 @@ class PlanDiversifierTest {
             demonBluffs = setOf(RoleId("Monk"), RoleId("Soldier"), RoleId("Butler")),
         )
 
-        assertEquals(100, PlanDiversifier.similarityPercent(signature, signature))
+        assertEquals(100, CandidatePoolBuilder.similarityPercent(signature, signature))
     }
 
     @Test
@@ -36,6 +36,6 @@ class PlanDiversifierTest {
             demonBluffs = setOf(RoleId("Investigator"), RoleId("Soldier"), RoleId("Butler")),
         )
 
-        assertTrue(PlanDiversifier.similarityPercent(first, second) < 50)
+        assertTrue(CandidatePoolBuilder.similarityPercent(first, second) < 50)
     }
 }

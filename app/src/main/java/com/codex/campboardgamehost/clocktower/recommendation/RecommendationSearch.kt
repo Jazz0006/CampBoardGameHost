@@ -5,6 +5,7 @@ import com.codex.campboardgamehost.clocktower.config.RecommendationProfiles
 import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
 import com.codex.campboardgamehost.clocktower.domain.CandidatePlan
 import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.MurmurHash3
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
@@ -46,7 +47,7 @@ internal object RecommendationSearch {
         val balanced = balancedRanking.firstOrNull() ?: return ConstrainedResult(emptyList())
 
         val gentleRanking = rankedPlans(game, roleDefinitions, RecommendationProfiles.gentle, lockedDecisions = lockedDecisions)
-        val gentle = PlanDiversifier.select(
+        val gentle = CandidatePoolBuilder.selectDiversifiedPlan(
             rankedCandidates = gentleRanking,
             alreadySelected = listOf(balanced),
             profile = RecommendationProfiles.gentle,
@@ -54,7 +55,7 @@ internal object RecommendationSearch {
 
         val selectedBeforeAggressive = listOfNotNull(balanced, gentle)
         val aggressiveRanking = rankedPlans(game, roleDefinitions, RecommendationProfiles.aggressive, lockedDecisions = lockedDecisions)
-        val aggressive = PlanDiversifier.select(
+        val aggressive = CandidatePoolBuilder.selectDiversifiedPlan(
             rankedCandidates = aggressiveRanking,
             alreadySelected = selectedBeforeAggressive,
             profile = RecommendationProfiles.aggressive,
@@ -73,7 +74,7 @@ internal object RecommendationSearch {
         require(maxResults > 0) { "maxResults must be positive." }
         val bestFirst = compareByDescending<RecommendationPlan> { it.qualityTier.rankingPriority() }
             .thenByDescending { it.totalScore }
-            .thenByDescending { seededTieBreak(it, game.seed) }
+            .thenByDescending { stableTieBreak(it, game.seed) }
         val retained = PriorityQueue(maxResults, bestFirst.reversed())
         val evaluationContext = PlanEvaluator.createContext(game)
         var cachedBaseDecisions: List<StorytellerDecision>? = null
@@ -135,9 +136,21 @@ internal object RecommendationSearch {
         return retained.sortedWith(bestFirst)
     }
 
-    private fun seededTieBreak(plan: RecommendationPlan, seed: Long): Int {
-        val canonical = plan.decisions.joinToString("|") { it.toString() }
-        val foldedSeed = (seed xor (seed ushr 32)).toInt()
-        return canonical.hashCode() xor foldedSeed
+    private fun stableTieBreak(plan: RecommendationPlan, seed: Long): Long {
+        val canonical = plan.decisions.joinToString("|") { decision ->
+            when (decision) {
+                is StorytellerDecision.RedHerring -> "red-herring:${decision.seat}"
+                is StorytellerDecision.DrunkShownRole -> "drunk-shown-role:${decision.role.value}"
+                is StorytellerDecision.DrunkInvestigatorInfo -> listOf(
+                    "drunk-investigator",
+                    decision.shownMinion.value,
+                    decision.candidateSeats.sorted().joinToString(","),
+                ).joinToString(":")
+                is StorytellerDecision.DemonBluffs -> {
+                    "demon-bluffs:${decision.roles.map { it.value }.sorted().joinToString(",")}"
+                }
+            }
+        }
+        return MurmurHash3.low64Utf8("recommendation-plan-v1|$seed|$canonical")
     }
 }

@@ -3,6 +3,7 @@ package com.codex.campboardgamehost.clocktower.rules
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CandidatePlan
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.ConstraintAuthority
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
@@ -10,29 +11,36 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 
 internal sealed interface LegalityFailure {
     val code: String
+    val constraintAuthority: ConstraintAuthority
 
     data class MissingRequiredDecision(val decisionType: String) : LegalityFailure {
         override val code: String = "missing-required-decision"
+        override val constraintAuthority = ConstraintAuthority.OFFICIAL_RULE_REQUIRED
     }
 
     data class UnexpectedDecision(val decisionType: String) : LegalityFailure {
         override val code: String = "unexpected-decision"
+        override val constraintAuthority = ConstraintAuthority.PRODUCT_POLICY_REQUIRED
     }
 
     data class MultipleDecisions(val decisionType: String) : LegalityFailure {
         override val code: String = "multiple-decisions"
+        override val constraintAuthority = ConstraintAuthority.PRODUCT_POLICY_REQUIRED
     }
 
     data class MissingSeat(val seat: Int) : LegalityFailure {
         override val code: String = "missing-seat"
+        override val constraintAuthority = ConstraintAuthority.PRODUCT_POLICY_REQUIRED
     }
 
     data class EvilRedHerring(val seat: Int) : LegalityFailure {
         override val code: String = "evil-red-herring"
+        override val constraintAuthority = ConstraintAuthority.OFFICIAL_RULE_REQUIRED
     }
 
     data class RoleOutsideScript(val role: RoleId) : LegalityFailure {
         override val code: String = "role-outside-script"
+        override val constraintAuthority = ConstraintAuthority.OFFICIAL_RULE_REQUIRED
     }
 
     data class InvalidRoleType(
@@ -40,34 +48,42 @@ internal sealed interface LegalityFailure {
         val expectedType: CharacterType,
     ) : LegalityFailure {
         override val code: String = "invalid-role-type"
+        override val constraintAuthority = ConstraintAuthority.OFFICIAL_RULE_REQUIRED
     }
 
     data class DrunkShownRoleIsInPlay(val role: RoleId) : LegalityFailure {
         override val code: String = "drunk-shown-role-is-in-play"
+        override val constraintAuthority = ConstraintAuthority.OFFICIAL_RULE_REQUIRED
     }
 
     data class InvalidCandidateCount(val actualCount: Int) : LegalityFailure {
         override val code: String = "invalid-candidate-count"
+        override val constraintAuthority = ConstraintAuthority.OFFICIAL_RULE_REQUIRED
     }
 
     data class DuplicateCandidateSeats(val seats: List<Int>) : LegalityFailure {
         override val code: String = "duplicate-candidate-seats"
+        override val constraintAuthority = ConstraintAuthority.OFFICIAL_RULE_REQUIRED
     }
 
     data class InvalidBluffCount(val actualCount: Int) : LegalityFailure {
         override val code: String = "invalid-bluff-count"
+        override val constraintAuthority = ConstraintAuthority.OFFICIAL_RULE_REQUIRED
     }
 
     data class DuplicateBluffs(val roles: List<RoleId>) : LegalityFailure {
         override val code: String = "duplicate-bluffs"
+        override val constraintAuthority = ConstraintAuthority.OFFICIAL_RULE_REQUIRED
     }
 
     data class BluffIsInPlay(val role: RoleId) : LegalityFailure {
         override val code: String = "bluff-is-in-play"
+        override val constraintAuthority = ConstraintAuthority.OFFICIAL_RULE_REQUIRED
     }
 
     data class EvilBluff(val role: RoleId) : LegalityFailure {
         override val code: String = "evil-bluff"
+        override val constraintAuthority = ConstraintAuthority.OFFICIAL_RULE_REQUIRED
     }
 }
 

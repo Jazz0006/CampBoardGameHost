@@ -1,12 +1,31 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.config.RecommendationProfile
+import com.codex.campboardgamehost.clocktower.domain.DecisionEvaluation
 import com.codex.campboardgamehost.clocktower.domain.PlanEffectSignature
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
 
-internal object PlanDiversifier {
-    fun select(
+internal object CandidatePoolBuilder {
+    fun <T> build(
+        evaluations: List<DecisionEvaluation<T>>,
+        scoreTolerance: Int,
+    ): List<DecisionEvaluation<T>> {
+        require(scoreTolerance >= 0) { "scoreTolerance cannot be negative." }
+        require(evaluations.map { it.candidate.candidateId }.distinct().size == evaluations.size) {
+            "candidateId must be unique within one selection request."
+        }
+
+        val eligible = evaluations.filterNot { it.qualityTier == QualityTier.REJECTED }
+        val bestTierPriority = eligible.maxOfOrNull { it.qualityTier.rankingPriority() } ?: return emptyList()
+        val bestTier = eligible.filter { it.qualityTier.rankingPriority() == bestTierPriority }
+        val bestScore = bestTier.maxOf { it.totalScore }
+        return bestTier
+            .filter { it.totalScore.toLong() >= bestScore.toLong() - scoreTolerance.toLong() }
+            .sortedBy { it.candidate.candidateId }
+    }
+
+    fun selectDiversifiedPlan(
         rankedCandidates: List<RecommendationPlan>,
         alreadySelected: List<RecommendationPlan>,
         profile: RecommendationProfile,
@@ -15,7 +34,10 @@ internal object PlanDiversifier {
         val eligible = rankedCandidates.takeWhile { it.qualityTier == bestTier }
         return eligible.maxWithOrNull(
             compareBy<RecommendationPlan> {
-                adjustedScore(it, alreadySelected, profile)
+                val maximumSimilarity = alreadySelected.maxOfOrNull { selected ->
+                    similarityPercent(it.effectSignature, selected.effectSignature)
+                } ?: 0
+                it.totalScore * 100 - maximumSimilarity * profile.diversityPenalty
             }.thenBy { it.totalScore },
         )
     }
@@ -34,17 +56,6 @@ internal object PlanDiversifier {
         similarity += (25 * jaccard(first.suspectedSeats, second.suspectedSeats)).toInt()
         similarity += (25 * jaccard(first.demonBluffs, second.demonBluffs)).toInt()
         return similarity.coerceIn(0, 100)
-    }
-
-    private fun adjustedScore(
-        candidate: RecommendationPlan,
-        selected: List<RecommendationPlan>,
-        profile: RecommendationProfile,
-    ): Int {
-        val maximumSimilarity = selected.maxOfOrNull {
-            similarityPercent(candidate.effectSignature, it.effectSignature)
-        } ?: 0
-        return candidate.totalScore * 100 - maximumSimilarity * profile.diversityPenalty
     }
 
     private fun <T> jaccard(first: Set<T>, second: Set<T>): Double {

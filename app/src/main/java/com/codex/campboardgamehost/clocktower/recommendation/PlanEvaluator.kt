@@ -116,14 +116,6 @@ internal object PlanEvaluator {
                 delta = metadata.drunkSuitability * 3,
                 seats = listOfNotNull(drunkPlayer?.seat),
             )
-            if (decision.role != investigator) {
-                qualityTier = qualityTier.worsenTo(QualityTier.ACCEPTABLE_WITH_WARNING)
-                warnings += PlanWarning(
-                    ruleId = "drunk-non-information-role",
-                    messageKey = "warning.drunk-non-information-role",
-                    affectedSeats = listOfNotNull(drunkPlayer?.seat),
-                )
-            }
         }
 
         drunkInfo?.let { info ->
