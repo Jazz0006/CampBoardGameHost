@@ -2,7 +2,18 @@ package com.codex.campboardgamehost.clocktower.domain
 
 sealed interface InformationValue {
     data class Role(val roleId: RoleId) : InformationValue
+    data class RoleSet(val roleIds: List<RoleId>) : InformationValue {
+        init {
+            require(roleIds.isNotEmpty()) { "RoleSet cannot be empty." }
+            require(roleIds.distinct().size == roleIds.size) { "RoleSet roles must be unique." }
+        }
+    }
     data class Number(val value: Int) : InformationValue
+    data class Category(val id: String) : InformationValue {
+        init {
+            require(id.isNotBlank()) { "Information category ID cannot be blank." }
+        }
+    }
     data class YesNo(val answer: YesNoAnswer) : InformationValue
     data class NoCharacters(val characterType: CharacterType) : InformationValue
     data class PlayerPair(

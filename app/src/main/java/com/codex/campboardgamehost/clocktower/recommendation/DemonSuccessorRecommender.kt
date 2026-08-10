@@ -87,7 +87,10 @@ internal object DemonSuccessorRecommender {
                 else -> 5
             }
         }
-        val pressure = request.state.informationPressureBySeat[target.seat] ?: 0
+        val pressure = request.state.playerInformationPressureBySeat[target.seat]
+            ?.let { it.directSuspicion + it.indirectSuspicion - it.confirmation }
+            ?.coerceAtLeast(0)
+            ?: 0
         val scoreItems = buildList {
             add(
                 ScoreItem(

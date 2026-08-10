@@ -3,6 +3,7 @@ package com.codex.campboardgamehost.clocktower.session
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
+import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 
 internal class ClocktowerGameSession private constructor(
     initialSnapshot: GameSnapshot,
@@ -24,6 +25,11 @@ internal class ClocktowerGameSession private constructor(
 
     fun recordPlayerInput(): GameSnapshot {
         snapshot = snapshot.copy(playerInputRevision = snapshot.playerInputRevision + 1)
+        return snapshot
+    }
+
+    fun recordCompletedGameSignature(signature: HistoricalClueSignature): GameSnapshot {
+        snapshot = snapshot.copy(crossGameHistory = snapshot.crossGameHistory.append(signature))
         return snapshot
     }
 

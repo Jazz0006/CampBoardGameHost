@@ -7,12 +7,12 @@ import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
-import com.codex.campboardgamehost.clocktower.recommendation.AutomaticInformationPolicy
-import com.codex.campboardgamehost.clocktower.recommendation.InformationReliability
-import com.codex.campboardgamehost.clocktower.recommendation.RecommendationSearch
-import com.codex.campboardgamehost.clocktower.recommendation.UnreliableNumberContext
-import com.codex.campboardgamehost.clocktower.recommendation.UnreliableNumberInformationRecommender
-import com.codex.campboardgamehost.clocktower.recommendation.UnreliableNumberRecommendation
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.MalfunctionPolicy
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberRecommendation
 import com.codex.campboardgamehost.clocktower.rules.PlanLegalityValidator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -103,7 +103,7 @@ private object StorytellerV4BaselineSimulator {
 
         repeat(sampleSize) { index ->
             val game = compactSetupGame(BASELINE_SEED + index)
-            val selected = RecommendationSearch
+            val selected = SetupRecommendationService
                 .recommend(game, setupRoleDefinitions)
                 .first { it.style == RecommendationStyle.BALANCED }
             if (PlanLegalityValidator.validate(game, setupRoleDefinitions, CandidatePlan(selected.decisions)).isNotEmpty()) {
@@ -145,18 +145,19 @@ private object StorytellerV4BaselineSimulator {
             maximumValue = 2,
             pressureCostPerPoint = 2,
         )
-        val options = UnreliableNumberInformationRecommender.recommend(context)
+        val options = MalfunctionPolicy.recommendNumber(context)
         val counts = mutableMapOf<Int, Int>()
 
         repeat(sampleSize) { index ->
             val selected = requireNotNull(
-                AutomaticInformationPolicy.select(
+                DynamicCandidateGenerator.select(
                     options = options,
                     reliability = InformationReliability.POISONED,
                     style = RecommendationStyle.BALANCED,
                     evilAdvantage = 0,
                     stableKey = "v4-baseline:poisoned-number:$index",
                     recentMisinformationStreak = 0,
+                    stableIdOf = { "${it.style.name}:${it.value}" },
                     isTruthful = { it.value == context.trueValue },
                     misinformationPressure = UnreliableNumberRecommendation::value,
                     styleOf = UnreliableNumberRecommendation::style,

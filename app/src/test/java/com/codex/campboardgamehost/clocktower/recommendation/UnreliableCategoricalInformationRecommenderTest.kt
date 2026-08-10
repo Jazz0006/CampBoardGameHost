@@ -1,14 +1,16 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.MalfunctionPolicy
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalCandidate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class UnreliableCategoricalInformationRecommenderTest {
+class MalfunctionCategoricalPolicyTest {
     @Test
     fun `gentle retains truth while other styles can mislead`() {
-        val recommendations = UnreliableCategoricalInformationRecommender.recommend(
+        val recommendations = MalfunctionPolicy.recommendCategorical(
             listOf(
                 UnreliableCategoricalCandidate("truth", isTruthful = true),
                 UnreliableCategoricalCandidate("limited", isTruthful = false, misinformationPressure = 2),
@@ -24,7 +26,7 @@ class UnreliableCategoricalInformationRecommenderTest {
 
     @Test
     fun `binary information returns two distinct legal outcomes`() {
-        val recommendations = UnreliableCategoricalInformationRecommender.recommend(
+        val recommendations = MalfunctionPolicy.recommendCategorical(
             listOf(
                 UnreliableCategoricalCandidate("yes", isTruthful = true),
                 UnreliableCategoricalCandidate("no", isTruthful = false, misinformationPressure = 3),
@@ -37,6 +39,6 @@ class UnreliableCategoricalInformationRecommenderTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun `empty candidates are rejected`() {
-        UnreliableCategoricalInformationRecommender.recommend(emptyList())
+        MalfunctionPolicy.recommendCategorical(emptyList())
     }
 }

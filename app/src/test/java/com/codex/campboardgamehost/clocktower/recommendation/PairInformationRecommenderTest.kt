@@ -1,14 +1,17 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationCandidate
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationRegistration
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.RegistrationPolicy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class PairInformationRecommenderTest {
+class RegistrationPairPolicyTest {
     @Test
     fun `styles select distinct complete information packages`() {
-        val recommendations = PairInformationRecommender.recommend(
+        val recommendations = RegistrationPolicy.recommendPair(
             listOf(
                 candidate("safe", PairInformationRegistration.NONE, exposure = 1, discussion = 1, pressure = 0),
                 candidate("balanced", PairInformationRegistration.NONE, exposure = 2, discussion = 5, pressure = 2),
@@ -24,12 +27,12 @@ class PairInformationRecommenderTest {
 
     @Test
     fun `empty candidate set has no recommendation`() {
-        assertTrue(PairInformationRecommender.recommend(emptyList()).isEmpty())
+        assertTrue(RegistrationPolicy.recommendPair(emptyList()).isEmpty())
     }
 
     @Test
     fun `balanced misinformation avoids repeatedly pressured players`() {
-        val recommendations = PairInformationRecommender.recommend(
+        val recommendations = RegistrationPolicy.recommendPair(
             listOf(
                 PairInformationCandidate(
                     id = "repeated",

@@ -1,10 +1,12 @@
-package com.codex.campboardgamehost.clocktower.recommendation
+package com.codex.campboardgamehost.clocktower.recommendation.setup
 
 import com.codex.campboardgamehost.clocktower.config.RecommendationProfile
 import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
 import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CandidatePlan
+import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
+import com.codex.campboardgamehost.clocktower.domain.DecisionEvaluation
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlanEffectSignature
 import com.codex.campboardgamehost.clocktower.domain.PlanWarning
@@ -17,14 +19,59 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScoreCategory
 import com.codex.campboardgamehost.clocktower.domain.ScoreItem
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
+import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
 import com.codex.campboardgamehost.clocktower.rules.PlanLegalityValidator
 
-internal object PlanEvaluator {
+internal object SetupEvaluator {
     private val drunk = RoleId("Drunk")
     private val empath = RoleId("Empath")
     private val investigator = RoleId("Investigator")
+
+    fun evaluateClue(
+        game: GameState,
+        candidate: DecisionCandidate<SetupClueOutcome>,
+        profile: RecommendationProfile,
+    ): DecisionEvaluation<SetupClueOutcome> {
+        val recommendation = when (val outcome = candidate.outcome) {
+            is SetupClueOutcome.DrunkShownRole -> evaluateGenerated(
+                createContext(game),
+                CandidatePlan(
+                    listOfNotNull(
+                        StorytellerDecision.DrunkShownRole(outcome.shownRole),
+                        outcome.investigatorInformation,
+                    ),
+                ),
+                profile,
+            )
+            is SetupClueOutcome.RedHerring -> evaluateGenerated(
+                createContext(game),
+                CandidatePlan(listOf(StorytellerDecision.RedHerring(outcome.seat))),
+                profile,
+            )
+            is SetupClueOutcome.DemonBluffs -> evaluateGenerated(
+                createContext(game),
+                CandidatePlan(listOf(StorytellerDecision.DemonBluffs(outcome.roles))),
+                profile,
+            )
+            is SetupClueOutcome.FullPlan -> evaluateGenerated(
+                createContext(game),
+                CandidatePlan(outcome.decisions),
+                profile,
+            )
+            is SetupClueOutcome.PairInformation -> pairInformationRecommendation(game, outcome, profile)
+        }
+        return recommendation.toDecisionEvaluation(candidate)
+    }
+
+    fun evaluatePlanCandidate(
+        context: PlanEvaluationContext,
+        candidate: DecisionCandidate<SetupClueOutcome.FullPlan>,
+        profile: RecommendationProfile,
+    ): DecisionEvaluation<SetupClueOutcome.FullPlan> =
+        evaluateGenerated(context, CandidatePlan(candidate.outcome.decisions), profile)
+            .toDecisionEvaluation(candidate)
 
     fun evaluate(
         game: GameState,
@@ -259,6 +306,56 @@ internal object PlanEvaluator {
             effectSignature = candidate.effectSignature(),
         )
     }
+
+    private fun pairInformationRecommendation(
+        game: GameState,
+        outcome: SetupClueOutcome.PairInformation,
+        profile: RecommendationProfile,
+    ): RecommendationPlan {
+        val seats = outcome.information.candidateSeats
+        val scoreItems = seats.mapNotNull(game::playerAt).flatMap { player ->
+            val roleMetadata = TroubleBrewingRecommendationMetadata.forRole(player.actualRole)
+            listOf(
+                ScoreItem(
+                    ruleId = "setup-pair-discussion-value",
+                    category = ScoreCategory.CONTRADICTION,
+                    delta = roleMetadata.discussionValue * profile.discussionValueWeight,
+                    messageKey = "score.setup-pair-discussion-value",
+                    affectedSeats = listOf(player.seat),
+                ),
+                ScoreItem(
+                    ruleId = "setup-pair-exposure",
+                    category = ScoreCategory.EXPOSURE,
+                    delta = -roleMetadata.exposureSensitivity * profile.criticalExposurePenalty,
+                    messageKey = "score.setup-pair-exposure",
+                    affectedSeats = listOf(player.seat),
+                ),
+            )
+        }
+        return RecommendationPlan(
+            decisions = emptyList(),
+            observations = emptyList(),
+            qualityTier = QualityTier.RECOMMENDED,
+            style = profile.style,
+            totalScore = scoreItems.sumOf { it.delta },
+            scoreItems = scoreItems,
+            warnings = emptyList(),
+            effectSignature = PlanEffectSignature(suspectedSeats = seats.toSet()),
+        )
+    }
+
+    private fun <T> RecommendationPlan.toDecisionEvaluation(
+        candidate: DecisionCandidate<T>,
+    ): DecisionEvaluation<T> = DecisionEvaluation(
+        candidate = candidate,
+        qualityTier = qualityTier,
+        totalScore = totalScore,
+        withinFamilyWeightFixedPoint = (1_000_000L + totalScore.toLong() * 25_000L).coerceAtLeast(1L),
+        finalProbabilityFixedPoint = 0,
+        pressureDelta = emptyMap(),
+        warnings = warnings.map { it.ruleId },
+        explanationCodes = scoreItems.map { it.ruleId }.distinct(),
+    )
 
     private fun zeroEmpathProtectedSeats(game: GameState): Set<Int> = game.players
         .asSequence()

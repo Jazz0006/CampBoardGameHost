@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost.clocktower.domain
 
+import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
+
 data class GameSnapshot(
     val gameId: String,
     val gameStateRevision: Long,
@@ -7,6 +9,8 @@ data class GameSnapshot(
     val gameSeed: Long,
     val rulesetRef: RulesetRef,
     val gameState: GameState,
+    val decisionHistory: DecisionHistoryArchive = DecisionHistoryArchive(),
+    val crossGameHistory: CrossGameHistory = CrossGameHistory(),
 ) {
     init {
         require(gameId.isNotBlank()) { "gameId cannot be blank." }

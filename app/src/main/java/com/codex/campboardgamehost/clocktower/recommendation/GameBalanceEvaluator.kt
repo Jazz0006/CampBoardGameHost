@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.PlayerInformationPressure
 import com.codex.campboardgamehost.clocktower.domain.PublicBalanceHint
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import kotlin.math.roundToInt
@@ -20,7 +21,7 @@ internal object GameBalanceEvaluator {
         game: GameState,
         round: Int,
         spentAbilitySeats: Set<Int> = emptySet(),
-        informationPressureBySeat: Map<Int, Int> = emptyMap(),
+        playerInformationPressureBySeat: Map<Int, PlayerInformationPressure> = emptyMap(),
     ): Assessment {
         val good = game.players.filter { it.actualAlignment == Alignment.GOOD }
         val evil = game.players.filter { it.actualAlignment == Alignment.EVIL }
@@ -39,10 +40,10 @@ internal object GameBalanceEvaluator {
         val spentEvil = spentAbilitySeats.count { game.playerAt(it)?.actualAlignment == Alignment.EVIL }
         score += (spentGood - spentEvil) * 3
 
-        val goodInformationPressure = informationPressureBySeat
+        val goodInformationPressure = playerInformationPressureBySeat
             .filterKeys { game.playerAt(it)?.actualAlignment == Alignment.GOOD }
             .values
-            .sum()
+            .sumOf { (it.directSuspicion + it.indirectSuspicion - it.confirmation).coerceAtLeast(0) }
         score += (goodInformationPressure / 4).coerceAtMost(12)
 
         if (round >= 4 && score != 0) score += if (score > 0) 3 else -3

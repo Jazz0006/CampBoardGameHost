@@ -3,6 +3,7 @@ package com.codex.campboardgamehost.clocktower.session
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
+import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
@@ -51,6 +52,19 @@ class ClocktowerGameSessionTest {
 
         assertEquals(original.snapshot, restored.snapshot)
         assertEquals(initialState.seed, restored.snapshot.gameSeed)
+    }
+
+    @Test
+    fun `completed game signature survives snapshot restore`() {
+        val signature = HistoricalClueSignature(
+            decisionType = "setup-plan",
+            drunkShownRole = com.codex.campboardgamehost.clocktower.domain.RoleId("Monk"),
+        )
+        val original = newSession().also { it.recordCompletedGameSignature(signature) }
+
+        val restored = ClocktowerGameSession.restore(original.snapshot)
+
+        assertEquals(listOf(signature), restored.snapshot.crossGameHistory.recentSignatures)
     }
 
     @Test(expected = IllegalArgumentException::class)

@@ -6,17 +6,20 @@ import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
+import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
+import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class RecommendationSearchTest {
+class SetupRecommendationServiceTest {
     private val game = TroubleBrewingFixtures.eightPlayerExample()
     private val roles = TroubleBrewingFixtures.roleDefinitions()
 
     @Test
     fun `search returns three safe and behaviorally different styles`() {
-        val recommendations = RecommendationSearch.recommend(game, roles)
+        val recommendations = SetupRecommendationService.recommend(game, roles)
 
         assertEquals(3, recommendations.size)
         assertEquals(
@@ -29,15 +32,27 @@ class RecommendationSearchTest {
 
     @Test
     fun `same seed produces the same recommendations`() {
-        val first = RecommendationSearch.recommend(game, roles)
-        val second = RecommendationSearch.recommend(game, roles)
+        val first = SetupRecommendationService.recommend(game, roles)
+        val second = SetupRecommendationService.recommend(game, roles)
+
+        assertEquals(first.map { it.decisions }, second.map { it.decisions })
+    }
+
+    @Test
+    fun `same seed and same cross game history produce the same recommendations`() {
+        val history = CrossGameHistory(
+            listOf(HistoricalClueSignature("setup-plan", drunkShownRole = RoleId("Investigator"))),
+        )
+
+        val first = SetupRecommendationService.recommend(game, roles, history)
+        val second = SetupRecommendationService.recommend(game, roles, history)
 
         assertEquals(first.map { it.decisions }, second.map { it.decisions })
     }
 
     @Test
     fun `balanced ranking selects the documented plan A structure`() {
-        val top = RecommendationSearch
+        val top = SetupRecommendationService
             .rankedPlans(game, roles, RecommendationProfiles.balanced)
             .first()
         val redHerring = top.decisions.filterIsInstance<StorytellerDecision.RedHerring>().single()
@@ -52,7 +67,7 @@ class RecommendationSearchTest {
 
     @Test
     fun `aggressive ranking selects the documented high conflict pair`() {
-        val top = RecommendationSearch
+        val top = SetupRecommendationService
             .rankedPlans(game, roles, RecommendationProfiles.aggressive)
             .first()
         val info = top.decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().single()
@@ -62,7 +77,7 @@ class RecommendationSearchTest {
 
     @Test
     fun `bounded ranking handles the full Trouble Brewing candidate stream`() {
-        val retained = RecommendationSearch.rankedPlans(
+        val retained = SetupRecommendationService.rankedPlans(
             game = game,
             roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
             profile = RecommendationProfiles.balanced,
@@ -75,7 +90,7 @@ class RecommendationSearchTest {
 
     @Test
     fun `full Trouble Brewing catalog returns three diverse recommendations`() {
-        val recommendations = RecommendationSearch.recommend(
+        val recommendations = SetupRecommendationService.recommend(
             game,
             TroubleBrewingFixtures.fullRoleDefinitions(),
         )
@@ -92,7 +107,7 @@ class RecommendationSearchTest {
             StorytellerDecision.DrunkInvestigatorInfo(RoleId("Poisoner"), listOf(1, 4)),
         )
 
-        val result = RecommendationSearch.recommendConstrained(game, roles, locked)
+        val result = SetupRecommendationService.recommendConstrained(game, roles, locked)
 
         assertTrue(result.failureCodes.isEmpty())
         assertTrue(result.plans.isNotEmpty())
@@ -101,7 +116,7 @@ class RecommendationSearchTest {
 
     @Test
     fun `illegal locked red herring is rejected instead of ignored`() {
-        val result = RecommendationSearch.recommendConstrained(
+        val result = SetupRecommendationService.recommendConstrained(
             game,
             roles,
             listOf(StorytellerDecision.RedHerring(7)),
@@ -113,7 +128,7 @@ class RecommendationSearchTest {
 
     @Test
     fun `incompatible drunk locks are rejected`() {
-        val result = RecommendationSearch.recommendConstrained(
+        val result = SetupRecommendationService.recommendConstrained(
             game,
             roles,
             listOf(

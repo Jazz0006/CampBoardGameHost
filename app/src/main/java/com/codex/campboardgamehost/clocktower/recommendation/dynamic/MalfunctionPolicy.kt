@@ -1,4 +1,4 @@
-package com.codex.campboardgamehost.clocktower.recommendation
+package com.codex.campboardgamehost.clocktower.recommendation.dynamic
 
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import kotlin.math.abs
@@ -31,8 +31,18 @@ internal data class UnreliableNumberRecommendation(
     val warningIds: List<String>,
 )
 
-internal object UnreliableNumberInformationRecommender {
-    fun recommend(context: UnreliableNumberContext): List<UnreliableNumberRecommendation> {
+internal object MalfunctionPolicy {
+    fun generateCandidates(
+        context: UnreliableNumberContext,
+        generationContext: DynamicGenerationContext,
+    ) = DynamicCandidateGenerator.generateNumeric(context, generationContext)
+
+    fun generateCandidates(
+        candidates: List<UnreliableCategoricalCandidate>,
+        generationContext: DynamicGenerationContext,
+    ) = DynamicCandidateGenerator.generateCategorical(candidates, generationContext)
+
+    fun recommendNumber(context: UnreliableNumberContext): List<UnreliableNumberRecommendation> {
         val selected = mutableListOf<UnreliableNumberRecommendation>()
         listOf(
             RecommendationStyle.GENTLE,
@@ -55,7 +65,7 @@ internal object UnreliableNumberInformationRecommender {
         return selected
     }
 
-    private fun evaluate(
+    internal fun evaluate(
         context: UnreliableNumberContext,
         value: Int,
         style: RecommendationStyle,
@@ -110,4 +120,67 @@ internal object UnreliableNumberInformationRecommender {
             warningIds = warnings,
         )
     }
+
+    fun recommendCategorical(
+        candidates: List<UnreliableCategoricalCandidate>,
+    ): List<UnreliableCategoricalRecommendation> {
+        val distinctCandidates = candidates.distinctBy(UnreliableCategoricalCandidate::id)
+        require(distinctCandidates.isNotEmpty())
+        val selectedIds = mutableSetOf<String>()
+        val selected = RecommendationStyle.entries.mapNotNull { style ->
+            distinctCandidates
+                .map { candidate -> evaluate(candidate, style) }
+                .sortedWith(
+                    compareByDescending<UnreliableCategoricalRecommendation> { it.totalScore }
+                        .thenBy(UnreliableCategoricalRecommendation::candidateId),
+                )
+                .firstOrNull { selectedIds.add(it.candidateId) }
+        }
+        val truthful = distinctCandidates.firstOrNull { it.isTruthful }
+        return if (truthful != null && selected.none { it.candidateId == truthful.id }) {
+            selected + evaluate(truthful, RecommendationStyle.GENTLE)
+        } else {
+            selected
+        }
+    }
+
+    internal fun evaluate(
+        candidate: UnreliableCategoricalCandidate,
+        style: RecommendationStyle,
+    ): UnreliableCategoricalRecommendation {
+        val score = when (style) {
+            RecommendationStyle.GENTLE ->
+                (if (candidate.isTruthful) 12 else 3) - candidate.misinformationPressure * 2
+            RecommendationStyle.BALANCED ->
+                (if (candidate.isTruthful) 2 else 10) - abs(candidate.misinformationPressure - 2) * 2
+            RecommendationStyle.AGGRESSIVE ->
+                (if (candidate.isTruthful) -4 else 6) + candidate.misinformationPressure * 3
+        }
+        return UnreliableCategoricalRecommendation(
+            candidateId = candidate.id,
+            style = style,
+            totalScore = score,
+            warningIds = buildList {
+                if (!candidate.isTruthful && candidate.misinformationPressure >= 4) add("high-misinformation-pressure")
+            },
+        )
+    }
 }
+
+internal data class UnreliableCategoricalCandidate(
+    val id: String,
+    val isTruthful: Boolean,
+    val misinformationPressure: Int = 0,
+) {
+    init {
+        require(id.isNotBlank())
+        require(misinformationPressure >= 0)
+    }
+}
+
+internal data class UnreliableCategoricalRecommendation(
+    val candidateId: String,
+    val style: RecommendationStyle,
+    val totalScore: Int,
+    val warningIds: List<String>,
+)

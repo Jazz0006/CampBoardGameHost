@@ -3,6 +3,8 @@ package com.codex.campboardgamehost.clocktower.session
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.CandidateAuditSummary
 import com.codex.campboardgamehost.clocktower.domain.DecisionEventStatus
+import com.codex.campboardgamehost.clocktower.domain.DecisionCorrectionEvent
+import com.codex.campboardgamehost.clocktower.domain.DecisionHistoryArchive
 import com.codex.campboardgamehost.clocktower.domain.DecisionOutcomeSnapshot
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
@@ -68,6 +70,61 @@ class DecisionEventStoreTest {
         } finally {
             executor.shutdownNow()
         }
+    }
+
+    @Test
+    fun `status transitions are ordered and terminal`() {
+        val store = InMemoryDecisionEventStore()
+        store.appendAtomically(event(), DecisionRevision(4, 2))
+
+        assertTrue(store.transitionStatus("event-1", DecisionEventStatus.PROPOSED, DecisionEventStatus.CONFIRMED))
+        assertTrue(store.transitionStatus("event-1", DecisionEventStatus.CONFIRMED, DecisionEventStatus.APPLIED))
+        assertTrue(!store.transitionStatus("event-1", DecisionEventStatus.APPLIED, DecisionEventStatus.FAILED))
+        assertEquals(DecisionEventStatus.APPLIED, store.allEvents().single().status)
+    }
+
+    @Test
+    fun `original proposal remains idempotent after status advances`() {
+        val store = InMemoryDecisionEventStore()
+        val proposed = event()
+        store.appendAtomically(proposed, DecisionRevision(4, 2))
+        store.transitionStatus("event-1", DecisionEventStatus.PROPOSED, DecisionEventStatus.CONFIRMED)
+
+        val replay = store.appendAtomically(proposed, DecisionRevision(8, 8))
+
+        assertTrue(replay is DecisionAppendResult.Existing)
+        assertEquals(DecisionEventStatus.CONFIRMED, (replay as DecisionAppendResult.Existing).event.status)
+    }
+
+    @Test
+    fun `archive restores status and a linear correction chain`() {
+        val first = event().copy(status = DecisionEventStatus.APPLIED)
+        val second = event().copy(
+            eventId = "event-2",
+            requestId = "request-2",
+            idempotencyKey = "game-1:first-night:investigator:1",
+            status = DecisionEventStatus.APPLIED,
+        )
+        val correction = DecisionCorrectionEvent("correction-1", "event-1", "event-2", "operator-fix")
+        val store = InMemoryDecisionEventStore(DecisionHistoryArchive(listOf(first, second), listOf(correction)))
+
+        assertEquals(DecisionHistoryArchive(listOf(first, second), listOf(correction)), store.archive())
+    }
+
+    @Test
+    fun `correction cannot branch or create a cycle`() {
+        val first = event().copy(status = DecisionEventStatus.APPLIED)
+        val second = event().copy(
+            eventId = "event-2",
+            requestId = "request-2",
+            idempotencyKey = "game-1:first-night:investigator:1",
+            status = DecisionEventStatus.APPLIED,
+        )
+        val store = InMemoryDecisionEventStore(DecisionHistoryArchive(events = listOf(first, second)))
+
+        assertTrue(store.appendCorrection(DecisionCorrectionEvent("correction-1", "event-1", "event-2", "operator-fix")))
+        assertTrue(!store.appendCorrection(DecisionCorrectionEvent("correction-2", "event-1", "event-2", "fork")))
+        assertTrue(!store.appendCorrection(DecisionCorrectionEvent("correction-3", "event-2", "event-1", "cycle")))
     }
 
     private fun event() = StorytellerDecisionEvent(
