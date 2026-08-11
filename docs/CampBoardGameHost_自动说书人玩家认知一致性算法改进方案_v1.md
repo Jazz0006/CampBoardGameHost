@@ -1,7 +1,7 @@
 # CampBoardGameHost 自动说书人玩家认知一致性算法改进方案
 
-> 版本：1.0  
-> 日期：2026-08-10  
+> 版本：1.1  
+> 日期：2026-08-11  
 > 状态：设计稿，尚未实施  
 > 适用范围：优先覆盖《暗流涌动》，架构需支持后续剧本扩展  
 > 与既有设计的关系：作为 V4 自动说书人算法的认知一致性补充与后续改进依据
@@ -1154,3 +1154,488 @@ MANUAL_ONLY 候选在自动模式中命中次数为 0
 10. **所有淘汰、降级和选择结果必须可解释、可复现、可回放。**
 
 本方案完成后，“8 人酒鬼图书管理员得到没有外来者”不再依赖专门条件被禁止；它会因为在玩家正常能力假设下不存在任何合理世界，而被统一认知一致性评价自动淘汰。调查员零爪牙、多夜信息矛盾以及其他尚未发现的同类问题，也由同一机制处理。
+
+---
+
+## 22. 外部参考项目与架构修订（2026-08-11）
+
+本节记录实施前新增的三项高价值参考，并据此修订本方案的底层实现方向。结论不是用外部求解器替代自动说书人的推荐算法，而是尽量复用成熟的“规则形式化 / Possible Worlds / 高效集合运算”思想，把本项目的开发重点集中在真正具有产品差异化的 Storyteller Recommendation Layer。
+
+### 22.1 `pnkfelix/botc-asp`：Formal Rule Oracle
+
+项目定位：使用 Answer Set Programming（Clingo）形式化 Blood on the Clocktower 游戏规则和角色能力，能够寻找与观察信息一致的所有合法模型，并验证场景是 SAT 还是 UNSAT。
+
+对本项目最有价值的部分：
+
+- 角色和能力采用声明式约束，而不是大量命令式 `if/else`；
+- 说书人的“可选信息”本身被建模为规则允许的选择空间；
+- 正常角色与醉酒/中毒角色的信息约束可以在同一语义下表达；
+- Spy / Recluse 的登记、Fortune Teller 红鲱鱼、Poisoner、Imp 传位和多夜状态都可以进入统一规则世界；
+- 可用 SAT / UNSAT 测试作为独立规则真值机。
+
+本项目对它的定位：
+
+> **ASP 主要负责回答“这个世界 / 这条信息在规则上是否可能”，而不是直接回答“说书人应该选哪一个”。**
+
+因此优先把 `botc-asp` 作为开发期的 **Formal Rule Oracle / Cross-validation Oracle**，而不是直接成为 Android 生产运行时的核心依赖。
+
+实施原则：
+
+1. 对《暗流涌动》规则建立本项目语义与 ASP predicate 的映射表；
+2. 对关键角色和交互建立双实现测试；
+3. 本项目 World Engine 输出的 SAT / UNSAT、候选集合或世界数量应在可比范围内与 ASP 交叉验证；
+4. 外部模型发现的边界案例优先加入本项目回归测试；
+5. 在确认外部项目许可证和可复用范围前，不直接复制其源代码进入产品仓库。
+
+### 22.2 `olarozenfeld/botc`：Possible Worlds 与 Perspective 模型
+
+项目定位：输入从某一视角记录的游戏日志，枚举所有 mechanically possible worlds，并允许通过额外假设继续过滤世界，例如某玩家为邪恶、某角色不在场、某玩家某夜未中毒等。
+
+对本项目最有价值的部分不是具体 SAT 实现，而是领域建模：
+
+- 明确区分 `STORYTELLER`、`PLAYER`、`OBSERVER` 视角；
+- Game Log 不只记录真实角色，还能记录角色行动、角色信息、声明和事件；
+- Claim 可以区分 hard claim / soft claim；
+- Audience 能表达公开信息、私聊信息和只有部分玩家知道的信息；
+- Possible Worlds 可以在不断加入新观察后持续过滤；
+- 项目自身已经预留未来从“机械可能”扩展到 world likelihood / player strategy 的方向。
+
+这与本方案的核心目标直接一致：
+
+> **不能从说书人的全知视角判断一条信息是否“明显”，必须从收到信息的玩家视角判断该玩家还剩哪些合理世界。**
+
+因此本项目的数据模型应吸收 `Perspective + GameLog + Observation + Audience + Assumption + World` 的思想，但继续保持适合 Android/Kotlin 和现有游戏状态架构的实现。
+
+### 22.3 `pnkfelix/botc-zdd-`：移动端 Runtime World Engine 的重点候选
+
+该项目是研究 `botc-asp` 后发现的进一步参考。它使用 Zero-suppressed Decision Diagram（ZDD）表示仍然可能的角色分布和说书人选择，目标本身就是移动端友好地跟踪“哪些游戏世界仍与玩家得到的信息一致”。
+
+它对本项目的意义尤其直接：
+
+- ZDD 天然适合表示大量稀疏的角色组合 / 世界集合；
+- `require / exclude / union / intersection / difference` 等集合运算直接对应“加入一个新观察后过滤 Possible Worlds”；
+- 不需要每次把所有可能性展开成完整对象列表；
+- 可以保存 world count、possible values 和增量过滤结果；
+- 项目采用分阶段状态：Distribution → Seat Assignment → Night Info → Day / Night Action，而不是一次构造整局的巨大笛卡尔积；
+- 已经和 `botc-asp` 使用独立实现做 cross-validation，并通过这种方式发现双方真实 bug。
+
+外部项目自己的 benchmark 显示，在其覆盖的 Night 1 场景中 ZDD 相比 Clingo 有数量级的性能优势。该结果不能直接作为本项目性能承诺，但足以支持我们把 ZDD / Decision Diagram 方案列为移动端运行时的优先技术路线，并在真实 Android 设备上重新基准测试。
+
+### 22.4 三个项目在本方案中的明确职责
+
+| 参考项目 | 本项目借鉴职责 | 不直接承担的职责 |
+|---|---|---|
+| `pnkfelix/botc-asp` | 规则形式化、合法性 Oracle、Cross-validation | 自动说书人的最终推荐排序 |
+| `olarozenfeld/botc` | Perspective、GameLog、Possible Worlds、Assumption 领域模型 | 移动端生产实现的直接依赖 |
+| `pnkfelix/botc-zdd-` | 高性能 World Set 表示、增量过滤、Runtime 架构 | 叙事平衡和说书人风格判断 |
+
+本项目自己的核心价值继续是：
+
+```text
+Formal Rules / Legal Worlds
+            ↓
+Player-perspective Possible Worlds
+            ↓
+Candidate Simulation
+            ↓
+Storyteller Recommendation
+            ↓
+Balance / Ambiguity / Bluff Support / Narrative / Style
+```
+
+即：**外部项目解决“什么可能”，CampBoardGameHost 重点解决“在所有可能中，自动说书人现在最好选择什么”。**
+
+---
+
+## 23. 修订后的目标架构
+
+第 5 节描述的评价层仍然成立，但底层实现进一步拆成三个明确层次。
+
+```text
+                   Official / Formal BotC Rules
+                              │
+                              ↓
+                 ┌────────────────────────┐
+                 │   Legal Choice Layer   │
+                 │  什么在规则上允许？     │
+                 └───────────┬────────────┘
+                             ↓
+                 ┌────────────────────────┐
+                 │      World Engine      │
+                 │ Possible World / ZDD   │
+                 └───────────┬────────────┘
+                             ↓
+                    PlayerWorldSet(P, t)
+                             │
+              ┌──────────────┼──────────────┐
+              ↓              ↓              ↓
+          Candidate A    Candidate B    Candidate C
+              │              │              │
+              ↓              ↓              ↓
+          WorldSet A     WorldSet B     WorldSet C
+              └──────────────┼──────────────┘
+                             ↓
+                 ┌────────────────────────┐
+                 │ Recommendation Engine  │
+                 │  认知 / 平衡 / 叙事评分 │
+                 └───────────┬────────────┘
+                             ↓
+                         Top N / Auto
+```
+
+### 23.1 Legal Choice Layer
+
+职责：只判断规则语义和生成规则允许的完整选择，不夹带“这个选择好不好”的策略判断。
+
+建议接口：
+
+```kotlin
+interface LegalChoiceProvider {
+    fun legalChoices(
+        state: FormalGameState,
+        decision: StorytellerDecisionPoint,
+    ): LegalChoiceSet
+}
+```
+
+在开发和测试环境中，Legal Choice Layer 可以与 ASP Oracle 对照；生产环境可以使用经过交叉验证的 Kotlin / ZDD 实现。
+
+### 23.2 `PlayerWorldSet` 升级为一等领域对象
+
+这是本次外部项目研究后最重要的架构变化。
+
+此前“玩家认知一致性”更接近 Candidate 的一个评分结果。修订后，每个相关玩家在每个时间点都应拥有一个可查询的认知世界集合：
+
+```kotlin
+interface PlayerWorldSet {
+    val recipientSeat: Int
+    val snapshotId: String
+
+    fun isEmpty(): Boolean
+    fun worldCount(): WorldCount
+    fun require(observation: EpistemicObservation): PlayerWorldSet
+    fun exclude(observation: EpistemicObservation): PlayerWorldSet
+    fun possibleRoles(seat: Int): Set<RoleId>
+    fun possibleDemonSeats(): Set<Int>
+    fun possibleMinionSeats(): Set<Int>
+    fun possibleValues(query: EpistemicQuery): PossibleValueSummary
+}
+```
+
+具体实现可以是：
+
+```text
+PlayerWorldSet
+├── EnumeratedWorldSet       // 第一版、调试与小规模基线
+├── ZddPlayerWorldSet        // 重点性能候选
+└── SolverBackedWorldSet     // 测试 / Oracle 适配
+```
+
+推荐层依赖接口，不绑定 ZDD、SAT 或 ASP。
+
+### 23.3 Candidate 不再只“评分”，而是先模拟世界变化
+
+统一流程改为：
+
+```text
+beforeWorlds = PlayerWorldSet(recipient, currentTime)
+
+for candidate in legalCandidates:
+    afterWorlds = simulate(beforeWorlds, candidate)
+
+    if afterWorlds.empty:
+        INELIGIBLE
+    else:
+        epistemicMetrics = compare(beforeWorlds, afterWorlds)
+        narrativeMetrics = evaluateAgainstActualWorld(candidate, afterWorlds)
+        score = recommendationPolicy(...)
+```
+
+这使“为什么一条信息太强 / 太弱 / 自证醉酒”有可审计的世界变化依据，而不是只有人工设定的加减分。
+
+### 23.4 评分指标重新建立在 World Set 上
+
+现有评分项保留，但逐步替换为有世界集合支撑的特征。
+
+#### Information Value
+
+概念上可由：
+
+```text
+uncertainty(before) - uncertainty(after)
+```
+
+衡量候选减少了多少合理解释。
+
+第一版不要求严格使用 Shannon entropy；可以先使用：
+
+- 世界集合缩减比例；
+- Demon candidate 数变化；
+- Minion candidate 数变化；
+- setup profile 数变化；
+- target explanation 数变化。
+
+#### Hard Solve Risk
+
+不再只依靠“指向真实邪恶次数”，还应观察候选之后是否出现：
+
+```text
+几乎所有剩余世界都把同一玩家解释为 Demon / Evil
+```
+
+或者：
+
+```text
+所有替代解释都依赖极端、脆弱的单一状态
+```
+
+#### Ambiguity / Discussion Value
+
+可结合：
+
+- 剩余 Demon 候选数量；
+- 各候选是否仍有多个 setup profile；
+- 信息是否同时支持多个可讨论方向；
+- 是否避免单一解释锁死。
+
+#### Malfunction Exposure
+
+比较：
+
+```text
+FunctioningAsPerceivedRole 的可解释世界
+vs
+AbilityMayMalfunction 的可解释世界
+```
+
+若正常能力世界消失或只剩极少脆弱解释，而失能世界大量存在，则能力失效暴露风险上升。
+
+### 23.5 World Count 不等于真实概率
+
+即使 ZDD / 枚举器可以精确统计 mechanically possible worlds，也不能直接解释为：
+
+```text
+某玩家有 72% 概率是恶魔
+```
+
+原因包括：
+
+- 世界建模粒度会影响数量；
+- 玩家真实策略、声明可信度和说书人选择并非均匀分布；
+- 不同合法登记或说书人选择可能产生不等权的机械世界。
+
+因此第一阶段只把 world count 当作：
+
+- 一致性证明；
+- 信息压缩程度；
+- 多样性特征；
+- 候选之间的相对启发式指标。
+
+未来如要加入 likelihood，必须单独设计概率 / 行为模型，不能直接把枚举数量归一化。
+
+---
+
+## 24. 修订后的实施顺序
+
+> **本节从 2026-08-11 起覆盖第 16 节原有的实施顺序。**  
+> 第 16 节保留作为原始设计演进记录，但 Codex 后续实施应以本节为准。
+
+核心变化是：**实施认知评分前，先确定并验证 Formal Oracle、World Engine 与 PlayerWorldSet 的边界。**
+
+### PR 0：外部模型验证与技术 Spike
+
+目标：在改生产算法之前确认参考项目真正能覆盖哪些问题。
+
+- 固定三个参考仓库的具体 commit / tag，避免研究基线漂移；
+- 整理 Trouble Brewing 角色能力和本项目已有规则到外部模型的映射表；
+- 建立至少 20 个代表性场景：WW / Librarian / Investigator / Chef / Empath / FT / Drunk / Poisoner / Spy / Recluse / Baron；
+- 用 `botc-asp` 验证 SAT / UNSAT 和合法信息集合；
+- 用 `olarozenfeld/botc` 对可覆盖场景观察 Possible Worlds 行为；
+- 跑 `botc-zdd-` 的现有测试和 benchmark，并在本项目目标 Android 设备上设计等价基准；
+- 明确许可证、代码复用和第三方 NOTICE 要求；
+- 输出 `external_solver_evaluation.md`，再决定 Runtime 是否采用 ZDD、枚举器或混合实现。
+
+**退出条件：**不允许只因为外部 benchmark 很好就直接引入依赖；必须先验证规则覆盖、正确性、包体积、内存、冷启动和 Android 集成成本。
+
+### PR 1：统一语义模型 + Oracle Adapter
+
+- 新增 / 完善 `InformationProposition`、`EpistemicObservation`、`FormalGameState`；
+- 定义 `LegalChoiceProvider` 和 `WorldEngine` 接口；
+- 将现有 WW / Librarian / Investigator / Chef / Empath 信息转换为统一命题；
+- 建立测试侧 ASP Oracle Adapter；
+- 生产结果保持完全不变；
+- 所有规则边界测试同时比较当前实现与 Oracle。
+
+### PR 2：可枚举 World Engine 基线
+
+先实现一个简单、透明、易调试的基线，而不是直接优化：
+
+- 支持 Trouble Brewing setup distribution；
+- 支持 seat assignment 和基础 registration；
+- 支持 `SAT / UNSAT`；
+- 支持有限 `enumerate`；
+- 支持 Player Perspective 过滤；
+- 对同一场景与 ASP Oracle cross-validation；
+- 作为后续 ZDD 实现的正确性基线。
+
+该版本不要求成为最终移动端生产实现。
+
+### PR 3：ZDD / Decision Diagram Runtime Prototype
+
+- 实现或适配 `ZddPlayerWorldSet`；
+- 支持 `require / exclude / count / possibleValues`；
+- 对 Distribution、Seat Assignment、Night 1 信息做分阶段表示；
+- 与 PR 2 枚举实现和 ASP Oracle 三方交叉验证；
+- 测量真实设备 P50 / P95、峰值内存、节点数和缓存命中；
+- 只有明显优于基线且维护成本可接受时，才确定为生产 Runtime。
+
+### PR 4：`PlayerWorldSet` 与 Candidate Simulation
+
+- 将 `PlayerWorldSet` 作为正式领域对象；
+- 建立 `beforeWorlds → candidate → afterWorlds` 模拟；
+- 产出 `worldSurvival`、possible Demon / Minion、setup profile 等指标；
+- `afterWorlds == empty` 时产生 `epistemic.no-functioning-world`；
+- 先影子记录，不改变自动选择。
+
+### PR 5：首夜认知一致性接入
+
+- 接入 WW / Librarian / Investigator / Chef / Empath；
+- 对健康角色、Drunk perceived role、Poisoned role 使用相同 World Engine；
+- 验证“8 人酒鬼图书管理员 + 没有外来者”等典型案例由统一世界约束自然淘汰；
+- 不增加针对人数 + 角色 + 输出值的特殊禁用分支；
+- 与 Oracle 做固定场景 cross-validation。
+
+### PR 6：酒鬼显示身份 + 首个信息联合规划
+
+- `DrunkShownRole` 升级为 `DrunkPerceivedRolePlan`；
+- 每个 perceived role 必须先证明至少存在一个可自动使用的首夜信息路径；
+- `drunkSuitability` 降为同质量候选的弱先验；
+- 候选选择以完整计划而不是孤立身份为单位。
+
+### PR 7：多夜 PlayerWorldSet
+
+- 加入 Day / Night 状态转换；
+- 支持 death、neighbor change、Poisoner retarget、Monk protection、Imp kill / starpass；
+- 接入 Empath N2、FT N2、Undertaker、Ravenkeeper 等；
+- 每个 observation 增量过滤当前 PlayerWorldSet；
+- 保存 snapshot / undo / replay；
+- 与可覆盖的 ASP / ZDD 外部模型持续 cross-validation。
+
+### PR 8：叙事与推荐评分建立在 World Metrics 上
+
+保留现有人工经验评分，但逐步替换底层特征：
+
+- `InformationScore` ← world reduction / candidate reduction；
+- `AmbiguityScore` ← remaining alternative explanations；
+- `HardSolvePenalty` ← evil / demon concentration；
+- `MalfunctionExposure` ← functioning worlds vs malfunction worlds；
+- `ConfirmationChainPenalty` ← 多个 observation 对同一 actual / bluff story 的联合压缩；
+- `EvilBluffSupportScore` 继续从真实世界视角计算，不能混入玩家认知事实。
+
+每个最终分数必须能追溯到 World Metrics + 策略权重。
+
+### PR 9：统一选择器、灰度与旧逻辑清理
+
+- 删除跨风格二次随机；
+- 自动池严格执行 `LEGAL → ELIGIBLE → QualityTier → StyleScore → tolerance → stable random`；
+- 固定种子 replay 对比旧算法 / 新算法；
+- 专家标注高风险场景；
+- 清理已被 Formal Rules / World Engine 替代的硬编码；
+- 保留手动说书人 override；
+- 输出最终性能、正确性和推荐质量验收报告。
+
+---
+
+## 25. 新增 Cross-validation 与性能验收要求
+
+### 25.1 三层正确性验证
+
+对于外部模型覆盖的核心 Trouble Brewing 场景，建立：
+
+```text
+Formal ASP Oracle
+       │
+       ├──── compare ──── Enumerated Baseline
+       │
+       └──── compare ──── ZDD / Runtime World Engine
+```
+
+重点比较：
+
+- SAT / UNSAT；
+- 合法角色分布数量；
+- 给定 observation 后的剩余世界；
+- 信息角色可产生的合法输出；
+- Spy / Recluse registration；
+- Drunk / Poisoned malfunction；
+- FT red herring；
+- 多夜状态变化。
+
+发现差异时，不能默认“我们的实现错”或“外部实现错”，必须缩小到最小场景，确认官方规则语义后加入永久回归测试。
+
+### 25.2 Runtime 性能
+
+性能目标以真实 Android 设备测量为准，而不是直接采用外部项目 benchmark。
+
+至少记录：
+
+- 5 / 7 / 8 / 10 / 12 人 Trouble Brewing；
+- 首次构建 WorldSet 时间；
+- 加入单个 observation 的增量过滤时间；
+- Top N candidate simulation 总时间；
+- P50 / P95；
+- 峰值内存；
+- ZDD node / internal state size；
+- snapshot / undo 成本。
+
+交互目标：推荐求解不得让正常夜间操作产生可感知卡顿。具体毫秒阈值在 PR 0 / PR 3 真实设备基线后冻结。
+
+### 25.3 新的架构验收条件
+
+正式启用新推荐算法前必须满足：
+
+1. 核心 Trouble Brewing 规则场景与独立 Oracle 无已知未解释差异；
+2. `PlayerWorldSet` 可重放且同输入结果确定；
+3. `afterWorlds == empty` 的候选自动命中次数为 0；
+4. 推荐层不直接依赖 ASP / ZDD 的具体数据结构；
+5. World Engine 可替换并有基线实现；
+6. world count 不被 UI 或评分代码错误展示为真实概率；
+7. 外部许可证和第三方依赖要求已明确；
+8. 固定场景能输出“为何合法、为何可信、为何被推荐/淘汰”的完整解释链。
+
+---
+
+## 26. 2026-08-11 修订后的最终原则
+
+在第 21 节原则基础上，新增以下架构原则：
+
+11. **不要重复发明已经有成熟形式化工作的规则真值层。** 优先用独立 Formal Oracle 验证自己的实现。
+12. **ASP 适合做规则 Oracle，不默认等于移动端 Runtime。**
+13. **Possible Worlds 必须是实际领域状态，而不只是一个评分过程中的临时统计。**
+14. **`PlayerWorldSet` 是玩家认知一致性算法的一等对象。**
+15. **候选评价先模拟世界变化，再进行叙事和风格打分。**
+16. **Runtime World Engine 与 Recommendation Engine 必须解耦。** 未来可以从枚举器换成 ZDD、SAT 或其他表示而不重写推荐策略。
+17. **机械世界数量不是玩家真实概率。** 概率模型属于未来独立层。
+18. **外部项目最重要的价值是规则模型、数据结构和验证方法，不是复制最终产品。**
+19. **本项目的差异化重点是 Storyteller Decision / Recommendation Layer。**
+20. **在实施认知评分之前先完成外部模型验证和 World Engine Spike。**
+
+修订后的总体方向可以概括为：
+
+```text
+botc-asp 思想 / Oracle
+        ↓
+Formal Legality
+        ↓
+Possible Worlds / PlayerWorldSet
+        ↓
+ZDD 或其他高效 Runtime
+        ↓
+CampBoardGameHost 独有的 Recommendation Layer
+        ↓
+可信但不自证、信息量适当、保留讨论空间、支持合理邪恶叙事
+```
+
+这使本方案从“为推荐算法增加认知一致性评分”进一步升级为：
+
+> **建立一个经过形式化规则交叉验证的玩家视角 Possible-Worlds 基础层，再让自动说书人的策略评分在这个基础上做选择。**
