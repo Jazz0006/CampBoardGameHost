@@ -5,7 +5,7 @@
 > 状态：当前唯一实施规范  
 > 适用范围：优先覆盖《暗流涌动》（Trouble Brewing），架构支持后续剧本扩展  
 > 取代文档：v2.0、v2.1；旧文档仅保留为设计演进记录  
-> 当前实施基线：A0、A1、A2、A1.1 已完成；下一项为 A2.1  
+> 当前实施基线：A0、A1、A2、A1.1、A2.1 已完成；下一项为 A3  
 
 ---
 
@@ -92,6 +92,7 @@ AUTO / ASSISTED Unified Selector
 AGREE
 EXPECTED_COVERAGE_GAP
 KNOWN_ORACLE_VARIANCE
+ORACLE_NOT_APPLICABLE
 UNEXPLAINED_MISMATCH
 NOT_RUN
 ```
@@ -101,6 +102,7 @@ NOT_RUN
 - `AGREE`：项目期望与 Oracle 一致；
 - `EXPECTED_COVERAGE_GAP`：冻结 Oracle 无法表达项目正式语义；
 - `KNOWN_ORACLE_VARIANCE`：Oracle 可运行，但与官方规则存在已解释偏差；
+- `ORACLE_NOT_APPLICABLE`：官方契约有效，但冻结 Oracle 或当前适配器无法忠实表达；不计作 agreement，也不等同于运行失败；
 - `UNEXPLAINED_MISMATCH`：尚未查明，阻断相关阶段退出；
 - `NOT_RUN`：工具、超时或环境失败，绝不能被解释成 UNSAT。
 
@@ -797,7 +799,7 @@ NOT_RUN                    0
 - snapshot/cache identity 不含玩家未知秘密；
 - 所有 A1/A1.1 序列化、迁移和防泄漏测试通过。
 
-#### A2.1：Golden Corpus & Oracle Authority
+#### A2.1：Golden Corpus & Oracle Authority — 已完成
 
 任务：
 
@@ -810,6 +812,8 @@ NOT_RUN                    0
 - 为 CHOICE 场景断言完整候选与 bound registration facts。
 
 场景数量是 coverage 目标，不为凑数量制造无意义 UNSAT。
+
+冻结交付基线：48 个 official golden contracts；其中 20 个进入真实 Clingo，28 个因冻结 Oracle/适配器无法忠实表达时间线或接收者投影而明确登记为 `ORACLE_NOT_APPLICABLE`。Oracle 结果为 18 `AGREE`、1 `EXPECTED_COVERAGE_GAP`、1 `KNOWN_ORACLE_VARIANCE`、0 `UNEXPLAINED_MISMATCH`、0 `NOT_RUN`。
 
 退出条件：
 
@@ -1116,4 +1120,3 @@ Phase D forward search 和 Phase E soft belief 不属于第一版生产完成的
 16. 移动端性能目标必须由真实设备数据校准。
 17. Forward search 后置，底层正确性优先。
 18. 每个阶段都以明确 golden gates 退出，不以“代码已写完”退出。
-

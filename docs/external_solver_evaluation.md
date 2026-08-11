@@ -91,7 +91,8 @@ Comparison result states:
 ```text
 AGREE
 EXPECTED_COVERAGE_GAP
-KNOWN_SEMANTIC_VARIANCE
+KNOWN_ORACLE_VARIANCE
+ORACLE_NOT_APPLICABLE
 UNEXPLAINED_MISMATCH
 NOT_RUN
 ```
@@ -100,6 +101,8 @@ Rules:
 
 - `UNEXPLAINED_MISMATCH` fails the cross-validation gate.
 - `EXPECTED_COVERAGE_GAP` requires an explanation and does not count as independent agreement.
+- `KNOWN_ORACLE_VARIANCE` records an explained conflict with official rules and preserves the official expectation.
+- `ORACLE_NOT_APPLICABLE` records that an official contract cannot be faithfully expressed by that Oracle/adapter; it is not `NOT_RUN`.
 - Enumeration or sampling limits may produce `NOT_RUN`; they may never be translated to `UNSAT`.
 - Scenario serialization, solver versions, command line, timeout and frozen commit must be included in generated reports.
 - Oracle output must never be shipped to the player-facing UI as an official ruling.
@@ -131,4 +134,3 @@ Reference upgrades are deliberate changes, not automatic dependency bumps.
 4. add scenarios for newly discovered edge cases;
 5. update this file and the reference matrix in the same change;
 6. keep historic reports tied to their original frozen revisions.
-

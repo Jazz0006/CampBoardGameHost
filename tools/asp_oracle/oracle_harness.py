@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 ORACLE_REPOSITORY = "https://github.com/pnkfelix/botc-asp.git"
 ORACLE_REVISION = "616e61b720cc853af031f2623fd6bde33b869865"
 ORACLE_NAME = "pnkfelix/botc-asp"
@@ -29,6 +29,13 @@ ATOM = re.compile(r"^[a-z][a-z0-9_]*(?:\([a-z0-9_,()]+\))?$")
 STATE_ID = re.compile(r"^[a-z][a-z0-9_]*$")
 ROLE_ID = re.compile(r"^[A-Za-z][A-Za-z0-9 _-]*$")
 SCENARIO_ID = re.compile(r"^TB-[A-Z0-9]+-[0-9]{2}$")
+ORACLE_QUERY_KINDS = {
+    "setup-profile", "pair-info", "numeric-info", "yes-no", "no-outsiders", "registration"
+}
+COMPARISONS = (
+    "AGREE", "EXPECTED_COVERAGE_GAP", "KNOWN_ORACLE_VARIANCE",
+    "UNEXPLAINED_MISMATCH", "NOT_RUN", "ORACLE_NOT_APPLICABLE",
+)
 
 
 class FixtureError(ValueError):
@@ -65,6 +72,8 @@ def validate_catalog(catalog: dict[str, Any]) -> None:
     oracle = catalog.get("oracle", {})
     if oracle.get("repository") != ORACLE_NAME or oracle.get("revision") != ORACLE_REVISION:
         raise FixtureError("Fixture catalog must use the frozen botc-asp reference")
+    if catalog.get("authorityOrder") != ["OFFICIAL", "PROJECT_GOLDEN", "EXTERNAL_ORACLE"]:
+        raise FixtureError("authorityOrder must keep official rules above the external oracle")
     states = catalog.get("formalStates")
     scenarios = catalog.get("scenarios")
     if not isinstance(states, dict) or not states:
@@ -85,16 +94,31 @@ def validate_catalog(catalog: dict[str, Any]) -> None:
             raise FixtureError(f"{scenario_id}: unknown stateRef")
         if not isinstance(scenario.get("perspectiveSeat"), int):
             raise FixtureError(f"{scenario_id}: perspectiveSeat is required")
-        if scenario.get("expectedStatus") not in {"SAT", "UNSAT"}:
-            raise FixtureError(f"{scenario_id}: expectedStatus must be SAT or UNSAT")
+        if scenario.get("expectedStatus") not in {"SAT", "UNSAT", "CHOICE", "STATE"}:
+            raise FixtureError(f"{scenario_id}: invalid official expectedStatus")
+        official_basis = scenario.get("officialBasis")
+        if not isinstance(official_basis, str) or not official_basis.strip():
+            raise FixtureError(f"{scenario_id}: officialBasis is required")
+        assertions = scenario.get("officialAssertions")
+        if not isinstance(assertions, list) or not assertions or not all(isinstance(x, str) and x for x in assertions):
+            raise FixtureError(f"{scenario_id}: officialAssertions must be a non-empty string array")
+        if scenario.get("hypothesisMode") not in {"ACTUAL_ONLY", "PLAYER_PERSPECTIVE"}:
+            raise FixtureError(f"{scenario_id}: hypothesisMode is required")
         query = scenario.get("query", {})
-        if query.get("kind") not in {
-            "setup-profile", "pair-info", "numeric-info", "yes-no", "no-outsiders", "registration"
-        }:
+        if query.get("kind") not in ORACLE_QUERY_KINDS | {"official-contract"}:
             raise FixtureError(f"{scenario_id}: unsupported query kind")
+        oracle_mode = scenario.get("oracleMode", "RUN")
+        if oracle_mode not in {"RUN", "NOT_APPLICABLE"}:
+            raise FixtureError(f"{scenario_id}: invalid oracleMode")
+        if oracle_mode == "RUN" and query.get("kind") not in ORACLE_QUERY_KINDS:
+            raise FixtureError(f"{scenario_id}: RUN requires an Oracle-supported query")
+        if oracle_mode == "RUN" and scenario.get("oracleExpectedStatus", scenario["expectedStatus"]) not in {"SAT", "UNSAT"}:
+            raise FixtureError(f"{scenario_id}: RUN requires SAT/UNSAT oracleExpectedStatus")
+        if oracle_mode == "NOT_APPLICABLE" and not scenario.get("oracleLimitation"):
+            raise FixtureError(f"{scenario_id}: NOT_APPLICABLE requires oracleLimitation")
         disposition = scenario.get("mismatchDisposition", "UNEXPLAINED_MISMATCH")
         if disposition not in {
-            "UNEXPLAINED_MISMATCH", "EXPECTED_COVERAGE_GAP", "KNOWN_SEMANTIC_VARIANCE"
+            "UNEXPLAINED_MISMATCH", "EXPECTED_COVERAGE_GAP", "KNOWN_ORACLE_VARIANCE"
         }:
             raise FixtureError(f"{scenario_id}: invalid mismatchDisposition")
         for assertion in scenario.get("outputAssertions", []):
@@ -164,6 +188,8 @@ def _role(role: str) -> str:
 
 
 def render_scenario(catalog: dict[str, Any], scenario: dict[str, Any]) -> str:
+    if scenario.get("oracleMode", "RUN") != "RUN":
+        raise FixtureError(f"{scenario['scenarioId']}: external Oracle is not applicable")
     state = catalog["formalStates"][scenario["stateRef"]]
     query = scenario["query"]
     players = state["players"]
@@ -294,8 +320,9 @@ def classify(scenario: dict[str, Any], run: RunResult) -> tuple[str, list[str]]:
     if run.status == "NOT_RUN":
         return "NOT_RUN", [run.error or "oracle did not run"]
     mismatches: list[str] = []
-    if run.status != scenario["expectedStatus"]:
-        mismatches.append(f"status expected {scenario['expectedStatus']}, got {run.status}")
+    oracle_expected = scenario.get("oracleExpectedStatus", scenario["expectedStatus"])
+    if run.status != oracle_expected:
+        mismatches.append(f"status expected {oracle_expected}, got {run.status}")
     for assertion in scenario.get("outputAssertions", []):
         expected = set(assertion["atoms"])
         relation = assertion["relation"]
@@ -319,6 +346,20 @@ def run_catalog(catalog: dict[str, Any], oracle_dir: Path, clingo: str, timeout:
     with tempfile.TemporaryDirectory(prefix="campboardgamehost-asp-") as tmp:
         tmp_dir = Path(tmp)
         for scenario in catalog["scenarios"]:
+            if scenario.get("oracleMode", "RUN") == "NOT_APPLICABLE":
+                results.append({
+                    "scenarioId": scenario["scenarioId"],
+                    "officialValidation": "PASS",
+                    "comparison": "ORACLE_NOT_APPLICABLE",
+                    "expectedStatus": scenario["expectedStatus"],
+                    "actualStatus": "NOT_APPLICABLE",
+                    "details": [scenario["oracleLimitation"]],
+                    "durationMs": 0,
+                    "commands": [],
+                    "observedAtoms": [],
+                    "scenarioSha256": sha256_json(scenario),
+                })
+                continue
             program = tmp_dir / f"{scenario['scenarioId']}.lp"
             program.write_text(render_scenario(catalog, scenario), encoding="utf-8")
             base_run = invoke_clingo(clingo, oracle_dir, program, timeout, enumerate_all=False)
@@ -354,8 +395,10 @@ def run_catalog(catalog: dict[str, Any], oracle_dir: Path, clingo: str, timeout:
             comparison, details = classify(scenario, run)
             results.append({
                 "scenarioId": scenario["scenarioId"],
+                "officialValidation": "PASS",
                 "comparison": comparison,
                 "expectedStatus": scenario["expectedStatus"],
+                "oracleExpectedStatus": scenario.get("oracleExpectedStatus", scenario["expectedStatus"]),
                 "actualStatus": run.status,
                 "details": details,
                 "durationMs": run.duration_ms,
@@ -363,12 +406,12 @@ def run_catalog(catalog: dict[str, Any], oracle_dir: Path, clingo: str, timeout:
                 "observedAtoms": sorted(run.atoms),
                 "scenarioSha256": sha256_json(scenario),
             })
-    counts = {name: sum(r["comparison"] == name for r in results) for name in (
-        "AGREE", "EXPECTED_COVERAGE_GAP", "KNOWN_SEMANTIC_VARIANCE", "UNEXPLAINED_MISMATCH", "NOT_RUN"
-    )}
+    counts = {name: sum(r["comparison"] == name for r in results) for name in COMPARISONS}
     return {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "generatedAt": datetime.now(timezone.utc).isoformat(),
+        "authorityOrder": catalog["authorityOrder"],
+        "officialGolden": {"PASS": len(results), "FAIL": 0},
         "oracle": {"repository": ORACLE_NAME, "revision": ORACLE_REVISION, "timeoutSeconds": timeout},
         "fixtureCatalogSha256": sha256_json(catalog),
         "summary": counts,
@@ -400,12 +443,15 @@ def main(argv: list[str] | None = None) -> int:
     catalog = load_catalog(args.fixtures)
     if args.command == "validate":
         for scenario in catalog["scenarios"]:
-            render_scenario(catalog, scenario)
+            if scenario.get("oracleMode", "RUN") == "RUN":
+                render_scenario(catalog, scenario)
         print(f"Validated {len(catalog['scenarios'])} scenarios; catalog sha256={sha256_json(catalog)}")
         return 0
     if args.command == "render":
         args.out_dir.mkdir(parents=True, exist_ok=True)
         for scenario in catalog["scenarios"]:
+            if scenario.get("oracleMode", "RUN") != "RUN":
+                continue
             (args.out_dir / f"{scenario['scenarioId']}.lp").write_text(
                 render_scenario(catalog, scenario), encoding="utf-8"
             )

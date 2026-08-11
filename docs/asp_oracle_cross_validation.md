@@ -1,12 +1,14 @@
-# ASP Oracle cross-validation harness (A2)
+# Official golden corpus and ASP Oracle cross-validation (A2.1)
 
-> Milestone: Phase A / PR A2  
+> Milestone: Phase A / PR A2.1  
 > Frozen oracle: `pnkfelix/botc-asp@616e61b720cc853af031f2623fd6bde33b869865`  
 > Production rollout: development/test only; Android gameplay dependencies unchanged
 
-## Delivered boundary
+## Authority and delivered boundary
 
-The A2 harness turns A1-shaped `FormalGameState` fixtures plus a typed query into a generated ASP program. It invokes Clingo with the frozen `botc.lp` and `tb.lp`, parses Clingo's JSON output, and compares:
+A2.1 enforces `OFFICIAL > PROJECT_GOLDEN > EXTERNAL_ORACLE`. The official expectation is retained when the frozen Oracle disagrees.
+
+The harness validates 48 official contracts. For the 20 scenarios the frozen model can faithfully express, it turns A1-shaped `FormalGameState` fixtures plus a typed query into ASP, invokes Clingo, parses JSON output, and compares:
 
 - SAT or UNSAT;
 - required or excluded legal-output atoms;
@@ -14,7 +16,7 @@ The A2 harness turns A1-shaped `FormalGameState` fixtures plus a typed query int
 
 Legal-output and registration assertions use separate exact atom-existence SAT probes. This avoids enumerating every irrelevant full-world variation while retaining exact yes/no answers for each expected or forbidden atom.
 
-The fixture catalog contains 18 executable priority scenarios covering setup and Baron, Washerwoman, Librarian, Investigator, Chef, Empath, Fortune Teller, Drunk, Poisoning, Spy, and Recluse. Scenario IDs remain aligned with `epistemic_reference_matrix.md`.
+The other 28 scenarios cover timeline transitions and recipient projections such as poison duration, protection/death, starpass, Scarlet Woman, Undertaker, Ravenkeeper, Virgin, Saint, Mayor, Spy grimoire, and secret-leak boundaries. They remain mandatory official contracts but are explicitly `ORACLE_NOT_APPLICABLE`; the harness does not invent lossy constraints to inflate agreement.
 
 Fixtures retain the app's `RoleId` spelling (for example `Fortune Teller`). The adapter owns the explicit conversion to the frozen Oracle's lowercase ASP symbol (`fortune_teller`), keeping external predicate spelling out of the Android semantic model.
 
@@ -24,6 +26,7 @@ Fixtures retain the app's `RoleId` spelling (for example `Fortune Teller`). The 
 
 ```text
 oracle repository and revision
+authority order and official validation
 timeout
 effective Clingo command per scenario
 canonical catalog and scenario SHA-256
@@ -33,11 +36,13 @@ duration
 comparison classification
 ```
 
-The classifications are the A0 protocol values: `AGREE`, `EXPECTED_COVERAGE_GAP`, `KNOWN_SEMANTIC_VARIANCE`, `UNEXPLAINED_MISMATCH`, and `NOT_RUN`. A missing solver, timeout, or enumeration failure is `NOT_RUN`; it is never converted to `UNSAT`. The command exits non-zero for `NOT_RUN` or an unexplained mismatch.
+Classifications are `AGREE`, `EXPECTED_COVERAGE_GAP`, `KNOWN_ORACLE_VARIANCE`, `ORACLE_NOT_APPLICABLE`, `UNEXPLAINED_MISMATCH`, and `NOT_RUN`. A missing solver or timeout is `NOT_RUN`; it is never converted to `UNSAT`. `ORACLE_NOT_APPLICABLE` is a declared model/adapter limitation, not an environment failure. The command exits non-zero for `NOT_RUN` or an unexplained mismatch.
 
 ## Known frozen-oracle boundary
 
 `TB-LIB-03` intentionally permits `EXPECTED_COVERAGE_GAP`: the A1 state correctly records an actual Drunk with a shown Librarian token, while the frozen oracle's Librarian rules bind the acting player through actual `character_assignment_state_at_time(..., librarian)`. The harness reports disagreement rather than patching the external model or leaking storyteller truth into player knowledge.
+
+`TB-FT-04` is a `KNOWN_ORACLE_VARIANCE`: official Fortune Teller setup requires the red herring to be an actual good player, so Spy is illegal. The frozen model instead checks setup-time `registers_as(..., good, ...)` and accepts Spy. `TB-FT-05` separately verifies that Recluse, an actual good player, is a legal red herring.
 
 ## Non-production guarantee
 
@@ -45,16 +50,18 @@ All A2 code is under `tools/asp_oracle`; no Gradle dependency or Android source-
 
 ## Verification
 
-The standard-library unit suite checks fixture breadth, schema validation, deterministic translation and hashing, comparison behavior, and the invariant that `NOT_RUN != UNSAT`. A real Clingo run remains the required environment-level gate whenever Git and Clingo 5.x are available.
+The standard-library unit suite checks authority order, fixture breadth, schema validation, deterministic translation and hashing, red-herring authority, explicit non-applicability, comparison behavior, and `NOT_RUN != UNSAT`. A real Clingo run remains the release gate.
 
-The 2026-08-11 A2 baseline was run with Clingo 5.8.0 against the exact frozen commit. Catalog SHA-256 was `5b424f718446c3a6cc30aed66d65a0a39441525f103b2d98c863b73b4fe8da9e` and the result was:
+The 2026-08-11 A2.1 baseline was run with Clingo 5.8.0 against the exact frozen commit. Catalog SHA-256 was `e0770f927a52357078be3dd10c765f8a99e40ff5a43dc581bf5932d2847f2d2b` and the result was:
 
 ```text
-AGREE                     17
-EXPECTED_COVERAGE_GAP      1  (TB-LIB-03)
-KNOWN_SEMANTIC_VARIANCE    0
-UNEXPLAINED_MISMATCH       0
-NOT_RUN                    0
+official PASS               48
+AGREE                       18
+EXPECTED_COVERAGE_GAP        1  (TB-LIB-03)
+KNOWN_ORACLE_VARIANCE        1  (TB-FT-04)
+ORACLE_NOT_APPLICABLE       28
+UNEXPLAINED_MISMATCH         0
+NOT_RUN                      0
 ```
 
-Seven standard-library unit tests also passed. The single coverage gap is documented above and is not counted as independent Oracle agreement.
+Eleven standard-library unit tests also passed. Coverage gaps, variances, and non-applicable scenarios remain visible and are never counted as independent Oracle agreement.

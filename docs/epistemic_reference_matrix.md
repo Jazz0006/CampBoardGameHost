@@ -1,13 +1,13 @@
 # Trouble Brewing epistemic reference matrix
 
 > Project: CampBoardGameHost  
-> Milestone: Phase A / PR A0  
-> Version: 1.0  
+> Milestone: Phase A / PR A0 + A2.1 executable corpus  
+> Version: 1.1  
 > Date: 2026-08-11
 
 ## 1. Scope and notation
 
-This matrix defines the first frozen golden-scenario catalog for the player-perspective world engine. It specifies expected semantics; PR A2/A3 will add executable adapters and fixtures.
+This matrix defines the first frozen golden-scenario catalog for the player-perspective world engine. A2.1 has converted all 33 original entries into machine-readable official contracts and expanded the corpus to 48 scenarios; A3/B4 will execute the world/timeline implementation against them.
 
 Oracle abbreviations:
 
@@ -98,13 +98,13 @@ For `CHOICE` scenarios, each branch receives its own stable candidate ID. A test
 
 | Slice | Scenario IDs | First executable milestone |
 |---|---|---|
-| Setup and knowledge boundary | `TB-SETUP-01`–`05` | A3 |
+| Setup and knowledge boundary | `TB-SETUP-01`–`05` | A2.1 contract; A3 implementation |
 | First-night pair information | `TB-WW-01`–`02`, `TB-LIB-01`–`03`, `TB-INV-01`–`03`, `TB-SPY-01` | A2 then A3 |
 | First-night numeric information | `TB-CHEF-01`–`02`, `TB-EMPATH-01` | A2 then A3 |
 | FT and local registration | `TB-FT-01`–`03` | A2 then A3 |
-| Malfunction boundary | `TB-MAL-01`–`02` | A2; full timeline in B4 |
-| Night/day transitions | `TB-EMPATH-02`, `TB-IMP-01`–`03`, `TB-SW-01`, `TB-UT-01`, `TB-RK-01`, `TB-VIRGIN-01`, `TB-SAINT-01`, `TB-MAYOR-01` | B4 |
-| High-impact registration | `TB-SLAYER-01` | A2 legality; B4 timeline |
+| Malfunction boundary | `TB-MAL-01`–`02` | A2.1 contract; full timeline in B4 |
+| Night/day transitions | `TB-EMPATH-02`, `TB-IMP-01`–`03`, `TB-SW-01`, `TB-UT-01`, `TB-RK-01`, `TB-VIRGIN-01`, `TB-SAINT-01`, `TB-MAYOR-01` | A2.1 contract; B4 implementation |
+| High-impact registration | `TB-SLAYER-01` | A2.1 contract; B4 implementation |
 
 ## 6. Known limits at A0
 
@@ -122,3 +122,27 @@ For `CHOICE` scenarios, each branch receives its own stable candidate ID. A test
 - [x] Perspective boundary stated explicitly.
 - [x] No external implementation is labelled an official source.
 - [x] Exact versus future approximate computation boundary preserved.
+
+## 8. A2.1 expansion and execution status
+
+A2.1 adds 15 coverage-driven variants beyond the original 33:
+
+```text
+TB-FT-04 Spy red-herring prohibition
+TB-FT-05 Recluse red-herring eligibility
+TB-MAL-03 poison-target knowledge boundary
+TB-MAL-04 Drunk malfunction/registration separation
+TB-IMP-04 poisoned Imp self-kill without starpass
+TB-SW-02 Scarlet Woman threshold negative branch
+TB-UT-02 execution without death
+TB-RK-02 poisoned Ravenkeeper output
+TB-SLAYER-02 Slayer hits actual Demon
+TB-VIRGIN-02 non-Townsfolk nomination
+TB-MAYOR-02 illegal no-death redirect branch
+TB-KNOW-01 Spy grimoire recipient/time
+TB-KNOW-02 Spy grimoire non-leakage
+TB-KNOW-03 red-herring non-leakage
+TB-KNOW-04 general storyteller-secret non-leakage
+```
+
+All 48 are schema-v2 official contracts. Twenty are also executable against the frozen ASP adapter; 28 are explicitly `ORACLE_NOT_APPLICABLE` until a faithful timeline or recipient-projection adapter exists. The release baseline has 18 agreements, one documented Drunk coverage gap, one documented Spy red-herring Oracle variance, zero unexplained mismatches, and zero `NOT_RUN`.
