@@ -11,8 +11,8 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
-/** Stable schema marker for persisted A1 semantic objects. */
-const val EPISTEMIC_SCHEMA_VERSION: Int = 1
+/** Stable schema marker for persisted A1/A1.1 semantic objects. */
+const val EPISTEMIC_SCHEMA_VERSION: Int = 2
 
 data class FormalPlayerState(
     val seat: Int,
@@ -23,18 +23,9 @@ data class FormalPlayerState(
     val alive: Boolean = true,
     val poisoned: Boolean = false,
 ) {
-    init {
-        require(seat > 0) { "seat must be positive." }
-    }
+    init { require(seat > 0) { "seat must be positive." } }
 }
 
-/**
- * Storyteller-truth state used by formal engines and oracle adapters.
- *
- * This object deliberately contains no localized text. It is not safe to pass
- * to a player-world engine directly because it includes actual roles and
- * storyteller-only propositions.
- */
 data class FormalGameState(
     val snapshotId: String,
     val gameId: String,
@@ -48,22 +39,22 @@ data class FormalGameState(
     val schemaVersion: Int = EPISTEMIC_SCHEMA_VERSION,
 ) {
     init {
-        require(schemaVersion == EPISTEMIC_SCHEMA_VERSION) { "Unsupported epistemic schema version." }
+        requireSchemaVersion(schemaVersion)
         require(snapshotId.isNotBlank()) { "snapshotId cannot be blank." }
         require(gameId.isNotBlank()) { "gameId cannot be blank." }
         require(gameStateRevision >= 0) { "gameStateRevision cannot be negative." }
         require(round > 0) { "round must be positive." }
         require(players.isNotEmpty()) { "FormalGameState requires at least one player." }
-        require(players.map { it.seat }.distinct().size == players.size) {
-            "Each formal player must have a unique seat."
-        }
+        require(players.map { it.seat }.distinct().size == players.size) { "Each formal player must have a unique seat." }
         val seats = players.map { it.seat }.toSet()
-        require((publicPropositions + storytellerOnlyPropositions).all {
-            seats.containsAll(it.referencedSeats())
-        }) {
+        require((publicPropositions + storytellerOnlyPropositions).all { seats.containsAll(it.referencedSeats()) }) {
             "Every proposition seat must exist in the formal state."
         }
     }
+
+    fun eligibleRedHerringSeats(): Set<Int> = players
+        .filter { it.actualAlignment == Alignment.GOOD }
+        .mapTo(linkedSetOf()) { it.seat }
 
     companion object {
         fun from(
@@ -112,49 +103,23 @@ data class FormalGameState(
     }
 }
 
-/** A mechanically meaningful statement. It carries no UI wording or probability. */
 sealed interface InformationProposition {
-    data class RoleAt(val seat: Int, val role: RoleId) : InformationProposition {
-        init { require(seat > 0) { "seat must be positive." } }
-    }
-    data class AlignmentAt(val seat: Int, val alignment: Alignment) : InformationProposition {
-        init { require(seat > 0) { "seat must be positive." } }
-    }
-    data class CharacterTypeAt(val seat: Int, val characterType: CharacterType) : InformationProposition {
-        init { require(seat > 0) { "seat must be positive." } }
-    }
-    data class AliveAt(val seat: Int, val alive: Boolean) : InformationProposition {
-        init { require(seat > 0) { "seat must be positive." } }
-    }
-    data class AbilityStateAt(
-        val seat: Int,
-        val abilityRole: RoleId,
-        val abilityState: AbilityState,
-    ) : InformationProposition {
-        init { require(seat > 0) { "seat must be positive." } }
+    data class RoleAt(val seat: Int, val role: RoleId) : InformationProposition { init { require(seat > 0) } }
+    data class AlignmentAt(val seat: Int, val alignment: Alignment) : InformationProposition { init { require(seat > 0) } }
+    data class CharacterTypeAt(val seat: Int, val characterType: CharacterType) : InformationProposition { init { require(seat > 0) } }
+    data class AliveAt(val seat: Int, val alive: Boolean) : InformationProposition { init { require(seat > 0) } }
+    data class AbilityStateAt(val seat: Int, val abilityRole: RoleId, val abilityState: AbilityState) : InformationProposition {
+        init { require(seat > 0) }
     }
     data class RoleInPlay(val role: RoleId, val inPlay: Boolean = true) : InformationProposition
-    data class SetupProfile(
-        val townsfolk: Int,
-        val outsiders: Int,
-        val minions: Int,
-        val demons: Int,
-    ) : InformationProposition {
-        init {
-            require(listOf(townsfolk, outsiders, minions, demons).all { it >= 0 }) {
-                "Setup counts cannot be negative."
-            }
-        }
+    data class SetupProfile(val townsfolk: Int, val outsiders: Int, val minions: Int, val demons: Int) : InformationProposition {
+        init { require(listOf(townsfolk, outsiders, minions, demons).all { it >= 0 }) { "Setup counts cannot be negative." } }
     }
     data class AnyOf(val alternatives: List<InformationProposition>) : InformationProposition {
-        init {
-            require(alternatives.size >= 2) { "AnyOf requires at least two alternatives." }
-        }
+        init { require(alternatives.size >= 2) { "AnyOf requires at least two alternatives." } }
     }
     data class AllOf(val propositions: List<InformationProposition>) : InformationProposition {
-        init {
-            require(propositions.isNotEmpty()) { "AllOf cannot be empty." }
-        }
+        init { require(propositions.isNotEmpty()) { "AllOf cannot be empty." } }
     }
     data class Not(val proposition: InformationProposition) : InformationProposition
     data class NumericResult(
@@ -164,32 +129,41 @@ sealed interface InformationProposition {
         val value: Int,
     ) : InformationProposition {
         init {
-            require(sourceSeat > 0) { "sourceSeat must be positive." }
-            require(subjectSeats.all { it > 0 }) { "subject seats must be positive." }
-            require(subjectSeats.distinct().size == subjectSeats.size) { "subject seats must be unique." }
-            require(value >= 0) { "numeric result cannot be negative." }
+            require(sourceSeat > 0)
+            require(subjectSeats.all { it > 0 } && subjectSeats.distinct().size == subjectSeats.size)
+            require(value >= 0)
+        }
+    }
+
+    /** Exact grimoire contents visible to the Spy at one wake interaction. */
+    data class GrimoireState(val seats: List<GrimoireSeatView>) : InformationProposition {
+        init {
+            require(seats.isNotEmpty()) { "GrimoireState cannot be empty." }
+            require(seats.map { it.seat }.distinct().size == seats.size) { "Grimoire seats must be unique." }
+            require(seats.map { it.seat } == seats.map { it.seat }.sorted()) { "Grimoire seats must use canonical seat order." }
         }
     }
 }
 
-enum class NumericMetric {
-    ADJACENT_EVIL_PAIRS,
-    LIVING_EVIL_NEIGHBOURS,
-    STEPS_TO_NEAREST_MINION,
-    PLAYERS_WAKING_FOR_ABILITY,
+data class GrimoireSeatView(
+    val seat: Int,
+    val displayedRole: RoleId,
+    val alive: Boolean,
+    val reminderTokens: List<String> = emptyList(),
+) {
+    init {
+        require(seat > 0)
+        require(reminderTokens.all { STABLE_TOKEN_ID.matches(it) }) { "Reminder token IDs must be stable lowercase IDs." }
+        require(reminderTokens.distinct().size == reminderTokens.size) { "Reminder token IDs must be unique per seat." }
+        require(reminderTokens == reminderTokens.sorted()) { "Reminder token IDs must use canonical order." }
+    }
+
+    companion object { private val STABLE_TOKEN_ID = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*") }
 }
 
-enum class ObservationVisibility {
-    PUBLIC,
-    PRIVATE,
-}
-
-enum class ObservationReliability {
-    /** The recipient has no mechanically granted knowledge that the ability malfunctioned. */
-    RECEIVED_AS_FUNCTIONING,
-    KNOWN_MALFUNCTIONING,
-    NOT_ABILITY_INFORMATION,
-}
+enum class NumericMetric { ADJACENT_EVIL_PAIRS, LIVING_EVIL_NEIGHBOURS, STEPS_TO_NEAREST_MINION, PLAYERS_WAKING_FOR_ABILITY }
+enum class ObservationVisibility { PUBLIC, PRIVATE }
+enum class ObservationReliability { RECEIVED_AS_FUNCTIONING, KNOWN_MALFUNCTIONING, NOT_ABILITY_INFORMATION }
 
 data class EpistemicObservation(
     val observationId: String,
@@ -206,18 +180,16 @@ data class EpistemicObservation(
     val schemaVersion: Int = EPISTEMIC_SCHEMA_VERSION,
 ) {
     init {
-        require(schemaVersion == EPISTEMIC_SCHEMA_VERSION) { "Unsupported epistemic schema version." }
-        require(observationId.isNotBlank()) { "observationId cannot be blank." }
-        require(snapshotId.isNotBlank()) { "snapshotId cannot be blank." }
-        require(round > 0) { "round must be positive." }
-        require(sequence >= 0) { "sequence cannot be negative." }
-        require(sourceSeat == null || sourceSeat > 0) { "sourceSeat must be positive when present." }
-        require(recipientSeats.all { it > 0 }) { "recipient seats must be positive." }
-        require(visibility != ObservationVisibility.PRIVATE || recipientSeats.isNotEmpty()) {
-            "A private observation needs at least one recipient."
-        }
-        require(visibility != ObservationVisibility.PUBLIC || recipientSeats.isEmpty()) {
-            "Public observations use an empty recipient set."
+        requireSchemaVersion(schemaVersion)
+        require(observationId.isNotBlank() && snapshotId.isNotBlank())
+        require(round > 0 && sequence >= 0)
+        require(sourceSeat == null || sourceSeat > 0)
+        require(recipientSeats.all { it > 0 })
+        require(visibility != ObservationVisibility.PRIVATE || recipientSeats.isNotEmpty())
+        require(visibility != ObservationVisibility.PUBLIC || recipientSeats.isEmpty())
+        require(proposition !is InformationProposition.GrimoireState ||
+            (visibility == ObservationVisibility.PRIVATE && sourceAbility?.value == "Spy")) {
+            "GrimoireState must be a private observation sourced from the Spy ability."
         }
     }
 }
@@ -233,40 +205,40 @@ data class StorytellerDecisionPoint(
     val decisionTypeId: String,
     val recipientSeats: Set<Int>,
     val queryPropositions: List<InformationProposition> = emptyList(),
+    val candidateFamilyId: CandidateFamilyId? = null,
     val schemaVersion: Int = EPISTEMIC_SCHEMA_VERSION,
 ) {
     init {
-        require(schemaVersion == EPISTEMIC_SCHEMA_VERSION) { "Unsupported epistemic schema version." }
-        require(decisionPointId.isNotBlank()) { "decisionPointId cannot be blank." }
-        require(snapshotId.isNotBlank()) { "snapshotId cannot be blank." }
-        require(round > 0) { "round must be positive." }
-        require(sequence >= 0) { "sequence cannot be negative." }
-        require(sourceSeat == null || sourceSeat > 0) { "sourceSeat must be positive when present." }
-        require(decisionTypeId.matches(STABLE_TYPE_ID)) { "decisionTypeId must be a stable lowercase ID." }
-        require(recipientSeats.isNotEmpty() && recipientSeats.all { it > 0 }) {
-            "A decision point needs positive recipient seats."
-        }
+        requireSchemaVersion(schemaVersion)
+        require(decisionPointId.isNotBlank() && snapshotId.isNotBlank())
+        require(round > 0 && sequence >= 0)
+        require(sourceSeat == null || sourceSeat > 0)
+        require(STABLE_TYPE_ID.matches(decisionTypeId))
+        require(recipientSeats.isNotEmpty() && recipientSeats.all { it > 0 })
     }
-
-    companion object {
-        private val STABLE_TYPE_ID = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*")
-    }
+    companion object { private val STABLE_TYPE_ID = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*") }
 }
 
 data class LegalEpistemicChoice(
     val choiceId: String,
+    val interactionId: String,
     val observation: EpistemicObservation,
     val registrations: List<RegistrationFact> = emptyList(),
 ) {
     init {
-        require(choiceId.isNotBlank()) { "choiceId cannot be blank." }
-        require(registrations.map { it.interactionId }.distinct().size == registrations.size) {
-            "Registration interaction IDs must be unique within a legal choice."
+        require(choiceId.isNotBlank())
+        require(interactionId.matches(Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*"))) {
+            "interactionId must be a stable lowercase ID."
+        }
+        require(registrations.all { it.interactionId == interactionId }) {
+            "Every selected registration must be bound to the legal choice interaction."
+        }
+        require(registrations.map { it.subjectSeat to it.registrationQuestion }.distinct().size == registrations.size) {
+            "A subject may have only one selected registration per question in an interaction."
         }
     }
 }
 
-/** Complete official-legal outputs for one decision point. */
 data class LegalChoiceSet(
     val choiceSetId: String,
     val decisionPointId: String,
@@ -275,24 +247,14 @@ data class LegalChoiceSet(
     val schemaVersion: Int = EPISTEMIC_SCHEMA_VERSION,
 ) {
     init {
-        require(schemaVersion == EPISTEMIC_SCHEMA_VERSION) { "Unsupported epistemic schema version." }
-        require(choiceSetId.isNotBlank()) { "choiceSetId cannot be blank." }
-        require(decisionPointId.isNotBlank()) { "decisionPointId cannot be blank." }
-        require(choices.isNotEmpty()) { "LegalChoiceSet cannot be empty." }
-        require(choices.map { it.choiceId }.distinct().size == choices.size) {
-            "Legal choice IDs must be unique."
-        }
-        require(choices.map { it.observation.snapshotId }.distinct().size == 1) {
-            "All legal choices must refer to the same snapshot."
-        }
+        requireSchemaVersion(schemaVersion)
+        require(choiceSetId.isNotBlank() && decisionPointId.isNotBlank())
+        require(choices.isNotEmpty())
+        require(choices.map { it.choiceId }.distinct().size == choices.size)
+        require(choices.map { it.observation.snapshotId }.distinct().size == 1)
     }
 }
 
-/**
- * Facts available to a single player. Actual roles, poison targets and other
- * storyteller secrets have no field here and can only enter through a valid
- * observation granted to this perspective.
- */
 data class PlayerKnowledgeSnapshot(
     val knowledgeSnapshotId: String,
     val formalSnapshotId: String,
@@ -304,34 +266,32 @@ data class PlayerKnowledgeSnapshot(
     val schemaVersion: Int = EPISTEMIC_SCHEMA_VERSION,
 ) {
     init {
-        require(schemaVersion == EPISTEMIC_SCHEMA_VERSION) { "Unsupported epistemic schema version." }
-        require(knowledgeSnapshotId.isNotBlank()) { "knowledgeSnapshotId cannot be blank." }
-        require(formalSnapshotId.isNotBlank()) { "formalSnapshotId cannot be blank." }
-        require(recipientSeat > 0) { "recipientSeat must be positive." }
-        require(publicObservations.all { observation ->
-            observation.snapshotId == formalSnapshotId &&
-                observation.visibility == ObservationVisibility.PUBLIC
-        }) { "Public knowledge must contain only public observations from this snapshot." }
-        require(privateObservations.all { observation ->
-            observation.snapshotId == formalSnapshotId &&
-                observation.visibility == ObservationVisibility.PRIVATE &&
-                recipientSeat in observation.recipientSeats
-        }) { "Private knowledge must be addressed to this player and snapshot." }
+        requireSchemaVersion(schemaVersion)
+        require(knowledgeSnapshotId.isNotBlank() && formalSnapshotId.isNotBlank())
+        require(recipientSeat > 0)
+        require(publicObservations.all { it.snapshotId == formalSnapshotId && it.visibility == ObservationVisibility.PUBLIC })
+        require(privateObservations.all {
+            it.snapshotId == formalSnapshotId && it.visibility == ObservationVisibility.PRIVATE && recipientSeat in it.recipientSeats
+        })
         require((publicObservations + privateObservations).map { it.observationId }.distinct().size ==
-            publicObservations.size + privateObservations.size) {
-            "Observation IDs must be unique within a knowledge snapshot."
-        }
+            publicObservations.size + privateObservations.size)
     }
 }
 
 object SemanticStableId {
     fun create(prefix: String, canonicalPayload: String): String {
-        require(prefix.matches(Regex("[a-z][a-z0-9-]*"))) { "prefix must be a stable lowercase ID." }
+        require(prefix.matches(Regex("[a-z][a-z0-9-]*")))
         val digest = MessageDigest.getInstance("SHA-256")
             .digest(canonicalPayload.toByteArray(StandardCharsets.UTF_8))
             .take(16)
             .joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
         return "$prefix-$digest"
+    }
+}
+
+internal fun requireSchemaVersion(version: Int) {
+    require(version == EPISTEMIC_SCHEMA_VERSION) {
+        "Unsupported epistemic schema version $version; expected $EPISTEMIC_SCHEMA_VERSION. Schema v1 must be explicitly migrated."
     }
 }
 
@@ -347,4 +307,5 @@ private fun InformationProposition.referencedSeats(): Set<Int> = when (this) {
     is InformationProposition.AllOf -> propositions.flatMap { it.referencedSeats() }.toSet()
     is InformationProposition.Not -> proposition.referencedSeats()
     is InformationProposition.NumericResult -> setOf(sourceSeat) + subjectSeats
+    is InformationProposition.GrimoireState -> seats.mapTo(linkedSetOf()) { it.seat }
 }

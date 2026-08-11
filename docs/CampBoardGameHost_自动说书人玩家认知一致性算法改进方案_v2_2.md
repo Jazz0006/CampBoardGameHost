@@ -5,7 +5,7 @@
 > 状态：当前唯一实施规范  
 > 适用范围：优先覆盖《暗流涌动》（Trouble Brewing），架构支持后续剧本扩展  
 > 取代文档：v2.0、v2.1；旧文档仅保留为设计演进记录  
-> 当前实施基线：A0、A1、A2 已完成；下一项为 A1.1  
+> 当前实施基线：A0、A1、A2、A1.1 已完成；下一项为 A2.1  
 
 ---
 
@@ -776,7 +776,7 @@ UNEXPLAINED_MISMATCH       0
 NOT_RUN                    0
 ```
 
-#### A1.1：Semantic Contract Hardening — 下一步
+#### A1.1：Semantic Contract Hardening — 已完成
 
 任务：
 

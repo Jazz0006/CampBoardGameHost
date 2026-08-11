@@ -1,59 +1,98 @@
-# Unified semantic model (A1)
+# Unified semantic model (A1 + A1.1)
 
-> Milestone: Phase A / PR A1  
-> Schema: `epistemic-semantic-v1`  
+> Milestone: Phase A / PR A1.1  
+> Schema: `epistemic-semantic-v2`  
 > Production rollout: not connected; recommendation output is unchanged
 
 ## Purpose
 
-The A1 model separates three kinds of state that the current recommendation DTOs could not safely distinguish:
+The semantic boundary separates storyteller truth, information actually delivered, and facts available to one recipient. A1.1 hardens that boundary before any `PlayerWorldSet` implementation is introduced.
 
-1. storyteller truth (`FormalGameState`);
-2. information actually delivered (`EpistemicObservation`);
-3. facts available to one recipient (`PlayerKnowledgeSnapshot`).
+Schema v2 is intentionally incompatible with v1. Persisted v1 roots fail with an explicit migration error; they are never silently interpreted as v2.
 
-This boundary is required before A2/A3 can ask whether an observation is SAT from a player's perspective without leaking actual roles, poison targets, red-herring identity or storyteller decisions into that perspective.
+## Contract map
 
-## Model map
-
-| A1 object | Responsibility | Explicitly excluded |
+| Object | Responsibility | Boundary |
 |---|---|---|
-| `FormalGameState` | immutable actual roles, statuses, public facts and storyteller-only facts at one timeline point | UI labels; player claims; probability |
-| `InformationProposition` | typed logical or numeric statement consumed by solver adapters | localized descriptions; free-form rule text |
-| `EpistemicObservation` | who received which proposition, when and under what visible reliability | hidden actual reliability that the player was not told |
-| `StorytellerDecisionPoint` | stable query context before a legal output is selected | recommendation score and selected candidate |
-| `LegalChoiceSet` | complete official-legal outputs, with local registration facts bound to each choice | policy ranking; sampling; illegal fallback output |
-| `PlayerKnowledgeSnapshot` | public observations, addressed private observations, perceived token and setup knowledge for one seat | actual role list and storyteller-only propositions |
+| `FormalGameState` | actual roles, statuses, hidden setup facts and timeline truth | storyteller-only; never a player cache key |
+| `EpistemicObservation` | a proposition delivered to named recipients at one point | contains visible reliability, not hidden truth |
+| `PlayerKnowledgeSnapshot` | public facts plus private facts addressed to one seat | excludes actual roles, poison target, red herring and unaddressed decisions |
+| `RegistrationQuery` | one detecting ability's question at one `interactionId` and `TimelinePoint` | registration is not a permanent identity rewrite |
+| `RegistrationProfile` | one rules-permitted response to a registration query | capability only; not proof that it was selected |
+| `RegistrationFact` | the registration selected in one complete legal choice | must match `LegalEpistemicChoice.interactionId` |
+| `EpistemicHypothesis` | world-construction assumption | included in world-set identity and cache keys |
+| `WorldCardinality` | exact arbitrary-precision count or explicit lower bound | no `Long` overflow or cap-as-exact ambiguity |
+| `PlayerWorldSetIdentity` | SHA-256 identity of visible knowledge + ruleset + recipient + hypothesis + schema | excludes formal snapshot and caller-generated IDs |
+| `CandidateFamilyId` | storyteller decision/clue family | distinct from world explanations |
+| `WorldExplanationClusterId` | mechanism explaining surviving worlds | distinct from candidate families |
 
-Existing `GameSnapshot`, `GameState`, `RulesetRef`, `RoleId`, `RegistrationFact`, `AbilityState` and `StorytellerPhase` are reused. Existing recommendation candidates and production selection are not replaced in A1.
+## Interaction-scoped registration
 
-## Stable identity and serialization
+`TroubleBrewingRegistrationSemantics` always returns the actual profile and may add a special Spy/Recluse profile when the query target is compatible with the official ability:
 
-- every persisted root contains `schemaVersion = 1`;
-- semantic type IDs use lowercase machine IDs rather than UI strings;
-- `SemanticStableId` uses the first 128 bits of SHA-256 over a caller-supplied canonical semantic payload;
-- `EpistemicSemanticJson` sorts object keys and recipient sets, uses enum names and stable IDs, and has round-trip decoders for all six A1 roots;
-- list order remains meaningful for timelines and logical expressions;
-- unknown proposition kinds or enum values fail closed during decoding.
+- Spy: good and Townsfolk/Outsider;
+- Recluse: evil and Minion/Demon.
 
-This JSON is the fixture boundary for A2's ASP adapter and A3's enumerated-world baseline. A schema change requires a new schema version and migration; changing translated text does not change serialized semantics.
+A role-level query must carry the ruleset-resolved role, character type and alignment. This prevents an unconstrained role ID from being treated as a legal special registration.
 
-## Guardrails
+`isLegalSelection(...)` verifies the selected fact against the same interaction, subject, question and possible profiles. Special selections must also carry the matching `SPY_ABILITY` or `RECLUSE_ABILITY` reason.
 
-- A public observation must have no explicit recipient list.
-- A private observation must name at least one recipient.
-- A knowledge snapshot rejects private observations addressed to another seat or another formal snapshot.
-- `FormalGameState` validates that all referenced seats exist.
-- `LegalChoiceSet` requires a non-empty unique choice set and keeps registration facts inside the complete choice.
-- malfunction and registration remain separate concepts.
+The query includes `interactionId`, timeline point, detecting ability, official `RegistrationQuestion`, and target values. Two abilities in the same night therefore remain independent. `LegalEpistemicChoice` also carries the interaction ID and rejects any selected `RegistrationFact` from another interaction; multiple subjects may still register independently within the same interaction. Capability and selection are never conflated.
 
-## A1 verification
+Fortune Teller red-herring setup is an explicit exception. `FormalGameState.eligibleRedHerringSeats()` uses `actualAlignment == GOOD`:
+
+- Spy is ineligible even though it may register as good in an interaction;
+- Recluse is eligible even though it may register as evil or Demon in an interaction.
+
+## Spy grimoire observation
+
+`InformationProposition.GrimoireState` records the current displayed token, alive state and stable reminder-token IDs per seat. It is valid only inside a private observation sourced from the Spy ability at the relevant wake point. The model has no demon-bluff field; bluffs are not inferred into Spy knowledge without a separate official rule or product event.
+
+## Knowledge-based identity
+
+`PlayerWorldSetIdentity.create(...)` hashes canonical schema-v2 data containing:
+
+```text
+ruleset identity
++ recipient seat
++ perceived role
++ visible public/private observation semantics
++ setup knowledge
++ EpistemicHypothesis
++ schema version
+```
+
+It deliberately omits:
+
+- `FormalGameState.snapshotId` / `PlayerKnowledgeSnapshot.formalSnapshotId`;
+- `knowledgeSnapshotId`;
+- observation IDs, hidden global sequence numbers and other private recipients;
+- actual roles and storyteller-only propositions.
+
+Those IDs remain useful for storage joins and audit, but cannot make identical player knowledge produce different world-cache identities. A changed visible fact, ruleset, recipient, hypothesis or schema does change the identity.
+
+## Serialization and validation
+
+- every persisted root uses `schemaVersion = 2`;
+- canonical JSON sorts object keys, recipient sets, reminder-token IDs and grimoire seats;
+- timeline/list order remains meaningful where appropriate;
+- new A1.1 values have round-trip encoders and decoders;
+- unknown kinds, enum values and schema v1 fail closed;
+- `WorldCardinality` writes arbitrary-precision values as decimal strings.
+
+## Verification
 
 `EpistemicSemanticModelTest` covers:
 
-- round-trip serialization for all six required root objects;
-- canonical output independent of set insertion order;
-- deterministic semantic IDs;
-- rejection of cross-recipient private-information leakage.
+- A1 and A1.1 schema-v2 round trips;
+- explicit schema-v1 rejection;
+- interaction-local Spy/Recluse registration capability;
+- selected registration facts remaining bound to legal choices;
+- actual-alignment red-herring eligibility;
+- world-set identity independence from formal secret IDs and dependence on visible knowledge/hypothesis;
+- private timed Spy grimoire observations with no implicit bluff field;
+- arbitrary-precision exact and lower-bound cardinality;
+- separate candidate and explanation taxonomies;
+- cross-recipient private-information rejection.
 
-Because A1 adds only the isolated `clocktower.epistemic` package, tests and this document, no production recommendation call site or selection policy changes in this milestone.
+No production recommendation call site, candidate generator, selector, scoring policy or UI path is changed by A1.1.
