@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "oracle": {
+    "repository": "pnkfelix/botc-asp",
+    "revision": "616e61b720cc853af031f2623fd6bde33b869865"
+  },
+  "formalStates": {
+    "base7_no_outsider": {
+      "snapshotId": "snapshot-base7-no-outsider", "gameId": "golden-a2", "gameStateRevision": 1,
+      "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a2", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "players": [
+        {"seat": 1, "actualRole": "Librarian", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Librarian", "alive": true, "poisoned": false},
+        {"seat": 2, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
+        {"seat": 3, "actualRole": "Investigator", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Investigator", "alive": true, "poisoned": false},
+        {"seat": 4, "actualRole": "Chef", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Chef", "alive": true, "poisoned": false},
+        {"seat": 5, "actualRole": "Empath", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Empath", "alive": true, "poisoned": false},
+        {"seat": 6, "actualRole": "Spy", "actualAlignment": "EVIL", "actualType": "MINION", "shownRole": "Spy", "alive": true, "poisoned": false},
+        {"seat": 7, "actualRole": "Imp", "actualAlignment": "EVIL", "actualType": "DEMON", "shownRole": "Imp", "alive": true, "poisoned": false}
+      ], "publicPropositions": [], "storytellerOnlyPropositions": []
+    },
+    "base8_registration": {
+      "snapshotId": "snapshot-base8-registration", "gameId": "golden-a2", "gameStateRevision": 2,
+      "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a2", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "players": [
+        {"seat": 1, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
+        {"seat": 2, "actualRole": "Librarian", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Librarian", "alive": true, "poisoned": false},
+        {"seat": 3, "actualRole": "Investigator", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Investigator", "alive": true, "poisoned": false},
+        {"seat": 4, "actualRole": "Chef", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Chef", "alive": true, "poisoned": false},
+        {"seat": 5, "actualRole": "Empath", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Empath", "alive": true, "poisoned": false},
+        {"seat": 6, "actualRole": "Recluse", "actualAlignment": "GOOD", "actualType": "OUTSIDER", "shownRole": "Recluse", "alive": true, "poisoned": false},
+        {"seat": 7, "actualRole": "Spy", "actualAlignment": "EVIL", "actualType": "MINION", "shownRole": "Spy", "alive": true, "poisoned": false},
+        {"seat": 8, "actualRole": "Imp", "actualAlignment": "EVIL", "actualType": "DEMON", "shownRole": "Imp", "alive": true, "poisoned": false}
+      ], "publicPropositions": [], "storytellerOnlyPropositions": []
+    },
+    "baron8": {
+      "snapshotId": "snapshot-baron8", "gameId": "golden-a2", "gameStateRevision": 3,
+      "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a2", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "players": [
+        {"seat": 1, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
+        {"seat": 2, "actualRole": "Chef", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Chef", "alive": true, "poisoned": false},
+        {"seat": 3, "actualRole": "Fortune Teller", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Fortune Teller", "alive": true, "poisoned": false},
+        {"seat": 4, "actualRole": "Drunk", "actualAlignment": "GOOD", "actualType": "OUTSIDER", "shownRole": "Librarian", "alive": true, "poisoned": false},
+        {"seat": 5, "actualRole": "Recluse", "actualAlignment": "GOOD", "actualType": "OUTSIDER", "shownRole": "Recluse", "alive": true, "poisoned": false},
+        {"seat": 6, "actualRole": "Saint", "actualAlignment": "GOOD", "actualType": "OUTSIDER", "shownRole": "Saint", "alive": true, "poisoned": false},
+        {"seat": 7, "actualRole": "Baron", "actualAlignment": "EVIL", "actualType": "MINION", "shownRole": "Baron", "alive": true, "poisoned": false},
+        {"seat": 8, "actualRole": "Imp", "actualAlignment": "EVIL", "actualType": "DEMON", "shownRole": "Imp", "alive": true, "poisoned": false}
+      ], "publicPropositions": [], "storytellerOnlyPropositions": []
+    },
+    "evil_run10": {
+      "snapshotId": "snapshot-evil-run10", "gameId": "golden-a2", "gameStateRevision": 4,
+      "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a2", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "players": [
+        {"seat": 1, "actualRole": "Chef", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Chef", "alive": true, "poisoned": false},
+        {"seat": 2, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
+        {"seat": 3, "actualRole": "Librarian", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Librarian", "alive": true, "poisoned": false},
+        {"seat": 4, "actualRole": "Investigator", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Investigator", "alive": true, "poisoned": false},
+        {"seat": 5, "actualRole": "Empath", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Empath", "alive": true, "poisoned": false},
+        {"seat": 6, "actualRole": "Fortune Teller", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Fortune Teller", "alive": true, "poisoned": false},
+        {"seat": 7, "actualRole": "Undertaker", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Undertaker", "alive": true, "poisoned": false},
+        {"seat": 8, "actualRole": "Poisoner", "actualAlignment": "EVIL", "actualType": "MINION", "shownRole": "Poisoner", "alive": true, "poisoned": false},
+        {"seat": 9, "actualRole": "Spy", "actualAlignment": "EVIL", "actualType": "MINION", "shownRole": "Spy", "alive": true, "poisoned": false},
+        {"seat": 10, "actualRole": "Imp", "actualAlignment": "EVIL", "actualType": "DEMON", "shownRole": "Imp", "alive": true, "poisoned": false}
+      ], "publicPropositions": [], "storytellerOnlyPropositions": []
+    },
+    "fortune_teller8": {
+      "snapshotId": "snapshot-ft8", "gameId": "golden-a2", "gameStateRevision": 5,
+      "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a2", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "players": [
+        {"seat": 1, "actualRole": "Fortune Teller", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Fortune Teller", "alive": true, "poisoned": false},
+        {"seat": 2, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
+        {"seat": 3, "actualRole": "Librarian", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Librarian", "alive": true, "poisoned": false},
+        {"seat": 4, "actualRole": "Investigator", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Investigator", "alive": true, "poisoned": false},
+        {"seat": 5, "actualRole": "Chef", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Chef", "alive": true, "poisoned": false},
+        {"seat": 6, "actualRole": "Recluse", "actualAlignment": "GOOD", "actualType": "OUTSIDER", "shownRole": "Recluse", "alive": true, "poisoned": false},
+        {"seat": 7, "actualRole": "Spy", "actualAlignment": "EVIL", "actualType": "MINION", "shownRole": "Spy", "alive": true, "poisoned": false},
+        {"seat": 8, "actualRole": "Imp", "actualAlignment": "EVIL", "actualType": "DEMON", "shownRole": "Imp", "alive": true, "poisoned": false}
+      ], "publicPropositions": [], "storytellerOnlyPropositions": []
+    },
+    "poisoned_empath8": {
+      "snapshotId": "snapshot-poisoned-empath8", "gameId": "golden-a2", "gameStateRevision": 6,
+      "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a2", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "players": [
+        {"seat": 1, "actualRole": "Empath", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Empath", "alive": true, "poisoned": true},
+        {"seat": 2, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
+        {"seat": 3, "actualRole": "Librarian", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Librarian", "alive": true, "poisoned": false},
+        {"seat": 4, "actualRole": "Investigator", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Investigator", "alive": true, "poisoned": false},
+        {"seat": 5, "actualRole": "Chef", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Chef", "alive": true, "poisoned": false},
+        {"seat": 6, "actualRole": "Saint", "actualAlignment": "GOOD", "actualType": "OUTSIDER", "shownRole": "Saint", "alive": true, "poisoned": false},
+        {"seat": 7, "actualRole": "Poisoner", "actualAlignment": "EVIL", "actualType": "MINION", "shownRole": "Poisoner", "alive": true, "poisoned": false},
+        {"seat": 8, "actualRole": "Imp", "actualAlignment": "EVIL", "actualType": "DEMON", "shownRole": "Imp", "alive": true, "poisoned": false}
+      ], "publicPropositions": [], "storytellerOnlyPropositions": []
+    }
+  },
+  "scenarios": [
+    {"scenarioId": "TB-SETUP-01", "stateRef": "base7_no_outsider", "perspectiveSeat": 1, "knowledgeBoundary": "storyteller truth", "query": {"kind": "setup-profile", "profile": {"townsfolk": 5, "outsiders": 0, "minions": 1, "demons": 1}}, "expectedStatus": "SAT", "outputAssertions": [{"relation": "CONTAINS", "atoms": ["oracle_output(setup_profile)"]}]},
+    {"scenarioId": "TB-SETUP-02", "stateRef": "baron8", "perspectiveSeat": 1, "knowledgeBoundary": "storyteller truth", "query": {"kind": "setup-profile", "requiredRoles": ["Baron"], "profile": {"townsfolk": 3, "outsiders": 3, "minions": 1, "demons": 1}}, "expectedStatus": "SAT", "outputAssertions": [{"relation": "CONTAINS", "atoms": ["oracle_output(setup_profile)"]}]},
+    {"scenarioId": "TB-WW-01", "stateRef": "base8_registration", "perspectiveSeat": 1, "knowledgeBoundary": "private observation only", "query": {"kind": "pair-info", "ability": "Washerwoman", "sourceSeat": 1, "pairSeats": [2, 4], "shownRole": "Librarian"}, "expectedStatus": "SAT", "outputAssertions": [{"relation": "CONTAINS", "atoms": ["oracle_output(info(seat_2,seat_4,librarian))"]}]},
+    {"scenarioId": "TB-WW-02", "stateRef": "base8_registration", "perspectiveSeat": 1, "knowledgeBoundary": "private observation only", "query": {"kind": "pair-info", "ability": "Washerwoman", "sourceSeat": 1, "pairSeats": [6, 8], "shownRole": "Chef"}, "expectedStatus": "UNSAT"},
+    {"scenarioId": "TB-LIB-01", "stateRef": "base8_registration", "perspectiveSeat": 2, "knowledgeBoundary": "private observation only", "query": {"kind": "pair-info", "ability": "Librarian", "sourceSeat": 2, "pairSeats": [5, 6], "shownRole": "Recluse"}, "expectedStatus": "SAT", "outputAssertions": [{"relation": "CONTAINS", "atoms": ["oracle_output(info(seat_5,seat_6,recluse))"]}]},
+    {"scenarioId": "TB-LIB-02", "stateRef": "base7_no_outsider", "perspectiveSeat": 1, "knowledgeBoundary": "private observation only", "query": {"kind": "no-outsiders", "ability": "Librarian", "sourceSeat": 1}, "expectedStatus": "SAT", "outputAssertions": [{"relation": "CONTAINS", "atoms": ["oracle_output(no_outsiders)"]}]},
+    {"scenarioId": "TB-LIB-03", "stateRef": "baron8", "perspectiveSeat": 4, "knowledgeBoundary": "Drunk perceived-role observation", "query": {"kind": "pair-info", "ability": "Librarian", "sourceSeat": 4, "pairSeats": [5, 6], "shownRole": "Recluse"}, "expectedStatus": "SAT", "mismatchDisposition": "EXPECTED_COVERAGE_GAP"},
+    {"scenarioId": "TB-INV-01", "stateRef": "base8_registration", "perspectiveSeat": 3, "knowledgeBoundary": "private observation only", "query": {"kind": "pair-info", "ability": "Investigator", "sourceSeat": 3, "pairSeats": [5, 7], "shownRole": "Spy"}, "expectedStatus": "SAT", "outputAssertions": [{"relation": "CONTAINS", "atoms": ["oracle_output(info(seat_5,seat_7,spy))"]}]},
+    {"scenarioId": "TB-INV-02", "stateRef": "base8_registration", "perspectiveSeat": 3, "knowledgeBoundary": "private observation only", "query": {"kind": "pair-info", "ability": "Investigator", "sourceSeat": 3, "pairSeats": [4, 7], "shownRole": "Spy"}, "expectedStatus": "SAT"},
+    {"scenarioId": "TB-INV-03", "stateRef": "base8_registration", "perspectiveSeat": 3, "knowledgeBoundary": "private observation only", "query": {"kind": "pair-info", "ability": "Investigator", "sourceSeat": 3, "pairSeats": [7, 8], "shownRole": "Poisoner"}, "expectedStatus": "UNSAT"},
+    {"scenarioId": "TB-SPY-01", "stateRef": "base8_registration", "perspectiveSeat": 1, "knowledgeBoundary": "private observation with local registration", "query": {"kind": "pair-info", "ability": "Washerwoman", "sourceSeat": 1, "pairSeats": [5, 7], "shownRole": "Chef"}, "expectedStatus": "SAT", "outputAssertions": [{"relation": "CONTAINS", "atoms": ["oracle_registration(registration(seat_7,townsfolk))"]}]},
+    {"scenarioId": "TB-CHEF-01", "stateRef": "evil_run10", "perspectiveSeat": 1, "knowledgeBoundary": "private numeric observation", "query": {"kind": "numeric-info", "ability": "Chef", "sourceSeat": 1, "value": 2}, "expectedStatus": "SAT", "outputAssertions": [{"relation": "CONTAINS", "atoms": ["oracle_output(count(2))"]}]},
+    {"scenarioId": "TB-CHEF-02", "stateRef": "base8_registration", "perspectiveSeat": 4, "knowledgeBoundary": "private numeric observation with Recluse choice", "query": {"kind": "numeric-info", "ability": "Chef", "sourceSeat": 4, "value": 1, "constrainObservation": false}, "expectedStatus": "SAT", "outputAssertions": [{"relation": "CONTAINS", "atoms": ["oracle_output(count(1))", "oracle_output(count(2))"]}]},
+    {"scenarioId": "TB-EMPATH-01", "stateRef": "base8_registration", "perspectiveSeat": 5, "knowledgeBoundary": "private numeric observation", "query": {"kind": "numeric-info", "ability": "Empath", "sourceSeat": 5, "value": 0, "constrainObservation": false}, "expectedStatus": "SAT", "outputAssertions": [{"relation": "CONTAINS", "atoms": ["oracle_output(count(0))", "oracle_output(count(1))"]}]},
+    {"scenarioId": "TB-FT-01", "stateRef": "fortune_teller8", "perspectiveSeat": 1, "knowledgeBoundary": "private yes/no observation", "query": {"kind": "yes-no", "ability": "Fortune Teller", "sourceSeat": 1, "chosenSeats": [7, 8], "answer": "yes"}, "expectedStatus": "SAT", "outputAssertions": [{"relation": "CONTAINS", "atoms": ["oracle_output(yes)"]}, {"relation": "EXCLUDES", "atoms": ["oracle_output(no)"]}]},
+    {"scenarioId": "TB-FT-02", "stateRef": "fortune_teller8", "perspectiveSeat": 1, "knowledgeBoundary": "private yes/no observation plus storyteller-only red herring", "query": {"kind": "yes-no", "ability": "Fortune Teller", "sourceSeat": 1, "chosenSeats": [2, 3], "redHerringSeat": 2, "answer": "yes"}, "expectedStatus": "SAT", "outputAssertions": [{"relation": "CONTAINS", "atoms": ["oracle_output(yes)"]}]},
+    {"scenarioId": "TB-FT-03", "stateRef": "fortune_teller8", "perspectiveSeat": 1, "knowledgeBoundary": "private observation with local Recluse registration", "query": {"kind": "yes-no", "ability": "Fortune Teller", "sourceSeat": 1, "chosenSeats": [2, 6], "answer": "yes", "constrainObservation": false}, "expectedStatus": "SAT", "outputAssertions": [{"relation": "CONTAINS", "atoms": ["oracle_output(yes)", "oracle_output(no)"]}]},
+    {"scenarioId": "TB-MAL-01", "stateRef": "poisoned_empath8", "perspectiveSeat": 1, "knowledgeBoundary": "recipient is not told poisoning state", "query": {"kind": "numeric-info", "ability": "Empath", "sourceSeat": 1, "value": 0, "constrainObservation": false}, "expectedStatus": "SAT", "outputAssertions": [{"relation": "CONTAINS", "atoms": ["oracle_output(count(0))", "oracle_output(count(1))", "oracle_output(count(2))"]}]}
+  ]
+}
