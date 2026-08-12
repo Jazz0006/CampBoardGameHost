@@ -83,11 +83,13 @@ object EpistemicSemanticJson {
         is InformationProposition.AliveAt -> mapOf("alive" to value.alive, "kind" to "alive-at", "seat" to value.seat)
         is InformationProposition.AbilityStateAt -> mapOf("abilityRole" to value.abilityRole.value, "abilityState" to value.abilityState.name, "kind" to "ability-state-at", "seat" to value.seat)
         is InformationProposition.RoleInPlay -> mapOf("inPlay" to value.inPlay, "kind" to "role-in-play", "role" to value.role.value)
+        is InformationProposition.PlayerCount -> mapOf("kind" to "player-count", "value" to value.value)
         is InformationProposition.SetupProfile -> mapOf("demons" to value.demons, "kind" to "setup-profile", "minions" to value.minions, "outsiders" to value.outsiders, "townsfolk" to value.townsfolk)
         is InformationProposition.AnyOf -> mapOf("alternatives" to value.alternatives.map(::proposition), "kind" to "any-of")
         is InformationProposition.AllOf -> mapOf("kind" to "all-of", "propositions" to value.propositions.map(::proposition))
         is InformationProposition.Not -> mapOf("kind" to "not", "proposition" to proposition(value.proposition))
         is InformationProposition.NumericResult -> mapOf("kind" to "numeric-result", "metric" to value.metric.name, "sourceSeat" to value.sourceSeat, "subjectSeats" to value.subjectSeats, "value" to value.value)
+        is InformationProposition.BooleanResult -> mapOf("kind" to "boolean-result", "metric" to value.metric.name, "sourceSeat" to value.sourceSeat, "subjectSeats" to value.subjectSeats, "value" to value.value)
         is InformationProposition.GrimoireState -> mapOf(
             "kind" to "grimoire-state",
             "seats" to value.seats.sortedBy { it.seat }.map {
@@ -201,11 +203,13 @@ object EpistemicSemanticJson {
         "alive-at" -> InformationProposition.AliveAt(json.getInt("seat"), json.getBoolean("alive"))
         "ability-state-at" -> InformationProposition.AbilityStateAt(json.getInt("seat"), RoleId(json.getString("abilityRole")), AbilityState.valueOf(json.getString("abilityState")))
         "role-in-play" -> InformationProposition.RoleInPlay(RoleId(json.getString("role")), json.getBoolean("inPlay"))
+        "player-count" -> InformationProposition.PlayerCount(json.getInt("value"))
         "setup-profile" -> InformationProposition.SetupProfile(json.getInt("townsfolk"), json.getInt("outsiders"), json.getInt("minions"), json.getInt("demons"))
         "any-of" -> InformationProposition.AnyOf(json.getJSONArray("alternatives").objects().map(::proposition))
         "all-of" -> InformationProposition.AllOf(json.getJSONArray("propositions").objects().map(::proposition))
         "not" -> InformationProposition.Not(proposition(json.getJSONObject("proposition")))
         "numeric-result" -> InformationProposition.NumericResult(NumericMetric.valueOf(json.getString("metric")), json.getInt("sourceSeat"), json.getJSONArray("subjectSeats").ints(), json.getInt("value"))
+        "boolean-result" -> InformationProposition.BooleanResult(BooleanMetric.valueOf(json.getString("metric")), json.getInt("sourceSeat"), json.getJSONArray("subjectSeats").ints(), json.getBoolean("value"))
         "grimoire-state" -> InformationProposition.GrimoireState(json.getJSONArray("seats").objects().map {
             GrimoireSeatView(it.getInt("seat"), RoleId(it.getString("displayedRole")), it.getBoolean("alive"), it.getJSONArray("reminderTokens").strings())
         })

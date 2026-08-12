@@ -5,7 +5,7 @@
 > 状态：当前唯一实施规范  
 > 适用范围：优先覆盖《暗流涌动》（Trouble Brewing），架构支持后续剧本扩展  
 > 取代文档：v2.0、v2.1；旧文档仅保留为设计演进记录  
-> 当前实施基线：A0、A1、A2、A1.1、A2.1 已完成；下一项为 A3  
+> 当前实施基线：A0、A1、A2、A1.1、A2.1、A3 已完成；下一项为 A4
 
 ---
 
@@ -825,6 +825,12 @@ All official golden scenarios pass
 ```
 
 #### A3：EnumeratedWorldSet Baseline
+
+状态：已完成。`PlayerWorldSet` 契约、透明物化世界、TB setup/Baron 分布、
+Drunk 感知身份、Poisoner 隐藏目标、Fortune Teller 红鲱鱼、interaction-local
+Spy/Recluse 登记、观察过滤、精确计数、explanation cluster、golden corpus
+适配、Oracle 分类保留和受约束性能基线均已通过退出审查。详见
+`docs/storyteller_a3_enumerated_world_baseline.md` 与 `docs/storyteller_a3_exit_review.md`。
 
 实现透明、可调试的 exact baseline：
 

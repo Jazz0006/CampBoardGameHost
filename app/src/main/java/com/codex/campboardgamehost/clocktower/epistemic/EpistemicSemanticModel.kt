@@ -112,6 +112,9 @@ sealed interface InformationProposition {
         init { require(seat > 0) }
     }
     data class RoleInPlay(val role: RoleId, val inPlay: Boolean = true) : InformationProposition
+    data class PlayerCount(val value: Int) : InformationProposition {
+        init { require(value in 5..15) { "Trouble Brewing player count must be between 5 and 15." } }
+    }
     data class SetupProfile(val townsfolk: Int, val outsiders: Int, val minions: Int, val demons: Int) : InformationProposition {
         init { require(listOf(townsfolk, outsiders, minions, demons).all { it >= 0 }) { "Setup counts cannot be negative." } }
     }
@@ -132,6 +135,18 @@ sealed interface InformationProposition {
             require(sourceSeat > 0)
             require(subjectSeats.all { it > 0 } && subjectSeats.distinct().size == subjectSeats.size)
             require(value >= 0)
+        }
+    }
+    data class BooleanResult(
+        val metric: BooleanMetric,
+        val sourceSeat: Int,
+        val subjectSeats: List<Int>,
+        val value: Boolean,
+    ) : InformationProposition {
+        init {
+            require(sourceSeat > 0)
+            require(subjectSeats.isNotEmpty() && subjectSeats.all { it > 0 })
+            require(subjectSeats.distinct().size == subjectSeats.size)
         }
     }
 
@@ -162,6 +177,7 @@ data class GrimoireSeatView(
 }
 
 enum class NumericMetric { ADJACENT_EVIL_PAIRS, LIVING_EVIL_NEIGHBOURS, STEPS_TO_NEAREST_MINION, PLAYERS_WAKING_FOR_ABILITY }
+enum class BooleanMetric { DEMON_OR_RED_HERRING_PRESENT }
 enum class ObservationVisibility { PUBLIC, PRIVATE }
 enum class ObservationReliability { RECEIVED_AS_FUNCTIONING, KNOWN_MALFUNCTIONING, NOT_ABILITY_INFORMATION }
 
@@ -302,10 +318,12 @@ private fun InformationProposition.referencedSeats(): Set<Int> = when (this) {
     is InformationProposition.AliveAt -> setOf(seat)
     is InformationProposition.AbilityStateAt -> setOf(seat)
     is InformationProposition.RoleInPlay -> emptySet()
+    is InformationProposition.PlayerCount -> emptySet()
     is InformationProposition.SetupProfile -> emptySet()
     is InformationProposition.AnyOf -> alternatives.flatMap { it.referencedSeats() }.toSet()
     is InformationProposition.AllOf -> propositions.flatMap { it.referencedSeats() }.toSet()
     is InformationProposition.Not -> proposition.referencedSeats()
     is InformationProposition.NumericResult -> setOf(sourceSeat) + subjectSeats
+    is InformationProposition.BooleanResult -> setOf(sourceSeat) + subjectSeats
     is InformationProposition.GrimoireState -> seats.mapTo(linkedSetOf()) { it.seat }
 }

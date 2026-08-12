@@ -70,6 +70,12 @@ class EpistemicSemanticModelTest {
 
         assertEquals(state, EpistemicSemanticJson.decodeFormalGameState(EpistemicSemanticJson.encode(state)))
         assertEquals(pair, EpistemicSemanticJson.decodeInformationProposition(EpistemicSemanticJson.encode(pair)))
+        val playerCount = InformationProposition.PlayerCount(5)
+        assertEquals(playerCount, EpistemicSemanticJson.decodeInformationProposition(EpistemicSemanticJson.encode(playerCount)))
+        val booleanResult = InformationProposition.BooleanResult(
+            BooleanMetric.DEMON_OR_RED_HERRING_PRESENT, 1, listOf(2, 4), true,
+        )
+        assertEquals(booleanResult, EpistemicSemanticJson.decodeInformationProposition(EpistemicSemanticJson.encode(booleanResult)))
         assertEquals(observation, EpistemicSemanticJson.decodeEpistemicObservation(EpistemicSemanticJson.encode(observation)))
         assertEquals(knowledge, EpistemicSemanticJson.decodePlayerKnowledgeSnapshot(EpistemicSemanticJson.encode(knowledge)))
         assertEquals(decision, EpistemicSemanticJson.decodeStorytellerDecisionPoint(EpistemicSemanticJson.encode(decision)))
