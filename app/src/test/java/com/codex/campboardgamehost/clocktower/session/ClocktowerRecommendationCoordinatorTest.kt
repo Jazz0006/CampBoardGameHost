@@ -14,6 +14,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionEvent
+import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
@@ -54,6 +55,23 @@ class ClocktowerRecommendationCoordinatorTest {
             setOf("truth", "lie"),
             information.map { (it.candidate.outcome as DynamicInformationOutcome.Category).id }.toSet(),
         )
+    }
+
+    @Test
+    fun `pre-deal setup selection supplies the committed Drunk identity`() {
+        val coordinator = ClocktowerRecommendationCoordinator()
+
+        val selected = coordinator.selectSetupPlan(
+            SetupCoordinationRequest(game, TroubleBrewingFixtures.roleDefinitions()),
+            RecommendationStyle.BALANCED,
+        )
+
+        val shownRole = requireNotNull(selected)
+            .decisions
+            .filterIsInstance<StorytellerDecision.DrunkShownRole>()
+            .single()
+        assertTrue(shownRole.role != RoleId("Drunk"))
+        assertTrue(game.players.none { it.actualRole == shownRole.role })
     }
 
     @Test

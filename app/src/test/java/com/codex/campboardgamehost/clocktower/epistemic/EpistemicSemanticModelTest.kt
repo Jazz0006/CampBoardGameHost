@@ -67,6 +67,12 @@ class EpistemicSemanticModelTest {
             "choice-set-investigator-1", decision.decisionPointId, ruleset,
             listOf(LegalEpistemicChoice("choice-natural-spy", "investigator-night-1", observation)),
         )
+        val durableRecord = RecordedEpistemicObservation(
+            recordId = "first-night-investigator", phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1, sequence = 3, sourceSeat = 1, sourceAbility = RoleId("Investigator"),
+            visibility = ObservationVisibility.PRIVATE, recipientSeats = setOf(1),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING, proposition = pair,
+        )
 
         assertEquals(state, EpistemicSemanticJson.decodeFormalGameState(EpistemicSemanticJson.encode(state)))
         assertEquals(pair, EpistemicSemanticJson.decodeInformationProposition(EpistemicSemanticJson.encode(pair)))
@@ -77,6 +83,7 @@ class EpistemicSemanticModelTest {
         )
         assertEquals(booleanResult, EpistemicSemanticJson.decodeInformationProposition(EpistemicSemanticJson.encode(booleanResult)))
         assertEquals(observation, EpistemicSemanticJson.decodeEpistemicObservation(EpistemicSemanticJson.encode(observation)))
+        assertEquals(durableRecord, EpistemicSemanticJson.decodeRecordedEpistemicObservation(EpistemicSemanticJson.encode(durableRecord)))
         assertEquals(knowledge, EpistemicSemanticJson.decodePlayerKnowledgeSnapshot(EpistemicSemanticJson.encode(knowledge)))
         assertEquals(decision, EpistemicSemanticJson.decodeStorytellerDecisionPoint(EpistemicSemanticJson.encode(decision)))
         assertEquals(choiceSet, EpistemicSemanticJson.decodeLegalChoiceSet(EpistemicSemanticJson.encode(choiceSet)))

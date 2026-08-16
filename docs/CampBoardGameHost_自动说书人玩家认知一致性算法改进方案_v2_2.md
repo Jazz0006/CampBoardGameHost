@@ -2,10 +2,12 @@
 
 > 版本：2.2  
 > 日期：2026-08-11  
+> 动态决策架构修订：2026-08-15
 > 状态：当前唯一实施规范  
 > 适用范围：优先覆盖《暗流涌动》（Trouble Brewing），架构支持后续剧本扩展  
 > 取代文档：v2.0、v2.1；旧文档仅保留为设计演进记录  
-> 当前实施基线：A0、A1、A2、A1.1、A2.1、A3 已完成；下一项为 A4
+> 当前实施基线：A0、A1、A2、A1.1、A2.1、A3 已完成；A4 已启动
+> 动态决策实施合同：`storyteller_revision_driven_dynamic_decision_engine_plan.md`
 
 ---
 
@@ -853,6 +855,10 @@ Spy/Recluse 登记、观察过滤、精确计数、explanation cluster、golden 
 
 #### A4：ZddPlayerWorldSet Prototype
 
+状态：进行中。首个切片已建立 canonical zero-suppressed decision diagram、
+`ZddPlayerWorldSet` 契约实现、精确计数、不可变 snapshot 和 A3 差分测试基线。
+详见 `docs/storyteller_a4_zdd_prototype.md`。
+
 实现或适配：
 
 ```text
@@ -873,6 +879,11 @@ with ASP as external cross-check
 
 在 POCO X5/X8 完成正确性、P50/P95、内存和降级策略评估后，才决定是否作为 runtime 实现。
 
+下一实施切片固定为 **A4.5 Observation cache rebuild executor**，详细合同见
+`docs/storyteller_a4_5_observation_cache_rebuild_spec.md`。必须先加固 cache identity，再从完整
+observation log 重建受影响 recipient；非首夜/round-1 timeline 明确返回 `DEFERRED_B4`，
+不得调用 setup enumerator，也不得报告 UNSAT。
+
 ### Phase B：Player Epistemic Correctness
 
 #### B1：PlayerWorldSet Domain Integration
@@ -892,7 +903,11 @@ with ASP as external cross-check
 
 #### B3：Drunk Perceived Role Joint Planning
 
-- shown role 与相关 observations 联合规划；
+- shown role 与可行的初始 information path 联合评价；预计算的具体信息在展示前仍是 provisional；
+- 当 setup 包含 Drunk 时，在首张身份卡展示前用本局 seed 计算完整 setup 推荐，并以当前说书人风格对应方案的 `DrunkShownRole` 生成身份卡；
+- 一旦展示，只有 `DrunkShownRole` 成为不可清除的已提交 setup 决定；`DrunkInvestigatorInfo` 和其他具体线索只有实际展示后才提交；
+- 投毒目标、死亡、角色变化等状态改变后，所有尚未展示的具体线索必须基于新 snapshot/revision 重算；不得把预发牌 provisional clue 当作永久锁；
+- 预发牌 setup 选择与身份展示期间的 A4 world-set 预热是两条独立路径，不得将 A4 慢路径移到发牌按钮的同步阶段；
 - 区分 mechanically credible 与 auto-setup eligible；
 - 不证明自身失能；
 - 保留健康世界、Demon 分散度和叙事分支。
@@ -905,6 +920,11 @@ with ASP as external cross-check
 - Undertaker/Ravenkeeper；
 - Imp starpass、Scarlet Woman、Mayor、Monk/Soldier；
 - snapshot/undo/replay。
+
+B4 负责“不同时间点玩家相信哪些世界仍可能”的 exact/shadow 语义，不负责 UI 推荐任务的并发与提交生命周期。
+所有首夜和后续回合的推荐失效、重新生成、stale rejection 与原子提交统一遵循
+`docs/storyteller_revision_driven_dynamic_decision_engine_plan.md`。该动态引擎可以先使用现有规则和启发式评分上线 shadow；
+缺少 B4 覆盖的 epistemic 查询必须显式 `DEFERRED_B4`，不得报告 UNSAT。
 
 ### Phase C：Quality, Policy and Production
 

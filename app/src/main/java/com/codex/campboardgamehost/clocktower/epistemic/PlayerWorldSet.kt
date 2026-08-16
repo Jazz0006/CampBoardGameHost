@@ -22,6 +22,39 @@ interface PlayerWorldSet {
     fun roleWorldCount(seat: Int, role: RoleId): WorldCardinality
     fun demonWorldCount(seat: Int): WorldCardinality
     fun explanationClusters(): ExplanationClusterSummary
+
+    /** Immutable checkpoint. Restoring returns the exact retained implementation instance. */
+    fun checkpoint(): PlayerWorldSetCheckpoint = PlayerWorldSetCheckpoint.create(this)
+
+    fun restore(checkpoint: PlayerWorldSetCheckpoint): PlayerWorldSet = checkpoint.restoreFor(this)
+
+    /**
+     * Returns the propositions belonging to candidate observations which preserve at least one
+     * world. Callers supply the finite legal output domain; the world engine supplies exact SAT.
+     */
+    fun possibleValues(candidateObservations: Collection<EpistemicObservation>): Set<InformationProposition> {
+        require(candidateObservations.isNotEmpty()) { "possibleValues requires at least one candidate observation." }
+        require(candidateObservations.all { observation ->
+            observation.visibility == ObservationVisibility.PUBLIC || recipientSeat in observation.recipientSeats
+        }) { "Every candidate observation must be visible to the world-set recipient." }
+        return candidateObservations.mapNotNullTo(linkedSetOf()) { observation ->
+            observation.proposition.takeUnless { require(observation).isEmpty() }
+        }
+    }
+}
+
+class PlayerWorldSetCheckpoint private constructor(
+    val identity: PlayerWorldSetIdentity,
+    private val retained: PlayerWorldSet,
+) {
+    internal fun restoreFor(current: PlayerWorldSet): PlayerWorldSet {
+        require(current.identity == identity) { "Cannot restore a checkpoint from another player-world identity." }
+        return retained
+    }
+
+    companion object {
+        internal fun create(value: PlayerWorldSet) = PlayerWorldSetCheckpoint(value.identity, value)
+    }
 }
 
 data class ExplanationClusterSummary(

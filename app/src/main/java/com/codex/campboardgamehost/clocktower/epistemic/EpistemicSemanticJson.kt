@@ -20,6 +20,7 @@ object EpistemicSemanticJson {
     fun encode(value: FormalGameState): String = canonical(formalGameState(value))
     fun encode(value: InformationProposition): String = canonical(proposition(value))
     fun encode(value: EpistemicObservation): String = canonical(observation(value))
+    fun encode(value: RecordedEpistemicObservation): String = canonical(recordedObservation(value))
     fun encode(value: StorytellerDecisionPoint): String = canonical(decisionPoint(value))
     fun encode(value: LegalChoiceSet): String = canonical(legalChoiceSet(value))
     fun encode(value: PlayerKnowledgeSnapshot): String = canonical(playerKnowledge(value))
@@ -31,6 +32,7 @@ object EpistemicSemanticJson {
     fun decodeFormalGameState(json: String): FormalGameState = formalGameState(checkedRoot(json))
     fun decodeInformationProposition(json: String): InformationProposition = proposition(JSONObject(json))
     fun decodeEpistemicObservation(json: String): EpistemicObservation = observation(checkedRoot(json))
+    fun decodeRecordedEpistemicObservation(json: String): RecordedEpistemicObservation = recordedObservation(checkedRoot(json))
     fun decodeStorytellerDecisionPoint(json: String): StorytellerDecisionPoint = decisionPoint(checkedRoot(json))
     fun decodeLegalChoiceSet(json: String): LegalChoiceSet = legalChoiceSet(checkedRoot(json))
     fun decodePlayerKnowledgeSnapshot(json: String): PlayerKnowledgeSnapshot = playerKnowledge(checkedRoot(json))
@@ -106,6 +108,14 @@ object EpistemicSemanticJson {
         "sequence" to value.sequence, "snapshotId" to value.snapshotId,
         "sourceAbility" to value.sourceAbility?.value, "sourceSeat" to value.sourceSeat,
         "visibility" to value.visibility.name,
+    )
+
+    private fun recordedObservation(value: RecordedEpistemicObservation): Map<String, Any?> = mapOf(
+        "phase" to value.phase.name, "proposition" to proposition(value.proposition),
+        "recipientSeats" to value.recipientSeats.sorted(), "recordId" to value.recordId,
+        "reliability" to value.reliability.name, "round" to value.round, "schemaVersion" to value.schemaVersion,
+        "sequence" to value.sequence, "sourceAbility" to value.sourceAbility?.value,
+        "sourceSeat" to value.sourceSeat, "visibility" to value.visibility.name,
     )
 
     private fun identityObservation(value: EpistemicObservation, perspectiveSeat: Int): Map<String, Any?> = mapOf(
@@ -221,6 +231,16 @@ object EpistemicSemanticJson {
         phase = StorytellerPhase.valueOf(json.getString("phase")), round = json.getInt("round"),
         sequence = json.getInt("sequence"), sourceSeat = json.nullableInt("sourceSeat"),
         sourceAbility = json.nullableString("sourceAbility")?.let(::RoleId),
+        visibility = ObservationVisibility.valueOf(json.getString("visibility")),
+        recipientSeats = json.getJSONArray("recipientSeats").ints().toSet(),
+        reliability = ObservationReliability.valueOf(json.getString("reliability")),
+        proposition = proposition(json.getJSONObject("proposition")), schemaVersion = json.getInt("schemaVersion"),
+    )
+
+    private fun recordedObservation(json: JSONObject): RecordedEpistemicObservation = RecordedEpistemicObservation(
+        recordId = json.getString("recordId"), phase = StorytellerPhase.valueOf(json.getString("phase")),
+        round = json.getInt("round"), sequence = json.getInt("sequence"),
+        sourceSeat = json.nullableInt("sourceSeat"), sourceAbility = json.nullableString("sourceAbility")?.let(::RoleId),
         visibility = ObservationVisibility.valueOf(json.getString("visibility")),
         recipientSeats = json.getJSONArray("recipientSeats").ints().toSet(),
         reliability = ObservationReliability.valueOf(json.getString("reliability")),

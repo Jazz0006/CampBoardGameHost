@@ -18,6 +18,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInforma
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SpecialRegistrationContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
+import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 
 internal class ClocktowerRecommendationCoordinator(
     initialArchive: DecisionHistoryArchive = DecisionHistoryArchive(),
@@ -34,6 +35,15 @@ internal class ClocktowerRecommendationCoordinator(
         request.lockedDecisions,
         request.history,
     )
+
+    fun selectSetupPlan(
+        request: SetupCoordinationRequest,
+        style: RecommendationStyle,
+    ): RecommendationPlan? {
+        val result = recommendSetup(request)
+        if (result.failureCodes.isNotEmpty()) return null
+        return WeightedStableSelector.selectStyle(result.plans, style, RecommendationPlan::style)
+    }
 
     fun resolveInformation(request: InformationResolutionRequest) = nightModule.resolveInformation(request)
 

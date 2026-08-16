@@ -44,7 +44,7 @@ internal object SetupCandidateGenerator {
         return drunkDecisionOptions(game, scriptRoles, inPlayRoles).map { decisions ->
             val shown = decisions.filterIsInstance<StorytellerDecision.DrunkShownRole>().single()
             val investigatorInfo = decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().singleOrNull()
-            val familyId = if (investigatorInfo == null) "drunk-shown-role" else "drunk-investigator-info"
+            val familyId = drunkShownRoleFamily(decisions) ?: "drunk-shown-role"
             val canonical = buildList {
                 add(shown.role.value)
                 add(investigatorInfo?.shownMinion?.value.orEmpty())
@@ -179,11 +179,7 @@ internal object SetupCandidateGenerator {
         generatePlans(game, roleDefinitions, lockedDecisions).map(::planCandidate)
 
     fun planCandidate(plan: CandidatePlan): DecisionCandidate<SetupClueOutcome.FullPlan> {
-        val familyId = when {
-            plan.decisions.any { it is StorytellerDecision.DrunkInvestigatorInfo } -> "drunk-investigator-info"
-            plan.decisions.any { it is StorytellerDecision.DrunkShownRole } -> "drunk-shown-role"
-            else -> "setup-plan"
-        }
+        val familyId = drunkShownRoleFamily(plan.decisions) ?: "setup-plan"
         return DecisionCandidate(
             candidateId = stableId("setup-plan", canonicalPlan(plan.decisions)),
             candidateFamilyId = familyId,
@@ -193,6 +189,13 @@ internal object SetupCandidateGenerator {
             metadata = metadata("setup-plan", setOf("setup", "complete-plan")),
         )
     }
+
+    internal fun drunkShownRoleFamily(decisions: List<StorytellerDecision>): String? = decisions
+        .filterIsInstance<StorytellerDecision.DrunkShownRole>()
+        .singleOrNull()
+        ?.role
+        ?.value
+        ?.let { role -> "drunk-shown-role:$role" }
 
     private fun scriptRoles(game: GameState, roleDefinitions: List<RoleDefinition>): List<RoleDefinition> =
         roleDefinitions.filter { game.script in it.scriptIds }.distinctBy(RoleDefinition::id)

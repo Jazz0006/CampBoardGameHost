@@ -46,4 +46,17 @@ class DecisionSeedFactoryTest {
 
         assertNotEquals(DecisionSeedFactory.create(first), DecisionSeedFactory.create(second))
     }
+
+    @Test
+    fun `characterization - current setup seed has no phase observation or locked-decision fields`() {
+        val firstNightBeforeObservation = material
+        // The model cannot express a later phase, a newly shown observation, or a changed lock.
+        // Consequently distinct dynamic contexts collapse to this same legacy setup-seed material.
+        val nightTwoAfterObservation = material
+
+        assertEquals(
+            DecisionSeedFactory.create(firstNightBeforeObservation),
+            DecisionSeedFactory.create(nightTwoAfterObservation),
+        )
+    }
 }

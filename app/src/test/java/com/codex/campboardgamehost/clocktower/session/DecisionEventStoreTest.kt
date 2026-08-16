@@ -40,6 +40,15 @@ class DecisionEventStoreTest {
     }
 
     @Test
+    fun `characterization - either revision change rejects a new commit`() {
+        val store = InMemoryDecisionEventStore()
+
+        assertTrue(store.appendAtomically(event(), DecisionRevision(4, 3)) is DecisionAppendResult.StaleRequest)
+        assertTrue(store.appendAtomically(event(), DecisionRevision(5, 2)) is DecisionAppendResult.StaleRequest)
+        assertTrue(store.allEvents().isEmpty())
+    }
+
+    @Test
     fun `reusing idempotency key for different content fails closed`() {
         val store = InMemoryDecisionEventStore()
         val first = event()

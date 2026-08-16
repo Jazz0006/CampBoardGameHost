@@ -2,8 +2,17 @@ package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
+import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
+import com.codex.campboardgamehost.clocktower.epistemic.A4PlayerKnowledgeFactory
+import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
+import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
@@ -65,6 +74,58 @@ class ClocktowerGameSessionTest {
         val restored = ClocktowerGameSession.restore(original.snapshot)
 
         assertEquals(listOf(signature), restored.snapshot.crossGameHistory.recentSignatures)
+    }
+
+    @Test
+    fun `epistemic observation history persists across state revisions and restore`() {
+        val session = newSession()
+        session.recordEpistemicObservation(
+            RecordedEpistemicObservation(
+                recordId = "dawn-one-dead",
+                phase = StorytellerPhase.DAWN,
+                round = 1,
+                sequence = 0,
+                sourceSeat = null,
+                sourceAbility = null,
+                visibility = ObservationVisibility.PUBLIC,
+                recipientSeats = emptySet(),
+                reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+                proposition = InformationProposition.AliveAt(1, false),
+            ),
+        )
+        session.updateGameState(initialState.copy(players = initialState.players.mapIndexed { index, player ->
+            if (index == 0) player.copy(alive = false) else player
+        }))
+
+        val restored = ClocktowerGameSession.restore(session.snapshot)
+
+        assertEquals(1, restored.snapshot.epistemicObservationLog.records.size)
+        assertEquals("dawn-one-dead", restored.snapshot.epistemicObservationLog.records.single().recordId)
+        assertEquals(1, restored.snapshot.playerInputRevision)
+        assertEquals(1, restored.snapshot.gameStateRevision)
+    }
+
+    @Test
+    fun `restored epistemic history rebuilds identical recipient knowledge`() {
+        val session = newSession()
+        session.recordEpistemicObservation(RecordedEpistemicObservation(
+            "public-death", StorytellerPhase.DAWN, 1, 0, null, null,
+            ObservationVisibility.PUBLIC, emptySet(), ObservationReliability.NOT_ABILITY_INFORMATION,
+            InformationProposition.AliveAt(2, false),
+        ))
+        session.recordEpistemicObservation(RecordedEpistemicObservation(
+            "chef-info", StorytellerPhase.FIRST_NIGHT, 1, 4, 1, RoleId("Chef"),
+            ObservationVisibility.PRIVATE, setOf(1), ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            InformationProposition.NumericResult(NumericMetric.ADJACENT_EVIL_PAIRS, 1, (1..8).toList(), 1),
+        ))
+        val roles = initialState.players.associate { it.seat to (it.shownRole ?: it.actualRole) }
+        fun knowledge(snapshot: com.codex.campboardgamehost.clocktower.domain.GameSnapshot) =
+            A4PlayerKnowledgeFactory.createAll(FormalGameState.from(snapshot, StorytellerPhase.DAWN, 1), roles, snapshot.epistemicObservationLog)
+
+        val before = knowledge(session.snapshot)
+        val after = knowledge(ClocktowerGameSession.restore(session.snapshot).snapshot)
+
+        assertEquals(before, after)
     }
 
     @Test(expected = IllegalArgumentException::class)

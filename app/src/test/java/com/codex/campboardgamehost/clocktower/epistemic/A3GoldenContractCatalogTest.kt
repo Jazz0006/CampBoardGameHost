@@ -139,16 +139,16 @@ internal class A3GoldenContractRunner(private val catalog: JSONObject) {
     private val script = ScriptId("trouble_brewing")
     private val roles: List<RoleDefinition> = buildRoleCatalog(catalog.getJSONObject("formalStates"))
 
-    fun runAll(): List<A3ExecutionResult> = catalog.getJSONArray("scenarios").objects()
+    fun runAll(useZdd: Boolean = false): List<A3ExecutionResult> = catalog.getJSONArray("scenarios").objects()
         .filter { it.getJSONObject("query").getString("kind") in EXECUTABLE_QUERY_KINDS }
-        .map(::run)
+        .map { run(it, useZdd) }
 
-    private fun run(scenario: JSONObject): A3ExecutionResult {
+    private fun run(scenario: JSONObject, useZdd: Boolean): A3ExecutionResult {
         val id = scenario.getString("scenarioId")
         return try {
             val state = catalog.getJSONObject("formalStates").getJSONObject(scenario.getString("stateRef"))
             val query = scenario.getJSONObject("query")
-            val outcome = execute(id, state, scenario.getInt("perspectiveSeat"), query)
+            val outcome = execute(id, state, scenario.getInt("perspectiveSeat"), query, useZdd)
             val expected = scenario.getString("expectedStatus")
             val passed = when (expected) {
                 "SAT" -> outcome.selectedMatches
@@ -175,7 +175,7 @@ internal class A3GoldenContractRunner(private val catalog: JSONObject) {
         val hasBoundRegistration: Boolean = false,
     )
 
-    private fun execute(id: String, state: JSONObject, recipientSeat: Int, query: JSONObject): Outcome {
+    private fun execute(id: String, state: JSONObject, recipientSeat: Int, query: JSONObject, useZdd: Boolean): Outcome {
         val players = state.getJSONArray("players").objects()
         val ruleset = state.getJSONObject("rulesetRef").let {
             RulesetRef(script, it.getString("scriptContentHash"), it.getString("rulesetVersion"),
@@ -206,9 +206,10 @@ internal class A3GoldenContractRunner(private val catalog: JSONObject) {
                 }
             }.toMap(),
         )
-        val set = EnumeratedWorldSet.fromWorlds(
+        val enumerated = EnumeratedWorldSet.fromWorlds(
             ruleset, knowledge, EpistemicHypothesis.MECHANICALLY_CREDIBLE, roles, listOf(world),
         )
+        val set: PlayerWorldSet = if (useZdd) ZddPlayerWorldSet.fromEnumerated(enumerated) else enumerated
         return when (query.getString("kind")) {
             "setup-profile" -> Outcome(!set.isEmpty() && profile == query.setupProfile())
             "no-outsiders" -> Outcome(profile.outsiders == 0, setOf("no-outsiders"))
@@ -219,21 +220,21 @@ internal class A3GoldenContractRunner(private val catalog: JSONObject) {
         }
     }
 
-    private fun evaluatePair(id: String, state: JSONObject, set: EnumeratedWorldSet, query: JSONObject): Outcome {
+    private fun evaluatePair(id: String, state: JSONObject, set: PlayerWorldSet, query: JSONObject): Outcome {
         val role = RoleId(query.getString("shownRole"))
         val observation = observation(id, state, query, InformationProposition.AnyOf(
             query.getJSONArray("pairSeats").ints().map { InformationProposition.RoleAt(it, role) },
         ))
         val filtered = set.require(observation)
-        return Outcome(!filtered.isEmpty(), setOf(role.value), set.boundRegistrationFacts(observation).isNotEmpty())
+        return Outcome(!filtered.isEmpty(), setOf(role.value), boundRegistrationFacts(set, observation).isNotEmpty())
     }
 
     private fun evaluateNumeric(
-        id: String, state: JSONObject, set: EnumeratedWorldSet, query: JSONObject, playerCount: Int,
+        id: String, state: JSONObject, set: PlayerWorldSet, query: JSONObject, playerCount: Int,
     ): Outcome {
         val ability = query.getString("ability")
         val source = query.getInt("sourceSeat")
-        val subjects = if (ability == "Chef") (1..playerCount).toList() else livingNeighbours(source, set.enumeratedWorlds().single())
+        val subjects = if (ability == "Chef") (1..playerCount).toList() else livingNeighbours(source, state)
         val metric = if (ability == "Chef") NumericMetric.ADJACENT_EVIL_PAIRS else NumericMetric.LIVING_EVIL_NEIGHBOURS
         val max = if (ability == "Chef") playerCount else 2
         val evaluations = (0..max).associate { value ->
@@ -243,10 +244,12 @@ internal class A3GoldenContractRunner(private val catalog: JSONObject) {
         }
         val outputs = evaluations.filterValues { it }.keys.mapTo(linkedSetOf()) { it.proposition.let { p -> (p as InformationProposition.NumericResult).value }.toString() }
         val selected = query.getInt("value").toString() in outputs
-        return Outcome(selected, outputs, evaluations.filterValues { it }.keys.any { set.boundRegistrationFacts(it).isNotEmpty() })
+        return Outcome(selected, outputs, evaluations.filterValues { it }.keys.any {
+            boundRegistrationFacts(set, it).isNotEmpty()
+        })
     }
 
-    private fun evaluateYesNo(id: String, state: JSONObject, set: EnumeratedWorldSet, query: JSONObject): Outcome {
+    private fun evaluateYesNo(id: String, state: JSONObject, set: PlayerWorldSet, query: JSONObject): Outcome {
         val outputs = linkedSetOf<String>()
         var bound = false
         for (value in listOf(true, false)) {
@@ -256,7 +259,7 @@ internal class A3GoldenContractRunner(private val catalog: JSONObject) {
             ), suffix = value.toString())
             if (!set.require(observation).isEmpty()) {
                 outputs += if (value) "yes" else "no"
-                bound = bound || set.boundRegistrationFacts(observation).isNotEmpty()
+                bound = bound || boundRegistrationFacts(set, observation).isNotEmpty()
             }
         }
         return Outcome(query.getString("answer") in outputs, outputs, bound)
@@ -277,13 +280,24 @@ internal class A3GoldenContractRunner(private val catalog: JSONObject) {
         proposition = proposition,
     )
 
-    private fun livingNeighbours(source: Int, world: EnumeratedWorld): List<Int> {
-        val seats = world.rolesBySeat.keys.sorted()
+    private fun livingNeighbours(source: Int, state: JSONObject): List<Int> {
+        val players = state.getJSONArray("players").objects()
+        val seats = players.map { it.getInt("seat") }.sorted()
+        val alive = players.filter { it.getBoolean("alive") }.mapTo(hashSetOf()) { it.getInt("seat") }
         val index = seats.indexOf(source)
         fun seek(step: Int): Int = generateSequence(index + step) { it + step }
             .map { seats[(it % seats.size + seats.size) % seats.size] }
-            .first { it in world.aliveSeats }
+            .first { it in alive }
         return listOf(seek(-1), seek(1))
+    }
+
+    private fun boundRegistrationFacts(
+        set: PlayerWorldSet,
+        observation: EpistemicObservation,
+    ) = when (set) {
+        is EnumeratedWorldSet -> set.boundRegistrationFacts(observation)
+        is ZddPlayerWorldSet -> set.boundRegistrationFacts(observation)
+        else -> emptySet()
     }
 
     private fun expectedOutputs(scenario: JSONObject): Set<String> = scenario.optJSONArray("outputAssertions")

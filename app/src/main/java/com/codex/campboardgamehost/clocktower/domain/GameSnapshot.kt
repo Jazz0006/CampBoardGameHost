@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.domain
 
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 
 data class GameSnapshot(
     val gameId: String,
@@ -11,6 +12,8 @@ data class GameSnapshot(
     val gameState: GameState,
     val decisionHistory: DecisionHistoryArchive = DecisionHistoryArchive(),
     val crossGameHistory: CrossGameHistory = CrossGameHistory(),
+    /** Recipient-scoped facts already delivered during this game; actual roles are never inferred from it. */
+    val epistemicObservationLog: EpistemicObservationLog = EpistemicObservationLog(),
 ) {
     init {
         require(gameId.isNotBlank()) { "gameId cannot be blank." }

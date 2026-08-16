@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.domain
 
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class GameSnapshotTest {
@@ -28,6 +29,22 @@ class GameSnapshotTest {
         assertEquals(game.seed, snapshot.gameSeed)
         assertEquals(4, snapshot.gameStateRevision)
         assertEquals(7, snapshot.playerInputRevision)
+    }
+
+    @Test
+    fun `characterization - a mechanically different state can currently retain both revisions`() {
+        val snapshot = GameSnapshot(
+            gameId = "game-2026-08-06-001", gameStateRevision = 4, playerInputRevision = 7,
+            gameSeed = game.seed, rulesetRef = rulesetRef, gameState = game,
+        )
+        val changedState = game.copy(players = game.players.mapIndexed { index, player ->
+            if (index == 0) player.copy(alive = false) else player
+        })
+        val changed = snapshot.copy(gameState = changedState)
+
+        assertNotEquals(snapshot.gameState, changed.gameState)
+        assertEquals(snapshot.gameStateRevision, changed.gameStateRevision)
+        assertEquals(snapshot.playerInputRevision, changed.playerInputRevision)
     }
 
     @Test(expected = IllegalArgumentException::class)

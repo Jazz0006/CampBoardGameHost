@@ -6,6 +6,7 @@ import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 
 /** Exact, intentionally simple Trouble Brewing setup enumerator used as the A3 correctness oracle. */
 object TroubleBrewingWorldEnumerator {
@@ -17,6 +18,22 @@ object TroubleBrewingWorldEnumerator {
         hypothesis: EpistemicHypothesis,
         roleDefinitions: Collection<RoleDefinition>,
     ): EnumeratedWorldSet {
+        val stream = stream(rulesetRef, knowledge, roleDefinitions)
+        return EnumeratedWorldSet.fromWorlds(rulesetRef, knowledge, hypothesis, stream.roleDefinitions, stream.worlds.toList())
+    }
+
+    /** A4 construction seam: emits exact worlds lazily without retaining the complete family. */
+    internal fun stream(
+        rulesetRef: RulesetRef,
+        knowledge: PlayerKnowledgeSnapshot,
+        roleDefinitions: Collection<RoleDefinition>,
+    ): TroubleBrewingWorldStream {
+        val unsupportedTimelineObservation = (knowledge.publicObservations + knowledge.privateObservations)
+            .firstOrNull { it.phase != StorytellerPhase.FIRST_NIGHT || it.round != 1 }
+        require(unsupportedTimelineObservation == null) {
+            "A3/A4 setup enumeration supports first-night observations only; " +
+                "multi-night replay requires the B4 timeline model and must not be reported as UNSAT."
+        }
         val catalog = roleDefinitions.filter { rulesetRef.scriptId in it.scriptIds }.associateBy(RoleDefinition::id)
         require(catalog.isNotEmpty()) { "No roles belong to ruleset ${rulesetRef.scriptId.value}." }
         val playerCount = inferPlayerCount(knowledge)
@@ -25,12 +42,11 @@ object TroubleBrewingWorldEnumerator {
         require(profiles.all { it in TroubleBrewingSetupProfiles.legalProfiles(playerCount) }) {
             "Setup knowledge contains an illegal Trouble Brewing profile."
         }
-        val worlds = buildList {
-            profiles.forEach { profile ->
-                enumerateProfile(profile, knowledge, catalog).forEach(::add)
-            }
-        }
-        return EnumeratedWorldSet.fromWorlds(rulesetRef, knowledge, hypothesis, catalog.values, worlds)
+        return TroubleBrewingWorldStream(
+            playerCount = playerCount,
+            roleDefinitions = catalog.values,
+            worlds = profiles.asSequence().flatMap { profile -> enumerateProfile(profile, knowledge, catalog) },
+        )
     }
 
     private fun inferPlayerCount(knowledge: PlayerKnowledgeSnapshot): Int {
@@ -146,6 +162,12 @@ object TroubleBrewingWorldEnumerator {
         }
     }
 }
+
+internal data class TroubleBrewingWorldStream(
+    val playerCount: Int,
+    val roleDefinitions: Collection<RoleDefinition>,
+    val worlds: Sequence<EnumeratedWorld>,
+)
 
 object TroubleBrewingSetupProfiles {
     private val STANDARD = mapOf(

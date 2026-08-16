@@ -208,7 +208,25 @@ internal object SetupRecommendationService {
             )
         }
         val activeFamilies = cooledPool.map { it.candidate.candidateFamilyId }.distinct().sorted()
-        val budget = FamilyProbabilityBudget(activeFamilies.associateWith { 1L })
+        val budget = FamilyProbabilityBudget(activeFamilies.associateWith { family ->
+            val representative = cooledPool.first { it.candidate.candidateFamilyId == family }
+            val shownRole = planByCandidateId.getValue(representative.candidate.candidateId)
+                .effectSignature
+                .drunkShownRole
+            if (shownRole == null) {
+                WeightedStableSelector.FIXED_POINT_SCALE
+            } else {
+                // The selector normalizes weights inside each family. Put the shown-role
+                // cooldown on the family itself so it cannot disappear during normalization.
+                HistoryCooldown.multiplierFixedPoint(
+                    HistoricalClueSignature(
+                        decisionType = "setup-plan",
+                        drunkShownRole = shownRole,
+                    ),
+                    history,
+                )
+            }
+        })
         val seed = MurmurHash3.low64Utf8(
             "$SELECTOR_VERSION|${game.seed}|${profile.style.name}|${history.digest()}|${cooledPool.map { it.candidate.candidateId }.sorted().joinToString(",")}",
         )
@@ -231,11 +249,8 @@ internal object SetupRecommendationService {
         } ?: selected
     }
 
-    private fun setupFamily(plan: RecommendationPlan): String = when {
-        plan.decisions.any { it is StorytellerDecision.DrunkInvestigatorInfo } -> "drunk-investigator-info"
-        plan.decisions.any { it is StorytellerDecision.DrunkShownRole } -> "drunk-shown-role"
-        else -> "setup-plan"
-    }
+    private fun setupFamily(plan: RecommendationPlan): String =
+        SetupCandidateGenerator.drunkShownRoleFamily(plan.decisions) ?: "setup-plan"
 
     private fun retainBest(
         queue: PriorityQueue<RecommendationPlan>,

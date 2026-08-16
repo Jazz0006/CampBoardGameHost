@@ -77,6 +77,7 @@ class EnumeratedWorldSet private constructor(
 
     /** Debug/test view only; production integrations must use [PlayerWorldSet]. */
     internal fun enumeratedWorlds(): List<EnumeratedWorld> = worlds.toList()
+    internal fun roleDefinitions(): Collection<RoleDefinition> = roles.values
 
     /**
      * The interaction-local registration selections that preserve at least one world for [observation].
@@ -283,6 +284,12 @@ internal object TroubleBrewingWorldObservationEvaluator {
             (queriedType == null || actual.type == queriedType) &&
             (queriedAlignment == null || actual.alignment == queriedAlignment)
         ) return WorldObservationResult(true)
+
+        // Spy/Recluse registration is an ability of the queried character, not of the
+        // information source. Poisoning that subject removes the optional registration branch.
+        if ((world.abilityStatesBySeat[seat] ?: AbilityState.FUNCTIONING) != AbilityState.FUNCTIONING) {
+            return WorldObservationResult(false)
+        }
 
         return when (actualRole.value.lowercase()) {
             "spy" -> WorldObservationResult(

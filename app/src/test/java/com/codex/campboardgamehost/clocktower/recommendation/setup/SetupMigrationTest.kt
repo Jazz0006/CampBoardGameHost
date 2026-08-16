@@ -16,6 +16,8 @@ import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
+import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
+import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -30,7 +32,19 @@ class SetupMigrationTest {
         )
 
         assertEquals(114, candidates.size)
-        assertEquals(setOf("drunk-shown-role", "drunk-investigator-info"), candidates.map { it.candidateFamilyId }.toSet())
+        assertTrue(candidates.map { it.candidateFamilyId }.all { it.startsWith("drunk-shown-role:") })
+        assertEquals(
+            candidates.map { (it.outcome as SetupClueOutcome.DrunkShownRole).shownRole }.toSet(),
+            candidates.map { it.candidateFamilyId.removePrefix("drunk-shown-role:") }.map(::RoleId).toSet(),
+        )
+        assertEquals(
+            1,
+            candidates
+                .filter { (it.outcome as SetupClueOutcome.DrunkShownRole).shownRole == RoleId("Investigator") }
+                .map { it.candidateFamilyId }
+                .distinct()
+                .size,
+        )
         assertTrue(candidates.all { it.abilityState == AbilityState.MALFUNCTIONING_DRUNK })
         assertTrue(candidates.all { it.truthRelation == TruthRelation.NOT_APPLICABLE })
         assertTrue(candidates.all { it.effects.single() is EffectDraft.Reminder })
@@ -91,7 +105,7 @@ class SetupMigrationTest {
     }
 
     @Test
-    fun `one thousand setup selections are reproducible but not investigator monopolized`() {
+    fun `one thousand setup selections are reproducible and not monopolized by one shown role`() {
         val template = TroubleBrewingFixtures.eightPlayerExample()
         val roles = TroubleBrewingFixtures.roleDefinitions()
         val shownRoleCounts = (0 until 1_000).map { seed ->
@@ -100,11 +114,56 @@ class SetupMigrationTest {
                 .decisions.filterIsInstance<StorytellerDecision.DrunkShownRole>().single().role
         }.groupingBy { it }.eachCount()
 
-        assertTrue("shownRoleCounts=$shownRoleCounts", shownRoleCounts.size >= 2)
-        assertTrue((shownRoleCounts[RoleId("Investigator")] ?: 0) < 900)
+        assertTrue("shownRoleCounts=$shownRoleCounts", shownRoleCounts.size >= 3)
+        assertTrue("shownRoleCounts=$shownRoleCounts", shownRoleCounts.values.max() < 600)
         val first = SetupRecommendationService.recommend(template.copy(seed = 777), roles)
         val replay = SetupRecommendationService.recommend(template.copy(seed = 777), roles)
         assertEquals(first.map { it.decisions }, replay.map { it.decisions })
+    }
+
+    @Test
+    fun `recent Drunk shown role receives a family-level soft cooldown`() {
+        val template = TroubleBrewingFixtures.eightPlayerExample()
+        val roles = TroubleBrewingFixtures.roleDefinitions()
+        val repeatedRole = RoleId("Investigator")
+        val history = CrossGameHistory(
+            listOf(HistoricalClueSignature("setup-plan", drunkShownRole = repeatedRole)),
+        )
+
+        val withoutHistory = (0 until 200).count { seed ->
+            SetupRecommendationService.recommend(template.copy(seed = seed.toLong()), roles)
+                .single { it.style == RecommendationStyle.BALANCED }
+                .decisions.filterIsInstance<StorytellerDecision.DrunkShownRole>().single().role == repeatedRole
+        }
+        val withHistory = (0 until 200).count { seed ->
+            SetupRecommendationService.recommend(template.copy(seed = seed.toLong()), roles, history)
+                .single { it.style == RecommendationStyle.BALANCED }
+                .decisions.filterIsInstance<StorytellerDecision.DrunkShownRole>().single().role == repeatedRole
+        }
+
+        assertTrue("withoutHistory=$withoutHistory withHistory=$withHistory", withHistory < withoutHistory)
+    }
+
+    @Test
+    fun `committed Drunk shown role constrains every later setup recommendation`() {
+        val game = TroubleBrewingFixtures.eightPlayerExample()
+        val committed = StorytellerDecision.DrunkShownRole(RoleId("Investigator"))
+        val committedInformation = StorytellerDecision.DrunkInvestigatorInfo(
+            shownMinion = RoleId("Poisoner"),
+            candidateSeats = listOf(2, 4),
+        )
+
+        val plans = SetupRecommendationService.recommendConstrained(
+            game = game,
+            roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
+            lockedDecisions = listOf(committed, committedInformation),
+        ).plans
+
+        assertTrue(plans.isNotEmpty())
+        assertTrue(plans.all { plan ->
+            plan.decisions.filterIsInstance<StorytellerDecision.DrunkShownRole>().single() == committed &&
+                plan.decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().single() == committedInformation
+        })
     }
 
     private fun game(vararg players: PlayerState) = GameState(

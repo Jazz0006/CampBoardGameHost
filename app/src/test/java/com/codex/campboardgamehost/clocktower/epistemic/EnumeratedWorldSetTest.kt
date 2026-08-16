@@ -41,6 +41,30 @@ class EnumeratedWorldSetTest {
         assertEquals(InformationProposition.SetupProfile(9, 2, 3, 1), TroubleBrewingSetupProfiles.standard(15))
     }
 
+    @Test(expected = IllegalArgumentException::class)
+    fun `setup enumerator rejects multi-night history instead of returning false UNSAT`() {
+        val publicDeath = EpistemicObservation(
+            observationId = "public-death",
+            snapshotId = snapshotId,
+            phase = StorytellerPhase.DAWN,
+            round = 1,
+            sequence = 1,
+            sourceSeat = null,
+            sourceAbility = null,
+            visibility = ObservationVisibility.PUBLIC,
+            recipientSeats = emptySet(),
+            reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+            proposition = InformationProposition.AliveAt(2, false),
+        )
+        val knowledge = knowledge("Chef", InformationProposition.SetupProfile(2, 1, 1, 1)).copy(
+            publicObservations = listOf(publicDeath),
+        )
+
+        TroubleBrewingWorldEnumerator.enumerate(
+            ruleset, knowledge, EpistemicHypothesis.MECHANICALLY_CREDIBLE, roles,
+        )
+    }
+
     @Test fun `enumerator keeps standard and hidden Baron profiles without leaking setup truth`() {
         val knowledge = PlayerKnowledgeSnapshot(
             knowledgeSnapshotId = "knowledge-a3-player-count",
@@ -136,6 +160,40 @@ class EnumeratedWorldSetTest {
         assertEquals(2, facts.single().subjectSeat)
         assertEquals(RoleId("Empath"), facts.single().registeredRole)
         assertEquals(RegistrationReason.SPY_ABILITY, facts.single().reason)
+    }
+
+    @Test fun `poisoned Spy and Recluse cannot use optional registration`() {
+        val washerwomanSeesEmpath = observation(
+            InformationProposition.RoleAt(2, RoleId("Empath")),
+            sourceAbility = "Washerwoman",
+        )
+        val investigatorSeesPoisoner = observation(
+            InformationProposition.RoleAt(5, RoleId("Poisoner")),
+            sourceAbility = "Investigator",
+        )
+        val poisonedSpy = fromWorlds(listOf(
+            world("Chef", "Spy", "Imp", "Empath", "Recluse").copy(
+                abilityStatesBySeat = mapOf(2 to AbilityState.MALFUNCTIONING_POISONED),
+            ),
+        ))
+        val poisonedRecluse = fromWorlds(listOf(
+            world("Chef", "Spy", "Imp", "Empath", "Recluse").copy(
+                abilityStatesBySeat = mapOf(5 to AbilityState.MALFUNCTIONING_POISONED),
+            ),
+        ))
+
+        assertTrue(poisonedSpy.require(washerwomanSeesEmpath).isEmpty())
+        assertTrue(poisonedSpy.boundRegistrationFacts(washerwomanSeesEmpath).isEmpty())
+        assertTrue(poisonedRecluse.require(investigatorSeesPoisoner).isEmpty())
+        assertTrue(poisonedRecluse.boundRegistrationFacts(investigatorSeesPoisoner).isEmpty())
+
+        // Poisoning disables only the special-registration branch; actual identity still matches.
+        assertFalse(poisonedSpy.require(observation(
+            InformationProposition.RoleAt(2, RoleId("Spy")), sourceAbility = "Undertaker",
+        )).isEmpty())
+        assertFalse(poisonedRecluse.require(observation(
+            InformationProposition.RoleAt(5, RoleId("Recluse")), sourceAbility = "Undertaker",
+        )).isEmpty())
     }
 
     @Test(expected = IllegalArgumentException::class)
