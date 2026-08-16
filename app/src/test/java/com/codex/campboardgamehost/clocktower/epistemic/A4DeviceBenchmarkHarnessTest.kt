@@ -33,6 +33,9 @@ class A4DeviceBenchmarkHarnessTest {
         assertTrue(report.toLogLine().contains("canonicalizeP50P95Us="))
         assertTrue(report.toLogLine().contains("filter[alive]=NATIVE_RESTRICTION"))
         assertTrue(report.toLogLine().contains("filter[chef]=DECODE_REBUILD"))
+        assertTrue(report.toLogLine().contains("retainedWorlds="))
+        assertTrue(report.toLogLine().contains("evalP50P95Us="))
+        assertTrue(report.toLogLine().contains("rebuildP50P95Us="))
     }
 
     private fun publicObservation(formal: FormalGameState, proposition: InformationProposition) = EpistemicObservation(

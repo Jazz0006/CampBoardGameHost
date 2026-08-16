@@ -619,6 +619,15 @@ Completed as a state-settlement and recovery slice.
 
 退出条件：B4 golden matrix 通过；shadow diff 无秘密泄漏和伪 UNSAT。
 
+#### Batch 6 execution record — 2026-08-16
+
+Completed as a domain-only shadow integration; production recommendation selection and the A4 cache consumer remain unchanged.
+
+- `FormalGameState` now persists a canonical ordered `ActionFact` timeline, including death, poison duration/replacement and role-transition facts; schema-v2 JSON round-trips that timeline.
+- `B4DynamicPlayerWorldSetShadow` reduces the dynamic timeline, projects only public deaths into recipient knowledge, replays durable observations in timeline order, and runs exact before/after candidate world queries. Its report exposes only recipient, candidate ID and cardinalities, never a formal snapshot or secret target.
+- Attack/protect resolution and role-transition world semantics are not yet exact possible-world operations. They explicitly return `DEFERRED_B4`, rather than treating an unsupported query as `UNSAT`.
+- Added the B4 golden-matrix regression slice for public death replay, secret poison-target replacement, poison-target report invariance, explicit deferred role transition, and canonical JSON timeline replay for every typed action shape. Focused B4 JVM tests pass (5/5), A3 golden/A4 runtime cross-check tests pass, the ASP Oracle suite passes (11/11), and `git diff --check` passes. Recommendation's 1,000-selection reproducibility/distribution test and 200×2 history-cooldown distribution test also pass. The aggregate full-JVM command exceeds this environment's reporting window after entering the test task, so the complete 62-class JVM suite was run as deterministic package/class batches instead; every batch passed.
+
 ### Batch 7 — 生产门槛与清理
 
 目标：在正确性、性能和分布验证后逐步替换旧路径。
@@ -632,6 +641,164 @@ Completed as a state-settlement and recovery slice.
 - 只有新旧 parity 和所有 gates 通过后删除旧 UI helper。
 
 退出条件：主规范 C9 gates 全部通过。
+
+#### Batch 7 execution record — 2026-08-16 (C8 telemetry foundation)
+
+In progress. The first C8 slice is deliberately audit-only and does not alter production selection:
+
+- Added a thread-safe, aggregate-only `SelectionDistributionTelemetryRecorder`. It records the full candidate opportunity pool and aggregates the required opportunity, AUTO-eligible, highest eligible tier, and selected counters by family × player count × phase × style. The live first-night and later-night AUTO information selector now supplies that audit at its stable-selection boundary; its decision key makes recomposition idempotent.
+- `EXPERT_ONLY` candidates remain available to ASSISTED but are excluded from the AUTO denominator. `REJECTED` candidates remain opportunities only. A selected family must have an AUTO-eligible candidate, so the audit cannot accidentally validate a manual-only selection.
+- The retained snapshot contains no candidate IDs, player names, propositions, or hidden game facts; it supports replayable withholding analysis through `selectionRateGivenEligibility` without creating a second selector.
+- The existing debug A4 device probe already emits cold/warm P50/P95, coarse heap deltas and main-thread frame intervals. Identity-reveal cancellation now additionally logs the synchronous acknowledgement latency and cancelled-entry count; an in-flight exact build remains discard-only after that acknowledgement.
+- **POCO X5 measurement — 2026-08-16:** Xiaomi 22101320G (Android 14), 5-player Trouble Brewing live structural fixture, 11 samples: 2,160 worlds / 496 ZDD nodes; build P50/P95 **125.613 / 131.026 ms**; generation **91.475 / 95.093 ms**; prefix insertion **24.091 / 25.295 ms**; canonicalization **3.437 / 3.715 ms**; coarse maximum build-heap delta **13,205,504 bytes**. Native `alive-seat-2` filter P50/P95 was **2.407 / 2.478 ms**, and native `spy-absent` was **1.981 / 2.843 ms**. No ANR was observed during the 11-sample run. This particular legal role draw contained neither Chef nor Empath, so the numeric decode/rebuild fallback probe was not emitted; fallback, frame-interval and cancellation-latency measurements remain explicitly pending.
+- **POCO X5 repeatable fallback measurement — 2026-08-16:** the Debug-only synthetic numeric observation was added so every legal 5-player draw exercises decode/rebuild without changing a game or recommendation. Across 11 samples: build P50/P95 **172.901 / 256.340 ms**; generation **117.264 / 163.363 ms**; prefix insertion **33.718 / 58.005 ms**; canonicalization **14.998 / 27.735 ms**; coarse maximum build-heap delta **13,221,888 bytes**. Native `alive-seat-2` was **2.652 / 3.198 ms**, native `spy-absent` was **1.779 / 3.422 ms**, while `numeric-synthetic-fallback` decode/rebuild was **244.723 / 346.330 ms**. The repeated fallback P95 is over `A4WorldEngineRuntimePolicy`'s 50 ms provisional maximum; ZDD must remain shadow-only and is not eligible for `ZDD_DEVICE_VALIDATED` or a C9 production switch. Frame-interval and cancellation-latency samples remain pending.
+- **POCO X5 fallback decomposition — 2026-08-16:** repeatable synthetic numeric fallback, 11 samples: total P50/P95 **247.325 / 345.840 ms**; the exact fallback retained **1,440** worlds, with decode-plus-observation evaluation P50/P95 **190.830 / 258.324 ms** and ZDD rebuild **56.459 / 87.481 ms**. The dominant cost is therefore per-world decoding/rule evaluation, not canonical diagram rebuild. Do not attempt a rebuild-only micro-optimization as a production gate fix; any path toward `ZDD_DEVICE_VALIDATED` requires an exact symbolic compiler for numeric observations plus golden/Oracle parity, otherwise the rollout remains shadow-only.
+- Focused `SelectionDistributionTelemetryTest` (4/4), A4 identity-prewarm cancellation regression, existing automatic-selector regression, and `git diff --check` passed.
+
+Still required for C9: wire this audit at every unified selector boundary, complete AUTO/ASSISTED shared-pool parity, perform POCO X5/X8 performance/cancellation measurements and staged shadow rollout, then remove legacy UI helpers only after the gates pass.
+
+#### Batch 7 progress review and next implementation plan — 2026-08-16
+
+结论：Batch 7 仍为 **IN PROGRESS / production rollout blocked**。Batch 6 的 B4 动态视角接入已经完成其 shadow 范围，但 Batch 7 目前只完成了 C8 遥测骨架、AUTO 夜间信息选择的一处接线，以及 POCO X5 的部分 A4 shadow 性能测量。不得把这些成果解释为 C6、C8 或 C9 已退出，也不得删除 legacy UI helper。
+
+##### 当前完成度
+
+| 范围 | 状态 | 证据与边界 |
+|---|---|---|
+| B4 dynamic PlayerWorldSet | 完成其既定 shadow 范围 | golden matrix 通过；不支持的 attack/protect/role transition 显式 `DEFERRED_B4`；不驱动生产选择 |
+| C6 AUTO/ASSISTED unified pipeline | **未完成** | 持久化模式仍是 `MANUAL` 与三个 `AUTO_*`；UI 仍分别使用 `displayOptions`、`recommendedDisplayOptions` 和 `legacyInformationCandidates`，尚未证明同一候选池、gate、ranking 与解释 |
+| C8 telemetry domain model | 部分完成 | 有线程安全、去重、无私密内容的内存聚合器及 4 个 focused tests |
+| C8 production coverage | **未完成** | 仅 AUTO 的首夜/后续夜晚信息 selector 接线；setup、registration、Mayor、Demon succession、ASSISTED 人工最终选择和 game-end/export 均未接线 |
+| C8 denominator correctness | **需修正** | 当前 `familyOpportunityCount`/`familyEligibleCount` 按候选数累加；规范要求按 decision opportunity 计数，即每次 selector invocation 中某 family 至多各加 1。现实现会让候选较多的 family 人为降低 `selectionRateGivenEligibility` |
+| POCO X5 correctness/performance evidence | 部分完成且 ZDD promotion 失败 | native filter P95 约 3 ms；numeric decode/rebuild P95 345.840 ms，超过 50 ms 暂定上限；ZDD 必须保持 shadow-only |
+| POCO frame/cancel/X8 evidence | **未完成** | frame interval 与 cancellation acknowledgement 尚未形成设备样本；POCO X8 尚未测；当前 heap 只是 JVM coarse delta，不等于 Android Profiler peak memory |
+| C9 staged rollout | **未开始** | 尚无统一 selector rollout state、shadow diff 汇总、跨局 distribution 审查或生产切换证据 |
+| Legacy helper removal | **禁止** | parity、distribution、X5/X8 和 staged rollout gates 均未完成 |
+
+##### 优先级修正
+
+POCO X5 已证明 ZDD numeric fallback 不具备生产资格，但本实施计划的 PlayerWorldSet 本来就是 shadow 接入。数值观察的 exact symbolic compiler 归入后续 A4/B4 性能工作，不是 Batch 7 当前关键路径。除非统一 selector 的 correctness gate 明确要求该操作，否则不得用继续优化 shadow ZDD 取代 C6/C8/C9 主线工作。
+
+##### 下一步实施顺序
+
+**B7.1 — 修正 C8 统计口径并建立可导出审计（下一项且唯一优先实施项）**
+
+1. 将 opportunity/eligible/highest-tier/selected 改为 invocation-level family counters：
+   - family 在完整候选池出现：`opportunity += 1`；
+   - family 至少有一个 AUTO-eligible 候选：`eligible += 1`；
+   - family 至少有一个候选处于本次全池最高 eligible tier：`highestTier += 1`；
+   - 最终选择属于该 family：`selected += 1`。
+2. 保留候选数量为独立字段（如确有分析价值），不得再混入 opportunity 分母。
+3. 区分 `recommended/previewed` 与 `committed selection`；AUTO 在 exact key 发布并采用时记录 selected，ASSISTED 只在说书人实际确认时记录 selected，单纯渲染候选不得算 selected。
+4. 增加 bounded、aggregate-only export/log snapshot；不得输出玩家名、poison target、实际角色表、候选 proposition 或未匿名化 game ID。
+5. 必测：多候选同 family 只增加一次 opportunity；无 eligible family 的 rate 为 null；重组/恢复/重复确认不重复计数；同一 decision 的不同 revision 可分别计数；AUTO 与 ASSISTED commit 的 selected 语义一致。
+
+退出条件：统计口径测试通过，聚合快照可按 family × player count × phase × style 重放，且日志隐私测试通过。
+
+##### B7.1 execution record — 2026-08-16
+
+Completed for the currently migrated AUTO night-information selector.
+
+- `SelectionDistributionTelemetryRecorder` now counts opportunity, AUTO eligibility and highest eligible tier once per family per exact selector invocation. Candidate multiplicity is no longer part of the withholding denominator.
+- Preview publication and committed selection are separate operations. Generating or recomposing an AUTO recommendation records a preview only; the selected counter advances only when the player display action adopts it. Both operations are idempotent for the exact decision key, while a later state revision is a distinct opportunity.
+- The recorder retains only the AUTO-eligible family set needed to validate a later commit. Its bounded export contains aggregate family × player-count × phase × style totals only, with no candidate IDs, player names, propositions or game identifiers.
+- Regression coverage now proves invocation-level counting, null rate for an ineligible family, preview-versus-commit separation, duplicate preview/commit idempotency, separate state revisions and bounded aggregate export. Focused telemetry and selector regression tests, ASP Oracle tests and `git diff --check` pass.
+
+The next permitted implementation entry is **B7.2 — unified candidate pool and execution-policy boundary**. Do not broaden C8 coverage or delete legacy helpers until B7.2 parity is in place.
+
+**B7.2 — 建立统一候选池与执行策略边界**
+
+1. 新增纯 Kotlin `UnifiedSelectionPool`（命名可等价），一次性保存 candidate ID/family、legality、epistemic status、quality tier、fixed-point rank、reason/warning codes。
+2. 将模式差异限制在最终动作：
+   - `AUTO` 从同一 pool 的 AUTO-eligible 候选稳定选择；
+   - `ASSISTED` 展示同一 pool、排序、解释及 `MANUAL_ONLY` 候选，由说书人确认；
+   - `INELIGIBLE` 对两种模式都不可选择。
+3. 明确现有 `MANUAL` 设置与 ASSISTED 产品语义的迁移：优先保留 prefs 兼容，在领域层引入 execution policy；不要直接破坏已有存档枚举值。
+4. 首先在 first-night information family 上 shadow 接入，使用 `legacyInformationCandidates` 的完整集合做 ID parity；mismatch 继续旧路径并记录 aggregate diff。
+
+退出条件：每个已迁移 family 的 AUTO/ASSISTED candidate ID 集合、tier、rank 完全相同；差异只剩最终执行方式。
+
+##### B7.2 execution record — 2026-08-16
+
+Completed as a first-night shadow slice; production rollout remains blocked on the later B7.3–B7.5 gates.
+
+- Added pure Kotlin `UnifiedSelectionPool`, carrying candidate ID/family, legality, epistemic status, quality tier, fixed-point rank and reason/warning codes. AUTO can act on recommended/warning candidates only; ASSISTED uses the same order and additionally exposes expert candidates. Ineligible, rejected and unverified/deferred candidates are selectable by neither policy.
+- `StorytellerAutomationMode.MANUAL` remains the persisted preference value and maps to the new domain-level `ASSISTED` execution policy, preserving existing preferences and saves.
+- First-night shadow conversion now derives a complete pool from `legacyInformationCandidates` and compares ID, tier and rank rather than IDs alone. A mismatch records aggregate-only parity telemetry and continues down the legacy event/display path; it cannot call `display()` on an unpublished migrated draft.
+- Added pool-policy, persisted-mode, aggregate-parity and tier/rank-mismatch regressions. Focused B7.1/B7.2 JVM tests and `git diff --check` pass.
+
+The next permitted implementation entry is **B7.3 — expand the unified selector and telemetry coverage**, beginning with completing first-night production-pool wiring and parity tests before setup or registration migration.
+
+**B7.3 — 扩展 selector 与 telemetry 覆盖**
+
+按风险从低到高迁移：first-night information → setup → special registration → Mayor redirect → Demon succession。每个入口必须同时具备：exact key、完整 pool parity、AUTO/ASSISTED 共池测试、selected-at-commit 遥测和恢复幂等测试。未迁移入口保留 legacy，不允许半接线后静默 fallback。
+
+退出条件：C6 所列入口全部共池，C8 audit 不再只覆盖 AUTO 夜间信息。
+
+##### B7.3 execution record — 2026-08-16 (first-night production slice)
+
+In progress. The first-night information card now builds its AUTO and ASSISTED views from the same `UnifiedSelectionPool` constructed from the complete `legacyInformationCandidates` set. It uses the canonical semantic candidate ID also used by the first-night shadow boundary; AUTO is projected to AUTO-eligible candidates and ASSISTED to the full assisted-eligible ordering. Later-night information, setup, special registration, Mayor redirect and Demon succession deliberately remain on their existing paths pending their own parity and recovery tests.
+
+The setup AUTO path now also projects its existing constrained plans through `UnifiedSelectionPool` before style selection. The same complete plan set remains available to ASSISTED, and automatic adoption records preview/commit C8 telemetry by setup family. Spy and Recluse special-registration panels likewise project their recommendations from a shared pool, use distinct registration decision keys, and record AUTO adoption as preview then commit. Mayor redirect and Demon succession now use the same candidate projection for AUTO and ASSISTED; their AUTO telemetry commits only when the selected outcome is confirmed at the night-step boundary. Focused unified-pool, first-night migration, setup coordinator, special-registration, Mayor redirect, Demon succession, dynamic selector and C8 telemetry JVM tests pass. This is not C6 completion and must not be used to remove any legacy helper.
+
+#### B7.3 exit-validation attempt — 2026-08-16
+
+- The full `testDebugUnitTest assembleDebug` invocation compiled successfully and produced `app-debug.apk` (13,717,186 bytes). As with the earlier recorded aggregate suite, this environment did not return a complete test-task summary inside its reporting window; the migrated focused test classes remain the deterministic automated evidence.
+- ASP Oracle tests pass 11/11 and `git diff --check` passes.
+- The Debug APK was installed on the attached POCO X5 (22101320G) without clearing app data. After user unlock, the existing five-player saved game loaded and the Debug-only A4 benchmark completed: 11 samples, 2,160 worlds / 496 nodes; build P50/P95 **178.874 / 256.006 ms**; generation P50/P95 **123.654 / 156.540 ms**; prefix insertion P50/P95 **34.625 / 64.960 ms**; canonicalization P50/P95 **13.496 / 27.206 ms**; coarse maximum build heap delta **13,221,888 bytes**. Native `alive-seat-2` P50/P95 was **2.325 / 3.175 ms** and native `spy-absent` was **1.854 / 3.496 ms**. Synthetic numeric decode/rebuild P50/P95 was **239.874 / 339.061 ms** (decode/evaluation **184.798 / 252.823 ms**, rebuild **55.092 / 86.208 ms**), still above the provisional 50 ms maximum; ZDD remains `ZDD_SHADOW`.
+- After the user provided a new disposable game and unlocked the device, the normal end-of-day transition was clicked once. The app advanced from Day 1 through the intervening night to Day 2 with all five players alive; there was no stuck confirmation state and no `com.codex.campboardgamehost` `AndroidRuntime` crash. This is a later-night automatic-transition smoke test only: because the supplied game was already at Day 1, it does not prove the first-night card or a Mayor/Demon decision branch end-to-end.
+- A real restore uncovered two B7.3 setup-pool defects before any recommendation was displayed: a legal no-op plan produced a blank candidate ID, and style variants of the same no-op plan produced duplicate IDs. `unifiedSetupPool` now hashes the full stable plan variant (canonical decisions, style, tier, score and deterministic source index); a regression covers both blank and duplicate no-op variants. Focused coordinator/A4 tests and a POCO X5 restore into the first-night recommendation screen pass after the fix.
+
+**B7.4 — 设备门槛补齐**
+
+1. POCO X5 采集 identity-prewarm 的 frame P50/P95、>32 ms/>50 ms 帧数、coarse heap、cancel acknowledgement；验证取消后的 in-flight 结果只能为 stale。
+2. 在 POCO X8 重复相同脚本、样本数和 thermal/charging 条件，记录 device/build 标签。
+3. 另行基准统一 production selector 的 build/select/commit latency；不得用 A4 shadow benchmark 代替生产 selector 性能。
+4. ZDD 维持 `ZDD_SHADOW`；只有 exact symbolic compiler 的 golden/Oracle parity 与两台设备门槛通过后，才重新评估 `ZDD_DEVICE_VALIDATED`。
+
+退出条件：X5/X8 均有可复核的 P50/P95、peak/coarse memory、frame 与 cancellation evidence；无 ANR/OOM/stale publish。
+
+##### B7.4 execution record — 2026-08-16 (POCO X5 partial)
+
+- Natural identity-reveal prewarm on the POCO X5 completed 5/5 recipients: total build **9,773 ms**, coarse maximum/end heap delta **62,797,000 / 62,797,000 bytes**, main-thread frame P50/P95 **16 / 16 ms**, 0 frames over 32/50 ms, maximum interval **23 ms**.
+- The Debug-only isolated cancellation probe reads only the current structural snapshot and uses a fresh shadow cache; it does not change the current night step, event log, recommendation or persisted game. On the same device, after two frame boundaries it reported: 5 recipients, `1:STALE, 2–5:CANCELLED`, 0 ready, total worker build **2,113 ms**, coarse max/end heap delta **9,472,488 / 9,472,488 bytes**, frame P50/P95 **8 / 8 ms**, 0 frames over 32/50 ms, maximum interval **19 ms**, synchronous cancellation acknowledgement **0 ms**, 5 cancelled entries, and `verification=stale-not-published`.
+- A Debug-only, aggregate-only unified setup-selector benchmark uses the current ready setup plans without writing a decision or save. On the POCO X5, 11 samples / 3 candidates: pool build P50/P95 **155 / 217 µs**, AUTO selection **24 / 32 µs**, and isolated C8 preview/commit recording **75 / 87 µs**. This covers the setup selector boundary only; it must not be generalized to first-night information, registration, Mayor or Demon decision latency.
+- **POCO X8 measurement — 2026-08-16:** Xiaomi POCO X8 (`2511FPC34G` / `klee_global`, Android 16, build `OS3.0.306.0.WPJMIXM`), 5-player Trouble Brewing test game. The user ran the same Debug-only isolated cancellation probe: 5 recipients, `1:STALE, 2–5:CANCELLED`, 0 ready, worker build **1,290 ms**, coarse max/end heap delta **12,132,112 / 12,132,112 bytes**, frame P50/P95 **8 / 8 ms**, no frames over 32/50 ms, maximum interval **8 ms**, cancellation acknowledgement **0 ms**, 5 cancelled entries and `verification=stale-not-published`. The 11-sample setup-selector slice (3 candidates) measured pool build **116 / 152 µs**, AUTO selection **14 / 15 µs**, and C8 preview/commit **39 / 44 µs**. Android 16 forbids ADB input injection on this device, so the user tapped the diagnostic controls manually; log retrieval remains ADB-verifiable. No `com.codex.campboardgamehost` crash appeared in the captured log.
+- **POCO X8 first-night information-pool slice — 2026-08-16:** the Debug-only benchmark recreated the complete Investigator first-night `UnifiedSelectionPool` for each of 11 samples without showing, committing or persisting information. With 4 candidates, pool build P50/P95 was **157 / 320 µs**, AUTO projection/style selection **30 / 41 µs**, and isolated C8 preview/commit **50 / 84 µs**. No `com.codex.campboardgamehost` crash appeared in the captured log.
+- This completes the POCO X5/X8 coarse/frame/cancellation evidence and the setup-selector latency slice, but does not complete B7.4: Android Profiler peak-memory data and the remaining unified decision-family latency measurements are pending. The prior numeric fallback gate failure still keeps ZDD at `ZDD_SHADOW`.
+
+**B7.5 — Distribution review 与 staged rollout**
+
+1. rollout 状态至少为 `LEGACY_ONLY → SHADOW_COMPARE → ASSISTED → LIMITED_AUTO → AUTO`，默认保持 `LEGACY_ONLY` 或 `SHADOW_COMPARE`。
+2. 每阶段记录 candidate parity、selected parity、stale discard、failure/degradation 和 withholding strata；任何 unexplained mismatch 自动回退且禁止扩大 rollout。
+3. 在足够的 replay/simulation 与真实匿名聚合样本上审查稳定 withholding signal；representation floor 只能作用于已经通过 legality、epistemic 和 quality gates 的候选。
+4. 只有 correctness、epistemic、metric、policy、performance、distribution gates 全部通过后，才允许 production switch；legacy helper 删除必须是最后一个独立变更。
+
+##### B7.5 execution record — 2026-08-16 (in progress)
+
+- Added a pure-domain `SelectionRolloutGate` with the required ladder: `LEGACY_ONLY → SHADOW_COMPARE → ASSISTED → LIMITED_AUTO → AUTO`. It is intentionally decoupled from persisted storyteller automation preferences, so this change does not expand any live automatic decision path.
+- Any candidate/selected parity mismatch, selection failure/degradation, or unexplained withholding stratum forces `LEGACY_ONLY` and blocks expansion. Stale discards remain separately measurable and do not by themselves create a false rollback.
+- `ASSISTED` and higher require an explicit external distribution-review approval. Wiring aggregate parity, stale-discard, failure/degradation and withholding evidence from every migrated decision family into this gate remains pending; until then each family stays at its existing conservative behavior.
+- Added `SelectionDistributionReviewer`: it consumes only C8 aggregate exports, compares AUTO-eligible family selection rates within the same player-count/phase/style cohort after a configurable minimum sample, and emits review signals rather than a self-authorizing rollout decision. Cross-game persistence/aggregation and reviewer approval UI remain pending.
+- Verification on 2026-08-16: full `testDebugUnitTest`, ASP Oracle suite (11 tests), `git diff --check`, and Debug APK assembly passed; the APK was installed on the connected POCO X8 without automated input.
+- The remaining B7.4 Debug-only controls are now behind one collapsed developer-diagnostics disclosure per host view; the first-night pool measurement follows the same disclosure. They remain available only until the outstanding device evidence is collected, and are excluded from Release builds.
+
+##### 进入下一项前的验证基线
+
+当前工作区同时包含 Batch 6、Batch 7 与设备诊断在途修改。开始 B7.1 前先运行并记录：
+
+```zsh
+./gradlew testDebugUnitTest --no-daemon \
+  --tests 'com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryTest' \
+  --tests 'com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigrationTest' \
+  --tests 'com.codex.campboardgamehost.clocktower.epistemic.B4DynamicPlayerWorldSetShadowTest' \
+  --tests 'com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkHarnessTest' \
+  --tests 'com.codex.campboardgamehost.clocktower.epistemic.A4IdentityRevealPrewarmCoordinatorTest'
+python3 -m unittest discover -s tools/asp_oracle -p 'test_*.py'
+git diff --check
+```
+
+完成 B7.1–B7.3 后再运行 full JVM、Debug APK build 和人工点击冒烟。若出现秘密泄漏、旧 generation 发布、真实 OOM/ANR、无法区分 preview 与 committed selection，立即按第 17 节停止条件报告。
 
 ## 13. 每批验证命令
 
@@ -791,3 +958,42 @@ Completed as a pure Kotlin transaction slice; no UI, recommendation scoring, or 
 - Validation passed: focused `DynamicDecisionTransactionAggregateTest`; full `./gradlew testDebugUnitTest --no-daemon`; 11-test `python3 -m unittest discover -s tools/asp_oracle -p 'test_*.py'`; and `git diff --check`.
 
 The aggregate is intentionally not wired to `MainActivity`, the legacy `DecisionEventStore`, or production recommendation generation. A durable persistence adapter will need to store the aggregate's initial snapshot, ordered facts, events and observation log as one transaction. The next permitted implementation entry is Batch 3, Poisoner-driven first-night dynamic regeneration, after the required full validation succeeds.
+
+## 19. Current handoff for a new development session — 2026-08-16
+
+This section supersedes the stale “next permitted implementation” wording in section 18 for the current worktree. Preserve all existing modified and untracked files: they are in-progress Batch 6/7 work. Do not clean, reset, checkout, stage, commit, or broadly reformat the worktree.
+
+### 19.1 Current state
+
+- B7.1–B7.3 migrated the setup selector, first-night information, special registrations, Mayor redirect and Demon succession to shared `UnifiedSelectionPool` boundaries with aggregate-only C8 preview/commit telemetry and focused parity coverage.
+- B7.4 has verified A4 cancellation/coarse/frame evidence on POCO X5 and POCO X8, plus setup-selector and Investigator first-night pool latency on X8. ZDD remains `ZDD_SHADOW`; the numeric decode/rebuild threshold is still not met.
+- B7.5 has a pure-domain rollout ladder (`SelectionRolloutGate`) and aggregate-only withholding reviewer (`SelectionDistributionReviewer`). Neither expands live automation; cross-game aggregate persistence, all-family evidence wiring, and an explicit reviewer approval path are still absent.
+- Debug diagnostic controls remain necessary only for the outstanding device gates. They are compiled only in Debug and are now hidden behind a single “Show developer diagnostics” disclosure. The first-night pool control follows that disclosure.
+
+### 19.2 Latest verified baseline
+
+- `./gradlew testDebugUnitTest --no-daemon` passed on 2026-08-16.
+- `python3 -m unittest discover -s tools/asp_oracle -p 'test_*.py'` passed 11 tests.
+- `git diff --check` passed.
+- Debug APK compiled and was installed without clearing data on POCO X8: serial `YXSCJNTSIFT4W8Z9`, model `2511FPC34G` / `klee_global`, Android 16 build `OS3.0.306.0.WPJMIXM`.
+- Android 16 on this device rejects ADB input injection (`INJECT_EVENTS`); the user must tap diagnostics manually. ADB log retrieval remains usable. Never claim a device measurement was run unless its log line has been retrieved.
+
+### 19.3 Next permitted work
+
+1. Complete B7.4 by adding/using real, non-persisting selector benchmarks for the remaining migrated families: special registration, Mayor redirect and Demon succession. Do not substitute a synthetic generic pool benchmark for their real candidate construction. Record X8 P50/P95 build/select/C8-commit timings and check for app crashes after each manual run.
+2. Collect Android Profiler peak-memory evidence under the existing specified fixture; coarse heap metrics do not satisfy this remaining gate.
+3. Then implement B7.5 evidence wiring and an aggregate-only cross-game persistence/review boundary. It must contain no names, role sheets, poison targets, private propositions, candidate IDs, or decision IDs. Do not allow the reviewer or rollout gate to promote a live family without explicit human approval and all required gates.
+4. Do not remove legacy helpers or the Debug diagnostics until B7.4/B7.5 evidence is complete in a separate reviewable change.
+
+### 19.4 New-session first checks
+
+```zsh
+git status --short
+./gradlew testDebugUnitTest --no-daemon \
+  --tests 'com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPoolTest' \
+  --tests 'com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryTest' \
+  --tests 'com.codex.campboardgamehost.clocktower.recommendation.SelectionRolloutGateTest' \
+  --tests 'com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionReviewTest'
+git diff --check
+adb devices -l
+```

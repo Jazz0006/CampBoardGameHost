@@ -14,6 +14,10 @@ import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.recommendation.FamilyProbabilityBudget
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCandidate
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditRecord
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
@@ -44,9 +48,26 @@ internal data class DynamicGenerationContext(
     }
 }
 
+/** Optional C8 observation attached at the one stable-selection boundary. */
+internal data class SelectionAuditContext(
+    val selectionId: String,
+    val dimensions: SelectionAuditDimensions,
+    val recorder: SelectionDistributionTelemetryRecorder,
+)
+
 internal object DynamicCandidateGenerator {
     private const val CANDIDATE_SCHEMA_VERSION = "dynamic-v1"
     private const val SELECTOR_VERSION = "dynamic-weighted-v1"
+
+    /** Family names are retained for the commit-time C8 audit without exposing a candidate. */
+    fun selectionAuditFamilyId(
+        reliability: InformationReliability,
+        truthful: Boolean,
+    ): String = when {
+        truthful && reliability == InformationReliability.RELIABLE -> "natural-truth"
+        truthful -> "malfunction-truth"
+        else -> "malfunction-falsehood-role"
+    }
 
     fun generateNumeric(
         numberContext: UnreliableNumberContext,
@@ -171,6 +192,7 @@ internal object DynamicCandidateGenerator {
         styleOf: (T) -> RecommendationStyle,
         history: CrossGameHistory = CrossGameHistory(),
         historicalSignatureOf: ((T) -> HistoricalClueSignature)? = null,
+        selectionAudit: SelectionAuditContext? = null,
     ): T? {
         if (options.isEmpty()) return null
         require(stableKey.isNotBlank()) { "stableKey cannot be blank." }
@@ -252,6 +274,23 @@ internal object DynamicCandidateGenerator {
             familyBudget = FamilyProbabilityBudget(massByFamily),
             decisionSeed = MurmurHash3.low64Utf8("$SELECTOR_VERSION|$stableKey$historyKey"),
         ) ?: return null
+        selectionAudit?.let { audit ->
+            audit.recorder.recordPreview(
+                SelectionAuditRecord(
+                    selectionId = audit.selectionId,
+                    dimensions = audit.dimensions,
+                    // Audit the entire generated pool, rather than the probability- or
+                    // cooldown-filtered selector pool, so withholding denominators retain
+                    // every family that was available at this decision point.
+                    candidates = evaluations.map { evaluation ->
+                        SelectionAuditCandidate(
+                            familyId = evaluation.candidate.candidateFamilyId,
+                            qualityTier = evaluation.qualityTier,
+                        )
+                    },
+                ),
+            )
+        }
         val selectedId = selection.selected.candidate.outcome.id
         return options.first { stableIdOf(it) == selectedId }
     }
@@ -265,11 +304,13 @@ internal object DynamicCandidateGenerator {
         decisionType: String,
     ): DecisionCandidate<T> = DecisionCandidate(
         candidateId = stableCandidateId(decisionType, stableOptionId, context),
-        candidateFamilyId = when {
-            truthful && context.reliability == InformationReliability.RELIABLE -> "natural-truth"
-            truthful -> "malfunction-truth"
-            outcome is DynamicInformationOutcome.Number -> "malfunction-falsehood-numeric"
-            else -> "malfunction-falsehood-role"
+        candidateFamilyId = when (outcome) {
+            is DynamicInformationOutcome.Number -> when {
+                truthful && context.reliability == InformationReliability.RELIABLE -> "natural-truth"
+                truthful -> "malfunction-truth"
+                else -> "malfunction-falsehood-numeric"
+            }
+            else -> selectionAuditFamilyId(context.reliability, truthful)
         },
         outcome = outcome,
         abilityState = when (context.reliability) {

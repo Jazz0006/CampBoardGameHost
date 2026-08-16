@@ -3,6 +3,11 @@ package com.codex.campboardgamehost.clocktower.session
 import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.QualityTier
+import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLegality
+import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicStatus
+import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
+import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
 
 /**
  * Batch 4's common boundary for first-night information.
@@ -24,11 +29,29 @@ internal enum class FirstNightInformationFamily(val role: RoleId) {
 internal data class FirstNightInformationCandidate(
     val id: String,
     val observation: AbilityObservation,
+    val qualityTier: QualityTier = QualityTier.RECOMMENDED,
+    val rankFixedPoint: Long = 0L,
+    val legality: UnifiedCandidateLegality = UnifiedCandidateLegality.LEGAL,
+    val epistemicStatus: UnifiedEpistemicStatus = UnifiedEpistemicStatus.VERIFIED,
+    val reasonCodes: List<String> = emptyList(),
+    val warningCodes: List<String> = emptyList(),
 ) {
     init {
         require(id.isNotBlank())
     }
 }
+
+private fun FirstNightInformationCandidate.toUnified(family: FirstNightInformationFamily) = UnifiedSelectionCandidate(
+    candidateId = id,
+    familyId = family.name.lowercase(),
+    legality = legality,
+    epistemicStatus = epistemicStatus,
+    qualityTier = qualityTier,
+    rankFixedPoint = rankFixedPoint,
+    reasonCodes = reasonCodes,
+    warningCodes = warningCodes,
+    payload = observation,
+)
 
 internal data class FirstNightInformationRequest(
     val decisionId: String,
@@ -66,9 +89,13 @@ internal data class FirstNightInformationMigration(
     private val displayedObservations: Map<String, AbilityObservation> = emptyMap(),
 ) {
     fun shadow(request: FirstNightInformationRequest): FirstNightShadowResult {
-        val legacy = request.legacyCandidates.mapTo(sortedSetOf(), FirstNightInformationCandidate::id)
-        val migrated = request.migratedCandidates.mapTo(sortedSetOf(), FirstNightInformationCandidate::id)
-        return if (legacy == migrated) FirstNightShadowResult.Ready(migrated)
+        val legacyPool = UnifiedSelectionPool(request.legacyCandidates.map { it.toUnified(request.family) })
+        val migratedPool = UnifiedSelectionPool(request.migratedCandidates.map { it.toUnified(request.family) })
+        val legacyParity = legacyPool.paritySignature()
+        val migratedParity = migratedPool.paritySignature()
+        val legacy = legacyParity.mapTo(sortedSetOf()) { it.candidateId }
+        val migrated = migratedParity.mapTo(sortedSetOf()) { it.candidateId }
+        return if (legacyParity == migratedParity) FirstNightShadowResult.Ready(migrated)
         else FirstNightShadowResult.Mismatch(legacy - migrated, migrated - legacy)
     }
 

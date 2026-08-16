@@ -33,6 +33,9 @@ object A4DeviceBenchmarkHarness {
         val prefixInsertionMicros = mutableListOf<Long>()
         val canonicalizationMicros = mutableListOf<Long>()
         val caseMicros = cases.associateWith { mutableListOf<Long>() }
+        val caseDecodeEvaluationMicros = cases.associateWith { mutableListOf<Long>() }
+        val caseRebuildMicros = cases.associateWith { mutableListOf<Long>() }
+        val caseRetainedWorldCount = mutableMapOf<A4DeviceBenchmarkCase, Int>()
         var nodeCount = 0
         var cardinality = WorldCardinality.Exact(java.math.BigInteger.ZERO)
         var maxHeapDelta = 0L
@@ -60,6 +63,11 @@ object A4DeviceBenchmarkHarness {
                 require(result.lastFilterStrategy == case.expectedStrategy) {
                     "${case.label} expected ${case.expectedStrategy}, got ${result.lastFilterStrategy}."
                 }
+                result.lastDecodeRebuildMetrics?.let { metrics ->
+                    caseDecodeEvaluationMicros.getValue(case) += metrics.evaluationMicros
+                    caseRebuildMicros.getValue(case) += metrics.rebuildMicros
+                    caseRetainedWorldCount[case] = metrics.retainedWorldCount
+                }
             }
         }
         return A4DeviceBenchmarkReport(
@@ -76,7 +84,16 @@ object A4DeviceBenchmarkHarness {
             ),
             coarseMaxBuildHeapDeltaBytes = maxHeapDelta,
             filters = cases.map { case -> A4DeviceFilterBenchmark(
-                case.label, case.expectedStrategy, A4LatencyPercentiles.from(caseMicros.getValue(case).drop(1)),
+                case.label,
+                case.expectedStrategy,
+                A4LatencyPercentiles.from(caseMicros.getValue(case).drop(1)),
+                caseRetainedWorldCount[case]?.let { retainedWorldCount ->
+                    A4DecodeRebuildBenchmark(
+                        retainedWorldCount = retainedWorldCount,
+                        evaluation = A4LatencyPercentiles.from(caseDecodeEvaluationMicros.getValue(case).drop(1)),
+                        rebuild = A4LatencyPercentiles.from(caseRebuildMicros.getValue(case).drop(1)),
+                    )
+                },
             ) },
         )
     }
@@ -113,6 +130,13 @@ data class A4DeviceFilterBenchmark(
     val label: String,
     val strategy: ZddFilterStrategy,
     val latency: A4LatencyPercentiles,
+    val decodeRebuild: A4DecodeRebuildBenchmark? = null,
+)
+
+data class A4DecodeRebuildBenchmark(
+    val retainedWorldCount: Int,
+    val evaluation: A4LatencyPercentiles,
+    val rebuild: A4LatencyPercentiles,
 )
 
 data class A4ConstructionPhaseBenchmarks(
@@ -154,6 +178,11 @@ data class A4DeviceBenchmarkReport(
             append(" filter[").append(filter.label).append("]=")
             append(filter.strategy).append(":")
             append(filter.latency.p50Micros).append('/').append(filter.latency.p95Micros).append("us")
+            filter.decodeRebuild?.let { breakdown ->
+                append(" retainedWorlds=").append(breakdown.retainedWorldCount)
+                append(" evalP50P95Us=").append(breakdown.evaluation.p50Micros).append('/').append(breakdown.evaluation.p95Micros)
+                append(" rebuildP50P95Us=").append(breakdown.rebuild.p50Micros).append('/').append(breakdown.rebuild.p95Micros)
+            }
         }
     }
 }

@@ -120,7 +120,9 @@ class A4IdentityRevealPrewarmCoordinatorTest {
         val worker = thread(start = true, name = "a4-prewarm-test") { coordinator.run(session) }
 
         assertTrue(entered.await(5, TimeUnit.SECONDS))
-        coordinator.cancel(session)
+        val cancellation = coordinator.cancel(session)
+        assertTrue(cancellation.acknowledgementMillis >= 0)
+        assertEquals(5, cancellation.cancelledEntries)
         release.countDown()
         worker.join(5_000)
 

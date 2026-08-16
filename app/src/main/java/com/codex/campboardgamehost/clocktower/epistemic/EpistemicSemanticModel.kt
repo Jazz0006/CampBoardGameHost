@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
+import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
@@ -36,6 +37,8 @@ data class FormalGameState(
     val players: List<FormalPlayerState>,
     val publicPropositions: List<InformationProposition> = emptyList(),
     val storytellerOnlyPropositions: List<InformationProposition> = emptyList(),
+    /** Ordered mechanical history used only by the B4 shadow timeline. */
+    val timeline: List<ActionFact> = emptyList(),
     val schemaVersion: Int = EPISTEMIC_SCHEMA_VERSION,
 ) {
     init {
@@ -50,6 +53,8 @@ data class FormalGameState(
         require((publicPropositions + storytellerOnlyPropositions).all { seats.containsAll(it.referencedSeats()) }) {
             "Every proposition seat must exist in the formal state."
         }
+        require(timeline.map(ActionFact::actionId).distinct().size == timeline.size) { "Timeline action IDs must be unique." }
+        require(timeline.map(ActionFact::sequence).distinct().size == timeline.size) { "Timeline action sequences must be unique." }
     }
 
     fun eligibleRedHerringSeats(): Set<Int> = players
@@ -63,6 +68,7 @@ data class FormalGameState(
             round: Int,
             publicPropositions: List<InformationProposition> = emptyList(),
             storytellerOnlyPropositions: List<InformationProposition> = emptyList(),
+            timeline: List<ActionFact> = emptyList(),
         ): FormalGameState {
             val players = snapshot.gameState.players.map { player ->
                 FormalPlayerState(
@@ -87,6 +93,7 @@ data class FormalGameState(
                 },
                 publicPropositions.joinToString(";") { EpistemicSemanticJson.encode(it) },
                 storytellerOnlyPropositions.joinToString(";") { EpistemicSemanticJson.encode(it) },
+                timeline.sortedWith(compareBy<ActionFact>({ it.sequence }, { it.actionId })).joinToString(";") { it.b4CanonicalPayload() },
             ).joinToString("|")
             return FormalGameState(
                 snapshotId = SemanticStableId.create("snapshot", idPayload),
@@ -98,9 +105,20 @@ data class FormalGameState(
                 players = players,
                 publicPropositions = publicPropositions,
                 storytellerOnlyPropositions = storytellerOnlyPropositions,
+                timeline = timeline.sortedWith(compareBy<ActionFact>({ it.sequence }, { it.actionId })),
             )
         }
     }
+}
+
+internal fun ActionFact.b4CanonicalPayload(): String = when (this) {
+    is ActionFact.Poison -> "poison:$actionId:$sequence:${targetSeat ?: "none"}"
+    is ActionFact.Protect -> "protect:$actionId:$sequence:$targetSeat"
+    is ActionFact.Attack -> "attack:$actionId:$sequence:$targetSeat"
+    is ActionFact.Execution -> "execution:$actionId:$sequence:$targetSeat"
+    is ActionFact.Death -> "death:$actionId:$sequence:$targetSeat"
+    is ActionFact.RoleChange -> "role-change:$actionId:$sequence:$targetSeat:${role.value}:${alignment.name}:${type.name}"
+    is ActionFact.PhaseAdvance -> "phase:$actionId:$sequence:${phase.name}:$round"
 }
 
 sealed interface InformationProposition {

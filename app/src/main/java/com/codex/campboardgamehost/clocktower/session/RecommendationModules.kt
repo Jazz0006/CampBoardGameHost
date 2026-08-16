@@ -20,6 +20,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.Malfunction
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationRecommendation
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.RegistrationPolicy
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SpecialRegistrationContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalRecommendation
@@ -86,6 +87,7 @@ internal class NightRecommendationModule {
         styleOf: (T) -> RecommendationStyle,
         history: CrossGameHistory = CrossGameHistory(),
         historicalSignatureOf: ((T) -> HistoricalClueSignature)? = null,
+        selectionAudit: SelectionAuditContext? = null,
     ): T? = DynamicCandidateGenerator.select(
         options,
         reliability,
@@ -99,6 +101,7 @@ internal class NightRecommendationModule {
         styleOf,
         history,
         historicalSignatureOf,
+        selectionAudit,
     )
 }
 

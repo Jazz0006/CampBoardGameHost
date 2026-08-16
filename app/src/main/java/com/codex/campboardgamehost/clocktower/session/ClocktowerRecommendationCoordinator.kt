@@ -16,9 +16,16 @@ import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SpecialRegistrationContext
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
+import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLegality
+import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicStatus
+import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
+import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
 
 internal class ClocktowerRecommendationCoordinator(
     initialArchive: DecisionHistoryArchive = DecisionHistoryArchive(),
@@ -44,6 +51,42 @@ internal class ClocktowerRecommendationCoordinator(
         if (result.failureCodes.isNotEmpty()) return null
         return WeightedStableSelector.selectStyle(result.plans, style, RecommendationPlan::style)
     }
+
+    /** B7.3 setup projection: one pool supplies both AUTO and ASSISTED. */
+    fun unifiedSetupPool(plans: List<RecommendationPlan>): UnifiedSelectionPool<RecommendationPlan>? =
+        plans.takeIf { it.isNotEmpty() }?.let { source ->
+            UnifiedSelectionPool(source.mapIndexed { index, plan ->
+                val canonicalPlan = SetupCandidateGenerator.canonicalPlan(plan.decisions)
+                UnifiedSelectionCandidate(
+                    // A legal no-op setup plan has an empty canonical decision list, and the
+                    // same outcome can legitimately appear under several recommendation styles.
+                    // Keep each stable source variant distinct for AUTO style selection.
+                    candidateId = java.lang.Long.toUnsignedString(
+                        MurmurHash3.low64Utf8(
+                            "unified-setup-plan-v2|$canonicalPlan|${plan.style.name}|" +
+                                "${plan.qualityTier.name}|${plan.totalScore}|$index",
+                        ),
+                        16,
+                    ).padStart(16, '0'),
+                    familyId = SetupCandidateGenerator.drunkShownRoleFamily(plan.decisions) ?: "setup-plan",
+                    legality = UnifiedCandidateLegality.LEGAL,
+                    epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
+                    qualityTier = plan.qualityTier,
+                    rankFixedPoint = plan.totalScore.toLong() * 1_000L,
+                    reasonCodes = plan.scoreItems.map { it.ruleId },
+                    warningCodes = plan.warnings.map { it.ruleId },
+                    payload = plan,
+                )
+            })
+        }
+
+    fun selectSetupPlan(
+        plans: List<RecommendationPlan>,
+        style: RecommendationStyle,
+    ): RecommendationPlan? = unifiedSetupPool(plans)
+        ?.candidatesFor(SelectionExecutionPolicy.AUTO)
+        ?.map { it.payload }
+        ?.let { WeightedStableSelector.selectStyle(it, style, RecommendationPlan::style) }
 
     fun resolveInformation(request: InformationResolutionRequest) = nightModule.resolveInformation(request)
 
@@ -77,6 +120,7 @@ internal class ClocktowerRecommendationCoordinator(
         styleOf: (T) -> RecommendationStyle,
         history: CrossGameHistory = CrossGameHistory(),
         historicalSignatureOf: ((T) -> HistoricalClueSignature)? = null,
+        selectionAudit: SelectionAuditContext? = null,
     ): T? = nightModule.selectInformation(
         options,
         reliability,
@@ -90,6 +134,7 @@ internal class ClocktowerRecommendationCoordinator(
         styleOf,
         history,
         historicalSignatureOf,
+        selectionAudit,
     )
 
     fun resolveDynamicDecision(request: DynamicResolutionRequest): List<DynamicDecisionRecommendation> = when (request) {

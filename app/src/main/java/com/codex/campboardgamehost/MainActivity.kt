@@ -132,22 +132,40 @@ import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import com.codex.campboardgamehost.clocktower.recommendation.RecommendationUiState
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.recommendation.GameBalanceEvaluator
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCandidate
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditRecord
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionPoolParityRecorder
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
+import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLegality
+import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicStatus
+import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
+import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
+import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPoolDeviceBenchmark
+import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPoolDeviceBenchmarkReport
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationRegistration
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.RegistrationDetail
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SpecialRegistrationContext
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest
 import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
+import com.codex.campboardgamehost.clocktower.session.UnifiedSetupSelectorDeviceBenchmark
+import com.codex.campboardgamehost.clocktower.session.UnifiedSetupSelectorDeviceBenchmarkReport
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationCandidate
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationFamily
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationRequest
+import com.codex.campboardgamehost.clocktower.session.FirstNightShadowResult
 import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkCase
 import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkHarness
 import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkReport
@@ -179,6 +197,7 @@ import com.codex.campboardgamehost.clocktower.rules.RegistrationInteractionRules
 import com.codex.campboardgamehost.clocktower.rules.RulesetContentHasher
 import com.codex.campboardgamehost.clocktower.rules.RulesetJsonLoader
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -484,6 +503,8 @@ private const val GAME_HISTORY_KEY = "game_history"
 private const val ACTIVE_GAME_STATE_VERSION = 1
 private const val A4_IDENTITY_PREWARM_LOG_TAG = "A4IdentityPrewarm"
 private const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG = "A4ObservationCacheUpdate"
+private const val UNIFIED_SETUP_SELECTOR_BENCHMARK_LOG_TAG = "UnifiedSetupSelectorBenchmark"
+private const val UNIFIED_FIRST_NIGHT_POOL_BENCHMARK_LOG_TAG = "UnifiedFirstNightPoolBenchmark"
 private const val MAX_GAME_HISTORY = 20
 private const val MIN_PLAYERS = 3
 private const val MIN_WEREWOLF_PLAYERS = 4
@@ -1352,7 +1373,10 @@ private fun CampBoardGameHostApp() {
             completedReportLogged = true
         } finally {
             frameMonitor.cancel()
-            a4IdentityRevealPrewarmer.cancel(session)
+            val cancellation = a4IdentityRevealPrewarmer.cancel(session)
+            if (cancellation.cancelledEntries > 0) {
+                Log.i(A4_IDENTITY_PREWARM_LOG_TAG, cancellation.toLogLine())
+            }
             if (!completedReportLogged) {
                 Log.i(
                     A4_IDENTITY_PREWARM_LOG_TAG,
@@ -7557,6 +7581,20 @@ private data class ClocktowerDisplayOption(
     val warningCodes: List<String> = emptyList(),
 )
 
+/** Canonical semantic ID shared by legacy, unified-pool and first-night shadow paths. */
+private fun clocktowerInformationCandidateId(option: ClocktowerDisplayOption): String = listOf(
+    option.displayKind.name,
+    option.proposition?.toString().orEmpty(),
+    option.displayPrimary.orEmpty(),
+    option.displaySecondary.orEmpty(),
+    option.displayFooter.orEmpty(),
+    option.spyRegistersGood?.toString().orEmpty(),
+    option.spyRegisteredRoleEnName.orEmpty(),
+    option.recluseRegistersEvil?.toString().orEmpty(),
+    option.recluseRegisteredRoleEnName.orEmpty(),
+    option.isTruthful.toString(),
+).joinToString("|")
+
 private data class ClocktowerDecisionOption(
     val label: String,
     val targetName: String,
@@ -7567,6 +7605,49 @@ private data class ClocktowerDecisionOption(
     val warningCodes: List<String> = emptyList(),
 )
 
+private fun unifiedDecisionPool(
+    options: List<ClocktowerDecisionOption>,
+    familyId: String,
+): UnifiedSelectionPool<ClocktowerDecisionOption>? = options
+    .takeIf { it.isNotEmpty() }
+    ?.let { candidates ->
+        UnifiedSelectionPool(candidates.map { option ->
+            UnifiedSelectionCandidate(
+                candidateId = listOf(option.recommendationStyle.name, option.targetName).joinToString("|"),
+                familyId = familyId,
+                legality = UnifiedCandidateLegality.LEGAL,
+                epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
+                qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
+                rankFixedPoint = if (option.isDefaultRecommendation) 1_000_000L else 800_000L,
+                reasonCodes = option.reasonCodes,
+                warningCodes = option.warningCodes,
+                payload = option,
+            )
+        })
+    }
+
+private fun unifiedFirstNightInformationPool(
+    options: List<ClocktowerDisplayOption>,
+    familyId: String,
+    automaticStyle: RecommendationStyle,
+): UnifiedSelectionPool<ClocktowerDisplayOption> = UnifiedSelectionPool(options.map { option ->
+    UnifiedSelectionCandidate(
+        candidateId = clocktowerInformationCandidateId(option),
+        familyId = familyId,
+        legality = UnifiedCandidateLegality.LEGAL,
+        epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
+        qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
+        rankFixedPoint = when {
+            option.isDefaultRecommendation -> 1_000_000L
+            option.recommendationStyle == automaticStyle -> 900_000L
+            else -> 800_000L
+        },
+        reasonCodes = option.reasonCodes,
+        warningCodes = option.warningCodes,
+        payload = option,
+    )
+})
+
 private data class ClocktowerRegistrationRecommendationOption(
     val label: String,
     val usesSpecialRegistration: Boolean,
@@ -7576,6 +7657,31 @@ private data class ClocktowerRegistrationRecommendationOption(
     val reasonCodes: List<String> = emptyList(),
     val warningCodes: List<String> = emptyList(),
 )
+
+/** Shared registration pool: style changes selection, never candidate legality or ordering data. */
+private fun unifiedRegistrationPool(
+    options: List<ClocktowerRegistrationRecommendationOption>,
+): UnifiedSelectionPool<ClocktowerRegistrationRecommendationOption>? = options
+    .takeIf { it.isNotEmpty() }
+    ?.let { candidates ->
+        UnifiedSelectionPool(candidates.map { option ->
+            UnifiedSelectionCandidate(
+                candidateId = listOf(
+                    option.style.name,
+                    option.usesSpecialRegistration,
+                    option.registeredRoleEnName.orEmpty(),
+                ).joinToString("|"),
+                familyId = if (option.usesSpecialRegistration) "special-registration" else "actual-registration",
+                legality = UnifiedCandidateLegality.LEGAL,
+                epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
+                qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
+                rankFixedPoint = if (option.isDefaultRecommendation) 1_000_000L else 800_000L,
+                reasonCodes = option.reasonCodes,
+                warningCodes = option.warningCodes,
+                payload = option,
+            )
+        })
+    }
 
 private fun recommendationReasonLabel(code: String, language: String): String {
     fun text(zh: String, en: String): String = if (language == "en") en else zh
@@ -7774,9 +7880,21 @@ private fun ClocktowerJudgeScreen(
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
     val recommendationCoordinator = remember(gameSeed) { ClocktowerRecommendationCoordinator() }
+    // Aggregate-only C8 telemetry lives for this game UI session. The recorder
+    // de-duplicates stable decision IDs, so Compose recomposition is not a new selection.
+    val selectionDistributionTelemetry = remember(gameId) { SelectionDistributionTelemetryRecorder() }
+    // B7.2 shadow telemetry stores only parity totals; candidate IDs and game facts stay local.
+    val firstNightPoolParity = remember(gameId) { SelectionPoolParityRecorder() }
     var a4DeviceBenchmarkReport by remember { mutableStateOf<A4DeviceBenchmarkReport?>(null) }
     var a4DeviceBenchmarkRuns by remember { mutableStateOf(0) }
     var a4DeviceBenchmarkError by remember { mutableStateOf<String?>(null) }
+    var a4PrewarmCancellationProbeRuns by remember { mutableStateOf(0) }
+    var a4PrewarmCancellationProbeResult by remember { mutableStateOf<String?>(null) }
+    var a4PrewarmCancellationProbeError by remember { mutableStateOf<String?>(null) }
+    var unifiedSetupSelectorBenchmarkRuns by remember { mutableStateOf(0) }
+    var unifiedSetupSelectorBenchmarkReport by remember { mutableStateOf<UnifiedSetupSelectorDeviceBenchmarkReport?>(null) }
+    var unifiedSetupSelectorBenchmarkError by remember { mutableStateOf<String?>(null) }
+    var debugDiagnosticsExpanded by remember { mutableStateOf(false) }
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val aliveCards = cards.filter { it.eliminatedRound == null }
     // The UI still owns rendering, but first-night information now crosses one
@@ -7795,19 +7913,6 @@ private fun ClocktowerJudgeScreen(
         hasObservedFirstNightPoisonTarget = true
     }
 
-    fun firstNightCandidateId(option: ClocktowerDisplayOption): String = listOf(
-        option.displayKind.name,
-        option.proposition?.toString().orEmpty(),
-        option.displayPrimary.orEmpty(),
-        option.displaySecondary.orEmpty(),
-        option.displayFooter.orEmpty(),
-        option.spyRegistersGood?.toString().orEmpty(),
-        option.spyRegisteredRoleEnName.orEmpty(),
-        option.recluseRegistersEvil?.toString().orEmpty(),
-        option.recluseRegisteredRoleEnName.orEmpty(),
-        option.isTruthful.toString(),
-    ).joinToString("|")
-
     fun firstNightMigrationRequest(displayStep: ClocktowerNightStepUi): FirstNightInformationRequest? {
         if (phase != ClocktowerPhase.FirstNight) return null
         val actor = displayStep.actor ?: return null
@@ -7820,7 +7925,7 @@ private fun ClocktowerJudgeScreen(
         }
         fun candidate(option: ClocktowerDisplayOption): FirstNightInformationCandidate {
             val primary = option.displayPrimary
-            return FirstNightInformationCandidate(firstNightCandidateId(option), AbilityObservation(
+            return FirstNightInformationCandidate(clocktowerInformationCandidateId(option), AbilityObservation(
                 sourceSeat = sourceSeat,
                 perceivedRole = family.role,
                 shownRole = primary?.takeIf { option.displayKind == ClocktowerDisplayKind.EitherOne }
@@ -7839,7 +7944,20 @@ private fun ClocktowerJudgeScreen(
                 },
                 reliability = reliability,
                 semanticTruth = if (option.isTruthful) SemanticTruth.TRUE else SemanticTruth.FALSE,
-            ))
+            ),
+                qualityTier = if (option.isDefaultRecommendation) {
+                    QualityTier.RECOMMENDED
+                } else {
+                    QualityTier.ACCEPTABLE_WITH_WARNING
+                },
+                rankFixedPoint = when {
+                    option.isDefaultRecommendation -> 1_000_000L
+                    option.recommendationStyle == automaticStorytellerStyle -> 900_000L
+                    else -> 800_000L
+                },
+                reasonCodes = option.reasonCodes,
+                warningCodes = option.warningCodes,
+            )
         }
         val selectedOption = ClocktowerDisplayOption(
             label = "selected",
@@ -7850,11 +7968,12 @@ private fun ClocktowerJudgeScreen(
             displayFooter = displayStep.displayFooter,
             proposition = displayStep.displayProposition,
             isTruthful = displayStep.selectedInformationTruthful != false,
+            recommendationStyle = automaticStorytellerStyle,
         )
         // The selected statement is included as a defensive fallback for a
         // direct/manual legacy path that has no option list.
         val legacyOptions = (displayStep.legacyInformationCandidates + selectedOption)
-            .distinctBy(::firstNightCandidateId)
+            .distinctBy(::clocktowerInformationCandidateId)
         val legacyCandidates = legacyOptions.map(::candidate)
         // The migration adapter intentionally rebuilds typed candidates from
         // the complete legacy pool rather than treating the chosen UI row as
@@ -7866,7 +7985,7 @@ private fun ClocktowerJudgeScreen(
             family = family,
             sourceSeat = sourceSeat,
             reliability = reliability,
-            selectedCandidateId = firstNightCandidateId(selectedOption),
+            selectedCandidateId = clocktowerInformationCandidateId(selectedOption),
             legacyCandidates = legacyCandidates,
             migratedCandidates = migratedCandidates,
         )
@@ -7909,41 +8028,35 @@ private fun ClocktowerJudgeScreen(
                     id, formal.snapshotId, formal.phase, formal.round, 0, null, null,
                     ObservationVisibility.PUBLIC, emptySet(), ObservationReliability.NOT_ABILITY_INFORMATION, proposition,
                 )
-                val numericActor = cards.withIndex().firstOrNull { (_, card) ->
-                    card.eliminatedRound == null && card.name != poisonTarget &&
-                        card.clocktowerRole?.enName in setOf("Chef", "Empath")
-                }
-                val numericFallbackCase = numericActor?.let { (index, actor) ->
-                    val actorSeat = index + 1
-                    val metric = if (actor.clocktowerRole?.enName == "Chef") {
-                        NumericMetric.ADJACENT_EVIL_PAIRS
-                    } else {
-                        NumericMetric.LIVING_EVIL_NEIGHBOURS
-                    }
-                    val subjects = if (metric == NumericMetric.ADJACENT_EVIL_PAIRS) {
-                        (1..cards.size).toList()
-                    } else {
-                        livingNeighbors(cards, actor.name).map { cards.indexOf(it) + 1 }
-                    }
-                    A4DeviceBenchmarkCase(
-                        "numeric-${actor.clocktowerRole?.enName?.lowercase()}-fallback",
-                        EpistemicObservation(
-                            "a4-device-numeric", formal.snapshotId, formal.phase, formal.round, 1,
-                            actorSeat, RoleId(requireNotNull(actor.clocktowerRole).enName),
-                            ObservationVisibility.PRIVATE, setOf(actorSeat),
-                            ObservationReliability.RECEIVED_AS_FUNCTIONING,
-                            InformationProposition.NumericResult(metric, actorSeat, subjects, 1),
+                // Always include one synthetic private numeric observation so the device gate can
+                // measure decode/rebuild on any legal 5-player draw. It is never displayed,
+                // persisted, or fed to recommendation logic; real ability observations retain
+                // their own role and recipient semantics elsewhere.
+                val fallbackSeat = cards.indexOfFirst { it.eliminatedRound == null }.plus(1)
+                check(fallbackSeat > 0) { "A4 diagnostic requires one living recipient." }
+                val numericFallbackCase = A4DeviceBenchmarkCase(
+                    "numeric-synthetic-fallback",
+                    EpistemicObservation(
+                        "a4-device-numeric", formal.snapshotId, formal.phase, formal.round, 1,
+                        fallbackSeat, RoleId("Chef"),
+                        ObservationVisibility.PRIVATE, setOf(fallbackSeat),
+                        ObservationReliability.RECEIVED_AS_FUNCTIONING,
+                        InformationProposition.NumericResult(
+                            NumericMetric.ADJACENT_EVIL_PAIRS,
+                            fallbackSeat,
+                            (1..cards.size).toList(),
+                            1,
                         ),
-                        ZddFilterStrategy.DECODE_REBUILD,
-                    )
-                }
+                    ),
+                    ZddFilterStrategy.DECODE_REBUILD,
+                )
                 A4DeviceBenchmarkHarness.run(
                     deviceLabel = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}",
                     formal = formal,
                     knowledge = knowledge,
                     hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
                     roleDefinitions = clocktowerRoleDefinitionsForScript(script),
-                    cases = listOfNotNull(
+                    cases = listOf(
                         A4DeviceBenchmarkCase("alive-seat-2", publicObservation("a4-device-alive", InformationProposition.AliveAt(2, true)), ZddFilterStrategy.NATIVE_RESTRICTION),
                         A4DeviceBenchmarkCase("spy-absent", publicObservation("a4-device-spy", InformationProposition.RoleInPlay(RoleId("Spy"), false)), ZddFilterStrategy.NATIVE_RESTRICTION),
                         numericFallbackCase,
@@ -7952,6 +8065,75 @@ private fun ClocktowerJudgeScreen(
             }
         }.onSuccess { a4DeviceBenchmarkReport = it }
             .onFailure { a4DeviceBenchmarkError = it.message ?: it.javaClass.simpleName }
+    }
+    LaunchedEffect(a4PrewarmCancellationProbeRuns) {
+        if (a4PrewarmCancellationProbeRuns == 0) return@LaunchedEffect
+        a4PrewarmCancellationProbeResult = null
+        a4PrewarmCancellationProbeError = null
+        runCatching {
+            check(a4DiagnosticAvailable) { "A4 prewarm diagnostic is unavailable for this game." }
+            val activeRuleset = requireNotNull(rulesetRef)
+            val snapshot = GameSnapshot(
+                gameId = gameId.ifBlank { "a4-prewarm-diagnostic" },
+                gameStateRevision = gameStateRevision,
+                playerInputRevision = playerInputRevision,
+                gameSeed = gameSeed,
+                rulesetRef = activeRuleset,
+                gameState = cards.toClocktowerGameState(script, gameSeed, poisonedPlayerName = null),
+            )
+            val formal = FormalGameState.from(snapshot, StorytellerPhase.FIRST_NIGHT, round = 1)
+            val perceivedRoles = cards.mapIndexed { index, card ->
+                index + 1 to RoleId(requireNotNull(card.clocktowerShownRole ?: card.clocktowerRole).enName)
+            }.toMap()
+            val request = A4IdentityRevealPrewarmRequest(
+                formal = formal,
+                playerInputRevision = playerInputRevision,
+                knowledgeBySeat = A4PlayerKnowledgeFactory.createAll(
+                    formal = formal,
+                    perceivedRolesBySeat = perceivedRoles,
+                    observationLog = EpistemicObservationLog(),
+                ).associateBy(PlayerKnowledgeSnapshot::recipientSeat),
+                revealOrder = cards.indices.map { it + 1 },
+                hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+                roleDefinitions = clocktowerRoleDefinitionsForScript(script),
+            )
+            // This coordinator and its cache are deliberately isolated from the live prewarmer.
+            // The probe reads a snapshot only and must prove its cancelled result is not reusable.
+            val coordinator = A4IdentityRevealPrewarmCoordinator()
+            val session = coordinator.start(request)
+            val frameTelemetry = A4MainThreadFrameTelemetry()
+            val frameMonitor = launch {
+                while (isActive) withFrameNanos(frameTelemetry::recordFrame)
+            }
+            try {
+                val worker = async(Dispatchers.Default) {
+                    coordinator.run(session, prioritizedRecipientSeat = 1)
+                }
+                // Allow an exact build to enter the worker, then cancel at a main-thread frame
+                // boundary so this device run exercises the stale-publication guarantee.
+                withFrameNanos { }
+                withFrameNanos { }
+                val cancellation = coordinator.cancel(session)
+                val report = worker.await()
+                check(report.entries.any { it.status.name == "STALE" }) {
+                    "Cancellation probe did not observe an in-flight stale result."
+                }
+                check(report.entries.all { coordinator.ready(it.key) == null }) {
+                    "Cancellation probe exposed a cancelled shadow result."
+                }
+                val summary = frameTelemetry.summary()
+                val logLine = report.toLogLine(summary) + " " + cancellation.toLogLine() +
+                    " verification=stale-not-published"
+                Log.i(A4_IDENTITY_PREWARM_LOG_TAG, logLine)
+                logLine
+            } finally {
+                frameMonitor.cancel()
+            }
+        }.onSuccess { a4PrewarmCancellationProbeResult = it }
+            .onFailure { error ->
+                a4PrewarmCancellationProbeError = error.message ?: error.javaClass.simpleName
+                Log.e(A4_IDENTITY_PREWARM_LOG_TAG, "A4 prewarm cancellation probe failed", error)
+            }
     }
     val spyCard = cards.firstOrNull { it.clocktowerRole?.enName == "Spy" }
     val recluseCard = cards.firstOrNull { it.clocktowerRole?.enName == "Recluse" }
@@ -8292,20 +8474,68 @@ private fun ClocktowerJudgeScreen(
     }
     LaunchedEffect(automaticStorytellerInfo, automaticStorytellerStyle, recommendationUiState) {
         if (automaticStorytellerInfo && appliedRecommendationStyle != automaticStorytellerStyle) {
-            val automaticPlan = (recommendationUiState as? RecommendationUiState.Ready)
-                ?.plans
-                ?.let { plans ->
-                    WeightedStableSelector.selectStyle(
-                        plans,
-                        automaticStorytellerStyle,
-                        RecommendationPlan::style,
-                    )
-                }
+            val setupPlans = (recommendationUiState as? RecommendationUiState.Ready)?.plans.orEmpty()
+            val automaticPlan = recommendationCoordinator.selectSetupPlan(setupPlans, automaticStorytellerStyle)
             if (automaticPlan != null) {
+                fun setupFamily(plan: RecommendationPlan): String = plan.decisions
+                    .filterIsInstance<StorytellerDecision.DrunkShownRole>()
+                    .singleOrNull()
+                    ?.role
+                    ?.value
+                    ?.let { "drunk-shown-role:$it" }
+                    ?: "setup-plan"
+                val setupAuditId = "$recommendationKey|setup"
+                val setupDimensions = SelectionAuditDimensions(
+                    playerCount = cards.size,
+                    phase = StorytellerPhase.FIRST_NIGHT,
+                    style = automaticStorytellerStyle,
+                )
+                selectionDistributionTelemetry.recordPreview(
+                    SelectionAuditRecord(
+                        selectionId = setupAuditId,
+                        dimensions = setupDimensions,
+                        candidates = setupPlans.map { plan ->
+                            SelectionAuditCandidate(
+                                familyId = setupFamily(plan),
+                                qualityTier = plan.qualityTier,
+                            )
+                        },
+                    ),
+                )
                 onApplyRecommendation(automaticPlan)
+                selectionDistributionTelemetry.recordCommittedSelection(
+                    SelectionAuditCommit(
+                        selectionId = setupAuditId,
+                        dimensions = setupDimensions,
+                    selectedFamilyId = setupFamily(automaticPlan),
+                    ),
+                )
                 selectedRecommendationStyle = automaticPlan.style
                 appliedRecommendationStyle = automaticPlan.style
             }
+        }
+    }
+    LaunchedEffect(unifiedSetupSelectorBenchmarkRuns) {
+        if (unifiedSetupSelectorBenchmarkRuns == 0) return@LaunchedEffect
+        unifiedSetupSelectorBenchmarkReport = null
+        unifiedSetupSelectorBenchmarkError = null
+        runCatching {
+            val plans = (recommendationUiState as? RecommendationUiState.Ready)?.plans.orEmpty()
+            check(plans.isNotEmpty()) { "Setup selector diagnostic requires a ready setup recommendation." }
+            withContext(Dispatchers.Default) {
+                UnifiedSetupSelectorDeviceBenchmark.run(
+                    coordinator = recommendationCoordinator,
+                    plans = plans,
+                    playerCount = cards.size,
+                    style = automaticStorytellerStyle,
+                )
+            }
+        }.onSuccess { report ->
+            unifiedSetupSelectorBenchmarkReport = report
+            Log.i(UNIFIED_SETUP_SELECTOR_BENCHMARK_LOG_TAG, report.toLogLine())
+        }.onFailure { error ->
+            unifiedSetupSelectorBenchmarkError = error.message ?: error.javaClass.simpleName
+            Log.e(UNIFIED_SETUP_SELECTOR_BENCHMARK_LOG_TAG, "Unified setup selector diagnostic failed", error)
         }
     }
     val executionThreshold = (aliveCards.size + 1) / 2
@@ -10241,7 +10471,11 @@ private fun ClocktowerJudgeScreen(
             actionsEnabled = gameOutcome == null,
             diagnosticContent = if (BuildConfig.DEBUG) {
                 {
-                    Card(
+                    OutlinedButton(
+                        onClick = { debugDiagnosticsExpanded = !debugDiagnosticsExpanded },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text(if (debugDiagnosticsExpanded) "Hide developer diagnostics" else "Show developer diagnostics") }
+                    if (debugDiagnosticsExpanded) Card(
                         shape = RoundedCornerShape(8.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                     ) {
@@ -10259,6 +10493,11 @@ private fun ClocktowerJudgeScreen(
                                 enabled = a4DiagnosticAvailable,
                                 modifier = Modifier.fillMaxWidth(),
                             ) { Text("Run A4 benchmark (11 samples)") }
+                            OutlinedButton(
+                                onClick = { a4PrewarmCancellationProbeRuns += 1 },
+                                enabled = a4DiagnosticAvailable,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) { Text("Run A4 prewarm cancellation probe") }
                             if (!a4DiagnosticAvailable) {
                                 Text(
                                     "Available only for a 5-player Trouble Brewing game with complete role data. Larger exact enumeration can exhaust device memory before ZDD compression.",
@@ -10271,6 +10510,12 @@ private fun ClocktowerJudgeScreen(
                             }
                             a4DeviceBenchmarkError?.let { error ->
                                 Text("Benchmark failed: $error", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                            }
+                            a4PrewarmCancellationProbeResult?.let { result ->
+                                Text(result, style = MaterialTheme.typography.bodySmall)
+                            }
+                            a4PrewarmCancellationProbeError?.let { error ->
+                                Text("Prewarm cancellation probe failed: $error", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -10904,7 +11149,65 @@ private fun ClocktowerJudgeScreen(
                 onConfirmDemonAttack()
             }
             if (currentStep.action == ClocktowerNightAction.MayorRedirect) {
+                if (automaticStorytellerInfo) {
+                    val autoOptions = unifiedDecisionPool(currentStep.decisionOptions, "mayor-redirect")
+                        ?.candidatesFor(SelectionExecutionPolicy.AUTO)
+                        ?.map { it.payload }
+                        .orEmpty()
+                    val selected = WeightedStableSelector.selectStyle(
+                        autoOptions,
+                        automaticStorytellerStyle,
+                        ClocktowerDecisionOption::recommendationStyle,
+                    )
+                    if (selected != null && mayorRedirectDraftTarget == selected.targetName) {
+                        val auditId = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}|mayor-redirect"
+                        val dimensions = SelectionAuditDimensions(
+                            playerCount = cards.size,
+                            phase = StorytellerPhase.NIGHT,
+                            style = automaticStorytellerStyle,
+                        )
+                        selectionDistributionTelemetry.recordPreview(
+                            SelectionAuditRecord(
+                                selectionId = auditId,
+                                dimensions = dimensions,
+                                candidates = currentStep.decisionOptions.map { option ->
+                                    SelectionAuditCandidate("mayor-redirect", if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING)
+                                },
+                            ),
+                        )
+                        selectionDistributionTelemetry.recordCommittedSelection(
+                            SelectionAuditCommit(auditId, dimensions, "mayor-redirect"),
+                        )
+                    }
+                }
                 onConfirmMayorRedirectTarget()
+            }
+            if (currentStep.action == ClocktowerNightAction.DemonSuccessor && automaticStorytellerInfo) {
+                val autoOptions = unifiedDecisionPool(currentStep.decisionOptions, "demon-succession")
+                    ?.candidatesFor(SelectionExecutionPolicy.AUTO)
+                    ?.map { it.payload }
+                    .orEmpty()
+                val selected = WeightedStableSelector.selectStyle(
+                    autoOptions,
+                    automaticStorytellerStyle,
+                    ClocktowerDecisionOption::recommendationStyle,
+                )
+                if (selected != null && demonSuccessorTarget == selected.targetName) {
+                    val auditId = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}|demon-succession"
+                    val dimensions = SelectionAuditDimensions(cards.size, StorytellerPhase.NIGHT, automaticStorytellerStyle)
+                    selectionDistributionTelemetry.recordPreview(
+                        SelectionAuditRecord(
+                            selectionId = auditId,
+                            dimensions = dimensions,
+                            candidates = currentStep.decisionOptions.map { option ->
+                                SelectionAuditCandidate("demon-succession", if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING)
+                            },
+                        ),
+                    )
+                    selectionDistributionTelemetry.recordCommittedSelection(
+                        SelectionAuditCommit(auditId, dimensions, "demon-succession"),
+                    )
+                }
             }
             recordSpyRegistration(
                 currentStep.spyRegistrationKey,
@@ -10959,10 +11262,58 @@ private fun ClocktowerJudgeScreen(
             },
             onNext = advanceNightStep,
         ) {
+            if (BuildConfig.DEBUG) {
+                OutlinedButton(
+                    onClick = { debugDiagnosticsExpanded = !debugDiagnosticsExpanded },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(if (debugDiagnosticsExpanded) "Hide developer diagnostics" else "Show developer diagnostics") }
+            }
+            if (BuildConfig.DEBUG && debugDiagnosticsExpanded) {
+                Card(
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text("A4 device diagnostic", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text(
+                            "Debug only. Starts an isolated shadow prewarm from the current snapshot and cancels it without changing this night step.",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        OutlinedButton(
+                            onClick = { a4PrewarmCancellationProbeRuns += 1 },
+                            enabled = a4DiagnosticAvailable,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text("Run A4 prewarm cancellation probe") }
+                        OutlinedButton(
+                            onClick = { unifiedSetupSelectorBenchmarkRuns += 1 },
+                            enabled = a4DiagnosticAvailable,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text("Run unified setup selector benchmark (11 samples)") }
+                        a4PrewarmCancellationProbeResult?.let { result ->
+                            Text(result, style = MaterialTheme.typography.bodySmall)
+                        }
+                        a4PrewarmCancellationProbeError?.let { error ->
+                            Text("Prewarm cancellation probe failed: $error", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                        }
+                        unifiedSetupSelectorBenchmarkReport?.let { report ->
+                            Text(report.toLogLine(), style = MaterialTheme.typography.bodySmall)
+                        }
+                        unifiedSetupSelectorBenchmarkError?.let { error ->
+                            Text("Unified setup selector diagnostic failed: $error", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+            }
             ClocktowerNightStepCardLocalized(
                 recommendationCoordinator = recommendationCoordinator,
                 automaticStorytellerInfo = automaticStorytellerInfo,
                 automaticStorytellerStyle = automaticStorytellerStyle,
+                phase = phase,
+                debugDiagnosticsExpanded = debugDiagnosticsExpanded,
+                selectionDistributionTelemetry = selectionDistributionTelemetry,
                 evilAdvantage = currentDynamicStorytellerState.evilAdvantage,
                 informationDecisionKey = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}",
                 cards = cards,
@@ -11072,11 +11423,20 @@ private fun ClocktowerJudgeScreen(
                 },
                 onShowPlayerDisplay = showPlayerDisplay@{ displayStep ->
                     firstNightMigrationRequest(displayStep)?.let { request ->
+                        val shadow = firstNightInformationMigration.shadow(request)
+                        firstNightPoolParity.recordResult(
+                            familyId = request.family.name.lowercase(),
+                            matches = shadow is FirstNightShadowResult.Ready,
+                        )
                         val prepared = firstNightInformationMigration.publishIfShadowMatches(request)
                         // Re-entering a completed night step must not create a second information
                         // event or replace the statement that the player already received.
                         if (prepared.isDisplayed(request.decisionId)) return@showPlayerDisplay
-                        firstNightInformationMigration = prepared.display(request.decisionId, request.selectedCandidateId)
+                        // A parity failure must retain the legacy UI/event path. It is never
+                        // allowed to call display() on an unpublished migrated draft.
+                        if (shadow is FirstNightShadowResult.Ready) {
+                            firstNightInformationMigration = prepared.display(request.decisionId, request.selectedCandidateId)
+                        }
                     }
                     recordReliablePrivateInformation(displayStep)
                     val actor = displayStep.actor
@@ -11173,6 +11533,9 @@ private fun ClocktowerJudgeScreen(
                         recommendationCoordinator = recommendationCoordinator,
                         automaticStorytellerInfo = automaticStorytellerInfo,
                         automaticStorytellerStyle = automaticStorytellerStyle,
+                        phase = phase,
+                        debugDiagnosticsExpanded = debugDiagnosticsExpanded,
+                        selectionDistributionTelemetry = selectionDistributionTelemetry,
                         evilAdvantage = currentDynamicStorytellerState.evilAdvantage,
                         informationDecisionKey = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}",
                         cards = cards,
@@ -12407,6 +12770,14 @@ private fun ClocktowerJudgeScreen(
 
         if (BuildConfig.DEBUG) {
             item {
+                OutlinedButton(
+                    onClick = { debugDiagnosticsExpanded = !debugDiagnosticsExpanded },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(if (debugDiagnosticsExpanded) "Hide developer diagnostics" else "Show developer diagnostics") }
+            }
+        }
+        if (BuildConfig.DEBUG && debugDiagnosticsExpanded) {
+            item {
                 Card(
                     shape = RoundedCornerShape(8.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -12425,6 +12796,11 @@ private fun ClocktowerJudgeScreen(
                             enabled = a4DiagnosticAvailable,
                             modifier = Modifier.fillMaxWidth(),
                         ) { Text("Run A4 benchmark (11 samples)") }
+                        OutlinedButton(
+                            onClick = { a4PrewarmCancellationProbeRuns += 1 },
+                            enabled = a4DiagnosticAvailable,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text("Run A4 prewarm cancellation probe") }
                         if (!a4DiagnosticAvailable) {
                             Text(
                                 "Available only for a 5-player Trouble Brewing game with complete role data. Larger exact enumeration can exhaust device memory before ZDD compression.",
@@ -12437,6 +12813,12 @@ private fun ClocktowerJudgeScreen(
                         }
                         a4DeviceBenchmarkError?.let { error ->
                             Text("Benchmark failed: $error", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                        }
+                        a4PrewarmCancellationProbeResult?.let { result ->
+                            Text(result, style = MaterialTheme.typography.bodySmall)
+                        }
+                        a4PrewarmCancellationProbeError?.let { error ->
+                            Text("Prewarm cancellation probe failed: $error", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -13406,14 +13788,20 @@ private fun SpyRegistrationPanel(
     recommendations: List<ClocktowerRegistrationRecommendationOption> = emptyList(),
     automaticStorytellerInfo: Boolean = false,
     automaticStorytellerStyle: RecommendationStyle = RecommendationStyle.BALANCED,
+    selectionAudit: SelectionAuditContext? = null,
     enabled: Boolean,
     onRegistersGoodChange: (Boolean) -> Unit,
     onRoleChange: (String) -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     val roles = completeTroubleBrewingRoles.filter { it.team in teams && it.enName != "Spy" }
+    val registrationPool = unifiedRegistrationPool(recommendations)
+    val assistedRecommendations = registrationPool
+        ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
+        ?.map { it.payload }
+        ?: recommendations
     val automaticRecommendation = WeightedStableSelector.selectStyle(
-        recommendations,
+        registrationPool?.candidatesFor(SelectionExecutionPolicy.AUTO)?.map { it.payload }.orEmpty(),
         automaticStorytellerStyle,
         ClocktowerRegistrationRecommendationOption::style,
     )
@@ -13422,8 +13810,29 @@ private fun SpyRegistrationPanel(
         RecommendationStyle.BALANCED -> if (language == "en") "balanced" else "均衡"
         RecommendationStyle.AGGRESSIVE -> if (language == "en") "aggressive" else "激进"
     }
-    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRecommendation) {
+    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRecommendation, selectionAudit?.selectionId) {
         if (automaticStorytellerInfo && enabled && automaticRecommendation != null) {
+            selectionAudit?.let { audit ->
+                audit.recorder.recordPreview(
+                    SelectionAuditRecord(
+                        selectionId = audit.selectionId,
+                        dimensions = audit.dimensions,
+                        candidates = recommendations.map { option ->
+                            SelectionAuditCandidate(
+                                familyId = if (option.usesSpecialRegistration) "special-registration" else "actual-registration",
+                                qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
+                            )
+                        },
+                    ),
+                )
+                audit.recorder.recordCommittedSelection(
+                    SelectionAuditCommit(
+                        selectionId = audit.selectionId,
+                        dimensions = audit.dimensions,
+                        selectedFamilyId = if (automaticRecommendation.usesSpecialRegistration) "special-registration" else "actual-registration",
+                    ),
+                )
+            }
             onRegistersGoodChange(automaticRecommendation.usesSpecialRegistration)
             if (automaticRecommendation.usesSpecialRegistration && detail == ClocktowerRegistrationDetail.Role) {
                 automaticRecommendation.registeredRoleEnName?.let(onRoleChange)
@@ -13468,13 +13877,13 @@ private fun SpyRegistrationPanel(
                     automaticRecommendation.warningCodes,
                     language,
                 )
-            } else if (recommendations.isNotEmpty()) {
+            } else if (assistedRecommendations.isNotEmpty()) {
                 Text(
                     if (language == "en") "Recommended ruling" else "推荐裁定",
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                 )
-                recommendations.forEach { recommendation ->
+                assistedRecommendations.forEach { recommendation ->
                     val apply = {
                         onRegistersGoodChange(recommendation.usesSpecialRegistration)
                         if (recommendation.usesSpecialRegistration && detail == ClocktowerRegistrationDetail.Role) {
@@ -13543,14 +13952,20 @@ private fun RecluseRegistrationPanel(
     recommendations: List<ClocktowerRegistrationRecommendationOption> = emptyList(),
     automaticStorytellerInfo: Boolean = false,
     automaticStorytellerStyle: RecommendationStyle = RecommendationStyle.BALANCED,
+    selectionAudit: SelectionAuditContext? = null,
     enabled: Boolean,
     onRegistersEvilChange: (Boolean) -> Unit,
     onRoleChange: (String) -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     val roles = completeTroubleBrewingRoles.filter { it.team in teams }
+    val registrationPool = unifiedRegistrationPool(recommendations)
+    val assistedRecommendations = registrationPool
+        ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
+        ?.map { it.payload }
+        ?: recommendations
     val automaticRecommendation = WeightedStableSelector.selectStyle(
-        recommendations,
+        registrationPool?.candidatesFor(SelectionExecutionPolicy.AUTO)?.map { it.payload }.orEmpty(),
         automaticStorytellerStyle,
         ClocktowerRegistrationRecommendationOption::style,
     )
@@ -13559,8 +13974,29 @@ private fun RecluseRegistrationPanel(
         RecommendationStyle.BALANCED -> if (language == "en") "balanced" else "均衡"
         RecommendationStyle.AGGRESSIVE -> if (language == "en") "aggressive" else "激进"
     }
-    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRecommendation) {
+    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRecommendation, selectionAudit?.selectionId) {
         if (automaticStorytellerInfo && enabled && automaticRecommendation != null) {
+            selectionAudit?.let { audit ->
+                audit.recorder.recordPreview(
+                    SelectionAuditRecord(
+                        selectionId = audit.selectionId,
+                        dimensions = audit.dimensions,
+                        candidates = recommendations.map { option ->
+                            SelectionAuditCandidate(
+                                familyId = if (option.usesSpecialRegistration) "special-registration" else "actual-registration",
+                                qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
+                            )
+                        },
+                    ),
+                )
+                audit.recorder.recordCommittedSelection(
+                    SelectionAuditCommit(
+                        selectionId = audit.selectionId,
+                        dimensions = audit.dimensions,
+                        selectedFamilyId = if (automaticRecommendation.usesSpecialRegistration) "special-registration" else "actual-registration",
+                    ),
+                )
+            }
             onRegistersEvilChange(automaticRecommendation.usesSpecialRegistration)
             if (automaticRecommendation.usesSpecialRegistration) {
                 automaticRecommendation.registeredRoleEnName?.let(onRoleChange)
@@ -13604,13 +14040,13 @@ private fun RecluseRegistrationPanel(
                     automaticRecommendation.warningCodes,
                     language,
                 )
-            } else if (recommendations.isNotEmpty()) {
+            } else if (assistedRecommendations.isNotEmpty()) {
                 Text(
                     if (language == "en") "Recommended ruling" else "推荐裁定",
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                 )
-                recommendations.forEach { recommendation ->
+                assistedRecommendations.forEach { recommendation ->
                     val apply = {
                         onRegistersEvilChange(recommendation.usesSpecialRegistration)
                         if (recommendation.usesSpecialRegistration) {
@@ -13668,6 +14104,9 @@ private fun ClocktowerNightStepCardLocalized(
     recommendationCoordinator: ClocktowerRecommendationCoordinator,
     automaticStorytellerInfo: Boolean,
     automaticStorytellerStyle: RecommendationStyle,
+    phase: ClocktowerPhase,
+    debugDiagnosticsExpanded: Boolean,
+    selectionDistributionTelemetry: SelectionDistributionTelemetryRecorder,
     evilAdvantage: Int,
     informationDecisionKey: String,
     cards: List<PlayerCard>,
@@ -13705,36 +14144,125 @@ private fun ClocktowerNightStepCardLocalized(
     showNavigationActions: Boolean = true,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
+    fun optionId(option: ClocktowerDisplayOption): String = clocktowerInformationCandidateId(option)
+    // B7.3's first production slice: a single complete first-night pool is
+    // projected differently by execution policy. Later-night families retain
+    // their legacy lists until individually migrated.
+    val firstNightPool = step.legacyInformationCandidates
+        .takeIf { phase == ClocktowerPhase.FirstNight && it.isNotEmpty() }
+        ?.let { options -> unifiedFirstNightInformationPool(
+            options = options,
+            familyId = step.roleEnName ?: "first-night-information",
+            automaticStyle = automaticStorytellerStyle,
+        ) }
+    var firstNightPoolBenchmarkRuns by remember(
+        phase,
+        step.roleEnName,
+        step.legacyInformationCandidates,
+        automaticStorytellerStyle,
+    ) { mutableStateOf(0) }
+    var firstNightPoolBenchmarkReport by remember { mutableStateOf<UnifiedSelectionPoolDeviceBenchmarkReport?>(null) }
+    var firstNightPoolBenchmarkError by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(firstNightPoolBenchmarkRuns) {
+        if (firstNightPoolBenchmarkRuns == 0) return@LaunchedEffect
+        firstNightPoolBenchmarkReport = null
+        firstNightPoolBenchmarkError = null
+        runCatching {
+            val options = requireNotNull(step.legacyInformationCandidates.takeIf {
+                phase == ClocktowerPhase.FirstNight && it.isNotEmpty()
+            })
+            val family = step.roleEnName ?: "first-night-information"
+            withContext(Dispatchers.Default) {
+                UnifiedSelectionPoolDeviceBenchmark.run(
+                    poolFactory = {
+                        unifiedFirstNightInformationPool(options, family, automaticStorytellerStyle)
+                    },
+                    playerCount = cards.size,
+                    phase = StorytellerPhase.FIRST_NIGHT,
+                    style = automaticStorytellerStyle,
+                    styleOf = ClocktowerDisplayOption::recommendationStyle,
+                )
+            }
+        }.onSuccess { report ->
+            firstNightPoolBenchmarkReport = report
+            Log.i(
+                UNIFIED_FIRST_NIGHT_POOL_BENCHMARK_LOG_TAG,
+                report.toLogLine(step.roleEnName ?: "first-night-information"),
+            )
+        }.onFailure { error ->
+            firstNightPoolBenchmarkError = error.message ?: error.javaClass.simpleName
+            Log.e(UNIFIED_FIRST_NIGHT_POOL_BENCHMARK_LOG_TAG, "Unified first-night pool diagnostic failed", error)
+        }
+    }
+    val automaticInformationOptions = firstNightPool
+        ?.candidatesFor(SelectionExecutionPolicy.AUTO)
+        ?.map { it.payload }
+        ?: step.recommendedDisplayOptions
+    val assistedInformationOptions = firstNightPool
+        ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
+        ?.map { it.payload }
+        ?: step.recommendedDisplayOptions
+    val displayedInformationOptions = if (automaticStorytellerInfo) automaticInformationOptions else assistedInformationOptions
+    val dynamicDecisionFamily = when (step.action) {
+        ClocktowerNightAction.MayorRedirect -> "mayor-redirect"
+        ClocktowerNightAction.DemonSuccessor -> "demon-succession"
+        else -> null
+    }
+    val dynamicDecisionPool = dynamicDecisionFamily
+        ?.let { family -> unifiedDecisionPool(step.decisionOptions, family) }
+    val automaticDecisionOptions = dynamicDecisionPool
+        ?.candidatesFor(SelectionExecutionPolicy.AUTO)
+        ?.map { it.payload }
+        ?: step.decisionOptions
+    val assistedDecisionOptions = dynamicDecisionPool
+        ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
+        ?.map { it.payload }
+        ?: step.decisionOptions
     val automaticDecision = WeightedStableSelector.selectStyle(
-        step.decisionOptions,
+        automaticDecisionOptions,
         automaticStorytellerStyle,
         ClocktowerDecisionOption::recommendationStyle,
     )
+    val selectionAudit = if (automaticStorytellerInfo) {
+        SelectionAuditContext(
+            selectionId = informationDecisionKey,
+            dimensions = SelectionAuditDimensions(
+                playerCount = cards.size,
+                phase = if (phase == ClocktowerPhase.FirstNight) StorytellerPhase.FIRST_NIGHT else StorytellerPhase.NIGHT,
+                style = automaticStorytellerStyle,
+            ),
+            recorder = selectionDistributionTelemetry,
+        )
+    } else {
+        null
+    }
     val automaticDisplayOption = recommendationCoordinator.selectInformation(
-        options = step.recommendedDisplayOptions,
+        options = automaticInformationOptions,
         reliability = step.informationReliability,
         style = automaticStorytellerStyle,
         evilAdvantage = evilAdvantage,
         stableKey = informationDecisionKey,
         recentMisinformationStreak = step.recentMisinformationStreak,
-        stableIdOf = { option ->
-            listOf(
-                option.displayKind.name,
-                option.displayTitle,
-                option.displayPrimary.orEmpty(),
-                option.displaySecondary.orEmpty(),
-                option.displayFooter.orEmpty(),
-                option.recommendationStyle.name,
-                option.isTruthful.toString(),
-                option.misinformationPressure.toString(),
-            ).joinToString("|")
-        },
+        stableIdOf = ::optionId,
         isTruthful = ClocktowerDisplayOption::isTruthful,
         misinformationPressure = ClocktowerDisplayOption::misinformationPressure,
         styleOf = ClocktowerDisplayOption::recommendationStyle,
+        selectionAudit = selectionAudit,
     )
     fun showRecommendedDisplayOption(option: ClocktowerDisplayOption) {
         onApplyRecommendedDisplayOption(option)
+        selectionAudit?.let { audit ->
+            audit.recorder.recordCommittedSelection(
+                SelectionAuditCommit(
+                    selectionId = audit.selectionId,
+                    dimensions = audit.dimensions,
+                    selectedFamilyId = DynamicCandidateGenerator.selectionAuditFamilyId(
+                        reliability = step.informationReliability,
+                        truthful = option.isTruthful,
+                    ),
+                ),
+            )
+        }
         onShowPlayerDisplay(
             step.copy(
                 tellPlayer = option.displayPrimary,
@@ -13812,6 +14340,26 @@ private fun ClocktowerNightStepCardLocalized(
                 fontWeight = FontWeight.Black,
             )
 
+            if (BuildConfig.DEBUG && debugDiagnosticsExpanded && firstNightPool != null) {
+                OutlinedButton(
+                    onClick = { firstNightPoolBenchmarkRuns += 1 },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Run first-night unified pool benchmark (11 samples)") }
+                firstNightPoolBenchmarkReport?.let { report ->
+                    Text(
+                        report.toLogLine(step.roleEnName ?: "first-night-information"),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                firstNightPoolBenchmarkError?.let { error ->
+                    Text(
+                        "First-night pool diagnostic failed: $error",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+
             if (step.spyRegistrationKey != null && spyCard != null) {
                 SpyRegistrationPanel(
                     automaticStorytellerInfo = automaticStorytellerInfo,
@@ -13824,6 +14372,7 @@ private fun ClocktowerNightStepCardLocalized(
                     hint = step.spyRegistrationHint,
                     recommendations = spyRegistrationRecommendations,
                     enabled = spyCanRegister,
+                    selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|spy-registration"),
                     onRegistersGoodChange = onSpyRegistrationGoodChange,
                     onRoleChange = onSpyRegistrationRoleChange,
                 )
@@ -13839,6 +14388,7 @@ private fun ClocktowerNightStepCardLocalized(
                     registeredRoleEnName = recluseRegisteredRoleEnName,
                     recommendations = recluseRegistrationRecommendations,
                     enabled = recluseCanRegister,
+                    selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|recluse-registration"),
                     onRegistersEvilChange = onRecluseRegistrationEvilChange,
                     onRoleChange = onRecluseRegistrationRoleChange,
                 )
@@ -13991,7 +14541,7 @@ private fun ClocktowerNightStepCardLocalized(
                         onClick = {
                             if (automaticStorytellerInfo && automaticDisplayOption != null) {
                                 showRecommendedDisplayOption(automaticDisplayOption)
-                            } else if (step.displayOptions.isNotEmpty() || step.recommendedDisplayOptions.isNotEmpty()) {
+                            } else if (step.displayOptions.isNotEmpty() || displayedInformationOptions.isNotEmpty()) {
                                 showFortuneTellerDisplayOptions = true
                             } else {
                                 onShowPlayerDisplay(step)
@@ -14086,7 +14636,7 @@ private fun ClocktowerNightStepCardLocalized(
                         }
                         Text(if (language == "en") "Or redirect the death to:" else "或将死亡转移给：", fontWeight = FontWeight.SemiBold)
                         SelectablePlayerChips(
-                            cards = cards.filter { it.name != mayor.name },
+                            cards = cards.filter { it.name != mayor.name && it.name in assistedDecisionOptions.map(ClocktowerDecisionOption::targetName) },
                             selectedName = selectedName,
                             enabled = step.isRealAction,
                             allCards = cards,
@@ -14098,7 +14648,7 @@ private fun ClocktowerNightStepCardLocalized(
             }
 
             ClocktowerNightAction.DemonSuccessor -> {
-                val legalNames = step.decisionOptions.map { it.targetName }.toSet()
+                val legalNames = assistedDecisionOptions.map { it.targetName }.toSet()
                 if (!automaticStorytellerInfo) {
                 HostActionSection(
                     title = if (language == "en") "Choose the new Imp" else "选择新小恶魔",
@@ -14140,7 +14690,7 @@ private fun ClocktowerNightStepCardLocalized(
                 }
 
             if (
-                step.recommendedDisplayOptions.isNotEmpty() &&
+                displayedInformationOptions.isNotEmpty() &&
                 (step.action != ClocktowerNightAction.FortuneTeller || showFortuneTellerDisplayOptions)
             ) {
                 Text(if (language == "en") "Recommended information" else "推荐给说书人的完整信息", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
@@ -14153,7 +14703,7 @@ private fun ClocktowerNightStepCardLocalized(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                 )
-                step.recommendedDisplayOptions
+                displayedInformationOptions
                     .filter { !automaticStorytellerInfo || it == automaticDisplayOption }
                     .sortedBy { if (it.isDefaultRecommendation) 0 else 1 }
                     .forEach { option ->
@@ -14179,7 +14729,7 @@ private fun ClocktowerNightStepCardLocalized(
                         }
                         RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
                     }
-                if (!automaticStorytellerInfo) {
+                if (!automaticStorytellerInfo && firstNightPool == null) {
                     OutlinedButton(
                         onClick = { onShowPlayerDisplay(step.copy(recommendedDisplayOptions = emptyList())) },
                         modifier = Modifier.fillMaxWidth(),
@@ -14191,7 +14741,7 @@ private fun ClocktowerNightStepCardLocalized(
             }
 
             if (
-                step.displayOptions.isNotEmpty() &&
+                firstNightPool == null && step.displayOptions.isNotEmpty() &&
                 (step.action != ClocktowerNightAction.FortuneTeller || showFortuneTellerDisplayOptions)
             ) {
                 Text(if (language == "en") "This ability is unreliable. Choose a result to show." else "能力不可靠：请选择一个结果展示。", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)

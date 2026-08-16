@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
+import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -66,6 +67,23 @@ class FirstNightInformationMigrationTest {
             .publishIfShadowMatches(request)
             .display(request.decisionId, request.selectedCandidateId)
         assertEquals(selected.observation, migration.displayedObservation(request.decisionId))
+    }
+
+    @Test fun `same candidate IDs with a different tier or rank are a shadow mismatch`() {
+        val legacy = candidate(FirstNightInformationFamily.CHEF, 5, ReliabilityState.RELIABLE, "same")
+            .copy(qualityTier = QualityTier.RECOMMENDED, rankFixedPoint = 100)
+        val migrated = legacy.copy(rankFixedPoint = 99)
+        val request = FirstNightInformationRequest(
+            decisionId = "first-night-chef-rank",
+            family = FirstNightInformationFamily.CHEF,
+            sourceSeat = 5,
+            reliability = ReliabilityState.RELIABLE,
+            selectedCandidateId = "same",
+            legacyCandidates = listOf(legacy),
+            migratedCandidates = listOf(migrated),
+        )
+
+        assertTrue(FirstNightInformationMigration().shadow(request) is FirstNightShadowResult.Mismatch)
     }
 
     private fun request(

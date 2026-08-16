@@ -151,10 +151,21 @@ class A4IdentityRevealPrewarmCoordinator(
         return synchronized(lock) { reportLocked(session) }
     }
 
-    fun cancel(session: A4IdentityRevealPrewarmSession) {
-        synchronized(lock) {
-            if (activeSessionId == session.id) cancelLocked(session.id)
+    /**
+     * Invalidates publication synchronously. The exact worker may still finish its current build,
+     * but its result is then stale; [acknowledgementMillis] is the device-measurable cancellation
+     * response required by the production gate.
+     */
+    fun cancel(session: A4IdentityRevealPrewarmSession): A4IdentityRevealCancellationReport {
+        val started = nanoTime()
+        val cancelledEntries = synchronized(lock) {
+            if (activeSessionId == session.id) cancelLocked(session.id) else 0
         }
+        return A4IdentityRevealCancellationReport(
+            session = session,
+            acknowledgementMillis = elapsedMillis(started),
+            cancelledEntries = cancelledEntries,
+        )
     }
 
     fun ready(key: A4IdentityRevealPrewarmCacheKey): PlayerWorldSet? = cache.read(key)
@@ -180,16 +191,19 @@ class A4IdentityRevealPrewarmCoordinator(
     fun report(session: A4IdentityRevealPrewarmSession): A4IdentityRevealPrewarmReport =
         synchronized(lock) { reportLocked(session) }
 
-    private fun cancelLocked(sessionId: Long) {
+    private fun cancelLocked(sessionId: Long): Int {
         sessions[sessionId]?.let { cache.cancel(it.generation) }
+        var cancelledEntries = 0
         sessions[sessionId]?.entries?.values?.forEach { entry ->
             if (entry.status == A4IdentityRevealPrewarmStatus.QUEUED ||
                 entry.status == A4IdentityRevealPrewarmStatus.BUILDING
             ) {
                 entry.status = A4IdentityRevealPrewarmStatus.CANCELLED
+                cancelledEntries += 1
             }
         }
         if (activeSessionId == sessionId) activeSessionId = null
+        return cancelledEntries
     }
 
     private fun reportLocked(session: A4IdentityRevealPrewarmSession): A4IdentityRevealPrewarmReport {
@@ -354,6 +368,21 @@ data class A4IdentityRevealPrewarmReport(
             append(" mainThreadMaxFrameIntervalMs=").append(telemetry.maxMillis)
         }
     }
+}
+
+/** Aggregate-only cancellation measurement; it never includes a world set or player knowledge. */
+data class A4IdentityRevealCancellationReport(
+    val session: A4IdentityRevealPrewarmSession,
+    val acknowledgementMillis: Long,
+    val cancelledEntries: Int,
+) {
+    init {
+        require(acknowledgementMillis >= 0)
+        require(cancelledEntries >= 0)
+    }
+
+    fun toLogLine(): String = "A4_IDENTITY_PREWARM_CANCEL session=${session.id} " +
+        "acknowledgementMs=$acknowledgementMillis cancelledEntries=$cancelledEntries"
 }
 
 /** Main-thread frame-interval distribution for a bounded debug measurement window. */

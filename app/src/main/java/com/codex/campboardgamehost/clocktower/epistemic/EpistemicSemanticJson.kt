@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
+import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
@@ -64,6 +65,7 @@ object EpistemicSemanticJson {
         "players" to value.players.map(::formalPlayer), "publicPropositions" to value.publicPropositions.map(::proposition),
         "round" to value.round, "rulesetRef" to ruleset(value.rulesetRef), "schemaVersion" to value.schemaVersion,
         "snapshotId" to value.snapshotId, "storytellerOnlyPropositions" to value.storytellerOnlyPropositions.map(::proposition),
+        "timeline" to value.timeline.map(::actionFact),
     )
 
     private fun formalPlayer(value: FormalPlayerState): Map<String, Any?> = mapOf(
@@ -71,6 +73,16 @@ object EpistemicSemanticJson {
         "actualType" to value.actualType.name, "alive" to value.alive, "poisoned" to value.poisoned,
         "seat" to value.seat, "shownRole" to value.shownRole?.value,
     )
+
+    private fun actionFact(value: ActionFact): Map<String, Any?> = when (value) {
+        is ActionFact.Poison -> mapOf("actionId" to value.actionId, "kind" to "poison", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
+        is ActionFact.Protect -> mapOf("actionId" to value.actionId, "kind" to "protect", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
+        is ActionFact.Attack -> mapOf("actionId" to value.actionId, "kind" to "attack", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
+        is ActionFact.Execution -> mapOf("actionId" to value.actionId, "kind" to "execution", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
+        is ActionFact.Death -> mapOf("actionId" to value.actionId, "kind" to "death", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
+        is ActionFact.RoleChange -> mapOf("actionId" to value.actionId, "alignment" to value.alignment.name, "kind" to "role-change", "role" to value.role.value, "sequence" to value.sequence, "targetSeat" to value.targetSeat, "type" to value.type.name)
+        is ActionFact.PhaseAdvance -> mapOf("actionId" to value.actionId, "kind" to "phase-advance", "phase" to value.phase.name, "round" to value.round, "sequence" to value.sequence)
+    }
 
     private fun ruleset(value: RulesetRef): Map<String, Any?> = mapOf(
         "coverage" to value.coverage.name, "rulesetVersion" to value.rulesetVersion,
@@ -189,6 +201,7 @@ object EpistemicSemanticJson {
         players = json.getJSONArray("players").objects().map(::formalPlayer),
         publicPropositions = json.getJSONArray("publicPropositions").objects().map(::proposition),
         storytellerOnlyPropositions = json.getJSONArray("storytellerOnlyPropositions").objects().map(::proposition),
+        timeline = json.optJSONArray("timeline")?.objects()?.map(::actionFact).orEmpty(),
         schemaVersion = json.getInt("schemaVersion"),
     )
 
@@ -199,6 +212,17 @@ object EpistemicSemanticJson {
         shownRole = json.nullableString("shownRole")?.let(::RoleId), alive = json.getBoolean("alive"),
         poisoned = json.getBoolean("poisoned"),
     )
+
+    private fun actionFact(json: JSONObject): ActionFact = when (json.getString("kind")) {
+        "poison" -> ActionFact.Poison(json.getString("actionId"), json.getLong("sequence"), json.nullableInt("targetSeat"))
+        "protect" -> ActionFact.Protect(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"))
+        "attack" -> ActionFact.Attack(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"))
+        "execution" -> ActionFact.Execution(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"))
+        "death" -> ActionFact.Death(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"))
+        "role-change" -> ActionFact.RoleChange(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"), RoleId(json.getString("role")), Alignment.valueOf(json.getString("alignment")), CharacterType.valueOf(json.getString("type")))
+        "phase-advance" -> ActionFact.PhaseAdvance(json.getString("actionId"), json.getLong("sequence"), StorytellerPhase.valueOf(json.getString("phase")), json.getInt("round"))
+        else -> error("Unknown B4 action fact kind: ${json.getString("kind")}")
+    }
 
     private fun ruleset(json: JSONObject): RulesetRef = RulesetRef(
         scriptId = ScriptId(json.getString("scriptId")), scriptContentHash = json.getString("scriptContentHash"),

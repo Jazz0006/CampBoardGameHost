@@ -20,6 +20,7 @@ class ZddPlayerWorldSet private constructor(
     private val roles: Map<RoleId, RoleDefinition>,
     private val diagram: WorldZdd,
     val lastFilterStrategy: ZddFilterStrategy = ZddFilterStrategy.NONE,
+    val lastDecodeRebuildMetrics: ZddDecodeRebuildMetrics? = null,
     private val overlayClusters: Set<WorldExplanationClusterId> = emptySet(),
 ) : PlayerWorldSet {
     override fun isEmpty(): Boolean = diagram.isEmpty()
@@ -68,14 +69,23 @@ class ZddPlayerWorldSet private constructor(
             return ZddPlayerWorldSet(
                 recipientSeat, knowledgeSnapshotId, hypothesis, identity, roles, restricted,
                 ZddFilterStrategy.NATIVE_RESTRICTION,
+                null,
                 overlayClusters + if (retainMatches) setOf(WorldExplanationClusterId("true-info")) else emptySet(),
             )
         }
+        val evaluationStarted = System.nanoTime()
         val retained = worlds().mapNotNull { world ->
             val evaluation = TroubleBrewingWorldObservationEvaluator.evaluate(world, roles, observation, hypothesis)
             if (evaluation.matches == retainMatches) world.withClusters(evaluation.clusters) else null
         }.toList()
-        return copyWith(retained, ZddFilterStrategy.DECODE_REBUILD)
+        val evaluationMicros = (System.nanoTime() - evaluationStarted) / NANOS_PER_MICRO
+        val rebuildStarted = System.nanoTime()
+        val metrics = ZddDecodeRebuildMetrics(
+            retainedWorldCount = retained.size,
+            evaluationMicros = evaluationMicros,
+            rebuildMicros = 0,
+        )
+        return copyWith(retained, ZddFilterStrategy.DECODE_REBUILD, metrics, rebuildStarted)
     }
 
     private fun nativeRestriction(observation: EpistemicObservation, retainMatches: Boolean): WorldZdd? {
@@ -140,8 +150,20 @@ class ZddPlayerWorldSet private constructor(
     private fun exactCount(predicate: (EnumeratedWorld) -> Boolean): WorldCardinality.Exact =
         WorldCardinality.Exact(worlds().count(predicate).toBigInteger())
 
-    private fun copyWith(worlds: Collection<EnumeratedWorld>, strategy: ZddFilterStrategy) = ZddPlayerWorldSet(
-        recipientSeat, knowledgeSnapshotId, hypothesis, identity, roles, WorldZdd.create(worlds), strategy,
+    private fun copyWith(
+        worlds: Collection<EnumeratedWorld>,
+        strategy: ZddFilterStrategy,
+        metrics: ZddDecodeRebuildMetrics? = null,
+        rebuildStarted: Long? = null,
+    ): ZddPlayerWorldSet = ZddPlayerWorldSet(
+        recipientSeat,
+        knowledgeSnapshotId,
+        hypothesis,
+        identity,
+        roles,
+        WorldZdd.create(worlds),
+        strategy,
+        metrics?.copy(rebuildMicros = (System.nanoTime() - requireNotNull(rebuildStarted)) / NANOS_PER_MICRO),
     )
 
     companion object {
@@ -195,6 +217,13 @@ class ZddPlayerWorldSet private constructor(
     }
 }
 
+/** Diagnostic-only decomposition of the exact fallback path; no selection consumes these values. */
+data class ZddDecodeRebuildMetrics(
+    val retainedWorldCount: Int,
+    val evaluationMicros: Long,
+    val rebuildMicros: Long,
+)
+
 data class A4MeasuredZddConstruction(
     val worldSet: ZddPlayerWorldSet,
     val metrics: A4ZddConstructionMetrics,
@@ -208,6 +237,8 @@ data class A4ZddConstructionMetrics(
 )
 
 enum class ZddFilterStrategy { NONE, NATIVE_RESTRICTION, DECODE_REBUILD }
+
+private const val NANOS_PER_MICRO = 1_000L
 
 private class WorldZdd private constructor(
     private val root: Int,

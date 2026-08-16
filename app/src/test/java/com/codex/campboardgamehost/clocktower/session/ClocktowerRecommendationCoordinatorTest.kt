@@ -9,6 +9,8 @@ import com.codex.campboardgamehost.clocktower.domain.DecisionOutcomeSnapshot
 import com.codex.campboardgamehost.clocktower.domain.DynamicGameState
 import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
+import com.codex.campboardgamehost.clocktower.domain.PlanEffectSignature
+import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
@@ -72,6 +74,50 @@ class ClocktowerRecommendationCoordinatorTest {
             .single()
         assertTrue(shownRole.role != RoleId("Drunk"))
         assertTrue(game.players.none { it.actualRole == shownRole.role })
+    }
+
+    @Test
+    fun `setup AUTO selection is projected from the same unified pool exposed to assisted`() {
+        val coordinator = ClocktowerRecommendationCoordinator()
+        val plans = coordinator.recommendSetup(
+            SetupCoordinationRequest(game, TroubleBrewingFixtures.roleDefinitions()),
+        ).plans
+
+        val pool = requireNotNull(coordinator.unifiedSetupPool(plans))
+        val auto = requireNotNull(coordinator.selectSetupPlan(plans, RecommendationStyle.BALANCED))
+
+        assertEquals(
+            plans.map { it.decisions }.toSet(),
+            pool.candidatesFor(com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy.ASSISTED)
+                .map { it.payload.decisions }.toSet(),
+        )
+        assertTrue(
+            pool.candidatesFor(com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy.AUTO)
+                .map { it.payload.decisions }
+                .contains(auto.decisions),
+        )
+    }
+
+    @Test
+    fun `unified setup pool assigns a stable ID to a legal no-op plan`() {
+        val noOp = RecommendationPlan(
+            decisions = emptyList(),
+            observations = emptyList(),
+            qualityTier = QualityTier.RECOMMENDED,
+            style = RecommendationStyle.BALANCED,
+            totalScore = 0,
+            scoreItems = emptyList(),
+            warnings = emptyList(),
+            effectSignature = PlanEffectSignature(),
+        )
+
+        val aggressiveNoOp = noOp.copy(style = RecommendationStyle.AGGRESSIVE, totalScore = 1)
+        val coordinator = ClocktowerRecommendationCoordinator()
+        val pool = requireNotNull(coordinator.unifiedSetupPool(listOf(noOp, aggressiveNoOp)))
+
+        assertEquals(2, pool.rankedCandidates.map { it.candidateId }.toSet().size)
+        assertTrue(pool.rankedCandidates.all { it.candidateId.isNotBlank() })
+        assertEquals(noOp, coordinator.selectSetupPlan(listOf(noOp, aggressiveNoOp), RecommendationStyle.BALANCED))
     }
 
     @Test
