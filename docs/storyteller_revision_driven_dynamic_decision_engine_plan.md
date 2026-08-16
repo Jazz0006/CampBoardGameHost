@@ -3,7 +3,7 @@
 > 状态：READY FOR IMPLEMENTATION
 > 日期：2026-08-15
 > 主规范：`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`
-> 本文取代：`dynamic_storyteller_decision_recommendation_implementation.md` 中面向未来的实施计划
+> 本文取代：`archive/dynamic_storyteller_decision_recommendation_implementation.md` 中面向未来的实施计划
 > 相关但不取代：`storyteller_a4_5_observation_cache_rebuild_spec.md`
 > 第一实施范围：Trouble Brewing；先使用现有启发式评分，Possible Worlds 以 shadow 接入
 
