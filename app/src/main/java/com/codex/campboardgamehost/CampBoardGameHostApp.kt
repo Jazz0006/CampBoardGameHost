@@ -249,12 +249,6 @@ internal enum class Role {
     Hunter,
 }
 
-private data class WordPair(
-    val civilianWord: String,
-    val undercoverWord: String,
-    val category: String,
-)
-
 internal data class PlayerCard(
     val name: String,
     val role: Role,
@@ -399,44 +393,6 @@ private data class PlayerDragState(
     val center: Offset,
 )
 
-private val chineseWordPairs = listOf(
-    WordPair("帐篷", "天幕", "露营"),
-    WordPair("营地灯", "手电筒", "露营"),
-    WordPair("睡袋", "防潮垫", "露营"),
-    WordPair("烤肉", "火锅", "食物"),
-    WordPair("可乐", "雪碧", "饮料"),
-    WordPair("咖啡", "奶茶", "饮料"),
-    WordPair("苹果", "梨", "水果"),
-    WordPair("西瓜", "哈密瓜", "水果"),
-    WordPair("牙刷", "毛巾", "生活"),
-    WordPair("雨伞", "雨衣", "生活"),
-    WordPair("高铁", "地铁", "交通"),
-    WordPair("飞机", "热气球", "交通"),
-    WordPair("猫", "狗", "动物"),
-    WordPair("狮子", "老虎", "动物"),
-    WordPair("医生", "护士", "职业"),
-    WordPair("老师", "教练", "职业"),
-)
-
-private val englishWordPairs = listOf(
-    WordPair("Tent", "Tarp", "Camping"),
-    WordPair("Lantern", "Flashlight", "Camping"),
-    WordPair("Sleeping bag", "Sleeping pad", "Camping"),
-    WordPair("Barbecue", "Hot pot", "Food"),
-    WordPair("Cola", "Lemon-lime soda", "Drink"),
-    WordPair("Coffee", "Milk tea", "Drink"),
-    WordPair("Apple", "Pear", "Fruit"),
-    WordPair("Watermelon", "Cantaloupe", "Fruit"),
-    WordPair("Toothbrush", "Towel", "Daily"),
-    WordPair("Umbrella", "Raincoat", "Daily"),
-    WordPair("High-speed train", "Subway", "Transport"),
-    WordPair("Airplane", "Hot air balloon", "Transport"),
-    WordPair("Cat", "Dog", "Animal"),
-    WordPair("Lion", "Tiger", "Animal"),
-    WordPair("Doctor", "Nurse", "Job"),
-    WordPair("Teacher", "Coach", "Job"),
-)
-
 private fun Context.playerName(number: Int): String = getString(R.string.default_player_name_format, number)
 
 private const val PREFS_NAME = "camp_board_game_host"
@@ -452,7 +408,7 @@ private const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG = "A4ObservationCacheUpdat
 private const val UNIFIED_SETUP_SELECTOR_BENCHMARK_LOG_TAG = "UnifiedSetupSelectorBenchmark"
 private const val UNIFIED_FIRST_NIGHT_POOL_BENCHMARK_LOG_TAG = "UnifiedFirstNightPoolBenchmark"
 private const val MAX_GAME_HISTORY = 20
-private const val MIN_PLAYERS = 3
+internal const val MIN_PLAYERS = 3
 private const val MIN_WEREWOLF_PLAYERS = 4
 private const val MIN_CLOCKTOWER_PLAYERS = 5
 private const val MAX_PLAYERS = 15
@@ -876,10 +832,6 @@ private fun LanguageMode.labelResId(): Int = when (this) {
     LanguageMode.System -> R.string.language_system
     LanguageMode.Chinese -> R.string.language_chinese
     LanguageMode.English -> R.string.language_english
-}
-
-private fun wordPairsFor(language: String): List<WordPair> {
-    return if (language == "en") englishWordPairs else chineseWordPairs
 }
 
 private val troubleBrewingRoles = listOf(
@@ -4308,55 +4260,6 @@ private fun SettingsScreen(
     }
 }
 
-@Composable
-private fun UndercoverSettingsScreen(
-    playerCount: Int,
-    undercoverCount: Int,
-    includeBlank: Boolean,
-    onUndercoverCountChange: (Int) -> Unit,
-    onIncludeBlankChange: (Boolean) -> Unit,
-    onBack: () -> Unit,
-    onStart: () -> Unit,
-) {
-    val maxUndercover = if (includeBlank) playerCount - 2 else playerCount - 1
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        item {
-            GameSettingsHeader(
-                title = stringResource(R.string.game_who_is_undercover),
-                subtitle = stringResource(R.string.game_settings_subtitle, playerCount),
-                onBack = onBack,
-            )
-        }
-        item {
-            SettingsPanel(
-                playerCount = playerCount,
-                undercoverCount = undercoverCount,
-                includeBlank = includeBlank,
-                maxUndercover = maxUndercover,
-                onUndercoverCountChange = onUndercoverCountChange,
-                onIncludeBlankChange = onIncludeBlankChange,
-            )
-        }
-        item {
-            Button(
-                onClick = onStart,
-                enabled = playerCount >= MIN_PLAYERS,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(8.dp),
-            ) {
-                Text(stringResource(R.string.start_dealing))
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun WerewolfSettingsScreen(
@@ -4833,7 +4736,7 @@ private fun ClocktowerSetupSummaryRow(label: String, value: String) {
 }
 
 @Composable
-private fun GameSettingsHeader(
+internal fun GameSettingsHeader(
     title: String,
     subtitle: String,
     onBack: () -> Unit,
@@ -4874,40 +4777,6 @@ private fun RoleToggleRow(
 }
 
 @Composable
-private fun SettingsPanel(
-    playerCount: Int,
-    undercoverCount: Int,
-    includeBlank: Boolean,
-    maxUndercover: Int,
-    onUndercoverCountChange: (Int) -> Unit,
-    onIncludeBlankChange: (Boolean) -> Unit,
-) {
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text(stringResource(R.string.game_settings), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Text(stringResource(R.string.player_count_summary, playerCount), color = Color(0xFF6F7B74))
-            StepperRow(
-                label = stringResource(R.string.undercover_count),
-                value = undercoverCount,
-                range = 1..maxUndercover.coerceAtLeast(1),
-                onChange = onUndercoverCountChange,
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = includeBlank, onCheckedChange = onIncludeBlankChange)
-                Text(stringResource(R.string.include_blank))
-            }
-        }
-    }
-}
-
-@Composable
 private fun EmptyStateCard(text: String) {
     Card(
         shape = RoundedCornerShape(8.dp),
@@ -4925,7 +4794,7 @@ private fun EmptyStateCard(text: String) {
 }
 
 @Composable
-private fun StepperRow(
+internal fun StepperRow(
     label: String,
     value: Int,
     range: IntRange,
