@@ -253,9 +253,7 @@ jobs:
 
       - name: Verify extracted Android source
         if: steps.gate.outputs.needed == 'true'
-        run: |
-          chmod +x ./gradlew
-          ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --build-cache
+        run: bash ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --build-cache
 
       - name: Verify ASP contracts
         if: steps.gate.outputs.needed == 'true'
