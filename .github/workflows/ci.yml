@@ -4,11 +4,14 @@ on:
   push:
     branches:
       - main
-      - "codex/**"
   pull_request:
     branches:
       - main
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -30,15 +33,16 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
+        with:
+          # This repository uses a long-lived same-repository development PR.
+          # Let it populate its PR-scoped Gradle cache; fork PRs remain read-only.
+          cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
 
       - name: Ensure Gradle wrapper is executable
         run: chmod +x ./gradlew
 
-      - name: Run unit tests
-        run: ./gradlew :app:testDebugUnitTest --no-daemon
-
-      - name: Build debug APK
-        run: ./gradlew :app:assembleDebug --no-daemon
+      - name: Run Android unit tests and build debug APK
+        run: ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --build-cache
 
   asp-contract-tests:
     name: ASP contract tests
