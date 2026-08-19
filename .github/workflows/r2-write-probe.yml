@@ -72,16 +72,18 @@ jobs:
                   raise SystemExit("extracted block is not unique")
               source = source.replace(block, "", 1)
 
-          target = """package com.codex.campboardgamehost
-
-import android.content.Context
-
-/**
- * Behavior-preserving R2 extraction from MainActivity.
- * State ownership and UI behavior remain in CampBoardGameHostApp during this pass.
- */
-"""
-          target += type_block + rules_block + last_words_label_block + judge_resources_block
+          header = "\n".join([
+              "package com.codex.campboardgamehost",
+              "",
+              "import android.content.Context",
+              "",
+              "/**",
+              " * Behavior-preserving R2 extraction from MainActivity.",
+              " * State ownership and UI behavior remain in CampBoardGameHostApp during this pass.",
+              " */",
+              "",
+          ])
+          target = header + type_block + rules_block + last_words_label_block + judge_resources_block
           target = target.replace("private enum class WerewolfJudgeStep", "internal enum class WerewolfJudgeStep")
           target = target.replace("private enum class LastWordsMode", "internal enum class LastWordsMode")
           target = target.replace("private data class WerewolfTemplate", "internal data class WerewolfTemplate")
