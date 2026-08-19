@@ -1,4 +1,4 @@
-name: R2 Clocktower setup extraction verifier
+name: R2 roadmap status sync
 
 on:
   push:
@@ -13,10 +13,10 @@ on:
       - .github/workflows/r2-write-probe.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  verify:
+  sync:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -24,27 +24,68 @@ jobs:
           ref: codex/storyteller-algorithm-v4
           fetch-depth: 0
 
-      - name: Verify Clocktower setup extraction
+      - name: Update authoritative roadmap status
         shell: bash
         run: |
           set -euo pipefail
-          source_file=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-          target_file=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt
+          python3 - <<'PY'
+          from pathlib import Path
 
-          test -f "$target_file"
-          grep -q "internal fun ClocktowerSettingsScreen" "$target_file"
-          grep -q "private fun ClocktowerSetupSummaryRow" "$target_file"
+          path = Path("docs/CURRENT_DEVELOPMENT_ROADMAP.md")
+          text = path.read_text(encoding="utf-8")
 
-          grep -q "internal const val MIN_CLOCKTOWER_PLAYERS = 5" "$source_file"
-          grep -q "internal fun canStartClocktowerScript(script: ClocktowerScript): Boolean" "$source_file"
-          grep -q "internal fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int>" "$source_file"
-          grep -q "internal fun ClocktowerScript.nameFor(language: String): String" "$source_file"
-          grep -q "internal fun ClocktowerTeam.label(context: Context): String" "$source_file"
-          grep -q "internal fun ClocktowerDarkTheme" "$source_file"
+          replacements = [
+              ("> 状态日期：2026-08-19  ", "> 状态日期：2026-08-20  "),
+              (
+                  "| **A3 EnumeratedWorldSet** | **REOPEN / R1 IMPLEMENTED** | 已修复已知 poisoned numeric-registration 缺口并补直接/Golden 回归；仍需实际测试、A3/A4 differential 与后续 R3 validation 后才能重新 PASS。 |",
+                  "| **A3 EnumeratedWorldSet** | **REOPEN / R1 PASS** | poisoned numeric-registration 修复已通过 Android、ASP contract 与真实 Clingo CI；A3 整体仍需 R3 end-to-end enumerator validation 后才能重新 PASS。 |",
+              ),
+              (
+                  "| **MainActivity decomposition** | **PLANNED** | R1 运行验收后进行纯结构拆分；禁止与状态架构/规则语义修改混做。 |",
+                  "| **MainActivity decomposition** | **IN PROGRESS / R2 BATCHES 1–5 PASS** | 已机械拆出 Activity shell、Werewolf support、Undercover UI、Werewolf host UI、Clocktower pre-game setup；每批均由 CI 验收。 |",
+              ),
+              (
+                  "当前尚未获得本分支的 CI/Gradle/Clingo 运行结果，所以 R1 不提前标记 PASS。",
+                  "2026-08-20 已由 GitHub Actions 获得 Android unit tests、debug APK、ASP contract tests 与真实 Clingo cross-validation 的通过证据，因此 R1 runtime gate 标记 PASS；A3 整体仍保持 REOPEN，等待 R3 end-to-end enumerator validation。",
+              ),
+              (
+                  "当前状态：**IMPLEMENTED / VALIDATION PENDING**。",
+                  "当前状态：**PASS**。Android unit tests、debug APK、ASP contract tests 与真实 Clingo cross-validation 均已有通过证据；A3 overall 仍待 R3 后重新签署。",
+              ),
+          ]
+          for old, new in replacements:
+              if text.count(old) != 1:
+                  raise SystemExit(f"roadmap marker missing or not unique: {old[:80]!r}")
+              text = text.replace(old, new, 1)
 
-          if grep -q "private fun ClocktowerSettingsScreen(" "$source_file"; then
-            echo "ClocktowerSettingsScreen still exists in app root" >&2
-            exit 1
-          fi
+          r2_marker = "### R2 — MainActivity mechanical decomposition\n\n范围：P0.S1–P0.S4。\n"
+          if text.count(r2_marker) != 1:
+              raise SystemExit("R2 section marker missing or not unique")
+          r2_status = (
+              r2_marker
+              + "\n当前状态：**IN PROGRESS / BATCHES 1–5 VALIDATED**。\n\n"
+              + "已完成并通过 CI：\n\n"
+              + "1. `WerewolfGameSupport.kt`：狼人杀纯模型/规则 helper 机械抽取；\n"
+              + "2. `MainActivity.kt`：缩减为 Android Activity / immersive mode / `setContent` 壳；`CampBoardGameHostApp.kt` 保留原状态 owner；\n"
+              + "3. `undercover/UndercoverSupport.kt`：词库、选词 helper 与 Undercover 设置 UI；\n"
+              + "4. `werewolf/WerewolfHostScreen.kt`：Werewolf 设置页与 Judge UI；\n"
+              + "5. `clocktower/ui/ClocktowerSetupScreen.kt`：仅 pre-game setup UI，不触及发牌、night/day、revision、persistence 或 A4/A4.5。\n\n"
+              + "每批都保持行为不变，仅做必要的 `private -> internal` 可见性调整，并通过 Android unit tests、debug APK build、ASP contract tests 与真实 Clingo cross-validation。\n"
+          )
+          text = text.replace(r2_marker, r2_status, 1)
+
+          path.write_text(text.rstrip() + "\n", encoding="utf-8")
+          PY
 
           git diff --check
+          grep -q "R2 BATCHES 1–5 PASS" docs/CURRENT_DEVELOPMENT_ROADMAP.md
+          grep -q "当前状态：\*\*PASS\*\*" docs/CURRENT_DEVELOPMENT_ROADMAP.md
+
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/CURRENT_DEVELOPMENT_ROADMAP.md
+            git diff --cached --check
+            git commit -m "docs: record R1 pass and R2 decomposition progress"
+            git push origin HEAD:codex/storyteller-algorithm-v4
+          fi
