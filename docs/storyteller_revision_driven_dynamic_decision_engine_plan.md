@@ -1,6 +1,7 @@
 # 状态版本驱动的动态决策引擎：Terra 实施规范
 
-> 状态：READY FOR IMPLEMENTATION
+> 状态：BLOCKED BY CURRENT ROADMAP — R5 + R5.5  
+> 当前解锁条件：Phase A R5 通过 + `多剧本多板子与动态游戏流程架构设计_v1.md` 的 R5.5 Foundation 退出  
 > 日期：2026-08-15
 > 主规范：`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`
 > 本文取代：`archive/dynamic_storyteller_decision_recommendation_implementation.md` 中面向未来的实施计划
@@ -763,7 +764,7 @@ The setup AUTO path now also projects its existing constrained plans through `Un
 - Natural identity-reveal prewarm on the POCO X5 completed 5/5 recipients: total build **9,773 ms**, coarse maximum/end heap delta **62,797,000 / 62,797,000 bytes**, main-thread frame P50/P95 **16 / 16 ms**, 0 frames over 32/50 ms, maximum interval **23 ms**.
 - The Debug-only isolated cancellation probe reads only the current structural snapshot and uses a fresh shadow cache; it does not change the current night step, event log, recommendation or persisted game. On the same device, after two frame boundaries it reported: 5 recipients, `1:STALE, 2–5:CANCELLED`, 0 ready, total worker build **2,113 ms**, coarse max/end heap delta **9,472,488 / 9,472,488 bytes**, frame P50/P95 **8 / 8 ms**, 0 frames over 32/50 ms, maximum interval **19 ms**, synchronous cancellation acknowledgement **0 ms**, 5 cancelled entries, and `verification=stale-not-published`.
 - A Debug-only, aggregate-only unified setup-selector benchmark uses the current ready setup plans without writing a decision or save. On the POCO X5, 11 samples / 3 candidates: pool build P50/P95 **155 / 217 µs**, AUTO selection **24 / 32 µs**, and isolated C8 preview/commit recording **75 / 87 µs**. This covers the setup selector boundary only; it must not be generalized to first-night information, registration, Mayor or Demon decision latency.
-- **POCO X8 measurement — 2026-08-16:** Xiaomi POCO X8 (`2511FPC34G` / `klee_global`, Android 16, build `OS3.0.306.0.WPJMIXM`), 5-player Trouble Brewing test game. The user ran the same Debug-only isolated cancellation probe: 5 recipients, `1:STALE, 2–5:CANCELLED`, 0 ready, worker build **1,290 ms**, coarse max/end heap delta **12,132,112 / 12,132,112 bytes**, frame P50/P95 **8 / 8 ms**, no frames over 32/50 ms, maximum interval **8 ms**, cancellation acknowledgement **0 ms**, 5 cancelled entries and `verification=stale-not-published`. The 11-sample setup-selector slice (3 candidates) measured pool build **116 / 152 µs**, AUTO selection **14 / 15 µs**, and C8 preview/commit **39 / 44 µs**. Android 16 forbids ADB input injection on this device, so the user tapped the diagnostic controls manually; log retrieval remains ADB-verifiable. No `com.codex.campboardgamehost` crash appeared in the captured log.
+- **POCO X8 measurement — 2026-08-16:** Xiaomi POCO X8 (`2511FPC34G` / `klee_global`, Android 16, build `OS3.0.306.0.WPJMIXM`), 5-player Trouble Brewing test game. The user ran the same Debug-only isolated cancellation probe: 5 recipients, `1:STALE, 2–5:CANCELLED`, 0 ready, worker build **1,290 ms**, coarse max/end heap delta **12,132,112 / 12,132,112 bytes**, frame P50/P95 **8 / 8 ms**, no frames over 32/50 ms, maximum interval **8 ms**, cancellation acknowledgement **0 ms**, 5 cancelled entries and `verification=stale-not-published`. The 11-sample setup-selector slice (3 candidates) measured pool build **116 / 152 µs**, AUTO selection **14 / 15 µs**, and C8 preview/commit **39 / 44 µs**. Android 16 forbids ADB input injection on this device, so the user tapped the diagnostic controls manually；log retrieval remains ADB-verifiable. No `com.codex.campboardgamehost` crash appeared in the captured log.
 - **POCO X8 first-night information-pool slice — 2026-08-16:** the Debug-only benchmark recreated the complete Investigator first-night `UnifiedSelectionPool` for each of 11 samples without showing, committing or persisting information. With 4 candidates, pool build P50/P95 was **157 / 320 µs**, AUTO projection/style selection **30 / 41 µs**, and isolated C8 preview/commit **50 / 84 µs**. No `com.codex.campboardgamehost` crash appeared in the captured log.
 - This completes the POCO X5/X8 coarse/frame/cancellation evidence and the setup-selector latency slice, but does not complete B7.4: Android Profiler peak-memory data and the remaining unified decision-family latency measurements are pending. The prior numeric fallback gate failure still keeps ZDD at `ZDD_SHADOW`.
 
@@ -781,7 +782,7 @@ The setup AUTO path now also projects its existing constrained plans through `Un
 - `ASSISTED` and higher require an explicit external distribution-review approval. Wiring aggregate parity, stale-discard, failure/degradation and withholding evidence from every migrated decision family into this gate remains pending; until then each family stays at its existing conservative behavior.
 - Added `SelectionDistributionReviewer`: it consumes only C8 aggregate exports, compares AUTO-eligible family selection rates within the same player-count/phase/style cohort after a configurable minimum sample, and emits review signals rather than a self-authorizing rollout decision. Cross-game persistence/aggregation and reviewer approval UI remain pending.
 - Verification on 2026-08-16: full `testDebugUnitTest`, ASP Oracle suite (11 tests), `git diff --check`, and Debug APK assembly passed; the APK was installed on the connected POCO X8 without automated input.
-- The remaining B7.4 Debug-only controls are now behind one collapsed developer-diagnostics disclosure per host view; the first-night pool measurement follows the same disclosure. They remain available only until the outstanding device evidence is collected, and are excluded from Release builds.
+- The remaining B7.4 Debug-only controls are now behind one collapsed developer-diagnostics disclosure per host view；the first-night pool control follows the same disclosure. They remain available only until the outstanding device evidence is collected, and are excluded from Release builds.
 
 ##### 进入下一项前的验证基线
 
@@ -967,7 +968,7 @@ This section supersedes the stale “next permitted implementation” wording in
 
 - B7.1–B7.3 migrated the setup selector, first-night information, special registrations, Mayor redirect and Demon succession to shared `UnifiedSelectionPool` boundaries with aggregate-only C8 preview/commit telemetry and focused parity coverage.
 - B7.4 has verified A4 cancellation/coarse/frame evidence on POCO X5 and POCO X8, plus setup-selector and Investigator first-night pool latency on X8. ZDD remains `ZDD_SHADOW`; the numeric decode/rebuild threshold is still not met.
-- B7.5 has a pure-domain rollout ladder (`SelectionRolloutGate`) and aggregate-only withholding reviewer (`SelectionDistributionReviewer`). Neither expands live automation; cross-game aggregate persistence, all-family evidence wiring, and an explicit reviewer approval path are still absent.
+- B7.5 has a pure-domain rollout ladder (`SelectionRolloutGate`) and aggregate-only withholding reviewer (`SelectionDistributionReviewer`). Neither expands live automation；cross-game aggregate persistence, all-family evidence wiring, and an explicit reviewer approval path are still absent.
 - Debug diagnostic controls remain necessary only for the outstanding device gates. They are compiled only in Debug and are now hidden behind a single “Show developer diagnostics” disclosure. The first-night pool control follows that disclosure.
 
 ### 19.2 Latest verified baseline
@@ -981,7 +982,7 @@ This section supersedes the stale “next permitted implementation” wording in
 ### 19.3 Next permitted work
 
 1. Complete B7.4 by adding/using real, non-persisting selector benchmarks for the remaining migrated families: special registration, Mayor redirect and Demon succession. Do not substitute a synthetic generic pool benchmark for their real candidate construction. Record X8 P50/P95 build/select/C8-commit timings and check for app crashes after each manual run.
-2. Collect Android Profiler peak-memory evidence under the existing specified fixture; coarse heap metrics do not satisfy this remaining gate.
+2. Collect Android Profiler peak-memory evidence under the existing specified fixture；coarse heap metrics do not satisfy this remaining gate.
 3. Then implement B7.5 evidence wiring and an aggregate-only cross-game persistence/review boundary. It must contain no names, role sheets, poison targets, private propositions, candidate IDs, or decision IDs. Do not allow the reviewer or rollout gate to promote a live family without explicit human approval and all required gates.
 4. Do not remove legacy helpers or the Debug diagnostics until B7.4/B7.5 evidence is complete in a separate reviewable change.
 
@@ -1000,7 +1001,7 @@ adb devices -l
 
 ## 20. 2026-08-20 R5.5 FlowPlanner 前置约束
 
-本节覆盖本文顶部的 `READY FOR IMPLEMENTATION` 以及第 18/19 节历史 handoff 中任何“下一项可直接继续 production implementation”的旧状态文字。当前实际状态由 `CURRENT_DEVELOPMENT_ROADMAP.md` 决定：**本文的后续 production implementation 在 Phase A R5 与 R5.5 Script & Dynamic Flow Foundation 完成前均为 BLOCKED。**
+本节覆盖第 18/19 节历史 handoff 中任何“下一项可直接继续 production implementation”的旧状态文字。当前实际状态由 `CURRENT_DEVELOPMENT_ROADMAP.md` 决定：**本文的后续 production implementation 在 Phase A R5 与 R5.5 Script & Dynamic Flow Foundation 完成前均为 BLOCKED。**
 
 R5.5 的专项规范是：
 
