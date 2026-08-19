@@ -6,6 +6,11 @@ on:
       - codex/storyteller-algorithm-v4
     paths:
       - .github/workflows/r2-mainactivity-extract.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/r2-mainactivity-extract.yml
 
 permissions:
   contents: write
@@ -40,6 +45,10 @@ jobs:
           target_path = Path("app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfGameSupport.kt")
           source = source_path.read_text(encoding="utf-8")
 
+          if target_path.exists() and "private enum class WerewolfJudgeStep" not in source:
+              print("Werewolf support is already extracted; validating existing result.")
+              raise SystemExit(0)
+
           def extract(start: str, end: str) -> str:
               start_index = source.find(start)
               if start_index < 0:
@@ -68,12 +77,7 @@ jobs:
               "@Composable\nprivate fun HostProgressCard(",
           )
 
-          moved_blocks = [
-              type_block,
-              rules_block,
-              last_words_label_block,
-              judge_resources_block,
-          ]
+          moved_blocks = [type_block, rules_block, last_words_label_block, judge_resources_block]
           for block in moved_blocks:
               if source.count(block) != 1:
                   raise SystemExit("extracted block is not unique")
@@ -153,7 +157,12 @@ import android.content.Context
         run: ./gradlew :app:assembleDebug --no-daemon
 
       - name: Commit R2 extraction
+        if: github.event_name == 'push'
         run: |
+          if git diff --quiet; then
+            echo "No source changes to commit."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app/src/main/java/com/codex/campboardgamehost/MainActivity.kt \
