@@ -35,7 +35,7 @@ jobs:
           text = path.read_text(encoding="utf-8")
 
           replacements = [
-              ("> 状态日期：2026-08-19  ", "> 状态日期：2026-08-20  "),
+              ("> 状态日期：2026-08-19  ", "> 状态日期：2026-08-20"),
               (
                   "| **A3 EnumeratedWorldSet** | **REOPEN / R1 IMPLEMENTED** | 已修复已知 poisoned numeric-registration 缺口并补直接/Golden 回归；仍需实际测试、A3/A4 differential 与后续 R3 validation 后才能重新 PASS。 |",
                   "| **A3 EnumeratedWorldSet** | **REOPEN / R1 PASS** | poisoned numeric-registration 修复已通过 Android、ASP contract 与真实 Clingo CI；A3 整体仍需 R3 end-to-end enumerator validation 后才能重新 PASS。 |",
