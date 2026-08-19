@@ -1,20 +1,20 @@
 # Trouble Brewing epistemic reference matrix
 
 > Project: CampBoardGameHost  
-> Milestone: Phase A / PR A0 + A2.1 executable corpus  
-> Version: 1.1  
-> Date: 2026-08-11
+> Milestone: Phase A / PR A0 + A2.1 executable corpus + A3 R1 remediation  
+> Version: 1.2  
+> Date: 2026-08-19
 
 ## 1. Scope and notation
 
-This matrix defines the first frozen golden-scenario catalog for the player-perspective world engine. A2.1 has converted all 33 original entries into machine-readable official contracts and expanded the corpus to 48 scenarios; A3/B4 will execute the world/timeline implementation against them.
+This matrix defines the frozen golden-scenario catalog for the player-perspective world engine. A2.1 converted all 33 original entries into machine-readable official contracts and expanded the corpus to 48 scenarios. The 2026-08-19 A3 R1 remediation adds four poisoned Spy/Recluse numeric-registration contracts, bringing the catalog to **52 scenarios**. A3 executes the currently supported information contracts; B4 remains responsible for deferred timeline and recipient-projection contracts.
 
 Oracle abbreviations:
 
 - **OFFICIAL** — official role text, almanac or published ruling; authority, not executable oracle.
 - **ASP** — `pnkfelix/botc-asp@616e61b720cc853af031f2623fd6bde33b869865`.
-- **ENUM** — future CampBoardGameHost `EnumeratedWorldSet` baseline.
-- **ZDD** — `pnkfelix/botc-zdd-@0bbe6fa07afe84ab506e772315d0f7edc305939d`.
+- **ENUM** — CampBoardGameHost `EnumeratedWorldSet` correctness baseline.
+- **ZDD** — `pnkfelix/botc-zdd-@0bbe6fa07afe84ab506e772315d0f7edc305939d` / CampBoardGameHost ZDD shadow representation where applicable.
 - **ORZ** — `olarozenfeld/botc@fc919f19356f78aa9fd22f036f5fe63257d7fde8` where its log semantics cover the case.
 
 Expected result terminology:
@@ -53,6 +53,10 @@ These scenarios do not assign likelihoods. Player claims and storyteller-only se
 | TB-FT-03 | Fortune Teller/Recluse | healthy FT checks Recluse, not Demon or red herring | result with/without Demon registration | CHOICE: YES requires bound Recluse-as-Demon registration; NO remains legal without it | OFFICIAL, ASP, ENUM, ZDD |
 | TB-MAL-01 | Poisoned information | Poisoner selects Empath for current night/day interval | arbitrary number | both truthful and false mechanically legal observations remain SAT in malfunction-allowed perspective | OFFICIAL, ASP, ENUM, ZDD |
 | TB-MAL-02 | Poison duration | Poisoner changes target on next night | old and new target state | old target becomes healthy; new target is poisoned for the new interval | OFFICIAL, ASP, ENUM, ZDD, ORZ |
+| TB-MAL-05 | Poisoned Spy/Chef | 10-player legal setup; Spy is poisoned and sits in an evil run; Chef healthy | Chef count that requires Spy to register good | UNSAT; poisoning removes Spy's optional good registration, while actual evil alignment remains | OFFICIAL, ENUM, ZDD; ASP known variance |
+| TB-MAL-06 | Poisoned Spy/Empath | same legal setup; healthy Empath has poisoned Spy as a living neighbour | Empath count 0 requiring Spy to register good | UNSAT; poisoned Spy is still actually evil and cannot use its registration ability | OFFICIAL, ENUM, ZDD; ASP known variance |
+| TB-MAL-07 | Poisoned Recluse/Chef | 8-player legal setup; Recluse is poisoned next to evil; Chef healthy | Chef count that requires Recluse to register evil | UNSAT; poisoning removes Recluse's optional evil registration, while actual good alignment remains | OFFICIAL, ENUM, ZDD; ASP known variance |
+| TB-MAL-08 | Poisoned Recluse/Empath | same legal setup; healthy Empath has poisoned Recluse as a living neighbour | Empath count 1 requiring Recluse to register evil | UNSAT; poisoned Recluse is actually good and cannot use its registration ability | OFFICIAL, ENUM, ZDD; ASP known variance |
 | TB-IMP-01 | Soldier interaction | poisoned Soldier is selected by Imp | night death | Soldier dies; malfunctioning ability does not protect | OFFICIAL, ASP, ENUM, ZDD, ORZ |
 | TB-IMP-02 | Monk protection | healthy Monk protects another player; Imp selects that player | night death | protected target survives | OFFICIAL, ASP, ENUM, ZDD, ORZ |
 | TB-IMP-03 | Imp starpass | Imp selects self; at least one living Minion | role transition | Imp dies and one living Minion becomes Imp | OFFICIAL, ASP, ENUM, ZDD, ORZ |
@@ -64,7 +68,7 @@ These scenarios do not assign likelihoods. Player claims and storyteller-only se
 | TB-SAINT-01 | Saint | healthy Saint is executed and dies | game end | good team loses | OFFICIAL, ASP, ENUM, ZDD, ORZ |
 | TB-MAYOR-01 | Mayor | healthy Mayor selected by Imp at night; valid alternative death target | death branch | CHOICE: Mayor may die or another player may die; no-death branch requires a separate legal cause | OFFICIAL, ASP, ENUM, ZDD, ORZ |
 
-Catalog size: **33 scenarios**.
+Original A0 table size: **33 scenarios**. Machine-readable catalog after A2.1 + A3 R1: **52 scenarios**.
 
 ## 3. Required assertions per scenario
 
@@ -90,9 +94,10 @@ For `CHOICE` scenarios, each branch receives its own stable candidate ID. A test
 3. Poisoning is not automatically revealed to its target.
 4. Red herring identity is storyteller-only and is applied only to Fortune Teller semantics.
 5. Spy and Recluse registration is local to the queried interaction; it is not a permanent global role rewrite.
-6. Public deaths, executions and nominations enter later snapshots at their actual timeline position.
-7. Evil-only setup knowledge is included only for the evil player's perspective and only when player-count rules grant it.
-8. Storyteller-only bluffs, actual roles and decision seeds must never leak into a good player's `PlayerWorldSet`.
+6. **Spy/Recluse special registration is their ability. If that character is poisoned/drunk or otherwise not functioning, the optional special-registration branch is unavailable; their actual role/type/alignment remains unchanged.**
+7. Public deaths, executions and nominations enter later snapshots at their actual timeline position.
+8. Evil-only setup knowledge is included only for the evil player's perspective and only when player-count rules grant it.
+9. Storyteller-only bluffs, actual roles and decision seeds must never leak into a good player's `PlayerWorldSet`.
 
 ## 5. Coverage map and implementation order
 
@@ -102,17 +107,19 @@ For `CHOICE` scenarios, each branch receives its own stable candidate ID. A test
 | First-night pair information | `TB-WW-01`–`02`, `TB-LIB-01`–`03`, `TB-INV-01`–`03`, `TB-SPY-01` | A2 then A3 |
 | First-night numeric information | `TB-CHEF-01`–`02`, `TB-EMPATH-01` | A2 then A3 |
 | FT and local registration | `TB-FT-01`–`03` | A2 then A3 |
-| Malfunction boundary | `TB-MAL-01`–`02` | A2.1 contract; full timeline in B4 |
-| Night/day transitions | `TB-EMPATH-02`, `TB-IMP-01`–`03`, `TB-SW-01`, `TB-UT-01`, `TB-RK-01`, `TB-VIRGIN-01`, `TB-SAINT-01`, `TB-MAYOR-01` | A2.1 contract; B4 implementation |
-| High-impact registration | `TB-SLAYER-01` | A2.1 contract; B4 implementation |
+| Malfunction boundary | `TB-MAL-01`–`08` | A2.1/A3 contract; full timeline remains B4 where applicable |
+| Night/day transitions | `TB-EMPATH-02`, `TB-IMP-01`–`04`, `TB-SW-01`–`02`, `TB-UT-01`–`02`, `TB-RK-01`–`02`, `TB-VIRGIN-01`–`02`, `TB-SAINT-01`, `TB-MAYOR-01`–`02` | A2.1 contract; B4 implementation |
+| High-impact registration | `TB-SLAYER-01`–`02` | A2.1 contract; B4 implementation |
+| Knowledge projection | `TB-KNOW-01`–`04` | A2.1 contract; B4 implementation |
 
-## 6. Known limits at A0
+## 6. Known limits at A0/A3
 
-- The catalog is a semantic specification, not yet an executable fixture set.
-- Exact seat assignments and serialized inputs will be added with the A1 unified semantic model to avoid freezing an ad-hoc test schema now.
+- The original A0 matrix was a semantic specification; the machine-readable catalog now provides executable fixture data for supported A3 information queries.
 - External implementations may encode role text differently. Agreement does not override official rules; disagreement is recorded and investigated.
-- This first catalog focuses on the interactions most relevant to player cognition. Butler voting legality, nomination-count minutiae, dead-vote consumption and all game-end permutations remain deterministic-rule coverage but are not required for the initial epistemic engine gate.
-- Mechanical world counts are not player probabilities. A0 defines no probability or weighting assertions.
+- The frozen ASP Oracle's Spy/Recluse misregistration predicates are based on assignment and are not gated by `functioning/impaired`. Therefore `TB-MAL-05`–`08` intentionally record `KNOWN_ORACLE_VARIANCE`; the project does not weaken official poison semantics to match that external implementation.
+- The catalog root uses schema v2, but its embedded `formalStates` still carry the older v1 state shape. Migrating those nested fixtures to the current A1 schema-v2 contract is tracked separately in R3 and is not silently treated as complete by this document.
+- This corpus focuses on interactions most relevant to player cognition. Additional deterministic-rule coverage may continue to live outside the first epistemic gate.
+- Mechanical world counts are not player probabilities. No probability or weighting assertion is implied.
 
 ## 7. A0 exit checklist
 
@@ -123,9 +130,9 @@ For `CHOICE` scenarios, each branch receives its own stable candidate ID. A test
 - [x] No external implementation is labelled an official source.
 - [x] Exact versus future approximate computation boundary preserved.
 
-## 8. A2.1 expansion and execution status
+## 8. A2.1 and A3 R1 expansion/execution status
 
-A2.1 adds 15 coverage-driven variants beyond the original 33:
+A2.1 added 15 coverage-driven variants beyond the original 33:
 
 ```text
 TB-FT-04 Spy red-herring prohibition
@@ -145,4 +152,13 @@ TB-KNOW-03 red-herring non-leakage
 TB-KNOW-04 general storyteller-secret non-leakage
 ```
 
-All 48 are schema-v2 official contracts. Twenty are also executable against the frozen ASP adapter; 28 are explicitly `ORACLE_NOT_APPLICABLE` until a faithful timeline or recipient-projection adapter exists. The release baseline has 18 agreements, one documented Drunk coverage gap, one documented Spy red-herring Oracle variance, zero unexplained mismatches, and zero `NOT_RUN`.
+A3 R1 adds four correctness-regression contracts:
+
+```text
+TB-MAL-05 poisoned Spy cannot register good for Chef
+TB-MAL-06 poisoned Spy cannot register good for Empath
+TB-MAL-07 poisoned Recluse cannot register evil for Chef
+TB-MAL-08 poisoned Recluse cannot register evil for Empath
+```
+
+The machine-readable catalog therefore contains **52 official contracts** at catalog schema v2. **24** are executable by the current A3 information-contract runner; **28** remain explicitly deferred/`ORACLE_NOT_APPLICABLE` for timeline or recipient-projection work. The A3 executable classification baseline is **18 agreements, 1 expected Drunk coverage gap, 5 known Oracle variances, 0 unexplained mismatches, and 0 `NOT_RUN`**. Four of the five variances are the poisoned Spy/Recluse cases above; the fifth is `TB-FT-04` Spy red-herring eligibility.
