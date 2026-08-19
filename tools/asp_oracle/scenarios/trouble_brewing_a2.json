@@ -109,6 +109,38 @@
         {"seat": 7, "actualRole": "Poisoner", "actualAlignment": "EVIL", "actualType": "MINION", "shownRole": "Poisoner", "alive": true, "poisoned": false},
         {"seat": 8, "actualRole": "Imp", "actualAlignment": "EVIL", "actualType": "DEMON", "shownRole": "Imp", "alive": true, "poisoned": false}
       ], "publicPropositions": [], "storytellerOnlyPropositions": []
+    },
+    "poisoned_spy10": {
+      "snapshotId": "snapshot-poisoned-spy10", "gameId": "golden-a3-r1", "gameStateRevision": 7,
+      "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a3-r1", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "players": [
+        {"seat": 1, "actualRole": "Chef", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Chef", "alive": true, "poisoned": false},
+        {"seat": 2, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
+        {"seat": 3, "actualRole": "Librarian", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Librarian", "alive": true, "poisoned": false},
+        {"seat": 4, "actualRole": "Investigator", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Investigator", "alive": true, "poisoned": false},
+        {"seat": 5, "actualRole": "Fortune Teller", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Fortune Teller", "alive": true, "poisoned": false},
+        {"seat": 6, "actualRole": "Undertaker", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Undertaker", "alive": true, "poisoned": false},
+        {"seat": 7, "actualRole": "Empath", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Empath", "alive": true, "poisoned": false},
+        {"seat": 8, "actualRole": "Spy", "actualAlignment": "EVIL", "actualType": "MINION", "shownRole": "Spy", "alive": true, "poisoned": true},
+        {"seat": 9, "actualRole": "Poisoner", "actualAlignment": "EVIL", "actualType": "MINION", "shownRole": "Poisoner", "alive": true, "poisoned": false},
+        {"seat": 10, "actualRole": "Imp", "actualAlignment": "EVIL", "actualType": "DEMON", "shownRole": "Imp", "alive": true, "poisoned": false}
+      ], "publicPropositions": [], "storytellerOnlyPropositions": []
+    },
+    "poisoned_recluse8": {
+      "snapshotId": "snapshot-poisoned-recluse8", "gameId": "golden-a3-r1", "gameStateRevision": 8,
+      "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a3-r1", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "players": [
+        {"seat": 1, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
+        {"seat": 2, "actualRole": "Librarian", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Librarian", "alive": true, "poisoned": false},
+        {"seat": 3, "actualRole": "Investigator", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Investigator", "alive": true, "poisoned": false},
+        {"seat": 4, "actualRole": "Chef", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Chef", "alive": true, "poisoned": false},
+        {"seat": 5, "actualRole": "Empath", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Empath", "alive": true, "poisoned": false},
+        {"seat": 6, "actualRole": "Recluse", "actualAlignment": "GOOD", "actualType": "OUTSIDER", "shownRole": "Recluse", "alive": true, "poisoned": true},
+        {"seat": 7, "actualRole": "Poisoner", "actualAlignment": "EVIL", "actualType": "MINION", "shownRole": "Poisoner", "alive": true, "poisoned": false},
+        {"seat": 8, "actualRole": "Imp", "actualAlignment": "EVIL", "actualType": "DEMON", "shownRole": "Imp", "alive": true, "poisoned": false}
+      ], "publicPropositions": [], "storytellerOnlyPropositions": []
     }
   },
   "scenarios": [
@@ -139,6 +171,10 @@
     {"scenarioId":"TB-MAL-02","stateRef":"poisoned_empath8","perspectiveSeat":1,"hypothesisMode":"ACTUAL_ONLY","knowledgeBoundary":"storyteller timeline","query":{"kind":"official-contract","givenFacts":["poisoner_targets(1,night1)","poisoner_targets(2,night2)"],"expectedFacts":["healthy(1,night2)","poisoned(2,night2)"]},"expectedStatus":"STATE","officialBasis":"Poisoner duration","officialAssertions":["old_target_recovers","new_target_poisoned"],"oracleMode":"NOT_APPLICABLE","oracleLimitation":"Cross-night target replacement is deferred to the timeline adapter rather than approximated in A2 queries."},
     {"scenarioId":"TB-MAL-03","stateRef":"poisoned_empath8","perspectiveSeat":1,"hypothesisMode":"PLAYER_PERSPECTIVE","knowledgeBoundary":"poison target is storyteller-only","query":{"kind":"official-contract","givenFacts":["perspective=poisoned_player"],"expectedFacts":["poison_fact_not_visible"]},"expectedStatus":"STATE","officialBasis":"Poisoning is secret","officialAssertions":["recipient_snapshot_excludes_poison_target"],"oracleMode":"NOT_APPLICABLE","oracleLimitation":"Frozen Oracle has no PlayerKnowledgeSnapshot serialization boundary."},
     {"scenarioId":"TB-MAL-04","stateRef":"baron8","perspectiveSeat":4,"hypothesisMode":"PLAYER_PERSPECTIVE","knowledgeBoundary":"Drunk is not told actual role or malfunction","query":{"kind":"official-contract","givenFacts":["actual_role=drunk","shown_role=librarian"],"expectedFacts":["arbitrary_info_legal","actual_role_hidden"]},"expectedStatus":"CHOICE","officialBasis":"Drunk ability","officialAssertions":["malfunction_separate_from_registration"],"oracleMode":"NOT_APPLICABLE","oracleLimitation":"Frozen Oracle coverage gap cannot preserve both shown-role hypothesis and hidden actual role."},
+    {"scenarioId":"TB-MAL-05","stateRef":"poisoned_spy10","perspectiveSeat":1,"hypothesisMode":"ACTUAL_ONLY","knowledgeBoundary":"storyteller truth; poisoned Spy has no registration ability","query":{"kind":"numeric-info","ability":"Chef","sourceSeat":1,"value":1},"expectedStatus":"UNSAT","officialBasis":"Poisoning disables the Spy ability; Chef counts actual evil registration only","officialAssertions":["poisoned_spy_cannot_register_good_for_chef"],"mismatchDisposition":"KNOWN_ORACLE_VARIANCE"},
+    {"scenarioId":"TB-MAL-06","stateRef":"poisoned_spy10","perspectiveSeat":7,"hypothesisMode":"ACTUAL_ONLY","knowledgeBoundary":"storyteller truth; poisoned Spy has no registration ability","query":{"kind":"numeric-info","ability":"Empath","sourceSeat":7,"value":0},"expectedStatus":"UNSAT","officialBasis":"Poisoning disables the Spy ability; Empath sees actual evil alignment","officialAssertions":["poisoned_spy_cannot_register_good_for_empath"],"mismatchDisposition":"KNOWN_ORACLE_VARIANCE"},
+    {"scenarioId":"TB-MAL-07","stateRef":"poisoned_recluse8","perspectiveSeat":4,"hypothesisMode":"ACTUAL_ONLY","knowledgeBoundary":"storyteller truth; poisoned Recluse has no registration ability","query":{"kind":"numeric-info","ability":"Chef","sourceSeat":4,"value":2},"expectedStatus":"UNSAT","officialBasis":"Poisoning disables the Recluse ability; Chef counts actual good alignment","officialAssertions":["poisoned_recluse_cannot_register_evil_for_chef"],"mismatchDisposition":"KNOWN_ORACLE_VARIANCE"},
+    {"scenarioId":"TB-MAL-08","stateRef":"poisoned_recluse8","perspectiveSeat":5,"hypothesisMode":"ACTUAL_ONLY","knowledgeBoundary":"storyteller truth; poisoned Recluse has no registration ability","query":{"kind":"numeric-info","ability":"Empath","sourceSeat":5,"value":1},"expectedStatus":"UNSAT","officialBasis":"Poisoning disables the Recluse ability; Empath sees actual good alignment","officialAssertions":["poisoned_recluse_cannot_register_evil_for_empath"],"mismatchDisposition":"KNOWN_ORACLE_VARIANCE"},
     {"scenarioId":"TB-IMP-01","stateRef":"poisoned_empath8","perspectiveSeat":1,"hypothesisMode":"ACTUAL_ONLY","knowledgeBoundary":"storyteller death resolution","query":{"kind":"official-contract","givenFacts":["poisoned_soldier","imp_targets_soldier"],"expectedFacts":["soldier_dies"]},"expectedStatus":"STATE","officialBasis":"Soldier loses protection while poisoned","officialAssertions":["poisoned_soldier_dies_to_imp"],"oracleMode":"NOT_APPLICABLE","oracleLimitation":"A2 information adapter does not yet encode death resolution events."},
     {"scenarioId":"TB-IMP-02","stateRef":"base8_registration","perspectiveSeat":1,"hypothesisMode":"ACTUAL_ONLY","knowledgeBoundary":"storyteller death resolution","query":{"kind":"official-contract","givenFacts":["healthy_monk_protects_target","imp_targets_same_player"],"expectedFacts":["target_survives"]},"expectedStatus":"STATE","officialBasis":"Monk protection","officialAssertions":["monk_target_survives_demon_attack"],"oracleMode":"NOT_APPLICABLE","oracleLimitation":"A2 information adapter does not yet encode protection and death events."},
     {"scenarioId":"TB-IMP-03","stateRef":"base8_registration","perspectiveSeat":8,"hypothesisMode":"ACTUAL_ONLY","knowledgeBoundary":"storyteller role transition","query":{"kind":"official-contract","givenFacts":["imp_targets_self","living_minion_exists"],"expectedFacts":["imp_dies","one_living_minion_becomes_imp"]},"expectedStatus":"STATE","officialBasis":"Imp starpass","officialAssertions":["starpass_transition"],"oracleMode":"NOT_APPLICABLE","oracleLimitation":"Role-transition comparison requires the A3/B4 timeline adapter."},
