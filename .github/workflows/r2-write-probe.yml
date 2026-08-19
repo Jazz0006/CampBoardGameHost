@@ -1,4 +1,4 @@
-name: R2 extraction executor
+name: R2 app-shell extraction executor
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
           ref: codex/storyteller-algorithm-v4
           fetch-depth: 0
 
-      - name: Extract Werewolf support mechanically
+      - name: Extract Android Activity shell mechanically
         shell: bash
         run: |
           set -euo pipefail
@@ -32,98 +32,92 @@ jobs:
           from pathlib import Path
 
           source_path = Path("app/src/main/java/com/codex/campboardgamehost/MainActivity.kt")
-          target_path = Path("app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfGameSupport.kt")
+          target_path = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
           source = source_path.read_text(encoding="utf-8")
 
-          if target_path.exists() and "private enum class WerewolfJudgeStep" not in source:
-              print("Werewolf support already extracted")
+          if target_path.exists() and "private enum class Screen {" not in source:
+              target = target_path.read_text(encoding="utf-8")
+              if "internal fun CampBoardGameHostApp()" not in target:
+                  raise SystemExit("existing app file does not expose CampBoardGameHostApp internally")
+              print("Android Activity shell already extracted")
               raise SystemExit(0)
 
-          def extract(start: str, end: str) -> str:
-              start_index = source.find(start)
-              if start_index < 0:
-                  raise SystemExit(f"missing start marker: {start!r}")
-              if source.find(start, start_index + 1) >= 0:
-                  raise SystemExit(f"start marker is not unique: {start!r}")
-              end_index = source.find(end, start_index)
-              if end_index < 0:
-                  raise SystemExit(f"missing end marker after {start!r}: {end!r}")
-              return source[start_index:end_index]
+          activity_marker = "class MainActivity : ComponentActivity() {"
+          app_body_marker = "private enum class Screen {"
+          activity_start = source.find(activity_marker)
+          if activity_start < 0:
+              raise SystemExit("MainActivity declaration not found")
+          if source.find(activity_marker, activity_start + 1) >= 0:
+              raise SystemExit("MainActivity declaration is not unique")
 
-          type_block = extract(
-              "private enum class WerewolfJudgeStep {",
-              "private data class WordPair(",
-          )
-          rules_block = extract(
-              "private fun Role.werewolfDescription(context: Context): String = when (this) {",
-              "private val troubleBrewingRoles = listOf(",
-          )
-          last_words_label_block = extract(
-              "private fun LastWordsMode.labelResId(): Int = when (this) {",
-              "private fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int> {",
-          )
-          judge_resources_block = extract(
-              "private fun WerewolfJudgeStep.titleResId(): Int = when (this) {",
-              "@Composable\nprivate fun HostProgressCard(",
+          app_body_start = source.find(app_body_marker, activity_start)
+          if app_body_start < 0:
+              raise SystemExit("app body marker not found after MainActivity")
+
+          activity_block = source[activity_start:app_body_start].rstrip() + "\n"
+          app_source = source[:activity_start] + source[app_body_start:]
+
+          root_marker = "@Composable\nprivate fun CampBoardGameHostApp() {"
+          if app_source.count(root_marker) != 1:
+              raise SystemExit("CampBoardGameHostApp declaration is missing or not unique")
+          app_source = app_source.replace(
+              root_marker,
+              "@Composable\ninternal fun CampBoardGameHostApp() {",
+              1,
           )
 
-          for block in (type_block, rules_block, last_words_label_block, judge_resources_block):
-              if source.count(block) != 1:
-                  raise SystemExit("extracted block is not unique")
-              source = source.replace(block, "", 1)
-
-          header = "\n".join([
+          main_header = "\n".join([
               "package com.codex.campboardgamehost",
               "",
-              "import android.content.Context",
-              "",
-              "/**",
-              " * Behavior-preserving R2 extraction from MainActivity.",
-              " * State ownership and UI behavior remain in CampBoardGameHostApp during this pass.",
-              " */",
+              "import android.os.Bundle",
+              "import androidx.activity.ComponentActivity",
+              "import androidx.activity.compose.setContent",
+              "import androidx.activity.enableEdgeToEdge",
+              "import androidx.core.view.WindowInsetsCompat",
+              "import androidx.core.view.WindowInsetsControllerCompat",
               "",
           ])
-          target = header + type_block + rules_block + last_words_label_block + judge_resources_block
-          target = target.replace("private enum class WerewolfJudgeStep", "internal enum class WerewolfJudgeStep")
-          target = target.replace("private enum class LastWordsMode", "internal enum class LastWordsMode")
-          target = target.replace("private data class WerewolfTemplate", "internal data class WerewolfTemplate")
-          target = target.replace("private fun Role.werewolfDescription", "internal fun Role.werewolfDescription")
-          target = target.replace("private fun werewolfRolesFor", "internal fun werewolfRolesFor")
-          target = target.replace("private val werewolfTemplates", "internal val werewolfTemplates")
-          target = target.replace("private fun LastWordsMode.labelResId", "internal fun LastWordsMode.labelResId")
-          target = target.replace("private fun WerewolfJudgeStep.", "internal fun WerewolfJudgeStep.")
+          main_source = main_header + activity_block
 
-          required = (
-              "internal enum class WerewolfJudgeStep",
-              "internal enum class LastWordsMode",
-              "internal data class WerewolfTemplate",
-              "internal fun Role.werewolfDescription",
-              "internal fun werewolfRolesFor",
-              "internal val werewolfTemplates",
-              "internal fun LastWordsMode.labelResId",
-              "internal fun WerewolfJudgeStep.titleResId",
-              "internal fun WerewolfJudgeStep.scriptResId",
-              "internal fun WerewolfJudgeStep.actionResId",
+          required_main = (
+              "class MainActivity : ComponentActivity()",
+              "CampBoardGameHostApp()",
+              "enterImmersiveMode()",
           )
-          for marker in required:
-              if marker not in target:
-                  raise SystemExit(f"missing extracted declaration: {marker}")
+          for marker in required_main:
+              if marker not in main_source:
+                  raise SystemExit(f"missing MainActivity shell marker: {marker}")
 
-          target_path.parent.mkdir(parents=True, exist_ok=True)
-          source_path.write_text(source, encoding="utf-8")
-          target_path.write_text(target.rstrip() + "\n", encoding="utf-8")
+          forbidden_main = (
+              "private enum class Screen {",
+              "@Composable",
+              "remember {",
+              "clocktowerGameStateRevision",
+              "A4ObservationCacheRebuildExecutor",
+          )
+          for marker in forbidden_main:
+              if marker in main_source:
+                  raise SystemExit(f"non-shell declaration leaked into MainActivity: {marker}")
+
+          if "internal fun CampBoardGameHostApp()" not in app_source:
+              raise SystemExit("CampBoardGameHostApp was not made cross-file visible")
+          if "class MainActivity : ComponentActivity()" in app_source:
+              raise SystemExit("MainActivity class leaked into CampBoardGameHostApp.kt")
+
+          source_path.write_text(main_source.rstrip() + "\n", encoding="utf-8")
+          target_path.write_text(app_source.rstrip() + "\n", encoding="utf-8")
           PY
 
           git diff --check
           git diff --stat
-          test -f app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfGameSupport.kt
+          test -f app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
 
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && ! git diff --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add app/src/main/java/com/codex/campboardgamehost/MainActivity.kt \
-                    app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfGameSupport.kt
+                    app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
             git diff --cached --check
-            git commit -m "refactor: extract Werewolf support from MainActivity"
+            git commit -m "refactor: separate MainActivity shell from app root"
             git push origin HEAD:codex/storyteller-algorithm-v4
           fi
