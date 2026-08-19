@@ -1146,3 +1146,36 @@ Phase D forward search 和 Phase E soft belief 不属于第一版生产完成的
 16. 移动端性能目标必须由真实设备数据校准。
 17. Forward search 后置，底层正确性优先。
 18. 每个阶段都以明确 golden gates 退出，不以“代码已写完”退出。
+
+---
+
+## 19. 与多剧本、多板子和动态流程专项架构的边界
+
+2026-08-20 起，Script/Board composition、Character/Role Catalog、官方/custom BotC JSON normalization、Clocktower/Werewolf FlowPlanner、`HostInteraction` 以及 custom/homebrew automation coverage 由：
+
+`docs/多剧本多板子与动态游戏流程架构设计_v1.md`
+
+负责。
+
+本规范继续只负责 Player Epistemic / Possible Worlds / recommendation quality 语义，不升级为整个 App 的内容管理或流程编排规范。二者接口固定为：
+
+```text
+Script / Board subsystem
+    → stable ScriptId / BoardId
+    → RulesetRef / content identity
+    → RoleId set
+    → FlowPlanner-generated HostInteraction / StorytellerDecisionPoint
+
+v2.2 epistemic/recommendation subsystem
+    → FormalGameState / PlayerKnowledgeSnapshot
+    → PlayerWorldSet keyed by ruleset identity
+    → LegalChoice / EpistemicGate / quality evaluation
+```
+
+因此：
+
+- `PlayerWorldSetIdentity` 继续使用现有 `ruleset identity` 合同，不读取 raw script JSON；
+- 不在本规范中复制 Character Catalog、ScriptDefinition 或 night-order schema；
+- 多剧本支持不得降低官方规则 > golden > Oracle 的权威顺序；
+- 未验证 homebrew 不得因为“可导入”就自动取得 AUTO correctness；
+- R5.5 若最终要求改变 `FormalGameState`、`TimelinePoint`、`RulesetRef` 或 PlayerWorldSet 的公共语义，必须先明确修订本主规范；仅增加 catalog/flow implementation 不构成 v2.3 的理由。
