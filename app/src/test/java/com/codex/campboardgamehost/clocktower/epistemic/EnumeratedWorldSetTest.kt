@@ -196,6 +196,82 @@ class EnumeratedWorldSetTest {
         )).isEmpty())
     }
 
+    @Test fun `poisoned Spy and Recluse cannot use numeric alignment registration`() {
+        val poisonedSpyChef = fromWorlds(listOf(
+            world("Chef", "Spy", "Imp", "Empath", "Drunk").copy(
+                abilityStatesBySeat = mapOf(2 to AbilityState.MALFUNCTIONING_POISONED),
+            ),
+        ))
+        val spyChefZero = observation(
+            InformationProposition.NumericResult(
+                NumericMetric.ADJACENT_EVIL_PAIRS,
+                sourceSeat = 1,
+                subjectSeats = listOf(1, 2, 3, 4, 5),
+                value = 0,
+            ),
+            sourceAbility = "Chef",
+        )
+        assertTrue(poisonedSpyChef.require(spyChefZero).isEmpty())
+        assertTrue(poisonedSpyChef.boundRegistrationFacts(spyChefZero).isEmpty())
+
+        val poisonedSpyEmpath = fromWorlds(
+            listOf(
+                world("Empath", "Spy", "Imp", "Chef", "Drunk").copy(
+                    abilityStatesBySeat = mapOf(2 to AbilityState.MALFUNCTIONING_POISONED),
+                ),
+            ),
+            perceivedRole = "Empath",
+        )
+        val spyEmpathZero = observation(
+            InformationProposition.NumericResult(
+                NumericMetric.LIVING_EVIL_NEIGHBOURS,
+                sourceSeat = 1,
+                subjectSeats = listOf(5, 2),
+                value = 0,
+            ),
+            sourceAbility = "Empath",
+        )
+        assertTrue(poisonedSpyEmpath.require(spyEmpathZero).isEmpty())
+        assertTrue(poisonedSpyEmpath.boundRegistrationFacts(spyEmpathZero).isEmpty())
+
+        val poisonedRecluseChef = fromWorlds(listOf(
+            world("Chef", "Recluse", "Poisoner", "Imp", "Empath").copy(
+                abilityStatesBySeat = mapOf(2 to AbilityState.MALFUNCTIONING_POISONED),
+            ),
+        ))
+        val recluseChefTwo = observation(
+            InformationProposition.NumericResult(
+                NumericMetric.ADJACENT_EVIL_PAIRS,
+                sourceSeat = 1,
+                subjectSeats = listOf(1, 2, 3, 4, 5),
+                value = 2,
+            ),
+            sourceAbility = "Chef",
+        )
+        assertTrue(poisonedRecluseChef.require(recluseChefTwo).isEmpty())
+        assertTrue(poisonedRecluseChef.boundRegistrationFacts(recluseChefTwo).isEmpty())
+
+        val poisonedRecluseEmpath = fromWorlds(
+            listOf(
+                world("Empath", "Recluse", "Poisoner", "Imp", "Chef").copy(
+                    abilityStatesBySeat = mapOf(2 to AbilityState.MALFUNCTIONING_POISONED),
+                ),
+            ),
+            perceivedRole = "Empath",
+        )
+        val recluseEmpathOne = observation(
+            InformationProposition.NumericResult(
+                NumericMetric.LIVING_EVIL_NEIGHBOURS,
+                sourceSeat = 1,
+                subjectSeats = listOf(5, 2),
+                value = 1,
+            ),
+            sourceAbility = "Empath",
+        )
+        assertTrue(poisonedRecluseEmpath.require(recluseEmpathOne).isEmpty())
+        assertTrue(poisonedRecluseEmpath.boundRegistrationFacts(recluseEmpathOne).isEmpty())
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun `Spy cannot be a Fortune Teller red herring even though Spy can register good`() {
         fromWorlds(listOf(world("Chef", "Empath", "Imp", "Spy", "Recluse").copy(redHerringSeat = 4)))
