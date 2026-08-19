@@ -223,7 +223,7 @@ future unopened step      generate lazily from new snapshot
 | 推荐风格变化 | 不改机械 revision；key 改变 | 尚未提交的排序/选择 | 合法候选与历史事实 |
 | 新 observation 提交 | history/log digest | 叙事压力与认知评分依赖项 | observation 本身 |
 
-禁止手写“投毒时只刷新被投毒者”。投毒改变全局叙事与评分，因此本夜所有未提交信息都需要新 generation；生成器可以按 dependency set 做性能优化，但语义上必须等价于完整失效。
+禁止手写“投毒时只刷新被投毒者”。投毒改变全局信息压力、登记选择、候选重叠和叙事评分，因此本夜所有未提交信息都需要新 generation；生成器可以按 dependency set 做性能优化，但语义上必须等价于完整失效。
 
 ## 7. 首夜正式流程
 
@@ -997,3 +997,40 @@ git status --short
 git diff --check
 adb devices -l
 ```
+
+## 20. 2026-08-20 R5.5 FlowPlanner 前置约束
+
+本节覆盖本文顶部的 `READY FOR IMPLEMENTATION` 以及第 18/19 节历史 handoff 中任何“下一项可直接继续 production implementation”的旧状态文字。当前实际状态由 `CURRENT_DEVELOPMENT_ROADMAP.md` 决定：**本文的后续 production implementation 在 Phase A R5 与 R5.5 Script & Dynamic Flow Foundation 完成前均为 BLOCKED。**
+
+R5.5 的专项规范是：
+
+`docs/多剧本多板子与动态游戏流程架构设计_v1.md`
+
+新的上游边界固定为：
+
+```text
+Script / Character Catalog
+        ↓
+ClocktowerFlowPlanner
+        ↓
+HostInteraction / StorytellerDecisionPoint
+        ↓
+DynamicDecisionSnapshotFactory
+        ↓
+本文定义的 generation / recommendation / commit lifecycle
+```
+
+因此本文负责“一个已经打开的 decision point 如何生成、失效、评分、确认和提交”，**不负责决定本阶段有哪些角色应该行动、谁应该醒、下一个流程步骤是什么**。这些职责属于 FlowPlanner / Role Handler。
+
+R5.5 后恢复本文 implementation 时必须满足：
+
+- decision point 来自 script-aware `ClocktowerFlowPlanner` 或等价正式 seam；
+- generation key/snapshot 能携带稳定 `ScriptId / RulesetRef / RoleId / interaction identity`；
+- `nightOrderPosition` 只可用于定位/replay，不得作为定义流程的唯一事实；
+- 禁止按 `TroubleBrewing` enum、角色显示名或 Compose `when` 重新生成流程；
+- dynamic engine 不自行维护第二份 first/other-night order；
+- FlowPlanner 的 waking/interaction eligibility 与 role ability functioning 分离；
+- state/action/event commit 完成后由 FlowPlanner 基于新状态重新计算开放 interaction；
+- custom/homebrew `PARTIAL / UNVERIFIED` interaction 必须遵守 R5.5 的 MANUAL_ONLY/安全降级，不能仅因本文能生成候选就提升为 AUTO。
+
+R5.5 不废弃本文已经实现并验证的 revision、stale rejection、transaction、UnifiedSelectionPool 或 telemetry 机制；目标是让这些机制从“TB hardcoded flow 的下游”迁移为“script-aware FlowPlanner 的下游”。
