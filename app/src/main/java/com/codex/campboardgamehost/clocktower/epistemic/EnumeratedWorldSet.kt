@@ -403,6 +403,10 @@ internal object TroubleBrewingWorldObservationEvaluator {
     ): List<AlignmentOption> {
         val role = world.rolesBySeat.getValue(seat)
         val actual = roles.getValue(role).alignment
+        val specialRegistrationAvailable =
+            (world.abilityStatesBySeat[seat] ?: AbilityState.FUNCTIONING) == AbilityState.FUNCTIONING
+        if (!specialRegistrationAvailable) return listOf(AlignmentOption(actual))
+
         return when (role.value.lowercase()) {
             "spy" -> listOf(
                 AlignmentOption(actual),
