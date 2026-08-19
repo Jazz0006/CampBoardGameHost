@@ -1,6 +1,6 @@
 # CampBoardGameHost 自动说书人 — 当前开发路线
 
-> 状态日期：2026-08-19  
+> 状态日期：2026-08-20
 > 当前分支：`codex/storyteller-algorithm-v4`  
 > 文档角色：**CURRENT / 当前状态唯一权威**  
 > 主架构规范：`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`
@@ -42,8 +42,8 @@ ONLY THEN unlock revision-driven dynamic decision plan / Phase B
 | A1.1 Semantic Hardening | PASS WITH FOLLOW-UP | schema-v2、registration interaction binding、world-set identity 基本成立；B4 前需补时间线身份细节。 |
 | A2 ASP Oracle harness | CONDITIONAL PASS | Oracle 权威边界正确，但 golden catalog 内嵌 `FormalGameState` 仍使用旧 schema shape。 |
 | A2.1 Golden corpus | CONDITIONAL PASS | R1 已将合同扩充到 52 个并加入 4 个 poisoned Spy/Recluse numeric regression；nested FormalGameState schema-v1 债务仍待 R3。 |
-| **A3 EnumeratedWorldSet** | **REOPEN / R1 IMPLEMENTED** | 已修复已知 poisoned numeric-registration 缺口并补直接/Golden 回归；仍需实际测试、A3/A4 differential 与后续 R3 validation 后才能重新 PASS。 |
-| **MainActivity decomposition** | **PLANNED** | R1 运行验收后进行纯结构拆分；禁止与状态架构/规则语义修改混做。 |
+| **A3 EnumeratedWorldSet** | **REOPEN / R1 PASS** | poisoned numeric-registration 修复已通过 Android、ASP contract 与真实 Clingo CI；A3 整体仍需 R3 end-to-end enumerator validation 后才能重新 PASS。 |
+| **MainActivity decomposition** | **IN PROGRESS / R2 BATCHES 1–5 PASS** | 已机械拆出 Activity shell、Werewolf support、Undercover UI、Werewolf host UI、Clocktower pre-game setup；每批均由 CI 验收。 |
 | **A4 ZDD prototype** | **IN PROGRESS** | 仍为 exact shadow/prototype；设备性能门槛未完成，需在 R1 后重新跑 differential。 |
 | **A4.5 observation cache rebuild** | **REOPEN** | 核心 rebuild 架构可保留，但 durability、cancellation/invalidation、cache invariant 未完全满足原 spec。 |
 | B1+ | BLOCKED | 等 Phase A final exit。 |
@@ -69,7 +69,7 @@ poisoned Recluse -> Chef / Empath 仍可按 EVIL 登记
 4. 将这些组合加入 official golden corpus；外部 Oracle 的已知错误不得覆盖官方规则。
 5. 修复后重新跑 Enumerated/ZDD differential；“A3 == A4”不能替代 official/golden 独立验证。
 
-**实施状态（2026-08-19）：代码修复、4 组直接单元回归、4 个 machine-readable golden contracts（`TB-MAL-05`–`08`）和 Oracle authority-boundary 测试已写入分支。冻结 `pnkfelix/botc-asp` 的 Spy/Recluse misregistration 规则不受 impairment 门控，因此这 4 个场景记录为 `KNOWN_ORACLE_VARIANCE`。当前尚未获得本分支的 CI/Gradle/Clingo 运行结果，所以 R1 不提前标记 PASS。**
+**实施状态（2026-08-19）：代码修复、4 组直接单元回归、4 个 machine-readable golden contracts（`TB-MAL-05`–`08`）和 Oracle authority-boundary 测试已写入分支。冻结 `pnkfelix/botc-asp` 的 Spy/Recluse misregistration 规则不受 impairment 门控，因此这 4 个场景记录为 `KNOWN_ORACLE_VARIANCE`。2026-08-20 已由 GitHub Actions 获得 Android unit tests、debug APK、ASP contract tests 与真实 Clingo cross-validation 的通过证据，因此 R1 runtime gate 标记 PASS；A3 整体仍保持 REOPEN，等待 R3 end-to-end enumerator validation。**
 
 ### P0.2 A2 fixture schema 与当前 A1 schema-v2 不一致
 
@@ -293,7 +293,7 @@ Player-world construction input (knowledge-safe structural facts)
 
 范围：P0.1 + golden regression。
 
-当前状态：**IMPLEMENTED / VALIDATION PENDING**。
+当前状态：**PASS**。Android unit tests、debug APK、ASP contract tests 与真实 Clingo cross-validation 均已有通过证据；A3 overall 仍待 R3 后重新签署。
 
 已实施：
 
@@ -322,6 +322,18 @@ Player-world construction input (knowledge-safe structural facts)
 ### R2 — MainActivity mechanical decomposition
 
 范围：P0.S1–P0.S4。
+
+当前状态：**IN PROGRESS / BATCHES 1–5 VALIDATED**。
+
+已完成并通过 CI：
+
+1. `WerewolfGameSupport.kt`：狼人杀纯模型/规则 helper 机械抽取；
+2. `MainActivity.kt`：缩减为 Android Activity / immersive mode / `setContent` 壳；`CampBoardGameHostApp.kt` 保留原状态 owner；
+3. `undercover/UndercoverSupport.kt`：词库、选词 helper 与 Undercover 设置 UI；
+4. `werewolf/WerewolfHostScreen.kt`：Werewolf 设置页与 Judge UI；
+5. `clocktower/ui/ClocktowerSetupScreen.kt`：仅 pre-game setup UI，不触及发牌、night/day、revision、persistence 或 A4/A4.5。
+
+每批都保持行为不变，仅做必要的 `private -> internal` 可见性调整，并通过 Android unit tests、debug APK build、ASP contract tests 与真实 Clingo cross-validation。
 
 目标：降低后续 A4.5 lifecycle/persistence 修改风险，并改善 GitHub connector 对日常小范围代码修改的可维护性。
 
