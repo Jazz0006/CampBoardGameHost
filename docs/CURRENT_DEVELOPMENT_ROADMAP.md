@@ -11,6 +11,8 @@
 
 同时，当前 `MainActivity.kt` 已承担过多职责：Android Activity 生命周期、Compose 根界面、多游戏模式 UI、Clocktower 夜间/白天流程、持久化、revision wiring、A4/A4.5 shadow wiring 等均集中在同一大文件。继续直接在其中实施 A4.5 lifecycle 修复会提高误改和回归风险。
 
+2026-08-20 的多剧本/多板子架构审计进一步确认：后续 BotC Script Catalog、ClocktowerFlowPlanner、狼人杀 Board/RoleRegistry 必须在 revision-driven dynamic decision engine 进入新的 production 实施前建立，否则 R6 会继续固化 Trouble Brewing / fixed JudgeStep 假设。但该工作同样不能插入当前 R2–R5 correctness remediation。
+
 因此当前唯一正确的实施方向是：
 
 ```text
@@ -28,10 +30,12 @@ A3/A4/A4.5 regression + device gate review
     ↓
 Phase A final exit review
     ↓
-ONLY THEN unlock revision-driven dynamic decision plan / Phase B
+R5.5 Script & Dynamic Flow Foundation
+    ↓
+ONLY THEN unlock revision-driven dynamic decision plan / Phase B production implementation
 ```
 
-**在 Phase A 重新退出前，不开始新的 B1/B2/B3 功能扩展，也不把 B4 shadow 变成生产依赖。**
+**在 Phase A 重新退出前，不开始新的 B1/B2/B3 功能扩展，也不把 B4 shadow 变成生产依赖；R5.5 也只能作为未来架构约束，不能提前进入 R2–R5。**
 
 ## 2. 阶段状态
 
@@ -46,7 +50,8 @@ ONLY THEN unlock revision-driven dynamic decision plan / Phase B
 | **MainActivity decomposition** | **IN PROGRESS / R2 BATCHES 1–5 PASS** | 已机械拆出 Activity shell、Werewolf support、Undercover UI、Werewolf host UI、Clocktower pre-game setup；每批均由 CI 验收。 |
 | **A4 ZDD prototype** | **IN PROGRESS** | 仍为 exact shadow/prototype；设备性能门槛未完成，需在 R1 后重新跑 differential。 |
 | **A4.5 observation cache rebuild** | **REOPEN** | 核心 rebuild 架构可保留，但 durability、cancellation/invalidation、cache invariant 未完全满足原 spec。 |
-| B1+ | BLOCKED | 等 Phase A final exit。 |
+| **R5.5 Script & Dynamic Flow Foundation** | **FUTURE / BLOCKED** | R5 通过后才实施；规范见 `多剧本多板子与动态游戏流程架构设计_v1.md`。 |
+| B1+ / revision-driven production expansion | BLOCKED | 先完成 Phase A final exit，再完成 R5.5。 |
 
 ## 3. P0 — 必须先修的 correctness 问题
 
@@ -398,11 +403,47 @@ Player-world construction input (knowledge-safe structural facts)
 
 A4 仍只有在目标设备 correctness、latency、memory 和 degradation gates 全部满足后，才可以讨论 `ZDD_DEVICE_VALIDATED`。
 
-### R6 — Unlock dynamic decision engine
+### R5.5 — Script & Dynamic Flow Foundation
 
-只有 R5 通过后，`storyteller_revision_driven_dynamic_decision_engine_plan.md` 才从 `BLOCKED` 变为 `READY`。
+**状态：FUTURE / BLOCKED BY R5。** 详细规范：`docs/多剧本多板子与动态游戏流程架构设计_v1.md`。
 
-开始前重新核对该计划的 Batch 0 输入是否仍与最新 `GameSnapshot`、revision、observation log 和 PlayerWorldSet seam 一致；若 Phase A 修复改变公共语义，先更新计划再写代码。
+目标：在不重新设计 Possible Worlds 的前提下，建立多剧本/多板子的内容身份、角色注册和动态流程上游，使 R6 不再依赖 Trouble Brewing enum、固定夜序或 Werewolf fixed JudgeStep。
+
+按以下小批次实施：
+
+```text
+S0 Schema / Catalog / official-custom JSON normalization / validation
+S1 Trouble Brewing FlowPlanner golden-equivalent migration
+S2 No Greater Joy second-script structural proof
+S3 Werewolf BoardRegistry + RoleRegistry + FlowPlanner migration
+S4 persistence/ruleset identity migration
+S5 full regression + legacy flow removal + R6 handoff
+```
+
+必须保持：
+
+- Script/Board 只组合角色，复杂规则留在 Kotlin handler/domain；
+- 不构建通用规则 JSON DSL；
+- ClocktowerFlowPlanner 与 WerewolfFlowPlanner 分离；
+- `VERIFIED / PARTIAL / UNVERIFIED` 决定 custom/homebrew 自动化安全等级；
+- TB legacy flow 只有在 shadow/golden parity 后才能移除；
+- 新增只由已有角色组成的 script/board 不需要修改 Host UI 或 flow core；
+- R6 的 decision point 必须来自 script-aware FlowPlanner/HostInteraction seam。
+
+R5.5 不要求实现 BMR/S&V 全部角色；内容扩展在 foundation 和 R6 script-aware seam 稳定后进行。
+
+### R6 — Unlock revision-driven dynamic decision engine
+
+只有 R5 **以及 R5.5** 通过后，`storyteller_revision_driven_dynamic_decision_engine_plan.md` 才从 `BLOCKED` 变为 `READY`。
+
+开始前重新核对该计划的输入是否仍与最新 `GameSnapshot`、revision、observation log、PlayerWorldSet seam，以及 `ClocktowerFlowPlanner -> HostInteraction/StorytellerDecisionPoint` seam 一致；若 Phase A 或 R5.5 改变公共语义，先更新计划再写代码。
+
+R6 不得重新：
+
+- 按 Trouble Brewing enum/role-name `when` 生成流程；
+- 在 Compose UI 中决定“下一个角色是谁”；
+- 把 `nightOrderPosition` 当成流程定义的唯一事实；
+- 为狼人杀恢复固定 `WerewolfJudgeStep` 扩展模式。
 
 ## 8. Phase A 最终退出条件
 
@@ -421,6 +462,8 @@ A4 仍只有在目标设备 correctness、latency、memory 和 degradation gates
 - 完整回归通过；
 - 若要推广 ZDD，目标设备 gate 另外通过。
 
+**R5 退出只解锁 R5.5，不再直接解锁 R6。**
+
 ## 9. 生产保护线
 
 在本路线另行更新前：
@@ -431,6 +474,7 @@ A3 enumerator: correctness/debug baseline only
 A4 ZDD: shadow/prototype only
 A4.5 cache: debug/shadow only
 B4 DynamicPlayerWorldSetShadow: isolated shadow only
+R5.5 multi-script/board flow: design-only until R5 passes
 ```
 
 任何性能优化或结构重构都不能：
@@ -440,8 +484,9 @@ B4 DynamicPlayerWorldSetShadow: isolated shadow only
 - 省略 Spy/Recluse/Drunk/Poisoner/red-herring 的规则分支；
 - 把 storyteller-only truth 放入普通玩家知识；
 - 让 background result 覆盖已经展示/提交的决定；
-- 借“拆文件”名义改变 revision、persistence 或 recommendation 语义。
+- 借“拆文件”名义改变 revision、persistence 或 recommendation 语义；
+- 借“为多剧本做准备”名义在 R2–R5 中改写当前 flow/persistence 行为。
 
 ## 10. 文档状态维护
 
-后续只在本文更新阶段状态。完成 R1/R2/R3/R4 时不要再创建新的并列“最终路线”。专项实现细节可以追加到对应 spec/status log，但“下一步做什么”始终回到本文。
+后续只在本文更新阶段状态。完成 R1/R2/R3/R4/R5/R5.5 时不要再创建新的并列“最终路线”。专项实现细节可以追加到对应 spec/status log，但“下一步做什么”始终回到本文。
