@@ -1,4 +1,4 @@
-name: R2 app-shell extraction executor
+name: R2 Undercover extraction executor
 
 on:
   push:
@@ -24,100 +24,169 @@ jobs:
           ref: codex/storyteller-algorithm-v4
           fetch-depth: 0
 
-      - name: Extract Android Activity shell mechanically
+      - name: Extract Undercover UI and helpers mechanically
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
 
-          source_path = Path("app/src/main/java/com/codex/campboardgamehost/MainActivity.kt")
-          target_path = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
+          source_path = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
+          target_path = Path("app/src/main/java/com/codex/campboardgamehost/undercover/UndercoverSupport.kt")
           source = source_path.read_text(encoding="utf-8")
 
-          if target_path.exists() and "private enum class Screen {" not in source:
+          if target_path.exists() and "private fun UndercoverSettingsScreen(" not in source:
               target = target_path.read_text(encoding="utf-8")
-              if "internal fun CampBoardGameHostApp()" not in target:
-                  raise SystemExit("existing app file does not expose CampBoardGameHostApp internally")
-              print("Android Activity shell already extracted")
+              required_existing = (
+                  "internal data class WordPair",
+                  "internal fun wordPairsFor",
+                  "internal fun UndercoverSettingsScreen",
+                  "private fun SettingsPanel",
+              )
+              for marker in required_existing:
+                  if marker not in target:
+                      raise SystemExit(f"existing Undercover file is missing {marker}")
+              print("Undercover support already extracted")
               raise SystemExit(0)
 
-          activity_marker = "class MainActivity : ComponentActivity() {"
-          app_body_marker = "private enum class Screen {"
-          activity_start = source.find(activity_marker)
-          if activity_start < 0:
-              raise SystemExit("MainActivity declaration not found")
-          if source.find(activity_marker, activity_start + 1) >= 0:
-              raise SystemExit("MainActivity declaration is not unique")
+          def extract(start: str, end: str) -> str:
+              start_index = source.find(start)
+              if start_index < 0:
+                  raise SystemExit(f"missing start marker: {start!r}")
+              if source.find(start, start_index + 1) >= 0:
+                  raise SystemExit(f"start marker is not unique: {start!r}")
+              end_index = source.find(end, start_index)
+              if end_index < 0:
+                  raise SystemExit(f"missing end marker after {start!r}: {end!r}")
+              return source[start_index:end_index]
 
-          app_body_start = source.find(app_body_marker, activity_start)
-          if app_body_start < 0:
-              raise SystemExit("app body marker not found after MainActivity")
-
-          activity_block = source[activity_start:app_body_start].rstrip() + "\n"
-          app_source = source[:activity_start] + source[app_body_start:]
-
-          root_marker = "@Composable\nprivate fun CampBoardGameHostApp() {"
-          if app_source.count(root_marker) != 1:
-              raise SystemExit("CampBoardGameHostApp declaration is missing or not unique")
-          app_source = app_source.replace(
-              root_marker,
-              "@Composable\ninternal fun CampBoardGameHostApp() {",
-              1,
+          type_block = extract(
+              "private data class WordPair(",
+              "internal data class PlayerCard(",
+          )
+          word_pairs_block = extract(
+              "private val chineseWordPairs = listOf(",
+              "private fun Context.playerName(number: Int): String",
+          )
+          selector_block = extract(
+              "private fun wordPairsFor(language: String): List<WordPair> {",
+              "private val troubleBrewingRoles = listOf(",
+          )
+          settings_screen_block = extract(
+              "@Composable\nprivate fun UndercoverSettingsScreen(",
+              "@OptIn(ExperimentalLayoutApi::class)\n@Composable\nprivate fun WerewolfSettingsScreen(",
+          )
+          settings_panel_block = extract(
+              "@Composable\nprivate fun SettingsPanel(",
+              "@Composable\nprivate fun EmptyStateCard(",
           )
 
-          main_header = "\n".join([
+          moved_blocks = (
+              type_block,
+              word_pairs_block,
+              selector_block,
+              settings_screen_block,
+              settings_panel_block,
+          )
+          for block in moved_blocks:
+              if source.count(block) != 1:
+                  raise SystemExit("extracted block is not unique")
+              source = source.replace(block, "", 1)
+
+          visibility_replacements = (
+              ("private const val MIN_PLAYERS = 3", "internal const val MIN_PLAYERS = 3"),
+              ("@Composable\nprivate fun GameSettingsHeader(", "@Composable\ninternal fun GameSettingsHeader("),
+              ("@Composable\nprivate fun StepperRow(", "@Composable\ninternal fun StepperRow("),
+          )
+          for old, new in visibility_replacements:
+              if source.count(old) != 1:
+                  raise SystemExit(f"visibility marker missing or not unique: {old!r}")
+              source = source.replace(old, new, 1)
+
+          header = "\n".join([
               "package com.codex.campboardgamehost",
               "",
-              "import android.os.Bundle",
-              "import androidx.activity.ComponentActivity",
-              "import androidx.activity.compose.setContent",
-              "import androidx.activity.enableEdgeToEdge",
-              "import androidx.core.view.WindowInsetsCompat",
-              "import androidx.core.view.WindowInsetsControllerCompat",
+              "import androidx.compose.foundation.layout.Arrangement",
+              "import androidx.compose.foundation.layout.Column",
+              "import androidx.compose.foundation.layout.Row",
+              "import androidx.compose.foundation.layout.fillMaxSize",
+              "import androidx.compose.foundation.layout.fillMaxWidth",
+              "import androidx.compose.foundation.layout.height",
+              "import androidx.compose.foundation.layout.padding",
+              "import androidx.compose.foundation.lazy.LazyColumn",
+              "import androidx.compose.foundation.shape.RoundedCornerShape",
+              "import androidx.compose.material3.Button",
+              "import androidx.compose.material3.Card",
+              "import androidx.compose.material3.CardDefaults",
+              "import androidx.compose.material3.Checkbox",
+              "import androidx.compose.material3.MaterialTheme",
+              "import androidx.compose.material3.Text",
+              "import androidx.compose.runtime.Composable",
+              "import androidx.compose.ui.Alignment",
+              "import androidx.compose.ui.Modifier",
+              "import androidx.compose.ui.graphics.Color",
+              "import androidx.compose.ui.res.stringResource",
+              "import androidx.compose.ui.text.font.FontWeight",
+              "import androidx.compose.ui.unit.dp",
+              "",
+              "/** Behavior-preserving R2 extraction for Who Is Undercover. */",
               "",
           ])
-          main_source = main_header + activity_block
 
-          required_main = (
-              "class MainActivity : ComponentActivity()",
-              "CampBoardGameHostApp()",
-              "enterImmersiveMode()",
+          target = header + type_block + word_pairs_block + selector_block + settings_screen_block + settings_panel_block
+          target = target.replace("private data class WordPair", "internal data class WordPair", 1)
+          target = target.replace("private fun wordPairsFor", "internal fun wordPairsFor", 1)
+          target = target.replace("@Composable\nprivate fun UndercoverSettingsScreen(", "@Composable\ninternal fun UndercoverSettingsScreen(", 1)
+
+          required_target = (
+              "internal data class WordPair",
+              "private val chineseWordPairs",
+              "private val englishWordPairs",
+              "internal fun wordPairsFor",
+              "internal fun UndercoverSettingsScreen",
+              "private fun SettingsPanel",
           )
-          for marker in required_main:
-              if marker not in main_source:
-                  raise SystemExit(f"missing MainActivity shell marker: {marker}")
+          for marker in required_target:
+              if marker not in target:
+                  raise SystemExit(f"missing Undercover target declaration: {marker}")
 
-          forbidden_main = (
-              "private enum class Screen {",
-              "@Composable",
-              "remember {",
-              "clocktowerGameStateRevision",
-              "A4ObservationCacheRebuildExecutor",
+          forbidden_source = (
+              "private data class WordPair(",
+              "private val chineseWordPairs = listOf(",
+              "private val englishWordPairs = listOf(",
+              "private fun wordPairsFor(language: String): List<WordPair>",
+              "private fun UndercoverSettingsScreen(",
+              "private fun SettingsPanel(",
           )
-          for marker in forbidden_main:
-              if marker in main_source:
-                  raise SystemExit(f"non-shell declaration leaked into MainActivity: {marker}")
+          for marker in forbidden_source:
+              if marker in source:
+                  raise SystemExit(f"Undercover declaration was not removed from app root: {marker}")
 
-          if "internal fun CampBoardGameHostApp()" not in app_source:
-              raise SystemExit("CampBoardGameHostApp was not made cross-file visible")
-          if "class MainActivity : ComponentActivity()" in app_source:
-              raise SystemExit("MainActivity class leaked into CampBoardGameHostApp.kt")
+          required_source = (
+              "internal const val MIN_PLAYERS = 3",
+              "internal fun GameSettingsHeader(",
+              "internal fun StepperRow(",
+              "internal fun CampBoardGameHostApp()",
+          )
+          for marker in required_source:
+              if marker not in source:
+                  raise SystemExit(f"missing shared visibility marker: {marker}")
 
-          source_path.write_text(main_source.rstrip() + "\n", encoding="utf-8")
-          target_path.write_text(app_source.rstrip() + "\n", encoding="utf-8")
+          target_path.parent.mkdir(parents=True, exist_ok=True)
+          source_path.write_text(source.rstrip() + "\n", encoding="utf-8")
+          target_path.write_text(target.rstrip() + "\n", encoding="utf-8")
           PY
 
           git diff --check
           git diff --stat
-          test -f app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          test -f app/src/main/java/com/codex/campboardgamehost/undercover/UndercoverSupport.kt
 
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && ! git diff --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add app/src/main/java/com/codex/campboardgamehost/MainActivity.kt \
-                    app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+            git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt \
+                    app/src/main/java/com/codex/campboardgamehost/undercover/UndercoverSupport.kt
             git diff --cached --check
-            git commit -m "refactor: separate MainActivity shell from app root"
+            git commit -m "refactor: extract Undercover support from app root"
             git push origin HEAD:codex/storyteller-algorithm-v4
           fi
