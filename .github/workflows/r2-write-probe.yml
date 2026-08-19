@@ -1,4 +1,4 @@
-name: R2 Clocktower setup visibility fix
+name: R2 Clocktower setup extraction verifier
 
 on:
   push:
@@ -13,10 +13,10 @@ on:
       - .github/workflows/r2-write-probe.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  fix:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -24,35 +24,27 @@ jobs:
           ref: codex/storyteller-algorithm-v4
           fetch-depth: 0
 
-      - name: Expose shared Clocktower theme mechanically
+      - name: Verify Clocktower setup extraction
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
+          source_file=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          target_file=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt
 
-          source_path = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
-          source = source_path.read_text(encoding="utf-8")
-          old = "@Composable\nprivate fun ClocktowerDarkTheme(content: @Composable () -> Unit) {"
-          new = "@Composable\ninternal fun ClocktowerDarkTheme(content: @Composable () -> Unit) {"
+          test -f "$target_file"
+          grep -q "internal fun ClocktowerSettingsScreen" "$target_file"
+          grep -q "private fun ClocktowerSetupSummaryRow" "$target_file"
 
-          if new in source:
-              print("ClocktowerDarkTheme is already internal")
-          else:
-              if source.count(old) != 1:
-                  raise SystemExit("ClocktowerDarkTheme marker missing or not unique")
-              source = source.replace(old, new, 1)
-              source_path.write_text(source.rstrip() + "\n", encoding="utf-8")
-          PY
+          grep -q "internal const val MIN_CLOCKTOWER_PLAYERS = 5" "$source_file"
+          grep -q "internal fun canStartClocktowerScript(script: ClocktowerScript): Boolean" "$source_file"
+          grep -q "internal fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int>" "$source_file"
+          grep -q "internal fun ClocktowerScript.nameFor(language: String): String" "$source_file"
+          grep -q "internal fun ClocktowerTeam.label(context: Context): String" "$source_file"
+          grep -q "internal fun ClocktowerDarkTheme" "$source_file"
+
+          if grep -q "private fun ClocktowerSettingsScreen(" "$source_file"; then
+            echo "ClocktowerSettingsScreen still exists in app root" >&2
+            exit 1
+          fi
 
           git diff --check
-          grep -q "internal fun ClocktowerDarkTheme" app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && ! git diff --quiet; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-            git diff --cached --check
-            git commit -m "refactor: expose shared Clocktower theme for setup UI"
-            git push origin HEAD:codex/storyteller-algorithm-v4
-          fi
