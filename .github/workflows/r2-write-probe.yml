@@ -1,4 +1,4 @@
-name: R2 Werewolf UI extraction verifier
+name: R2 Clocktower setup extraction executor
 
 on:
   push:
@@ -13,10 +13,10 @@ on:
       - .github/workflows/r2-write-probe.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  verify:
+  extract:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -24,38 +24,128 @@ jobs:
           ref: codex/storyteller-algorithm-v4
           fetch-depth: 0
 
-      - name: Verify Werewolf UI extraction
+      - name: Extract Clocktower setup UI mechanically
         shell: bash
         run: |
           set -euo pipefail
-          source_file=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-          target_file=app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfHostScreen.kt
+          python3 - <<'PY'
+          from pathlib import Path
 
-          test -f "$target_file"
-          grep -q "internal fun WerewolfSettingsScreen" "$target_file"
-          grep -q "internal fun WerewolfJudgeScreen" "$target_file"
-          grep -q "private fun templateLabel" "$target_file"
-          grep -q "private fun RoleToggleRow" "$target_file"
+          source_path = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
+          target_path = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt")
+          source = source_path.read_text(encoding="utf-8")
 
-          grep -q "internal const val MIN_WEREWOLF_PLAYERS = 4" "$source_file"
-          grep -q "internal data class EliminationRecord(" "$source_file"
-          grep -q "internal data class GameOutcome(" "$source_file"
-          grep -q "internal fun HostProgressCard(" "$source_file"
-          grep -q "internal fun HostScriptCard(" "$source_file"
-          grep -q "internal fun HostInstructionBlock(" "$source_file"
-          grep -q "internal fun HostActionSection(" "$source_file"
-          grep -q "internal fun SelectablePlayerChips(" "$source_file"
-          grep -q "internal fun WerewolfPlayerStatusRow(" "$source_file"
-          grep -q "internal fun WerewolfRoleLine(" "$source_file"
-          grep -q "internal fun EliminationRecord.displayText()" "$source_file"
+          if target_path.exists() and "private fun ClocktowerSettingsScreen(" not in source:
+              target = target_path.read_text(encoding="utf-8")
+              for marker in ("internal fun ClocktowerSettingsScreen", "private fun ClocktowerSetupSummaryRow"):
+                  if marker not in target:
+                      raise SystemExit(f"existing Clocktower setup file is missing {marker}")
+              print("Clocktower setup UI already extracted")
+              raise SystemExit(0)
 
-          if grep -q "private fun WerewolfSettingsScreen(" "$source_file"; then
-            echo "WerewolfSettingsScreen still exists in app root" >&2
-            exit 1
-          fi
-          if grep -q "private fun WerewolfJudgeScreen(" "$source_file"; then
-            echo "WerewolfJudgeScreen still exists in app root" >&2
-            exit 1
-          fi
+          start_marker = "@OptIn(ExperimentalLayoutApi::class)\n@Composable\nprivate fun ClocktowerSettingsScreen("
+          end_marker = "@Composable\ninternal fun GameSettingsHeader("
+          start = source.find(start_marker)
+          if start < 0 or source.find(start_marker, start + 1) >= 0:
+              raise SystemExit("ClocktowerSettingsScreen marker missing or not unique")
+          end = source.find(end_marker, start)
+          if end < 0:
+              raise SystemExit("GameSettingsHeader marker not found after Clocktower setup")
+          setup_block = source[start:end]
+          source = source[:start] + source[end:]
+
+          replacements = (
+              ("private const val MIN_CLOCKTOWER_PLAYERS = 5", "internal const val MIN_CLOCKTOWER_PLAYERS = 5"),
+              ("private fun canStartClocktowerScript(script: ClocktowerScript): Boolean", "internal fun canStartClocktowerScript(script: ClocktowerScript): Boolean"),
+              ("private fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int>", "internal fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int>"),
+              ("private fun ClocktowerScript.nameFor(language: String): String", "internal fun ClocktowerScript.nameFor(language: String): String"),
+              ("private fun ClocktowerTeam.label(context: Context): String", "internal fun ClocktowerTeam.label(context: Context): String"),
+          )
+          for old, new in replacements:
+              if source.count(old) != 1:
+                  raise SystemExit(f"visibility marker missing or not unique: {old!r}")
+              source = source.replace(old, new, 1)
+
+          header = "\n".join([
+              "package com.codex.campboardgamehost",
+              "",
+              "import androidx.compose.foundation.BorderStroke",
+              "import androidx.compose.foundation.background",
+              "import androidx.compose.foundation.layout.Arrangement",
+              "import androidx.compose.foundation.layout.Box",
+              "import androidx.compose.foundation.layout.Column",
+              "import androidx.compose.foundation.layout.ExperimentalLayoutApi",
+              "import androidx.compose.foundation.layout.PaddingValues",
+              "import androidx.compose.foundation.layout.Row",
+              "import androidx.compose.foundation.layout.fillMaxSize",
+              "import androidx.compose.foundation.layout.fillMaxWidth",
+              "import androidx.compose.foundation.layout.height",
+              "import androidx.compose.foundation.layout.padding",
+              "import androidx.compose.foundation.layout.size",
+              "import androidx.compose.foundation.lazy.LazyColumn",
+              "import androidx.compose.foundation.shape.CircleShape",
+              "import androidx.compose.foundation.shape.RoundedCornerShape",
+              "import androidx.compose.material3.Button",
+              "import androidx.compose.material3.Card",
+              "import androidx.compose.material3.CardDefaults",
+              "import androidx.compose.material3.HorizontalDivider",
+              "import androidx.compose.material3.MaterialTheme",
+              "import androidx.compose.material3.Text",
+              "import androidx.compose.material3.TextButton",
+              "import androidx.compose.runtime.Composable",
+              "import androidx.compose.runtime.getValue",
+              "import androidx.compose.runtime.mutableStateOf",
+              "import androidx.compose.runtime.remember",
+              "import androidx.compose.runtime.setValue",
+              "import androidx.compose.ui.Alignment",
+              "import androidx.compose.ui.Modifier",
+              "import androidx.compose.ui.platform.LocalContext",
+              "import androidx.compose.ui.res.stringResource",
+              "import androidx.compose.ui.text.font.FontWeight",
+              "import androidx.compose.ui.text.style.TextAlign",
+              "import androidx.compose.ui.unit.dp",
+              "import androidx.compose.ui.unit.sp",
+              "",
+              "/** Behavior-preserving R2 extraction for Clocktower pre-game setup UI. */",
+              "",
+          ])
+          target = header + setup_block
+          target = target.replace(
+              "@OptIn(ExperimentalLayoutApi::class)\n@Composable\nprivate fun ClocktowerSettingsScreen(",
+              "@OptIn(ExperimentalLayoutApi::class)\n@Composable\ninternal fun ClocktowerSettingsScreen(",
+              1,
+          )
+
+          for marker in ("internal fun ClocktowerSettingsScreen", "private fun ClocktowerSetupSummaryRow"):
+              if marker not in target:
+                  raise SystemExit(f"missing Clocktower setup target declaration: {marker}")
+          if "private fun ClocktowerSettingsScreen(" in source:
+              raise SystemExit("ClocktowerSettingsScreen still exists in app root")
+          for marker in (
+              "internal const val MIN_CLOCKTOWER_PLAYERS = 5",
+              "internal fun canStartClocktowerScript(script: ClocktowerScript): Boolean",
+              "internal fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int>",
+              "internal fun ClocktowerScript.nameFor(language: String): String",
+              "internal fun ClocktowerTeam.label(context: Context): String",
+          ):
+              if marker not in source:
+                  raise SystemExit(f"missing shared Clocktower setup visibility: {marker}")
+
+          target_path.parent.mkdir(parents=True, exist_ok=True)
+          source_path.write_text(source.rstrip() + "\n", encoding="utf-8")
+          target_path.write_text(target.rstrip() + "\n", encoding="utf-8")
+          PY
 
           git diff --check
+          git diff --stat
+          test -f app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt
+
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt \
+                    app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt
+            git diff --cached --check
+            git commit -m "refactor: extract Clocktower setup UI from app root"
+            git push origin HEAD:codex/storyteller-algorithm-v4
+          fi
