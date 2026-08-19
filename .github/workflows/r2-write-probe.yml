@@ -1,4 +1,4 @@
-name: R2 Werewolf UI extraction executor
+name: R2 Werewolf UI extraction verifier
 
 on:
   push:
@@ -13,10 +13,10 @@ on:
       - .github/workflows/r2-write-probe.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  extract:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -24,178 +24,38 @@ jobs:
           ref: codex/storyteller-algorithm-v4
           fetch-depth: 0
 
-      - name: Extract Werewolf UI mechanically
+      - name: Verify Werewolf UI extraction
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
+          source_file=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          target_file=app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfHostScreen.kt
 
-          source_path = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
-          target_path = Path("app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfHostScreen.kt")
-          source = source_path.read_text(encoding="utf-8")
+          test -f "$target_file"
+          grep -q "internal fun WerewolfSettingsScreen" "$target_file"
+          grep -q "internal fun WerewolfJudgeScreen" "$target_file"
+          grep -q "private fun templateLabel" "$target_file"
+          grep -q "private fun RoleToggleRow" "$target_file"
 
-          if target_path.exists() and "private fun WerewolfJudgeScreen(" not in source:
-              target = target_path.read_text(encoding="utf-8")
-              required_existing = (
-                  "internal fun WerewolfSettingsScreen",
-                  "private fun templateLabel",
-                  "private fun RoleToggleRow",
-                  "internal fun WerewolfJudgeScreen",
-              )
-              for marker in required_existing:
-                  if marker not in target:
-                      raise SystemExit(f"existing Werewolf UI file is missing {marker}")
-              print("Werewolf UI already extracted")
-              raise SystemExit(0)
+          grep -q "internal const val MIN_WEREWOLF_PLAYERS = 4" "$source_file"
+          grep -q "internal data class EliminationRecord(" "$source_file"
+          grep -q "internal data class GameOutcome(" "$source_file"
+          grep -q "internal fun HostProgressCard(" "$source_file"
+          grep -q "internal fun HostScriptCard(" "$source_file"
+          grep -q "internal fun HostInstructionBlock(" "$source_file"
+          grep -q "internal fun HostActionSection(" "$source_file"
+          grep -q "internal fun SelectablePlayerChips(" "$source_file"
+          grep -q "internal fun WerewolfPlayerStatusRow(" "$source_file"
+          grep -q "internal fun WerewolfRoleLine(" "$source_file"
+          grep -q "internal fun EliminationRecord.displayText()" "$source_file"
 
-          def extract(start: str, end: str) -> str:
-              start_index = source.find(start)
-              if start_index < 0:
-                  raise SystemExit(f"missing start marker: {start!r}")
-              if source.find(start, start_index + 1) >= 0:
-                  raise SystemExit(f"start marker is not unique: {start!r}")
-              end_index = source.find(end, start_index)
-              if end_index < 0:
-                  raise SystemExit(f"missing end marker after {start!r}: {end!r}")
-              return source[start_index:end_index]
-
-          settings_block = extract(
-              "@OptIn(ExperimentalLayoutApi::class)\n@Composable\nprivate fun WerewolfSettingsScreen(",
-              "@OptIn(ExperimentalLayoutApi::class)\n@Composable\nprivate fun ClocktowerSettingsScreen(",
-          )
-          role_toggle_block = extract(
-              "@Composable\nprivate fun RoleToggleRow(",
-              "@Composable\nprivate fun EmptyStateCard(",
-          )
-          judge_block = extract(
-              "@OptIn(ExperimentalLayoutApi::class)\n@Composable\nprivate fun WerewolfJudgeScreen(",
-              "@Composable\nprivate fun HostProgressCard(",
-          )
-
-          for block in (settings_block, role_toggle_block, judge_block):
-              if source.count(block) != 1:
-                  raise SystemExit("extracted Werewolf block is not unique")
-              source = source.replace(block, "", 1)
-
-          visibility_replacements = (
-              ("private const val MIN_WEREWOLF_PLAYERS = 4", "internal const val MIN_WEREWOLF_PLAYERS = 4"),
-              ("private data class EliminationRecord(", "internal data class EliminationRecord("),
-              ("private data class GameOutcome(", "internal data class GameOutcome("),
-              ("@Composable\nprivate fun HostProgressCard(", "@Composable\ninternal fun HostProgressCard("),
-              ("@Composable\nprivate fun HostScriptCard(", "@Composable\ninternal fun HostScriptCard("),
-              ("@Composable\nprivate fun HostInstructionBlock(", "@Composable\ninternal fun HostInstructionBlock("),
-              ("@Composable\nprivate fun HostActionSection(", "@Composable\ninternal fun HostActionSection("),
-              ("@OptIn(ExperimentalLayoutApi::class)\n@Composable\nprivate fun SelectablePlayerChips(", "@OptIn(ExperimentalLayoutApi::class)\n@Composable\ninternal fun SelectablePlayerChips("),
-              ("@Composable\nprivate fun WerewolfPlayerStatusRow(", "@Composable\ninternal fun WerewolfPlayerStatusRow("),
-              ("@Composable\nprivate fun WerewolfRoleLine(", "@Composable\ninternal fun WerewolfRoleLine("),
-              ("@Composable\nprivate fun EliminationRecord.displayText()", "@Composable\ninternal fun EliminationRecord.displayText()"),
-          )
-          for old, new in visibility_replacements:
-              if source.count(old) != 1:
-                  raise SystemExit(f"visibility marker missing or not unique: {old!r}")
-              source = source.replace(old, new, 1)
-
-          header = "\n".join([
-              "package com.codex.campboardgamehost",
-              "",
-              "import androidx.compose.foundation.layout.Arrangement",
-              "import androidx.compose.foundation.layout.Column",
-              "import androidx.compose.foundation.layout.ExperimentalLayoutApi",
-              "import androidx.compose.foundation.layout.FlowRow",
-              "import androidx.compose.foundation.layout.Row",
-              "import androidx.compose.foundation.layout.fillMaxSize",
-              "import androidx.compose.foundation.layout.fillMaxWidth",
-              "import androidx.compose.foundation.layout.height",
-              "import androidx.compose.foundation.layout.padding",
-              "import androidx.compose.foundation.lazy.LazyColumn",
-              "import androidx.compose.foundation.lazy.items",
-              "import androidx.compose.foundation.shape.RoundedCornerShape",
-              "import androidx.compose.material3.Button",
-              "import androidx.compose.material3.ButtonDefaults",
-              "import androidx.compose.material3.Card",
-              "import androidx.compose.material3.CardDefaults",
-              "import androidx.compose.material3.Checkbox",
-              "import androidx.compose.material3.HorizontalDivider",
-              "import androidx.compose.material3.MaterialTheme",
-              "import androidx.compose.material3.OutlinedButton",
-              "import androidx.compose.material3.Text",
-              "import androidx.compose.runtime.Composable",
-              "import androidx.compose.ui.Alignment",
-              "import androidx.compose.ui.Modifier",
-              "import androidx.compose.ui.graphics.Color",
-              "import androidx.compose.ui.res.stringResource",
-              "import androidx.compose.ui.text.font.FontWeight",
-              "import androidx.compose.ui.unit.dp",
-              "",
-              "/** Behavior-preserving R2 extraction for Werewolf host UI. */",
-              "",
-          ])
-
-          target = header + settings_block + role_toggle_block + judge_block
-          target = target.replace(
-              "@OptIn(ExperimentalLayoutApi::class)\n@Composable\nprivate fun WerewolfSettingsScreen(",
-              "@OptIn(ExperimentalLayoutApi::class)\n@Composable\ninternal fun WerewolfSettingsScreen(",
-              1,
-          )
-          target = target.replace(
-              "@OptIn(ExperimentalLayoutApi::class)\n@Composable\nprivate fun WerewolfJudgeScreen(",
-              "@OptIn(ExperimentalLayoutApi::class)\n@Composable\ninternal fun WerewolfJudgeScreen(",
-              1,
-          )
-
-          required_target = (
-              "internal fun WerewolfSettingsScreen",
-              "private fun templateLabel",
-              "private fun RoleToggleRow",
-              "internal fun WerewolfJudgeScreen",
-          )
-          for marker in required_target:
-              if marker not in target:
-                  raise SystemExit(f"missing Werewolf target declaration: {marker}")
-
-          forbidden_source = (
-              "private fun WerewolfSettingsScreen(",
-              "private fun templateLabel(",
-              "private fun RoleToggleRow(",
-              "private fun WerewolfJudgeScreen(",
-          )
-          for marker in forbidden_source:
-              if marker in source:
-                  raise SystemExit(f"Werewolf declaration was not removed from app root: {marker}")
-
-          required_source = (
-              "internal const val MIN_WEREWOLF_PLAYERS = 4",
-              "internal data class EliminationRecord(",
-              "internal data class GameOutcome(",
-              "internal fun HostProgressCard(",
-              "internal fun HostScriptCard(",
-              "internal fun HostInstructionBlock(",
-              "internal fun HostActionSection(",
-              "internal fun SelectablePlayerChips(",
-              "internal fun WerewolfPlayerStatusRow(",
-              "internal fun WerewolfRoleLine(",
-              "internal fun EliminationRecord.displayText()",
-          )
-          for marker in required_source:
-              if marker not in source:
-                  raise SystemExit(f"missing shared Werewolf dependency visibility: {marker}")
-
-          target_path.parent.mkdir(parents=True, exist_ok=True)
-          source_path.write_text(source.rstrip() + "\n", encoding="utf-8")
-          target_path.write_text(target.rstrip() + "\n", encoding="utf-8")
-          PY
+          if grep -q "private fun WerewolfSettingsScreen(" "$source_file"; then
+            echo "WerewolfSettingsScreen still exists in app root" >&2
+            exit 1
+          fi
+          if grep -q "private fun WerewolfJudgeScreen(" "$source_file"; then
+            echo "WerewolfJudgeScreen still exists in app root" >&2
+            exit 1
+          fi
 
           git diff --check
-          git diff --stat
-          test -f app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfHostScreen.kt
-
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && ! git diff --quiet; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt \
-                    app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfHostScreen.kt
-            git diff --cached --check
-            git commit -m "refactor: extract Werewolf host UI from app root"
-            git push origin HEAD:codex/storyteller-algorithm-v4
-          fi
