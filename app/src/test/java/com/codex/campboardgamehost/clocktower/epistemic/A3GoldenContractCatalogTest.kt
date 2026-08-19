@@ -25,14 +25,14 @@ class A3GoldenContractCatalogTest {
     @Test fun `every official golden contract has an explicit A3 disposition`() {
         val catalog = A3GoldenContractCatalog.load()
 
-        assertEquals(48, catalog.size)
-        assertEquals(48, catalog.map(A3GoldenContract::id).distinct().size)
+        assertEquals(52, catalog.size)
+        assertEquals(52, catalog.map(A3GoldenContract::id).distinct().size)
         assertTrue(catalog.all { it.disposition != A3Disposition.UNCLASSIFIED })
         assertEquals(
             setOf("TB-SETUP-01", "TB-SETUP-02", "TB-WW-01", "TB-WW-02", "TB-LIB-01", "TB-LIB-02",
                 "TB-LIB-03", "TB-INV-01", "TB-INV-02", "TB-INV-03", "TB-SPY-01", "TB-CHEF-01",
                 "TB-CHEF-02", "TB-EMPATH-01", "TB-FT-01", "TB-FT-02", "TB-FT-03", "TB-FT-04",
-                "TB-FT-05", "TB-MAL-01"),
+                "TB-FT-05", "TB-MAL-01", "TB-MAL-05", "TB-MAL-06", "TB-MAL-07", "TB-MAL-08"),
             catalog.filter { it.disposition == A3Disposition.EXECUTE_NOW }.mapTo(linkedSetOf(), A3GoldenContract::id),
         )
     }
@@ -49,7 +49,7 @@ class A3GoldenContractCatalogTest {
         val results = A3GoldenContractRunner(catalog).runAll()
         val failures = results.filterNot(A3ExecutionResult::passed)
 
-        assertEquals(failures.joinToString("\n") { "${it.id}: ${it.detail}" }, 20, results.size)
+        assertEquals(failures.joinToString("\n") { "${it.id}: ${it.detail}" }, 24, results.size)
         assertTrue(failures.joinToString("\n") { "${it.id}: ${it.detail}" }, failures.isEmpty())
     }
 
@@ -76,9 +76,8 @@ class A3GoldenContractCatalogTest {
         assertEquals(setOf("TB-LIB-03"), comparisons.filterValues {
             it == A3OracleComparison.EXPECTED_COVERAGE_GAP
         }.keys)
-        assertEquals(setOf("TB-FT-04"), comparisons.filterValues {
-            it == A3OracleComparison.KNOWN_ORACLE_VARIANCE
-        }.keys)
+        assertEquals(setOf("TB-FT-04", "TB-MAL-05", "TB-MAL-06", "TB-MAL-07", "TB-MAL-08"),
+            comparisons.filterValues { it == A3OracleComparison.KNOWN_ORACLE_VARIANCE }.keys)
         assertTrue(comparisons.values.none { it == A3OracleComparison.UNEXPLAINED_MISMATCH })
         assertTrue(comparisons.values.none { it == A3OracleComparison.NOT_RUN })
     }
@@ -127,7 +126,6 @@ internal object A3GoldenContractCatalog {
             }
         }
     }
-
 
     fun loadDocument(catalogFile: File = defaultCatalogFile()): JSONObject {
         require(catalogFile.isFile) { "Missing A2.1 golden catalog: ${catalogFile.path}" }
