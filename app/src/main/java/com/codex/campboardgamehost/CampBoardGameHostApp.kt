@@ -4463,7 +4463,7 @@ internal fun HostProgressCard(
 }
 
 @Composable
-private fun ClocktowerDarkTheme(content: @Composable () -> Unit) {
+internal fun ClocktowerDarkTheme(content: @Composable () -> Unit) {
     val typography = MaterialTheme.typography
     MaterialTheme(
         colorScheme = androidx.compose.material3.darkColorScheme(
