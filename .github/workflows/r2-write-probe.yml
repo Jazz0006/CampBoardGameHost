@@ -111,7 +111,7 @@ jobs:
 
           target_path.parent.mkdir(parents=True, exist_ok=True)
           source_path.write_text(source, encoding="utf-8")
-          target_path.write_text(target, encoding="utf-8")
+          target_path.write_text(target.rstrip() + "\n", encoding="utf-8")
           PY
 
           git diff --check
