@@ -34,8 +34,6 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
-          # This repository uses a long-lived same-repository development PR.
-          # Let it populate its PR-scoped Gradle cache; fork PRs remain read-only.
           cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
 
       - name: Ensure Gradle wrapper is executable
@@ -85,7 +83,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install clingo==5.8.0
-
           mkdir -p "$RUNNER_TEMP/bin"
           cat > "$RUNNER_TEMP/bin/clingo" <<'EOF'
           #!/usr/bin/env bash
@@ -249,7 +246,7 @@ jobs:
           if grep -q "fun ClocktowerDayOverviewScreen(" "$root"; then exit 1; fi
           if grep -q "fun ClocktowerNominationScreen(" "$root"; then exit 1; fi
 
-          actual="$(git diff --name-only | sort)"
+          actual="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u )"
           expected="$(printf '%s\n' "$root" "$day" | sort)"
           test "$actual" = "$expected"
           git diff --check
@@ -294,7 +291,7 @@ jobs:
           set -euo pipefail
           root=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
           day=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
-          actual="$(git diff --name-only | sort)"
+          actual="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u )"
           expected="$(printf '%s\n' "$root" "$day" | sort)"
           test "$actual" = "$expected"
           git diff --check
