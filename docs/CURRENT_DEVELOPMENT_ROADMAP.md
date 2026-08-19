@@ -9,14 +9,22 @@
 
 2026-08-19 对 A0–A4.5 做了重新审计。审计推翻了“可以继续进入 Phase B”的前提：A3 存在真实规则语义缺口，A4.5 也有未满足的生命周期/持久化合同。
 
+同时，当前 `MainActivity.kt` 已承担过多职责：Android Activity 生命周期、Compose 根界面、多游戏模式 UI、Clocktower 夜间/白天流程、持久化、revision wiring、A4/A4.5 shadow wiring 等均集中在同一大文件。继续直接在其中实施 A4.5 lifecycle 修复会提高误改和回归风险。
+
 因此当前唯一正确的实施方向是：
 
 ```text
 Phase A remediation
     ↓
-A3 correctness re-exit
+A3 correctness hotfix
     ↓
-A4/A4.5 regression + device gate review
+MainActivity mechanical decomposition
+    ↓
+A2/A3 validation contract hardening
+    ↓
+A4.5 lifecycle hardening
+    ↓
+A3/A4/A4.5 regression + device gate review
     ↓
 Phase A final exit review
     ↓
@@ -35,6 +43,7 @@ ONLY THEN unlock revision-driven dynamic decision plan / Phase B
 | A2 ASP Oracle harness | CONDITIONAL PASS | Oracle 权威边界正确，但 golden catalog 内嵌 `FormalGameState` 仍使用旧 schema shape。 |
 | A2.1 Golden corpus | CONDITIONAL PASS | 48 个合同仍是重要基线，但缺 poisoned Spy/Recluse + numeric registration 组合覆盖。 |
 | **A3 EnumeratedWorldSet** | **REOPEN** | 已发现真实 correctness bug；旧 exit PASS 已归档。 |
+| **MainActivity decomposition** | **PLANNED** | A3 hotfix 后进行纯结构拆分；禁止与状态架构/规则语义修改混做。 |
 | **A4 ZDD prototype** | **IN PROGRESS** | 仍为 exact shadow/prototype；设备性能门槛未完成，而且共享 A3 evaluator bug。 |
 | **A4.5 observation cache rebuild** | **REOPEN** | 核心 rebuild 架构可保留，但 durability、cancellation/invalidation、cache invariant 未完全满足原 spec。 |
 | B1+ | BLOCKED | 等 Phase A final exit。 |
@@ -89,7 +98,93 @@ PlayerKnowledgeSnapshot
 - setup、Drunk identity alternative、hidden Baron、Poisoner target、red herring、registration-sensitive info 至少有代表性场景贯穿完整路径；
 - 只有通过该路径后才能重新签署 A3 exit review。
 
-## 4. P0 — A4.5 合同修复
+## 4. P0 — MainActivity 结构性拆分
+
+### P0.S1 为什么在 A4.5 前拆分
+
+当前 `MainActivity.kt` 已同时承担过多不同层次的职责。A4.5 下一步恰好需要修改 persistence、lifecycle cancellation、revision invalidation 和 coroutine wiring，如果继续直接叠加在大文件中，会显著增加以下风险：
+
+- 小范围修改需要整体重写超大文件；
+- Clocktower 改动误伤狼人杀/谁是卧底 UI；
+- Compose UI 与领域状态/持久化逻辑难以区分；
+- lifecycle/persistence 修复与界面重构混杂后难以定位回归来源；
+- GitHub connector 对大单体文件的小差异修改不够理想。
+
+因此在 A3 最小 correctness hotfix 之后、A4.5 lifecycle hardening 之前，安排一次**纯结构性 mechanical extraction**。
+
+### P0.S2 第一轮目标结构
+
+第一轮只要求形成清晰职责边界，不追求一次完成最终架构。目标可等价于：
+
+```text
+MainActivity.kt
+    Android Activity / window / setContent only
+
+CampBoardGameHostApp.kt
+    app root / top-level game navigation
+
+undercover/
+    UndercoverScreen.kt
+
+werewolf/
+    WerewolfHostScreen.kt
+
+clocktower/ui/
+    ClocktowerHostScreen.kt
+    ClocktowerSetupScreen.kt
+    ClocktowerNightScreen.kt
+    ClocktowerDayScreen.kt
+    ClocktowerHistoryScreen.kt
+
+clocktower/persistence/
+    ClocktowerGamePersistence.kt   (仅在可机械抽取且不改变语义时)
+```
+
+实际文件名可按现有代码边界调整。第一轮目标约为 8–12 个职责明确的文件，而不是拆成大量几十行的小文件。
+
+### P0.S3 第一轮严格禁止事项
+
+本阶段是 **behavior-preserving structural refactor**。禁止同时做以下改动：
+
+- 不修 Clocktower 规则行为；
+- 不改变 `gameStateRevision` / `playerInputRevision` 增加时机；
+- 不改变 observation append/persistence 顺序；
+- 不改变 recommendation key、cache key 或 hash；
+- 不改变 A4/A4.5 rollout；
+- 不引入新的 ViewModel/Redux/MVI 状态架构；
+- 不把 Compose mutable state 迁移为新的领域状态模型；
+- 不改持久化 schema；
+- 不顺便清理业务逻辑或重命名大批领域概念；
+- 不改变任何用户可见流程、文案或推荐结果。
+
+允许的操作主要是：
+
+- 移动顶层/Composable/helper function 到职责明确的新 `.kt` 文件；
+- 机械调整 visibility/import；
+- 为了拆文件添加最小参数传递或轻量参数容器，但不得改变状态拥有者；
+- 抽离无状态 UI helper；
+- 抽离已经是纯函数的 formatting/mapping helper。
+
+### P0.S4 为什么暂时不同时引入 ViewModel
+
+长期目标仍然应该从：
+
+```text
+Compose mutable state + callbacks
+```
+
+演进为：
+
+```text
+Compose UI
+  -> controller / ViewModel
+  -> immutable session/domain state
+  -> rules / recommendation / epistemic engine
+```
+
+但这属于第二阶段架构重构，不与本次文件拆分混做。先完成零行为变化的 mechanical extraction，后续才能更安全地判断哪些状态真正应该进入 `ClocktowerSessionController` / ViewModel。
+
+## 5. P0 — A4.5 合同修复
 
 A4.5 的 complete-log rebuild、recipient isolation、sequential build、stale commit、OOM != UNSAT 等设计保留，但以下合同必须补齐。
 
@@ -151,7 +246,7 @@ A4.5 report 当前名为 `coarseMaxHeapDeltaBytes`，但 executor 只计算结�
 - leave/restart/revision cancellation 的真实 wiring；
 - durable-before-build 顺序。
 
-## 5. P1 — Phase B/B4 前必须解决的语义债务
+## 6. P1 — Phase B/B4 前必须解决的语义债务
 
 这些问题不阻止当前 P0 修复，但在正式多夜 Possible Worlds 前必须完成。
 
@@ -190,11 +285,13 @@ Player-world construction input (knowledge-safe structural facts)
 
 不能靠把真实字段传 `null` 来长期表达两种不同语义。
 
-## 6. 实施批次
+## 7. 实施批次
 
 ### R1 — A3 registration correctness
 
 范围：P0.1 + golden regression。
+
+说明：这是最小 correctness hotfix，应在 MainActivity 拆分前完成，因为它位于 epistemic evaluator，不依赖 UI 大文件重构。
 
 退出条件：
 
@@ -203,7 +300,36 @@ Player-world construction input (knowledge-safe structural facts)
 - A3/A4 differential 无新差异；
 - 无 cap/OOM 被翻译为 UNSAT。
 
-### R2 — A2/A3 validation contract
+### R2 — MainActivity mechanical decomposition
+
+范围：P0.S1–P0.S4。
+
+目标：降低后续 A4.5 lifecycle/persistence 修改风险，并改善 GitHub connector 对日常小范围代码修改的可维护性。
+
+实施原则：
+
+1. 先盘点 `MainActivity.kt` 内所有顶层函数、Composable、remember state、SideEffect/LaunchedEffect、持久化 helper 和各游戏模式入口。
+2. 先抽**无状态 UI / helper**，再抽各游戏模式 screen；不优先移动 state ownership。
+3. Clocktower UI 按 setup / night / day / history 等自然边界拆分，但避免一次创建过多文件。
+4. 每一个小批次只做移动、visibility/import/参数机械调整，并立即运行相关编译/单测。
+5. 结构拆分完成后再执行全量回归；只有行为零变化才能退出 R2。
+
+退出条件：
+
+- `MainActivity.kt` 只保留 Activity/window/setContent 和必要顶层 app bootstrap，或接近这一目标；
+- 三种游戏模式仍能从同一路径进入，用户可见流程不变；
+- Clocktower setup/night/day/history 的主要 UI 已不再全部堆在 `MainActivity.kt`；
+- revision、persistence、recommendation、A4/A4.5 行为与拆分前一致；
+- 不新增/删除任何正式规则分支；
+- focused tests 通过；
+- full `testDebugUnitTest` 通过；
+- `git diff --check` 通过；
+- 若 CI 可用，CI 必须通过；
+- 对关键 Clocktower happy path 做至少一次编译/运行级 smoke 验证。
+
+**R2 退出不代表最终架构完成。** ViewModel/SessionController/immutable state ownership 重构应在后续单独规划，不得偷偷并入 R2。
+
+### R3 — A2/A3 validation contract
 
 范围：P0.2 + P0.3。
 
@@ -214,9 +340,11 @@ Player-world construction input (knowledge-safe structural facts)
 - Oracle mismatch 分类重新生成；
 - `UNEXPLAINED_MISMATCH = 0`、`NOT_RUN = 0` 才能申请 A3 re-exit。
 
-### R3 — A4.5 lifecycle hardening
+### R4 — A4.5 lifecycle hardening
 
 范围：P0.4–P0.8。
+
+前置条件：R2 已完成，避免 persistence/lifecycle 修复继续堆入超大 `MainActivity.kt`。
 
 退出条件：
 
@@ -226,7 +354,7 @@ Player-world construction input (knowledge-safe structural facts)
 - OOM/failure/cancel/stale 均不产生 empty logical result/UNSAT；
 - production recommendation 完全不读取 shadow cache。
 
-### R4 — Phase A re-exit
+### R5 — Phase A re-exit
 
 执行：
 
@@ -239,17 +367,18 @@ Player-world construction input (knowledge-safe structural facts)
 
 A4 仍只有在目标设备 correctness、latency、memory 和 degradation gates 全部满足后，才可以讨论 `ZDD_DEVICE_VALIDATED`。
 
-### R5 — Unlock dynamic decision engine
+### R6 — Unlock dynamic decision engine
 
-只有 R4 通过后，`storyteller_revision_driven_dynamic_decision_engine_plan.md` 才从 `BLOCKED` 变为 `READY`。
+只有 R5 通过后，`storyteller_revision_driven_dynamic_decision_engine_plan.md` 才从 `BLOCKED` 变为 `READY`。
 
 开始前重新核对该计划的 Batch 0 输入是否仍与最新 `GameSnapshot`、revision、observation log 和 PlayerWorldSet seam 一致；若 Phase A 修复改变公共语义，先更新计划再写代码。
 
-## 7. Phase A 最终退出条件
+## 8. Phase A 最终退出条件
 
 必须同时满足：
 
 - A3 known correctness defect 已修复且有 official/golden regression；
+- MainActivity 第一轮 mechanical decomposition 已完成且行为零变化；
 - A2 fixture 使用当前 schema-v2；
 - A3 至少有代表性 official golden 端到端经过真实 enumerator；
 - 所有已运行 Oracle 差异已分类，无 unexplained mismatch；
@@ -261,7 +390,7 @@ A4 仍只有在目标设备 correctness、latency、memory 和 degradation gates
 - 完整回归通过；
 - 若要推广 ZDD，目标设备 gate 另外通过。
 
-## 8. 生产保护线
+## 9. 生产保护线
 
 在本路线另行更新前：
 
@@ -273,14 +402,15 @@ A4.5 cache: debug/shadow only
 B4 DynamicPlayerWorldSetShadow: isolated shadow only
 ```
 
-任何性能优化都不能：
+任何性能优化或结构重构都不能：
 
 - 截断 exact worlds 后仍声称 exact；
 - 把 timeout/OOM/cap 当 UNSAT；
 - 省略 Spy/Recluse/Drunk/Poisoner/red-herring 的规则分支；
 - 把 storyteller-only truth 放入普通玩家知识；
-- 让 background result 覆盖已经展示/提交的决定。
+- 让 background result 覆盖已经展示/提交的决定；
+- 借“拆文件”名义改变 revision、persistence 或 recommendation 语义。
 
-## 9. 文档状态维护
+## 10. 文档状态维护
 
-后续只在本文更新阶段状态。完成 R1/R2/R3 时不要再创建新的并列“最终路线”。专项实现细节可以追加到对应 spec/status log，但“下一步做什么”始终回到本文。
+后续只在本文更新阶段状态。完成 R1/R2/R3/R4 时不要再创建新的并列“最终路线”。专项实现细节可以追加到对应 spec/status log，但“下一步做什么”始终回到本文。
