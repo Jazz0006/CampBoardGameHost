@@ -1,6 +1,6 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-08-19  
+> 最后整理：2026-08-20  
 > 当前开发分支：`codex/storyteller-algorithm-v4`  
 > **任何新的开发或审计任务都应先读本文，再读 `CURRENT_DEVELOPMENT_ROADMAP.md`。**
 
@@ -52,9 +52,15 @@
 
 该计划仍是 Phase A 之后动态决策引擎的主要实施方案，但其正文顶部的 `READY FOR IMPLEMENTATION` 已被 2026-08-19 审计状态覆盖。
 
-**当前状态：BLOCKED BY PHASE A REMEDIATION。**
+**当前状态：BLOCKED BY PHASE A REMEDIATION AND R5.5 FLOW FOUNDATION。**
 
-只有 `CURRENT_DEVELOPMENT_ROADMAP.md` 中定义的 Phase A 修复和重新退出审查全部通过，才能开始该计划的下一批实施。
+只有 `CURRENT_DEVELOPMENT_ROADMAP.md` 中定义的 Phase A 修复和重新退出审查全部通过，并完成 R5.5 Script & Dynamic Flow Foundation 后，才能开始该计划的下一批 production implementation。
+
+- [`多剧本多板子与动态游戏流程架构设计_v1.md`](多剧本多板子与动态游戏流程架构设计_v1.md)
+
+文档角色：**FUTURE/BLOCKED**。它定义 BotC Script Catalog、Character Registry、官方/custom JSON normalization、ClocktowerFlowPlanner、狼人杀 Board/RoleRegistry、HostInteraction、RuleCoverage 安全降级，以及与动态决策引擎/PlayerWorldSet 的接口边界。
+
+当前只允许把它作为 R2 拆分时的未来架构约束，**不得在 R2/R3/R4/R5 中引入多剧本、多板子或流程语义变化**。R5 Phase A re-exit 通过后，本文转为 R5.5 的 NORMATIVE 专项规范；R5.5 完成后才解锁 revision-driven dynamic decision engine 的 script-aware production 实施。
 
 ## 4. 已归档文档
 
