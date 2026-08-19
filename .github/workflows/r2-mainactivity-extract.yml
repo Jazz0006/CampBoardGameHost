@@ -1,0 +1,163 @@
+name: R2 MainActivity extraction
+
+on:
+  push:
+    branches:
+      - codex/storyteller-algorithm-v4
+    paths:
+      - .github/workflows/r2-mainactivity-extract.yml
+
+permissions:
+  contents: write
+
+jobs:
+  extract-werewolf-support:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/storyteller-algorithm-v4
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Extract Werewolf support from MainActivity
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source_path = Path("app/src/main/java/com/codex/campboardgamehost/MainActivity.kt")
+          target_path = Path("app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfGameSupport.kt")
+          source = source_path.read_text(encoding="utf-8")
+
+          def extract(start: str, end: str) -> str:
+              start_index = source.find(start)
+              if start_index < 0:
+                  raise SystemExit(f"missing start marker: {start!r}")
+              if source.find(start, start_index + 1) >= 0:
+                  raise SystemExit(f"start marker is not unique: {start!r}")
+              end_index = source.find(end, start_index)
+              if end_index < 0:
+                  raise SystemExit(f"missing end marker after {start!r}: {end!r}")
+              return source[start_index:end_index]
+
+          type_block = extract(
+              "private enum class WerewolfJudgeStep {",
+              "private data class WordPair(",
+          )
+          rules_block = extract(
+              "private fun Role.werewolfDescription(context: Context): String = when (this) {",
+              "private val troubleBrewingRoles = listOf(",
+          )
+          last_words_label_block = extract(
+              "private fun LastWordsMode.labelResId(): Int = when (this) {",
+              "private fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int> {",
+          )
+          judge_resources_block = extract(
+              "private fun WerewolfJudgeStep.titleResId(): Int = when (this) {",
+              "@Composable\nprivate fun HostProgressCard(",
+          )
+
+          moved_blocks = [
+              type_block,
+              rules_block,
+              last_words_label_block,
+              judge_resources_block,
+          ]
+          for block in moved_blocks:
+              if source.count(block) != 1:
+                  raise SystemExit("extracted block is not unique")
+              source = source.replace(block, "", 1)
+
+          target = """package com.codex.campboardgamehost
+
+import android.content.Context
+
+/**
+ * Behavior-preserving R2 extraction from MainActivity.
+ *
+ * This file owns Werewolf configuration/rule helpers only. State ownership and UI behavior remain
+ * in CampBoardGameHostApp / MainActivity during the first mechanical decomposition pass.
+ */
+"""
+          target += type_block
+          target += rules_block
+          target += last_words_label_block
+          target += judge_resources_block
+          target = target.replace("private enum class WerewolfJudgeStep", "internal enum class WerewolfJudgeStep")
+          target = target.replace("private enum class LastWordsMode", "internal enum class LastWordsMode")
+          target = target.replace("private data class WerewolfTemplate", "internal data class WerewolfTemplate")
+          target = target.replace("private fun Role.werewolfDescription", "internal fun Role.werewolfDescription")
+          target = target.replace("private fun werewolfRolesFor", "internal fun werewolfRolesFor")
+          target = target.replace("private val werewolfTemplates", "internal val werewolfTemplates")
+          target = target.replace("private fun LastWordsMode.labelResId", "internal fun LastWordsMode.labelResId")
+          target = target.replace("private fun WerewolfJudgeStep.", "internal fun WerewolfJudgeStep.")
+
+          required_in_target = [
+              "internal enum class WerewolfJudgeStep",
+              "internal enum class LastWordsMode",
+              "internal data class WerewolfTemplate",
+              "internal fun Role.werewolfDescription",
+              "internal fun werewolfRolesFor",
+              "internal val werewolfTemplates",
+              "internal fun LastWordsMode.labelResId",
+              "internal fun WerewolfJudgeStep.titleResId",
+              "internal fun WerewolfJudgeStep.scriptResId",
+              "internal fun WerewolfJudgeStep.actionResId",
+          ]
+          for marker in required_in_target:
+              if marker not in target:
+                  raise SystemExit(f"missing extracted declaration: {marker}")
+
+          forbidden_in_source = [
+              "private enum class WerewolfJudgeStep",
+              "private enum class LastWordsMode",
+              "private data class WerewolfTemplate",
+              "private fun Role.werewolfDescription",
+              "private fun werewolfRolesFor",
+              "private val werewolfTemplates",
+              "private fun LastWordsMode.labelResId",
+              "private fun WerewolfJudgeStep.titleResId",
+          ]
+          for marker in forbidden_in_source:
+              if marker in source:
+                  raise SystemExit(f"declaration was not removed from MainActivity: {marker}")
+
+          target_path.parent.mkdir(parents=True, exist_ok=True)
+          source_path.write_text(source, encoding="utf-8")
+          target_path.write_text(target, encoding="utf-8")
+          PY
+
+      - name: Verify mechanical diff
+        run: |
+          git diff --check
+          git diff --stat
+          test -f app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfGameSupport.kt
+
+      - name: Run Android unit tests
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:testDebugUnitTest --no-daemon
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug --no-daemon
+
+      - name: Commit R2 extraction
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/codex/campboardgamehost/MainActivity.kt \
+                  app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfGameSupport.kt
+          git diff --cached --check
+          git commit -m "refactor: extract Werewolf support from MainActivity"
+          git push origin HEAD:codex/storyteller-algorithm-v4
