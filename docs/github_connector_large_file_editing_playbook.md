@@ -195,6 +195,17 @@ git diff --cached --check
 - 必要的 `internal` visibility 已存在；
 - 禁止修改的关键 marker 仍存在。
 
+对于“只允许固定文件变化”的 scope guard，不能只用 `git diff --name-only`，因为新建文件在 `git add` 前属于 untracked，不会被该命令列出。推荐在 transformation 后使用：
+
+```bash
+actual="$( {
+  git diff --name-only
+  git ls-files --others --exclude-standard
+} | sort -u )"
+```
+
+这样 tracked diff 与 untracked target 都会进入 fail-closed 检查。
+
 ### Step 7 — Actions bot 只提交明确文件
 
 不要直接：
@@ -208,6 +219,15 @@ git add .
 ```bash
 git add path/to/source.kt path/to/target.kt
 ```
+
+然后重新检查 staged scope：
+
+```bash
+git diff --cached --name-only
+git diff --cached --check
+```
+
+最终提交边界应以 **staged 文件列表**为准；因为 Android/Gradle/Oracle 等验证工具可能在 runner 中制造不准备提交的临时 working-tree 噪音。只要 transformation 后已经做过全量 scope guard，最终阶段显式 `git add` 目标文件并再次核对 staged scope，可以同时保持 fail-closed 与可重复性。
 
 然后：
 
@@ -325,6 +345,47 @@ GitHub Actions 的 `GITHUB_TOKEN` push 可能不会像普通 connector/user comm
 - 不顺便重构其实现；
 - 在正式 CI 前尽量通过依赖盘点提前发现；
 - Android compiler 仍是最终兜底。
+
+### 5.6 `git diff --name-only` 不包含 untracked 新文件
+
+在抽取新文件时，曾使用：
+
+```bash
+git diff --name-only
+```
+
+检查“只允许两个目标文件变化”。结果新建的 `ClocktowerDayScreen.kt` 仍是 untracked，因此未出现在结果中，导致 scope guard 误判失败。
+
+应改为同时统计 tracked diff 和 untracked 文件：
+
+```bash
+actual="$( {
+  git diff --name-only
+  git ls-files --others --exclude-standard
+} | sort -u )"
+```
+
+经验：**只要 transformation 会创建新文件，scope guard 必须显式包含 untracked 文件。**
+
+### 5.7 验证阶段不要无意修改 tracked file mode
+
+在 executor 中执行：
+
+```bash
+chmod +x ./gradlew
+```
+
+会在某些仓库状态下改变 tracked `gradlew` 的 executable bit，使严格 scope guard 看到一个额外 tracked diff。即使产品源码完全正确，最终 commit gate 也会因此失败。
+
+在不需要持久化 executable bit 时，推荐直接：
+
+```bash
+bash ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --build-cache
+```
+
+或在验证后明确恢复任何只为 runner 执行产生的 file-mode 变化。
+
+经验：**executor 的验证步骤本身也必须尽量保持 working tree 无副作用；验证工具需要执行权限，不等于应该把权限变化写进 git diff。**
 
 ## 6. 安全边界
 
