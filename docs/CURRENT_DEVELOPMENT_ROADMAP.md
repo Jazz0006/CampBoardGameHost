@@ -41,10 +41,10 @@ ONLY THEN unlock revision-driven dynamic decision plan / Phase B
 | A1 Unified Semantic Model | PASS | storyteller truth / observation / player knowledge 三层边界保留。 |
 | A1.1 Semantic Hardening | PASS WITH FOLLOW-UP | schema-v2、registration interaction binding、world-set identity 基本成立；B4 前需补时间线身份细节。 |
 | A2 ASP Oracle harness | CONDITIONAL PASS | Oracle 权威边界正确，但 golden catalog 内嵌 `FormalGameState` 仍使用旧 schema shape。 |
-| A2.1 Golden corpus | CONDITIONAL PASS | 48 个合同仍是重要基线，但缺 poisoned Spy/Recluse + numeric registration 组合覆盖。 |
-| **A3 EnumeratedWorldSet** | **REOPEN** | 已发现真实 correctness bug；旧 exit PASS 已归档。 |
-| **MainActivity decomposition** | **PLANNED** | A3 hotfix 后进行纯结构拆分；禁止与状态架构/规则语义修改混做。 |
-| **A4 ZDD prototype** | **IN PROGRESS** | 仍为 exact shadow/prototype；设备性能门槛未完成，而且共享 A3 evaluator bug。 |
+| A2.1 Golden corpus | CONDITIONAL PASS | R1 已将合同扩充到 52 个并加入 4 个 poisoned Spy/Recluse numeric regression；nested FormalGameState schema-v1 债务仍待 R3。 |
+| **A3 EnumeratedWorldSet** | **REOPEN / R1 IMPLEMENTED** | 已修复已知 poisoned numeric-registration 缺口并补直接/Golden 回归；仍需实际测试、A3/A4 differential 与后续 R3 validation 后才能重新 PASS。 |
+| **MainActivity decomposition** | **PLANNED** | R1 运行验收后进行纯结构拆分；禁止与状态架构/规则语义修改混做。 |
+| **A4 ZDD prototype** | **IN PROGRESS** | 仍为 exact shadow/prototype；设备性能门槛未完成，需在 R1 后重新跑 differential。 |
 | **A4.5 observation cache rebuild** | **REOPEN** | 核心 rebuild 架构可保留，但 durability、cancellation/invalidation、cache invariant 未完全满足原 spec。 |
 | B1+ | BLOCKED | 等 Phase A final exit。 |
 
@@ -52,7 +52,7 @@ ONLY THEN unlock revision-driven dynamic decision plan / Phase B
 
 ### P0.1 Poisoned Spy/Recluse 在 Chef/Empath 数字信息中仍可特殊登记
 
-当前 `TroubleBrewingWorldObservationEvaluator.registrationMatch()` 会在 Role/Type/Alignment 类查询中检查被登记角色自身的 ability state；但是 `evaluateNumeric()` 使用的 `alignmentOptions()` 没有做同样检查。
+审计发现：`TroubleBrewingWorldObservationEvaluator.registrationMatch()` 会在 Role/Type/Alignment 类查询中检查被登记角色自身的 ability state；但是 `evaluateNumeric()` 使用的 `alignmentOptions()` 原先没有做同样检查。
 
 这会允许：
 
@@ -66,8 +66,10 @@ poisoned Recluse -> Chef / Empath 仍可按 EVIL 登记
 1. `alignmentOptions()` 只有在 Spy/Recluse 自身 `AbilityState.FUNCTIONING` 时才能增加 special-registration branch。
 2. 保留实际 alignment 分支；中毒只关闭角色能力产生的可选登记，不改变真实身份。
 3. 增加 Chef + poisoned Spy、Chef + poisoned Recluse、Empath + poisoned Spy、Empath + poisoned Recluse 回归测试。
-4. 将这些组合加入 official golden corpus；可被冻结外部实现忠实表达的部分必须做独立 cross-validation。
+4. 将这些组合加入 official golden corpus；外部 Oracle 的已知错误不得覆盖官方规则。
 5. 修复后重新跑 Enumerated/ZDD differential；“A3 == A4”不能替代 official/golden 独立验证。
+
+**实施状态（2026-08-19）：代码修复、4 组直接单元回归、4 个 machine-readable golden contracts（`TB-MAL-05`–`08`）和 Oracle authority-boundary 测试已写入分支。冻结 `pnkfelix/botc-asp` 的 Spy/Recluse misregistration 规则不受 impairment 门控，因此这 4 个场景记录为 `KNOWN_ORACLE_VARIANCE`。当前尚未获得本分支的 CI/Gradle/Clingo 运行结果，所以 R1 不提前标记 PASS。**
 
 ### P0.2 A2 fixture schema 与当前 A1 schema-v2 不一致
 
@@ -291,7 +293,24 @@ Player-world construction input (knowledge-safe structural facts)
 
 范围：P0.1 + golden regression。
 
-说明：这是最小 correctness hotfix，应在 MainActivity 拆分前完成，因为它位于 epistemic evaluator，不依赖 UI 大文件重构。
+当前状态：**IMPLEMENTED / VALIDATION PENDING**。
+
+已实施：
+
+- `alignmentOptions()` 对被登记角色的 `AbilityState` fail closed；
+- 直接单元测试覆盖 Chef/Empath × poisoned Spy/Recluse 四组合；
+- machine-readable catalog 从 48 扩充为 52，新增 `TB-MAL-05`–`08`；
+- A3 executable golden contracts 从 20 扩充为 24；
+- 冻结 ASP Oracle 的 impairment/misregistration 差异登记为 `KNOWN_ORACLE_VARIANCE`；
+- Python harness 增加 authority-boundary regression，防止以后误把外部 Oracle 提升为规则权威。
+
+仍待验证：
+
+- focused `EnumeratedWorldSetTest` / `A3GoldenContractCatalogTest` 实际运行；
+- Python oracle harness tests；
+- real Clingo cross-validation（预期 4 个新增 case 为 documented known variance）；
+- A3/A4 differential；
+- full JVM regression。
 
 退出条件：
 
