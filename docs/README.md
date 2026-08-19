@@ -15,7 +15,8 @@
 3. **Possible Worlds / 玩家认知一致性总体架构**：`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md` 是当前主规范。
 4. **阶段专项实现**：对应专项 spec 只在主规范边界内生效。
 5. **实现状态、测试报告和历史验收**：只能作为证据，不得覆盖当前路线或规则语义。
-6. **`archive/`**：只用于历史追溯，不再作为新代码的实施依据。
+6. **开发运行手册 / connector 操作指南**：用于说明开发环境中的可靠操作方式，不改变产品架构或阶段状态。
+7. **`archive/`**：只用于历史追溯，不再作为新代码的实施依据。
 
 特别说明：部分较早的活跃文档正文中仍保留“COMPLETE / READY / PASS”等当时状态。**如果与本目录 README 或 `CURRENT_DEVELOPMENT_ROADMAP.md` 冲突，以当前路线为准。**
 
@@ -45,6 +46,10 @@
 - [`external_solver_evaluation.md`](external_solver_evaluation.md) — 外部 solver/research 冻结与使用边界。
 - [`epistemic_reference_matrix.md`](epistemic_reference_matrix.md) — Trouble Brewing golden scenario 矩阵。
 - [`asp_oracle_cross_validation.md`](asp_oracle_cross_validation.md) — A2/A2.1 ASP Oracle 交叉验证基线。
+
+### E. 开发运行手册
+
+- [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md) — **REFERENCE / DEVELOPMENT OPERATIONS**。当没有本地 working tree、只能使用 GitHub connector，并且需要修改数百 KB 级大文件时，优先使用该手册中已验证的 temporary GitHub Actions executor 流程，而不是重新尝试整文件覆盖或要求用户本地应用 patch。包含适用条件、幂等 marker transformation、`git diff --check`、bot push、正式 CI 验收、workflow 降权和已验证踩坑。
 
 ## 3. 下一阶段文档：当前禁止提前实施
 
