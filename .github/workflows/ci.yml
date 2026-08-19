@@ -289,13 +289,14 @@ jobs:
           set -euo pipefail
           root=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
           day=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
-          actual="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u )"
           expected="$(printf '%s\n' "$root" "$day" | sort)"
-          test "$actual" = "$expected"
           git diff --check
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- "$root" "$day"
+          staged="$(git diff --cached --name-only | sort)"
+          printf 'Expected staged files:\n%s\nActual staged files:\n%s\n' "$expected" "$staged"
+          test "$staged" = "$expected"
           git diff --cached --check
           git commit -m "refactor(r2): extract Clocktower day UI"
           git push origin HEAD:codex/storyteller-algorithm-v4
