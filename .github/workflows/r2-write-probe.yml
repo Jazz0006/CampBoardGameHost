@@ -1,4 +1,4 @@
-name: R2 structural decomposition verifier
+name: R2 guarded day UI extraction
 
 on:
   push:
@@ -6,17 +6,12 @@ on:
       - codex/storyteller-algorithm-v4
     paths:
       - .github/workflows/r2-write-probe.yml
-  pull_request:
-    branches:
-      - main
-    paths:
-      - .github/workflows/r2-write-probe.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  verify:
+  extract-and-verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -24,35 +19,188 @@ jobs:
           ref: codex/storyteller-algorithm-v4
           fetch-depth: 0
 
-      - name: Verify completed R2 boundaries
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Mechanically extract Clocktower day UI
         shell: bash
         run: |
           set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
 
-          main=app/src/main/java/com/codex/campboardgamehost/MainActivity.kt
+          root = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
+          target = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt")
+          text = root.read_text(encoding="utf-8")
+
+          if target.exists():
+              raise SystemExit(f"target already exists: {target}")
+
+          start_marker = "@Composable\nprivate fun ClocktowerDayPlayerTile("
+          end_marker = "@Composable\ninternal fun HostScriptCard("
+          if text.count(start_marker) != 1 or text.count(end_marker) != 1:
+              raise SystemExit("expected unique day-UI extraction markers")
+
+          start = text.index(start_marker)
+          end = text.index(end_marker, start)
+          block = text[start:end]
+
+          names = [
+              "ClocktowerDayPlayerTile",
+              "ClocktowerDayOverviewScreen",
+              "ClocktowerDawnSummaryScreen",
+              "ClocktowerNominationScreen",
+              "ClocktowerVoteScreen",
+              "ClocktowerExecutionConfirmScreen",
+              "ClocktowerSpecialDayActionScreen",
+              "ClocktowerDayActionHeader",
+          ]
+          for name in names:
+              needle = f"private fun {name}("
+              if block.count(needle) != 1:
+                  raise SystemExit(f"expected exactly one extracted declaration: {name}")
+              block = block.replace(needle, f"internal fun {name}(", 1)
+
+          remaining = text[:start] + text[end:]
+          visibility_changes = {
+              "private enum class ClocktowerEventType {": "internal enum class ClocktowerEventType {",
+              "private data class ClocktowerEvent(": "internal data class ClocktowerEvent(",
+              "private enum class ClocktowerPhase {": "internal enum class ClocktowerPhase {",
+              "private fun playerSeatLabel(cards: List<PlayerCard>, playerName: String?): String =":
+                  "internal fun playerSeatLabel(cards: List<PlayerCard>, playerName: String?): String =",
+          }
+          for old, new in visibility_changes.items():
+              if remaining.count(old) != 1:
+                  raise SystemExit(f"expected exactly one visibility seam: {old}")
+              remaining = remaining.replace(old, new, 1)
+
+          for name in names:
+              if f"private fun {name}(" in remaining or f"internal fun {name}(" in remaining:
+                  raise SystemExit(f"day UI declaration still present in root: {name}")
+
+          header = '''package com.codex.campboardgamehost
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+/** Behavior-preserving R2 extraction for Clocktower day/dawn host UI. */
+'''
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text(header + block.lstrip(), encoding="utf-8")
+          root.write_text(remaining, encoding="utf-8")
+          PY
+
           root=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-          undercover=app/src/main/java/com/codex/campboardgamehost/undercover/UndercoverSupport.kt
-          wolf_support=app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfGameSupport.kt
-          wolf_ui=app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfHostScreen.kt
-          ct_setup=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt
+          day=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
+          test -f "$day"
+          grep -q "internal fun ClocktowerDayOverviewScreen" "$day"
+          grep -q "internal fun ClocktowerDawnSummaryScreen" "$day"
+          grep -q "internal fun ClocktowerNominationScreen" "$day"
+          grep -q "internal fun ClocktowerVoteScreen" "$day"
+          grep -q "internal fun ClocktowerExecutionConfirmScreen" "$day"
+          grep -q "internal fun ClocktowerSpecialDayActionScreen" "$day"
+          if grep -q "private fun ClocktowerDayOverviewScreen(" "$root"; then exit 1; fi
+          if grep -q "private fun ClocktowerNominationScreen(" "$root"; then exit 1; fi
 
-          test -f "$main"
-          test -f "$root"
-          test -f "$undercover"
-          test -f "$wolf_support"
-          test -f "$wolf_ui"
-          test -f "$ct_setup"
-
-          grep -q "class MainActivity" "$main"
-          grep -q "internal fun CampBoardGameHostApp" "$root"
-          grep -q "internal fun UndercoverSettingsScreen" "$undercover"
-          grep -q "internal enum class WerewolfJudgeStep" "$wolf_support"
-          grep -q "internal fun WerewolfJudgeScreen" "$wolf_ui"
-          grep -q "internal fun ClocktowerSettingsScreen" "$ct_setup"
-          grep -q "internal fun ClocktowerDarkTheme" "$root"
-
-          if grep -q "private fun UndercoverSettingsScreen(" "$root"; then exit 1; fi
-          if grep -q "private fun WerewolfJudgeScreen(" "$root"; then exit 1; fi
-          if grep -q "private fun ClocktowerSettingsScreen(" "$root"; then exit 1; fi
-
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' "$root" "$day" | sort)"
+          test "$actual" = "$expected"
           git diff --check
+
+      - name: Run Android unit tests and build debug APK
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --build-cache
+
+      - name: Validate ASP contracts
+        run: |
+          python tools/asp_oracle/oracle_harness.py validate \
+            --fixtures tools/asp_oracle/scenarios/trouble_brewing_a2.json
+          python -m unittest discover -s tools/asp_oracle -p 'test_*.py'
+
+      - name: Run real Clingo cross-validation
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install clingo==5.8.0
+          mkdir -p "$RUNNER_TEMP/bin"
+          cat > "$RUNNER_TEMP/bin/clingo" <<'EOF'
+          #!/usr/bin/env bash
+          exec python -m clingo "$@"
+          EOF
+          chmod +x "$RUNNER_TEMP/bin/clingo"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+          export PATH="$RUNNER_TEMP/bin:$PATH"
+          python tools/asp_oracle/oracle_harness.py fetch \
+            --checkout-dir build/oracles/botc-asp
+          python tools/asp_oracle/oracle_harness.py run \
+            --fixtures tools/asp_oracle/scenarios/trouble_brewing_a2.json \
+            --botc-asp-dir build/oracles/botc-asp \
+            --report build/reports/asp-oracle-a2.json \
+            --timeout 30
+
+      - name: Commit validated extraction only
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          day=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' "$root" "$day" | sort)"
+          test "$actual" = "$expected"
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "$root" "$day"
+          git diff --cached --check
+          git commit -m "refactor(r2): extract Clocktower day UI"
+          git push origin HEAD:codex/storyteller-algorithm-v4
