@@ -25,6 +25,8 @@ class OracleHarnessTest(unittest.TestCase):
         self.assertIn("TB-CHEF-02", ids)
         self.assertIn("TB-FT-03", ids)
         self.assertIn("TB-MAL-01", ids)
+        self.assertIn("TB-MAL-05", ids)
+        self.assertIn("TB-MAL-08", ids)
         self.assertIn("TB-SETUP-02", ids)
         self.assertIn("TB-FT-04", ids)
         self.assertIn("TB-FT-05", ids)
@@ -114,6 +116,15 @@ class OracleHarnessTest(unittest.TestCase):
         self.assertEqual("UNSAT", spy["expectedStatus"])
         self.assertEqual("KNOWN_ORACLE_VARIANCE", spy["mismatchDisposition"])
         self.assertEqual("SAT", recluse["expectedStatus"])
+
+    def test_poisoned_registration_authority_boundary_is_frozen(self):
+        scenarios = {item["scenarioId"]: item for item in self.catalog["scenarios"]}
+        for scenario_id in ("TB-MAL-05", "TB-MAL-06", "TB-MAL-07", "TB-MAL-08"):
+            scenario = scenarios[scenario_id]
+            self.assertEqual("UNSAT", scenario["expectedStatus"])
+            self.assertEqual("KNOWN_ORACLE_VARIANCE", scenario["mismatchDisposition"])
+            self.assertEqual("ACTUAL_ONLY", scenario["hypothesisMode"])
+            self.assertEqual("numeric-info", scenario["query"]["kind"])
 
 
 if __name__ == "__main__":
