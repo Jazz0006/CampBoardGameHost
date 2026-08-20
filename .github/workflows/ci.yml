@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  android-tests:
+    name: Android tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Run Android unit tests and build debug APK
+        run: ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --build-cache
+
+  asp-contract-tests:
+    name: ASP contract tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Validate golden corpus
+        run: |
+          python tools/asp_oracle/oracle_harness.py validate \
+            --fixtures tools/asp_oracle/scenarios/trouble_brewing_a2.json
+
+      - name: Run Oracle harness unit tests
+        run: |
+          python -m unittest discover \
+            -s tools/asp_oracle \
+            -p 'test_*.py'
+
+  asp-oracle:
+    name: Real Clingo cross-validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Clingo 5.8.0
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install clingo==5.8.0
+          mkdir -p "$RUNNER_TEMP/bin"
+          cat > "$RUNNER_TEMP/bin/clingo" <<'EOF'
+          #!/usr/bin/env bash
+          exec python -m clingo "$@"
+          EOF
+          chmod +x "$RUNNER_TEMP/bin/clingo"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Clingo
+        run: clingo --version
+
+      - name: Fetch frozen botc-asp Oracle
+        run: |
+          python tools/asp_oracle/oracle_harness.py fetch \
+            --checkout-dir build/oracles/botc-asp
+
+      - name: Run Oracle cross-validation
+        run: |
+          python tools/asp_oracle/oracle_harness.py run \
+            --fixtures tools/asp_oracle/scenarios/trouble_brewing_a2.json \
+            --botc-asp-dir build/oracles/botc-asp \
+            --report build/reports/asp-oracle-a2.json \
+            --timeout 30

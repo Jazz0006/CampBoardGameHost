@@ -12,8 +12,8 @@ import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
-import com.codex.campboardgamehost.clocktower.recommendation.PlanEvaluator
-import com.codex.campboardgamehost.clocktower.recommendation.RecommendationSearch
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupEvaluator
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
 import com.codex.campboardgamehost.clocktower.rules.PlanLegalityValidator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -93,7 +93,7 @@ class ExpertRecommendationReviewTest {
     @Test
     fun `twenty four expert scenarios beat deterministic first legal baseline`() {
         // Exclude class loading and JVM compilation from the scenario timing samples.
-        RecommendationSearch.recommend(ExpertReviewFixtures.scenarios.first().game, roleDefinitions)
+        SetupRecommendationService.recommend(ExpertReviewFixtures.scenarios.first().game, roleDefinitions)
         val reviews = ExpertReviewFixtures.scenarios.map(::review)
 
         assertEquals(24, reviews.size)
@@ -110,11 +110,11 @@ class ExpertRecommendationReviewTest {
     @Test
     fun `review fixtures are deterministic and independent of player names`() {
         ExpertReviewFixtures.scenarios.take(4).forEach { scenario ->
-            val first = RecommendationSearch.recommend(scenario.game, roleDefinitions)
+            val first = SetupRecommendationService.recommend(scenario.game, roleDefinitions)
             val renamedGame = scenario.game.copy(
                 players = scenario.game.players.map { it.copy(name = "Renamed ${it.seat}") },
             )
-            val second = RecommendationSearch.recommend(renamedGame, roleDefinitions)
+            val second = SetupRecommendationService.recommend(renamedGame, roleDefinitions)
 
             assertEquals(first.map { it.decisions }, second.map { it.decisions })
         }
@@ -122,7 +122,7 @@ class ExpertRecommendationReviewTest {
 
     private fun review(scenario: ExpertReviewScenario): ScenarioReview {
         val baselineCandidate = LegacyFirstLegalBaseline.create(scenario.game, roleDefinitions)
-        val baseline = PlanEvaluator.evaluate(
+        val baseline = SetupEvaluator.evaluate(
             game = scenario.game,
             roleDefinitions = roleDefinitions,
             candidate = baselineCandidate,
@@ -130,7 +130,7 @@ class ExpertRecommendationReviewTest {
         )
         lateinit var recommendations: List<RecommendationPlan>
         val elapsedNanos = measureNanoTime {
-            recommendations = RecommendationSearch.recommend(scenario.game, roleDefinitions)
+            recommendations = SetupRecommendationService.recommend(scenario.game, roleDefinitions)
         }
         val balanced = recommendations.first { it.style == RecommendationStyle.BALANCED }
         val allLegal = recommendations.all { plan ->

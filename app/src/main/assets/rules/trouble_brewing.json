@@ -1,0 +1,32 @@
+{
+  "scriptId": "trouble_brewing",
+  "characters": [
+    {"id": "Washerwoman", "abilityText": "You start knowing that 1 of 2 players is a particular Townsfolk."},
+    {"id": "Librarian", "abilityText": "You start knowing that 1 of 2 players is a particular Outsider. (Or that zero are in play.)"},
+    {"id": "Investigator", "abilityText": "You start knowing that 1 of 2 players is a particular Minion."},
+    {"id": "Chef", "abilityText": "You start knowing how many pairs of evil players there are."},
+    {"id": "Empath", "abilityText": "Each night, you learn how many of your 2 alive neighbours are evil."},
+    {"id": "Fortune Teller", "abilityText": "Each night, choose 2 players: you learn if there is a Demon. There is a good player that registers as a Demon to you."},
+    {"id": "Undertaker", "abilityText": "Each night*, you learn which character died by execution today."},
+    {"id": "Monk", "abilityText": "Each night*, choose a player (not yourself): they are safe from the Demon tonight."},
+    {"id": "Ravenkeeper", "abilityText": "If you die at night, you are woken to choose a player: you learn their character."},
+    {"id": "Virgin", "abilityText": "The 1st time you are nominated, if the nominator is a Townsfolk, they are executed immediately."},
+    {"id": "Slayer", "abilityText": "Once per game, during the day, publicly choose a player: if they are the Demon, they die."},
+    {"id": "Soldier", "abilityText": "You are safe from the Demon."},
+    {"id": "Mayor", "abilityText": "If only 3 players live & no execution occurs, your team wins. If you die at night, another player might die instead."},
+    {"id": "Butler", "abilityText": "Each night, choose a player (not yourself): tomorrow, you may only vote if they are voting too."},
+    {"id": "Drunk", "abilityText": "You do not know you are the Drunk. You think you are a Townsfolk character, but you are not."},
+    {"id": "Recluse", "abilityText": "You might register as evil & as a Minion or Demon, even if dead."},
+    {"id": "Saint", "abilityText": "If you die by execution, your team loses."},
+    {"id": "Poisoner", "abilityText": "Each night, choose a player: they are poisoned tonight and tomorrow day."},
+    {"id": "Spy", "abilityText": "Each night, you see the Grimoire. You might register as good & as a Townsfolk or Outsider, even if dead."},
+    {"id": "Scarlet Woman", "abilityText": "If there are 5 or more players alive & the Demon dies, you become the Demon. (Travellers don't count.)"},
+    {"id": "Baron", "abilityText": "There are extra Outsiders in play. [+2 Outsiders]"},
+    {"id": "Imp", "abilityText": "Each night*, choose a player: they die. If you kill yourself this way, a Minion becomes the Imp."}
+  ],
+  "nightOrder": {
+    "firstNight": ["Poisoner", "Spy", "Washerwoman", "Librarian", "Investigator", "Chef", "Empath", "Fortune Teller", "Butler"],
+    "otherNights": ["Poisoner", "Monk", "Spy", "Imp", "Scarlet Woman", "Mayor", "Ravenkeeper", "Undertaker", "Empath", "Fortune Teller", "Butler"]
+  },
+  "jinxes": []
+}

@@ -5,14 +5,14 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-class AutomaticStorytellerSelectorTest {
+class WeightedStableSelectorFallbackTest {
     @Test
     fun `selectStyle applies the configured automatic style`() {
         val options = RecommendationStyle.entries.toList()
 
         assertEquals(
             RecommendationStyle.AGGRESSIVE,
-            AutomaticStorytellerSelector.selectStyle(
+            WeightedStableSelector.selectStyle(
                 options,
                 RecommendationStyle.AGGRESSIVE,
             ) { it },
@@ -25,7 +25,7 @@ class AutomaticStorytellerSelectorTest {
 
         assertEquals(
             "balanced",
-            AutomaticStorytellerSelector.select(options) { it == "balanced" },
+            WeightedStableSelector.selectPreferred(options) { it == "balanced" },
         )
     }
 
@@ -35,14 +35,14 @@ class AutomaticStorytellerSelectorTest {
 
         assertEquals(
             "gentle",
-            AutomaticStorytellerSelector.select(options) { it == "balanced" },
+            WeightedStableSelector.selectPreferred(options) { it == "balanced" },
         )
     }
 
     @Test
     fun `select returns null when no legal information exists`() {
         assertNull(
-            AutomaticStorytellerSelector.select(emptyList<String>()) { it == "balanced" },
+            WeightedStableSelector.selectPreferred(emptyList<String>()) { it == "balanced" },
         )
     }
 }

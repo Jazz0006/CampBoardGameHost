@@ -1,14 +1,16 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.MalfunctionPolicy
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class UnreliableNumberInformationRecommenderTest {
+class MalfunctionNumberPolicyTest {
     @Test
     fun `all legal values remain available including the truth`() {
-        val recommendations = UnreliableNumberInformationRecommender.recommend(
+        val recommendations = MalfunctionPolicy.recommendNumber(
             UnreliableNumberContext(trueValue = 1, minimumValue = 0, maximumValue = 2),
         )
 
@@ -18,7 +20,7 @@ class UnreliableNumberInformationRecommenderTest {
 
     @Test
     fun `gentle keeps truth while balanced creates limited misinformation`() {
-        val recommendations = UnreliableNumberInformationRecommender.recommend(
+        val recommendations = MalfunctionPolicy.recommendNumber(
             UnreliableNumberContext(trueValue = 0, minimumValue = 0, maximumValue = 2, pressureCostPerPoint = 2),
         ).associateBy { it.style }
 
@@ -29,7 +31,7 @@ class UnreliableNumberInformationRecommenderTest {
 
     @Test
     fun `history continuity influences gentle recommendation`() {
-        val recommendation = UnreliableNumberInformationRecommender.recommend(
+        val recommendation = MalfunctionPolicy.recommendNumber(
             UnreliableNumberContext(
                 trueValue = 1,
                 minimumValue = 0,

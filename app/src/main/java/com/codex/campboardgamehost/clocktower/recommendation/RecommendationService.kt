@@ -4,22 +4,27 @@ import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
+import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
 
 /** Single entry point used by the Android UI. */
 internal object RecommendationService {
     fun recommend(
         game: GameState,
         roleDefinitions: List<RoleDefinition>,
-    ): List<RecommendationPlan> = RecommendationSearch.recommend(game, roleDefinitions)
+        history: CrossGameHistory = CrossGameHistory(),
+    ): List<RecommendationPlan> = SetupRecommendationService.recommend(game, roleDefinitions, history)
 
     fun recommendConstrained(
         game: GameState,
         roleDefinitions: List<RoleDefinition>,
         lockedDecisions: List<StorytellerDecision>,
-    ): RecommendationSearch.ConstrainedResult = RecommendationSearch.recommendConstrained(
+        history: CrossGameHistory = CrossGameHistory(),
+    ): SetupRecommendationService.ConstrainedResult = SetupRecommendationService.recommendConstrained(
         game = game,
         roleDefinitions = roleDefinitions,
         lockedDecisions = lockedDecisions,
+        history = history,
     )
 }
 

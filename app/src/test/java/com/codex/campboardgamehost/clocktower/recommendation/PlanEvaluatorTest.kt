@@ -7,18 +7,19 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupEvaluator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class PlanEvaluatorTest {
+class SetupEvaluatorTest {
     private val game = TroubleBrewingFixtures.eightPlayerExample()
     private val roles = TroubleBrewingFixtures.roleDefinitions()
 
     @Test
     fun `balanced profile prefers documented plan A over high conflict plan B`() {
-        val planA = PlanEvaluator.evaluate(game, roles, plan(listOf(1, 4)), RecommendationProfiles.balanced)
-        val planB = PlanEvaluator.evaluate(game, roles, plan(listOf(2, 3)), RecommendationProfiles.balanced)
+        val planA = SetupEvaluator.evaluate(game, roles, plan(listOf(1, 4)), RecommendationProfiles.balanced)
+        val planB = SetupEvaluator.evaluate(game, roles, plan(listOf(2, 3)), RecommendationProfiles.balanced)
 
         assertTrue(planA.totalScore > planB.totalScore)
         assertEquals(QualityTier.RECOMMENDED, planA.qualityTier)
@@ -26,15 +27,15 @@ class PlanEvaluatorTest {
 
     @Test
     fun `aggressive profile prefers documented high conflict plan B over plan A`() {
-        val planA = PlanEvaluator.evaluate(game, roles, plan(listOf(1, 4)), RecommendationProfiles.aggressive)
-        val planB = PlanEvaluator.evaluate(game, roles, plan(listOf(2, 3)), RecommendationProfiles.aggressive)
+        val planA = SetupEvaluator.evaluate(game, roles, plan(listOf(1, 4)), RecommendationProfiles.aggressive)
+        val planB = SetupEvaluator.evaluate(game, roles, plan(listOf(2, 3)), RecommendationProfiles.aggressive)
 
         assertTrue(planB.totalScore > planA.totalScore)
     }
 
     @Test
     fun `drunk information that hits real evil is downgraded with warning`() {
-        val evaluated = PlanEvaluator.evaluate(
+        val evaluated = SetupEvaluator.evaluate(
             game,
             roles,
             plan(listOf(1, 7)),
@@ -47,7 +48,7 @@ class PlanEvaluatorTest {
 
     @Test
     fun `drunk observation records unreliable false information separately`() {
-        val evaluated = PlanEvaluator.evaluate(
+        val evaluated = SetupEvaluator.evaluate(
             game,
             roles,
             plan(listOf(1, 4)),
@@ -57,6 +58,32 @@ class PlanEvaluatorTest {
         assertEquals(SemanticTruth.FALSE, evaluated.observations.single().semanticTruth)
         assertTrue(evaluated.scoreItems.isNotEmpty())
         assertEquals(evaluated.scoreItems.sumOf { it.delta }, evaluated.totalScore)
+    }
+
+    @Test
+    fun `non investigator drunk roles remain in the recommended tier`() {
+        val fullRoles = TroubleBrewingFixtures.fullRoleDefinitions()
+        val shownRoles = listOf("Washerwoman", "Librarian", "Monk").map(::RoleId)
+
+        shownRoles.forEach { shownRole ->
+            val evaluated = SetupEvaluator.evaluate(
+                game = game,
+                roleDefinitions = fullRoles,
+                candidate = CandidatePlan(
+                    decisions = listOf(
+                        StorytellerDecision.RedHerring(5),
+                        StorytellerDecision.DrunkShownRole(shownRole),
+                        StorytellerDecision.DemonBluffs(
+                            listOf(RoleId("Investigator"), RoleId("Soldier"), RoleId("Slayer")),
+                        ),
+                    ),
+                ),
+                profile = RecommendationProfiles.balanced,
+            )
+
+            assertEquals("shownRole=$shownRole", QualityTier.RECOMMENDED, evaluated.qualityTier)
+            assertTrue(evaluated.warnings.none { it.ruleId == "drunk-non-information-role" })
+        }
     }
 
     private fun plan(candidateSeats: List<Int>): CandidatePlan = CandidatePlan(

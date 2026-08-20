@@ -3,18 +3,19 @@ package com.codex.campboardgamehost.clocktower.recommendation
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
 import com.codex.campboardgamehost.clocktower.rules.PlanLegalityValidator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class CandidateGeneratorTest {
+class SetupCandidateGeneratorTest {
     @Test
     fun `eight player fixture generates every legal combination`() {
         val game = TroubleBrewingFixtures.eightPlayerExample()
         val roles = TroubleBrewingFixtures.roleDefinitions()
 
-        val plans = CandidateGenerator.generatePlans(game, roles).toList()
+        val plans = SetupCandidateGenerator.generatePlans(game, roles).toList()
 
         // 6 red herrings * (112 Investigator information options + Monk + Soldier) * 4 bluff sets.
         assertEquals(2_736, plans.size)
@@ -23,7 +24,7 @@ class CandidateGeneratorTest {
 
     @Test
     fun `fortune teller themself is generated as a red herring`() {
-        val plans = CandidateGenerator.generatePlans(
+        val plans = SetupCandidateGenerator.generatePlans(
             TroubleBrewingFixtures.eightPlayerExample(),
             TroubleBrewingFixtures.roleDefinitions(),
         )
@@ -40,7 +41,7 @@ class CandidateGeneratorTest {
 
     @Test
     fun `drunk investigator options cover minion roles and unordered seat pairs`() {
-        val plans = CandidateGenerator.generatePlans(
+        val plans = SetupCandidateGenerator.generatePlans(
             TroubleBrewingFixtures.eightPlayerExample(),
             TroubleBrewingFixtures.roleDefinitions(),
         )
@@ -57,7 +58,7 @@ class CandidateGeneratorTest {
 
     @Test
     fun `full Trouble Brewing catalog exposes the expected search space`() {
-        val count = CandidateGenerator.generatePlans(
+        val count = SetupCandidateGenerator.generatePlans(
             TroubleBrewingFixtures.eightPlayerExample(),
             TroubleBrewingFixtures.fullRoleDefinitions(),
         ).count()
@@ -72,7 +73,7 @@ class CandidateGeneratorTest {
             StorytellerDecision.DrunkInvestigatorInfo(RoleId("Poisoner"), listOf(1, 4)),
         )
 
-        val plans = CandidateGenerator.generatePlans(
+        val plans = SetupCandidateGenerator.generatePlans(
             TroubleBrewingFixtures.eightPlayerExample(),
             TroubleBrewingFixtures.roleDefinitions(),
             locked,

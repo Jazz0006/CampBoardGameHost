@@ -1,9 +1,11 @@
 package com.codex.campboardgamehost.clocktower.rules
 
 import com.codex.campboardgamehost.clocktower.domain.CandidatePlan
+import com.codex.campboardgamehost.clocktower.domain.ConstraintAuthority
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -61,6 +63,22 @@ class PlanLegalityValidatorTest {
         val failures = PlanLegalityValidator.validate(game, roles, plan)
 
         assertTrue(failures.any { it is LegalityFailure.RoleOutsideScript })
+    }
+
+    @Test
+    fun `official rule failures and product contract failures remain distinguishable`() {
+        assertEquals(
+            ConstraintAuthority.OFFICIAL_RULE_REQUIRED,
+            LegalityFailure.EvilRedHerring(7).constraintAuthority,
+        )
+        assertEquals(
+            ConstraintAuthority.PRODUCT_POLICY_REQUIRED,
+            LegalityFailure.MissingSeat(99).constraintAuthority,
+        )
+        assertEquals(
+            ConstraintAuthority.PRODUCT_POLICY_REQUIRED,
+            LegalityFailure.MultipleDecisions("red-herring").constraintAuthority,
+        )
     }
 
     private fun validPlan(redHerringSeat: Int = 5): CandidatePlan = CandidatePlan(

@@ -122,7 +122,10 @@ internal object MayorRedirectRecommender {
                 if (livingDeathTarget.actualAlignment == Alignment.EVIL) {
                     add(score("evil-player-redirect", ScoreCategory.EVIL_PRESSURE, evilDeathScore(style), livingDeathTarget.seat))
                 }
-                val pressure = state.informationPressureBySeat[livingDeathTarget.seat] ?: 0
+                val pressure = state.playerInformationPressureBySeat[livingDeathTarget.seat]
+                    ?.let { it.directSuspicion + it.indirectSuspicion - it.confirmation }
+                    ?.coerceAtLeast(0)
+                    ?: 0
                 if (pressure > 0) {
                     add(score("information-pressure-continuity", ScoreCategory.CONTRADICTION, pressureScore(style, pressure), livingDeathTarget.seat))
                 }

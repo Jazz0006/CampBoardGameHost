@@ -1,0 +1,37 @@
+[
+  {
+    "id": "_meta",
+    "name": "No Greater Joy",
+    "author": "Steven Medway",
+    "firstNight": [
+      "dusk",
+      "minioninfo",
+      "demoninfo",
+      "investigator",
+      "empath",
+      "clockmaker",
+      "chambermaid",
+      "dawn"
+    ],
+    "otherNight": [
+      "dusk",
+      "scarletwoman",
+      "imp",
+      "sage",
+      "empath",
+      "chambermaid",
+      "dawn"
+    ]
+  },
+  "clockmaker",
+  "investigator",
+  "empath",
+  "chambermaid",
+  "artist",
+  "sage",
+  "drunk",
+  "klutz",
+  "baron",
+  "scarletwoman",
+  "imp"
+]

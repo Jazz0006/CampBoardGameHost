@@ -1,0 +1,101 @@
+name: R2 main-thread boundary
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - codex/storyteller-algorithm-v4
+    paths:
+      - app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+      - app/src/main/java/com/codex/campboardgamehost/MainActivity.kt
+      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt
+      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
+      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
+      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHistoryScreen.kt
+      - .github/workflows/r2-write-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Verify extracted R2 boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          main=app/src/main/java/com/codex/campboardgamehost/MainActivity.kt
+          setup=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt
+          day=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
+          night=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
+          host=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          history=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHistoryScreen.kt
+
+          for file in "$root" "$main" "$setup" "$day" "$night" "$host" "$history"; do
+            test -f "$file"
+          done
+
+          if grep -q "fun ClocktowerSettingsScreen(" "$root"; then
+            echo "ClocktowerSettingsScreen still lives in CampBoardGameHostApp.kt" >&2
+            exit 1
+          fi
+          grep -q "internal fun ClocktowerSettingsScreen" "$setup"
+
+          for name in \
+            ClocktowerDayOverviewScreen \
+            ClocktowerDawnSummaryScreen \
+            ClocktowerNominationScreen \
+            ClocktowerVoteScreen \
+            ClocktowerExecutionConfirmScreen \
+            ClocktowerSpecialDayActionScreen
+          do
+            if grep -q "fun ${name}(" "$root"; then
+              echo "${name} still lives in CampBoardGameHostApp.kt" >&2
+              exit 1
+            fi
+            grep -q "internal fun ${name}" "$day"
+          done
+
+          grep -q "private fun ClocktowerDayPlayerTile" "$day"
+          grep -q "private fun ClocktowerDayActionHeader" "$day"
+
+          for name in ClocktowerNightActiveScreen ClocktowerNightReadyCard; do
+            if grep -q "fun ${name}(" "$root"; then
+              echo "${name} still lives in CampBoardGameHostApp.kt" >&2
+              exit 1
+            fi
+            grep -q "internal fun ${name}" "$night"
+          done
+
+          if grep -q "fun ClocktowerJudgeScreen(" "$root"; then
+            echo "ClocktowerJudgeScreen still lives in CampBoardGameHostApp.kt" >&2
+            exit 1
+          fi
+          grep -q "internal fun ClocktowerJudgeScreen" "$host"
+          grep -q "private fun ClocktowerStorytellerRecommendationScreen" "$host"
+          grep -q "private fun ClocktowerNightStepCardLocalized" "$host"
+          grep -q "internal fun PlayerCard.clocktowerShownAsDifferentRole" "$host"
+
+          for name in ClocktowerGameRecordPanel ClocktowerPlayerStatusRow ClocktowerResultsDialog; do
+            if grep -q "fun ${name}(" "$root"; then
+              echo "${name} still lives in CampBoardGameHostApp.kt" >&2
+              exit 1
+            fi
+            grep -q "internal fun ${name}" "$history"
+          done
+          grep -q "internal fun clocktowerEventPhaseLabel" "$history"
+          grep -q "private fun ClocktowerTimelineRow" "$history"
+          grep -q "private fun ClocktowerResultPlayerRow" "$history"
+
+          main_lines="$(wc -l < "$main")"
+          main_bytes="$(wc -c < "$main")"
+          test "$main_lines" -lt 200
+          test "$main_bytes" -lt 6000
