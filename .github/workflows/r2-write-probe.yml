@@ -65,12 +65,19 @@ jobs:
           grep -q "private fun ClocktowerDayPlayerTile" "$day"
           grep -q "private fun ClocktowerDayActionHeader" "$day"
 
-          if grep -q "fun ClocktowerNightActiveScreen(" "$root"; then
-            echo "ClocktowerNightActiveScreen still lives in CampBoardGameHostApp.kt" >&2
-            exit 1
-          fi
-          grep -q "internal fun ClocktowerNightActiveScreen" "$night"
+          for name in \
+            ClocktowerNightActiveScreen \
+            ClocktowerNightReadyCard
+          do
+            if grep -q "fun ${name}(" "$root"; then
+              echo "${name} still lives in CampBoardGameHostApp.kt" >&2
+              exit 1
+            fi
+            grep -q "internal fun ${name}" "$night"
+          done
+
           grep -q "private fun ClocktowerNewDemonConfirmationScreen(" "$root"
+          grep -q "private fun ClocktowerStorytellerRecommendationScreen(" "$root"
 
           main_lines="$(wc -l < "$main")"
           main_bytes="$(wc -c < "$main")"
