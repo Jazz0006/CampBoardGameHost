@@ -40,6 +40,8 @@ The first vertical slice establishes the missing primitive contract:
 - phase, round, and local sequence remain replay/display context, not global-order authority;
 - canonical registration-query JSON includes the global sequence;
 - changing only the global sequence changes the serialized interaction identity;
+- legacy schema-v2 timeline JSON without `globalSequence` fails closed with an explicit migration
+  error; the decoder never infers global identity from a local sequence;
 - no UI, recommendation selection, action reducer, or observation persistence behavior changes.
 
 This foundation does **not** close P1.2. Remaining slices must add a persisted per-game allocator,
@@ -61,18 +63,23 @@ cache-key, and golden/Oracle boundaries.
 
 ## Tests-first evidence for the selected slice
 
-The new contract test first failed to compile because `globalSequence` and total ordering did not
-exist. After the implementation it proves cross-phase ordering, JSON round-trip, and interaction
-identity invalidation when global sequence changes.
+The first contract test failed to compile because `globalSequence` and total ordering did not exist.
+After the implementation it proves cross-phase ordering, JSON round-trip, and interaction identity
+invalidation when global sequence changes. A follow-up compatibility test then locked the legacy
+schema-v2 behavior before the decoder was hardened: missing `globalSequence` must produce an
+explicit migration-required failure and must not be inferred from the local sequence.
 
-Focused command:
+Focused commands:
 
 ```zsh
 ./gradlew testDebugUnitTest --no-daemon \
   --tests 'com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticModelTest'
+
+./gradlew testDebugUnitTest --no-daemon \
+  --tests 'com.codex.campboardgamehost.clocktower.epistemic.TimelinePointJsonCompatibilityTest'
 ```
 
-Validation completed on this branch:
+Validation completed for the original foundation commit:
 
 - focused semantic, player-knowledge, B4 shadow, and dynamic-key JVM tests: PASS;
 - full `:app:testDebugUnitTest` plus `:app:assembleDebug`: PASS;
@@ -81,12 +88,16 @@ Validation completed on this branch:
 - local R2 structural boundary verifier: PASS;
 - `git diff --check`: PASS.
 
+The compatibility hardening commits were added after that local validation record. Their authoritative
+verification is the normal PR CI/R2 gate; the documentation therefore does not claim a new local
+full-suite result for those commits.
+
 The real-Clingo cross-validation was not rerun locally because this environment has no `clingo`
 binary or Python module. This slice does not change the golden corpus, ASP adapter, formal state, or
 world enumeration; normal CI remains the authoritative real-Clingo gate.
 
 ## Next smallest slice
 
-After this foundation is green, the next P1.2 slice should be a pure session/domain allocator and
-restore contract for monotonically assigning `TimelinePoint.globalSequence`. It should be tested
-independently before changing persisted observation or action schemas.
+After this foundation is green in PR CI/R2, the next P1.2 slice should be a pure session/domain
+allocator and restore contract for monotonically assigning `TimelinePoint.globalSequence`. It should
+be tested independently before changing persisted observation or action schemas.
