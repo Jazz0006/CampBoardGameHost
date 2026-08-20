@@ -1,15 +1,9 @@
 package com.codex.campboardgamehost
 
 import android.content.Context
+import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerScriptDefinition
-import com.codex.campboardgamehost.clocktower.catalog.ClocktowerScriptSource
-import com.codex.campboardgamehost.clocktower.catalog.LegacyRulesetCatalogAdapter
-import com.codex.campboardgamehost.clocktower.catalog.NoGreaterJoyOfficialCharacterMetadata
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
-import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
-import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
-import com.codex.campboardgamehost.clocktower.rules.RulesetJsonLoader
 import org.json.JSONObject
 
 internal data class ActiveGamePersistenceInputs(
@@ -270,69 +264,13 @@ internal class ActiveGamePersistenceCoordinator(
 
         fun fromContext(context: Context): ActiveGamePersistenceCoordinator {
             val roleRegistry = WerewolfRoleRegistry.builtIn()
+            val catalog = BuiltInClocktowerRulesetCatalog.fromContext(context)
             return ActiveGamePersistenceCoordinator(
-                clocktowerScriptProvider = { script -> BuiltInClocktowerPersistenceCatalog.script(context, script) },
+                clocktowerScriptProvider = { script -> catalog.ruleset(script).script },
                 werewolfRoleRegistry = roleRegistry,
                 werewolfBoardRegistry = WerewolfBoardRegistry.builtIn(roleRegistry),
             )
         }
-    }
-}
-
-private object BuiltInClocktowerPersistenceCatalog {
-    @Volatile
-    private var cached: Map<ClocktowerScript, ClocktowerScriptDefinition>? = null
-
-    fun script(context: Context, script: ClocktowerScript): ClocktowerScriptDefinition =
-        catalog(context)[script] ?: error("Missing built-in Clocktower persistence script '$script'.")
-
-    private fun catalog(context: Context): Map<ClocktowerScript, ClocktowerScriptDefinition> {
-        cached?.let { return it }
-        return synchronized(this) {
-            cached ?: load(context.applicationContext).also { cached = it }
-        }
-    }
-
-    private fun load(context: Context): Map<ClocktowerScript, ClocktowerScriptDefinition> {
-        val legacyKnowledge = context.assets.open("rules/trouble_brewing.json")
-            .bufferedReader(Charsets.UTF_8)
-            .use { it.readText() }
-            .let(RulesetJsonLoader::parse)
-        val baseRegistry = LegacyRulesetCatalogAdapter.characterRegistry(
-            knowledge = legacyKnowledge,
-            roleDefinitions = clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
-            coverage = RuleCoverage.PARTIAL,
-        )
-        val noGreaterJoyRegistry = NoGreaterJoyOfficialCharacterMetadata.extend(baseRegistry)
-
-        fun loadScript(
-            script: ClocktowerScript,
-            assetName: String,
-            registry: com.codex.campboardgamehost.clocktower.catalog.ClocktowerCharacterRegistry,
-        ): ClocktowerScriptDefinition {
-            val json = context.assets.open("scripts/$assetName")
-                .bufferedReader(Charsets.UTF_8)
-                .use { it.readText() }
-            return RulesetJsonLoader.parseScript(
-                json = json,
-                requestedScriptId = script.toRecommendationScriptId(),
-                registry = registry,
-                source = ClocktowerScriptSource.BUILTIN_OFFICIAL,
-            ).script
-        }
-
-        return mapOf(
-            ClocktowerScript.TroubleBrewing to loadScript(
-                ClocktowerScript.TroubleBrewing,
-                "trouble_brewing.json",
-                baseRegistry,
-            ),
-            ClocktowerScript.NoGreaterJoy to loadScript(
-                ClocktowerScript.NoGreaterJoy,
-                "no_greater_joy.json",
-                noGreaterJoyRegistry,
-            ),
-        )
     }
 }
 
