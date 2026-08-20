@@ -5,7 +5,20 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 internal interface ClocktowerCharacterInteractionHandler {
     val roleId: RoleId
 
-    fun beforeRoleInteractions(phase: ClocktowerNightFlowPhase): List<ClocktowerHostInteraction> = emptyList()
+    fun isRoleInteractionEligible(
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): Boolean = true
+
+    fun beforeRoleInteractions(
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): List<ClocktowerHostInteraction> = emptyList()
+
+    fun afterRoleInteractions(
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): List<ClocktowerHostInteraction> = emptyList()
 }
 
 internal class ClocktowerCharacterInteractionRegistry(
@@ -21,14 +34,36 @@ internal class ClocktowerCharacterInteractionRegistry(
         byRoleId = handlerList.associateBy { it.roleId }
     }
 
+    fun isRoleInteractionEligible(
+        roleId: RoleId,
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): Boolean = byRoleId[roleId]?.isRoleInteractionEligible(phase, resolvedFacts) ?: true
+
     fun beforeRoleInteractions(
         roleId: RoleId,
         phase: ClocktowerNightFlowPhase,
-    ): List<ClocktowerHostInteraction> = byRoleId[roleId]?.beforeRoleInteractions(phase).orEmpty()
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): List<ClocktowerHostInteraction> =
+        byRoleId[roleId]?.beforeRoleInteractions(phase, resolvedFacts).orEmpty()
+
+    fun afterRoleInteractions(
+        roleId: RoleId,
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): List<ClocktowerHostInteraction> =
+        byRoleId[roleId]?.afterRoleInteractions(phase, resolvedFacts).orEmpty()
 
     companion object {
         fun builtIn(): ClocktowerCharacterInteractionRegistry = ClocktowerCharacterInteractionRegistry(
-            listOf(FortuneTellerInteractionHandler),
+            listOf(
+                FortuneTellerInteractionHandler,
+                ImpInteractionHandler,
+                ScarletWomanInteractionHandler,
+                MayorInteractionHandler,
+                RavenkeeperInteractionHandler,
+                UndertakerInteractionHandler,
+            ),
         )
     }
 }
@@ -36,7 +71,10 @@ internal class ClocktowerCharacterInteractionRegistry(
 private object FortuneTellerInteractionHandler : ClocktowerCharacterInteractionHandler {
     override val roleId: RoleId = RoleId("Fortune Teller")
 
-    override fun beforeRoleInteractions(phase: ClocktowerNightFlowPhase): List<ClocktowerHostInteraction> =
+    override fun beforeRoleInteractions(
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): List<ClocktowerHostInteraction> =
         if (phase == ClocktowerNightFlowPhase.FIRST_NIGHT) {
             listOf(
                 ClocktowerHostInteraction(
@@ -51,3 +89,98 @@ private object FortuneTellerInteractionHandler : ClocktowerCharacterInteractionH
             emptyList()
         }
 }
+
+private object ImpInteractionHandler : ClocktowerCharacterInteractionHandler {
+    override val roleId: RoleId = RoleId("Imp")
+
+    override fun afterRoleInteractions(
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): List<ClocktowerHostInteraction> =
+        if (
+            phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+            ClocktowerResolvedFlowFact.DEMON_SUCCESSION_REQUIRED in resolvedFacts
+        ) {
+            listOf(
+                eventResolutionInteraction(
+                    id = "other_night:event:imp:demon_successor",
+                    phase = phase,
+                    roleId = roleId,
+                ),
+            )
+        } else {
+            emptyList()
+        }
+}
+
+/** Scarlet Woman's night-order token is an ordering anchor, not a normal wake step. */
+private object ScarletWomanInteractionHandler : ClocktowerCharacterInteractionHandler {
+    override val roleId: RoleId = RoleId("Scarlet Woman")
+
+    override fun isRoleInteractionEligible(
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): Boolean = false
+}
+
+private object MayorInteractionHandler : ClocktowerCharacterInteractionHandler {
+    override val roleId: RoleId = RoleId("Mayor")
+
+    override fun isRoleInteractionEligible(
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): Boolean = false
+
+    override fun beforeRoleInteractions(
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): List<ClocktowerHostInteraction> =
+        if (
+            phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+            ClocktowerResolvedFlowFact.MAYOR_REDIRECT_ELIGIBLE in resolvedFacts
+        ) {
+            listOf(
+                eventResolutionInteraction(
+                    id = "other_night:event:mayor:death_resolution",
+                    phase = phase,
+                    roleId = roleId,
+                ),
+            )
+        } else {
+            emptyList()
+        }
+}
+
+private object RavenkeeperInteractionHandler : ClocktowerCharacterInteractionHandler {
+    override val roleId: RoleId = RoleId("Ravenkeeper")
+
+    override fun isRoleInteractionEligible(
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): Boolean =
+        phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+            ClocktowerResolvedFlowFact.RAVENKEEPER_DIED_AT_NIGHT in resolvedFacts
+}
+
+private object UndertakerInteractionHandler : ClocktowerCharacterInteractionHandler {
+    override val roleId: RoleId = RoleId("Undertaker")
+
+    override fun isRoleInteractionEligible(
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): Boolean =
+        phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+            ClocktowerResolvedFlowFact.EXECUTION_OCCURRED_TODAY in resolvedFacts
+}
+
+private fun eventResolutionInteraction(
+    id: String,
+    phase: ClocktowerNightFlowPhase,
+    roleId: RoleId,
+): ClocktowerHostInteraction = ClocktowerHostInteraction(
+    id = ClocktowerInteractionId(id),
+    phase = phase,
+    roleId = roleId,
+    kind = ClocktowerHostInteractionKind.EVENT_RESOLUTION,
+    completionPolicy = ClocktowerInteractionCompletionPolicy.STORYTELLER_SELECTION,
+)

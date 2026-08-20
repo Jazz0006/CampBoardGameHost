@@ -14,6 +14,7 @@ internal enum class ClocktowerHostInteractionKind {
     EVIL_INFORMATION,
     ROLE_PHASE_ACTION,
     STORYTELLER_SETUP,
+    EVENT_RESOLUTION,
 }
 
 internal enum class ClocktowerInteractionCompletionPolicy {

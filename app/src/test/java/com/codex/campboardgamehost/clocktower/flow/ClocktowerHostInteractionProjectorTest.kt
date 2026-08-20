@@ -104,6 +104,98 @@ class ClocktowerHostInteractionProjectorTest {
     }
 
     @Test
+    fun `conditional other-night anchors stay silent without resolved facts`() {
+        val inPlay = setOf(
+            "Imp",
+            "Scarlet Woman",
+            "Mayor",
+            "Ravenkeeper",
+            "Undertaker",
+            "Empath",
+        ).map(::RoleId).toSet()
+        val interactions = project(ClocktowerNightFlowPhase.OTHER_NIGHT, playerCount = 8, inPlay = inPlay)
+
+        assertTrue(interactions.any { it.id == ClocktowerInteractionId("other_night:role:Imp") })
+        assertTrue(interactions.any { it.id == ClocktowerInteractionId("other_night:role:Empath") })
+        assertTrue(interactions.none { it.id == ClocktowerInteractionId("other_night:role:Scarlet Woman") })
+        assertTrue(interactions.none { it.id == ClocktowerInteractionId("other_night:event:mayor:death_resolution") })
+        assertTrue(interactions.none { it.id == ClocktowerInteractionId("other_night:role:Ravenkeeper") })
+        assertTrue(interactions.none { it.id == ClocktowerInteractionId("other_night:role:Undertaker") })
+    }
+
+    @Test
+    fun `resolved facts project legacy conditional and event order`() {
+        val inPlay = setOf(
+            "Imp",
+            "Scarlet Woman",
+            "Mayor",
+            "Ravenkeeper",
+            "Undertaker",
+            "Empath",
+        ).map(::RoleId).toSet()
+        val facts = ClocktowerResolvedFlowFacts(
+            setOf(
+                ClocktowerResolvedFlowFact.DEMON_SUCCESSION_REQUIRED,
+                ClocktowerResolvedFlowFact.MAYOR_REDIRECT_ELIGIBLE,
+                ClocktowerResolvedFlowFact.RAVENKEEPER_DIED_AT_NIGHT,
+                ClocktowerResolvedFlowFact.EXECUTION_OCCURRED_TODAY,
+            ),
+        )
+        val interactions = project(
+            phase = ClocktowerNightFlowPhase.OTHER_NIGHT,
+            playerCount = 8,
+            inPlay = inPlay,
+            resolvedFacts = facts,
+        )
+
+        val expectedOrderedIds = listOf(
+            "other_night:role:Imp",
+            "other_night:event:imp:demon_successor",
+            "other_night:event:mayor:death_resolution",
+            "other_night:role:Ravenkeeper",
+            "other_night:role:Undertaker",
+        )
+        assertEquals(
+            expectedOrderedIds,
+            interactions.map { it.id.value }.filter { it in expectedOrderedIds.toSet() },
+        )
+        assertTrue(interactions.none { it.id == ClocktowerInteractionId("other_night:role:Scarlet Woman") })
+
+        val successor = interactions.single {
+            it.id == ClocktowerInteractionId("other_night:event:imp:demon_successor")
+        }
+        assertEquals(ClocktowerHostInteractionKind.EVENT_RESOLUTION, successor.kind)
+        assertEquals(ClocktowerInteractionCompletionPolicy.STORYTELLER_SELECTION, successor.completionPolicy)
+        assertEquals(RoleId("Imp"), successor.roleId)
+
+        val mayor = interactions.single {
+            it.id == ClocktowerInteractionId("other_night:event:mayor:death_resolution")
+        }
+        assertEquals(ClocktowerHostInteractionKind.EVENT_RESOLUTION, mayor.kind)
+        assertEquals(ClocktowerInteractionCompletionPolicy.STORYTELLER_SELECTION, mayor.completionPolicy)
+        assertEquals(RoleId("Mayor"), mayor.roleId)
+    }
+
+    @Test
+    fun `resolved facts do not invent interactions for roles that are not in play`() {
+        val facts = ClocktowerResolvedFlowFacts(
+            ClocktowerResolvedFlowFact.entries.toSet(),
+        )
+        val inPlay = setOf("Poisoner", "Empath", "Fortune Teller", "Butler").map(::RoleId).toSet()
+        val interactions = project(
+            phase = ClocktowerNightFlowPhase.OTHER_NIGHT,
+            playerCount = 8,
+            inPlay = inPlay,
+            resolvedFacts = facts,
+        )
+
+        assertTrue(interactions.none { it.id.value.contains("demon_successor") })
+        assertTrue(interactions.none { it.id.value.contains("mayor:death_resolution") })
+        assertTrue(interactions.none { it.roleId == RoleId("Ravenkeeper") })
+        assertTrue(interactions.none { it.roleId == RoleId("Undertaker") })
+    }
+
+    @Test
     fun `system and role tokens project to stable unique interaction identities`() {
         val inPlay = setOf("Poisoner", "Empath", "Fortune Teller", "Imp").map(::RoleId).toSet()
         val interactions = project(ClocktowerNightFlowPhase.FIRST_NIGHT, playerCount = 7, inPlay = inPlay)
@@ -138,12 +230,13 @@ class ClocktowerHostInteractionProjectorTest {
         phase: ClocktowerNightFlowPhase,
         playerCount: Int,
         inPlay: Set<RoleId>,
+        resolvedFacts: ClocktowerResolvedFlowFacts = ClocktowerResolvedFlowFacts.EMPTY,
     ): List<ClocktowerHostInteraction> {
         val basePlan = planner.planNight(
             ruleset = ruleset,
             phase = phase,
             context = ClocktowerFlowContext(playerCount = playerCount, inPlayRoleIds = inPlay),
         )
-        return projector.projectNight(phase, basePlan)
+        return projector.projectNight(phase, basePlan, resolvedFacts)
     }
 }

@@ -4,8 +4,8 @@ import com.codex.campboardgamehost.clocktower.catalog.NightOrderToken
 
 /**
  * Converts the pure base night-token plan into stable flow interactions without touching Compose.
- * Role-specific setup hooks live in ClocktowerCharacterInteractionRegistry instead of script-name
- * or UI-level ordering branches.
+ * Role-specific setup and conditional hooks live in ClocktowerCharacterInteractionRegistry instead
+ * of script-name or UI-level ordering branches.
  */
 internal class ClocktowerHostInteractionProjector(
     private val registry: ClocktowerCharacterInteractionRegistry = ClocktowerCharacterInteractionRegistry.builtIn(),
@@ -13,13 +13,17 @@ internal class ClocktowerHostInteractionProjector(
     fun projectNight(
         phase: ClocktowerNightFlowPhase,
         basePlan: List<NightOrderToken>,
+        resolvedFacts: ClocktowerResolvedFlowFacts = ClocktowerResolvedFlowFacts.EMPTY,
     ): List<ClocktowerHostInteraction> {
         val interactions = buildList {
             basePlan.forEach { token ->
                 when (token) {
                     is NightOrderToken.Character -> {
-                        addAll(registry.beforeRoleInteractions(token.roleId, phase))
-                        add(roleInteraction(phase, token))
+                        addAll(registry.beforeRoleInteractions(token.roleId, phase, resolvedFacts))
+                        if (registry.isRoleInteractionEligible(token.roleId, phase, resolvedFacts)) {
+                            add(roleInteraction(phase, token))
+                        }
+                        addAll(registry.afterRoleInteractions(token.roleId, phase, resolvedFacts))
                     }
                     NightOrderToken.System.DUSK -> add(
                         systemInteraction(
