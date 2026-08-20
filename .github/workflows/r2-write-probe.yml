@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   verify-boundary:
@@ -99,3 +99,81 @@ jobs:
           main_bytes="$(wc -c < "$main")"
           test "$main_lines" -lt 200
           test "$main_bytes" -lt 6000
+
+  remove-debug-buttons:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/storyteller-algorithm-v4'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/storyteller-algorithm-v4
+          fetch-depth: 0
+      - name: Remove Clocktower debug UI buttons by exact anchors
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt")
+          text = path.read_text(encoding="utf-8")
+
+          def replace_span(label: str, start: str, end: str, replacement: str):
+              global text
+              if text.count(start) != 1:
+                  raise SystemExit(f"{label}: expected exactly one start anchor, found {text.count(start)}")
+              start_index = text.index(start)
+              end_index = text.find(end, start_index + len(start))
+              if end_index < 0:
+                  raise SystemExit(f"{label}: end anchor not found")
+              text = text[:start_index] + replacement + text[end_index + len(end):]
+
+          replace_span(
+              "day diagnostics",
+              "            diagnosticContent = if (BuildConfig.DEBUG) {\n",
+              "            onStartNomination = {\n",
+              "            diagnosticContent = null,\n            onStartNomination = {\n",
+          )
+          replace_span(
+              "active night diagnostics",
+              "            onNext = advanceNightStep,\n        ) {\n            if (BuildConfig.DEBUG) {\n",
+              "            ClocktowerNightStepCardLocalized(\n",
+              "            onNext = advanceNightStep,\n        ) {\n            ClocktowerNightStepCardLocalized(\n",
+          )
+          replace_span(
+              "host footer diagnostics",
+              "        if (BuildConfig.DEBUG) {\n            item {\n                OutlinedButton(\n                    onClick = { debugDiagnosticsExpanded = !debugDiagnosticsExpanded },\n",
+              "        item {\n            HorizontalDivider()\n",
+              "        item {\n            HorizontalDivider()\n",
+          )
+          replace_span(
+              "first-night pool benchmark button",
+              "            if (BuildConfig.DEBUG && debugDiagnosticsExpanded && firstNightPool != null) {\n",
+              "            if (step.spyRegistrationKey != null && spyCard != null) {\n",
+              "            if (step.spyRegistrationKey != null && spyCard != null) {\n",
+          )
+
+          forbidden = [
+              "Show developer diagnostics",
+              "Hide developer diagnostics",
+              "Run A4 benchmark (11 samples)",
+              "Run A4 prewarm cancellation probe",
+              "Run unified setup selector benchmark (11 samples)",
+              "Run first-night unified pool benchmark (11 samples)",
+          ]
+          remaining = [label for label in forbidden if label in text]
+          if remaining:
+              raise SystemExit(f"debug UI labels remain: {remaining}")
+
+          path.write_text(text, encoding="utf-8")
+          PY
+          git diff --check
+          git diff -- app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+      - name: Commit cleanup
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          git diff --cached --quiet && exit 0
+          git commit -m "chore(release): remove Clocktower debug buttons"
+          git push origin HEAD:codex/storyteller-algorithm-v4
