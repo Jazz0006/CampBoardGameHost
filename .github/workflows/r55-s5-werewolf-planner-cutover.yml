@@ -1,6 +1,11 @@
 name: R5.5 S5 Werewolf planner cutover
 
 on:
+  push:
+    branches:
+      - codex/storyteller-algorithm-v4
+    paths:
+      - .github/workflows/r55-s5-werewolf-planner-cutover.yml
   pull_request:
     branches:
       - main
@@ -12,7 +17,7 @@ permissions:
 
 jobs:
   patch:
-    if: github.head_ref == 'codex/storyteller-algorithm-v4'
+    if: github.ref == 'refs/heads/codex/storyteller-algorithm-v4' || github.head_ref == 'codex/storyteller-algorithm-v4'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
