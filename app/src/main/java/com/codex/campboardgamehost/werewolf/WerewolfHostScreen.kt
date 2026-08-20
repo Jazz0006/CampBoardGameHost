@@ -261,14 +261,22 @@ internal fun WerewolfJudgeScreen(
     onDismissLastWordsPrompt: () -> Unit,
     onShowResults: () -> Unit,
 ) {
-    val steps = buildList {
-        add(WerewolfJudgeStep.Wolves)
-        if (cards.any { it.role == Role.Seer }) add(WerewolfJudgeStep.Seer)
-        if (cards.any { it.role == Role.Witch }) add(WerewolfJudgeStep.Witch)
-        if (cards.any { it.role == Role.Hunter }) add(WerewolfJudgeStep.Hunter)
-        add(WerewolfJudgeStep.Dawn)
-        add(WerewolfJudgeStep.DayVote)
-    }
+    val roleRegistry = WerewolfRoleRegistry.builtIn()
+    val productionRoleDeck = cards
+        .groupingBy { card ->
+            requireNotNull(roleRegistry.roleIdFor(card.role)) {
+                "Unknown production Werewolf role '${card.role}'."
+            }
+        }
+        .eachCount()
+    val productionBoard = WerewolfBoardDefinition.create(
+        id = WerewolfBoardId("production_runtime"),
+        name = "Production runtime",
+        roleDeck = productionRoleDeck,
+    )
+    val steps = WerewolfFlowPlanner()
+        .plan(productionBoard, roleRegistry)
+        .map { interaction -> interaction.legacyStep }
     val currentIndex = stepIndex.coerceIn(0, steps.lastIndex)
     val currentStep = steps[currentIndex]
     val aliveCards = cards.filter { it.eliminatedRound == null }
