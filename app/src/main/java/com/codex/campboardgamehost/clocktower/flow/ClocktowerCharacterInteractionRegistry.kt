@@ -59,6 +59,7 @@ internal class ClocktowerCharacterInteractionRegistry(
             listOf(
                 FortuneTellerInteractionHandler,
                 ImpInteractionHandler,
+                ScarletWomanInteractionHandler,
                 MayorInteractionHandler,
                 RavenkeeperInteractionHandler,
                 SageInteractionHandler,
@@ -138,6 +139,20 @@ private object ImpInteractionHandler : ClocktowerCharacterInteractionHandler {
         } else {
             emptyList()
         }
+}
+
+/**
+ * The Scarlet Woman's night-order token is an ordering anchor, not a repeatable role action.
+ * If she has become the Demon, the current role is Imp and the Imp handler emits the private
+ * new-Demon identity interaction instead.
+ */
+private object ScarletWomanInteractionHandler : ClocktowerCharacterInteractionHandler {
+    override val roleId: RoleId = RoleId("Scarlet Woman")
+
+    override fun isRoleInteractionEligible(
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): Boolean = false
 }
 
 private object MayorInteractionHandler : ClocktowerCharacterInteractionHandler {
