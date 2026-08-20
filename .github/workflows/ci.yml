@@ -107,8 +107,8 @@ jobs:
             --report build/reports/asp-oracle-a2.json \
             --timeout 30
 
-  r2-day-ui-extraction:
-    name: R2 guarded day UI extraction
+  r2-night-ui-extraction:
+    name: R2 guarded night UI extraction
     if: >-
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
@@ -132,8 +132,8 @@ jobs:
         id: gate
         shell: bash
         run: |
-          day=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
-          if test -f "$day"; then
+          night=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
+          if test -f "$night"; then
             echo "needed=false" >> "$GITHUB_OUTPUT"
           else
             echo "needed=true" >> "$GITHUB_OUTPUT"
@@ -156,7 +156,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Mechanically extract Clocktower day UI
+      - name: Mechanically extract Clocktower night presentation UI
         if: steps.gate.outputs.needed == 'true'
         shell: bash
         run: |
@@ -165,67 +165,44 @@ jobs:
           from pathlib import Path
 
           root = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
-          target = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt")
+          target = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt")
           text = root.read_text(encoding="utf-8")
 
-          start_marker = "@Composable\nprivate fun ClocktowerDayPlayerTile("
-          end_marker = "@Composable\ninternal fun HostScriptCard("
+          start_marker = "@Composable\nprivate fun ClocktowerNightActiveScreen("
+          end_marker = "@Composable\nprivate fun ClocktowerNightStepCardLocalized("
           if target.exists():
               raise SystemExit(f"target already exists: {target}")
           if text.count(start_marker) != 1 or text.count(end_marker) != 1:
-              raise SystemExit("expected unique day-UI extraction markers")
+              raise SystemExit("expected unique night presentation extraction markers")
 
           start = text.index(start_marker)
           end = text.index(end_marker, start)
           block = text[start:end]
 
-          all_names = [
-              "ClocktowerDayPlayerTile",
-              "ClocktowerDayOverviewScreen",
-              "ClocktowerDawnSummaryScreen",
-              "ClocktowerNominationScreen",
-              "ClocktowerVoteScreen",
-              "ClocktowerExecutionConfirmScreen",
-              "ClocktowerSpecialDayActionScreen",
-              "ClocktowerDayActionHeader",
+          names = [
+              "ClocktowerNightActiveScreen",
+              "ClocktowerNightReadyCard",
           ]
-          for name in all_names:
-              if block.count(f"private fun {name}(") != 1:
+          for name in names:
+              needle = f"private fun {name}("
+              if block.count(needle) != 1:
                   raise SystemExit(f"expected exactly one extracted declaration: {name}")
+          if block.count("private fun ") != len(names):
+              raise SystemExit("unexpected private declaration inside night presentation block")
 
-          externally_called = [
-              "ClocktowerDayOverviewScreen",
-              "ClocktowerDawnSummaryScreen",
-              "ClocktowerNominationScreen",
-              "ClocktowerVoteScreen",
-              "ClocktowerExecutionConfirmScreen",
-              "ClocktowerSpecialDayActionScreen",
-          ]
-          for name in externally_called:
+          for name in names:
               block = block.replace(f"private fun {name}(", f"internal fun {name}(", 1)
 
           remaining = text[:start] + text[end:]
-          visibility_changes = {
-              "private enum class ClocktowerEventType {": "internal enum class ClocktowerEventType {",
-              "private data class ClocktowerEvent(": "internal data class ClocktowerEvent(",
-              "private enum class ClocktowerPhase {": "internal enum class ClocktowerPhase {",
-              "private fun playerSeatLabel(cards: List<PlayerCard>, playerName: String?): String =":
-                  "internal fun playerSeatLabel(cards: List<PlayerCard>, playerName: String?): String =",
-          }
-          for old, new in visibility_changes.items():
-              if remaining.count(old) != 1:
-                  raise SystemExit(f"expected exactly one visibility seam: {old}")
-              remaining = remaining.replace(old, new, 1)
-
-          for name in all_names:
+          for name in names:
               if f"private fun {name}(" in remaining or f"internal fun {name}(" in remaining:
-                  raise SystemExit(f"day UI declaration still present in root: {name}")
+                  raise SystemExit(f"night presentation declaration still present in root: {name}")
 
           imports = [line for line in text.splitlines() if line.startswith("import ")]
           header = (
               "package com.codex.campboardgamehost\n\n"
               + "\n".join(imports)
-              + "\n\n/** Behavior-preserving R2 extraction for Clocktower day/dawn host UI. */\n"
+              + "\n\n/** Behavior-preserving R2 extraction for Clocktower night presentation UI. */\n"
           )
           target.parent.mkdir(parents=True, exist_ok=True)
           target.write_text((header + block.lstrip()).rstrip() + "\n", encoding="utf-8")
@@ -233,21 +210,16 @@ jobs:
           PY
 
           root=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-          day=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
-          test -f "$day"
-          grep -q "internal fun ClocktowerDayOverviewScreen" "$day"
-          grep -q "internal fun ClocktowerDawnSummaryScreen" "$day"
-          grep -q "internal fun ClocktowerNominationScreen" "$day"
-          grep -q "internal fun ClocktowerVoteScreen" "$day"
-          grep -q "internal fun ClocktowerExecutionConfirmScreen" "$day"
-          grep -q "internal fun ClocktowerSpecialDayActionScreen" "$day"
-          grep -q "private fun ClocktowerDayPlayerTile" "$day"
-          grep -q "private fun ClocktowerDayActionHeader" "$day"
-          if grep -q "fun ClocktowerDayOverviewScreen(" "$root"; then exit 1; fi
-          if grep -q "fun ClocktowerNominationScreen(" "$root"; then exit 1; fi
+          night=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
+          test -f "$night"
+          grep -q "internal fun ClocktowerNightActiveScreen" "$night"
+          grep -q "internal fun ClocktowerNightReadyCard" "$night"
+          if grep -q "fun ClocktowerNightActiveScreen(" "$root"; then exit 1; fi
+          if grep -q "fun ClocktowerNightReadyCard(" "$root"; then exit 1; fi
+          grep -q "private fun ClocktowerNightStepCardLocalized(" "$root"
 
           actual="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u )"
-          expected="$(printf '%s\n' "$root" "$day" | sort)"
+          expected="$(printf '%s\n' "$root" "$night" | sort)"
           test "$actual" = "$expected"
           git diff --check
 
@@ -288,15 +260,15 @@ jobs:
         run: |
           set -euo pipefail
           root=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-          day=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
-          expected="$(printf '%s\n' "$root" "$day" | sort)"
+          night=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
+          expected="$(printf '%s\n' "$root" "$night" | sort)"
           git diff --check
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- "$root" "$day"
+          git add -- "$root" "$night"
           staged="$(git diff --cached --name-only | sort)"
           printf 'Expected staged files:\n%s\nActual staged files:\n%s\n' "$expected" "$staged"
           test "$staged" = "$expected"
           git diff --cached --check
-          git commit -m "refactor(r2): extract Clocktower day UI"
+          git commit -m "refactor(r2): extract Clocktower night presentation UI"
           git push origin HEAD:codex/storyteller-algorithm-v4
