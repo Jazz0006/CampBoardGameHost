@@ -5,6 +5,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.rules.RulesetKnowledge
+import java.math.BigDecimal
 import java.util.Locale
 
 internal object LegacyRulesetCatalogAdapter {
@@ -14,8 +15,12 @@ internal object LegacyRulesetCatalogAdapter {
         coverage: RuleCoverage,
     ): ClocktowerCharacterRegistry {
         val definitionsById = roleDefinitions.associateBy { it.id }
-        val firstNightPositions = knowledge.firstNightOrder.withIndex().associate { (index, roleId) -> roleId to index + 1 }
-        val otherNightPositions = knowledge.otherNightOrder.withIndex().associate { (index, roleId) -> roleId to index + 1 }
+        val firstNightPositions = knowledge.firstNightOrder.withIndex().associate { (index, roleId) ->
+            roleId to BigDecimal.valueOf((index + 1).toLong())
+        }
+        val otherNightPositions = knowledge.otherNightOrder.withIndex().associate { (index, roleId) ->
+            roleId to BigDecimal.valueOf((index + 1).toLong())
+        }
         val characters = knowledge.characters.map { character ->
             val role = definitionsById[character.roleId]
                 ?: throw IllegalArgumentException("Legacy ruleset role '${character.roleId.value}' has no RoleDefinition.")
@@ -25,8 +30,8 @@ internal object LegacyRulesetCatalogAdapter {
                 name = character.roleId.value,
                 team = role.type.toCatalogTeam(),
                 abilityText = character.abilityText,
-                firstNightOrder = firstNightPositions[character.roleId] ?: 0,
-                otherNightOrder = otherNightPositions[character.roleId] ?: 0,
+                firstNightOrder = firstNightPositions[character.roleId] ?: BigDecimal.ZERO,
+                otherNightOrder = otherNightPositions[character.roleId] ?: BigDecimal.ZERO,
                 automationCoverage = coverage,
             )
         }

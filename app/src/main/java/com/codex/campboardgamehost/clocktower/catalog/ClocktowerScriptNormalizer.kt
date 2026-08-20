@@ -13,20 +13,46 @@ internal object ClocktowerScriptNormalizer {
         registry: ClocktowerCharacterRegistry,
         requestedSource: ClocktowerScriptSource,
     ): ValidatedClocktowerRuleset {
-        val resolved = parsed.characters.map { entry ->
+        val duplicateExternalId = parsed.characters
+            .groupBy { it.externalId }
+            .entries
+            .firstOrNull { it.value.size > 1 }
+            ?.key
+        clocktowerValidate(duplicateExternalId == null, ClocktowerScriptValidationCode.DUPLICATE_CHARACTER_ID, {
+            "Clocktower script contains duplicate character id '$duplicateExternalId'."
+        })
+
+        val preliminary = parsed.characters.map { entry ->
             when (entry) {
                 is ImportedClocktowerCharacter.OfficialReference ->
                     registry.findByExternalId(entry.externalId)
-                        ?: throw IllegalArgumentException("Unknown official Clocktower character id '${entry.externalId}'.")
+                        ?: clocktowerValidationFailure(
+                            ClocktowerScriptValidationCode.UNKNOWN_CHARACTER_ID,
+                            "Unknown official Clocktower character id '${entry.externalId}'.",
+                        )
 
                 is ImportedClocktowerCharacter.CustomDefinition -> customDefinition(entry, registry)
             }
         }
-        require(resolved.map { it.id }.distinct().size == resolved.size) {
-            "Clocktower script contains duplicate character IDs."
-        }
-        require(resolved.map { it.externalId }.distinct().size == resolved.size) {
-            "Clocktower script contains duplicate external character IDs."
+        clocktowerValidate(
+            preliminary.map { it.id }.distinct().size == preliminary.size,
+            ClocktowerScriptValidationCode.DUPLICATE_CHARACTER_ID,
+            { "Clocktower script contains duplicate character RoleIds." },
+        )
+
+        val byExternalId = preliminary.associateBy { it.externalId }
+        val resolved = preliminary.zip(parsed.characters).map { (definition, imported) ->
+            if (imported !is ImportedClocktowerCharacter.CustomDefinition) return@map definition
+            definition.copy(
+                jinxes = imported.jinxes.map { jinx ->
+                    val target = byExternalId[jinx.externalId]
+                        ?: clocktowerValidationFailure(
+                            ClocktowerScriptValidationCode.INVALID_JINX_TARGET,
+                            "Clocktower jinx target '${jinx.externalId}' is not present on this script.",
+                        )
+                    ClocktowerJinxDefinition(target.id, jinx.reason)
+                },
+            )
         }
 
         val scriptCharactersByExternalId = resolved.associateBy { it.externalId }
@@ -68,9 +94,14 @@ internal object ClocktowerScriptNormalizer {
         imported: ImportedClocktowerCharacter.CustomDefinition,
         registry: ClocktowerCharacterRegistry,
     ): ClocktowerCharacterDefinition {
-        require(registry.findByExternalId(imported.externalId) == null) {
-            "Custom character id '${imported.externalId}' collides with a known official character; use an official ID reference instead."
-        }
+        clocktowerValidate(
+            registry.findByExternalId(imported.externalId) == null,
+            ClocktowerScriptValidationCode.CUSTOM_ID_COLLISION,
+            {
+                "Custom character id '${imported.externalId}' collides with a known official character; " +
+                    "use an official ID reference instead."
+            },
+        )
         val team = when (imported.team) {
             "townsfolk" -> ClocktowerCatalogTeam.TOWNSFOLK
             "outsider" -> ClocktowerCatalogTeam.OUTSIDER
@@ -79,7 +110,10 @@ internal object ClocktowerScriptNormalizer {
             "traveller" -> ClocktowerCatalogTeam.TRAVELLER
             "fabled" -> ClocktowerCatalogTeam.FABLED
             "loric" -> ClocktowerCatalogTeam.LORIC
-            else -> throw IllegalArgumentException("Unknown Clocktower character team '${imported.team}'.")
+            else -> clocktowerValidationFailure(
+                ClocktowerScriptValidationCode.UNKNOWN_CHARACTER_TEAM,
+                "Unknown Clocktower character team '${imported.team}'.",
+            )
         }
         return ClocktowerCharacterDefinition(
             id = RoleId("homebrew:${imported.externalId}"),
@@ -92,7 +126,18 @@ internal object ClocktowerScriptNormalizer {
             firstNightReminder = imported.firstNightReminder,
             otherNightReminder = imported.otherNightReminder,
             reminders = imported.reminders,
+            globalReminders = imported.globalReminders,
             setup = imported.setup,
+            jinxes = emptyList(),
+            specialFeatures = imported.specialFeatures.map { feature ->
+                ClocktowerSpecialFeature(
+                    type = feature.type,
+                    name = feature.name,
+                    value = feature.value,
+                    time = feature.time,
+                    global = feature.global,
+                )
+            },
             behaviorKey = null,
             automationCoverage = RuleCoverage.UNVERIFIED,
             sourceSemanticHash = imported.sourceSemanticHash,
@@ -104,25 +149,36 @@ internal object ClocktowerScriptNormalizer {
         charactersByExternalId: Map<String, ClocktowerCharacterDefinition>,
         firstNight: Boolean,
     ): List<NightOrderToken> {
-        require(rawTokens.distinct().size == rawTokens.size) { "Clocktower night-order tokens must be unique." }
-        return rawTokens.map { rawToken ->
-            require(rawToken == rawToken.lowercase(Locale.ROOT)) {
+        clocktowerValidate(rawTokens.distinct().size == rawTokens.size, ClocktowerScriptValidationCode.DUPLICATE_NIGHT_TOKEN, {
+            "Clocktower night-order tokens must be unique."
+        })
+        return rawTokens.mapIndexed { index, rawToken ->
+            val path = if (firstNight) "_meta.firstNight[$index]" else "_meta.otherNight[$index]"
+            clocktowerValidate(rawToken == rawToken.lowercase(Locale.ROOT), ClocktowerScriptValidationCode.INVALID_NIGHT_TOKEN, {
                 "Clocktower night-order tokens must use lowercase official IDs."
-            }
+            }, path)
             when (rawToken) {
                 "dusk" -> NightOrderToken.System.DUSK
                 "dawn" -> NightOrderToken.System.DAWN
                 "minioninfo" -> {
-                    require(firstNight) { "minioninfo is valid only in firstNight metadata." }
+                    clocktowerValidate(firstNight, ClocktowerScriptValidationCode.INVALID_NIGHT_SYSTEM_TOKEN, {
+                        "minioninfo is valid only in firstNight metadata."
+                    }, path)
                     NightOrderToken.System.MINION_INFO
                 }
                 "demoninfo" -> {
-                    require(firstNight) { "demoninfo is valid only in firstNight metadata." }
+                    clocktowerValidate(firstNight, ClocktowerScriptValidationCode.INVALID_NIGHT_SYSTEM_TOKEN, {
+                        "demoninfo is valid only in firstNight metadata."
+                    }, path)
                     NightOrderToken.System.DEMON_INFO
                 }
                 else -> {
                     val character = charactersByExternalId[rawToken]
-                        ?: throw IllegalArgumentException("Unknown or off-script night-order token '$rawToken'.")
+                        ?: clocktowerValidationFailure(
+                            ClocktowerScriptValidationCode.INVALID_NIGHT_TOKEN,
+                            "Unknown or off-script night-order token '$rawToken'.",
+                            path,
+                        )
                     NightOrderToken.Character(character.id)
                 }
             }
@@ -151,14 +207,24 @@ internal object ClocktowerCatalogContentHasher {
                 buildString {
                     append("{\"ability\":${quoted(character.abilityText)}")
                     append(",\"externalId\":${quoted(character.externalId)}")
-                    append(",\"firstNight\":${character.firstNightOrder}")
+                    append(",\"firstNight\":${canonicalNumber(character.firstNightOrder)}")
                     append(",\"firstNightReminder\":${quoted(character.firstNightReminder)}")
+                    append(",\"globalReminders\":[${character.globalReminders.sorted().joinToString(",") { quoted(it) }}]")
                     append(",\"id\":${quoted(character.id.value)}")
-                    append(",\"otherNight\":${character.otherNightOrder}")
+                    append(",\"jinxes\":[${character.jinxes.sortedBy { it.targetRoleId.value }.joinToString(",") { jinx ->
+                        "{\"reason\":${quoted(jinx.reason)},\"target\":${quoted(jinx.targetRoleId.value)}}"
+                    }}]")
+                    append(",\"otherNight\":${canonicalNumber(character.otherNightOrder)}")
                     append(",\"otherNightReminder\":${quoted(character.otherNightReminder)}")
                     append(",\"reminders\":[${character.reminders.sorted().joinToString(",") { quoted(it) }}]")
                     append(",\"semanticSourceHash\":${quoted(character.sourceSemanticHash ?: "")}")
                     append(",\"setup\":${character.setup}")
+                    append(",\"special\":[${character.specialFeatures.sortedWith(compareBy<ClocktowerSpecialFeature> { it.type }.thenBy { it.name }.thenBy { it.time ?: "" }.thenBy { it.global ?: "" }.thenBy { it.value?.canonicalValue ?: "" }).joinToString(",") { feature ->
+                        "{\"global\":${quoted(feature.global ?: "")},\"name\":${quoted(feature.name)}," +
+                            "\"time\":${quoted(feature.time ?: "")},\"type\":${quoted(feature.type)}," +
+                            "\"valueKind\":${quoted(feature.value?.kind?.name ?: "")}," +
+                            "\"value\":${quoted(feature.value?.canonicalValue ?: "")}}"
+                    }}]")
                     append(",\"team\":${quoted(character.team.name)}")
                     append('}')
                 }
@@ -174,6 +240,9 @@ internal object ClocktowerCatalogContentHasher {
             .take(16)
             .joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
     }
+
+    private fun canonicalNumber(value: java.math.BigDecimal): String =
+        value.stripTrailingZeros().toPlainString()
 
     private fun canonicalOrder(tokens: List<NightOrderToken>?): String {
         if (tokens == null) return "null"

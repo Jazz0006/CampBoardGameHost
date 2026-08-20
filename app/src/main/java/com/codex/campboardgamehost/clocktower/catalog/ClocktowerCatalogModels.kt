@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
+import java.math.BigDecimal
 
 internal enum class ClocktowerCatalogTeam {
     TOWNSFOLK,
@@ -32,18 +33,48 @@ internal sealed interface NightOrderToken {
     }
 }
 
+internal data class ClocktowerJinxDefinition(
+    val targetRoleId: RoleId,
+    val reason: String,
+) {
+    init {
+        require(reason.isNotBlank()) { "Clocktower jinx reason cannot be blank." }
+    }
+}
+
+internal enum class ClocktowerSpecialValueKind {
+    TEXT,
+    NUMBER,
+}
+
+internal data class ClocktowerSpecialValue(
+    val kind: ClocktowerSpecialValueKind,
+    val canonicalValue: String,
+)
+
+internal data class ClocktowerSpecialFeature(
+    val type: String,
+    val name: String,
+    val value: ClocktowerSpecialValue? = null,
+    val time: String? = null,
+    val global: String? = null,
+)
+
 internal data class ClocktowerCharacterDefinition(
     val id: RoleId,
     val externalId: String,
     val name: String,
     val team: ClocktowerCatalogTeam,
     val abilityText: String,
-    val firstNightOrder: Int = 0,
-    val otherNightOrder: Int = 0,
+    val firstNightOrder: BigDecimal = BigDecimal.ZERO,
+    val otherNightOrder: BigDecimal = BigDecimal.ZERO,
     val firstNightReminder: String = "",
     val otherNightReminder: String = "",
     val reminders: List<String> = emptyList(),
+    val globalReminders: List<String> = emptyList(),
     val setup: Boolean = false,
+    val jinxes: List<ClocktowerJinxDefinition> = emptyList(),
+    val specialFeatures: List<ClocktowerSpecialFeature> = emptyList(),
     val behaviorKey: String? = null,
     val automationCoverage: RuleCoverage,
     val sourceSemanticHash: String? = null,
@@ -54,8 +85,8 @@ internal data class ClocktowerCharacterDefinition(
         }
         require(name.isNotBlank()) { "Clocktower character name cannot be blank." }
         require(abilityText.isNotBlank()) { "Clocktower character ability text cannot be blank." }
-        require(firstNightOrder >= 0) { "firstNightOrder cannot be negative." }
-        require(otherNightOrder >= 0) { "otherNightOrder cannot be negative." }
+        require(firstNightOrder.signum() >= 0) { "firstNightOrder cannot be negative." }
+        require(otherNightOrder.signum() >= 0) { "otherNightOrder cannot be negative." }
         require(behaviorKey == null || behaviorKey.isNotBlank()) { "behaviorKey cannot be blank." }
         require(sourceSemanticHash == null || SEMANTIC_HASH_PATTERN.matches(sourceSemanticHash)) {
             "sourceSemanticHash must be a lowercase SHA-256 hex string."

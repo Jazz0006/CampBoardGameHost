@@ -10,6 +10,7 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import java.math.BigDecimal
 
 class ClocktowerScriptCatalogTest {
     private val legacyKnowledge by lazy {
@@ -52,10 +53,10 @@ class ClocktowerScriptCatalogTest {
         val first = """
             [
               {"id":"_meta","name":"Display A","author":"Author A","firstNight":["dusk","poisoner","dawn"]},
-              "imp", "chef", "poisoner"
+              "imp", "chef", "poisoner", "empath"
             ]
         """.trimIndent()
-        val second = """[{"firstNight":["dusk","poisoner","dawn"],"author":"Author B","name":"Display B","id":"_meta"},"poisoner","imp","chef"]"""
+        val second = """[{"firstNight":["dusk","poisoner","dawn"],"author":"Author B","name":"Display B","id":"_meta"},"poisoner","empath","imp","chef"]"""
 
         val firstNormalized = normalize(first)
         val secondNormalized = normalize(second)
@@ -66,36 +67,67 @@ class ClocktowerScriptCatalogTest {
     }
 
     @Test
-    fun `unknown duplicate and invalid night tokens fail closed`() {
-        val unknown = runCatching { normalize("""["imp","notarealcharacter"]""") }.exceptionOrNull()
-        val duplicate = runCatching { normalize("""["imp","imp"]""") }.exceptionOrNull()
-        val invalidNight = runCatching {
-            normalize(
-                """[{"id":"_meta","name":"Bad Night","firstNight":["dusk","notarealcharacter","dawn"]},"imp"]""",
-            )
-        }.exceptionOrNull()
-        val invalidOtherNightSystemToken = runCatching {
-            normalize(
-                """[{"id":"_meta","name":"Bad Other Night","otherNight":["dusk","minioninfo","imp","dawn"]},"imp"]""",
-            )
-        }.exceptionOrNull()
-
-        assertTrue(unknown is IllegalArgumentException)
-        assertTrue(duplicate is IllegalArgumentException)
-        assertTrue(invalidNight is IllegalArgumentException)
-        assertTrue(invalidOtherNightSystemToken is IllegalArgumentException)
+    fun `typed validation rejects undersized unknown duplicate and invalid night tokens`() {
+        assertEquals(
+            ClocktowerScriptValidationCode.INVALID_SCRIPT_SIZE,
+            failureCode("""["imp","chef","empath","poisoner"]"""),
+        )
+        assertEquals(
+            ClocktowerScriptValidationCode.UNKNOWN_CHARACTER_ID,
+            failureCode("""["imp","chef","empath","poisoner","notarealcharacter"]"""),
+        )
+        assertEquals(
+            ClocktowerScriptValidationCode.DUPLICATE_CHARACTER_ID,
+            failureCode("""["imp","imp","chef","empath","poisoner"]"""),
+        )
+        assertEquals(
+            ClocktowerScriptValidationCode.INVALID_NIGHT_TOKEN,
+            failureCode(
+                """[{"id":"_meta","name":"Bad Night","firstNight":["dusk","notarealcharacter","dawn"]},"imp","chef","empath","poisoner"]""",
+            ),
+        )
+        assertEquals(
+            ClocktowerScriptValidationCode.INVALID_NIGHT_SYSTEM_TOKEN,
+            failureCode(
+                """[{"id":"_meta","name":"Bad Other Night","otherNight":["dusk","minioninfo","imp","dawn"]},"imp","chef","empath","poisoner"]""",
+            ),
+        )
     }
 
     @Test
-    fun `homebrew character stays unverified and opaque semantic metadata participates in identity`() {
-        val first = homebrewJson("alpha")
-        val second = homebrewJson("beta")
+    fun `custom character schema rejects unknown fields and invalid special metadata`() {
+        assertEquals(
+            ClocktowerScriptValidationCode.INVALID_FIELD,
+            failureCode(
+                homebrewJson("alpha").replace(
+                    "\"setup\":false,",
+                    "\"setup\":false,\"unexpected\":true,",
+                ),
+            ),
+        )
+        assertEquals(
+            ClocktowerScriptValidationCode.INVALID_FIELD,
+            failureCode(
+                homebrewJson("alpha").replace("\"name\":\"card\"", "\"name\":\"invented-feature\""),
+            ),
+        )
+    }
 
-        val firstNormalized = normalize(first)
-        val secondNormalized = normalize(second)
+    @Test
+    fun `homebrew metadata is preserved as unverified without interpreting its behavior`() {
+        val firstNormalized = normalize(homebrewJson("alpha"))
+        val secondNormalized = normalize(homebrewJson("beta"))
         val custom = firstNormalized.characters.single { it.externalId == "customseer" }
 
         assertEquals(RoleId("homebrew:customseer"), custom.id)
+        assertEquals(BigDecimal("1.5"), custom.firstNightOrder)
+        assertEquals(listOf("Knows"), custom.globalReminders)
+        assertEquals(RoleId("Imp"), custom.jinxes.single().targetRoleId)
+        assertEquals("Custom interaction.", custom.jinxes.single().reason)
+        assertEquals("signal", custom.specialFeatures.single().type)
+        assertEquals("card", custom.specialFeatures.single().name)
+        assertEquals(ClocktowerSpecialValueKind.TEXT, custom.specialFeatures.single().value?.kind)
+        assertEquals("alpha", custom.specialFeatures.single().value?.canonicalValue)
         assertEquals(RuleCoverage.UNVERIFIED, custom.automationCoverage)
         assertEquals(RuleCoverage.UNVERIFIED, firstNormalized.coverage)
         assertEquals(ClocktowerScriptSource.IMPORTED_HOMEBREW, firstNormalized.script.source)
@@ -103,9 +135,26 @@ class ClocktowerScriptCatalogTest {
     }
 
     @Test
+    fun `equivalent decimal encodings produce the same normalized identity`() {
+        val first = normalize(numericHomebrewJson("1.50", "3.0"))
+        val second = normalize(numericHomebrewJson("1.5", "3"))
+
+        assertEquals(first.script.contentHash, second.script.contentHash)
+        assertEquals(BigDecimal("1.5"), first.characters.single { it.externalId == "customseer" }.firstNightOrder)
+        assertEquals("3", first.characters.single { it.externalId == "customseer" }.specialFeatures.single().value?.canonicalValue)
+    }
+
+    @Test
+    fun `off script homebrew jinx target fails closed`() {
+        val invalid = homebrewJson("alpha").replace("\"id\":\"imp\",\"reason\":\"Custom interaction.\"", "\"id\":\"spy\",\"reason\":\"Custom interaction.\"")
+
+        assertEquals(ClocktowerScriptValidationCode.INVALID_JINX_TARGET, failureCode(invalid))
+    }
+
+    @Test
     fun `bootlegger rule downgrades otherwise known official script to unverified`() {
         val normalized = normalize(
-            """[{"id":"_meta","name":"Bootleg","bootlegger":["Imp attacks twice."]},"imp","chef"]""",
+            """[{"id":"_meta","name":"Bootleg","bootlegger":["Imp attacks twice."]},"imp","chef","empath","poisoner"]""",
         )
 
         assertEquals(RuleCoverage.UNVERIFIED, normalized.coverage)
@@ -114,11 +163,14 @@ class ClocktowerScriptCatalogTest {
 
     @Test
     fun `script catalog rejects duplicate script identities`() {
-        val script = normalize("""["imp","chef"]""").script
+        val script = normalize("""["imp","chef","empath","poisoner","spy"]""").script
         val failure = runCatching { ClocktowerScriptCatalog(listOf(script, script)) }.exceptionOrNull()
 
         assertTrue(failure is IllegalArgumentException)
     }
+
+    private fun failureCode(json: String): ClocktowerScriptValidationCode? =
+        (runCatching { normalize(json) }.exceptionOrNull() as? ClocktowerScriptValidationException)?.code
 
     private fun normalize(json: String): ValidatedClocktowerRuleset = RulesetJsonLoader.parseScript(
         json = json,
@@ -134,17 +186,40 @@ class ClocktowerScriptCatalogTest {
         [
           {"id":"_meta","name":"Homebrew"},
           "imp",
+          "chef",
+          "empath",
           {
             "id":"customseer",
             "name":"Custom Seer",
             "team":"townsfolk",
             "ability":"You learn something.",
-            "firstNight":1,
+            "firstNight":1.5,
             "firstNightReminder":"Give information.",
             "otherNight":0,
             "reminders":["Seen"],
+            "remindersGlobal":["Knows"],
             "setup":false,
-            "special":[{"type":"signal","name":"card","value":"$specialValue"}]
+            "jinxes":[{"id":"imp","reason":"Custom interaction."}],
+            "special":[{"type":"signal","name":"card","value":"$specialValue","time":"firstNight"}]
+          }
+        ]
+    """.trimIndent()
+
+    private fun numericHomebrewJson(priority: String, specialValue: String): String = """
+        [
+          {"id":"_meta","name":"Homebrew"},
+          "imp",
+          "chef",
+          "empath",
+          {
+            "id":"customseer",
+            "name":"Custom Seer",
+            "team":"townsfolk",
+            "ability":"You learn something.",
+            "firstNight":$priority,
+            "otherNight":0,
+            "setup":false,
+            "special":[{"type":"vote","name":"multiplier","value":$specialValue}]
           }
         ]
     """.trimIndent()
