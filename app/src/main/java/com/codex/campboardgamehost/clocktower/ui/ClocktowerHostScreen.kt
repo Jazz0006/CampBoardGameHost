@@ -125,6 +125,9 @@ import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsFo
 import com.codex.campboardgamehost.clocktower.domain.kind
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerPlayerStates
+import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNightFlow
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
 import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
 import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
@@ -3068,43 +3071,53 @@ internal fun ClocktowerJudgeScreen(
             (step.roleEnName == null || step.roleEnName in scriptRoleNames) &&
             !(script == ClocktowerScript.NoGreaterJoy && step.title in setOf(minionInfoTitle, demonInfoTitle))
     }
-    fun officialNightOrder(step: ClocktowerNightStepUi): Int = if (phase == ClocktowerPhase.FirstNight) {
-        when {
-            step.title == minionInfoTitle -> 0
-            step.title == demonInfoTitle -> 1
-            step.roleEnName == "Poisoner" -> 2
-            step.roleEnName == "Spy" -> 3
-            step.roleEnName == "Clockmaker" -> 4
-            step.roleEnName == "Washerwoman" -> 5
-            step.roleEnName == "Librarian" -> 6
-            step.roleEnName == "Investigator" -> 7
-            step.roleEnName == "Chef" -> 8
-            step.roleEnName == "Empath" -> 9
-            step.action == ClocktowerNightAction.RedHerring -> 10
-            step.roleEnName == "Fortune Teller" -> 11
-            step.roleEnName == "Butler" -> 12
-            step.roleEnName == "Chambermaid" -> 13
-            else -> 100
-        }
-    } else {
-        when {
-            step.roleEnName == "Poisoner" -> 0
-            step.roleEnName == "Monk" -> 1
-            step.roleEnName == "Spy" -> 2
-            step.action == ClocktowerNightAction.DemonKill -> 3
-            step.action == ClocktowerNightAction.DemonSuccessor -> 4
-            step.action == ClocktowerNightAction.MayorRedirect -> 5
-            step.roleEnName == "Sage" -> 6
-            step.roleEnName == "Ravenkeeper" -> 7
-            step.roleEnName == "Undertaker" -> 8
-            step.roleEnName == "Empath" -> 9
-            step.roleEnName == "Fortune Teller" -> 10
-            step.roleEnName == "Butler" -> 11
-            step.roleEnName == "Chambermaid" -> 12
-            else -> 100
+    fun legacyOtherNightOrder(step: ClocktowerNightStepUi): Int = when {
+        step.roleEnName == "Poisoner" -> 0
+        step.roleEnName == "Monk" -> 1
+        step.roleEnName == "Spy" -> 2
+        step.action == ClocktowerNightAction.DemonKill -> 3
+        step.action == ClocktowerNightAction.DemonSuccessor -> 4
+        step.action == ClocktowerNightAction.MayorRedirect -> 5
+        step.roleEnName == "Sage" -> 6
+        step.roleEnName == "Ravenkeeper" -> 7
+        step.roleEnName == "Undertaker" -> 8
+        step.roleEnName == "Empath" -> 9
+        step.roleEnName == "Fortune Teller" -> 10
+        step.roleEnName == "Butler" -> 11
+        step.roleEnName == "Chambermaid" -> 12
+        else -> 100
+    }
+    val firstNightWakingRoleIds = buildSet {
+        cards.forEach { card ->
+            card.clocktowerRole?.enName?.let { add(RoleId(it)) }
+            if (card.clocktowerRole?.enName == "Drunk") {
+                card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
+            }
         }
     }
-    val nightSteps = filteredNightSteps.sortedBy(::officialNightOrder)
+    val nightSteps = if (phase == ClocktowerPhase.FirstNight) {
+        ClocktowerProductionFirstNightFlow.order(
+            ruleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script),
+            playerCount = cards.size,
+            inPlayRoleIds = firstNightWakingRoleIds,
+            productionSteps = filteredNightSteps,
+            identityOf = { step ->
+                when {
+                    step.title == minionInfoTitle -> ClocktowerProductionNightStepIdentity.minionInfo()
+                    step.title == demonInfoTitle -> ClocktowerProductionNightStepIdentity.demonInfo()
+                    step.action == ClocktowerNightAction.RedHerring ->
+                        ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring()
+                    else -> ClocktowerProductionNightStepIdentity.role(
+                        RoleId(requireNotNull(step.roleEnName) {
+                            "First-night production step is missing a stable role identity."
+                        }),
+                    )
+                }
+            },
+        )
+    } else {
+        filteredNightSteps.sortedBy(::legacyOtherNightOrder)
+    }
 
     playerDisplayStep?.let { displayStep ->
         ClocktowerPlayerDisplayCardLocalized(
