@@ -46,11 +46,10 @@ class ClocktowerProductionFirstNightWiringTest {
     }
 
     @Test
-    fun `other night remains legacy until its event projection cutover`() {
-        assertTrue(ordering.contains("fun legacyOtherNightOrder(step: ClocktowerNightStepUi): Int"))
-        assertTrue(ordering.contains("filteredNightSteps.sortedBy(::legacyOtherNightOrder)"))
-        assertTrue(ordering.contains("step.action == ClocktowerNightAction.DemonSuccessor"))
-        assertTrue(ordering.contains("step.action == ClocktowerNightAction.MayorRedirect"))
+    fun `other night cutover is owned by its dedicated event-aware planner guard`() {
+        assertTrue(ordering.contains("ClocktowerProductionOtherNightFlow.order("))
+        assertFalse(ordering.contains("fun legacyOtherNightOrder(step: ClocktowerNightStepUi): Int"))
+        assertFalse(ordering.contains("filteredNightSteps.sortedBy(::legacyOtherNightOrder)"))
     }
 
     @Test
