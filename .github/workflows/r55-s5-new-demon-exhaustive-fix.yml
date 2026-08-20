@@ -1,0 +1,62 @@
+name: R5.5 S5 new Demon exhaustive fix
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/r55-s5-new-demon-exhaustive-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.head_ref == 'codex/storyteller-algorithm-v4'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/storyteller-algorithm-v4
+          fetch-depth: 0
+      - name: Patch exhaustive night-action recording
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt")
+          text = path.read_text(encoding="utf-8")
+
+          def replace_once(old: str, new: str, label: str):
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one anchor, found {count}")
+              text = text.replace(old, new, 1)
+
+          replace_once(
+              '            ClocktowerNightAction.Chambermaid -> listOfNotNull(step.actor?.name, chambermaidFirst, chambermaidSecond)\n            ClocktowerNightAction.DemonKill -> listOfNotNull(step.actor?.name, pendingNightDeath)',
+              '            ClocktowerNightAction.Chambermaid -> listOfNotNull(step.actor?.name, chambermaidFirst, chambermaidSecond)\n            ClocktowerNightAction.NewDemonIdentity -> listOfNotNull(step.actor?.name)\n            ClocktowerNightAction.DemonKill -> listOfNotNull(step.actor?.name, pendingNightDeath)',
+              'recorded names branch',
+          )
+
+          replace_once(
+              '            ClocktowerNightAction.DemonKill ->\n                text("击杀目标：${playerSeatLabel(cards, pendingNightDeath)}", "Kill target: ${playerSeatLabel(cards, pendingNightDeath)}")',
+              '            ClocktowerNightAction.NewDemonIdentity -> step.tellPlayer ?: step.storytellerAction\n            ClocktowerNightAction.DemonKill ->\n                text("击杀目标：${playerSeatLabel(cards, pendingNightDeath)}", "Kill target: ${playerSeatLabel(cards, pendingNightDeath)}")',
+              'recorded detail branch',
+          )
+
+          path.write_text(text, encoding="utf-8")
+          PY
+          git diff --check
+          git diff -- app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+      - name: Commit exact patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          git diff --cached --quiet && exit 0
+          git commit -m "fix(r5.5): cover new Demon night action recording"
+          git push origin HEAD:codex/storyteller-algorithm-v4
