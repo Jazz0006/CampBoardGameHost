@@ -116,14 +116,17 @@ class NoGreaterJoyStructuralProofTest {
     }
 
     @Test
-    fun `NGJ conditional other-night roles stay silent until rules layer resolves their facts`() {
-        val inPlay = setOf(
-            "Scarlet Woman", "Imp", "Sage", "Empath", "Chambermaid", "Artist",
+    fun `promoted Scarlet Woman is represented by current Imp role plus explicit identity event`() {
+        // Production changes the player's actual role from Scarlet Woman to Imp immediately.
+        // The planner must therefore consume the current role set, not preserve a historical
+        // Scarlet Woman token merely as an ordering anchor.
+        val currentInPlay = setOf(
+            "Imp", "Sage", "Empath", "Chambermaid", "Artist",
         ).map(::RoleId).toSet()
         val basePlan = planner.planNight(
             ruleset = ruleset,
             phase = ClocktowerNightFlowPhase.OTHER_NIGHT,
-            context = ClocktowerFlowContext(playerCount = 6, inPlayRoleIds = inPlay),
+            context = ClocktowerFlowContext(playerCount = 5, inPlayRoleIds = currentInPlay),
         )
 
         val quiet = projector.projectNight(
@@ -131,8 +134,12 @@ class NoGreaterJoyStructuralProofTest {
             basePlan = basePlan,
         )
         assertEquals(
-            listOf("Imp", "Empath", "Chambermaid").map(::RoleId),
-            quiet.mapNotNull(ClocktowerHostInteraction::roleId),
+            listOf(
+                "other_night:role:Imp",
+                "other_night:role:Empath",
+                "other_night:role:Chambermaid",
+            ),
+            quiet.actionableIds(),
         )
 
         val triggered = projector.projectNight(
@@ -146,8 +153,14 @@ class NoGreaterJoyStructuralProofTest {
             ),
         )
         assertEquals(
-            listOf("Scarlet Woman", "Imp", "Sage", "Empath", "Chambermaid").map(::RoleId),
-            triggered.mapNotNull(ClocktowerHostInteraction::roleId),
+            listOf(
+                "other_night:event:imp:new_demon_identity",
+                "other_night:role:Imp",
+                "other_night:role:Sage",
+                "other_night:role:Empath",
+                "other_night:role:Chambermaid",
+            ),
+            triggered.actionableIds(),
         )
     }
 
@@ -181,4 +194,8 @@ class NoGreaterJoyStructuralProofTest {
 
     private fun List<NightOrderToken>.characterRoleIds(): List<RoleId> =
         mapNotNull { token -> (token as? NightOrderToken.Character)?.roleId }
+
+    private fun List<ClocktowerHostInteraction>.actionableIds(): List<String> =
+        filterNot { it.kind == ClocktowerHostInteractionKind.SYSTEM_BOUNDARY }
+            .map { it.id.value }
 }
