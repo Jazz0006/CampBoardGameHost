@@ -134,7 +134,7 @@ def _validate_state(state: dict[str, Any], name: str) -> None:
     missing = required - state.keys()
     if missing:
         raise FixtureError(f"{name}: FormalGameState missing {sorted(missing)}")
-    if state["schemaVersion"] != 1 or state["round"] < 1:
+    if state["schemaVersion"] != SCHEMA_VERSION or state["round"] < 1:
         raise FixtureError(f"{name}: invalid FormalGameState version or round")
     ruleset = state["rulesetRef"]
     if not re.fullmatch(r"[0-9a-f]{32}", ruleset.get("scriptContentHash", "")):

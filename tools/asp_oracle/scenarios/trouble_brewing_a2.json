@@ -9,7 +9,7 @@
     "base7_no_outsider": {
       "snapshotId": "snapshot-base7-no-outsider", "gameId": "golden-a2", "gameStateRevision": 1,
       "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a2", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
-      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 2,
       "players": [
         {"seat": 1, "actualRole": "Librarian", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Librarian", "alive": true, "poisoned": false},
         {"seat": 2, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
@@ -23,7 +23,7 @@
     "base8_registration": {
       "snapshotId": "snapshot-base8-registration", "gameId": "golden-a2", "gameStateRevision": 2,
       "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a2", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
-      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 2,
       "players": [
         {"seat": 1, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
         {"seat": 2, "actualRole": "Librarian", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Librarian", "alive": true, "poisoned": false},
@@ -38,7 +38,7 @@
     "teensyville6": {
       "snapshotId": "snapshot-teensyville6", "gameId": "golden-a2-1", "gameStateRevision": 3,
       "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a2-1", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
-      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 2,
       "players": [
         {"seat": 1, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
         {"seat": 2, "actualRole": "Chef", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Chef", "alive": true, "poisoned": false},
@@ -51,7 +51,7 @@
     "baron8": {
       "snapshotId": "snapshot-baron8", "gameId": "golden-a2", "gameStateRevision": 3,
       "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a2", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
-      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 2,
       "players": [
         {"seat": 1, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
         {"seat": 2, "actualRole": "Chef", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Chef", "alive": true, "poisoned": false},
@@ -66,7 +66,7 @@
     "evil_run10": {
       "snapshotId": "snapshot-evil-run10", "gameId": "golden-a2", "gameStateRevision": 4,
       "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a2", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
-      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 2,
       "players": [
         {"seat": 1, "actualRole": "Chef", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Chef", "alive": true, "poisoned": false},
         {"seat": 2, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
@@ -83,7 +83,7 @@
     "fortune_teller8": {
       "snapshotId": "snapshot-ft8", "gameId": "golden-a2", "gameStateRevision": 5,
       "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a2", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
-      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 2,
       "players": [
         {"seat": 1, "actualRole": "Fortune Teller", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Fortune Teller", "alive": true, "poisoned": false},
         {"seat": 2, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
@@ -98,7 +98,7 @@
     "poisoned_empath8": {
       "snapshotId": "snapshot-poisoned-empath8", "gameId": "golden-a2", "gameStateRevision": 6,
       "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a2", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
-      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 2,
       "players": [
         {"seat": 1, "actualRole": "Empath", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Empath", "alive": true, "poisoned": true},
         {"seat": 2, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
@@ -113,7 +113,7 @@
     "poisoned_spy10": {
       "snapshotId": "snapshot-poisoned-spy10", "gameId": "golden-a3-r1", "gameStateRevision": 7,
       "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a3-r1", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
-      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 2,
       "players": [
         {"seat": 1, "actualRole": "Chef", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Chef", "alive": true, "poisoned": false},
         {"seat": 2, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
@@ -130,7 +130,7 @@
     "poisoned_recluse8": {
       "snapshotId": "snapshot-poisoned-recluse8", "gameId": "golden-a3-r1", "gameStateRevision": 8,
       "rulesetRef": {"scriptId": "trouble_brewing", "scriptContentHash": "616e61b720cc853af031f2623fd6bde3", "rulesetVersion": "tb-a3-r1", "sourceRevision": "official-plus-frozen-oracle", "coverage": "VERIFIED"},
-      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 1,
+      "phase": "FIRST_NIGHT", "round": 1, "schemaVersion": 2,
       "players": [
         {"seat": 1, "actualRole": "Washerwoman", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Washerwoman", "alive": true, "poisoned": false},
         {"seat": 2, "actualRole": "Librarian", "actualAlignment": "GOOD", "actualType": "TOWNSFOLK", "shownRole": "Librarian", "alive": true, "poisoned": false},

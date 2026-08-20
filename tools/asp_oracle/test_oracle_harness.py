@@ -126,6 +126,23 @@ class OracleHarnessTest(unittest.TestCase):
             self.assertEqual("ACTUAL_ONLY", scenario["hypothesisMode"])
             self.assertEqual("numeric-info", scenario["query"]["kind"])
 
+    def test_nested_formal_states_are_schema_v2(self):
+        self.assertTrue(self.catalog["formalStates"])
+        self.assertTrue(all(
+            state["schemaVersion"] == 2
+            for state in self.catalog["formalStates"].values()
+        ))
+
+    def test_nested_formal_state_schema_v1_fails_closed(self):
+        migrated = json.loads(json.dumps(self.catalog))
+        first_state = next(iter(migrated["formalStates"].values()))
+        first_state["schemaVersion"] = 1
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "fixtures-v1.json"
+            path.write_text(json.dumps(migrated, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaises(FixtureError):
+                load_catalog(path)
+
 
 if __name__ == "__main__":
     unittest.main()

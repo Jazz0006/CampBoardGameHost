@@ -37,6 +37,20 @@ class A3GoldenContractCatalogTest {
         )
     }
 
+    @Test fun `nested FormalGameState fixtures decode through the schema v2 semantic adapter`() {
+        val root = A3GoldenContractCatalog.loadDocument()
+        val states = root.getJSONObject("formalStates")
+        val decoded = states.keys().asSequence().map { stateName ->
+            EpistemicSemanticJson.decodeFormalGameState(states.getJSONObject(stateName).toString())
+        }.toList()
+
+        assertTrue(decoded.isNotEmpty())
+        assertTrue(decoded.all { it.schemaVersion == EPISTEMIC_SCHEMA_VERSION })
+
+        val v1 = JSONObject(states.getJSONObject(states.keys().next()).toString()).put("schemaVersion", 1)
+        assertTrue(runCatching { EpistemicSemanticJson.decodeFormalGameState(v1.toString()) }.isFailure)
+    }
+
     @Test fun `A3 deferred contracts are only timeline or knowledge-projection work`() {
         val deferred = A3GoldenContractCatalog.load().filter { it.disposition == A3Disposition.DEFER_TO_B4 }
 
@@ -129,7 +143,13 @@ internal object A3GoldenContractCatalog {
 
     fun loadDocument(catalogFile: File = defaultCatalogFile()): JSONObject {
         require(catalogFile.isFile) { "Missing A2.1 golden catalog: ${catalogFile.path}" }
-        return JSONObject(catalogFile.readText()).also { require(it.getInt("schemaVersion") == 2) }
+        return JSONObject(catalogFile.readText()).also { root ->
+            require(root.getInt("schemaVersion") == EPISTEMIC_SCHEMA_VERSION)
+            val states = root.getJSONObject("formalStates")
+            states.keys().asSequence().forEach { stateName ->
+                EpistemicSemanticJson.decodeFormalGameState(states.getJSONObject(stateName).toString())
+            }
+        }
     }
 }
 
