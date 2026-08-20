@@ -8,6 +8,7 @@ import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.rules.RulesetJsonLoader
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -45,25 +46,24 @@ class ClocktowerLegacyPlannerDifferentialTest {
     private val projector = ClocktowerHostInteractionProjector()
 
     @Test
-    fun `production legacy priority source remains the differential anchor`() {
-        val start = legacyHostSource.indexOf("fun officialNightOrder(step: ClocktowerNightStepUi): Int")
+    fun `production other-night legacy priority remains the differential anchor after first-night cutover`() {
+        assertFalse(
+            "First-night cutover must remove the old combined officialNightOrder table.",
+            legacyHostSource.contains("fun officialNightOrder(step: ClocktowerNightStepUi): Int"),
+        )
+        assertTrue(
+            "Production first night must be owned by the canonical planner seam.",
+            legacyHostSource.contains("ClocktowerProductionFirstNightFlow.order("),
+        )
+
+        val start = legacyHostSource.indexOf("fun legacyOtherNightOrder(step: ClocktowerNightStepUi): Int")
         val end = legacyHostSource.indexOf(
-            "val nightSteps = filteredNightSteps.sortedBy(::officialNightOrder)",
+            "filteredNightSteps.sortedBy(::legacyOtherNightOrder)",
             startIndex = start.coerceAtLeast(0),
         )
-        assertTrue("Legacy officialNightOrder source must remain discoverable", start >= 0 && end > start)
+        assertTrue("Other-night legacy priority source must remain discoverable", start >= 0 && end > start)
         val prioritySource = legacyHostSource.substring(start, end)
 
-        val firstNightFragments = listOf(
-            "step.title == minionInfoTitle -> 0",
-            "step.title == demonInfoTitle -> 1",
-            "step.roleEnName == \"Poisoner\" -> 2",
-            "step.roleEnName == \"Spy\" -> 3",
-            "step.roleEnName == \"Empath\" -> 9",
-            "step.action == ClocktowerNightAction.RedHerring -> 10",
-            "step.roleEnName == \"Fortune Teller\" -> 11",
-            "step.roleEnName == \"Butler\" -> 12",
-        )
         val otherNightFragments = listOf(
             "step.roleEnName == \"Poisoner\" -> 0",
             "step.roleEnName == \"Monk\" -> 1",
@@ -71,20 +71,22 @@ class ClocktowerLegacyPlannerDifferentialTest {
             "step.action == ClocktowerNightAction.DemonKill -> 3",
             "step.action == ClocktowerNightAction.DemonSuccessor -> 4",
             "step.action == ClocktowerNightAction.MayorRedirect -> 5",
+            "step.roleEnName == \"Sage\" -> 6",
             "step.roleEnName == \"Ravenkeeper\" -> 7",
             "step.roleEnName == \"Undertaker\" -> 8",
             "step.roleEnName == \"Empath\" -> 9",
             "step.roleEnName == \"Fortune Teller\" -> 10",
             "step.roleEnName == \"Butler\" -> 11",
+            "step.roleEnName == \"Chambermaid\" -> 12",
         )
 
-        (firstNightFragments + otherNightFragments).forEach { fragment ->
-            assertTrue("Legacy priority contract moved or changed: $fragment", fragment in prioritySource)
+        otherNightFragments.forEach { fragment ->
+            assertTrue("Other-night legacy priority contract moved or changed: $fragment", fragment in prioritySource)
         }
     }
 
     @Test
-    fun `first-night shadow projection is legacy-order equivalent`() {
+    fun `first-night shadow projection matches the canonical production order`() {
         val inPlay = setOf(
             "Poisoner",
             "Spy",
