@@ -120,4 +120,20 @@ class ActiveGameProductionPersistenceWiringTest {
         assertTrue(restore.contains("clocktowerRulesetRoleIds = restoredRulesetBasis?.roleIds.orEmpty()"))
         assertTrue(restore.contains("clocktowerRulesetRef = resolvedClocktowerRulesetRef"))
     }
+
+    @Test
+    fun `legacy Trouble Brewing restore recovers original basis from old ref after role succession`() {
+        val restore = source
+            .substringAfter("fun restoreSavedGame()")
+            .substringBefore("val latestPersistActiveGameState")
+
+        assertTrue(restore.contains("TroubleBrewingRulesetPersistence.resolveLegacyBasisForRestore("))
+        assertTrue(restore.contains("assignedRoleIds = restoredCards.map"))
+        assertTrue(restore.contains("persistedRef = restoredClocktowerRulesetRef"))
+        assertFalse(
+            restore.contains(
+                "ActiveGamePersistenceCoordinator.LEGACY_VERSION -> ClocktowerRulesetPersistenceBasis(",
+            ),
+        )
+    }
 }
