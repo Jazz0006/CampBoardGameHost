@@ -62,7 +62,7 @@ b33506acc9398546c46b925afc236ad4c9587c53
 
 第一组 red 在 registry/planner 类型尚不存在时按预期 Android compile fail；green 后 CI #133 / R2 #125 全绿。第二组 hardening red 的 363 个 Android tests 中只有 non-positive role-count contract 失败，证明旧实现会静默删除 count=0 角色；最终 green 改为 fail closed 后 CI #135 / R2 #127 全绿。
 
-R5 只解锁 R5.5，**没有**直接解锁 R6。R6 仍必须等待 S4–S5 全部通过。
+R5 只解锁 R5.5，**没有**直接解锁 R6。S4 已通过，R6 当前仍必须等待 S5 通过。
 
 A4 ZDD 继续保持 exact shadow/prototype；`ZDD_DEVICE_VALIDATED` 仍未授权。
 
@@ -402,9 +402,9 @@ NGJ: Catalog ✅ / FlowPlanner ✅ / Possible Worlds deferred
 
 S0–S3 建立的是已验证 shadow foundation。Production Clocktower Host 与 Werewolf Judge 继续使用 legacy source，直到 S5 full regression / removal gate 明确授权。
 
-### 8.3 `troubleBrewingRulesetRefFor(...)`
+### 8.3 Trouble Brewing ruleset persistence boundary
 
-该 helper 继续服务 TB A3/A4 correctness boundary；S4 可以审计并设计统一 identity seam，但不能破坏当前 exact correctness contract。
+S4 已将该边界拆为 `troubleBrewingRulesetKnowledge()`、immutable `ClocktowerRulesetPersistenceBasis` 与 `TroubleBrewingRulesetPersistence`；existing `RulesetRef` 继续服务 TB A3/A4 correctness，normalized script identity 保持独立，S5 cutover 不得混用两种 hash 语义。
 
 ## 9. R5.5 全局约束
 
@@ -421,7 +421,7 @@ S0–S3 建立的是已验证 shadow foundation。Production Clocktower Host 与
 
 ## 10. R6 — revision-driven dynamic decision engine
 
-**BLOCKED BY R5.5。**
+**BLOCKED BY S5。**
 
 只有 S0–S5 通过后，`storyteller_revision_driven_dynamic_decision_engine_plan.md` 才能从 BLOCKED 改为 READY。
 
