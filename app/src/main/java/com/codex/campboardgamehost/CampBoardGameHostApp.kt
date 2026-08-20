@@ -177,6 +177,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationDurabilityG
 import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationCacheRebuildRequest
 import com.codex.campboardgamehost.clocktower.epistemic.A4PlayerKnowledgeFactory
 import com.codex.campboardgamehost.clocktower.epistemic.A4ShadowWorldSetCache
+import com.codex.campboardgamehost.clocktower.epistemic.A4ShadowLifecycleInvalidator
 import com.codex.campboardgamehost.clocktower.epistemic.A4WorldEngineRollout
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
@@ -1091,6 +1092,31 @@ internal fun CampBoardGameHostApp() {
     }
     val a4ObservationDurabilityGate = remember(clocktowerGameId) { A4ObservationDurabilityGate() }
     var a4ObservationCacheRebuildRequest by remember { mutableStateOf<A4ObservationCacheRebuildRequest?>(null) }
+    val a4ShadowLifecycleInvalidator = remember(a4ShadowWorldSetCache, a4ObservationDurabilityGate) {
+        A4ShadowLifecycleInvalidator(
+            invalidateGame = a4ShadowWorldSetCache::invalidateGame,
+            clearPendingObservation = a4ObservationDurabilityGate::clear,
+            cancelObservationRebuild = { a4ObservationCacheRebuildRequest = null },
+        )
+    }
+
+    fun invalidateA4RevisionScope() {
+        a4ShadowLifecycleInvalidator.revisionSuperseded(clocktowerGameId)
+    }
+
+    fun invalidateA4SessionBoundary() {
+        a4ShadowLifecycleInvalidator.sessionBoundary(clocktowerGameId)
+    }
+
+    fun advanceClocktowerGameStateRevision() {
+        clocktowerGameStateRevision = clocktowerGameStateRevision + 1
+        invalidateA4RevisionScope()
+    }
+
+    fun advanceClocktowerPlayerInputRevision() {
+        clocktowerPlayerInputRevision = clocktowerPlayerInputRevision + 1
+        invalidateA4RevisionScope()
+    }
     val playerCount = playerNames.size
 
     fun newClocktowerSeed(): Long = UUID.randomUUID().let { uuid ->
@@ -1261,7 +1287,7 @@ internal fun CampBoardGameHostApp() {
         eventPhase: ClocktowerPhase = clocktowerPhase,
         eventRound: Int = round,
     ) {
-        clocktowerGameStateRevision += 1
+        advanceClocktowerGameStateRevision()
         clocktowerEventCounter += 1
         clocktowerEvents.add(
             ClocktowerEvent(
@@ -1304,7 +1330,7 @@ internal fun CampBoardGameHostApp() {
             )
             appendedObservationIds += observationId
         }
-        clocktowerPlayerInputRevision += 1
+        advanceClocktowerPlayerInputRevision()
         appendedObservationIds.lastOrNull()?.let { recordId ->
             a4ObservationDurabilityGate.markPending(recordId)
         }
@@ -1313,7 +1339,7 @@ internal fun CampBoardGameHostApp() {
     fun recordEpistemicObservation(record: RecordedEpistemicObservation) {
         if (clocktowerEpistemicObservations.any { it.recordId == record.recordId }) return
         clocktowerEpistemicObservations += record
-        clocktowerPlayerInputRevision += 1
+        advanceClocktowerPlayerInputRevision()
         a4ObservationDurabilityGate.markPending(record.recordId)
     }
 
@@ -1503,6 +1529,7 @@ internal fun CampBoardGameHostApp() {
 
     fun restoreSavedGame() {
         val json = baseContext.loadActiveGameStateJson() ?: return
+        invalidateA4SessionBoundary()
         val restored = runCatching {
             if (json.optInt("version", 0) != ACTIVE_GAME_STATE_VERSION) {
                 error("Unsupported active game state version")
@@ -1784,6 +1811,7 @@ internal fun CampBoardGameHostApp() {
         preparedClocktowerSeed: Long? = null,
         preparedSetupPlan: RecommendationPlan? = null,
     ) {
+        invalidateA4SessionBoundary()
         clearSavedGameState()
         currentGameKind = nextGameKind
         records.clear()
@@ -1992,6 +2020,7 @@ internal fun CampBoardGameHostApp() {
 
     fun archiveCurrentGameForRestart(): Boolean {
         if (cards.isEmpty()) return false
+        invalidateA4SessionBoundary()
         gameHistory = baseContext.archiveGame(activeGameSnapshotJson())
         clearSavedGameState()
         showNewGameConfirmation = false
@@ -2026,7 +2055,7 @@ internal fun CampBoardGameHostApp() {
     fun setClocktowerActualRole(playerName: String, nextRole: ClocktowerRole) {
         val index = cards.indexOfFirst { it.name == playerName }
         if (index >= 0) {
-            clocktowerGameStateRevision += 1
+            advanceClocktowerGameStateRevision()
             cards[index] = cards[index].copy(
                 actualRoleLabel = nextRole.nameFor(language),
                 clocktowerTeam = nextRole.team,
@@ -2038,7 +2067,7 @@ internal fun CampBoardGameHostApp() {
     fun setClocktowerShownRole(playerName: String, nextRole: ClocktowerRole) {
         val index = cards.indexOfFirst { it.name == playerName }
         if (index >= 0) {
-            clocktowerGameStateRevision += 1
+            advanceClocktowerGameStateRevision()
             cards[index] = cards[index].copy(
                 roleLabel = nextRole.nameFor(language),
                 clocktowerShownRole = nextRole,
@@ -2427,7 +2456,7 @@ internal fun CampBoardGameHostApp() {
                             // A phase switch ends the preceding decision window. It is a
                             // timeline fact, not a provisional UI edit, so stale drafts must
                             // not be allowed to publish into the new phase.
-                            clocktowerGameStateRevision += 1
+                            advanceClocktowerGameStateRevision()
                             clocktowerPhase = nextPhase
                             if (nextPhase == ClocktowerPhase.FirstNight || nextPhase == ClocktowerPhase.Night) {
                                 resetClocktowerNightFlow()
@@ -2438,7 +2467,7 @@ internal fun CampBoardGameHostApp() {
                             }
                         },
                         onSelectNightDeath = { selected ->
-                            clocktowerPlayerInputRevision += 1
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerDemonAttackDraftTarget = selected
                             val livingDemonName = cards.firstOrNull {
                                 it.eliminatedRound == null && it.clocktowerTeam == ClocktowerTeam.Demon
@@ -2450,21 +2479,21 @@ internal fun CampBoardGameHostApp() {
                         onConfirmDemonAttack = {
                             if (clocktowerPendingNightDeath != clocktowerDemonAttackDraftTarget) {
                                 clocktowerPendingNightDeath = clocktowerDemonAttackDraftTarget
-                                clocktowerGameStateRevision += 1
+                                advanceClocktowerGameStateRevision()
                             }
                         },
                         onSelectExecution = {
-                            clocktowerPlayerInputRevision += 1
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerSelectedExecution = it
                         },
                         onSelectPoisonTarget = {
-                            clocktowerPlayerInputRevision += 1
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerPoisonTarget = it
                         },
                         onConfirmPoisonTarget = {
                             if (clocktowerConfirmedPoisonTarget != clocktowerPoisonTarget) {
                                 clocktowerConfirmedPoisonTarget = clocktowerPoisonTarget
-                                clocktowerGameStateRevision += 1
+                                advanceClocktowerGameStateRevision()
                                 // A Drunk's shown role is committed, but any concrete
                                 // first-night clue remains provisional until displayed.
                                 clocktowerRecommendedDrunkInvestigatorRoleName = null
@@ -2472,27 +2501,27 @@ internal fun CampBoardGameHostApp() {
                             }
                         },
                         onSelectFortuneTellerFirst = {
-                            clocktowerPlayerInputRevision += 1
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerFortuneTellerFirst = it
                         },
                         onSelectFortuneTellerSecond = {
-                            clocktowerPlayerInputRevision += 1
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerFortuneTellerSecond = it
                         },
                         onSelectChambermaidFirst = {
-                            clocktowerPlayerInputRevision += 1
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerChambermaidFirst = it
                         },
                         onSelectChambermaidSecond = {
-                            clocktowerPlayerInputRevision += 1
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerChambermaidSecond = it
                         },
                         onSelectRavenkeeperTarget = {
-                            clocktowerPlayerInputRevision += 1
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerRavenkeeperTarget = it
                         },
                         onSelectRedHerring = {
-                            clocktowerPlayerInputRevision += 1
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerRedHerring = it
                         },
                         onApplyRecommendation = { plan ->
@@ -2539,44 +2568,44 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerRecommendedDemonBluffRoleNames = recommendedDemonBluffs
                                 setupChanged = true
                             }
-                            if (setupChanged) clocktowerPlayerInputRevision += 1
+                            if (setupChanged) advanceClocktowerPlayerInputRevision()
                         },
                         onSelectButlerMaster = {
-                            clocktowerPlayerInputRevision += 1
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerButlerMaster = it
                         },
                         onSelectMonkProtectedTarget = {
-                            clocktowerPlayerInputRevision += 1
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerMonkProtectedTarget = it
                         },
                         onConfirmMonkProtectedTarget = {
                             if (clocktowerConfirmedMonkProtectedTarget != clocktowerMonkProtectedTarget) {
                                 clocktowerConfirmedMonkProtectedTarget = clocktowerMonkProtectedTarget
-                                clocktowerGameStateRevision += 1
+                                advanceClocktowerGameStateRevision()
                             }
                         },
                         onSelectMayorRedirectTarget = {
-                            clocktowerPlayerInputRevision += 1
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerMayorRedirectTarget = it
                         },
                         onConfirmMayorRedirectTarget = {
                             if (clocktowerConfirmedMayorRedirectTarget != clocktowerMayorRedirectTarget) {
                                 clocktowerConfirmedMayorRedirectTarget = clocktowerMayorRedirectTarget
-                                clocktowerGameStateRevision += 1
+                                advanceClocktowerGameStateRevision()
                             }
                         },
                         onSelectDemonSuccessor = {
-                            clocktowerPlayerInputRevision += 1
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerDemonSuccessorTarget = it
                         },
                         onConfirmNewDemon = {
                             clocktowerPendingNewDemonName = null
                             clocktowerPhase = ClocktowerPhase.Dawn
-                            clocktowerGameStateRevision += 1
+                            advanceClocktowerGameStateRevision()
                             resetClocktowerNightFlow()
                         },
                         onSelectKlutzChoice = {
-                            clocktowerPlayerInputRevision += 1
+                            advanceClocktowerPlayerInputRevision()
                             clocktowerKlutzChoiceName = it
                         },
                         onConfirmKlutzChoice = { spyRegistersGoodForChoice ->
@@ -2611,7 +2640,7 @@ internal fun CampBoardGameHostApp() {
                                     }
                                     resetClocktowerDayFlow()
                                     resetClocktowerNightFlow()
-                                    clocktowerGameStateRevision += 1
+                                    advanceClocktowerGameStateRevision()
                                 }
                             }
                         },
@@ -2649,7 +2678,7 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerArtistTruthfulAnswer = null
                                 clocktowerArtistShownAnswer = null
                                 clocktowerDayModeState.value = ClocktowerDayMode.Overview
-                                clocktowerGameStateRevision += 1
+                                advanceClocktowerGameStateRevision()
                             }
                         },
                         onSlayerShot = { claimantName, targetName, recluseRegistersAsDemon ->
@@ -2678,7 +2707,7 @@ internal fun CampBoardGameHostApp() {
                             var shotOutcome: GameOutcome? = null
                             if (canUseSlayerAbility) {
                                 clocktowerSlayerUsed = true
-                                clocktowerGameStateRevision += 1
+                                advanceClocktowerGameStateRevision()
                             }
                             if (canUseSlayerAbility && !slayerPoisoned && targetIndex >= 0 && targetCard != null && targetCard.eliminatedRound == null && targetRegistersAsDemon) {
                                 cards[targetIndex] = targetCard.copy(eliminatedRound = round)
@@ -2729,7 +2758,7 @@ internal fun CampBoardGameHostApp() {
                         },
                         onVirginNomination = { nominatorName, nomineeName, executeNominator ->
                             clocktowerVirginUsed = true
-                            clocktowerGameStateRevision += 1
+                            advanceClocktowerGameStateRevision()
                             if (executeNominator) {
                                 val index = cards.indexOfFirst { it.name == nominatorName }
                                 val nominatorCard = cards.getOrNull(index)
@@ -2788,7 +2817,7 @@ internal fun CampBoardGameHostApp() {
                         },
                         onAdvanceFromFirstNight = {
                             clocktowerPhase = ClocktowerPhase.Day
-                            clocktowerGameStateRevision += 1
+                            advanceClocktowerGameStateRevision()
                             clocktowerPendingNightDeath = null
                             clocktowerDemonAttackDraftTarget = null
                             resetClocktowerNightFlow()
@@ -2797,7 +2826,7 @@ internal fun CampBoardGameHostApp() {
                         onConfirmDay = {
                             // Confirming the day commits its execution/no-execution result and
                             // closes the day decision window, including when no one dies.
-                            clocktowerGameStateRevision += 1
+                            advanceClocktowerGameStateRevision()
                             val aliveBeforeExecution = cards.filter { it.eliminatedRound == null }
                             val executionName = clocktowerSelectedExecution
                             var executionOutcome: GameOutcome? = null
@@ -2871,7 +2900,7 @@ internal fun CampBoardGameHostApp() {
                             // Dawn resolution commits deaths, role changes and the next phase as
                             // one timeline boundary. Earlier action confirmations have already
                             // revisioned their own facts; this closes the night as a whole.
-                            clocktowerGameStateRevision += 1
+                            advanceClocktowerGameStateRevision()
                             val demonPoisonedTonight = clocktowerConfirmedPoisonTarget?.let { name ->
                                 cards.firstOrNull { it.name == name && it.eliminatedRound == null }?.clocktowerTeam == ClocktowerTeam.Demon
                             } == true
