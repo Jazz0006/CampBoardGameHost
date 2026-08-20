@@ -28,7 +28,7 @@ class ActiveGameProductionPersistenceWiringTest {
     }
 
     @Test
-    fun `snapshot writes strict content identity for the active game`() {
+    fun `snapshot writes strict content identity and immutable Clocktower ruleset basis`() {
         val snapshot = source
             .substringAfter("fun activeGameSnapshotJson(): JSONObject")
             .substringBefore("fun persistActiveGameStateIfNeeded()")
@@ -39,10 +39,33 @@ class ActiveGameProductionPersistenceWiringTest {
         assertTrue(snapshot.contains("assignedClocktowerRoleIds"))
         assertTrue(snapshot.contains("assignedWerewolfRoles"))
         assertTrue(snapshot.contains("lastWordsMode = lastWordsMode"))
+        assertTrue(snapshot.contains("\"clocktowerRulesetRoleIds\""))
+        assertTrue(snapshot.contains("ClocktowerRulesetPersistenceBasisJsonCodec.encode("))
+        assertTrue(snapshot.contains("ClocktowerRulesetPersistenceBasis(clocktowerRulesetRoleIds)"))
     }
 
     @Test
-    fun `restore validates version and identity before mutating live game state`() {
+    fun `Clocktower setup captures immutable ruleset basis before later role changes`() {
+        assertTrue(
+            source.contains(
+                "var clocktowerRulesetRoleIds by remember { mutableStateOf<Set<RoleId>>(emptySet()) }",
+            ),
+        )
+        val reset = source
+            .substringAfter("fun resetDealState(")
+            .substringBefore("fun startUndercoverGame()")
+        assertTrue(reset.contains("val rulesetBasis = ClocktowerRulesetPersistenceBasis("))
+        assertTrue(reset.contains("clocktowerRulesetRoleIds = rulesetBasis.roleIds"))
+        assertTrue(reset.contains("troubleBrewingRulesetRefFor(rulesetBasis)"))
+
+        val roleMutation = source
+            .substringAfter("fun setClocktowerActualRole(")
+            .substringBefore("fun setClocktowerShownRole(")
+        assertFalse(roleMutation.contains("clocktowerRulesetRoleIds"))
+    }
+
+    @Test
+    fun `restore validates version identity ruleset basis and ref before mutating live game state`() {
         val restore = source
             .substringAfter("fun restoreSavedGame()")
             .substringBefore("val latestPersistActiveGameState")
@@ -53,11 +76,20 @@ class ActiveGameProductionPersistenceWiringTest {
                 "val restoredPersistence = activeGamePersistenceCoordinator.resolveForRestore(",
             ),
         )
-        val validationIndex = restore.indexOf("val restoredPersistence = activeGamePersistenceCoordinator.resolveForRestore(")
+        assertTrue(restore.contains("val restoredRulesetBasis ="))
+        assertTrue(restore.contains("ClocktowerRulesetPersistenceBasisJsonCodec.decode("))
+        assertTrue(restore.contains("val restoredClocktowerRulesetRef ="))
+        assertTrue(restore.contains("val resolvedClocktowerRulesetRef ="))
+        assertTrue(restore.contains("TroubleBrewingRulesetPersistence.resolveForRestore("))
+
+        val identityIndex = restore.indexOf("val restoredPersistence = activeGamePersistenceCoordinator.resolveForRestore(")
+        val rulesetIndex = restore.indexOf("val resolvedClocktowerRulesetRef =")
         val mutationIndex = restore.indexOf("playerNames.clear()")
-        assertTrue(validationIndex >= 0)
+        assertTrue(identityIndex >= 0)
+        assertTrue(rulesetIndex >= 0)
         assertTrue(mutationIndex >= 0)
-        assertTrue("Persistence identity must be validated before live state mutation.", validationIndex < mutationIndex)
+        assertTrue("Persistence identity must be validated before live state mutation.", identityIndex < mutationIndex)
+        assertTrue("Ruleset basis/ref must be validated before live state mutation.", rulesetIndex < mutationIndex)
     }
 
     @Test
@@ -76,14 +108,16 @@ class ActiveGameProductionPersistenceWiringTest {
     }
 
     @Test
-    fun `Trouble Brewing ruleset fallback is legacy-only and v2 validates exact current ruleset`() {
+    fun `Trouble Brewing restore uses persisted immutable basis instead of mutable restored cards`() {
         val restore = source
             .substringAfter("fun restoreSavedGame()")
             .substringBefore("val latestPersistActiveGameState")
 
         assertTrue(restore.contains("restoredPersistence.allowLegacyClocktowerRulesetFallback"))
-        assertTrue(restore.contains("val currentTroubleBrewingRulesetRef = troubleBrewingRulesetRefFor(localizedRestoredCards)"))
-        assertTrue(restore.contains("clocktowerRulesetRef == currentTroubleBrewingRulesetRef"))
-        assertTrue(restore.contains("Version 2 Trouble Brewing save has an incompatible ruleset reference."))
+        assertTrue(restore.contains("TroubleBrewingRulesetPersistence.resolveForRestore("))
+        assertTrue(restore.contains("Version 2 Clocktower save is missing ruleset role basis."))
+        assertFalse(restore.contains("troubleBrewingRulesetRefFor(localizedRestoredCards)"))
+        assertTrue(restore.contains("clocktowerRulesetRoleIds = restoredRulesetBasis?.roleIds.orEmpty()"))
+        assertTrue(restore.contains("clocktowerRulesetRef = resolvedClocktowerRulesetRef"))
     }
 }
