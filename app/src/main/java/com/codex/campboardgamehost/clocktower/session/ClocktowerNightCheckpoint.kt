@@ -23,6 +23,7 @@ internal data class ClocktowerNightCheckpoint(
     val confirmedMayorRedirectTarget: String?,
     val mayorRedirectDraftTarget: String?,
     val pendingNewDemonName: String?,
+    val pendingNightNewDemonIdentityName: String? = null,
     val demonSuccessorDraftTarget: String?,
 ) {
     init {
@@ -47,6 +48,7 @@ internal data class ClocktowerNightCheckpoint(
         "clocktowerConfirmedMayorRedirectTarget" to confirmedMayorRedirectTarget,
         "clocktowerMayorRedirectTarget" to mayorRedirectDraftTarget,
         "clocktowerPendingNewDemonName" to pendingNewDemonName,
+        "clocktowerPendingNightNewDemonIdentityName" to pendingNightNewDemonIdentityName,
         "clocktowerDemonSuccessorTarget" to demonSuccessorDraftTarget,
     )
 
@@ -71,6 +73,7 @@ internal data class ClocktowerNightCheckpoint(
                 ?: values.string("clocktowerMayorRedirectTarget"),
             mayorRedirectDraftTarget = values.string("clocktowerMayorRedirectTarget"),
             pendingNewDemonName = values.string("clocktowerPendingNewDemonName"),
+            pendingNightNewDemonIdentityName = values.string("clocktowerPendingNightNewDemonIdentityName"),
             demonSuccessorDraftTarget = values.string("clocktowerDemonSuccessorTarget"),
         )
 
