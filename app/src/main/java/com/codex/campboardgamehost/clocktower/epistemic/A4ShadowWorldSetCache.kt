@@ -17,13 +17,18 @@ class A4ShadowWorldSetCache {
         A4ShadowCacheGeneration(++nextGenerationId, scope).also { currentByGame[scope.gameId] = it }
     }
 
-    /** Atomic current-generation check and write. */
+    /** Atomic current-generation and cache-scope check before publishing one immutable value. */
     fun commitIfCurrent(
         generation: A4ShadowCacheGeneration,
         key: A4IdentityRevealPrewarmCacheKey,
         value: PlayerWorldSet,
     ): Boolean = synchronized(lock) {
-        if (generation.scope.gameId != key.gameId || currentByGame[key.gameId] != generation) return false
+        if (generation.scope.gameId != key.gameId ||
+            generation.scope.gameStateRevision != key.gameStateRevision ||
+            generation.scope.formalSnapshotId != key.formalSnapshotId ||
+            generation.scope.rollout != key.rollout ||
+            currentByGame[key.gameId] != generation
+        ) return false
         values[key] = value
         true
     }

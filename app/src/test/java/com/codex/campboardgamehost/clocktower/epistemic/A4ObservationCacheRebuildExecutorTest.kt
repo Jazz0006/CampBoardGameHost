@@ -96,6 +96,28 @@ class A4ObservationCacheRebuildExecutorTest {
         assertTrue(cache.commitIfCurrent(newGeneration, request.cacheKey(knowledge), worldSet(request, knowledge)))
     }
 
+    @Test fun `cache commit fails closed when key disagrees with generation scope`() {
+        val formal = formal()
+        val request = request(formal, EpistemicObservationLog(), "unused").copy(appendedRecordId = "missing")
+        val knowledge = knowledge(formal, EpistemicObservationLog()).getValue(1)
+        val cache = A4ShadowWorldSetCache()
+        val generation = cache.beginVersion(request.cacheScope())
+        val key = request.cacheKey(knowledge)
+        val value = worldSet(request, knowledge)
+        val mismatchedKeys = listOf(
+            key.copy(gameStateRevision = key.gameStateRevision + 1),
+            key.copy(formalSnapshotId = "${key.formalSnapshotId}-stale"),
+            key.copy(rollout = A4WorldEngineRollout.ENUMERATED_ONLY),
+        )
+
+        mismatchedKeys.forEach { mismatched ->
+            assertFalse(cache.commitIfCurrent(generation, mismatched, value))
+            assertNull(cache.read(mismatched))
+        }
+        assertTrue(cache.commitIfCurrent(generation, key, value))
+        assertSame(value, cache.read(key))
+    }
+
     @Test fun `newer revision during a build makes completed and queued work stale`() {
         val formal = formal()
         val appended = record("public", ObservationVisibility.PUBLIC, emptySet())
@@ -179,7 +201,7 @@ class A4ObservationCacheRebuildExecutorTest {
             ),
             affectedSeats = listOf(2),
             totalBuildMillis = 7,
-            coarseMaxHeapDeltaBytes = 11,
+            coarseEndHeapDeltaBytes = 11,
         )
 
         assertEquals(
@@ -187,6 +209,8 @@ class A4ObservationCacheRebuildExecutorTest {
             report.toLogLine(request),
         )
         assertTrue(report.toLogLine(request).contains("status=1:READY_REUSED,2:MISSING_REBUILT"))
+        assertTrue(report.toLogLine(request).contains("coarseEndHeapDeltaBytes=11"))
+        assertFalse(report.toLogLine(request).contains("coarseMaxHeapDeltaBytes"))
         assertFalse(report.toLogLine(request).contains("Spy"))
     }
 

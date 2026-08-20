@@ -99,7 +99,7 @@ class A4ObservationCacheRebuildExecutor(
         entries = entries,
         affectedSeats = affected.sorted(),
         totalBuildMillis = ((System.nanoTime() - startedNanos) / NANOS_PER_MILLI).coerceAtLeast(0L),
-        coarseMaxHeapDeltaBytes = (heapBytes() - heapStart).coerceAtLeast(0L),
+        coarseEndHeapDeltaBytes = (heapBytes() - heapStart).coerceAtLeast(0L),
     )
 
     private companion object {
@@ -182,7 +182,7 @@ data class A4ObservationCacheRebuildReport(
     val entries: List<A4ObservationCacheRebuildEntry>,
     val affectedSeats: List<Int> = emptyList(),
     val totalBuildMillis: Long = 0L,
-    val coarseMaxHeapDeltaBytes: Long = 0L,
+    val coarseEndHeapDeltaBytes: Long = 0L,
 ) {
     fun toLogLine(request: A4ObservationCacheRebuildRequest): String = buildString {
         append("A4_OBSERVATION_CACHE_UPDATE")
@@ -197,6 +197,6 @@ data class A4ObservationCacheRebuildReport(
             "${entry.recipientSeat}:${entry.outcome}" + entry.failureType?.let { "/$it" }.orEmpty()
         })
         append(" totalBuildMs=").append(totalBuildMillis)
-        append(" coarseMaxHeapDeltaBytes=").append(coarseMaxHeapDeltaBytes)
+        append(" coarseEndHeapDeltaBytes=").append(coarseEndHeapDeltaBytes)
     }
 }
