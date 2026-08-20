@@ -1,0 +1,289 @@
+name: R5.5 S4d ruleset basis wiring patch
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/r55-s4d-ruleset-basis-wiring.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.head_ref == 'codex/storyteller-algorithm-v4'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/storyteller-algorithm-v4
+          fetch-depth: 0
+      - name: Apply exact immutable ruleset basis patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
+          text = path.read_text(encoding="utf-8")
+
+          def block(*lines: str) -> str:
+              return "\n".join(lines)
+
+          def replace_once(old: str, new: str, label: str) -> None:
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one anchor, found {count}")
+              text = text.replace(old, new, 1)
+
+          replace_once(
+              '    var clocktowerRulesetRef by remember { mutableStateOf<RulesetRef?>(null) }',
+              block(
+                  '    var clocktowerRulesetRef by remember { mutableStateOf<RulesetRef?>(null) }',
+                  '    var clocktowerRulesetRoleIds by remember { mutableStateOf<Set<RoleId>>(emptySet()) }',
+              ),
+              'ruleset basis state',
+          )
+
+          replace_once(
+              block(
+                  '    fun troubleBrewingRulesetRefFor(activeCards: List<PlayerCard>): RulesetRef? {',
+                  '        if (activeCards.isEmpty()) return null',
+                  '        return runCatching {',
+                  '            val json = baseContext.assets',
+                  '                .open("rules/trouble_brewing.json")',
+                  '                .bufferedReader(Charsets.UTF_8)',
+                  '                .use { it.readText() }',
+                  '            val knowledge = RulesetJsonLoader.parse(json)',
+                  '            val inPlayRoles = activeCards.mapNotNull { card -> card.clocktowerRole?.enName?.let(::RoleId) }.toSet()',
+                  '            RulesetRef(',
+                  '                scriptId = knowledge.scriptId,',
+                  '                scriptContentHash = RulesetContentHasher.hash(knowledge, inPlayRoles),',
+                  '                rulesetVersion = "trouble-brewing-v1",',
+                  '                sourceRevision = "official-wiki-2026-08-06",',
+                  '                coverage = RuleCoverage.PARTIAL,',
+                  '            )',
+                  '        }.getOrNull()',
+                  '    }',
+              ),
+              block(
+                  '    fun troubleBrewingRulesetKnowledge() = runCatching {',
+                  '        val json = baseContext.assets',
+                  '            .open("rules/trouble_brewing.json")',
+                  '            .bufferedReader(Charsets.UTF_8)',
+                  '            .use { it.readText() }',
+                  '        RulesetJsonLoader.parse(json)',
+                  '    }.getOrNull()',
+                  '',
+                  '    fun troubleBrewingRulesetRefFor(basis: ClocktowerRulesetPersistenceBasis): RulesetRef? {',
+                  '        val knowledge = troubleBrewingRulesetKnowledge() ?: return null',
+                  '        return runCatching { TroubleBrewingRulesetPersistence.refFor(knowledge, basis) }.getOrNull()',
+                  '    }',
+              ),
+              'ruleset helper basis',
+          )
+
+          replace_once(
+              block(
+                  '        put("clocktowerGameStateRevision", clocktowerGameStateRevision)',
+                  '        put("clocktowerPlayerInputRevision", clocktowerPlayerInputRevision)',
+                  '        if (clocktowerRulesetRef == null) {',
+              ),
+              block(
+                  '        put("clocktowerGameStateRevision", clocktowerGameStateRevision)',
+                  '        put("clocktowerPlayerInputRevision", clocktowerPlayerInputRevision)',
+                  '        if (currentGameKind == GameKind.Clocktower &&',
+                  '            currentClocktowerScript == ClocktowerScript.TroubleBrewing',
+                  '        ) {',
+                  '            put(',
+                  '                "clocktowerRulesetRoleIds",',
+                  '                ClocktowerRulesetPersistenceBasisJsonCodec.encode(',
+                  '                    ClocktowerRulesetPersistenceBasis(clocktowerRulesetRoleIds),',
+                  '                ),',
+                  '            )',
+                  '        } else {',
+                  '            put("clocktowerRulesetRoleIds", JSONObject.NULL)',
+                  '        }',
+                  '        if (clocktowerRulesetRef == null) {',
+              ),
+              'snapshot ruleset basis',
+          )
+
+          replace_once(
+              block(
+                  '                assignedWerewolfRoles = if (restoredGameKind == GameKind.Werewolf) {',
+                  '                    restoredCards.map { it.role }',
+                  '                } else {',
+                  '                    emptyList()',
+                  '                },',
+                  '            )',
+                  '            val localizedRestoredCards = restoredCards.map(::localizedRestoredCard)',
+              ),
+              block(
+                  '                assignedWerewolfRoles = if (restoredGameKind == GameKind.Werewolf) {',
+                  '                    restoredCards.map { it.role }',
+                  '                } else {',
+                  '                    emptyList()',
+                  '                },',
+                  '            )',
+                  '            val restoredRulesetBasis = if (',
+                  '                restoredGameKind == GameKind.Clocktower &&',
+                  '                restoredPersistence.clocktowerScript == ClocktowerScript.TroubleBrewing',
+                  '            ) {',
+                  '                when (json.optInt("version", 0)) {',
+                  '                    ActiveGamePersistenceCoordinator.LEGACY_VERSION -> ClocktowerRulesetPersistenceBasis(',
+                  '                        restoredCards.map { card ->',
+                  '                            RoleId(requireNotNull(card.clocktowerRole) {',
+                  '                                "Legacy Clocktower save is missing an assigned role."',
+                  '                            }.enName)',
+                  '                        }.toSet(),',
+                  '                    )',
+                  '                    ActiveGamePersistenceCoordinator.CURRENT_VERSION ->',
+                  '                        ClocktowerRulesetPersistenceBasisJsonCodec.decode(',
+                  '                            json.optJSONArray("clocktowerRulesetRoleIds")',
+                  '                                ?: error("Version 2 Clocktower save is missing ruleset role basis."),',
+                  '                        )',
+                  '                    else -> error("Unsupported active game state version")',
+                  '                }',
+                  '            } else {',
+                  '                null',
+                  '            }',
+                  '            val restoredClocktowerRulesetRef = json.opt("clocktowerRulesetRef")',
+                  '                .takeUnless { raw -> raw == null || raw == JSONObject.NULL }',
+                  '                ?.let { raw ->',
+                  '                    val ref = raw as? JSONObject',
+                  '                        ?: error("Invalid Clocktower ruleset reference payload.")',
+                  '                    RulesetRef(',
+                  '                        scriptId = ScriptId(ref.getString("scriptId")),',
+                  '                        scriptContentHash = ref.getString("scriptContentHash"),',
+                  '                        rulesetVersion = ref.getString("rulesetVersion"),',
+                  '                        sourceRevision = ref.getString("sourceRevision"),',
+                  '                        coverage = enumByName<RuleCoverage>(ref.getString("coverage"))',
+                  '                            ?: error("Invalid Clocktower ruleset coverage."),',
+                  '                    )',
+                  '                }',
+                  '            val resolvedClocktowerRulesetRef = if (',
+                  '                restoredGameKind == GameKind.Clocktower &&',
+                  '                restoredPersistence.clocktowerScript == ClocktowerScript.TroubleBrewing',
+                  '            ) {',
+                  '                TroubleBrewingRulesetPersistence.resolveForRestore(',
+                  '                    knowledge = troubleBrewingRulesetKnowledge()',
+                  '                        ?: error("Unable to resolve current Trouble Brewing ruleset knowledge."),',
+                  '                    persistedRef = restoredClocktowerRulesetRef,',
+                  '                    basis = requireNotNull(restoredRulesetBasis),',
+                  '                    allowLegacyFallback = restoredPersistence.allowLegacyClocktowerRulesetFallback,',
+                  '                )',
+                  '            } else {',
+                  '                restoredClocktowerRulesetRef',
+                  '            }',
+                  '            val localizedRestoredCards = restoredCards.map(::localizedRestoredCard)',
+              ),
+              'pre-mutation ruleset restore validation',
+          )
+
+          replace_once(
+              block(
+                  '            clocktowerGameStateRevision = json.optLong("clocktowerGameStateRevision", 0L).coerceAtLeast(0L)',
+                  '            clocktowerPlayerInputRevision = json.optLong("clocktowerPlayerInputRevision", 0L).coerceAtLeast(0L)',
+                  '            clocktowerRulesetRef = json.optJSONObject("clocktowerRulesetRef")?.let { ref ->',
+                  '                runCatching {',
+                  '                    RulesetRef(',
+                  '                        scriptId = ScriptId(ref.getString("scriptId")),',
+                  '                        scriptContentHash = ref.getString("scriptContentHash"),',
+                  '                        rulesetVersion = ref.getString("rulesetVersion"),',
+                  '                        sourceRevision = ref.getString("sourceRevision"),',
+                  '                        coverage = enumByName<RuleCoverage>(ref.optString("coverage")) ?: RuleCoverage.UNVERIFIED,',
+                  '                    )',
+                  '                }.getOrNull()',
+                  '            }',
+                  '            if (restoredGameKind == GameKind.Clocktower &&',
+                  '                currentClocktowerScript == ClocktowerScript.TroubleBrewing',
+                  '            ) {',
+                  '                val currentTroubleBrewingRulesetRef = troubleBrewingRulesetRefFor(localizedRestoredCards)',
+                  '                    ?: error("Unable to resolve current Trouble Brewing ruleset reference.")',
+                  '                if (restoredPersistence.allowLegacyClocktowerRulesetFallback) {',
+                  '                    if (clocktowerRulesetRef == null) {',
+                  '                        clocktowerRulesetRef = currentTroubleBrewingRulesetRef',
+                  '                    } else {',
+                  '                        require(clocktowerRulesetRef == currentTroubleBrewingRulesetRef) {',
+                  '                            "Legacy Trouble Brewing save has an incompatible ruleset reference."',
+                  '                        }',
+                  '                    }',
+                  '                } else {',
+                  '                    require(clocktowerRulesetRef == currentTroubleBrewingRulesetRef) {',
+                  '                        "Version 2 Trouble Brewing save has an incompatible ruleset reference."',
+                  '                    }',
+                  '                }',
+                  '            }',
+              ),
+              block(
+                  '            clocktowerGameStateRevision = json.optLong("clocktowerGameStateRevision", 0L).coerceAtLeast(0L)',
+                  '            clocktowerPlayerInputRevision = json.optLong("clocktowerPlayerInputRevision", 0L).coerceAtLeast(0L)',
+                  '            clocktowerRulesetRoleIds = restoredRulesetBasis?.roleIds.orEmpty()',
+                  '            clocktowerRulesetRef = resolvedClocktowerRulesetRef',
+              ),
+              'assign validated ruleset state',
+          )
+
+          replace_once(
+              block(
+                  '            clocktowerGameStateRevision = 0L',
+                  '            clocktowerPlayerInputRevision = 0L',
+                  '            clocktowerRulesetRef = if (clocktowerScript == ClocktowerScript.TroubleBrewing) {',
+                  '                troubleBrewingRulesetRefFor(cards)',
+                  '            } else {',
+                  '                null',
+                  '            }',
+                  '        } else {',
+                  '            clocktowerGameId = ""',
+                  '            clocktowerGameSeed = 0L',
+                  '            clocktowerGameStateRevision = 0L',
+                  '            clocktowerPlayerInputRevision = 0L',
+                  '            clocktowerRulesetRef = null',
+                  '        }',
+              ),
+              block(
+                  '            clocktowerGameStateRevision = 0L',
+                  '            clocktowerPlayerInputRevision = 0L',
+                  '            if (clocktowerScript == ClocktowerScript.TroubleBrewing) {',
+                  '                val rulesetBasis = ClocktowerRulesetPersistenceBasis(',
+                  '                    cards.map { card ->',
+                  '                        RoleId(requireNotNull(card.clocktowerRole) {',
+                  '                            "Trouble Brewing setup is missing an assigned role."',
+                  '                        }.enName)',
+                  '                    }.toSet(),',
+                  '                )',
+                  '                clocktowerRulesetRoleIds = rulesetBasis.roleIds',
+                  '                clocktowerRulesetRef = troubleBrewingRulesetRefFor(rulesetBasis)',
+                  '                    ?: error("Unable to resolve Trouble Brewing ruleset reference at setup.")',
+                  '            } else {',
+                  '                clocktowerRulesetRoleIds = emptySet()',
+                  '                clocktowerRulesetRef = null',
+                  '            }',
+                  '        } else {',
+                  '            clocktowerGameId = ""',
+                  '            clocktowerGameSeed = 0L',
+                  '            clocktowerGameStateRevision = 0L',
+                  '            clocktowerPlayerInputRevision = 0L',
+                  '            clocktowerRulesetRoleIds = emptySet()',
+                  '            clocktowerRulesetRef = null',
+                  '        }',
+              ),
+              'setup ruleset basis capture',
+          )
+
+          path.write_text(text, encoding="utf-8")
+          PY
+          git diff --check
+          git diff -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+      - name: Commit exact patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          git diff --cached --quiet && exit 0
+          git commit -m "fix(r5.5): persist immutable Clocktower ruleset basis"
+          git push origin HEAD:codex/storyteller-algorithm-v4
