@@ -173,6 +173,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.A4IdentityRevealPrewarmC
 import com.codex.campboardgamehost.clocktower.epistemic.A4IdentityRevealPrewarmRequest
 import com.codex.campboardgamehost.clocktower.epistemic.A4MainThreadFrameTelemetry
 import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationCacheRebuildExecutor
+import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationDurabilityGate
 import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationCacheRebuildRequest
 import com.codex.campboardgamehost.clocktower.epistemic.A4PlayerKnowledgeFactory
 import com.codex.campboardgamehost.clocktower.epistemic.A4ShadowWorldSetCache
@@ -490,12 +491,11 @@ private fun Screen.isActiveGameScreen(): Boolean = when (this) {
     Screen.Settings -> false
 }
 
-private fun Context.saveActiveGameState(snapshot: JSONObject) {
+private fun Context.saveActiveGameState(snapshot: JSONObject): Boolean =
     getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         .edit()
         .putString(ACTIVE_GAME_STATE_KEY, snapshot.toString())
         .commit()
-}
 
 private fun Context.loadActiveGameStateJson(): JSONObject? {
     val raw = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -1089,6 +1089,7 @@ internal fun CampBoardGameHostApp() {
     val a4ObservationCacheRebuildExecutor = remember(a4ShadowWorldSetCache) {
         A4ObservationCacheRebuildExecutor(a4ShadowWorldSetCache)
     }
+    val a4ObservationDurabilityGate = remember(clocktowerGameId) { A4ObservationDurabilityGate() }
     var a4ObservationCacheRebuildRequest by remember { mutableStateOf<A4ObservationCacheRebuildRequest?>(null) }
     val playerCount = playerNames.size
 
@@ -1237,7 +1238,10 @@ internal fun CampBoardGameHostApp() {
     }
     LaunchedEffect(a4ObservationCacheRebuildRequest) {
         val request = a4ObservationCacheRebuildRequest ?: return@LaunchedEffect
-        val report = withContext(Dispatchers.Default) { a4ObservationCacheRebuildExecutor.execute(request) }
+        val report = withContext(Dispatchers.Default) {
+            val workerScope = this
+            a4ObservationCacheRebuildExecutor.execute(request) { !workerScope.isActive }
+        }
         Log.i(A4_OBSERVATION_CACHE_UPDATE_LOG_TAG, report.toLogLine(request))
     }
     var a4InitialRecommendationDemandRecorded by remember(clocktowerGameId) { mutableStateOf(false) }
@@ -1302,7 +1306,7 @@ internal fun CampBoardGameHostApp() {
         }
         clocktowerPlayerInputRevision += 1
         appendedObservationIds.lastOrNull()?.let { recordId ->
-            a4ObservationCacheRebuildRequest = a4ObservationCacheRebuildRequestOrNull(recordId)
+            a4ObservationDurabilityGate.markPending(recordId)
         }
     }
 
@@ -1310,7 +1314,7 @@ internal fun CampBoardGameHostApp() {
         if (clocktowerEpistemicObservations.any { it.recordId == record.recordId }) return
         clocktowerEpistemicObservations += record
         clocktowerPlayerInputRevision += 1
-        a4ObservationCacheRebuildRequest = a4ObservationCacheRebuildRequestOrNull(record.recordId)
+        a4ObservationDurabilityGate.markPending(record.recordId)
     }
 
     fun localizedText(zh: String, en: String): String = if (language == "en") en else zh
@@ -1486,10 +1490,15 @@ internal fun CampBoardGameHostApp() {
         put("clocktowerEpistemicObservations", recordedEpistemicObservationsToJsonArray(clocktowerEpistemicObservations))
     }
 
-    fun persistActiveGameStateIfNeeded() {
-        if (screen.isActiveGameScreen() && cards.isNotEmpty()) {
-            baseContext.saveActiveGameState(activeGameSnapshotJson())
-        }
+    fun persistActiveGameStateIfNeeded(): Boolean {
+        if (!screen.isActiveGameScreen() || cards.isEmpty()) return false
+        return baseContext.saveActiveGameState(activeGameSnapshotJson())
+    }
+
+    fun persistAndReleaseA4ObservationRebuildIfDurable() {
+        val persisted = persistActiveGameStateIfNeeded()
+        val recordId = a4ObservationDurabilityGate.releaseAfterPersistence(persisted) ?: return
+        a4ObservationCacheRebuildRequest = a4ObservationCacheRebuildRequestOrNull(recordId)
     }
 
     fun restoreSavedGame() {
@@ -1686,7 +1695,7 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    val latestPersistActiveGameState by rememberUpdatedState { persistActiveGameStateIfNeeded() }
+    val latestPersistActiveGameState by rememberUpdatedState { persistAndReleaseA4ObservationRebuildIfDurable() }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -1701,7 +1710,7 @@ internal fun CampBoardGameHostApp() {
     }
 
     SideEffect {
-        persistActiveGameStateIfNeeded()
+        persistAndReleaseA4ObservationRebuildIfDurable()
     }
 
     fun maxUndercoverFor(count: Int): Int {

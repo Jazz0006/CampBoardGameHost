@@ -78,6 +78,14 @@ class A4ObservationCacheRebuildExecutor(
                     )
                     continue
                 }
+                if (isCancelled()) {
+                    cache.cancel(generation)
+                    queueStopped = true
+                    entries += A4ObservationCacheRebuildEntry(
+                        seat, A4ObservationCacheRebuildOutcome.CANCELLED, afterKey,
+                    )
+                    continue
+                }
                 val outcome = if (cache.commitIfCurrent(generation, afterKey, value)) {
                     if (wasReady) A4ObservationCacheRebuildOutcome.READY_REBUILT
                     else A4ObservationCacheRebuildOutcome.MISSING_REBUILT

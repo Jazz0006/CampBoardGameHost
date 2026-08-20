@@ -137,13 +137,14 @@ class A4ObservationCacheRebuildExecutorTest {
         assertTrue(report.entries.all { entry -> cache.read(requireNotNull(entry.key)) == null })
     }
 
-    @Test fun `cancellation leaves the completed entry ready and queued work cancelled`() {
+    @Test fun `cancellation discards completed build and cancels queued work`() {
         val formal = formal()
         val appended = record("public", ObservationVisibility.PUBLIC, emptySet())
         val request = request(formal, EpistemicObservationLog().append(appended), appended.recordId)
         val cancelled = AtomicBoolean(false)
         val calls = mutableListOf<Int>()
-        val executor = A4ObservationCacheRebuildExecutor(A4ShadowWorldSetCache()) { active, recipientKnowledge ->
+        val cache = A4ShadowWorldSetCache()
+        val executor = A4ObservationCacheRebuildExecutor(cache) { active, recipientKnowledge ->
             calls += recipientKnowledge.recipientSeat
             cancelled.set(true)
             worldSet(active, recipientKnowledge)
@@ -152,8 +153,8 @@ class A4ObservationCacheRebuildExecutorTest {
         val report = executor.execute(request) { cancelled.get() }
 
         assertEquals(listOf(1), calls)
-        assertEquals(A4ObservationCacheRebuildOutcome.MISSING_REBUILT, report.entries.first().outcome)
-        assertTrue(report.entries.drop(1).all { it.outcome == A4ObservationCacheRebuildOutcome.CANCELLED })
+        assertTrue(report.entries.all { it.outcome == A4ObservationCacheRebuildOutcome.CANCELLED })
+        assertTrue(report.entries.all { entry -> cache.read(requireNotNull(entry.key)) == null })
     }
 
     @Test fun `ordinary failure continues while OOM stops without a cardinality`() {
