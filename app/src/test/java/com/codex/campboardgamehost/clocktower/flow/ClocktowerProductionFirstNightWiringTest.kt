@@ -27,13 +27,22 @@ class ClocktowerProductionFirstNightWiringTest {
         assertTrue(ordering.contains("ClocktowerProductionFirstNightFlow.order("))
         assertTrue(ordering.contains("BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script)"))
         assertTrue(ordering.contains("playerCount = cards.size"))
-        assertTrue(ordering.contains("inPlayRoleIds = cards.mapNotNull { it.clocktowerRole?.enName }.map(::RoleId).toSet()"))
         assertTrue(ordering.contains("productionSteps = filteredNightSteps"))
         assertTrue(ordering.contains("ClocktowerProductionNightStepIdentity.minionInfo()"))
         assertTrue(ordering.contains("ClocktowerProductionNightStepIdentity.demonInfo()"))
         assertTrue(ordering.contains("ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring()"))
         assertTrue(ordering.contains("ClocktowerProductionNightStepIdentity.role("))
         assertTrue(ordering.contains("RoleId(requireNotNull(step.roleEnName)"))
+    }
+
+    @Test
+    fun `production first-night planner input preserves Drunk waking identity separately from functioning identity`() {
+        assertTrue(ordering.contains("val firstNightWakingRoleIds = buildSet"))
+        assertTrue(ordering.contains("cards.forEach { card ->"))
+        assertTrue(ordering.contains("card.clocktowerRole?.enName?.let { add(RoleId(it)) }"))
+        assertTrue(ordering.contains("if (card.clocktowerRole?.enName == \"Drunk\") {"))
+        assertTrue(ordering.contains("card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }"))
+        assertTrue(ordering.contains("inPlayRoleIds = firstNightWakingRoleIds"))
     }
 
     @Test
