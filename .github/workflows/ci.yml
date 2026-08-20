@@ -106,3 +106,128 @@ jobs:
             --botc-asp-dir build/oracles/botc-asp \
             --report build/reports/asp-oracle-a2.json \
             --timeout 30
+
+  r4-cache-contract:
+    name: R4 guarded cache contract
+    needs: [android-tests, asp-contract-tests, asp-oracle]
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'codex/storyteller-algorithm-v4'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout development branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/storyteller-algorithm-v4
+          fetch-depth: 0
+
+      - name: Check R4.1 gate
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cache=app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ShadowWorldSetCache.kt
+          executor=app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutor.kt
+          test_file=app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutorTest.kt
+          grep -q 'generation.scope.gameId != key.gameId || currentByGame\[key.gameId\] != generation' "$cache"
+          grep -q 'coarseMaxHeapDeltaBytes = (heapBytes() - heapStart)' "$executor"
+          grep -q 'coarseMaxHeapDeltaBytes = 11' "$test_file"
+          echo 'needs_patch=true' >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK 17
+        if: steps.gate.outputs.needs_patch == 'true'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        if: steps.gate.outputs.needs_patch == 'true'
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Apply R4.1 cache and telemetry contract
+        if: steps.gate.outputs.needs_patch == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          cache = Path('app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ShadowWorldSetCache.kt')
+          executor = Path('app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutor.kt')
+          test_file = Path('app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutorTest.kt')
+
+          cache_text = cache.read_text(encoding='utf-8')
+          old_guard = '        if (generation.scope.gameId != key.gameId || currentByGame[key.gameId] != generation) return false\n'
+          new_guard = '''        if (generation.scope.gameId != key.gameId ||\n            generation.scope.gameStateRevision != key.gameStateRevision ||\n            generation.scope.formalSnapshotId != key.formalSnapshotId ||\n            generation.scope.rollout != key.rollout ||\n            currentByGame[key.gameId] != generation\n        ) return false\n'''
+          assert cache_text.count(old_guard) == 1
+          cache_text = cache_text.replace(old_guard, new_guard)
+          cache.write_text(cache_text.rstrip() + '\n', encoding='utf-8')
+
+          executor_text = executor.read_text(encoding='utf-8')
+          assert executor_text.count('coarseMaxHeapDeltaBytes') == 3
+          executor_text = executor_text.replace('coarseMaxHeapDeltaBytes', 'coarseEndHeapDeltaBytes')
+          executor.write_text(executor_text.rstrip() + '\n', encoding='utf-8')
+
+          test_text = test_file.read_text(encoding='utf-8')
+          marker = '''    @Test fun `newer revision during a build makes completed and queued work stale`() {\n'''
+          assert test_text.count(marker) == 1
+          new_test = '''    @Test fun `cache commit fails closed when key disagrees with generation scope`() {\n        val formal = formal()\n        val request = request(formal, EpistemicObservationLog(), "unused").copy(appendedRecordId = "missing")\n        val knowledge = knowledge(formal, EpistemicObservationLog()).getValue(1)\n        val cache = A4ShadowWorldSetCache()\n        val generation = cache.beginVersion(request.cacheScope())\n        val key = request.cacheKey(knowledge)\n        val value = worldSet(request, knowledge)\n        val mismatchedKeys = listOf(\n            key.copy(gameStateRevision = key.gameStateRevision + 1),\n            key.copy(formalSnapshotId = "${key.formalSnapshotId}-stale"),\n            key.copy(rollout = A4WorldEngineRollout.ENUMERATED_ONLY),\n        )\n\n        mismatchedKeys.forEach { mismatched ->\n            assertFalse(cache.commitIfCurrent(generation, mismatched, value))\n            assertNull(cache.read(mismatched))\n        }\n        assertTrue(cache.commitIfCurrent(generation, key, value))\n        assertSame(value, cache.read(key))\n    }\n\n'''
+          test_text = test_text.replace(marker, new_test + marker)
+          assert test_text.count('coarseMaxHeapDeltaBytes = 11') == 1
+          test_text = test_text.replace('coarseMaxHeapDeltaBytes = 11', 'coarseEndHeapDeltaBytes = 11')
+          old_assert = '        assertTrue(report.toLogLine(request).contains("status=1:READY_REUSED,2:MISSING_REBUILT"))\n'
+          assert test_text.count(old_assert) == 1
+          test_text = test_text.replace(
+              old_assert,
+              old_assert + '        assertTrue(report.toLogLine(request).contains("coarseEndHeapDeltaBytes=11"))\n' +
+              '        assertFalse(report.toLogLine(request).contains("coarseMaxHeapDeltaBytes"))\n'
+          )
+          test_file.write_text(test_text.rstrip() + '\n', encoding='utf-8')
+          PY
+
+          allowed="$({
+            printf '%s\n' \
+              app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutor.kt \
+              app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ShadowWorldSetCache.kt \
+              app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutorTest.kt
+          } | sort -u)"
+          actual="$({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u)"
+          test "$actual" = "$allowed"
+          git diff --check
+
+      - name: Run focused R4.1 tests
+        if: steps.gate.outputs.needs_patch == 'true'
+        run: |
+          bash ./gradlew :app:testDebugUnitTest \
+            --tests '*A4ObservationCacheRebuildExecutorTest' \
+            --tests '*A4IdentityRevealPrewarmCoordinatorTest' \
+            --no-daemon --build-cache
+
+      - name: Run full Android regression
+        if: steps.gate.outputs.needs_patch == 'true'
+        run: bash ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --build-cache
+
+      - name: Commit validated R4.1 source only
+        if: steps.gate.outputs.needs_patch == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutor.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ShadowWorldSetCache.kt \
+            app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutorTest.kt
+          staged="$(git diff --cached --name-only | sort -u)"
+          expected="$({
+            printf '%s\n' \
+              app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutor.kt \
+              app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ShadowWorldSetCache.kt \
+              app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutorTest.kt
+          } | sort -u)"
+          test "$staged" = "$expected"
+          git diff --cached --check
+          git commit -m 'fix(r4): harden shadow cache contract'
+          git push origin HEAD:codex/storyteller-algorithm-v4
