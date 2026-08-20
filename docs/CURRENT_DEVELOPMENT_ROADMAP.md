@@ -35,6 +35,8 @@ R5.5 Script & Dynamic Flow Foundation
 ONLY THEN unlock revision-driven dynamic decision plan / Phase B production implementation
 ```
 
+**当前执行点（2026-08-20）：R1、R2、R3 已通过，下一步进入 R4 — A4.5 lifecycle hardening。**
+
 **在 Phase A 重新退出前，不开始新的 B1/B2/B3 功能扩展，也不把 B4 shadow 变成生产依赖；R5.5 也只能作为未来架构约束，不能提前进入 R2–R5。**
 
 ## 2. 阶段状态
@@ -44,9 +46,9 @@ ONLY THEN unlock revision-driven dynamic decision plan / Phase B production impl
 | A0 外部参考冻结 | PASS | 冻结参考仍有效；旧文档中的权威顺序文字需要以后统一，但不阻塞修复。 |
 | A1 Unified Semantic Model | PASS | storyteller truth / observation / player knowledge 三层边界保留。 |
 | A1.1 Semantic Hardening | PASS WITH FOLLOW-UP | schema-v2、registration interaction binding、world-set identity 基本成立；B4 前需补时间线身份细节。 |
-| A2 ASP Oracle harness | CONDITIONAL PASS | Oracle 权威边界正确，但 golden catalog 内嵌 `FormalGameState` 仍使用旧 schema shape。 |
-| A2.1 Golden corpus | CONDITIONAL PASS | R1 已将合同扩充到 52 个并加入 4 个 poisoned Spy/Recluse numeric regression；nested FormalGameState schema-v1 债务仍待 R3。 |
-| **A3 EnumeratedWorldSet** | **REOPEN / R1 PASS** | poisoned numeric-registration 修复已通过 Android、ASP contract 与真实 Clingo CI；A3 整体仍需 R3 end-to-end enumerator validation 后才能重新 PASS。 |
+| A2 ASP Oracle harness | PASS / R3.1 | nested `FormalGameState` 已迁移到 schema-v2；Python harness 与 Android typed decoder 共用 v2 合同，schema-v1 fail closed，canonical hash 与真实 Clingo baseline 已重新签署。 |
+| A2.1 Golden corpus | PASS / R3.1 | 52 个 official/golden contracts 保留；24 个进入 Clingo baseline、28 个明确 `ORACLE_NOT_APPLICABLE`，baseline 为 18 AGREE / 1 EXPECTED_COVERAGE_GAP / 5 KNOWN_ORACLE_VARIANCE / 28 ORACLE_NOT_APPLICABLE，且 `UNEXPLAINED_MISMATCH=0`、`NOT_RUN=0`。 |
+| **A3 EnumeratedWorldSet** | **REOPEN / R1+R3 VALIDATION PASS** | R1 correctness hotfix 与 R3 typed real-enumerator golden path 均已通过；A3 contract validation 已补齐，但整体 re-exit 仍等待 R5 的 A3/A4 differential 与 Phase A exit review。 |
 | **MainActivity decomposition** | **PASS / R2 BATCHES 1–10 VALIDATED** | Activity shell、三游戏边界及 Clocktower setup/day/night/host/history 主要职责已机械拆分；最终 read-only structural verifier 与标准 CI 验收通过后关闭 R2。 |
 | **A4 ZDD prototype** | **IN PROGRESS** | 仍为 exact shadow/prototype；设备性能门槛未完成，需在 R1 后重新跑 differential。 |
 | **A4.5 observation cache rebuild** | **REOPEN** | 核心 rebuild 架构可保留，但 durability、cancellation/invalidation、cache invariant 未完全满足原 spec。 |
@@ -74,7 +76,7 @@ poisoned Recluse -> Chef / Empath 仍可按 EVIL 登记
 4. 将这些组合加入 official golden corpus；外部 Oracle 的已知错误不得覆盖官方规则。
 5. 修复后重新跑 Enumerated/ZDD differential；“A3 == A4”不能替代 official/golden 独立验证。
 
-**实施状态（2026-08-19）：代码修复、4 组直接单元回归、4 个 machine-readable golden contracts（`TB-MAL-05`–`08`）和 Oracle authority-boundary 测试已写入分支。冻结 `pnkfelix/botc-asp` 的 Spy/Recluse misregistration 规则不受 impairment 门控，因此这 4 个场景记录为 `KNOWN_ORACLE_VARIANCE`。2026-08-20 已由 GitHub Actions 获得 Android unit tests、debug APK、ASP contract tests 与真实 Clingo cross-validation 的通过证据，因此 R1 runtime gate 标记 PASS；A3 整体仍保持 REOPEN，等待 R3 end-to-end enumerator validation。**
+**实施状态（2026-08-19～20）：代码修复、4 组直接单元回归、4 个 machine-readable golden contracts（`TB-MAL-05`–`08`）和 Oracle authority-boundary 测试均已通过。冻结 `pnkfelix/botc-asp` 的 Spy/Recluse misregistration 规则不受 impairment 门控，因此这 4 个场景继续登记为 `KNOWN_ORACLE_VARIANCE`。R3 又补齐 schema-v2 typed fixture 与真实 enumerator golden path；A3 contract validation 已通过，但整体 re-exit 仍等待 R5 A3/A4 differential 与 Phase A exit review。**
 
 ### P0.2 A2 fixture schema 与当前 A1 schema-v2 不一致
 
@@ -86,6 +88,8 @@ poisoned Recluse -> Chef / Empath 仍可按 EVIL 登记
 2. fixture 必须能通过当前 typed semantic decoder/adapter，而不是由 Python 维护一套“近似 A1”结构。
 3. schema-v1 必须继续 fail closed，不允许为了兼容测试重新静默接受。
 4. 更新 canonical hash 和 Oracle baseline report。
+
+**实施状态（2026-08-20 / R3.1 PASS）：所有 nested `FormalGameState` 已迁移到 schema-v2；Python harness 只接受当前 `SCHEMA_VERSION`，并新增 schema-v1 fail-closed regression；Android `A3GoldenContractCatalogTest` 会让每个 fixture 实际经过 `EpistemicSemanticJson.decodeFormalGameState()`。canonical fixture SHA-256 与真实 Clingo baseline 已重新生成并相互校验，`UNEXPLAINED_MISMATCH=0`、`NOT_RUN=0`。source commit：`d683fe383b6c56d74b3206b6c325d6ba3b31bed2`。**
 
 ### P0.3 A3 official golden runner 需要真正覆盖 enumerator
 
@@ -104,6 +108,8 @@ PlayerKnowledgeSnapshot
 - 新增至少一条 typed end-to-end golden path，直接经过 `TroubleBrewingWorldEnumerator`；
 - setup、Drunk identity alternative、hidden Baron、Poisoner target、red herring、registration-sensitive info 至少有代表性场景贯穿完整路径；
 - 只有通过该路径后才能重新签署 A3 exit review。
+
+**实施状态（2026-08-20 / R3.2 PASS）：保留原有 24 条 evaluator-level executable golden contracts，并新增 `A3EndToEndGoldenContractTest.kt`，从 schema-v2 canonical fixture 解码 typed state/role catalog 后直接调用 `TroubleBrewingWorldEnumerator.enumerate()`。代表性路径覆盖 hidden Baron + Drunk identity alternative、Poisoner target / malfunctioning Empath information、Fortune Teller red herring 的 actual-good 资格与 Recluse registration branch，以及 Spy interaction-local registration。focused Enumerated/ZDD/golden suite 与 full Android regression 均通过。source commit：`58574f6dcc094737e5d202ce5facfefc8a6b357b`。**
 
 ## 4. P0 — MainActivity 结构性拆分
 
@@ -298,7 +304,7 @@ Player-world construction input (knowledge-safe structural facts)
 
 范围：P0.1 + golden regression。
 
-当前状态：**PASS**。Android unit tests、debug APK、ASP contract tests 与真实 Clingo cross-validation 均已有通过证据；A3 overall 仍待 R3 后重新签署。
+当前状态：**PASS**。Android unit tests、debug APK、ASP contract tests 与真实 Clingo cross-validation 均已有通过证据；R3 validation contract 现已补齐，A3 overall re-exit 仍待 R5 differential / Phase A review。
 
 已实施：
 
@@ -309,13 +315,13 @@ Player-world construction input (knowledge-safe structural facts)
 - 冻结 ASP Oracle 的 impairment/misregistration 差异登记为 `KNOWN_ORACLE_VARIANCE`；
 - Python harness 增加 authority-boundary regression，防止以后误把外部 Oracle 提升为规则权威。
 
-仍待验证：
+R3 已补充验证：
 
-- focused `EnumeratedWorldSetTest` / `A3GoldenContractCatalogTest` 实际运行；
-- Python oracle harness tests；
-- real Clingo cross-validation（预期 4 个新增 case 为 documented known variance）；
-- A3/A4 differential；
-- full JVM regression。
+- focused `EnumeratedWorldSetTest` / `A3GoldenContractCatalogTest` 已实际运行；
+- Python oracle harness tests 已通过；
+- real Clingo cross-validation 已重新签署 52-case catalog；
+- full JVM regression 与 debug APK build 已通过；
+- 仍待 R5 执行 A3/A4 differential 与 Phase A re-exit。
 
 退出条件：
 
@@ -359,24 +365,44 @@ R2 第一轮拆分现在关闭。最终结构已经形成明确的 setup / day /
 - 最终 read-only `R2 main-thread boundary` verifier 固化主要结构合同；
 - 临时 Actions write executor 已撤销，workflow 恢复 `contents: read`。
 
-**下一步正式进入 R3 — A2/A3 validation contract。** ViewModel/SessionController/immutable state ownership 重构属于后续独立架构工作，不回填到 R2。
+**R2 已关闭，不再作为当前 blocker；R3 validation contract 现已通过，下一步进入 R4。** ViewModel/SessionController/immutable state ownership 重构属于后续独立架构工作，不回填到 R2。
 
 ### R3 — A2/A3 validation contract
 
 范围：P0.2 + P0.3。
 
-退出条件：
+当前状态：**PASS**。R3.1 与 R3.2 均已由 guarded writer、focused tests、full Android regression 和 clean read-only CI 验收。
 
-- fixture schema-v2 一致；
-- typed end-to-end enumerator golden path 存在；
-- Oracle mismatch 分类重新生成；
-- `UNEXPLAINED_MISMATCH = 0`、`NOT_RUN = 0` 才能申请 A3 re-exit。
+R3.1 — schema contract：
+
+- nested `FormalGameState.schemaVersion` 全部由 v1 迁移到 v2；
+- Python harness 使用当前 `SCHEMA_VERSION`，schema-v1 明确 fail closed；
+- Android catalog loader 让所有 nested state 经过 `EpistemicSemanticJson.decodeFormalGameState()`；
+- canonical catalog hash 与真实 Clingo report hash 相互校验；
+- baseline：18 AGREE / 1 EXPECTED_COVERAGE_GAP / 5 KNOWN_ORACLE_VARIANCE / 28 ORACLE_NOT_APPLICABLE；
+- `UNEXPLAINED_MISMATCH=0`，`NOT_RUN=0`。
+
+R3.2 — real enumerator golden path：
+
+- 保留 24 条 evaluator-level executable golden contracts；
+- 新增独立 `A3EndToEndGoldenContractTest.kt`，真实调用 `TroubleBrewingWorldEnumerator.enumerate()`；
+- 覆盖 hidden Baron / Drunk、Poisoner target、red herring actual-alignment qualification、Spy/Recluse registration-sensitive information；
+- focused Enumerated/ZDD/golden tests 与 full JVM/debug APK regression 通过。
+
+退出证据：
+
+- R3.1 source `d683fe383b6c56d74b3206b6c325d6ba3b31bed2`；
+- R3.2 source `58574f6dcc094737e5d202ce5facfefc8a6b357b`；
+- clean read-only CI #96：Android、ASP contract、真实 Clingo 全部 success；
+- 临时 R3 writer 已撤销，`.github/workflows/ci.yml` 恢复 `contents: read`。
+
+**R3 已关闭。下一步正式进入 R4 — A4.5 lifecycle hardening。A3 contract validation 已满足，但 A3 overall re-exit 仍由 R5 differential / Phase A exit review 签署。**
 
 ### R4 — A4.5 lifecycle hardening
 
 范围：P0.4–P0.8。
 
-前置条件：R2 已完成，避免 persistence/lifecycle 修复继续堆入超大 `MainActivity.kt`。
+前置条件：R2 与 R3 已完成；A4.5 lifecycle/persistence 修复现在可以在已拆分的 Host boundary 上实施。
 
 退出条件：
 
