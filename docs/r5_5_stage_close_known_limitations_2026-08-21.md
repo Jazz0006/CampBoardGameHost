@@ -84,7 +84,10 @@ All new development should start from **post-merge `main` on a new branch**.
 The next session must first read:
 
 1. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
-2. this document
-3. the relevant next-stage design document before changing production code
+2. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-21.md`
+3. this document
+4. the relevant next-stage design document before changing production code
+
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-21.md` explicitly records that the historical R5/R5.5 blocking condition in `storyteller_revision_driven_dynamic_decision_engine_plan.md` has now been satisfied, while the P1 semantic prerequisites still apply before formal multi-night player-world reasoning.
 
 R5.5 should now be treated as historical/released foundation, not an active branch to continue extending.
