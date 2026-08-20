@@ -316,12 +316,18 @@ object EpistemicSemanticJson {
         queriedAlignment = json.nullableString("queriedAlignment")?.let { Alignment.valueOf(it) },
     )
 
-    private fun timelinePoint(json: JSONObject) = TimelinePoint(
-        phase = StorytellerPhase.valueOf(json.getString("phase")),
-        round = json.getInt("round"),
-        sequence = json.getInt("sequence"),
-        globalSequence = json.getLong("globalSequence"),
-    )
+    private fun timelinePoint(json: JSONObject): TimelinePoint {
+        require(json.has("globalSequence") && !json.isNull("globalSequence")) {
+            "Legacy schema-v2 TimelinePoint without globalSequence requires explicit migration; " +
+                "globalSequence cannot be inferred from local sequence."
+        }
+        return TimelinePoint(
+            phase = StorytellerPhase.valueOf(json.getString("phase")),
+            round = json.getInt("round"),
+            sequence = json.getInt("sequence"),
+            globalSequence = json.getLong("globalSequence"),
+        )
+    }
     private fun registrationProfile(json: JSONObject) = RegistrationProfile(
         json.nullableString("role")?.let(::RoleId), json.nullableString("characterType")?.let { CharacterType.valueOf(it) },
         json.nullableString("alignment")?.let { Alignment.valueOf(it) }, RegistrationBasis.valueOf(json.getString("basis")),
