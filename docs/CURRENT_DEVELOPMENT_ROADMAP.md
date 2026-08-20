@@ -30,16 +30,19 @@ ONLY THEN R6 revision-driven dynamic decision engine
 
 R1–R5 已全部通过，Phase A correctness exit 已签署。
 
-**当前执行点（2026-08-20）：R5.5 / S4 NEXT。S0 PASS；S1 Trouble Brewing FlowPlanner migration PASS；S2 No Greater Joy real second-script proof PASS；S3 Werewolf BoardRegistry + RoleRegistry + FlowPlanner shadow migration PASS。下一 source batch 从 S4 persistence / ruleset identity migration 开始。**
+**当前执行点（2026-08-20）：R5.5 / S5 NEXT。S0–S4 PASS；S4 persistence / ruleset identity migration 已完成并通过 clean-head 验证。下一阶段进入 S5 full regression + legacy flow cutover/removal gate；S4 结束点的 Production Clocktower Host 与 Werewolf Judge 仍保持 legacy flow。**
 
-最新已验证 source baseline：
+最新已验证 clean source baseline：
 
 ```text
-90d0fd01e2424189cd6a078aafadd2878a48e383
-fix(r5.5): fail closed invalid Werewolf board counts
+6b3052bab3b34bf07678f7e2b5331469b44d9e82
+clean S4 head（temporary patch workflows 已移除）
+
+8787b615555abeccc6731dea3c35b7afc5ce042e
+fix(r5.5): wire legacy Clocktower basis recovery
 ```
 
-该 source head 的 normal CI #135 已通过 Android unit tests + debug APK、ASP contract tests、real Clingo cross-validation；R2 structural verifier #127 也通过。
+clean head 的 normal CI #164 已通过 Android unit tests + debug APK、ASP contract tests、real Clingo cross-validation；R2 structural verifier #156 也通过。S4 exact diff 从 `ee6d5b99...` 到该 clean head 仅包含 persistence identity / migration / save-restore wiring 与对应 tests，没有 FlowPlanner/Host/Judge cutover，也没有 A3/A4 correctness source 改动。
 
 S3 使用两组 tests-first / contract-first 提交完成：
 
@@ -81,9 +84,9 @@ A4 ZDD 继续保持 exact shadow/prototype；`ZDD_DEVICE_VALIDATED` 仍未授权
 | **R5.5 S1 TB FlowPlanner migration** | **PASS** | S1.1–S1.4 全部通过；shadow-only；legacy production Host 尚未切换。 |
 | **R5.5 S2 NGJ second-script proof** | **PASS** | canonical NGJ asset、central registry metadata、conditional handlers、dual-script structural tests 全绿；FlowPlanner core 无 script-name 分支。 |
 | **R5.5 S3 Werewolf registry/planner** | **PASS** | typed role/board registry、house-rule separation、pure shadow planner、all classic-template legacy parity 与 fail-closed validation 全绿。 |
-| **R5.5 S4 persistence/ruleset identity** | **NEXT** | 统一 variant/content/semantic compatibility identity，并明确旧存档 migration / rejection。 |
-| R5.5 S5 regression/legacy removal/R6 handoff | BLOCKED BY S4 | full regression 后才允许关闭 legacy flow 并准备 R6。 |
-| R6 revision-driven production expansion | BLOCKED | R5.5 全部通过后才可切 READY。 |
+| **R5.5 S4 persistence/ruleset identity** | **PASS** | active-game schema v2、Clocktower script identity、Werewolf board + house-rule identity、显式 v1 migration、immutable TB ruleset basis 与 hash-driven succession recovery 全部通过。 |
+| **R5.5 S5 regression/legacy removal/R6 handoff** | **NEXT** | full regression 后再执行 production Clocktower Host / Werewolf Judge planner cutover 与 legacy removal gate。 |
+| R6 revision-driven production expansion | BLOCKED BY S5 | 只有 S5 全部通过后才可切 READY。 |
 
 ## 3. Phase A 已完成结果
 
@@ -151,8 +154,8 @@ S0 Schema / Catalog / official-custom JSON normalization / validation      PASS
 S1 Trouble Brewing FlowPlanner golden-equivalent migration                 PASS
 S2 No Greater Joy real second-script structural proof                      PASS
 S3 Werewolf BoardRegistry + RoleRegistry + FlowPlanner migration           PASS
-S4 persistence/ruleset identity migration                                  NEXT
-S5 full regression + legacy flow removal + R6 handoff
+S4 persistence/ruleset identity migration                                  PASS
+S5 full regression + legacy flow removal + R6 handoff                      NEXT
 ```
 
 ### 5.1 S0 — PASS
@@ -346,22 +349,41 @@ A3/A4 recommendation correctness path
 
 **S3 结论：PASS。Production Werewolf Judge 仍完全使用 legacy step builder。**
 
-### 7.5 S4 — NEXT：persistence / ruleset identity migration
+### 7.5 S4 — PASS：persistence / ruleset identity migration
 
-S4 开始正式冻结“游戏是按什么内容与执行语义创建/恢复”的 identity。至少需要同时覆盖 Clocktower 和 Werewolf：
+S4 已冻结“游戏是按什么内容与执行语义创建/恢复”的 identity，并把 production active-game persistence 升级为 schema v2。
+
+已完成：
+
+- `PersistedGameContentIdentity` 将 variant kind / stable variant ID / normalized content hash / semantic-handler version / source provenance 分离；source revision 仅作 provenance，不误当 compatibility equality gate；
+- Clocktower identity 由 normalized `ClocktowerScriptDefinition.id + contentHash` 派生，不按 display name 猜测；v1 `ClocktowerScript` enum 只做显式 ID migration，assigned actual roles 仅作为一致性证据；
+- Werewolf identity 使用 stable board ID + normalized role-deck hash，并将 `LastWordsMode` 等 house-rule options 独立持久化与兼容性比较；legacy mechanical setup 可确定性映射 built-in board 或 `legacy_custom_<hash>`；
+- active-game v2 使用 `gameContentIdentity` envelope，root `currentGameKind` 与 nested identity 必须一致；unsupported / malformed / content mismatch / semantic mismatch / house-rule mismatch 全部 fail closed；
+- restore 在任何 `playerNames/cards` live-state mutation 之前完成 version、content identity、TB ruleset basis/ref 验证；
+- `RulesetRef.scriptContentHash` 继续保留原 A3/A4 correctness 语义，没有被 normalized script content hash 取代；
+- Trouble Brewing setup-time role basis 现在作为 immutable persistence evidence 保存，Scarlet Woman / Imp succession 不再改变 ruleset identity；
+- v1 若角色从未被 successor 替换，可由唯一 restored roles 重建 basis；若发生 succession，则必须使用旧 `RulesetRef` hash 唯一反推原始 basis；发生角色替换但旧 ref 缺失、stale 或无法唯一识别时拒绝恢复，不静默猜测；
+- S4 从 `ee6d5b99...` 到 clean head 的最终 diff 仅涉及 1 个 App persistence owner、7 个 persistence/helper source 与 6 个 persistence tests。
+
+验证：clean source head `6b3052ba...` 的 CI #164 success；R2 #156 success。
+
+**S4 结论：PASS。Production Clocktower Host 与 Werewolf Judge 在该边界仍使用 legacy flow；planner cutover/removal 明确留给 S5。**
+
+### 7.6 S5 — NEXT：full regression + legacy flow cutover/removal + R6 handoff
+
+S5 的门槛顺序：
 
 ```text
-variant/script/board id
-normalized content hash
-ruleset / semantic-handler compatibility version
-actual assigned role IDs
-relevant house-rule options
-import/source provenance where applicable
+full multi-script / multi-board regression
+→ production Clocktower Host planner cutover + legacy differential
+→ production Werewolf Judge planner cutover + legacy differential
+→ legacy flow removal only after parity gates pass
+→ persistence restore/recovery regression
+→ clean-head Android/ASP/Clingo/R2 validation
+→ ONLY THEN R6 READY
 ```
 
-旧存档不得只按“当前 catalog 中同名 script/board”静默重新解释；必须有显式 migration 或 fail-closed rejection。
-
-S4 仍不负责关闭 legacy Host/Judge flow；legacy removal 属于 S5。
+S5 不得借 cutover 修改 Clocktower/Werewolf 游戏规则；任何行为差异必须先由 differential 明确解释。R6 在 S5 完成前继续 BLOCKED。
 
 ## 8. 明确继续延后的范围
 
