@@ -1,1 +1,1 @@
-R4.3 lifecycle invalidation validation trigger final
+R4.3 lifecycle invalidation validation armed
