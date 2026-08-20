@@ -34,12 +34,12 @@ class ClocktowerProductionOtherNightWiringTest {
     @Test
     fun `other-night planner receives existing resolved rule outcomes rather than deriving rules`() {
         assertTrue(ordering.contains("val otherNightResolvedFacts = ClocktowerResolvedFlowFacts("))
+        assertTrue(ordering.contains("if (pendingNightNewDemonIdentityName != null) add(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON)"))
         assertTrue(ordering.contains("if (lastExecutedName != null) add(ClocktowerResolvedFlowFact.EXECUTION_OCCURRED_TODAY)"))
         assertTrue(ordering.contains("if (ravenkeeperTrigger != null) add(ClocktowerResolvedFlowFact.RAVENKEEPER_DIED_AT_NIGHT)"))
         assertTrue(ordering.contains("if (mayorCanRedirect) add(ClocktowerResolvedFlowFact.MAYOR_REDIRECT_ELIGIBLE)"))
         assertTrue(ordering.contains("if (impSelfKillNeedsSuccessor) add(ClocktowerResolvedFlowFact.DEMON_SUCCESSION_REQUIRED)"))
         assertTrue(ordering.contains("if (sageNightDeath != null) add(ClocktowerResolvedFlowFact.SAGE_KILLED_BY_DEMON)"))
-        assertFalse(ordering.contains("ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON"))
         assertTrue(ordering.contains("resolvedFacts = otherNightResolvedFacts"))
     }
 
@@ -56,6 +56,8 @@ class ClocktowerProductionOtherNightWiringTest {
         assertTrue(ordering.contains("BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script)"))
         assertTrue(ordering.contains("playerCount = cards.size"))
         assertTrue(ordering.contains("productionSteps = filteredNightSteps"))
+        assertTrue(ordering.contains("step.action == ClocktowerNightAction.NewDemonIdentity"))
+        assertTrue(ordering.contains("ClocktowerProductionNightStepIdentity.newDemonIdentity()"))
         assertTrue(ordering.contains("ClocktowerProductionNightStepIdentity.demonSuccessor()"))
         assertTrue(ordering.contains("ClocktowerProductionNightStepIdentity.mayorRedirect()"))
         assertTrue(ordering.contains("step.action == ClocktowerNightAction.DemonKill"))
@@ -74,9 +76,10 @@ class ClocktowerProductionOtherNightWiringTest {
     }
 
     @Test
-    fun `new Demon identity confirmation remains a separate legacy screen in this stage`() {
+    fun `daytime Scarlet Woman identity is planner ordered while same-night succession screen remains separate`() {
         assertTrue(source.contains("pendingNewDemonName?.let { newDemonName ->"))
         assertTrue(source.contains("ClocktowerNewDemonConfirmationScreen("))
-        assertFalse(ordering.contains("new_demon_identity"))
+        assertTrue(ordering.contains("ClocktowerNightAction.NewDemonIdentity"))
+        assertTrue(ordering.contains("ClocktowerProductionNightStepIdentity.newDemonIdentity()"))
     }
 }
