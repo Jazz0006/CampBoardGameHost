@@ -31,7 +31,7 @@ class ActiveGameProductionPersistenceWiringTest {
     fun `snapshot writes strict content identity for the active game`() {
         val snapshot = source
             .substringAfter("fun activeGameSnapshotJson(): JSONObject")
-            .substringBefore("fun persistActiveGameState()")
+            .substringBefore("fun persistActiveGameStateIfNeeded()")
 
         assertTrue(snapshot.contains("activeGamePersistenceCoordinator.identityForSave("))
         assertTrue(snapshot.contains("PersistedActiveGameIdentityJsonCodec.ROOT_KEY"))
