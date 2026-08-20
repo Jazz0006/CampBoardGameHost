@@ -62,6 +62,7 @@ internal class ClocktowerCharacterInteractionRegistry(
                 ScarletWomanInteractionHandler,
                 MayorInteractionHandler,
                 RavenkeeperInteractionHandler,
+                SageInteractionHandler,
                 UndertakerInteractionHandler,
             ),
         )
@@ -113,14 +114,20 @@ private object ImpInteractionHandler : ClocktowerCharacterInteractionHandler {
         }
 }
 
-/** Scarlet Woman's night-order token is an ordering anchor, not a normal wake step. */
+/**
+ * The Scarlet Woman token is normally only an ordering anchor. If the rules layer has already
+ * resolved that she became the Demon during the day, the same token becomes the next-night
+ * private role-change interaction. Imp self-kill succession remains an Imp after-interaction event.
+ */
 private object ScarletWomanInteractionHandler : ClocktowerCharacterInteractionHandler {
     override val roleId: RoleId = RoleId("Scarlet Woman")
 
     override fun isRoleInteractionEligible(
         phase: ClocktowerNightFlowPhase,
         resolvedFacts: ClocktowerResolvedFlowFacts,
-    ): Boolean = false
+    ): Boolean =
+        phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+            ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON in resolvedFacts
 }
 
 private object MayorInteractionHandler : ClocktowerCharacterInteractionHandler {
@@ -160,6 +167,17 @@ private object RavenkeeperInteractionHandler : ClocktowerCharacterInteractionHan
     ): Boolean =
         phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
             ClocktowerResolvedFlowFact.RAVENKEEPER_DIED_AT_NIGHT in resolvedFacts
+}
+
+private object SageInteractionHandler : ClocktowerCharacterInteractionHandler {
+    override val roleId: RoleId = RoleId("Sage")
+
+    override fun isRoleInteractionEligible(
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): Boolean =
+        phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+            ClocktowerResolvedFlowFact.SAGE_KILLED_BY_DEMON in resolvedFacts
 }
 
 private object UndertakerInteractionHandler : ClocktowerCharacterInteractionHandler {

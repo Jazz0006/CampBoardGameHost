@@ -12,6 +12,8 @@ internal enum class ClocktowerResolvedFlowFact {
     RAVENKEEPER_DIED_AT_NIGHT,
     MAYOR_REDIRECT_ELIGIBLE,
     DEMON_SUCCESSION_REQUIRED,
+    SCARLET_WOMAN_BECAME_DEMON,
+    SAGE_KILLED_BY_DEMON,
 }
 
 internal data class ClocktowerResolvedFlowFacts(
