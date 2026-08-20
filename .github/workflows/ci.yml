@@ -160,29 +160,67 @@ jobs:
 
           cache_text = cache.read_text(encoding='utf-8')
           old_guard = '        if (generation.scope.gameId != key.gameId || currentByGame[key.gameId] != generation) return false\n'
-          new_guard = '''        if (generation.scope.gameId != key.gameId ||\n            generation.scope.gameStateRevision != key.gameStateRevision ||\n            generation.scope.formalSnapshotId != key.formalSnapshotId ||\n            generation.scope.rollout != key.rollout ||\n            currentByGame[key.gameId] != generation\n        ) return false\n'''
-          assert cache_text.count(old_guard) == 1
-          cache_text = cache_text.replace(old_guard, new_guard)
+          new_guard = '''        if (generation.scope.gameId != key.gameId ||
+            generation.scope.gameStateRevision != key.gameStateRevision ||
+            generation.scope.formalSnapshotId != key.formalSnapshotId ||
+            generation.scope.rollout != key.rollout ||
+            currentByGame[key.gameId] != generation
+        ) return false
+'''
+          if old_guard not in cache_text:
+              raise SystemExit('missing old cache commit guard')
+          cache_text = cache_text.replace(old_guard, new_guard, 1)
+          if 'generation.scope.formalSnapshotId != key.formalSnapshotId' not in cache_text:
+              raise SystemExit('cache scope patch did not apply')
           cache.write_text(cache_text.rstrip() + '\n', encoding='utf-8')
 
           executor_text = executor.read_text(encoding='utf-8')
-          assert executor_text.count('coarseMaxHeapDeltaBytes') == 3
+          if 'coarseMaxHeapDeltaBytes = (heapBytes() - heapStart).coerceAtLeast(0L)' not in executor_text:
+              raise SystemExit('missing executor end-heap telemetry assignment')
           executor_text = executor_text.replace('coarseMaxHeapDeltaBytes', 'coarseEndHeapDeltaBytes')
+          if 'coarseEndHeapDeltaBytes = (heapBytes() - heapStart).coerceAtLeast(0L)' not in executor_text:
+              raise SystemExit('executor telemetry rename did not apply')
           executor.write_text(executor_text.rstrip() + '\n', encoding='utf-8')
 
           test_text = test_file.read_text(encoding='utf-8')
-          marker = '''    @Test fun `newer revision during a build makes completed and queued work stale`() {\n'''
-          assert test_text.count(marker) == 1
-          new_test = '''    @Test fun `cache commit fails closed when key disagrees with generation scope`() {\n        val formal = formal()\n        val request = request(formal, EpistemicObservationLog(), "unused").copy(appendedRecordId = "missing")\n        val knowledge = knowledge(formal, EpistemicObservationLog()).getValue(1)\n        val cache = A4ShadowWorldSetCache()\n        val generation = cache.beginVersion(request.cacheScope())\n        val key = request.cacheKey(knowledge)\n        val value = worldSet(request, knowledge)\n        val mismatchedKeys = listOf(\n            key.copy(gameStateRevision = key.gameStateRevision + 1),\n            key.copy(formalSnapshotId = "${key.formalSnapshotId}-stale"),\n            key.copy(rollout = A4WorldEngineRollout.ENUMERATED_ONLY),\n        )\n\n        mismatchedKeys.forEach { mismatched ->\n            assertFalse(cache.commitIfCurrent(generation, mismatched, value))\n            assertNull(cache.read(mismatched))\n        }\n        assertTrue(cache.commitIfCurrent(generation, key, value))\n        assertSame(value, cache.read(key))\n    }\n\n'''
-          test_text = test_text.replace(marker, new_test + marker)
-          assert test_text.count('coarseMaxHeapDeltaBytes = 11') == 1
-          test_text = test_text.replace('coarseMaxHeapDeltaBytes = 11', 'coarseEndHeapDeltaBytes = 11')
+          marker = '    @Test fun `newer revision during a build makes completed and queued work stale`() {\n'
+          if marker not in test_text:
+              raise SystemExit('missing insertion marker for scope mismatch test')
+          new_test = '''    @Test fun `cache commit fails closed when key disagrees with generation scope`() {
+        val formal = formal()
+        val request = request(formal, EpistemicObservationLog(), "unused").copy(appendedRecordId = "missing")
+        val knowledge = knowledge(formal, EpistemicObservationLog()).getValue(1)
+        val cache = A4ShadowWorldSetCache()
+        val generation = cache.beginVersion(request.cacheScope())
+        val key = request.cacheKey(knowledge)
+        val value = worldSet(request, knowledge)
+        val mismatchedKeys = listOf(
+            key.copy(gameStateRevision = key.gameStateRevision + 1),
+            key.copy(formalSnapshotId = "${key.formalSnapshotId}-stale"),
+            key.copy(rollout = A4WorldEngineRollout.ENUMERATED_ONLY),
+        )
+
+        mismatchedKeys.forEach { mismatched ->
+            assertFalse(cache.commitIfCurrent(generation, mismatched, value))
+            assertNull(cache.read(mismatched))
+        }
+        assertTrue(cache.commitIfCurrent(generation, key, value))
+        assertSame(value, cache.read(key))
+    }
+
+'''
+          test_text = test_text.replace(marker, new_test + marker, 1)
+          if 'coarseMaxHeapDeltaBytes = 11' not in test_text:
+              raise SystemExit('missing old report telemetry fixture')
+          test_text = test_text.replace('coarseMaxHeapDeltaBytes = 11', 'coarseEndHeapDeltaBytes = 11', 1)
           old_assert = '        assertTrue(report.toLogLine(request).contains("status=1:READY_REUSED,2:MISSING_REBUILT"))\n'
-          assert test_text.count(old_assert) == 1
+          if old_assert not in test_text:
+              raise SystemExit('missing telemetry log assertion marker')
           test_text = test_text.replace(
               old_assert,
               old_assert + '        assertTrue(report.toLogLine(request).contains("coarseEndHeapDeltaBytes=11"))\n' +
-              '        assertFalse(report.toLogLine(request).contains("coarseMaxHeapDeltaBytes"))\n'
+              '        assertFalse(report.toLogLine(request).contains("coarseMaxHeapDeltaBytes"))\n',
+              1,
           )
           test_file.write_text(test_text.rstrip() + '\n', encoding='utf-8')
           PY
