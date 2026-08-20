@@ -169,7 +169,7 @@ jobs:
           text = root.read_text(encoding="utf-8")
 
           start_marker = "@Composable\nprivate fun ClocktowerNightActiveScreen("
-          end_marker = "@Composable\ninternal fun HostScriptCard("
+          end_marker = "@Composable\nprivate fun ClocktowerNewDemonConfirmationScreen("
           if target.exists():
               raise SystemExit(f"target already exists: {target}")
           if text.count(start_marker) != 1 or text.count(end_marker) != 1:
@@ -207,7 +207,7 @@ jobs:
           test -f "$night"
           grep -q "internal fun ClocktowerNightActiveScreen" "$night"
           if grep -q "fun ClocktowerNightActiveScreen(" "$root"; then exit 1; fi
-          grep -q "internal fun HostScriptCard(" "$root"
+          grep -q "private fun ClocktowerNewDemonConfirmationScreen(" "$root"
 
           actual="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u )"
           expected="$(printf '%s\n' "$root" "$night" | sort)"
