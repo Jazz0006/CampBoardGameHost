@@ -28,6 +28,9 @@ jobs:
           path = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
           text = path.read_text(encoding="utf-8")
 
+          def block(*lines: str) -> str:
+              return "\n".join(lines)
+
           def replace_once(old: str, new: str, label: str) -> None:
               global text
               count = text.count(old)
@@ -42,146 +45,174 @@ jobs:
           )
 
           replace_once(
-              '''    val baseContext = LocalContext.current
-              val lifecycleOwner = LocalLifecycleOwner.current''',
-              '''    val baseContext = LocalContext.current
-              val activeGamePersistenceCoordinator = remember(baseContext) {
-                  ActiveGamePersistenceCoordinator.fromContext(baseContext)
-              }
-              val lifecycleOwner = LocalLifecycleOwner.current''',
+              block(
+                  '    val baseContext = LocalContext.current',
+                  '    val lifecycleOwner = LocalLifecycleOwner.current',
+              ),
+              block(
+                  '    val baseContext = LocalContext.current',
+                  '    val activeGamePersistenceCoordinator = remember(baseContext) {',
+                  '        ActiveGamePersistenceCoordinator.fromContext(baseContext)',
+                  '    }',
+                  '    val lifecycleOwner = LocalLifecycleOwner.current',
+              ),
               'coordinator initialization',
           )
 
           replace_once(
-              '''private fun savedGamePreviewFromJson(context: Context, json: JSONObject): SavedGamePreview? {
-              if (json.optInt("version", 0) != ACTIVE_GAME_STATE_VERSION) return null''',
-              '''private fun savedGamePreviewFromJson(context: Context, json: JSONObject): SavedGamePreview? {
-              if (!ActiveGamePersistenceCoordinator.isSupportedVersion(json.optInt("version", 0))) return null''',
+              block(
+                  'private fun savedGamePreviewFromJson(context: Context, json: JSONObject): SavedGamePreview? {',
+                  '    if (json.optInt("version", 0) != ACTIVE_GAME_STATE_VERSION) return null',
+              ),
+              block(
+                  'private fun savedGamePreviewFromJson(context: Context, json: JSONObject): SavedGamePreview? {',
+                  '    if (!ActiveGamePersistenceCoordinator.isSupportedVersion(json.optInt("version", 0))) return null',
+              ),
               'preview version compatibility',
           )
 
           replace_once(
-              '''        put("currentGameKind", currentGameKind.name)
-              put("undercoverCount", undercoverCount)''',
-              '''        put("currentGameKind", currentGameKind.name)
-              val gameContentIdentity = activeGamePersistenceCoordinator.identityForSave(
-                  ActiveGamePersistenceInputs(
-                      gameKind = currentGameKind,
-                      clocktowerScript = currentClocktowerScript,
-                      assignedClocktowerRoleIds = if (currentGameKind == GameKind.Clocktower) {
-                          cards.map { card ->
-                              RoleId(requireNotNull(card.clocktowerRole) {
-                                  "Clocktower active save is missing an assigned role."
-                              }.enName)
-                          }
-                      } else {
-                          emptyList()
-                      },
-                      assignedWerewolfRoles = if (currentGameKind == GameKind.Werewolf) {
-                          cards.map { it.role }
-                      } else {
-                          emptyList()
-                      },
-                      werewolfCount = werewolfCount,
-                      includeSeer = includeSeer,
-                      includeWitch = includeWitch,
-                      includeHunter = includeHunter,
-                      lastWordsMode = lastWordsMode,
-                  ),
-              )
-              put(
-                  PersistedActiveGameIdentityJsonCodec.ROOT_KEY,
-                  PersistedActiveGameIdentityJsonCodec.encode(gameContentIdentity),
-              )
-              put("undercoverCount", undercoverCount)''',
+              block(
+                  '        put("currentGameKind", currentGameKind.name)',
+                  '        put("undercoverCount", undercoverCount)',
+              ),
+              block(
+                  '        put("currentGameKind", currentGameKind.name)',
+                  '        val gameContentIdentity = activeGamePersistenceCoordinator.identityForSave(',
+                  '            ActiveGamePersistenceInputs(',
+                  '                gameKind = currentGameKind,',
+                  '                clocktowerScript = currentClocktowerScript,',
+                  '                assignedClocktowerRoleIds = if (currentGameKind == GameKind.Clocktower) {',
+                  '                    cards.map { card ->',
+                  '                        RoleId(requireNotNull(card.clocktowerRole) {',
+                  '                            "Clocktower active save is missing an assigned role."',
+                  '                        }.enName)',
+                  '                    }',
+                  '                } else {',
+                  '                    emptyList()',
+                  '                },',
+                  '                assignedWerewolfRoles = if (currentGameKind == GameKind.Werewolf) {',
+                  '                    cards.map { it.role }',
+                  '                } else {',
+                  '                    emptyList()',
+                  '                },',
+                  '                werewolfCount = werewolfCount,',
+                  '                includeSeer = includeSeer,',
+                  '                includeWitch = includeWitch,',
+                  '                includeHunter = includeHunter,',
+                  '                lastWordsMode = lastWordsMode,',
+                  '            ),',
+                  '        )',
+                  '        put(',
+                  '            PersistedActiveGameIdentityJsonCodec.ROOT_KEY,',
+                  '            PersistedActiveGameIdentityJsonCodec.encode(gameContentIdentity),',
+                  '        )',
+                  '        put("undercoverCount", undercoverCount)',
+              ),
               'snapshot identity',
           )
 
           replace_once(
-              '''            if (json.optInt("version", 0) != ACTIVE_GAME_STATE_VERSION) {
-                  error("Unsupported active game state version")
-              }''',
-              '''            if (!ActiveGamePersistenceCoordinator.isSupportedVersion(json.optInt("version", 0))) {
-                  error("Unsupported active game state version")
-              }''',
+              block(
+                  '            if (json.optInt("version", 0) != ACTIVE_GAME_STATE_VERSION) {',
+                  '                error("Unsupported active game state version")',
+                  '            }',
+              ),
+              block(
+                  '            if (!ActiveGamePersistenceCoordinator.isSupportedVersion(json.optInt("version", 0))) {',
+                  '                error("Unsupported active game state version")',
+                  '            }',
+              ),
               'restore version compatibility',
           )
 
           replace_once(
-              '''            val restoredCards = json.optJSONArray("cards")?.toPlayerCards().orEmpty()
-              if (restoredCards.isEmpty()) error("Missing player cards")
-              val localizedRestoredCards = restoredCards.map(::localizedRestoredCard)''',
-              '''            val restoredCards = json.optJSONArray("cards")?.toPlayerCards().orEmpty()
-              if (restoredCards.isEmpty()) error("Missing player cards")
-              val restoredPersistence = activeGamePersistenceCoordinator.resolveForRestore(
-                  json = json,
-                  gameKind = restoredGameKind,
-                  assignedClocktowerRoleIds = if (restoredGameKind == GameKind.Clocktower) {
-                      restoredCards.map { card ->
-                          RoleId(requireNotNull(card.clocktowerRole) {
-                              "Clocktower restored save is missing an assigned role."
-                          }.enName)
-                      }
-                  } else {
-                      emptyList()
-                  },
-                  assignedWerewolfRoles = if (restoredGameKind == GameKind.Werewolf) {
-                      restoredCards.map { it.role }
-                  } else {
-                      emptyList()
-                  },
-              )
-              val localizedRestoredCards = restoredCards.map(::localizedRestoredCard)''',
+              block(
+                  '            val restoredCards = json.optJSONArray("cards")?.toPlayerCards().orEmpty()',
+                  '            if (restoredCards.isEmpty()) error("Missing player cards")',
+                  '            val localizedRestoredCards = restoredCards.map(::localizedRestoredCard)',
+              ),
+              block(
+                  '            val restoredCards = json.optJSONArray("cards")?.toPlayerCards().orEmpty()',
+                  '            if (restoredCards.isEmpty()) error("Missing player cards")',
+                  '            val restoredPersistence = activeGamePersistenceCoordinator.resolveForRestore(',
+                  '                json = json,',
+                  '                gameKind = restoredGameKind,',
+                  '                assignedClocktowerRoleIds = if (restoredGameKind == GameKind.Clocktower) {',
+                  '                    restoredCards.map { card ->',
+                  '                        RoleId(requireNotNull(card.clocktowerRole) {',
+                  '                            "Clocktower restored save is missing an assigned role."',
+                  '                        }.enName)',
+                  '                    }',
+                  '                } else {',
+                  '                    emptyList()',
+                  '                },',
+                  '                assignedWerewolfRoles = if (restoredGameKind == GameKind.Werewolf) {',
+                  '                    restoredCards.map { it.role }',
+                  '                } else {',
+                  '                    emptyList()',
+                  '                },',
+                  '            )',
+                  '            val localizedRestoredCards = restoredCards.map(::localizedRestoredCard)',
+              ),
               'restore identity validation',
           )
 
           replace_once(
-              '''            val savedClocktowerScript = enumByName<ClocktowerScript>(json.optNullableString("currentClocktowerScript"))
-                  ?: defaultClocktowerScriptFor(localizedRestoredCards.size)
-              val restoredHasNoGreaterJoyOnlyRole = localizedRestoredCards.any {
-                  it.clocktowerRole?.enName in setOf("Clockmaker", "Chambermaid", "Artist", "Sage", "Klutz")
-              }
-              currentClocktowerScript = if (localizedRestoredCards.size in 5..6 && restoredHasNoGreaterJoyOnlyRole) {
-                  ClocktowerScript.NoGreaterJoy
-              } else {
-                  savedClocktowerScript
-              }''',
-              '''            if (restoredGameKind == GameKind.Clocktower) {
-                  currentClocktowerScript = requireNotNull(restoredPersistence.clocktowerScript)
-              }''',
+              block(
+                  '            val savedClocktowerScript = enumByName<ClocktowerScript>(json.optNullableString("currentClocktowerScript"))',
+                  '                ?: defaultClocktowerScriptFor(localizedRestoredCards.size)',
+                  '            val restoredHasNoGreaterJoyOnlyRole = localizedRestoredCards.any {',
+                  '                it.clocktowerRole?.enName in setOf("Clockmaker", "Chambermaid", "Artist", "Sage", "Klutz")',
+                  '            }',
+                  '            currentClocktowerScript = if (localizedRestoredCards.size in 5..6 && restoredHasNoGreaterJoyOnlyRole) {',
+                  '                ClocktowerScript.NoGreaterJoy',
+                  '            } else {',
+                  '                savedClocktowerScript',
+                  '            }',
+              ),
+              block(
+                  '            if (restoredGameKind == GameKind.Clocktower) {',
+                  '                currentClocktowerScript = requireNotNull(restoredPersistence.clocktowerScript)',
+                  '            }',
+              ),
               'remove Clocktower script guessing',
           )
 
           replace_once(
-              '''                }.getOrNull()
-              } ?: if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
-                  troubleBrewingRulesetRefFor(localizedRestoredCards)
-              } else {
-                  null
-              }
-              clocktowerPendingNightDeath = json.optNullableString("clocktowerPendingNightDeath")''',
-              '''                }.getOrNull()
-              }
-              if (restoredGameKind == GameKind.Clocktower &&
-                  currentClocktowerScript == ClocktowerScript.TroubleBrewing
-              ) {
-                  val currentTroubleBrewingRulesetRef = troubleBrewingRulesetRefFor(localizedRestoredCards)
-                      ?: error("Unable to resolve current Trouble Brewing ruleset reference.")
-                  if (restoredPersistence.allowLegacyClocktowerRulesetFallback) {
-                      if (clocktowerRulesetRef == null) {
-                          clocktowerRulesetRef = currentTroubleBrewingRulesetRef
-                      } else {
-                          require(clocktowerRulesetRef == currentTroubleBrewingRulesetRef) {
-                              "Legacy Trouble Brewing save has an incompatible ruleset reference."
-                          }
-                      }
-                  } else {
-                      require(clocktowerRulesetRef == currentTroubleBrewingRulesetRef) {
-                          "Version 2 Trouble Brewing save has an incompatible ruleset reference."
-                      }
-                  }
-              }
-              clocktowerPendingNightDeath = json.optNullableString("clocktowerPendingNightDeath")''',
+              block(
+                  '                }.getOrNull()',
+                  '            } ?: if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {',
+                  '                troubleBrewingRulesetRefFor(localizedRestoredCards)',
+                  '            } else {',
+                  '                null',
+                  '            }',
+                  '            clocktowerPendingNightDeath = json.optNullableString("clocktowerPendingNightDeath")',
+              ),
+              block(
+                  '                }.getOrNull()',
+                  '            }',
+                  '            if (restoredGameKind == GameKind.Clocktower &&',
+                  '                currentClocktowerScript == ClocktowerScript.TroubleBrewing',
+                  '            ) {',
+                  '                val currentTroubleBrewingRulesetRef = troubleBrewingRulesetRefFor(localizedRestoredCards)',
+                  '                    ?: error("Unable to resolve current Trouble Brewing ruleset reference.")',
+                  '                if (restoredPersistence.allowLegacyClocktowerRulesetFallback) {',
+                  '                    if (clocktowerRulesetRef == null) {',
+                  '                        clocktowerRulesetRef = currentTroubleBrewingRulesetRef',
+                  '                    } else {',
+                  '                        require(clocktowerRulesetRef == currentTroubleBrewingRulesetRef) {',
+                  '                            "Legacy Trouble Brewing save has an incompatible ruleset reference."',
+                  '                        }',
+                  '                    }',
+                  '                } else {',
+                  '                    require(clocktowerRulesetRef == currentTroubleBrewingRulesetRef) {',
+                  '                        "Version 2 Trouble Brewing save has an incompatible ruleset reference."',
+                  '                    }',
+                  '                }',
+                  '            }',
+                  '            clocktowerPendingNightDeath = json.optNullableString("clocktowerPendingNightDeath")',
+              ),
               'ruleset compatibility',
           )
 
