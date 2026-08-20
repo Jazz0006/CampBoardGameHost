@@ -35,7 +35,7 @@ R5.5 Script & Dynamic Flow Foundation
 ONLY THEN unlock revision-driven dynamic decision plan / Phase B production implementation
 ```
 
-**当前执行点（2026-08-20）：R1、R2、R3 已通过；R4.1 cache invariant / telemetry 与 R4.2 durable-before-build / coroutine cancellation 已通过；当前进入 R4.3 — revision/session lifecycle invalidation。**
+**当前执行点（2026-08-20）：R1、R2、R3、R4 已通过；下一步正式进入 R5 — Phase A re-exit。R5 先重新执行 A3/A4 differential、focused/full regression、Oracle/Clingo 与退出证据审计；只有 correctness 全部通过后才讨论目标设备 gate。**
 
 **在 Phase A 重新退出前，不开始新的 B1/B2/B3 功能扩展，也不把 B4 shadow 变成生产依赖；R5.5 也只能作为未来架构约束，不能提前进入 R2–R5。**
 
@@ -50,8 +50,8 @@ ONLY THEN unlock revision-driven dynamic decision plan / Phase B production impl
 | A2.1 Golden corpus | PASS / R3.1 | 52 个 official/golden contracts 保留；24 个进入 Clingo baseline、28 个明确 `ORACLE_NOT_APPLICABLE`，baseline 为 18 AGREE / 1 EXPECTED_COVERAGE_GAP / 5 KNOWN_ORACLE_VARIANCE / 28 ORACLE_NOT_APPLICABLE，且 `UNEXPLAINED_MISMATCH=0`、`NOT_RUN=0`。 |
 | **A3 EnumeratedWorldSet** | **REOPEN / R1+R3 VALIDATION PASS** | R1 correctness hotfix 与 R3 typed real-enumerator golden path 均已通过；A3 contract validation 已补齐，但整体 re-exit 仍等待 R5 的 A3/A4 differential 与 Phase A exit review。 |
 | **MainActivity decomposition** | **PASS / R2 BATCHES 1–10 VALIDATED** | Activity shell、三游戏边界及 Clocktower setup/day/night/host/history 主要职责已机械拆分；最终 read-only structural verifier 与标准 CI 验收通过后关闭 R2。 |
-| **A4 ZDD prototype** | **IN PROGRESS** | 仍为 exact shadow/prototype；设备性能门槛未完成，需在 R5 前重新跑 differential/device gate。 |
-| **A4.5 observation cache rebuild** | **IN PROGRESS / R4.1+R4.2 PASS** | cache scope invariant、telemetry contract、durable-before-build 与 coroutine cancellation 已修复并通过验证；当前补 revision/session 主动 invalidation 与剩余 acceptance evidence。 |
+| **A4 ZDD prototype** | **IN PROGRESS / R4 CORRECTNESS CONTRACT PASS** | exact shadow/prototype 的 lifecycle/cache correctness 已通过 R4；A3/A4 differential 与目标设备 latency/memory/degradation gate 在 R5 重新签署。 |
+| **A4.5 observation cache rebuild** | **PASS / R4 VALIDATED** | cache scope invariant、truthful telemetry、durable-before-build、coroutine cancellation、revision/session invalidation 与 production-shadow isolation 均已有直接验收证据。 |
 | **R5.5 Script & Dynamic Flow Foundation** | **FUTURE / BLOCKED** | R5 通过后才实施；规范见 `多剧本多板子与动态游戏流程架构设计_v1.md`。 |
 | B1+ / revision-driven production expansion | BLOCKED | 先完成 Phase A final exit，再完成 R5.5。 |
 
@@ -230,7 +230,7 @@ append / deduplicate observation
 - 已经运行的 exact build 可以结束，但结果只能成为 `STALE/CANCELLED`，不得继续写为 current cache；
 - 不依赖“恰好会启动下一次 rebuild”来使旧 generation 失效。
 
-**实施状态：R4.2 已把 coroutine active state 传入 executor，并在 exact build 返回后、`commitIfCurrent()` 前再次检查 cancellation，因此中途取消的已完成 build 不会 publish cache。R4.3 继续补 leave/restart/revision/session 主动 invalidation。**
+**实施状态（R4.2+R4.3 PASS）：R4.2 已把 coroutine active state 传入 executor，并在 exact build 返回后、`commitIfCurrent()` 前再次检查 cancellation；R4.3 又新增同步 lifecycle invalidation，revision supersede 立即 invalidate 当前 game generation 并取消 observation rebuild，reset/archive/restore session boundary 还会清 durability pending。旧 exact build 即使结束也不能 publish current cache。**
 
 ### P0.6 Cache generation invariant 加固
 
@@ -267,7 +267,7 @@ A4.5 report 原字段名为 `coarseMaxHeapDeltaBytes`，但 executor 只计算�
 - leave/restart/revision cancellation 的真实 wiring；
 - durable-before-build 顺序。
 
-当前 R4.1/R4.2 已补 cache scope mismatch、durability failure、build-completion cancellation 等直接证据；R4.3 补真实 revision/session invalidation，之后再做 R4 final acceptance sweep。
+**实施状态（R4 PASS）：现有 `A4ObservationCacheRebuildExecutorTest` / `A4IdentityRevealPrewarmCoordinatorTest` 已直接覆盖 identity mismatch、stale generation、cancellation、ordinary failure、OOM/resource exhaustion 与 `DEFERRED_B4`，失败/取消/OOM 均不产生 logical empty/UNSAT；R4.2 增加 durability failure 与 build-completion cancellation；R4.3 增加 revision/session invalidation；最终新增 `A4ShadowProductionIsolationTest`，验证 shadow cache 从 miss 变为 ready 前后 production setup recommendation 完全一致，且 demand probe 只暴露 readiness metadata。final acceptance test commits：`6ee3815489bdf23abd28188e21c7e2a43677be17` + `8bfb9e6cc2f95987c22ff8f133a84c918c02ca10`；CI #116 Android/ASP/真实 Clingo全部 success。**
 
 ## 6. P1 — Phase B/B4 前必须解决的语义债务
 
@@ -406,13 +406,13 @@ R3.2 — real enumerator golden path：
 - clean read-only CI #96：Android、ASP contract、真实 Clingo 全部 success；
 - 临时 R3 writer 已撤销，`.github/workflows/ci.yml` 恢复 `contents: read`。
 
-**R3 已关闭。下一步正式进入 R4 — A4.5 lifecycle hardening。A3 contract validation 已满足，但 A3 overall re-exit 仍由 R5 differential / Phase A exit review 签署。**
+**R3 已关闭。A3 contract validation 已满足，但 A3 overall re-exit 仍由 R5 differential / Phase A exit review 签署。**
 
 ### R4 — A4.5 lifecycle hardening
 
 范围：P0.4–P0.8。
 
-当前状态：**IN PROGRESS — R4.1 PASS / R4.2 PASS / R4.3 ACTIVE**。
+当前状态：**PASS / R4.1–R4.3 + FINAL ACCEPTANCE VALIDATED**。
 
 已完成：
 
@@ -429,25 +429,33 @@ R3.2 — real enumerator golden path：
   - coroutine active/cancel state 进入 executor；
   - build 返回后、cache publication 前再次检查 cancellation；
   - source commit `7dc1a8a5afd69ed1b0f87406c71d84adbdf602cb`；
-  - compile、focused tests、full Android、ASP、真实 Clingo 全部通过；
+  - compile、focused tests、full Android、ASP、真实 Clingo全部通过；
   - temporary writer/trigger 已撤销，PR base 已恢复 `main`。
+- **R4.3 — revision/session lifecycle invalidation**
+  - 新增 `A4ShadowLifecycleInvalidator`；
+  - same-session `gameStateRevision` / `playerInputRevision` supersede 同步 invalidate 当前 game generation 并取消 observation rebuild，但保留 durability pending；
+  - reset/archive/restore session boundary 同步 invalidate cache、clear durability pending、cancel rebuild；
+  - 原有 revision 增加位置保持不变，只收口到 helper；
+  - source commit `2981b86374284cd2967037942c14011d01700c23`，exact source diff 仅 root + invalidator + invalidator test 三文件；
+  - cleanup head `96a1757c60036a83da0fa08e8593f0063ef4bcf5` 的标准 CI #114 与 R2 boundary #106 全部 success；
+  - temporary validation base 已恢复到 `main`，PR #2 已恢复 `base=main`、Draft/open/unmerged。
+- **R4 final acceptance — production shadow isolation**
+  - 新增 `A4ShadowProductionIsolationTest.kt`；
+  - 直接证明 shadow cache 由 miss 变 ready 前后 production setup recommendation 完全一致；
+  - demand probe 只返回 readiness/revision/seat metadata，不把 cached `PlayerWorldSet` 交给 production recommendation；
+  - final acceptance 两个 test-only commits `6ee3815489bdf23abd28188e21c7e2a43677be17`、`8bfb9e6cc2f95987c22ff8f133a84c918c02ca10` 从 R4.3 clean head 起只新增这一份测试文件，production code 零变化；
+  - CI #116：Android tests + debug APK、ASP contract、真实 Clingo 全部 success；R2 boundary #108 success。
 
-当前 R4.3：
+R4 退出条件现已全部满足：
 
-- revision supersede 必须同步失效当前 game 的 A4 shadow generation；
-- leave/restart/restore 必须同步 invalidate cache、clear durability pending、cancel observation rebuild request；
-- 同一 session 的 revision bump **不得**清 durability pending，否则刚 append、等待 durable commit 的 observation 会丢失；
-- `gameStateRevision` / `playerInputRevision` 的原有增加时机保持不变，只把同步 invalidation 收口到 helper；
-- in-flight exact build 可以结束，但旧 generation 已失效，不能 publish current cache。
-
-R4 退出条件：
-
-- durable-before-build 可测试；
-- leave/restart/revision 可立即失效旧 generation；
+- durable-before-build 有直接测试；
+- leave/restart/revision 可同步失效旧 generation；
 - cache scope invariant fail closed；
 - OOM/failure/cancel/stale 均不产生 empty logical result/UNSAT；
-- production recommendation 完全不读取 shadow cache；
-- R4 final acceptance sweep 通过。
+- production recommendation 不读取 shadow cache；
+- final acceptance sweep 通过。
+
+**R4 已关闭。下一步正式进入 R5 — Phase A re-exit。**
 
 开发操作策略（R4.2 后更新）：
 
@@ -458,16 +466,23 @@ R4 退出条件：
 
 ### R5 — Phase A re-exit
 
+**当前状态：ACTIVE / READ-ONLY EXIT AUDIT STARTED。**
+
 执行：
 
-1. focused epistemic tests；
+1. focused epistemic tests，尤其重新签署 A3 Enumerated vs A4 ZDD exact differential；
 2. full `testDebugUnitTest`；
 3. Python ASP Oracle tests + real Clingo baseline；
 4. `git diff --check`；
-5. A4 target-device measurements（仅在 correctness 通过后）；
+5. 在 correctness gate 全部通过后审计 A4 target-device measurements；
 6. 新建一份 Phase A exit review，旧 A3 PASS 不恢复原文件。
 
-A4 仍只有在目标设备 correctness、latency、memory 和 degradation gates 全部满足后，才可以讨论 `ZDD_DEVICE_VALIDATED`。
+R5 必须明确区分两件事：
+
+- **Phase A correctness re-exit**：A3/A4/A4.5 的规则、差分、失败语义与 production isolation 均已重新签署；
+- **ZDD device validation**：只有目标设备 latency、memory、degradation gate 另外通过后，才可以讨论 `ZDD_DEVICE_VALIDATED`。
+
+在 R5 correctness 退出前，A3 仍保持 `REOPEN / R1+R3 VALIDATION PASS`，A4 仍保持 shadow/prototype；不能因为 R4 lifecycle 已通过就提前提升 production rollout。
 
 ### R5.5 — Script & Dynamic Flow Foundation
 
