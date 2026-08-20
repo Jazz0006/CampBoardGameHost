@@ -11,32 +11,33 @@ class WerewolfLegacyPlannerDifferentialTest {
     private val boardRegistry = WerewolfBoardRegistry.builtIn(roleRegistry)
     private val planner = WerewolfFlowPlanner()
 
-    private val legacyJudgeSource by lazy {
+    private val productionJudgeSource by lazy {
         File("src/main/java/com/codex/campboardgamehost/werewolf/WerewolfHostScreen.kt")
             .readText(Charsets.UTF_8)
     }
 
     @Test
-    fun `production legacy step builder remains the shadow differential anchor`() {
-        val start = legacyJudgeSource.indexOf("val steps = buildList {")
-        val end = legacyJudgeSource.indexOf("val currentIndex = stepIndex.coerceIn", start.coerceAtLeast(0))
-        assertTrue("Legacy Werewolf step builder must remain discoverable", start >= 0 && end > start)
+    fun `production Judge is planner backed while preserving role-existence eligibility`() {
+        val start = productionJudgeSource.indexOf("val roleRegistry = WerewolfRoleRegistry.builtIn()")
+        val end = productionJudgeSource.indexOf("val currentIndex = stepIndex.coerceIn", start.coerceAtLeast(0))
+        assertTrue("Planner-backed Werewolf production projection must remain discoverable", start >= 0 && end > start)
 
-        val stepBuilder = legacyJudgeSource.substring(start, end)
+        val projection = productionJudgeSource.substring(start, end)
+        assertTrue("Werewolf production must call the canonical planner", "WerewolfFlowPlanner()" in projection)
+        assertTrue("Werewolf production must project planner interactions to legacy UI steps", ".map { interaction -> interaction.legacyStep }" in projection)
+        assertFalse("Legacy Werewolf step builder must be removed after cutover", "val steps = buildList" in projection)
         listOf(
             "add(WerewolfJudgeStep.Wolves)",
             "if (cards.any { it.role == Role.Seer }) add(WerewolfJudgeStep.Seer)",
             "if (cards.any { it.role == Role.Witch }) add(WerewolfJudgeStep.Witch)",
             "if (cards.any { it.role == Role.Hunter }) add(WerewolfJudgeStep.Hunter)",
-            "add(WerewolfJudgeStep.Dawn)",
-            "add(WerewolfJudgeStep.DayVote)",
-        ).forEach { fragment ->
-            assertTrue("Legacy Werewolf flow contract moved or changed: $fragment", fragment in stepBuilder)
+        ).forEach { legacyFragment ->
+            assertFalse("Production must not retain legacy role-step branching: $legacyFragment", legacyFragment in projection)
         }
 
-        // Current production includes a role step when that role exists in dealt cards, even if the
-        // player has since died. S3 is structural migration and must not silently change that rule.
-        assertFalse("Legacy role-step eligibility unexpectedly became alive-only", "eliminatedRound" in stepBuilder)
+        // Production historically includes a role step whenever that role exists in dealt cards,
+        // even if the player has since died. Planner cutover must preserve that observable rule.
+        assertFalse("Role-step eligibility unexpectedly became alive-only", "eliminatedRound" in projection)
     }
 
     @Test
