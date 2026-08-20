@@ -93,7 +93,7 @@ class ActiveGamePersistenceCoordinatorTest {
     fun `Clocktower v1 migration trusts saved script and never infers from assigned roles`() {
         val json = JSONObject()
             .put("version", 1)
-            .put("currentGameKind", GameKind.NoSuchKindSafeName())
+            .put("currentGameKind", GameKind.Clocktower.name)
             .put("currentClocktowerScript", ClocktowerScript.TroubleBrewing.name)
 
         val resolution = coordinator.resolveForRestore(
@@ -270,6 +270,4 @@ class ActiveGamePersistenceCoordinatorTest {
         }
         assertTrue("Expected persistence validation to fail closed.", failed)
     }
-
-    private fun GameKind.Companion.NoSuchKindSafeName(): String = Clocktower.name
 }
