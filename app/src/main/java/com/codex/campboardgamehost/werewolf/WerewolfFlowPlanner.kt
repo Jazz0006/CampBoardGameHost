@@ -16,11 +16,12 @@ internal data class WerewolfHostInteraction(
 )
 
 /**
- * Pure R5.5 shadow planner for the current Werewolf board cycle.
+ * Canonical R5.5 planner for the current Werewolf board cycle.
  *
  * Role-specific wake/action metadata comes from WerewolfRoleRegistry. This planner knows only how
  * to order eligible registered role interactions and append the two legacy system/day boundaries.
- * Production WerewolfJudgeScreen continues to build its own legacy step list during S3 validation.
+ * Production WerewolfJudgeScreen projects these interactions to the existing WerewolfJudgeStep UI
+ * contract, so the planner owns step eligibility/order without changing the Judge callbacks.
  */
 internal class WerewolfFlowPlanner {
     fun plan(
