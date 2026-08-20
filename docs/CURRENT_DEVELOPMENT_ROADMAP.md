@@ -47,7 +47,7 @@ ONLY THEN unlock revision-driven dynamic decision plan / Phase B production impl
 | A2 ASP Oracle harness | CONDITIONAL PASS | Oracle 权威边界正确，但 golden catalog 内嵌 `FormalGameState` 仍使用旧 schema shape。 |
 | A2.1 Golden corpus | CONDITIONAL PASS | R1 已将合同扩充到 52 个并加入 4 个 poisoned Spy/Recluse numeric regression；nested FormalGameState schema-v1 债务仍待 R3。 |
 | **A3 EnumeratedWorldSet** | **REOPEN / R1 PASS** | poisoned numeric-registration 修复已通过 Android、ASP contract 与真实 Clingo CI；A3 整体仍需 R3 end-to-end enumerator validation 后才能重新 PASS。 |
-| **MainActivity decomposition** | **IN PROGRESS / R2 BATCHES 1–7 PASS** | 已机械拆出 Activity shell、Werewolf support、Undercover UI、Werewolf host UI、Clocktower pre-game setup、Clocktower day/dawn UI，并建立 Clocktower night presentation 文件边界；每批均由 CI 验收。 |
+| **MainActivity decomposition** | **IN PROGRESS / R2 BATCHES 1–8 PASS** | 已机械拆出 Activity shell、Werewolf support、Undercover UI、Werewolf host UI、Clocktower pre-game setup、Clocktower day/dawn UI，并持续扩展 Clocktower night presentation 文件边界；每批均由 CI 验收。 |
 | **A4 ZDD prototype** | **IN PROGRESS** | 仍为 exact shadow/prototype；设备性能门槛未完成，需在 R1 后重新跑 differential。 |
 | **A4.5 observation cache rebuild** | **REOPEN** | 核心 rebuild 架构可保留，但 durability、cancellation/invalidation、cache invariant 未完全满足原 spec。 |
 | **R5.5 Script & Dynamic Flow Foundation** | **FUTURE / BLOCKED** | R5 通过后才实施；规范见 `多剧本多板子与动态游戏流程架构设计_v1.md`。 |
@@ -328,7 +328,7 @@ Player-world construction input (knowledge-safe structural facts)
 
 范围：P0.S1–P0.S4。
 
-当前状态：**IN PROGRESS / BATCHES 1–7 VALIDATED**。
+当前状态：**IN PROGRESS / BATCHES 1–8 VALIDATED**。
 
 已完成并通过 CI：
 
@@ -338,11 +338,12 @@ Player-world construction input (knowledge-safe structural facts)
 4. `werewolf/WerewolfHostScreen.kt`：Werewolf 设置页与 Judge UI；
 5. `clocktower/ui/ClocktowerSetupScreen.kt`：仅 pre-game setup UI，不触及发牌、night/day、revision、persistence 或 A4/A4.5；
 6. `clocktower/ui/ClocktowerDayScreen.kt`：机械迁移 day overview、dawn summary、nomination、vote、execution confirmation 与特殊白天行动 UI；`ClocktowerJudgeScreen` 仍持有全部状态、事件写入与流程控制，仅为跨文件调用放宽必要的 `ClocktowerEventType`、`ClocktowerEvent`、`ClocktowerPhase`、`playerSeatLabel` seam；
-7. `clocktower/ui/ClocktowerNightScreen.kt`：先建立最小 night presentation 文件边界，仅机械迁移 callback-driven 的 `ClocktowerNightActiveScreen`；`ClocktowerNewDemonConfirmationScreen`、`ClocktowerNightReadyCard`、recommendation-heavy night step card 与 `ClocktowerJudgeScreen` state owner 均保持原位。
+7. `clocktower/ui/ClocktowerNightScreen.kt`：建立最小 night presentation 文件边界，机械迁移 callback-driven 的 `ClocktowerNightActiveScreen`；`ClocktowerNewDemonConfirmationScreen`、`ClocktowerNightReadyCard`、recommendation-heavy night step card 与 `ClocktowerJudgeScreen` state owner 当时均保持原位；
+8. `clocktower/ui/ClocktowerNightScreen.kt`：继续机械迁移纯展示的 `ClocktowerNightReadyCard`；仅将该 composable 调整为跨文件可调用的 `internal`，`ClocktowerStorytellerRecommendationScreen`、recommendation-heavy night step card 与 `ClocktowerJudgeScreen` state owner 仍保持原位。
 
-每批都保持行为不变，仅做必要的 `private -> internal` 可见性调整，并通过 Android unit tests、debug APK build、ASP contract tests 与真实 Clingo cross-validation。Batch 6/7 的 guarded extraction 另外使用 untracked-aware scope、单 EOF、`bash ./gradlew` 与 staged-scope commit guard，相关流程经验已记录在 `docs/github_connector_large_file_editing_playbook.md`。
+每批都保持行为不变，仅做必要的 `private -> internal` 可见性调整，并通过 Android unit tests、debug APK build、ASP contract tests 与真实 Clingo cross-validation。Batch 6–8 的 guarded extraction 使用 untracked-aware scope、单 EOF、`bash ./gradlew` 与 staged-scope commit guard，相关流程经验已记录在 `docs/github_connector_large_file_editing_playbook.md`。
 
-R2 仍为 **IN PROGRESS**。Night 文件目前只是建立了安全的 presentation seam，history/剩余 night UI 仍需按当前 HEAD 重新审计后分批机械迁移；不得因为已创建 `ClocktowerNightScreen.kt` 就提前进入 R3。
+R2 仍为 **IN PROGRESS**。Night 文件目前只承接了安全的 presentation seam；history/剩余 night UI 仍需按当前 HEAD 重新审计后分批机械迁移，尤其不得把 recommendation/state ownership 以“拆文件”为名一起重构；不得因为已创建 `ClocktowerNightScreen.kt` 就提前进入 R3。
 
 目标：降低后续 A4.5 lifecycle/persistence 修改风险，并改善 GitHub connector 对日常小范围代码修改的可维护性。
 
