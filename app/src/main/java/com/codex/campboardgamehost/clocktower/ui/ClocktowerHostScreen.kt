@@ -528,6 +528,7 @@ internal fun ClocktowerJudgeScreen(
     mayorRedirectTarget: String?,
     mayorRedirectDraftTarget: String?,
     pendingNewDemonName: String?,
+    pendingNightNewDemonIdentityName: String?,
     demonSuccessorTarget: String?,
     virginUsed: Boolean,
     slayerUsed: Boolean,
@@ -2913,6 +2914,39 @@ internal fun ClocktowerJudgeScreen(
                 hostInstruction = text("轻拍僧侣，示意睁眼。让他指一名除自己以外的玩家，在下面记录为今晚保护目标。", "Tap the Monk to wake them. Have them point to another player and record that player as tonight's protected target."),
             ),
             )
+            if (pendingNightNewDemonIdentityName != null) {
+                val newDemon = requireNotNull(
+                    aliveCards.firstOrNull {
+                        it.name == pendingNightNewDemonIdentityName &&
+                            it.clocktowerRole?.enName == "Imp"
+                    },
+                ) {
+                    "Pending next-night new-Demon identity must reference the current living Imp."
+                }
+                add(
+                    ClocktowerNightStepUi(
+                        title = text("新恶魔身份", "New Demon identity"),
+                        actor = newDemon,
+                        isRealAction = true,
+                        reason = "",
+                        storytellerAction = text(
+                            "轻拍 ${newDemon.seatLabel(cards)}，示意睁眼。把手机交给他，确认他现在是小恶魔；看完后收回手机并示意闭眼。",
+                            "Tap ${newDemon.seatLabel(cards)} to wake them. Hand them the phone to confirm they are now the Imp, then take it back and signal them to close their eyes.",
+                        ),
+                        tellPlayer = text("你现在是小恶魔。", "You are now the Imp."),
+                        explanation = text(
+                            "猩红女巫在白天因恶魔死亡而继任。必须在新的小恶魔本夜行动前私下确认身份。",
+                            "The Scarlet Woman became the Demon during the day. Confirm the new identity privately before the Imp acts tonight.",
+                        ),
+                        action = ClocktowerNightAction.NewDemonIdentity,
+                        displayKind = ClocktowerDisplayKind.RoleReveal,
+                        displayTitle = text("新身份", "New role"),
+                        displayPrimary = text("小恶魔", "Imp"),
+                        displayFooter = "",
+                        roleEnName = "Imp",
+                    ),
+                )
+            }
             add(
             ClocktowerNightStepUi(
                 title = text("恶魔行动", "Demon action"),
@@ -3093,6 +3127,7 @@ internal fun ClocktowerJudgeScreen(
     }
     val otherNightResolvedFacts = ClocktowerResolvedFlowFacts(
         buildSet {
+            if (pendingNightNewDemonIdentityName != null) add(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON)
             if (lastExecutedName != null) add(ClocktowerResolvedFlowFact.EXECUTION_OCCURRED_TODAY)
             if (ravenkeeperTrigger != null) add(ClocktowerResolvedFlowFact.RAVENKEEPER_DIED_AT_NIGHT)
             if (mayorCanRedirect) add(ClocktowerResolvedFlowFact.MAYOR_REDIRECT_ELIGIBLE)
@@ -3129,6 +3164,8 @@ internal fun ClocktowerJudgeScreen(
             productionSteps = filteredNightSteps,
             identityOf = { step ->
                 when {
+                    step.action == ClocktowerNightAction.NewDemonIdentity ->
+                        ClocktowerProductionNightStepIdentity.newDemonIdentity()
                     step.action == ClocktowerNightAction.DemonSuccessor ->
                         ClocktowerProductionNightStepIdentity.demonSuccessor()
                     step.action == ClocktowerNightAction.MayorRedirect ->

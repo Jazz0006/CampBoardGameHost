@@ -355,6 +355,7 @@ internal enum class ClocktowerNightAction {
     MonkProtect,
     Chambermaid,
     FortuneTeller,
+    NewDemonIdentity,
     DemonKill,
     MayorRedirect,
     DemonSuccessor,
@@ -1046,6 +1047,7 @@ internal fun CampBoardGameHostApp() {
     var clocktowerMayorRedirectTarget by remember { mutableStateOf<String?>(null) }
     var clocktowerConfirmedMayorRedirectTarget by remember { mutableStateOf<String?>(null) }
     var clocktowerPendingNewDemonName by remember { mutableStateOf<String?>(null) }
+    var clocktowerPendingNightNewDemonIdentityName by remember { mutableStateOf<String?>(null) }
     var clocktowerDemonSuccessorTarget by remember { mutableStateOf<String?>(null) }
     var clocktowerVirginUsed by remember { mutableStateOf(false) }
     var clocktowerSlayerUsed by remember { mutableStateOf(false) }
@@ -1497,6 +1499,7 @@ internal fun CampBoardGameHostApp() {
         putNullableString("clocktowerMayorRedirectTarget", clocktowerMayorRedirectTarget)
         putNullableString("clocktowerConfirmedMayorRedirectTarget", clocktowerConfirmedMayorRedirectTarget)
         putNullableString("clocktowerPendingNewDemonName", clocktowerPendingNewDemonName)
+        putNullableString("clocktowerPendingNightNewDemonIdentityName", clocktowerPendingNightNewDemonIdentityName)
         putNullableString("clocktowerDemonSuccessorTarget", clocktowerDemonSuccessorTarget)
         // Store the unfinished-night continuation as one checkpoint as well as
         // the legacy flat keys above. This keeps old saves compatible while
@@ -1517,6 +1520,7 @@ internal fun CampBoardGameHostApp() {
             confirmedMayorRedirectTarget = clocktowerConfirmedMayorRedirectTarget,
             mayorRedirectDraftTarget = clocktowerMayorRedirectTarget,
             pendingNewDemonName = clocktowerPendingNewDemonName,
+            pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
             demonSuccessorDraftTarget = clocktowerDemonSuccessorTarget,
         ).persistedValues().forEach { (key, value) -> put(key, value ?: JSONObject.NULL) }
         put("clocktowerVirginUsed", clocktowerVirginUsed)
@@ -1746,6 +1750,7 @@ internal fun CampBoardGameHostApp() {
             clocktowerConfirmedMayorRedirectTarget = json.optNullableString("clocktowerConfirmedMayorRedirectTarget")
                 ?: clocktowerMayorRedirectTarget
             clocktowerPendingNewDemonName = json.optNullableString("clocktowerPendingNewDemonName")
+            clocktowerPendingNightNewDemonIdentityName = json.optNullableString("clocktowerPendingNightNewDemonIdentityName")
             clocktowerDemonSuccessorTarget = json.optNullableString("clocktowerDemonSuccessorTarget")
             val restoredNightCheckpoint = ClocktowerNightCheckpoint.fromPersistedValues(mapOf(
                 "clocktowerPhase" to json.optNullableString("clocktowerPhase"),
@@ -1763,6 +1768,7 @@ internal fun CampBoardGameHostApp() {
                 "clocktowerConfirmedMayorRedirectTarget" to json.optNullableString("clocktowerConfirmedMayorRedirectTarget"),
                 "clocktowerMayorRedirectTarget" to json.optNullableString("clocktowerMayorRedirectTarget"),
                 "clocktowerPendingNewDemonName" to json.optNullableString("clocktowerPendingNewDemonName"),
+                "clocktowerPendingNightNewDemonIdentityName" to json.optNullableString("clocktowerPendingNightNewDemonIdentityName"),
                 "clocktowerDemonSuccessorTarget" to json.optNullableString("clocktowerDemonSuccessorTarget"),
             ))
             clocktowerPhase = enumByName<ClocktowerPhase>(restoredNightCheckpoint.phaseName) ?: ClocktowerPhase.FirstNight
@@ -1780,6 +1786,7 @@ internal fun CampBoardGameHostApp() {
             clocktowerConfirmedMayorRedirectTarget = restoredNightCheckpoint.confirmedMayorRedirectTarget
             clocktowerMayorRedirectTarget = restoredNightCheckpoint.mayorRedirectDraftTarget
             clocktowerPendingNewDemonName = restoredNightCheckpoint.pendingNewDemonName
+            clocktowerPendingNightNewDemonIdentityName = restoredNightCheckpoint.pendingNightNewDemonIdentityName
             clocktowerDemonSuccessorTarget = restoredNightCheckpoint.demonSuccessorDraftTarget
             clocktowerVirginUsed = json.optBoolean("clocktowerVirginUsed", false)
             clocktowerSlayerUsed = json.optBoolean("clocktowerSlayerUsed", false)
@@ -1976,6 +1983,7 @@ internal fun CampBoardGameHostApp() {
         clocktowerMayorRedirectTarget = null
         clocktowerConfirmedMayorRedirectTarget = null
         clocktowerPendingNewDemonName = null
+        clocktowerPendingNightNewDemonIdentityName = null
         clocktowerDemonSuccessorTarget = null
         clocktowerVirginUsed = false
         clocktowerSlayerUsed = false
@@ -2527,6 +2535,7 @@ internal fun CampBoardGameHostApp() {
                         mayorRedirectTarget = clocktowerConfirmedMayorRedirectTarget,
                         mayorRedirectDraftTarget = clocktowerMayorRedirectTarget,
                         pendingNewDemonName = clocktowerPendingNewDemonName,
+                        pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
                         demonSuccessorTarget = clocktowerDemonSuccessorTarget,
                         virginUsed = clocktowerVirginUsed,
                         slayerUsed = clocktowerSlayerUsed,
@@ -2825,6 +2834,9 @@ internal fun CampBoardGameHostApp() {
                                 } else {
                                     null
                                 }
+                                if (promotedName != null) {
+                                    clocktowerPendingNightNewDemonIdentityName = promotedName
+                                }
                                 shotOutcome = if (targetCard.clocktowerTeam != ClocktowerTeam.Demon || promotedName != null) null
                                 else evaluateGameOutcome(context, cards, currentGameKind)
                                 addClocktowerEvent(
@@ -2960,6 +2972,9 @@ internal fun CampBoardGameHostApp() {
                                         executionOutcome = null
                                     } else if (executedCard.clocktowerTeam == ClocktowerTeam.Demon) {
                                         val promotedName = promoteDemonSuccessorIfNeeded(impDeathWasSelfChosen = false)
+                                        if (promotedName != null) {
+                                            clocktowerPendingNightNewDemonIdentityName = promotedName
+                                        }
                                         executionOutcome = if (promotedName == null) {
                                             evaluateGameOutcome(context, cards, currentGameKind)
                                         } else {
@@ -3003,6 +3018,7 @@ internal fun CampBoardGameHostApp() {
                             // one timeline boundary. Earlier action confirmations have already
                             // revisioned their own facts; this closes the night as a whole.
                             advanceClocktowerGameStateRevision()
+                            clocktowerPendingNightNewDemonIdentityName = null
                             val demonPoisonedTonight = clocktowerConfirmedPoisonTarget?.let { name ->
                                 cards.firstOrNull { it.name == name && it.eliminatedRound == null }?.clocktowerTeam == ClocktowerTeam.Demon
                             } == true
