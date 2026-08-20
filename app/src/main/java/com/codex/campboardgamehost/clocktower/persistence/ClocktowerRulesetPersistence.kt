@@ -67,6 +67,63 @@ internal object TroubleBrewingRulesetPersistence {
         )
     }
 
+    /**
+     * Recovers the immutable setup-time role basis from a version-1 save.
+     *
+     * Version 1 did not persist the basis separately. If every restored actual role is still unique,
+     * the current assignments are sufficient evidence. If succession has replaced one or more roles
+     * with another Imp, the old RulesetRef hash is required and is used to identify the unique
+     * setup-time role set. A changed-role save without that evidence is ambiguous and fails closed.
+     */
+    fun resolveLegacyBasisForRestore(
+        knowledge: RulesetKnowledge,
+        assignedRoleIds: List<RoleId>,
+        persistedRef: RulesetRef?,
+    ): ClocktowerRulesetPersistenceBasis {
+        require(knowledge.scriptId == SCRIPT_ID) {
+            "Legacy Trouble Brewing basis recovery requires trouble_brewing ruleset knowledge."
+        }
+        require(assignedRoleIds.isNotEmpty()) {
+            "Legacy Trouble Brewing save is missing assigned role IDs."
+        }
+        val knownRoleIds = knowledge.characters.map { it.roleId }.toSet()
+        require(assignedRoleIds.all { it in knownRoleIds }) {
+            "Legacy Trouble Brewing save contains a role outside the current ruleset knowledge."
+        }
+
+        val currentRoleIds = assignedRoleIds.toSet()
+        val replacedRoleCount = assignedRoleIds.size - currentRoleIds.size
+        if (replacedRoleCount == 0) {
+            val basis = ClocktowerRulesetPersistenceBasis(currentRoleIds)
+            persistedRef?.let { ref ->
+                require(ref == refFor(knowledge, basis)) {
+                    "Legacy Trouble Brewing save has an incompatible ruleset reference."
+                }
+            }
+            return basis
+        }
+
+        require(persistedRef != null) {
+            "Legacy Trouble Brewing save changed assigned roles but has no ruleset reference to recover the setup basis."
+        }
+        val missingCandidates = (knownRoleIds - currentRoleIds).sortedBy { it.value }
+        require(replacedRoleCount <= missingCandidates.size) {
+            "Legacy Trouble Brewing save cannot recover its setup role basis."
+        }
+
+        val matches = combinations(missingCandidates, replacedRoleCount)
+            .map { missingRoleIds ->
+                ClocktowerRulesetPersistenceBasis(currentRoleIds + missingRoleIds)
+            }
+            .filter { basis -> refFor(knowledge, basis) == persistedRef }
+            .take(2)
+            .toList()
+        require(matches.size == 1) {
+            "Legacy Trouble Brewing save does not uniquely identify its setup role basis."
+        }
+        return matches.single()
+    }
+
     fun resolveForRestore(
         knowledge: RulesetKnowledge,
         persistedRef: RulesetRef?,
@@ -88,5 +145,18 @@ internal object TroubleBrewingRulesetPersistence {
             }
         }
         return persistedRef
+    }
+
+    private fun <T> combinations(values: List<T>, choose: Int): Sequence<List<T>> = sequence {
+        require(choose in 0..values.size) { "Invalid combination size '$choose'." }
+        if (choose == 0) {
+            yield(emptyList())
+            return@sequence
+        }
+        for (index in 0..values.size - choose) {
+            for (tail in combinations(values.subList(index + 1, values.size), choose - 1)) {
+                yield(listOf(values[index]) + tail)
+            }
+        }
     }
 }
