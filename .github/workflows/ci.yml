@@ -107,8 +107,8 @@ jobs:
             --report build/reports/asp-oracle-a2.json \
             --timeout 30
 
-  r2-host-extraction:
-    name: R2 guarded host extraction
+  r2-history-extraction:
+    name: R2 guarded history extraction
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
@@ -124,8 +124,8 @@ jobs:
         run: |
           set -euo pipefail
           root=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-          host=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
-          if grep -q '^private fun isClocktowerEvil(card: PlayerCard): Boolean =' "$root" && [ ! -e "$host" ]; then
+          history=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHistoryScreen.kt
+          if grep -q '^internal fun ClocktowerGameRecordPanel(' "$root" && [ ! -e "$history" ]; then
             echo 'needs_extract=true' >> "$GITHUB_OUTPUT"
           else
             echo 'needs_extract=false' >> "$GITHUB_OUTPUT"
@@ -148,7 +148,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Mechanically extract Clocktower host boundary
+      - name: Mechanically extract Clocktower history and result UI
         if: steps.gate.outputs.needs_extract == 'true'
         shell: bash
         run: |
@@ -157,75 +157,58 @@ jobs:
           from pathlib import Path
 
           root_path = Path('app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt')
-          host_path = Path('app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt')
+          history_path = Path('app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHistoryScreen.kt')
           root = root_path.read_text(encoding='utf-8')
 
-          start_marker = 'private fun isClocktowerEvil(card: PlayerCard): Boolean ='
-          end_marker = '@Composable\nprivate fun ClocktowerGameRecordPanel('
-          assert root.count(start_marker) == 1, root.count(start_marker)
-          assert root.count(end_marker) == 1, root.count(end_marker)
-          assert not host_path.exists()
+          start1 = '@Composable\ninternal fun ClocktowerGameRecordPanel('
+          end1 = '@OptIn(ExperimentalLayoutApi::class)\n@Composable\nprivate fun GameScreen('
+          start2 = '@Composable\nprivate fun ClocktowerResultsDialog('
+          end2 = '@Composable\nprivate fun ResultsDialog('
+          for marker in (start1, end1, start2, end2):
+              assert root.count(marker) == 1, (marker, root.count(marker))
+          assert not history_path.exists()
 
-          start = root.index(start_marker)
-          end = root.index(end_marker)
-          assert start < end
-          block = root[start:end].rstrip() + '\n'
-          assert block.count('private fun ClocktowerJudgeScreen(') == 1
-          assert block.count('private fun PlayerCard.clocktowerShownAsDifferentRole()') == 1
-          assert block.count('private fun isClocktowerEvil(card: PlayerCard): Boolean =') == 1
-          block = block.replace('private fun ClocktowerJudgeScreen(', 'internal fun ClocktowerJudgeScreen(', 1)
-          block = block.replace(
-              'private fun PlayerCard.clocktowerShownAsDifferentRole()',
-              'internal fun PlayerCard.clocktowerShownAsDifferentRole()',
+          s1, e1 = root.index(start1), root.index(end1)
+          s2, e2 = root.index(start2), root.index(end2)
+          assert s1 < e1 < s2 < e2
+          block1 = root[s1:e1].rstrip() + '\n'
+          block2 = root[s2:e2].rstrip() + '\n'
+          assert block1.count('private fun clocktowerEventPhaseLabel(') == 1
+          assert block1.count('internal fun ClocktowerPlayerStatusRow(') == 1
+          assert block2.count('private fun ClocktowerResultsDialog(') == 1
+          block1 = block1.replace(
+              'private fun clocktowerEventPhaseLabel(',
+              'internal fun clocktowerEventPhaseLabel(',
               1,
           )
-          block = block.replace(
-              'private fun isClocktowerEvil(card: PlayerCard): Boolean =',
-              'internal fun isClocktowerEvil(card: PlayerCard): Boolean =',
+          block2 = block2.replace(
+              'private fun ClocktowerResultsDialog(',
+              'internal fun ClocktowerResultsDialog(',
               1,
           )
 
           import_start = root.index('import ')
           import_end = root.index('\nprivate enum class Screen')
           imports = root[import_start:import_end].rstrip()
-          host = 'package com.codex.campboardgamehost\n\n' + imports + '\n\n' + block
+          history = 'package com.codex.campboardgamehost\n\n' + imports + '\n\n' + block1 + '\n' + block2
 
-          root = root[:start] + root[end:]
-          replacements = {
-              'private enum class GameKind {': 'internal enum class GameKind {',
-              'private enum class ClocktowerDayMode {': 'internal enum class ClocktowerDayMode {',
-              'private enum class ClocktowerNightAction {': 'internal enum class ClocktowerNightAction {',
-              'private enum class ClocktowerDisplayKind {': 'internal enum class ClocktowerDisplayKind {',
-              'private const val A4_IDENTITY_PREWARM_LOG_TAG': 'internal const val A4_IDENTITY_PREWARM_LOG_TAG',
-              'private const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG': 'internal const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG',
-              'private const val UNIFIED_SETUP_SELECTOR_BENCHMARK_LOG_TAG': 'internal const val UNIFIED_SETUP_SELECTOR_BENCHMARK_LOG_TAG',
-              'private const val UNIFIED_FIRST_NIGHT_POOL_BENCHMARK_LOG_TAG': 'internal const val UNIFIED_FIRST_NIGHT_POOL_BENCHMARK_LOG_TAG',
-              'private val completeTroubleBrewingRoles =': 'internal val completeTroubleBrewingRoles =',
-              'private fun ClocktowerRole.nameFor(language: String): String': 'internal fun ClocktowerRole.nameFor(language: String): String',
-              'private fun PlayerCard.hostRoleLabel(context: Context, gameKind: GameKind): String': 'internal fun PlayerCard.hostRoleLabel(context: Context, gameKind: GameKind): String',
-              'private fun PlayerCard.seatLabel(cards: List<PlayerCard>): String': 'internal fun PlayerCard.seatLabel(cards: List<PlayerCard>): String',
-              'private fun ClocktowerNewDemonConfirmationScreen(': 'internal fun ClocktowerNewDemonConfirmationScreen(',
-              'private fun ClocktowerGameRecordPanel(': 'internal fun ClocktowerGameRecordPanel(',
-              'private fun ClocktowerPlayerStatusRow(card: PlayerCard)': 'internal fun ClocktowerPlayerStatusRow(card: PlayerCard)',
-              'private fun SelectableSeatNumbers(': 'internal fun SelectableSeatNumbers(',
-              'private fun SelectableTwoPlayerChips(': 'internal fun SelectableTwoPlayerChips(',
-          }
-          for old, new in replacements.items():
-              count = root.count(old)
-              assert count == 1, (old, count)
-              root = root.replace(old, new, 1)
-
-          assert 'fun ClocktowerJudgeScreen(' not in root
-          assert 'internal fun ClocktowerJudgeScreen(' in host
+          root = root[:s2] + root[e2:]
+          root = root[:s1] + root[e1:s2] + root[s2:]
+          assert 'fun ClocktowerGameRecordPanel(' not in root
+          assert 'fun ClocktowerResultsDialog(' not in root
+          history_path.write_text(history.rstrip() + '\n', encoding='utf-8')
           root_path.write_text(root.rstrip() + '\n', encoding='utf-8')
-          host_path.write_text(host.rstrip() + '\n', encoding='utf-8')
           PY
 
           allowed='app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt'
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHistoryScreen.kt'
           actual="$({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u)"
           test "$actual" = "$allowed"
           git diff --check
+
+      - name: Fast Kotlin compile gate
+        if: steps.gate.outputs.needs_extract == 'true'
+        run: bash ./gradlew :app:compileDebugKotlin --no-daemon --build-cache
 
       - name: Verify extracted Android source
         if: steps.gate.outputs.needs_extract == 'true'
@@ -262,13 +245,13 @@ jobs:
         run: |
           set -euo pipefail
           root=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-          host=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
-          git add -- "$root" "$host"
+          history=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHistoryScreen.kt
+          git add -- "$root" "$history"
           staged="$(git diff --cached --name-only | sort -u)"
-          expected="$(printf '%s\n%s\n' "$root" "$host" | sort -u)"
+          expected="$(printf '%s\n%s\n' "$root" "$history" | sort -u)"
           test "$staged" = "$expected"
           git diff --cached --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'refactor(r2): extract Clocktower host screen'
+          git commit -m 'refactor(r2): extract Clocktower history UI'
           git push origin HEAD:codex/storyteller-algorithm-v4
