@@ -1,85 +1,165 @@
-name: R2 main-thread boundary
+name: R2 batch 9 host extraction
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
       - codex/storyteller-algorithm-v4
     paths:
       - app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-      - app/src/main/java/com/codex/campboardgamehost/MainActivity.kt
-      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt
-      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
-      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
+      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
       - .github/workflows/r2-write-probe.yml
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  verify-boundary:
+  extract-host-boundary:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout development branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/storyteller-algorithm-v4
+          fetch-depth: 0
 
-      - name: Verify extracted R2 boundaries
+      - name: Check extraction gate
+        id: gate
         shell: bash
         run: |
           set -euo pipefail
           root=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-          main=app/src/main/java/com/codex/campboardgamehost/MainActivity.kt
-          setup=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt
-          day=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
-          night=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
-
-          test -f "$root"
-          test -f "$main"
-          test -f "$setup"
-          test -f "$day"
-          test -f "$night"
-
-          if grep -q "fun ClocktowerSettingsScreen(" "$root"; then
-            echo "ClocktowerSettingsScreen still lives in CampBoardGameHostApp.kt" >&2
-            exit 1
+          host=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          if grep -q '^private fun isClocktowerEvil(card: PlayerCard): Boolean =' "$root" && [ ! -e "$host" ]; then
+            echo 'needs_extract=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'needs_extract=false' >> "$GITHUB_OUTPUT"
           fi
-          grep -q "internal fun ClocktowerSettingsScreen" "$setup"
 
-          for name in \
-            ClocktowerDayOverviewScreen \
-            ClocktowerDawnSummaryScreen \
-            ClocktowerNominationScreen \
-            ClocktowerVoteScreen \
-            ClocktowerExecutionConfirmScreen \
-            ClocktowerSpecialDayActionScreen
-          do
-            if grep -q "fun ${name}(" "$root"; then
-              echo "${name} still lives in CampBoardGameHostApp.kt" >&2
-              exit 1
-            fi
-            grep -q "internal fun ${name}" "$day"
-          done
+      - name: Set up JDK 17
+        if: steps.gate.outputs.needs_extract == 'true'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
 
-          grep -q "private fun ClocktowerDayPlayerTile" "$day"
-          grep -q "private fun ClocktowerDayActionHeader" "$day"
+      - name: Set up Gradle
+        if: steps.gate.outputs.needs_extract == 'true'
+        uses: gradle/actions/setup-gradle@v6
 
-          for name in \
-            ClocktowerNightActiveScreen \
-            ClocktowerNightReadyCard
-          do
-            if grep -q "fun ${name}(" "$root"; then
-              echo "${name} still lives in CampBoardGameHostApp.kt" >&2
-              exit 1
-            fi
-            grep -q "internal fun ${name}" "$night"
-          done
+      - name: Set up Python
+        if: steps.gate.outputs.needs_extract == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
 
-          grep -q "private fun ClocktowerNewDemonConfirmationScreen(" "$root"
-          grep -q "private fun ClocktowerStorytellerRecommendationScreen(" "$root"
+      - name: Mechanically extract Clocktower host boundary
+        if: steps.gate.outputs.needs_extract == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
 
-          main_lines="$(wc -l < "$main")"
-          main_bytes="$(wc -c < "$main")"
-          test "$main_lines" -lt 200
-          test "$main_bytes" -lt 6000
+          root_path = Path('app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt')
+          host_path = Path('app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt')
+          root = root_path.read_text(encoding='utf-8')
+
+          start_marker = 'private fun isClocktowerEvil(card: PlayerCard): Boolean ='
+          end_marker = '@Composable\nprivate fun ClocktowerGameRecordPanel('
+          assert root.count(start_marker) == 1, root.count(start_marker)
+          assert root.count(end_marker) == 1, root.count(end_marker)
+          assert not host_path.exists()
+
+          start = root.index(start_marker)
+          end = root.index(end_marker)
+          assert start < end
+          block = root[start:end].rstrip() + '\n'
+          assert block.count('private fun ClocktowerJudgeScreen(') == 1
+          block = block.replace('private fun ClocktowerJudgeScreen(', 'internal fun ClocktowerJudgeScreen(', 1)
+
+          import_start = root.index('import ')
+          import_end = root.index('\nprivate enum class Screen')
+          imports = root[import_start:import_end].rstrip()
+          host = 'package com.codex.campboardgamehost\n\n' + imports + '\n\n' + block
+
+          root = root[:start] + root[end:]
+
+          replacements = {
+              'private enum class GameKind {': 'internal enum class GameKind {',
+              'private enum class ClocktowerDayMode {': 'internal enum class ClocktowerDayMode {',
+              'private enum class ClocktowerNightAction {': 'internal enum class ClocktowerNightAction {',
+              'private enum class ClocktowerDisplayKind {': 'internal enum class ClocktowerDisplayKind {',
+              'private const val A4_IDENTITY_PREWARM_LOG_TAG': 'internal const val A4_IDENTITY_PREWARM_LOG_TAG',
+              'private const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG': 'internal const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG',
+              'private const val UNIFIED_SETUP_SELECTOR_BENCHMARK_LOG_TAG': 'internal const val UNIFIED_SETUP_SELECTOR_BENCHMARK_LOG_TAG',
+              'private const val UNIFIED_FIRST_NIGHT_POOL_BENCHMARK_LOG_TAG': 'internal const val UNIFIED_FIRST_NIGHT_POOL_BENCHMARK_LOG_TAG',
+              'private fun ClocktowerRole.nameFor(language: String): String': 'internal fun ClocktowerRole.nameFor(language: String): String',
+              'private fun PlayerCard.hostRoleLabel(context: Context, gameKind: GameKind): String': 'internal fun PlayerCard.hostRoleLabel(context: Context, gameKind: GameKind): String',
+              'private fun PlayerCard.seatLabel(cards: List<PlayerCard>): String': 'internal fun PlayerCard.seatLabel(cards: List<PlayerCard>): String',
+              'private fun ClocktowerNewDemonConfirmationScreen(': 'internal fun ClocktowerNewDemonConfirmationScreen(',
+              'private fun ClocktowerGameRecordPanel(': 'internal fun ClocktowerGameRecordPanel(',
+              'private fun ClocktowerPlayerStatusRow(card: PlayerCard)': 'internal fun ClocktowerPlayerStatusRow(card: PlayerCard)',
+          }
+          for old, new in replacements.items():
+              count = root.count(old)
+              assert count == 1, (old, count)
+              root = root.replace(old, new, 1)
+
+          assert 'fun ClocktowerJudgeScreen(' not in root
+          assert 'internal fun ClocktowerJudgeScreen(' in host
+          root_path.write_text(root.rstrip() + '\n', encoding='utf-8')
+          host_path.write_text(host.rstrip() + '\n', encoding='utf-8')
+          PY
+
+          allowed='app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt'
+          actual="$({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u)"
+          test "$actual" = "$allowed"
+          git diff --check
+
+      - name: Verify extracted Android source
+        if: steps.gate.outputs.needs_extract == 'true'
+        run: bash ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --build-cache
+
+      - name: Verify ASP contracts
+        if: steps.gate.outputs.needs_extract == 'true'
+        run: |
+          python tools/asp_oracle/oracle_harness.py validate --fixtures tools/asp_oracle/scenarios/trouble_brewing_a2.json
+          python -m unittest discover -s tools/asp_oracle -p 'test_*.py'
+
+      - name: Verify real Clingo cross-validation
+        if: steps.gate.outputs.needs_extract == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install clingo==5.8.0
+          mkdir -p "$RUNNER_TEMP/bin"
+          cat > "$RUNNER_TEMP/bin/clingo" <<'EOF'
+          #!/usr/bin/env bash
+          exec python -m clingo "$@"
+          EOF
+          chmod +x "$RUNNER_TEMP/bin/clingo"
+          export PATH="$RUNNER_TEMP/bin:$PATH"
+          python tools/asp_oracle/oracle_harness.py fetch --checkout-dir build/oracles/botc-asp
+          python tools/asp_oracle/oracle_harness.py run \
+            --fixtures tools/asp_oracle/scenarios/trouble_brewing_a2.json \
+            --botc-asp-dir build/oracles/botc-asp \
+            --report build/reports/asp-oracle-a2.json \
+            --timeout 30
+
+      - name: Commit validated extraction only
+        if: steps.gate.outputs.needs_extract == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          root=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          host=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          git add -- "$root" "$host"
+          staged="$(git diff --cached --name-only | sort -u)"
+          expected="$(printf '%s\n%s\n' "$root" "$host" | sort -u)"
+          test "$staged" = "$expected"
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'refactor(r2): extract Clocktower host screen'
+          git push origin HEAD:codex/storyteller-algorithm-v4
