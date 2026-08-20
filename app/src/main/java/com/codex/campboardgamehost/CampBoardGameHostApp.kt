@@ -10582,38 +10582,6 @@ private fun EvilInfoDisplay(
 }
 
 @Composable
-private fun ClocktowerNightReadyCard() {
-    val language = LocalContext.current.resources.configuration.locales[0].language
-    fun text(zh: String, en: String): String = if (language == "en") en else zh
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        shape = RoundedCornerShape(16.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(
-                text("夜晚准备", "Night preparation"),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text(
-                    "所有人请闭眼，低头，保持安静。如果需要唤醒某位玩家，轻拍他。不要泄露信息。",
-                    "Everyone close your eyes, look down, and stay quiet. Tap a player to wake them. Do not reveal information.",
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
 private fun ClocktowerStorytellerRecommendationScreen(
     title: String,
     subtitle: String,
