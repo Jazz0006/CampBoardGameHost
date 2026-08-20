@@ -30,32 +30,38 @@ ONLY THEN R6 revision-driven dynamic decision engine
 
 R1–R5 已全部通过，Phase A correctness exit 已签署。
 
-**当前执行点（2026-08-20）：R5.5 / S3 NEXT。S0 PASS；S1 Trouble Brewing FlowPlanner migration 已完整 PASS；S2 No Greater Joy real second-script structural proof 已 PASS。下一 source batch 从 S3 Werewolf BoardRegistry + RoleRegistry + FlowPlanner migration 开始。**
+**当前执行点（2026-08-20）：R5.5 / S4 NEXT。S0 PASS；S1 Trouble Brewing FlowPlanner migration PASS；S2 No Greater Joy real second-script proof PASS；S3 Werewolf BoardRegistry + RoleRegistry + FlowPlanner shadow migration PASS。下一 source batch 从 S4 persistence / ruleset identity migration 开始。**
 
 最新已验证 source baseline：
 
 ```text
-5058a473e5ef46a69c1bd81239b725dff684181d
-feat(r5.5): add No Greater Joy structural proof
+90d0fd01e2424189cd6a078aafadd2878a48e383
+fix(r5.5): fail closed invalid Werewolf board counts
 ```
 
-该 source head 的 normal CI #130 已通过 Android unit tests + debug APK、ASP contract tests、real Clingo cross-validation；R2 structural verifier #122 也通过。
+该 source head 的 normal CI #135 已通过 Android unit tests + debug APK、ASP contract tests、real Clingo cross-validation；R2 structural verifier #127 也通过。
 
-S2 使用 tests-first 两提交完成：
+S3 使用两组 tests-first / contract-first 提交完成：
 
 ```text
-ea9a34ef36ab93f6528a669d3f5a036b81a07da6
-  test(r5.5): define No Greater Joy structural proof
+a20cef0b64fcb7c73af5e43147a06c5aab228e52
+  test(r5.5): define Werewolf registry planner parity
 
-5058a473e5ef46a69c1bd81239b725dff684181d
-  feat(r5.5): add No Greater Joy structural proof
+ecbe6d60af2e489104326da371403811cfa1ae34
+  feat(r5.5): add Werewolf registry shadow planner
+
+b33506acc9398546c46b925afc236ad4c9587c53
+  test(r5.5): harden Werewolf legacy planner differential
+
+90d0fd01e2424189cd6a078aafadd2878a48e383
+  fix(r5.5): fail closed invalid Werewolf board counts
 ```
 
-red commit 的 Android 编译在缺失 `NoGreaterJoyOfficialCharacterMetadata`、`SCARLET_WOMAN_BECAME_DEMON`、`SAGE_KILLED_BY_DEMON` 时按预期失败；implementation commit 补齐合同后全部 normal gates 转绿。
+第一组 red 在 registry/planner 类型尚不存在时按预期 Android compile fail；green 后 CI #133 / R2 #125 全绿。第二组 hardening red 的 363 个 Android tests 中只有 non-positive role-count contract 失败，证明旧实现会静默删除 count=0 角色；最终 green 改为 fail closed 后 CI #135 / R2 #127 全绿。
 
-R5 只解锁 R5.5，**没有**直接解锁 R6。R6 仍必须等待 S3–S5 全部通过。
+R5 只解锁 R5.5，**没有**直接解锁 R6。R6 仍必须等待 S4–S5 全部通过。
 
-A4 ZDD 也没有因为 Phase A 退出或多剧本 structural proof 获得 production 授权：继续保持 exact shadow/prototype；`ZDD_DEVICE_VALIDATED` 仍未授权。
+A4 ZDD 继续保持 exact shadow/prototype；`ZDD_DEVICE_VALIDATED` 仍未授权。
 
 ## 2. 阶段状态
 
@@ -63,7 +69,7 @@ A4 ZDD 也没有因为 Phase A 退出或多剧本 structural proof 获得 produc
 |---|---|---|
 | A0 外部参考冻结 | PASS | 冻结参考继续有效。 |
 | A1 Unified Semantic Model | PASS | storyteller truth / observation / player knowledge 三层边界保留。 |
-| A1.1 Semantic Hardening | PASS WITH FOLLOW-UP | schema-v2、registration interaction binding、world-set identity 成立；B4 前仍需完成 timeline identity 等 P1 语义债务。 |
+| A1.1 Semantic Hardening | PASS WITH FOLLOW-UP | schema-v2、registration interaction binding、world-set identity 成立；R6 前仍需完成 timeline identity 等 P1 语义债务。 |
 | A2 ASP Oracle harness | PASS / R3.1 | nested `FormalGameState` 已迁移 schema-v2；Python 与 Android typed decoder 共用 fail-closed 合同。 |
 | A2.1 Golden corpus | PASS / R3.1 | 52 total；24 Clingo executable；`UNEXPLAINED_MISMATCH=0`、`NOT_RUN=0`。 |
 | **A3 EnumeratedWorldSet** | **PASS / R5 RE-EXIT VALIDATED** | exact correctness baseline；R1/R3/R5 验证通过。 |
@@ -74,8 +80,8 @@ A4 ZDD 也没有因为 Phase A 退出或多剧本 structural proof 获得 produc
 | **R5.5 S0 Schema/Catalog** | **PASS** | official/custom JSON normalization、typed validation、canonical TB asset 已通过。 |
 | **R5.5 S1 TB FlowPlanner migration** | **PASS** | S1.1–S1.4 全部通过；shadow-only；legacy production Host 尚未切换。 |
 | **R5.5 S2 NGJ second-script proof** | **PASS** | canonical NGJ asset、central registry metadata、conditional handlers、dual-script structural tests 全绿；FlowPlanner core 无 script-name 分支。 |
-| **R5.5 S3 Werewolf registry/planner** | **NEXT** | 下一 source batch；迁移 board/role identity 与 fixed JudgeStep flow seam。 |
-| R5.5 S4 persistence/ruleset identity | BLOCKED BY S3 | 统一 identity、handler compatibility、旧存档 migration。 |
+| **R5.5 S3 Werewolf registry/planner** | **PASS** | typed role/board registry、house-rule separation、pure shadow planner、all classic-template legacy parity 与 fail-closed validation 全绿。 |
+| **R5.5 S4 persistence/ruleset identity** | **NEXT** | 统一 variant/content/semantic compatibility identity，并明确旧存档 migration / rejection。 |
 | R5.5 S5 regression/legacy removal/R6 handoff | BLOCKED BY S4 | full regression 后才允许关闭 legacy flow 并准备 R6。 |
 | R6 revision-driven production expansion | BLOCKED | R5.5 全部通过后才可切 READY。 |
 
@@ -136,7 +142,7 @@ Player-world construction input
 
 ## 5. R5.5 — Script & Dynamic Flow Foundation
 
-目标是在不重写 Possible Worlds 的前提下，让内容身份、角色注册和游戏流程不再硬编码为 Trouble Brewing enum / fixed Werewolf JudgeStep，为 R6 提供稳定 script-aware decision seam。
+目标是在不重写 Possible Worlds 的前提下，让内容身份、角色注册和游戏流程不再硬编码为 Trouble Brewing enum / fixed Werewolf JudgeStep，为 R6 提供稳定 variant-aware decision seam。
 
 总体顺序：
 
@@ -144,8 +150,8 @@ Player-world construction input
 S0 Schema / Catalog / official-custom JSON normalization / validation      PASS
 S1 Trouble Brewing FlowPlanner golden-equivalent migration                 PASS
 S2 No Greater Joy real second-script structural proof                      PASS
-S3 Werewolf BoardRegistry + RoleRegistry + FlowPlanner migration           NEXT
-S4 persistence/ruleset identity migration
+S3 Werewolf BoardRegistry + RoleRegistry + FlowPlanner migration           PASS
+S4 persistence/ruleset identity migration                                  NEXT
 S5 full regression + legacy flow removal + R6 handoff
 ```
 
@@ -170,89 +176,31 @@ S0.2 b02153f821f2403aa39d733d3fe30ace3e6abebd
 S0.3 df0509da...
 ```
 
-已建立：strong typed catalog、existing `RulesetJsonLoader.parseScript(...)` adapter、deterministic normalized hash、typed validation、official/custom schema compatibility、homebrew/bootlegger safe downgrade、canonical `trouble_brewing.json`。
+已建立 strong typed catalog、existing `RulesetJsonLoader.parseScript(...)` adapter、deterministic normalized hash、typed validation、official/custom schema compatibility、homebrew/bootlegger safe downgrade、canonical `trouble_brewing.json`。
 
-### 5.2 S1.1 — pure shadow base-night planner — PASS
+### 5.2 S1 — Trouble Brewing FlowPlanner golden migration — PASS
 
-Source：`e76614ffc4382e247cf37d6c994172642b922a8c`
-
-`ClocktowerFlowPlanner` 输入：
+关键 source：
 
 ```text
-ValidatedClocktowerRuleset
-+ playerCount
-+ inPlayRoleIds
-        ↓
-base night token plan
+S1.1 e76614ffc4382e247cf37d6c994172642b922a8c
+S1.2 5a628675e3f047d919908fbd7f14eaa31b788ac6
+S1.3 e4fec575c974839941e79db1f55fa16f5971ad83
+S1.4 b32101d80b3c70f674ed9d864d85a4bd16ce5b81
 ```
 
-已验证：explicit script override、metadata derived order、system tokens、5–6 / 7+ evil-info eligibility、in-play filtering、off-script fail closed、TB first/other-night parity。
+已验证：
 
-CI #123 success；R2 #115 success。
+- pure base night plan；
+- stable `ClocktowerHostInteraction`；
+- Fortune Teller red-herring setup；
+- resolved facts / conditional-event interactions；
+- DemonSuccessor / Mayor / Ravenkeeper / Undertaker ordering；
+- production `officialNightOrder()` ↔ shadow planner differential；
+- deterministic / unique stable interaction identity；
+- FlowPlanner 不 hardcode script name，也不重复实现 poison/protection/death correctness。
 
-### 5.3 S1.2 — stable HostInteraction projection — PASS
-
-Source：`5a628675e3f047d919908fbd7f14eaa31b788ac6`
-
-建立：
-
-- `ClocktowerHostInteraction` stable flow model；
-- character interaction registry；
-- pure projector；
-- Fortune Teller red herring 由 FT handler 产生 storyteller-setup interaction；
-- FlowPlanner 不 hardcode `TroubleBrewing`；
-- `DynamicDecisionRequest` 不被当成通用流程节点。
-
-TB golden 锁定：
-
-```text
-Empath
-→ Fortune Teller red-herring setup
-→ Fortune Teller action
-```
-
-CI #124 success；R2 #116 success。
-
-### 5.4 S1.3 — resolved flow facts + conditional/event interactions — PASS
-
-Source：`e4fec575c974839941e79db1f55fa16f5971ad83`
-
-建立/扩展：
-
-```text
-ClocktowerResolvedFlowFacts
-CharacterInteractionHandler eligibility
-before-role / after-role conditional interactions
-EVENT_RESOLUTION interaction
-```
-
-已锁定：
-
-- no fact → 不误生成 conditional interaction；
-- fact 有但角色不在场 → 不凭空生成；
-- DemonKill → optional DemonSuccessor → optional MayorRedirect → Ravenkeeper → Undertaker ordering；
-- Scarlet Woman 普通 night token 作为 ordering anchor，不误投影普通 wake step；
-- FlowPlanner 不重复计算 poison/protection/death correctness，只消费规则层已解析 facts。
-
-CI #127 success；R2 #119 success。
-
-### 5.5 S1.4 — legacy ↔ planner shadow differential — PASS
-
-Source：`b32101d80b3c70f674ed9d864d85a4bd16ce5b81`
-
-新增真实 differential，直接锚定 production `ClocktowerHostScreen.kt` 的 `officialNightOrder()`，覆盖：
-
-- first night；
-- other night；
-- day execution → Undertaker transition；
-- conditional/event-triggered interaction；
-- deterministic / unique stable interaction identity。
-
-该 batch 只新增测试文件，没有 production source 改动。
-
-CI #128 success；R2 #120 success。
-
-**S1 结论：PASS。Production Host 仍完全使用 legacy flow。**
+**Production Clocktower Host 仍完全使用 legacy flow。**
 
 ## 6. S2 — No Greater Joy real second-script structural proof — PASS
 
@@ -274,65 +222,14 @@ Scarlet Woman
 Imp
 ```
 
-### 6.1 tests-first red contract
-
-Source：`ea9a34ef36ab93f6528a669d3f5a036b81a07da6`
-
-新增 `NoGreaterJoyStructuralProofTest`，先要求：
-
-- canonical `no_greater_joy.json`；
-- NGJ-only official metadata；
-- Clockmaker / Chambermaid / Artist / Sage / Klutz behavior keys；
-- Artist / Klutz 不进入 night flow；
-- 5–6 人 first-night evil info suppression；
-- Sage 只在 Demon kill fact 后触发；
-- Scarlet Woman 只有规则层已解析“已继任 Demon”事实时才在对应 ordering slot 产生 interaction；
-- `ClocktowerFlowPlanner.kt` 不允许出现 TB/NGJ script-name literals。
-
-red Android compile 按预期失败在上述尚未实现的 metadata/facts。
-
-### 6.2 implementation
-
-Source：`5058a473e5ef46a69c1bd81239b725dff684181d`
-
-新增：
+关键 source：
 
 ```text
-app/src/main/assets/scripts/no_greater_joy.json
-app/src/main/java/.../catalog/NoGreaterJoyOfficialCharacterMetadata.kt
+ea9a34ef36ab93f6528a669d3f5a036b81a07da6  tests-first red
+5058a473e5ef46a69c1bd81239b725dff684181d  implementation
 ```
 
-central CharacterRegistry 通过现有 registry 类型扩展 NGJ-only official metadata；没有新增第二套 catalog / loader / generic script engine。
-
-新增 resolved facts：
-
-```text
-SCARLET_WOMAN_BECAME_DEMON
-SAGE_KILLED_BY_DEMON
-```
-
-现有 interaction registry 增加 Sage handler，并让 Scarlet Woman 的 ordering-anchor token 在规则层已经解析“已继任 Demon”时成为有效 interaction。复杂规则仍不进入 JSON，也不进入 FlowPlanner。
-
-canonical NGJ first-night order：
-
-```text
-Investigator
-→ Empath
-→ Clockmaker
-→ Chambermaid
-```
-
-canonical NGJ other-night structural order：
-
-```text
-Scarlet Woman
-→ Imp
-→ Sage
-→ Empath
-→ Chambermaid
-```
-
-S2 强判据已满足：
+已建立 canonical `no_greater_joy.json`、NGJ-only official metadata、Sage/Scarlet Woman resolved-fact handlers，并证明：
 
 ```text
 新增 NGJ
@@ -340,37 +237,137 @@ S2 强判据已满足：
 ≠ FlowPlanner core 中新增 NoGreaterJoy when/if
 ```
 
-`ClocktowerFlowPlanner.kt` 在 S2 diff 中 **零改动**。
+`ClocktowerFlowPlanner.kt` 在 S2 diff 中零改动。验证：CI #130 success；R2 #122 success。
 
-验证：CI #130 success；R2 #122 success。
+**仍未接 production Clocktower Host。**
 
-**S2 结论：PASS。仍未接 production Host。**
+## 7. S3 — Werewolf BoardRegistry + RoleRegistry + FlowPlanner migration — PASS
 
-## 7. S3 — NEXT：Werewolf BoardRegistry + RoleRegistry + FlowPlanner migration
-
-下一批进入狼人杀板子/角色/流程的结构迁移，但继续遵守 R5.5 的渐进式原则：
+S3 从当前 legacy 行为出发：
 
 ```text
-现有 Werewolf board / role / JudgeStep 行为
+WerewolfTemplate(playerCount, werewolfCount, includeSeer/includeWitch/includeHunter)
         ↓
-先建立 typed BoardRegistry / RoleRegistry
+WerewolfRoleRegistry + WerewolfBoardRegistry
         ↓
-再建立 pure WerewolfFlowPlanner shadow
+pure WerewolfFlowPlanner shadow
         ↓
-legacy ↔ planner parity tests
-        ↓
-通过前不切 production Judge UI
+legacy JudgeStep differential
 ```
 
-S3 第一批应先审计当前 Werewolf board identity、角色配置来源、`JudgeStep` 固定流程与夜间条件步骤，明确最小 typed model 和 golden parity；不要在第一批同时重写 production UI。
+### 7.1 typed role registry
 
-S3 不复用 `ClocktowerFlowPlanner`：两种游戏保留各自 planner，只共享更高层 HostInteraction/decision seam 的设计原则。
+新增：
+
+```text
+WerewolfRoleId / WerewolfRoleIds
+WerewolfRoleDefinition
+WerewolfRoleRegistry
+WerewolfTeam
+WerewolfInteractionKind
+WerewolfWakePolicy
+WerewolfInteractionCompletionPolicy
+```
+
+当前 built-in 角色：
+
+- Villager：无夜间 interaction；
+- Werewolf：order 10，ROLE_ACTION；
+- Seer：order 20，ROLE_ACTION；
+- Witch：order 30，ROLE_ACTION；
+- Hunter：order 40，ROLE_STATUS。
+
+Hunter 保留当前 legacy 的“夜间状态步骤”；实际死亡后开枪仍由现有 Dawn / DayVote 行为处理。S3 没有借结构迁移改规则。
+
+### 7.2 typed board registry + house-rule separation
+
+新增：
+
+```text
+WerewolfBoardId
+WerewolfBoardDefinition
+WerewolfBoardRegistry
+WerewolfRuleOptions
+```
+
+全部现有 4–12 人 `werewolfTemplates` 都映射为 `classic_<playerCount>` typed board，并保持相同角色组成。
+
+`LastWordsMode` 放在独立 `WerewolfRuleOptions`，不进入 board composition source。board content hash 由 normalized role deck 决定。
+
+`WerewolfBoardDefinition.create(...)` 对空 deck / non-positive role count fail closed，不允许把非法输入静默规范化成另一副板子。
+
+### 7.3 pure WerewolfFlowPlanner shadow
+
+新增独立 `WerewolfFlowPlanner`；不复用 `ClocktowerFlowPlanner`。
+
+planner：
+
+- 从 RoleRegistry 读取 role-specific interaction metadata；
+- 按 metadata order 生成实际在 board 中存在的 role interactions；
+- 再追加 Dawn / DayVote system boundaries；
+- stable interaction IDs deterministic + unique；
+- planner core 不 hardcode `Role.Seer/Witch/Hunter` 或 `classic_8` 等 board name。
+
+### 7.4 legacy differential
+
+`WerewolfLegacyPlannerDifferentialTest` 直接锚定 production `WerewolfHostScreen.kt` 当前 step builder：
+
+```text
+Wolves
+→ optional Seer
+→ optional Witch
+→ optional Hunter
+→ Dawn
+→ DayVote
+```
+
+所有 4–12 人 classic templates 均 legacy ↔ planner order equivalent。
+
+当前 production 使用 `cards.any { role == ... }`，而不是 alive-only eligibility；S3 differential 明确保留该可观察行为，不因结构迁移静默改变死亡角色步骤存在性。
+
+最终 S3 exact diff 从 `8aad6bf3...` 到 `90d0fd01...` 只有：
+
+```text
+4 个新增 shadow source files
+2 个新增 test files
+```
+
+没有修改：
+
+```text
+WerewolfGameSupport.kt
+WerewolfHostScreen.kt
+CampBoardGameHostApp persistence/state
+Clocktower production flow
+A3/A4 recommendation correctness path
+```
+
+验证：CI #135 success；R2 #127 success。
+
+**S3 结论：PASS。Production Werewolf Judge 仍完全使用 legacy step builder。**
+
+### 7.5 S4 — NEXT：persistence / ruleset identity migration
+
+S4 开始正式冻结“游戏是按什么内容与执行语义创建/恢复”的 identity。至少需要同时覆盖 Clocktower 和 Werewolf：
+
+```text
+variant/script/board id
+normalized content hash
+ruleset / semantic-handler compatibility version
+actual assigned role IDs
+relevant house-rule options
+import/source provenance where applicable
+```
+
+旧存档不得只按“当前 catalog 中同名 script/board”静默重新解释；必须有显式 migration 或 fail-closed rejection。
+
+S4 仍不负责关闭 legacy Host/Judge flow；legacy removal 属于 S5。
 
 ## 8. 明确继续延后的范围
 
 ### 8.1 A3/A4 Possible Worlds
 
-不要因为 NGJ 或 Werewolf migration 顺手泛化 A3/A4。
+不要因为 NGJ、Werewolf 或 persistence migration 顺手泛化 A3/A4。
 
 允许：
 
@@ -379,13 +376,13 @@ TB:  Catalog ✅ / FlowPlanner ✅ / Possible Worlds exact+shadow baseline
 NGJ: Catalog ✅ / FlowPlanner ✅ / Possible Worlds deferred
 ```
 
-### 8.2 Persistence / Ruleset identity
+### 8.2 Legacy flow cutover
 
-当前 save 同时保存 legacy `currentClocktowerScript` 与 `clocktowerRulesetRef`。统一 `ScriptId / RulesetRef / contentHash / handler compatibility identity` 与旧存档 migration 继续属于 S4。
+S0–S3 建立的是已验证 shadow foundation。Production Clocktower Host 与 Werewolf Judge 继续使用 legacy source，直到 S5 full regression / removal gate 明确授权。
 
 ### 8.3 `troubleBrewingRulesetRefFor(...)`
 
-该 legacy helper 继续服务 TB A3/A4 correctness boundary；S4 前不为形式通用化提前改掉。
+该 helper 继续服务 TB A3/A4 correctness boundary；S4 可以审计并设计统一 identity seam，但不能破坏当前 exact correctness contract。
 
 ## 9. R5.5 全局约束
 
@@ -395,9 +392,10 @@ NGJ: Catalog ✅ / FlowPlanner ✅ / Possible Worlds deferred
 - Character/Role Registry 是 metadata + handler binding 的单一入口；
 - ClocktowerFlowPlanner 与 WerewolfFlowPlanner 分离；
 - `VERIFIED / PARTIAL / UNVERIFIED` 决定 custom/homebrew 自动化安全等级；
-- TB legacy flow 只有 shadow/golden parity 后才能移除；
 - 新增只由已有角色构成的 script/board 不应要求修改 Host UI 或 flow core；
-- R6 decision point 必须来自 script-aware `FlowPlanner -> HostInteraction / StorytellerDecisionPoint` seam。
+- board composition 与独立 house-rule options 分离；
+- invalid content/identity 必须 fail closed，不能 silent rewrite；
+- R6 decision point 必须来自 variant-aware `FlowPlanner -> HostInteraction / StorytellerDecisionPoint` seam。
 
 ## 10. R6 — revision-driven dynamic decision engine
 
@@ -417,7 +415,8 @@ R6 不得重新引入：
 在后续路线明确修改前：
 
 ```text
-Production Host flow: existing legacy path
+Production Clocktower Host flow: existing legacy path
+Production Werewolf Judge flow: existing legacy path
 Production recommendation engine: existing production path
 A3 EnumeratedWorldSet: exact correctness baseline
 A4 ZDD: exact shadow/prototype only
@@ -425,7 +424,7 @@ A4.5 cache: debug/shadow only
 B4 DynamicPlayerWorldSetShadow: isolated shadow only
 ZDD_DEVICE_VALIDATED: NOT AUTHORIZED
 R5.5 ClocktowerFlowPlanner: validated shadow foundation; not production Host source
-R5.5 WerewolfFlowPlanner: not implemented yet
+R5.5 WerewolfFlowPlanner: validated shadow foundation; not production Judge source
 R6: BLOCKED
 ```
 
@@ -439,7 +438,8 @@ R6: BLOCKED
 - 以“多剧本准备”为名提前改写 production recommendation；
 - 以 JSON 内容化为名把复杂规则变成未经验证的通用规则 DSL；
 - 为 No Greater Joy 新建第二套 catalog/flow framework；
-- 在 S3 parity 通过前切换 production Werewolf Judge flow。
+- 在 S5 前切换 production Clocktower Host / Werewolf Judge flow；
+- 在 S4 中静默把旧 save 解释为最新同名 content。
 
 ## 12. GitHub 开发操作策略
 
@@ -481,16 +481,17 @@ PR #2 在 R5.5 期间继续保持：
 
 ```text
 确认 PR #2 / branch head
-→ 确认 latest validated source baseline 5058a473...
-→ 审计现有 Werewolf board / role / JudgeStep source
-→ 定义 S3.1 最小 typed BoardRegistry / RoleRegistry contract
-→ tests first
-→ shadow-only implementation
+→ 确认 latest validated source baseline 90d0fd01...
+→ 审计当前 Clocktower / Werewolf save + restore identity 字段和 migration 行为
+→ 列出 legacy currentClocktowerScript / clocktowerRulesetRef / Werewolf settings 的真实 persistence seam
+→ S4 tests-first 冻结 variant/content/semantic compatibility identity contract
+→ 最小 schema/migration implementation
+→ old-save explicit migration or fail-closed rejection
 → exact diff audit
 → normal CI
 ```
 
-不要重新讨论是否需要新“多剧本框架”：Clocktower 的 S2 real second-script proof 已经证明现有 S0/S1 seam 足够。
+S4 不切 production flow；S5 才负责 full regression、legacy flow removal 与 R6 handoff。
 
 ## 14. 文档状态维护
 
