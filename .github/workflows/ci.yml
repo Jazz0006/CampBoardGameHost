@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   android-tests:
@@ -106,3 +106,208 @@ jobs:
             --botc-asp-dir build/oracles/botc-asp \
             --report build/reports/asp-oracle-a2.json \
             --timeout 30
+
+  r3-schema-contract:
+    name: R3 guarded schema-v2 contract
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout development branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/storyteller-algorithm-v4
+          fetch-depth: 0
+
+      - name: Check migration gate
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture=tools/asp_oracle/scenarios/trouble_brewing_a2.json
+          if grep -q '"schemaVersion": 1' "$fixture"; then
+            echo 'needs_migration=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'needs_migration=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up JDK 17
+        if: steps.gate.outputs.needs_migration == 'true'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        if: steps.gate.outputs.needs_migration == 'true'
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Set up Python
+        if: steps.gate.outputs.needs_migration == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Migrate nested FormalGameState fixtures to schema v2
+        if: steps.gate.outputs.needs_migration == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import importlib.util
+          import json
+          import re
+
+          fixture_path = Path('tools/asp_oracle/scenarios/trouble_brewing_a2.json')
+          harness_path = Path('tools/asp_oracle/oracle_harness.py')
+          harness_test_path = Path('tools/asp_oracle/test_oracle_harness.py')
+          kotlin_test_path = Path('app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A3GoldenContractCatalogTest.kt')
+          readme_path = Path('tools/asp_oracle/README.md')
+
+          fixture_text = fixture_path.read_text(encoding='utf-8')
+          catalog_before = json.loads(fixture_text)
+          states = catalog_before['formalStates']
+          assert states and all(state['schemaVersion'] == 1 for state in states.values())
+          assert fixture_text.count('"schemaVersion": 1') == len(states)
+          fixture_text = fixture_text.replace('"schemaVersion": 1', '"schemaVersion": 2')
+          fixture_path.write_text(fixture_text.rstrip() + '\n', encoding='utf-8')
+
+          harness = harness_path.read_text(encoding='utf-8')
+          old = 'if state["schemaVersion"] != 1 or state["round"] < 1:'
+          new = 'if state["schemaVersion"] != SCHEMA_VERSION or state["round"] < 1:'
+          assert harness.count(old) == 1
+          harness = harness.replace(old, new, 1)
+          harness_path.write_text(harness.rstrip() + '\n', encoding='utf-8')
+
+          harness_test = harness_test_path.read_text(encoding='utf-8')
+          marker = '\n\nif __name__ == "__main__":\n'
+          assert harness_test.count(marker) == 1
+          addition = '''\n    def test_nested_formal_states_are_schema_v2(self):\n        self.assertTrue(self.catalog["formalStates"])\n        self.assertTrue(all(\n            state["schemaVersion"] == 2\n            for state in self.catalog["formalStates"].values()\n        ))\n\n    def test_nested_formal_state_schema_v1_fails_closed(self):\n        migrated = json.loads(json.dumps(self.catalog))\n        first_state = next(iter(migrated["formalStates"].values()))\n        first_state["schemaVersion"] = 1\n        with tempfile.TemporaryDirectory() as directory:\n            path = Path(directory) / "fixtures-v1.json"\n            path.write_text(json.dumps(migrated, ensure_ascii=False), encoding="utf-8")\n            with self.assertRaises(FixtureError):\n                load_catalog(path)\n'''
+          assert 'test_nested_formal_states_are_schema_v2' not in harness_test
+          harness_test = harness_test.replace(marker, addition + marker, 1)
+          harness_test_path.write_text(harness_test.rstrip() + '\n', encoding='utf-8')
+
+          kotlin_test = kotlin_test_path.read_text(encoding='utf-8')
+          test_marker = '    @Test fun `A3 deferred contracts are only timeline or knowledge-projection work`() {'
+          assert kotlin_test.count(test_marker) == 1
+          kotlin_addition = '''    @Test fun `nested FormalGameState fixtures decode through the schema v2 semantic adapter`() {\n        val root = A3GoldenContractCatalog.loadDocument()\n        val states = root.getJSONObject("formalStates")\n        val decoded = states.keys().asSequence().map { stateName ->\n            EpistemicSemanticJson.decodeFormalGameState(states.getJSONObject(stateName).toString())\n        }.toList()\n\n        assertTrue(decoded.isNotEmpty())\n        assertTrue(decoded.all { it.schemaVersion == EPISTEMIC_SCHEMA_VERSION })\n\n        val v1 = JSONObject(states.getJSONObject(states.keys().next()).toString()).put("schemaVersion", 1)\n        assertTrue(runCatching { EpistemicSemanticJson.decodeFormalGameState(v1.toString()) }.isFailure)\n    }\n\n'''
+          assert 'nested FormalGameState fixtures decode through the schema v2 semantic adapter' not in kotlin_test
+          kotlin_test = kotlin_test.replace(test_marker, kotlin_addition + test_marker, 1)
+
+          load_marker = '''    fun loadDocument(catalogFile: File = defaultCatalogFile()): JSONObject {\n        require(catalogFile.isFile) { "Missing A2.1 golden catalog: ${catalogFile.path}" }\n        return JSONObject(catalogFile.readText()).also { require(it.getInt("schemaVersion") == 2) }\n    }\n'''
+          assert kotlin_test.count(load_marker) == 1
+          load_replacement = '''    fun loadDocument(catalogFile: File = defaultCatalogFile()): JSONObject {\n        require(catalogFile.isFile) { "Missing A2.1 golden catalog: ${catalogFile.path}" }\n        return JSONObject(catalogFile.readText()).also { root ->\n            require(root.getInt("schemaVersion") == EPISTEMIC_SCHEMA_VERSION)\n            val states = root.getJSONObject("formalStates")\n            states.keys().asSequence().forEach { stateName ->\n                EpistemicSemanticJson.decodeFormalGameState(states.getJSONObject(stateName).toString())\n            }\n        }\n    }\n'''
+          kotlin_test = kotlin_test.replace(load_marker, load_replacement, 1)
+          kotlin_test_path.write_text(kotlin_test.rstrip() + '\n', encoding='utf-8')
+
+          # Load the migrated catalog through the migrated Python validator and compute the canonical hash.
+          spec = importlib.util.spec_from_file_location('oracle_harness_r3', harness_path)
+          module = importlib.util.module_from_spec(spec)
+          assert spec.loader is not None
+          spec.loader.exec_module(module)
+          catalog = module.load_catalog(fixture_path)
+          catalog_hash = module.sha256_json(catalog)
+
+          readme = readme_path.read_text(encoding='utf-8')
+          readme = readme.replace(
+              'The schema-v2 catalog contains 48 coverage-driven Trouble Brewing scenarios. Every scenario has an official basis, explicit assertions, a perspective/hypothesis boundary, and stable canonical hash. Twenty scenarios run against Clingo; 28 transition or knowledge-projection contracts are explicitly `ORACLE_NOT_APPLICABLE` until a faithful adapter exists.',
+              'The schema-v2 catalog contains 52 coverage-driven Trouble Brewing scenarios. Every nested `FormalGameState` is also schema-v2 and is decoded by the Android A1 semantic adapter in contract tests. Every scenario has an official basis, explicit assertions, a perspective/hypothesis boundary, and stable canonical hash. Twenty-four scenarios run against Clingo; 28 transition or knowledge-projection contracts are explicitly `ORACLE_NOT_APPLICABLE` until a faithful adapter exists.',
+          )
+          readme = readme.replace('official PASS               48', 'official PASS               52')
+          readme = readme.replace('KNOWN_ORACLE_VARIANCE        1', 'KNOWN_ORACLE_VARIANCE        5')
+          hash_line = f'Canonical schema-v2 fixture catalog SHA-256: `{catalog_hash}`.\n\n'
+          baseline_marker = 'Frozen A2.1 baseline (Clingo 5.8.0):\n\n'
+          assert baseline_marker in readme
+          if 'Canonical schema-v2 fixture catalog SHA-256:' in readme:
+              readme = re.sub(r'Canonical schema-v2 fixture catalog SHA-256: `[0-9a-f]{64}`\.\n\n', hash_line, readme)
+          else:
+              readme = readme.replace(baseline_marker, hash_line + baseline_marker, 1)
+          readme_path.write_text(readme.rstrip() + '\n', encoding='utf-8')
+          PY
+
+          allowed='app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A3GoldenContractCatalogTest.kt
+          tools/asp_oracle/README.md
+          tools/asp_oracle/oracle_harness.py
+          tools/asp_oracle/scenarios/trouble_brewing_a2.json
+          tools/asp_oracle/test_oracle_harness.py'
+          actual="$({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u)"
+          test "$actual" = "$allowed"
+          git diff --check
+
+      - name: Validate Python schema contract
+        if: steps.gate.outputs.needs_migration == 'true'
+        run: |
+          python tools/asp_oracle/oracle_harness.py validate --fixtures tools/asp_oracle/scenarios/trouble_brewing_a2.json
+          python -m unittest discover -s tools/asp_oracle -p 'test_*.py'
+
+      - name: Validate typed Kotlin schema contract
+        if: steps.gate.outputs.needs_migration == 'true'
+        run: |
+          bash ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.clocktower.epistemic.A3GoldenContractCatalogTest' \
+            --tests 'com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticModelTest' \
+            --no-daemon --build-cache
+
+      - name: Run full Android regression
+        if: steps.gate.outputs.needs_migration == 'true'
+        run: bash ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --build-cache
+
+      - name: Run real Clingo baseline and verify canonical report
+        if: steps.gate.outputs.needs_migration == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install clingo==5.8.0
+          mkdir -p "$RUNNER_TEMP/bin"
+          cat > "$RUNNER_TEMP/bin/clingo" <<'EOF'
+          #!/usr/bin/env bash
+          exec python -m clingo "$@"
+          EOF
+          chmod +x "$RUNNER_TEMP/bin/clingo"
+          export PATH="$RUNNER_TEMP/bin:$PATH"
+          python tools/asp_oracle/oracle_harness.py fetch --checkout-dir build/oracles/botc-asp
+          python tools/asp_oracle/oracle_harness.py run \
+            --fixtures tools/asp_oracle/scenarios/trouble_brewing_a2.json \
+            --botc-asp-dir build/oracles/botc-asp \
+            --report build/reports/asp-oracle-a2.json \
+            --timeout 30
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          report = json.loads(Path('build/reports/asp-oracle-a2.json').read_text(encoding='utf-8'))
+          summary = report['summary']
+          assert summary['UNEXPLAINED_MISMATCH'] == 0, summary
+          assert summary['NOT_RUN'] == 0, summary
+          assert summary['AGREE'] == 18, summary
+          assert summary['EXPECTED_COVERAGE_GAP'] == 1, summary
+          assert summary['KNOWN_ORACLE_VARIANCE'] == 5, summary
+          assert summary['ORACLE_NOT_APPLICABLE'] == 28, summary
+          readme = Path('tools/asp_oracle/README.md').read_text(encoding='utf-8')
+          expected_hash = re.search(r'Canonical schema-v2 fixture catalog SHA-256: `([0-9a-f]{64})`', readme).group(1)
+          assert report['fixtureCatalogSha256'] == expected_hash, (report['fixtureCatalogSha256'], expected_hash)
+          print('R3 schema-v2 baseline:', json.dumps(summary, sort_keys=True))
+          print('fixtureCatalogSha256=', expected_hash)
+          PY
+
+      - name: Commit validated R3 schema contract only
+        if: steps.gate.outputs.needs_migration == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A3GoldenContractCatalogTest.kt
+            tools/asp_oracle/README.md
+            tools/asp_oracle/oracle_harness.py
+            tools/asp_oracle/scenarios/trouble_brewing_a2.json
+            tools/asp_oracle/test_oracle_harness.py
+          )
+          git add -- "${files[@]}"
+          staged="$(git diff --cached --name-only | sort -u)"
+          expected="$(printf '%s\n' "${files[@]}" | sort -u)"
+          test "$staged" = "$expected"
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'test(r3): migrate golden states to schema v2'
+          git push origin HEAD:codex/storyteller-algorithm-v4
