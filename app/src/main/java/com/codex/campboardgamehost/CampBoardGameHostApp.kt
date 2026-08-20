@@ -404,7 +404,7 @@ private const val AUTOMATIC_STORYTELLER_INFO_KEY = "automatic_storyteller_info"
 private const val STORYTELLER_AUTOMATION_MODE_KEY = "storyteller_automation_mode"
 private const val ACTIVE_GAME_STATE_KEY = "active_game_state"
 private const val GAME_HISTORY_KEY = "game_history"
-private const val ACTIVE_GAME_STATE_VERSION = 1
+private const val ACTIVE_GAME_STATE_VERSION = ActiveGamePersistenceCoordinator.CURRENT_VERSION
 internal const val A4_IDENTITY_PREWARM_LOG_TAG = "A4IdentityPrewarm"
 internal const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG = "A4ObservationCacheUpdate"
 internal const val UNIFIED_SETUP_SELECTOR_BENCHMARK_LOG_TAG = "UnifiedSetupSelectorBenchmark"
@@ -779,7 +779,7 @@ private fun gameOutcomeFromJson(json: JSONObject?): GameOutcome? {
 }
 
 private fun savedGamePreviewFromJson(context: Context, json: JSONObject): SavedGamePreview? {
-    if (json.optInt("version", 0) != ACTIVE_GAME_STATE_VERSION) return null
+    if (!ActiveGamePersistenceCoordinator.isSupportedVersion(json.optInt("version", 0))) return null
     val gameKind = enumByName<GameKind>(json.optNullableString("currentGameKind")) ?: return null
     val screen = enumByName<Screen>(json.optNullableString("screen")) ?: return null
     val playerCount = json.optJSONArray("cards")?.length() ?: 0
@@ -985,6 +985,9 @@ private fun generateClocktowerAssignments(playerCount: Int, script: ClocktowerSc
 @Composable
 internal fun CampBoardGameHostApp() {
     val baseContext = LocalContext.current
+    val activeGamePersistenceCoordinator = remember(baseContext) {
+        ActiveGamePersistenceCoordinator.fromContext(baseContext)
+    }
     val lifecycleOwner = LocalLifecycleOwner.current
     var languageMode by remember { mutableStateOf(baseContext.loadLanguageMode()) }
     var storytellerAutomationMode by remember { mutableStateOf(baseContext.loadStorytellerAutomationMode()) }
@@ -1401,6 +1404,35 @@ internal fun CampBoardGameHostApp() {
         put("savedAtMillis", System.currentTimeMillis())
         put("screen", screen.name)
         put("currentGameKind", currentGameKind.name)
+        val gameContentIdentity = activeGamePersistenceCoordinator.identityForSave(
+            ActiveGamePersistenceInputs(
+                gameKind = currentGameKind,
+                clocktowerScript = currentClocktowerScript,
+                assignedClocktowerRoleIds = if (currentGameKind == GameKind.Clocktower) {
+                    cards.map { card ->
+                        RoleId(requireNotNull(card.clocktowerRole) {
+                            "Clocktower active save is missing an assigned role."
+                        }.enName)
+                    }
+                } else {
+                    emptyList()
+                },
+                assignedWerewolfRoles = if (currentGameKind == GameKind.Werewolf) {
+                    cards.map { it.role }
+                } else {
+                    emptyList()
+                },
+                werewolfCount = werewolfCount,
+                includeSeer = includeSeer,
+                includeWitch = includeWitch,
+                includeHunter = includeHunter,
+                lastWordsMode = lastWordsMode,
+            ),
+        )
+        put(
+            PersistedActiveGameIdentityJsonCodec.ROOT_KEY,
+            PersistedActiveGameIdentityJsonCodec.encode(gameContentIdentity),
+        )
         put("undercoverCount", undercoverCount)
         put("includeBlank", includeBlank)
         put("werewolfCount", werewolfCount)
@@ -1531,13 +1563,31 @@ internal fun CampBoardGameHostApp() {
         val json = baseContext.loadActiveGameStateJson() ?: return
         invalidateA4SessionBoundary()
         val restored = runCatching {
-            if (json.optInt("version", 0) != ACTIVE_GAME_STATE_VERSION) {
+            if (!ActiveGamePersistenceCoordinator.isSupportedVersion(json.optInt("version", 0))) {
                 error("Unsupported active game state version")
             }
             val restoredGameKind = enumByName<GameKind>(json.optNullableString("currentGameKind"))
                 ?: error("Missing game kind")
             val restoredCards = json.optJSONArray("cards")?.toPlayerCards().orEmpty()
             if (restoredCards.isEmpty()) error("Missing player cards")
+            val restoredPersistence = activeGamePersistenceCoordinator.resolveForRestore(
+                json = json,
+                gameKind = restoredGameKind,
+                assignedClocktowerRoleIds = if (restoredGameKind == GameKind.Clocktower) {
+                    restoredCards.map { card ->
+                        RoleId(requireNotNull(card.clocktowerRole) {
+                            "Clocktower restored save is missing an assigned role."
+                        }.enName)
+                    }
+                } else {
+                    emptyList()
+                },
+                assignedWerewolfRoles = if (restoredGameKind == GameKind.Werewolf) {
+                    restoredCards.map { it.role }
+                } else {
+                    emptyList()
+                },
+            )
             val localizedRestoredCards = restoredCards.map(::localizedRestoredCard)
             val restoredScreen = enumByName<Screen>(json.optNullableString("screen"))
                 ?.takeIf { it.isActiveGameScreen() }
@@ -1590,15 +1640,8 @@ internal fun CampBoardGameHostApp() {
             hunterShotTarget = json.optNullableString("hunterShotTarget")
             selectedDayExile = json.optNullableString("selectedDayExile")
             clocktowerPhase = enumByName<ClocktowerPhase>(json.optNullableString("clocktowerPhase")) ?: ClocktowerPhase.FirstNight
-            val savedClocktowerScript = enumByName<ClocktowerScript>(json.optNullableString("currentClocktowerScript"))
-                ?: defaultClocktowerScriptFor(localizedRestoredCards.size)
-            val restoredHasNoGreaterJoyOnlyRole = localizedRestoredCards.any {
-                it.clocktowerRole?.enName in setOf("Clockmaker", "Chambermaid", "Artist", "Sage", "Klutz")
-            }
-            currentClocktowerScript = if (localizedRestoredCards.size in 5..6 && restoredHasNoGreaterJoyOnlyRole) {
-                ClocktowerScript.NoGreaterJoy
-            } else {
-                savedClocktowerScript
+            if (restoredGameKind == GameKind.Clocktower) {
+                currentClocktowerScript = requireNotNull(restoredPersistence.clocktowerScript)
             }
             clocktowerGameId = json.optString("clocktowerGameId")
                 .takeIf { it.isNotBlank() }
@@ -1620,10 +1663,25 @@ internal fun CampBoardGameHostApp() {
                         coverage = enumByName<RuleCoverage>(ref.optString("coverage")) ?: RuleCoverage.UNVERIFIED,
                     )
                 }.getOrNull()
-            } ?: if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
-                troubleBrewingRulesetRefFor(localizedRestoredCards)
-            } else {
-                null
+            }
+            if (restoredGameKind == GameKind.Clocktower &&
+                currentClocktowerScript == ClocktowerScript.TroubleBrewing
+            ) {
+                val currentTroubleBrewingRulesetRef = troubleBrewingRulesetRefFor(localizedRestoredCards)
+                    ?: error("Unable to resolve current Trouble Brewing ruleset reference.")
+                if (restoredPersistence.allowLegacyClocktowerRulesetFallback) {
+                    if (clocktowerRulesetRef == null) {
+                        clocktowerRulesetRef = currentTroubleBrewingRulesetRef
+                    } else {
+                        require(clocktowerRulesetRef == currentTroubleBrewingRulesetRef) {
+                            "Legacy Trouble Brewing save has an incompatible ruleset reference."
+                        }
+                    }
+                } else {
+                    require(clocktowerRulesetRef == currentTroubleBrewingRulesetRef) {
+                        "Version 2 Trouble Brewing save has an incompatible ruleset reference."
+                    }
+                }
             }
             clocktowerPendingNightDeath = json.optNullableString("clocktowerPendingNightDeath")
             clocktowerDemonAttackDraftTarget = json.optNullableString("clocktowerDemonAttackDraftTarget")
