@@ -1,1 +1,1 @@
-R4.3 lifecycle invalidation validation trigger v2
+R4.3 lifecycle invalidation validation trigger ready
