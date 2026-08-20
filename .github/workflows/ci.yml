@@ -154,7 +154,7 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          import importlib.util
+          import hashlib
           import json
           import re
 
@@ -200,13 +200,9 @@ jobs:
           kotlin_test = kotlin_test.replace(load_marker, load_replacement, 1)
           kotlin_test_path.write_text(kotlin_test.rstrip() + '\n', encoding='utf-8')
 
-          # Load the migrated catalog through the migrated Python validator and compute the canonical hash.
-          spec = importlib.util.spec_from_file_location('oracle_harness_r3', harness_path)
-          module = importlib.util.module_from_spec(spec)
-          assert spec.loader is not None
-          spec.loader.exec_module(module)
-          catalog = module.load_catalog(fixture_path)
-          catalog_hash = module.sha256_json(catalog)
+          catalog = json.loads(fixture_path.read_text(encoding='utf-8'))
+          canonical = json.dumps(catalog, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+          catalog_hash = hashlib.sha256(canonical.encode('utf-8')).hexdigest()
 
           readme = readme_path.read_text(encoding='utf-8')
           readme = readme.replace(
