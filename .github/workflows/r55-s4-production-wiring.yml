@@ -1,9 +1,9 @@
 name: R5.5 S4 production wiring patch
 
 on:
-  push:
+  pull_request:
     branches:
-      - codex/storyteller-algorithm-v4
+      - main
     paths:
       - .github/workflows/r55-s4-production-wiring.yml
 
@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   patch:
+    if: github.head_ref == 'codex/storyteller-algorithm-v4'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
