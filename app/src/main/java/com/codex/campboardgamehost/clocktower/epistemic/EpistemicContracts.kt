@@ -11,8 +11,28 @@ import java.math.BigInteger
 
 enum class EpistemicHypothesis { MECHANICALLY_CREDIBLE, FUNCTIONING_ONLY, MALFUNCTION_ALLOWED }
 
-data class TimelinePoint(val phase: StorytellerPhase, val round: Int, val sequence: Int) {
-    init { require(round > 0 && sequence >= 0) }
+/**
+ * Stable position on the committed game timeline.
+ *
+ * [globalSequence] is the ordering authority across phase and round boundaries. [sequence] is
+ * retained as the local interaction position for display/replay diagnostics only.
+ */
+data class TimelinePoint(
+    val phase: StorytellerPhase,
+    val round: Int,
+    val sequence: Int,
+    val globalSequence: Long,
+) : Comparable<TimelinePoint> {
+    init { require(round > 0 && sequence >= 0 && globalSequence >= 0) }
+
+    override fun compareTo(other: TimelinePoint): Int = compareValuesBy(
+        this,
+        other,
+        TimelinePoint::globalSequence,
+        TimelinePoint::round,
+        { it.phase.ordinal },
+        TimelinePoint::sequence,
+    )
 }
 
 data class RegistrationQuery(

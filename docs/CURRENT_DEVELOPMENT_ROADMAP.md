@@ -181,6 +181,11 @@ round -> sequence -> id
 
 多 phase/multi-night 前需要统一 TimelinePoint / global monotonic sequence，并明确哪些时间字段进入 knowledge identity/hash。
 
+Post-R5.5 入口审计与第一个 tests-first foundation slice 记录见：
+`r6_p1_entry_audit_2026-08-21.md`。该切片只建立 `TimelinePoint.globalSequence` 的类型、排序与
+serialization identity 契约；P1.2 仍为 OPEN，allocator、restore、action/observation migration
+与 knowledge/digest 字段决策尚未完成。
+
 ### P1.3 Actual truth vs knowledge-safe world-builder input
 
 必须进一步明确：
