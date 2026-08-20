@@ -35,6 +35,12 @@ internal data class ClocktowerProductionNightStepIdentity private constructor(
             }
             ClocktowerInteractionId("first_night:fortune_teller:red_herring")
         }
+        Kind.NEW_DEMON_IDENTITY -> {
+            require(phase == ClocktowerNightFlowPhase.OTHER_NIGHT) {
+                "New-Demon identity is only an other-night production interaction."
+            }
+            ClocktowerInteractionId("other_night:event:imp:new_demon_identity")
+        }
         Kind.DEMON_SUCCESSOR -> {
             require(phase == ClocktowerNightFlowPhase.OTHER_NIGHT) {
                 "Demon succession is only an other-night production interaction."
@@ -62,6 +68,9 @@ internal data class ClocktowerProductionNightStepIdentity private constructor(
         fun fortuneTellerRedHerring(): ClocktowerProductionNightStepIdentity =
             ClocktowerProductionNightStepIdentity(Kind.FORTUNE_TELLER_RED_HERRING)
 
+        fun newDemonIdentity(): ClocktowerProductionNightStepIdentity =
+            ClocktowerProductionNightStepIdentity(Kind.NEW_DEMON_IDENTITY)
+
         fun demonSuccessor(): ClocktowerProductionNightStepIdentity =
             ClocktowerProductionNightStepIdentity(Kind.DEMON_SUCCESSOR)
 
@@ -74,6 +83,7 @@ internal data class ClocktowerProductionNightStepIdentity private constructor(
         MINION_INFO,
         DEMON_INFO,
         FORTUNE_TELLER_RED_HERRING,
+        NEW_DEMON_IDENTITY,
         DEMON_SUCCESSOR,
         MAYOR_REDIRECT,
     }
