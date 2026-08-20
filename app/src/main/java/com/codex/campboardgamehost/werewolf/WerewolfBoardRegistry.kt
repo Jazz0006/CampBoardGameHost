@@ -38,10 +38,9 @@ internal data class WerewolfBoardDefinition private constructor(
             name: String,
             roleDeck: Map<WerewolfRoleId, Int>,
         ): WerewolfBoardDefinition {
-            val normalizedDeck = roleDeck
-                .filterValues { it > 0 }
-                .toSortedMap(compareBy { it.value })
-            require(normalizedDeck.isNotEmpty()) { "Werewolf board role deck cannot be empty." }
+            require(roleDeck.isNotEmpty()) { "Werewolf board role deck cannot be empty." }
+            require(roleDeck.values.all { it > 0 }) { "Werewolf board role counts must be positive." }
+            val normalizedDeck = roleDeck.toSortedMap(compareBy { it.value })
             return WerewolfBoardDefinition(
                 id = id,
                 name = name,
