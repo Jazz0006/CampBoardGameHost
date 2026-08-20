@@ -35,7 +35,7 @@ R5.5 Script & Dynamic Flow Foundation
 ONLY THEN unlock revision-driven dynamic decision plan / Phase B production implementation
 ```
 
-**当前执行点（2026-08-20）：R1、R2、R3 已通过，下一步进入 R4 — A4.5 lifecycle hardening。**
+**当前执行点（2026-08-20）：R1、R2、R3 已通过；R4.1 cache invariant / telemetry 与 R4.2 durable-before-build / coroutine cancellation 已通过；当前进入 R4.3 — revision/session lifecycle invalidation。**
 
 **在 Phase A 重新退出前，不开始新的 B1/B2/B3 功能扩展，也不把 B4 shadow 变成生产依赖；R5.5 也只能作为未来架构约束，不能提前进入 R2–R5。**
 
@@ -50,8 +50,8 @@ ONLY THEN unlock revision-driven dynamic decision plan / Phase B production impl
 | A2.1 Golden corpus | PASS / R3.1 | 52 个 official/golden contracts 保留；24 个进入 Clingo baseline、28 个明确 `ORACLE_NOT_APPLICABLE`，baseline 为 18 AGREE / 1 EXPECTED_COVERAGE_GAP / 5 KNOWN_ORACLE_VARIANCE / 28 ORACLE_NOT_APPLICABLE，且 `UNEXPLAINED_MISMATCH=0`、`NOT_RUN=0`。 |
 | **A3 EnumeratedWorldSet** | **REOPEN / R1+R3 VALIDATION PASS** | R1 correctness hotfix 与 R3 typed real-enumerator golden path 均已通过；A3 contract validation 已补齐，但整体 re-exit 仍等待 R5 的 A3/A4 differential 与 Phase A exit review。 |
 | **MainActivity decomposition** | **PASS / R2 BATCHES 1–10 VALIDATED** | Activity shell、三游戏边界及 Clocktower setup/day/night/host/history 主要职责已机械拆分；最终 read-only structural verifier 与标准 CI 验收通过后关闭 R2。 |
-| **A4 ZDD prototype** | **IN PROGRESS** | 仍为 exact shadow/prototype；设备性能门槛未完成，需在 R1 后重新跑 differential。 |
-| **A4.5 observation cache rebuild** | **REOPEN** | 核心 rebuild 架构可保留，但 durability、cancellation/invalidation、cache invariant 未完全满足原 spec。 |
+| **A4 ZDD prototype** | **IN PROGRESS** | 仍为 exact shadow/prototype；设备性能门槛未完成，需在 R5 前重新跑 differential/device gate。 |
+| **A4.5 observation cache rebuild** | **IN PROGRESS / R4.1+R4.2 PASS** | cache scope invariant、telemetry contract、durable-before-build 与 coroutine cancellation 已修复并通过验证；当前补 revision/session 主动 invalidation 与剩余 acceptance evidence。 |
 | **R5.5 Script & Dynamic Flow Foundation** | **FUTURE / BLOCKED** | R5 通过后才实施；规范见 `多剧本多板子与动态游戏流程架构设计_v1.md`。 |
 | B1+ / revision-driven production expansion | BLOCKED | 先完成 Phase A final exit，再完成 R5.5。 |
 
@@ -217,9 +217,11 @@ append / deduplicate observation
 
 如果持久化失败，不得把该 observation 当作可重放的 cache rebuild 基础。
 
+**实施状态（R4.2 PASS）：新增 `A4ObservationDurabilityGate`；observation append 只标记 pending，只有 `SharedPreferences.commit()` 返回成功后才释放 record ID 并捕获 immutable rebuild request。持久化失败保持 pending，不生成 rebuild。source commit：`7dc1a8a5afd69ed1b0f87406c71d84adbdf602cb`。**
+
 ### P0.5 Coroutine/lifecycle cancellation 必须进入 executor
 
-`A4ObservationCacheRebuildExecutor.execute()` 已支持 `isCancelled`，但真实 UI 调用没有传入 coroutine/lifecycle cancellation。
+`A4ObservationCacheRebuildExecutor.execute()` 已支持 `isCancelled`，但真实 UI 调用原先没有传入 coroutine/lifecycle cancellation。
 
 要求：
 
@@ -227,6 +229,8 @@ append / deduplicate observation
 - 离开 game、restart、role reassignment、player-count 改变或 revision supersede 时主动使旧 generation 失效；
 - 已经运行的 exact build 可以结束，但结果只能成为 `STALE/CANCELLED`，不得继续写为 current cache；
 - 不依赖“恰好会启动下一次 rebuild”来使旧 generation 失效。
+
+**实施状态：R4.2 已把 coroutine active state 传入 executor，并在 exact build 返回后、`commitIfCurrent()` 前再次检查 cancellation，因此中途取消的已完成 build 不会 publish cache。R4.3 继续补 leave/restart/revision/session 主动 invalidation。**
 
 ### P0.6 Cache generation invariant 加固
 
@@ -239,9 +243,11 @@ append / deduplicate observation
 
 builder 返回的 recipient、knowledge ID、hypothesis、world-set identity 校验继续保留。
 
+**实施状态（R4.1 PASS）：`commitIfCurrent()` 已原子核对 `gameId`、`gameStateRevision`、`formalSnapshotId`、`rollout` 与 current generation，scope mismatch fail closed，并有直接回归测试。**
+
 ### P0.7 Heap telemetry 命名/实现一致
 
-A4.5 report 当前名为 `coarseMaxHeapDeltaBytes`，但 executor 只计算结束时 heap 与开始时 heap 的差值。
+A4.5 report 原字段名为 `coarseMaxHeapDeltaBytes`，但 executor 只计算结束时 heap 与开始时 heap 的差值。
 
 二选一：
 
@@ -249,6 +255,8 @@ A4.5 report 当前名为 `coarseMaxHeapDeltaBytes`，但 executor 只计算结�
 - 改名为 `coarseEndHeapDeltaBytes`，避免把 end delta 当 peak。
 
 性能数据不得作为 retained-size 结论。
+
+**实施状态（R4.1 PASS）：observation rebuild report 已改名为 `coarseEndHeapDeltaBytes`，与当前 end-start 实现一致；不再把该数据表述为 peak/retained size。**
 
 ### P0.8 补齐直接 acceptance tests
 
@@ -258,6 +266,8 @@ A4.5 report 当前名为 `coarseMaxHeapDeltaBytes`，但 executor 只计算结�
 - production recommendation 在 shadow cache ready 与 absent 两种情况下结果完全一致；
 - leave/restart/revision cancellation 的真实 wiring；
 - durable-before-build 顺序。
+
+当前 R4.1/R4.2 已补 cache scope mismatch、durability failure、build-completion cancellation 等直接证据；R4.3 补真实 revision/session invalidation，之后再做 R4 final acceptance sweep。
 
 ## 6. P1 — Phase B/B4 前必须解决的语义债务
 
@@ -402,15 +412,49 @@ R3.2 — real enumerator golden path：
 
 范围：P0.4–P0.8。
 
-前置条件：R2 与 R3 已完成；A4.5 lifecycle/persistence 修复现在可以在已拆分的 Host boundary 上实施。
+当前状态：**IN PROGRESS — R4.1 PASS / R4.2 PASS / R4.3 ACTIVE**。
 
-退出条件：
+已完成：
+
+- **R4.1 — cache invariant + telemetry contract**
+  - `commitIfCurrent()` 原子核对 `gameId / gameStateRevision / formalSnapshotId / rollout / current generation`；
+  - scope mismatch fail closed；
+  - observation rebuild telemetry 改为 `coarseEndHeapDeltaBytes`；
+  - source commit `46f17b7b99eec5a2178560429eb216655505d3b5`；
+  - clean-head CI 与 structural verifier 通过。
+- **R4.2 — durable-before-build + coroutine cancellation**
+  - 新增 `A4ObservationDurabilityGate`；
+  - persistence success 后才释放 observation rebuild request；
+  - persistence failure 不释放 pending observation；
+  - coroutine active/cancel state 进入 executor；
+  - build 返回后、cache publication 前再次检查 cancellation；
+  - source commit `7dc1a8a5afd69ed1b0f87406c71d84adbdf602cb`；
+  - compile、focused tests、full Android、ASP、真实 Clingo 全部通过；
+  - temporary writer/trigger 已撤销，PR base 已恢复 `main`。
+
+当前 R4.3：
+
+- revision supersede 必须同步失效当前 game 的 A4 shadow generation；
+- leave/restart/restore 必须同步 invalidate cache、clear durability pending、cancel observation rebuild request；
+- 同一 session 的 revision bump **不得**清 durability pending，否则刚 append、等待 durable commit 的 observation 会丢失；
+- `gameStateRevision` / `playerInputRevision` 的原有增加时机保持不变，只把同步 invalidation 收口到 helper；
+- in-flight exact build 可以结束，但旧 generation 已失效，不能 publish current cache。
+
+R4 退出条件：
 
 - durable-before-build 可测试；
 - leave/restart/revision 可立即失效旧 generation；
 - cache scope invariant fail closed；
 - OOM/failure/cancel/stale 均不产生 empty logical result/UNSAT；
-- production recommendation 完全不读取 shadow cache。
+- production recommendation 完全不读取 shadow cache；
+- R4 final acceptance sweep 通过。
+
+开发操作策略（R4.2 后更新）：
+
+- 默认：read-only audit → **Git Data API 原子 source commit** → normal PR CI → exact diff audit；
+- temporary trusted writer 只用于超大文件且 connector 无法安全构造完整内容的机械 patch；
+- 已确认 `pull_request` workflow 由 base branch 上的 workflow 定义控制，修改已有 base workflow 不自动产生新的 PR event，同-tree/no-op commit 不是可靠 trigger；
+- 详细规则见 `docs/github_connector_large_file_editing_playbook.md`。
 
 ### R5 — Phase A re-exit
 
