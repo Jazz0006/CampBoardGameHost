@@ -1,0 +1,341 @@
+name: R5.5 S5 new Demon wiring patch
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/r55-s5-new-demon-wiring.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.head_ref == 'codex/storyteller-algorithm-v4'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/storyteller-algorithm-v4
+          fetch-depth: 0
+      - name: Apply exact new Demon production wiring
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def block(*lines: str) -> str:
+              return "\n".join(lines)
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one anchor, found {count}")
+              return text.replace(old, new, 1)
+
+          app_path = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
+          app = app_path.read_text(encoding="utf-8")
+
+          app = replace_once(
+              app,
+              block(
+                  '    FortuneTeller,',
+                  '    DemonKill,',
+                  '    MayorRedirect,',
+              ),
+              block(
+                  '    FortuneTeller,',
+                  '    NewDemonIdentity,',
+                  '    DemonKill,',
+                  '    MayorRedirect,',
+              ),
+              'ClocktowerNightAction enum',
+          )
+
+          app = replace_once(
+              app,
+              block(
+                  '    var clocktowerConfirmedMayorRedirectTarget by remember { mutableStateOf<String?>(null) }',
+                  '    var clocktowerPendingNewDemonName by remember { mutableStateOf<String?>(null) }',
+                  '    var clocktowerDemonSuccessorTarget by remember { mutableStateOf<String?>(null) }',
+              ),
+              block(
+                  '    var clocktowerConfirmedMayorRedirectTarget by remember { mutableStateOf<String?>(null) }',
+                  '    var clocktowerPendingNewDemonName by remember { mutableStateOf<String?>(null) }',
+                  '    var clocktowerPendingNightNewDemonIdentityName by remember { mutableStateOf<String?>(null) }',
+                  '    var clocktowerDemonSuccessorTarget by remember { mutableStateOf<String?>(null) }',
+              ),
+              'next-night new Demon app state',
+          )
+
+          app = replace_once(
+              app,
+              block(
+                  '        putNullableString("clocktowerConfirmedMayorRedirectTarget", clocktowerConfirmedMayorRedirectTarget)',
+                  '        putNullableString("clocktowerPendingNewDemonName", clocktowerPendingNewDemonName)',
+                  '        putNullableString("clocktowerDemonSuccessorTarget", clocktowerDemonSuccessorTarget)',
+              ),
+              block(
+                  '        putNullableString("clocktowerConfirmedMayorRedirectTarget", clocktowerConfirmedMayorRedirectTarget)',
+                  '        putNullableString("clocktowerPendingNewDemonName", clocktowerPendingNewDemonName)',
+                  '        putNullableString("clocktowerPendingNightNewDemonIdentityName", clocktowerPendingNightNewDemonIdentityName)',
+                  '        putNullableString("clocktowerDemonSuccessorTarget", clocktowerDemonSuccessorTarget)',
+              ),
+              'flat persistence save',
+          )
+
+          app = replace_once(
+              app,
+              block(
+                  '            pendingNewDemonName = clocktowerPendingNewDemonName,',
+                  '            demonSuccessorDraftTarget = clocktowerDemonSuccessorTarget,',
+              ),
+              block(
+                  '            pendingNewDemonName = clocktowerPendingNewDemonName,',
+                  '            pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,',
+                  '            demonSuccessorDraftTarget = clocktowerDemonSuccessorTarget,',
+              ),
+              'checkpoint save',
+          )
+
+          app = replace_once(
+              app,
+              block(
+                  '            clocktowerPendingNewDemonName = json.optNullableString("clocktowerPendingNewDemonName")',
+                  '            clocktowerDemonSuccessorTarget = json.optNullableString("clocktowerDemonSuccessorTarget")',
+              ),
+              block(
+                  '            clocktowerPendingNewDemonName = json.optNullableString("clocktowerPendingNewDemonName")',
+                  '            clocktowerPendingNightNewDemonIdentityName = json.optNullableString("clocktowerPendingNightNewDemonIdentityName")',
+                  '            clocktowerDemonSuccessorTarget = json.optNullableString("clocktowerDemonSuccessorTarget")',
+              ),
+              'flat persistence restore',
+          )
+
+          app = replace_once(
+              app,
+              block(
+                  '                "clocktowerPendingNewDemonName" to json.optNullableString("clocktowerPendingNewDemonName"),',
+                  '                "clocktowerDemonSuccessorTarget" to json.optNullableString("clocktowerDemonSuccessorTarget"),',
+              ),
+              block(
+                  '                "clocktowerPendingNewDemonName" to json.optNullableString("clocktowerPendingNewDemonName"),',
+                  '                "clocktowerPendingNightNewDemonIdentityName" to json.optNullableString("clocktowerPendingNightNewDemonIdentityName"),',
+                  '                "clocktowerDemonSuccessorTarget" to json.optNullableString("clocktowerDemonSuccessorTarget"),',
+              ),
+              'checkpoint restore map',
+          )
+
+          app = replace_once(
+              app,
+              block(
+                  '            clocktowerPendingNewDemonName = restoredNightCheckpoint.pendingNewDemonName',
+                  '            clocktowerDemonSuccessorTarget = restoredNightCheckpoint.demonSuccessorDraftTarget',
+              ),
+              block(
+                  '            clocktowerPendingNewDemonName = restoredNightCheckpoint.pendingNewDemonName',
+                  '            clocktowerPendingNightNewDemonIdentityName = restoredNightCheckpoint.pendingNightNewDemonIdentityName',
+                  '            clocktowerDemonSuccessorTarget = restoredNightCheckpoint.demonSuccessorDraftTarget',
+              ),
+              'checkpoint restored state',
+          )
+
+          app = replace_once(
+              app,
+              block(
+                  '        clocktowerPendingNewDemonName = null',
+                  '        clocktowerDemonSuccessorTarget = null',
+                  '        clocktowerVirginUsed = false',
+              ),
+              block(
+                  '        clocktowerPendingNewDemonName = null',
+                  '        clocktowerPendingNightNewDemonIdentityName = null',
+                  '        clocktowerDemonSuccessorTarget = null',
+                  '        clocktowerVirginUsed = false',
+              ),
+              'whole-game reset',
+          )
+
+          app = replace_once(
+              app,
+              block(
+                  '                                val promotedName = if (targetCard.clocktowerTeam == ClocktowerTeam.Demon) {',
+                  '                                    promoteDemonSuccessorIfNeeded(impDeathWasSelfChosen = false)',
+                  '                                } else {',
+                  '                                    null',
+                  '                                }',
+                  '                                shotOutcome = if (targetCard.clocktowerTeam != ClocktowerTeam.Demon || promotedName != null) null',
+              ),
+              block(
+                  '                                val promotedName = if (targetCard.clocktowerTeam == ClocktowerTeam.Demon) {',
+                  '                                    promoteDemonSuccessorIfNeeded(impDeathWasSelfChosen = false)',
+                  '                                } else {',
+                  '                                    null',
+                  '                                }',
+                  '                                if (promotedName != null) {',
+                  '                                    clocktowerPendingNightNewDemonIdentityName = promotedName',
+                  '                                }',
+                  '                                shotOutcome = if (targetCard.clocktowerTeam != ClocktowerTeam.Demon || promotedName != null) null',
+              ),
+              'Slayer daytime promotion queue',
+          )
+
+          app = replace_once(
+              app,
+              block(
+                  '                                    } else if (executedCard.clocktowerTeam == ClocktowerTeam.Demon) {',
+                  '                                        val promotedName = promoteDemonSuccessorIfNeeded(impDeathWasSelfChosen = false)',
+                  '                                        executionOutcome = if (promotedName == null) {',
+              ),
+              block(
+                  '                                    } else if (executedCard.clocktowerTeam == ClocktowerTeam.Demon) {',
+                  '                                        val promotedName = promoteDemonSuccessorIfNeeded(impDeathWasSelfChosen = false)',
+                  '                                        if (promotedName != null) {',
+                  '                                            clocktowerPendingNightNewDemonIdentityName = promotedName',
+                  '                                        }',
+                  '                                        executionOutcome = if (promotedName == null) {',
+              ),
+              'execution daytime promotion queue',
+          )
+
+          app = replace_once(
+              app,
+              block(
+                  '                        pendingNewDemonName = clocktowerPendingNewDemonName,',
+                  '                        demonSuccessorTarget = clocktowerDemonSuccessorTarget,',
+              ),
+              block(
+                  '                        pendingNewDemonName = clocktowerPendingNewDemonName,',
+                  '                        pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,',
+                  '                        demonSuccessorTarget = clocktowerDemonSuccessorTarget,',
+              ),
+              'App to Host next-night identity parameter',
+          )
+
+          app = replace_once(
+              app,
+              block(
+                  '                            // revisioned their own facts; this closes the night as a whole.',
+                  '                            advanceClocktowerGameStateRevision()',
+                  '                            val demonPoisonedTonight = clocktowerConfirmedPoisonTarget?.let { name ->',
+              ),
+              block(
+                  '                            // revisioned their own facts; this closes the night as a whole.',
+                  '                            advanceClocktowerGameStateRevision()',
+                  '                            clocktowerPendingNightNewDemonIdentityName = null',
+                  '                            val demonPoisonedTonight = clocktowerConfirmedPoisonTarget?.let { name ->',
+              ),
+              'night completion clear',
+          )
+
+          app_path.write_text(app, encoding="utf-8")
+
+          host_path = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt")
+          host = host_path.read_text(encoding="utf-8")
+
+          host = replace_once(
+              host,
+              block(
+                  '    mayorRedirectDraftTarget: String?,',
+                  '    pendingNewDemonName: String?,',
+                  '    demonSuccessorTarget: String?,',
+              ),
+              block(
+                  '    mayorRedirectDraftTarget: String?,',
+                  '    pendingNewDemonName: String?,',
+                  '    pendingNightNewDemonIdentityName: String?,',
+                  '    demonSuccessorTarget: String?,',
+              ),
+              'Host next-night identity parameter',
+          )
+
+          demon_anchor = block(
+              '            add(',
+              '            ClocktowerNightStepUi(',
+              '                title = text("恶魔行动", "Demon action"),',
+          )
+          new_identity_step = block(
+              '            if (pendingNightNewDemonIdentityName != null) {',
+              '                val newDemon = requireNotNull(',
+              '                    aliveCards.firstOrNull {',
+              '                        it.name == pendingNightNewDemonIdentityName &&',
+              '                            it.clocktowerRole?.enName == "Imp"',
+              '                    },',
+              '                ) {',
+              '                    "Pending next-night new-Demon identity must reference the current living Imp."',
+              '                }',
+              '                add(',
+              '                    ClocktowerNightStepUi(',
+              '                        title = text("新恶魔身份", "New Demon identity"),',
+              '                        actor = newDemon,',
+              '                        isRealAction = true,',
+              '                        reason = "",',
+              '                        storytellerAction = text(',
+              '                            "轻拍 ${newDemon.seatLabel(cards)}，示意睁眼。把手机交给他，确认他现在是小恶魔；看完后收回手机并示意闭眼。",',
+              '                            "Tap ${newDemon.seatLabel(cards)} to wake them. Hand them the phone to confirm they are now the Imp, then take it back and signal them to close their eyes.",',
+              '                        ),',
+              '                        tellPlayer = text("你现在是小恶魔。", "You are now the Imp."),',
+              '                        explanation = text(',
+              '                            "猩红女巫在白天因恶魔死亡而继任。必须在新的小恶魔本夜行动前私下确认身份。",',
+              '                            "The Scarlet Woman became the Demon during the day. Confirm the new identity privately before the Imp acts tonight.",',
+              '                        ),',
+              '                        action = ClocktowerNightAction.NewDemonIdentity,',
+              '                        displayKind = ClocktowerDisplayKind.RoleReveal,',
+              '                        displayTitle = text("新身份", "New role"),',
+              '                        displayPrimary = text("小恶魔", "Imp"),',
+              '                        displayFooter = "",',
+              '                        roleEnName = "Imp",',
+              '                    ),',
+              '                )',
+              '            }',
+              demon_anchor,
+          )
+          host = replace_once(host, demon_anchor, new_identity_step, 'new Demon identity UI step')
+
+          host = replace_once(
+              host,
+              block(
+                  '    val otherNightResolvedFacts = ClocktowerResolvedFlowFacts(',
+                  '        buildSet {',
+                  '            if (lastExecutedName != null) add(ClocktowerResolvedFlowFact.EXECUTION_OCCURRED_TODAY)',
+              ),
+              block(
+                  '    val otherNightResolvedFacts = ClocktowerResolvedFlowFacts(',
+                  '        buildSet {',
+                  '            if (pendingNightNewDemonIdentityName != null) add(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON)',
+                  '            if (lastExecutedName != null) add(ClocktowerResolvedFlowFact.EXECUTION_OCCURRED_TODAY)',
+              ),
+              'new Demon resolved fact',
+          )
+
+          host = replace_once(
+              host,
+              block(
+                  '                when {',
+                  '                    step.action == ClocktowerNightAction.DemonSuccessor ->',
+                  '                        ClocktowerProductionNightStepIdentity.demonSuccessor()',
+              ),
+              block(
+                  '                when {',
+                  '                    step.action == ClocktowerNightAction.NewDemonIdentity ->',
+                  '                        ClocktowerProductionNightStepIdentity.newDemonIdentity()',
+                  '                    step.action == ClocktowerNightAction.DemonSuccessor ->',
+                  '                        ClocktowerProductionNightStepIdentity.demonSuccessor()',
+              ),
+              'new Demon stable identity mapping',
+          )
+
+          host_path.write_text(host, encoding="utf-8")
+          PY
+          git diff --check
+          git diff -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+      - name: Commit exact patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          git diff --cached --quiet && exit 0
+          git commit -m "feat(r5.5): wire next-night new Demon identity"
+          git push origin HEAD:codex/storyteller-algorithm-v4
