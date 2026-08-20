@@ -59,7 +59,6 @@ internal class ClocktowerCharacterInteractionRegistry(
             listOf(
                 FortuneTellerInteractionHandler,
                 ImpInteractionHandler,
-                ScarletWomanInteractionHandler,
                 MayorInteractionHandler,
                 RavenkeeperInteractionHandler,
                 SageInteractionHandler,
@@ -94,6 +93,33 @@ private object FortuneTellerInteractionHandler : ClocktowerCharacterInteractionH
 private object ImpInteractionHandler : ClocktowerCharacterInteractionHandler {
     override val roleId: RoleId = RoleId("Imp")
 
+    /**
+     * A Scarlet Woman who became the Demon is already an Imp in current game state. The private
+     * role-change notification therefore belongs immediately before the current Imp interaction;
+     * keeping a historical Scarlet Woman role in the flow context would incorrectly preserve the
+     * old Minion ability after the character change.
+     */
+    override fun beforeRoleInteractions(
+        phase: ClocktowerNightFlowPhase,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+    ): List<ClocktowerHostInteraction> =
+        if (
+            phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+            ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON in resolvedFacts
+        ) {
+            listOf(
+                ClocktowerHostInteraction(
+                    id = ClocktowerInteractionId("other_night:event:imp:new_demon_identity"),
+                    phase = phase,
+                    roleId = roleId,
+                    kind = ClocktowerHostInteractionKind.EVENT_RESOLUTION,
+                    completionPolicy = ClocktowerInteractionCompletionPolicy.INFORMATION_DISPLAY,
+                ),
+            )
+        } else {
+            emptyList()
+        }
+
     override fun afterRoleInteractions(
         phase: ClocktowerNightFlowPhase,
         resolvedFacts: ClocktowerResolvedFlowFacts,
@@ -112,22 +138,6 @@ private object ImpInteractionHandler : ClocktowerCharacterInteractionHandler {
         } else {
             emptyList()
         }
-}
-
-/**
- * The Scarlet Woman token is normally only an ordering anchor. If the rules layer has already
- * resolved that she became the Demon during the day, the same token becomes the next-night
- * private role-change interaction. Imp self-kill succession remains an Imp after-interaction event.
- */
-private object ScarletWomanInteractionHandler : ClocktowerCharacterInteractionHandler {
-    override val roleId: RoleId = RoleId("Scarlet Woman")
-
-    override fun isRoleInteractionEligible(
-        phase: ClocktowerNightFlowPhase,
-        resolvedFacts: ClocktowerResolvedFlowFacts,
-    ): Boolean =
-        phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
-            ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON in resolvedFacts
 }
 
 private object MayorInteractionHandler : ClocktowerCharacterInteractionHandler {
