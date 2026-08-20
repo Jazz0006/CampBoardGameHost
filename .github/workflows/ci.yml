@@ -107,6 +107,7 @@ jobs:
             --report build/reports/asp-oracle-a2.json \
             --timeout 30
 
+  # One-shot guarded R4.1 writer; remove after the validated source commit.
   r4-cache-contract:
     name: R4 guarded cache contract
     needs: [android-tests, asp-contract-tests, asp-oracle]
