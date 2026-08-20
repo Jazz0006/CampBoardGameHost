@@ -3250,58 +3250,7 @@ internal fun ClocktowerJudgeScreen(
             showArtistAction = scriptHasArtist,
             artistActionEnabled = artistClaimantCandidates.isNotEmpty(),
             actionsEnabled = gameOutcome == null,
-            diagnosticContent = if (BuildConfig.DEBUG) {
-                {
-                    OutlinedButton(
-                        onClick = { debugDiagnosticsExpanded = !debugDiagnosticsExpanded },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text(if (debugDiagnosticsExpanded) "Hide developer diagnostics" else "Show developer diagnostics") }
-                    if (debugDiagnosticsExpanded) Card(
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth().padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text("A4 device diagnostic", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                            Text(
-                                "Debug only. Uses the live structural snapshot and synthetic native/fallback probes; it does not replay the full information history.",
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                            OutlinedButton(
-                                onClick = { a4DeviceBenchmarkRuns += 1 },
-                                enabled = a4DiagnosticAvailable,
-                                modifier = Modifier.fillMaxWidth(),
-                            ) { Text("Run A4 benchmark (11 samples)") }
-                            OutlinedButton(
-                                onClick = { a4PrewarmCancellationProbeRuns += 1 },
-                                enabled = a4DiagnosticAvailable,
-                                modifier = Modifier.fillMaxWidth(),
-                            ) { Text("Run A4 prewarm cancellation probe") }
-                            if (!a4DiagnosticAvailable) {
-                                Text(
-                                    "Available only for a 5-player Trouble Brewing game with complete role data. Larger exact enumeration can exhaust device memory before ZDD compression.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            a4DeviceBenchmarkReport?.let { report ->
-                                Text(report.toLogLine(), style = MaterialTheme.typography.bodySmall)
-                            }
-                            a4DeviceBenchmarkError?.let { error ->
-                                Text("Benchmark failed: $error", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                            }
-                            a4PrewarmCancellationProbeResult?.let { result ->
-                                Text(result, style = MaterialTheme.typography.bodySmall)
-                            }
-                            a4PrewarmCancellationProbeError?.let { error ->
-                                Text("Prewarm cancellation probe failed: $error", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                            }
-                        }
-                    }
-                }
-            } else null,
+            diagnosticContent = null,
             onStartNomination = {
                 nominatorName = null
                 nomineeName = null
@@ -4043,51 +3992,6 @@ internal fun ClocktowerJudgeScreen(
             },
             onNext = advanceNightStep,
         ) {
-            if (BuildConfig.DEBUG) {
-                OutlinedButton(
-                    onClick = { debugDiagnosticsExpanded = !debugDiagnosticsExpanded },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(if (debugDiagnosticsExpanded) "Hide developer diagnostics" else "Show developer diagnostics") }
-            }
-            if (BuildConfig.DEBUG && debugDiagnosticsExpanded) {
-                Card(
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text("A4 device diagnostic", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        Text(
-                            "Debug only. Starts an isolated shadow prewarm from the current snapshot and cancels it without changing this night step.",
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                        OutlinedButton(
-                            onClick = { a4PrewarmCancellationProbeRuns += 1 },
-                            enabled = a4DiagnosticAvailable,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) { Text("Run A4 prewarm cancellation probe") }
-                        OutlinedButton(
-                            onClick = { unifiedSetupSelectorBenchmarkRuns += 1 },
-                            enabled = a4DiagnosticAvailable,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) { Text("Run unified setup selector benchmark (11 samples)") }
-                        a4PrewarmCancellationProbeResult?.let { result ->
-                            Text(result, style = MaterialTheme.typography.bodySmall)
-                        }
-                        a4PrewarmCancellationProbeError?.let { error ->
-                            Text("Prewarm cancellation probe failed: $error", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                        }
-                        unifiedSetupSelectorBenchmarkReport?.let { report ->
-                            Text(report.toLogLine(), style = MaterialTheme.typography.bodySmall)
-                        }
-                        unifiedSetupSelectorBenchmarkError?.let { error ->
-                            Text("Unified setup selector diagnostic failed: $error", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                        }
-                    }
-                }
-            }
             ClocktowerNightStepCardLocalized(
                 recommendationCoordinator = recommendationCoordinator,
                 automaticStorytellerInfo = automaticStorytellerInfo,
@@ -5545,63 +5449,6 @@ internal fun ClocktowerJudgeScreen(
                     shape = RoundedCornerShape(8.dp),
                 ) {
                     Text(stringResource(R.string.next_step))
-                }
-            }
-        }
-
-        if (BuildConfig.DEBUG) {
-            item {
-                OutlinedButton(
-                    onClick = { debugDiagnosticsExpanded = !debugDiagnosticsExpanded },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(if (debugDiagnosticsExpanded) "Hide developer diagnostics" else "Show developer diagnostics") }
-            }
-        }
-        if (BuildConfig.DEBUG && debugDiagnosticsExpanded) {
-            item {
-                Card(
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text("A4 device diagnostic", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        Text(
-                            "Debug only. Uses the live structural snapshot and synthetic native/fallback probes; it does not replay the full information history.",
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                        OutlinedButton(
-                            onClick = { a4DeviceBenchmarkRuns += 1 },
-                            enabled = a4DiagnosticAvailable,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) { Text("Run A4 benchmark (11 samples)") }
-                        OutlinedButton(
-                            onClick = { a4PrewarmCancellationProbeRuns += 1 },
-                            enabled = a4DiagnosticAvailable,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) { Text("Run A4 prewarm cancellation probe") }
-                        if (!a4DiagnosticAvailable) {
-                            Text(
-                                "Available only for a 5-player Trouble Brewing game with complete role data. Larger exact enumeration can exhaust device memory before ZDD compression.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        a4DeviceBenchmarkReport?.let { report ->
-                            Text(report.toLogLine(), style = MaterialTheme.typography.bodySmall)
-                        }
-                        a4DeviceBenchmarkError?.let { error ->
-                            Text("Benchmark failed: $error", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                        }
-                        a4PrewarmCancellationProbeResult?.let { result ->
-                            Text(result, style = MaterialTheme.typography.bodySmall)
-                        }
-                        a4PrewarmCancellationProbeError?.let { error ->
-                            Text("Prewarm cancellation probe failed: $error", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                        }
-                    }
                 }
             }
         }
@@ -7088,26 +6935,6 @@ private fun ClocktowerNightStepCardLocalized(
                 lineHeight = 36.sp,
                 fontWeight = FontWeight.Black,
             )
-
-            if (BuildConfig.DEBUG && debugDiagnosticsExpanded && firstNightPool != null) {
-                OutlinedButton(
-                    onClick = { firstNightPoolBenchmarkRuns += 1 },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Run first-night unified pool benchmark (11 samples)") }
-                firstNightPoolBenchmarkReport?.let { report ->
-                    Text(
-                        report.toLogLine(step.roleEnName ?: "first-night-information"),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-                firstNightPoolBenchmarkError?.let { error ->
-                    Text(
-                        "First-night pool diagnostic failed: $error",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-            }
 
             if (step.spyRegistrationKey != null && spyCard != null) {
                 SpyRegistrationPanel(
