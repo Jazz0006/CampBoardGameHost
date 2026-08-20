@@ -1595,28 +1595,6 @@ internal fun CampBoardGameHostApp() {
                     emptyList()
                 },
             )
-            val restoredRulesetBasis = if (
-                restoredGameKind == GameKind.Clocktower &&
-                restoredPersistence.clocktowerScript == ClocktowerScript.TroubleBrewing
-            ) {
-                when (json.optInt("version", 0)) {
-                    ActiveGamePersistenceCoordinator.LEGACY_VERSION -> ClocktowerRulesetPersistenceBasis(
-                        restoredCards.map { card ->
-                            RoleId(requireNotNull(card.clocktowerRole) {
-                                "Legacy Clocktower save is missing an assigned role."
-                            }.enName)
-                        }.toSet(),
-                    )
-                    ActiveGamePersistenceCoordinator.CURRENT_VERSION ->
-                        ClocktowerRulesetPersistenceBasisJsonCodec.decode(
-                            json.optJSONArray("clocktowerRulesetRoleIds")
-                                ?: error("Version 2 Clocktower save is missing ruleset role basis."),
-                        )
-                    else -> error("Unsupported active game state version")
-                }
-            } else {
-                null
-            }
             val restoredClocktowerRulesetRef = json.opt("clocktowerRulesetRef")
                 .takeUnless { raw -> raw == null || raw == JSONObject.NULL }
                 ?.let { raw ->
@@ -1631,6 +1609,32 @@ internal fun CampBoardGameHostApp() {
                             ?: error("Invalid Clocktower ruleset coverage."),
                     )
                 }
+            val restoredRulesetBasis = if (
+                restoredGameKind == GameKind.Clocktower &&
+                restoredPersistence.clocktowerScript == ClocktowerScript.TroubleBrewing
+            ) {
+                when (json.optInt("version", 0)) {
+                    ActiveGamePersistenceCoordinator.LEGACY_VERSION ->
+                        TroubleBrewingRulesetPersistence.resolveLegacyBasisForRestore(
+                            knowledge = troubleBrewingRulesetKnowledge()
+                                ?: error("Unable to resolve current Trouble Brewing ruleset knowledge."),
+                            assignedRoleIds = restoredCards.map { card ->
+                                RoleId(requireNotNull(card.clocktowerRole) {
+                                    "Legacy Clocktower save is missing an assigned role."
+                                }.enName)
+                            },
+                            persistedRef = restoredClocktowerRulesetRef,
+                        )
+                    ActiveGamePersistenceCoordinator.CURRENT_VERSION ->
+                        ClocktowerRulesetPersistenceBasisJsonCodec.decode(
+                            json.optJSONArray("clocktowerRulesetRoleIds")
+                                ?: error("Version 2 Clocktower save is missing ruleset role basis."),
+                        )
+                    else -> error("Unsupported active game state version")
+                }
+            } else {
+                null
+            }
             val resolvedClocktowerRulesetRef = if (
                 restoredGameKind == GameKind.Clocktower &&
                 restoredPersistence.clocktowerScript == ClocktowerScript.TroubleBrewing
