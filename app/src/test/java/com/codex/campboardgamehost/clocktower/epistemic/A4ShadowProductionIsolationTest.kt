@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
-import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
@@ -26,7 +25,7 @@ class A4ShadowProductionIsolationTest {
         val knowledgeBySeat = A4PlayerKnowledgeFactory.createAll(
             formal = formal,
             perceivedRolesBySeat = perceivedRolesBySeat,
-            observationLog = emptyList(),
+            observationLog = EpistemicObservationLog(),
         ).associateBy(PlayerKnowledgeSnapshot::recipientSeat)
         val shadowRequest = A4IdentityRevealPrewarmRequest(
             formal = formal,
@@ -73,7 +72,7 @@ class A4ShadowProductionIsolationTest {
         val knowledgeBySeat = A4PlayerKnowledgeFactory.createAll(
             formal = formal,
             perceivedRolesBySeat = perceivedRolesBySeat,
-            observationLog = emptyList(),
+            observationLog = EpistemicObservationLog(),
         ).associateBy(PlayerKnowledgeSnapshot::recipientSeat)
         val request = A4IdentityRevealPrewarmRequest(
             formal = formal,
