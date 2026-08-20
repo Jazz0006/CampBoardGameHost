@@ -127,7 +127,10 @@ import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerPlayerStates
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNightFlow
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionOtherNightFlow
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerResolvedFlowFact
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerResolvedFlowFacts
 import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
 import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
@@ -2407,6 +2410,14 @@ internal fun ClocktowerJudgeScreen(
     // Evil-team introductions always use true identities. Registration choices
     // for the Spy/Recluse only affect abilities that explicitly allow them.
     val demonCard = cards.firstOrNull { it.clocktowerRole?.team == ClocktowerTeam.Demon }
+    val livingImp = demonCard?.takeIf {
+        it.eliminatedRound == null && it.clocktowerRole?.enName == "Imp"
+    }
+    val impSelfKillNeedsSuccessor =
+        livingImp != null &&
+            pendingNightDeath == livingImp.name &&
+            !demonPoisonedTonight &&
+            aliveCards.any { it.clocktowerTeam == ClocktowerTeam.Minion }
     val sageNightDeath = resolvedNightDeathCard
         ?.takeIf { nightDeathWillOccur && it.clocktowerRole?.enName == "Sage" }
     val sagePair = demonCard?.let { storytellerPairHint(it, cards) }
@@ -2924,14 +2935,7 @@ internal fun ClocktowerJudgeScreen(
                 action = ClocktowerNightAction.DemonKill,
             ),
             )
-            val livingImp = demonCard?.takeIf {
-                it.eliminatedRound == null && it.clocktowerRole?.enName == "Imp"
-            }
-            val impSelfKillNeedsSuccessor =
-                livingImp != null &&
-                    pendingNightDeath == livingImp.name &&
-                    !demonPoisonedTonight &&
-                    aliveCards.any { it.clocktowerTeam == ClocktowerTeam.Minion }
+
             if (impSelfKillNeedsSuccessor) {
                 add(
                     ClocktowerNightStepUi(
@@ -3071,22 +3075,6 @@ internal fun ClocktowerJudgeScreen(
             (step.roleEnName == null || step.roleEnName in scriptRoleNames) &&
             !(script == ClocktowerScript.NoGreaterJoy && step.title in setOf(minionInfoTitle, demonInfoTitle))
     }
-    fun legacyOtherNightOrder(step: ClocktowerNightStepUi): Int = when {
-        step.roleEnName == "Poisoner" -> 0
-        step.roleEnName == "Monk" -> 1
-        step.roleEnName == "Spy" -> 2
-        step.action == ClocktowerNightAction.DemonKill -> 3
-        step.action == ClocktowerNightAction.DemonSuccessor -> 4
-        step.action == ClocktowerNightAction.MayorRedirect -> 5
-        step.roleEnName == "Sage" -> 6
-        step.roleEnName == "Ravenkeeper" -> 7
-        step.roleEnName == "Undertaker" -> 8
-        step.roleEnName == "Empath" -> 9
-        step.roleEnName == "Fortune Teller" -> 10
-        step.roleEnName == "Butler" -> 11
-        step.roleEnName == "Chambermaid" -> 12
-        else -> 100
-    }
     val firstNightWakingRoleIds = buildSet {
         cards.forEach { card ->
             card.clocktowerRole?.enName?.let { add(RoleId(it)) }
@@ -3095,6 +3083,23 @@ internal fun ClocktowerJudgeScreen(
             }
         }
     }
+    val otherNightWakingRoleIds = buildSet {
+        aliveCards.forEach { card ->
+            card.clocktowerRole?.enName?.let { add(RoleId(it)) }
+            if (card.clocktowerRole?.enName == "Drunk") {
+                card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
+            }
+        }
+    }
+    val otherNightResolvedFacts = ClocktowerResolvedFlowFacts(
+        buildSet {
+            if (lastExecutedName != null) add(ClocktowerResolvedFlowFact.EXECUTION_OCCURRED_TODAY)
+            if (ravenkeeperTrigger != null) add(ClocktowerResolvedFlowFact.RAVENKEEPER_DIED_AT_NIGHT)
+            if (mayorCanRedirect) add(ClocktowerResolvedFlowFact.MAYOR_REDIRECT_ELIGIBLE)
+            if (impSelfKillNeedsSuccessor) add(ClocktowerResolvedFlowFact.DEMON_SUCCESSION_REQUIRED)
+            if (sageNightDeath != null) add(ClocktowerResolvedFlowFact.SAGE_KILLED_BY_DEMON)
+        },
+    )
     val nightSteps = if (phase == ClocktowerPhase.FirstNight) {
         ClocktowerProductionFirstNightFlow.order(
             ruleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script),
@@ -3116,7 +3121,28 @@ internal fun ClocktowerJudgeScreen(
             },
         )
     } else {
-        filteredNightSteps.sortedBy(::legacyOtherNightOrder)
+        ClocktowerProductionOtherNightFlow.order(
+            ruleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script),
+            playerCount = cards.size,
+            wakingRoleIds = otherNightWakingRoleIds,
+            resolvedFacts = otherNightResolvedFacts,
+            productionSteps = filteredNightSteps,
+            identityOf = { step ->
+                when {
+                    step.action == ClocktowerNightAction.DemonSuccessor ->
+                        ClocktowerProductionNightStepIdentity.demonSuccessor()
+                    step.action == ClocktowerNightAction.MayorRedirect ->
+                        ClocktowerProductionNightStepIdentity.mayorRedirect()
+                    step.action == ClocktowerNightAction.DemonKill ->
+                        ClocktowerProductionNightStepIdentity.role(RoleId("Imp"))
+                    else -> ClocktowerProductionNightStepIdentity.role(
+                        RoleId(requireNotNull(step.roleEnName) {
+                            "Other-night production step is missing a stable role identity."
+                        }),
+                    )
+                }
+            },
+        )
     }
 
     playerDisplayStep?.let { displayStep ->

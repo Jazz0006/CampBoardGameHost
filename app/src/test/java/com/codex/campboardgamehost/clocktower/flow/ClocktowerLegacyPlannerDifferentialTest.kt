@@ -46,43 +46,27 @@ class ClocktowerLegacyPlannerDifferentialTest {
     private val projector = ClocktowerHostInteractionProjector()
 
     @Test
-    fun `production other-night legacy priority remains the differential anchor after first-night cutover`() {
+    fun `production night ordering is owned by canonical planner seams after cutover`() {
         assertFalse(
-            "First-night cutover must remove the old combined officialNightOrder table.",
+            "Combined legacy night-order table must remain removed.",
             legacyHostSource.contains("fun officialNightOrder(step: ClocktowerNightStepUi): Int"),
+        )
+        assertFalse(
+            "Other-night legacy numeric order table must be removed after cutover.",
+            legacyHostSource.contains("fun legacyOtherNightOrder(step: ClocktowerNightStepUi): Int"),
+        )
+        assertFalse(
+            "Production must not sort night steps through the legacy numeric table.",
+            legacyHostSource.contains("filteredNightSteps.sortedBy(::legacyOtherNightOrder)"),
         )
         assertTrue(
             "Production first night must be owned by the canonical planner seam.",
             legacyHostSource.contains("ClocktowerProductionFirstNightFlow.order("),
         )
-
-        val start = legacyHostSource.indexOf("fun legacyOtherNightOrder(step: ClocktowerNightStepUi): Int")
-        val end = legacyHostSource.indexOf(
-            "filteredNightSteps.sortedBy(::legacyOtherNightOrder)",
-            startIndex = start.coerceAtLeast(0),
+        assertTrue(
+            "Production other night must be owned by the event-aware canonical planner seam.",
+            legacyHostSource.contains("ClocktowerProductionOtherNightFlow.order("),
         )
-        assertTrue("Other-night legacy priority source must remain discoverable", start >= 0 && end > start)
-        val prioritySource = legacyHostSource.substring(start, end)
-
-        val otherNightFragments = listOf(
-            "step.roleEnName == \"Poisoner\" -> 0",
-            "step.roleEnName == \"Monk\" -> 1",
-            "step.roleEnName == \"Spy\" -> 2",
-            "step.action == ClocktowerNightAction.DemonKill -> 3",
-            "step.action == ClocktowerNightAction.DemonSuccessor -> 4",
-            "step.action == ClocktowerNightAction.MayorRedirect -> 5",
-            "step.roleEnName == \"Sage\" -> 6",
-            "step.roleEnName == \"Ravenkeeper\" -> 7",
-            "step.roleEnName == \"Undertaker\" -> 8",
-            "step.roleEnName == \"Empath\" -> 9",
-            "step.roleEnName == \"Fortune Teller\" -> 10",
-            "step.roleEnName == \"Butler\" -> 11",
-            "step.roleEnName == \"Chambermaid\" -> 12",
-        )
-
-        otherNightFragments.forEach { fragment ->
-            assertTrue("Other-night legacy priority contract moved or changed: $fragment", fragment in prioritySource)
-        }
     }
 
     @Test
