@@ -1,101 +1,412 @@
-name: R2 main-thread boundary
+name: R4.2 durability and cancellation writer
 
 on:
   pull_request:
     branches:
       - main
-  push:
-    branches:
-      - codex/storyteller-algorithm-v4
-    paths:
-      - app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-      - app/src/main/java/com/codex/campboardgamehost/MainActivity.kt
-      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt
-      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
-      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
-      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
-      - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHistoryScreen.kt
-      - .github/workflows/r2-write-probe.yml
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  verify-boundary:
+  guarded-r4-durability:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'codex/storyteller-algorithm-v4'
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout development branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/storyteller-algorithm-v4
+          fetch-depth: 0
 
-      - name: Verify extracted R2 boundaries
+      - name: Verify R4.2 source gate
         shell: bash
         run: |
           set -euo pipefail
-          root=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-          main=app/src/main/java/com/codex/campboardgamehost/MainActivity.kt
-          setup=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt
-          day=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
-          night=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
-          host=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
-          history=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHistoryScreen.kt
+          test "$(git hash-object .github/workflows/ci.yml)" = 'd541d29507871b804cc050170a85f768acbe045f'
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = 'b512b07aec0e0830d20225b8bea1be446de944e4'
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutor.kt)" = 'bc030de44a465cf7d367b2b2cf13af867a83aa60'
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutorTest.kt)" = 'd9aa7843a60f54ff042a873e869f92e8cfb765f4'
+          test ! -e app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationDurabilityGate.kt
+          test ! -e app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationDurabilityGateTest.kt
 
-          for file in "$root" "$main" "$setup" "$day" "$night" "$host" "$history"; do
-            test -f "$file"
-          done
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
 
-          if grep -q "fun ClocktowerSettingsScreen(" "$root"; then
-            echo "ClocktowerSettingsScreen still lives in CampBoardGameHostApp.kt" >&2
-            exit 1
-          fi
-          grep -q "internal fun ClocktowerSettingsScreen" "$setup"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
 
-          for name in \
-            ClocktowerDayOverviewScreen \
-            ClocktowerDawnSummaryScreen \
-            ClocktowerNominationScreen \
-            ClocktowerVoteScreen \
-            ClocktowerExecutionConfirmScreen \
-            ClocktowerSpecialDayActionScreen
-          do
-            if grep -q "fun ${name}(" "$root"; then
-              echo "${name} still lives in CampBoardGameHostApp.kt" >&2
-              exit 1
-            fi
-            grep -q "internal fun ${name}" "$day"
-          done
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
 
-          grep -q "private fun ClocktowerDayPlayerTile" "$day"
-          grep -q "private fun ClocktowerDayActionHeader" "$day"
+      - name: Apply R4.2 durability and cancellation contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
 
-          for name in ClocktowerNightActiveScreen ClocktowerNightReadyCard; do
-            if grep -q "fun ${name}(" "$root"; then
-              echo "${name} still lives in CampBoardGameHostApp.kt" >&2
-              exit 1
-            fi
-            grep -q "internal fun ${name}" "$night"
-          done
+          root = Path('app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt')
+          executor = Path('app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutor.kt')
+          executor_test = Path('app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutorTest.kt')
+          gate = Path('app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationDurabilityGate.kt')
+          gate_test = Path('app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationDurabilityGateTest.kt')
 
-          if grep -q "fun ClocktowerJudgeScreen(" "$root"; then
-            echo "ClocktowerJudgeScreen still lives in CampBoardGameHostApp.kt" >&2
-            exit 1
-          fi
-          grep -q "internal fun ClocktowerJudgeScreen" "$host"
-          grep -q "private fun ClocktowerStorytellerRecommendationScreen" "$host"
-          grep -q "private fun ClocktowerNightStepCardLocalized" "$host"
-          grep -q "internal fun PlayerCard.clocktowerShownAsDifferentRole" "$host"
+          root_text = root.read_text(encoding='utf-8')
 
-          for name in ClocktowerGameRecordPanel ClocktowerPlayerStatusRow ClocktowerResultsDialog; do
-            if grep -q "fun ${name}(" "$root"; then
-              echo "${name} still lives in CampBoardGameHostApp.kt" >&2
-              exit 1
-            fi
-            grep -q "internal fun ${name}" "$history"
-          done
-          grep -q "internal fun clocktowerEventPhaseLabel" "$history"
-          grep -q "private fun ClocktowerTimelineRow" "$history"
-          grep -q "private fun ClocktowerResultPlayerRow" "$history"
+          import_marker = 'import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationCacheRebuildExecutor\n'
+          if root_text.count(import_marker) != 1:
+              raise SystemExit('unexpected executor import marker')
+          root_text = root_text.replace(
+              import_marker,
+              import_marker + 'import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationDurabilityGate\n',
+              1,
+          )
 
-          main_lines="$(wc -l < "$main")"
-          main_bytes="$(wc -c < "$main")"
-          test "$main_lines" -lt 200
-          test "$main_bytes" -lt 6000
+          old_save = '''private fun Context.saveActiveGameState(snapshot: JSONObject) {
+    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .edit()
+        .putString(ACTIVE_GAME_STATE_KEY, snapshot.toString())
+        .commit()
+}
+'''
+          new_save = '''private fun Context.saveActiveGameState(snapshot: JSONObject): Boolean =
+    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .edit()
+        .putString(ACTIVE_GAME_STATE_KEY, snapshot.toString())
+        .commit()
+'''
+          if root_text.count(old_save) != 1:
+              raise SystemExit('unexpected saveActiveGameState marker')
+          root_text = root_text.replace(old_save, new_save, 1)
+
+          state_marker = '    var a4ObservationCacheRebuildRequest by remember { mutableStateOf<A4ObservationCacheRebuildRequest?>(null) }\n'
+          if root_text.count(state_marker) != 1:
+              raise SystemExit('unexpected rebuild state marker')
+          root_text = root_text.replace(
+              state_marker,
+              '    val a4ObservationDurabilityGate = remember(clocktowerGameId) { A4ObservationDurabilityGate() }\n' + state_marker,
+              1,
+          )
+
+          old_worker = '''    LaunchedEffect(a4ObservationCacheRebuildRequest) {
+        val request = a4ObservationCacheRebuildRequest ?: return@LaunchedEffect
+        val report = withContext(Dispatchers.Default) { a4ObservationCacheRebuildExecutor.execute(request) }
+        Log.i(A4_OBSERVATION_CACHE_UPDATE_LOG_TAG, report.toLogLine(request))
+    }
+'''
+          new_worker = '''    LaunchedEffect(a4ObservationCacheRebuildRequest) {
+        val request = a4ObservationCacheRebuildRequest ?: return@LaunchedEffect
+        val report = withContext(Dispatchers.Default) {
+            val workerScope = this
+            a4ObservationCacheRebuildExecutor.execute(request) { !workerScope.isActive }
+        }
+        Log.i(A4_OBSERVATION_CACHE_UPDATE_LOG_TAG, report.toLogLine(request))
+    }
+'''
+          if root_text.count(old_worker) != 1:
+              raise SystemExit('unexpected rebuild worker marker')
+          root_text = root_text.replace(old_worker, new_worker, 1)
+
+          old_event_release = '''        appendedObservationIds.lastOrNull()?.let { recordId ->
+            a4ObservationCacheRebuildRequest = a4ObservationCacheRebuildRequestOrNull(recordId)
+        }
+'''
+          new_event_release = '''        appendedObservationIds.lastOrNull()?.let { recordId ->
+            a4ObservationDurabilityGate.markPending(recordId)
+        }
+'''
+          if root_text.count(old_event_release) != 1:
+              raise SystemExit('unexpected event rebuild marker')
+          root_text = root_text.replace(old_event_release, new_event_release, 1)
+
+          old_record_release = '''        clocktowerEpistemicObservations += record
+        clocktowerPlayerInputRevision += 1
+        a4ObservationCacheRebuildRequest = a4ObservationCacheRebuildRequestOrNull(record.recordId)
+'''
+          new_record_release = '''        clocktowerEpistemicObservations += record
+        clocktowerPlayerInputRevision += 1
+        a4ObservationDurabilityGate.markPending(record.recordId)
+'''
+          if root_text.count(old_record_release) != 1:
+              raise SystemExit('unexpected private observation rebuild marker')
+          root_text = root_text.replace(old_record_release, new_record_release, 1)
+
+          old_persist = '''    fun persistActiveGameStateIfNeeded() {
+        if (screen.isActiveGameScreen() && cards.isNotEmpty()) {
+            baseContext.saveActiveGameState(activeGameSnapshotJson())
+        }
+    }
+'''
+          new_persist = '''    fun persistActiveGameStateIfNeeded(): Boolean {
+        if (!screen.isActiveGameScreen() || cards.isEmpty()) return false
+        return baseContext.saveActiveGameState(activeGameSnapshotJson())
+    }
+
+    fun persistAndReleaseA4ObservationRebuildIfDurable() {
+        val persisted = persistActiveGameStateIfNeeded()
+        val recordId = a4ObservationDurabilityGate.releaseAfterPersistence(persisted) ?: return
+        a4ObservationCacheRebuildRequest = a4ObservationCacheRebuildRequestOrNull(recordId)
+    }
+'''
+          if root_text.count(old_persist) != 1:
+              raise SystemExit('unexpected persistence marker')
+          root_text = root_text.replace(old_persist, new_persist, 1)
+
+          old_lifecycle = '''    val latestPersistActiveGameState by rememberUpdatedState { persistActiveGameStateIfNeeded() }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_PAUSE || event == Lifecycle.Event.ON_STOP) {
+                latestPersistActiveGameState()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    SideEffect {
+        persistActiveGameStateIfNeeded()
+    }
+'''
+          new_lifecycle = '''    val latestPersistActiveGameState by rememberUpdatedState { persistAndReleaseA4ObservationRebuildIfDurable() }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_PAUSE || event == Lifecycle.Event.ON_STOP) {
+                latestPersistActiveGameState()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    SideEffect {
+        persistAndReleaseA4ObservationRebuildIfDurable()
+    }
+'''
+          if root_text.count(old_lifecycle) != 1:
+              raise SystemExit('unexpected lifecycle persistence marker')
+          root_text = root_text.replace(old_lifecycle, new_lifecycle, 1)
+
+          if root_text.count('a4ObservationCacheRebuildRequest = a4ObservationCacheRebuildRequestOrNull(') != 1:
+              raise SystemExit('rebuild request must be captured only at the durable-release seam')
+          if 'a4ObservationCacheRebuildExecutor.execute(request) { !workerScope.isActive }' not in root_text:
+              raise SystemExit('coroutine cancellation was not wired into rebuild executor')
+          root.write_text(root_text.rstrip() + '\n', encoding='utf-8')
+
+          executor_text = executor.read_text(encoding='utf-8')
+          outcome_marker = '''                val outcome = if (cache.commitIfCurrent(generation, afterKey, value)) {
+'''
+          cancellation_guard = '''                if (isCancelled()) {
+                    cache.cancel(generation)
+                    queueStopped = true
+                    entries += A4ObservationCacheRebuildEntry(
+                        seat, A4ObservationCacheRebuildOutcome.CANCELLED, afterKey,
+                    )
+                    continue
+                }
+'''
+          if executor_text.count(outcome_marker) != 1:
+              raise SystemExit('unexpected cache commit marker')
+          executor_text = executor_text.replace(outcome_marker, cancellation_guard + outcome_marker, 1)
+          executor.write_text(executor_text.rstrip() + '\n', encoding='utf-8')
+
+          test_text = executor_test.read_text(encoding='utf-8')
+          old_cancel_test = '''    @Test fun `cancellation leaves the completed entry ready and queued work cancelled`() {
+        val formal = formal()
+        val appended = record("public", ObservationVisibility.PUBLIC, emptySet())
+        val request = request(formal, EpistemicObservationLog().append(appended), appended.recordId)
+        val cancelled = AtomicBoolean(false)
+        val calls = mutableListOf<Int>()
+        val executor = A4ObservationCacheRebuildExecutor(A4ShadowWorldSetCache()) { active, recipientKnowledge ->
+            calls += recipientKnowledge.recipientSeat
+            cancelled.set(true)
+            worldSet(active, recipientKnowledge)
+        }
+
+        val report = executor.execute(request) { cancelled.get() }
+
+        assertEquals(listOf(1), calls)
+        assertEquals(A4ObservationCacheRebuildOutcome.MISSING_REBUILT, report.entries.first().outcome)
+        assertTrue(report.entries.drop(1).all { it.outcome == A4ObservationCacheRebuildOutcome.CANCELLED })
+    }
+'''
+          new_cancel_test = '''    @Test fun `cancellation discards completed build and cancels queued work`() {
+        val formal = formal()
+        val appended = record("public", ObservationVisibility.PUBLIC, emptySet())
+        val request = request(formal, EpistemicObservationLog().append(appended), appended.recordId)
+        val cancelled = AtomicBoolean(false)
+        val calls = mutableListOf<Int>()
+        val cache = A4ShadowWorldSetCache()
+        val executor = A4ObservationCacheRebuildExecutor(cache) { active, recipientKnowledge ->
+            calls += recipientKnowledge.recipientSeat
+            cancelled.set(true)
+            worldSet(active, recipientKnowledge)
+        }
+
+        val report = executor.execute(request) { cancelled.get() }
+
+        assertEquals(listOf(1), calls)
+        assertTrue(report.entries.all { it.outcome == A4ObservationCacheRebuildOutcome.CANCELLED })
+        assertTrue(report.entries.all { entry -> cache.read(requireNotNull(entry.key)) == null })
+    }
+'''
+          if test_text.count(old_cancel_test) != 1:
+              raise SystemExit('unexpected cancellation test marker')
+          test_text = test_text.replace(old_cancel_test, new_cancel_test, 1)
+          executor_test.write_text(test_text.rstrip() + '\n', encoding='utf-8')
+
+          gate.write_text('''package com.codex.campboardgamehost.clocktower.epistemic
+
+/**
+ * Releases one pending observation ID only after the caller confirms that the active-game
+ * snapshot containing that observation was durably committed.
+ *
+ * The gate deliberately retains only the newest pending ID because the rebuild request contains
+ * the complete durable observation log; this preserves the pre-R4 behavior where a burst of
+ * records rebuilds from the last appended record after all prior records are present.
+ */
+class A4ObservationDurabilityGate {
+    private var pendingRecordId: String? = null
+
+    fun markPending(recordId: String) {
+        require(recordId.isNotBlank()) { "Pending observation record ID cannot be blank." }
+        pendingRecordId = recordId
+    }
+
+    fun releaseAfterPersistence(persistenceSucceeded: Boolean): String? {
+        if (!persistenceSucceeded) return null
+        return pendingRecordId.also { pendingRecordId = null }
+    }
+
+    fun clear() {
+        pendingRecordId = null
+    }
+}
+''', encoding='utf-8')
+
+          gate_test.write_text('''package com.codex.campboardgamehost.clocktower.epistemic
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
+
+class A4ObservationDurabilityGateTest {
+    @Test fun `failed persistence never releases pending observation`() {
+        val gate = A4ObservationDurabilityGate()
+        gate.markPending("record-1")
+
+        assertNull(gate.releaseAfterPersistence(false))
+        assertEquals("record-1", gate.releaseAfterPersistence(true))
+        assertNull(gate.releaseAfterPersistence(true))
+    }
+
+    @Test fun `newest pending observation is released after durable persistence`() {
+        val gate = A4ObservationDurabilityGate()
+        gate.markPending("record-1")
+        gate.markPending("record-2")
+
+        assertEquals("record-2", gate.releaseAfterPersistence(true))
+        assertNull(gate.releaseAfterPersistence(true))
+    }
+
+    @Test fun `clear prevents stale observation from crossing a session boundary`() {
+        val gate = A4ObservationDurabilityGate()
+        gate.markPending("record-1")
+        gate.clear()
+
+        assertNull(gate.releaseAfterPersistence(true))
+    }
+}
+''', encoding='utf-8')
+          PY
+
+          allowed="$({
+            printf '%s\n' \
+              app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt \
+              app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutor.kt \
+              app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationDurabilityGate.kt \
+              app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutorTest.kt \
+              app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationDurabilityGateTest.kt
+          } | sort -u)"
+          actual="$({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u)"
+          test "$actual" = "$allowed"
+          git diff --check
+
+      - name: Compile R4.2 integration seam
+        run: bash ./gradlew :app:compileDebugKotlin --no-daemon --build-cache
+
+      - name: Run focused R4.2 tests
+        run: |
+          bash ./gradlew :app:testDebugUnitTest \
+            --tests '*A4ObservationDurabilityGateTest' \
+            --tests '*A4ObservationCacheRebuildExecutorTest' \
+            --no-daemon --build-cache
+
+      - name: Run full Android regression
+        run: bash ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --build-cache
+
+      - name: Run ASP contract regression
+        run: |
+          python tools/asp_oracle/oracle_harness.py validate \
+            --fixtures tools/asp_oracle/scenarios/trouble_brewing_a2.json
+          python -m unittest discover \
+            -s tools/asp_oracle \
+            -p 'test_*.py'
+
+      - name: Run real Clingo cross-validation
+        run: |
+          python -m pip install clingo==5.8.0
+          mkdir -p "$RUNNER_TEMP/bin"
+          cat > "$RUNNER_TEMP/bin/clingo" <<'EOF'
+          #!/usr/bin/env bash
+          exec python -m clingo "$@"
+          EOF
+          chmod +x "$RUNNER_TEMP/bin/clingo"
+          export PATH="$RUNNER_TEMP/bin:$PATH"
+          python tools/asp_oracle/oracle_harness.py fetch \
+            --checkout-dir build/oracles/botc-asp
+          python tools/asp_oracle/oracle_harness.py run \
+            --fixtures tools/asp_oracle/scenarios/trouble_brewing_a2.json \
+            --botc-asp-dir build/oracles/botc-asp \
+            --report build/reports/asp-oracle-a2.json \
+            --timeout 30
+
+      - name: Commit validated R4.2 source only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutor.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationDurabilityGate.kt \
+            app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutorTest.kt \
+            app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationDurabilityGateTest.kt
+          staged="$(git diff --cached --name-only | sort -u)"
+          expected="$({
+            printf '%s\n' \
+              app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt \
+              app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutor.kt \
+              app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationDurabilityGate.kt \
+              app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationCacheRebuildExecutorTest.kt \
+              app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4ObservationDurabilityGateTest.kt
+          } | sort -u)"
+          test "$staged" = "$expected"
+          git diff --cached --check
+          git commit -m 'fix(r4): gate rebuilds on durable observations'
+          git push origin HEAD:codex/storyteller-algorithm-v4
