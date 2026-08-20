@@ -5,7 +5,7 @@
 > 文档角色：**CURRENT / 当前状态唯一权威**  
 > 主架构规范：`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`  
 > 多剧本架构规范：`多剧本多板子与动态游戏流程架构设计_v1.md`  
-> 当前 R5.5 交接：`r5_5_multiscript_progress_handoff_2026-08-20.md`  
+> 历史 R5.5 交接：`r5_5_multiscript_progress_handoff_2026-08-20.md`  
 > Phase A 退出评审：`phase_a_exit_review_2026-08-20.md`
 
 ## 1. 当前结论
@@ -30,22 +30,32 @@ ONLY THEN R6 revision-driven dynamic decision engine
 
 R1–R5 已全部通过，Phase A correctness exit 已签署。
 
-**当前执行点（2026-08-20）：R5.5 / S1 ACTIVE。S0 已 PASS；S1.1 pure shadow base-night planner 已 PASS；S1.2 stable HostInteraction projection 已 PASS；下个 source batch 从 S1.3 resolved flow facts / conditional-event interaction 开始。**
+**当前执行点（2026-08-20）：R5.5 / S3 NEXT。S0 PASS；S1 Trouble Brewing FlowPlanner migration 已完整 PASS；S2 No Greater Joy real second-script structural proof 已 PASS。下一 source batch 从 S3 Werewolf BoardRegistry + RoleRegistry + FlowPlanner migration 开始。**
 
 最新已验证 source baseline：
 
 ```text
-5a628675e3f047d919908fbd7f14eaa31b788ac6
-feat(r5.5): project shadow host interactions
+5058a473e5ef46a69c1bd81239b725dff684181d
+feat(r5.5): add No Greater Joy structural proof
 ```
 
-该 source head 的 normal CI #124 已通过 Android unit/build + debug APK、ASP、real Clingo；R2 structural verifier #116 也通过。
+该 source head 的 normal CI #130 已通过 Android unit tests + debug APK、ASP contract tests、real Clingo cross-validation；R2 structural verifier #122 也通过。
 
-之后只有 docs-only 交接更新；S1.3 **尚无 source commit**。下个会话不得假设任何未提交本地/临时 patch 存在。
+S2 使用 tests-first 两提交完成：
 
-R5 只解锁 R5.5，**没有**直接解锁 R6。
+```text
+ea9a34ef36ab93f6528a669d3f5a036b81a07da6
+  test(r5.5): define No Greater Joy structural proof
 
-A4 ZDD 也没有因为 Phase A 退出而获得 production 授权：现阶段继续保持 exact shadow/prototype；`ZDD_DEVICE_VALIDATED` 仍未授权，目标设备 latency / memory / degradation gate 是未来 runtime promotion 的独立门槛。
+5058a473e5ef46a69c1bd81239b725dff684181d
+  feat(r5.5): add No Greater Joy structural proof
+```
+
+red commit 的 Android 编译在缺失 `NoGreaterJoyOfficialCharacterMetadata`、`SCARLET_WOMAN_BECAME_DEMON`、`SAGE_KILLED_BY_DEMON` 时按预期失败；implementation commit 补齐合同后全部 normal gates 转绿。
+
+R5 只解锁 R5.5，**没有**直接解锁 R6。R6 仍必须等待 S3–S5 全部通过。
+
+A4 ZDD 也没有因为 Phase A 退出或多剧本 structural proof 获得 production 授权：继续保持 exact shadow/prototype；`ZDD_DEVICE_VALIDATED` 仍未授权。
 
 ## 2. 阶段状态
 
@@ -55,16 +65,18 @@ A4 ZDD 也没有因为 Phase A 退出而获得 production 授权：现阶段继�
 | A1 Unified Semantic Model | PASS | storyteller truth / observation / player knowledge 三层边界保留。 |
 | A1.1 Semantic Hardening | PASS WITH FOLLOW-UP | schema-v2、registration interaction binding、world-set identity 成立；B4 前仍需完成 timeline identity 等 P1 语义债务。 |
 | A2 ASP Oracle harness | PASS / R3.1 | nested `FormalGameState` 已迁移 schema-v2；Python 与 Android typed decoder 共用 fail-closed 合同。 |
-| A2.1 Golden corpus | PASS / R3.1 | 52 total；24 Clingo executable；18 AGREE / 1 EXPECTED_COVERAGE_GAP / 5 KNOWN_ORACLE_VARIANCE / 28 ORACLE_NOT_APPLICABLE；`UNEXPLAINED_MISMATCH=0`、`NOT_RUN=0`。 |
+| A2.1 Golden corpus | PASS / R3.1 | 52 total；24 Clingo executable；`UNEXPLAINED_MISMATCH=0`、`NOT_RUN=0`。 |
 | **A3 EnumeratedWorldSet** | **PASS / R5 RE-EXIT VALIDATED** | exact correctness baseline；R1/R3/R5 验证通过。 |
 | **MainActivity decomposition** | **PASS / R2 BATCHES 1–10 VALIDATED** | Activity shell、三游戏边界、Clocktower setup/day/night/host/history 已机械拆分；read-only structural verifier 持续守护。 |
 | **A4 ZDD prototype** | **PASS AS EXACT SHADOW / NOT DEVICE-VALIDATED** | correctness differential 通过；production selector 不读取 shadow。 |
 | **A4.5 observation cache rebuild** | **PASS / R4 VALIDATED** | durable-before-build、cancellation、generation identity、revision/session invalidation、OOM/failure semantics、production-shadow isolation 均通过。 |
 | **R5 Phase A re-exit** | **PASS** | exit review 已签署；clean-head Android/ASP/Clingo/structural CI 通过。 |
 | **R5.5 S0 Schema/Catalog** | **PASS** | official/custom JSON normalization、typed validation、canonical TB asset 已通过。 |
-| **R5.5 S1 TB FlowPlanner migration** | **ACTIVE / S1.1+S1.2 PASS / S1.3 NEXT** | 新 planner 仍 shadow-only；production Host 尚未切换。 |
-| R5.5 S2 NGJ second-script proof | READY AFTER S1 | 调整为直接使用现有真实 No Greater Joy，而不是 toy fixture。 |
-| R5.5 S3–S5 | BLOCKED BY PRIOR BATCHES | Werewolf registry/planner、persistence identity、legacy removal/R6 handoff。 |
+| **R5.5 S1 TB FlowPlanner migration** | **PASS** | S1.1–S1.4 全部通过；shadow-only；legacy production Host 尚未切换。 |
+| **R5.5 S2 NGJ second-script proof** | **PASS** | canonical NGJ asset、central registry metadata、conditional handlers、dual-script structural tests 全绿；FlowPlanner core 无 script-name 分支。 |
+| **R5.5 S3 Werewolf registry/planner** | **NEXT** | 下一 source batch；迁移 board/role identity 与 fixed JudgeStep flow seam。 |
+| R5.5 S4 persistence/ruleset identity | BLOCKED BY S3 | 统一 identity、handler compatibility、旧存档 migration。 |
+| R5.5 S5 regression/legacy removal/R6 handoff | BLOCKED BY S4 | full regression 后才允许关闭 legacy flow 并准备 R6。 |
 | R6 revision-driven production expansion | BLOCKED | R5.5 全部通过后才可切 READY。 |
 
 ## 3. Phase A 已完成结果
@@ -126,20 +138,20 @@ Player-world construction input
 
 目标是在不重写 Possible Worlds 的前提下，让内容身份、角色注册和游戏流程不再硬编码为 Trouble Brewing enum / fixed Werewolf JudgeStep，为 R6 提供稳定 script-aware decision seam。
 
-总体顺序保持：
+总体顺序：
 
 ```text
 S0 Schema / Catalog / official-custom JSON normalization / validation      PASS
-S1 Trouble Brewing FlowPlanner golden-equivalent migration                 ACTIVE
-S2 No Greater Joy real second-script structural proof                      NEXT AFTER S1
-S3 Werewolf BoardRegistry + RoleRegistry + FlowPlanner migration
+S1 Trouble Brewing FlowPlanner golden-equivalent migration                 PASS
+S2 No Greater Joy real second-script structural proof                      PASS
+S3 Werewolf BoardRegistry + RoleRegistry + FlowPlanner migration           NEXT
 S4 persistence/ruleset identity migration
 S5 full regression + legacy flow removal + R6 handoff
 ```
 
 ### 5.1 S0 — PASS
 
-S0 建立的多剧本基础已经足够，不再新增另一套 framework：
+S0 建立的多剧本基础继续作为唯一 Clocktower framework：
 
 ```text
 ClocktowerCharacterDefinition
@@ -150,51 +162,21 @@ ValidatedClocktowerRuleset
 NightOrderToken
 ```
 
-#### S0.1 — catalog core
-
-Source：`beb23512b4133712025e534152d268fd9315a5bf`
-
-- strong typed catalog；
-- existing `RulesetJsonLoader.parseScript(...)` adapter；
-- deterministic normalized hash；
-- TB composition/night-order parity；
-- fail-closed validation；
-- homebrew/bootlegger safe downgrade。
-
-CI #120 success；R2 #112 success。
-
-#### S0.2 — official schema compatibility
-
-Source：`b02153f821f2403aa39d733d3fe30ace3e6abebd`
-
-- typed validation codes；
-- current custom-script schema constraints；
-- `remindersGlobal / jinxes / special` metadata；
-- decimal night priority；
-- custom-character unknown-field rejection；
-- metadata 继续不被解释为通用规则 DSL。
-
-CI #121 success；R2 #113 success。
-
-#### S0.3 — canonical TB asset
-
-Source：`df0509da...`
-
-新增：
+关键 source：
 
 ```text
-app/src/main/assets/scripts/trouble_brewing.json
+S0.1 beb23512b4133712025e534152d268fd9315a5bf
+S0.2 b02153f821f2403aa39d733d3fe30ace3e6abebd
+S0.3 df0509da...
 ```
 
-作为 S1 的稳定 canonical input。
-
-CI #122 success；R2 #114 success。
+已建立：strong typed catalog、existing `RulesetJsonLoader.parseScript(...)` adapter、deterministic normalized hash、typed validation、official/custom schema compatibility、homebrew/bootlegger safe downgrade、canonical `trouble_brewing.json`。
 
 ### 5.2 S1.1 — pure shadow base-night planner — PASS
 
 Source：`e76614ffc4382e247cf37d6c994172642b922a8c`
 
-`ClocktowerFlowPlanner` 当前输入：
+`ClocktowerFlowPlanner` 输入：
 
 ```text
 ValidatedClocktowerRuleset
@@ -204,15 +186,7 @@ ValidatedClocktowerRuleset
 base night token plan
 ```
 
-已验证：
-
-- explicit script override 优先；
-- 无 override 时按 character priority 派生；
-- system tokens；
-- 5–6 / 7+ 首夜 evil-info eligibility；
-- in-play filtering；
-- off-script fail closed；
-- TB first/other-night canonical parity。
+已验证：explicit script override、metadata derived order、system tokens、5–6 / 7+ evil-info eligibility、in-play filtering、off-script fail closed、TB first/other-night parity。
 
 CI #123 success；R2 #115 success。
 
@@ -229,7 +203,7 @@ Source：`5a628675e3f047d919908fbd7f14eaa31b788ac6`
 - FlowPlanner 不 hardcode `TroubleBrewing`；
 - `DynamicDecisionRequest` 不被当成通用流程节点。
 
-TB golden 已锁定关键顺序：
+TB golden 锁定：
 
 ```text
 Empath
@@ -239,62 +213,52 @@ Empath
 
 CI #124 success；R2 #116 success。
 
-**Production Host 仍完全使用 legacy flow。**
+### 5.4 S1.3 — resolved flow facts + conditional/event interactions — PASS
 
-### 5.4 S1.3 — NEXT：resolved flow facts + conditional/event interaction
+Source：`e4fec575c974839941e79db1f55fa16f5971ad83`
 
-下个会话从这里开始。
-
-legacy 审计已确认，以下 official night-order token 不能简单解释为“角色在场就执行”：
-
-- Undertaker：需要当天实际处决；
-- Ravenkeeper：需要实际夜死且死亡角色匹配；
-- Mayor：需要 Demon attack / death resolution 已满足 redirect 前提；
-- Scarlet Woman：主要作为 succession/order anchor，不应直接成为普通 wake step；
-- Demon successor：Imp self-kill 等条件结算后临时产生。
-
-S1.3 应建立/完善：
+建立/扩展：
 
 ```text
 ClocktowerResolvedFlowFacts
-handler eligibility
+CharacterInteractionHandler eligibility
 before-role / after-role conditional interactions
-pending-event interactions
+EVENT_RESOLUTION interaction
 ```
 
-要求：
+已锁定：
 
-1. FlowPlanner 消费规则层已经解析的 facts，不重复计算 death/protection/poison correctness；
-2. 无 fact 不误生成；
-3. 角色不在场不凭空生成；
-4. 条件 interaction 顺序与 legacy TB 一致；
-5. tests first / contract first；
-6. 继续 shadow-only，不接 Compose Host。
+- no fact → 不误生成 conditional interaction；
+- fact 有但角色不在场 → 不凭空生成；
+- DemonKill → optional DemonSuccessor → optional MayorRedirect → Ravenkeeper → Undertaker ordering；
+- Scarlet Woman 普通 night token 作为 ordering anchor，不误投影普通 wake step；
+- FlowPlanner 不重复计算 poison/protection/death correctness，只消费规则层已解析 facts。
 
-### 5.5 S1.4 — planned：legacy ↔ planner shadow differential
+CI #127 success；R2 #119 success。
 
-S1.3 通过后建立真实 differential：
+### 5.5 S1.4 — legacy ↔ planner shadow differential — PASS
+
+Source：`b32101d80b3c70f674ed9d864d85a4bd16ce5b81`
+
+新增真实 differential，直接锚定 production `ClocktowerHostScreen.kt` 的 `officialNightOrder()`，覆盖：
 
 - first night；
 - other night；
-- day transition；
-- conditional/event-triggered interactions；
-- committed action/observation order and stable identity。
+- day execution → Undertaker transition；
+- conditional/event-triggered interaction；
+- deterministic / unique stable interaction identity。
 
-只有 shadow/golden parity 通过后，才允许考虑关闭 `officialNightOrder()` / fixed legacy source。
+该 batch 只新增测试文件，没有 production source 改动。
 
-## 6. 多剧本实施调整：S2 直接使用真实 No Greater Joy
+CI #128 success；R2 #120 success。
 
-重新审计确认：当前 App 已经存在真实双剧本产品行为，而不是只有未来占位。
+**S1 结论：PASS。Production Host 仍完全使用 legacy flow。**
 
-现有 legacy 已支持：
+## 6. S2 — No Greater Joy real second-script structural proof — PASS
 
-- 5–6 人 setup UI 选择 Trouble Brewing / No Greater Joy；
-- 5–6 人默认 No Greater Joy；
-- `generateClocktowerAssignments(playerCount, script)` 按 script 选择角色池；
-- NGJ 已包含实际 day/night/trigger gameplay。
+S2 直接使用 App 已有真实 No Greater Joy，而不是 toy fixture。
 
-No Greater Joy 当前角色池：
+No Greater Joy 角色池：
 
 ```text
 Clockmaker
@@ -310,21 +274,65 @@ Scarlet Woman
 Imp
 ```
 
-因此明确调整：
+### 6.1 tests-first red contract
 
-> **不再新增一层“多剧本框架”；S2 直接把现有 No Greater Joy 接入 S0/S1 已建立的 catalog/registry/FlowPlanner，并把它作为第二个真实 structural proof。**
+Source：`ea9a34ef36ab93f6528a669d3f5a036b81a07da6`
 
-S2 目标：
+新增 `NoGreaterJoyStructuralProofTest`，先要求：
 
-1. canonical `no_greater_joy.json` script asset；
-2. NGJ-only character metadata / behavior bindings 进入 existing central CharacterRegistry；
-3. same parser / normalizer / ScriptCatalog；
-4. same ClocktowerFlowPlanner；
-5. `Clockmaker / Chambermaid / Artist / Sage / Klutz` 等通过 metadata + handler 接入；
-6. TB + NGJ dual-script structural regression；
-7. 不新增 script-specific Host UI 主流程分支。
+- canonical `no_greater_joy.json`；
+- NGJ-only official metadata；
+- Clockmaker / Chambermaid / Artist / Sage / Klutz behavior keys；
+- Artist / Klutz 不进入 night flow；
+- 5–6 人 first-night evil info suppression；
+- Sage 只在 Demon kill fact 后触发；
+- Scarlet Woman 只有规则层已解析“已继任 Demon”事实时才在对应 ordering slot 产生 interaction；
+- `ClocktowerFlowPlanner.kt` 不允许出现 TB/NGJ script-name literals。
 
-S2 强判据：
+red Android compile 按预期失败在上述尚未实现的 metadata/facts。
+
+### 6.2 implementation
+
+Source：`5058a473e5ef46a69c1bd81239b725dff684181d`
+
+新增：
+
+```text
+app/src/main/assets/scripts/no_greater_joy.json
+app/src/main/java/.../catalog/NoGreaterJoyOfficialCharacterMetadata.kt
+```
+
+central CharacterRegistry 通过现有 registry 类型扩展 NGJ-only official metadata；没有新增第二套 catalog / loader / generic script engine。
+
+新增 resolved facts：
+
+```text
+SCARLET_WOMAN_BECAME_DEMON
+SAGE_KILLED_BY_DEMON
+```
+
+现有 interaction registry 增加 Sage handler，并让 Scarlet Woman 的 ordering-anchor token 在规则层已经解析“已继任 Demon”时成为有效 interaction。复杂规则仍不进入 JSON，也不进入 FlowPlanner。
+
+canonical NGJ first-night order：
+
+```text
+Investigator
+→ Empath
+→ Clockmaker
+→ Chambermaid
+```
+
+canonical NGJ other-night structural order：
+
+```text
+Scarlet Woman
+→ Imp
+→ Sage
+→ Empath
+→ Chambermaid
+```
+
+S2 强判据已满足：
 
 ```text
 新增 NGJ
@@ -332,13 +340,37 @@ S2 强判据：
 ≠ FlowPlanner core 中新增 NoGreaterJoy when/if
 ```
 
-如果接入 NGJ 必须修改 FlowPlanner 主干以识别剧本名字，则先修架构 seam，不继续堆分支。
+`ClocktowerFlowPlanner.kt` 在 S2 diff 中 **零改动**。
 
-## 7. 明确继续延后的范围
+验证：CI #130 success；R2 #122 success。
 
-### 7.1 A3/A4 Possible Worlds
+**S2 结论：PASS。仍未接 production Host。**
 
-不要因为 NGJ 接入顺手泛化 A3/A4。
+## 7. S3 — NEXT：Werewolf BoardRegistry + RoleRegistry + FlowPlanner migration
+
+下一批进入狼人杀板子/角色/流程的结构迁移，但继续遵守 R5.5 的渐进式原则：
+
+```text
+现有 Werewolf board / role / JudgeStep 行为
+        ↓
+先建立 typed BoardRegistry / RoleRegistry
+        ↓
+再建立 pure WerewolfFlowPlanner shadow
+        ↓
+legacy ↔ planner parity tests
+        ↓
+通过前不切 production Judge UI
+```
+
+S3 第一批应先审计当前 Werewolf board identity、角色配置来源、`JudgeStep` 固定流程与夜间条件步骤，明确最小 typed model 和 golden parity；不要在第一批同时重写 production UI。
+
+S3 不复用 `ClocktowerFlowPlanner`：两种游戏保留各自 planner，只共享更高层 HostInteraction/decision seam 的设计原则。
+
+## 8. 明确继续延后的范围
+
+### 8.1 A3/A4 Possible Worlds
+
+不要因为 NGJ 或 Werewolf migration 顺手泛化 A3/A4。
 
 允许：
 
@@ -347,15 +379,15 @@ TB:  Catalog ✅ / FlowPlanner ✅ / Possible Worlds exact+shadow baseline
 NGJ: Catalog ✅ / FlowPlanner ✅ / Possible Worlds deferred
 ```
 
-### 7.2 Persistence / Ruleset identity
+### 8.2 Persistence / Ruleset identity
 
-当前 save 已经同时保存 legacy `currentClocktowerScript` 与 `clocktowerRulesetRef`。统一 identity、handler compatibility、旧存档 migration 继续属于 S4。
+当前 save 同时保存 legacy `currentClocktowerScript` 与 `clocktowerRulesetRef`。统一 `ScriptId / RulesetRef / contentHash / handler compatibility identity` 与旧存档 migration 继续属于 S4。
 
-### 7.3 `troubleBrewingRulesetRefFor(...)`
+### 8.3 `troubleBrewingRulesetRefFor(...)`
 
-该 legacy helper 仍服务 TB A3/A4 correctness boundary。不要在 S1.3 为了形式通用化而提前修改；dual-script catalog 通过后再在 S4 收口。
+该 legacy helper 继续服务 TB A3/A4 correctness boundary；S4 前不为形式通用化提前改掉。
 
-## 8. R5.5 全局约束
+## 9. R5.5 全局约束
 
 - Script/Board 只组合角色，复杂规则留 Kotlin；
 - 不构建通用规则 JSON DSL；
@@ -367,7 +399,7 @@ NGJ: Catalog ✅ / FlowPlanner ✅ / Possible Worlds deferred
 - 新增只由已有角色构成的 script/board 不应要求修改 Host UI 或 flow core；
 - R6 decision point 必须来自 script-aware `FlowPlanner -> HostInteraction / StorytellerDecisionPoint` seam。
 
-## 9. R6 — revision-driven dynamic decision engine
+## 10. R6 — revision-driven dynamic decision engine
 
 **BLOCKED BY R5.5。**
 
@@ -380,7 +412,7 @@ R6 不得重新引入：
 - `nightOrderPosition` 作为唯一流程定义；
 - Werewolf fixed `JudgeStep` 扩展模式。
 
-## 10. 生产保护线
+## 11. 生产保护线
 
 在后续路线明确修改前：
 
@@ -392,7 +424,8 @@ A4 ZDD: exact shadow/prototype only
 A4.5 cache: debug/shadow only
 B4 DynamicPlayerWorldSetShadow: isolated shadow only
 ZDD_DEVICE_VALIDATED: NOT AUTHORIZED
-R5.5 ClocktowerFlowPlanner: shadow-only during S1
+R5.5 ClocktowerFlowPlanner: validated shadow foundation; not production Host source
+R5.5 WerewolfFlowPlanner: not implemented yet
 R6: BLOCKED
 ```
 
@@ -405,24 +438,22 @@ R6: BLOCKED
 - 让 background result 覆盖已展示/提交决定；
 - 以“多剧本准备”为名提前改写 production recommendation；
 - 以 JSON 内容化为名把复杂规则变成未经验证的通用规则 DSL；
-- 为 No Greater Joy 新建第二套 catalog/flow framework。
+- 为 No Greater Joy 新建第二套 catalog/flow framework；
+- 在 S3 parity 通过前切换 production Werewolf Judge flow。
 
-## 11. GitHub 开发操作策略
+## 12. GitHub 开发操作策略
 
 默认：
 
 ```text
 read-only audit
+→ tests-first / contract-first where behavior changes
 → Git Data API / Contents API 的最小原子 source commit
 → exact diff audit
 → normal PR CI
 ```
 
-只有超大文件、connector 无法安全构造完整内容时，才使用 temporary trusted writer；结束后必须清理 writer/trigger/temporary base，并恢复 normal read-only workflow。
-
-详细规则：`docs/github_connector_large_file_editing_playbook.md`。
-
-本次多剧本重新审计**没有发现新的 GitHub Actions / connector 机制**，因此 playbook 不需要追加重复规则，也不需要新增 workflow。现有正常 gate 继续使用：
+现有 normal gates：
 
 ```text
 Android unit tests + debug APK
@@ -438,31 +469,29 @@ PR #2 在 R5.5 期间继续保持：
 - base=`main`；
 - **do not merge**。
 
-## 12. 下个新会话启动点
+## 13. 下个新会话启动点
 
 直接读取：
 
 1. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
-2. `docs/r5_5_multiscript_progress_handoff_2026-08-20.md`
-3. `docs/多剧本多板子与动态游戏流程架构设计_v1.md`
+2. `docs/多剧本多板子与动态游戏流程架构设计_v1.md`
+3. 如需历史上下文，再读 `docs/r5_5_multiscript_progress_handoff_2026-08-20.md`
 
 然后：
 
 ```text
 确认 PR #2 / branch head
-→ 确认 5a628675... 之后只有 docs-only handoff updates
-→ 审计 S1.2 flow files 与 legacy conditional night-step eligibility
-→ S1.3 tests-first implementation
-→ minimal atomic source commit
+→ 确认 latest validated source baseline 5058a473...
+→ 审计现有 Werewolf board / role / JudgeStep source
+→ 定义 S3.1 最小 typed BoardRegistry / RoleRegistry contract
+→ tests first
+→ shadow-only implementation
 → exact diff audit
 → normal CI
-→ S1.3 PASS
-→ S1.4 legacy↔planner shadow differential
-→ S1 PASS 后直接进入真实 No Greater Joy S2 proof
 ```
 
-不要重新讨论是否需要新“多剧本框架”：当前结论已经冻结为 **现有 S0/S1 seam 足够，第二剧本用于验证框架而不是触发再抽象**。
+不要重新讨论是否需要新“多剧本框架”：Clocktower 的 S2 real second-script proof 已经证明现有 S0/S1 seam 足够。
 
-## 13. 文档状态维护
+## 14. 文档状态维护
 
 后续只在本文更新“当前执行点”。专项设计/退出证据维护独立 spec/review/handoff，但不得创建并列的“当前路线”。
