@@ -1023,6 +1023,7 @@ internal fun ClocktowerJudgeScreen(
             ClocktowerNightAction.MonkProtect -> listOfNotNull(step.actor?.name, monkProtectedTarget)
             ClocktowerNightAction.FortuneTeller -> listOfNotNull(step.actor?.name, fortuneTellerFirst, fortuneTellerSecond)
             ClocktowerNightAction.Chambermaid -> listOfNotNull(step.actor?.name, chambermaidFirst, chambermaidSecond)
+            ClocktowerNightAction.NewDemonIdentity -> listOfNotNull(step.actor?.name)
             ClocktowerNightAction.DemonKill -> listOfNotNull(step.actor?.name, pendingNightDeath)
             ClocktowerNightAction.MayorRedirect -> listOfNotNull(mayorRedirectTarget)
             ClocktowerNightAction.DemonSuccessor -> listOfNotNull(demonSuccessorTarget)
@@ -1046,6 +1047,7 @@ internal fun ClocktowerJudgeScreen(
                 val targets = listOfNotNull(chambermaidFirst, chambermaidSecond).joinToString(" + ") { playerSeatLabel(cards, it) }
                 text("查验 $targets：$chambermaidResult 人今晚醒来", "Checked $targets: $chambermaidResult woke tonight")
             }
+            ClocktowerNightAction.NewDemonIdentity -> step.tellPlayer ?: step.storytellerAction
             ClocktowerNightAction.DemonKill ->
                 text("击杀目标：${playerSeatLabel(cards, pendingNightDeath)}", "Kill target: ${playerSeatLabel(cards, pendingNightDeath)}")
             ClocktowerNightAction.MayorRedirect -> mayorRedirectTarget?.let { target ->
