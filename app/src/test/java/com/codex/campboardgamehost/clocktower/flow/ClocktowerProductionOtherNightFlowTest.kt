@@ -4,7 +4,6 @@ import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
@@ -91,24 +90,25 @@ class ClocktowerProductionOtherNightFlowTest {
     }
 
     @Test
-    fun `new Demon identity remains fail closed until its separate production screen is integrated`() {
-        val failure = runCatching {
-            ClocktowerProductionOtherNightFlow.order(
-                ruleset = catalog.ruleset(ClocktowerScript.TroubleBrewing),
-                playerCount = 7,
-                wakingRoleIds = setOf(RoleId("Imp"), RoleId("Empath")),
-                resolvedFacts = ClocktowerResolvedFlowFacts(
-                    setOf(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON),
-                ),
-                productionSteps = listOf(
-                    step("DemonKill", role("Imp")),
-                    step("Empath", role("Empath")),
-                ),
-                identityOf = Step::identity,
-            )
-        }.exceptionOrNull()
+    fun `new Demon identity is exact matched before current Imp action`() {
+        val expected = listOf(
+            step("NewDemonIdentity", ClocktowerProductionNightStepIdentity.newDemonIdentity()),
+            step("DemonKill", role("Imp")),
+            step("Empath", role("Empath")),
+        )
 
-        assertTrue("Expected separate new-Demon identity screen to stay fail closed.", failure is IllegalArgumentException)
+        val ordered = ClocktowerProductionOtherNightFlow.order(
+            ruleset = catalog.ruleset(ClocktowerScript.TroubleBrewing),
+            playerCount = 7,
+            wakingRoleIds = setOf(RoleId("Imp"), RoleId("Empath")),
+            resolvedFacts = ClocktowerResolvedFlowFacts(
+                setOf(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON),
+            ),
+            productionSteps = expected.reversed(),
+            identityOf = Step::identity,
+        )
+
+        assertEquals(expected.map(Step::label), ordered.map(Step::label))
     }
 
     private fun role(name: String): ClocktowerProductionNightStepIdentity =
