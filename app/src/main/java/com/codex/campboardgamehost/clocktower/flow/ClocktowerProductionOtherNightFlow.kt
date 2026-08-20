@@ -7,9 +7,8 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
  * Production-facing other-night ordering seam for the staged R5.5 cutover.
  *
  * Rules outcomes are supplied as already-resolved facts; this helper does not derive deaths,
- * poison, protection, execution, succession, or storyteller choices. The Scarlet-Woman-to-Demon
- * identity notification is still rendered by a separate legacy production screen, so that fact is
- * rejected until the screen itself is integrated into the exact-match interaction list.
+ * poison, protection, execution, succession, or storyteller choices. Production steps must expose
+ * the same stable interaction identities emitted by the planner projection.
  */
 internal object ClocktowerProductionOtherNightFlow {
     private val planner = ClocktowerFlowPlanner()
@@ -23,10 +22,6 @@ internal object ClocktowerProductionOtherNightFlow {
         productionSteps: List<T>,
         identityOf: (T) -> ClocktowerProductionNightStepIdentity,
     ): List<T> {
-        require(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON !in resolvedFacts) {
-            "New-Demon identity remains a separate production screen and is not yet planner-ordered."
-        }
-
         val phase = ClocktowerNightFlowPhase.OTHER_NIGHT
         val basePlan = planner.planNight(
             ruleset = ruleset,
