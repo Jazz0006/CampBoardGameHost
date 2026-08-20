@@ -1066,6 +1066,7 @@ internal fun CampBoardGameHostApp() {
     var clocktowerGameStateRevision by remember { mutableStateOf(0L) }
     var clocktowerPlayerInputRevision by remember { mutableStateOf(0L) }
     var clocktowerRulesetRef by remember { mutableStateOf<RulesetRef?>(null) }
+    var clocktowerRulesetRoleIds by remember { mutableStateOf<Set<RoleId>>(emptySet()) }
     var showResults by remember { mutableStateOf(false) }
     var gameOutcome by remember { mutableStateOf<GameOutcome?>(null) }
     var newCommonPlayerName by remember { mutableStateOf("") }
@@ -1126,23 +1127,17 @@ internal fun CampBoardGameHostApp() {
         (uuid.mostSignificantBits xor uuid.leastSignificantBits).takeIf { it != 0L } ?: 1L
     }
 
-    fun troubleBrewingRulesetRefFor(activeCards: List<PlayerCard>): RulesetRef? {
-        if (activeCards.isEmpty()) return null
-        return runCatching {
-            val json = baseContext.assets
-                .open("rules/trouble_brewing.json")
-                .bufferedReader(Charsets.UTF_8)
-                .use { it.readText() }
-            val knowledge = RulesetJsonLoader.parse(json)
-            val inPlayRoles = activeCards.mapNotNull { card -> card.clocktowerRole?.enName?.let(::RoleId) }.toSet()
-            RulesetRef(
-                scriptId = knowledge.scriptId,
-                scriptContentHash = RulesetContentHasher.hash(knowledge, inPlayRoles),
-                rulesetVersion = "trouble-brewing-v1",
-                sourceRevision = "official-wiki-2026-08-06",
-                coverage = RuleCoverage.PARTIAL,
-            )
-        }.getOrNull()
+    fun troubleBrewingRulesetKnowledge() = runCatching {
+        val json = baseContext.assets
+            .open("rules/trouble_brewing.json")
+            .bufferedReader(Charsets.UTF_8)
+            .use { it.readText() }
+        RulesetJsonLoader.parse(json)
+    }.getOrNull()
+
+    fun troubleBrewingRulesetRefFor(basis: ClocktowerRulesetPersistenceBasis): RulesetRef? {
+        val knowledge = troubleBrewingRulesetKnowledge() ?: return null
+        return runCatching { TroubleBrewingRulesetPersistence.refFor(knowledge, basis) }.getOrNull()
     }
 
     fun a4InitialIdentityPrewarmRequestOrNull(): A4IdentityRevealPrewarmRequest? {
@@ -1459,6 +1454,18 @@ internal fun CampBoardGameHostApp() {
         put("clocktowerGameSeed", clocktowerGameSeed)
         put("clocktowerGameStateRevision", clocktowerGameStateRevision)
         put("clocktowerPlayerInputRevision", clocktowerPlayerInputRevision)
+        if (currentGameKind == GameKind.Clocktower &&
+            currentClocktowerScript == ClocktowerScript.TroubleBrewing
+        ) {
+            put(
+                "clocktowerRulesetRoleIds",
+                ClocktowerRulesetPersistenceBasisJsonCodec.encode(
+                    ClocktowerRulesetPersistenceBasis(clocktowerRulesetRoleIds),
+                ),
+            )
+        } else {
+            put("clocktowerRulesetRoleIds", JSONObject.NULL)
+        }
         if (clocktowerRulesetRef == null) {
             put("clocktowerRulesetRef", JSONObject.NULL)
         } else {
@@ -1588,6 +1595,56 @@ internal fun CampBoardGameHostApp() {
                     emptyList()
                 },
             )
+            val restoredRulesetBasis = if (
+                restoredGameKind == GameKind.Clocktower &&
+                restoredPersistence.clocktowerScript == ClocktowerScript.TroubleBrewing
+            ) {
+                when (json.optInt("version", 0)) {
+                    ActiveGamePersistenceCoordinator.LEGACY_VERSION -> ClocktowerRulesetPersistenceBasis(
+                        restoredCards.map { card ->
+                            RoleId(requireNotNull(card.clocktowerRole) {
+                                "Legacy Clocktower save is missing an assigned role."
+                            }.enName)
+                        }.toSet(),
+                    )
+                    ActiveGamePersistenceCoordinator.CURRENT_VERSION ->
+                        ClocktowerRulesetPersistenceBasisJsonCodec.decode(
+                            json.optJSONArray("clocktowerRulesetRoleIds")
+                                ?: error("Version 2 Clocktower save is missing ruleset role basis."),
+                        )
+                    else -> error("Unsupported active game state version")
+                }
+            } else {
+                null
+            }
+            val restoredClocktowerRulesetRef = json.opt("clocktowerRulesetRef")
+                .takeUnless { raw -> raw == null || raw == JSONObject.NULL }
+                ?.let { raw ->
+                    val ref = raw as? JSONObject
+                        ?: error("Invalid Clocktower ruleset reference payload.")
+                    RulesetRef(
+                        scriptId = ScriptId(ref.getString("scriptId")),
+                        scriptContentHash = ref.getString("scriptContentHash"),
+                        rulesetVersion = ref.getString("rulesetVersion"),
+                        sourceRevision = ref.getString("sourceRevision"),
+                        coverage = enumByName<RuleCoverage>(ref.getString("coverage"))
+                            ?: error("Invalid Clocktower ruleset coverage."),
+                    )
+                }
+            val resolvedClocktowerRulesetRef = if (
+                restoredGameKind == GameKind.Clocktower &&
+                restoredPersistence.clocktowerScript == ClocktowerScript.TroubleBrewing
+            ) {
+                TroubleBrewingRulesetPersistence.resolveForRestore(
+                    knowledge = troubleBrewingRulesetKnowledge()
+                        ?: error("Unable to resolve current Trouble Brewing ruleset knowledge."),
+                    persistedRef = restoredClocktowerRulesetRef,
+                    basis = requireNotNull(restoredRulesetBasis),
+                    allowLegacyFallback = restoredPersistence.allowLegacyClocktowerRulesetFallback,
+                )
+            } else {
+                restoredClocktowerRulesetRef
+            }
             val localizedRestoredCards = restoredCards.map(::localizedRestoredCard)
             val restoredScreen = enumByName<Screen>(json.optNullableString("screen"))
                 ?.takeIf { it.isActiveGameScreen() }
@@ -1653,36 +1710,8 @@ internal fun CampBoardGameHostApp() {
             }
             clocktowerGameStateRevision = json.optLong("clocktowerGameStateRevision", 0L).coerceAtLeast(0L)
             clocktowerPlayerInputRevision = json.optLong("clocktowerPlayerInputRevision", 0L).coerceAtLeast(0L)
-            clocktowerRulesetRef = json.optJSONObject("clocktowerRulesetRef")?.let { ref ->
-                runCatching {
-                    RulesetRef(
-                        scriptId = ScriptId(ref.getString("scriptId")),
-                        scriptContentHash = ref.getString("scriptContentHash"),
-                        rulesetVersion = ref.getString("rulesetVersion"),
-                        sourceRevision = ref.getString("sourceRevision"),
-                        coverage = enumByName<RuleCoverage>(ref.optString("coverage")) ?: RuleCoverage.UNVERIFIED,
-                    )
-                }.getOrNull()
-            }
-            if (restoredGameKind == GameKind.Clocktower &&
-                currentClocktowerScript == ClocktowerScript.TroubleBrewing
-            ) {
-                val currentTroubleBrewingRulesetRef = troubleBrewingRulesetRefFor(localizedRestoredCards)
-                    ?: error("Unable to resolve current Trouble Brewing ruleset reference.")
-                if (restoredPersistence.allowLegacyClocktowerRulesetFallback) {
-                    if (clocktowerRulesetRef == null) {
-                        clocktowerRulesetRef = currentTroubleBrewingRulesetRef
-                    } else {
-                        require(clocktowerRulesetRef == currentTroubleBrewingRulesetRef) {
-                            "Legacy Trouble Brewing save has an incompatible ruleset reference."
-                        }
-                    }
-                } else {
-                    require(clocktowerRulesetRef == currentTroubleBrewingRulesetRef) {
-                        "Version 2 Trouble Brewing save has an incompatible ruleset reference."
-                    }
-                }
-            }
+            clocktowerRulesetRoleIds = restoredRulesetBasis?.roleIds.orEmpty()
+            clocktowerRulesetRef = resolvedClocktowerRulesetRef
             clocktowerPendingNightDeath = json.optNullableString("clocktowerPendingNightDeath")
             clocktowerDemonAttackDraftTarget = json.optNullableString("clocktowerDemonAttackDraftTarget")
                 ?: clocktowerPendingNightDeath
@@ -1898,16 +1927,27 @@ internal fun CampBoardGameHostApp() {
             clocktowerGameSeed = preparedClocktowerSeed ?: newClocktowerSeed()
             clocktowerGameStateRevision = 0L
             clocktowerPlayerInputRevision = 0L
-            clocktowerRulesetRef = if (clocktowerScript == ClocktowerScript.TroubleBrewing) {
-                troubleBrewingRulesetRefFor(cards)
+            if (clocktowerScript == ClocktowerScript.TroubleBrewing) {
+                val rulesetBasis = ClocktowerRulesetPersistenceBasis(
+                    cards.map { card ->
+                        RoleId(requireNotNull(card.clocktowerRole) {
+                            "Trouble Brewing setup is missing an assigned role."
+                        }.enName)
+                    }.toSet(),
+                )
+                clocktowerRulesetRoleIds = rulesetBasis.roleIds
+                clocktowerRulesetRef = troubleBrewingRulesetRefFor(rulesetBasis)
+                    ?: error("Unable to resolve Trouble Brewing ruleset reference at setup.")
             } else {
-                null
+                clocktowerRulesetRoleIds = emptySet()
+                clocktowerRulesetRef = null
             }
         } else {
             clocktowerGameId = ""
             clocktowerGameSeed = 0L
             clocktowerGameStateRevision = 0L
             clocktowerPlayerInputRevision = 0L
+            clocktowerRulesetRoleIds = emptySet()
             clocktowerRulesetRef = null
         }
         clocktowerPendingNightDeath = null
