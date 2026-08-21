@@ -196,7 +196,7 @@ class EpistemicSemanticModelTest {
         val grimoire = InformationProposition.GrimoireState(
             listOf(
                 GrimoireSeatView(1, RoleId("Investigator"), true),
-                GrimoireSeatView(2, RoleId("Spy"), true, listOf("spy")),
+                GrimoireSeatView(2, RoleId("Spy"), true),
             ),
         )
         val spyView = EpistemicObservation(
