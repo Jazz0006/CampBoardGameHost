@@ -2,12 +2,14 @@
 
 > Project: CampBoardGameHost  
 > Milestone: Phase A / PR A0 + A2.1 executable corpus + A3 R1 remediation  
-> Version: 1.2  
-> Date: 2026-08-19
+> Version: 1.3  
+> Date: 2026-08-21
 
 ## 1. Scope and notation
 
 This matrix defines the frozen golden-scenario catalog for the player-perspective world engine. A2.1 converted all 33 original entries into machine-readable official contracts and expanded the corpus to 48 scenarios. The 2026-08-19 A3 R1 remediation adds four poisoned Spy/Recluse numeric-registration contracts, bringing the catalog to **52 scenarios**. A3 executes the currently supported information contracts; B4 remains responsible for deferred timeline and recipient-projection contracts.
+
+**Coverage caveat:** `52` is the total semantic contract corpus, not the number of cases currently executable by the frozen Clingo/A3 oracle path. **24** contracts are currently oracle/A3-executable and **28** are explicitly deferred / `ORACLE_NOT_APPLICABLE` timeline or recipient-projection contracts. Do not reinterpret this split as a simple “percentage validated”; contract coverage and external-oracle execution are separate dimensions.
 
 Oracle abbreviations:
 

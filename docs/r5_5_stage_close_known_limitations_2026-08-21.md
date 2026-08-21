@@ -60,6 +60,32 @@ This is a presentation / information-migration boundary limitation. It is **not*
 
 Do not reopen R5.5 merely to hide these labels or cosmetically unify the buttons. Fix this as part of the later recommendation-information migration so there remains one semantic information-decision model rather than two UI-specific paths.
 
+### Post-close clarification — legacy direct recommendation entry point
+
+The 2026-08-21 field-test review identified a more precise form of this limitation: production still exposes a legacy direct recommendation button/path alongside the newer recommendation path.
+
+This is **not only cosmetic UI debt**. It is a production authority problem because two entry points can eventually produce different answers when poison/protection/alive state, observation history, revision and historical context become richer.
+
+The required future stage is therefore named **Production Recommendation Entry-Point Unification**.
+
+It must happen:
+
+```text
+after semantic-history/session ownership foundation
+        ↓
+before recommendation behavior expands into historical multi-night semantics
+```
+
+Exit criteria:
+
+1. no production recommendation button bypasses the unified recommendation authority/coordinator;
+2. UI does not independently recompute recommendation semantics;
+3. stale revision/context results cannot be reused through the legacy direct path;
+4. `MANUAL_ONLY`, `INELIGIBLE` and unavailable states are driven by one result model;
+5. regression tests prevent the legacy direct path from being reintroduced.
+
+Do **not** treat this as an R5.5 hotfix and do not fix it by merely renaming/hiding a `legacy` button.
+
 ## Field validation — 2026-08-22 real game
 
 The app will be used in a real game on 2026-08-22. Treat that session as field validation for usability and runtime behavior.
@@ -88,6 +114,6 @@ The next session must first read:
 3. this document
 4. the relevant next-stage design document before changing production code
 
-`docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-21.md` explicitly records that the historical R5/R5.5 blocking condition in `storyteller_revision_driven_dynamic_decision_engine_plan.md` has now been satisfied, while the P1 semantic prerequisites still apply before formal multi-night player-world reasoning.
+The R5.5 milestone remains historical/released foundation. R6 P1 semantic prerequisites have since closed, and the post-P1 production-rollout audit now determines the rollout order. See `post_p1_production_rollout_entry_audit_2026-08-21.md` for that newer boundary.
 
 R5.5 should now be treated as historical/released foundation, not an active branch to continue extending.
