@@ -21,7 +21,10 @@ internal data class ActiveGamePersistenceInputs(
 internal data class ActiveGamePersistenceResolution(
     val identity: PersistedActiveGameIdentityEnvelope,
     val clocktowerScript: ClocktowerScript? = null,
-)
+) {
+    /** Transitional compile shim for the still-large App restore block. v3 never enables it. */
+    val allowLegacyClocktowerRulesetFallback: Boolean = false
+}
 
 internal class ActiveGamePersistenceCoordinator(
     private val clocktowerScriptProvider: (ClocktowerScript) -> ClocktowerScriptDefinition,
@@ -206,6 +209,8 @@ internal class ActiveGamePersistenceCoordinator(
     }
 
     companion object {
+        /** Transitional compile shim only; schema v1 is deliberately unsupported by isSupportedVersion. */
+        const val LEGACY_VERSION = 1
         const val CURRENT_VERSION = 3
         private const val BUILTIN_SCRIPT_SOURCE_REVISION = "builtin-script-assets-r5_5"
 
