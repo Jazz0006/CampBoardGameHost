@@ -1,0 +1,88 @@
+package com.codex.campboardgamehost
+
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.io.File
+
+class ClocktowerGlobalObservationProductionWiringTest {
+    private val appSource = File(
+        "src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt",
+    ).readText(Charsets.UTF_8)
+    private val hostSource = File(
+        "src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt",
+    ).readText(Charsets.UTF_8)
+
+    @Test
+    fun `new Clocktower games start explicit global v1 without changing restored legacy mode`() {
+        val reset = appSource
+            .substringAfter("fun resetDealState(")
+            .substringBefore("fun startUndercoverGame()")
+
+        assertTrue(reset.contains("ClocktowerSemanticHistoryMode.GLOBAL_V1"))
+        assertTrue(reset.contains("clocktowerNextTimelineGlobalSequence = 0L"))
+
+        val restore = appSource
+            .substringAfter("fun restoreSavedGame()")
+            .substringBefore("val latestPersistActiveGameState")
+        assertTrue(restore.contains("clocktowerSemanticHistoryMode = restoredSemanticHistoryMode"))
+        assertFalse(
+            restore.substringAfter("clocktowerSemanticHistoryMode = restoredSemanticHistoryMode")
+                .substringBefore("screen = restoredScreen")
+                .contains("ClocktowerSemanticHistoryMode.GLOBAL_V1"),
+        )
+    }
+
+    @Test
+    fun `app commits drafts through session authority and writes back only history revision and cursor`() {
+        val commit = appSource
+            .substringAfter("fun recordEpistemicObservation(")
+            .substringBefore("fun localizedText(")
+
+        assertTrue(commit.contains("draft: EpistemicObservationDraft"))
+        assertTrue(commit.contains("ClocktowerGameSession.commitGlobalEpistemicObservation("))
+        assertTrue(commit.contains("semanticHistoryMode = clocktowerSemanticHistoryMode"))
+        assertTrue(commit.contains("observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList())"))
+        assertTrue(commit.contains("nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence"))
+        assertTrue(commit.contains("playerInputRevision = clocktowerPlayerInputRevision"))
+        assertTrue(commit.contains("draft = draft"))
+        assertTrue(commit.contains("clocktowerPlayerInputRevision = committed.playerInputRevision"))
+        assertTrue(commit.contains("clocktowerNextTimelineGlobalSequence = committed.nextTimelineGlobalSequence"))
+        assertTrue(commit.contains("clocktowerEpistemicObservations"))
+        assertFalse(commit.contains("advanceClocktowerPlayerInputRevision()"))
+    }
+
+    @Test
+    fun `public alive observations use same draft commit authority`() {
+        val eventFunction = appSource
+            .substringAfter("fun addClocktowerEvent(")
+            .substringBefore("fun recordEpistemicObservation(")
+
+        assertTrue(eventFunction.contains("EpistemicObservationDraft("))
+        assertTrue(eventFunction.contains("recordEpistemicObservation("))
+        assertFalse(eventFunction.contains("clocktowerEpistemicObservations += RecordedEpistemicObservation("))
+        assertFalse(eventFunction.contains("advanceClocktowerPlayerInputRevision()"))
+    }
+
+    @Test
+    fun `host creates unbound private drafts and never assigns global identity`() {
+        val privateProducer = hostSource
+            .substringAfter("fun recordReliablePrivateInformation(")
+            .substringBefore("val undertakerTarget =")
+
+        assertTrue(privateProducer.contains("onRecordEpistemicObservation(EpistemicObservationDraft("))
+        assertFalse(privateProducer.contains("RecordedEpistemicObservation("))
+        assertFalse(privateProducer.contains("ObservationTimelineBinding.Global"))
+        assertFalse(privateProducer.contains("globalSequence"))
+    }
+
+    @Test
+    fun `host callback accepts an unbound draft rather than a durable record`() {
+        val signature = hostSource
+            .substringAfter("internal fun ClocktowerJudgeScreen(")
+            .substringBefore(") {")
+
+        assertTrue(signature.contains("onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit"))
+        assertFalse(signature.contains("onRecordEpistemicObservation: (RecordedEpistemicObservation) -> Unit"))
+    }
+}
