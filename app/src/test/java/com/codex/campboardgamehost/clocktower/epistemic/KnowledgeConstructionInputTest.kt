@@ -43,6 +43,15 @@ class KnowledgeConstructionInputTest {
         assertNotEquals(original, changedPublic)
     }
 
+    @Test fun `safe knowledge input rejects public proposition for unknown seat`() {
+        org.junit.Assert.assertThrows(IllegalArgumentException::class.java) {
+            KnowledgeConstructionInput(
+                worldInput = formal.toKnowledgeSafeWorldInput(),
+                publicPropositions = listOf(InformationProposition.AliveAt(99, true)),
+            )
+        }
+    }
+
     @Test fun `safe knowledge core matches formal compatibility adapter`() {
         val observations = listOf(
             EpistemicObservation(
