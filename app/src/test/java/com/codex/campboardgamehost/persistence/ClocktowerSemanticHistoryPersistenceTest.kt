@@ -16,6 +16,18 @@ class ClocktowerSemanticHistoryPersistenceTest {
     }
 
     @Test
+    fun `persisted semantic history mode names are stable`() {
+        assertEquals(
+            "LEGACY_LOCAL",
+            ClocktowerSemanticHistoryPersistence.encode(ClocktowerSemanticHistoryMode.LEGACY_LOCAL),
+        )
+        assertEquals(
+            "GLOBAL_V1",
+            ClocktowerSemanticHistoryPersistence.encode(ClocktowerSemanticHistoryMode.GLOBAL_V1),
+        )
+    }
+
+    @Test
     fun `explicit legacy and global modes round trip through the persisted value`() {
         ClocktowerSemanticHistoryMode.values().forEach { mode ->
             val json = JSONObject().put(
