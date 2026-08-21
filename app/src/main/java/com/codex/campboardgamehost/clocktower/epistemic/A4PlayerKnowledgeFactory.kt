@@ -21,14 +21,17 @@ object A4PlayerKnowledgeFactory {
         require(observations.map { it.observationId }.distinct().size == observations.size) {
             "Observation replay cannot contain duplicate IDs."
         }
+        val canonicalObservations = observations.canonicalTimelineOrder()
         // Player count is public, mechanically required setup knowledge. Including it here keeps
         // the knowledge identity used by cache keys identical to the world-builder input.
         val canonicalSetup = (
             formal.publicPropositions + setupKnowledge + InformationProposition.PlayerCount(formal.players.size)
         ).distinct()
         return seats.sorted().map { seat ->
-            val public = observations.filter { it.visibility == ObservationVisibility.PUBLIC }.canonical()
-            val private = observations.filter { it.visibility == ObservationVisibility.PRIVATE && seat in it.recipientSeats }.canonical()
+            val public = canonicalObservations.filter { it.visibility == ObservationVisibility.PUBLIC }
+            val private = canonicalObservations.filter {
+                it.visibility == ObservationVisibility.PRIVATE && seat in it.recipientSeats
+            }
             PlayerKnowledgeSnapshot(
                 knowledgeSnapshotId = SemanticStableId.create(
                     "knowledge",
@@ -62,7 +65,4 @@ object A4PlayerKnowledgeFactory {
         observations = observationLog.bindTo(formal),
         setupKnowledge = setupKnowledge,
     )
-
-    private fun List<EpistemicObservation>.canonical(): List<EpistemicObservation> =
-        sortedWith(compareBy<EpistemicObservation>({ it.round }, { it.sequence }, { it.observationId }))
 }

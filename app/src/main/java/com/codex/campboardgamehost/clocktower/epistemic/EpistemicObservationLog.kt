@@ -24,13 +24,42 @@ internal fun ObservationTimelineBinding.requireReplayFieldsMatch(
     }
 }
 
-private enum class ObservationTimelineMode { LEGACY_LOCAL, GLOBAL }
+internal enum class ObservationTimelineMode { LEGACY_LOCAL, GLOBAL }
 
-private val ObservationTimelineBinding.mode: ObservationTimelineMode
+internal val ObservationTimelineBinding.timelineMode: ObservationTimelineMode
     get() = when (this) {
         ObservationTimelineBinding.LegacyLocal -> ObservationTimelineMode.LEGACY_LOCAL
         is ObservationTimelineBinding.Global -> ObservationTimelineMode.GLOBAL
     }
+
+/**
+ * Canonicalizes already-bound observations using the same whole-history timeline contract as the
+ * durable log. Direct knowledge/world-set builders use this so they cannot silently reintroduce
+ * legacy round/local-sequence ordering after a Global observation has been persisted.
+ */
+internal fun Collection<EpistemicObservation>.canonicalTimelineOrder(): List<EpistemicObservation> {
+    val values = toList()
+    if (values.isEmpty()) return values
+    require(values.map { it.timelineBinding.timelineMode }.distinct().size <= 1) {
+        "Observation replay cannot mix LegacyLocal and Global timeline records."
+    }
+    return when (values.first().timelineBinding) {
+        ObservationTimelineBinding.LegacyLocal ->
+            values.sortedWith(compareBy<EpistemicObservation>({ it.round }, { it.sequence }, { it.observationId }))
+        is ObservationTimelineBinding.Global -> {
+            val globalSequences = values.map {
+                (it.timelineBinding as ObservationTimelineBinding.Global).point.globalSequence
+            }
+            require(globalSequences.distinct().size == globalSequences.size) {
+                "Observation replay cannot contain duplicate global timeline sequences."
+            }
+            values.sortedWith(compareBy<EpistemicObservation>(
+                { (it.timelineBinding as ObservationTimelineBinding.Global).point.globalSequence },
+                { it.observationId },
+            ))
+        }
+    }
+}
 
 /**
  * A durable statement of information that was actually shown or publicly established in a game.
@@ -91,11 +120,13 @@ data class EpistemicObservationLog(
         require(records.map(RecordedEpistemicObservation::recordId).distinct().size == records.size) {
             "An epistemic observation log cannot contain duplicate record IDs."
         }
-        require(records.map { it.timelineBinding.mode }.distinct().size <= 1) {
+        require(records.map { it.timelineBinding.timelineMode }.distinct().size <= 1) {
             "An epistemic observation log cannot mix LegacyLocal and Global timeline records."
         }
         if (records.firstOrNull()?.timelineBinding is ObservationTimelineBinding.Global) {
-            val globalSequences = records.map { (it.timelineBinding as ObservationTimelineBinding.Global).point.globalSequence }
+            val globalSequences = records.map {
+                (it.timelineBinding as ObservationTimelineBinding.Global).point.globalSequence
+            }
             require(globalSequences.distinct().size == globalSequences.size) {
                 "An epistemic observation log cannot contain duplicate global timeline sequences."
             }
@@ -108,7 +139,7 @@ data class EpistemicObservationLog(
             "An epistemic observation log cannot contain duplicate record ID ${record.recordId}."
         }
         if (records.isNotEmpty()) {
-            require(records.first().timelineBinding.mode == record.timelineBinding.mode) {
+            require(records.first().timelineBinding.timelineMode == record.timelineBinding.timelineMode) {
                 "An epistemic observation log cannot mix LegacyLocal and Global timeline records."
             }
         }
