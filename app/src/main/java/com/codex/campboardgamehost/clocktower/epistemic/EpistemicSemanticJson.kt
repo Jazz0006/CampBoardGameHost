@@ -120,7 +120,7 @@ object EpistemicSemanticJson {
         "sequence" to value.sequence, "snapshotId" to value.snapshotId,
         "sourceAbility" to value.sourceAbility?.value, "sourceSeat" to value.sourceSeat,
         "visibility" to value.visibility.name,
-    )
+    ) + timelineBindingFields(value.timelineBinding)
 
     private fun recordedObservation(value: RecordedEpistemicObservation): Map<String, Any?> = mapOf(
         "phase" to value.phase.name, "proposition" to proposition(value.proposition),
@@ -128,7 +128,17 @@ object EpistemicSemanticJson {
         "reliability" to value.reliability.name, "round" to value.round, "schemaVersion" to value.schemaVersion,
         "sequence" to value.sequence, "sourceAbility" to value.sourceAbility?.value,
         "sourceSeat" to value.sourceSeat, "visibility" to value.visibility.name,
-    )
+    ) + timelineBindingFields(value.timelineBinding)
+
+    private fun timelineBindingFields(value: ObservationTimelineBinding): Map<String, Any?> = when (value) {
+        ObservationTimelineBinding.LegacyLocal -> emptyMap()
+        is ObservationTimelineBinding.Global -> mapOf(
+            "timelineBinding" to mapOf(
+                "kind" to "global",
+                "point" to timelinePoint(value.point),
+            ),
+        )
+    }
 
     private fun identityObservation(value: EpistemicObservation, perspectiveSeat: Int): Map<String, Any?> = mapOf(
         "phase" to value.phase.name, "proposition" to proposition(value.proposition),
@@ -260,6 +270,7 @@ object EpistemicSemanticJson {
         recipientSeats = json.getJSONArray("recipientSeats").ints().toSet(),
         reliability = ObservationReliability.valueOf(json.getString("reliability")),
         proposition = proposition(json.getJSONObject("proposition")), schemaVersion = json.getInt("schemaVersion"),
+        timelineBinding = observationTimelineBinding(json),
     )
 
     private fun recordedObservation(json: JSONObject): RecordedEpistemicObservation = RecordedEpistemicObservation(
@@ -270,7 +281,20 @@ object EpistemicSemanticJson {
         recipientSeats = json.getJSONArray("recipientSeats").ints().toSet(),
         reliability = ObservationReliability.valueOf(json.getString("reliability")),
         proposition = proposition(json.getJSONObject("proposition")), schemaVersion = json.getInt("schemaVersion"),
+        timelineBinding = observationTimelineBinding(json),
     )
+
+    private fun observationTimelineBinding(json: JSONObject): ObservationTimelineBinding {
+        if (!json.has("timelineBinding")) return ObservationTimelineBinding.LegacyLocal
+        require(!json.isNull("timelineBinding")) {
+            "timelineBinding cannot be null when present."
+        }
+        val binding = json.getJSONObject("timelineBinding")
+        return when (binding.getString("kind")) {
+            "global" -> ObservationTimelineBinding.Global(timelinePoint(binding.getJSONObject("point")))
+            else -> throw IllegalArgumentException("Unknown observation timeline binding kind: ${binding.getString("kind")}")
+        }
+    }
 
     private fun decisionPoint(json: JSONObject): StorytellerDecisionPoint = StorytellerDecisionPoint(
         decisionPointId = json.getString("decisionPointId"), snapshotId = json.getString("snapshotId"),
