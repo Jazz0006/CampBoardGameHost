@@ -22,6 +22,18 @@ data class TimelineBoundActionFact(
 }
 
 /**
+ * Persistence migration state for FormalGameState action history.
+ *
+ * Legacy means the persisted schema-v2 action list contains only ActionFact.sequence and therefore
+ * has no recoverable phase/round/local TimelinePoint metadata. Global is valid only when every
+ * action is explicitly bound to a committed TimelinePoint.
+ */
+sealed interface FormalActionTimelineBinding {
+    object Legacy : FormalActionTimelineBinding
+    data class Global(val timeline: ActionFactTimeline) : FormalActionTimelineBinding
+}
+
+/**
  * Immutable canonical action history whose ordering authority is the shared global timeline.
  *
  * The underlying [ActionFact.sequence] remains unchanged for [com.codex.campboardgamehost.clocktower.domain.DynamicActionReducer]
