@@ -20,6 +20,9 @@ data class KnowledgeSafeWorldInput(
         require(playerSeats.all { it > 0 }) { "Player seats must be positive." }
         require(playerSeats.distinct().size == playerSeats.size) { "Player seats must be unique." }
         require(playerSeats == playerSeats.sorted()) { "Player seats must use canonical order." }
+        require(playerSeats == (1..playerSeats.size).toList()) {
+            "Player seats must be contiguous and start at 1 because current world enumeration uses 1..playerCount."
+        }
     }
 
     val playerCount: Int get() = playerSeats.size
