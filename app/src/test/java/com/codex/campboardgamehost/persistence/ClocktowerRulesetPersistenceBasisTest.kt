@@ -76,6 +76,17 @@ class ClocktowerRulesetPersistenceBasisTest {
     }
 
     @Test
+    fun `legacy ruleset helper is fail only and cannot migrate`() {
+        assertFails {
+            TroubleBrewingRulesetPersistence.resolveLegacyBasisForRestore(
+                knowledge = knowledge,
+                assignedRoleIds = listOf(imp, scarletWoman, empath),
+                persistedRef = null,
+            )
+        }
+    }
+
+    @Test
     fun `basis rejects empty role set`() {
         assertFails { ClocktowerRulesetPersistenceBasis(emptySet()) }
     }
