@@ -252,7 +252,18 @@ internal object TroubleBrewingWorldObservationEvaluator {
         is InformationProposition.Not -> !evaluateActual(world, roles, proposition.proposition)
         is InformationProposition.NumericResult -> evaluateNumeric(world, roles, null, proposition).matches
         is InformationProposition.BooleanResult -> evaluateBoolean(world, roles, null, proposition).matches
-        is InformationProposition.GrimoireState -> grimoireMatches(world, roles, proposition)
+        is InformationProposition.GrimoireState -> when (proposition.truthBinding) {
+            GrimoireTruthBinding.LEGACY_DISPLAY_ONLY -> legacyGrimoireMatches(world, proposition)
+            GrimoireTruthBinding.VERIFIED_EXACT -> grimoireMatches(world, roles, proposition)
+        }
+    }
+
+    private fun legacyGrimoireMatches(
+        world: EnumeratedWorld,
+        grimoire: InformationProposition.GrimoireState,
+    ): Boolean = grimoire.seats.all { view ->
+        (world.shownRolesBySeat[view.seat] ?: world.rolesBySeat[view.seat]) == view.displayedRole &&
+            (view.seat in world.aliveSeats) == view.alive
     }
 
     private fun grimoireMatches(
