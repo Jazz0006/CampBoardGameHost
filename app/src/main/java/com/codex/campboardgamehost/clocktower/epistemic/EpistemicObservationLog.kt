@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import java.util.Collections
 
 /** Explicit migration state for durable observations during the P1.2 timeline cutover. */
 sealed interface ObservationTimelineBinding {
@@ -120,27 +121,30 @@ data class RecordedEpistemicObservation(
 }
 
 /** Immutable, ordered history of facts that players have actually received. */
-data class EpistemicObservationLog(
-    val records: List<RecordedEpistemicObservation> = emptyList(),
+class EpistemicObservationLog(
+    records: List<RecordedEpistemicObservation> = emptyList(),
     val schemaVersion: Int = EPISTEMIC_SCHEMA_VERSION,
 ) {
+    /** Defensive immutable snapshot; caller-owned mutable collections cannot rewrite validated history. */
+    val records: List<RecordedEpistemicObservation> = Collections.unmodifiableList(records.toList())
+
     init {
         requireSchemaVersion(schemaVersion)
-        require(records.map(RecordedEpistemicObservation::recordId).distinct().size == records.size) {
+        require(this.records.map(RecordedEpistemicObservation::recordId).distinct().size == this.records.size) {
             "An epistemic observation log cannot contain duplicate record IDs."
         }
-        require(records.map { it.timelineBinding.timelineMode }.distinct().size <= 1) {
+        require(this.records.map { it.timelineBinding.timelineMode }.distinct().size <= 1) {
             "An epistemic observation log cannot mix LegacyLocal and Global timeline records."
         }
-        if (records.firstOrNull()?.timelineBinding is ObservationTimelineBinding.Global) {
-            val globalSequences = records.map {
+        if (this.records.firstOrNull()?.timelineBinding is ObservationTimelineBinding.Global) {
+            val globalSequences = this.records.map {
                 (it.timelineBinding as ObservationTimelineBinding.Global).point.globalSequence
             }
             require(globalSequences.distinct().size == globalSequences.size) {
                 "An epistemic observation log cannot contain duplicate global timeline sequences."
             }
         }
-        require(records == records.canonical()) { "Epistemic observation records must use canonical order." }
+        require(this.records == this.records.canonical()) { "Epistemic observation records must use canonical order." }
     }
 
     fun append(record: RecordedEpistemicObservation): EpistemicObservationLog {
@@ -169,6 +173,23 @@ data class EpistemicObservationLog(
         require(formalSnapshotId.isNotBlank()) { "formalSnapshotId cannot be blank." }
         return records.map { it.bindTo(formalSnapshotId) }
     }
+
+    /** Source-compatible value-copy API retained from the previous data-class contract. */
+    fun copy(
+        records: List<RecordedEpistemicObservation> = this.records,
+        schemaVersion: Int = this.schemaVersion,
+    ): EpistemicObservationLog = EpistemicObservationLog(records, schemaVersion)
+
+    operator fun component1(): List<RecordedEpistemicObservation> = records
+    operator fun component2(): Int = schemaVersion
+
+    override fun equals(other: Any?): Boolean =
+        other is EpistemicObservationLog && records == other.records && schemaVersion == other.schemaVersion
+
+    override fun hashCode(): Int = 31 * records.hashCode() + schemaVersion
+
+    override fun toString(): String =
+        "EpistemicObservationLog(records=$records, schemaVersion=$schemaVersion)"
 
     private fun List<RecordedEpistemicObservation>.canonical(): List<RecordedEpistemicObservation> {
         if (isEmpty()) return this
