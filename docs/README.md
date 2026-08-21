@@ -1,98 +1,131 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-08-20  
-> 当前开发分支：`codex/storyteller-algorithm-v4`  
-> **任何新的开发或审计任务都应先读本文，再读 `CURRENT_DEVELOPMENT_ROADMAP.md`。**
+> 最后整理：2026-08-21  
+> **任何新的开发或审计任务都应先读本文，再读 `CURRENT_DEVELOPMENT_ROADMAP.md`。**  
+> 不在 README 中硬编码“当前开发 branch”；所有 source work 都应从最新 `main` 创建短生命周期 branch。
 
-## 1. 文档权威与使用规则
+## 1. 文档权威与冲突处理
 
-本目录只保留仍然会影响当前设计、验证或下一步实施的文档。已经完成、被后续方案取代、或验收结论已经失效的文档统一放入 `archive/`。
-
-当文档之间出现冲突时，按以下方式处理：
+当文档之间出现冲突时：
 
 1. **游戏规则正确性**：官方 Blood on the Clocktower 规则 / Almanac / published rulings 优先；项目 golden expectation 次之；外部 Oracle 只用于交叉验证。
 2. **当前开发状态和“下一步做什么”**：`CURRENT_DEVELOPMENT_ROADMAP.md` 是唯一状态权威。
-3. **Possible Worlds / 玩家认知一致性总体架构**：`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md` 是当前主规范。
-4. **阶段专项实现**：对应专项 spec 只在主规范边界内生效。
-5. **实现状态、测试报告和历史验收**：只能作为证据，不得覆盖当前路线或规则语义。
-6. **开发运行手册 / connector 操作指南**：用于说明开发环境中的可靠操作方式，不改变产品架构或阶段状态。
-7. **`archive/`**：只用于历史追溯，不再作为新代码的实施依据。
+3. **Possible Worlds / 玩家认知一致性总体架构**：`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md` 是主规范。
+4. **多剧本 / 动态流程架构**：`多剧本多板子与动态游戏流程架构设计_v1.md` 是 R5.5 以后继续生效的专项规范；R5.5 已验证 structural/flow foundation。
+5. **专项 audit / closeout / handoff**：保存证据与局部上下文，不覆盖 roadmap 的当前状态。
+6. **历史 handoff**：如果顶部标记 `SUPERSEDED` / `HISTORICAL ONLY`，不得执行正文中的旧“下一步”指令。
+7. **开发运行手册**：说明可靠的开发/connector 操作方式，不改变产品架构。
+8. **`archive/`**：仅历史追溯，不作为新代码实施入口。
 
-特别说明：部分较早的活跃文档正文中仍保留“COMPLETE / READY / PASS”等当时状态。**如果与本目录 README 或 `CURRENT_DEVELOPMENT_ROADMAP.md` 冲突，以当前路线为准。**
+## 2. 当前必须阅读
 
-## 2. 当前必须阅读的文档
+### A. 当前路线
 
-### A. 当前开发路线
+- [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **CURRENT / 唯一状态权威**  
+  当前状态：R6 P1 CLOSED；post-P1 production-rollout entry audit 已完成；下一 source slice 是 **Production Semantic-History Foundation**。
 
-- [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)  
-  2026-08-19 全量审计后的唯一实施顺序、阶段状态、阻塞项和退出条件。
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-08-21.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-21.md) — **CURRENT HANDOFF**  
+  把当前 audit 结论转换成下一次 tests-first source implementation 的边界、non-goals 与 gate。
+
+- [`post_p1_production_rollout_entry_audit_2026-08-21.md`](post_p1_production_rollout_entry_audit_2026-08-21.md) — **CURRENT AUDIT EVIDENCE**  
+  记录 production timeline/session ownership、Spy truth、A3/ZDD/B4 readiness、persistence/migration 与 rollout dependency。
 
 ### B. 主架构规范
 
-- [`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`](CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md)  
-  Possible Worlds、玩家知识边界、registration、Oracle 权威、A/B/C 阶段总体架构。正文中的旧阶段完成状态不再作为当前状态来源。
+- [`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`](CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md) — **NORMATIVE**  
+  Possible Worlds、玩家知识边界、registration、Oracle 权威和 recommendation policy 总体架构。
 
-### C. 当前 Phase A 专项
+- [`多剧本多板子与动态游戏流程架构设计_v1.md`](多剧本多板子与动态游戏流程架构设计_v1.md) — **NORMATIVE / FOUNDATION IMPLEMENTED**  
+  Catalog、registry、ruleset identity、Clocktower/Werewolf FlowPlanner 与多剧本/多板子扩展边界。R5.5 已完成 production flow foundation；不要重新建设第二套 framework。
 
-- [`storyteller_a4_5_observation_cache_rebuild_spec.md`](storyteller_a4_5_observation_cache_rebuild_spec.md)  
-  A4.5 cache rebuild 的原始合同。2026-08-19 审计后 A4.5 已重新打开，必须补齐 durability、lifecycle cancellation/invalidation 和 cache invariant。
+### C. 当前 rollout / recommendation 设计
 
-- [`storyteller_a4_zdd_prototype.md`](storyteller_a4_zdd_prototype.md)  
-  A4 ZDD 原型的实现与设备实验日志。它是工程证据日志，不是当前状态权威；生产仍不得因该文档中的旧完成记录直接切到 ZDD。
+- [`storyteller_revision_driven_dynamic_decision_engine_plan.md`](storyteller_revision_driven_dynamic_decision_engine_plan.md) — **NORMATIVE FOLLOW-UP PLAN**  
+  其中顶部较早的 `BLOCKED BY R5 + R5.5` 状态是历史 gate；R5/R5.5 已完成。该计划现在必须服从当前 roadmap 的 rollout dependency：先完成 semantic-history/session ownership，再进行更广泛的 revision-driven recommendation unification。不要按旧 header 重新打开 R5/R5.5。
 
-### D. Phase A 参考与验证
+- [`r5_5_stage_close_known_limitations_2026-08-21.md`](r5_5_stage_close_known_limitations_2026-08-21.md) — **REFERENCE / RELEASE LIMITATIONS**  
+  R5.5 closeout 与 recommendation UI transition。2026-08-21 已补充：legacy direct recommendation button/path 是 **Production Recommendation Entry-Point Unification** 的 authority debt，不是 cosmetic label 问题。
 
-- [`unified_semantic_model.md`](unified_semantic_model.md) — A1/A1.1 统一语义模型。
-- [`external_solver_evaluation.md`](external_solver_evaluation.md) — 外部 solver/research 冻结与使用边界。
-- [`epistemic_reference_matrix.md`](epistemic_reference_matrix.md) — Trouble Brewing golden scenario 矩阵。
-- [`asp_oracle_cross_validation.md`](asp_oracle_cross_validation.md) — A2/A2.1 ASP Oracle 交叉验证基线。
+### D. R6 P1 closeout evidence
 
-### E. 开发运行手册
+- [`r6_p1_1_closeout_2026-08-21.md`](r6_p1_1_closeout_2026-08-21.md) — P1.1 Spy Grimoire truth boundary。
+- [`r6_p1_2_closeout_2026-08-21.md`](r6_p1_2_closeout_2026-08-21.md) — P1.2 Global timeline semantic prerequisite。
+- [`r6_p1_3_closeout_2026-08-21.md`](r6_p1_3_closeout_2026-08-21.md) — P1.3 knowledge-safe boundary；§7–§8 的旧 OPEN/next-step 内容已明确标成历史状态。
 
-- [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md) — **REFERENCE / DEVELOPMENT OPERATIONS**。当没有本地 working tree、只能使用 GitHub connector，并且需要修改数百 KB 级大文件时，优先使用该手册中已验证的 temporary GitHub Actions executor 流程，而不是重新尝试整文件覆盖或要求用户本地应用 patch。包含适用条件、幂等 marker transformation、`git diff --check`、bot push、正式 CI 验收、workflow 降权和已验证踩坑。
+### E. correctness / oracle reference
 
-## 3. 下一阶段文档：当前禁止提前实施
+- [`unified_semantic_model.md`](unified_semantic_model.md) — A1/A1.1 unified semantic model。
+- [`external_solver_evaluation.md`](external_solver_evaluation.md) — external solver/research 冻结与使用边界。
+- [`epistemic_reference_matrix.md`](epistemic_reference_matrix.md) — 52-contract Trouble Brewing corpus；当前 **24 oracle/A3 executable + 28 deferred/`ORACLE_NOT_APPLICABLE`**，两者不是简单“验证百分比”。
+- [`asp_oracle_cross_validation.md`](asp_oracle_cross_validation.md) — ASP / real Clingo 交叉验证基线。
+- [`storyteller_a4_zdd_prototype.md`](storyteller_a4_zdd_prototype.md) — ZDD 工程证据；当前仍 shadow/prototype，device gate 未通过。
 
-- [`storyteller_revision_driven_dynamic_decision_engine_plan.md`](storyteller_revision_driven_dynamic_decision_engine_plan.md)
+### F. design review / audit
 
-该计划仍是 Phase A 之后动态决策引擎的主要实施方案，但其正文顶部的 `READY FOR IMPLEMENTATION` 已被 2026-08-19 审计状态覆盖。
+- [`design_plan_audit_2026-08-21.md`](design_plan_audit_2026-08-21.md) — 全设计/开发计划审计与后续 disposition；原始 finding 保留，review clarification 记录在文末。
 
-**当前状态：BLOCKED BY PHASE A REMEDIATION AND R5.5 FLOW FOUNDATION。**
+### G. 开发运行手册
 
-只有 `CURRENT_DEVELOPMENT_ROADMAP.md` 中定义的 Phase A 修复和重新退出审查全部通过，并完成 R5.5 Script & Dynamic Flow Foundation 后，才能开始该计划的下一批 production implementation。
+- [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md) — **REFERENCE / DEVELOPMENT OPERATIONS**。
 
-- [`多剧本多板子与动态游戏流程架构设计_v1.md`](多剧本多板子与动态游戏流程架构设计_v1.md)
+## 3. 当前 rollout 顺序摘要
 
-文档角色：**FUTURE/BLOCKED**。它定义 BotC Script Catalog、Character Registry、官方/custom JSON normalization、ClocktowerFlowPlanner、狼人杀 Board/RoleRegistry、HostInteraction、RuleCoverage 安全降级，以及与动态决策引擎/PlayerWorldSet 的接口边界。
+完整定义只看 roadmap；README 只保留导航摘要：
 
-当前只允许把它作为 R2 拆分时的未来架构约束，**不得在 R2/R3/R4/R5 中引入多剧本、多板子或流程语义变化**。R5 Phase A re-exit 通过后，本文转为 R5.5 的 NORMATIVE 专项规范；R5.5 完成后才解锁 revision-driven dynamic decision engine 的 script-aware production 实施。
+```text
+Production Semantic-History Foundation
+        ↓
+new-game Global observation ownership
+        ↓
+Production Recommendation Entry-Point Unification
+        ↓
+historical action + observation capture
+        ↓
+A3 historical multi-night exact baseline
+        ↓
+authoritative physical Grimoire ledger + Spy VerifiedExact
+        ↓
+B4 historical expansion
+        ↓
+revision-driven recommendation unification
+        ↓
+ZDD reconsideration
+```
 
-## 4. 已归档文档
+当前第一 slice **不改 production Host/Compose behavior**。
 
-历史文档统一见 [`archive/README.md`](archive/README.md)。主要包含：
+## 4. Multi-script 当前准确边界
 
-- V3/V4 旧算法设计与基线/最终验收；
-- 已被新动态决策计划取代的旧实施说明；
-- 已失效的 A3 `PASS` 与旧 A3 baseline 记录；
-- 较早的 UI 设计与离线审计材料。
+不要再用“multi-script 仍只是 scaffold”描述当前状态。
 
-归档不是删除。需要追溯设计演进、比较旧算法行为或理解历史决策时仍可查阅，但不得直接作为新开发任务的入口。
+```text
+catalog / normalization / registry / ruleset identity / flow
+    → MULTI-SCRIPT VERIFIED (TB + NGJ structural proof)
 
-## 5. 子目录局部文档
+advanced recommendation metadata / Possible Worlds / role-specific epistemic semantics
+    → TB-FIRST / future expansion
+```
 
-某些工具拥有自己的 README，例如：
+这意味着未来扩展 NGJ/其他剧本时，应复用现有 framework，而不是创建 `MultiScriptManager`、第二套 catalog 或 script-specific FlowPlanner 主干。
 
-- `tools/asp_oracle/README.md`
+## 5. 历史文档
 
-这类文档描述局部工具的运行方式和依赖，保留在工具目录中，不迁移到 `docs/` 顶层，也不参与总体开发路线排序。
+历史过程文档可以保留在 `docs/` 或 `archive/` 供追溯，但有两个规则：
+
+- 已失效的 handoff 必须在顶部显示 `SUPERSEDED / HISTORICAL ONLY`；
+- 历史正文中的 `PASS / OPEN / NEXT / BLOCKED` 只代表当时状态，不得覆盖 roadmap。
+
+特别是：
+
+- `r5_5_multiscript_progress_handoff_2026-08-20.md` 已 superseded；不要继续旧 `codex/storyteller-algorithm-v4` 或 PR #2 Draft 指令。
+- `r6_p1_3_closeout_2026-08-21.md` 的旧 P1.1/P1.2 OPEN 段落是 P1.3 close 当时的历史记录；当前 P1 已 CLOSED。
 
 ## 6. 文档维护规则
 
-以后每完成一个较大阶段，遵循以下规则：
-
-- **只有一份当前路线**：只更新 `CURRENT_DEVELOPMENT_ROADMAP.md` 的阶段状态。
-- 主规范只在架构/语义发生变化时升级版本，不用它记录每日进度。
-- 专项 spec 完成后可保留到该阶段彻底退出；被后续方案取代时移入 `archive/`。
-- 验收报告一旦被后续审计撤销，立即归档，并在当前路线记录撤销原因。
-- 不再创建名称含“最终版”但以后仍可能被新路线覆盖的并列主规范。
-- 新文档必须在本 README 中登记其角色：`CURRENT`、`NORMATIVE`、`REFERENCE`、`FUTURE/BLOCKED` 或 `ARCHIVE`。
+- **只有一份当前路线**：`CURRENT_DEVELOPMENT_ROADMAP.md`。
+- 主规范只在架构/语义发生变化时升级版本，不记录每日进度。
+- Audit 记录“发现了什么”；roadmap 记录“现在决定怎么做”。
+- Closeout 保留退出证据；不要为了更新状态改写当时历史，使用 banner 指向当前 roadmap。
+- Handoff 只服务下一次开发；一旦失效必须标记 superseded。
+- Deferred decision 必须写清 **current decision + reopen trigger**，避免“以后再说”被永久遗忘。
+- 不再把当前开发 branch 写进 README；每次 source work 都从最新 `main` 创建短生命周期 branch。
