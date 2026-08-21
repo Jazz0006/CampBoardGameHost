@@ -35,12 +35,29 @@ class ActiveGamePersistenceCoordinatorTest {
     )
 
     @Test
-    fun `current schema is v2 while v1 remains an explicit migration input`() {
-        assertEquals(2, ActiveGamePersistenceCoordinator.CURRENT_VERSION)
-        assertTrue(ActiveGamePersistenceCoordinator.isSupportedVersion(1))
-        assertTrue(ActiveGamePersistenceCoordinator.isSupportedVersion(2))
+    fun `current schema is v3 and older active-game schemas are unsupported`() {
+        assertEquals(3, ActiveGamePersistenceCoordinator.CURRENT_VERSION)
+        assertTrue(ActiveGamePersistenceCoordinator.isSupportedVersion(3))
         assertFalse(ActiveGamePersistenceCoordinator.isSupportedVersion(0))
-        assertFalse(ActiveGamePersistenceCoordinator.isSupportedVersion(3))
+        assertFalse(ActiveGamePersistenceCoordinator.isSupportedVersion(1))
+        assertFalse(ActiveGamePersistenceCoordinator.isSupportedVersion(2))
+        assertFalse(ActiveGamePersistenceCoordinator.isSupportedVersion(4))
+    }
+
+    @Test
+    fun `v1 and v2 saves are rejected for every game kind`() {
+        listOf(1, 2).forEach { version ->
+            GameKind.values().forEach { gameKind ->
+                assertFails {
+                    coordinator.resolveForRestore(
+                        json = JSONObject().put("version", version),
+                        gameKind = gameKind,
+                        assignedClocktowerRoleIds = emptyList(),
+                        assignedWerewolfRoles = emptyList(),
+                    )
+                }
+            }
+        }
     }
 
     @Test
@@ -60,7 +77,7 @@ class ActiveGamePersistenceCoordinatorTest {
     }
 
     @Test
-    fun `Clocktower v2 restore rejects same script id when persisted content changed`() {
+    fun `Clocktower v3 restore rejects same script id when persisted content changed`() {
         val current = coordinator.identityForSave(
             ActiveGamePersistenceInputs(
                 gameKind = GameKind.Clocktower,
@@ -73,9 +90,9 @@ class ActiveGamePersistenceCoordinatorTest {
                 contentHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             ),
         )
-        val json = v2Json(
+        val json = v3Json(
             gameKind = GameKind.Clocktower,
-            legacyScript = ClocktowerScript.TroubleBrewing,
+            script = ClocktowerScript.TroubleBrewing,
             envelope = stale,
         )
 
@@ -90,49 +107,32 @@ class ActiveGamePersistenceCoordinatorTest {
     }
 
     @Test
-    fun `Clocktower v1 migration trusts saved script and never infers from assigned roles`() {
-        val json = JSONObject()
-            .put("version", 1)
-            .put("currentGameKind", GameKind.Clocktower.name)
-            .put("currentClocktowerScript", ClocktowerScript.TroubleBrewing.name)
+    fun `Clocktower v3 restore binds explicit script and current content identity`() {
+        val inputs = ActiveGamePersistenceInputs(
+            gameKind = GameKind.Clocktower,
+            clocktowerScript = ClocktowerScript.TroubleBrewing,
+            assignedClocktowerRoleIds = listOf(RoleId("Imp"), RoleId("Empath")),
+        )
+        val envelope = coordinator.identityForSave(inputs)
+        val json = v3Json(
+            gameKind = GameKind.Clocktower,
+            script = ClocktowerScript.TroubleBrewing,
+            envelope = envelope,
+        )
 
         val resolution = coordinator.resolveForRestore(
             json = json,
             gameKind = GameKind.Clocktower,
-            assignedClocktowerRoleIds = listOf(RoleId("Imp"), RoleId("Empath")),
+            assignedClocktowerRoleIds = inputs.assignedClocktowerRoleIds,
             assignedWerewolfRoles = emptyList(),
         )
 
         assertEquals(ClocktowerScript.TroubleBrewing, resolution.clocktowerScript)
-        assertTrue(resolution.allowLegacyClocktowerRulesetFallback)
         assertEquals("trouble_brewing", resolution.identity.clocktower?.variantId)
-
-        assertFails {
-            coordinator.resolveForRestore(
-                json = json,
-                gameKind = GameKind.Clocktower,
-                assignedClocktowerRoleIds = listOf(RoleId("Imp"), RoleId("Clockmaker")),
-                assignedWerewolfRoles = emptyList(),
-            )
-        }
     }
 
     @Test
-    fun `Clocktower v1 save without selected script fails closed instead of player-count guessing`() {
-        val json = JSONObject().put("version", 1)
-
-        assertFails {
-            coordinator.resolveForRestore(
-                json = json,
-                gameKind = GameKind.Clocktower,
-                assignedClocktowerRoleIds = listOf(RoleId("Imp"), RoleId("Empath")),
-                assignedWerewolfRoles = emptyList(),
-            )
-        }
-    }
-
-    @Test
-    fun `Werewolf v2 restore binds board content house rules and actual assigned role deck`() {
+    fun `Werewolf v3 restore binds board content house rules and actual assigned role deck`() {
         val inputs = ActiveGamePersistenceInputs(
             gameKind = GameKind.Werewolf,
             assignedWerewolfRoles = listOf(
@@ -146,7 +146,7 @@ class ActiveGamePersistenceCoordinatorTest {
             lastWordsMode = LastWordsMode.FirstDay,
         )
         val envelope = coordinator.identityForSave(inputs)
-        val json = v2Json(GameKind.Werewolf, envelope = envelope)
+        val json = v3Json(GameKind.Werewolf, envelope = envelope)
             .put("werewolfCount", 2)
             .put("includeSeer", true)
             .put("includeWitch", true)
@@ -160,7 +160,6 @@ class ActiveGamePersistenceCoordinatorTest {
             assignedWerewolfRoles = inputs.assignedWerewolfRoles,
         )
         assertEquals("classic_8", resolution.identity.werewolf?.board?.variantId)
-        assertFalse(resolution.allowLegacyClocktowerRulesetFallback)
 
         val changedRule = JSONObject(json.toString())
             .put("lastWordsMode", LastWordsMode.Always.name)
@@ -187,32 +186,24 @@ class ActiveGamePersistenceCoordinatorTest {
     }
 
     @Test
-    fun `Werewolf v1 restore deterministically migrates legacy mechanical setup`() {
-        val assigned = listOf(
-            Role.Werewolf, Role.Werewolf, Role.Seer, Role.Witch,
-            Role.Villager, Role.Villager,
+    fun `Undercover v3 restore keeps strict current identity envelope`() {
+        val envelope = coordinator.identityForSave(
+            ActiveGamePersistenceInputs(gameKind = GameKind.Undercover),
         )
-        val json = JSONObject()
-            .put("version", 1)
-            .put("werewolfCount", 2)
-            .put("includeSeer", true)
-            .put("includeWitch", true)
-            .put("includeHunter", false)
-            .put("lastWordsMode", LastWordsMode.FirstTwoDays.name)
+        val json = v3Json(GameKind.Undercover, envelope = envelope)
 
         val resolution = coordinator.resolveForRestore(
             json = json,
-            gameKind = GameKind.Werewolf,
+            gameKind = GameKind.Undercover,
             assignedClocktowerRoleIds = emptyList(),
-            assignedWerewolfRoles = assigned,
+            assignedWerewolfRoles = emptyList(),
         )
 
-        assertEquals("classic_6", resolution.identity.werewolf?.board?.variantId)
-        assertEquals(LastWordsMode.FirstTwoDays, resolution.identity.werewolf?.ruleOptions?.lastWordsMode)
+        assertEquals(GameKind.Undercover, resolution.identity.gameKind)
     }
 
     @Test
-    fun `v2 envelope game kind mismatch is rejected before mutable state restore`() {
+    fun `v3 envelope game kind mismatch is rejected before mutable state restore`() {
         val envelope = coordinator.identityForSave(
             ActiveGamePersistenceInputs(
                 gameKind = GameKind.Clocktower,
@@ -220,7 +211,7 @@ class ActiveGamePersistenceCoordinatorTest {
                 assignedClocktowerRoleIds = listOf(RoleId("Imp")),
             ),
         )
-        val json = v2Json(GameKind.Clocktower, ClocktowerScript.TroubleBrewing, envelope)
+        val json = v3Json(GameKind.Clocktower, ClocktowerScript.TroubleBrewing, envelope)
 
         assertFails {
             coordinator.resolveForRestore(
@@ -232,14 +223,14 @@ class ActiveGamePersistenceCoordinatorTest {
         }
     }
 
-    private fun v2Json(
+    private fun v3Json(
         gameKind: GameKind,
-        legacyScript: ClocktowerScript? = null,
+        script: ClocktowerScript? = null,
         envelope: PersistedActiveGameIdentityEnvelope,
     ): JSONObject = JSONObject().apply {
-        put("version", 2)
+        put("version", 3)
         put("currentGameKind", gameKind.name)
-        legacyScript?.let { put("currentClocktowerScript", it.name) }
+        script?.let { put("currentClocktowerScript", it.name) }
         put(
             PersistedActiveGameIdentityJsonCodec.ROOT_KEY,
             PersistedActiveGameIdentityJsonCodec.encode(envelope),
