@@ -29,12 +29,11 @@ class B4DynamicPlayerWorldSetShadow(
         }
         val publicDeaths = orderedFacts.filter { it is ActionFact.Death || it is ActionFact.Execution }
             .map { fact -> InformationProposition.AliveAt((fact as? ActionFact.Death)?.targetSeat ?: (fact as ActionFact.Execution).targetSeat, false) }
-        val formal = FormalGameState.from(
+        val formal = request.b4FormalGameState(
             snapshot = reduced.snapshot,
             phase = reduced.phase,
             round = reduced.round,
             publicPropositions = publicDeaths,
-            timeline = orderedFacts,
         )
         val knowledgeBySeat = try {
             A4PlayerKnowledgeFactory.createAll(formal, request.perceivedRolesBySeat, request.observationLog)
@@ -63,6 +62,21 @@ class B4DynamicPlayerWorldSetShadow(
         return B4ShadowReport(B4ShadowOutcome.READY, queries)
     }
 }
+
+/** Preserves the request's already-validated global action identity when B4 materializes formal state. */
+internal fun B4ShadowRequest.b4FormalGameState(
+    snapshot: GameSnapshot,
+    phase: StorytellerPhase,
+    round: Int,
+    publicPropositions: List<InformationProposition>,
+): FormalGameState = FormalGameState.from(
+    snapshot = snapshot,
+    phase = phase,
+    round = round,
+    publicPropositions = publicPropositions,
+    timeline = actionTimeline.reducerFacts(),
+    actionTimelineBinding = FormalActionTimelineBinding.Global(actionTimeline),
+)
 
 /** Recombines recipient-visible public/private observations under the shared timeline authority. */
 internal fun PlayerKnowledgeSnapshot.b4ReplayObservationsInTimelineOrder(): List<EpistemicObservation> =
