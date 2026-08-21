@@ -260,34 +260,59 @@ sealed interface InformationProposition {
     }
 
     /** Exact grimoire contents visible to the Spy at one wake interaction. */
-    data class GrimoireState(val seats: List<GrimoireSeatView>) : InformationProposition {
+    class GrimoireState(seats: List<GrimoireSeatView>) : InformationProposition {
+        val seats: List<GrimoireSeatView> = Collections.unmodifiableList(seats.toList())
+
         init {
-            require(seats.isNotEmpty()) { "GrimoireState cannot be empty." }
-            require(seats.map { it.seat }.distinct().size == seats.size) { "Grimoire seats must be unique." }
-            require(seats.map { it.seat } == seats.map { it.seat }.sorted()) { "Grimoire seats must use canonical seat order." }
-            val tokens = seats.flatMap(GrimoireSeatView::reminderTokens)
+            require(this.seats.isNotEmpty()) { "GrimoireState cannot be empty." }
+            require(this.seats.map { it.seat }.distinct().size == this.seats.size) { "Grimoire seats must be unique." }
+            require(this.seats.map { it.seat } == this.seats.map { it.seat }.sorted()) { "Grimoire seats must use canonical seat order." }
+            val tokens = this.seats.flatMap(GrimoireSeatView::reminderTokens)
             require(tokens.distinct().size == tokens.size) {
                 "The same physical reminder-token reference cannot appear on multiple Grimoire seats."
             }
         }
+
+        override fun equals(other: Any?): Boolean = other is GrimoireState && seats == other.seats
+        override fun hashCode(): Int = seats.hashCode()
+        override fun toString(): String = "GrimoireState(seats=$seats)"
     }
 }
 
-data class GrimoireSeatView(
+class GrimoireSeatView(
     val seat: Int,
     val displayedRole: RoleId,
     val alive: Boolean,
-    val reminderTokens: List<GrimoireReminderTokenRef> = emptyList(),
+    reminderTokens: List<GrimoireReminderTokenRef> = emptyList(),
 ) {
+    val reminderTokens: List<GrimoireReminderTokenRef> = Collections.unmodifiableList(reminderTokens.toList())
+
     init {
         require(seat > 0)
-        require(reminderTokens.distinct().size == reminderTokens.size) {
+        require(this.reminderTokens.distinct().size == this.reminderTokens.size) {
             "The same physical reminder-token reference cannot appear twice on one seat."
         }
-        require(reminderTokens == reminderTokens.sorted()) {
+        require(this.reminderTokens == this.reminderTokens.sorted()) {
             "Rule-backed reminder tokens must use canonical order."
         }
     }
+
+    override fun equals(other: Any?): Boolean = other is GrimoireSeatView &&
+        seat == other.seat &&
+        displayedRole == other.displayedRole &&
+        alive == other.alive &&
+        reminderTokens == other.reminderTokens
+
+    override fun hashCode(): Int {
+        var result = seat
+        result = 31 * result + displayedRole.hashCode()
+        result = 31 * result + alive.hashCode()
+        result = 31 * result + reminderTokens.hashCode()
+        return result
+    }
+
+    override fun toString(): String =
+        "GrimoireSeatView(seat=$seat, displayedRole=$displayedRole, alive=$alive, reminderTokens=$reminderTokens)"
 }
 
 enum class NumericMetric { ADJACENT_EVIL_PAIRS, LIVING_EVIL_NEIGHBOURS, STEPS_TO_NEAREST_MINION, PLAYERS_WAKING_FOR_ABILITY }
