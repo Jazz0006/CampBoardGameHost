@@ -21,7 +21,6 @@ internal data class ActiveGamePersistenceInputs(
 internal data class ActiveGamePersistenceResolution(
     val identity: PersistedActiveGameIdentityEnvelope,
     val clocktowerScript: ClocktowerScript? = null,
-    val allowLegacyClocktowerRulesetFallback: Boolean = false,
 )
 
 internal class ActiveGamePersistenceCoordinator(
@@ -65,70 +64,22 @@ internal class ActiveGamePersistenceCoordinator(
         json.optString("currentGameKind").takeIf { it.isNotBlank() }?.let { savedKind ->
             require(savedKind == gameKind.name) { "Active-game payload game kind does not match restored game kind." }
         }
-        return when (version) {
-            LEGACY_VERSION -> resolveVersion1(
-                json = json,
-                gameKind = gameKind,
-                assignedClocktowerRoleIds = assignedClocktowerRoleIds,
-                assignedWerewolfRoles = assignedWerewolfRoles,
-            )
-            CURRENT_VERSION -> resolveVersion2(
-                json = json,
-                gameKind = gameKind,
-                assignedClocktowerRoleIds = assignedClocktowerRoleIds,
-                assignedWerewolfRoles = assignedWerewolfRoles,
-            )
-            else -> error("Unsupported active game state version '$version'.")
-        }
-    }
-
-    private fun resolveVersion1(
-        json: JSONObject,
-        gameKind: GameKind,
-        assignedClocktowerRoleIds: List<RoleId>,
-        assignedWerewolfRoles: List<Role>,
-    ): ActiveGamePersistenceResolution = when (gameKind) {
-        GameKind.Undercover -> ActiveGamePersistenceResolution(
-            identity = PersistedActiveGameIdentityEnvelope.undercover(),
-        )
-        GameKind.Clocktower -> {
-            val savedScript = enumValueOrNull<ClocktowerScript>(json.optString("currentClocktowerScript"))
-                ?: throw IllegalArgumentException("Legacy Clocktower save is missing a valid selected script.")
-            val targetScript = clocktowerScriptProvider(savedScript)
-            val migratedIdentity = ClocktowerLegacyPersistenceIdentityFactory.fromVersion1(
-                savedScript = savedScript,
-                targetScript = targetScript,
-                assignedRoleIds = assignedClocktowerRoleIds,
-            )
-            ActiveGamePersistenceResolution(
-                identity = PersistedActiveGameIdentityEnvelope.clocktower(migratedIdentity),
-                clocktowerScript = savedScript,
-                allowLegacyClocktowerRulesetFallback = true,
-            )
-        }
-        GameKind.Werewolf -> ActiveGamePersistenceResolution(
-            identity = PersistedActiveGameIdentityEnvelope.werewolf(
-                currentWerewolfIdentity(
-                    playerCount = assignedWerewolfRoles.size,
-                    werewolfCount = json.requiredInt("werewolfCount"),
-                    includeSeer = json.requiredBoolean("includeSeer"),
-                    includeWitch = json.requiredBoolean("includeWitch"),
-                    includeHunter = json.requiredBoolean("includeHunter"),
-                    lastWordsMode = json.requiredEnum("lastWordsMode"),
-                    assignedRoles = assignedWerewolfRoles,
-                ),
-            ),
+        return resolveVersion3(
+            json = json,
+            gameKind = gameKind,
+            assignedClocktowerRoleIds = assignedClocktowerRoleIds,
+            assignedWerewolfRoles = assignedWerewolfRoles,
         )
     }
 
-    private fun resolveVersion2(
+    private fun resolveVersion3(
         json: JSONObject,
         gameKind: GameKind,
         assignedClocktowerRoleIds: List<RoleId>,
         assignedWerewolfRoles: List<Role>,
     ): ActiveGamePersistenceResolution {
         val identityJson = json.optJSONObject(PersistedActiveGameIdentityJsonCodec.ROOT_KEY)
-            ?: throw IllegalArgumentException("Version 2 active-game save is missing content identity.")
+            ?: throw IllegalArgumentException("Version 3 active-game save is missing content identity.")
         val persisted = PersistedActiveGameIdentityJsonCodec.decode(identityJson)
         require(persisted.gameKind == gameKind) { "Persisted content identity game kind mismatch." }
 
@@ -136,14 +87,14 @@ internal class ActiveGamePersistenceCoordinator(
             GameKind.Undercover -> ActiveGamePersistenceResolution(identity = persisted)
             GameKind.Clocktower -> {
                 val persistedClocktower = requireNotNull(persisted.clocktower) {
-                    "Version 2 Clocktower save is missing script identity."
+                    "Version 3 Clocktower save is missing script identity."
                 }
                 val selectedScript = clocktowerScriptForVariantId(persistedClocktower.variantId)
-                json.optString("currentClocktowerScript").takeIf { it.isNotBlank() }?.let { legacyName ->
-                    val legacyScript = enumValueOrNull<ClocktowerScript>(legacyName)
-                        ?: throw IllegalArgumentException("Invalid legacy Clocktower script mirror in v2 save.")
-                    require(legacyScript == selectedScript) {
-                        "Legacy Clocktower script mirror disagrees with v2 content identity."
+                json.optString("currentClocktowerScript").takeIf { it.isNotBlank() }?.let { mirrorName ->
+                    val mirroredScript = enumValueOrNull<ClocktowerScript>(mirrorName)
+                        ?: throw IllegalArgumentException("Invalid Clocktower script mirror in v3 save.")
+                    require(mirroredScript == selectedScript) {
+                        "Clocktower script mirror disagrees with v3 content identity."
                     }
                 }
                 val currentScript = clocktowerScriptProvider(selectedScript)
@@ -158,12 +109,11 @@ internal class ActiveGamePersistenceCoordinator(
                 ActiveGamePersistenceResolution(
                     identity = persisted,
                     clocktowerScript = selectedScript,
-                    allowLegacyClocktowerRulesetFallback = false,
                 )
             }
             GameKind.Werewolf -> {
                 val persistedWerewolf = requireNotNull(persisted.werewolf) {
-                    "Version 2 Werewolf save is missing board identity."
+                    "Version 3 Werewolf save is missing board identity."
                 }
                 val currentIdentity = currentWerewolfIdentity(
                     playerCount = assignedWerewolfRoles.size,
@@ -256,11 +206,10 @@ internal class ActiveGamePersistenceCoordinator(
     }
 
     companion object {
-        const val LEGACY_VERSION = 1
-        const val CURRENT_VERSION = 2
+        const val CURRENT_VERSION = 3
         private const val BUILTIN_SCRIPT_SOURCE_REVISION = "builtin-script-assets-r5_5"
 
-        fun isSupportedVersion(version: Int): Boolean = version == LEGACY_VERSION || version == CURRENT_VERSION
+        fun isSupportedVersion(version: Int): Boolean = version == CURRENT_VERSION
 
         fun fromContext(context: Context): ActiveGamePersistenceCoordinator {
             val roleRegistry = WerewolfRoleRegistry.builtIn()
