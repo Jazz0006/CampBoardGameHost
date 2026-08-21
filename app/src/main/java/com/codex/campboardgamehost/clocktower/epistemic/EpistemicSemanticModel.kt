@@ -273,16 +273,17 @@ data class GrimoireSeatView(
     val seat: Int,
     val displayedRole: RoleId,
     val alive: Boolean,
-    val reminderTokens: List<String> = emptyList(),
+    val reminderTokens: List<GrimoireReminderTokenRef> = emptyList(),
 ) {
     init {
         require(seat > 0)
-        require(reminderTokens.all { STABLE_TOKEN_ID.matches(it) }) { "Reminder token IDs must be stable lowercase IDs." }
-        require(reminderTokens.distinct().size == reminderTokens.size) { "Reminder token IDs must be unique per seat." }
-        require(reminderTokens == reminderTokens.sorted()) { "Reminder token IDs must use canonical order." }
+        require(reminderTokens.distinct().size == reminderTokens.size) {
+            "The same physical reminder-token reference cannot appear twice on one seat."
+        }
+        require(reminderTokens == reminderTokens.sorted()) {
+            "Rule-backed reminder tokens must use canonical order."
+        }
     }
-
-    companion object { private val STABLE_TOKEN_ID = Regex("[a-z0-9]+(?:[._-][a-z0-9]+)*") }
 }
 
 enum class NumericMetric { ADJACENT_EVIL_PAIRS, LIVING_EVIL_NEIGHBOURS, STEPS_TO_NEAREST_MINION, PLAYERS_WAKING_FOR_ABILITY }
