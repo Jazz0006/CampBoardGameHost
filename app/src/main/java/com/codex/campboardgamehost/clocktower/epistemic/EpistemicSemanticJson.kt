@@ -66,7 +66,7 @@ object EpistemicSemanticJson {
         "round" to value.round, "rulesetRef" to ruleset(value.rulesetRef), "schemaVersion" to value.schemaVersion,
         "snapshotId" to value.snapshotId, "storytellerOnlyPropositions" to value.storytellerOnlyPropositions.map(::proposition),
         "timeline" to value.timeline.map(::actionFact),
-    )
+    ) + formalActionTimelineBindingFields(value.actionTimelineBinding)
 
     private fun formalPlayer(value: FormalPlayerState): Map<String, Any?> = mapOf(
         "actualAlignment" to value.actualAlignment.name, "actualRole" to value.actualRole.value,
@@ -82,6 +82,18 @@ object EpistemicSemanticJson {
         is ActionFact.Death -> mapOf("actionId" to value.actionId, "kind" to "death", "sequence" to value.sequence, "targetSeat" to value.targetSeat)
         is ActionFact.RoleChange -> mapOf("actionId" to value.actionId, "alignment" to value.alignment.name, "kind" to "role-change", "role" to value.role.value, "sequence" to value.sequence, "targetSeat" to value.targetSeat, "type" to value.type.name)
         is ActionFact.PhaseAdvance -> mapOf("actionId" to value.actionId, "kind" to "phase-advance", "phase" to value.phase.name, "round" to value.round, "sequence" to value.sequence)
+    }
+
+    private fun formalActionTimelineBindingFields(value: FormalActionTimelineBinding): Map<String, Any?> = when (value) {
+        FormalActionTimelineBinding.Legacy -> emptyMap()
+        is FormalActionTimelineBinding.Global -> mapOf(
+            "actionTimelineBinding" to mapOf(
+                "kind" to "global",
+                "entries" to value.timeline.entries.map { entry ->
+                    mapOf("actionId" to entry.fact.actionId, "point" to timelinePoint(entry.point))
+                },
+            ),
+        )
     }
 
     private fun ruleset(value: RulesetRef): Map<String, Any?> = mapOf(
@@ -205,16 +217,20 @@ object EpistemicSemanticJson {
         "schemaVersion" to value.schemaVersion, "value" to value.value,
     )
 
-    private fun formalGameState(json: JSONObject): FormalGameState = FormalGameState(
-        snapshotId = json.getString("snapshotId"), gameId = json.getString("gameId"),
-        gameStateRevision = json.getLong("gameStateRevision"), rulesetRef = ruleset(json.getJSONObject("rulesetRef")),
-        phase = StorytellerPhase.valueOf(json.getString("phase")), round = json.getInt("round"),
-        players = json.getJSONArray("players").objects().map(::formalPlayer),
-        publicPropositions = json.getJSONArray("publicPropositions").objects().map(::proposition),
-        storytellerOnlyPropositions = json.getJSONArray("storytellerOnlyPropositions").objects().map(::proposition),
-        timeline = json.optJSONArray("timeline")?.objects()?.map(::actionFact).orEmpty(),
-        schemaVersion = json.getInt("schemaVersion"),
-    )
+    private fun formalGameState(json: JSONObject): FormalGameState {
+        val timeline = json.optJSONArray("timeline")?.objects()?.map(::actionFact).orEmpty()
+        return FormalGameState(
+            snapshotId = json.getString("snapshotId"), gameId = json.getString("gameId"),
+            gameStateRevision = json.getLong("gameStateRevision"), rulesetRef = ruleset(json.getJSONObject("rulesetRef")),
+            phase = StorytellerPhase.valueOf(json.getString("phase")), round = json.getInt("round"),
+            players = json.getJSONArray("players").objects().map(::formalPlayer),
+            publicPropositions = json.getJSONArray("publicPropositions").objects().map(::proposition),
+            storytellerOnlyPropositions = json.getJSONArray("storytellerOnlyPropositions").objects().map(::proposition),
+            timeline = timeline,
+            schemaVersion = json.getInt("schemaVersion"),
+            actionTimelineBinding = formalActionTimelineBinding(json, timeline),
+        )
+    }
 
     private fun formalPlayer(json: JSONObject): FormalPlayerState = FormalPlayerState(
         seat = json.getInt("seat"), actualRole = RoleId(json.getString("actualRole")),
@@ -233,6 +249,43 @@ object EpistemicSemanticJson {
         "role-change" -> ActionFact.RoleChange(json.getString("actionId"), json.getLong("sequence"), json.getInt("targetSeat"), RoleId(json.getString("role")), Alignment.valueOf(json.getString("alignment")), CharacterType.valueOf(json.getString("type")))
         "phase-advance" -> ActionFact.PhaseAdvance(json.getString("actionId"), json.getLong("sequence"), StorytellerPhase.valueOf(json.getString("phase")), json.getInt("round"))
         else -> error("Unknown B4 action fact kind: ${json.getString("kind")}")
+    }
+
+    private fun formalActionTimelineBinding(
+        json: JSONObject,
+        timeline: List<ActionFact>,
+    ): FormalActionTimelineBinding {
+        if (!json.has("actionTimelineBinding")) return FormalActionTimelineBinding.Legacy
+        require(!json.isNull("actionTimelineBinding")) {
+            "actionTimelineBinding cannot be null when present."
+        }
+        val binding = json.getJSONObject("actionTimelineBinding")
+        return when (binding.getString("kind")) {
+            "global" -> {
+                val persistedEntries = binding.getJSONArray("entries").objects()
+                val actionIds = persistedEntries.map { it.getString("actionId") }
+                require(actionIds.distinct().size == actionIds.size) {
+                    "Global formal action timeline binding cannot contain duplicate action IDs."
+                }
+                val factsById = timeline.associateBy(ActionFact::actionId)
+                require(actionIds.toSet() == factsById.keys) {
+                    "Global formal action timeline binding must reference every persisted action exactly once."
+                }
+                FormalActionTimelineBinding.Global(
+                    ActionFactTimeline(
+                        persistedEntries.map { entry ->
+                            TimelineBoundActionFact(
+                                fact = factsById.getValue(entry.getString("actionId")),
+                                point = timelinePoint(entry.getJSONObject("point")),
+                            )
+                        },
+                    ),
+                )
+            }
+            else -> throw IllegalArgumentException(
+                "Unknown formal action timeline binding kind: ${binding.getString("kind")}",
+            )
+        }
     }
 
     private fun ruleset(json: JSONObject): RulesetRef = RulesetRef(
