@@ -48,6 +48,17 @@ class FormalActionTimelinePersistenceTest {
         assertEquals(listOf(99, 0), decodedTimeline.entries.map { it.point.sequence })
     }
 
+    @Test fun `formal state defensively snapshots caller owned action list`() {
+        val expected = globalFormal()
+        val callerOwned = expected.timeline.toMutableList()
+        val formal = expected.copy(timeline = callerOwned)
+
+        callerOwned.clear()
+
+        assertEquals(expected.timeline, formal.timeline)
+        assertEquals(formal, EpistemicSemanticJson.decodeFormalGameState(EpistemicSemanticJson.encode(formal)))
+    }
+
     @Test fun `global formal binding rejects action ids absent from the persisted action payload`() {
         val root = JSONObject(EpistemicSemanticJson.encode(globalFormal()))
         root.getJSONObject("actionTimelineBinding")
