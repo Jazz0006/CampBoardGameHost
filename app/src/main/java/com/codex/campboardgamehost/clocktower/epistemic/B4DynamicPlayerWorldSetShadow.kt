@@ -48,13 +48,12 @@ class B4DynamicPlayerWorldSetShadow(
                 (candidate.observation.visibility == ObservationVisibility.PRIVATE && candidate.recipientSeat !in candidate.observation.recipientSeats)
             ) return B4ShadowReport(B4ShadowOutcome.DEFERRED_B4, emptyList())
             // A3's enumerator remains a setup constructor. B4 replays later observations after
-            // construction, in stable timeline order, so they constrain worlds rather than being
-            // rejected as unsupported setup input.
+            // construction, in shared canonical timeline order, so they constrain worlds rather
+            // than being rejected as unsupported setup input.
             val seed = knowledge.copy(publicObservations = emptyList(), privateObservations = emptyList())
             val before = try {
                 runtime.build(formal, seed, request.hypothesis, request.roleDefinitions).selected
-                    .let { worlds -> (knowledge.publicObservations + knowledge.privateObservations)
-                        .sortedWith(compareBy<EpistemicObservation>({ it.round }, { it.sequence }, { it.observationId }))
+                    .let { worlds -> knowledge.b4ReplayObservationsInTimelineOrder()
                         .fold(worlds as PlayerWorldSet) { current, observation -> current.require(observation) } }
             } catch (_: IllegalArgumentException) {
                 return B4ShadowReport(B4ShadowOutcome.DEFERRED_B4, emptyList())
@@ -64,6 +63,10 @@ class B4DynamicPlayerWorldSetShadow(
         return B4ShadowReport(B4ShadowOutcome.READY, queries)
     }
 }
+
+/** Recombines recipient-visible public/private observations under the shared timeline authority. */
+internal fun PlayerKnowledgeSnapshot.b4ReplayObservationsInTimelineOrder(): List<EpistemicObservation> =
+    (publicObservations + privateObservations).canonicalTimelineOrder()
 
 data class B4ShadowRequest(
     val initialSnapshot: GameSnapshot,
