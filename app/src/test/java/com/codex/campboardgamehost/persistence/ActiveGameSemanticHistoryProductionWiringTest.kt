@@ -74,7 +74,7 @@ class ActiveGameSemanticHistoryProductionWiringTest {
     }
 
     @Test
-    fun `observation field keeps prior restore behavior outside Clocktower`() {
+    fun `observation payload decoding keeps prior restore behavior outside Clocktower`() {
         val restore = source
             .substringAfter("fun restoreSavedGame()")
             .substringBefore("val latestPersistActiveGameState")
