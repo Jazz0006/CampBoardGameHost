@@ -6,6 +6,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
@@ -46,6 +47,22 @@ class ClocktowerGlobalObservationCommitTest {
         assertEquals(1L, session.snapshot.nextTimelineGlobalSequence)
         assertEquals(1L, session.snapshot.playerInputRevision)
         assertEquals(beforeGameRevision, session.snapshot.gameStateRevision)
+    }
+
+    @Test
+    fun `stateless session transition needs no ruleset or game state`() {
+        val committed = ClocktowerGameSession.commitGlobalEpistemicObservation(
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+            observationLog = EpistemicObservationLog(),
+            nextTimelineGlobalSequence = 0L,
+            playerInputRevision = 0L,
+            draft = privateDraft("ngj-safe", localSequence = 3),
+        )
+
+        assertEquals(0L, committed.record.globalSequence())
+        assertEquals(1L, committed.nextTimelineGlobalSequence)
+        assertEquals(1L, committed.playerInputRevision)
+        assertEquals(listOf(committed.record), committed.observationLog.records)
     }
 
     @Test
@@ -173,6 +190,23 @@ class ClocktowerGlobalObservationCommitTest {
         }
 
         assertSame(before, session.snapshot)
+    }
+
+    @Test
+    fun `player input revision exhaustion fails before log or cursor changes`() {
+        val beforeLog = EpistemicObservationLog()
+
+        assertFails {
+            ClocktowerGameSession.commitGlobalEpistemicObservation(
+                semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+                observationLog = beforeLog,
+                nextTimelineGlobalSequence = 9L,
+                playerInputRevision = Long.MAX_VALUE,
+                draft = privateDraft("revision-overflow", localSequence = 0),
+            )
+        }
+
+        assertTrue(beforeLog.records.isEmpty())
     }
 
     private fun newGlobalSession(): ClocktowerGameSession = ClocktowerGameSession.create(
