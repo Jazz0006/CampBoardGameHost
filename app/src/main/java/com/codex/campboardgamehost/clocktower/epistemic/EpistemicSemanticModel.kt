@@ -265,6 +265,10 @@ sealed interface InformationProposition {
             require(seats.isNotEmpty()) { "GrimoireState cannot be empty." }
             require(seats.map { it.seat }.distinct().size == seats.size) { "Grimoire seats must be unique." }
             require(seats.map { it.seat } == seats.map { it.seat }.sorted()) { "Grimoire seats must use canonical seat order." }
+            val tokens = seats.flatMap(GrimoireSeatView::reminderTokens)
+            require(tokens.distinct().size == tokens.size) {
+                "The same physical reminder-token reference cannot appear on multiple Grimoire seats."
+            }
         }
     }
 }
