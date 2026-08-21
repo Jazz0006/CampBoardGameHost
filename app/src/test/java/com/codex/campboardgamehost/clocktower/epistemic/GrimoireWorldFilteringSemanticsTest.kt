@@ -62,6 +62,31 @@ class GrimoireWorldFilteringSemanticsTest {
     }
 
     @Test
+    fun `legacy grimoire producer keeps old display-only behavior without reminder constraints`() {
+        val world = EnumeratedWorld(
+            rolesBySeat = sortedMapOf(
+                1 to RoleId("Drunk"),
+                2 to RoleId("Fortune Teller"),
+                3 to RoleId("Poisoner"),
+                4 to RoleId("Spy"),
+            ),
+            redHerringSeat = 1,
+            abilityStatesBySeat = mapOf(1 to AbilityState.MALFUNCTIONING_DRUNK),
+        )
+        val legacy = InformationProposition.GrimoireState(
+            listOf(
+                view(1, "Drunk"),
+                view(2, "Fortune Teller"),
+                view(3, "Poisoner"),
+                view(4, "Spy"),
+            ),
+        )
+
+        assertEquals(GrimoireTruthBinding.LEGACY_DISPLAY_ONLY, legacy.truthBinding)
+        assertTrue(matches(world, legacy))
+    }
+
+    @Test
     fun `exact grimoire proposition cannot match a sparse world roster`() {
         val world = world(
             1 to "Empath",
@@ -247,7 +272,10 @@ class GrimoireWorldFilteringSemanticsTest {
     )
 
     private fun grimoire(vararg seats: GrimoireSeatView): InformationProposition.GrimoireState =
-        InformationProposition.GrimoireState(seats.toList())
+        InformationProposition.GrimoireState(
+            seats = seats.toList(),
+            truthBinding = GrimoireTruthBinding.VERIFIED_EXACT,
+        )
 
     private fun view(
         seat: Int,
