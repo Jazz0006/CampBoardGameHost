@@ -16,7 +16,9 @@ class B4DynamicPlayerWorldSetShadow(
     private val runtime: A4PlayerWorldSetRuntime = A4PlayerWorldSetRuntime(),
 ) {
     fun evaluate(request: B4ShadowRequest): B4ShadowReport {
-        val orderedFacts = request.actionFacts.sortedWith(compareBy<ActionFact>({ it.sequence }, { it.actionId }))
+        // ActionFactTimeline is already validated and canonicalized by shared global timeline identity.
+        // B4 must not reconstruct ordering authority from the raw domain sequence list.
+        val orderedFacts = request.actionTimeline.reducerFacts()
         if (orderedFacts.any { it is ActionFact.Attack || it is ActionFact.Protect || it is ActionFact.RoleChange }) {
             return B4ShadowReport(B4ShadowOutcome.DEFERRED_B4, emptyList())
         }
@@ -67,7 +69,7 @@ data class B4ShadowRequest(
     val initialSnapshot: GameSnapshot,
     val initialPhase: StorytellerPhase,
     val initialRound: Int,
-    val actionFacts: List<ActionFact>,
+    val actionTimeline: ActionFactTimeline,
     val perceivedRolesBySeat: Map<Int, RoleId>,
     val observationLog: EpistemicObservationLog,
     val hypothesis: EpistemicHypothesis,
