@@ -22,7 +22,8 @@ PR #24 / codex/r6-semantic-history-foundation
   ↓ stacked
 PR #27 / codex/r6-global-observation-cutover
   New-game Global Observation Ownership Cutover
-  current head at checkpoint: 808168cf9f4ba8b39c80472181b5dc68a01ef0e1
+  semantic code checkpoint before handoff-doc commits:
+  808168cf9f4ba8b39c80472181b5dc68a01ef0e1
 ```
 
 **#27 不得在 #24 前合并。**
@@ -137,9 +138,11 @@ real Clingo cross-validation
 
 ## 5. PR #27 — New-game Global Observation Ownership Cutover
 
-#27 是 stacked Draft PR，base 直接指向 #24 branch，当前 checkpoint head：
+#27 是 stacked Draft PR，base 直接指向 #24 branch。纯 semantic implementation 在 handoff 文档提交之前的 code checkpoint 是：
 
 `808168cf9f4ba8b39c80472181b5dc68a01ef0e1`
+
+该 SHA 用于区分“语义代码完成点”和之后仅更新交接文档产生的 branch-head 前移；恢复开发时应重新查询 #27 当前 head，而不是假设 branch head 仍等于此 SHA。
 
 当前相对 #24 的 intended semantic diff 只围绕四个文件：
 
@@ -184,7 +187,7 @@ playerInputRevision + 1
 已覆盖的 contract：
 
 1. first Global observation 从 persisted cursor 分配；
-2. private / public observations 共用一个 global allocator namespace；
+2. private / public observations共用一个 global allocator namespace；
 3. local `sequence` 可以不同，但不决定 global ordering；
 4. restore 后从 persisted cursor 继续；
 5. exact duplicate `recordId` 幂等，不消耗新 slot/revision；
@@ -362,5 +365,5 @@ OR self-hosted runner
 ## 12. 下一会话可直接使用的起始指令
 
 ```text
-继续 CampBoardGameHost R6 rollout。先读 docs/CURRENT_DEVELOPMENT_ROADMAP.md 和 docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-21.md。当前 PR #24 head 为 cdd3d7d300379c4e4a31ee000453a168188d1537，foundation implementation 已完成但 GitHub Actions 2000/2000 included minutes 已耗尽，因此所有新 job 都在 runner 启动前 steps=null 失败；这不是有效代码 red/green。PR #27 codex/r6-global-observation-cutover stacked 在 #24 上，checkpoint head 808168cf9f4ba8b39c80472181b5dc68a01ef0e1，已完成 EpistemicObservationDraft + ClocktowerGameSession atomic Global observation transition + tests-first production wiring contract，但尚未改 CampBoardGameHostApp.kt / ClocktowerHostScreen.kt。runner 恢复后先让 #24 真正通过 R2 + Android/APK + ASP + real Clingo 并合并，再 retarget/rebase #27，使用 safe trusted writer 做 App/Host production cutover。不要提前进入 recommendation/Spy/A3/B4/ZDD，不新增第二 cursor，不恢复 v1/v2 save migration。
+继续 CampBoardGameHost R6 rollout。先读 docs/CURRENT_DEVELOPMENT_ROADMAP.md 和 docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-21.md。当前 PR #24 semantic foundation code head 为 cdd3d7d300379c4e4a31ee000453a168188d1537，foundation implementation 已完成但 GitHub Actions 2000/2000 included minutes 已耗尽，因此所有新 job 都在 runner 启动前 steps=null 失败；这不是有效代码 red/green。PR #27 codex/r6-global-observation-cutover stacked 在 #24 上；其 handoff 文档提交前的 semantic code checkpoint 为 808168cf9f4ba8b39c80472181b5dc68a01ef0e1，已完成 EpistemicObservationDraft + ClocktowerGameSession atomic Global observation transition + tests-first production wiring contract，但尚未改 CampBoardGameHostApp.kt / ClocktowerHostScreen.kt。开始工作时先重新查询 #24/#27 当前 head。runner 恢复后先让 #24 真正通过 R2 + Android/APK + ASP + real Clingo 并合并，再 retarget/rebase #27，使用 safe trusted writer 做 App/Host production cutover。不要提前进入 recommendation/Spy/A3/B4/ZDD，不新增第二 cursor，不恢复 v1/v2 save migration。
 ```
