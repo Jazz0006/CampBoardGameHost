@@ -7,6 +7,7 @@
 > 主架构规范：`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`  
 > 多剧本架构规范：`多剧本多板子与动态游戏流程架构设计_v1.md`  
 > R5.5 最终收尾：`r5_5_stage_close_known_limitations_2026-08-21.md`  
+> R6 P1.3 收尾：`r6_p1_3_closeout_2026-08-21.md`  
 > 历史 R5.5 交接：`r5_5_multiscript_progress_handoff_2026-08-20.md`（**仅历史参考，不得按其中 S1.3 / Draft PR 指令恢复开发**）  
 > Phase A 退出评审：`phase_a_exit_review_2026-08-20.md`
 
@@ -29,10 +30,12 @@ R5.5 Script & Dynamic Flow Foundation / production flow cutover
   ↓
 PR #2 merged to main
   ↓
-NEXT: post-merge development on a new branch
+R6 P1 prerequisite hardening
+  ↓
+P1.3 PASS; P1.1 / P1.2 remain OPEN
 ```
 
-**当前执行点（2026-08-21）：R5.5 CLOSED / MERGED。**
+**当前执行点（2026-08-21）：R6 / P1 IN PROGRESS — P1.3 PASS，P1.1 / P1.2 OPEN。**
 
 R5.5 的 production 目标已经完成：
 
@@ -44,6 +47,8 @@ R5.5 的 production 目标已经完成：
 - persistence / ruleset identity migration 已完成 R5.5 范围；
 - R5.5 最终文档 head `aae5b5198c605bbd00fa064b703bb237b2f21bb9`：CI #222 SUCCESS、R2 #217 SUCCESS；
 - PR #2 已合并，merge commit `7add8569e2484a350f6cf1512a730e9f4db469c5`。
+
+R6 已完成的 P1 hardening 包括 TimelinePoint/global allocator foundation、observation timeline migration seam、knowledge chronology，以及 P1.3 knowledge-safe input boundary；这些基础工作**尚未授权 production multi-night Possible Worlds**。
 
 **不要继续在 `codex/storyteller-algorithm-v4` 长分支上开发。下一次开发从最新 `main` 创建新 branch。**
 
@@ -68,7 +73,9 @@ R5.5 的 production 目标已经完成：
 | R5.5 S4 persistence/ruleset identity | PASS | schema v2 + explicit migration / fail-closed identity。 |
 | R5.5 S5 production cutover/regression | PASS | planner cutover、legacy flow authority removal、persistence regression、CI/R2。 |
 | **R5.5 release** | **CLOSED / MERGED** | PR #2 merged to `main`。 |
-| R6 revision-driven production expansion | SOFTWARE READY | 只能从 post-merge `main` / 新分支启动；正式多夜 possible-world reasoning 前先处理 P1。 |
+| R6 P1.2 Observation timeline identity | IN PROGRESS | Global timeline foundation、allocator/restore、observation binding、knowledge chronology 已建立；ActionFact shared authority 与 time-aware replay migration 仍需收口。 |
+| **R6 P1.3 Actual truth vs safe input** | **PASS** | PR #7/#8 已将 world-builder 与 player-knowledge core 从完整 Formal truth 中隔离。 |
+| R6 revision-driven production expansion | P1 IN PROGRESS | 正式多夜 possible-world reasoning 仍被 P1.1 / P1.2 阻塞。 |
 | Recommendation-information UI migration | DEFERRED / KNOWN LIMITATION | 不属于 R5.5 blocker；后续单独完成。 |
 | 2026-08-22 real-game field validation | PLANNED | 实战发现作为后续输入；只有核心 rules/flow/persistence/state defect 才重新打开 R5.5 correctness boundary。 |
 
@@ -167,36 +174,59 @@ information interaction
 
 这些语义债务不重新打开 Phase A 或 R5.5，但在 production 化多夜 player-world reasoning 前必须处理。
 
-### P1.1 Spy Grimoire reminder tokens
+### P1.1 Spy Grimoire reminder tokens — OPEN
 
 `GrimoireState` 已包含 reminder tokens；正式使用 Spy perspective 前要确定哪些 token 属于 mechanical truth，并与 filtering/schema 承诺一致。
 
-### P1.2 Observation timeline identity
+### P1.2 Observation timeline identity — IN PROGRESS
 
-当前部分 canonical order 仍依赖：
+原始问题是部分 canonical order 依赖：
 
 ```text
 round -> sequence -> id
 ```
 
-多 phase/multi-night 前需要统一 TimelinePoint / global monotonic sequence，并明确哪些时间字段进入 knowledge identity/hash。
+R6 已完成：
 
-Post-R5.5 入口审计与第一个 tests-first foundation slice 记录见：
-`r6_p1_entry_audit_2026-08-21.md`。该切片只建立 `TimelinePoint.globalSequence` 的类型、排序与
-serialization identity 契约；P1.2 仍为 OPEN，allocator、restore、action/observation migration
-与 knowledge/digest 字段决策尚未完成。
+- `TimelinePoint.globalSequence` 类型、ordering 与 JSON identity contract；
+- schema-v2 legacy TimelinePoint fail-closed compatibility hardening；
+- per-game global timeline allocator + restore contract；
+- durable observation 的 `LegacyLocal / Global(TimelinePoint)` migration seam；
+- Global observation log 的全局排序、duplicate/mixed-mode fail-closed；
+- player-knowledge chronology 保留 global ordering；
+- 当前 evaluator 仍 time-insensitive，因此 `globalSequence` 暂不进入 `PlayerWorldSetIdentity`，避免制造假的 time-aware cache contract。
 
-### P1.3 Actual truth vs knowledge-safe world-builder input
+P1.2 **仍为 OPEN**，下一步重点不是重写 reducer，而是把已经全局唯一的 `ActionFact.sequence` 明确绑定到共享 TimelinePoint/global authority，并在未来引入 historically time-aware evaluation 前迁移 A3/ZDD/B4 的 legacy replay sort。
 
-必须进一步明确：
+入口与阶段文档见：
+
+- `r6_p1_entry_audit_2026-08-21.md`；
+- `r6_p1_2_observation_timeline_handoff_2026-08-21.md`；
+- `r6_p1_2_knowledge_timeline_semantics_2026-08-21.md`。
+
+### P1.3 Actual truth vs knowledge-safe world-builder input — PASS
+
+已建立明确类型边界：
 
 ```text
 Actual FormalGameState
-vs
-Player-world construction input
+        ↓ one-way compatibility projection
+KnowledgeSafeWorldInput
+        ↓
+A3/A4 world-construction core
+
+Actual FormalGameState
+        ↓ one-way compatibility projection
+KnowledgeConstructionInput
+        ↓
+A4PlayerKnowledgeFactory core
 ```
 
-长期不能用把真实 secret 字段传 `null` 来同时表达两种语义。
+安全输入不暴露 actual role / alignment / type、poison state、shown role 或 storyteller-only propositions；knowledge construction 额外只接收明确 public 的 propositions。Durable observation replay 也可仅通过 opaque formal snapshot ID 绑定，不需要把完整 Formal truth 传入 safe core。
+
+R6.5 PR #7 merge：`19b91887344655285ec8bd93ca5bdb51bcfff445`。  
+R6.6 PR #8 merge：`8f5ccc551948fea085caf8df3eb100ef67eae438`。  
+完整退出证据：`r6_p1_3_closeout_2026-08-21.md`。
 
 ## 6. 下一阶段开发入口
 
@@ -205,11 +235,13 @@ Player-world construction input
 ```text
 post-merge main
 → new branch
-→ audit R6 plan + P1 prerequisites
+→ audit R6 plan + remaining P1 prerequisites
 → tests-first / contract-first smallest vertical slice
 → exact diff audit
 → normal CI + R2
 ```
+
+**当前默认下一目标：继续 P1.2，tests-first 建立 ActionFact 与 shared global timeline authority 的绑定契约；仍不要提前接 production Host。**
 
 R6 设计入口：
 
@@ -219,10 +251,10 @@ R6 设计入口：
 
 新会话直接执行：
 
-1. 确认 `main` head 包含 R5.5 merge `7add8569...` 以及后续 documentation commits；
+1. 确认 `main` head 包含 R5.5 merge `7add8569...`、P1.3 merge `19b91887...` / `8f5ccc55...` 以及后续 documentation commits；
 2. 读取本文件；
 3. 读取 `r5_5_stage_close_known_limitations_2026-08-21.md`；
-4. 如果继续 R6，读取 `storyteller_revision_driven_dynamic_decision_engine_plan.md` 并先审计 P1 / 第一个最小 vertical slice；
+4. 如果继续 R6，优先读取 P1.2 阶段文档并从 ActionFact/shared timeline 最小 contract slice 继续；
 5. 创建新的 development branch；
 6. 不再恢复 `codex/storyteller-algorithm-v4` 的 S1/S5 工作；
 7. 行为变更继续 tests-first / contract-first。
@@ -263,7 +295,7 @@ A4.5 cache: debug/shadow only
 B4 DynamicPlayerWorldSetShadow: isolated shadow only
 ZDD_DEVICE_VALIDATED: NOT AUTHORIZED
 R5.5: CLOSED / MERGED
-R6 prerequisite: SOFTWARE READY, P1 before multi-night production reasoning
+R6 prerequisite: P1.3 PASS; P1.1 / P1.2 still required before multi-night production reasoning
 ```
 
 任何后续优化或重构都不能：
@@ -310,7 +342,8 @@ R5.5 详细过程保留在：
 - `r5_5_stage_close_known_limitations_2026-08-21.md` — **R5.5 最终收尾与已知限制**；
 - `多剧本多板子与动态游戏流程架构设计_v1.md` — 长期架构规范；
 - `phase_a_exit_review_2026-08-20.md` — Phase A correctness exit；
-- `CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md` — recommendation / knowledge 主设计。
+- `CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md` — recommendation / knowledge 主设计；
+- `r6_p1_3_closeout_2026-08-21.md` — P1.3 knowledge-safe world-builder / knowledge-construction exit evidence。
 
 ### R5.5 关键验证基线
 
@@ -334,6 +367,16 @@ CI #222 SUCCESS / R2 #217 SUCCESS
 
 R5.5 merge commit:
 7add8569e2484a350f6cf1512a730e9f4db469c5
+```
+
+### R6 P1.3 关键验证基线
+
+```text
+R6.5 world-input boundary merge:
+19b91887344655285ec8bd93ca5bdb51bcfff445
+
+R6.6 knowledge-input boundary merge:
+8f5ccc551948fea085caf8df3eb100ef67eae438
 ```
 
 ## 11. 文档维护规则
