@@ -55,6 +55,21 @@ class CrossTypeTimelineCompatibilityTest {
         assertEquals(ObservationTimelineBinding.LegacyLocal, request.observationLog.records.single().timelineBinding)
     }
 
+    @Test fun `validated observation log cannot be rewritten through caller owned mutable list`() {
+        val callerOwned = mutableListOf(globalObservation(11L))
+        val log = EpistemicObservationLog(callerOwned)
+        val request = request(actionTimeline(10L), log)
+
+        callerOwned.clear()
+        callerOwned += globalObservation(10L)
+
+        assertEquals(
+            11L,
+            (request.observationLog.records.single().timelineBinding as ObservationTimelineBinding.Global)
+                .point.globalSequence,
+        )
+    }
+
     private fun request(
         actionTimeline: ActionFactTimeline,
         observationLog: EpistemicObservationLog,
@@ -84,30 +99,30 @@ class CrossTypeTimelineCompatibilityTest {
         ),
     )
 
-    private fun globalObservationLog(globalSequence: Long): EpistemicObservationLog = EpistemicObservationLog(
-        listOf(
-            RecordedEpistemicObservation(
-                recordId = "observation-$globalSequence",
-                phase = StorytellerPhase.FIRST_NIGHT,
-                round = 1,
-                sequence = globalSequence.toInt(),
-                sourceSeat = 1,
-                sourceAbility = RoleId("Chef"),
-                visibility = ObservationVisibility.PRIVATE,
-                recipientSeats = setOf(1),
-                reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
-                proposition = InformationProposition.PlayerCount(5),
-                timelineBinding = ObservationTimelineBinding.Global(
-                    TimelinePoint(
-                        phase = StorytellerPhase.FIRST_NIGHT,
-                        round = 1,
-                        sequence = globalSequence.toInt(),
-                        globalSequence = globalSequence,
-                    ),
+    private fun globalObservationLog(globalSequence: Long): EpistemicObservationLog =
+        EpistemicObservationLog(listOf(globalObservation(globalSequence)))
+
+    private fun globalObservation(globalSequence: Long): RecordedEpistemicObservation =
+        RecordedEpistemicObservation(
+            recordId = "observation-$globalSequence",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = globalSequence.toInt(),
+            sourceSeat = 1,
+            sourceAbility = RoleId("Chef"),
+            visibility = ObservationVisibility.PRIVATE,
+            recipientSeats = setOf(1),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = InformationProposition.PlayerCount(5),
+            timelineBinding = ObservationTimelineBinding.Global(
+                TimelinePoint(
+                    phase = StorytellerPhase.FIRST_NIGHT,
+                    round = 1,
+                    sequence = globalSequence.toInt(),
+                    globalSequence = globalSequence,
                 ),
             ),
-        ),
-    )
+        )
 
     private fun legacyObservationLog(): EpistemicObservationLog = EpistemicObservationLog(
         listOf(
