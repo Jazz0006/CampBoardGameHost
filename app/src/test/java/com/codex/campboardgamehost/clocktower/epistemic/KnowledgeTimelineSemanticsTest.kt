@@ -40,6 +40,48 @@ class KnowledgeTimelineSemanticsTest {
         )
     }
 
+    @Test fun `world replay preserves global chronology after public private split`() {
+        val earlierPrivate = globalObservation(
+            id = "day-private-earlier",
+            point = TimelinePoint(StorytellerPhase.DAY, round = 2, sequence = 99, globalSequence = 40),
+            visibility = ObservationVisibility.PRIVATE,
+        )
+        val laterPublic = globalObservation(
+            id = "night-public-later",
+            point = TimelinePoint(StorytellerPhase.NIGHT, round = 2, sequence = 0, globalSequence = 41),
+        )
+        val knowledge = PlayerKnowledgeSnapshot(
+            knowledgeSnapshotId = "world-replay-global",
+            formalSnapshotId = formal.snapshotId,
+            recipientSeat = 1,
+            perceivedRole = RoleId("Chef"),
+            publicObservations = listOf(laterPublic),
+            privateObservations = listOf(earlierPrivate),
+        )
+
+        assertEquals(
+            listOf("day-private-earlier", "night-public-later"),
+            knowledge.worldReplayObservationsInTimelineOrder().map { it.observationId },
+        )
+    }
+
+    @Test fun `world replay keeps legacy compatibility order`() {
+        val later = legacyObservation("legacy-later", StorytellerPhase.NIGHT, round = 2, sequence = 0)
+        val earlier = legacyObservation("legacy-earlier", StorytellerPhase.FIRST_NIGHT, round = 1, sequence = 99)
+        val knowledge = PlayerKnowledgeSnapshot(
+            knowledgeSnapshotId = "world-replay-legacy",
+            formalSnapshotId = formal.snapshotId,
+            recipientSeat = 1,
+            perceivedRole = RoleId("Chef"),
+            publicObservations = listOf(later, earlier),
+        )
+
+        assertEquals(
+            listOf("legacy-earlier", "legacy-later"),
+            knowledge.worldReplayObservationsInTimelineOrder().map { it.observationId },
+        )
+    }
+
     @Test fun `knowledge factory rejects mixed legacy and global observation modes`() {
         val global = globalObservation(
             id = "global-one",
@@ -111,6 +153,7 @@ class KnowledgeTimelineSemanticsTest {
     private fun globalObservation(
         id: String,
         point: TimelinePoint,
+        visibility: ObservationVisibility = ObservationVisibility.PUBLIC,
     ): EpistemicObservation = EpistemicObservation(
         observationId = id,
         snapshotId = formal.snapshotId,
@@ -119,11 +162,30 @@ class KnowledgeTimelineSemanticsTest {
         sequence = point.sequence,
         sourceSeat = null,
         sourceAbility = null,
+        visibility = visibility,
+        recipientSeats = if (visibility == ObservationVisibility.PRIVATE) setOf(1) else emptySet(),
+        reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+        proposition = InformationProposition.AliveAt(1, true),
+        timelineBinding = ObservationTimelineBinding.Global(point),
+    )
+
+    private fun legacyObservation(
+        id: String,
+        phase: StorytellerPhase,
+        round: Int,
+        sequence: Int,
+    ): EpistemicObservation = EpistemicObservation(
+        observationId = id,
+        snapshotId = formal.snapshotId,
+        phase = phase,
+        round = round,
+        sequence = sequence,
+        sourceSeat = null,
+        sourceAbility = null,
         visibility = ObservationVisibility.PUBLIC,
         recipientSeats = emptySet(),
         reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
         proposition = InformationProposition.AliveAt(1, true),
-        timelineBinding = ObservationTimelineBinding.Global(point),
     )
 
     private fun expectIllegalArgument(label: String, block: () -> Unit) {
