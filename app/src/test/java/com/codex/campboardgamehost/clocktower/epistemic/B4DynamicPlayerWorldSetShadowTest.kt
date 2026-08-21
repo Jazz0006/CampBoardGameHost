@@ -76,6 +76,32 @@ class B4DynamicPlayerWorldSetShadowTest {
         )
     }
 
+    @Test fun `b4 formal builder preserves shared global action timeline binding`() {
+        val facts = listOf(
+            ActionFact.Poison("poison-1", 1L, 1),
+            ActionFact.PhaseAdvance("day-1", 2L, StorytellerPhase.DAY, 1),
+        )
+        val timeline = timelineOf(facts)
+        val request = request(timeline, placeholderCandidate())
+        val reduced = DynamicActionReducer.reduce(
+            snapshot,
+            StorytellerPhase.FIRST_NIGHT,
+            1,
+            timeline.reducerFacts(),
+        )
+
+        val formal = request.b4FormalGameState(
+            snapshot = reduced.snapshot,
+            phase = reduced.phase,
+            round = reduced.round,
+            publicPropositions = emptyList(),
+        )
+
+        assertEquals(FormalActionTimelineBinding.Global(timeline), formal.actionTimelineBinding)
+        assertEquals(timeline.reducerFacts(), formal.timeline)
+        assertEquals(formal, EpistemicSemanticJson.decodeFormalGameState(EpistemicSemanticJson.encode(formal)))
+    }
+
     @Test fun `b4 observation replay keeps shared global chronology across public private split`() {
         val formalSnapshotId = "b4-global-observation-snapshot"
         val earlierPrivate = EpistemicObservation(
