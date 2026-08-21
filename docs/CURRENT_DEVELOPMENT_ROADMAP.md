@@ -50,7 +50,7 @@ Post-P1 production-rollout entry audit      COMPLETE
 | R6 P1.3 | PASS | world/knowledge safe-core 不再接收完整 storyteller truth。 |
 | R6 P1 | CLOSED | 三个 semantic prerequisite 全部 PASS。 |
 | Post-P1 production-rollout entry audit | **COMPLETE** | production authority map、migration risk 与 rollout dependency 已确认。 |
-| **Production Semantic-History Foundation** | **NEXT** | explicit history mode + durable global cursor/session ownership；第一片不改 Host/Compose 行为。 |
+| **Production Semantic-History Foundation** | **NEXT** | explicit history mode + **复用并接通现有 `clocktowerNextTimelineGlobalSequence` persistence key** + session ownership；第一片不改 Host/Compose 行为。 |
 | Production Recommendation Entry-Point Unification | REQUIRED FOLLOW-UP | semantic-history/session ownership稳定后、扩大 recommendation 语义前必须移除 legacy direct recommendation path。 |
 | Historical multi-night engine | NOT AUTHORIZED | 先建立 production history ownership，再扩展 A3/B4 historical semantics。 |
 | Spy VerifiedExact production | NOT AUTHORIZED | 等 authoritative durable physical Grimoire ledger。 |
@@ -137,10 +137,12 @@ ClocktowerGameSession
 private observation → nightStepIndex
 public observation  → clocktowerEventCounter
 observation storage → App/Compose mutable list
-active save         → 未持久化 semantic global cursor/mode
+active save         → `clocktowerNextTimelineGlobalSequence` key 已存在于 ClocktowerNightCheckpoint，
+                      但 live checkpoint constructor / restore map 未接通真实 cursor，实际退回默认 0；
+                      semantic-history mode 仍不存在
 ```
 
-因此下一步不是再设计一个 timeline model，而是安全地把 production ownership 迁到现有 session authority。
+因此下一步不是再设计一个 timeline model，也不是新增第二套 cursor persistence，而是安全地把 production ownership 迁到现有 session authority，并**复用/接通现有 cursor key**。
 
 ### 4.2 Spy production truth 仍不足以升级 VerifiedExact
 
@@ -185,12 +187,13 @@ ClocktowerSemanticHistoryMode
 1. 旧 v1/v2 save 缺少 mode → 明确恢复为 `LEGACY_LOCAL`；
 2. 绝不从 legacy local sequence 推断 Global chronology；
 3. `GLOBAL_V1` 必须显式持久化；
-4. Global mode 持久化并恢复 `nextTimelineGlobalSequence`；
-5. restore 后 cursor 必须大于所有 committed global positions；
-6. Global history 中出现 `LegacyLocal` observation → fail closed；
-7. unknown / explicit-null / incompatible mixed payload → fail closed；
-8. **第一 foundation PR 不把现有或新 production game 自动切为 Global**，避免行为变化；
-9. 不修改 Spy truth、A3/ZDD/B4 authority、Host flow、Compose UI 或 recommendation UI。
+4. **复用现有 `clocktowerNextTimelineGlobalSequence` checkpoint/JSON key 作为唯一 production cursor 表示**：把 live cursor 接入 checkpoint 创建，并把该 JSON key 接入 restore map；不得新建平行 cursor key；
+5. Global mode 通过该现有 key 与 `GameSnapshot.nextTimelineGlobalSequence` 持久化并恢复 cursor；
+6. restore 后 cursor 必须大于所有 committed global positions；
+7. Global history 中出现 `LegacyLocal` observation → fail closed；
+8. unknown / explicit-null / incompatible mixed payload → fail closed；
+9. **第一 foundation PR 不把现有或新 production game 自动切为 Global**，避免行为变化；
+10. 不修改 Spy truth、A3/ZDD/B4 authority、Host flow、Compose UI 或 recommendation UI。
 
 因此第一片仍可满足：
 
@@ -204,7 +207,7 @@ tests first
 
 ```text
 1. Production Semantic-History Foundation
-   explicit mode + durable cursor/session ownership contract
+   explicit mode + reuse/fix existing durable cursor/session ownership contract
 
 2. New-game Global observation ownership cutover
    从第一条 committed semantic event 开始使用 session allocator
@@ -304,11 +307,13 @@ Production Global producer cutover: NOT YET WIRED
 Production VerifiedExact Spy producer: NOT AUTHORIZED
 Production historical multi-night Possible Worlds: NOT AUTHORIZED
 ZDD_DEVICE_VALIDATED: NOT AUTHORIZED
+Existing `clocktowerNextTimelineGlobalSequence` key: REUSE / REPAIR, DO NOT DUPLICATE
 ```
 
 禁止：
 
 - 从 legacy local sequence 猜 global identity；
+- 新增第二个/平行 production timeline cursor persistence key；
 - 从 legacy Grimoire/空 reminder/UI label 猜 `VERIFIED_EXACT`；
 - 把 timeout/OOM/cap 当 UNSAT；
 - 截断 exact worlds 后仍声称 exact；
