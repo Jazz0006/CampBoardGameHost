@@ -70,6 +70,28 @@ class GrimoireReminderTokenBoundaryTest {
         }
     }
 
+    @Test fun `caller owned token list cannot rewrite a validated grimoire seat`() {
+        val first = poisoner.grimoireReminderToken(GrimoireReminderTokenScope.CHARACTER, occurrence = 1)
+        val second = poisoner.grimoireReminderToken(GrimoireReminderTokenScope.CHARACTER, occurrence = 2)
+        val source = mutableListOf(first)
+        val seat = GrimoireSeatView(2, RoleId("Spy"), true, source)
+
+        source += second
+
+        assertEquals(listOf(first), seat.reminderTokens)
+    }
+
+    @Test fun `caller owned seat list cannot rewrite a validated grimoire state`() {
+        val token = poisoner.grimoireReminderToken(GrimoireReminderTokenScope.CHARACTER, occurrence = 1)
+        val firstSeat = GrimoireSeatView(1, RoleId("Investigator"), true, listOf(token))
+        val source = mutableListOf(firstSeat)
+        val grimoire = InformationProposition.GrimoireState(source)
+
+        source += GrimoireSeatView(2, RoleId("Spy"), true, listOf(token))
+
+        assertEquals(listOf(firstSeat), grimoire.seats)
+    }
+
     @Test fun `typed rule-backed reminder tokens round trip canonically in spy grimoire`() {
         val token = poisoner.grimoireReminderToken(GrimoireReminderTokenScope.CHARACTER, occurrence = 1)
         val grimoire = InformationProposition.GrimoireState(
