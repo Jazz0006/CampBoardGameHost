@@ -20,7 +20,7 @@ class GrimoireTruthBindingPersistenceTest {
     @Test
     fun `old schema v2 grimoire without binding decodes as legacy display only`() {
         val decoded = EpistemicSemanticJson.decodeInformationProposition(
-            """{"kind":"grimoire-state","seats":[{"alive":true,"displayedRole":"Spy","ruleReminderTokens":[],"seat":1}]}""",
+            """{"kind":"grimoire-state","seats":[{"alive":true,"displayedRole":"Spy","ruleReminderTokens":[],"seat":1}]}""".replace("\\\"", "\""),
         ) as InformationProposition.GrimoireState
 
         assertEquals(GrimoireTruthBinding.LEGACY_DISPLAY_ONLY, decoded.truthBinding)
@@ -33,7 +33,7 @@ class GrimoireTruthBindingPersistenceTest {
 
         assertFalse(encoded.contains("truthBinding"))
         assertEquals(
-            """{"kind":"grimoire-state","seats":[{"alive":true,"displayedRole":"Spy","ruleReminderTokens":[],"seat":1}]}""",
+            """{"kind":"grimoire-state","seats":[{"alive":true,"displayedRole":"Spy","ruleReminderTokens":[],"seat":1}]}""".replace("\\\"", "\""),
             encoded,
         )
     }
@@ -55,7 +55,7 @@ class GrimoireTruthBindingPersistenceTest {
     fun `present null grimoire truth binding fails closed`() {
         assertThrows(IllegalArgumentException::class.java) {
             EpistemicSemanticJson.decodeInformationProposition(
-                """{"kind":"grimoire-state","seats":[{"alive":true,"displayedRole":"Spy","ruleReminderTokens":[],"seat":1}],"truthBinding":null}""",
+                """{"kind":"grimoire-state","seats":[{"alive":true,"displayedRole":"Spy","ruleReminderTokens":[],"seat":1}],"truthBinding":null}""".replace("\\\"", "\""),
             )
         }
     }
