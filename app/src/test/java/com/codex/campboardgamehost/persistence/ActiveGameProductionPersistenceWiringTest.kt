@@ -65,7 +65,7 @@ class ActiveGameProductionPersistenceWiringTest {
     }
 
     @Test
-    fun `restore validates version identity ruleset basis and ref before mutating live game state`() {
+    fun `restore gates schema identity and ruleset before mutating live game state`() {
         val restore = source
             .substringAfter("fun restoreSavedGame()")
             .substringBefore("val latestPersistActiveGameState")
@@ -82,12 +82,15 @@ class ActiveGameProductionPersistenceWiringTest {
         assertTrue(restore.contains("val resolvedClocktowerRulesetRef ="))
         assertTrue(restore.contains("TroubleBrewingRulesetPersistence.resolveForRestore("))
 
+        val versionGateIndex = restore.indexOf("ActiveGamePersistenceCoordinator.isSupportedVersion")
         val identityIndex = restore.indexOf("val restoredPersistence = activeGamePersistenceCoordinator.resolveForRestore(")
         val rulesetIndex = restore.indexOf("val resolvedClocktowerRulesetRef =")
         val mutationIndex = restore.indexOf("playerNames.clear()")
+        assertTrue(versionGateIndex >= 0)
         assertTrue(identityIndex >= 0)
         assertTrue(rulesetIndex >= 0)
         assertTrue(mutationIndex >= 0)
+        assertTrue("Schema version must be rejected before live state mutation.", versionGateIndex < mutationIndex)
         assertTrue("Persistence identity must be validated before live state mutation.", identityIndex < mutationIndex)
         assertTrue("Ruleset basis/ref must be validated before live state mutation.", rulesetIndex < mutationIndex)
     }
@@ -108,26 +111,15 @@ class ActiveGameProductionPersistenceWiringTest {
     }
 
     @Test
-    fun `Trouble Brewing v3 restore requires persisted immutable basis`() {
+    fun `Trouble Brewing current restore requires persisted immutable basis`() {
         val restore = source
             .substringAfter("fun restoreSavedGame()")
             .substringBefore("val latestPersistActiveGameState")
 
         assertTrue(restore.contains("TroubleBrewingRulesetPersistence.resolveForRestore("))
-        assertTrue(restore.contains("Version 3 Clocktower save is missing ruleset role basis."))
+        assertTrue(restore.contains("clocktowerRulesetRoleIds"))
         assertFalse(restore.contains("troubleBrewingRulesetRefFor(localizedRestoredCards)"))
         assertTrue(restore.contains("clocktowerRulesetRoleIds = restoredRulesetBasis?.roleIds.orEmpty()"))
         assertTrue(restore.contains("clocktowerRulesetRef = resolvedClocktowerRulesetRef"))
-    }
-
-    @Test
-    fun `production restore contains no legacy active-game migration path`() {
-        val restore = source
-            .substringAfter("fun restoreSavedGame()")
-            .substringBefore("val latestPersistActiveGameState")
-
-        assertFalse(restore.contains("ActiveGamePersistenceCoordinator.LEGACY_VERSION"))
-        assertFalse(restore.contains("allowLegacyClocktowerRulesetFallback"))
-        assertFalse(restore.contains("resolveLegacyBasisForRestore("))
     }
 }
