@@ -14,7 +14,7 @@ data class GameSnapshot(
     val crossGameHistory: CrossGameHistory = CrossGameHistory(),
     /** Recipient-scoped facts already delivered during this game; actual roles are never inferred from it. */
     val epistemicObservationLog: EpistemicObservationLog = EpistemicObservationLog(),
-    /** Explicit production chronology mode; old snapshots remain LegacyLocal by default. */
+    /** Explicit chronology mode; new/default snapshots stay LegacyLocal until the later producer cutover. */
     val semanticHistoryMode: ClocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
     /** Next game-wide monotonic identity reserved for a committed epistemic timeline point. */
     val nextTimelineGlobalSequence: Long = 0L,
