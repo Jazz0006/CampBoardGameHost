@@ -63,3 +63,76 @@ None of these change the recorded status or any spec; they only add navigational
 ## 4. Overall assessment
 
 The project is unusually disciplined: a single normative spec (v2.2), a declared status authority, phase gates backed by tests and exact commit hashes, and explicit "NOT AUTHORIZED" production guardlines. Design and code agree on the large majority of Phase A concepts. The findings above are predominantly documentation hygiene; the only item with material engineering risk (F3) is already gated behind the planned entry audit.
+
+---
+
+## 5. Disposition after project review
+
+The findings above are retained as the original audit record. The project review on 2026-08-21 accepted the hygiene findings but clarified several technical interpretations before incorporating them into the live roadmap.
+
+### F1 / F2 — accepted
+
+- Keep historical closeout/handoff text intact.
+- Add a prominent historical-status / `SUPERSEDED` banner so an agent cannot mistake old instructions for the current execution point.
+
+### F3 — accepted, but split into two layers
+
+The technical risk is real, but it should not be implemented as one broad "revision engine refactor".
+
+```text
+F3a — production semantic-history ownership
+      timeline/session authority, persistence, restore and migration
+      → rollout dependency / first priority
+
+F3b — revision-driven recommendation unification
+      recompute triggers, complete context keys, coordinator ownership
+      → follow-up after semantic-history ownership is stable
+```
+
+The post-P1 production audit found that `ClocktowerGameSession` / `GameSnapshot` already contain the correct global timeline authority, while production App/Compose still owns separate local counters and mutable observation state. Therefore ownership cutover must precede a larger recommendation recompute refactor.
+
+### F4 — caveat accepted; percentage interpretation rejected
+
+`52` is the **contract corpus size**, while `24` is the currently oracle/A3-executable subset and `28` are explicitly deferred / `ORACLE_NOT_APPLICABLE` cases. This should not be summarized as "only ~46% validated" or "54% unvalidated" because contract coverage and external-oracle execution are different dimensions.
+
+Preferred wording:
+
+```text
+52 total golden contracts
+24 currently oracle/A3 executable
+28 deferred/non-oracle timeline or recipient-projection contracts
+```
+
+### F5 — accepted with an architecture trigger, not a calendar date
+
+ZDD remains exact shadow/prototype. Reconsider promotion only after:
+
+1. an exact historical multi-night baseline is production-correct;
+2. realistic world sizes are known; and
+3. the device latency/memory gate passes.
+
+### F6 — accepted as a Deferred Decisions table
+
+The roadmap should distinguish:
+
+- a genuinely unresolved decision;
+- a current explicit decision with a future reopen trigger.
+
+For example, `globalSequence` is currently **not** part of `PlayerWorldSetIdentity`; reopen that decision only when historical timeline position changes world semantics.
+
+### F7 — wording corrected
+
+R5.5 did verify a real multi-script structural/flow foundation using Trouble Brewing and No Greater Joy. The remaining limitation is more precise:
+
+```text
+multi-script catalog / normalization / registry / flow / ruleset identity: VERIFIED
+advanced recommendation metadata / Possible Worlds / role-specific epistemic semantics: TB-FIRST
+```
+
+No Greater Joy must not be described as merely an unverified scaffold, because doing so could cause future work to unnecessarily rebuild the already-proven multi-script foundation.
+
+### Additional field-test issue incorporated
+
+The existing legacy direct recommendation button/path is now tracked as **Production Recommendation Entry-Point Unification**, not cosmetic UI polish. It represents a second production decision entry path and must be removed after semantic-history/session ownership is established and before recommendation behavior is expanded into historical multi-night semantics.
+
+The resulting current rollout order is recorded in `CURRENT_DEVELOPMENT_ROADMAP.md` and `post_p1_production_rollout_entry_audit_2026-08-21.md`.
