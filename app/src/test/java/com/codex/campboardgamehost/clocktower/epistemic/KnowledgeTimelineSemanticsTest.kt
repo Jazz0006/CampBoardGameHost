@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.fail
@@ -82,6 +83,32 @@ class KnowledgeTimelineSemanticsTest {
         )
     }
 
+    @Test fun `A3 replay consumer rejects mixed legacy and global chronology`() {
+        val knowledge = mixedModeFirstNightKnowledge()
+
+        expectIllegalArgument("A3 mixed timeline modes") {
+            TroubleBrewingWorldEnumerator.enumerate(
+                snapshot.rulesetRef,
+                knowledge,
+                EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+                TroubleBrewingFixtures.fullRoleDefinitions(),
+            )
+        }
+    }
+
+    @Test fun `ZDD replay consumer rejects mixed legacy and global chronology`() {
+        val knowledge = mixedModeFirstNightKnowledge()
+
+        expectIllegalArgument("ZDD mixed timeline modes") {
+            ZddPlayerWorldSet.enumerateDirect(
+                snapshot.rulesetRef,
+                knowledge,
+                EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+                TroubleBrewingFixtures.fullRoleDefinitions(),
+            )
+        }
+    }
+
     @Test fun `knowledge factory rejects mixed legacy and global observation modes`() {
         val global = globalObservation(
             id = "global-one",
@@ -147,6 +174,27 @@ class KnowledgeTimelineSemanticsTest {
         assertEquals(
             PlayerWorldSetIdentity.create(snapshot.rulesetRef, firstKnowledge, EpistemicHypothesis.MECHANICALLY_CREDIBLE).value,
             PlayerWorldSetIdentity.create(snapshot.rulesetRef, movedKnowledge, EpistemicHypothesis.MECHANICALLY_CREDIBLE).value,
+        )
+    }
+
+    private fun mixedModeFirstNightKnowledge(): PlayerKnowledgeSnapshot {
+        val global = globalObservation(
+            id = "mixed-global",
+            point = TimelinePoint(StorytellerPhase.FIRST_NIGHT, round = 1, sequence = 0, globalSequence = 10),
+        )
+        val legacy = legacyObservation(
+            id = "mixed-legacy",
+            phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1,
+            sequence = 1,
+        )
+        return PlayerKnowledgeSnapshot(
+            knowledgeSnapshotId = "mixed-world-replay",
+            formalSnapshotId = formal.snapshotId,
+            recipientSeat = 1,
+            perceivedRole = RoleId("Chef"),
+            publicObservations = listOf(global, legacy),
+            setupKnowledge = listOf(InformationProposition.PlayerCount(5)),
         )
     }
 
