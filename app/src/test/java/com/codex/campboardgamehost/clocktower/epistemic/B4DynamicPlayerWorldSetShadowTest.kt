@@ -58,6 +58,24 @@ class B4DynamicPlayerWorldSetShadowTest {
         assertEquals(first, second)
     }
 
+    @Test fun `b4 request consumes shared action timeline canonical order`() {
+        val facts = listOf(
+            ActionFact.Poison("poison-1", 1, 1),
+            ActionFact.Poison("poison-2", 2, 2),
+        )
+        val formal = formalFor(facts)
+        val candidate = candidateFor(formal)
+        val forward = request(timelineOf(facts), candidate)
+        val reverse = request(timelineOf(facts.reversed()), candidate)
+
+        assertEquals(listOf(1L, 2L), forward.actionTimeline.reducerFacts().map(ActionFact::sequence))
+        assertEquals(forward.actionTimeline, reverse.actionTimeline)
+        assertEquals(
+            B4DynamicPlayerWorldSetShadow().evaluate(forward),
+            B4DynamicPlayerWorldSetShadow().evaluate(reverse),
+        )
+    }
+
     @Test fun `unmodelled transition is explicitly deferred rather than reported unsat`() {
         val facts = listOf(ActionFact.RoleChange("starpass", 1, 4, RoleId("Imp"),
             com.codex.campboardgamehost.clocktower.domain.Alignment.EVIL,
@@ -88,10 +106,35 @@ class B4DynamicPlayerWorldSetShadowTest {
         assertEquals(formal, EpistemicSemanticJson.decodeFormalGameState(EpistemicSemanticJson.encode(formal)))
     }
 
-    private fun request(facts: List<ActionFact>, candidate: B4ShadowCandidate) = B4ShadowRequest(
-        snapshot, StorytellerPhase.FIRST_NIGHT, 1, facts, perceived, EpistemicObservationLog(),
-        EpistemicHypothesis.MECHANICALLY_CREDIBLE, roles, listOf(candidate),
+    private fun request(facts: List<ActionFact>, candidate: B4ShadowCandidate): B4ShadowRequest =
+        request(timelineOf(facts), candidate)
+
+    private fun request(actionTimeline: ActionFactTimeline, candidate: B4ShadowCandidate) = B4ShadowRequest(
+        initialSnapshot = snapshot,
+        initialPhase = StorytellerPhase.FIRST_NIGHT,
+        initialRound = 1,
+        actionTimeline = actionTimeline,
+        perceivedRolesBySeat = perceived,
+        observationLog = EpistemicObservationLog(),
+        hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+        roleDefinitions = roles,
+        candidates = listOf(candidate),
     )
+
+    private fun timelineOf(facts: List<ActionFact>): ActionFactTimeline =
+        facts.fold(ActionFactTimeline()) { timeline, fact ->
+            timeline.append(
+                TimelineBoundActionFact(
+                    fact = fact,
+                    point = TimelinePoint(
+                        phase = StorytellerPhase.FIRST_NIGHT,
+                        round = 1,
+                        sequence = fact.sequence.toInt(),
+                        globalSequence = fact.sequence,
+                    ),
+                ),
+            )
+        }
 
     private fun formalFor(facts: List<ActionFact>): FormalGameState {
         val reduced = DynamicActionReducer.reduce(snapshot, StorytellerPhase.FIRST_NIGHT, 1, facts)
