@@ -40,6 +40,8 @@ data class FormalGameState(
     /** Ordered mechanical history used only by the B4 shadow timeline. */
     val timeline: List<ActionFact> = emptyList(),
     val schemaVersion: Int = EPISTEMIC_SCHEMA_VERSION,
+    /** Explicitly distinguishes legacy raw action sequences from globally bound TimelinePoints. */
+    val actionTimelineBinding: FormalActionTimelineBinding = FormalActionTimelineBinding.Legacy,
 ) {
     init {
         requireSchemaVersion(schemaVersion)
@@ -55,6 +57,12 @@ data class FormalGameState(
         }
         require(timeline.map(ActionFact::actionId).distinct().size == timeline.size) { "Timeline action IDs must be unique." }
         require(timeline.map(ActionFact::sequence).distinct().size == timeline.size) { "Timeline action sequences must be unique." }
+        if (actionTimelineBinding is FormalActionTimelineBinding.Global) {
+            val canonicalFacts = timeline.sortedWith(compareBy<ActionFact>({ it.sequence }, { it.actionId }))
+            require(actionTimelineBinding.timeline.reducerFacts() == canonicalFacts) {
+                "Global formal action timeline binding must describe exactly the persisted action timeline."
+            }
+        }
     }
 
     fun eligibleRedHerringSeats(): Set<Int> = players
@@ -69,6 +77,7 @@ data class FormalGameState(
             publicPropositions: List<InformationProposition> = emptyList(),
             storytellerOnlyPropositions: List<InformationProposition> = emptyList(),
             timeline: List<ActionFact> = emptyList(),
+            actionTimelineBinding: FormalActionTimelineBinding = FormalActionTimelineBinding.Legacy,
         ): FormalGameState {
             val players = snapshot.gameState.players.map { player ->
                 FormalPlayerState(
@@ -106,6 +115,7 @@ data class FormalGameState(
                 publicPropositions = publicPropositions,
                 storytellerOnlyPropositions = storytellerOnlyPropositions,
                 timeline = timeline.sortedWith(compareBy<ActionFact>({ it.sequence }, { it.actionId })),
+                actionTimelineBinding = actionTimelineBinding,
             )
         }
     }
