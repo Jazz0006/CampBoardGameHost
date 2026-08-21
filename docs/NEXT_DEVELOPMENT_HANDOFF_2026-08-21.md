@@ -144,7 +144,7 @@ real Clingo cross-validation
 
 该 SHA 用于区分“语义代码完成点”和之后仅更新交接文档产生的 branch-head 前移；恢复开发时应重新查询 #27 当前 head，而不是假设 branch head 仍等于此 SHA。
 
-当前相对 #24 的 intended semantic diff 只围绕四个文件：
+当前相对 #24 的 intended semantic diff 围绕四个 semantic/test 文件：
 
 ```text
 app/src/main/java/.../clocktower/epistemic/EpistemicObservationDraft.kt
@@ -153,7 +153,7 @@ app/src/test/java/.../clocktower/session/ClocktowerGlobalObservationCommitTest.k
 app/src/test/java/.../persistence/ClocktowerGlobalObservationProductionWiringTest.kt
 ```
 
-文档 checkpoint 更新后，#27 还会额外包含本 handoff 文档修改。
+另外包含本 handoff 文档作为当前开发 checkpoint。
 
 ### 5.1 新增 unbound observation draft
 
