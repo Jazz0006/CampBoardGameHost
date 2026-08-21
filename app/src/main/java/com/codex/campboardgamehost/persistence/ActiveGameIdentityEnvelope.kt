@@ -33,9 +33,8 @@ internal data class PersistedActiveGameIdentityEnvelope(
     }
 
     companion object {
-        fun undercover(): PersistedActiveGameIdentityEnvelope = PersistedActiveGameIdentityEnvelope(
-            gameKind = GameKind.Undercover,
-        )
+        fun undercover(): PersistedActiveGameIdentityEnvelope =
+            PersistedActiveGameIdentityEnvelope(gameKind = GameKind.Undercover)
 
         fun clocktower(identity: PersistedGameContentIdentity): PersistedActiveGameIdentityEnvelope =
             PersistedActiveGameIdentityEnvelope(
@@ -52,67 +51,46 @@ internal data class PersistedActiveGameIdentityEnvelope(
 }
 
 internal object PersistedActiveGameIdentityJsonCodec {
-    const val ROOT_KEY = "contentIdentity"
+    const val ROOT_KEY = "gameContentIdentity"
 
-    fun encode(envelope: PersistedActiveGameIdentityEnvelope): JSONObject = JSONObject().apply {
-        put("gameKind", envelope.gameKind.name)
-        envelope.clocktower?.let { identity ->
-            put("clocktower", JSONObject().apply {
-                put("kind", identity.kind.name)
-                put("variantId", identity.variantId)
-                put("contentHash", identity.contentHash)
-                put("semanticVersion", identity.semanticVersion)
-                put("sourceRevision", identity.sourceRevision)
-            })
+    fun encode(identity: PersistedActiveGameIdentityEnvelope): JSONObject = JSONObject().apply {
+        put("gameKind", identity.gameKind.name)
+        identity.clocktower?.let {
+            put("clocktower", PersistedGameContentIdentityJsonCodec.encode(it))
         }
-        envelope.werewolf?.let { identity ->
-            put("werewolf", JSONObject().apply {
-                put("board", JSONObject().apply {
-                    put("kind", identity.board.kind.name)
-                    put("variantId", identity.board.variantId)
-                    put("contentHash", identity.board.contentHash)
-                    put("semanticVersion", identity.board.semanticVersion)
-                    put("sourceRevision", identity.board.sourceRevision)
-                })
-                put("ruleOptionsHash", identity.ruleOptionsHash)
-            })
+        identity.werewolf?.let {
+            put("werewolf", PersistedWerewolfGameIdentityJsonCodec.encode(it))
         }
     }
 
     fun decode(json: JSONObject): PersistedActiveGameIdentityEnvelope {
-        val gameKind = json.requiredEnum<GameKind>("gameKind")
-        val clocktower = json.optJSONObject("clocktower")?.let(::decodeContentIdentity)
-        val werewolf = json.optJSONObject("werewolf")?.let { value ->
-            PersistedWerewolfGameIdentity(
-                board = decodeContentIdentity(value.getJSONObject("board")),
-                ruleOptionsHash = value.requiredString("ruleOptionsHash"),
-            )
+        val gameKind = runCatching { GameKind.valueOf(json.getString("gameKind")) }
+            .getOrElse { throw IllegalArgumentException("Unknown active-game identity gameKind.", it) }
+        return when (gameKind) {
+            GameKind.Undercover -> {
+                require(!json.has("clocktower") && !json.has("werewolf")) {
+                    "Undercover identity payload contains an unexpected variant identity."
+                }
+                PersistedActiveGameIdentityEnvelope.undercover()
+            }
+            GameKind.Clocktower -> {
+                require(json.has("clocktower") && !json.has("werewolf")) {
+                    "Clocktower identity payload must contain only Clocktower identity."
+                }
+                val identity = runCatching {
+                    PersistedGameContentIdentityJsonCodec.decode(json.getJSONObject("clocktower"))
+                }.getOrElse { throw IllegalArgumentException("Invalid Clocktower identity payload.", it) }
+                PersistedActiveGameIdentityEnvelope.clocktower(identity)
+            }
+            GameKind.Werewolf -> {
+                require(json.has("werewolf") && !json.has("clocktower")) {
+                    "Werewolf identity payload must contain only Werewolf identity."
+                }
+                val identity = runCatching {
+                    PersistedWerewolfGameIdentityJsonCodec.decode(json.getJSONObject("werewolf"))
+                }.getOrElse { throw IllegalArgumentException("Invalid Werewolf identity payload.", it) }
+                PersistedActiveGameIdentityEnvelope.werewolf(identity)
+            }
         }
-        return PersistedActiveGameIdentityEnvelope(
-            gameKind = gameKind,
-            clocktower = clocktower,
-            werewolf = werewolf,
-        )
     }
-
-    private fun decodeContentIdentity(json: JSONObject): PersistedGameContentIdentity =
-        PersistedGameContentIdentity(
-            kind = json.requiredEnum("kind"),
-            variantId = json.requiredString("variantId"),
-            contentHash = json.requiredString("contentHash"),
-            semanticVersion = json.requiredString("semanticVersion"),
-            sourceRevision = json.requiredString("sourceRevision"),
-        )
-}
-
-private fun JSONObject.requiredString(key: String): String {
-    require(has(key) && !isNull(key)) { "Missing required persisted string '$key'." }
-    return getString(key).takeIf { it.isNotBlank() }
-        ?: throw IllegalArgumentException("Persisted string '$key' cannot be blank.")
-}
-
-private inline fun <reified T : Enum<T>> JSONObject.requiredEnum(key: String): T {
-    val raw = requiredString(key)
-    return enumValues<T>().firstOrNull { it.name == raw }
-        ?: throw IllegalArgumentException("Invalid persisted enum '$key'.")
 }
