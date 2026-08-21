@@ -1,5 +1,8 @@
 # R5.5 多剧本 / 动态流程实施进度与下个会话交接
 
+> **⚠️ SUPERSEDED / HISTORICAL ONLY**  
+> 本文记录 2026-08-20 当时的开发断点。下面关于 `codex/storyteller-algorithm-v4`、PR #2 Draft、S1.3 / S1.4 的执行指令已经全部失效，**不得据此恢复开发**。当前状态与下一步只以 `CURRENT_DEVELOPMENT_ROADMAP.md` 和 `NEXT_DEVELOPMENT_HANDOFF_2026-08-21.md` 为准。
+
 > 日期：2026-08-20  
 > 分支：`codex/storyteller-algorithm-v4`  
 > PR：#2，继续保持 **open + Draft + base=main + do not merge**  
