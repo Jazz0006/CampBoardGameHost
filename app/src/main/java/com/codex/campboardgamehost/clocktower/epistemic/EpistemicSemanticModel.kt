@@ -212,6 +212,7 @@ data class EpistemicObservation(
     val reliability: ObservationReliability,
     val proposition: InformationProposition,
     val schemaVersion: Int = EPISTEMIC_SCHEMA_VERSION,
+    val timelineBinding: ObservationTimelineBinding = ObservationTimelineBinding.LegacyLocal,
 ) {
     init {
         requireSchemaVersion(schemaVersion)
@@ -225,6 +226,7 @@ data class EpistemicObservation(
             (visibility == ObservationVisibility.PRIVATE && sourceAbility?.value == "Spy")) {
             "GrimoireState must be a private observation sourced from the Spy ability."
         }
+        timelineBinding.requireReplayFieldsMatch(phase, round, sequence)
     }
 }
 
