@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
+import java.util.Collections
 
 /**
  * Explicit bridge between the domain reducer's existing global action sequence and the shared
@@ -27,17 +28,20 @@ data class TimelineBoundActionFact(
  * compatibility. This contract proves that sequence is the same identity as [TimelinePoint.globalSequence]
  * before facts cross into timeline-aware epistemic code.
  */
-data class ActionFactTimeline(
-    val entries: List<TimelineBoundActionFact> = emptyList(),
+class ActionFactTimeline(
+    entries: List<TimelineBoundActionFact> = emptyList(),
 ) {
+    /** Defensive immutable snapshot; caller-owned mutable collections cannot rewrite validated history. */
+    val entries: List<TimelineBoundActionFact> = Collections.unmodifiableList(entries.toList())
+
     init {
-        require(entries.map { it.fact.actionId }.distinct().size == entries.size) {
+        require(this.entries.map { it.fact.actionId }.distinct().size == this.entries.size) {
             "Action timeline cannot contain duplicate action IDs."
         }
-        require(entries.map { it.point.globalSequence }.distinct().size == entries.size) {
+        require(this.entries.map { it.point.globalSequence }.distinct().size == this.entries.size) {
             "Action timeline cannot contain duplicate global timeline sequences."
         }
-        require(entries == entries.canonical()) {
+        require(this.entries == this.entries.canonical()) {
             "Action timeline entries must use canonical global timeline order."
         }
     }
@@ -54,6 +58,10 @@ data class ActionFactTimeline(
 
     /** Exact reducer-compatible view; no action payload or sequence is rewritten. */
     fun reducerFacts(): List<ActionFact> = entries.map { it.fact }
+
+    override fun equals(other: Any?): Boolean = other is ActionFactTimeline && entries == other.entries
+    override fun hashCode(): Int = entries.hashCode()
+    override fun toString(): String = "ActionFactTimeline(entries=$entries)"
 
     private fun List<TimelineBoundActionFact>.canonical(): List<TimelineBoundActionFact> =
         sortedWith(compareBy<TimelineBoundActionFact>({ it.point.globalSequence }, { it.fact.actionId }))
