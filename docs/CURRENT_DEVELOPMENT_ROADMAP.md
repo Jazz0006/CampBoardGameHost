@@ -2,7 +2,8 @@
 
 > 状态日期：2026-08-21  
 > 文档角色：**CURRENT / 当前状态唯一权威**  
-> 审计基线：`main@46ec09c22f0e991cb4ad2a6a51e493c751255f1e`  
+> 当前 `main` 基线：`3db66482d9367c6b42a3f2550b979c28bfafea42`  
+> 当前 source PR：#24 `R6: establish production semantic-history foundation`（Draft）  
 > 主架构规范：`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`  
 > 多剧本架构规范：`多剧本多板子与动态游戏流程架构设计_v1.md`  
 > Post-P1 production audit：`post_p1_production_rollout_entry_audit_2026-08-21.md`  
@@ -20,19 +21,40 @@ R6 P1.2 Global timeline semantics            PASS
 R6 P1.3 Knowledge-safe input boundary        PASS
 R6 P1 semantic prerequisites                CLOSED
 Post-P1 production-rollout entry audit      COMPLETE
+Production Semantic-History Foundation      IN PROGRESS / PR #24
 ```
 
-**当前执行点：下一步不是 broad production Host wiring，而是 `Production Semantic-History Foundation`。**
+当前第一 rollout slice 只建立：
 
-这个第一 rollout slice 只建立显式 semantic-history mode、timeline cursor/session ownership 与 persistence/restore contract。它应 tests-first，并继续保持 **production Host/Compose 行为不变**。
+- explicit semantic-history mode；
+- durable timeline cursor / session persistence contract；
+- active-game schema v3；
+- restore-time fail-closed validation。
+
+**production Host/Compose observation semantics 仍不切 Global。**
+
+### 2026-08-21 persistence policy decision
+
+项目目前没有外部用户，因此不再为未发布的旧 active-game save 承担 migration complexity。
+
+```text
+active-game v1 → UNSUPPORTED
+active-game v2 → UNSUPPORTED
+active-game v3 → ONLY SUPPORTED SCHEMA
+```
+
+旧 v1/v2 save 在 restore 最入口直接拒绝，并清除失效 active save；**不得**因为缺字段猜成 `LEGACY_LOCAL`。
+
+`LEGACY_LOCAL` 仍保留，但它是 **v3 中显式写入的新语义状态**，不是旧 save migration fallback。
 
 当前仍未授权：
 
+- production Global observation producer cutover；
 - production Spy `VERIFIED_EXACT` cutover；
 - production historical multi-night Possible Worlds；
 - B4 production authority；
 - ZDD production promotion / `ZDD_DEVICE_VALIDATED`；
-- legacy save 通过猜测 local sequence 自动升级为 Global chronology。
+- recommendation legacy direct entry removal（它属于后续独立阶段）。
 
 ## 2. 当前阶段状态
 
@@ -40,19 +62,19 @@ Post-P1 production-rollout entry audit      COMPLETE
 |---|---|---|
 | A0 / A1 / A1.1 | PASS | unified semantic model 与 player-knowledge boundary 成立。 |
 | A2 ASP Oracle | PASS | typed/fail-closed oracle contract 已建立。 |
-| A2.1 Golden corpus | PASS | **52 total semantic contracts；24 当前 oracle/A3 executable；28 deferred / `ORACLE_NOT_APPLICABLE`。** 52 是 corpus size，不应解释成“52 个都已由 Clingo 执行”。 |
-| A3 EnumeratedWorldSet | PASS / exact baseline | 当前 exact correctness baseline；尚不是完整 historical state-transition engine。 |
-| A4 ZDD | PASS AS EXACT SHADOW | differential correctness 成立；device latency/memory gate 未通过，不得驱动 production decisions。 |
+| A2.1 Golden corpus | PASS | **52 total semantic contracts；24 当前 oracle/A3 executable；28 deferred / `ORACLE_NOT_APPLICABLE`。** |
+| A3 EnumeratedWorldSet | PASS / exact baseline | exact correctness baseline；尚不是完整 historical state-transition engine。 |
+| A4 ZDD | PASS AS EXACT SHADOW | differential correctness 成立；device gate 未通过，不得驱动 production decisions。 |
 | A4.5 cache/lifecycle | PASS | observation cache rebuild/durability boundary 已验证。 |
-| R5.5 | CLOSED / MERGED | production Clocktower/Werewolf flow planner cutover 与 multi-script structural foundation 已完成。 |
+| R5.5 | CLOSED / MERGED | production flow planner 与 multi-script structural foundation 已完成。 |
 | R6 P1.1 | PASS | VerifiedExact Grimoire semantic contract 已完成；production producer 仍 Legacy。 |
 | R6 P1.2 | PASS | Global action/observation chronology contract 已完成；production ownership 尚未切换。 |
 | R6 P1.3 | PASS | world/knowledge safe-core 不再接收完整 storyteller truth。 |
-| R6 P1 | CLOSED | 三个 semantic prerequisite 全部 PASS。 |
-| Post-P1 production-rollout entry audit | **COMPLETE** | production authority map、migration risk 与 rollout dependency 已确认。 |
-| **Production Semantic-History Foundation** | **NEXT** | explicit history mode + **复用并接通现有 `clocktowerNextTimelineGlobalSequence` persistence key** + session ownership；第一片不改 Host/Compose 行为。 |
-| Production Recommendation Entry-Point Unification | REQUIRED FOLLOW-UP | semantic-history/session ownership稳定后、扩大 recommendation 语义前必须移除 legacy direct recommendation path。 |
-| Historical multi-night engine | NOT AUTHORIZED | 先建立 production history ownership，再扩展 A3/B4 historical semantics。 |
+| Post-P1 entry audit | COMPLETE | production authority map、persistence gaps、rollout dependency 已确认。 |
+| **Production Semantic-History Foundation** | **IN PROGRESS / PR #24** | schema v3-only + explicit mode + existing cursor key wiring + fail-closed restore；不切 production Global producer。 |
+| New-game Global observation ownership | NEXT AFTER FOUNDATION | 新 game 才开始通过 session allocator 写 Global observation。 |
+| Recommendation Entry-Point Unification | REQUIRED FOLLOW-UP | Global/session ownership稳定后，删除 legacy direct recommendation path。 |
+| Historical multi-night engine | NOT AUTHORIZED | 先完成 production history ownership。 |
 | Spy VerifiedExact production | NOT AUTHORIZED | 等 authoritative durable physical Grimoire ledger。 |
 | ZDD production promotion | NOT AUTHORIZED | 等 exact multi-night baseline + realistic device gate。 |
 
@@ -60,7 +82,7 @@ Post-P1 production-rollout entry audit      COMPLETE
 
 ### 3.1 Multi-script foundation：结构层已验证，advanced semantics 仍 TB-first
 
-R5.5 已通过 Trouble Brewing + No Greater Joy 证明以下 seam 是真实 multi-script foundation：
+R5.5 已通过 Trouble Brewing + No Greater Joy 证明：
 
 ```text
 script asset / imported JSON
@@ -78,9 +100,7 @@ ClocktowerHostInteraction
 production UI adapter
 ```
 
-因此未来不得因为 advanced semantics 仍 TB-first 就重建第二套 catalog/flow framework。
-
-当前准确边界是：
+当前准确边界：
 
 ```text
 catalog / normalization / registry / flow / ruleset identity
@@ -90,11 +110,11 @@ recommendation metadata / Possible Worlds / role-specific epistemic semantics
     → TB-FIRST / EXPAND LATER
 ```
 
+未来不得因为 advanced semantics 仍 TB-first 就重建第二套 catalog / flow framework。
+
 ### 3.2 Flow authority 与 UI adapter 必须分离
 
-R5.5 删除的是独立 legacy flow-order / eligibility authority，不是机械删除所有旧 adapter。
-
-允许保留纯 adapter，但它们不得重新决定：
+legacy adapter 可以保留，但不得重新决定：
 
 - next interaction；
 - eligibility；
@@ -117,11 +137,9 @@ actual role/alignment/type、poison、shown role、storyteller-only propositions
 
 ## 4. Post-P1 production audit 的关键发现
 
-完整证据见：`post_p1_production_rollout_entry_audit_2026-08-21.md`。
+### 4.1 Timeline/session authority 已存在，但 production 尚未切换
 
-### 4.1 Timeline/session authority 已存在，但 production 还没有使用它
-
-正确 semantic authority 已经存在：
+正确 semantic authority 已存在：
 
 ```text
 ClocktowerGameSession
@@ -131,50 +149,35 @@ ClocktowerGameSession
     └── recordEpistemicObservation(...)
 ```
 
-但 production 当前仍分散使用：
+foundation 之前 production 仍是：
 
 ```text
 private observation → nightStepIndex
 public observation  → clocktowerEventCounter
 observation storage → App/Compose mutable list
-active save         → `clocktowerNextTimelineGlobalSequence` key 已存在于 ClocktowerNightCheckpoint，
-                      但 live checkpoint constructor / restore map 未接通真实 cursor，实际退回默认 0；
-                      semantic-history mode 仍不存在
 ```
 
-因此下一步不是再设计一个 timeline model，也不是新增第二套 cursor persistence，而是安全地把 production ownership 迁到现有 session authority，并**复用/接通现有 cursor key**。
+`ClocktowerNightCheckpoint` 已经有 `clocktowerNextTimelineGlobalSequence` persistence key，但 production live/restore wiring 原先没有真正接通 cursor。
+
+**决定：复用这个现有 key；禁止新增第二套 cursor representation。**
 
 ### 4.2 Spy production truth 仍不足以升级 VerifiedExact
 
-当前 Host 的 Spy Grimoire producer 仍直接从 player card 组装 Legacy `GrimoireState`，没有经过 `SpyGrimoireTruthProjector`。
+production 仍没有 durable authoritative physical Grimoire ledger，因此不能仅通过改变 binding flag 把 Spy producer 升级为 `VERIFIED_EXACT`。
 
-虽然 production 已持久化 actual/shown role、red herring、poison target 等碎片状态，但仍不存在一份 durable authoritative physical Grimoire ledger，能够完整重建：
-
-- physical character token per seat；
-- `IS THE DRUNK`；
-- `RED HERRING`；
-- current physical `POISONED`；
-- 其他 visible reminder placements。
-
-旧 save 的 poison compatibility fallback 也意味着旧数据不能自动提升成 exact physical reminder truth。
-
-**结论：Spy VerifiedExact 不是第一个 rollout slice。**
-
-### 4.3 A3 / ZDD / B4 仍不能被误称为 production historical engine
-
-- A3：exact enumerated baseline，但不是通用 multi-night state-transition replay engine；
-- ZDD：exact shadow/prototype，production selector 不读取它；
-- B4：isolated shadow，重要 Attack / Protect / RoleChange historical classes 仍 deferred。
+### 4.3 A3 / ZDD / B4 仍不是完整 historical engine
 
 ```text
-shared chronology support
-!=
-historical multi-night semantic engine
+A3  = exact baseline, not general historical transition engine
+ZDD = exact shadow/prototype
+B4  = isolated historical shadow with deferred action classes
 ```
 
-## 5. 下一步：Production Semantic-History Foundation
+shared chronology support != historical multi-night semantic engine。
 
-第一 source PR 应只建立 production history/persistence contract，概念上引入：
+## 5. 当前实施：Production Semantic-History Foundation
+
+### 5.1 目标模型
 
 ```text
 ClocktowerSemanticHistoryMode
@@ -182,155 +185,154 @@ ClocktowerSemanticHistoryMode
 └── GLOBAL_V1
 ```
 
-类型名可在实现审查中调整，但必须满足以下 contract：
+`LEGACY_LOCAL` 表示当前 v3 game 明确使用 legacy-local production observation semantics；它不再代表“旧 save 猜出来的模式”。
 
-1. 旧 v1/v2 save 缺少 mode → 明确恢复为 `LEGACY_LOCAL`；
-2. 绝不从 legacy local sequence 推断 Global chronology；
-3. `GLOBAL_V1` 必须显式持久化；
-4. **复用现有 `clocktowerNextTimelineGlobalSequence` checkpoint/JSON key 作为唯一 production cursor 表示**：把 live cursor 接入 checkpoint 创建，并把该 JSON key 接入 restore map；不得新建平行 cursor key；
-5. Global mode 通过该现有 key 与 `GameSnapshot.nextTimelineGlobalSequence` 持久化并恢复 cursor；
-6. restore 后 cursor 必须大于所有 committed global positions；
-7. Global history 中出现 `LegacyLocal` observation → fail closed；
-8. unknown / explicit-null / incompatible mixed payload → fail closed；
-9. **第一 foundation PR 不把现有或新 production game 自动切为 Global**，避免行为变化；
-10. 不修改 Spy truth、A3/ZDD/B4 authority、Host flow、Compose UI 或 recommendation UI。
+### 5.2 Active-game v3 contract
 
-因此第一片仍可满足：
+必须满足：
+
+1. `CURRENT_VERSION = 3`；
+2. v1 / v2 对所有 game kind 都 unsupported；
+3. unsupported save 在 live-state mutation 前拒绝；
+4. Clocktower v3 必须显式包含 `clocktowerSemanticHistoryMode`；
+5. missing / null / unknown / invalid mode → fail closed；
+6. **必须复用**现有 `clocktowerNextTimelineGlobalSequence` 作为唯一 cursor key；
+7. Clocktower v3 必须显式包含该 cursor，且必须为非负整数；
+8. 不从 `nightStepIndex` / round / eventCounter 合成或猜测 global sequence；
+9. `GLOBAL_V1` history 中出现 `LegacyLocal` observation → fail closed；
+10. `LEGACY_LOCAL` history 中出现 Global observation → fail closed；
+11. Global cursor 必须严格大于所有 committed Global observation positions；
+12. v3 Trouble Brewing restore 必须具有 immutable ruleset basis + matching persisted ruleset ref，不再重建旧 basis；
+13. 新创建/reset 的 production game 仍显式从 `LEGACY_LOCAL + cursor 0` 开始；
+14. 第一 foundation PR 不切 production observation producer 到 Global。
+
+### 5.3 明确删除的旧兼容能力
+
+以下不再属于产品 contract：
 
 ```text
-tests first
-→ persistence/session contract
-→ no Host/Compose behavior change
+v1 Clocktower identity migration
+v1/v2 active-game restore
+missing semantic-history mode -> LEGACY_LOCAL
+missing ruleset ref -> reconstruct
+succession 后通过旧 hash 猜 setup role basis
 ```
 
-## 6. 已确定的后续 rollout 顺序
+旧 `ClocktowerLegacyPersistenceIdentityFactory` 与 migration tests 应删除。
+
+如果因为超大 App 文件机械清扫暂时保留 compile-only legacy symbol，它必须是 **unreachable / fail-only shim**：
+
+- `isSupportedVersion(1/2)` 必须为 false；
+- shim 不得产生 migration result；
+- 直接调用 legacy helper 也必须失败；
+- 后续大文件拆分时删除 dead branch，不把它重新解释为 compatibility promise。
+
+## 6. Foundation 后的 rollout 顺序
 
 ```text
 1. Production Semantic-History Foundation
-   explicit mode + reuse/fix existing durable cursor/session ownership contract
+   schema v3-only + explicit mode + existing cursor/session persistence
 
 2. New-game Global observation ownership cutover
-   从第一条 committed semantic event 开始使用 session allocator
+   新 game 从第一条 committed semantic event 开始走 session allocator
 
 3. Production Recommendation Entry-Point Unification
    移除 legacy direct recommendation button/path
-   所有推荐入口只走一个 recommendation authority/coordinator
 
 4. Historical action + observation capture
    action 与 observation 共用同一 global allocator namespace
 
 5. A3 historical multi-night exact baseline
-   tests-first 扩展真实 state-transition semantics
 
 6. Authoritative physical Grimoire ledger
-   然后才允许 production Spy VERIFIED_EXACT cutover
+   然后才允许 production Spy VERIFIED_EXACT
 
 7. B4 historical expansion
-   补齐 deferred action/state classes 后再讨论 production authority
 
 8. Revision-driven recommendation unification
-   session ownership稳定后统一 recompute/context ownership
 
 9. Reconsider ZDD promotion
-   exact multi-night baseline + realistic device gate 全部通过后才重开
 ```
-
-这是 dependency order，不代表所有阶段必须是一个大版本；每一步继续使用短生命周期 tests-first PR。
 
 ## 7. Recommendation UI：legacy direct 按钮的正式定位
 
-2026-08-21 实机测试确认，当前 recommendation/presentation 仍存在 transitional legacy direct entry path。
+legacy direct recommendation path 是双 decision-authority debt，不是 cosmetic UI polish。
 
-它不是简单的按钮文案问题，而是潜在双 decision authority：
-
-```text
-new recommendation path
-    → revision/context/coordinator
-
-legacy direct button/path
-    → 可能绕过部分统一 context / revision / eligibility
-```
-
-随着 poison/protection/alive state、observation history 和 historical revision 进入推荐语义，两条入口可能给出不同答案。
-
-因此建立独立阶段：**Production Recommendation Entry-Point Unification**。
-
-### Trigger
+Trigger：
 
 ```text
-semantic-history/session ownership foundation 已稳定
+semantic-history/session ownership stable
         ↓
-在 recommendation 扩大到 historical multi-night semantics 之前完成
+Recommendation Entry-Point Unification
+        ↓
+historical recommendation semantics expansion
 ```
 
-### Exit criteria
+Exit criteria：
 
-1. production 中不存在绕过统一 recommendation authority 的按钮/入口；
+1. production 不存在绕过统一 recommendation authority 的入口；
 2. UI 不自行重新计算 recommendation semantics；
 3. revision/context 变化后 stale result 不可通过 legacy path 复用；
 4. `MANUAL_ONLY` / `INELIGIBLE` / unavailable 由同一 result model 驱动；
 5. regression test 防止 legacy direct path 回归。
 
-不要只隐藏 `legacy` label，也不要把这个工作伪装成 R5.5 hotfix。
-
 ## 8. Deferred Decisions / Reopen Triggers
-
-以下事项必须被追踪，但不应提前实现：
 
 | Decision | 当前决定 | 何时重新打开 |
 |---|---|---|
-| `globalSequence` 是否进入 `PlayerWorldSetIdentity` | **NO** | 只有当 timeline position 本身会改变 world constraints / cache identity 时 tests-first 重审。 |
-| `StoryDisruptionRisk` thresholds | UNSET | 累积足够真实游戏样本、且 recommendation policy 准备消费该维度时。 |
-| `MANUAL_ONLY` vs `INELIGIBLE` UI wording | DEFERRED | Production Recommendation Entry-Point Unification 阶段。 |
-| Revision-driven recommendation full unification | PARTIAL | semantic-history/session ownership完成后，并在复杂 multi-night/多剧本 recommendation 扩张前。 |
-| Spy `VERIFIED_EXACT` production | LEGACY ONLY | durable authoritative physical Grimoire ledger 可完整 restore 后。 |
-| ZDD production promotion | SHADOW ONLY | historical exact baseline 稳定 + realistic device latency/memory gate 通过后。 |
-| Advanced multi-script Possible Worlds | TB-FIRST | TB historical exact baseline稳定后，以第二剧本做独立 structural/semantic proof；不得重建 catalog/flow foundation。 |
-
-“当前决定为 NO”与“尚未决定”必须区分。例如 `globalSequence` 当前明确**不进入** `PlayerWorldSetIdentity`；不是待办事项，除非 trigger 成立。
+| `globalSequence` 是否进入 `PlayerWorldSetIdentity` | **NO** | timeline position 本身改变 world constraints / cache identity 时。 |
+| `StoryDisruptionRisk` thresholds | UNSET | 有足够真实游戏样本且 recommendation policy 准备消费时。 |
+| `MANUAL_ONLY` vs `INELIGIBLE` UX | DEFERRED | Recommendation Entry-Point Unification 阶段。 |
+| Revision-driven recommendation full unification | PARTIAL | semantic-history/session ownership完成后。 |
+| Spy `VERIFIED_EXACT` production | LEGACY ONLY | durable authoritative physical Grimoire ledger 完整可 restore 后。 |
+| ZDD production promotion | SHADOW ONLY | historical exact baseline + realistic device gate 通过后。 |
+| Advanced multi-script Possible Worlds | TB-FIRST | TB historical exact baseline稳定后，用第二剧本做独立 semantic proof。 |
+| old active-game save migration | **NO / DROPPED** | 只有产品真正发布并拥有外部用户后，未来 schema 迁移策略才重新设计；v1/v2 不恢复。 |
 
 ## 9. Production guardlines
-
-在后续路线明确修改前：
 
 ```text
 Production Clocktower flow order: planner-backed
 Production Werewolf flow order: planner-backed
-Legacy UI adapters: only as non-authoritative adapters
 A3 EnumeratedWorldSet: exact correctness baseline
 A4 ZDD: exact shadow/prototype only
 B4: isolated shadow only
 R6 P1: CLOSED
 Post-P1 entry audit: COMPLETE
-Production semantic-history mode/cursor cutover: FOUNDATION NEXT
+Active-game schema: V3 ONLY
+V1/V2 restore: UNSUPPORTED
+Clocktower v3 history mode: REQUIRED / EXPLICIT
+Clocktower v3 cursor key: EXISTING KEY / REQUIRED / DO NOT DUPLICATE
 Production Global producer cutover: NOT YET WIRED
 Production VerifiedExact Spy producer: NOT AUTHORIZED
 Production historical multi-night Possible Worlds: NOT AUTHORIZED
 ZDD_DEVICE_VALIDATED: NOT AUTHORIZED
-Existing `clocktowerNextTimelineGlobalSequence` key: REUSE / REPAIR, DO NOT DUPLICATE
 ```
 
 禁止：
 
+- 从缺字段猜 `LEGACY_LOCAL`；
 - 从 legacy local sequence 猜 global identity；
 - 新增第二个/平行 production timeline cursor persistence key；
+- 恢复 v1/v2 active save；
+- 从旧 hash/当前角色猜旧 setup ruleset basis；
 - 从 legacy Grimoire/空 reminder/UI label 猜 `VERIFIED_EXACT`；
 - 把 timeout/OOM/cap 当 UNSAT；
 - 截断 exact worlds 后仍声称 exact；
 - 把 storyteller-only truth 放入 player knowledge；
 - 让 shadow result 驱动 production decision；
 - 为新剧本重建第二套 catalog/flow framework；
-- 在第一 semantic-history foundation PR 中顺便修改 Host/Compose/recommendation UI。
+- 在 foundation PR 中顺便切 Global producer、改 recommendation UI、Spy、A3/B4/ZDD authority。
 
-## 10. 2026-08-22 实战验证
+## 10. 实战验证
 
-实战仍用于发现真实 runtime/UX 问题，但分类必须保持：
+实战用于发现 runtime/UX 问题，但分类保持：
 
-- rules / flow order / persistence / state correctness defect → correctness follow-up；
-- recommendation decision-entry / presentation issue → Recommendation Entry-Point Unification / migration backlog；
-- preference / cosmetic polish → 不打断 rollout correctness work。
+- rules / flow / persistence / state correctness defect → correctness follow-up；
+- recommendation decision-entry issue → Recommendation Entry-Point Unification；
+- cosmetic preference → 不打断 rollout correctness work。
 
-最高价值观察包括：TB/NGJ night-flow continuity、Scarlet Woman / Imp succession、Mayor / Ravenkeeper / Undertaker / Sage conditional flow、navigation/back/restore，以及 recommendation 双路径是否造成实际摩擦。
+由于 v1/v2 已主动放弃，升级到 v3 后当前设备上的旧 active-game save 无需继续兼容；重新开局即可。
 
 ## 11. 开发与 CI 策略
 
@@ -350,16 +352,9 @@ latest main audit
 → merge
 ```
 
-Review 发现 semantic hole：
+CI 必须**实际启动并执行 steps**。GitHub Actions 在 runner 启动前失败、job `steps=null`、没有 checkout/compiler/test log 时，只能记为 infrastructure failure，不能视为代码通过或失败。
 
-```text
-regression test first
-→ fix
-→ rerun gates
-→ exact final diff audit
-```
-
-不要在 `main` 直接开展 source work；从最新 `main` 创建新的短生命周期 branch。
+PR #24 在上述完整 gate 真正执行并通过前保持 Draft，不合并。
 
 ## 12. 关键历史证据
 
@@ -367,21 +362,13 @@ regression test first
 - P1.3 safe-input PR #7/#8：`19b91887344655285ec8bd93ca5bdb51bcfff445` / `8f5ccc551948fea085caf8df3eb100ef67eae438`
 - P1.1 VerifiedExact semantic close / PR #21 merge：`f77338bc85ae4a81b7e54e456b430e2f7f35c51a`
 - P1 docs closeout / PR #22 merge：`d56edd1552dc25dc73574c311179b9fe5a9d216b`
-- Design-plan audit addition：`46ec09c22f0e991cb4ad2a6a51e493c751255f1e`
-
-详细证据保留在：
-
-- `r5_5_stage_close_known_limitations_2026-08-21.md`
-- `r6_p1_1_closeout_2026-08-21.md`
-- `r6_p1_2_closeout_2026-08-21.md`
-- `r6_p1_3_closeout_2026-08-21.md`
-- `design_plan_audit_2026-08-21.md`
-- `post_p1_production_rollout_entry_audit_2026-08-21.md`
+- docs/design cleanup / PR #23 merge：`3db66482d9367c6b42a3f2550b979c28bfafea42`
+- Semantic-History tests-first red evidence：`4759c6ee95bbbae53f4b43412bf75b7ee4cf5768` / CI #308
 
 ## 13. 文档维护规则
 
-1. **只有本文件维护“当前执行点 / 当前阶段状态”。**
-2. 专项设计、audit、closeout、handoff 保存证据与上下文，不创建第二个并列 roadmap。
-3. 历史 handoff/closeout 若正文包含已失效的“下一步”指令，保留历史正文，但在顶部加 `SUPERSEDED` / historical-status banner。
-4. 新 handoff 必须指向本 roadmap，并不得覆盖本 roadmap 的 status authority。
-5. 如果专项文档与本文件的当前状态冲突，以本文件为准；如果是规范语义冲突，则回到对应 normative design spec 做显式评审，不靠 handoff 猜测。
+1. **只有本文件维护当前执行点 / 当前阶段状态。**
+2. 专项 design/audit/closeout/handoff 保存证据，不创建第二个并列 roadmap。
+3. 历史文档中的旧 migration 设计可以保留为历史证据，但不得覆盖本文件的 **v3-only / v1-v2 unsupported** 决策。
+4. 新 handoff 必须指向本 roadmap。
+5. 未发布阶段可以主动丢弃不再有价值的 compatibility burden；一旦产品对外发布，未来 schema migration policy 必须重新显式设计。
