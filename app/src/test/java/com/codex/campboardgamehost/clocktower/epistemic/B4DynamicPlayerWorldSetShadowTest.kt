@@ -76,6 +76,57 @@ class B4DynamicPlayerWorldSetShadowTest {
         )
     }
 
+    @Test fun `b4 observation replay keeps shared global chronology across public private split`() {
+        val formalSnapshotId = "b4-global-observation-snapshot"
+        val earlierPrivate = EpistemicObservation(
+            observationId = "earlier-private",
+            snapshotId = formalSnapshotId,
+            phase = StorytellerPhase.DAY,
+            round = 1,
+            sequence = 99,
+            sourceSeat = null,
+            sourceAbility = null,
+            visibility = ObservationVisibility.PRIVATE,
+            recipientSeats = setOf(1),
+            reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+            proposition = InformationProposition.AliveAt(2, true),
+            timelineBinding = ObservationTimelineBinding.Global(
+                TimelinePoint(StorytellerPhase.DAY, round = 1, sequence = 99, globalSequence = 10L),
+            ),
+        )
+        val laterPublic = EpistemicObservation(
+            observationId = "later-public",
+            snapshotId = formalSnapshotId,
+            phase = StorytellerPhase.NIGHT,
+            round = 1,
+            sequence = 0,
+            sourceSeat = null,
+            sourceAbility = null,
+            visibility = ObservationVisibility.PUBLIC,
+            recipientSeats = emptySet(),
+            reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+            proposition = InformationProposition.AliveAt(3, true),
+            timelineBinding = ObservationTimelineBinding.Global(
+                TimelinePoint(StorytellerPhase.NIGHT, round = 1, sequence = 0, globalSequence = 20L),
+            ),
+        )
+        val knowledge = PlayerKnowledgeSnapshot(
+            knowledgeSnapshotId = "b4-global-replay",
+            formalSnapshotId = formalSnapshotId,
+            recipientSeat = 1,
+            perceivedRole = RoleId("Chef"),
+            publicObservations = listOf(laterPublic),
+            privateObservations = listOf(earlierPrivate),
+        )
+
+        assertEquals(
+            listOf(10L, 20L),
+            knowledge.b4ReplayObservationsInTimelineOrder().map {
+                (it.timelineBinding as ObservationTimelineBinding.Global).point.globalSequence
+            },
+        )
+    }
+
     @Test fun `unmodelled transition is explicitly deferred rather than reported unsat`() {
         val facts = listOf(ActionFact.RoleChange("starpass", 1, 4, RoleId("Imp"),
             com.codex.campboardgamehost.clocktower.domain.Alignment.EVIL,
