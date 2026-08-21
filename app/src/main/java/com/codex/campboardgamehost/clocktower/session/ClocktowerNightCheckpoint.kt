@@ -25,11 +25,13 @@ internal data class ClocktowerNightCheckpoint(
     val pendingNewDemonName: String?,
     val pendingNightNewDemonIdentityName: String? = null,
     val demonSuccessorDraftTarget: String?,
+    val nextTimelineGlobalSequence: Long = 0L,
 ) {
     init {
         require(round > 0)
         require(gameStateRevision >= 0 && playerInputRevision >= 0)
         require(nightStepIndex >= 0)
+        require(nextTimelineGlobalSequence >= 0) { "nextTimelineGlobalSequence cannot be negative." }
     }
 
     fun persistedValues(): Map<String, Any?> = mapOf(
@@ -50,6 +52,7 @@ internal data class ClocktowerNightCheckpoint(
         "clocktowerPendingNewDemonName" to pendingNewDemonName,
         "clocktowerPendingNightNewDemonIdentityName" to pendingNightNewDemonIdentityName,
         "clocktowerDemonSuccessorTarget" to demonSuccessorDraftTarget,
+        "clocktowerNextTimelineGlobalSequence" to nextTimelineGlobalSequence,
     )
 
     companion object {
@@ -75,6 +78,7 @@ internal data class ClocktowerNightCheckpoint(
             pendingNewDemonName = values.string("clocktowerPendingNewDemonName"),
             pendingNightNewDemonIdentityName = values.string("clocktowerPendingNightNewDemonIdentityName"),
             demonSuccessorDraftTarget = values.string("clocktowerDemonSuccessorTarget"),
+            nextTimelineGlobalSequence = values.long("clocktowerNextTimelineGlobalSequence") ?: 0L,
         )
 
         private fun Map<String, Any?>.string(key: String): String? = this[key] as? String
