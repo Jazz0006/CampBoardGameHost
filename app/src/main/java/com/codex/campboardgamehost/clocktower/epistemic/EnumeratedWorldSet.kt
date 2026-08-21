@@ -252,10 +252,90 @@ internal object TroubleBrewingWorldObservationEvaluator {
         is InformationProposition.Not -> !evaluateActual(world, roles, proposition.proposition)
         is InformationProposition.NumericResult -> evaluateNumeric(world, roles, null, proposition).matches
         is InformationProposition.BooleanResult -> evaluateBoolean(world, roles, null, proposition).matches
-        is InformationProposition.GrimoireState -> proposition.seats.all { view ->
-            (world.shownRolesBySeat[view.seat] ?: world.rolesBySeat[view.seat]) == view.displayedRole &&
-                (view.seat in world.aliveSeats) == view.alive
+        is InformationProposition.GrimoireState -> when (proposition.truthBinding) {
+            GrimoireTruthBinding.LEGACY_DISPLAY_ONLY -> legacyGrimoireMatches(world, proposition)
+            GrimoireTruthBinding.VERIFIED_EXACT -> grimoireMatches(world, roles, proposition)
         }
+    }
+
+    private fun legacyGrimoireMatches(
+        world: EnumeratedWorld,
+        grimoire: InformationProposition.GrimoireState,
+    ): Boolean = grimoire.seats.all { view ->
+        (world.shownRolesBySeat[view.seat] ?: world.rolesBySeat[view.seat]) == view.displayedRole &&
+            (view.seat in world.aliveSeats) == view.alive
+    }
+
+    private fun grimoireMatches(
+        world: EnumeratedWorld,
+        roles: Map<RoleId, RoleDefinition>,
+        grimoire: InformationProposition.GrimoireState,
+    ): Boolean {
+        val observedSeats = grimoire.seats.mapTo(linkedSetOf()) { it.seat }
+        if (observedSeats != world.rolesBySeat.keys) return false
+
+        val expectedConstraints = expectedMechanicalGrimoireConstraints(world)
+        return grimoire.seats.all { view ->
+            val observedConstraints = view.reminderTokens.mapNotNullTo(linkedSetOf()) {
+                TroubleBrewingGrimoireReminderSemantics.worldConstraint(it)
+            }
+            grimoireDisplayedRoleMatches(world, roles, view, observedConstraints) &&
+                (view.seat in world.aliveSeats) == view.alive &&
+                observedConstraints == expectedConstraints[view.seat].orEmpty()
+        }
+    }
+
+    private fun grimoireDisplayedRoleMatches(
+        world: EnumeratedWorld,
+        roles: Map<RoleId, RoleDefinition>,
+        view: GrimoireSeatView,
+        observedConstraints: Set<GrimoireReminderWorldConstraint>,
+    ): Boolean {
+        val actualRole = world.rolesBySeat[view.seat] ?: return false
+        if (!actualRole.value.equals("Drunk", ignoreCase = true)) {
+            return actualRole == view.displayedRole
+        }
+        if (GrimoireReminderWorldConstraint.DRUNK_IDENTITY !in observedConstraints) return false
+        val displayed = roles[view.displayedRole] ?: return false
+        return displayed.type == CharacterType.TOWNSFOLK && view.displayedRole !in world.rolesBySeat.values
+    }
+
+    private fun expectedMechanicalGrimoireConstraints(
+        world: EnumeratedWorld,
+    ): Map<Int, Set<GrimoireReminderWorldConstraint>> {
+        val result = linkedMapOf<Int, MutableSet<GrimoireReminderWorldConstraint>>()
+        fun add(seat: Int, constraint: GrimoireReminderWorldConstraint) {
+            result.getOrPut(seat, ::linkedSetOf) += constraint
+        }
+
+        world.redHerringSeat?.let { add(it, GrimoireReminderWorldConstraint.RED_HERRING) }
+        world.rolesBySeat.entries.singleOrNull { it.value.value.equals("Drunk", ignoreCase = true) }?.key?.let {
+            add(it, GrimoireReminderWorldConstraint.DRUNK_IDENTITY)
+        }
+        currentPoisonerTargetSeat(world)?.let {
+            add(it, GrimoireReminderWorldConstraint.POISONER_TARGET)
+        }
+        return result.mapValues { (_, constraints) -> constraints.toSet() }
+    }
+
+    /**
+     * Trouble Brewing has one mandatory Poisoner target each night while the Poisoner is alive. The
+     * current setup world model stores ordinary targets as MALFUNCTIONING_POISONED. If the target is
+     * already the Drunk, its single AbilityState remains MALFUNCTIONING_DRUNK, so the absence of
+     * another poisoned seat plus an alive, in-play Poisoner and an in-play Drunk identifies that
+     * collapsed target without treating the printed token label as rule authority.
+     */
+    private fun currentPoisonerTargetSeat(world: EnumeratedWorld): Int? {
+        val poisonerSeat = world.rolesBySeat.entries.singleOrNull {
+            it.value.value.equals("Poisoner", ignoreCase = true)
+        }?.key ?: return null
+        if (poisonerSeat !in world.aliveSeats) return null
+        val poisonedSeats = world.abilityStatesBySeat.filterValues {
+            it == AbilityState.MALFUNCTIONING_POISONED
+        }.keys
+        if (poisonedSeats.size == 1) return poisonedSeats.single()
+        if (poisonedSeats.isNotEmpty()) return null
+        return world.rolesBySeat.entries.singleOrNull { it.value.value.equals("Drunk", ignoreCase = true) }?.key
     }
 
     private fun profile(world: EnumeratedWorld, roles: Map<RoleId, RoleDefinition>): InformationProposition.SetupProfile {

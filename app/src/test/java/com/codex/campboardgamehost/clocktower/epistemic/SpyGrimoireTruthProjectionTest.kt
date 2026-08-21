@@ -41,7 +41,7 @@ class SpyGrimoireTruthProjectionTest {
 
         assertEquals(
             InformationProposition.GrimoireState(
-                listOf(
+                seats = listOf(
                     GrimoireSeatView(
                         1,
                         RoleId("Fortune Teller"),
@@ -64,6 +64,7 @@ class SpyGrimoireTruthProjectionTest {
                     ),
                     GrimoireSeatView(3, RoleId("Spy"), true),
                 ),
+                truthBinding = GrimoireTruthBinding.VERIFIED_EXACT,
             ),
             SpyGrimoireTruthProjector.project(troubleBrewing, input),
         )
@@ -81,6 +82,7 @@ class SpyGrimoireTruthProjectionTest {
 
         val result = SpyGrimoireTruthProjector.project(troubleBrewing, input)
 
+        assertEquals(GrimoireTruthBinding.VERIFIED_EXACT, result.truthBinding)
         assertEquals(RoleId("Empath"), result.seats[0].displayedRole)
         assertEquals(false, result.seats[1].alive)
     }

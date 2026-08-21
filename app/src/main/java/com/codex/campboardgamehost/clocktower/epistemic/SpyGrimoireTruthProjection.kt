@@ -110,7 +110,7 @@ internal object SpyGrimoireTruthProjector {
             }
 
         return InformationProposition.GrimoireState(
-            input.seats.map { seat ->
+            seats = input.seats.map { seat ->
                 GrimoireSeatView(
                     seat = seat.seat,
                     displayedRole = seat.displayedRole,
@@ -118,6 +118,7 @@ internal object SpyGrimoireTruthProjector {
                     reminderTokens = tokensBySeat[seat.seat].orEmpty(),
                 )
             },
+            truthBinding = GrimoireTruthBinding.VERIFIED_EXACT,
         )
     }
 }
