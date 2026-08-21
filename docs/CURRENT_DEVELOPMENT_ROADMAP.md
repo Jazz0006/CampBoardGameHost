@@ -4,17 +4,20 @@
 > 当前基线：`main`  
 > 文档角色：**CURRENT / 当前状态唯一权威**  
 > R5.5 merge commit：`7add8569e2484a350f6cf1512a730e9f4db469c5`  
+> R6 P1.1 semantic close merge：`f77338bc85ae4a81b7e54e456b430e2f7f35c51a`  
 > 主架构规范：`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`  
 > 多剧本架构规范：`多剧本多板子与动态游戏流程架构设计_v1.md`  
 > R5.5 最终收尾：`r5_5_stage_close_known_limitations_2026-08-21.md`  
+> R6 P1.1 收尾：`r6_p1_1_closeout_2026-08-21.md`  
 > R6 P1.2 收尾：`r6_p1_2_closeout_2026-08-21.md`  
 > R6 P1.3 收尾：`r6_p1_3_closeout_2026-08-21.md`  
+> 下一会话交接：`NEXT_DEVELOPMENT_HANDOFF_2026-08-21.md`  
 > 历史 R5.5 交接：`r5_5_multiscript_progress_handoff_2026-08-20.md`（**仅历史参考，不得按其中 S1.3 / Draft PR 指令恢复开发**）  
 > Phase A 退出评审：`phase_a_exit_review_2026-08-20.md`
 
 ## 1. 当前结论
 
-Phase A remediation 与 R5.5 已完成并正式合并：
+Phase A remediation、R5.5 与 R6 P1 semantic prerequisite hardening 已完成：
 
 ```text
 R1  A3 correctness hotfix
@@ -33,10 +36,10 @@ PR #2 merged to main
   ↓
 R6 P1 prerequisite hardening
   ↓
-P1.2 / P1.3 PASS; P1.1 remains OPEN
+P1.1 / P1.2 / P1.3 PASS
 ```
 
-**当前执行点（2026-08-21）：R6 / P1 IN PROGRESS — P1.2 / P1.3 PASS，仅 P1.1 OPEN。**
+**当前执行点（2026-08-21）：R6 P1 semantic prerequisites CLOSED。下一步是 post-P1 production-rollout entry audit；尚未授权 production multi-night Possible Worlds。**
 
 R5.5 的 production 目标已经完成：
 
@@ -49,7 +52,7 @@ R5.5 的 production 目标已经完成：
 - R5.5 最终文档 head `aae5b5198c605bbd00fa064b703bb237b2f21bb9`：CI #222 SUCCESS、R2 #217 SUCCESS；
 - PR #2 已合并，merge commit `7add8569e2484a350f6cf1512a730e9f4db469c5`。
 
-R6 已完成 P1.2 timeline semantic prerequisite 与 P1.3 knowledge-safe input boundary；这些 PASS **仍不等于 production multi-night Possible Worlds 已获授权**。P1.1 Spy reminder-token truth boundary 仍 OPEN，且 production Host/Compose 尚未切换为从游戏开始即统一分配 Global timeline positions。
+R6 已完成 P1.1 Spy Grimoire truth boundary、P1.2 timeline semantic prerequisite 与 P1.3 knowledge-safe input boundary。三个 PASS 都是**语义前置条件退出**，不是 production rollout claim。Production Host/Compose 仍没有统一切换到 VerifiedExact Grimoire truth producer，也没有从游戏开始为所有 action/observation 使用 Global timeline allocator；B4 仍是 isolated shadow，当前 evaluator 仍不是完整 historical multi-night engine。
 
 **不要继续在 `codex/storyteller-algorithm-v4` 长分支上开发。下一次开发从最新 `main` 创建新 branch。**
 
@@ -59,7 +62,7 @@ R6 已完成 P1.2 timeline semantic prerequisite 与 P1.3 knowledge-safe input b
 |---|---|---|
 | A0 外部参考冻结 | PASS | 冻结参考继续有效。 |
 | A1 Unified Semantic Model | PASS | storyteller truth / observation / player knowledge 三层边界保留。 |
-| A1.1 Semantic Hardening | PASS WITH FOLLOW-UP | schema-v2、registration interaction binding、world-set identity 成立；正式多夜 player-world reasoning 前仍需处理 P1。 |
+| A1.1 Semantic Hardening | PASS WITH FOLLOW-UP | schema-v2、registration interaction binding、world-set identity 与 R6 P1 semantic prerequisites 成立；production rollout 仍需独立审计。 |
 | A2 ASP Oracle harness | PASS / R3.1 | nested `FormalGameState` schema-v2 与 fail-closed typed decoder 已验证。 |
 | A2.1 Golden corpus | PASS / R3.1 | 52 total；24 Clingo executable；`UNEXPLAINED_MISMATCH=0`、`NOT_RUN=0`。 |
 | A3 EnumeratedWorldSet | PASS / R5 RE-EXIT VALIDATED | exact correctness baseline。 |
@@ -74,9 +77,11 @@ R6 已完成 P1.2 timeline semantic prerequisite 与 P1.3 knowledge-safe input b
 | R5.5 S4 persistence/ruleset identity | PASS | schema v2 + explicit migration / fail-closed identity。 |
 | R5.5 S5 production cutover/regression | PASS | planner cutover、legacy flow authority removal、persistence regression、CI/R2。 |
 | **R5.5 release** | **CLOSED / MERGED** | PR #2 merged to `main`。 |
+| **R6 P1.1 Spy Grimoire truth boundary** | **PASS** | typed rule-backed token identity、explicit complete physical truth projector、Legacy/Verified provenance、audited TB exact filtering 已建立；production VerifiedExact producer cutover 仍单独受保护。 |
 | **R6 P1.2 Timeline identity** | **PASS** | Global allocator/binding/persistence、ActionFact authority、A3/ZDD/B4 shared replay chronology 与 cross-type global uniqueness 已建立；production cutover 仍单独受保护。 |
 | **R6 P1.3 Actual truth vs safe input** | **PASS** | PR #7/#8 已将 world-builder 与 player-knowledge core 从完整 Formal truth 中隔离。 |
-| R6 revision-driven production expansion | P1 IN PROGRESS | 正式多夜 possible-world reasoning 仍被 P1.1 与 production Global timeline cutover guardline 阻塞。 |
+| **R6 P1 semantic prerequisites** | **CLOSED** | P1.1 / P1.2 / P1.3 全部 PASS；不等于 production multi-night rollout。 |
+| R6 revision-driven production expansion | ENTRY AUDIT NEXT | 先审计 production truth/timeline/historical-engine cutover 边界，再选最小 tests-first slice；禁止一次性接入完整 Host。 |
 | Recommendation-information UI migration | DEFERRED / KNOWN LIMITATION | 不属于 R5.5 blocker；后续单独完成。 |
 | 2026-08-22 real-game field validation | PLANNED | 实战发现作为后续输入；只有核心 rules/flow/persistence/state defect 才重新打开 R5.5 correctness boundary。 |
 
@@ -171,13 +176,51 @@ information interaction
 
 详见：`r5_5_stage_close_known_limitations_2026-08-21.md`。
 
-## 5. P1 — 正式多夜 Possible Worlds / R6 深化前必须解决
+## 5. P1 — 正式多夜 Possible Worlds / R6 深化前的语义前置条件
 
-这些语义债务不重新打开 Phase A 或 R5.5，但在 production 化多夜 player-world reasoning 前必须处理。
+P1.1 / P1.2 / P1.3 已全部完成 semantic prerequisite 收口。这些 PASS 不重新打开 Phase A 或 R5.5，也**不自动授权 production multi-night rollout**。
 
-### P1.1 Spy Grimoire reminder tokens — OPEN
+### P1.1 Spy Grimoire reminder tokens — PASS
 
-`GrimoireState` 已包含 reminder tokens；正式使用 Spy perspective 前要确定哪些 token 属于 mechanical truth，并与 filtering/schema 承诺一致。
+P1.1 已从“字符串 reminder 是否可信”收口为显式 truth boundary：
+
+```text
+ValidatedClocktowerRuleset
+        ↓ rule-backed token identity
+explicit physical Grimoire truth
+        ↓ SpyGrimoireTruthProjector
+GrimoireState(VERIFIED_EXACT)
+        ↓
+audited exact world constraints
+```
+
+已成立的契约包括：
+
+- reminder token identity 由 active validated ruleset 的 `sourceRole + scope + occurrence` 决定，不能从任意 UI/label 文本猜 mechanics；
+- physical Grimoire snapshot 必须显式携带完整 expected seat roster、每座位真实展示 character token、alive 状态与 rule-backed reminder placements；
+- snapshot 缺 seat、多 seat、重复 physical token occurrence、off-script role/token 均 fail closed；
+- `SpyGrimoireTruthProjector` 是当前唯一能把该显式 truth 升级为 `VERIFIED_EXACT` proposition 的语义入口；
+- `LEGACY_DISPLAY_ONLY` 是旧 constructor / 旧 schema-v2 payload 的默认 provenance；当前 production Host 仍在该兼容路径；
+- Legacy filtering 保留既有 displayed-role/alive 语义，不把“空 reminder list”误解释成“物理上确定不存在 reminder”；
+- VerifiedExact 才启用 complete-roster、physical role-token 与 reminder constraints；
+- provenance 进入 proposition equality / canonical identity；VerifiedExact JSON 显式持久化，missing binding 解码 Legacy，null/unknown fail closed；
+- 当前 TB world model 可精确解释的 reminder constraints 只有经过审计的三类：Drunk `IS THE DRUNK`、Fortune Teller `RED HERRING`、Poisoner `POISONED`；
+- Drunk 使用 out-of-play Townsfolk character token + `IS THE DRUNK`，不能混用 player-perceived `shownRolesBySeat`；
+- Poisoner targeting Drunk 与 later-night dead Poisoner 边界有显式回归测试；
+- Monk Safe 等当前 world model 无法精确表达的 visible reminders 保留但 under-constrained，不制造假精度。
+
+#### Production cutover guardline
+
+P1.1 PASS **不是 production Spy rollout claim**：
+
+- 当前 Host 的两处 Spy Grimoire producer 仍是 Legacy display-only producer；
+- production 尚无 durable authoritative physical reminder placement source；
+- 不允许仅从当前 `GameState`、UI label 或已有空 reminder list 反推 VerifiedExact truth；
+- production cutover 必须另开 tests-first slice，并证明完整 physical truth authority 后才能启用 VerifiedExact。
+
+R6.16 / PR #20 merge：`1a2b1852c77473e525535377afe70186da26700e`。  
+R6.17 / PR #21 merge：`f77338bc85ae4a81b7e54e456b430e2f7f35c51a`。  
+完整退出证据：`r6_p1_1_closeout_2026-08-21.md`。
 
 ### P1.2 Timeline identity — PASS
 
@@ -253,36 +296,38 @@ R6.6 PR #8 merge：`8f5ccc551948fea085caf8df3eb100ef67eae438`。
 
 ## 6. 下一阶段开发入口
 
-默认软件路线仍是：
+默认软件路线现在是：
 
 ```text
-post-merge main
+post-P1 main
 → new branch
-→ audit R6 plan + remaining P1 prerequisites
+→ production-rollout entry audit
+→ identify one authoritative source/cutover boundary
 → tests-first / contract-first smallest vertical slice
 → exact diff audit
 → normal CI + R2
 ```
 
-**当前默认下一目标：P1.1 Spy Grimoire reminder-token truth boundary。先定义哪些 reminder tokens 属于 mechanical truth、哪些只是 storyteller/UI annotation，再决定 Spy perspective/filtering/schema 承诺；仍不要提前接 production multi-night Possible Worlds。**
+**当前默认下一目标：先做 post-P1 production-rollout entry audit，不直接接完整 production Host。审计至少同时覆盖 VerifiedExact Grimoire truth authority、Global timeline production allocation/cutover、historically time-aware multi-night world engine 三条 guardline；然后只选择一个可证明的最小 vertical slice。**
 
 R6 设计入口：
 
 `docs/storyteller_revision_driven_dynamic_decision_engine_plan.md`
 
-### 6.1 明天白天继续开发时的第一步
+### 6.1 下一会话继续开发时的第一步
 
 新会话直接执行：
 
-1. 确认 `main` head 包含 R5.5 merge `7add8569...`、P1.2 source close merge `ea78b8f4...`、P1.3 merge `19b91887...` / `8f5ccc55...` 以及后续 documentation commits；
+1. 确认最新 `main` 包含 R6.17 merge `f77338bc85ae4a81b7e54e456b430e2f7f35c51a` 以及本次 docs closeout merge；
 2. 读取本文件；
-3. 读取 `r5_5_stage_close_known_limitations_2026-08-21.md`；
-4. 如果继续 R6，读取 `r6_p1_2_closeout_2026-08-21.md` 后从 P1.1 reminder-token truth boundary 做最小 tests-first audit；
-5. 创建新的 development branch；
-6. 不再恢复 `codex/storyteller-algorithm-v4` 的 S1/S5 工作；
-7. 行为变更继续 tests-first / contract-first。
+3. 读取 `r6_p1_1_closeout_2026-08-21.md`、`r6_p1_2_closeout_2026-08-21.md`、`r6_p1_3_closeout_2026-08-21.md`；
+4. 读取 `NEXT_DEVELOPMENT_HANDOFF_2026-08-21.md`；
+5. 先做 post-P1 production-rollout entry audit，不要先改 Host/Compose；
+6. 明确三条仍未授权的 production guardline 与依赖顺序，再选择一个最小 tests-first slice；
+7. 从最新 `main` 创建新 development branch；
+8. 不再恢复 `codex/storyteller-algorithm-v4` 的历史 S1/S5 工作。
 
-如果明天临时决定优先改善实战 UX，也可以单独开启 recommendation-information migration branch；但不要把它伪装成 R5.5 hotfix，也不要仅隐藏 `legacy` 文案。
+如果临时决定优先改善实战 UX，也可以单独开启 recommendation-information migration branch；但不要把它伪装成 R5.5 hotfix，也不要仅隐藏 `legacy` 文案。
 
 ## 7. 2026-08-22 实战验证
 
@@ -318,8 +363,10 @@ A4.5 cache: debug/shadow only
 B4 DynamicPlayerWorldSetShadow: isolated shadow only
 ZDD_DEVICE_VALIDATED: NOT AUTHORIZED
 R5.5: CLOSED / MERGED
-R6 prerequisite: P1.2 / P1.3 PASS; P1.1 remains required before multi-night production reasoning
+R6 P1 semantic prerequisites: P1.1 / P1.2 / P1.3 PASS / CLOSED
+Production VerifiedExact Grimoire producer cutover: NOT AUTHORIZED / NOT YET WIRED
 Production Global timeline cutover: NOT AUTHORIZED / NOT YET WIRED
+Production historically time-aware multi-night Possible Worlds: NOT AUTHORIZED
 ```
 
 任何后续优化或重构都不能：
@@ -334,7 +381,8 @@ Production Global timeline cutover: NOT AUTHORIZED / NOT YET WIRED
 - 为 No Greater Joy 新建第二套 catalog/flow framework；
 - 重新引入第二套 production flow-order authority；
 - 静默把旧 save 解释为最新同名 content；
-- 从 legacy local sequence 猜测或补造 global timeline identity。
+- 从 legacy local sequence 猜测或补造 global timeline identity；
+- 从 legacy Grimoire、空 reminder list、UI label 或普通 `GameState` 猜测 `VERIFIED_EXACT` physical truth。
 
 ## 9. GitHub / CI 开发策略
 
@@ -361,15 +409,17 @@ R2 structural verifier
 
 ## 10. 历史证据与参考
 
-R5.5 详细过程保留在：
+R5.5 / R6 详细过程保留在：
 
 - `r5_5_multiscript_progress_handoff_2026-08-20.md` — **历史过程文档**；其中“当前 S1.3 / PR Draft / do not merge”等措辞已经过期；
 - `r5_5_stage_close_known_limitations_2026-08-21.md` — **R5.5 最终收尾与已知限制**；
 - `多剧本多板子与动态游戏流程架构设计_v1.md` — 长期架构规范；
 - `phase_a_exit_review_2026-08-20.md` — Phase A correctness exit；
 - `CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md` — recommendation / knowledge 主设计；
+- `r6_p1_1_closeout_2026-08-21.md` — P1.1 Spy Grimoire truth semantic exit evidence；
 - `r6_p1_2_closeout_2026-08-21.md` — P1.2 timeline identity semantic exit evidence；
-- `r6_p1_3_closeout_2026-08-21.md` — P1.3 knowledge-safe world-builder / knowledge-construction exit evidence。
+- `r6_p1_3_closeout_2026-08-21.md` — P1.3 knowledge-safe world-builder / knowledge-construction exit evidence；
+- `NEXT_DEVELOPMENT_HANDOFF_2026-08-21.md` — 当前下一会话交接。
 
 ### R5.5 关键验证基线
 
@@ -393,6 +443,21 @@ CI #222 SUCCESS / R2 #217 SUCCESS
 
 R5.5 merge commit:
 7add8569e2484a350f6cf1512a730e9f4db469c5
+```
+
+### R6 P1.1 关键验证基线
+
+```text
+R6.16 explicit physical Grimoire truth / PR #20 merge:
+1a2b1852c77473e525535377afe70186da26700e
+
+R6.17 audited reminder filtering + Legacy/Verified provenance / PR #21 merge:
+f77338bc85ae4a81b7e54e456b430e2f7f35c51a
+
+PR #21 final head:
+8324d688e97395952ce47eb8fd9fdbee97362e23
+R2 / Android / ASP / Real Clingo: PASS
+Review P1 resolved
 ```
 
 ### R6 P1.2 关键验证基线
