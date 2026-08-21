@@ -25,11 +25,13 @@ internal data class ClocktowerNightCheckpoint(
     val pendingNewDemonName: String?,
     val pendingNightNewDemonIdentityName: String? = null,
     val demonSuccessorDraftTarget: String?,
+    val nextTimelineGlobalSequence: Long = 0L,
 ) {
     init {
         require(round > 0)
         require(gameStateRevision >= 0 && playerInputRevision >= 0)
         require(nightStepIndex >= 0)
+        require(nextTimelineGlobalSequence >= 0) { "nextTimelineGlobalSequence cannot be negative." }
     }
 
     fun persistedValues(): Map<String, Any?> = mapOf(
@@ -50,9 +52,12 @@ internal data class ClocktowerNightCheckpoint(
         "clocktowerPendingNewDemonName" to pendingNewDemonName,
         "clocktowerPendingNightNewDemonIdentityName" to pendingNightNewDemonIdentityName,
         "clocktowerDemonSuccessorTarget" to demonSuccessorDraftTarget,
+        "clocktowerNextTimelineGlobalSequence" to nextTimelineGlobalSequence,
     )
 
     companion object {
+        private const val TIMELINE_CURSOR_KEY = "clocktowerNextTimelineGlobalSequence"
+
         fun fromPersistedValues(values: Map<String, Any?>): ClocktowerNightCheckpoint = ClocktowerNightCheckpoint(
             phaseName = values.string("clocktowerPhase") ?: "FirstNight",
             round = values.int("round")?.coerceAtLeast(1) ?: 1,
@@ -75,7 +80,19 @@ internal data class ClocktowerNightCheckpoint(
             pendingNewDemonName = values.string("clocktowerPendingNewDemonName"),
             pendingNightNewDemonIdentityName = values.string("clocktowerPendingNightNewDemonIdentityName"),
             demonSuccessorDraftTarget = values.string("clocktowerDemonSuccessorTarget"),
+            nextTimelineGlobalSequence = values.timelineCursor(),
         )
+
+        private fun Map<String, Any?>.timelineCursor(): Long {
+            if (!containsKey(TIMELINE_CURSOR_KEY)) return 0L
+            val raw = this[TIMELINE_CURSOR_KEY]
+            require(raw is Number) {
+                "$TIMELINE_CURSOR_KEY must be an integer number when present."
+            }
+            return requireNotNull(raw.toString().toLongOrNull()) {
+                "$TIMELINE_CURSOR_KEY must be an integer Long value when present."
+            }
+        }
 
         private fun Map<String, Any?>.string(key: String): String? = this[key] as? String
         private fun Map<String, Any?>.int(key: String): Int? = (this[key] as? Number)?.toInt()
