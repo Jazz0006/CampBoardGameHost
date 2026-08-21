@@ -126,7 +126,12 @@ object EpistemicSemanticJson {
                     "seat" to seat.seat,
                 )
             },
-        )
+        ) + grimoireTruthBindingFields(value.truthBinding)
+    }
+
+    private fun grimoireTruthBindingFields(value: GrimoireTruthBinding): Map<String, Any?> = when (value) {
+        GrimoireTruthBinding.LEGACY_DISPLAY_ONLY -> emptyMap()
+        GrimoireTruthBinding.VERIFIED_EXACT -> mapOf("truthBinding" to "verified-exact")
     }
 
     private fun grimoireReminderToken(value: GrimoireReminderTokenRef): Map<String, Any?> = mapOf(
@@ -319,8 +324,22 @@ object EpistemicSemanticJson {
         "not" -> InformationProposition.Not(proposition(json.getJSONObject("proposition")))
         "numeric-result" -> InformationProposition.NumericResult(NumericMetric.valueOf(json.getString("metric")), json.getInt("sourceSeat"), json.getJSONArray("subjectSeats").ints(), json.getInt("value"))
         "boolean-result" -> InformationProposition.BooleanResult(BooleanMetric.valueOf(json.getString("metric")), json.getInt("sourceSeat"), json.getJSONArray("subjectSeats").ints(), json.getBoolean("value"))
-        "grimoire-state" -> InformationProposition.GrimoireState(json.getJSONArray("seats").objects().map(::grimoireSeatView))
+        "grimoire-state" -> InformationProposition.GrimoireState(
+            seats = json.getJSONArray("seats").objects().map(::grimoireSeatView),
+            truthBinding = grimoireTruthBinding(json),
+        )
         else -> error("Unknown InformationProposition kind: ${json.getString("kind")}")
+    }
+
+    private fun grimoireTruthBinding(json: JSONObject): GrimoireTruthBinding {
+        if (!json.has("truthBinding")) return GrimoireTruthBinding.LEGACY_DISPLAY_ONLY
+        require(!json.isNull("truthBinding")) {
+            "Grimoire truthBinding cannot be null when present."
+        }
+        return when (val binding = json.getString("truthBinding")) {
+            "verified-exact" -> GrimoireTruthBinding.VERIFIED_EXACT
+            else -> throw IllegalArgumentException("Unknown Grimoire truthBinding: $binding")
+        }
     }
 
     private fun grimoireSeatView(json: JSONObject): GrimoireSeatView {
