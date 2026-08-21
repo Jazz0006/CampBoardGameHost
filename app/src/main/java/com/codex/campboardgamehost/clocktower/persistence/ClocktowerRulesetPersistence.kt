@@ -67,11 +67,28 @@ internal object TroubleBrewingRulesetPersistence {
         )
     }
 
+    /**
+     * Transitional compile shim for the still-large App restore block.
+     * Active-game schema v1/v2 are rejected before this branch can run.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun resolveLegacyBasisForRestore(
+        knowledge: RulesetKnowledge,
+        assignedRoleIds: List<RoleId>,
+        persistedRef: RulesetRef?,
+    ): ClocktowerRulesetPersistenceBasis = throw IllegalStateException(
+        "Legacy active-game saves are unsupported by schema v3.",
+    )
+
     fun resolveForRestore(
         knowledge: RulesetKnowledge,
         persistedRef: RulesetRef?,
         basis: ClocktowerRulesetPersistenceBasis,
+        allowLegacyFallback: Boolean = false,
     ): RulesetRef {
+        require(!allowLegacyFallback) {
+            "Legacy Trouble Brewing restore is unsupported by active-game schema v3."
+        }
         val expected = refFor(knowledge, basis)
         require(persistedRef != null) {
             "Version 3 Trouble Brewing save is missing its ruleset reference."
