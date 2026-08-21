@@ -78,6 +78,9 @@ class KnowledgeSafeWorldInputTest {
         expectIllegalArgument("unsorted player seats") {
             KnowledgeSafeWorldInput(formal.snapshotId, formal.rulesetRef, listOf(2, 1, 3))
         }
+        expectIllegalArgument("noncontiguous player seats") {
+            KnowledgeSafeWorldInput(formal.snapshotId, formal.rulesetRef, listOf(2, 3, 4, 5, 6))
+        }
     }
 
     @Test fun `safe input core validates recipient only against structural seats`() {
