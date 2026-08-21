@@ -50,7 +50,7 @@ class EpistemicSemanticModelTest {
 
     @Test fun `schema v2 roots and A1_1 values round trip canonically`() {
         val query = RegistrationQuery(
-            4, "ft-night-1-seat-4", TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 8), RoleId("Fortune Teller"),
+            4, "ft-night-1-seat-4", TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 8, 8), RoleId("Fortune Teller"),
             RegistrationQuestion.DEMON, RoleId("Imp"), CharacterType.DEMON, Alignment.EVIL,
         )
         val profile = RegistrationProfile(RoleId("Imp"), CharacterType.DEMON, Alignment.EVIL, RegistrationBasis.RECLUSE_ABILITY)
@@ -106,7 +106,7 @@ class EpistemicSemanticModelTest {
 
     @Test fun `registration capability is interaction scoped and selected fact stays bound to choice`() {
         val query = RegistrationQuery(
-            4, "ft-night-1-seat-4", TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 8), RoleId("Fortune Teller"),
+            4, "ft-night-1-seat-4", TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 8, 8), RoleId("Fortune Teller"),
             RegistrationQuestion.DEMON, RoleId("Imp"), CharacterType.DEMON, Alignment.EVIL,
         )
         val profiles = TroubleBrewingRegistrationSemantics.possibleRegistrations(state, query)
@@ -126,8 +126,43 @@ class EpistemicSemanticModelTest {
         val decoded = EpistemicSemanticJson.decodeLegalChoiceSet(EpistemicSemanticJson.encode(choiceSet))
         assertEquals(query.interactionId, decoded.choices.single().registrations.single().interactionId)
 
-        val otherInteraction = query.copy(interactionId = "ft-night-2-seat-4", timelinePoint = TimelinePoint(StorytellerPhase.NIGHT, 2, 4))
+        val otherInteraction = query.copy(
+            interactionId = "ft-night-2-seat-4",
+            timelinePoint = TimelinePoint(StorytellerPhase.NIGHT, 2, 4, 104),
+        )
         assertNotEquals(EpistemicSemanticJson.encode(query), EpistemicSemanticJson.encode(otherInteraction))
+    }
+
+    @Test fun `timeline identity and ordering use the global monotonic sequence`() {
+        val earlier = TimelinePoint(
+            phase = StorytellerPhase.DAY,
+            round = 2,
+            sequence = 99,
+            globalSequence = 40,
+        )
+        val later = TimelinePoint(
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = 0,
+            globalSequence = 41,
+        )
+
+        assertEquals(listOf(earlier, later), listOf(later, earlier).sorted())
+
+        val query = RegistrationQuery(
+            4,
+            "ft-night-2-seat-4",
+            later,
+            RoleId("Fortune Teller"),
+            RegistrationQuestion.DEMON,
+            RoleId("Imp"),
+            CharacterType.DEMON,
+            Alignment.EVIL,
+        )
+        val moved = query.copy(timelinePoint = later.copy(globalSequence = 42))
+
+        assertEquals(query, EpistemicSemanticJson.decodeRegistrationQuery(EpistemicSemanticJson.encode(query)))
+        assertNotEquals(EpistemicSemanticJson.encode(query), EpistemicSemanticJson.encode(moved))
     }
 
     @Test fun `red herring eligibility uses actual alignment not registration`() {
