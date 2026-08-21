@@ -308,15 +308,17 @@ internal object TroubleBrewingWorldObservationEvaluator {
     }
 
     /**
-     * Trouble Brewing has one mandatory Poisoner target each night. The current setup world model
-     * stores ordinary targets as MALFUNCTIONING_POISONED. If the target is already the Drunk, its
-     * single AbilityState remains MALFUNCTIONING_DRUNK, so the absence of another poisoned seat plus
-     * an in-play Drunk identifies that collapsed target without treating the printed token label as
-     * rule authority.
+     * Trouble Brewing has one mandatory Poisoner target each night while the Poisoner is alive. The
+     * current setup world model stores ordinary targets as MALFUNCTIONING_POISONED. If the target is
+     * already the Drunk, its single AbilityState remains MALFUNCTIONING_DRUNK, so the absence of
+     * another poisoned seat plus an alive, in-play Poisoner and an in-play Drunk identifies that
+     * collapsed target without treating the printed token label as rule authority.
      */
     private fun currentPoisonerTargetSeat(world: EnumeratedWorld): Int? {
-        val poisonerInPlay = world.rolesBySeat.values.any { it.value.equals("Poisoner", ignoreCase = true) }
-        if (!poisonerInPlay) return null
+        val poisonerSeat = world.rolesBySeat.entries.singleOrNull {
+            it.value.value.equals("Poisoner", ignoreCase = true)
+        }?.key ?: return null
+        if (poisonerSeat !in world.aliveSeats) return null
         val poisonedSeats = world.abilityStatesBySeat.filterValues {
             it == AbilityState.MALFUNCTIONING_POISONED
         }.keys
