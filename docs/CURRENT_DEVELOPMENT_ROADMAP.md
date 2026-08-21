@@ -7,6 +7,7 @@
 > 主架构规范：`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`  
 > 多剧本架构规范：`多剧本多板子与动态游戏流程架构设计_v1.md`  
 > R5.5 最终收尾：`r5_5_stage_close_known_limitations_2026-08-21.md`  
+> R6 P1.2 收尾：`r6_p1_2_closeout_2026-08-21.md`  
 > R6 P1.3 收尾：`r6_p1_3_closeout_2026-08-21.md`  
 > 历史 R5.5 交接：`r5_5_multiscript_progress_handoff_2026-08-20.md`（**仅历史参考，不得按其中 S1.3 / Draft PR 指令恢复开发**）  
 > Phase A 退出评审：`phase_a_exit_review_2026-08-20.md`
@@ -32,10 +33,10 @@ PR #2 merged to main
   ↓
 R6 P1 prerequisite hardening
   ↓
-P1.3 PASS; P1.1 / P1.2 remain OPEN
+P1.2 / P1.3 PASS; P1.1 remains OPEN
 ```
 
-**当前执行点（2026-08-21）：R6 / P1 IN PROGRESS — P1.3 PASS，P1.1 / P1.2 OPEN。**
+**当前执行点（2026-08-21）：R6 / P1 IN PROGRESS — P1.2 / P1.3 PASS，仅 P1.1 OPEN。**
 
 R5.5 的 production 目标已经完成：
 
@@ -48,7 +49,7 @@ R5.5 的 production 目标已经完成：
 - R5.5 最终文档 head `aae5b5198c605bbd00fa064b703bb237b2f21bb9`：CI #222 SUCCESS、R2 #217 SUCCESS；
 - PR #2 已合并，merge commit `7add8569e2484a350f6cf1512a730e9f4db469c5`。
 
-R6 已完成的 P1 hardening 包括 TimelinePoint/global allocator foundation、observation timeline migration seam、knowledge chronology，以及 P1.3 knowledge-safe input boundary；这些基础工作**尚未授权 production multi-night Possible Worlds**。
+R6 已完成 P1.2 timeline semantic prerequisite 与 P1.3 knowledge-safe input boundary；这些 PASS **仍不等于 production multi-night Possible Worlds 已获授权**。P1.1 Spy reminder-token truth boundary 仍 OPEN，且 production Host/Compose 尚未切换为从游戏开始即统一分配 Global timeline positions。
 
 **不要继续在 `codex/storyteller-algorithm-v4` 长分支上开发。下一次开发从最新 `main` 创建新 branch。**
 
@@ -73,9 +74,9 @@ R6 已完成的 P1 hardening 包括 TimelinePoint/global allocator foundation、
 | R5.5 S4 persistence/ruleset identity | PASS | schema v2 + explicit migration / fail-closed identity。 |
 | R5.5 S5 production cutover/regression | PASS | planner cutover、legacy flow authority removal、persistence regression、CI/R2。 |
 | **R5.5 release** | **CLOSED / MERGED** | PR #2 merged to `main`。 |
-| R6 P1.2 Observation timeline identity | IN PROGRESS | Global timeline foundation、allocator/restore、observation binding、knowledge chronology 已建立；ActionFact shared authority 与 time-aware replay migration 仍需收口。 |
+| **R6 P1.2 Timeline identity** | **PASS** | Global allocator/binding/persistence、ActionFact authority、A3/ZDD/B4 shared replay chronology 与 cross-type global uniqueness 已建立；production cutover 仍单独受保护。 |
 | **R6 P1.3 Actual truth vs safe input** | **PASS** | PR #7/#8 已将 world-builder 与 player-knowledge core 从完整 Formal truth 中隔离。 |
-| R6 revision-driven production expansion | P1 IN PROGRESS | 正式多夜 possible-world reasoning 仍被 P1.1 / P1.2 阻塞。 |
+| R6 revision-driven production expansion | P1 IN PROGRESS | 正式多夜 possible-world reasoning 仍被 P1.1 与 production Global timeline cutover guardline 阻塞。 |
 | Recommendation-information UI migration | DEFERRED / KNOWN LIMITATION | 不属于 R5.5 blocker；后续单独完成。 |
 | 2026-08-22 real-game field validation | PLANNED | 实战发现作为后续输入；只有核心 rules/flow/persistence/state defect 才重新打开 R5.5 correctness boundary。 |
 
@@ -178,27 +179,49 @@ information interaction
 
 `GrimoireState` 已包含 reminder tokens；正式使用 Spy perspective 前要确定哪些 token 属于 mechanical truth，并与 filtering/schema 承诺一致。
 
-### P1.2 Observation timeline identity — IN PROGRESS
+### P1.2 Timeline identity — PASS
 
-原始问题是部分 canonical order 依赖：
+P1.2 已完成 semantic prerequisite 收口。核心模型现在是：
 
 ```text
-round -> sequence -> id
+TimelinePoint(globalSequence)
+        ├── ActionFactTimeline
+        └── Global observation history
+                 ↓
+     shared chronology / uniqueness
+                 ↓
+       knowledge + A3/ZDD/B4
 ```
 
-R6 已完成：
+已成立的契约包括：
 
-- `TimelinePoint.globalSequence` 类型、ordering 与 JSON identity contract；
-- schema-v2 legacy TimelinePoint fail-closed compatibility hardening；
-- per-game global timeline allocator + restore contract；
-- durable observation 的 `LegacyLocal / Global(TimelinePoint)` migration seam；
-- Global observation log 的全局排序、duplicate/mixed-mode fail-closed；
-- player-knowledge chronology 保留 global ordering；
-- 当前 evaluator 仍 time-insensitive，因此 `globalSequence` 暂不进入 `PlayerWorldSetIdentity`，避免制造假的 time-aware cache contract。
+- `TimelinePoint.globalSequence` 是跨 phase / round 的唯一 ordering identity；
+- per-game allocator + restore cursor 已有持久化契约；
+- durable observations 显式区分 `LegacyLocal / Global(TimelinePoint)`；
+- Global observation log、player knowledge、A3、ZDD、B4 共用 chronology contract；
+- `ActionFact.sequence` 通过 `TimelineBoundActionFact` 显式绑定 `TimelinePoint.globalSequence`；
+- `FormalGameState` 显式区分 Legacy action payload 与 `Global(ActionFactTimeline)` persistence binding；
+- B4 materialized Formal state 保留 Global action binding；
+- action 与 observation histories 在 combined consumer 中不能共享同一 global position；
+- 非空 Global actions 与非空 LegacyLocal observations 不允许被偷偷拼接，因为没有可证明的 cross-type ordering；
+- timeline containers 防御 caller-owned mutable-list mutation；
+- A3/ZDD/B4 已移除会覆盖 Global chronology 的本地 `round -> sequence` replay sort。
 
-P1.2 **仍为 OPEN**，下一步重点不是重写 reducer，而是把已经全局唯一的 `ActionFact.sequence` 明确绑定到共享 TimelinePoint/global authority，并在未来引入 historically time-aware evaluation 前迁移 A3/ZDD/B4 的 legacy replay sort。
+当前 evaluator 仍 time-insensitive，因此 `globalSequence` **不进入** `PlayerWorldSetIdentity`，也不被无条件塞入 recommendation stable digests。未来一旦 historical timeline position 会改变 world constraints，必须 tests-first 重新审计 identity/cache/digest contract。
 
-入口与阶段文档见：
+#### Production cutover guardline
+
+P1.2 PASS **不是 production rollout claim**：
+
+- Production Host/Compose 尚未从游戏开始为所有 action/observation 使用 per-game Global allocator；
+- legacy/running games 继续保持 LegacyLocal，不允许猜测历史 global positions；
+- B4 仍是 isolated shadow；
+- A3 仍是 setup/first-night constructor，不是 historical-state engine；
+- 当前 evaluator 尚未 historically time-aware。
+
+完整退出证据：`r6_p1_2_closeout_2026-08-21.md`。
+
+入口与阶段历史文档仍保留：
 
 - `r6_p1_entry_audit_2026-08-21.md`；
 - `r6_p1_2_observation_timeline_handoff_2026-08-21.md`；
@@ -241,7 +264,7 @@ post-merge main
 → normal CI + R2
 ```
 
-**当前默认下一目标：继续 P1.2，tests-first 建立 ActionFact 与 shared global timeline authority 的绑定契约；仍不要提前接 production Host。**
+**当前默认下一目标：P1.1 Spy Grimoire reminder-token truth boundary。先定义哪些 reminder tokens 属于 mechanical truth、哪些只是 storyteller/UI annotation，再决定 Spy perspective/filtering/schema 承诺；仍不要提前接 production multi-night Possible Worlds。**
 
 R6 设计入口：
 
@@ -251,10 +274,10 @@ R6 设计入口：
 
 新会话直接执行：
 
-1. 确认 `main` head 包含 R5.5 merge `7add8569...`、P1.3 merge `19b91887...` / `8f5ccc55...` 以及后续 documentation commits；
+1. 确认 `main` head 包含 R5.5 merge `7add8569...`、P1.2 source close merge `ea78b8f4...`、P1.3 merge `19b91887...` / `8f5ccc55...` 以及后续 documentation commits；
 2. 读取本文件；
 3. 读取 `r5_5_stage_close_known_limitations_2026-08-21.md`；
-4. 如果继续 R6，优先读取 P1.2 阶段文档并从 ActionFact/shared timeline 最小 contract slice 继续；
+4. 如果继续 R6，读取 `r6_p1_2_closeout_2026-08-21.md` 后从 P1.1 reminder-token truth boundary 做最小 tests-first audit；
 5. 创建新的 development branch；
 6. 不再恢复 `codex/storyteller-algorithm-v4` 的 S1/S5 工作；
 7. 行为变更继续 tests-first / contract-first。
@@ -295,7 +318,8 @@ A4.5 cache: debug/shadow only
 B4 DynamicPlayerWorldSetShadow: isolated shadow only
 ZDD_DEVICE_VALIDATED: NOT AUTHORIZED
 R5.5: CLOSED / MERGED
-R6 prerequisite: P1.3 PASS; P1.1 / P1.2 still required before multi-night production reasoning
+R6 prerequisite: P1.2 / P1.3 PASS; P1.1 remains required before multi-night production reasoning
+Production Global timeline cutover: NOT AUTHORIZED / NOT YET WIRED
 ```
 
 任何后续优化或重构都不能：
@@ -309,7 +333,8 @@ R6 prerequisite: P1.3 PASS; P1.1 / P1.2 still required before multi-night produc
 - 以 JSON 内容化为名把复杂规则变成未经验证的通用 DSL；
 - 为 No Greater Joy 新建第二套 catalog/flow framework；
 - 重新引入第二套 production flow-order authority；
-- 静默把旧 save 解释为最新同名 content。
+- 静默把旧 save 解释为最新同名 content；
+- 从 legacy local sequence 猜测或补造 global timeline identity。
 
 ## 9. GitHub / CI 开发策略
 
@@ -343,6 +368,7 @@ R5.5 详细过程保留在：
 - `多剧本多板子与动态游戏流程架构设计_v1.md` — 长期架构规范；
 - `phase_a_exit_review_2026-08-20.md` — Phase A correctness exit；
 - `CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md` — recommendation / knowledge 主设计；
+- `r6_p1_2_closeout_2026-08-21.md` — P1.2 timeline identity semantic exit evidence；
 - `r6_p1_3_closeout_2026-08-21.md` — P1.3 knowledge-safe world-builder / knowledge-construction exit evidence。
 
 ### R5.5 关键验证基线
@@ -367,6 +393,31 @@ CI #222 SUCCESS / R2 #217 SUCCESS
 
 R5.5 merge commit:
 7add8569e2484a350f6cf1512a730e9f4db469c5
+```
+
+### R6 P1.2 关键验证基线
+
+```text
+R6.7 ActionFact timeline contract / PR #10:
+6c254edb7c5cd5d3c429eb59e4a9623a2e5397e5
+
+R6.8 B4 bound action timeline / PR #11:
+c7b53a8bc7f7d52a0940f8b148655f67c52d6e61
+
+R6.9 B4 observation chronology / PR #12:
+b1161470df6bca30dd2801511d72c75e090cdda1
+
+R6.10 Formal action timeline persistence / PR #13:
+45861ff6ca4ce4171fddfd88bb765aec82a4d2cb
+
+R6.11 B4 Formal Global binding / PR #14:
+32e136565096dc2bf92c1bdc1ab040aae03a931f
+
+R6.12 A3/ZDD shared replay chronology / PR #15:
+06122e45e894811b19f7e110a7654c765c2314df
+
+R6.13 cross-type timeline uniqueness / PR #16:
+ea78b8f4e31e56c10d21eb62a0fc6e6c2dbb5d0a
 ```
 
 ### R6 P1.3 关键验证基线
