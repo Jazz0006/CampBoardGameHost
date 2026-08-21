@@ -78,3 +78,26 @@ class ActionFactTimeline(
     private fun List<TimelineBoundActionFact>.canonical(): List<TimelineBoundActionFact> =
         sortedWith(compareBy<TimelineBoundActionFact>({ it.point.globalSequence }, { it.fact.actionId }))
 }
+
+/**
+ * Validates that independently persisted action and observation histories can coexist on one
+ * game-wide timeline. Empty histories need no cross-type ordering relation. Once both histories
+ * contain entries, observations must be globally bound and every global position must be unique
+ * across both event types; legacy local positions are never guessed into the global sequence.
+ */
+internal fun ActionFactTimeline.requireCompatibleWith(observationLog: EpistemicObservationLog) {
+    if (entries.isEmpty() || observationLog.records.isEmpty()) return
+
+    require(observationLog.records.first().timelineBinding is ObservationTimelineBinding.Global) {
+        "Globally bound actions cannot be combined with LegacyLocal observations; cross-type ordering cannot be inferred."
+    }
+
+    val actionSequences = entries.mapTo(linkedSetOf()) { it.point.globalSequence }
+    val observationSequences = observationLog.records.mapTo(linkedSetOf()) {
+        (it.timelineBinding as ObservationTimelineBinding.Global).point.globalSequence
+    }
+    val collisions = actionSequences intersect observationSequences
+    require(collisions.isEmpty()) {
+        "Action and observation timelines cannot share global timeline sequences: ${collisions.sorted().joinToString()}."
+    }
+}
