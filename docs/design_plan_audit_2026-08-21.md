@@ -2,6 +2,8 @@
 
 Date: 2026-08-21
 
+> **Historical-status note:** Sections 1–4 preserve the project state and findings at the time this audit was written. The post-P1 production-rollout entry audit was completed later on 2026-08-21; §5 records the reviewed dispositions. For the current execution point, always use `CURRENT_DEVELOPMENT_ROADMAP.md`.
+
 Scope: read-only audit of the design and development plan of **CampBoardGameHost** — an automatic Storyteller assistant for *Blood on the Clocktower* (血染钟楼) — based on all documents in `docs/` (+ `docs/archive/`), cross-checked against the source tree under `app/src/main/java/com/codex/campboardgamehost/clocktower/` and `tools/asp_oracle/`.
 
 This document records findings only. It does not change any status, spec, or code. `CURRENT_DEVELOPMENT_ROADMAP.md` remains the single status authority.
