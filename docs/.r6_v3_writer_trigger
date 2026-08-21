@@ -1,1 +1,2 @@
 temporary trigger for isolated v3-only trusted writer
+retrigger after writer workflow update
