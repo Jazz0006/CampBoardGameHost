@@ -61,6 +61,10 @@ internal fun Collection<EpistemicObservation>.canonicalTimelineOrder(): List<Epi
     }
 }
 
+/** Shared chronology consumed by exact A3, ZDD shadow, and future time-aware world replay. */
+internal fun PlayerKnowledgeSnapshot.worldReplayObservationsInTimelineOrder(): List<EpistemicObservation> =
+    (publicObservations + privateObservations).canonicalTimelineOrder()
+
 /**
  * A durable statement of information that was actually shown or publicly established in a game.
  *

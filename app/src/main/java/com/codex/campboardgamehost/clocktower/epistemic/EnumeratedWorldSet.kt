@@ -150,8 +150,7 @@ class EnumeratedWorldSet private constructor(
             knowledge.setupKnowledge.forEach { proposition ->
                 result = result.filterProposition(proposition)
             }
-            (knowledge.publicObservations + knowledge.privateObservations)
-                .sortedWith(compareBy<EpistemicObservation>({ it.round }, { it.sequence }, { it.observationId }))
+            knowledge.worldReplayObservationsInTimelineOrder()
                 .forEach { observation -> result = result.require(observation) }
             return result
         }
