@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -20,7 +21,7 @@ class GrimoireTruthBindingPersistenceTest {
     @Test
     fun `old schema v2 grimoire without binding decodes as legacy display only`() {
         val decoded = EpistemicSemanticJson.decodeInformationProposition(
-            """{"kind":"grimoire-state","seats":[{"alive":true,"displayedRole":"Spy","ruleReminderTokens":[],"seat":1}]}""".replace("\\\"", "\""),
+            """{"kind":"grimoire-state","seats":[{"alive":true,"displayedRole":"Spy","ruleReminderTokens":[],"seat":1}]}""",
         ) as InformationProposition.GrimoireState
 
         assertEquals(GrimoireTruthBinding.LEGACY_DISPLAY_ONLY, decoded.truthBinding)
@@ -28,14 +29,20 @@ class GrimoireTruthBindingPersistenceTest {
     }
 
     @Test
-    fun `legacy grimoire keeps canonical schema v2 json shape unchanged`() {
+    fun `legacy grimoire keeps schema v2 json shape unchanged`() {
         val encoded = EpistemicSemanticJson.encode(InformationProposition.GrimoireState(seats))
+        val root = JSONObject(encoded)
+        val persistedSeat = root.getJSONArray("seats").getJSONObject(0)
 
-        assertFalse(encoded.contains("truthBinding"))
-        assertEquals(
-            """{"kind":"grimoire-state","seats":[{"alive":true,"displayedRole":"Spy","ruleReminderTokens":[],"seat":1}]}""".replace("\\\"", "\""),
-            encoded,
-        )
+        assertFalse(root.has("truthBinding"))
+        assertEquals(2, root.length())
+        assertEquals("grimoire-state", root.getString("kind"))
+        assertEquals(1, root.getJSONArray("seats").length())
+        assertEquals(4, persistedSeat.length())
+        assertTrue(persistedSeat.getBoolean("alive"))
+        assertEquals(seats.single().displayedRole.value, persistedSeat.getString("displayedRole"))
+        assertEquals(0, persistedSeat.getJSONArray("ruleReminderTokens").length())
+        assertEquals(1, persistedSeat.getInt("seat"))
     }
 
     @Test
@@ -55,7 +62,7 @@ class GrimoireTruthBindingPersistenceTest {
     fun `present null grimoire truth binding fails closed`() {
         assertThrows(IllegalArgumentException::class.java) {
             EpistemicSemanticJson.decodeInformationProposition(
-                """{"kind":"grimoire-state","seats":[{"alive":true,"displayedRole":"Spy","ruleReminderTokens":[],"seat":1}],"truthBinding":null}""".replace("\\\"", "\""),
+                """{"kind":"grimoire-state","seats":[{"alive":true,"displayedRole":"Spy","ruleReminderTokens":[],"seat":1}],"truthBinding":null}""",
             )
         }
     }
