@@ -90,6 +90,11 @@ class ActiveGameSemanticHistoryProductionWiringTest {
                 "val restoredClocktowerEpistemicObservations = if (restoredGameKind == GameKind.Clocktower)",
             ),
         )
+        assertTrue(
+            restore.contains(
+                "clocktowerEpistemicObservations.addAll(restoredClocktowerEpistemicObservations)",
+            ),
+        )
     }
 
     @Test
