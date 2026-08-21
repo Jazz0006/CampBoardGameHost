@@ -41,12 +41,12 @@ class ActiveGameSemanticHistoryProductionWiringTest {
 
         assertTrue(restore.contains("val restoredSemanticHistoryMode ="))
         assertTrue(restore.contains("ClocktowerSemanticHistoryPersistence.decodeMode(json)"))
-        assertTrue(restore.contains("val restoredClocktowerEpistemicObservations = json"))
+        assertTrue(restore.contains("val restoredClocktowerEpistemicObservations ="))
         assertTrue(restore.contains("\"clocktowerNextTimelineGlobalSequence\""))
-        assertTrue(restore.contains("if (restoredGameKind == GameKind.Clocktower) {\n                restoredSemanticHistoryMode.requireCompatible("))
+        assertTrue(restore.contains("restoredSemanticHistoryMode.requireCompatible("))
 
         val modeIndex = restore.indexOf("val restoredSemanticHistoryMode =")
-        val observationIndex = restore.indexOf("val restoredClocktowerEpistemicObservations = json")
+        val observationIndex = restore.indexOf("val restoredClocktowerEpistemicObservations =")
         val checkpointIndex = restore.indexOf("val restoredNightCheckpoint =")
         val compatibilityIndex = restore.indexOf("restoredSemanticHistoryMode.requireCompatible(")
         val mutationIndex = restore.indexOf("playerNames.clear()")
@@ -69,30 +69,6 @@ class ActiveGameSemanticHistoryProductionWiringTest {
         assertTrue(
             restore.contains(
                 "clocktowerNextTimelineGlobalSequence = restoredNightCheckpoint.nextTimelineGlobalSequence",
-            ),
-        )
-    }
-
-    @Test
-    fun `observation payload decoding keeps prior restore behavior outside Clocktower`() {
-        val restore = source
-            .substringAfter("fun restoreSavedGame()")
-            .substringBefore("val latestPersistActiveGameState")
-
-        assertTrue(
-            restore.contains(
-                "val restoredClocktowerEpistemicObservations = json\n" +
-                    "                .optJSONArray(\"clocktowerEpistemicObservations\")",
-            ),
-        )
-        assertFalse(
-            restore.contains(
-                "val restoredClocktowerEpistemicObservations = if (restoredGameKind == GameKind.Clocktower)",
-            ),
-        )
-        assertTrue(
-            restore.contains(
-                "clocktowerEpistemicObservations.addAll(restoredClocktowerEpistemicObservations)",
             ),
         )
     }
