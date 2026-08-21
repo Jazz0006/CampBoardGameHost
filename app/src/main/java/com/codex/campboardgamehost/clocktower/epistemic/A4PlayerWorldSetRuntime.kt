@@ -5,8 +5,8 @@ import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 
 /**
- * Snapshot-facing A3/A4 entry point. It builds worlds from a player's declared knowledge and the
- * formal snapshot's structural identity only; it never copies actual roles from [FormalGameState].
+ * Snapshot-facing A3/A4 entry point. The construction core consumes only [KnowledgeSafeWorldInput]
+ * plus declared player knowledge; complete storyteller truth is projected away before enumeration.
  */
 class A4PlayerWorldSetRuntime(
     private val policy: A4WorldEngineRuntimePolicy = A4WorldEngineRuntimePolicy(),
@@ -28,28 +28,42 @@ class A4PlayerWorldSetRuntime(
         roleDefinitions,
     )
 
+    /** Compatibility adapter: formal storyteller truth crosses no further than this projection. */
     fun build(
         formal: FormalGameState,
         knowledge: PlayerKnowledgeSnapshot,
         hypothesis: EpistemicHypothesis,
         roleDefinitions: Collection<RoleDefinition>,
+    ): A4PlayerWorldSetBuild = build(
+        formal.toKnowledgeSafeWorldInput(),
+        knowledge,
+        hypothesis,
+        roleDefinitions,
+    )
+
+    /** Actual world-construction core. This API has no access to formal secret player fields. */
+    fun build(
+        input: KnowledgeSafeWorldInput,
+        knowledge: PlayerKnowledgeSnapshot,
+        hypothesis: EpistemicHypothesis,
+        roleDefinitions: Collection<RoleDefinition>,
     ): A4PlayerWorldSetBuild {
-        require(knowledge.formalSnapshotId == formal.snapshotId) {
+        require(knowledge.formalSnapshotId == input.formalSnapshotId) {
             "Player knowledge must be bound to the current formal snapshot."
         }
-        require(knowledge.recipientSeat in formal.players.map { it.seat }) {
-            "Player knowledge recipient must exist in the formal snapshot."
+        require(knowledge.recipientSeat in input.playerSeats) {
+            "Player knowledge recipient must exist in the knowledge-safe structural input."
         }
         val structuralKnowledge = knowledge.copy(
-            setupKnowledge = (knowledge.setupKnowledge + InformationProposition.PlayerCount(formal.players.size)).distinct(),
+            setupKnowledge = (knowledge.setupKnowledge + InformationProposition.PlayerCount(input.playerCount)).distinct(),
         )
         fun enumerated(): Timed<EnumeratedWorldSet> = timed {
-            TroubleBrewingWorldEnumerator.enumerate(formal.rulesetRef, structuralKnowledge, hypothesis, roleDefinitions)
+            TroubleBrewingWorldEnumerator.enumerate(input.rulesetRef, structuralKnowledge, hypothesis, roleDefinitions)
         }.also { measured ->
             record(A4WorldEngineOperation.BUILD, A4WorldSetRepresentation.ENUMERATED, measured.value, measured.elapsedMillis)
         }
         fun directZdd(): Timed<ZddPlayerWorldSet> = timed {
-            ZddPlayerWorldSet.enumerateDirect(formal.rulesetRef, structuralKnowledge, hypothesis, roleDefinitions)
+            ZddPlayerWorldSet.enumerateDirect(input.rulesetRef, structuralKnowledge, hypothesis, roleDefinitions)
         }.also { measured ->
             record(A4WorldEngineOperation.BUILD, A4WorldSetRepresentation.ZDD, measured.value, measured.elapsedMillis)
         }
@@ -83,7 +97,7 @@ class A4PlayerWorldSetRuntime(
         val formal = FormalGameState.from(snapshot, phase, round)
         return A4PlayerKnowledgeFactory.createAll(formal, perceivedRolesBySeat, observations, setupKnowledge)
             .associateBy(PlayerKnowledgeSnapshot::recipientSeat) { knowledge ->
-                build(formal, knowledge, hypothesis, roleDefinitions)
+                build(formal.toKnowledgeSafeWorldInput(), knowledge, hypothesis, roleDefinitions)
             }
     }
 
