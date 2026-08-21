@@ -195,6 +195,8 @@ import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.epistemic.ZddFilterStrategy
 import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
+import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
+import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 import com.codex.campboardgamehost.clocktower.rules.RegistrationInteractionRules
 import com.codex.campboardgamehost.clocktower.rules.RulesetContentHasher
 import com.codex.campboardgamehost.clocktower.rules.RulesetJsonLoader
@@ -261,6 +263,13 @@ internal data class PlayerCard(
     val clocktowerRole: ClocktowerRole? = null,
     val clocktowerShownRole: ClocktowerRole? = null,
     val eliminatedRound: Int? = null,
+)
+
+internal fun PlayerCard.abilitySubject(poisonTarget: String?): AbilitySubject = AbilitySubject(
+    actualRole = clocktowerRole?.enName,
+    shownRole = clocktowerShownRole?.enName,
+    isPoisoned = poisonTarget == name && eliminatedRound == null,
+    isAlive = eliminatedRound == null,
 )
 
 internal data class EliminationRecord(
@@ -2992,7 +3001,10 @@ internal fun CampBoardGameHostApp() {
                                     "",
                                 )
                             }
-                            if (executionName == null && aliveBeforeExecution.size == 3 && aliveBeforeExecution.any { it.clocktowerRole?.enName == "Mayor" }) {
+                            if (executionName == null && aliveBeforeExecution.size == 3 && aliveBeforeExecution.any {
+                                    AbilityFunctioningSemantics.functionsAs(it.abilitySubject(clocktowerConfirmedPoisonTarget), "Mayor")
+                                }
+                            ) {
                                 executionOutcome = GameOutcome(
                                     title = context.getString(R.string.outcome_clocktower_good_title),
                                     summary = context.getString(R.string.clocktower_outcome_mayor_summary),
@@ -3066,7 +3078,14 @@ internal fun CampBoardGameHostApp() {
                                 val index = cards.indexOfFirst { it.name == deathName }
                                 val nightDeathCard = cards.getOrNull(index)
                                 if (index >= 0 && nightDeathCard != null && nightDeathCard.eliminatedRound == null) {
-                                    val protectedByMonk = clocktowerConfirmedMonkProtectedTarget == deathName
+                                    val apparentMonk = cards.firstOrNull {
+                                        AbilityFunctioningSemantics.interactsAs(it.abilitySubject(clocktowerConfirmedPoisonTarget), "Monk")
+                                    }
+                                    val protectedByMonk = AbilityFunctioningSemantics.selectedMechanicalEffectApplies(
+                                        subject = apparentMonk?.abilitySubject(clocktowerConfirmedPoisonTarget),
+                                        role = "Monk",
+                                        selectionMatches = clocktowerConfirmedMonkProtectedTarget == deathName,
+                                    )
                                     val soldierPoisoned = clocktowerConfirmedPoisonTarget == deathName
                                     val protectedBySoldier = nightDeathCard.clocktowerRole?.enName == "Soldier" && !soldierPoisoned
                                     if (protectedByMonk || protectedBySoldier) {
@@ -3110,7 +3129,12 @@ internal fun CampBoardGameHostApp() {
                                             nightKlutzName = deathName
                                         }
                                     }
-                                    if (!protectedByMonk && !protectedBySoldier && nightDeathCard.clocktowerRole?.enName == "Ravenkeeper" && clocktowerRavenkeeperTarget != null) {
+                                    if (!protectedByMonk && !protectedBySoldier &&
+                                        AbilityFunctioningSemantics.interactsAs(
+                                            nightDeathCard.abilitySubject(clocktowerConfirmedPoisonTarget),
+                                            "Ravenkeeper",
+                                        ) && clocktowerRavenkeeperTarget != null
+                                    ) {
                                         records.add(
                                             EliminationRecord(
                                                 round,

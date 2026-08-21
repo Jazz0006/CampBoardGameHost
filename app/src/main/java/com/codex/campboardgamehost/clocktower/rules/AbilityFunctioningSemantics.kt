@@ -1,0 +1,41 @@
+package com.codex.campboardgamehost.clocktower.rules
+
+internal enum class AbilityFunctioningState {
+    FUNCTIONING,
+    DRUNK,
+    POISONED,
+}
+
+internal data class AbilitySubject(
+    val actualRole: String?,
+    val shownRole: String?,
+    val isPoisoned: Boolean,
+    val isAlive: Boolean,
+)
+
+/** Keeps simulated character identity separate from canonical ability effects. */
+internal object AbilityFunctioningSemantics {
+    fun perceivedRole(subject: AbilitySubject): String? =
+        if (subject.actualRole == "Drunk") subject.shownRole else subject.actualRole
+
+    fun interactsAs(subject: AbilitySubject, role: String): Boolean =
+        subject.isAlive && perceivedRole(subject) == role
+
+    fun stateFor(subject: AbilitySubject, role: String): AbilityFunctioningState? {
+        if (!interactsAs(subject, role)) return null
+        return when {
+            subject.isPoisoned -> AbilityFunctioningState.POISONED
+            subject.actualRole == "Drunk" -> AbilityFunctioningState.DRUNK
+            else -> AbilityFunctioningState.FUNCTIONING
+        }
+    }
+
+    fun functionsAs(subject: AbilitySubject, role: String): Boolean =
+        stateFor(subject, role) == AbilityFunctioningState.FUNCTIONING
+
+    fun selectedMechanicalEffectApplies(
+        subject: AbilitySubject?,
+        role: String,
+        selectionMatches: Boolean,
+    ): Boolean = selectionMatches && subject != null && functionsAs(subject, role)
+}
