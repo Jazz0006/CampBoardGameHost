@@ -93,21 +93,26 @@ data class RecordedEpistemicObservation(
         timelineBinding.requireReplayFieldsMatch(phase, round, sequence)
     }
 
-    fun bindTo(formal: FormalGameState): EpistemicObservation = EpistemicObservation(
-        observationId = SemanticStableId.create("observation", "$recordId|${formal.snapshotId}"),
-        snapshotId = formal.snapshotId,
-        phase = phase,
-        round = round,
-        sequence = sequence,
-        sourceSeat = sourceSeat,
-        sourceAbility = sourceAbility,
-        visibility = visibility,
-        recipientSeats = recipientSeats,
-        reliability = reliability,
-        proposition = proposition,
-        schemaVersion = schemaVersion,
-        timelineBinding = timelineBinding,
-    )
+    fun bindTo(formal: FormalGameState): EpistemicObservation = bindTo(formal.snapshotId)
+
+    fun bindTo(formalSnapshotId: String): EpistemicObservation {
+        require(formalSnapshotId.isNotBlank()) { "formalSnapshotId cannot be blank." }
+        return EpistemicObservation(
+            observationId = SemanticStableId.create("observation", "$recordId|$formalSnapshotId"),
+            snapshotId = formalSnapshotId,
+            phase = phase,
+            round = round,
+            sequence = sequence,
+            sourceSeat = sourceSeat,
+            sourceAbility = sourceAbility,
+            visibility = visibility,
+            recipientSeats = recipientSeats,
+            reliability = reliability,
+            proposition = proposition,
+            schemaVersion = schemaVersion,
+            timelineBinding = timelineBinding,
+        )
+    }
 }
 
 /** Immutable, ordered history of facts that players have actually received. */
@@ -154,7 +159,12 @@ data class EpistemicObservationLog(
         return copy(records = (records + record).canonical())
     }
 
-    fun bindTo(formal: FormalGameState): List<EpistemicObservation> = records.map { it.bindTo(formal) }
+    fun bindTo(formal: FormalGameState): List<EpistemicObservation> = bindTo(formal.snapshotId)
+
+    fun bindTo(formalSnapshotId: String): List<EpistemicObservation> {
+        require(formalSnapshotId.isNotBlank()) { "formalSnapshotId cannot be blank." }
+        return records.map { it.bindTo(formalSnapshotId) }
+    }
 
     private fun List<RecordedEpistemicObservation>.canonical(): List<RecordedEpistemicObservation> {
         if (isEmpty()) return this
