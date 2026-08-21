@@ -8,21 +8,30 @@
 
 ## 1. Current repository state
 
-This handoff was prepared against `main` before this docs-only commit:
+This handoff was originally prepared from the post-PR-#23 `main` baseline. Immediately before this integration-policy update:
 
-- `main`: `3db66482d9367c6b42a3f2550b979c28bfafea42`
+- `main`: `aab271be7dde9a659e6041abee59c50a558e61c9`
+  - contains this handoff document as a docs-only commit;
 - PR #24: **Draft / open**, `codex/r6-semantic-history-foundation`
+  - base: `main`
   - head: `cdd3d7d300379c4e4a31ee000453a168188d1537`
+  - contains production semantic-history / persistence work and does modify `CampBoardGameHostApp.kt`, but its App changes are concentrated around semantic-history state, save, restore, and reset;
 - PR #27: **Draft / open**, stacked on #24, `codex/r6-global-observation-cutover`
+  - base: `codex/r6-semantic-history-foundation`
   - head: `c4324c1e1e2e568c68171177d36c4cf664322895`
+  - current changed files are limited to global observation/session contracts, tests, and handoff documentation; production `CampBoardGameHostApp.kt` / `ClocktowerHostScreen.kt` wiring is still intentionally not implemented.
+
+Always query the live `main`, PR #24, and PR #27 heads before implementation because these values may advance after this document update.
 
 PR #24 and #27 are ongoing R6 semantic-history / global-observation work. This correctness hotfix must **not** be implemented inside either stacked PR.
 
-After this handoff file lands, create a new hotfix branch from the then-current `main`.
+Create a new hotfix branch from the then-current `main`.
 
 Recommended branch name:
 
 `codex/clocktower-drunk-poison-correctness-hotfix`
+
+This hotfix has **merge priority over unfinished expansionary R6 work** because it fixes confirmed production gameplay correctness defects found in real-game field testing.
 
 ---
 
@@ -417,19 +426,87 @@ If an unrelated defect is discovered, document it separately rather than expandi
 
 ---
 
-## 11. Relationship to current R6 work
+## 11. Integration with unfinished stacked R6 work
 
-PR #24 and #27 are intentionally stacked R6 semantic-history work.
+This section is authoritative for branch/merge ordering.
 
-This correctness repair should be developed from `main` on its own branch because:
+### 11.1 Development branch
 
-- it is a real rules correctness defect observed in field play;
-- it affects current production gameplay behavior;
-- it should not inherit semantic-history rollout risk;
-- it should be independently reviewable and mergeable;
-- once merged, the open R6 stack can be rebased/updated as appropriate.
+Develop this correctness repair from current `main` on a separate branch:
 
-Do not merge #24/#27 merely to obtain a place to implement this fix.
+```text
+main
+  └─ codex/clocktower-drunk-poison-correctness-hotfix
+```
+
+Do **not** base the hotfix on PR #24 or PR #27.
+
+Do **not** duplicate the same repair independently inside those R6 branches.
+
+### 11.2 Merge priority
+
+After tests and exact diff audit pass, this hotfix should be reviewed and merged to `main` **before expansionary production work continues on the stacked R6 branches**.
+
+Target sequence:
+
+```text
+current main
+   │
+   ├── Drunk/Poison correctness hotfix
+   │       │
+   │       └── merge to main
+   │
+   ▼
+updated main
+   │
+   └── integrate into PR #24 branch
+             │
+             ▼
+        validate PR #24
+             │
+             └── integrate updated #24 into PR #27 branch
+                         │
+                         ▼
+                    validate PR #27
+                         │
+                         └── resume #27 production wiring / later R6 work
+```
+
+### 11.3 Updating PR #24 after the hotfix merges
+
+PR #24 already contains a long tests-first history and modifies `CampBoardGameHostApp.kt`. Prefer a low-risk integration of the updated `main` into the PR #24 branch rather than rewriting history merely to obtain a linear graph.
+
+A merge of updated `main` into `codex/r6-semantic-history-foundation` is acceptable and is generally preferred if rebasing the long stack would create unnecessary risk.
+
+Resolve any conflict semantically:
+
+- preserve the hotfix's gameplay correctness behavior;
+- preserve #24's semantic-history/persistence behavior;
+- do not let one side silently revert the other;
+- rerun the relevant local tests after integration.
+
+The current #24 App patch is primarily in semantic-history state, save, restore, and reset, so direct semantic overlap with the Drunk/Poison resolution work is expected to be limited even though the same large file may be touched.
+
+### 11.4 Updating PR #27 after #24 is current
+
+PR #27 is intentionally stacked on #24. After #24 contains the merged hotfix baseline, integrate the updated #24 branch into `codex/r6-global-observation-cutover`.
+
+Do not independently merge old `main` into #27 in a way that bypasses its #24 dependency.
+
+Then rerun the relevant local tests and continue #27 from that updated stacked base.
+
+### 11.5 What Work must not do
+
+Work/Codex must not:
+
+- merge #24/#27 early merely to unblock this correctness fix;
+- implement the hotfix directly on #24 or #27;
+- reimplement the same hotfix a second time after it has merged to `main`;
+- continue #27 production App/Host wiring before the hotfix branch boundary and integration plan are understood;
+- discard #24/#27 changes because they are not yet merged;
+- force a history rewrite if a simple merge safely preserves both lines of work.
+
+The goal is to preserve all unfinished R6 work while allowing the confirmed gameplay defect to reach `main` independently and first.
 
 ---
 
@@ -449,13 +526,15 @@ Before considering the hotfix complete:
 
 GitHub Actions may currently be quota-blocked; do not treat pre-runner `steps=null` failures as valid red/green evidence. Local executable test evidence remains required.
 
+After the hotfix is explicitly approved and merged, branch-integration validation for #24 and #27 is a separate follow-up step; do not silently perform those merges as part of the hotfix implementation unless explicitly instructed.
+
 ---
 
 ## 13. Suggested Work/Codex startup instruction
 
 Use this as the first implementation prompt:
 
-> Read `docs/R6_DRUNK_POISON_CORRECTNESS_HOTFIX_HANDOFF_2026-08-22.md`. Audit the current `Jazz0006/CampBoardGameHost` `main` and confirm the live head and open PR state before changing code. Create a separate correctness-hotfix branch from current `main`. Strictly tests-first, implement the Drunk/Poisoned perceived-role vs ability-functioning contract described in the handoff. Do not mix this work into PR #24/#27 and do not modify misinformation tuning, history UI, balance tuning, or unrelated R6 work. Prefer one coherent semantic seam over scattered role-specific Drunk checks. Run local tests and perform an exact diff audit before stopping; do not merge unless explicitly instructed.
+> Read `docs/R6_DRUNK_POISON_CORRECTNESS_HOTFIX_HANDOFF_2026-08-22.md`. Audit the current `Jazz0006/CampBoardGameHost` live `main`, PR #24, and PR #27 heads before changing code. The unfinished R6 work must be preserved: #24 is the semantic-history foundation and #27 is stacked on #24. Create a separate correctness-hotfix branch from current `main`; do not implement this repair inside #24/#27. Strictly tests-first, implement the Drunk/Poisoned perceived-role vs ability-functioning contract described in the handoff. Prefer one coherent semantic seam over scattered role-specific Drunk checks. Do not modify misinformation tuning, history UI, balance tuning, or unrelated R6 work. Run local tests and perform an exact diff audit. Stop before merge unless explicitly instructed. After the hotfix is later approved and merged to `main`, the required integration order is updated `main` -> #24 branch -> #27 branch -> resume later R6 production wiring.
 
 ---
 
