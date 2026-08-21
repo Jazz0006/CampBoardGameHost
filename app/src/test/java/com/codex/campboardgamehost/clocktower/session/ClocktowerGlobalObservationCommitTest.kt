@@ -7,6 +7,7 @@ import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
@@ -194,10 +195,10 @@ class ClocktowerGlobalObservationCommitTest {
             recipientSeats = setOf(1),
             reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
             proposition = InformationProposition.NumericResult(
-                metric = com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.ADJACENT_EVIL_PAIRS,
-                sourceSeat = 1,
-                relevantSeats = (1..8).toList(),
-                value = 1,
+                NumericMetric.ADJACENT_EVIL_PAIRS,
+                1,
+                (1..8).toList(),
+                1,
             ),
         )
 
