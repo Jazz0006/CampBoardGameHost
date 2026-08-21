@@ -57,6 +57,19 @@ class GrimoireReminderTokenBoundaryTest {
         assertEquals(2, seat.reminderTokens.size)
     }
 
+    @Test fun `same physical reminder token cannot appear on two grimoire seats`() {
+        val token = poisoner.grimoireReminderToken(GrimoireReminderTokenScope.CHARACTER, occurrence = 1)
+
+        assertThrows(IllegalArgumentException::class.java) {
+            InformationProposition.GrimoireState(
+                listOf(
+                    GrimoireSeatView(1, RoleId("Investigator"), true, listOf(token)),
+                    GrimoireSeatView(2, RoleId("Spy"), true, listOf(token)),
+                ),
+            )
+        }
+    }
+
     @Test fun `typed rule-backed reminder tokens round trip canonically in spy grimoire`() {
         val token = poisoner.grimoireReminderToken(GrimoireReminderTokenScope.CHARACTER, occurrence = 1)
         val grimoire = InformationProposition.GrimoireState(
