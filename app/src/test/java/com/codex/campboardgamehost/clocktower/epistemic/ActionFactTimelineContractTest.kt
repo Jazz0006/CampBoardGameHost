@@ -61,6 +61,19 @@ class ActionFactTimelineContractTest {
         }
     }
 
+    @Test fun `action timeline defensively copies caller owned entries`() {
+        val first = bound(ActionFact.Poison("first", 4L, 2), StorytellerPhase.FIRST_NIGHT, 1, 8)
+        val injected = bound(ActionFact.Death("injected", 5L, 3), StorytellerPhase.DAY, 1, 0)
+        val callerOwned = mutableListOf(first)
+        val timeline = ActionFactTimeline(callerOwned)
+
+        callerOwned += injected
+        callerOwned.clear()
+
+        assertEquals(listOf("first"), timeline.entries.map { it.fact.actionId })
+        assertEquals(listOf(4L), timeline.reducerFacts().map(ActionFact::sequence))
+    }
+
     @Test fun `append canonicalizes by global timeline across phase and local resets`() {
         val firstNight = bound(
             ActionFact.Poison("first-night-poison", 40L, 2),
