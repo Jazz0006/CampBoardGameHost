@@ -11,6 +11,7 @@ import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import java.util.Collections
 
 /** Stable schema marker for persisted A1/A1.1 semantic objects. */
 const val EPISTEMIC_SCHEMA_VERSION: Int = 2
@@ -27,7 +28,7 @@ data class FormalPlayerState(
     init { require(seat > 0) { "seat must be positive." } }
 }
 
-data class FormalGameState(
+class FormalGameState(
     val snapshotId: String,
     val gameId: String,
     val gameStateRevision: Long,
@@ -38,9 +39,14 @@ data class FormalGameState(
     val publicPropositions: List<InformationProposition> = emptyList(),
     val storytellerOnlyPropositions: List<InformationProposition> = emptyList(),
     /** Ordered mechanical history used only by the B4 shadow timeline. */
-    val timeline: List<ActionFact> = emptyList(),
+    timeline: List<ActionFact> = emptyList(),
     val schemaVersion: Int = EPISTEMIC_SCHEMA_VERSION,
+    /** Explicitly distinguishes legacy raw action sequences from globally bound TimelinePoints. */
+    val actionTimelineBinding: FormalActionTimelineBinding = FormalActionTimelineBinding.Legacy,
 ) {
+    /** Defensive immutable snapshot; caller-owned mutable collections cannot rewrite validated history. */
+    val timeline: List<ActionFact> = Collections.unmodifiableList(timeline.toList())
+
     init {
         requireSchemaVersion(schemaVersion)
         require(snapshotId.isNotBlank()) { "snapshotId cannot be blank." }
@@ -53,13 +59,96 @@ data class FormalGameState(
         require((publicPropositions + storytellerOnlyPropositions).all { seats.containsAll(it.referencedSeats()) }) {
             "Every proposition seat must exist in the formal state."
         }
-        require(timeline.map(ActionFact::actionId).distinct().size == timeline.size) { "Timeline action IDs must be unique." }
-        require(timeline.map(ActionFact::sequence).distinct().size == timeline.size) { "Timeline action sequences must be unique." }
+        require(this.timeline.map(ActionFact::actionId).distinct().size == this.timeline.size) { "Timeline action IDs must be unique." }
+        require(this.timeline.map(ActionFact::sequence).distinct().size == this.timeline.size) { "Timeline action sequences must be unique." }
+        if (actionTimelineBinding is FormalActionTimelineBinding.Global) {
+            val canonicalFacts = this.timeline.sortedWith(compareBy<ActionFact>({ it.sequence }, { it.actionId }))
+            require(actionTimelineBinding.timeline.reducerFacts() == canonicalFacts) {
+                "Global formal action timeline binding must describe exactly the persisted action timeline."
+            }
+        }
     }
 
     fun eligibleRedHerringSeats(): Set<Int> = players
         .filter { it.actualAlignment == Alignment.GOOD }
         .mapTo(linkedSetOf()) { it.seat }
+
+    fun copy(
+        snapshotId: String = this.snapshotId,
+        gameId: String = this.gameId,
+        gameStateRevision: Long = this.gameStateRevision,
+        rulesetRef: RulesetRef = this.rulesetRef,
+        phase: StorytellerPhase = this.phase,
+        round: Int = this.round,
+        players: List<FormalPlayerState> = this.players,
+        publicPropositions: List<InformationProposition> = this.publicPropositions,
+        storytellerOnlyPropositions: List<InformationProposition> = this.storytellerOnlyPropositions,
+        timeline: List<ActionFact> = this.timeline,
+        schemaVersion: Int = this.schemaVersion,
+        actionTimelineBinding: FormalActionTimelineBinding = this.actionTimelineBinding,
+    ): FormalGameState = FormalGameState(
+        snapshotId = snapshotId,
+        gameId = gameId,
+        gameStateRevision = gameStateRevision,
+        rulesetRef = rulesetRef,
+        phase = phase,
+        round = round,
+        players = players,
+        publicPropositions = publicPropositions,
+        storytellerOnlyPropositions = storytellerOnlyPropositions,
+        timeline = timeline,
+        schemaVersion = schemaVersion,
+        actionTimelineBinding = actionTimelineBinding,
+    )
+
+    operator fun component1(): String = snapshotId
+    operator fun component2(): String = gameId
+    operator fun component3(): Long = gameStateRevision
+    operator fun component4(): RulesetRef = rulesetRef
+    operator fun component5(): StorytellerPhase = phase
+    operator fun component6(): Int = round
+    operator fun component7(): List<FormalPlayerState> = players
+    operator fun component8(): List<InformationProposition> = publicPropositions
+    operator fun component9(): List<InformationProposition> = storytellerOnlyPropositions
+    operator fun component10(): List<ActionFact> = timeline
+    operator fun component11(): Int = schemaVersion
+    operator fun component12(): FormalActionTimelineBinding = actionTimelineBinding
+
+    override fun equals(other: Any?): Boolean = other is FormalGameState &&
+        snapshotId == other.snapshotId &&
+        gameId == other.gameId &&
+        gameStateRevision == other.gameStateRevision &&
+        rulesetRef == other.rulesetRef &&
+        phase == other.phase &&
+        round == other.round &&
+        players == other.players &&
+        publicPropositions == other.publicPropositions &&
+        storytellerOnlyPropositions == other.storytellerOnlyPropositions &&
+        timeline == other.timeline &&
+        schemaVersion == other.schemaVersion &&
+        actionTimelineBinding == other.actionTimelineBinding
+
+    override fun hashCode(): Int {
+        var result = snapshotId.hashCode()
+        result = 31 * result + gameId.hashCode()
+        result = 31 * result + gameStateRevision.hashCode()
+        result = 31 * result + rulesetRef.hashCode()
+        result = 31 * result + phase.hashCode()
+        result = 31 * result + round
+        result = 31 * result + players.hashCode()
+        result = 31 * result + publicPropositions.hashCode()
+        result = 31 * result + storytellerOnlyPropositions.hashCode()
+        result = 31 * result + timeline.hashCode()
+        result = 31 * result + schemaVersion
+        result = 31 * result + actionTimelineBinding.hashCode()
+        return result
+    }
+
+    override fun toString(): String =
+        "FormalGameState(snapshotId=$snapshotId, gameId=$gameId, gameStateRevision=$gameStateRevision, " +
+            "rulesetRef=$rulesetRef, phase=$phase, round=$round, players=$players, " +
+            "publicPropositions=$publicPropositions, storytellerOnlyPropositions=$storytellerOnlyPropositions, " +
+            "timeline=$timeline, schemaVersion=$schemaVersion, actionTimelineBinding=$actionTimelineBinding)"
 
     companion object {
         fun from(
@@ -69,6 +158,7 @@ data class FormalGameState(
             publicPropositions: List<InformationProposition> = emptyList(),
             storytellerOnlyPropositions: List<InformationProposition> = emptyList(),
             timeline: List<ActionFact> = emptyList(),
+            actionTimelineBinding: FormalActionTimelineBinding = FormalActionTimelineBinding.Legacy,
         ): FormalGameState {
             val players = snapshot.gameState.players.map { player ->
                 FormalPlayerState(
@@ -106,6 +196,7 @@ data class FormalGameState(
                 publicPropositions = publicPropositions,
                 storytellerOnlyPropositions = storytellerOnlyPropositions,
                 timeline = timeline.sortedWith(compareBy<ActionFact>({ it.sequence }, { it.actionId })),
+                actionTimelineBinding = actionTimelineBinding,
             )
         }
     }
