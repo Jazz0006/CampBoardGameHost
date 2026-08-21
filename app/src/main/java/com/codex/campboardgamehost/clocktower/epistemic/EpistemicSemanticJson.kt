@@ -118,12 +118,23 @@ object EpistemicSemanticJson {
         is InformationProposition.BooleanResult -> mapOf("kind" to "boolean-result", "metric" to value.metric.name, "sourceSeat" to value.sourceSeat, "subjectSeats" to value.subjectSeats, "value" to value.value)
         is InformationProposition.GrimoireState -> mapOf(
             "kind" to "grimoire-state",
-            "seats" to value.seats.sortedBy { it.seat }.map {
-                mapOf("alive" to it.alive, "displayedRole" to it.displayedRole.value,
-                    "reminderTokens" to it.reminderTokens.sorted(), "seat" to it.seat)
+            "seats" to value.seats.sortedBy { it.seat }.map { seat ->
+                mapOf(
+                    "alive" to seat.alive,
+                    "displayedRole" to seat.displayedRole.value,
+                    "ruleReminderTokens" to seat.reminderTokens.sorted().map(::grimoireReminderToken),
+                    "seat" to seat.seat,
+                )
             },
         )
     }
+
+    private fun grimoireReminderToken(value: GrimoireReminderTokenRef): Map<String, Any?> = mapOf(
+        "label" to value.label,
+        "occurrence" to value.occurrence,
+        "scope" to value.scope.name,
+        "sourceRole" to value.sourceRole.value,
+    )
 
     private fun observation(value: EpistemicObservation): Map<String, Any?> = mapOf(
         "observationId" to value.observationId, "phase" to value.phase.name,
@@ -308,11 +319,40 @@ object EpistemicSemanticJson {
         "not" -> InformationProposition.Not(proposition(json.getJSONObject("proposition")))
         "numeric-result" -> InformationProposition.NumericResult(NumericMetric.valueOf(json.getString("metric")), json.getInt("sourceSeat"), json.getJSONArray("subjectSeats").ints(), json.getInt("value"))
         "boolean-result" -> InformationProposition.BooleanResult(BooleanMetric.valueOf(json.getString("metric")), json.getInt("sourceSeat"), json.getJSONArray("subjectSeats").ints(), json.getBoolean("value"))
-        "grimoire-state" -> InformationProposition.GrimoireState(json.getJSONArray("seats").objects().map {
-            GrimoireSeatView(it.getInt("seat"), RoleId(it.getString("displayedRole")), it.getBoolean("alive"), it.getJSONArray("reminderTokens").strings())
-        })
+        "grimoire-state" -> InformationProposition.GrimoireState(json.getJSONArray("seats").objects().map(::grimoireSeatView))
         else -> error("Unknown InformationProposition kind: ${json.getString("kind")}")
     }
+
+    private fun grimoireSeatView(json: JSONObject): GrimoireSeatView {
+        if (json.has("reminderTokens")) {
+            val legacy = json.getJSONArray("reminderTokens")
+            require(legacy.length() == 0) {
+                "Legacy schema-v2 Grimoire reminderTokens require explicit migration; raw token IDs cannot be inferred as rule-backed reminder-token identity."
+            }
+        }
+        val tokens = if (json.has("ruleReminderTokens")) {
+            json.getJSONArray("ruleReminderTokens").objects().map(::grimoireReminderToken)
+        } else {
+            emptyList()
+        }
+        return GrimoireSeatView(
+            seat = json.getInt("seat"),
+            displayedRole = RoleId(json.getString("displayedRole")),
+            alive = json.getBoolean("alive"),
+            reminderTokens = tokens,
+        )
+    }
+
+    private fun grimoireReminderToken(json: JSONObject): GrimoireReminderTokenRef = GrimoireReminderTokenRef(
+        sourceRole = RoleId(json.getString("sourceRole")),
+        scope = try {
+            GrimoireReminderTokenScope.valueOf(json.getString("scope"))
+        } catch (error: IllegalArgumentException) {
+            throw IllegalArgumentException("Unknown Grimoire reminder-token scope: ${json.getString("scope")}", error)
+        },
+        label = json.getString("label"),
+        occurrence = json.getInt("occurrence"),
+    )
 
     private fun observation(json: JSONObject): EpistemicObservation = EpistemicObservation(
         observationId = json.getString("observationId"), snapshotId = json.getString("snapshotId"),
