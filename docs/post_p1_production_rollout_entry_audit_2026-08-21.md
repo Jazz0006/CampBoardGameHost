@@ -39,7 +39,7 @@ Therefore the next production-rollout slice should **not** be Spy VerifiedExact,
 | Private observations | Host uses local `nightStepIndex` sequence | `TimelinePoint` + per-game allocator | LEGACY LOCAL |
 | Public observations | App uses `clocktowerEventCounter` | same shared allocator | LEGACY LOCAL |
 | Durable observation collection | mutable Compose/App list | `GameSnapshot.epistemicObservationLog` | PRODUCTION BYPASSES SESSION |
-| Global timeline cursor | not stored by current active-game production JSON | `GameSnapshot.nextTimelineGlobalSequence` | MISSING IN PRODUCTION PERSISTENCE |
+| Global timeline cursor | `ClocktowerNightCheckpoint.persistedValues()` already emits `clocktowerNextTimelineGlobalSequence`, but the production checkpoint constructor does not pass the live cursor and the restore map does not pass the JSON key back, so production effectively writes/restores the default `0` | `GameSnapshot.nextTimelineGlobalSequence` | EXISTING PERSISTENCE KEY / DISCONNECTED PRODUCTION WIRING |
 | Action timeline | no general production-owned formal action history | `ActionFactTimeline` / Global binding | SEMANTIC ONLY / SHADOW CONSUMERS |
 | A3 | exact enumerated correctness baseline | shared observation chronology support | NOT HISTORICAL STATE ENGINE |
 | ZDD | exact shadow/prototype | shared chronology/filtering seam | SHADOW ONLY |
@@ -63,7 +63,8 @@ Current production chronology is fragmented:
 - private recipient observations are recorded with local `nightStepIndex`;
 - public alive/death observations use `clocktowerEventCounter`;
 - observations are stored in an App/Compose mutable list;
-- production active-game JSON persists those observations and the event counter, but not the semantic allocator cursor or an explicit semantic-history mode.
+- active-game persistence already has the key `clocktowerNextTimelineGlobalSequence` through `ClocktowerNightCheckpoint.persistedValues()`, but production does not connect the live cursor into that checkpoint constructor and does not include the JSON key in the restore map, so the persisted/restored checkpoint cursor collapses to its default `0`;
+- there is still no explicit production semantic-history mode distinguishing LegacyLocal from a future Global-v1 game/session.
 
 By contrast, `ClocktowerGameSession` already owns the correct semantic primitives:
 
@@ -81,7 +82,7 @@ P1.2 also already provides safe timeline semantics:
 - Global action and observation positions share one uniqueness space;
 - no consumer is allowed to guess cross-type chronology from local phase/round sequences.
 
-**Decision:** production must migrate ownership to the existing session/global authority rather than inventing another counter or patching individual Host callbacks independently.
+**Decision:** production must migrate ownership to the existing session/global authority rather than inventing another counter or patching individual Host callbacks independently. The existing `clocktowerNextTimelineGlobalSequence` persistence key must be reused and correctly wired; do **not** add a second cursor representation.
 
 ## 5. Historical consumer readiness
 
@@ -120,18 +121,19 @@ Required contracts:
 1. Existing v1/v2 saves with no semantic-history mode restore as `LEGACY_LOCAL`.
 2. Never infer Global chronology from old local sequence data.
 3. `GLOBAL_V1` is explicit in persistence.
-4. Global mode durably owns/restores `nextTimelineGlobalSequence`.
-5. Restored Global cursor must be strictly beyond every committed global position.
-6. Global history containing a `LegacyLocal` observation fails closed.
-7. Unknown/null mode or incompatible mixed payload fails closed.
-8. The first foundation PR does not silently switch existing or newly created production games to Global; behavior remains unchanged until a later producer-cutover slice.
-9. No Spy truth, A3/ZDD/B4 authority, Host flow, Compose UI or recommendation UI changes are included.
+4. Reuse the existing `clocktowerNextTimelineGlobalSequence` checkpoint/JSON key as the single production cursor representation; wire the live cursor into checkpoint creation and include that key in restore mapping rather than adding a parallel field.
+5. Global mode durably owns/restores the cursor through that existing key and `GameSnapshot.nextTimelineGlobalSequence`.
+6. Restored Global cursor must be strictly beyond every committed global position.
+7. Global history containing a `LegacyLocal` observation fails closed.
+8. Unknown/null mode or incompatible mixed payload fails closed.
+9. The first foundation PR does not silently switch existing or newly created production games to Global; behavior remains unchanged until a later producer-cutover slice.
+10. No Spy truth, A3/ZDD/B4 authority, Host flow, Compose UI or recommendation UI changes are included.
 
 ## 7. Recommended rollout order after the foundation
 
 ```text
 1. Production Semantic-History Foundation
-   explicit mode + durable cursor/session ownership contract
+   explicit mode + reuse/fix existing durable cursor/session ownership contract
 
 2. New-game Global observation ownership cutover
    allocate/commit semantic observations through ClocktowerGameSession
@@ -172,6 +174,7 @@ Production historical multi-night Possible Worlds: NOT AUTHORIZED
 B4 production authority: NOT AUTHORIZED
 ZDD_DEVICE_VALIDATED: NOT AUTHORIZED
 Legacy saves -> Global by inference: FORBIDDEN
+Second/parallel timeline cursor persistence key: FORBIDDEN
 ```
 
 Do not broaden the first implementation slice to production Host/Compose.
