@@ -56,6 +56,8 @@ internal data class ClocktowerNightCheckpoint(
     )
 
     companion object {
+        private const val TIMELINE_CURSOR_KEY = "clocktowerNextTimelineGlobalSequence"
+
         fun fromPersistedValues(values: Map<String, Any?>): ClocktowerNightCheckpoint = ClocktowerNightCheckpoint(
             phaseName = values.string("clocktowerPhase") ?: "FirstNight",
             round = values.int("round")?.coerceAtLeast(1) ?: 1,
@@ -78,8 +80,19 @@ internal data class ClocktowerNightCheckpoint(
             pendingNewDemonName = values.string("clocktowerPendingNewDemonName"),
             pendingNightNewDemonIdentityName = values.string("clocktowerPendingNightNewDemonIdentityName"),
             demonSuccessorDraftTarget = values.string("clocktowerDemonSuccessorTarget"),
-            nextTimelineGlobalSequence = values.long("clocktowerNextTimelineGlobalSequence") ?: 0L,
+            nextTimelineGlobalSequence = values.timelineCursor(),
         )
+
+        private fun Map<String, Any?>.timelineCursor(): Long {
+            if (!containsKey(TIMELINE_CURSOR_KEY)) return 0L
+            val raw = this[TIMELINE_CURSOR_KEY]
+            require(raw is Number) {
+                "$TIMELINE_CURSOR_KEY must be an integer number when present."
+            }
+            return requireNotNull(raw.toString().toLongOrNull()) {
+                "$TIMELINE_CURSOR_KEY must be an integer Long value when present."
+            }
+        }
 
         private fun Map<String, Any?>.string(key: String): String? = this[key] as? String
         private fun Map<String, Any?>.int(key: String): Int? = (this[key] as? Number)?.toInt()
