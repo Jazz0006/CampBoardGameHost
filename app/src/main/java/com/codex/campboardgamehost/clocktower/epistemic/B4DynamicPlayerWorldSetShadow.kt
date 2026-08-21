@@ -92,7 +92,11 @@ data class B4ShadowRequest(
     val hypothesis: EpistemicHypothesis,
     val roleDefinitions: Collection<RoleDefinition>,
     val candidates: List<B4ShadowCandidate>,
-)
+) {
+    init {
+        actionTimeline.requireCompatibleWith(observationLog)
+    }
+}
 
 data class B4ShadowCandidate(val candidateId: String, val recipientSeat: Int, val observation: EpistemicObservation) {
     init { require(candidateId.isNotBlank() && recipientSeat > 0) }
