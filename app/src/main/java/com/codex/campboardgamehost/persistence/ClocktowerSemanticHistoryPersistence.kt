@@ -10,11 +10,11 @@ internal object ClocktowerSemanticHistoryPersistence {
     fun encode(mode: ClocktowerSemanticHistoryMode): String = mode.name
 
     fun decodeMode(json: JSONObject): ClocktowerSemanticHistoryMode {
-        if (!json.has(MODE_KEY)) return ClocktowerSemanticHistoryMode.LEGACY_LOCAL
-        require(!json.isNull(MODE_KEY)) { "$MODE_KEY cannot be null when present." }
+        require(json.has(MODE_KEY)) { "$MODE_KEY is required in active-game schema v3." }
+        require(!json.isNull(MODE_KEY)) { "$MODE_KEY cannot be null." }
         val raw = json.opt(MODE_KEY)
         require(raw is String && raw.isNotBlank()) {
-            "$MODE_KEY must be a non-blank string when present."
+            "$MODE_KEY must be a non-blank string."
         }
         return ClocktowerSemanticHistoryMode.values().firstOrNull { it.name == raw }
             ?: throw IllegalArgumentException("Unknown $MODE_KEY '$raw'.")
