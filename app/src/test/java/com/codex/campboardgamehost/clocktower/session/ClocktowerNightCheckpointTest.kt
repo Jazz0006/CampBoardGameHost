@@ -61,4 +61,17 @@ class ClocktowerNightCheckpointTest {
             // Expected: persisted global identity state is fail-closed.
         }
     }
+
+    @Test fun `present malformed persisted timeline cursor is rejected instead of treated as legacy`() {
+        try {
+            ClocktowerNightCheckpoint.fromPersistedValues(mapOf(
+                "clocktowerPhase" to "Night",
+                "round" to 2,
+                "clocktowerNextTimelineGlobalSequence" to "17",
+            ))
+            fail("present nonnumeric timeline cursor must be rejected")
+        } catch (_: IllegalArgumentException) {
+            // Expected: only an absent cursor is a legacy save.
+        }
+    }
 }
