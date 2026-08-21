@@ -209,8 +209,7 @@ class ZddPlayerWorldSet private constructor(
                 roles,
                 built.diagram,
             )
-            (knowledge.publicObservations + knowledge.privateObservations)
-                .sortedWith(compareBy<EpistemicObservation>({ it.round }, { it.sequence }, { it.observationId }))
+            knowledge.worldReplayObservationsInTimelineOrder()
                 .forEach { observation -> result = result.require(observation) }
             return A4MeasuredZddConstruction(result, built.metrics)
         }
