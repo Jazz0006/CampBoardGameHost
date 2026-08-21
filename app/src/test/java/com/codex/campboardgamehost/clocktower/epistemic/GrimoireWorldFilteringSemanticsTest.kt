@@ -196,6 +196,32 @@ class GrimoireWorldFilteringSemanticsTest {
     }
 
     @Test
+    fun `dead Poisoner has no current poisoned reminder requirement on a later night`() {
+        val world = EnumeratedWorld(
+            rolesBySeat = sortedMapOf(
+                1 to RoleId("Drunk"),
+                2 to RoleId("Poisoner"),
+                3 to RoleId("Spy"),
+            ),
+            aliveSeats = setOf(1, 3),
+            abilityStatesBySeat = mapOf(1 to AbilityState.MALFUNCTIONING_DRUNK),
+        )
+        val noPoisonedReminder = grimoire(
+            view(1, "Mayor", drunkToken()),
+            view(2, "Poisoner", alive = false),
+            view(3, "Spy"),
+        )
+        val stalePoisonedReminder = grimoire(
+            view(1, "Mayor", drunkToken(), poisonedToken()),
+            view(2, "Poisoner", alive = false),
+            view(3, "Spy"),
+        )
+
+        assertTrue(matches(world, noPoisonedReminder))
+        assertFalse(matches(world, stalePoisonedReminder))
+    }
+
+    @Test
     fun `visible but unmodelled reminder does not eliminate a mechanically matching world`() {
         val world = world(
             1 to "Empath",
@@ -227,10 +253,11 @@ class GrimoireWorldFilteringSemanticsTest {
         seat: Int,
         displayedRole: String,
         vararg tokens: GrimoireReminderTokenRef,
+        alive: Boolean = true,
     ): GrimoireSeatView = GrimoireSeatView(
         seat = seat,
         displayedRole = RoleId(displayedRole),
-        alive = true,
+        alive = alive,
         reminderTokens = tokens.sorted(),
     )
 
