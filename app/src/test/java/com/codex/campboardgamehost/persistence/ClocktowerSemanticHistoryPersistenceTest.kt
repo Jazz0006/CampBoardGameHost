@@ -8,11 +8,10 @@ import org.junit.Test
 
 class ClocktowerSemanticHistoryPersistenceTest {
     @Test
-    fun `missing semantic history mode restores as legacy local`() {
-        assertEquals(
-            ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
-            ClocktowerSemanticHistoryPersistence.decodeMode(JSONObject()),
-        )
+    fun `missing semantic history mode fails closed`() {
+        assertFails {
+            ClocktowerSemanticHistoryPersistence.decodeMode(JSONObject())
+        }
     }
 
     @Test
@@ -39,7 +38,7 @@ class ClocktowerSemanticHistoryPersistenceTest {
     }
 
     @Test
-    fun `explicit null or unknown semantic history mode fails closed`() {
+    fun `explicit null unknown or non-string semantic history mode fails closed`() {
         assertFails {
             ClocktowerSemanticHistoryPersistence.decodeMode(
                 JSONObject().put(ClocktowerSemanticHistoryPersistence.MODE_KEY, JSONObject.NULL),
