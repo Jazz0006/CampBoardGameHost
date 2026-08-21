@@ -14,11 +14,14 @@ data class GameSnapshot(
     val crossGameHistory: CrossGameHistory = CrossGameHistory(),
     /** Recipient-scoped facts already delivered during this game; actual roles are never inferred from it. */
     val epistemicObservationLog: EpistemicObservationLog = EpistemicObservationLog(),
+    /** Next game-wide monotonic identity reserved for a committed epistemic timeline point. */
+    val nextTimelineGlobalSequence: Long = 0L,
 ) {
     init {
         require(gameId.isNotBlank()) { "gameId cannot be blank." }
         require(gameStateRevision >= 0) { "gameStateRevision cannot be negative." }
         require(playerInputRevision >= 0) { "playerInputRevision cannot be negative." }
+        require(nextTimelineGlobalSequence >= 0) { "nextTimelineGlobalSequence cannot be negative." }
         require(gameSeed == gameState.seed) {
             "The persisted gameSeed must match the recommendation GameState seed."
         }
