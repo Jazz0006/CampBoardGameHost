@@ -126,6 +126,7 @@ class ActiveGameProductionPersistenceWiringTest {
             .substringAfter("fun restoreSavedGame()")
             .substringBefore("val latestPersistActiveGameState")
 
+        assertFalse(restore.contains("ActiveGamePersistenceCoordinator.LEGACY_VERSION"))
         assertFalse(restore.contains("allowLegacyClocktowerRulesetFallback"))
         assertFalse(restore.contains("resolveLegacyBasisForRestore("))
     }
