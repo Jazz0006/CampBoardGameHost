@@ -11,7 +11,7 @@ class ActiveGameProductionPersistenceWiringTest {
     ).readText(Charsets.UTF_8)
 
     @Test
-    fun `production active game schema is owned by the v2 persistence coordinator`() {
+    fun `production active game schema is owned by the v3 persistence coordinator`() {
         assertTrue(
             source.contains(
                 "private const val ACTIVE_GAME_STATE_VERSION = ActiveGamePersistenceCoordinator.CURRENT_VERSION",
@@ -108,32 +108,25 @@ class ActiveGameProductionPersistenceWiringTest {
     }
 
     @Test
-    fun `Trouble Brewing restore uses persisted immutable basis instead of mutable restored cards`() {
+    fun `Trouble Brewing v3 restore requires persisted immutable basis`() {
         val restore = source
             .substringAfter("fun restoreSavedGame()")
             .substringBefore("val latestPersistActiveGameState")
 
-        assertTrue(restore.contains("restoredPersistence.allowLegacyClocktowerRulesetFallback"))
         assertTrue(restore.contains("TroubleBrewingRulesetPersistence.resolveForRestore("))
-        assertTrue(restore.contains("Version 2 Clocktower save is missing ruleset role basis."))
+        assertTrue(restore.contains("Version 3 Clocktower save is missing ruleset role basis."))
         assertFalse(restore.contains("troubleBrewingRulesetRefFor(localizedRestoredCards)"))
         assertTrue(restore.contains("clocktowerRulesetRoleIds = restoredRulesetBasis?.roleIds.orEmpty()"))
         assertTrue(restore.contains("clocktowerRulesetRef = resolvedClocktowerRulesetRef"))
     }
 
     @Test
-    fun `legacy Trouble Brewing restore recovers original basis from old ref after role succession`() {
+    fun `production restore contains no legacy active-game migration path`() {
         val restore = source
             .substringAfter("fun restoreSavedGame()")
             .substringBefore("val latestPersistActiveGameState")
 
-        assertTrue(restore.contains("TroubleBrewingRulesetPersistence.resolveLegacyBasisForRestore("))
-        assertTrue(restore.contains("assignedRoleIds = restoredCards.map"))
-        assertTrue(restore.contains("persistedRef = restoredClocktowerRulesetRef"))
-        assertFalse(
-            restore.contains(
-                "ActiveGamePersistenceCoordinator.LEGACY_VERSION -> ClocktowerRulesetPersistenceBasis(",
-            ),
-        )
+        assertFalse(restore.contains("allowLegacyClocktowerRulesetFallback"))
+        assertFalse(restore.contains("resolveLegacyBasisForRestore("))
     }
 }
