@@ -212,6 +212,14 @@ internal fun ActionFact.b4CanonicalPayload(): String = when (this) {
     is ActionFact.PhaseAdvance -> "phase:$actionId:$sequence:${phase.name}:$round"
 }
 
+enum class GrimoireTruthBinding {
+    /** Legacy producers know only display-role/alive payloads and make no completeness claim for reminders. */
+    LEGACY_DISPLAY_ONLY,
+
+    /** Produced from an explicit complete physical-Grimoire truth snapshot. */
+    VERIFIED_EXACT,
+}
+
 sealed interface InformationProposition {
     data class RoleAt(val seat: Int, val role: RoleId) : InformationProposition { init { require(seat > 0) } }
     data class AlignmentAt(val seat: Int, val alignment: Alignment) : InformationProposition { init { require(seat > 0) } }
@@ -259,8 +267,11 @@ sealed interface InformationProposition {
         }
     }
 
-    /** Exact grimoire contents visible to the Spy at one wake interaction. */
-    class GrimoireState(seats: List<GrimoireSeatView>) : InformationProposition {
+    /** Grimoire contents visible to the Spy at one wake interaction, with explicit truth provenance. */
+    class GrimoireState(
+        seats: List<GrimoireSeatView>,
+        val truthBinding: GrimoireTruthBinding = GrimoireTruthBinding.LEGACY_DISPLAY_ONLY,
+    ) : InformationProposition {
         val seats: List<GrimoireSeatView> = Collections.unmodifiableList(seats.toList())
 
         init {
@@ -273,9 +284,12 @@ sealed interface InformationProposition {
             }
         }
 
-        override fun equals(other: Any?): Boolean = other is GrimoireState && seats == other.seats
-        override fun hashCode(): Int = seats.hashCode()
-        override fun toString(): String = "GrimoireState(seats=$seats)"
+        override fun equals(other: Any?): Boolean = other is GrimoireState &&
+            seats == other.seats && truthBinding == other.truthBinding
+
+        override fun hashCode(): Int = 31 * seats.hashCode() + truthBinding.hashCode()
+
+        override fun toString(): String = "GrimoireState(seats=$seats, truthBinding=$truthBinding)"
     }
 }
 
