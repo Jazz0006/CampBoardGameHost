@@ -26,12 +26,15 @@ internal class BuiltInClocktowerRulesetCatalog(
 
     private fun load(): Map<ClocktowerScript, ValidatedClocktowerRuleset> {
         val legacyKnowledge = RulesetJsonLoader.parse(readAsset("rules/trouble_brewing.json"))
-        val baseRegistry = LegacyRulesetCatalogAdapter.characterRegistry(
+        val legacyRegistry = LegacyRulesetCatalogAdapter.characterRegistry(
             knowledge = legacyKnowledge,
             roleDefinitions = clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
             coverage = RuleCoverage.PARTIAL,
         )
-        val noGreaterJoyRegistry = NoGreaterJoyOfficialCharacterMetadata.extend(baseRegistry)
+        val baseRegistry = OfficialReminderTokenMetadata.applyTo(legacyRegistry)
+        val noGreaterJoyRegistry = OfficialReminderTokenMetadata.applyTo(
+            NoGreaterJoyOfficialCharacterMetadata.extend(baseRegistry),
+        )
 
         fun loadScript(
             script: ClocktowerScript,

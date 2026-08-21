@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCharacterDefinition
+import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 
 /**
@@ -59,4 +60,20 @@ internal fun ClocktowerCharacterDefinition.grimoireReminderToken(
         label = declared[occurrence - 1],
         occurrence = occurrence,
     )
+}
+
+/**
+ * Resolve a Spy-visible reminder token only through the currently active validated ruleset.
+ * Off-script roles fail closed before token identity can be constructed.
+ */
+internal fun ValidatedClocktowerRuleset.grimoireReminderToken(
+    sourceRole: RoleId,
+    scope: GrimoireReminderTokenScope,
+    occurrence: Int,
+): GrimoireReminderTokenRef {
+    val character = characterRegistry.findByRoleId(sourceRole)
+        ?: throw IllegalArgumentException(
+            "Reminder token source role '${sourceRole.value}' is not present in active ruleset '${script.id.value}'.",
+        )
+    return character.grimoireReminderToken(scope, occurrence)
 }

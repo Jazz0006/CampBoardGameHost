@@ -209,14 +209,14 @@ internal object ClocktowerCatalogContentHasher {
                     append(",\"externalId\":${quoted(character.externalId)}")
                     append(",\"firstNight\":${canonicalNumber(character.firstNightOrder)}")
                     append(",\"firstNightReminder\":${quoted(character.firstNightReminder)}")
-                    append(",\"globalReminders\":[${character.globalReminders.sorted().joinToString(",") { quoted(it) }}]")
+                    append(",\"globalReminders\":[${character.globalReminders.joinToString(",") { quoted(it) }}]")
                     append(",\"id\":${quoted(character.id.value)}")
                     append(",\"jinxes\":[${character.jinxes.sortedBy { it.targetRoleId.value }.joinToString(",") { jinx ->
                         "{\"reason\":${quoted(jinx.reason)},\"target\":${quoted(jinx.targetRoleId.value)}}"
                     }}]")
                     append(",\"otherNight\":${canonicalNumber(character.otherNightOrder)}")
                     append(",\"otherNightReminder\":${quoted(character.otherNightReminder)}")
-                    append(",\"reminders\":[${character.reminders.sorted().joinToString(",") { quoted(it) }}]")
+                    append(",\"reminders\":[${character.reminders.joinToString(",") { quoted(it) }}]")
                     append(",\"semanticSourceHash\":${quoted(character.sourceSemanticHash ?: "")}")
                     append(",\"setup\":${character.setup}")
                     append(",\"special\":[${character.specialFeatures.sortedWith(compareBy<ClocktowerSpecialFeature> { it.type }.thenBy { it.name }.thenBy { it.time ?: "" }.thenBy { it.global ?: "" }.thenBy { it.value?.canonicalValue ?: "" }).joinToString(",") { feature ->
