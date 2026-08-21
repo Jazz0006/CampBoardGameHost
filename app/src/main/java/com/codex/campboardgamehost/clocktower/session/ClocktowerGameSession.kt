@@ -5,11 +5,21 @@ import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.domain.requireCompatible
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
+
+/** Transient result of one session-owned Global observation transition; never persisted as a second state model. */
+internal data class GlobalEpistemicObservationCommit(
+    val record: RecordedEpistemicObservation,
+    val observationLog: EpistemicObservationLog,
+    val nextTimelineGlobalSequence: Long,
+    val playerInputRevision: Long,
+)
 
 internal class ClocktowerGameSession private constructor(
     initialSnapshot: GameSnapshot,
@@ -43,41 +53,38 @@ internal class ClocktowerGameSession private constructor(
         round: Int,
         sequence: Int,
     ): TimelinePoint {
-        val point = nextTimelinePoint(phase, round, sequence)
+        val point = nextTimelinePoint(
+            phase = phase,
+            round = round,
+            sequence = sequence,
+            nextTimelineGlobalSequence = snapshot.nextTimelineGlobalSequence,
+        )
         snapshot = snapshot.copy(nextTimelineGlobalSequence = point.globalSequence + 1)
         return point
     }
 
-    /**
-     * Atomic authority for newly produced Global observations.
-     *
-     * The caller supplies an unbound draft. Timeline identity, durable binding, cursor advancement,
-     * and the player-input revision are committed together from the session snapshot.
-     */
+    /** Atomic instance authority for newly produced Global observations. */
     fun commitGlobalEpistemicObservation(draft: EpistemicObservationDraft): RecordedEpistemicObservation {
-        require(snapshot.semanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1) {
-            "Global observation commit requires GLOBAL_V1 semantic history."
-        }
-
-        snapshot.epistemicObservationLog.records.firstOrNull { it.recordId == draft.recordId }?.let { existing ->
-            require(draft.matches(existing)) {
-                "Observation record ID '${draft.recordId}' is already committed with different content."
-            }
-            require(existing.timelineBinding is ObservationTimelineBinding.Global) {
-                "GLOBAL_V1 history cannot reuse a LegacyLocal observation record ID."
-            }
-            return existing
-        }
-
-        val point = nextTimelinePoint(draft.phase, draft.round, draft.sequence)
-        val record = draft.bindGlobal(point)
-        val nextLog = snapshot.epistemicObservationLog.append(record)
-        snapshot = snapshot.copy(
-            playerInputRevision = snapshot.playerInputRevision + 1,
-            epistemicObservationLog = nextLog,
-            nextTimelineGlobalSequence = point.globalSequence + 1,
+        val committed = commitGlobalEpistemicObservation(
+            semanticHistoryMode = snapshot.semanticHistoryMode,
+            observationLog = snapshot.epistemicObservationLog,
+            nextTimelineGlobalSequence = snapshot.nextTimelineGlobalSequence,
+            playerInputRevision = snapshot.playerInputRevision,
+            draft = draft,
         )
-        return record
+        if (
+            committed.observationLog === snapshot.epistemicObservationLog &&
+            committed.nextTimelineGlobalSequence == snapshot.nextTimelineGlobalSequence &&
+            committed.playerInputRevision == snapshot.playerInputRevision
+        ) {
+            return committed.record
+        }
+        snapshot = snapshot.copy(
+            playerInputRevision = committed.playerInputRevision,
+            epistemicObservationLog = committed.observationLog,
+            nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
+        )
+        return committed.record
     }
 
     /** Records pre-cutover LegacyLocal information only; Global producers must use the draft API. */
@@ -100,22 +107,57 @@ internal class ClocktowerGameSession private constructor(
         return snapshot
     }
 
-    private fun nextTimelinePoint(
-        phase: StorytellerPhase,
-        round: Int,
-        sequence: Int,
-    ): TimelinePoint {
-        val globalSequence = snapshot.nextTimelineGlobalSequence
-        check(globalSequence != Long.MAX_VALUE) { "Timeline global sequence exhausted." }
-        return TimelinePoint(
-            phase = phase,
-            round = round,
-            sequence = sequence,
-            globalSequence = globalSequence,
-        )
-    }
-
     companion object {
+        /**
+         * Stateless session transition used by the production Compose adapter until the full game
+         * state is session-owned. It owns the same cursor/log/revision semantics as the instance API
+         * without requiring a synthetic RulesetRef for scripts whose advanced ruleset is not loaded.
+         */
+        fun commitGlobalEpistemicObservation(
+            semanticHistoryMode: ClocktowerSemanticHistoryMode,
+            observationLog: EpistemicObservationLog,
+            nextTimelineGlobalSequence: Long,
+            playerInputRevision: Long,
+            draft: EpistemicObservationDraft,
+        ): GlobalEpistemicObservationCommit {
+            require(semanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1) {
+                "Global observation commit requires GLOBAL_V1 semantic history."
+            }
+            require(playerInputRevision >= 0L) { "playerInputRevision cannot be negative." }
+            semanticHistoryMode.requireCompatible(observationLog, nextTimelineGlobalSequence)
+
+            observationLog.records.firstOrNull { it.recordId == draft.recordId }?.let { existing ->
+                require(draft.matches(existing)) {
+                    "Observation record ID '${draft.recordId}' is already committed with different content."
+                }
+                require(existing.timelineBinding is ObservationTimelineBinding.Global) {
+                    "GLOBAL_V1 history cannot reuse a LegacyLocal observation record ID."
+                }
+                return GlobalEpistemicObservationCommit(
+                    record = existing,
+                    observationLog = observationLog,
+                    nextTimelineGlobalSequence = nextTimelineGlobalSequence,
+                    playerInputRevision = playerInputRevision,
+                )
+            }
+
+            check(playerInputRevision != Long.MAX_VALUE) { "Player input revision exhausted." }
+            val point = nextTimelinePoint(
+                phase = draft.phase,
+                round = draft.round,
+                sequence = draft.sequence,
+                nextTimelineGlobalSequence = nextTimelineGlobalSequence,
+            )
+            val record = draft.bindGlobal(point)
+            val nextLog = observationLog.append(record)
+            return GlobalEpistemicObservationCommit(
+                record = record,
+                observationLog = nextLog,
+                nextTimelineGlobalSequence = point.globalSequence + 1,
+                playerInputRevision = playerInputRevision + 1,
+            )
+        }
+
         fun create(
             gameId: String,
             gameSeed: Long,
@@ -135,5 +177,21 @@ internal class ClocktowerGameSession private constructor(
         )
 
         fun restore(snapshot: GameSnapshot): ClocktowerGameSession = ClocktowerGameSession(snapshot)
+
+        private fun nextTimelinePoint(
+            phase: StorytellerPhase,
+            round: Int,
+            sequence: Int,
+            nextTimelineGlobalSequence: Long,
+        ): TimelinePoint {
+            require(nextTimelineGlobalSequence >= 0L) { "Timeline global sequence cannot be negative." }
+            check(nextTimelineGlobalSequence != Long.MAX_VALUE) { "Timeline global sequence exhausted." }
+            return TimelinePoint(
+                phase = phase,
+                round = round,
+                sequence = sequence,
+                globalSequence = nextTimelineGlobalSequence,
+            )
+        }
     }
 }
