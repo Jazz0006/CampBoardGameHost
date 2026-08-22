@@ -3,7 +3,7 @@ name: Temp R6 final review fixes writer v2
 on:
   pull_request:
     branches:
-      - main
+      - codex/r6-final-review-fixes-writer-temp
 
 permissions:
   contents: write
