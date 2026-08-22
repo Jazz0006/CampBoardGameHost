@@ -54,6 +54,8 @@ internal fun prepareEmpathNumberInformationUiModel(
     recommendationStyle: com.codex.campboardgamehost.clocktower.domain.RecommendationStyle,
     revision: InformationDecisionRevision,
     recommendedValue: Int?,
+    previousShownValue: Int? = null,
+    pressureCostPerPoint: Int = 0,
 ): StructuredNumberInformationUiModel {
     require(actorSeat > 0) { "Empath actor seat must be positive." }
     require(subjectSeats.all { it > 0 } && subjectSeats.distinct().size == subjectSeats.size) {
@@ -65,6 +67,8 @@ internal fun prepareEmpathNumberInformationUiModel(
                 trueValue = trueValue,
                 minimumValue = 0,
                 maximumValue = 2,
+                previousShownValue = previousShownValue?.takeIf { it in 0..2 },
+                pressureCostPerPoint = pressureCostPerPoint,
             ),
             generation = DynamicGenerationContext(
                 abilityRole = RoleId("Empath"),
@@ -75,7 +79,9 @@ internal fun prepareEmpathNumberInformationUiModel(
             ),
         ),
     )
-    val recommendedIds = recommendedValue?.let { value ->
+    val effectiveRecommendedValue = recommendedValue
+        ?: trueValue.takeIf { reliability == InformationReliability.RELIABLE }
+    val recommendedIds = effectiveRecommendedValue?.let { value ->
         evaluations
             .filter { it.candidate.outcome.value == value }
             .mapTo(linkedSetOf()) { it.candidate.candidateId }
