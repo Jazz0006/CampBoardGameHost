@@ -13,6 +13,7 @@ import com.codex.campboardgamehost.clocktower.domain.MurmurHash3
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.ImpairedTruthfulException
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SpecialRegistrationContext
@@ -121,6 +122,7 @@ internal class ClocktowerRecommendationCoordinator(
         history: CrossGameHistory = CrossGameHistory(),
         historicalSignatureOf: ((T) -> HistoricalClueSignature)? = null,
         selectionAudit: SelectionAuditContext? = null,
+        truthfulException: ImpairedTruthfulException? = null,
     ): T? = nightModule.selectInformation(
         options,
         reliability,
@@ -135,6 +137,7 @@ internal class ClocktowerRecommendationCoordinator(
         history,
         historicalSignatureOf,
         selectionAudit,
+        truthfulException,
     )
 
     fun resolveDynamicDecision(request: DynamicResolutionRequest): List<DynamicDecisionRecommendation> = when (request) {
