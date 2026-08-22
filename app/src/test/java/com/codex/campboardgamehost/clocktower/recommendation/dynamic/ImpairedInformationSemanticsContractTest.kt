@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.recommendation.dynamic
 
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -120,5 +121,26 @@ class ImpairedInformationSemanticsContractTest {
         assertEquals(0L, budget.truthfulMassFixedPoint)
         assertEquals(0L, budget.falseMassFixedPoint)
         assertEquals(ImpairedInformationPolicyReason.NO_LEGAL_TRUTHFUL_CANDIDATE, budget.reason)
+    }
+
+    @Test
+    fun `healthy selector refuses a false-only candidate pool`() {
+        data class Option(val id: String, val truthful: Boolean)
+        val falseOnly = Option("false-only", false)
+
+        val selected = DynamicCandidateGenerator.select(
+            options = listOf(falseOnly),
+            reliability = InformationReliability.RELIABLE,
+            style = RecommendationStyle.BALANCED,
+            evilAdvantage = 0,
+            stableKey = "healthy:false-only",
+            recentMisinformationStreak = 0,
+            stableIdOf = Option::id,
+            isTruthful = Option::truthful,
+            misinformationPressure = { 1 },
+            styleOf = { RecommendationStyle.BALANCED },
+        )
+
+        assertNull(selected)
     }
 }
