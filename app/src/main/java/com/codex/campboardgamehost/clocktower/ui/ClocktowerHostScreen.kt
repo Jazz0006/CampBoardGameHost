@@ -504,6 +504,7 @@ private data class ClocktowerNightStepUi(
     val roleEnName: String? = null,
     val informationReliability: InformationReliability = InformationReliability.RELIABLE,
     val recentMisinformationStreak: Int = 0,
+    val previousShownNumber: Int? = null,
     val selectedInformationTruthful: Boolean? = null,
     /** Confirmed Foundation draft; when present, the existing display path commits this exact draft. */
     val informationDecisionDraft: EpistemicObservationDraft? = null,
@@ -2155,6 +2156,7 @@ internal fun ClocktowerJudgeScreen(
         hostInstruction: String? = null,
         displayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         reliableDisplayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
+        previousShownNumber: Int? = null,
         spyRegistrationKey: String? = null,
         spyRegistrationTeams: List<ClocktowerTeam> = emptyList(),
         spyRegistrationDetail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,
@@ -2262,6 +2264,7 @@ internal fun ClocktowerJudgeScreen(
             roleEnName = enName,
             informationReliability = informationReliability,
             recentMisinformationStreak = recentMisinformationStreak(actor),
+            previousShownNumber = previousShownNumber,
             spyRegistrationKey = RegistrationInteractionRules.effectiveRegistrationKey(
                 spyRegistrationKey,
                 informationAbilityReliable = !actorAbilityUnreliable,
@@ -2700,6 +2703,10 @@ internal fun ClocktowerJudgeScreen(
                 explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
                 hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
                 displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, livingNeighbors(cards, actor.name).map { cards.indexOf(it) + 1 }, value) }) },
+                previousShownNumber = empathActor?.let { actor ->
+                    previousUnreliableNumber(text("共情者信息", "Empath information"), actor)
+                        ?.takeIf { it in 0..2 }
+                },
                 spyRegistrationKey = empathRegistrationKey,
                 spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
                 spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
@@ -6967,6 +6974,8 @@ private fun ClocktowerNightStepCardLocalized(
             recommendationStyle = if (automaticStorytellerInfo) automaticStorytellerStyle else RecommendationStyle.BALANCED,
             revision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
             recommendedValue = structuredEmpathRecommendedValue,
+            previousShownValue = step.previousShownNumber,
+            pressureCostPerPoint = 1,
         )
     } else {
         null
