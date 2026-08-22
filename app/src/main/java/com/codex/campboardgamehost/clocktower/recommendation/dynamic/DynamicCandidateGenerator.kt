@@ -69,6 +69,23 @@ internal object DynamicCandidateGenerator {
         else -> "malfunction-falsehood-role"
     }
 
+    /**
+     * Stable aggregate-safe explanation for the selected truth relation under a semantic budget.
+     * A truthful draw from the default impaired 3% allowance is distinguished from deterministic
+     * truthful exceptions such as no legal false candidate or avoiding obvious impairment.
+     */
+    fun selectionAuditReasonCode(
+        policyReason: ImpairedInformationPolicyReason,
+        selectedTruthful: Boolean,
+    ): String = when {
+        selectedTruthful && policyReason == ImpairedInformationPolicyReason.HEALTHY_TRUTH ->
+            "information.truth.healthy"
+        selectedTruthful && policyReason == ImpairedInformationPolicyReason.IMPAIRED_FALSE_PREFERRED ->
+            "impaired-information.truth.deliberate-uncertainty"
+        selectedTruthful -> "impaired-information.truth.${policyReason.auditSlug()}"
+        else -> "impaired-information.false.${policyReason.auditSlug()}"
+    }
+
     fun generateNumeric(
         numberContext: UnreliableNumberContext,
         context: DynamicGenerationContext,
@@ -255,6 +272,7 @@ internal object DynamicCandidateGenerator {
             decisionSeed = MurmurHash3.low64Utf8("$SELECTOR_VERSION|$stableKey$historyKey"),
         ) ?: return null
         selectionAudit?.let { audit ->
+            val selectedTruthful = selection.selected.candidate.truthRelation == TruthRelation.TRUE_TO_ACTUAL_STATE
             audit.recorder.recordPreview(
                 SelectionAuditRecord(
                     selectionId = audit.selectionId,
@@ -268,6 +286,12 @@ internal object DynamicCandidateGenerator {
                             qualityTier = evaluation.qualityTier,
                         )
                     },
+                    reasonCodes = setOf(
+                        selectionAuditReasonCode(
+                            policyReason = semanticBudget.reason,
+                            selectedTruthful = selectedTruthful,
+                        ),
+                    ),
                 ),
             )
         }
@@ -340,6 +364,8 @@ internal object DynamicCandidateGenerator {
             ),
         )
     }
+
+    private fun ImpairedInformationPolicyReason.auditSlug(): String = name.lowercase().replace('_', '-')
 
     private fun stableCandidateId(
         decisionType: String,
