@@ -2,8 +2,8 @@
 
 > 状态日期：2026-08-21  
 > 文档角色：**CURRENT / 当前状态唯一权威**  
-> 当前 `main` 基线：`3db66482d9367c6b42a3f2550b979c28bfafea42`  
-> 当前 source PR：#24 `R6: establish production semantic-history foundation`（Draft）  
+> 当前 `main` 基线：`3db66482d9367c6b42a3f2550b979c28bfafea42`
+> 当前 source PR：#24 `R6: establish production semantic-history foundation`（Draft）
 > 主架构规范：`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`  
 > 多剧本架构规范：`多剧本多板子与动态游戏流程架构设计_v1.md`  
 > Post-P1 production audit：`post_p1_production_rollout_entry_audit_2026-08-21.md`  

@@ -1,8 +1,8 @@
 # CampBoardGameHost 下一阶段开发交接 — 2026-08-21
 
 > 当前路线权威：`CURRENT_DEVELOPMENT_ROADMAP.md`  
-> 当前阶段：**Production Semantic-History Foundation IN PROGRESS / PR #24**  
-> 当前 branch：`codex/r6-semantic-history-foundation`  
+> 当前阶段：**Production Semantic-History Foundation IN PROGRESS / PR #24**
+> 当前 branch：`codex/r6-semantic-history-foundation`
 > 基线 `main`：`3db66482d9367c6b42a3f2550b979c28bfafea42`
 
 ## 1. 这次 foundation 的最新决策
