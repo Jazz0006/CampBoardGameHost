@@ -53,7 +53,29 @@ class ClocktowerGlobalObservationProductionWiringTest {
         assertTrue(commit.contains("clocktowerPlayerInputRevision = committed.playerInputRevision"))
         assertTrue(commit.contains("clocktowerNextTimelineGlobalSequence = committed.nextTimelineGlobalSequence"))
         assertTrue(commit.contains("clocktowerEpistemicObservations"))
-        assertFalse(commit.contains("advanceClocktowerPlayerInputRevision()"))
+    }
+
+    @Test
+    fun `restored legacy local games keep recording without entering global commit authority`() {
+        val commitStart = appSource.indexOf("fun recordEpistemicObservation(")
+        val eventStart = appSource.indexOf("fun addClocktowerEvent(")
+        assertTrue(commitStart >= 0)
+        assertTrue(eventStart > commitStart)
+
+        val commit = appSource.substring(commitStart, eventStart)
+        assertTrue(commit.contains("when (clocktowerSemanticHistoryMode)"))
+        assertTrue(commit.contains("ClocktowerSemanticHistoryMode.LEGACY_LOCAL ->"))
+        assertTrue(commit.contains("ClocktowerSemanticHistoryMode.GLOBAL_V1 ->"))
+
+        val legacyBranch = commit
+            .substringAfter("ClocktowerSemanticHistoryMode.LEGACY_LOCAL ->")
+            .substringBefore("ClocktowerSemanticHistoryMode.GLOBAL_V1 ->")
+        assertTrue(legacyBranch.contains("clocktowerEpistemicObservations.any { it.recordId == draft.recordId }"))
+        assertTrue(legacyBranch.contains("draft.bindLegacyLocal()"))
+        assertTrue(legacyBranch.contains("advanceClocktowerPlayerInputRevision()"))
+        assertTrue(legacyBranch.contains("a4ObservationDurabilityGate.markPending(draft.recordId)"))
+        assertFalse(legacyBranch.contains("commitGlobalEpistemicObservation"))
+        assertFalse(legacyBranch.contains("clocktowerNextTimelineGlobalSequence"))
     }
 
     @Test
