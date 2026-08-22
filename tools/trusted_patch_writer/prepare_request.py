@@ -11,10 +11,12 @@ import re
 import sys
 import urllib.request
 from pathlib import PurePosixPath
+from typing import NoReturn
 
 MARKER = "/trusted-patch-writer"
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
-MAX_PATCH_BYTES = 64 * 1024
+SAFE_PATH_RE = re.compile(r"^[A-Za-z0-9._/-]+$")
+MAX_PATCH_BYTES = 40 * 1024
 ALLOWED_KEYS = {
     "expected_head_sha",
     "target_path",
@@ -25,7 +27,7 @@ ALLOWED_KEYS = {
 }
 
 
-def fail(message: str) -> "NoReturn":
+def fail(message: str) -> NoReturn:
     raise SystemExit(f"trusted-patch-writer: {message}")
 
 
@@ -57,12 +59,16 @@ def parse_comment(body: str) -> dict[str, str]:
 
 
 def validate_path(raw: str) -> str:
+    if not raw or not SAFE_PATH_RE.fullmatch(raw):
+        fail("target_path contains unsupported characters")
     path = PurePosixPath(raw)
-    if path.is_absolute() or not raw or raw.startswith("/"):
+    if path.is_absolute() or raw.startswith("/"):
         fail("target_path must be repository-relative")
     if any(part in {"", ".", ".."} for part in path.parts):
         fail("target_path contains an unsafe path component")
     normalized = path.as_posix()
+    if normalized != raw:
+        fail("target_path must already be normalized")
     protected = (
         normalized == ".gitattributes"
         or normalized.startswith(".github/")
@@ -119,8 +125,8 @@ def main() -> int:
         fail("request must be made on a pull request conversation")
 
     values = parse_comment(comment.get("body") or "")
-    expected_head = values["expected_head_sha"].lower()
-    expected_blob = values["expected_blob_sha"].lower()
+    expected_head = values["expected_head_sha"]
+    expected_blob = values["expected_blob_sha"]
     if not SHA_RE.fullmatch(expected_head) or not SHA_RE.fullmatch(expected_blob):
         fail("expected_head_sha and expected_blob_sha must be full 40-character lowercase SHAs")
 
@@ -128,8 +134,13 @@ def main() -> int:
     test_profile = values["test_profile"]
     if test_profile not in {"android", "none"}:
         fail("test_profile must be android or none")
-    if target_path.startswith("app/src/main/") and test_profile != "android":
-        fail("production Android source requires test_profile=android")
+    android_validation_required = (
+        target_path.startswith("app/")
+        or target_path.startswith("gradle/")
+        or target_path in {"build.gradle.kts", "settings.gradle.kts", "gradle.properties"}
+    )
+    if android_validation_required and test_profile != "android":
+        fail("Android/build files require test_profile=android")
 
     commit_message = values["commit_message"]
     if not (1 <= len(commit_message) <= 120) or "\n" in commit_message or "\r" in commit_message:
