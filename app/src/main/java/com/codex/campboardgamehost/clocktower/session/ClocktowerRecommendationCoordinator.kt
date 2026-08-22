@@ -94,6 +94,10 @@ internal class ClocktowerRecommendationCoordinator(
 
     fun resolveInformation(request: InformationResolutionRequest) = nightModule.resolveInformation(request)
 
+    /** Typed UI-adapter seam; rules candidate generation remains owned by the recommendation/session layer. */
+    fun resolveNumberInformation(request: InformationResolutionRequest.Number) =
+        nightModule.resolveNumberInformation(request)
+
     /**
      * Recommendation and future structured-manual callers meet here before information can become
      * an observation draft. This method intentionally does not commit history or expose UI state.
