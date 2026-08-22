@@ -226,3 +226,5 @@ jobs:
           git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
           git commit -m "fix: close final global observation review gaps"
           git push origin HEAD:codex/r6-final-review-fixes-writer-temp
+
+# trigger writer after workflow registration
