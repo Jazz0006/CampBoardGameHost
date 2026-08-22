@@ -1,6 +1,9 @@
 package com.codex.campboardgamehost.clocktower.recommendation.dynamic
 
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -166,5 +169,65 @@ class ImpairedInformationSemanticsContractTest {
         )
 
         assertEquals(truth, selected)
+    }
+
+    @Test
+    fun `truthful exception reason survives into selection audit metadata`() {
+        data class Option(val id: String, val truthful: Boolean)
+        val truth = Option("truth", true)
+        val falsehood = Option("falsehood", false)
+        val recorder = SelectionDistributionTelemetryRecorder()
+        val dimensions = SelectionAuditDimensions(
+            playerCount = 8,
+            phase = StorytellerPhase.NIGHT,
+            style = RecommendationStyle.AGGRESSIVE,
+        )
+        val selectionId = "audit:poisoned:avoid-exposing-impairment"
+
+        val selected = ClocktowerRecommendationCoordinator().selectInformation(
+            options = listOf(truth, falsehood),
+            reliability = InformationReliability.POISONED,
+            style = RecommendationStyle.AGGRESSIVE,
+            evilAdvantage = 100,
+            stableKey = selectionId,
+            recentMisinformationStreak = 0,
+            stableIdOf = Option::id,
+            isTruthful = Option::truthful,
+            misinformationPressure = { if (it.truthful) 0 else 4 },
+            styleOf = { RecommendationStyle.AGGRESSIVE },
+            selectionAudit = SelectionAuditContext(selectionId, dimensions, recorder),
+            truthfulException = ImpairedTruthfulException.AVOID_EXPOSING_IMPAIRMENT,
+        )
+
+        assertEquals(truth, selected)
+        assertEquals(
+            setOf("impaired-information.truth.avoid-exposing-impairment"),
+            recorder.previewReasonCodes(selectionId, dimensions),
+        )
+    }
+
+    @Test
+    fun `truthful selection reason distinguishes all allowed exception families`() {
+        assertEquals(
+            "impaired-information.truth.deliberate-uncertainty",
+            DynamicCandidateGenerator.selectionAuditReasonCode(
+                ImpairedInformationPolicyReason.IMPAIRED_FALSE_PREFERRED,
+                selectedTruthful = true,
+            ),
+        )
+        assertEquals(
+            "impaired-information.truth.no-legal-false-candidate",
+            DynamicCandidateGenerator.selectionAuditReasonCode(
+                ImpairedInformationPolicyReason.NO_LEGAL_FALSE_CANDIDATE,
+                selectedTruthful = true,
+            ),
+        )
+        assertEquals(
+            "impaired-information.truth.avoid-exposing-impairment",
+            DynamicCandidateGenerator.selectionAuditReasonCode(
+                ImpairedInformationPolicyReason.AVOID_EXPOSING_IMPAIRMENT,
+                selectedTruthful = true,
+            ),
+        )
     }
 }
