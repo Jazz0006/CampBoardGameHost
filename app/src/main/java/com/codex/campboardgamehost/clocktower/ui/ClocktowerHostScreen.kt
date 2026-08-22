@@ -1,5 +1,8 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
+import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
+
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
@@ -919,23 +922,30 @@ internal fun ClocktowerJudgeScreen(
     val demonPoisonedTonight = poisonTarget?.let { name ->
         cards.firstOrNull { it.name == name && it.eliminatedRound == null }?.clocktowerTeam == ClocktowerTeam.Demon
     } == true
+    val functioningMonkProtection = cards.firstOrNull {
+        AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Monk")
+    }?.let {
+        AbilityFunctioningSemantics.functionsAs(it.abilitySubject(poisonTarget), "Monk")
+    } == true
     val mayorTarget = pendingNightDeath
-        ?.let { name -> cards.firstOrNull { it.name == name && it.eliminatedRound == null && it.clocktowerRole?.enName == "Mayor" } }
+        ?.let { name -> cards.firstOrNull {
+            it.name == name && AbilityFunctioningSemantics.functionsAs(it.abilitySubject(poisonTarget), "Mayor")
+        } }
     val mayorCanRedirect =
         mayorTarget != null &&
             !demonPoisonedTonight &&
             poisonTarget != mayorTarget.name &&
-            monkProtectedTarget != mayorTarget.name
+            !(functioningMonkProtection && monkProtectedTarget == mayorTarget.name)
     val resolvedNightDeathName = if (mayorCanRedirect && mayorRedirectTarget != null) mayorRedirectTarget else pendingNightDeath
     val resolvedNightDeathCard = resolvedNightDeathName?.let { name -> cards.firstOrNull { it.name == name } }
     val nightDeathWillOccur =
         resolvedNightDeathCard != null &&
             !demonPoisonedTonight &&
             resolvedNightDeathCard.eliminatedRound == null &&
-            resolvedNightDeathCard.name != monkProtectedTarget &&
+            !(functioningMonkProtection && resolvedNightDeathCard.name == monkProtectedTarget) &&
             !(resolvedNightDeathCard.clocktowerRole?.enName == "Soldier" && poisonTarget != resolvedNightDeathName)
     val ravenkeeperTrigger = resolvedNightDeathCard
-        ?.takeIf { nightDeathWillOccur && it.clocktowerRole?.enName == "Ravenkeeper" }
+        ?.takeIf { nightDeathWillOccur && AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Ravenkeeper") }
 
     val fortuneTellerRecluseRegistrationKey = recluseCard
         ?.takeIf { it.name == fortuneTellerFirst || it.name == fortuneTellerSecond }
@@ -1276,10 +1286,7 @@ internal fun ClocktowerJudgeScreen(
     }
 
     fun roleActor(enName: String): PlayerCard? =
-        cards.firstOrNull {
-            it.eliminatedRound == null &&
-                (it.clocktowerRole?.enName == enName || (it.clocktowerRole?.enName == "Drunk" && it.clocktowerShownRole?.enName == enName))
-        }
+        cards.firstOrNull { AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), enName) }
 
     fun roleMissingReason(enName: String): String {
         val roleCard = actualClocktowerRoleCards(cards, enName).firstOrNull()
@@ -1298,7 +1305,8 @@ internal fun ClocktowerJudgeScreen(
     fun stableIndex(key: String, size: Int): Int = if (size <= 0) 0 else Math.floorMod(key.hashCode(), size)
     fun actorIsPoisoned(actor: PlayerCard?): Boolean = actor != null && actor.eliminatedRound == null && poisonTarget == actor.name
     fun actorIsUnreliable(enName: String, actor: PlayerCard?): Boolean =
-        actor != null && ((actor.clocktowerRole?.enName == "Drunk" && actor.clocktowerShownRole?.enName == enName) || actorIsPoisoned(actor))
+        actor != null && AbilityFunctioningSemantics.stateFor(actor.abilitySubject(poisonTarget), enName) in
+            setOf(AbilityFunctioningState.DRUNK, AbilityFunctioningState.POISONED)
     fun orderedPair(first: PlayerCard?, second: PlayerCard?, key: String): Pair<PlayerCard, PlayerCard>? =
         if (first == null || second == null) null else if (stableIndex(key, 2) == 0) first to second else second to first
     fun seatNumberFor(card: PlayerCard): String = ((cards.indexOf(card) + 1).takeIf { it > 0 } ?: 0).toString()
@@ -2132,10 +2140,11 @@ internal fun ClocktowerJudgeScreen(
         val actor = roleActor(enName)
         val localizedRoleName = if (language == "en") enName else roleName
         val localizedDisplayTitle = displayTitle ?: text("$roleName 信息", "$enName information")
-        val actorIsDrunkShownRole = actor?.clocktowerRole?.enName == "Drunk" && actor.clocktowerShownRole?.enName == enName
-        val informationReliability = when {
-            actorIsPoisoned(actor) -> InformationReliability.POISONED
-            actorIsDrunkShownRole -> InformationReliability.DRUNK
+        val abilityState = actor?.let { AbilityFunctioningSemantics.stateFor(it.abilitySubject(poisonTarget), enName) }
+        val actorIsDrunkShownRole = abilityState == AbilityFunctioningState.DRUNK
+        val informationReliability = when (abilityState) {
+            AbilityFunctioningState.POISONED -> InformationReliability.POISONED
+            AbilityFunctioningState.DRUNK -> InformationReliability.DRUNK
             else -> InformationReliability.RELIABLE
         }
         val hostUnreliableNote = if (actorIsDrunkShownRole) {
@@ -2422,7 +2431,7 @@ internal fun ClocktowerJudgeScreen(
             !demonPoisonedTonight &&
             aliveCards.any { it.clocktowerTeam == ClocktowerTeam.Minion }
     val sageNightDeath = resolvedNightDeathCard
-        ?.takeIf { nightDeathWillOccur && it.clocktowerRole?.enName == "Sage" }
+        ?.takeIf { nightDeathWillOccur && AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Sage") }
     val sagePair = demonCard?.let { storytellerPairHint(it, cards) }
     val spyDelta: String? = run {
         if (spyCard == null || phase == ClocktowerPhase.FirstNight) return@run null
@@ -3277,8 +3286,12 @@ internal fun ClocktowerJudgeScreen(
     if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Nomination) {
         val nominatorCard = cards.firstOrNull { it.name == nominatorName }
         val nomineeCard = cards.firstOrNull { it.name == nomineeName }
-        val virginFirstNomination = nomineeCard?.clocktowerRole?.enName == "Virgin" && !virginUsed
-        val virginAbilityWorks = virginFirstNomination && poisonTarget != nomineeCard?.name
+        val virginFirstNomination = nomineeCard?.let {
+            AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Virgin")
+        } == true && !virginUsed
+        val virginAbilityWorks = nomineeCard?.let {
+            AbilityFunctioningSemantics.functionsAs(it.abilitySubject(poisonTarget), "Virgin")
+        } == true && virginFirstNomination
         val virginRegistrationKey = nominatorCard
             ?.takeIf { it.name == spyCard?.name && virginFirstNomination }
             ?.let { registrationKey("Virgin", it.name) }
@@ -4795,8 +4808,12 @@ internal fun ClocktowerJudgeScreen(
                     item {
                         val nominatorCard = cards.firstOrNull { it.name == nominatorName }
                         val nomineeCard = cards.firstOrNull { it.name == nomineeName }
-                        val virginFirstNomination = nomineeCard?.clocktowerRole?.enName == "Virgin" && !virginUsed
-                        val virginAbilityWorks = virginFirstNomination && poisonTarget != nomineeCard?.name
+                        val virginFirstNomination = nomineeCard?.let {
+                            AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Virgin")
+                        } == true && !virginUsed
+                        val virginAbilityWorks = nomineeCard?.let {
+                            AbilityFunctioningSemantics.functionsAs(it.abilitySubject(poisonTarget), "Virgin")
+                        } == true && virginFirstNomination
                         val virginRegistrationKey = nominatorCard?.takeIf { it.name == spyCard?.name && virginFirstNomination }?.let { registrationKey("Virgin", it.name) }
                         val virginExecutes = virginAbilityWorks && (nominatorCard?.clocktowerTeam == ClocktowerTeam.Townsfolk || spyRegistersGood(virginRegistrationKey))
                         HostScriptCard(
