@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.recommendation.dynamic
 
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -142,5 +143,28 @@ class ImpairedInformationSemanticsContractTest {
         )
 
         assertNull(selected)
+    }
+
+    @Test
+    fun `truthful exception propagates through coordinator selection seam`() {
+        data class Option(val id: String, val truthful: Boolean)
+        val truth = Option("truth", true)
+        val falsehood = Option("falsehood", false)
+
+        val selected = ClocktowerRecommendationCoordinator().selectInformation(
+            options = listOf(truth, falsehood),
+            reliability = InformationReliability.POISONED,
+            style = RecommendationStyle.AGGRESSIVE,
+            evilAdvantage = -100,
+            stableKey = "poisoned:avoid-exposing-impairment",
+            recentMisinformationStreak = 0,
+            stableIdOf = Option::id,
+            isTruthful = Option::truthful,
+            misinformationPressure = { if (it.truthful) 0 else 4 },
+            styleOf = { RecommendationStyle.AGGRESSIVE },
+            truthfulException = ImpairedTruthfulException.AVOID_EXPOSING_IMPAIRMENT,
+        )
+
+        assertEquals(truth, selected)
     }
 }
