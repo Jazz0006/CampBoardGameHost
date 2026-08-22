@@ -81,4 +81,44 @@ class ImpairedInformationSemanticsContractTest {
             }
         }
     }
+
+    @Test
+    fun `no legal false candidate produces an explicit truthful fallback budget`() {
+        val budget = ImpairedInformationPolicy.familyBudget(
+            reliability = InformationReliability.POISONED,
+            hasTruthfulCandidate = true,
+            hasFalseCandidate = false,
+        )
+
+        assertEquals(1_000_000L, budget.truthfulMassFixedPoint)
+        assertEquals(0L, budget.falseMassFixedPoint)
+        assertEquals(ImpairedInformationPolicyReason.NO_LEGAL_FALSE_CANDIDATE, budget.reason)
+    }
+
+    @Test
+    fun `avoid exposing impairment is an explicit truthful exception`() {
+        val budget = ImpairedInformationPolicy.familyBudget(
+            reliability = InformationReliability.DRUNK,
+            hasTruthfulCandidate = true,
+            hasFalseCandidate = true,
+            truthfulException = ImpairedTruthfulException.AVOID_EXPOSING_IMPAIRMENT,
+        )
+
+        assertEquals(1_000_000L, budget.truthfulMassFixedPoint)
+        assertEquals(0L, budget.falseMassFixedPoint)
+        assertEquals(ImpairedInformationPolicyReason.AVOID_EXPOSING_IMPAIRMENT, budget.reason)
+    }
+
+    @Test
+    fun `healthy information refuses a false-only candidate pool`() {
+        val budget = ImpairedInformationPolicy.familyBudget(
+            reliability = InformationReliability.RELIABLE,
+            hasTruthfulCandidate = false,
+            hasFalseCandidate = true,
+        )
+
+        assertEquals(0L, budget.truthfulMassFixedPoint)
+        assertEquals(0L, budget.falseMassFixedPoint)
+        assertEquals(ImpairedInformationPolicyReason.NO_LEGAL_TRUTHFUL_CANDIDATE, budget.reason)
+    }
 }
