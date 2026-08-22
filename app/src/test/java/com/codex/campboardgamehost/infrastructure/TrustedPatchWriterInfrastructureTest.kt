@@ -29,14 +29,16 @@ class TrustedPatchWriterInfrastructureTest {
     fun `trusted patch request parser keeps the write surface narrow`() {
         val source = repoFile("tools/trusted_patch_writer/prepare_request.py")
 
-        assertTrue(source.contains("MAX_PATCH_BYTES = 64 * 1024"))
+        assertTrue(source.contains("MAX_PATCH_BYTES = 40 * 1024"))
         assertTrue(source.contains("if key not in ALLOWED_KEYS:"))
         assertTrue(source.contains("if not owner or actor != owner:"))
         assertTrue(source.contains("if head_repo.get(\"full_name\") != repo_full_name:"))
         assertTrue(source.contains("if not target_branch or target_branch == default_branch:"))
         assertTrue(source.contains("normalized.startswith(\".github/\")"))
         assertTrue(source.contains("normalized.startswith(\"tools/trusted_patch_writer/\")"))
-        assertTrue(source.contains("if target_path.startswith(\"app/src/main/\") and test_profile != \"android\":"))
+        assertTrue(source.contains("target_path.startswith(\"app/\")"))
+        assertTrue(source.contains("target_path.startswith(\"gradle/\")"))
+        assertTrue(source.contains("\"gradle.properties\""))
         assertTrue(source.contains("base64.b64decode(values[\"patch_base64\"], validate=True)"))
         assertTrue(source.contains("patch_text.count(\"diff --git \") != 1"))
         assertTrue(source.contains("head.get(\"sha\") != expected_head"))
