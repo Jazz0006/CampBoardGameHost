@@ -217,27 +217,26 @@ internal object DynamicCandidateGenerator {
                 explanationCodes = listOf("selection.weighted-stable-random"),
             )
         }
-        val misleadingMass = misinformationMassFixedPoint(
-            reliability,
-            style,
-            evilAdvantage,
-            recentMisinformationStreak,
-            options.filterNot(isTruthful).minOfOrNull(misinformationPressure) ?: 0,
-        )
         val truthfulFamily = evaluations.firstOrNull {
             it.candidate.truthRelation == TruthRelation.TRUE_TO_ACTUAL_STATE
         }?.candidate?.candidateFamilyId
         val misleadingFamily = evaluations.firstOrNull {
             it.candidate.truthRelation == TruthRelation.FALSE_TO_ACTUAL_STATE
         }?.candidate?.candidateFamilyId
-        val massByFamily = when {
-            truthfulFamily == null -> mapOf(requireNotNull(misleadingFamily) to 1_000_000L)
-            misleadingFamily == null || reliability == InformationReliability.RELIABLE -> mapOf(truthfulFamily to 1_000_000L)
-            else -> mapOf(
-                truthfulFamily to 1_000_000L - misleadingMass,
-                misleadingFamily to misleadingMass,
-            ).filterValues { it > 0 }
+        val semanticBudget = ImpairedInformationPolicy.familyBudget(
+            reliability = reliability,
+            hasTruthfulCandidate = truthfulFamily != null,
+            hasFalseCandidate = misleadingFamily != null,
+        )
+        val massByFamily = mutableMapOf<String, Long>()
+        if (truthfulFamily != null && semanticBudget.truthfulMassFixedPoint > 0L) {
+            massByFamily[truthfulFamily] = semanticBudget.truthfulMassFixedPoint
         }
+        if (misleadingFamily != null && semanticBudget.falseMassFixedPoint > 0L) {
+            massByFamily[misleadingFamily] = semanticBudget.falseMassFixedPoint
+        }
+        if (massByFamily.isEmpty()) return null
+
         val activePool = evaluations.filter { (massByFamily[it.candidate.candidateFamilyId] ?: 0L) > 0L }
         val cooledPool = if (historicalSignatureOf == null || history.recentSignatures.isEmpty()) {
             activePool
