@@ -14,6 +14,8 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevisio
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionValidationResult
 import com.codex.campboardgamehost.clocktower.session.InformationResolutionRequest
+import java.nio.file.Files
+import java.nio.file.Path
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -114,6 +116,39 @@ class StructuredEmpathInformationAdapterTest {
     }
 
     @Test
+    fun `structured Empath confirmation records committed selection telemetry`() {
+        val source = hostScreenSource()
+        val panelBlock = source
+            .substringAfter("StructuredNumberInformationDecisionPanel(")
+            .substringBefore("\n            if (\n                structuredEmpathUiModel == null")
+
+        assertTrue(panelBlock.contains("recordCommittedSelection("))
+        assertTrue(panelBlock.contains("truthful = value == structuredEmpathTruthValue"))
+    }
+
+    @Test
+    fun `assisted impaired Empath derives recommendation from unreliable display options`() {
+        val source = hostScreenSource()
+        val recommendationBlock = source
+            .substringAfter("val structuredEmpathRecommendedOption =")
+            .substringBefore("val structuredEmpathRecommendedValue")
+
+        assertTrue(recommendationBlock.contains("step.displayOptions.firstOrNull { it.isDefaultRecommendation }"))
+    }
+
+    @Test
+    fun `later-night Empath step preserves previous unreliable number`() {
+        val source = hostScreenSource()
+        val firstEmpath = source.indexOf("enName = \"Empath\",")
+        val laterEmpath = source.indexOf("enName = \"Empath\",", firstEmpath + 1)
+        val laterChambermaid = source.indexOf("enName = \"Chambermaid\",", laterEmpath)
+        require(firstEmpath >= 0 && laterEmpath > firstEmpath && laterChambermaid > laterEmpath)
+        val laterEmpathBlock = source.substring(laterEmpath, laterChambermaid)
+
+        assertTrue(laterEmpathBlock.contains("previousShownNumber ="))
+    }
+
+    @Test
     fun `poisoned Empath accepted recommendation yields the exact unbound player-visible draft`() {
         val model = poisonedModel()
 
@@ -191,4 +226,15 @@ class StructuredEmpathInformationAdapterTest {
         revision = revision,
         recommendedValue = 2,
     )
+
+    private fun hostScreenSource(): String {
+        val relative = Path.of("src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt")
+        val fromRoot = Path.of("app").resolve(relative)
+        val path = when {
+            Files.exists(relative) -> relative
+            Files.exists(fromRoot) -> fromRoot
+            else -> error("ClocktowerHostScreen.kt source not found from ${Path.of("").toAbsolutePath()}")
+        }
+        return Files.readString(path)
+    }
 }
