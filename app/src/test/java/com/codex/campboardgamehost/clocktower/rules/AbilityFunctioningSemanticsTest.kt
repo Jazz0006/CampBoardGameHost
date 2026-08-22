@@ -54,7 +54,7 @@ class AbilityFunctioningSemanticsTest {
     }
 
     @Test
-    fun `committed or restored Monk selection is not itself canonical protection`() {
+    fun `committed Monk selection requires a functioning Monk to protect`() {
         assertTrue(
             AbilityFunctioningSemantics.selectedMechanicalEffectApplies(
                 subject("Monk"), "Monk", selectionMatches = true,

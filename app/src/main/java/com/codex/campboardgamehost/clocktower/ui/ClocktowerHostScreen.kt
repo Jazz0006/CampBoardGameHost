@@ -928,7 +928,9 @@ internal fun ClocktowerJudgeScreen(
         AbilityFunctioningSemantics.functionsAs(it.abilitySubject(poisonTarget), "Monk")
     } == true
     val mayorTarget = pendingNightDeath
-        ?.let { name -> cards.firstOrNull { it.name == name && it.eliminatedRound == null && it.clocktowerRole?.enName == "Mayor" } }
+        ?.let { name -> cards.firstOrNull {
+            it.name == name && AbilityFunctioningSemantics.functionsAs(it.abilitySubject(poisonTarget), "Mayor")
+        } }
     val mayorCanRedirect =
         mayorTarget != null &&
             !demonPoisonedTonight &&
@@ -3284,8 +3286,12 @@ internal fun ClocktowerJudgeScreen(
     if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Nomination) {
         val nominatorCard = cards.firstOrNull { it.name == nominatorName }
         val nomineeCard = cards.firstOrNull { it.name == nomineeName }
-        val virginFirstNomination = nomineeCard?.clocktowerRole?.enName == "Virgin" && !virginUsed
-        val virginAbilityWorks = virginFirstNomination && poisonTarget != nomineeCard?.name
+        val virginFirstNomination = nomineeCard?.let {
+            AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Virgin")
+        } == true && !virginUsed
+        val virginAbilityWorks = nomineeCard?.let {
+            AbilityFunctioningSemantics.functionsAs(it.abilitySubject(poisonTarget), "Virgin")
+        } == true && virginFirstNomination
         val virginRegistrationKey = nominatorCard
             ?.takeIf { it.name == spyCard?.name && virginFirstNomination }
             ?.let { registrationKey("Virgin", it.name) }
@@ -4802,8 +4808,12 @@ internal fun ClocktowerJudgeScreen(
                     item {
                         val nominatorCard = cards.firstOrNull { it.name == nominatorName }
                         val nomineeCard = cards.firstOrNull { it.name == nomineeName }
-                        val virginFirstNomination = nomineeCard?.clocktowerRole?.enName == "Virgin" && !virginUsed
-                        val virginAbilityWorks = virginFirstNomination && poisonTarget != nomineeCard?.name
+                        val virginFirstNomination = nomineeCard?.let {
+                            AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Virgin")
+                        } == true && !virginUsed
+                        val virginAbilityWorks = nomineeCard?.let {
+                            AbilityFunctioningSemantics.functionsAs(it.abilitySubject(poisonTarget), "Virgin")
+                        } == true && virginFirstNomination
                         val virginRegistrationKey = nominatorCard?.takeIf { it.name == spyCard?.name && virginFirstNomination }?.let { registrationKey("Virgin", it.name) }
                         val virginExecutes = virginAbilityWorks && (nominatorCard?.clocktowerTeam == ClocktowerTeam.Townsfolk || spyRegistersGood(virginRegistrationKey))
                         HostScriptCard(
