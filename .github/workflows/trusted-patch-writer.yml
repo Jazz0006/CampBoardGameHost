@@ -1,0 +1,126 @@
+name: Trusted patch writer
+
+on:
+  issue_comment:
+    types:
+      - created
+
+permissions:
+  contents: write
+  issues: read
+  pull-requests: read
+  actions: write
+
+jobs:
+  apply-patch:
+    if: >-
+      github.event.issue.pull_request &&
+      github.actor == github.repository_owner &&
+      startsWith(github.event.comment.body, '/trusted-patch-writer')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout trusted infrastructure
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Parse and validate request
+        id: request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/trusted_patch_writer/prepare_request.py
+
+      - name: Checkout exact feature head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.request.outputs.expected_head_sha }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Verify locked head and blob
+        env:
+          EXPECTED_HEAD_SHA: ${{ steps.request.outputs.expected_head_sha }}
+          EXPECTED_BLOB_SHA: ${{ steps.request.outputs.expected_blob_sha }}
+          TARGET_PATH: ${{ steps.request.outputs.target_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+          test "$(git rev-parse "$EXPECTED_HEAD_SHA:$TARGET_PATH")" = "$EXPECTED_BLOB_SHA"
+
+      - name: Apply exact single-file patch
+        env:
+          PATCH_FILE: ${{ steps.request.outputs.patch_file }}
+          TARGET_PATH: ${{ steps.request.outputs.target_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --check --whitespace=error-all "$PATCH_FILE"
+          git apply --whitespace=error-all "$PATCH_FILE"
+          git diff --check
+          actual="$(git diff --name-only)"
+          test "$actual" = "$TARGET_PATH"
+
+      - name: Set up JDK 17
+        if: steps.request.outputs.test_profile == 'android'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        if: steps.request.outputs.test_profile == 'android'
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Run Android validation
+        if: steps.request.outputs.test_profile == 'android'
+        shell: bash
+        run: bash ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --build-cache
+
+      - name: Stage and re-audit exact scope
+        env:
+          TARGET_PATH: ${{ steps.request.outputs.target_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- "$TARGET_PATH"
+          git diff --cached --check
+          actual="$(git diff --cached --name-only)"
+          test "$actual" = "$TARGET_PATH"
+
+      - name: Verify remote head has not moved
+        env:
+          EXPECTED_HEAD_SHA: ${{ steps.request.outputs.expected_head_sha }}
+          TARGET_BRANCH: ${{ steps.request.outputs.target_branch }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          target_branch="$TARGET_BRANCH"
+          remote_line="$(git ls-remote origin "refs/heads/$target_branch")"
+          remote_sha="${remote_line%%$'\t'*}"
+          test -n "$remote_sha"
+          test "$remote_sha" = "$EXPECTED_HEAD_SHA"
+
+      - name: Commit and push
+        env:
+          COMMIT_MESSAGE: ${{ steps.request.outputs.commit_message }}
+          TARGET_BRANCH: ${{ steps.request.outputs.target_branch }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "$COMMIT_MESSAGE"
+          git push origin "HEAD:refs/heads/$TARGET_BRANCH"
+
+      - name: Dispatch independent validation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_BRANCH: ${{ steps.request.outputs.target_branch }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run ci.yml --ref "$TARGET_BRANCH"
+          gh workflow run r2-write-probe.yml --ref "$TARGET_BRANCH"
