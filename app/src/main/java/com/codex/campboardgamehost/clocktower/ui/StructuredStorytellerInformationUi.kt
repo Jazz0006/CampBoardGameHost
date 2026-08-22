@@ -22,6 +22,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicGenerationContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
@@ -31,7 +32,6 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionConfirm
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionHardBlockReason
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionValidationResult
-import com.codex.campboardgamehost.clocktower.session.InformationResolutionRequest
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 
 /**
@@ -59,25 +59,23 @@ internal fun prepareEmpathNumberInformationUiModel(
     require(subjectSeats.all { it > 0 } && subjectSeats.distinct().size == subjectSeats.size) {
         "Empath subject seats must be positive and unique."
     }
-    val evaluations = coordinator.resolveInformation(
-        InformationResolutionRequest.Number(
-            context = UnreliableNumberContext(
-                trueValue = trueValue,
-                minimumValue = 0,
-                maximumValue = 2,
-            ),
-            generation = DynamicGenerationContext(
-                abilityRole = RoleId("Empath"),
-                recipientSeat = actorSeat,
-                reliability = reliability,
-                style = recommendationStyle,
-                targetSeats = subjectSeats.toSet(),
-            ),
+    val evaluations = DynamicCandidateGenerator.generateNumeric(
+        numberContext = UnreliableNumberContext(
+            trueValue = trueValue,
+            minimumValue = 0,
+            maximumValue = 2,
+        ),
+        context = DynamicGenerationContext(
+            abilityRole = RoleId("Empath"),
+            recipientSeat = actorSeat,
+            reliability = reliability,
+            style = recommendationStyle,
+            targetSeats = subjectSeats.toSet(),
         ),
     )
     val recommendedIds = recommendedValue?.let { value ->
         evaluations
-            .filter { (it.candidate.outcome as DynamicInformationOutcome.Number).value == value }
+            .filter { it.candidate.outcome.value == value }
             .mapTo(linkedSetOf()) { it.candidate.candidateId }
     }.orEmpty()
     val storytellerPhase = when (phase) {
@@ -92,7 +90,7 @@ internal fun prepareEmpathNumberInformationUiModel(
         revision = revision,
         semanticIdentity = "empath|$gameId|${phase.name}|$round|$sequence|$actorSeat",
         draftOf = { evaluation ->
-            val value = (evaluation.candidate.outcome as DynamicInformationOutcome.Number).value
+            val value = evaluation.candidate.outcome.value
             val proposition = InformationProposition.NumericResult(
                 metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
                 sourceSeat = actorSeat,
