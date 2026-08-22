@@ -1296,18 +1296,28 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun recordEpistemicObservation(draft: EpistemicObservationDraft) {
-        val committed = ClocktowerGameSession.commitGlobalEpistemicObservation(
-            semanticHistoryMode = clocktowerSemanticHistoryMode,
-            observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),
-            nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
-            playerInputRevision = clocktowerPlayerInputRevision,
-            draft = draft,
-        )
-        clocktowerEpistemicObservations.clear()
-        clocktowerEpistemicObservations.addAll(committed.observationLog.records)
-        clocktowerPlayerInputRevision = committed.playerInputRevision
-        clocktowerNextTimelineGlobalSequence = committed.nextTimelineGlobalSequence
-        a4ObservationDurabilityGate.markPending(committed.record.recordId)
+        when (clocktowerSemanticHistoryMode) {
+            ClocktowerSemanticHistoryMode.LEGACY_LOCAL -> {
+                if (clocktowerEpistemicObservations.any { it.recordId == draft.recordId }) return
+                clocktowerEpistemicObservations += draft.bindLegacyLocal()
+                advanceClocktowerPlayerInputRevision()
+                a4ObservationDurabilityGate.markPending(draft.recordId)
+            }
+            ClocktowerSemanticHistoryMode.GLOBAL_V1 -> {
+                val committed = ClocktowerGameSession.commitGlobalEpistemicObservation(
+                    semanticHistoryMode = clocktowerSemanticHistoryMode,
+                    observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),
+                    nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
+                    playerInputRevision = clocktowerPlayerInputRevision,
+                    draft = draft,
+                )
+                clocktowerEpistemicObservations.clear()
+                clocktowerEpistemicObservations.addAll(committed.observationLog.records)
+                clocktowerPlayerInputRevision = committed.playerInputRevision
+                clocktowerNextTimelineGlobalSequence = committed.nextTimelineGlobalSequence
+                a4ObservationDurabilityGate.markPending(committed.record.recordId)
+            }
+        }
     }
 
     fun addClocktowerEvent(
