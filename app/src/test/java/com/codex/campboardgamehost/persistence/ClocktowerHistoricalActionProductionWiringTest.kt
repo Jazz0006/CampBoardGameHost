@@ -12,7 +12,7 @@ class ClocktowerHistoricalActionProductionWiringTest {
 
     @Test
     fun `production owns one action timeline and routes both event types through the shared cursor`() {
-        assertTrue(appSource.contains("val clocktowerActionTimeline = remember { mutableStateOf(ActionFactTimeline()) }"))
+        assertTrue(appSource.contains("var clocktowerActionTimeline by remember { mutableStateOf(ActionFactTimeline()) }"))
 
         val actionCommit = appSource
             .substringAfter("fun recordClocktowerAction(")
