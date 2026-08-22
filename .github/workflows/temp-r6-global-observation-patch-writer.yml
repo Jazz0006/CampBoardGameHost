@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - codex/r6-global-observation-patch-writer-temp
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
