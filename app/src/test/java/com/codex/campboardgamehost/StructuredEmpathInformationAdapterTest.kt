@@ -24,24 +24,26 @@ class StructuredEmpathInformationAdapterTest {
 
     @Test
     fun `typed numeric resolution stays behind the coordinator boundary`() {
-        val evaluations = coordinator.resolveNumberInformation(
-            InformationResolutionRequest.Number(
-                context = UnreliableNumberContext(
-                    trueValue = 1,
-                    minimumValue = 0,
-                    maximumValue = 2,
-                ),
-                generation = DynamicGenerationContext(
-                    abilityRole = RoleId("Empath"),
-                    recipientSeat = 2,
-                    reliability = InformationReliability.RELIABLE,
-                    style = RecommendationStyle.BALANCED,
-                    targetSeats = setOf(1, 3),
-                ),
+        val request = InformationResolutionRequest.Number(
+            context = UnreliableNumberContext(
+                trueValue = 1,
+                minimumValue = 0,
+                maximumValue = 2,
+            ),
+            generation = DynamicGenerationContext(
+                abilityRole = RoleId("Empath"),
+                recipientSeat = 2,
+                reliability = InformationReliability.RELIABLE,
+                style = RecommendationStyle.BALANCED,
+                targetSeats = setOf(1, 3),
             ),
         )
 
-        assertEquals(listOf(1), evaluations.map { it.candidate.outcome.value })
+        val typed = coordinator.resolveNumberInformation(request)
+        val generic = coordinator.resolveInformation(request)
+
+        assertEquals(generic.map { it.candidate.candidateId }, typed.map { it.candidate.candidateId })
+        assertEquals(listOf(0, 1, 2), typed.map { it.candidate.outcome.value }.sorted())
     }
 
     @Test
