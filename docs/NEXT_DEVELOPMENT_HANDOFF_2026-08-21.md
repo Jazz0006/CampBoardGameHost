@@ -1,3 +1,9 @@
+# SUPERSEDED / HISTORICAL ONLY
+
+> Superseded on 2026-08-22 by `NEXT_DEVELOPMENT_HANDOFF_2026-08-22.md`.  
+> Do **not** execute the old “next step” below. PR #24 is merged, the repository is Public, GitHub Actions runners are green, and the current next source slice is **Impaired Information Semantics** before resuming PR #27.  
+> Current authority: `CURRENT_DEVELOPMENT_ROADMAP.md`.
+
 # CampBoardGameHost 下一阶段开发交接 — 2026-08-21
 
 > 当前路线权威：`CURRENT_DEVELOPMENT_ROADMAP.md`  
