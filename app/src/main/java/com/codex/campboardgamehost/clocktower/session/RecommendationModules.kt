@@ -47,9 +47,14 @@ internal class SetupRecommendationModule {
 }
 
 internal class NightRecommendationModule {
+    fun resolveNumberInformation(
+        request: InformationResolutionRequest.Number,
+    ): List<DecisionEvaluation<DynamicInformationOutcome.Number>> =
+        DynamicCandidateGenerator.generateNumeric(request.context, request.generation)
+
     fun resolveInformation(request: InformationResolutionRequest): List<DecisionEvaluation<out DynamicInformationOutcome>> =
         when (request) {
-            is InformationResolutionRequest.Number -> DynamicCandidateGenerator.generateNumeric(request.context, request.generation)
+            is InformationResolutionRequest.Number -> resolveNumberInformation(request)
             is InformationResolutionRequest.Category -> DynamicCandidateGenerator.generateCategorical(request.candidates, request.generation)
             is InformationResolutionRequest.Pair -> DynamicCandidateGenerator.generatePairInformation(request.candidates, request.generation)
         }
