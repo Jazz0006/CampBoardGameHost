@@ -172,6 +172,7 @@ internal object DynamicCandidateGenerator {
         history: CrossGameHistory = CrossGameHistory(),
         historicalSignatureOf: ((T) -> HistoricalClueSignature)? = null,
         selectionAudit: SelectionAuditContext? = null,
+        truthfulException: ImpairedTruthfulException? = null,
     ): T? {
         if (options.isEmpty()) return null
         require(stableKey.isNotBlank()) { "stableKey cannot be blank." }
@@ -227,6 +228,7 @@ internal object DynamicCandidateGenerator {
             reliability = reliability,
             hasTruthfulCandidate = truthfulFamily != null,
             hasFalseCandidate = misleadingFamily != null,
+            truthfulException = truthfulException,
         )
         val massByFamily = mutableMapOf<String, Long>()
         if (truthfulFamily != null && semanticBudget.truthfulMassFixedPoint > 0L) {
