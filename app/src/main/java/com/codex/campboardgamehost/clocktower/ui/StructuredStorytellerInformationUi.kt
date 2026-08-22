@@ -67,7 +67,9 @@ internal fun prepareEmpathNumberInformationUiModel(
                 trueValue = trueValue,
                 minimumValue = 0,
                 maximumValue = 2,
-                previousShownValue = previousShownValue?.takeIf { it in 0..2 },
+                previousShownValue = previousShownValue?.takeIf {
+                    reliability != InformationReliability.RELIABLE && it in 0..2
+                },
                 pressureCostPerPoint = pressureCostPerPoint,
             ),
             generation = DynamicGenerationContext(
