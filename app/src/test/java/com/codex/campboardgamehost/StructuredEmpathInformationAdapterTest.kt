@@ -6,11 +6,14 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicGenerationContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionValidationResult
+import com.codex.campboardgamehost.clocktower.session.InformationResolutionRequest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -18,6 +21,28 @@ import org.junit.Test
 class StructuredEmpathInformationAdapterTest {
     private val coordinator = ClocktowerRecommendationCoordinator()
     private val revision = InformationDecisionRevision(gameStateRevision = 5, playerInputRevision = 6)
+
+    @Test
+    fun `typed numeric resolution stays behind the coordinator boundary`() {
+        val evaluations = coordinator.resolveNumberInformation(
+            InformationResolutionRequest.Number(
+                context = UnreliableNumberContext(
+                    trueValue = 1,
+                    minimumValue = 0,
+                    maximumValue = 2,
+                ),
+                generation = DynamicGenerationContext(
+                    abilityRole = RoleId("Empath"),
+                    recipientSeat = 2,
+                    reliability = InformationReliability.RELIABLE,
+                    style = RecommendationStyle.BALANCED,
+                    targetSeats = setOf(1, 3),
+                ),
+            ),
+        )
+
+        assertEquals(listOf(1), evaluations.map { it.candidate.outcome.value })
+    }
 
     @Test
     fun `healthy Empath adapter exposes only the Foundation-legal truthful number`() {
