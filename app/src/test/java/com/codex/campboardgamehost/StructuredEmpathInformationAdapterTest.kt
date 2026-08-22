@@ -123,9 +123,11 @@ class StructuredEmpathInformationAdapterTest {
             .substringBefore("\n            if (\n                structuredEmpathUiModel == null")
         val previewGuard = panelBlock.indexOf("if (automaticDisplayOption != null)")
         val telemetryCommit = panelBlock.indexOf("recordCommittedSelection(")
+        val playerDisplay = panelBlock.indexOf("onShowPlayerDisplay(")
 
         assertTrue(previewGuard >= 0)
         assertTrue(telemetryCommit > previewGuard)
+        assertTrue(playerDisplay > telemetryCommit)
         assertTrue(panelBlock.contains("truthful = value == structuredEmpathTruthValue"))
     }
 
