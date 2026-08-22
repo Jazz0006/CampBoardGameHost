@@ -7417,17 +7417,19 @@ private fun ClocktowerNightStepCardLocalized(
                     automaticStorytellerInfo = automaticStorytellerInfo,
                     language = language,
                     onConfirmed = { confirmed, value ->
-                        selectionAudit?.let { audit ->
-                            audit.recorder.recordCommittedSelection(
-                                SelectionAuditCommit(
-                                    selectionId = audit.selectionId,
-                                    dimensions = audit.dimensions,
-                                    selectedFamilyId = DynamicCandidateGenerator.selectionAuditFamilyId(
-                                        reliability = step.informationReliability,
-                                        truthful = value == structuredEmpathTruthValue,
+                        if (automaticDisplayOption != null) {
+                            selectionAudit?.let { audit ->
+                                audit.recorder.recordCommittedSelection(
+                                    SelectionAuditCommit(
+                                        selectionId = audit.selectionId,
+                                        dimensions = audit.dimensions,
+                                        selectedFamilyId = DynamicCandidateGenerator.selectionAuditFamilyId(
+                                            reliability = step.informationReliability,
+                                            truthful = value == structuredEmpathTruthValue,
+                                        ),
                                     ),
-                                ),
-                            )
+                                )
+                            }
                         }
                         onShowPlayerDisplay(
                             step.copy(
