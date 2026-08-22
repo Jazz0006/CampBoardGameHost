@@ -2,6 +2,7 @@
 
 > 最后整理：2026-08-22  
 > **任何新的开发或审计任务都应先读本文，再读 `CURRENT_DEVELOPMENT_ROADMAP.md`。**  
+> **任何通过 ChatGPT / GitHub connector 修改代码的任务，还必须先读 `SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`。**  
 > 不在 README 中硬编码“当前开发 branch”；所有 source work 都应从最新 `main` 创建短生命周期 branch。
 
 ## 1. 文档权威与冲突处理
@@ -15,8 +16,9 @@
 5. **多剧本 / 动态流程架构**：`多剧本多板子与动态游戏流程架构设计_v1.md` 是 R5.5 以后继续生效的专项规范。
 6. **专项 audit / closeout / handoff**：保存证据与局部上下文，不覆盖 roadmap 的当前状态。
 7. **历史 handoff**：如果顶部标记 `SUPERSEDED` / `HISTORICAL ONLY`，不得执行正文中的旧“下一步”指令。
-8. **开发运行手册**：说明可靠的开发/connector 操作方式，不改变产品架构。
-9. **`archive/`**：仅历史追溯，不作为新代码实施入口。
+8. **本仓库 connector 默认开发策略**：`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` 是项目级运行规范；它明确本仓库按单开发者模式优先 whole-file replace + SHA guard + exact diff audit。
+9. **大文件 / trusted writer 详细机制**：`github_connector_large_file_editing_playbook.md` 保存 Git Data API / Actions writer 的详细 fallback 知识；若其默认路径与第 8 项冲突，以第 8 项为准。
+10. **`archive/`**：仅历史追溯，不作为新代码实施入口。
 
 ## 2. 当前必须阅读
 
@@ -71,7 +73,11 @@
 
 ### G. 开发运行手册
 
-- [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md) — **REFERENCE / DEVELOPMENT OPERATIONS**。
+- [`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`](SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md) — **NORMATIVE / DEVELOPMENT OPERATIONS**。  
+  本仓库当前按单开发者模式运行：只要能从目标 branch live head 可靠取得完整文件与 blob SHA，**大文件也优先 whole-file replace**；写入后用 exact diff audit 作为主要保护层。不要仅因文件大就先搭 Actions writer。
+
+- [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md) — **REFERENCE / FALLBACK DEVELOPMENT OPERATIONS**。  
+  保存 Git Data API、temporary trusted writer、workflow trigger/base 安全语义。仅在完整文件无法安全读取/构造、存在真实同文件并发、必须 runner 先验证等例外情况下升级使用。
 
 ## 3. 当前 rollout 顺序摘要
 
@@ -177,3 +183,4 @@ Level 2 是重要的实用里程碑：有经验的真人说书人可以在 AI re
 - Handoff 只服务下一次开发；一旦失效必须标记 superseded。
 - Deferred decision 必须写清 current decision + reopen trigger。
 - 不再把当前开发 branch 写进 README；每次 source work 都从最新 `main` 创建短生命周期 branch。
+- Connector 操作策略必须按 `SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` 执行；不要在新对话中重新假设“数千行文件必须通过 temporary writer”。
