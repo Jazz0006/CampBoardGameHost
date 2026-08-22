@@ -56,6 +56,23 @@ class ClocktowerGlobalObservationProductionWiringTest {
     }
 
     @Test
+    fun `global exact duplicate returns before observable or durability side effects`() {
+        val commit = appSource
+            .substringAfter("fun recordEpistemicObservation(")
+            .substringBefore("fun addClocktowerEvent(")
+        val globalBranch = commit.substringAfter("ClocktowerSemanticHistoryMode.GLOBAL_V1 ->")
+
+        val guard = "if (committed.playerInputRevision == clocktowerPlayerInputRevision) return"
+        val guardIndex = globalBranch.indexOf(guard)
+        val listMutationIndex = globalBranch.indexOf("clocktowerEpistemicObservations.clear()")
+        val durabilityIndex = globalBranch.indexOf("a4ObservationDurabilityGate.markPending(committed.record.recordId)")
+
+        assertTrue(guardIndex >= 0)
+        assertTrue(listMutationIndex > guardIndex)
+        assertTrue(durabilityIndex > guardIndex)
+    }
+
+    @Test
     fun `restored legacy local games keep recording without entering global commit authority`() {
         val commitStart = appSource.indexOf("fun recordEpistemicObservation(")
         val eventStart = appSource.indexOf("fun addClocktowerEvent(")
