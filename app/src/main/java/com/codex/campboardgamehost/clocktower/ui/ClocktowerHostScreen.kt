@@ -585,6 +585,7 @@ internal fun ClocktowerJudgeScreen(
     onSelectArtistShownAnswer: (Boolean?) -> Unit,
     onConfirmArtistQuestion: () -> Unit,
     onSlayerShot: (String, String, Boolean) -> Unit,
+    onPreflightVirginExecution: (String, Boolean) -> Unit,
     onVirginNomination: (String, String, Boolean) -> Unit,
     onAdvanceFromFirstNight: () -> Unit,
     onConfirmDay: () -> Unit,
@@ -866,6 +867,8 @@ internal fun ClocktowerJudgeScreen(
         val allowed = completeTroubleBrewingRoles.filter { it.team in teams && it.enName != "Spy" }
         return allowed.firstOrNull { it.enName == spyRegistrationRole[key] } ?: allowed.firstOrNull()
     }
+    fun spyRegistrationWillRecord(key: String?): Boolean =
+        key != null && recordedSpyRegistrations[key] != true && spyCard != null
     fun recordSpyRegistration(
         key: String?,
         teams: List<ClocktowerTeam>,
@@ -3329,6 +3332,12 @@ internal fun ClocktowerJudgeScreen(
             onContinue = {
                 val chosenNominator = nominatorName
                 val chosenNominee = nomineeName
+                if (chosenNominator != null && chosenNominee != null && virginFirstNomination && virginExecutes) {
+                    onPreflightVirginExecution(
+                        chosenNominator,
+                        spyRegistrationWillRecord(virginRegistrationKey),
+                    )
+                }
                 if (chosenNominator != null && chosenNominee != null && virginFirstNomination) {
                     recordSpyRegistration(virginRegistrationKey, listOf(ClocktowerTeam.Townsfolk))
                     onVirginNomination(chosenNominator, chosenNominee, virginExecutes)
@@ -4890,6 +4899,12 @@ internal fun ClocktowerJudgeScreen(
                                 onClick = {
                                     val chosenNominator = nominatorName
                                     val chosenNominee = nomineeName
+                                    if (chosenNominator != null && chosenNominee != null && virginFirstNomination && virginExecutes) {
+                                        onPreflightVirginExecution(
+                                            chosenNominator,
+                                            spyRegistrationWillRecord(virginRegistrationKey),
+                                        )
+                                    }
                                     if (chosenNominator != null && chosenNominee != null && virginFirstNomination) {
                                         recordSpyRegistration(virginRegistrationKey, listOf(ClocktowerTeam.Townsfolk))
                                         onVirginNomination(chosenNominator, chosenNominee, virginExecutes)
