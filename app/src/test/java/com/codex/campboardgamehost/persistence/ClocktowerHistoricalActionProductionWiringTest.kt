@@ -62,9 +62,12 @@ class ClocktowerHistoricalActionProductionWiringTest {
     fun `confirmed night selections emit action drafts rather than persisting provisional choices`() {
         val poison = appSource
             .substringAfter("onConfirmPoisonTarget =")
-            .substringBefore("onSelectDemonAttackTarget =")
+            .substringBefore("onSelectFortuneTellerFirst =")
         assertTrue(poison.contains("recordClocktowerAction(ActionFactDraft.Poison("))
-        assertFalse(poison.substringBefore("onConfirmPoisonTarget =").contains("ActionFactDraft.Poison("))
+        val poisonDraftSelection = appSource
+            .substringAfter("onSelectPoisonTarget =")
+            .substringBefore("onConfirmPoisonTarget =")
+        assertFalse(poisonDraftSelection.contains("ActionFactDraft.Poison("))
 
         val attack = appSource
             .substringAfter("onConfirmDemonAttack =")
