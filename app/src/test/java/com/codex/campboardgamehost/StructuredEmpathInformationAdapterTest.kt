@@ -10,6 +10,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.Information
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSource
+import com.codex.campboardgamehost.clocktower.session.InformationDecisionValidationResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -41,20 +42,7 @@ class StructuredEmpathInformationAdapterTest {
 
     @Test
     fun `poisoned Empath accepted recommendation yields the exact unbound player-visible draft`() {
-        val model = prepareEmpathNumberInformationUiModel(
-            coordinator = coordinator,
-            gameId = "game-poisoned",
-            phase = ClocktowerPhase.Night,
-            round = 2,
-            sequence = 4,
-            actorSeat = 2,
-            subjectSeats = listOf(1, 3),
-            trueValue = 1,
-            reliability = InformationReliability.POISONED,
-            recommendationStyle = RecommendationStyle.BALANCED,
-            revision = revision,
-            recommendedValue = 2,
-        )
+        val model = poisonedModel()
 
         assertEquals(listOf(0, 1, 2), model.choices.map { it.value })
         val recommended = model.choices.single { it.recommended }
@@ -78,4 +66,32 @@ class StructuredEmpathInformationAdapterTest {
         assertEquals(listOf(1, 3), proposition.subjectSeats)
         assertEquals(2, proposition.value)
     }
+
+    @Test
+    fun `poisoned Empath truthful manual choice remains legal but requires the Foundation warning`() {
+        val model = poisonedModel()
+        val truthfulManualChoice = model.choices.single { it.value == 1 }
+
+        val confirmation = model.chooseManually(truthfulManualChoice.candidateId, revision)
+        val validation = confirmation.validation as InformationDecisionValidationResult.Allowed
+
+        assertEquals(InformationDecisionSource.MANUAL, confirmation.confirmed!!.source)
+        assertTrue(validation.warnings.any { it.code == "information.manual.differs-from-recommendation" })
+        assertTrue(validation.warnings.any { it.code == "information.impaired.truthful-with-false-alternative" })
+    }
+
+    private fun poisonedModel() = prepareEmpathNumberInformationUiModel(
+        coordinator = coordinator,
+        gameId = "game-poisoned",
+        phase = ClocktowerPhase.Night,
+        round = 2,
+        sequence = 4,
+        actorSeat = 2,
+        subjectSeats = listOf(1, 3),
+        trueValue = 1,
+        reliability = InformationReliability.POISONED,
+        recommendationStyle = RecommendationStyle.BALANCED,
+        revision = revision,
+        recommendedValue = 2,
+    )
 }
