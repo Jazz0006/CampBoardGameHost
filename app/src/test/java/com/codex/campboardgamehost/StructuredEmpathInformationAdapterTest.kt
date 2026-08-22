@@ -116,14 +116,16 @@ class StructuredEmpathInformationAdapterTest {
     }
 
     @Test
-    fun `structured Empath confirmation records committed selection telemetry`() {
+    fun `structured Empath confirmation commits telemetry only when selector produced a preview`() {
         val source = hostScreenSource()
         val panelBlock = source
             .substringAfter("StructuredNumberInformationDecisionPanel(")
             .substringBefore("\n            if (\n                structuredEmpathUiModel == null")
+        val previewGuard = panelBlock.indexOf("if (automaticDisplayOption != null)")
+        val telemetryCommit = panelBlock.indexOf("recordCommittedSelection(")
 
-        assertTrue(panelBlock.contains("selectionAudit?.let { audit ->"))
-        assertTrue(panelBlock.contains("recordCommittedSelection("))
+        assertTrue(previewGuard >= 0)
+        assertTrue(telemetryCommit > previewGuard)
         assertTrue(panelBlock.contains("truthful = value == structuredEmpathTruthValue"))
     }
 
