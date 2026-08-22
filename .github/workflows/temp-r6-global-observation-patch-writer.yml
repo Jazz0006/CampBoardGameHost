@@ -1,9 +1,6 @@
 name: Temp R6 global observation patch writer
 
 on:
-  push:
-    branches:
-      - codex/r6-global-observation-patch-writer-temp
   pull_request:
     branches:
       - main
@@ -41,6 +38,9 @@ jobs:
                   raise SystemExit(f"{path}: expected exactly one match, found {count}\nOLD:\n{old}")
               p.write_text(text.replace(old, new, 1), encoding="utf-8")
 
+          def block(lines):
+              return "\n".join(lines) + "\n"
+
           app = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
           host = "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt"
           semantic_test = "app/src/test/java/com/codex/campboardgamehost/persistence/ActiveGameSemanticHistoryProductionWiringTest.kt"
@@ -56,71 +56,87 @@ jobs:
               "import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis\nimport com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft\nimport com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog",
           )
 
-          old_commit = '''    fun recordEpistemicObservation(record: RecordedEpistemicObservation) {
-              if (clocktowerEpistemicObservations.any { it.recordId == record.recordId }) return
-              clocktowerEpistemicObservations += record
-              advanceClocktowerPlayerInputRevision()
-              a4ObservationDurabilityGate.markPending(record.recordId)
-          }
+          app_path = Path(app)
+          app_text = app_path.read_text(encoding="utf-8")
+          old_commit_start = "    fun recordEpistemicObservation(record: RecordedEpistemicObservation) {"
+          localized_anchor = "    fun localizedText(zh: String, en: String): String"
+          if app_text.count(old_commit_start) != 1 or app_text.count(localized_anchor) != 1:
+              raise SystemExit("App commit/localized anchors are not unique")
+          start = app_text.index(old_commit_start)
+          end = app_text.index(localized_anchor, start)
+          old_commit = app_text[start:end]
+          for required in (
+              "if (clocktowerEpistemicObservations.any { it.recordId == record.recordId }) return",
+              "clocktowerEpistemicObservations += record",
+              "advanceClocktowerPlayerInputRevision()",
+              "a4ObservationDurabilityGate.markPending(record.recordId)",
+          ):
+              if required not in old_commit:
+                  raise SystemExit(f"Unexpected old commit seam; missing: {required}")
+          app_text = app_text[:start] + app_text[end:]
+          new_commit = block([
+              "    fun recordEpistemicObservation(draft: EpistemicObservationDraft) {",
+              "        val committed = ClocktowerGameSession.commitGlobalEpistemicObservation(",
+              "            semanticHistoryMode = clocktowerSemanticHistoryMode,",
+              "            observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),",
+              "            nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,",
+              "            playerInputRevision = clocktowerPlayerInputRevision,",
+              "            draft = draft,",
+              "        )",
+              "        clocktowerEpistemicObservations.clear()",
+              "        clocktowerEpistemicObservations.addAll(committed.observationLog.records)",
+              "        clocktowerPlayerInputRevision = committed.playerInputRevision",
+              "        clocktowerNextTimelineGlobalSequence = committed.nextTimelineGlobalSequence",
+              "        a4ObservationDurabilityGate.markPending(committed.record.recordId)",
+              "    }",
+              "",
+          ])
+          event_anchor = "    fun addClocktowerEvent(\n"
+          if app_text.count(event_anchor) != 1:
+              raise SystemExit("addClocktowerEvent anchor is not unique")
+          app_text = app_text.replace(event_anchor, new_commit + event_anchor, 1)
+          app_path.write_text(app_text, encoding="utf-8")
 
-          '''
-          new_commit = '''    fun recordEpistemicObservation(draft: EpistemicObservationDraft) {
-              val committed = ClocktowerGameSession.commitGlobalEpistemicObservation(
-                  semanticHistoryMode = clocktowerSemanticHistoryMode,
-                  observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),
-                  nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
-                  playerInputRevision = clocktowerPlayerInputRevision,
-                  draft = draft,
-              )
-              clocktowerEpistemicObservations.clear()
-              clocktowerEpistemicObservations.addAll(committed.observationLog.records)
-              clocktowerPlayerInputRevision = committed.playerInputRevision
-              clocktowerNextTimelineGlobalSequence = committed.nextTimelineGlobalSequence
-              a4ObservationDurabilityGate.markPending(committed.record.recordId)
-          }
-
-          '''
-          replace_once(app, old_commit, "")
-          replace_once(app, "    fun addClocktowerEvent(\n", new_commit + "    fun addClocktowerEvent(\n")
-
-          old_event = '''        val appendedObservationIds = mutableListOf<String>()
-          eliminatedSeats.forEach { seat ->
-              val observationId = "public-alive-${clocktowerGameId}-${clocktowerEventCounter}-$seat"
-              clocktowerEpistemicObservations += RecordedEpistemicObservation(
-                  recordId = observationId,
-                  phase = epistemicPhase,
-                  round = eventRound,
-                  sequence = clocktowerEventCounter,
-                  sourceSeat = null,
-                  sourceAbility = null,
-                  visibility = ObservationVisibility.PUBLIC,
-                  recipientSeats = emptySet(),
-                  reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
-                  proposition = InformationProposition.AliveAt(seat, false),
-              )
-              appendedObservationIds += observationId
-          }
-          advanceClocktowerPlayerInputRevision()
-          appendedObservationIds.lastOrNull()?.let { recordId ->
-              a4ObservationDurabilityGate.markPending(recordId)
-          }
-          '''
-          new_event = '''        eliminatedSeats.forEach { seat ->
-              val observationId = "public-alive-${clocktowerGameId}-${clocktowerEventCounter}-$seat"
-              recordEpistemicObservation(EpistemicObservationDraft(
-                  recordId = observationId,
-                  phase = epistemicPhase,
-                  round = eventRound,
-                  sequence = clocktowerEventCounter,
-                  sourceSeat = null,
-                  sourceAbility = null,
-                  visibility = ObservationVisibility.PUBLIC,
-                  recipientSeats = emptySet(),
-                  reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
-                  proposition = InformationProposition.AliveAt(seat, false),
-              ))
-          }
-          '''
+          old_event = block([
+              "        val appendedObservationIds = mutableListOf<String>()",
+              "        eliminatedSeats.forEach { seat ->",
+              "            val observationId = \"public-alive-${clocktowerGameId}-${clocktowerEventCounter}-$seat\"",
+              "            clocktowerEpistemicObservations += RecordedEpistemicObservation(",
+              "                recordId = observationId,",
+              "                phase = epistemicPhase,",
+              "                round = eventRound,",
+              "                sequence = clocktowerEventCounter,",
+              "                sourceSeat = null,",
+              "                sourceAbility = null,",
+              "                visibility = ObservationVisibility.PUBLIC,",
+              "                recipientSeats = emptySet(),",
+              "                reliability = ObservationReliability.NOT_ABILITY_INFORMATION,",
+              "                proposition = InformationProposition.AliveAt(seat, false),",
+              "            )",
+              "            appendedObservationIds += observationId",
+              "        }",
+              "        advanceClocktowerPlayerInputRevision()",
+              "        appendedObservationIds.lastOrNull()?.let { recordId ->",
+              "            a4ObservationDurabilityGate.markPending(recordId)",
+              "        }",
+          ])
+          new_event = block([
+              "        eliminatedSeats.forEach { seat ->",
+              "            val observationId = \"public-alive-${clocktowerGameId}-${clocktowerEventCounter}-$seat\"",
+              "            recordEpistemicObservation(EpistemicObservationDraft(",
+              "                recordId = observationId,",
+              "                phase = epistemicPhase,",
+              "                round = eventRound,",
+              "                sequence = clocktowerEventCounter,",
+              "                sourceSeat = null,",
+              "                sourceAbility = null,",
+              "                visibility = ObservationVisibility.PUBLIC,",
+              "                recipientSeats = emptySet(),",
+              "                reliability = ObservationReliability.NOT_ABILITY_INFORMATION,",
+              "                proposition = InformationProposition.AliveAt(seat, false),",
+              "            ))",
+              "        }",
+          ])
           replace_once(app, old_event, new_event)
           replace_once(
               app,
@@ -144,33 +160,35 @@ jobs:
               "        onRecordEpistemicObservation(EpistemicObservationDraft(\n            recordId = \"private-${gameId}-${phase.name}-${round}-${displayStep.roleEnName}-$actorSeat\",",
           )
 
-          old_test = '''    @Test
-          fun `new and non Clocktower games stay legacy until the later producer cutover`() {
-              val reset = source
-                  .substringAfter("fun resetDealState(")
-                  .substringBefore("fun startUndercoverGame()")
-
-              assertTrue(
-                  reset.contains(
-                      "clocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL",
-                  ),
-              )
-              assertTrue(reset.contains("clocktowerNextTimelineGlobalSequence = 0L"))
-              assertFalse(reset.contains("ClocktowerSemanticHistoryMode.GLOBAL_V1"))
-          }
-          '''
-          new_test = '''    @Test
-          fun `new Clocktower games use global history while non Clocktower games stay legacy`() {
-              val reset = source
-                  .substringAfter("fun resetDealState(")
-                  .substringBefore("fun startUndercoverGame()")
-
-              assertTrue(reset.contains("nextGameKind == GameKind.Clocktower"))
-              assertTrue(reset.contains("ClocktowerSemanticHistoryMode.GLOBAL_V1"))
-              assertTrue(reset.contains("ClocktowerSemanticHistoryMode.LEGACY_LOCAL"))
-              assertTrue(reset.contains("clocktowerNextTimelineGlobalSequence = 0L"))
-          }
-          '''
+          old_test = block([
+              "    @Test",
+              "    fun `new and non Clocktower games stay legacy until the later producer cutover`() {",
+              "        val reset = source",
+              "            .substringAfter(\"fun resetDealState(\")",
+              "            .substringBefore(\"fun startUndercoverGame()\")",
+              "",
+              "        assertTrue(",
+              "            reset.contains(",
+              "                \"clocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL\",",
+              "            ),",
+              "        )",
+              "        assertTrue(reset.contains(\"clocktowerNextTimelineGlobalSequence = 0L\"))",
+              "        assertFalse(reset.contains(\"ClocktowerSemanticHistoryMode.GLOBAL_V1\"))",
+              "    }",
+          ])
+          new_test = block([
+              "    @Test",
+              "    fun `new Clocktower games use global history while non Clocktower games stay legacy`() {",
+              "        val reset = source",
+              "            .substringAfter(\"fun resetDealState(\")",
+              "            .substringBefore(\"fun startUndercoverGame()\")",
+              "",
+              "        assertTrue(reset.contains(\"nextGameKind == GameKind.Clocktower\"))",
+              "        assertTrue(reset.contains(\"ClocktowerSemanticHistoryMode.GLOBAL_V1\"))",
+              "        assertTrue(reset.contains(\"ClocktowerSemanticHistoryMode.LEGACY_LOCAL\"))",
+              "        assertTrue(reset.contains(\"clocktowerNextTimelineGlobalSequence = 0L\"))",
+              "    }",
+          ])
           replace_once(semantic_test, old_test, new_test)
 
           app_text = Path(app).read_text(encoding="utf-8")
