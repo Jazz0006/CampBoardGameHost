@@ -110,6 +110,8 @@ import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRequest
 import com.codex.campboardgamehost.clocktower.domain.DynamicGameState
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
+import com.codex.campboardgamehost.clocktower.domain.Alignment as ClocktowerAlignment
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.requireCompatible
 import com.codex.campboardgamehost.clocktower.domain.DynamicStorytellerChoice
@@ -183,6 +185,8 @@ import com.codex.campboardgamehost.clocktower.epistemic.A4ShadowWorldSetCache
 import com.codex.campboardgamehost.clocktower.epistemic.A4ShadowLifecycleInvalidator
 import com.codex.campboardgamehost.clocktower.epistemic.A4WorldEngineRollout
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
@@ -1094,6 +1098,7 @@ internal fun CampBoardGameHostApp() {
     val records = remember { mutableStateListOf<EliminationRecord>() }
     val clocktowerEvents = remember { mutableStateListOf<ClocktowerEvent>() }
     val clocktowerEpistemicObservations = remember { mutableStateListOf<RecordedEpistemicObservation>() }
+    var clocktowerActionTimeline by remember { mutableStateOf(ActionFactTimeline()) }
     var clocktowerEventCounter by remember { mutableStateOf(0) }
     val clocktowerNightStartedState = remember { mutableStateOf(false) }
     val clocktowerNightStepIndexState = remember { mutableStateOf(0) }
@@ -1295,6 +1300,66 @@ internal fun CampBoardGameHostApp() {
         a4InitialRecommendationDemandRecorded = true
     }
 
+    fun storytellerPhaseFor(phase: ClocktowerPhase = clocktowerPhase): StorytellerPhase = when (phase) {
+        ClocktowerPhase.FirstNight -> StorytellerPhase.FIRST_NIGHT
+        ClocktowerPhase.Dawn -> StorytellerPhase.DAWN
+        ClocktowerPhase.Day -> StorytellerPhase.DAY
+        ClocktowerPhase.Night -> StorytellerPhase.NIGHT
+    }
+
+    fun clocktowerSeatFor(playerName: String): Int =
+        cards.indexOfFirst { it.name == playerName }
+            .takeIf { index -> index >= 0 }
+            ?.plus(1)
+            ?: error("Unknown Clocktower player '$playerName'.")
+
+    fun clocktowerActionId(
+        kind: String,
+        actionRound: Int = round,
+        localSequence: Int = clocktowerEventCounter + 1,
+        targetSeat: Int? = null,
+    ): String = buildList {
+        add(kind)
+        add(clocktowerGameId)
+        add(clocktowerGameStateRevision.toString())
+        add(actionRound.toString())
+        add(localSequence.toString())
+        targetSeat?.let { add(it.toString()) }
+    }.joinToString("-")
+
+    fun recordClocktowerAction(draft: ActionFactDraft) {
+        if (clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) return
+        val committed = ClocktowerGameSession.commitGlobalActionFact(
+            semanticHistoryMode = clocktowerSemanticHistoryMode,
+            actionTimeline = clocktowerActionTimeline,
+            observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),
+            nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
+            draft = draft,
+        )
+        clocktowerActionTimeline = committed.actionTimeline
+        clocktowerNextTimelineGlobalSequence = committed.nextTimelineGlobalSequence
+    }
+
+    fun recordClocktowerPhaseAdvance(
+        nextPhase: ClocktowerPhase,
+        nextRound: Int = round,
+    ) {
+        if (nextPhase == clocktowerPhase && nextRound == round) return
+        val localSequence = clocktowerEventCounter + 1
+        recordClocktowerAction(ActionFactDraft.PhaseAdvance(
+            actionId = clocktowerActionId(
+                kind = "phase-${nextPhase.name.lowercase()}-$nextRound",
+                actionRound = round,
+                localSequence = localSequence,
+            ),
+            phase = storytellerPhaseFor(clocktowerPhase),
+            round = round,
+            sequence = localSequence,
+            nextPhase = storytellerPhaseFor(nextPhase),
+            nextRound = nextRound,
+        ))
+    }
+
     fun recordEpistemicObservation(draft: EpistemicObservationDraft) {
         when (clocktowerSemanticHistoryMode) {
             ClocktowerSemanticHistoryMode.LEGACY_LOCAL -> {
@@ -1310,6 +1375,7 @@ internal fun CampBoardGameHostApp() {
                     nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
                     playerInputRevision = clocktowerPlayerInputRevision,
                     draft = draft,
+                    actionTimeline = clocktowerActionTimeline,
                 )
                 if (committed.playerInputRevision == clocktowerPlayerInputRevision) return
                 clocktowerEpistemicObservations.clear()
@@ -1356,6 +1422,7 @@ internal fun CampBoardGameHostApp() {
                 reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
                 proposition = InformationProposition.AliveAt(seat, false),
             ),
+            actionTimeline = clocktowerActionTimeline,
         )
         check(committed.playerInputRevision != clocktowerPlayerInputRevision) {
             "A new public elimination cannot reuse an existing observation ID."
@@ -1431,11 +1498,35 @@ internal fun CampBoardGameHostApp() {
                 ?.plus(1)
         }.distinct()
         if (eliminatedSeats.isEmpty()) return
-        val epistemicPhase = when (eventPhase) {
-            ClocktowerPhase.FirstNight -> StorytellerPhase.FIRST_NIGHT
-            ClocktowerPhase.Dawn -> StorytellerPhase.DAWN
-            ClocktowerPhase.Day -> StorytellerPhase.DAY
-            ClocktowerPhase.Night -> StorytellerPhase.NIGHT
+        val epistemicPhase = storytellerPhaseFor(eventPhase)
+        eliminatedSeats.forEach { seat ->
+            when (type) {
+                ClocktowerEventType.Execution -> recordClocktowerAction(ActionFactDraft.Execution(
+                    actionId = clocktowerActionId(
+                        kind = "execution",
+                        actionRound = eventRound,
+                        localSequence = clocktowerEventCounter,
+                        targetSeat = seat,
+                    ),
+                    phase = epistemicPhase,
+                    round = eventRound,
+                    sequence = clocktowerEventCounter,
+                    targetSeat = seat,
+                ))
+                ClocktowerEventType.Death -> recordClocktowerAction(ActionFactDraft.Death(
+                    actionId = clocktowerActionId(
+                        kind = "death",
+                        actionRound = eventRound,
+                        localSequence = clocktowerEventCounter,
+                        targetSeat = seat,
+                    ),
+                    phase = epistemicPhase,
+                    round = eventRound,
+                    sequence = clocktowerEventCounter,
+                    targetSeat = seat,
+                ))
+                else -> Unit
+            }
         }
         eliminatedSeats.forEach { seat ->
             val observationId = "public-alive-${clocktowerGameId}-${clocktowerEventCounter}-$seat"
@@ -1571,6 +1662,10 @@ internal fun CampBoardGameHostApp() {
             put(
                 ClocktowerSemanticHistoryPersistence.MODE_KEY,
                 ClocktowerSemanticHistoryPersistence.encode(clocktowerSemanticHistoryMode),
+            )
+            put(
+                ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY,
+                ClocktowerSemanticHistoryPersistence.encodeActionTimeline(clocktowerActionTimeline),
             )
         }
         if (currentGameKind == GameKind.Clocktower &&
@@ -1788,6 +1883,11 @@ internal fun CampBoardGameHostApp() {
             } else {
                 ClocktowerSemanticHistoryMode.LEGACY_LOCAL
             }
+            val restoredClocktowerActionTimeline = if (restoredGameKind == GameKind.Clocktower) {
+                ClocktowerSemanticHistoryPersistence.decodeActionTimeline(json)
+            } else {
+                ActionFactTimeline()
+            }
             val restoredClocktowerEpistemicObservations = if (restoredGameKind == GameKind.Clocktower) {
                 json.optJSONArray("clocktowerEpistemicObservations")
                     ?.toRecordedEpistemicObservations()
@@ -1821,6 +1921,7 @@ internal fun CampBoardGameHostApp() {
             val restoredNightCheckpoint =
                 ClocktowerNightCheckpoint.fromPersistedValues(restoredNightCheckpointValues)
             restoredSemanticHistoryMode.requireCompatible(
+                actionTimeline = restoredClocktowerActionTimeline,
                 observationLog = EpistemicObservationLog(restoredClocktowerEpistemicObservations),
                 nextTimelineGlobalSequence = restoredNightCheckpoint.nextTimelineGlobalSequence,
             )
@@ -1835,6 +1936,7 @@ internal fun CampBoardGameHostApp() {
             clocktowerEvents.addAll(json.optJSONArray("clocktowerEvents")?.toClocktowerEvents().orEmpty())
             clocktowerEpistemicObservations.clear()
             clocktowerEpistemicObservations.addAll(restoredClocktowerEpistemicObservations)
+            clocktowerActionTimeline = restoredClocktowerActionTimeline
             clocktowerEventCounter = maxOf(
                 json.optInt("clocktowerEventCounter", 0),
                 clocktowerEvents.maxOfOrNull { it.sequence } ?: 0,
@@ -2055,6 +2157,7 @@ internal fun CampBoardGameHostApp() {
         records.clear()
         clocktowerEvents.clear()
         clocktowerEpistemicObservations.clear()
+        clocktowerActionTimeline = ActionFactTimeline()
         clocktowerEventCounter = 0
         clocktowerSemanticHistoryMode = if (nextGameKind == GameKind.Clocktower) {
             ClocktowerSemanticHistoryMode.GLOBAL_V1
@@ -2311,6 +2414,30 @@ internal fun CampBoardGameHostApp() {
     fun setClocktowerActualRole(playerName: String, nextRole: ClocktowerRole) {
         val index = cards.indexOfFirst { it.name == playerName }
         if (index >= 0) {
+            val targetSeat = index + 1
+            val localSequence = clocktowerEventCounter + 1
+            recordClocktowerAction(ActionFactDraft.RoleChange(
+                actionId = clocktowerActionId(
+                    kind = "role-change-${nextRole.enName.lowercase().replace(' ', '-')}",
+                    localSequence = localSequence,
+                    targetSeat = targetSeat,
+                ),
+                phase = storytellerPhaseFor(),
+                round = round,
+                sequence = localSequence,
+                targetSeat = targetSeat,
+                role = RoleId(nextRole.enName),
+                alignment = when (nextRole.team) {
+                    ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider -> ClocktowerAlignment.GOOD
+                    ClocktowerTeam.Minion, ClocktowerTeam.Demon -> ClocktowerAlignment.EVIL
+                },
+                type = when (nextRole.team) {
+                    ClocktowerTeam.Townsfolk -> CharacterType.TOWNSFOLK
+                    ClocktowerTeam.Outsider -> CharacterType.OUTSIDER
+                    ClocktowerTeam.Minion -> CharacterType.MINION
+                    ClocktowerTeam.Demon -> CharacterType.DEMON
+                },
+            ))
             advanceClocktowerGameStateRevision()
             cards[index] = cards[index].copy(
                 actualRoleLabel = nextRole.nameFor(language),
@@ -2713,6 +2840,7 @@ internal fun CampBoardGameHostApp() {
                             // A phase switch ends the preceding decision window. It is a
                             // timeline fact, not a provisional UI edit, so stale drafts must
                             // not be allowed to publish into the new phase.
+                            recordClocktowerPhaseAdvance(nextPhase)
                             advanceClocktowerGameStateRevision()
                             clocktowerPhase = nextPhase
                             if (nextPhase == ClocktowerPhase.FirstNight || nextPhase == ClocktowerPhase.Night) {
@@ -2735,6 +2863,22 @@ internal fun CampBoardGameHostApp() {
                         },
                         onConfirmDemonAttack = {
                             if (clocktowerPendingNightDeath != clocktowerDemonAttackDraftTarget) {
+                                val targetName = clocktowerDemonAttackDraftTarget
+                                if (targetName != null) {
+                                    val targetSeat = clocktowerSeatFor(targetName)
+                                    val localSequence = clocktowerEventCounter + 1
+                                    recordClocktowerAction(ActionFactDraft.Attack(
+                                        actionId = clocktowerActionId(
+                                            kind = "attack",
+                                            localSequence = localSequence,
+                                            targetSeat = targetSeat,
+                                        ),
+                                        phase = storytellerPhaseFor(),
+                                        round = round,
+                                        sequence = localSequence,
+                                        targetSeat = targetSeat,
+                                    ))
+                                }
                                 clocktowerPendingNightDeath = clocktowerDemonAttackDraftTarget
                                 advanceClocktowerGameStateRevision()
                             }
@@ -2749,6 +2893,19 @@ internal fun CampBoardGameHostApp() {
                         },
                         onConfirmPoisonTarget = {
                             if (clocktowerConfirmedPoisonTarget != clocktowerPoisonTarget) {
+                                val targetSeat = clocktowerPoisonTarget?.let(::clocktowerSeatFor)
+                                val localSequence = clocktowerEventCounter + 1
+                                recordClocktowerAction(ActionFactDraft.Poison(
+                                    actionId = clocktowerActionId(
+                                        kind = "poison",
+                                        localSequence = localSequence,
+                                        targetSeat = targetSeat,
+                                    ),
+                                    phase = storytellerPhaseFor(),
+                                    round = round,
+                                    sequence = localSequence,
+                                    targetSeat = targetSeat,
+                                ))
                                 clocktowerConfirmedPoisonTarget = clocktowerPoisonTarget
                                 advanceClocktowerGameStateRevision()
                                 // A Drunk's shown role is committed, but any concrete
@@ -2837,6 +2994,22 @@ internal fun CampBoardGameHostApp() {
                         },
                         onConfirmMonkProtectedTarget = {
                             if (clocktowerConfirmedMonkProtectedTarget != clocktowerMonkProtectedTarget) {
+                                val targetName = clocktowerMonkProtectedTarget
+                                if (targetName != null) {
+                                    val targetSeat = clocktowerSeatFor(targetName)
+                                    val localSequence = clocktowerEventCounter + 1
+                                    recordClocktowerAction(ActionFactDraft.Protect(
+                                        actionId = clocktowerActionId(
+                                            kind = "protect",
+                                            localSequence = localSequence,
+                                            targetSeat = targetSeat,
+                                        ),
+                                        phase = storytellerPhaseFor(),
+                                        round = round,
+                                        sequence = localSequence,
+                                        targetSeat = targetSeat,
+                                    ))
+                                }
                                 clocktowerConfirmedMonkProtectedTarget = clocktowerMonkProtectedTarget
                                 advanceClocktowerGameStateRevision()
                             }
@@ -2857,6 +3030,7 @@ internal fun CampBoardGameHostApp() {
                         },
                         onConfirmNewDemon = {
                             clocktowerPendingNewDemonName = null
+                            recordClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
                             clocktowerPhase = ClocktowerPhase.Dawn
                             advanceClocktowerGameStateRevision()
                             resetClocktowerNightFlow()
@@ -2969,6 +3143,19 @@ internal fun CampBoardGameHostApp() {
                                 advanceClocktowerGameStateRevision()
                             }
                             if (slayerDecision.effectApplies && targetIndex >= 0 && targetCard != null && targetCard.eliminatedRound == null && targetRegistersAsDemon) {
+                                val targetSeat = targetIndex + 1
+                                val localSequence = clocktowerEventCounter + 1
+                                recordClocktowerAction(ActionFactDraft.Death(
+                                    actionId = clocktowerActionId(
+                                        kind = "slayer-death",
+                                        localSequence = localSequence,
+                                        targetSeat = targetSeat,
+                                    ),
+                                    phase = storytellerPhaseFor(),
+                                    round = round,
+                                    sequence = localSequence,
+                                    targetSeat = targetSeat,
+                                ))
                                 cards[targetIndex] = targetCard.copy(eliminatedRound = round)
                                 records.add(
                                     EliminationRecord(
@@ -3088,6 +3275,7 @@ internal fun CampBoardGameHostApp() {
                             }
                         },
                         onAdvanceFromFirstNight = {
+                            recordClocktowerPhaseAdvance(ClocktowerPhase.Day)
                             clocktowerPhase = ClocktowerPhase.Day
                             advanceClocktowerGameStateRevision()
                             clocktowerPendingNightDeath = null
@@ -3176,10 +3364,26 @@ internal fun CampBoardGameHostApp() {
                                 showResults = true
                                 addOutcomeEvent(executionOutcome)
                             } else if (clocktowerPendingKlutzName == null) {
-                                round += 1
+                                val nextRound = round + 1
+                                recordClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
+                                round = nextRound
+                                clocktowerPhase = ClocktowerPhase.Night
+                                if (clocktowerConfirmedPoisonTarget != null) {
+                                    val localSequence = clocktowerEventCounter + 1
+                                    recordClocktowerAction(ActionFactDraft.Poison(
+                                        actionId = clocktowerActionId(
+                                            kind = "poison-expire",
+                                            actionRound = round,
+                                            localSequence = localSequence,
+                                        ),
+                                        phase = storytellerPhaseFor(ClocktowerPhase.Night),
+                                        round = round,
+                                        sequence = localSequence,
+                                        targetSeat = null,
+                                    ))
+                                }
                                 clocktowerPoisonTarget = PoisonEffectLifecycle.atStartOfNextNight()
                                 clocktowerConfirmedPoisonTarget = null
-                                clocktowerPhase = ClocktowerPhase.Night
                                 resetClocktowerDayFlow()
                                 resetClocktowerNightFlow()
                             }
@@ -3347,6 +3551,7 @@ internal fun CampBoardGameHostApp() {
                             } else if (nightKlutzName == null && newDemonName != null) {
                                 clocktowerPendingNewDemonName = newDemonName
                             } else if (nightKlutzName == null) {
+                                recordClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
                                 clocktowerPhase = ClocktowerPhase.Dawn
                                 resetClocktowerNightFlow()
                             }
