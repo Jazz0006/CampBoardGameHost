@@ -2,15 +2,18 @@ package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.DecisionCorrectionEvent
 import com.codex.campboardgamehost.clocktower.domain.DecisionEventStatus
+import com.codex.campboardgamehost.clocktower.domain.DecisionEvaluation
 import com.codex.campboardgamehost.clocktower.domain.DecisionExplanation
 import com.codex.campboardgamehost.clocktower.domain.DecisionHistoryArchive
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRecommendation
+import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionEvent
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.MurmurHash3
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.ImpairedTruthfulException
@@ -91,6 +94,24 @@ internal class ClocktowerRecommendationCoordinator(
 
     fun resolveInformation(request: InformationResolutionRequest) = nightModule.resolveInformation(request)
 
+    /**
+     * Recommendation and future structured-manual callers meet here before information can become
+     * an observation draft. This method intentionally does not commit history or expose UI state.
+     */
+    fun <T : DynamicInformationOutcome> informationDecisionContext(
+        evaluations: List<DecisionEvaluation<T>>,
+        recommendedCandidateIds: Set<String>,
+        revision: InformationDecisionRevision,
+        semanticIdentity: String,
+        draftOf: (DecisionEvaluation<T>) -> EpistemicObservationDraft,
+    ): InformationDecisionContext<T> = InformationDecisionContext.fromEvaluations(
+        evaluations = evaluations,
+        recommendedCandidateIds = recommendedCandidateIds,
+        revision = revision,
+        semanticIdentity = semanticIdentity,
+        draftOf = draftOf,
+    )
+
     fun resolveRegistration(request: RegistrationResolutionRequest) = nightModule.resolveRegistration(
         request.request,
         request.context,
@@ -108,6 +129,10 @@ internal class ClocktowerRecommendationCoordinator(
 
     fun naturalPairCandidates(game: GameState) = setupModule.naturalPairCandidates(game)
 
+    /**
+     * Selects a recommendation suggestion only. Durable information must still pass through
+     * [informationDecisionContext] and explicit confirmation before a draft is available.
+     */
     fun <T> selectInformation(
         options: List<T>,
         reliability: InformationReliability,
