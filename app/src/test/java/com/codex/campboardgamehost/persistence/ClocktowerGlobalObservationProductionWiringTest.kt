@@ -144,13 +144,16 @@ class ClocktowerGlobalObservationProductionWiringTest {
         assertFalse(preflight.contains("clocktowerPlayerInputRevision ="))
         assertFalse(preflight.contains("clocktowerNextTimelineGlobalSequence ="))
 
-        val virgin = appSource
+        val virginPreflight = appSource
+            .substringAfter("onPreflightVirginExecution =")
+            .substringBefore("onVirginNomination =")
+        assertTrue(virginPreflight.contains("preflightClocktowerPublicAliveObservation("))
+
+        val virginMutation = appSource
             .substringAfter("onVirginNomination =")
             .substringBefore("onAdvanceFromFirstNight =")
-        val virginPreflightIndex = virgin.indexOf("preflightClocktowerPublicAliveObservation(")
-        val virginMutationIndex = virgin.indexOf("clocktowerVirginUsed = true")
-        assertTrue(virginPreflightIndex >= 0)
-        assertTrue(virginMutationIndex > virginPreflightIndex)
+        assertTrue(virginMutation.contains("clocktowerVirginUsed = true"))
+        assertFalse(virginMutation.contains("preflightClocktowerPublicAliveObservation("))
 
         val day = appSource
             .substringAfter("onConfirmDay =")

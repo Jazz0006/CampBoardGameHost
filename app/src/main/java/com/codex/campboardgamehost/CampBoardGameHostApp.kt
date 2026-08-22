@@ -3018,17 +3018,17 @@ internal fun CampBoardGameHostApp() {
                                 addOutcomeEvent(shotOutcome)
                             }
                         },
-                        onVirginNomination = { nominatorName, nomineeName, executeNominator ->
-                            if (executeNominator) {
-                                val preflightIndex = cards.indexOfFirst { it.name == nominatorName }
-                                val preflightCard = cards.getOrNull(preflightIndex)
-                                if (preflightIndex >= 0 && preflightCard != null && preflightCard.eliminatedRound == null) {
-                                    preflightClocktowerPublicAliveObservation(
-                                        playerName = nominatorName,
-                                        eventSequence = clocktowerEventCounter + 1,
-                                    )
-                                }
+                        onPreflightVirginExecution = { nominatorName, spyRegistrationWillRecord ->
+                            val preflightIndex = cards.indexOfFirst { it.name == nominatorName }
+                            val preflightCard = cards.getOrNull(preflightIndex)
+                            if (preflightIndex >= 0 && preflightCard != null && preflightCard.eliminatedRound == null) {
+                                preflightClocktowerPublicAliveObservation(
+                                    playerName = nominatorName,
+                                    eventSequence = clocktowerEventCounter + if (spyRegistrationWillRecord) 2 else 1,
+                                )
                             }
+                        },
+                        onVirginNomination = { nominatorName, nomineeName, executeNominator ->
                             clocktowerVirginUsed = true
                             advanceClocktowerGameStateRevision()
                             if (executeNominator) {
