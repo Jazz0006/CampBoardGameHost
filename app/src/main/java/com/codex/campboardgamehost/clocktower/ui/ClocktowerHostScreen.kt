@@ -219,6 +219,7 @@ import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import java.security.MessageDigest
 import java.util.Locale
 import java.util.UUID
 
@@ -307,6 +308,23 @@ private fun clocktowerInformationCandidateId(option: ClocktowerDisplayOption): S
     option.recluseRegisteredRoleEnName.orEmpty(),
     option.isTruthful.toString(),
 ).joinToString("|")
+
+internal fun clocktowerPrivateObservationRecordId(
+    gameId: String,
+    phase: ClocktowerPhase,
+    round: Int,
+    roleEnName: String,
+    actorSeat: Int,
+    proposition: InformationProposition,
+): String {
+    val statementKey = MessageDigest
+        .getInstance("SHA-256")
+        .digest(EpistemicSemanticJson.encode(proposition).toByteArray(Charsets.UTF_8))
+        .joinToString("") { byte ->
+            (byte.toInt() and 0xff).toString(16).padStart(2, '0')
+        }
+    return "private-$gameId-${phase.name}-$round-$roleEnName-$actorSeat-$statementKey"
+}
 
 private data class ClocktowerDecisionOption(
     val label: String,
@@ -2404,7 +2422,14 @@ internal fun ClocktowerJudgeScreen(
             else -> return
         }
         onRecordEpistemicObservation(EpistemicObservationDraft(
-            recordId = "private-${gameId}-${phase.name}-${round}-${displayStep.roleEnName}-$actorSeat",
+            recordId = clocktowerPrivateObservationRecordId(
+                gameId = gameId,
+                phase = phase,
+                round = round,
+                roleEnName = requireNotNull(displayStep.roleEnName),
+                actorSeat = actorSeat,
+                proposition = proposition,
+            ),
             phase = when (phase) {
                 ClocktowerPhase.FirstNight -> StorytellerPhase.FIRST_NIGHT
                 ClocktowerPhase.Dawn -> StorytellerPhase.DAWN
