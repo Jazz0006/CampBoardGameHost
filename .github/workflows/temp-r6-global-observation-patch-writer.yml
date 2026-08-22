@@ -1,0 +1,199 @@
+name: Temp R6 global observation patch writer
+
+on:
+  push:
+    branches:
+      - codex/r6-global-observation-patch-writer-temp
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/r6-global-observation-patch-writer-temp
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Apply exact Global observation production wiring
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              p = Path(path)
+              text = p.read_text(encoding="utf-8")
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected exactly one match, found {count}\nOLD:\n{old}")
+              p.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          app = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
+          host = "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt"
+          semantic_test = "app/src/test/java/com/codex/campboardgamehost/persistence/ActiveGameSemanticHistoryProductionWiringTest.kt"
+
+          replace_once(
+              app,
+              "import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint\nimport com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest",
+              "import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint\nimport com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession\nimport com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest",
+          )
+          replace_once(
+              app,
+              "import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis\nimport com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog",
+              "import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis\nimport com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft\nimport com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog",
+          )
+
+          old_commit = '''    fun recordEpistemicObservation(record: RecordedEpistemicObservation) {
+              if (clocktowerEpistemicObservations.any { it.recordId == record.recordId }) return
+              clocktowerEpistemicObservations += record
+              advanceClocktowerPlayerInputRevision()
+              a4ObservationDurabilityGate.markPending(record.recordId)
+          }
+
+          '''
+          new_commit = '''    fun recordEpistemicObservation(draft: EpistemicObservationDraft) {
+              val committed = ClocktowerGameSession.commitGlobalEpistemicObservation(
+                  semanticHistoryMode = clocktowerSemanticHistoryMode,
+                  observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),
+                  nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
+                  playerInputRevision = clocktowerPlayerInputRevision,
+                  draft = draft,
+              )
+              clocktowerEpistemicObservations.clear()
+              clocktowerEpistemicObservations.addAll(committed.observationLog.records)
+              clocktowerPlayerInputRevision = committed.playerInputRevision
+              clocktowerNextTimelineGlobalSequence = committed.nextTimelineGlobalSequence
+              a4ObservationDurabilityGate.markPending(committed.record.recordId)
+          }
+
+          '''
+          replace_once(app, old_commit, "")
+          replace_once(app, "    fun addClocktowerEvent(\n", new_commit + "    fun addClocktowerEvent(\n")
+
+          old_event = '''        val appendedObservationIds = mutableListOf<String>()
+          eliminatedSeats.forEach { seat ->
+              val observationId = "public-alive-${clocktowerGameId}-${clocktowerEventCounter}-$seat"
+              clocktowerEpistemicObservations += RecordedEpistemicObservation(
+                  recordId = observationId,
+                  phase = epistemicPhase,
+                  round = eventRound,
+                  sequence = clocktowerEventCounter,
+                  sourceSeat = null,
+                  sourceAbility = null,
+                  visibility = ObservationVisibility.PUBLIC,
+                  recipientSeats = emptySet(),
+                  reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+                  proposition = InformationProposition.AliveAt(seat, false),
+              )
+              appendedObservationIds += observationId
+          }
+          advanceClocktowerPlayerInputRevision()
+          appendedObservationIds.lastOrNull()?.let { recordId ->
+              a4ObservationDurabilityGate.markPending(recordId)
+          }
+          '''
+          new_event = '''        eliminatedSeats.forEach { seat ->
+              val observationId = "public-alive-${clocktowerGameId}-${clocktowerEventCounter}-$seat"
+              recordEpistemicObservation(EpistemicObservationDraft(
+                  recordId = observationId,
+                  phase = epistemicPhase,
+                  round = eventRound,
+                  sequence = clocktowerEventCounter,
+                  sourceSeat = null,
+                  sourceAbility = null,
+                  visibility = ObservationVisibility.PUBLIC,
+                  recipientSeats = emptySet(),
+                  reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+                  proposition = InformationProposition.AliveAt(seat, false),
+              ))
+          }
+          '''
+          replace_once(app, old_event, new_event)
+          replace_once(
+              app,
+              "        clocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL\n        clocktowerNextTimelineGlobalSequence = 0L",
+              "        clocktowerSemanticHistoryMode = if (nextGameKind == GameKind.Clocktower) {\n            ClocktowerSemanticHistoryMode.GLOBAL_V1\n        } else {\n            ClocktowerSemanticHistoryMode.LEGACY_LOCAL\n        }\n        clocktowerNextTimelineGlobalSequence = 0L",
+          )
+
+          replace_once(
+              host,
+              "import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis\nimport com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog",
+              "import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis\nimport com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft\nimport com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog",
+          )
+          replace_once(
+              host,
+              "    onRecordEpistemicObservation: (RecordedEpistemicObservation) -> Unit,",
+              "    onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,",
+          )
+          replace_once(
+              host,
+              "        onRecordEpistemicObservation(RecordedEpistemicObservation(\n            recordId = \"private-${gameId}-${phase.name}-${round}-${displayStep.roleEnName}-$actorSeat\",",
+              "        onRecordEpistemicObservation(EpistemicObservationDraft(\n            recordId = \"private-${gameId}-${phase.name}-${round}-${displayStep.roleEnName}-$actorSeat\",",
+          )
+
+          old_test = '''    @Test
+          fun `new and non Clocktower games stay legacy until the later producer cutover`() {
+              val reset = source
+                  .substringAfter("fun resetDealState(")
+                  .substringBefore("fun startUndercoverGame()")
+
+              assertTrue(
+                  reset.contains(
+                      "clocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL",
+                  ),
+              )
+              assertTrue(reset.contains("clocktowerNextTimelineGlobalSequence = 0L"))
+              assertFalse(reset.contains("ClocktowerSemanticHistoryMode.GLOBAL_V1"))
+          }
+          '''
+          new_test = '''    @Test
+          fun `new Clocktower games use global history while non Clocktower games stay legacy`() {
+              val reset = source
+                  .substringAfter("fun resetDealState(")
+                  .substringBefore("fun startUndercoverGame()")
+
+              assertTrue(reset.contains("nextGameKind == GameKind.Clocktower"))
+              assertTrue(reset.contains("ClocktowerSemanticHistoryMode.GLOBAL_V1"))
+              assertTrue(reset.contains("ClocktowerSemanticHistoryMode.LEGACY_LOCAL"))
+              assertTrue(reset.contains("clocktowerNextTimelineGlobalSequence = 0L"))
+          }
+          '''
+          replace_once(semantic_test, old_test, new_test)
+
+          app_text = Path(app).read_text(encoding="utf-8")
+          commit_index = app_text.index("fun recordEpistemicObservation(")
+          event_index = app_text.index("fun addClocktowerEvent(")
+          assert 0 <= commit_index < event_index
+          assert "ClocktowerGameSession.commitGlobalEpistemicObservation(" in app_text[commit_index:event_index]
+          assert "recordEpistemicObservation(EpistemicObservationDraft(" in app_text[event_index:]
+
+      - name: Validate focused contracts
+        run: |
+          git diff --check
+          chmod +x ./gradlew
+          ./gradlew :app:testDebugUnitTest \
+            --tests com.codex.campboardgamehost.ClocktowerGlobalObservationProductionWiringTest \
+            --tests com.codex.campboardgamehost.clocktower.session.ClocktowerGlobalObservationCommitTest \
+            --tests com.codex.campboardgamehost.ActiveGameSemanticHistoryProductionWiringTest \
+            --console=plain
+
+      - name: Commit generated production blobs
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt \
+                  app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt \
+                  app/src/test/java/com/codex/campboardgamehost/persistence/ActiveGameSemanticHistoryProductionWiringTest.kt
+          git diff --cached --check
+          git commit -m "temp: materialize global observation production patch"
+          git push origin HEAD:codex/r6-global-observation-patch-writer-temp
