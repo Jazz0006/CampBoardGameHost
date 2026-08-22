@@ -91,6 +91,29 @@ class StructuredEmpathInformationAdapterTest {
     }
 
     @Test
+    fun `healthy Empath does not inherit unreliable-history warnings`() {
+        val model = prepareEmpathNumberInformationUiModel(
+            coordinator = coordinator,
+            gameId = "game-healthy-after-poison",
+            phase = ClocktowerPhase.Night,
+            round = 4,
+            sequence = 4,
+            actorSeat = 2,
+            subjectSeats = listOf(1, 3),
+            trueValue = 2,
+            reliability = InformationReliability.RELIABLE,
+            recommendationStyle = RecommendationStyle.BALANCED,
+            revision = revision,
+            recommendedValue = null,
+            previousShownValue = 0,
+        )
+
+        val onlyChoice = model.choices.single()
+        val validation = model.acceptRecommendation(onlyChoice.candidateId, revision).validation as InformationDecisionValidationResult.Allowed
+        assertTrue(validation.warnings.none { it.code == "large-history-jump" })
+    }
+
+    @Test
     fun `poisoned Empath accepted recommendation yields the exact unbound player-visible draft`() {
         val model = poisonedModel()
 
