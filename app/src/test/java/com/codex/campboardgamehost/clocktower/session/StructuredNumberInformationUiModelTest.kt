@@ -44,6 +44,21 @@ class StructuredNumberInformationUiModelTest {
     }
 
     @Test
+    fun `semantic state key survives reconstruction but changes with decision projection`() {
+        val evaluations = listOf(
+            evaluation("empath-0", 0, truthful = false),
+            evaluation("empath-1", 1, truthful = true),
+            evaluation("empath-2", 2, truthful = false),
+        )
+        val first = StructuredNumberInformationUiModel.from(context(evaluations, setOf("empath-2")))
+        val reconstructed = StructuredNumberInformationUiModel.from(context(evaluations, setOf("empath-2")))
+        val changedRecommendation = StructuredNumberInformationUiModel.from(context(evaluations, setOf("empath-0")))
+
+        assertEquals(first.semanticStateKey, reconstructed.semanticStateKey)
+        assertTrue(first.semanticStateKey != changedRecommendation.semanticStateKey)
+    }
+
+    @Test
     fun `accept recommendation and structured manual choice share Foundation confirmation`() {
         val context = context(
             listOf(

@@ -20,6 +20,21 @@ internal class StructuredNumberInformationUiModel private constructor(
         val recommended: Boolean,
     )
 
+    /** Stable across recomposition when the semantic decision projection has not changed. */
+    val semanticStateKey: String = buildString {
+        append(context.semanticIdentity)
+        append('|')
+        append(context.revision.gameStateRevision)
+        append(':')
+        append(context.revision.playerInputRevision)
+        append('|')
+        append(
+            choices.joinToString(",") { choice ->
+                "${choice.candidateId}:${choice.value}:${choice.recommended}"
+            },
+        )
+    }
+
     fun acceptRecommendation(
         candidateId: String,
         currentRevision: InformationDecisionRevision,

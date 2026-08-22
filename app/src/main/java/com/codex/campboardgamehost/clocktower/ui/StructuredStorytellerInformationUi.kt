@@ -131,8 +131,10 @@ internal fun StructuredNumberInformationDecisionPanel(
     language: String,
     onConfirmed: (ConfirmedInformationDecision, Int) -> Unit,
 ) {
-    var blockedReason by remember(model, currentRevision) { mutableStateOf<InformationDecisionHardBlockReason?>(null) }
-    var pendingWarning by remember(model, currentRevision) {
+    var blockedReason by remember(model.semanticStateKey, currentRevision) {
+        mutableStateOf<InformationDecisionHardBlockReason?>(null)
+    }
+    var pendingWarning by remember(model.semanticStateKey, currentRevision) {
         mutableStateOf<Pair<InformationDecisionConfirmation, Int>?>(null)
     }
 
