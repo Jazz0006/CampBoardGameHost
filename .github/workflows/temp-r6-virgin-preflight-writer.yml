@@ -41,7 +41,8 @@ jobs:
           actual="$(git diff --name-only | sort)"
           expected="$(printf '%s\n' \
             'app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt' \
-            'app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt' | sort)"
+            'app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt' \
+            'app/src/test/java/com/codex/campboardgamehost/persistence/ClocktowerGlobalObservationProductionWiringTest.kt' | sort)"
           test "$actual" = "$expected"
 
       - name: Run focused contracts
@@ -58,11 +59,13 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add \
             app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt \
-            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt \
+            app/src/test/java/com/codex/campboardgamehost/persistence/ClocktowerGlobalObservationProductionWiringTest.kt
           actual="$(git diff --cached --name-only | sort)"
           expected="$(printf '%s\n' \
             'app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt' \
-            'app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt' | sort)"
+            'app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt' \
+            'app/src/test/java/com/codex/campboardgamehost/persistence/ClocktowerGlobalObservationProductionWiringTest.kt' | sort)"
           test "$actual" = "$expected"
           git diff --cached --check
           git commit -m 'fix: preflight Virgin execution before Spy registration'

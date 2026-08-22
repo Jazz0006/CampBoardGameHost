@@ -3,6 +3,7 @@ import re
 
 APP = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
 HOST = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt")
+PRODUCTION_TEST = Path("app/src/test/java/com/codex/campboardgamehost/persistence/ClocktowerGlobalObservationProductionWiringTest.kt")
 
 
 def replace_once(text: str, old: str, new: str, label: str) -> str:
@@ -14,6 +15,7 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 app = APP.read_text(encoding="utf-8")
 host = HOST.read_text(encoding="utf-8")
+production_test = PRODUCTION_TEST.read_text(encoding="utf-8")
 
 host = replace_once(
     host,
@@ -57,7 +59,7 @@ def inject_preflight(match: re.Match[str]) -> str:
     return (
         f"{indent}val chosenNominator = nominatorName\n"
         f"{indent}val chosenNominee = nomineeName\n"
-        f"{indent}if (chosenNominator != null && chosenNominee != null && virginExecutes) {{\n"
+        f"{indent}if (chosenNominator != null && chosenNominee != null && virginFirstNomination && virginExecutes) {{\n"
         f"{indent}    onPreflightVirginExecution(\n"
         f"{indent}        chosenNominator,\n"
         f"{indent}        spyRegistrationWillRecord(virginRegistrationKey),\n"
@@ -98,5 +100,32 @@ new_app = """                        onPreflightVirginExecution = { nominatorNam
 """
 app = replace_once(app, old_app, new_app, "App Virgin preflight wiring")
 
+old_test = """        val virgin = appSource
+            .substringAfter("onVirginNomination =")
+            .substringBefore("onAdvanceFromFirstNight =")
+        val virginPreflightIndex = virgin.indexOf("preflightClocktowerPublicAliveObservation(")
+        val virginMutationIndex = virgin.indexOf("clocktowerVirginUsed = true")
+        assertTrue(virginPreflightIndex >= 0)
+        assertTrue(virginMutationIndex > virginPreflightIndex)
+"""
+new_test = """        val virginPreflight = appSource
+            .substringAfter("onPreflightVirginExecution =")
+            .substringBefore("onVirginNomination =")
+        assertTrue(virginPreflight.contains("preflightClocktowerPublicAliveObservation("))
+
+        val virginMutation = appSource
+            .substringAfter("onVirginNomination =")
+            .substringBefore("onAdvanceFromFirstNight =")
+        assertTrue(virginMutation.contains("clocktowerVirginUsed = true"))
+        assertFalse(virginMutation.contains("preflightClocktowerPublicAliveObservation("))
+"""
+production_test = replace_once(
+    production_test,
+    old_test,
+    new_test,
+    "superseded Virgin structural expectation",
+)
+
 APP.write_text(app.rstrip() + "\n", encoding="utf-8")
 HOST.write_text(host.rstrip() + "\n", encoding="utf-8")
+PRODUCTION_TEST.write_text(production_test.rstrip() + "\n", encoding="utf-8")
