@@ -110,6 +110,8 @@ import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRequest
 import com.codex.campboardgamehost.clocktower.domain.DynamicGameState
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
+import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
+import com.codex.campboardgamehost.clocktower.domain.requireCompatible
 import com.codex.campboardgamehost.clocktower.domain.DynamicStorytellerChoice
 import com.codex.campboardgamehost.clocktower.domain.PlayerInformationPressure
 import com.codex.campboardgamehost.clocktower.domain.PredictedDecisionOutcome
@@ -1077,6 +1079,8 @@ internal fun CampBoardGameHostApp() {
     var clocktowerGameSeed by remember { mutableStateOf(0L) }
     var clocktowerGameStateRevision by remember { mutableStateOf(0L) }
     var clocktowerPlayerInputRevision by remember { mutableStateOf(0L) }
+    var clocktowerSemanticHistoryMode by remember { mutableStateOf(ClocktowerSemanticHistoryMode.LEGACY_LOCAL) }
+    var clocktowerNextTimelineGlobalSequence by remember { mutableStateOf(0L) }
     var clocktowerRulesetRef by remember { mutableStateOf<RulesetRef?>(null) }
     var clocktowerRulesetRoleIds by remember { mutableStateOf<Set<RoleId>>(emptySet()) }
     var showResults by remember { mutableStateOf(false) }
@@ -1466,6 +1470,12 @@ internal fun CampBoardGameHostApp() {
         put("clocktowerGameSeed", clocktowerGameSeed)
         put("clocktowerGameStateRevision", clocktowerGameStateRevision)
         put("clocktowerPlayerInputRevision", clocktowerPlayerInputRevision)
+        if (currentGameKind == GameKind.Clocktower) {
+            put(
+                ClocktowerSemanticHistoryPersistence.MODE_KEY,
+                ClocktowerSemanticHistoryPersistence.encode(clocktowerSemanticHistoryMode),
+            )
+        }
         if (currentGameKind == GameKind.Clocktower &&
             currentClocktowerScript == ClocktowerScript.TroubleBrewing
         ) {
@@ -1532,6 +1542,7 @@ internal fun CampBoardGameHostApp() {
             pendingNewDemonName = clocktowerPendingNewDemonName,
             pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
             demonSuccessorDraftTarget = clocktowerDemonSuccessorTarget,
+            nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
         ).persistedValues().forEach { (key, value) -> put(key, value ?: JSONObject.NULL) }
         put("clocktowerVirginUsed", clocktowerVirginUsed)
         put("clocktowerSlayerUsed", clocktowerSlayerUsed)
@@ -1675,6 +1686,47 @@ internal fun CampBoardGameHostApp() {
                 ?.toStringList()
                 .orEmpty()
                 .ifEmpty { localizedRestoredCards.map { it.name } }
+            val restoredSemanticHistoryMode = if (restoredGameKind == GameKind.Clocktower) {
+                ClocktowerSemanticHistoryPersistence.decodeMode(json)
+            } else {
+                ClocktowerSemanticHistoryMode.LEGACY_LOCAL
+            }
+            val restoredClocktowerEpistemicObservations = if (restoredGameKind == GameKind.Clocktower) {
+                json.optJSONArray("clocktowerEpistemicObservations")
+                    ?.toRecordedEpistemicObservations()
+                    .orEmpty()
+            } else {
+                emptyList()
+            }
+            val restoredNightCheckpointValues = mutableMapOf<String, Any?>(
+                "clocktowerPhase" to json.optNullableString("clocktowerPhase"),
+                "round" to json.optInt("round", 1),
+                "clocktowerGameStateRevision" to json.optLong("clocktowerGameStateRevision", 0L),
+                "clocktowerPlayerInputRevision" to json.optLong("clocktowerPlayerInputRevision", 0L),
+                "clocktowerNightStarted" to json.optBoolean("clocktowerNightStarted", false),
+                "clocktowerNightStepIndex" to json.optInt("clocktowerNightStepIndex", 0),
+                "clocktowerPendingNightDeath" to json.optNullableString("clocktowerPendingNightDeath"),
+                "clocktowerDemonAttackDraftTarget" to json.optNullableString("clocktowerDemonAttackDraftTarget"),
+                "clocktowerConfirmedPoisonTarget" to json.optNullableString("clocktowerConfirmedPoisonTarget"),
+                "clocktowerPoisonTarget" to json.optNullableString("clocktowerPoisonTarget"),
+                "clocktowerConfirmedMonkProtectedTarget" to json.optNullableString("clocktowerConfirmedMonkProtectedTarget"),
+                "clocktowerMonkProtectedTarget" to json.optNullableString("clocktowerMonkProtectedTarget"),
+                "clocktowerConfirmedMayorRedirectTarget" to json.optNullableString("clocktowerConfirmedMayorRedirectTarget"),
+                "clocktowerMayorRedirectTarget" to json.optNullableString("clocktowerMayorRedirectTarget"),
+                "clocktowerPendingNewDemonName" to json.optNullableString("clocktowerPendingNewDemonName"),
+                "clocktowerPendingNightNewDemonIdentityName" to json.optNullableString("clocktowerPendingNightNewDemonIdentityName"),
+                "clocktowerDemonSuccessorTarget" to json.optNullableString("clocktowerDemonSuccessorTarget"),
+            )
+            if (json.has("clocktowerNextTimelineGlobalSequence")) {
+                restoredNightCheckpointValues["clocktowerNextTimelineGlobalSequence"] =
+                    json.opt("clocktowerNextTimelineGlobalSequence")
+            }
+            val restoredNightCheckpoint =
+                ClocktowerNightCheckpoint.fromPersistedValues(restoredNightCheckpointValues)
+            restoredSemanticHistoryMode.requireCompatible(
+                observationLog = EpistemicObservationLog(restoredClocktowerEpistemicObservations),
+                nextTimelineGlobalSequence = restoredNightCheckpoint.nextTimelineGlobalSequence,
+            )
 
             playerNames.clear()
             playerNames.addAll(restoredPlayerNames)
@@ -1685,9 +1737,7 @@ internal fun CampBoardGameHostApp() {
             clocktowerEvents.clear()
             clocktowerEvents.addAll(json.optJSONArray("clocktowerEvents")?.toClocktowerEvents().orEmpty())
             clocktowerEpistemicObservations.clear()
-            clocktowerEpistemicObservations.addAll(
-                json.optJSONArray("clocktowerEpistemicObservations")?.toRecordedEpistemicObservations().orEmpty(),
-            )
+            clocktowerEpistemicObservations.addAll(restoredClocktowerEpistemicObservations)
             clocktowerEventCounter = maxOf(
                 json.optInt("clocktowerEventCounter", 0),
                 clocktowerEvents.maxOfOrNull { it.sequence } ?: 0,
@@ -1728,6 +1778,8 @@ internal fun CampBoardGameHostApp() {
             }
             clocktowerGameStateRevision = json.optLong("clocktowerGameStateRevision", 0L).coerceAtLeast(0L)
             clocktowerPlayerInputRevision = json.optLong("clocktowerPlayerInputRevision", 0L).coerceAtLeast(0L)
+            clocktowerSemanticHistoryMode = restoredSemanticHistoryMode
+            clocktowerNextTimelineGlobalSequence = restoredNightCheckpoint.nextTimelineGlobalSequence
             clocktowerRulesetRoleIds = restoredRulesetBasis?.roleIds.orEmpty()
             clocktowerRulesetRef = resolvedClocktowerRulesetRef
             clocktowerPendingNightDeath = json.optNullableString("clocktowerPendingNightDeath")
@@ -1762,25 +1814,6 @@ internal fun CampBoardGameHostApp() {
             clocktowerPendingNewDemonName = json.optNullableString("clocktowerPendingNewDemonName")
             clocktowerPendingNightNewDemonIdentityName = json.optNullableString("clocktowerPendingNightNewDemonIdentityName")
             clocktowerDemonSuccessorTarget = json.optNullableString("clocktowerDemonSuccessorTarget")
-            val restoredNightCheckpoint = ClocktowerNightCheckpoint.fromPersistedValues(mapOf(
-                "clocktowerPhase" to json.optNullableString("clocktowerPhase"),
-                "round" to json.optInt("round", 1),
-                "clocktowerGameStateRevision" to json.optLong("clocktowerGameStateRevision", 0L),
-                "clocktowerPlayerInputRevision" to json.optLong("clocktowerPlayerInputRevision", 0L),
-                "clocktowerNightStarted" to json.optBoolean("clocktowerNightStarted", false),
-                "clocktowerNightStepIndex" to json.optInt("clocktowerNightStepIndex", 0),
-                "clocktowerPendingNightDeath" to json.optNullableString("clocktowerPendingNightDeath"),
-                "clocktowerDemonAttackDraftTarget" to json.optNullableString("clocktowerDemonAttackDraftTarget"),
-                "clocktowerConfirmedPoisonTarget" to json.optNullableString("clocktowerConfirmedPoisonTarget"),
-                "clocktowerPoisonTarget" to json.optNullableString("clocktowerPoisonTarget"),
-                "clocktowerConfirmedMonkProtectedTarget" to json.optNullableString("clocktowerConfirmedMonkProtectedTarget"),
-                "clocktowerMonkProtectedTarget" to json.optNullableString("clocktowerMonkProtectedTarget"),
-                "clocktowerConfirmedMayorRedirectTarget" to json.optNullableString("clocktowerConfirmedMayorRedirectTarget"),
-                "clocktowerMayorRedirectTarget" to json.optNullableString("clocktowerMayorRedirectTarget"),
-                "clocktowerPendingNewDemonName" to json.optNullableString("clocktowerPendingNewDemonName"),
-                "clocktowerPendingNightNewDemonIdentityName" to json.optNullableString("clocktowerPendingNightNewDemonIdentityName"),
-                "clocktowerDemonSuccessorTarget" to json.optNullableString("clocktowerDemonSuccessorTarget"),
-            ))
             clocktowerPhase = enumByName<ClocktowerPhase>(restoredNightCheckpoint.phaseName) ?: ClocktowerPhase.FirstNight
             round = restoredNightCheckpoint.round
             clocktowerGameStateRevision = restoredNightCheckpoint.gameStateRevision
@@ -1926,6 +1959,8 @@ internal fun CampBoardGameHostApp() {
         clocktowerEvents.clear()
         clocktowerEpistemicObservations.clear()
         clocktowerEventCounter = 0
+        clocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL
+        clocktowerNextTimelineGlobalSequence = 0L
         currentDealIndex = 0
         round = 1
         showResults = false

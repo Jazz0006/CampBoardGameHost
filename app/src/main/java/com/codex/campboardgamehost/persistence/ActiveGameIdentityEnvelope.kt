@@ -3,7 +3,7 @@ package com.codex.campboardgamehost
 import org.json.JSONObject
 
 /**
- * Strict variant-identity envelope intended for ACTIVE_GAME_STATE_VERSION=2 snapshots.
+ * Strict variant-identity envelope for current active-game schema v3 snapshots.
  *
  * It is deliberately independent from the rest of the active-game payload so save/restore wiring
  * can validate variant identity before interpreting game-specific mutable state.
