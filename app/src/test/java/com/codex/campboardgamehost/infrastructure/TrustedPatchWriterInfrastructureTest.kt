@@ -16,7 +16,6 @@ class TrustedPatchWriterInfrastructureTest {
         assertTrue(source.contains("expected_head_sha"))
         assertTrue(source.contains("expected_blob_sha"))
         assertTrue(source.contains("target_path"))
-        assertTrue(source.contains("patch_base64"))
         assertTrue(source.contains("git apply --check"))
         assertTrue(source.contains("git diff --check"))
         assertTrue(source.contains("git diff --name-only"))
@@ -31,6 +30,7 @@ class TrustedPatchWriterInfrastructureTest {
 
         assertTrue(source.contains("MAX_PATCH_BYTES = 40 * 1024"))
         assertTrue(source.contains("if key not in ALLOWED_KEYS:"))
+        assertTrue(source.contains("\"patch_base64\""))
         assertTrue(source.contains("if not owner or actor != owner:"))
         assertTrue(source.contains("if head_repo.get(\"full_name\") != repo_full_name:"))
         assertTrue(source.contains("if not target_branch or target_branch == default_branch:"))
