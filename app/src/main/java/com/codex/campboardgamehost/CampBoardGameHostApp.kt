@@ -1316,9 +1316,91 @@ internal fun CampBoardGameHostApp() {
                 clocktowerEpistemicObservations.addAll(committed.observationLog.records)
                 clocktowerPlayerInputRevision = committed.playerInputRevision
                 clocktowerNextTimelineGlobalSequence = committed.nextTimelineGlobalSequence
+                invalidateA4RevisionScope()
                 a4ObservationDurabilityGate.markPending(committed.record.recordId)
             }
         }
+    }
+
+    fun preflightClocktowerPublicAliveObservation(
+        playerName: String,
+        eventSequence: Int,
+        eventPhase: ClocktowerPhase = clocktowerPhase,
+        eventRound: Int = round,
+    ) {
+        if (clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) return
+        val seat = cards.indexOfFirst { it.name == playerName }
+            .takeIf { index -> index >= 0 }
+            ?.plus(1)
+            ?: return
+        val epistemicPhase = when (eventPhase) {
+            ClocktowerPhase.FirstNight -> StorytellerPhase.FIRST_NIGHT
+            ClocktowerPhase.Dawn -> StorytellerPhase.DAWN
+            ClocktowerPhase.Day -> StorytellerPhase.DAY
+            ClocktowerPhase.Night -> StorytellerPhase.NIGHT
+        }
+        val committed = ClocktowerGameSession.commitGlobalEpistemicObservation(
+            semanticHistoryMode = clocktowerSemanticHistoryMode,
+            observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),
+            nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
+            playerInputRevision = clocktowerPlayerInputRevision,
+            draft = EpistemicObservationDraft(
+                recordId = "public-alive-${clocktowerGameId}-${eventSequence}-$seat",
+                phase = epistemicPhase,
+                round = eventRound,
+                sequence = eventSequence,
+                sourceSeat = null,
+                sourceAbility = null,
+                visibility = ObservationVisibility.PUBLIC,
+                recipientSeats = emptySet(),
+                reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+                proposition = InformationProposition.AliveAt(seat, false),
+            ),
+        )
+        check(committed.playerInputRevision != clocktowerPlayerInputRevision) {
+            "A new public elimination cannot reuse an existing observation ID."
+        }
+    }
+
+    fun nextNightPublicAliveObservationPreflightOrNull(): Pair<String, Int>? {
+        val demonPoisonedTonight = clocktowerConfirmedPoisonTarget?.let { name ->
+            cards.firstOrNull { it.name == name && it.eliminatedRound == null }?.clocktowerTeam == ClocktowerTeam.Demon
+        } == true
+        if (demonPoisonedTonight) return null
+
+        val originalDeathName = clocktowerPendingNightDeath ?: return null
+        val originalDeathCard = cards.firstOrNull { it.name == originalDeathName }
+        val mayorCanRedirect = originalDeathCard?.let {
+            AbilityFunctioningSemantics.functionsAs(
+                it.abilitySubject(clocktowerConfirmedPoisonTarget),
+                "Mayor",
+            )
+        } == true
+        val resolvedDeathName = if (mayorCanRedirect) {
+            clocktowerConfirmedMayorRedirectTarget ?: originalDeathName
+        } else {
+            originalDeathName
+        }
+        val deathIndex = cards.indexOfFirst { it.name == resolvedDeathName }
+        val nightDeathCard = cards.getOrNull(deathIndex)
+        if (deathIndex < 0 || nightDeathCard == null || nightDeathCard.eliminatedRound != null) return null
+
+        val apparentMonk = cards.firstOrNull {
+            AbilityFunctioningSemantics.interactsAs(it.abilitySubject(clocktowerConfirmedPoisonTarget), "Monk")
+        }
+        val protectedByMonk = AbilityFunctioningSemantics.selectedMechanicalEffectApplies(
+            subject = apparentMonk?.abilitySubject(clocktowerConfirmedPoisonTarget),
+            role = "Monk",
+            selectionMatches = clocktowerConfirmedMonkProtectedTarget == resolvedDeathName,
+        )
+        val protectedBySoldier = AbilityFunctioningSemantics.functionsAs(
+            nightDeathCard.abilitySubject(clocktowerConfirmedPoisonTarget),
+            "Soldier",
+        )
+        if (protectedByMonk || protectedBySoldier) return null
+
+        val eventOffset = if (mayorCanRedirect && resolvedDeathName != originalDeathName) 2 else 1
+        return resolvedDeathName to (clocktowerEventCounter + eventOffset)
     }
 
     fun addClocktowerEvent(
@@ -2937,6 +3019,16 @@ internal fun CampBoardGameHostApp() {
                             }
                         },
                         onVirginNomination = { nominatorName, nomineeName, executeNominator ->
+                            if (executeNominator) {
+                                val preflightIndex = cards.indexOfFirst { it.name == nominatorName }
+                                val preflightCard = cards.getOrNull(preflightIndex)
+                                if (preflightIndex >= 0 && preflightCard != null && preflightCard.eliminatedRound == null) {
+                                    preflightClocktowerPublicAliveObservation(
+                                        playerName = nominatorName,
+                                        eventSequence = clocktowerEventCounter + 1,
+                                    )
+                                }
+                            }
                             clocktowerVirginUsed = true
                             advanceClocktowerGameStateRevision()
                             if (executeNominator) {
@@ -3004,6 +3096,17 @@ internal fun CampBoardGameHostApp() {
                             resetClocktowerDayFlow()
                         },
                         onConfirmDay = {
+                            val preflightExecutionName = clocktowerSelectedExecution
+                            if (preflightExecutionName != null) {
+                                val preflightIndex = cards.indexOfFirst { it.name == preflightExecutionName }
+                                val preflightCard = cards.getOrNull(preflightIndex)
+                                if (preflightIndex >= 0 && preflightCard != null && preflightCard.eliminatedRound == null) {
+                                    preflightClocktowerPublicAliveObservation(
+                                        playerName = preflightExecutionName,
+                                        eventSequence = clocktowerEventCounter + 1,
+                                    )
+                                }
+                            }
                             // Confirming the day commits its execution/no-execution result and
                             // closes the day decision window, including when no one dies.
                             advanceClocktowerGameStateRevision()
@@ -3083,6 +3186,12 @@ internal fun CampBoardGameHostApp() {
                             clocktowerSelectedExecution = null
                         },
                         onConfirmNight = {
+                            nextNightPublicAliveObservationPreflightOrNull()?.let { (playerName, eventSequence) ->
+                                preflightClocktowerPublicAliveObservation(
+                                    playerName = playerName,
+                                    eventSequence = eventSequence,
+                                )
+                            }
                             // Dawn resolution commits deaths, role changes and the next phase as
                             // one timeline boundary. Earlier action confirmations have already
                             // revisioned their own facts; this closes the night as a whole.
