@@ -55,7 +55,7 @@ internal fun prepareEmpathNumberInformationUiModel(
     revision: InformationDecisionRevision,
     recommendedValue: Int?,
     previousShownValue: Int? = null,
-    pressureCostPerPoint: Int = 0,
+    pressureCostPerPoint: Int = 1,
 ): StructuredNumberInformationUiModel {
     require(actorSeat > 0) { "Empath actor seat must be positive." }
     require(subjectSeats.all { it > 0 } && subjectSeats.distinct().size == subjectSeats.size) {
