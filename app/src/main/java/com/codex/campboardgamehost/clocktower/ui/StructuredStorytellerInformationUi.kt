@@ -22,7 +22,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicGenerationContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
@@ -32,14 +31,15 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionConfirm
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionHardBlockReason
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionValidationResult
+import com.codex.campboardgamehost.clocktower.session.InformationResolutionRequest
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 
 /**
  * First production structured-manual slice: Empath numeric information.
  *
- * Legal values come from the existing numeric rules/recommendation candidate generator. This
- * adapter only supplies interaction identity and converts each validated value into the exact
- * player-visible observation draft that the existing session authority will commit.
+ * Legal values come from the existing numeric rules/recommendation candidate generator through the
+ * coordinator boundary. This adapter only supplies interaction identity and converts each validated
+ * value into the exact player-visible observation draft that the existing session authority commits.
  */
 internal fun prepareEmpathNumberInformationUiModel(
     coordinator: ClocktowerRecommendationCoordinator,
@@ -59,18 +59,20 @@ internal fun prepareEmpathNumberInformationUiModel(
     require(subjectSeats.all { it > 0 } && subjectSeats.distinct().size == subjectSeats.size) {
         "Empath subject seats must be positive and unique."
     }
-    val evaluations = DynamicCandidateGenerator.generateNumeric(
-        numberContext = UnreliableNumberContext(
-            trueValue = trueValue,
-            minimumValue = 0,
-            maximumValue = 2,
-        ),
-        context = DynamicGenerationContext(
-            abilityRole = RoleId("Empath"),
-            recipientSeat = actorSeat,
-            reliability = reliability,
-            style = recommendationStyle,
-            targetSeats = subjectSeats.toSet(),
+    val evaluations = coordinator.resolveNumberInformation(
+        InformationResolutionRequest.Number(
+            context = UnreliableNumberContext(
+                trueValue = trueValue,
+                minimumValue = 0,
+                maximumValue = 2,
+            ),
+            generation = DynamicGenerationContext(
+                abilityRole = RoleId("Empath"),
+                recipientSeat = actorSeat,
+                reliability = reliability,
+                style = recommendationStyle,
+                targetSeats = subjectSeats.toSet(),
+            ),
         ),
     )
     val recommendedIds = recommendedValue?.let { value ->
