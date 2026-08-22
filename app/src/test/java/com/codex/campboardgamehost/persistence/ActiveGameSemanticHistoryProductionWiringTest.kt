@@ -74,17 +74,14 @@ class ActiveGameSemanticHistoryProductionWiringTest {
     }
 
     @Test
-    fun `new and non Clocktower games stay legacy until the later producer cutover`() {
+    fun `new Clocktower games use global history while non Clocktower games stay legacy`() {
         val reset = source
             .substringAfter("fun resetDealState(")
             .substringBefore("fun startUndercoverGame()")
 
-        assertTrue(
-            reset.contains(
-                "clocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL",
-            ),
-        )
+        assertTrue(reset.contains("nextGameKind == GameKind.Clocktower"))
+        assertTrue(reset.contains("ClocktowerSemanticHistoryMode.GLOBAL_V1"))
+        assertTrue(reset.contains("ClocktowerSemanticHistoryMode.LEGACY_LOCAL"))
         assertTrue(reset.contains("clocktowerNextTimelineGlobalSequence = 0L"))
-        assertFalse(reset.contains("ClocktowerSemanticHistoryMode.GLOBAL_V1"))
     }
 }

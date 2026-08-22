@@ -188,6 +188,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.A4ShadowWorldSetCache
 import com.codex.campboardgamehost.clocktower.epistemic.A4WorldEngineRollout
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
@@ -218,6 +219,7 @@ import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import java.security.MessageDigest
 import java.util.Locale
 import java.util.UUID
 
@@ -306,6 +308,23 @@ private fun clocktowerInformationCandidateId(option: ClocktowerDisplayOption): S
     option.recluseRegisteredRoleEnName.orEmpty(),
     option.isTruthful.toString(),
 ).joinToString("|")
+
+internal fun clocktowerPrivateObservationRecordId(
+    gameId: String,
+    phase: ClocktowerPhase,
+    round: Int,
+    roleEnName: String,
+    actorSeat: Int,
+    proposition: InformationProposition,
+): String {
+    val statementKey = MessageDigest
+        .getInstance("SHA-256")
+        .digest(EpistemicSemanticJson.encode(proposition).toByteArray(Charsets.UTF_8))
+        .joinToString("") { byte ->
+            (byte.toInt() and 0xff).toString(16).padStart(2, '0')
+        }
+    return "private-$gameId-${phase.name}-$round-$roleEnName-$actorSeat-$statementKey"
+}
 
 private data class ClocktowerDecisionOption(
     val label: String,
@@ -556,7 +575,7 @@ internal fun ClocktowerJudgeScreen(
     slayerTargetNameState: MutableState<String?>,
     gameOutcome: GameOutcome?,
     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
-    onRecordEpistemicObservation: (RecordedEpistemicObservation) -> Unit,
+    onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
     onPhaseChange: (ClocktowerPhase) -> Unit,
     onSelectNightDeath: (String?) -> Unit,
     onConfirmDemonAttack: () -> Unit,
@@ -584,6 +603,7 @@ internal fun ClocktowerJudgeScreen(
     onSelectArtistShownAnswer: (Boolean?) -> Unit,
     onConfirmArtistQuestion: () -> Unit,
     onSlayerShot: (String, String, Boolean) -> Unit,
+    onPreflightVirginExecution: (String, Boolean) -> Unit,
     onVirginNomination: (String, String, Boolean) -> Unit,
     onAdvanceFromFirstNight: () -> Unit,
     onConfirmDay: () -> Unit,
@@ -865,6 +885,8 @@ internal fun ClocktowerJudgeScreen(
         val allowed = completeTroubleBrewingRoles.filter { it.team in teams && it.enName != "Spy" }
         return allowed.firstOrNull { it.enName == spyRegistrationRole[key] } ?: allowed.firstOrNull()
     }
+    fun spyRegistrationWillRecord(key: String?): Boolean =
+        key != null && recordedSpyRegistrations[key] != true && spyCard != null
     fun recordSpyRegistration(
         key: String?,
         teams: List<ClocktowerTeam>,
@@ -2399,8 +2421,15 @@ internal fun ClocktowerJudgeScreen(
             }
             else -> return
         }
-        onRecordEpistemicObservation(RecordedEpistemicObservation(
-            recordId = "private-${gameId}-${phase.name}-${round}-${displayStep.roleEnName}-$actorSeat",
+        onRecordEpistemicObservation(EpistemicObservationDraft(
+            recordId = clocktowerPrivateObservationRecordId(
+                gameId = gameId,
+                phase = phase,
+                round = round,
+                roleEnName = requireNotNull(displayStep.roleEnName),
+                actorSeat = actorSeat,
+                proposition = proposition,
+            ),
             phase = when (phase) {
                 ClocktowerPhase.FirstNight -> StorytellerPhase.FIRST_NIGHT
                 ClocktowerPhase.Dawn -> StorytellerPhase.DAWN
@@ -3328,6 +3357,12 @@ internal fun ClocktowerJudgeScreen(
             onContinue = {
                 val chosenNominator = nominatorName
                 val chosenNominee = nomineeName
+                if (chosenNominator != null && chosenNominee != null && virginFirstNomination && virginExecutes) {
+                    onPreflightVirginExecution(
+                        chosenNominator,
+                        spyRegistrationWillRecord(virginRegistrationKey),
+                    )
+                }
                 if (chosenNominator != null && chosenNominee != null && virginFirstNomination) {
                     recordSpyRegistration(virginRegistrationKey, listOf(ClocktowerTeam.Townsfolk))
                     onVirginNomination(chosenNominator, chosenNominee, virginExecutes)
@@ -4889,6 +4924,12 @@ internal fun ClocktowerJudgeScreen(
                                 onClick = {
                                     val chosenNominator = nominatorName
                                     val chosenNominee = nomineeName
+                                    if (chosenNominator != null && chosenNominee != null && virginFirstNomination && virginExecutes) {
+                                        onPreflightVirginExecution(
+                                            chosenNominator,
+                                            spyRegistrationWillRecord(virginRegistrationKey),
+                                        )
+                                    }
                                     if (chosenNominator != null && chosenNominee != null && virginFirstNomination) {
                                         recordSpyRegistration(virginRegistrationKey, listOf(ClocktowerTeam.Townsfolk))
                                         onVirginNomination(chosenNominator, chosenNominee, virginExecutes)
