@@ -68,6 +68,29 @@ class StructuredEmpathInformationAdapterTest {
     }
 
     @Test
+    fun `healthy Empath without explicit recommendation falls back to the sole legal truth`() {
+        val model = prepareEmpathNumberInformationUiModel(
+            coordinator = coordinator,
+            gameId = "game-healthy-fallback",
+            phase = ClocktowerPhase.Night,
+            round = 3,
+            sequence = 4,
+            actorSeat = 2,
+            subjectSeats = listOf(1, 3),
+            trueValue = 1,
+            reliability = InformationReliability.RELIABLE,
+            recommendationStyle = RecommendationStyle.BALANCED,
+            revision = revision,
+            recommendedValue = null,
+        )
+
+        val onlyChoice = model.choices.single()
+        assertEquals(1, onlyChoice.value)
+        assertTrue(onlyChoice.recommended)
+        assertTrue(model.acceptRecommendation(onlyChoice.candidateId, revision).confirmed != null)
+    }
+
+    @Test
     fun `poisoned Empath accepted recommendation yields the exact unbound player-visible draft`() {
         val model = poisonedModel()
 
