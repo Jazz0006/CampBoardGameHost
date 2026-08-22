@@ -133,8 +133,11 @@ class StructuredEmpathInformationAdapterTest {
         val recommendationBlock = source
             .substringAfter("val structuredEmpathRecommendedOption =")
             .substringBefore("val structuredEmpathRecommendedValue")
+        val unreliableDefault = recommendationBlock.indexOf("step.displayOptions.firstOrNull { it.isDefaultRecommendation }")
+        val automaticFallback = recommendationBlock.indexOf("?: automaticDisplayOption")
 
-        assertTrue(recommendationBlock.contains("step.displayOptions.firstOrNull { it.isDefaultRecommendation }"))
+        assertTrue(unreliableDefault >= 0)
+        assertTrue(automaticFallback > unreliableDefault)
     }
 
     @Test
