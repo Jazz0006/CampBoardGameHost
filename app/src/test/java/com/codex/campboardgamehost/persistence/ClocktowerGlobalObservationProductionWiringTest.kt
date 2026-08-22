@@ -73,6 +73,30 @@ class ClocktowerGlobalObservationProductionWiringTest {
     }
 
     @Test
+    fun `successful global commit invalidates superseded A4 revision before durability publication`() {
+        val commit = appSource
+            .substringAfter("fun recordEpistemicObservation(")
+            .substringBefore("fun addClocktowerEvent(")
+        val globalBranch = commit.substringAfter("ClocktowerSemanticHistoryMode.GLOBAL_V1 ->")
+
+        val guardIndex = globalBranch.indexOf(
+            "if (committed.playerInputRevision == clocktowerPlayerInputRevision) return",
+        )
+        val revisionWriteIndex = globalBranch.indexOf(
+            "clocktowerPlayerInputRevision = committed.playerInputRevision",
+        )
+        val invalidationIndex = globalBranch.indexOf("invalidateA4RevisionScope()")
+        val durabilityIndex = globalBranch.indexOf(
+            "a4ObservationDurabilityGate.markPending(committed.record.recordId)",
+        )
+
+        assertTrue(guardIndex >= 0)
+        assertTrue(revisionWriteIndex > guardIndex)
+        assertTrue(invalidationIndex > revisionWriteIndex)
+        assertTrue(durabilityIndex > invalidationIndex)
+    }
+
+    @Test
     fun `restored legacy local games keep recording without entering global commit authority`() {
         val commitStart = appSource.indexOf("fun recordEpistemicObservation(")
         val eventStart = appSource.indexOf("fun addClocktowerEvent(")
@@ -105,6 +129,44 @@ class ClocktowerGlobalObservationProductionWiringTest {
         assertTrue(eventFunction.contains("recordEpistemicObservation("))
         assertFalse(eventFunction.contains("clocktowerEpistemicObservations += RecordedEpistemicObservation("))
         assertFalse(eventFunction.contains("advanceClocktowerPlayerInputRevision()"))
+    }
+
+    @Test
+    fun `public eliminations preflight global observation before caller state publication`() {
+        val preflightStart = appSource.indexOf("fun preflightClocktowerPublicAliveObservation(")
+        val eventStart = appSource.indexOf("fun addClocktowerEvent(")
+        assertTrue(preflightStart >= 0)
+        assertTrue(eventStart > preflightStart)
+
+        val preflight = appSource.substring(preflightStart, eventStart)
+        assertTrue(preflight.contains("ClocktowerGameSession.commitGlobalEpistemicObservation("))
+        assertFalse(preflight.contains("clocktowerEpistemicObservations.clear()"))
+        assertFalse(preflight.contains("clocktowerPlayerInputRevision ="))
+        assertFalse(preflight.contains("clocktowerNextTimelineGlobalSequence ="))
+
+        val virgin = appSource
+            .substringAfter("onVirginNomination =")
+            .substringBefore("onAdvanceFromFirstNight =")
+        val virginPreflightIndex = virgin.indexOf("preflightClocktowerPublicAliveObservation(")
+        val virginMutationIndex = virgin.indexOf("clocktowerVirginUsed = true")
+        assertTrue(virginPreflightIndex >= 0)
+        assertTrue(virginMutationIndex > virginPreflightIndex)
+
+        val day = appSource
+            .substringAfter("onConfirmDay =")
+            .substringBefore("onConfirmNight =")
+        val dayPreflightIndex = day.indexOf("preflightClocktowerPublicAliveObservation(")
+        val dayMutationIndex = day.indexOf("advanceClocktowerGameStateRevision()")
+        assertTrue(dayPreflightIndex >= 0)
+        assertTrue(dayMutationIndex > dayPreflightIndex)
+
+        val night = appSource
+            .substringAfter("onConfirmNight =")
+            .substringBefore("onShowResults =")
+        val nightPreflightIndex = night.indexOf("preflightClocktowerPublicAliveObservation(")
+        val nightMutationIndex = night.indexOf("advanceClocktowerGameStateRevision()")
+        assertTrue(nightPreflightIndex >= 0)
+        assertTrue(nightMutationIndex > nightPreflightIndex)
     }
 
     @Test
