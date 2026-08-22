@@ -1,6 +1,6 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-08-22（PR #27 merged 后）  
+> 最后整理：2026-08-23（永久 trusted patch writer 基础设施）  
 > **任何新的开发或审计任务都应先读本文，再读 `CURRENT_DEVELOPMENT_ROADMAP.md`。**  
 > **任何通过 ChatGPT / GitHub connector 修改代码的任务，还必须先读 `SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`。**  
 > 不在 README 中硬编码“当前开发 branch”；所有 source work 都应从最新 live `main` 创建短生命周期 branch。
@@ -16,9 +16,10 @@
 5. **多剧本 / 动态流程架构**：`多剧本多板子与动态游戏流程架构设计_v1.md` 是 R5.5 以后继续生效的专项规范。
 6. **当前 handoff**：`NEXT_DEVELOPMENT_HANDOFF_2026-08-22.md` 服务下一次开发，但不得覆盖 roadmap。
 7. **历史 audit / closeout / handoff**：保存证据与局部上下文；如果正文仍写 `Impaired Information NEXT`、`#27 PAUSED` 等旧状态，视为历史，不得执行。
-8. **本仓库 connector 默认开发策略**：`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` 是项目级运行规范；默认单开发者模式，优先 whole-file replace + live-head/blob-SHA guard + exact diff audit。
-9. **大文件 / trusted writer 详细机制**：`github_connector_large_file_editing_playbook.md` 仅作为 fallback reference；不要仅因为文件大就默认搭 writer。
-10. **`archive/`**：仅历史追溯，不作为新代码实施入口。
+8. **本仓库 connector 默认开发策略**：`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` 是项目级运行规范。完整内容可靠时可 whole-file / atomic write；一旦 connector 出现 truncation / incomplete content，大文件小 patch 应切换到永久 trusted patch writer。
+9. **永久 patch writer 协议**：`TRUSTED_PATCH_WRITER.md` 是 default-branch writer 的规范；定义 PR comment 协议、head/blob 锁、单文件 scope、固定测试 profile、CI/R2 dispatch 与 LF policy。
+10. **大文件历史机制参考**：`github_connector_large_file_editing_playbook.md` 保留 Git Data API / temporary writer / workflow trigger 的经验；其中 temporary-writer 默认策略若与第 8–9 项冲突，以当前规范为准。
+11. **`archive/`**：仅历史追溯，不作为新代码实施入口。
 
 ## 2. 当前必须阅读
 
@@ -60,10 +61,13 @@
 ### E. 开发运行手册
 
 - [`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`](SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md) — **NORMATIVE / DEVELOPMENT OPERATIONS**  
-  单开发者模式：从目标 branch live head 读取完整文件和 blob SHA；大文件也可优先 whole-file replace；写后 exact diff audit。
+  规定 connector 写入路径决策：完整内容可靠时 whole-file / Git Data API；出现 truncation 后停止 reconstruction；确定性大文件小 patch 使用 permanent trusted patch writer。
 
-- [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md) — **REFERENCE / FALLBACK**  
-  Git Data API / temporary trusted writer / workflow trigger 详细机制，只在完整文件无法可靠处理、真实同文件并发、必须 runner 先验证等例外使用。
+- [`TRUSTED_PATCH_WRITER.md`](TRUSTED_PATCH_WRITER.md) — **NORMATIVE / DEVELOPMENT OPERATIONS**  
+  永久 default-branch patch primitive：owner-only PR comment trigger、exact head/blob lock、single-file patch scope、固定 Android validation、remote-head recheck、CI/R2 dispatch、禁止自修改和自动 merge。
+
+- [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md) — **REFERENCE / HISTORICAL MECHANICS**  
+  Git Data API / temporary writer / workflow trigger 的详细机制与历史经验。普通大文件小 patch 不再新建 temporary writer；当前标准 fallback 看 `TRUSTED_PATCH_WRITER.md`。
 
 ## 3. 当前 rollout 顺序摘要
 
@@ -185,13 +189,13 @@ Storyteller Decision Foundation 是未来达到 Level 2 的关键基础。
 
 1. 读本文；
 2. 读 `SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`；
-3. 读 `CURRENT_DEVELOPMENT_ROADMAP.md`；
-4. 读 `NEXT_DEVELOPMENT_HANDOFF_2026-08-22.md`；
-5. 必要时读 `R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md`；
-6. 查询 live `main`，不要假设文档中的 source baseline 就是当前 HEAD；
-7. 确认 PR #27 已 merged；
+3. 如果目标涉及 connector 大文件写入，读 `TRUSTED_PATCH_WRITER.md`；
+4. 读 `CURRENT_DEVELOPMENT_ROADMAP.md`；
+5. 读当前 handoff；
+6. 必要时读专项设计；
+7. 查询 live `main`，不要假设文档中的 source baseline 就是当前 HEAD；
 8. 从最新 `main` 创建新的 focused branch；
-9. 从 Foundation 的 RED contracts 开始，不先做 UI。
+9. 按当前阶段 tests-first 开始，不把基础设施工作和产品 scope 混在一起。
 
 ## 8. 历史文档处理
 
@@ -201,6 +205,7 @@ Storyteller Decision Foundation 是未来达到 Level 2 的关键基础。
 - 任何仍写 `PR #27 = PAUSED / OPEN` 的段落已经过时；
 - `NEXT_DEVELOPMENT_HANDOFF_2026-08-21.md` 已 superseded；
 - 旧 recommendation-entry 设计已被 **Storyteller Information Decision Unification** 吸收；
+- 历史 temporary-writer 默认路径已被 permanent writer 规范 supersede；
 - 历史 `PASS / OPEN / NEXT / BLOCKED` 只代表当时状态，不得覆盖 current roadmap。
 
 ## 9. 文档维护规则
@@ -210,4 +215,5 @@ Storyteller Decision Foundation 是未来达到 Level 2 的关键基础。
 - Audit 记录“发现了什么”；roadmap 记录“现在决定怎么做”。
 - Specialized design 记录本阶段语义/产品边界，不维护 live branch 状态。
 - 不在 README 中写当前工作 branch。
-- Connector 操作遵守 `SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`，不要在新对话中重新假设“数千行文件必须用 temporary writer”。
+- Connector 操作遵守 `SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`；永久 writer 的具体协议遵守 `TRUSTED_PATCH_WRITER.md`。
+- 不要在新对话中重新假设“数千行文件必须用 temporary writer”，也不要在 connector 已明确截断目标文件后继续 whole-file reconstruction。
