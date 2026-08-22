@@ -32,6 +32,22 @@ data class EpistemicObservationDraft(
         require(visibility != ObservationVisibility.PUBLIC || recipientSeats.isEmpty())
     }
 
+    /** Compatibility binding for observations produced while resuming a persisted LegacyLocal game. */
+    internal fun bindLegacyLocal(): RecordedEpistemicObservation = RecordedEpistemicObservation(
+        recordId = recordId,
+        phase = phase,
+        round = round,
+        sequence = sequence,
+        sourceSeat = sourceSeat,
+        sourceAbility = sourceAbility,
+        visibility = visibility,
+        recipientSeats = recipientSeats,
+        reliability = reliability,
+        proposition = proposition,
+        schemaVersion = schemaVersion,
+        timelineBinding = ObservationTimelineBinding.LegacyLocal,
+    )
+
     internal fun bindGlobal(point: TimelinePoint): RecordedEpistemicObservation {
         require(point.phase == phase && point.round == round && point.sequence == sequence) {
             "Global TimelinePoint must match observation draft replay fields."
