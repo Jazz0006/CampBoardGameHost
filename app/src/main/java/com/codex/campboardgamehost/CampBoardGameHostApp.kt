@@ -1311,6 +1311,7 @@ internal fun CampBoardGameHostApp() {
                     playerInputRevision = clocktowerPlayerInputRevision,
                     draft = draft,
                 )
+                if (committed.playerInputRevision == clocktowerPlayerInputRevision) return
                 clocktowerEpistemicObservations.clear()
                 clocktowerEpistemicObservations.addAll(committed.observationLog.records)
                 clocktowerPlayerInputRevision = committed.playerInputRevision
