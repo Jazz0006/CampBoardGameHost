@@ -142,42 +142,21 @@ internal object DynamicCandidateGenerator {
             )
         }.sortedBy { it.candidate.candidateId }
 
+    /**
+     * Compatibility seam for existing callers and telemetry tests.
+     *
+     * The tuning inputs are intentionally ignored here: they may rank candidates inside
+     * a legal family, but the impaired truthful-vs-false family budget belongs exclusively
+     * to [ImpairedInformationPolicy].
+     */
+    @Suppress("UNUSED_PARAMETER")
     fun misinformationMassFixedPoint(
         reliability: InformationReliability,
         style: RecommendationStyle,
         evilAdvantage: Int,
         recentMisinformationStreak: Int = 0,
         minimumMisinformationPressure: Int = 0,
-    ): Long {
-        if (reliability == InformationReliability.RELIABLE) return 0
-        val base = when (reliability) {
-            InformationReliability.DRUNK -> when (style) {
-                RecommendationStyle.GENTLE -> 550_000L
-                RecommendationStyle.BALANCED -> 650_000L
-                RecommendationStyle.AGGRESSIVE -> 750_000L
-            }
-            InformationReliability.POISONED -> when (style) {
-                RecommendationStyle.GENTLE -> 700_000L
-                RecommendationStyle.BALANCED -> 820_000L
-                RecommendationStyle.AGGRESSIVE -> 920_000L
-            }
-            InformationReliability.RELIABLE -> 0L
-        }
-        val balanceAdjustment = (-evilAdvantage.toLong() * 1_500L).coerceIn(-150_000L, 100_000L)
-        val streakAdjustment = if (recentMisinformationStreak >= 2) {
-            -(recentMisinformationStreak - 1).coerceAtMost(2) * 50_000L
-        } else {
-            0L
-        }
-        val impactAdjustment = -(minimumMisinformationPressure - 3).coerceAtLeast(0) * 25_000L
-        val range = when (reliability) {
-            InformationReliability.DRUNK -> 520_000L..850_000L
-            InformationReliability.POISONED -> 600_000L..950_000L
-            InformationReliability.RELIABLE -> 0L..0L
-        }
-        return (base + balanceAdjustment + streakAdjustment + impactAdjustment)
-            .coerceIn(range.first, range.last)
-    }
+    ): Long = ImpairedInformationPolicy.falseFamilyMassFixedPoint(reliability)
 
     fun <T> select(
         options: List<T>,
