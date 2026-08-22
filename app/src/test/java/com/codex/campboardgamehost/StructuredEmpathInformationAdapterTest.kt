@@ -122,6 +122,7 @@ class StructuredEmpathInformationAdapterTest {
             .substringAfter("StructuredNumberInformationDecisionPanel(")
             .substringBefore("\n            if (\n                structuredEmpathUiModel == null")
 
+        assertTrue(panelBlock.contains("selectionAudit?.let { audit ->"))
         assertTrue(panelBlock.contains("recordCommittedSelection("))
         assertTrue(panelBlock.contains("truthful = value == structuredEmpathTruthValue"))
     }
