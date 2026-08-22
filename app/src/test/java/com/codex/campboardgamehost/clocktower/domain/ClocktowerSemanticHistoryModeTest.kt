@@ -50,6 +50,32 @@ class ClocktowerSemanticHistoryModeTest {
     }
 
     @Test
+    fun `legacy mode rejects a later global observation in mixed history`() {
+        assertFails {
+            snapshot(
+                mode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
+                log = uncheckedLog(
+                    listOf(legacyRecord(), globalRecord(globalSequence = 4L)),
+                ),
+                cursor = 5L,
+            )
+        }
+    }
+
+    @Test
+    fun `global mode explicitly rejects a later legacy observation in mixed history`() {
+        assertFails {
+            snapshot(
+                mode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+                log = uncheckedLog(
+                    listOf(globalRecord(globalSequence = 4L), legacyRecord()),
+                ),
+                cursor = 5L,
+            )
+        }
+    }
+
+    @Test
     fun `global mode requires cursor strictly beyond every committed global observation`() {
         assertFails {
             snapshot(
@@ -116,6 +142,15 @@ class ClocktowerSemanticHistoryModeTest {
             ),
         ),
     )
+
+    private fun uncheckedLog(
+        records: List<RecordedEpistemicObservation>,
+    ): EpistemicObservationLog = EpistemicObservationLog().also { log ->
+        EpistemicObservationLog::class.java.getDeclaredField("records").apply {
+            isAccessible = true
+            set(log, records)
+        }
+    }
 
     private fun assertFails(block: () -> Unit) {
         var failed = false

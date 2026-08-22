@@ -17,21 +17,21 @@ internal fun ClocktowerSemanticHistoryMode.requireCompatible(
         "Semantic-history timeline cursor cannot be negative."
     }
 
-    val firstBinding = observationLog.records.firstOrNull()?.timelineBinding
+    val bindings = observationLog.records.map { it.timelineBinding }
     when (this) {
         ClocktowerSemanticHistoryMode.LEGACY_LOCAL -> require(
-            firstBinding == null || firstBinding === ObservationTimelineBinding.LegacyLocal,
+            bindings.all { it === ObservationTimelineBinding.LegacyLocal },
         ) {
             "LegacyLocal semantic history cannot contain Global observations."
         }
 
         ClocktowerSemanticHistoryMode.GLOBAL_V1 -> {
-            require(firstBinding == null || firstBinding is ObservationTimelineBinding.Global) {
+            require(bindings.all { it is ObservationTimelineBinding.Global }) {
                 "Global semantic history cannot contain LegacyLocal observations."
             }
-            val maxCommittedGlobalSequence = observationLog.records.maxOfOrNull { record ->
-                (record.timelineBinding as ObservationTimelineBinding.Global).point.globalSequence
-            }
+            val maxCommittedGlobalSequence = bindings
+                .filterIsInstance<ObservationTimelineBinding.Global>()
+                .maxOfOrNull { it.point.globalSequence }
             if (maxCommittedGlobalSequence != null) {
                 require(nextTimelineGlobalSequence > maxCommittedGlobalSequence) {
                     "Global timeline cursor must be strictly beyond all committed observations."

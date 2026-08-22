@@ -40,10 +40,13 @@ data class SelectionAuditRecord(
     val selectionId: String,
     val dimensions: SelectionAuditDimensions,
     val candidates: List<SelectionAuditCandidate>,
+    /** Aggregate-safe semantic reasons for why this preview selected its result family. */
+    val reasonCodes: Set<String> = emptySet(),
 ) {
     init {
         require(selectionId.isNotBlank()) { "selectionId cannot be blank." }
         require(candidates.isNotEmpty()) { "Selection audit requires the complete candidate pool." }
+        require(reasonCodes.all { it.isNotBlank() }) { "Selection audit reason codes cannot be blank." }
     }
 }
 
@@ -91,6 +94,7 @@ data class SelectionAuditTotals(
 class SelectionDistributionTelemetryRecorder {
     private val totals = linkedMapOf<SelectionAuditKey, MutableSelectionAuditTotals>()
     private val previewedSelections = linkedMapOf<RecordedSelectionKey, Set<String>>()
+    private val previewReasonCodesBySelection = linkedMapOf<RecordedSelectionKey, Set<String>>()
     private val committedSelections = mutableSetOf<RecordedSelectionKey>()
 
     @Synchronized
@@ -104,6 +108,7 @@ class SelectionDistributionTelemetryRecorder {
         previewedSelections[selectionKey] = record.candidates
             .filter(SelectionAuditCandidate::autoEligible)
             .mapTo(linkedSetOf(), SelectionAuditCandidate::familyId)
+        previewReasonCodesBySelection[selectionKey] = record.reasonCodes.toSet()
 
         record.candidates.groupBy(SelectionAuditCandidate::familyId).forEach { (familyId, candidates) ->
             val key = SelectionAuditKey(
@@ -121,6 +126,19 @@ class SelectionDistributionTelemetryRecorder {
                 it.autoEligible && it.qualityTier.rankingPriority() == highestEligibleTier
             }) accumulator.highestTier += 1
         }
+    }
+
+    /**
+     * Aggregate-safe debug/history metadata for the exact preview decision key.
+     * No candidate IDs, player names, or private propositions are retained here.
+     */
+    @Synchronized
+    internal fun previewReasonCodes(
+        selectionId: String,
+        dimensions: SelectionAuditDimensions,
+    ): Set<String>? {
+        require(selectionId.isNotBlank()) { "selectionId cannot be blank." }
+        return previewReasonCodesBySelection[RecordedSelectionKey(selectionId, dimensions)]?.toSet()
     }
 
     /** Records a real AUTO or ASSISTED confirmation; rendering a preview never calls this. */

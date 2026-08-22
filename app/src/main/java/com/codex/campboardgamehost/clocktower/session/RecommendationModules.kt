@@ -15,6 +15,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.DemonSuccessorRecom
 import com.codex.campboardgamehost.clocktower.recommendation.MayorRedirectRecommender
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicGenerationContext
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.ImpairedTruthfulException
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.MalfunctionPolicy
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationCandidate
@@ -88,6 +89,7 @@ internal class NightRecommendationModule {
         history: CrossGameHistory = CrossGameHistory(),
         historicalSignatureOf: ((T) -> HistoricalClueSignature)? = null,
         selectionAudit: SelectionAuditContext? = null,
+        truthfulException: ImpairedTruthfulException? = null,
     ): T? = DynamicCandidateGenerator.select(
         options,
         reliability,
@@ -102,6 +104,7 @@ internal class NightRecommendationModule {
         history,
         historicalSignatureOf,
         selectionAudit,
+        truthfulException,
     )
 }
 
