@@ -188,6 +188,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.A4ShadowWorldSetCache
 import com.codex.campboardgamehost.clocktower.epistemic.A4WorldEngineRollout
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
@@ -556,7 +557,7 @@ internal fun ClocktowerJudgeScreen(
     slayerTargetNameState: MutableState<String?>,
     gameOutcome: GameOutcome?,
     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
-    onRecordEpistemicObservation: (RecordedEpistemicObservation) -> Unit,
+    onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
     onPhaseChange: (ClocktowerPhase) -> Unit,
     onSelectNightDeath: (String?) -> Unit,
     onConfirmDemonAttack: () -> Unit,
@@ -2399,7 +2400,7 @@ internal fun ClocktowerJudgeScreen(
             }
             else -> return
         }
-        onRecordEpistemicObservation(RecordedEpistemicObservation(
+        onRecordEpistemicObservation(EpistemicObservationDraft(
             recordId = "private-${gameId}-${phase.name}-${round}-${displayStep.roleEnName}-$actorSeat",
             phase = when (phase) {
                 ClocktowerPhase.FirstNight -> StorytellerPhase.FIRST_NIGHT
