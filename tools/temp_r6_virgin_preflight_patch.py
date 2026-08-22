@@ -40,8 +40,8 @@ host = replace_once(
     "        teams: List<ClocktowerTeam>,\n"
     "        detail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,\n"
     "    ) {\n"
-    "        if (!spyRegistrationWillRecord(key)) return\n",
-    "Spy registration guard",
+    "        if (key == null || recordedSpyRegistrations[key] == true || spyCard == null) return\n",
+    "Spy registration preflight helper",
 )
 
 pattern = re.compile(
