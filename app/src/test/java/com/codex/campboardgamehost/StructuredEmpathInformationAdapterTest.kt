@@ -118,6 +118,31 @@ class StructuredEmpathInformationAdapterTest {
     }
 
     @Test
+    fun `poisoned Empath preserves prior shown value and pressure warnings`() {
+        val model = prepareEmpathNumberInformationUiModel(
+            coordinator = coordinator,
+            gameId = "game-poisoned-history",
+            phase = ClocktowerPhase.Night,
+            round = 3,
+            sequence = 4,
+            actorSeat = 2,
+            subjectSeats = listOf(1, 3),
+            trueValue = 1,
+            reliability = InformationReliability.POISONED,
+            recommendationStyle = RecommendationStyle.AGGRESSIVE,
+            revision = revision,
+            recommendedValue = 2,
+            previousShownValue = 0,
+            pressureCostPerPoint = 1,
+        )
+
+        val recommended = model.choices.single { it.recommended }
+        assertEquals(2, recommended.value)
+        val validation = model.acceptRecommendation(recommended.candidateId, revision).validation as InformationDecisionValidationResult.Allowed
+        assertTrue(validation.warnings.any { it.code == "large-history-jump" })
+    }
+
+    @Test
     fun `poisoned Empath truthful manual choice remains legal but requires the Foundation warning`() {
         val model = poisonedModel()
         val truthfulManualChoice = model.choices.single { it.value == 1 }
