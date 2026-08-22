@@ -159,6 +159,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableC
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
+import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
 import com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest
 import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
 import com.codex.campboardgamehost.clocktower.session.UnifiedSetupSelectorDeviceBenchmark
@@ -183,6 +184,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.A4ShadowLifecycleInvalid
 import com.codex.campboardgamehost.clocktower.epistemic.A4WorldEngineRollout
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
+import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
@@ -1293,6 +1295,21 @@ internal fun CampBoardGameHostApp() {
         a4InitialRecommendationDemandRecorded = true
     }
 
+    fun recordEpistemicObservation(draft: EpistemicObservationDraft) {
+        val committed = ClocktowerGameSession.commitGlobalEpistemicObservation(
+            semanticHistoryMode = clocktowerSemanticHistoryMode,
+            observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),
+            nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
+            playerInputRevision = clocktowerPlayerInputRevision,
+            draft = draft,
+        )
+        clocktowerEpistemicObservations.clear()
+        clocktowerEpistemicObservations.addAll(committed.observationLog.records)
+        clocktowerPlayerInputRevision = committed.playerInputRevision
+        clocktowerNextTimelineGlobalSequence = committed.nextTimelineGlobalSequence
+        a4ObservationDurabilityGate.markPending(committed.record.recordId)
+    }
+
     fun addClocktowerEvent(
         type: ClocktowerEventType,
         title: String,
@@ -1327,10 +1344,9 @@ internal fun CampBoardGameHostApp() {
             ClocktowerPhase.Day -> StorytellerPhase.DAY
             ClocktowerPhase.Night -> StorytellerPhase.NIGHT
         }
-        val appendedObservationIds = mutableListOf<String>()
         eliminatedSeats.forEach { seat ->
             val observationId = "public-alive-${clocktowerGameId}-${clocktowerEventCounter}-$seat"
-            clocktowerEpistemicObservations += RecordedEpistemicObservation(
+            recordEpistemicObservation(EpistemicObservationDraft(
                 recordId = observationId,
                 phase = epistemicPhase,
                 round = eventRound,
@@ -1341,20 +1357,8 @@ internal fun CampBoardGameHostApp() {
                 recipientSeats = emptySet(),
                 reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
                 proposition = InformationProposition.AliveAt(seat, false),
-            )
-            appendedObservationIds += observationId
+            ))
         }
-        advanceClocktowerPlayerInputRevision()
-        appendedObservationIds.lastOrNull()?.let { recordId ->
-            a4ObservationDurabilityGate.markPending(recordId)
-        }
-    }
-
-    fun recordEpistemicObservation(record: RecordedEpistemicObservation) {
-        if (clocktowerEpistemicObservations.any { it.recordId == record.recordId }) return
-        clocktowerEpistemicObservations += record
-        advanceClocktowerPlayerInputRevision()
-        a4ObservationDurabilityGate.markPending(record.recordId)
     }
 
     fun localizedText(zh: String, en: String): String = if (language == "en") en else zh
@@ -1959,7 +1963,11 @@ internal fun CampBoardGameHostApp() {
         clocktowerEvents.clear()
         clocktowerEpistemicObservations.clear()
         clocktowerEventCounter = 0
-        clocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL
+        clocktowerSemanticHistoryMode = if (nextGameKind == GameKind.Clocktower) {
+            ClocktowerSemanticHistoryMode.GLOBAL_V1
+        } else {
+            ClocktowerSemanticHistoryMode.LEGACY_LOCAL
+        }
         clocktowerNextTimelineGlobalSequence = 0L
         currentDealIndex = 0
         round = 1
