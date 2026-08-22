@@ -235,6 +235,6 @@ class StructuredEmpathInformationAdapterTest {
             Files.exists(fromRoot) -> fromRoot
             else -> error("ClocktowerHostScreen.kt source not found from ${Path.of("").toAbsolutePath()}")
         }
-        return Files.readString(path)
+        return String(Files.readAllBytes(path), Charsets.UTF_8)
     }
 }
