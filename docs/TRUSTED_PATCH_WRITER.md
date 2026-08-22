@@ -96,7 +96,8 @@ writer 会：
 当前永久 writer 故意只支持窄能力：
 
 - 单个已有 UTF-8 文本文件；
-- decoded patch 最大 64 KiB；
+- decoded patch 最大 **40 KiB**，为 PR comment 的 base64 膨胀和协议字段留出余量；
+- `target_path` 只接受项目常规安全字符并要求已经规范化；
 - 必须恰好只有一个 `diff --git`；
 - diff header 必须与 `target_path` 一致；
 - 不允许 binary patch；
@@ -118,9 +119,15 @@ writer 会：
   ```text
   bash ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --build-cache
   ```
-- `none`：只适用于不要求 Android build 的窄文本修改。
+- `none`：只适用于不要求 Android/build validation 的窄文本修改，例如普通 docs。
 
-任何 `app/src/main/` production source patch 都强制 `test_profile=android`。
+以下路径强制 `test_profile=android`：
+
+- `app/**`；
+- `gradle/**`；
+- `build.gradle.kts`；
+- `settings.gradle.kts`；
+- `gradle.properties`。
 
 writer 自身 GREEN 仍然不是最终验证。由 `GITHUB_TOKEN` 产生的 push 不应被假设会正常递归触发 PR CI，所以 writer push 后会显式 dispatch：
 
