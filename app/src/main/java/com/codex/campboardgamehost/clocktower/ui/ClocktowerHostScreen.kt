@@ -2836,6 +2836,10 @@ internal fun ClocktowerJudgeScreen(
                 explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
                 hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
                 displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), pressureCostPerPoint = 1) },
+                previousShownNumber = empathActor?.let { actor ->
+                    previousUnreliableNumber(text("共情者信息", "Empath information"), actor)
+                        ?.takeIf { it in 0..2 }
+                },
                 spyRegistrationKey = empathRegistrationKey,
                 spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
                 spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
@@ -6950,7 +6954,9 @@ private fun ClocktowerNightStepCardLocalized(
     val structuredEmpathRecommendedOption = if (automaticStorytellerInfo) {
         automaticDisplayOption
     } else {
-        displayedInformationOptions.firstOrNull { it.isDefaultRecommendation } ?: automaticDisplayOption
+        displayedInformationOptions.firstOrNull { it.isDefaultRecommendation }
+            ?: step.displayOptions.firstOrNull { it.isDefaultRecommendation }
+            ?: automaticDisplayOption
     }
     val structuredEmpathRecommendedValue = numericOptionValue(structuredEmpathRecommendedOption)
     val structuredEmpathUiModel = if (
@@ -7411,6 +7417,18 @@ private fun ClocktowerNightStepCardLocalized(
                     automaticStorytellerInfo = automaticStorytellerInfo,
                     language = language,
                     onConfirmed = { confirmed, value ->
+                        selectionAudit?.let { audit ->
+                            audit.recorder.recordCommittedSelection(
+                                SelectionAuditCommit(
+                                    selectionId = audit.selectionId,
+                                    dimensions = audit.dimensions,
+                                    selectedFamilyId = DynamicCandidateGenerator.selectionAuditFamilyId(
+                                        reliability = step.informationReliability,
+                                        truthful = value == structuredEmpathTruthValue,
+                                    ),
+                                ),
+                            )
+                        }
                         onShowPlayerDisplay(
                             step.copy(
                                 tellPlayer = value.toString(),
