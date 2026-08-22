@@ -1,5 +1,30 @@
 package com.codex.campboardgamehost.clocktower.recommendation.dynamic
 
+internal enum class ImpairedTruthfulException {
+    AVOID_EXPOSING_IMPAIRMENT,
+}
+
+internal enum class ImpairedInformationPolicyReason {
+    HEALTHY_TRUTH,
+    IMPAIRED_FALSE_PREFERRED,
+    NO_LEGAL_FALSE_CANDIDATE,
+    AVOID_EXPOSING_IMPAIRMENT,
+    NO_LEGAL_TRUTHFUL_CANDIDATE,
+    ONLY_LEGAL_FALSE_CANDIDATE,
+    NO_LEGAL_CANDIDATES,
+}
+
+internal data class ImpairedInformationFamilyBudget(
+    val truthfulMassFixedPoint: Long,
+    val falseMassFixedPoint: Long,
+    val reason: ImpairedInformationPolicyReason,
+) {
+    init {
+        require(truthfulMassFixedPoint >= 0L && falseMassFixedPoint >= 0L)
+        require(truthfulMassFixedPoint + falseMassFixedPoint in setOf(0L, 1_000_000L))
+    }
+}
+
 /**
  * Owns the reliability-family boundary for information shown by a malfunctioning ability.
  *
@@ -9,16 +34,80 @@ package com.codex.campboardgamehost.clocktower.recommendation.dynamic
  * is truthful versus false.
  */
 internal object ImpairedInformationPolicy {
+    private const val TOTAL_MASS_FIXED_POINT = 1_000_000L
     private const val IMPAIRED_FALSE_FAMILY_MASS_FIXED_POINT = 970_000L
 
+    /** Compatibility view for callers that know both truthful and false candidates exist. */
+    fun falseFamilyMassFixedPoint(reliability: InformationReliability): Long = familyBudget(
+        reliability = reliability,
+        hasTruthfulCandidate = true,
+        hasFalseCandidate = true,
+    ).falseMassFixedPoint
+
     /**
-     * A small truthful allowance keeps impairment from becoming mechanically solvable.
-     * If no legal false candidate exists, the selector falls back to the truthful family.
+     * Returns the semantic family budget before any within-family candidate ranking occurs.
+     *
+     * The default impaired path leaves a small truthful allowance so impairment is not
+     * mechanically solvable. Explicit truthful exceptions are deterministic and explainable.
      */
-    fun falseFamilyMassFixedPoint(reliability: InformationReliability): Long = when (reliability) {
-        InformationReliability.RELIABLE -> 0L
-        InformationReliability.DRUNK,
-        InformationReliability.POISONED,
-        -> IMPAIRED_FALSE_FAMILY_MASS_FIXED_POINT
+    fun familyBudget(
+        reliability: InformationReliability,
+        hasTruthfulCandidate: Boolean,
+        hasFalseCandidate: Boolean,
+        truthfulException: ImpairedTruthfulException? = null,
+    ): ImpairedInformationFamilyBudget {
+        if (!hasTruthfulCandidate && !hasFalseCandidate) {
+            return ImpairedInformationFamilyBudget(
+                truthfulMassFixedPoint = 0L,
+                falseMassFixedPoint = 0L,
+                reason = ImpairedInformationPolicyReason.NO_LEGAL_CANDIDATES,
+            )
+        }
+
+        if (reliability == InformationReliability.RELIABLE) {
+            return if (hasTruthfulCandidate) {
+                ImpairedInformationFamilyBudget(
+                    truthfulMassFixedPoint = TOTAL_MASS_FIXED_POINT,
+                    falseMassFixedPoint = 0L,
+                    reason = ImpairedInformationPolicyReason.HEALTHY_TRUTH,
+                )
+            } else {
+                ImpairedInformationFamilyBudget(
+                    truthfulMassFixedPoint = 0L,
+                    falseMassFixedPoint = 0L,
+                    reason = ImpairedInformationPolicyReason.NO_LEGAL_TRUTHFUL_CANDIDATE,
+                )
+            }
+        }
+
+        if (truthfulException == ImpairedTruthfulException.AVOID_EXPOSING_IMPAIRMENT && hasTruthfulCandidate) {
+            return ImpairedInformationFamilyBudget(
+                truthfulMassFixedPoint = TOTAL_MASS_FIXED_POINT,
+                falseMassFixedPoint = 0L,
+                reason = ImpairedInformationPolicyReason.AVOID_EXPOSING_IMPAIRMENT,
+            )
+        }
+
+        if (!hasFalseCandidate) {
+            return ImpairedInformationFamilyBudget(
+                truthfulMassFixedPoint = TOTAL_MASS_FIXED_POINT,
+                falseMassFixedPoint = 0L,
+                reason = ImpairedInformationPolicyReason.NO_LEGAL_FALSE_CANDIDATE,
+            )
+        }
+
+        if (!hasTruthfulCandidate) {
+            return ImpairedInformationFamilyBudget(
+                truthfulMassFixedPoint = 0L,
+                falseMassFixedPoint = TOTAL_MASS_FIXED_POINT,
+                reason = ImpairedInformationPolicyReason.ONLY_LEGAL_FALSE_CANDIDATE,
+            )
+        }
+
+        return ImpairedInformationFamilyBudget(
+            truthfulMassFixedPoint = TOTAL_MASS_FIXED_POINT - IMPAIRED_FALSE_FAMILY_MASS_FIXED_POINT,
+            falseMassFixedPoint = IMPAIRED_FALSE_FAMILY_MASS_FIXED_POINT,
+            reason = ImpairedInformationPolicyReason.IMPAIRED_FALSE_PREFERRED,
+        )
     }
 }
