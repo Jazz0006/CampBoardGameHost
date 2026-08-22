@@ -3061,13 +3061,30 @@ internal fun CampBoardGameHostApp() {
                                     clocktowerPendingKlutzName = null
                                     clocktowerKlutzChoiceName = null
                                     if (clocktowerKlutzReturnToDawn) {
+                                        recordClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
                                         clocktowerPhase = ClocktowerPhase.Dawn
                                         clocktowerKlutzReturnToDawn = false
                                     } else {
-                                        round += 1
+                                        val nextRound = round + 1
+                                        recordClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
+                                        round = nextRound
+                                        clocktowerPhase = ClocktowerPhase.Night
+                                        if (clocktowerConfirmedPoisonTarget != null) {
+                                            val localSequence = clocktowerEventCounter + 1
+                                            recordClocktowerAction(ActionFactDraft.Poison(
+                                                actionId = clocktowerActionId(
+                                                    kind = "poison-expire",
+                                                    actionRound = round,
+                                                    localSequence = localSequence,
+                                                ),
+                                                phase = storytellerPhaseFor(ClocktowerPhase.Night),
+                                                round = round,
+                                                sequence = localSequence,
+                                                targetSeat = null,
+                                            ))
+                                        }
                                         clocktowerPoisonTarget = PoisonEffectLifecycle.atStartOfNextNight()
                                         clocktowerConfirmedPoisonTarget = null
-                                        clocktowerPhase = ClocktowerPhase.Night
                                     }
                                     resetClocktowerDayFlow()
                                     resetClocktowerNightFlow()
@@ -3145,6 +3162,10 @@ internal fun CampBoardGameHostApp() {
                             if (slayerDecision.effectApplies && targetIndex >= 0 && targetCard != null && targetCard.eliminatedRound == null && targetRegistersAsDemon) {
                                 val targetSeat = targetIndex + 1
                                 val localSequence = clocktowerEventCounter + 1
+                                preflightClocktowerPublicAliveObservation(
+                                    playerName = targetName,
+                                    eventSequence = localSequence,
+                                )
                                 recordClocktowerAction(ActionFactDraft.Death(
                                     actionId = clocktowerActionId(
                                         kind = "slayer-death",
@@ -3157,6 +3178,18 @@ internal fun CampBoardGameHostApp() {
                                     targetSeat = targetSeat,
                                 ))
                                 cards[targetIndex] = targetCard.copy(eliminatedRound = round)
+                                recordEpistemicObservation(EpistemicObservationDraft(
+                                    recordId = "public-alive-${clocktowerGameId}-${localSequence}-$targetSeat",
+                                    phase = storytellerPhaseFor(),
+                                    round = round,
+                                    sequence = localSequence,
+                                    sourceSeat = null,
+                                    sourceAbility = null,
+                                    visibility = ObservationVisibility.PUBLIC,
+                                    recipientSeats = emptySet(),
+                                    reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+                                    proposition = InformationProposition.AliveAt(targetSeat, false),
+                                ))
                                 records.add(
                                     EliminationRecord(
                                         round,
@@ -3247,10 +3280,26 @@ internal fun CampBoardGameHostApp() {
                                     showResults = true
                                     addOutcomeEvent(outcome)
                                 } else {
-                                    round += 1
+                                    val nextRound = round + 1
+                                    recordClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
+                                    round = nextRound
+                                    clocktowerPhase = ClocktowerPhase.Night
+                                    if (clocktowerConfirmedPoisonTarget != null) {
+                                        val localSequence = clocktowerEventCounter + 1
+                                        recordClocktowerAction(ActionFactDraft.Poison(
+                                            actionId = clocktowerActionId(
+                                                kind = "poison-expire",
+                                                actionRound = round,
+                                                localSequence = localSequence,
+                                            ),
+                                            phase = storytellerPhaseFor(ClocktowerPhase.Night),
+                                            round = round,
+                                            sequence = localSequence,
+                                            targetSeat = null,
+                                        ))
+                                    }
                                     clocktowerPoisonTarget = PoisonEffectLifecycle.atStartOfNextNight()
                                     clocktowerConfirmedPoisonTarget = null
-                                    clocktowerPhase = ClocktowerPhase.Night
                                     resetClocktowerDayFlow()
                                     resetClocktowerNightFlow()
                                 }
@@ -3540,6 +3589,7 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerPendingKlutzName = nightKlutzName
                                 clocktowerKlutzChoiceName = null
                                 clocktowerKlutzReturnToDawn = true
+                                recordClocktowerPhaseAdvance(ClocktowerPhase.Day)
                                 clocktowerPhase = ClocktowerPhase.Day
                                 clocktowerDayModeState.value = ClocktowerDayMode.Klutz
                             }
@@ -3564,6 +3614,21 @@ internal fun CampBoardGameHostApp() {
                             // Keep the persisted draft aligned with the confirmed fact while
                             // poison lasts through the following day. At next dusk both are
                             // cleared before the Poisoner chooses again.
+                            if (poisonCarriedIntoTomorrow != clocktowerConfirmedPoisonTarget) {
+                                val targetSeat = poisonCarriedIntoTomorrow?.let(::clocktowerSeatFor)
+                                val localSequence = clocktowerEventCounter + 1
+                                recordClocktowerAction(ActionFactDraft.Poison(
+                                    actionId = clocktowerActionId(
+                                        kind = "poison-after-night",
+                                        localSequence = localSequence,
+                                        targetSeat = targetSeat,
+                                    ),
+                                    phase = storytellerPhaseFor(),
+                                    round = round,
+                                    sequence = localSequence,
+                                    targetSeat = targetSeat,
+                                ))
+                            }
                             clocktowerConfirmedPoisonTarget = poisonCarriedIntoTomorrow
                             clocktowerPoisonTarget = poisonCarriedIntoTomorrow
                             clocktowerFortuneTellerFirst = null
