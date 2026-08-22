@@ -1,9 +1,9 @@
 # CampBoardGameHost 单开发者 GitHub Connector 工作流
 
 > 文档角色：**NORMATIVE / DEVELOPMENT OPERATIONS**  
-> 生效日期：2026-08-22  
+> 生效日期：2026-08-23  
 > 适用仓库：`Jazz0006/CampBoardGameHost`  
-> **本文件覆盖本项目其他运行手册中与“大文件默认编辑策略”冲突的旧建议。**
+> **本文件覆盖本项目其他运行手册中与 connector 写入路径选择冲突的旧建议。**
 
 ## 1. 项目现实前提
 
@@ -11,44 +11,133 @@ CampBoardGameHost 当前按**单一开发者项目**运行：
 
 - 基本不存在多人同时修改同一文件的常态竞争；
 - branch / stacked PR 通常由同一开发者明确安排；
-- 真正需要优先防范的是**拿错 branch、使用过期 head/blob、整文件生成时意外改动无关内容**，而不是多人 merge conflict；
-- GitHub connector 的 `update_file` 使用当前 blob SHA，天然提供一层 optimistic concurrency guard：旧 SHA 不应被当成可以静默覆盖新文件的许可。
+- 真正需要优先防范的是**拿错 branch、使用过期 head/blob、整文件重建时意外改动无关内容、以及大文件内容被 connector 截断后仍继续 whole-file replacement**；
+- GitHub connector 的 `update_file` 使用当前 blob SHA，提供 optimistic concurrency guard，但它写的是**完整文件内容**，不是 patch hunk。
 
-因此，本项目不应仅因为目标文件很大，就自动设计临时 GitHub Actions writer、trigger PR 或 blob-harvest 流程。
+因此本项目不把“文件很大”本身当作禁止 whole-file replacement 的理由；但一旦 connector 无法可靠提供完整目标文件，必须立即停止整文件重建，切换到 patch-level 写入路径。
 
-## 2. 默认策略：whole-file replace 优先
+## 2. 默认策略：完整内容可靠时 whole-file replace
 
-只要 connector 能够可靠读取并构造**目标 branch 当前版本的完整 UTF-8 文件内容**，即使文件很大，也优先考虑直接 whole-file replacement。
+只要 connector 能够可靠读取并构造**目标 branch 当前版本的完整 UTF-8 文件内容**，可以优先考虑 direct `update_file` 或 Git Data API atomic commit。
 
 标准路径：
 
 ```text
 明确目标 branch / PR
-  -> 读取该 branch 的 live head SHA
-  -> 从该 exact head 读取目标文件完整内容 + blob SHA
-  -> 基于这份内容生成完整新文件
-  -> 写入前再次确认 branch head 未漂移
-  -> update_file(current blob SHA, complete new content)
+  -> 读取 live head SHA
+  -> 从 exact head 读取完整目标文件 + blob SHA
+  -> 基于该完整版本生成新内容
+  -> 写入前再次确认 head 未漂移
+  -> update_file / atomic Git Data commit
   -> 立即 exact diff audit
   -> focused tests（需要时）
-  -> full CI / review gate
+  -> full CI / R2 / review gate
 ```
 
-### 硬性安全规则
+### Whole-file 硬性安全规则
 
 1. **绝不能拿 `main` 的文件去覆盖 feature branch，反之亦然。**
-2. 完整文件必须从**真正要写入的目标 branch 当前 head**读取。
-3. 写入使用的 blob SHA 必须属于刚读取的那个目标文件版本。
-4. 从读取到写入之间若 branch head 已变化，停止写入；重新 fetch head/file/blob，再重新构造修改。
-5. whole-file replace 后必须立即做 exact diff audit；不能因为 API 返回 success 就认为修改正确。
-6. 如果计划只是小范围修改，而 diff 出现大量无关 churn、异常删除、格式化全文件、import 大规模变化等，**拒绝该 commit，不继续往 CI 推**。
-7. tests-first / RED provenance、focused tests、full CI、review/merge gate 等工程要求不因 whole-file replace 而降低。
+2. 完整文件必须从真正要写入的目标 branch 当前 head 读取。
+3. 写入使用的 blob SHA 必须属于刚读取的目标版本。
+4. 从读取到写入之间若 branch head 已变化，停止；重新 fetch head/file/blob。
+5. whole-file replace 后必须立即做 exact diff audit。
+6. 如果计划只改少量代码，却出现大量无关 churn、异常删除、全文件 reformat/import 变化，拒绝该 commit。
+7. tests-first / RED provenance、focused tests、full CI、review/merge gate 不因写入方式而降低。
 
-## 3. Exact diff audit 是 whole-file replace 的主要保护层
+## 3. 明确的升级条件：看到截断就不要重建整文件
 
-单开发者模式下，whole-file replace 的主要风险不是 merge conflict，而是模型在重建完整文本时意外改变了无关内容。
+以下任一条件成立时，不再尝试 direct whole-file replacement：
 
-因此写后至少核对：
+- connector 返回明确 truncated 内容；
+- 无法证明读取的是完整目标文件；
+- 文件/请求体大到无法安全构造完整 replacement；
+- exact diff 无法证明 reconstruction 没有无关 churn；
+- 修改本质上只是一个小范围、稳定、可机械表达的单文件 patch，而完整目标文件不可安全获得。
+
+特别是：
+
+> **“文件只有几行需要修改”并不能降低 whole-file API 的风险。** Contents API 仍然要求完整 replacement。
+
+PR #40 的 `ClocktowerHostScreen.kt`（约 433 KB）最终修复证明：当 connector 已无法可靠返回完整文件时，为几行修改继续尝试 whole-file 路径只会增加风险和人工成本。
+
+## 4. Permanent trusted patch writer：大文件小 patch 的标准 fallback
+
+仓库 default branch 长期维护：
+
+```text
+.github/workflows/trusted-patch-writer.yml
+tools/trusted_patch_writer/prepare_request.py
+```
+
+完整协议、安全边界和操作步骤见：
+
+- `docs/TRUSTED_PATCH_WRITER.md`
+
+它用于：
+
+```text
+大文件 / connector 内容不完整
++ 单文件
++ 小范围确定性 unified diff
++ 可以锁定 exact head + target blob
+```
+
+writer 由 repository owner 在目标 PR Conversation 中发布结构化 `/trusted-patch-writer` 评论触发。它不会接受 arbitrary shell command，只允许固定字段，并在 runner 内执行：
+
+```text
+live PR head verification
+-> exact SHA checkout
+-> exact target blob verification
+-> git apply --check
+-> git apply
+-> git diff --check
+-> exact single-file scope guard
+-> fixed validation profile
+-> staged exact-scope audit
+-> git ls-remote remote-head recheck
+-> commit + non-force push
+-> explicit CI / R2 dispatch
+```
+
+任何锁、scope 或测试失败都 fail closed。
+
+## 5. 当前写入路径优先级
+
+```text
+A. connector update_file
+   条件：目标文件完整内容可靠可得，单文件 replacement 可安全构造
+        ↓ 不适用
+B. Git Data API atomic commit
+   条件：一个或多个完整目标 blob 可可靠构造，需要原子提交
+        ↓ 不适用
+C. permanent trusted patch writer
+   条件：完整大文件不可安全获得，但改动是 <=64 KiB 的确定性单文件 patch
+        ↓ 不适用
+D. 完整本地/Codex Git worktree
+   条件：复杂重构、多文件语义编辑、大 patch、writer 窄协议无法表达
+```
+
+不要再为普通大文件小 patch 临时创建 writer、临时 retarget 产品 PR base、制造 trigger commit 或采收 source blob。
+
+## 6. Temporary writer 的新定位
+
+Temporary GitHub Actions writer 从“常规 fallback”降级为**历史/紧急例外**。
+
+只有 permanent writer 无法覆盖、完整 worktree 又确实不可用，而且必须依赖 runner 机械 transformation 时才考虑。若必须使用：
+
+- 明确记录 permanent writer 为什么不适用；
+- workflow 极简；复杂逻辑放独立脚本；
+- transformation fail closed；
+- runner 验证 exact scope；
+- writer GREEN 不替代正式 CI；
+- 不把临时基础设施混入产品 source commit；
+- 用完立即清理。
+
+`docs/github_connector_large_file_editing_playbook.md` 中 temporary writer 内容继续作为历史机制参考；与本文件冲突时，以本文件和 `TRUSTED_PATCH_WRITER.md` 为准。
+
+## 7. Exact diff audit 对所有路径都强制
+
+无论使用 whole-file、Git Data API、permanent writer 还是 worktree，写后至少核对：
 
 ```text
 expected parent/head
@@ -66,102 +155,64 @@ no accidental full-file reformatting
 +420 / -380
 ```
 
-除非该 churn 本来就在计划内，否则应视为失败并回滚/重做，而不是继续测试来“证明它也能编译”。
+除非 churn 本来就在计划内，否则视为失败，而不是继续靠编译通过来证明安全。
 
-## 4. Stacked PR / 未完成工作仍可使用 whole-file replace
+## 8. Stacked PR / 未完成工作
 
-存在 stacked work 并不自动意味着必须使用 temporary writer。
+存在 stacked work 不改变核心规则：
 
-只要满足：
+- 所有读取和写入都针对**实际目标 branch live head**；
+- 不从 main 猜 feature 文件内容；
+- patch writer 必须锁目标 PR head 和 target blob；
+- unrelated stacked work 不进入当前 diff；
+- 如果目标 branch head 已漂移，旧请求/旧 patch 失效，重新生成。
 
-- 从**该 stacked branch 的 live head**读取完整目标文件；
-- 修改基于该版本构造；
-- 写入前 head 未漂移；
-- 写后 exact diff 只包含预期变化；
+## 9. Line-ending policy
 
-whole-file replacement 仍是可接受且通常更省资源的方案。
+根目录 `.gitattributes` 是本仓库文本行尾权威：
 
-只有当**同一文件确实存在独立并发修改流**，或无法可靠拿到完整目标版本时，才需要升级到更复杂路径。
+- Kotlin/KTS/Java/Markdown/YAML/Python/JSON/XML/shell/properties 等统一 LF；
+- Windows `.bat` / `.cmd` 保持 CRLF。
 
-## 5. 何时不要直接 whole-file replace
+不要依赖开发者全局 `core.autocrlf` 来维持 source-contract tests 的稳定性。尤其 Windows working tree 中，仓库 policy 应优先于机器个人习惯。
 
-以下情况优先不要直接整文件覆盖：
+已有未提交修改时，不要为了行尾规范化直接 destructive restore/reset；先保护真实修改。
 
-- connector 无法可靠返回完整目标文件，内容被截断或上下文不足；
-- 文件/请求体大到无法安全构造或传输；
-- 同一目标文件存在真实的独立并发开发；
-- 目标是生成文件、二进制文件或不适合文本 replacement 的资源；
-- 修改必须依赖 runner 本地工具做机械 transformation，且无法安全在 connector 侧表达；
-- 必须在**落正式 source 前**先通过 compile/focused test 才允许生成目标 blob；
-- exact diff 无法证明 whole-file reconstruction 没有无关 churn。
+## 10. 新对话默认决策规则
 
-## 6. 备用路径顺序
-
-遇到上面的例外时，按以下顺序升级复杂度，而不是直接跳到临时 Actions 基础设施：
+新的 ChatGPT / Codex 开发对话在写代码前按以下判断：
 
 ```text
-A. whole-file update_file + SHA guard + exact diff
-        ↓ 不适用
-B. Git Data API：create_blob / create_tree / create_commit / fast-forward ref
-        ↓ 仍无法安全构造
-C. temporary trusted writer
-   - 简单 workflow
-   - 复杂 patch logic 放独立脚本，不内嵌大量 YAML heredoc
-   - fail-closed anchors
-   - focused validation
-   - 只采收目标 source blob/commit
-        ↓ 仍不适用
-D. 完整本地/Codex Git worktree + normal git patch workflow
+1. 这是 CampBoardGameHost 吗？
+   -> 是：按单开发者 + live-head discipline
+
+2. 能否从目标 branch exact head 可靠取得完整目标文件？
+   -> 能：update_file / Git Data API 候选
+
+3. 是否已经出现 truncation / incomplete content？
+   -> 是：停止 whole-file reconstruction
+
+4. 是否是小范围确定性单文件 patch？
+   -> 是：permanent trusted patch writer
+
+5. 是否是复杂、多文件或大范围语义修改？
+   -> 是：完整 Git worktree
+
+6. 所有路径完成后
+   -> exact diff + focused/full CI + R2 + review + explicit merge authorization
 ```
 
-**不要仅因为文件超过数千行就从 A 直接跳到 C。**
+新对话不得因为“大文件”机械地使用 writer，也不得在已经确认内容截断后继续尝试整文件 replacement。
 
-## 7. Temporary writer 的新定位
+## 11. 与其他文档的关系
 
-Temporary GitHub Actions writer 是**例外工具**，不是“大文件默认工具”。
+- `docs/README.md`：新开发任务文档入口。
+- `docs/TRUSTED_PATCH_WRITER.md`：permanent writer 的协议与安全规范。
+- `docs/github_connector_large_file_editing_playbook.md`：Git Data API / temporary writer / workflow trigger 的历史和机制参考。
+- 本文件对本仓库的**写入路径选择**具有最高项目级运行优先级。
 
-如果必须使用：
+当前原则：
 
-- workflow 自身保持极简；
-- Python/Kotlin transformation 放独立脚本；
-- 不把大量 Python heredoc 嵌入 YAML；
-- transformation 必须 fail closed；
-- runner 必须验证 scope；
-- writer GREEN 不能替代正式 PR CI；
-- 临时 PR / workflow 不 merge 到产品 branch；
-- 采收后立即关闭临时 PR，并用 compare audit 证明没有基础设施泄漏。
-
-2026-08-22 的 R6 Global observation work 已实际证明：复杂内嵌 YAML writer 会带来 workflow parsing / trigger 排查成本，而将 patcher 独立成脚本后才恢复稳定。因此未来不要重复走这条弯路。
-
-## 8. 新对话的默认决策规则
-
-任何新的 ChatGPT / Codex 开发对话，在处理 GitHub connector 修改前，应按以下判断：
-
-```text
-这是 CampBoardGameHost 吗？
-  -> 是：默认按单开发者模式
-
-目标是普通 UTF-8 source/doc 文件吗？
-  -> 是
-
-能否从目标 branch 当前 head 可靠读取完整文件？
-  -> 能：优先 whole-file replace
-
-写入后能否做 exact diff audit？
-  -> 能：继续正常 tests/CI/review
-
-只有上述任一项不成立
-  -> 才升级到 Git Data API / temporary writer / full worktree
-```
-
-新对话**不得因为历史上曾经使用过 trusted writer，就推断本项目的大文件必须通过 writer 修改**。
-
-## 9. 与其他文档的关系
-
-- `docs/README.md`：所有新开发任务的文档入口；应优先指向本文件。
-- `docs/github_connector_large_file_editing_playbook.md`：保留 Git Data API / trusted writer 的详细安全知识，尤其适用于 fallback 路径。
-- 本文件对本仓库的**默认路径选择**具有更高优先级：
-
-> **single developer + exact target head/blob + reliable full content + exact diff audit => whole-file replacement is acceptable and normally preferred.**
+> **complete content + exact head/blob => whole-file / atomic write 可接受；incomplete/truncated large file + small deterministic patch => permanent trusted patch writer。**
 
 产品架构、R6 rollout、tests-first 要求和 merge 授权规则不由本文件改变。
