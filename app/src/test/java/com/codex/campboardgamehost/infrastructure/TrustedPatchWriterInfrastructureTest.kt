@@ -1,8 +1,8 @@
 package com.codex.campboardgamehost.infrastructure
 
 import java.io.File
-import kotlin.test.Test
-import kotlin.test.assertTrue
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class TrustedPatchWriterInfrastructureTest {
     @Test
@@ -21,7 +21,7 @@ class TrustedPatchWriterInfrastructureTest {
         assertTrue(source.contains("git diff --check"))
         assertTrue(source.contains("git diff --name-only"))
         assertTrue(source.contains("git ls-remote"))
-        assertTrue(source.contains("refs/heads/$target_branch"))
+        assertTrue(source.contains("refs/heads/\$target_branch"))
         assertTrue(source.contains(":app:testDebugUnitTest :app:assembleDebug"))
     }
 
