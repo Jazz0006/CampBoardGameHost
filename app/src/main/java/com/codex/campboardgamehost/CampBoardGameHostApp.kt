@@ -2803,25 +2803,17 @@ internal fun CampBoardGameHostApp() {
                             }
                         },
                         onSlayerShot = { claimantName, targetName, recluseRegistersAsDemon ->
-                            if (claimantName !in clocktowerSlayerClaimedNames) {
-                                clocktowerSlayerClaimedNames = clocktowerSlayerClaimedNames + claimantName
-                            }
                             val claimantCard = cards.firstOrNull { it.name == claimantName }
                             val targetIndex = cards.indexOfFirst { it.name == targetName }
                             val targetCard = cards.getOrNull(targetIndex)
-                            val slayerFunctions = claimantCard?.let {
-                                AbilityFunctioningSemantics.functionsAs(
-                                    it.abilitySubject(clocktowerConfirmedPoisonTarget),
-                                    "Slayer",
-                                )
-                            } == true
-                            val slayerPoisoned = claimantCard?.let {
-                                AbilityFunctioningSemantics.stateFor(
-                                    it.abilitySubject(clocktowerConfirmedPoisonTarget),
-                                    "Slayer",
-                                ) == AbilityFunctioningState.POISONED
-                            } == true
-                            val canUseSlayerAbility = slayerFunctions && !clocktowerSlayerUsed
+                            val slayerDecision = AbilityFunctioningSemantics.oneShotDecision(
+                                subject = claimantCard?.abilitySubject(clocktowerConfirmedPoisonTarget),
+                                role = "Slayer",
+                                alreadyUsed = clocktowerSlayerUsed,
+                            )
+                            if (claimantName !in clocktowerSlayerClaimedNames) {
+                                clocktowerSlayerClaimedNames = clocktowerSlayerClaimedNames + claimantName
+                            }
                             val targetRegistersAsDemon = targetCard?.clocktowerTeam == ClocktowerTeam.Demon ||
                                 (targetCard?.clocktowerRole?.enName == "Recluse" && recluseRegistersAsDemon)
                             if (targetCard?.clocktowerRole?.enName == "Recluse" && recluseRegistersAsDemon) {
@@ -2836,11 +2828,11 @@ internal fun CampBoardGameHostApp() {
                                 )
                             }
                             var shotOutcome: GameOutcome? = null
-                            if (canUseSlayerAbility) {
+                            if (slayerDecision.consumesUse) {
                                 clocktowerSlayerUsed = true
                                 advanceClocktowerGameStateRevision()
                             }
-                            if (canUseSlayerAbility && !slayerPoisoned && targetIndex >= 0 && targetCard != null && targetCard.eliminatedRound == null && targetRegistersAsDemon) {
+                            if (slayerDecision.effectApplies && targetIndex >= 0 && targetCard != null && targetCard.eliminatedRound == null && targetRegistersAsDemon) {
                                 cards[targetIndex] = targetCard.copy(eliminatedRound = round)
                                 records.add(
                                     EliminationRecord(
@@ -2867,11 +2859,11 @@ internal fun CampBoardGameHostApp() {
                                 )
                             } else {
                                 val recordText = when {
-                                    canUseSlayerAbility && slayerPoisoned ->
+                                    slayerDecision.consumesUse && slayerDecision.state == AbilityFunctioningState.POISONED ->
                                         context.getString(R.string.clocktower_record_slayer_poisoned, playerSeatLabel(cards, targetName))
-                                    slayerFunctions && clocktowerSlayerUsed && !canUseSlayerAbility ->
+                                    slayerDecision.state != null && !slayerDecision.mayAttempt ->
                                         context.getString(R.string.clocktower_record_slayer_already_used, playerSeatLabel(cards, targetName))
-                                    canUseSlayerAbility ->
+                                    slayerDecision.consumesUse ->
                                         context.getString(R.string.clocktower_record_slayer_miss, playerSeatLabel(cards, targetName))
                                     else ->
                                         context.getString(R.string.clocktower_record_slayer_fake, playerSeatLabel(cards, targetName))

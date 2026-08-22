@@ -13,6 +13,13 @@ internal data class AbilitySubject(
     val isAlive: Boolean,
 )
 
+internal data class OneShotAbilityDecision(
+    val state: AbilityFunctioningState?,
+    val mayAttempt: Boolean,
+    val consumesUse: Boolean,
+    val effectApplies: Boolean,
+)
+
 /** Keeps simulated character identity separate from canonical ability effects. */
 internal object AbilityFunctioningSemantics {
     fun perceivedRole(subject: AbilitySubject): String? =
@@ -38,4 +45,19 @@ internal object AbilityFunctioningSemantics {
         role: String,
         selectionMatches: Boolean,
     ): Boolean = selectionMatches && subject != null && functionsAs(subject, role)
+
+    fun oneShotDecision(
+        subject: AbilitySubject?,
+        role: String,
+        alreadyUsed: Boolean,
+    ): OneShotAbilityDecision {
+        val state = subject?.let { stateFor(it, role) }
+        val mayAttempt = state != null && !alreadyUsed
+        return OneShotAbilityDecision(
+            state = state,
+            mayAttempt = mayAttempt,
+            consumesUse = mayAttempt,
+            effectApplies = mayAttempt && state == AbilityFunctioningState.FUNCTIONING,
+        )
+    }
 }
