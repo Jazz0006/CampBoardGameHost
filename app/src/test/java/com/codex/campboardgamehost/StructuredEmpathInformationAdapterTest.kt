@@ -133,7 +133,6 @@ class StructuredEmpathInformationAdapterTest {
             revision = revision,
             recommendedValue = 2,
             previousShownValue = 0,
-            pressureCostPerPoint = 1,
         )
 
         val recommended = model.choices.single { it.recommended }
