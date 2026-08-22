@@ -111,7 +111,7 @@ B. Git Data API atomic commit
    条件：一个或多个完整目标 blob 可可靠构造，需要原子提交
         ↓ 不适用
 C. permanent trusted patch writer
-   条件：完整大文件不可安全获得，但改动是 <=64 KiB 的确定性单文件 patch
+   条件：完整大文件不可安全获得，但改动是 <=40 KiB 的确定性单文件 patch
         ↓ 不适用
 D. 完整本地/Codex Git worktree
    条件：复杂重构、多文件语义编辑、大 patch、writer 窄协议无法表达
