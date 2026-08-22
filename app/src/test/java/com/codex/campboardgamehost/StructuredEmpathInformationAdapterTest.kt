@@ -128,6 +128,7 @@ class StructuredEmpathInformationAdapterTest {
         assertTrue(previewGuard >= 0)
         assertTrue(telemetryCommit > previewGuard)
         assertTrue(playerDisplay > telemetryCommit)
+        assertTrue(panelBlock.contains("if (automaticDisplayOption != null) {\n                            selectionAudit?.let { audit ->"))
         assertTrue(panelBlock.contains("truthful = value == structuredEmpathTruthValue"))
     }
 
