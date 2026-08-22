@@ -34,10 +34,14 @@ class ClocktowerGlobalObservationProductionWiringTest {
     }
 
     @Test
-    fun `app commits drafts through session authority and writes back only history revision and cursor`() {
+    fun `app declares commit seam before event producer and writes back only history revision and cursor`() {
+        val commitStart = appSource.indexOf("fun recordEpistemicObservation(")
+        val eventStart = appSource.indexOf("fun addClocktowerEvent(")
+        assertTrue(commitStart >= 0)
+        assertTrue(eventStart > commitStart)
+
         val commit = appSource
-            .substringAfter("fun recordEpistemicObservation(")
-            .substringBefore("fun localizedText(")
+            .substring(commitStart, eventStart)
 
         assertTrue(commit.contains("draft: EpistemicObservationDraft"))
         assertTrue(commit.contains("ClocktowerGameSession.commitGlobalEpistemicObservation("))
@@ -56,7 +60,7 @@ class ClocktowerGlobalObservationProductionWiringTest {
     fun `public alive observations use same draft commit authority`() {
         val eventFunction = appSource
             .substringAfter("fun addClocktowerEvent(")
-            .substringBefore("fun recordEpistemicObservation(")
+            .substringBefore("fun localizedText(")
 
         assertTrue(eventFunction.contains("EpistemicObservationDraft("))
         assertTrue(eventFunction.contains("recordEpistemicObservation("))
