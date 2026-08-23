@@ -19,11 +19,10 @@ class ClocktowerProductionFirstNightWiringTest {
         .substringBefore("ClocktowerProductionOtherNightFlow.order(")
 
     @Test
-    fun `production host imports planner projection and lazy materializer seams`() {
+    fun `production host uses canonical first-night planner seam`() {
         assertTrue(source.contains("import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog"))
         assertTrue(source.contains("import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNightFlow"))
         assertTrue(source.contains("import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity"))
-        assertTrue(source.contains("import com.codex.campboardgamehost.ClocktowerNightStepMaterializerRegistry"))
     }
 
     @Test
