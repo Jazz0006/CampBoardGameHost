@@ -2,314 +2,276 @@
 
 > 状态日期：2026-08-23  
 > 文档角色：**CURRENT / 当前状态唯一权威**  
-> 最近已验证 live source baseline：`205473868b50e159977a8ad34e2cf239a711a79d`（PR #40 merge commit）  
-> 当前开发重点：**Historical Action + Observation Capture 准备**  
+> 当前 live `main`：`88164a5bba1fa80695a0247538e632d127e5cfa1`（PR #42 merge）  
+> 当前工作：**PR #43 Clocktower host source decomposition**  
+> 当前 feature head：`e1f94fbe01ab95312555ae4524bbc6ad9204b820`  
+> 当前执行点：**A1–A8 完成；A9 规划中；PR 仍为 draft、未 merge**  
 > 当前交接：`NEXT_DEVELOPMENT_HANDOFF_2026-08-23.md`
 
-> 新会话实施前仍必须重新查询 live `main`，不得把本文 SHA 当作永久 HEAD。
+> 新会话实施前必须重新查询 live `main`、PR #43 和 feature head，不得把本文 SHA 当作永久 HEAD。
 
 ## 1. 当前状态
 
 ```text
 Phase A correctness foundation                         PASS
 R5.5 Script & Dynamic Flow Foundation                  CLOSED / MERGED
-R6 P1 semantic prerequisites                           CLOSED
-PR #28 Drunk/Poison mechanical correctness             CLOSED / MERGED
-PR #24 Production Semantic-History Foundation          CLOSED / MERGED
-PR #29 Impaired Information Semantics                  CLOSED / MERGED
-PR #27 New-game Global Observation Ownership           CLOSED / MERGED
+R6 semantic prerequisites                              CLOSED
 PR #39 Storyteller Information Decision Foundation     CLOSED / MERGED
-PR #40 Structured Manual Storyteller UI — Empath       CLOSED / MERGED
-PR #41 developer workflow + LF policy                  DRAFT / DOCS-INFRA ONLY
-Next product source slice                              HISTORICAL ACTION + OBSERVATION CAPTURE
+PR #40 Structured Manual UI — Empath numeric slice     CLOSED / MERGED
+PR #41 developer workflow + LF policy                  CLOSED / MERGED
+PR #42 Historical Action + Observation Capture         CLOSED / MERGED
+PR #43 Clocktower host source decomposition            DRAFT / A1–A8 GREEN
+Current implementation point                           A9 PLANNING
+Next product source slice after decomposition          A3 HISTORICAL MULTI-NIGHT EXACT BASELINE
 ```
 
 当前 live `main`：
 
 ```text
-205473868b50e159977a8ad34e2cf239a711a79d
+88164a5bba1fa80695a0247538e632d127e5cfa1
 ```
 
-该 commit 是 PR #40 merge commit。
+该 commit 是 PR #42 merge commit。PR #42 已完成 Historical Action + Observation Capture，因此旧文档中把它标为 NEXT 的状态已经作废。
 
-## 2. PR #39 — Storyteller Information Decision Foundation
+## 2. 已完成的 R6 产品基础
 
-PR #39 已合并，Foundation 现在提供统一 decision authority seam：
+### PR #39 — Storyteller Information Decision Foundation
+
+PR #39 建立 recommendation/manual 共用的 legal decision seam：
 
 ```text
-Actual / registered state
-  ↓
-role-specific legal information builder
-  ↓
-impairment policy
-  ↓
-InformationDecisionContext
-  ├ recommended candidate
-  └ manual legal candidates
-  ↓
-Storyteller confirm
-  ↓
-shared validator
-  ↓
-EpistemicObservationDraft
-  ↓
-ClocktowerGameSession
+actual / registered state
+  -> legal information builder
+  -> impairment policy
+  -> InformationDecisionContext
+  -> Storyteller confirmation
+  -> shared validation
+  -> EpistemicObservationDraft
+  -> ClocktowerGameSession authority
 ```
 
-关键 contract：
+Recommendation 是建议，不是 durable authority；Global identity / sequence 仍由 session 分配。
 
-- recommendation 与 manual 是 peer inputs；
-- recommendation 是 advice，不是 durable authority；
-- manual 不是 free-text bypass；
-- functioning information 只能确认 legal truthful/registered result；
-- Drunk/Poisoned 可在 legal unreliable candidate space 中选择；
-- hard block 与 soft warning 分离；
-- Foundation 只产生 unbound draft；Global identity 仍由 session 分配；
-- provenance 维持 `MANUAL` / `RECOMMENDATION_ACCEPTED`。
+### PR #40 — Structured Manual Storyteller UI first slice
 
-Foundation merge 后 live main 曾为：
+当前 production rollout 是 Empath numeric first slice，不是所有信息角色的完整 manual UI rollout。它已覆盖 structured 0/1/2 choice、healthy fallback、prior shown value、assisted recommendation 与 telemetry preview/commit 边界。
+
+### PR #42 — Historical Action + Observation Capture
+
+PR #42 已合并，完成：
+
+- shared Global timeline authority；
+- durable semantic action persistence；
+- lifecycle action capture；
+- information observation capture 的 production wiring；
+- restore-compatible historical inputs；
+- full CI/R2 validation。
+
+因此下一产品阶段可转向 A3 historical multi-night exact baseline，但当前先完成 PR #43 的结构拆分，避免在 300+ KB host monolith 上叠加新的产品实现。
+
+## 3. PR #43 — Clocktower host source decomposition
+
+### 3.1 目标与边界
+
+PR #43 基于 PR #42 merge：
 
 ```text
-faad0e52dbbe55e1a7cc09c642318d0f6ef99342
+base main: 88164a5bba1fa80695a0247538e632d127e5cfa1
+branch:    codex/source-decomposition-clocktower-host
+PR:        #43 — Refactor: decompose Clocktower host monolith
+state:     DRAFT / NOT MERGED
+head:      e1f94fbe01ab95312555ae4524bbc6ad9204b820
 ```
 
-## 3. PR #40 — Structured Manual Storyteller Information UI
+目标：
 
-PR #40 已于 2026-08-23 前完成全部 gate 并合并。
+- structural refactor only；
+- 保留规则、recommendation ordering、persistence、history identity 和 Compose state ownership；
+- handwritten production source 最终不超过 50 KiB，优先不超过 40 KiB；
+- 每个 slice 使用 characterization/ownership contract、local validation、exact diff、GitHub CI/R2；
+- 未完成整个 decomposition 前不 merge。
 
-最终 feature head：
+### 3.2 A1–A8 已完成
 
 ```text
-4a083b45e1f0525ca49ff7d6968da7e6d373ca1e
+A1  ClocktowerHostCoreSemantics.kt
+    core host semantics / stable observation identity / fixed-information helpers
+
+A2  ClocktowerHostSelectionSemantics.kt
+    display/decision/registration selection models and unified pool helpers
+
+A3  ClocktowerHostPresentationModels.kt
+    recommendation labels, registration/pair enums, ClocktowerNightStepUi
+
+A4  ClocktowerStorytellerRecommendationUi.kt
+    recommendation screen and reason summary
+
+A5  ClocktowerStorytellerRecommendationUi.kt
+    recommendation card and decision editor
+
+A6  ClocktowerPlayerDisplayUi.kt
+    localized player display, player display card, evil info display
+
+A7  ClocktowerRegistrationUi.kt
+    SpyRegistrationPanel and RecluseRegistrationPanel
+
+A8  ClocktowerNightStepUi.kt
+    ClocktowerNightStepCardLocalized only
 ```
 
-merge commit：
+A8 纠正记录：`ClocktowerInfoCard` 有 6 个 host 调用点，不能在跨文件后继续保持 file-private，因此 A8 最终只移动 night-step composable。A8 production commit：
 
 ```text
-205473868b50e159977a8ad34e2cf239a711a79d
+fdab916dd8f7e9b4614bf16b79355036ff45fe41
 ```
 
-当前 production rollout 是**第一切片：Empath numeric information**，不是所有信息角色的完整 manual UI rollout。
-
-已完成：
-
-- structured number model / panel / adapter；
-- Empath manual legal values；
-- recommendation/manual 共用 Foundation validation；
-- healthy no-recommendation fallback；
-- prior shown value handling；
-- later-night previousShownNumber；
-- assisted recommendation 与 `step.displayOptions` 对齐；
-- telemetry 只在 selector 实际产生 preview 时 commit；
-- fallback display 不依赖 telemetry preview。
-
-最终 gate：
+随后 source-contract test 跟随新 owner：
 
 ```text
-CI #439                          GREEN
-  Android tests + debug APK      GREEN
-  ASP contract tests             GREEN
-  Real Clingo                    GREEN
-R2 #382                          GREEN
-fresh Codex review               CLEAN / 👍
-all review threads               RESOLVED
+e1f94fbe01ab95312555ae4524bbc6ad9204b820
 ```
 
-## 4. 当前开发工作流决策
-
-PR #40 的大文件最终修复，以及 PR #41 的后续验证，形成新的开发运行结论。
-
-### 4.1 Remote writer 探索结果
-
-曾实现 permanent `issue_comment` trusted patch writer，并通过静态 CI/安全 contract，但 pre-merge canary 无法端到端触发：该类 workflow 必须先存在于 default branch。
-
-项目决定不先把尚未端到端验证的 write-enabled workflow 部署到 `main`。
-
-状态：
+最终 A8 gate：
 
 ```text
-Permanent remote patch writer
-  EXPLORED
-  STATICALLY VALIDATED
-  NOT END-TO-END VALIDATED
-  NOT ADOPTED
+ClocktowerNightStepUi.kt                 45,251 bytes
+function body exact move audit          PASS (private -> internal only)
+ClocktowerInfoCard + 6 call sites        UNCHANGED
+CI #503                                  SUCCESS
+  Android tests + debug APK              SUCCESS
+  ASP contract tests                     SUCCESS
+  Real Clingo cross-validation           SUCCESS
+R2 #443                                  SUCCESS
 ```
 
-### 4.2 正式采用的大文件流程
+### 3.3 当前剩余规模
 
-当 connector 无法可靠取得大文件完整内容时：
+在 A8 后：
 
 ```text
-ChatGPT
-  -> 生成最小 patch + tests + Luna prompt
-Codex Luna local worktree
-  -> apply/check/test
-  -> commit
-  -> push feature branch
-ChatGPT
-  -> GitHub exact diff / CI / review / merge gate
+ClocktowerHostScreen.kt   319,837 bytes
+ClocktowerHostScreen.kt   5,303 lines
 ```
 
-规范：
+50 KiB 目标尚未完成。当前文件几乎只剩一个超大的 `ClocktowerJudgeScreen` 与尾部 helper，后续不再只是简单 top-level move；必须先处理可证明的 dead fallback，再逐步分离 state/model construction 与 phase presentation。
 
-- `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`
-- `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`
+## 4. NEXT — A9 规划边界
 
-Luna 只负责机械执行；不自行扩大修改范围，不 merge。
-
-## 5. PR #41 当前定位
-
-PR #41 最初用于 permanent remote writer 探索。经过端到端验证后已收缩为 **developer workflow / portability docs-infra PR**。
-
-最终目标只保留：
-
-- `.gitattributes` 跨平台 LF policy；
-- ChatGPT ↔ Codex Luna 本地 patch 工作流规范；
-- connector 工作流规范更新；
-- roadmap / handoff / README 状态更新；
-- remote writer 探索结论作为文档历史。
-
-明确不进入最终 tree：
-
-- permanent writer workflow；
-- remote writer parser；
-- remote writer runtime tests；
-- production source behavior changes。
-
-PR #41 不改变 R6 产品语义。
-
-## 6. NEXT — Historical Action + Observation Capture
-
-PR #39 和 #40 已建立“信息 decision → observation draft → session authority”的生产路径。下一产品 source slice 转向历史动作/观察捕获，为后续 multi-night exact baseline 提供完整输入。
-
-目标方向：
+当前最安全的下一候选不是立即拆分 state ownership，而是先删除 A8 后确认存在的 unreachable legacy fallback：
 
 ```text
-physical/game action
-  ↓
-semantic action capture
-  ↓
-information decision / observation capture
-  ↓
-Global semantic timeline
-  ↓
-historical reconstruction inputs
+ClocktowerDarkTheme { ... }
+return
+LazyColumn { ... legacy fallback ... }   <- unreachable
+private fun ClocktowerInfoCard(...)       <- only used by that fallback
 ```
 
-下一 slice 开始前必须重新审计当前生产事件类型、history persistence、Global sequence ownership 和已有 observation coverage，再决定最小 tests-first 边界。
+候选范围约 25.8 KB / 513 lines。A9 目前是**规划状态，尚未提交 tests 或 production 改动**。
 
-### 明确 non-goals
+进入 A9 前必须：
 
-不要在第一 Historical Capture PR 同时扩展：
+1. 用 source contract 锁定 unconditional `return` 后 legacy `LazyColumn` 不应存在；
+2. 更新 A8 ownership test，不再把 `ClocktowerInfoCard` 固定为 host owner；
+3. GREEN 只删除 unreachable fallback 与其私有专用 helper；
+4. 不触碰 `ClocktowerDarkTheme` 内实际 production UI；
+5. 不修改 day/night flow、registration、recommendation、history/session ownership；
+6. local focused/full tests + assembleDebug；
+7. exact deletion audit + GitHub CI/R2；
+8. A9 完成后重新测量 host，并重新规划更深层 extraction。
 
-- history UI redesign；
-- misinformation tuning；
-- Investigator 小人数平衡；
-- broad evil-side win-rate tuning；
-- Spy/Recluse registration rewrite；
-- A3 multi-night solver implementation；
-- B4 / ZDD production promotion；
-- 全角色 structured manual UI rollout；
-- ML / personalized tuning。
+## 5. PR #43 后的下一产品阶段
 
-## 7. 更新后的 rollout 顺序
+PR #42 已提供 historical action/observation inputs。PR #43 完成、通过最终审计并由用户明确授权 merge 后，下一 product source slice 才进入：
 
-```text
-1. Production Semantic-History Foundation                    DONE / #24
-2. Impaired Information Semantics                            DONE / #29
-3. New-game Global Observation Ownership                     DONE / #27
-4. Storyteller Information Decision Foundation               DONE / #39
-5. Structured Manual UI first production slice (Empath)      DONE / #40
-6. Historical Action + Observation Capture                   NEXT
-7. A3 historical multi-night exact baseline
-8. Authoritative physical Grimoire ledger / Spy VerifiedExact
-9. B4 historical expansion
-10. Revision-driven recommendation/history unification
-11. Broader structured manual role rollout as prioritized
-12. Reconsider ZDD production promotion
-```
+# A3 historical multi-night exact baseline
 
-## 8. 当前长期架构边界
+其目标是使用 `EnumeratedWorldSet` 建立跨夜历史 reconstruction 的 exact correctness baseline。不得把 A3、B4/ZDD promotion、history UI redesign 或 broader manual UI rollout 混入 PR #43。
 
-### Registration 与 impairment 分层
+## 6. 当前长期架构边界
+
+### Registration 与 impairment
 
 ```text
 actual world
-  ↓
-registration projection
-  ↓
-truthful result / legal information space
-  ↓
-impairment policy
-  ↓
-storyteller decision
+  -> registration projection
+  -> truthful result / legal information space
+  -> impairment policy
+  -> storyteller decision
 ```
 
 ### Session authority
 
-UI / recommendation / manual selector / history adapter 都不得自行分配 Global timeline identity。Global identity / sequence 仍由 `ClocktowerGameSession` authority 负责。
+UI、recommendation、manual selector、history adapter 都不得自行分配 Global timeline identity。Global identity / sequence 仍由 `ClocktowerGameSession` authority 负责。
 
-### Recommendation status
+### Solver rollout
 
-Recommendation 是候选建议；只有经过 Storyteller confirmation + shared validation 的结果才能进入 observation pipeline。
-
-### A3 / A4 / B4
-
-- A3 `EnumeratedWorldSet`：exact correctness baseline；
+- A3 `EnumeratedWorldSet`：下一 exact correctness baseline；
 - A4 ZDD：exact shadow/prototype，未获 production promotion；
 - B4：isolated shadow；
-- historical multi-night authority 尚未授权扩展。
+- ZDD production reconsideration 保持 LATER。
 
-## 9. 开发与 CI 策略
+## 7. 开发与 CI 策略
 
-Behavior-changing PR：
+Behavior change：
 
 ```text
-query live main / live PR head
+live state recheck
 -> focused branch
--> tests-only RED commit
--> real CI RED evidence
--> smallest GREEN implementation
--> focused tests
--> full Android unit tests + debug APK
--> ASP
--> Real Clingo
--> R2
--> exact diff audit
--> final Codex review / threads
--> explicit user merge authorization
+-> tests-only RED
+-> real CI RED
+-> smallest GREEN
+-> focused/full tests + APK
+-> ASP + Real Clingo + R2
+-> exact diff + final review
+-> explicit merge authorization
 ```
 
-对于 connector 无法安全修改的大文件，GREEN implementation 默认交付为最小 patch，由 Codex Luna 在本地完整 worktree 中 apply/test/commit/push，然后 ChatGPT 从 GitHub 接回后半段。
-
-## 10. 关键历史证据
+Pure structural refactor：
 
 ```text
-R5.5 merge                                   7add8569e2484a350f6cf1512a730e9f4db469c5
-PR #28 Drunk/Poison correctness              241cb34a848833b27842d1233c37daabea244899
-PR #24 Semantic-History Foundation           9c1996dfc6b615a12014fb11dbb5ca9a43064b99
-PR #29 Impaired Information merge            b2c0b2c7a91290670d908292b3db5719d6bd6ddb
-PR #27 Global Observation merge              5bbb607ae408d5d9d25812825200304054a7aced
-PR #39 Decision Foundation main baseline      faad0e52dbbe55e1a7cc09c642318d0f6ef99342
-PR #40 final head                            4a083b45e1f0525ca49ff7d6968da7e6d373ca1e
-PR #40 merge / current validated main         205473868b50e159977a8ad34e2cf239a711a79d
+live state recheck
+-> characterization/ownership contract
+-> Luna mechanical implementation when large-file work is safer locally
+-> local focused/full validation
+-> remote exact diff
+-> GitHub CI/R2
+-> boundary re-audit before next slice
 ```
 
-## 11. 新会话启动顺序
+规范：
+
+- `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`
+- `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`
+
+## 8. 关键证据
+
+```text
+PR #39 merge / Decision Foundation        faad0e52dbbe55e1a7cc09c642318d0f6ef99342
+PR #40 merge / Empath UI                  205473868b50e159977a8ad34e2cf239a711a79d
+PR #41 merge / workflow docs-infra        7bbe754bf02638e311bdb7292792795eb7e18648
+PR #42 merge / historical capture         88164a5bba1fa80695a0247538e632d127e5cfa1
+PR #43 A6 GREEN                           0cdc8fec53980da986e7bb723e9dd73833b177a8
+PR #43 A7 GREEN                           be7234210f8d6249e6da8237cbd0f48ee4708dd7
+PR #43 A8 production GREEN                fdab916dd8f7e9b4614bf16b79355036ff45fe41
+PR #43 current validated head             e1f94fbe01ab95312555ae4524bbc6ad9204b820
+```
+
+## 9. 新会话启动顺序
 
 1. 读 `docs/README.md`；
 2. 读 `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`；
 3. 读 `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`；
-4. 读本 `CURRENT_DEVELOPMENT_ROADMAP.md`；
+4. 读本文件；
 5. 读 `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-23.md`；
-6. 查询 live `main` / open PR；
-7. 不重复实现 permanent writer；
-8. 下一 product source slice 从 Historical Action + Observation Capture 的 audit / RED contracts 开始。
+6. 查询 live `main`、PR #43、feature head 和 checks；
+7. 若 PR #43 仍在开发，从其 live head 继续，不从 main 另开重复 branch；
+8. 当前只规划/实施 A9，不提前进入 A3 product work；
+9. 未经用户明确授权不得 merge。
 
-## 12. 文档维护规则
+## 10. 文档维护规则
 
 - 本文件是当前执行点唯一权威；
 - handoff 服务下一次开发；
 - specialized design 维护语义边界，不维护 live branch 状态；
-- 历史 handoff / audit 不得覆盖本文件；
-- 开发运行规范以 `SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` 和 Luna patch 文档为准。
+- historical audit 不得覆盖本文件；
+- 每完成一个 decomposition slice，至少更新当前 head、gate、剩余规模和下一规划边界。

@@ -4,240 +4,174 @@
 > Parent roadmap: `docs/CURRENT_DEVELOPMENT_ROADMAP.md`  
 > Development operations: `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`  
 > Large-file execution: `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`  
-> Current next product task: **Historical Action + Observation Capture**  
+> Current task: **PR #43 Clocktower host source decomposition**  
+> Immediate next step: **A9 planning — unreachable legacy fallback cleanup**  
 > Status: **CURRENT HANDOFF**
 
-## 1. Trusted baseline
-
-Latest validated product source baseline:
+## 1. Trusted live state
 
 ```text
-main / PR #40 merge
-205473868b50e159977a8ad34e2cf239a711a79d
+repository: Jazz0006/CampBoardGameHost
+live main: 88164a5bba1fa80695a0247538e632d127e5cfa1
+main source: PR #42 Historical Action + Observation Capture merge
+
+PR: #43 — Refactor: decompose Clocktower host monolith
+branch: codex/source-decomposition-clocktower-host
+state: DRAFT / OPEN / NOT MERGED
+validated head: e1f94fbe01ab95312555ae4524bbc6ad9204b820
 ```
 
-PR #40 final feature head:
+New sessions must query live state again. Do not assume these SHAs remain current.
+
+## 2. Product progress before PR #43
+
+PR #42 has already completed Historical Action + Observation Capture. The previous handoff that named it as NEXT is obsolete.
+
+PR #42 provides shared Global timeline authority, durable semantic action persistence, lifecycle capture and information-observation production wiring. The next product source phase after decomposition is A3 historical multi-night exact baseline.
+
+PR #43 is structural-only and must not implement A3 product behavior.
+
+## 3. PR #43 completed slices
 
 ```text
-4a083b45e1f0525ca49ff7d6968da7e6d373ca1e
+A1 Core semantics owner
+   ClocktowerHostCoreSemantics.kt
+
+A2 Selection semantics owner
+   ClocktowerHostSelectionSemantics.kt
+
+A3 Presentation models owner
+   ClocktowerHostPresentationModels.kt
+
+A4 Recommendation screen/reason UI
+   ClocktowerStorytellerRecommendationUi.kt
+
+A5 Recommendation card/editor UI
+   ClocktowerStorytellerRecommendationUi.kt
+
+A6 Player display UI
+   ClocktowerPlayerDisplayUi.kt
+
+A7 Spy/Recluse registration UI
+   ClocktowerRegistrationUi.kt
+
+A8 Night-step presentation UI
+   ClocktowerNightStepUi.kt
 ```
 
-PR #40 final validation:
+All A1–A8 slices passed independent local/remote validation before moving on.
+
+## 4. A8 final evidence
+
+A8 originally attempted to move `ClocktowerInfoCard` while keeping it file-private. Audit found six remaining host call sites, so that boundary was corrected before GREEN.
+
+Final A8 scope:
+
+- move only `ClocktowerNightStepCardLocalized`;
+- change only `private -> internal`;
+- leave `ClocktowerInfoCard` and all six host calls unchanged;
+- update structural/source-contract tests to follow the new owner.
 
 ```text
-CI #439
-  Android unit tests + debug APK      GREEN
-  ASP contract tests                  GREEN
-  Real Clingo cross-validation        GREEN
-R2 #382                               GREEN
-fresh Codex review                    CLEAN / 👍
-review threads                        ALL RESOLVED
+A8 production commit:  fdab916dd8f7e9b4614bf16b79355036ff45fe41
+A8 validated head:      e1f94fbe01ab95312555ae4524bbc6ad9204b820
+new file size:          45,251 bytes
+exact move audit:       PASS
+CI #503:                SUCCESS
+R2 #443:                SUCCESS
 ```
 
-A new session must still query live `main`; do not assume the SHA above remains HEAD forever.
-
-## 2. What just completed
-
-### PR #39 — Storyteller Information Decision Foundation
-
-Foundation is merged and owns the shared decision seam between recommendation and manual Storyteller selection.
-
-Current semantic pipeline:
+## 5. Remaining host state
 
 ```text
-actual / registered state
-  ↓
-legal information builder
-  ↓
-impairment policy
-  ↓
-InformationDecisionContext
-  ├ recommendation
-  └ manual legal candidates
-  ↓
-Storyteller confirm
-  ↓
-shared validation
-  ↓
-EpistemicObservationDraft
-  ↓
-ClocktowerGameSession
+ClocktowerHostScreen.kt: 319,837 bytes
+ClocktowerHostScreen.kt: 5,303 lines
 ```
 
-### PR #40 — Structured Manual Storyteller Information UI, first production slice
+The file now consists primarily of one very large `ClocktowerJudgeScreen` plus a small tail helper. The <= 50 KiB objective is not complete.
 
-The first production rollout is Empath numeric information only.
+## 6. Immediate A9 candidate
 
-Important final behavior:
-
-- legal structured 0/1/2 choices;
-- recommendation/manual use the same Foundation validation;
-- healthy fallback can still display truthful information even when selector produced no automatic recommendation;
-- later-night previous shown number is preserved;
-- assisted recommendation uses actual display options;
-- telemetry commit occurs only when the legacy selector actually produced a preview;
-- fallback `onShowPlayerDisplay` remains outside telemetry guard.
-
-Do not treat PR #40 as “all information roles manual UI complete.”
-
-## 3. Developer workflow decision from PR #40 / #41 exploration
-
-Large file editing through GitHub connector repeatedly hit the same boundary: a tiny logical change inside `ClocktowerHostScreen.kt` still requires whole-file replacement if connector file APIs are used.
-
-A permanent remote trusted writer was explored in PR #41. Static CI and safety contracts could pass, but pre-merge end-to-end validation could not run because `issue_comment` workflows only activate after the workflow exists on the default branch.
-
-Decision:
+Static control-flow inspection found an unconditional return after the active themed UI:
 
 ```text
-remote permanent writer
-  NOT ADOPTED
+ClocktowerDarkTheme { ... active production UI ... }
+return
+LazyColumn { ... old legacy fallback ... }
 ```
 
-Standard large-file flow is now:
+The fallback and `ClocktowerInfoCard` occupy about 25.8 KB / 513 lines. All six `ClocktowerInfoCard` calls are inside that unreachable fallback; the helper has no active call site.
+
+A9 should first prove and remove this dead block before introducing any new state-owner abstraction.
+
+### Proposed A9 tests-first boundary
+
+1. Add a source contract that rejects the `return` followed by legacy `LazyColumn` pattern.
+2. Update `ClocktowerNightStepUiOwnershipTest` so it no longer requires `ClocktowerInfoCard` to remain in host.
+3. Require `ClocktowerInfoCard` to be absent after cleanup.
+4. Confirm the active `ClocktowerDarkTheme` block remains present.
+5. RED must fail only because the unreachable block/helper still exist.
+
+### Proposed A9 GREEN allowlist
 
 ```text
-ChatGPT
-  -> patch + tests + Luna prompt
-Codex Luna local worktree
-  -> apply/check/test/commit/push
-ChatGPT
-  -> remote exact diff / CI / review / PR gate
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+app/src/test/java/com/codex/campboardgamehost/ClocktowerNightStepUiOwnershipTest.kt
+app/src/test/java/com/codex/campboardgamehost/ClocktowerLegacyFallbackOwnershipTest.kt
+.github/workflows/r2-write-probe.yml
 ```
 
-For a patch task, Luna must push the tested commit to the current feature branch. Merely applying locally is not sufficient for ChatGPT to continue remote audit.
+Tests should be committed separately before the large deletion. Luna should perform the production deletion in a complete local worktree.
 
-## 4. PR #41 status
+## 7. A9 invariants
 
-PR #41 is no longer a remote writer rollout.
+- structural cleanup only;
+- do not change active themed UI;
+- do not change phase/day/night flow;
+- do not change recommendation ranking or telemetry;
+- do not change Spy/Recluse registration semantics;
+- do not change information decision lifecycle;
+- do not change persistence/history/session authority;
+- do not begin A3 product work;
+- do not merge PR #43.
 
-It is being reduced to docs/infrastructure only:
-
-- keep `.gitattributes` LF policy;
-- document ChatGPT ↔ Codex Luna patch workflow;
-- update connector operations documentation;
-- update current roadmap / handoff / README;
-- record remote writer exploration as not adopted.
-
-Do not merge remote writer workflow/parser into main.
-
-No product R6 behavior belongs in PR #41.
-
-## 5. Immediate next product objective
-
-After developer-workflow docs are settled, create a new focused tests-first branch from latest `main` for:
-
-# Historical Action + Observation Capture
-
-The purpose is to capture enough semantic action/observation history for later historical reconstruction without prematurely implementing the historical solver.
-
-First perform an audit of current production capture coverage:
-
-- semantic event/action types already emitted;
-- Global timeline sequence ownership;
-- observation drafts already committed;
-- death / execution / registration / night action coverage;
-- persistence schema and restore behavior;
-- gaps between actual game actions and durable semantic history.
-
-Then define the smallest RED contracts.
-
-## 6. Likely first-slice model
-
-The exact names are not predetermined, but the boundary should resemble:
+## 8. A9 validation
 
 ```text
-production action occurs
-  ↓
-semantic action draft / record
-  ↓
-session-owned Global identity
-  ↓
-durable semantic history
-
-information decision confirms
-  ↓
-EpistemicObservationDraft
-  ↓
-session-owned Global identity
-  ↓
-durable semantic history
+focused ownership/source contract
+-> full :app:testDebugUnitTest
+-> :app:assembleDebug
+-> git diff --check
+-> exact deletion audit
+-> verify only unreachable fallback/helper were removed
+-> measure remaining host bytes/lines
+-> push feature branch
+-> GitHub CI + ASP + Real Clingo + R2
+-> re-audit next decomposition boundary
 ```
 
-Action and observation should be distinguishable but share timeline authority.
+Use:
 
-Do not create another timeline cursor.
-
-## 7. Required questions before writing RED tests
-
-Audit and answer:
-
-1. Which physical/night/day actions are already represented semantically?
-2. Which actions currently exist only as UI/session state mutations?
-3. Which observation records are already globally sequenced?
-4. Does any path assign identity outside `ClocktowerGameSession`?
-5. What minimum history is required for the first multi-night reconstruction test?
-6. Which legacy restored-game paths must remain compatible?
-7. Can the first slice avoid history UI changes entirely?
-
-## 8. Explicit non-goals
-
-Do not combine the first Historical Capture PR with:
-
-- history UI redesign;
-- all-role structured manual UI rollout;
-- misinformation probability tuning;
-- Investigator balance changes;
-- broad evil-side balance changes;
-- Spy/Recluse registration rewrite;
-- A3 multi-night solver expansion itself;
-- B4 or ZDD production promotion;
-- ML / personalized tuning.
-
-If a true correctness bug is found during audit, classify it separately before broadening scope.
-
-## 9. Development execution rules
-
-For behavior changes:
-
-```text
-live main recheck
--> new focused branch
--> tests-only RED
--> real CI RED evidence
--> smallest GREEN
--> focused tests
--> full CI / R2
--> exact diff
--> final review
--> stop ready-for-merge
+```bash
+GRADLE_USER_HOME="$PWD/.gradle-codex"
 ```
 
-If GREEN touches a connector-truncated large file:
+Keep `.gradle-codex/` untracked.
 
-1. ChatGPT outputs exact patch;
-2. ChatGPT outputs local test commands;
-3. ChatGPT outputs Luna execution prompt;
-4. user passes those to Codex Luna;
-5. Luna apply/check/tests;
-6. Luna commit + `git push origin HEAD`;
-7. user returns commit SHA/result;
-8. ChatGPT fetches GitHub and resumes audit.
+## 9. Stop conditions
 
-Luna does not merge.
+Stop and report if:
 
-## 10. Stop condition
+- live head differs from the expected head without explanation;
+- local target diverged and cannot fast-forward;
+- the fallback is not provably after the unconditional return;
+- any `ClocktowerInfoCard` call exists in active code;
+- deletion changes active production code;
+- focused/full tests expose a product behavior dependency;
+- work would require modifying history, recommendation, registration or session semantics.
 
-The next product development session should stop when:
+After A9 GREEN and remote gates, stop before A10 and re-measure/re-plan.
 
-```text
-Historical Action + Observation Capture focused PR exists
-RED provenance is real and documented
-minimal production capture seam is implemented
-Global identity authority remains in session
-focused/full CI + R2 are GREEN
-exact diff is clean
-final review is clean
-PR is ready for explicit merge authorization
-```
+## 10. Merge boundary
 
-Do not automatically continue into A3 historical multi-night solving in the same slice.
+PR #43 remains draft. Do not mark ready or merge until the full decomposition goal, final size audit, full CI/R2 and final review are complete, and the user explicitly authorizes merge.

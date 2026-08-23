@@ -15,110 +15,108 @@
 5. Possible Worlds 总体架构：`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`；
 6. 多剧本 / 动态流程：`多剧本多板子与动态游戏流程架构设计_v1.md`；
 7. GitHub / Codex 写入流程：`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`；
-8. 大文件本地 patch 流程：`CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`；
+8. 大文件本地实现流程：`CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`；
 9. 历史 audit / handoff / `archive/` 仅用于追溯，不得覆盖当前 roadmap。
 
 ## 2. 当前必须阅读
 
-### 当前路线
-
 - [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **CURRENT / 唯一状态权威**  
-  当前 validated product baseline 已包含 PR #39 Decision Foundation 和 PR #40 Empath structured manual UI first production slice。下一产品 source slice 是 **Historical Action + Observation Capture**。
+  PR #42 Historical Action + Observation Capture 已合并；当前正在 PR #43 中拆分 `ClocktowerHostScreen.kt`，A1–A8 已完成，A9 规划中。
 
 - [`NEXT_DEVELOPMENT_HANDOFF_2026-08-23.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-23.md) — **CURRENT HANDOFF**  
-  记录 PR #39/#40 完成状态、PR #41 developer-workflow 决策，以及下一 Historical Capture slice 的审计入口和 stop condition。
+  记录 PR #43 live head、A1–A8 证据、A9 unreachable legacy fallback 候选和 stop conditions。
 
-### 当前开发运行规范
-
-- [`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`](SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md) — **NORMATIVE**  
-  小/中等完整文件可由 connector 直接写；一旦大文件出现 truncation / incomplete content，停止 whole-file reconstruction。
+- [`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`](SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md) — **NORMATIVE**
 
 - [`CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`](CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md) — **NORMATIVE**  
-  大文件默认执行路径：ChatGPT 生成 patch + tests + Luna prompt；Codex Luna 在本地 worktree apply/test/commit/push；ChatGPT 从 GitHub 接回 exact diff / CI / review。
-
-### 当前专项架构
-
-- [`R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md`](R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md)
-- [`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`](CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md)
-- [`多剧本多板子与动态游戏流程架构设计_v1.md`](多剧本多板子与动态游戏流程架构设计_v1.md)
-
-### 历史 / fallback reference
-
-- [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md) — Git Data API / temporary writer 历史机制参考。remote writer **不是当前默认方案**。
+  大文件 declaration move / mechanical cleanup 默认由 Luna 在完整本地 worktree 中实施、测试、commit、push；ChatGPT 负责远端 exact diff 与 CI/R2。
 
 ## 3. 当前准确开发状态
 
 ```text
-PR #24 Production Semantic-History Foundation          MERGED
-PR #29 Impaired Information Semantics                  MERGED
-PR #27 Global Observation Ownership                    MERGED
 PR #39 Storyteller Information Decision Foundation     MERGED
 PR #40 Structured Manual UI — Empath numeric slice     MERGED
-PR #41 workflow / LF policy docs-infra                 DRAFT
+PR #41 workflow / LF policy docs-infra                 MERGED
+PR #42 Historical Action + Observation Capture         MERGED
+PR #43 Clocktower host source decomposition            DRAFT / A1–A8 GREEN
 
-validated live product main:
-205473868b50e159977a8ad34e2cf239a711a79d
+live main:
+88164a5bba1fa80695a0247538e632d127e5cfa1
 
-next product source slice:
-Historical Action + Observation Capture
+PR #43 validated head:
+e1f94fbe01ab95312555ae4524bbc6ad9204b820
+
+current execution point:
+A9 PLANNING — remove unreachable legacy fallback before deeper extraction
+
+next product slice after decomposition:
+A3 HISTORICAL MULTI-NIGHT EXACT BASELINE
 ```
 
-PR #40 并不表示所有信息角色 manual UI 已完成；当前 production rollout 是 Empath numeric first slice。
+PR #43 仍为 draft、未 merge。未经用户明确授权不得 merge。
 
-## 4. 大文件工作流当前结论
+## 4. PR #43 摘要
 
-永久 remote `issue_comment` writer 已探索但**未采用**：静态 CI 可通过，但 pre-merge 无法端到端验证，因为此类 workflow 必须先存在于 default branch。
+A1–A8 已建立以下新 owner：
 
-因此不要在新会话重新实现 permanent writer。
+- `ClocktowerHostCoreSemantics.kt`
+- `ClocktowerHostSelectionSemantics.kt`
+- `ClocktowerHostPresentationModels.kt`
+- `ClocktowerStorytellerRecommendationUi.kt`
+- `ClocktowerPlayerDisplayUi.kt`
+- `ClocktowerRegistrationUi.kt`
+- `ClocktowerNightStepUi.kt`
 
-当前标准：
+A8 final gate：
+
+```text
+ClocktowerNightStepUi.kt   45,251 bytes
+CI #503                    SUCCESS
+R2 #443                    SUCCESS
+```
+
+A8 后 host 仍为 319,837 bytes / 5,303 lines，50 KiB 目标尚未完成。
+
+## 5. 当前 A9 规划
+
+当前最安全候选是删除 active themed UI 之后、unconditional `return` 后面的 unreachable legacy `LazyColumn` 与其专用 `ClocktowerInfoCard`。该候选约 25.8 KB / 513 lines。
+
+这是 structural cleanup，不得改变 active UI、day/night flow、recommendation、registration、information decision、history/persistence 或 session authority。
+
+A9 尚未实施；先建立真实 source-contract RED，再交给 Luna 做精确删除。
+
+## 6. 大文件工作流
 
 ```text
 complete small/medium file
-  -> connector direct write
+  -> connector direct update
 
-large file + truncation/incomplete content
-  -> ChatGPT minimum patch
-  -> Codex Luna local apply/test/commit/push
-  -> ChatGPT remote audit
+large file / declaration move / mechanical cleanup
+  -> ChatGPT scope + tests
+  -> Luna local implementation + focused/full validation
+  -> commit + push
+  -> ChatGPT remote exact diff + CI/R2
 ```
 
-Luna 测试通过后必须 push 当前 feature branch；否则 ChatGPT 无法从 repo 继续验证。
+Luna push 后必须返回 commit SHA；ChatGPT 必须从 GitHub 重新确认 live head，不能只依赖本地文字报告。
 
-## 5. 当前 rollout 摘要
-
-```text
-Semantic-History Foundation                         DONE
-Impaired Information Semantics                     DONE
-Global Observation Ownership                       DONE
-Storyteller Information Decision Foundation        DONE
-Structured Manual UI first slice (Empath)          DONE
-Historical Action + Observation Capture            NEXT
-A3 historical multi-night exact baseline           LATER
-physical Grimoire / Spy VerifiedExact              LATER
-B4 historical expansion                            LATER
-revision-driven recommendation/history unification LATER
-broader structured manual role rollout             AS PRIORITIZED
-ZDD production reconsideration                     LATER
-```
-
-## 6. 新会话启动顺序
+## 7. 新会话启动顺序
 
 1. 读本文；
 2. 读 `SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`；
 3. 读 `CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`；
 4. 读 `CURRENT_DEVELOPMENT_ROADMAP.md`；
 5. 读 `NEXT_DEVELOPMENT_HANDOFF_2026-08-23.md`；
-6. 查询 live `main` 和 open PR，不相信旧 SHA；
-7. 如果是产品 source work，从最新 main 新建 focused branch；
-8. behavior change 先真实 RED；
-9. 大文件若 connector 不完整，直接走 Luna patch，不再折腾 remote writer；
+6. 查询 live `main`、PR #43 和 feature head；
+7. 若 PR #43 仍 open，从其 live head 继续；
+8. 当前从 A9 source-contract planning 开始；
+9. 不提前进入 A3 product work；
 10. 未经用户明确授权不得 merge。
 
-## 7. 文档维护规则
+## 8. 文档维护规则
 
 - 只有 `CURRENT_DEVELOPMENT_ROADMAP.md` 维护当前执行点；
 - handoff 服务下一次开发；
 - design 文档维护语义/架构，不维护 live branch；
-- historical audit 保留证据但不覆盖 current roadmap；
-- developer workflow 以 `SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` 和 Luna patch 文档为准。
+- 每个 decomposition slice 完成后更新 head、gate、剩余规模和 next boundary；
+- historical audit 不得覆盖 current roadmap。
