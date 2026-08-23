@@ -11,6 +11,7 @@ import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class EnumeratedHistoricalWorldReplayTest {
@@ -74,7 +75,7 @@ class EnumeratedHistoricalWorldReplayTest {
         )
 
         assertFalse(result.worldSet.isEmpty())
-        assertEquals(setOf(1, 3, 4, 5), result.worldSet.enumeratedWorlds().single().aliveSeats)
+        assertTrue(result.worldSet.enumeratedWorlds().all { it.aliveSeats == setOf(1, 3, 4, 5) })
         assertEquals(StorytellerPhase.NIGHT, result.phase)
         assertEquals(2, result.round)
         assertEquals(12L, result.lastGlobalSequence)
@@ -164,6 +165,128 @@ class EnumeratedHistoricalWorldReplayTest {
         assertEquals(
             mapOf(2 to AbilityState.MALFUNCTIONING_DRUNK),
             result.worldSet.enumeratedWorlds().single().abilityStatesBySeat,
+        )
+    }
+
+    @Test
+    fun `day to night branches every player seat as a hidden Poisoner choice including dead players`() {
+        val world = EnumeratedWorld(
+            rolesBySeat = linkedMapOf(
+                1 to RoleId("Empath"),
+                2 to RoleId("Chef"),
+                3 to RoleId("Poisoner"),
+                4 to RoleId("Imp"),
+                5 to RoleId("Fortune Teller"),
+            ),
+            aliveSeats = setOf(1, 2, 3, 4),
+            abilityStatesBySeat = mapOf(2 to AbilityState.MALFUNCTIONING_POISONED),
+        )
+
+        val result = EnumeratedHistoricalWorldReplay.replay(
+            initialWorldSet = worldSet(listOf(world)),
+            formalSnapshotId = formalSnapshotId,
+            initialPhase = StorytellerPhase.DAY,
+            initialRound = 1,
+            events = listOf(
+                PlayerHistoricalEvent.PhaseAdvance(
+                    actionId = "phase-night-2",
+                    phase = StorytellerPhase.NIGHT,
+                    round = 2,
+                    point = TimelinePoint(StorytellerPhase.DAY, 1, 9, 30L),
+                ),
+            ),
+        )
+
+        val worlds = result.worldSet.enumeratedWorlds()
+        assertEquals(5, worlds.size)
+        assertTrue(worlds.all { it.aliveSeats == setOf(1, 2, 3, 4) })
+        assertEquals(
+            setOf(1, 2, 3, 4, 5),
+            worlds.map { candidate ->
+                candidate.abilityStatesBySeat.entries.single { it.value == AbilityState.MALFUNCTIONING_POISONED }.key
+            }.toSet(),
+        )
+    }
+
+    @Test
+    fun `day to night expires poison without branching when Poisoner is already dead`() {
+        val world = EnumeratedWorld(
+            rolesBySeat = linkedMapOf(
+                1 to RoleId("Empath"),
+                2 to RoleId("Chef"),
+                3 to RoleId("Poisoner"),
+                4 to RoleId("Imp"),
+                5 to RoleId("Fortune Teller"),
+            ),
+            aliveSeats = setOf(1, 2, 4, 5),
+            abilityStatesBySeat = mapOf(2 to AbilityState.MALFUNCTIONING_POISONED),
+        )
+
+        val result = EnumeratedHistoricalWorldReplay.replay(
+            initialWorldSet = worldSet(listOf(world)),
+            formalSnapshotId = formalSnapshotId,
+            initialPhase = StorytellerPhase.DAY,
+            initialRound = 1,
+            events = listOf(
+                PlayerHistoricalEvent.PhaseAdvance(
+                    actionId = "phase-night-2",
+                    phase = StorytellerPhase.NIGHT,
+                    round = 2,
+                    point = TimelinePoint(StorytellerPhase.DAY, 1, 9, 30L),
+                ),
+            ),
+        )
+
+        val onlyWorld = result.worldSet.enumeratedWorlds().single()
+        assertEquals(emptyMap<Int, AbilityState>(), onlyWorld.abilityStatesBySeat)
+        assertEquals(setOf(1, 2, 4, 5), onlyWorld.aliveSeats)
+    }
+
+    @Test
+    fun `new night Poisoner branching preserves collapsed Drunk target semantics`() {
+        val world = EnumeratedWorld(
+            rolesBySeat = linkedMapOf(
+                1 to RoleId("Empath"),
+                2 to RoleId("Drunk"),
+                3 to RoleId("Poisoner"),
+                4 to RoleId("Imp"),
+                5 to RoleId("Chef"),
+            ),
+            abilityStatesBySeat = mapOf(
+                2 to AbilityState.MALFUNCTIONING_DRUNK,
+                5 to AbilityState.MALFUNCTIONING_POISONED,
+            ),
+        )
+
+        val result = EnumeratedHistoricalWorldReplay.replay(
+            initialWorldSet = worldSet(
+                worlds = listOf(world),
+                setupProfile = InformationProposition.SetupProfile(2, 1, 1, 1),
+            ),
+            formalSnapshotId = formalSnapshotId,
+            initialPhase = StorytellerPhase.DAY,
+            initialRound = 1,
+            events = listOf(
+                PlayerHistoricalEvent.PhaseAdvance(
+                    actionId = "phase-night-2",
+                    phase = StorytellerPhase.NIGHT,
+                    round = 2,
+                    point = TimelinePoint(StorytellerPhase.DAY, 1, 9, 30L),
+                ),
+            ),
+        )
+
+        val worlds = result.worldSet.enumeratedWorlds()
+        assertEquals(5, worlds.size)
+        assertEquals(
+            1,
+            worlds.count { it.abilityStatesBySeat == mapOf(2 to AbilityState.MALFUNCTIONING_DRUNK) },
+        )
+        assertEquals(
+            setOf(1, 3, 4, 5),
+            worlds.flatMap { candidate ->
+                candidate.abilityStatesBySeat.filterValues { it == AbilityState.MALFUNCTIONING_POISONED }.keys
+            }.toSet(),
         )
     }
 
