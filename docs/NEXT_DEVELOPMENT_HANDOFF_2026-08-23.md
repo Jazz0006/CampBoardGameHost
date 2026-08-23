@@ -1,4 +1,4 @@
-# NEXT DEVELOPMENT HANDOFF — 2026-08-23
+# NEXT DEVELOPMENT HANDOFF — 2026-08-23 — A13
 
 > Project: `Jazz0006/CampBoardGameHost`  
 > Parent roadmap: `docs/CURRENT_DEVELOPMENT_ROADMAP.md`  
@@ -6,306 +6,341 @@
 > Development operations: `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`  
 > Large-file execution: `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`  
 > Current task: **PR #43 Clocktower host source decomposition**  
-> Immediate next step: **A11 Night Step Materialization seam / registry — Chat designs, connector can implement because target files are small**  
+> Immediate next step: **A13 planner-driven Other Night materialization — Chat audits/designs RED first; Luna only executes a later exact GREEN task if required**  
 > Status: **CURRENT HANDOFF**
 
-## 1. Trusted live state
+## 1. Trusted state at handoff creation
 
 ```text
 repository: Jazz0006/CampBoardGameHost
-live main: 88164a5bba1fa80695a0247538e632d127e5cfa1
-main source: PR #42 Historical Action + Observation Capture merge
+live main: efd63b360ca9aba8c7890594449aa5e21817f560
+main source: PR #44 correctness hotfix merge
 
 PR: #43 — Refactor: decompose Clocktower host monolith
 branch: codex/source-decomposition-clocktower-host
 state: DRAFT / OPEN / NOT MERGED
-validated A10 implementation head: 363629ed45f0f044da021f77bb52c5c3ff3c9e20
-latest documentation head after roadmap update: b795d2b91560033a537debf0f0ce472191ccdf52
+last fully validated production head: 854c2464d8a742ba0438fa700bdd2848aa88f4cf
+A12 CI #530: SUCCESS
+A12 R2 #469: SUCCESS
+A12 ASP: SUCCESS
+A12 Real Clingo: SUCCESS
 ```
 
-New sessions must query live state again. Do not assume these SHAs remain current.
+This handoff itself advances only documentation. New sessions must query the live PR/head/checks before doing any implementation and must not assume the documentation commit is still the branch tip.
 
-## 2. Product progress before PR #43
-
-PR #42 has already completed Historical Action + Observation Capture. The previous handoff that named it as NEXT is obsolete.
-
-PR #42 provides shared Global timeline authority, durable semantic action persistence, lifecycle capture and information-observation production wiring. The next product source phase after decomposition is A3 historical multi-night exact baseline.
-
-PR #43 is structural-only and must not implement A3 product behavior.
-
-## 3. PR #43 completed slices
+## 2. Working model — mandatory unless user changes it
 
 ```text
-A1 Core semantics owner
-   ClocktowerHostCoreSemantics.kt
+ChatGPT / Chat
+  -> live-state audit
+  -> architecture and risk decisions
+  -> slice boundaries
+  -> tests-first / characterization design
+  -> exact implementation specification
+  -> remote diff and CI review
 
-A2 Selection semantics owner
-   ClocktowerHostSelectionSemantics.kt
-
-A3 Presentation models owner
-   ClocktowerHostPresentationModels.kt
-
-A4 Recommendation screen/reason UI
-   ClocktowerStorytellerRecommendationUi.kt
-
-A5 Recommendation card/editor UI
-   ClocktowerStorytellerRecommendationUi.kt
-
-A6 Player display UI
-   ClocktowerPlayerDisplayUi.kt
-
-A7 Spy/Recluse registration UI
-   ClocktowerRegistrationUi.kt
-
-A8 Night-step presentation UI
-   ClocktowerNightStepUi.kt
-
-A9 Unreachable legacy fallback cleanup
-   ClocktowerHostScreen.kt
-
-A10 Generic information-step packaging owner
-    ClocktowerInformationStepBuilder.kt
+Codex / Luna
+  -> constrained executor for large/local mechanical edits
+  -> local validation
+  -> commit/push only when instructed
 ```
 
-All A1–A10 slices passed independent remote validation before moving on.
+Do not ask Luna to independently redesign, select decomposition boundaries, or perform the final architecture audit.
 
-## 4. A8 final evidence
+Use the GitHub connector for small/source-contract/doc edits when safe. For the large Host, prefer a Chat-authored exact task followed by Luna local execution.
 
-A8 originally attempted to move `ClocktowerInfoCard` while keeping it file-private. Audit found six remaining host call sites, so that boundary was corrected before GREEN.
+Mac/Codex Gradle:
 
-Final A8 scope:
+```bash
+GRADLE_USER_HOME="$PWD/.gradle-codex"
+```
 
-- move only `ClocktowerNightStepCardLocalized`;
-- change only `private -> internal`;
-- leave `ClocktowerInfoCard` and all six host calls unchanged;
-- update structural/source-contract tests to follow the new owner.
+Keep `.gradle-codex/` untracked.
+
+## 3. What is already complete in PR #43
 
 ```text
-A8 production commit:  fdab916dd8f7e9b4614bf16b79355036ff45fe41
-A8 validated head:      e1f94fbe01ab95312555ae4524bbc6ad9204b820
-new file size:          45,251 bytes
-exact move audit:       PASS
-CI #503:                SUCCESS
-R2 #443:                SUCCESS
+A1  Core semantics owner
+A2  Selection semantics owner
+A3  Presentation models owner
+A4  Recommendation screen/reason UI
+A5  Recommendation card/editor UI
+A6  Player display UI
+A7  Spy/Recluse registration UI
+A8  Night-step presentation UI
+A9  Unreachable legacy fallback cleanup
+A10 Generic stateless information-step packaging
+A11 Night Step Materialization registry + production interactions seams
+A11.1 integrate PR #44 actual-role correctness baseline
+A12 planner-first / lazy First Night materialization
 ```
 
-## 5. A9 final evidence
-
-A9 removed only the unreachable legacy `LazyColumn` after the active themed UI's unconditional return, its six `ClocktowerInfoCard` call sites, and the now-unused private helper.
+Important A11/A12 evidence:
 
 ```text
-RED commit:                   3ecbcadbd728ac83f7ab1f8d1d40175795e44078
-CI #505:                      EXPECTED FAILURE
-unit tests:                   657 total / 2 expected failures
-assembleDebug:                SUCCESS
-ASP contract tests:           SUCCESS
-Real Clingo:                  SUCCESS
-R2 #445:                      SUCCESS
+A11 RED:                   19bdaf5525c4979f36d44ed0213c0b3c60f4ff7d
+A11 GREEN:                 c893300b8d8dbc7ea845849b81416259da32d485
+A11 CI #520 / R2 #460:     SUCCESS / SUCCESS
 
-GREEN commit:                 00a2d19e45415614fbd8e93e83a53ba4d2cf9d35
-exact deletion audit:         PASS
-active prefix through return: byte-for-byte identical
-removed:                      25,068 bytes / 484 lines
-CI #506:                      SUCCESS
-R2 #446:                      SUCCESS
+PR #44 merge:              efd63b360ca9aba8c7890594449aa5e21817f560
+A11.1 integration:         4eaa9863070b1eee571169bde737b249379e28ee
+A11.1 CI #526 / R2 #465:   SUCCESS / SUCCESS
+
+A12 RED:                   43f64fc6b2123a35bd9e89b3f6120a8adb7ec809
+A12 expected RED CI #528:  FAILURE
+A12 legacy test migration: 3715c5428b52bcce87781fb48ab715338227e19f
+A12 GREEN:                 854c2464d8a742ba0438fa700bdd2848aa88f4cf
+A12 exact GREEN diff:      ClocktowerHostScreen.kt only from 3715c542...
+A12 CI #530 / R2 #469:     SUCCESS / SUCCESS
+A12 ASP / Real Clingo:     SUCCESS / SUCCESS
 ```
 
-## 6. A10 final evidence
+## 4. Correctness prerequisite already resolved — Drunk shown Fortune Teller
 
-A10 deliberately used a narrow seam rather than moving recommendation/registration logic wholesale.
+Do not regress this boundary.
 
-Moved owner:
+Production intentionally separates:
 
 ```text
-ClocktowerInformationStepBuilder.kt
+firstNightWakingRoleIds
+  = actual roles + Drunk shown role
+
+firstNightActualRoleIds
+  = actual roles only
 ```
 
-It owns only the previous generic `infoStep` packaging behavior and receives the former captured dependencies explicitly. It does not own Compose state/effects, recommendation calculation, dynamic decision, registration mutable maps, history/session authority or transaction ordering.
+Drunk shown Fortune Teller still wakes/acts at the Fortune Teller slot, but does not receive a real Fortune Teller Red Herring setup ability. `STORYTELLER_SETUP` is filtered against actual roles.
 
-```text
-RED commit:                         3377fdbea83727a797afce28064b924a074df5c3
-CI #513:                            EXPECTED FAILURE
-Android tests:                      658 total / 1 expected ownership failure
-ASP contract tests:                 SUCCESS
-Real Clingo:                        SUCCESS
-R2 #453:                            SUCCESS
+Do not merge these sets or generalize them away during A13.
 
-GREEN commit:                       363629ed45f0f044da021f77bb52c5c3ff3c9e20
-new builder size:                   9,095 bytes
-Host after GREEN:                   287,597 bytes
-infoStep call sites replaced:       21
-exact move / scope audit:           PASS
-CI #514:                            SUCCESS
-R2 #454:                            SUCCESS
-```
+## 5. A12 final architecture state
 
-## 7. Dynamic multi-script night flow — precise current state
-
-Do not describe multi-script dynamic flow as either “not implemented” or “fully complete”. The current production state is split at a clear boundary.
-
-Already implemented and production-authoritative since R5.5:
+First Night is now production planner-first:
 
 ```text
 ValidatedClocktowerRuleset
         ↓
-ClocktowerFlowPlanner
+ClocktowerProductionFirstNightFlow.interactions(...)
         ↓
 ClocktowerHostInteractionProjector
         ↓
-stable + conditional ClocktowerHostInteraction
+ClocktowerNightStepMaterializerRegistry(FIRST_NIGHT)
         ↓
-ClocktowerProductionFirstNightFlow / OtherNightFlow
+only projected actionable interactions are lazily materialized
+```
+
+First Night no longer routes eager `filteredNightSteps` through `ClocktowerProductionFirstNightFlow.order(...)`.
+
+The registry remains stateless and non-Compose. Its builder contract is ordinary:
+
+```kotlin
+() -> ClocktowerNightStepUi
+```
+
+Do not make it `@Composable`.
+
+A12 intentionally left First Night materializer lambdas in the Host because extracting them would require a large context bag containing derived facts, recommendation helpers and registration state. File-size reduction is not worth architecture-negative ownership.
+
+`ClocktowerHostScreen.kt` after A12: approximately 294,922 bytes.
+
+## 6. Current Other Night transitional path — A13 target
+
+Other Night still behaves as:
+
+```text
+Host eagerly constructs supported Other Night ClocktowerNightStepUi
         ↓
-canonical production ordering
-```
-
-This layer already makes script composition, night ordering and conditional/event interaction existence dynamic. Trouble Brewing and No Greater Joy use the same catalog/planner seam.
-
-Still transitional:
-
-```text
-ClocktowerJudgeScreen
-  -> constructs hardcoded unfilteredNightSteps for currently supported roles/events
-  -> filters them
-  -> asks planner-backed production flow to exact-match/reorder them
-```
-
-Therefore the remaining architectural gap is **production step materialization**, not flow-order authority.
-
-Target direction:
-
-```text
-planner/projector interaction plan first
+unfilteredNightSteps / filteredNightSteps
         ↓
-materializer registry keyed by stable interaction identity
+ClocktowerProductionOtherNightFlow.order(
+    ruleset,
+    wakingRoleIds,
+    resolvedFacts,
+    productionSteps = filteredNightSteps,
+    identityOf = ...
+)
         ↓
-lazy ClocktowerNightStepUi construction
+planner-backed exact match / reorder
 ```
 
-Do not simply move the current hardcoded list into large FirstNight/OtherNight factory files.
+R5.5 already owns Other Night flow existence/order through planner/projector. A13 only closes the final materialization gap.
 
-## 8. Revised remaining decomposition
-
-### A11 — Night Step Materialization seam / registry
-
-A11 is a small seam slice and should not touch the huge Host list yet.
-
-Required design:
-
-- add canonical interaction-projection access to `ClocktowerProductionFirstNightFlow` and `ClocktowerProductionOtherNightFlow` while preserving existing `.order(...)` behavior;
-- add a stateless `ClocktowerNightStepMaterializerRegistry` outside Compose;
-- registry registration uses stable `ClocktowerProductionNightStepIdentity` / `ClocktowerInteractionId` semantics;
-- projected interaction order is authoritative;
-- `SYSTEM_BOUNDARY` interactions do not create current production UI steps;
-- only projected actionable interactions invoke their lazy materializer;
-- missing projected materializer fails closed;
-- duplicate registered identity fails closed;
-- extra registered materializers are allowed and remain unevaluated, enabling a registry to support roles not present in the current script/table.
-
-A11 must not:
-
-- cut over `ClocktowerJudgeScreen` yet;
-- move role-specific construction;
-- absorb Compose state/effects;
-- absorb recommendation/dynamic-decision logic;
-- alter ordering or behavior.
-
-### A12 — planner-driven First Night materialization
-
-Cut first night over from:
+Target:
 
 ```text
-prebuild all supported first-night steps -> planner order
+ruleset + wakingRoleIds + resolvedFacts
+        ↓
+ClocktowerProductionOtherNightFlow.interactions(...)
+        ↓
+ClocktowerNightStepMaterializerRegistry(OTHER_NIGHT)
+        ↓
+lazy materialize projected interactions
+        ↓
+ClocktowerNightStepUi
 ```
 
-to:
+Do not redesign `ClocktowerFlowPlanner`, `ClocktowerHostInteractionProjector`, registry semantics, or stable interaction IDs unless a new audit proves an actual missing seam.
+
+## 7. A13 first action — audit before RED
+
+The new Chat must first read live source and enumerate the exact currently supported Other Night identities. Do not rely only on the following remembered candidate list:
 
 ```text
-planner interactions -> lazy materialize requested first-night steps
+Poisoner
+Butler
+Empath
+Chambermaid
+Fortune Teller
+Undertaker
+Monk
+Imp / DemonKill
+new Demon identity
+Demon succession
+Mayor redirect
+Sage
+Ravenkeeper
+Spy
 ```
 
-Keep planner/projector as sole order authority. Keep state/effect lifetime, recommendation/registration semantics and first-night information migration host-owned unless Chat explicitly proves another safe owner.
+Audit these sources before deciding RED:
 
-### A13 — planner-driven Other Night materialization
+- `ClocktowerHostScreen.kt` Other Night eager `buildList`;
+- `ClocktowerProductionOtherNightFlow.kt`;
+- `ClocktowerProductionNightStepIdentity.kt`;
+- `ClocktowerHostInteractionProjector.kt` conditional/event projection;
+- existing Other Night wiring/source-contract tests;
+- `ClocktowerLegacyPlannerDifferentialTest.kt` and any other test still asserting the transitional `.order()` source call;
+- `advanceNightStep` and related callback/transaction tests.
 
-Perform the same cutover for other night and conditional/event interactions.
+Special attention: identify all event interactions and whether any step existence currently also depends on Host conditions in addition to projector-resolved facts. If so, determine whether that is redundant, intentional UI behavior, or a correctness gap before writing GREEN.
 
-Do **not** move `advanceNightStep`. Confirm/audit/registration/event/index/finalization ordering remains Host-owned.
+## 8. A13 tests-first intent
 
-### A14 — optional clean day routing
+A13 RED should lock production authority, not file size.
 
-Only after A13 re-audit. Overview/Vote/EndConfirm remain likely low-coupling candidates. Nomination/Virgin, Slayer, Artist and Klutz are optional and should stay in Host if extraction worsens coupling.
+Expected contract direction, subject to live-source audit:
 
-### Post-A13/A14 re-audit
+- Other Night must call `ClocktowerProductionOtherNightFlow.interactions(...)`;
+- it must pass the existing `otherNightWakingRoleIds` and `otherNightResolvedFacts` through the canonical production seam;
+- Other Night must use `ClocktowerNightStepMaterializerRegistry` with `ClocktowerNightFlowPhase.OTHER_NIGHT`;
+- `materialize(projectedInteractions)` must determine UI step existence/order;
+- Other Night must no longer call `ClocktowerProductionOtherNightFlow.order(...)` from production Host;
+- Other Night must no longer pass `productionSteps = filteredNightSteps` / `identityOf = ...`;
+- First Night A12 planner-first path must remain unchanged;
+- resolved conditional/event interaction order must remain projector/planner-authoritative;
+- missing/duplicate materializer fail-closed behavior remains registry-owned;
+- `advanceNightStep` transaction remains Host-owned.
 
-Re-measure the host and inspect responsibility cohesion. Do not pre-commit to <=50 KiB. A14 is optional; stop when further extraction is architecture-negative.
+Before committing RED, proactively migrate any test whose only obsolete requirement is “production must contain OtherNightFlow.order()” while preserving the deeper canonical planner ownership assertion. Do not create a test contradiction like the one encountered in A12.
 
-## 9. Explicit host-owned responsibilities that are not current decomposition targets
+## 9. High-risk Host ownership — DO NOT MOVE IN A13
 
-The following should remain in `ClocktowerJudgeScreen` during the current plan unless Chat makes a later explicit architecture decision:
+The following stay in `ClocktowerJudgeScreen`:
 
-- Compose `remember` state ownership;
-- Compose effect lifecycle (`LaunchedEffect`, related lifecycle-bound work);
-- setup recommendation lifecycle;
-- first-night migration lifecycle;
-- telemetry recorder lifetime;
-- registration mutable maps/state;
-- night commit transaction and callback ordering;
-- top-level phase routing where it is truly orchestration;
-- debug/A4 benchmark lifecycle when extraction has little maintainability value.
+- Compose `remember` state and `LaunchedEffect` lifecycle;
+- recommendationCoordinator and telemetry recorder lifetime;
+- Spy/Recluse registration mutable state/maps;
+- all derived facts used by recommendation/information unless a tiny pure value can be captured safely;
+- player display lifecycle and information observation ordering;
+- history/session authority;
+- phase routing outside the Other Night materialization seam;
+- all day UI routing;
+- A3 historical product work.
 
-## 10. Working model — Chat decides, connector first, Codex/Luna executes heavy edits
+Most important: **do not move `advanceNightStep`.**
 
-The project-level authority is `AGENTS.md`.
-
-Default flow:
+Preserve its exact transactional ordering, including relevant operations such as:
 
 ```text
-Chat
-  -> query live state
-  -> perform architecture / risk / boundary audit
-  -> decide exact slice and validation strategy
-
-If GitHub connector can safely read/write the target
-  -> Chat performs the edit directly through connector
-  -> exact remote diff audit
-  -> appropriate GitHub checks / CI
-
-If file size/truncation/mechanical complexity makes connector editing unsafe
-  -> Chat writes a precise implementation task
-  -> user sends it to Codex/Luna
-  -> Codex/Luna performs only the specified implementation + local validation + commit/push
-  -> Chat re-reads GitHub and audits the remote result
+confirm poison / monk / demon draft
+-> mayor / successor resolution audit
+-> registration recording
+-> semantic event recording
+-> step index / finalization
 ```
 
-Codex/Luna is not the default architecture decision-maker. Do not ask it to choose decomposition boundaries unless the user explicitly changes this working model.
+Read the live method and tests for exact ordering before A13 GREEN; the list above is a conceptual boundary, not a substitute for source.
 
-A11 target files are small enough for connector-first implementation. A12/A13 are expected to touch the large Host and may require the Luna local-worktree path after Chat fixes the exact boundary.
+## 10. Compose/resource rule for A13
 
-## 11. Validation rules for each later slice
+Registry builders are not composable. If any Other Night step constructor directly calls `stringResource()`, do exactly what A12 did:
+
+- resolve only required Strings in surrounding Compose scope;
+- capture plain Strings in lazy builders;
+- keep the `ClocktowerNightStepUi` constructor itself lazy;
+- do not make registry/materialize composable;
+- do not substitute `context.getString()` simply to bypass the constraint;
+- do not alter resource IDs, format arguments or UI copy.
+
+## 11. A13 GREEN expected scope discipline
+
+The ideal A13 production GREEN should be as narrow as possible and is expected to primarily touch the large `ClocktowerHostScreen.kt`.
+
+Do not automatically edit Flow/Projector/Registry APIs. If the live audit reveals a truly missing production seam, stop and make a separate architecture decision before GREEN.
+
+For each Other Night materializer, compare old eager constructor vs new `build = { ... }` field-by-field. Except for lambda wrapping and necessary resource precomputation, semantics must stay identical.
+
+Do not chase the 50 KiB guideline during A13.
+
+## 12. Validation expectations
+
+After a valid RED and GREEN:
 
 ```text
-live head recheck
--> Chat architecture/scope decision
--> focused characterization or tests-only RED where required
--> connector direct GREEN when safe, otherwise Luna local mechanical GREEN
--> focused/full unit tests + assembleDebug as appropriate
--> exact move/deletion/diff audit
--> GitHub CI + ASP + Real Clingo + R2 as required
--> Chat boundary re-audit before next slice
+focused A13 wiring tests
++ materializer registry tests
++ OtherNight flow/projector tests
++ conditional event tests
++ transaction/advanceNightStep characterization
++ First Night A12 regression tests
 ```
 
-Use `GRADLE_USER_HOME="$PWD/.gradle-codex"`; keep `.gradle-codex/` untracked.
+Then:
 
-## 12. Stop conditions
+```bash
+GRADLE_USER_HOME="$PWD/.gradle-codex" ./gradlew :app:testDebugUnitTest
+GRADLE_USER_HOME="$PWD/.gradle-codex" ./gradlew :app:assembleDebug
+git diff --check
+```
 
-- PR #43 must remain draft and unmerged;
-- no A3 product work in this PR;
-- no file-size-driven state-lifetime move;
-- no callback ordering, recommendation, registration, information, history or session-authority changes without a dedicated explicit decision;
-- do not reintroduce UI/script order authority beside the R5.5 planner;
-- do not continue decomposition solely to satisfy a byte threshold once the host is a coherent coordinator.
+Run standard ASP checks locally if available; Real Clingo can be satisfied remotely if unavailable locally. Final acceptance requires GitHub CI / ASP / Real Clingo / R2 and Chat remote exact-diff audit.
 
-## 13. Merge boundary
+## 13. Stop after A13 GREEN audit
 
-PR #43 remains draft. Do not mark ready or merge until the planned high-value decomposition is complete, the final architecture/size audit is satisfactory, the latest full CI/R2 gates are GREEN, and the user explicitly authorizes merge.
+Do not automatically start A14.
+
+After A13 is fully green:
+
+1. re-measure Host;
+2. audit responsibility cohesion;
+3. decide whether any natural low-coupling extraction exists;
+4. decide whether optional A14 day routing has enough value;
+5. otherwise prepare PR #43 final review/merge-readiness audit.
+
+A14 is optional. File size is a soft guideline, not a merge gate.
+
+## 14. Product work after PR #43
+
+Only after PR #43 is complete, final-audited, and explicitly authorized for merge should product development proceed to:
+
+```text
+A3 historical multi-night exact baseline
+using EnumeratedWorldSet
+```
+
+Do not mix A3, B4/ZDD production promotion, history UI redesign, misinformation expansion, or broader manual UI into PR #43.
+
+## 15. New-conversation startup checklist
+
+1. Read `AGENTS.md`.
+2. Read `docs/README.md`.
+3. Read `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`.
+4. Read `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`.
+5. Read `docs/CURRENT_DEVELOPMENT_ROADMAP.md`.
+6. Read this handoff.
+7. Query live `main`, PR #43 state/head, and current checks.
+8. Verify no unreviewed code commit appeared after the A12 validated head/documentation checkpoint.
+9. Audit exact Other Night identities and existing source-contract tests.
+10. Design and establish A13 RED before any production GREEN.
+11. Keep PR #43 draft/unmerged.
+12. Do not merge without explicit user authorization.
