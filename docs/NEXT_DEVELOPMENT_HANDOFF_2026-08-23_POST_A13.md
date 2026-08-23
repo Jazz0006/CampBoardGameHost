@@ -2,22 +2,22 @@
 
 > Date: 2026-08-23  
 > Scope: PR #43 `codex/source-decomposition-clocktower-host`  
-> Role: immediate continuation handoff after A13  
+> Role: PR #43 completion evidence and merge handoff  
 > Do not treat SHA values below as permanent; always re-query GitHub first.
 
 ## 1. Current validated implementation baseline
 
 ```text
-main:                    efd63b360ca9aba8c7890594449aa5e21817f560
-PR #43 implementation:  b37f0067b674a0cd4bee5ff311840d1c52ce8c05
-A13 CI:                  #534 SUCCESS
-A13 R2:                  #473 SUCCESS
-ASP / Real Clingo:       SUCCESS / SUCCESS
+main before PR #43 merge: efd63b360ca9aba8c7890594449aa5e21817f560
+PR #43 implementation:   b37f0067b674a0cd4bee5ff311840d1c52ce8c05
+A13 CI:                   #534 SUCCESS
+A13 R2:                   #473 SUCCESS
+ASP / Real Clingo:        SUCCESS / SUCCESS
 ```
 
-Documentation commits may appear after the implementation baseline. Audit them separately; do not mistake a docs-only head for a new code implementation.
+Documentation commits appear after the implementation baseline. Audit them separately; do not mistake a docs-only head for a new code implementation.
 
-PR #43 must remain Draft / Open / Not merged until the user explicitly authorizes otherwise.
+PR #43 final review was reported clean / merge-ready. The user subsequently authorized documentation updates and PR #43 merge, with the next task to begin in a new conversation.
 
 ## 2. A13 completed architecture
 
@@ -84,7 +84,7 @@ A13 GREEN production commit changed `ClocktowerHostScreen.kt` only.
 
 ## 4. Protected transaction boundary
 
-Do not move or reorder `advanceNightStep` during final cleanup or review.
+Do not move or reorder `advanceNightStep` during future cleanup or product work without an explicit behavior-changing design.
 
 Current conceptual order:
 
@@ -126,54 +126,70 @@ ClocktowerNightScreen.kt     17,833 bytes
 ClocktowerSetupScreen.kt     17,362 bytes
 ```
 
-The file-size guideline remains soft.
-
-The optional A14 audit concluded **do not implement A14**:
+The optional A14 audit concluded **do not implement A14 inside PR #43**:
 
 - Overview / Vote / EndConfirm presentation screens already have clean owners in `ClocktowerDayScreen.kt`;
 - Host retains mostly state transitions and callback transactions for those paths;
 - Nomination/Virgin, Slayer, Artist and Klutz are tightly coupled to registration/recommendation state and commit ordering;
-- further extraction would likely introduce a context/parameter bag or move protected transaction/lifetime ownership for little architectural benefit.
+- further extraction inside PR #43 would likely introduce a context/parameter bag or move protected transaction/lifetime ownership for little architectural benefit.
 
-Therefore PR #43 decomposition is considered implementation-complete after A13.
+Therefore PR #43 decomposition is implementation-complete after A13.
 
-Do not start A14 merely to reduce `ClocktowerHostScreen.kt` bytes.
+## 6. New architectural rule — Host growth freeze
 
-## 6. Immediate next task — final PR #43 review / merge-readiness audit
+`ClocktowerHostScreen.kt` is allowed to remain large after PR #43, but it is no longer an acceptable default landing zone for new feature bodies.
 
-Before any merge recommendation:
+Future work should place new algorithms, history/session behavior, recommendation policy, role interaction presentation and persistence logic in their natural owners. Host additions should normally be thin orchestration/wiring or protected transaction/state-lifetime code.
 
-1. Re-query live main, PR #43 state/head, mergeability and latest checks.
-2. Separate docs-only commits after `b37f0067...` from implementation changes.
-3. Review the complete PR changed-file list for scope drift.
-4. Review unresolved PR review threads, submitted reviews and meaningful comments.
-5. Audit final diff against protected invariants:
-   - rule semantics / precedence;
-   - recommendation ordering;
-   - registration + impairment ordering;
-   - persistence/history/global identity;
-   - Compose state/effect lifetime;
-   - First Night A12 planner-first authority;
-   - Other Night A13 planner-first authority;
-   - `advanceNightStep` ordering;
-   - day stateful transaction ordering.
-6. Confirm no generated/debug/local workspace artifacts were committed.
-7. Confirm final docs match implementation.
-8. If clean, report `MERGE-READY` to the user with any residual risks.
-9. Stop. Do **not** mark ready, merge, rebase, force-push, or begin product A3 without explicit user authorization.
+If a future feature would add hundreds of lines to Host, stop and identify a stronger owner first.
 
-## 7. After PR #43
+This is a growth freeze on **new responsibility**, not a mechanical byte limit.
 
-Only after explicit user authorization and successful PR #43 merge should product development continue to:
+## 7. Large-file state after PR #43
+
+The earlier R2 `MainActivity` decomposition is complete; `MainActivity.kt` is now only a small Android shell.
+
+The largest remaining production sources are approximately:
 
 ```text
-A3 historical multi-night exact baseline
-using EnumeratedWorldSet
+CampBoardGameHostApp.kt      325,556 bytes
+ClocktowerHostScreen.kt      295,644 bytes
+ClocktowerDayScreen.kt        63,135 bytes
+ClocktowerNightStepUi.kt      45,251 bytes
 ```
 
-Do not mix A3, B4/ZDD production promotion, history UI redesign, misinformation expansion, or broader manual UI rollout into PR #43.
+Therefore the next structural priority is not another A14 Host slice. It is the app-root owner:
 
-## 8. Working model
+```text
+CampBoardGameHostApp.kt
+```
+
+## 8. After PR #43 merge — revised next task
+
+Do **not** go directly to A3.
+
+The user-approved sequence is:
+
+```text
+merge PR #43
+-> start a NEW conversation
+-> create a fresh structural branch from live main
+-> audit and decompose CampBoardGameHostApp.kt by cohesive ownership
+-> remeasure remaining large production files
+-> only then resume A3 historical multi-night exact baseline
+```
+
+The authoritative next-task handoff is:
+
+```text
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md
+```
+
+`ClocktowerDayScreen.kt` (~63 KiB) may be audited after App-root decomposition, but only split it if a natural low-coupling owner exists.
+
+Do not mix A3, B4/ZDD production promotion, history UI redesign, misinformation expansion, broader manual UI rollout or a new state-management framework into the structural App-root PR.
+
+## 9. Working model
 
 ```text
 ChatGPT / Chat
@@ -188,4 +204,4 @@ Codex / Luna
   = constrained executor for large/mechanical local edits
 ```
 
-Luna must not independently reopen A14 or redesign ownership boundaries.
+Luna must not independently reopen A14, redesign ownership boundaries, or begin A3 inside the structural App-root task.
