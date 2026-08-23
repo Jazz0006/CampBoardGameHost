@@ -68,11 +68,13 @@ class AppGameScreenPresentationOwnershipTest {
 
     @Test
     fun `S6 does not absorb shared app presentation or review ownership`() {
-        assertTrue(rootSource.contains("internal fun GameSettingsHeader("))
-        assertTrue(rootSource.contains("internal fun EmptyStateCard("))
-        assertTrue(rootSource.contains("internal fun StepperRow("))
-        assertTrue(rootSource.contains("internal fun HostProgressCard("))
-        assertTrue(rootSource.contains("internal fun ClocktowerDarkTheme("))
+        val extractedSource = extractedFile.readText(Charsets.UTF_8)
+
+        assertFalse(extractedSource.contains("fun GameSettingsHeader("))
+        assertFalse(extractedSource.contains("fun EmptyStateCard("))
+        assertFalse(extractedSource.contains("fun StepperRow("))
+        assertFalse(extractedSource.contains("fun HostProgressCard("))
+        assertFalse(extractedSource.contains("fun ClocktowerDarkTheme("))
         assertTrue(rootSource.contains("HostToolsTopBar("))
         assertTrue(rootSource.contains("ResultsDialog("))
         assertTrue(rootSource.contains("HostGameToolsScreen("))
