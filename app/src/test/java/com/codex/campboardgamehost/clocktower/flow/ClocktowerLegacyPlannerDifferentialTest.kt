@@ -60,7 +60,11 @@ class ClocktowerLegacyPlannerDifferentialTest {
             legacyHostSource.contains("filteredNightSteps.sortedBy(::legacyOtherNightOrder)"),
         )
         assertTrue(
-            "Production first night must be owned by the canonical planner seam.",
+            "Production first night must project canonical planner interactions before materialization.",
+            legacyHostSource.contains("ClocktowerProductionFirstNightFlow.interactions("),
+        )
+        assertFalse(
+            "Production first night must no longer route eager UI steps through the legacy-compatible orderer.",
             legacyHostSource.contains("ClocktowerProductionFirstNightFlow.order("),
         )
         assertTrue(
