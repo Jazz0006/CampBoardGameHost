@@ -87,15 +87,38 @@ Detailed local-worktree rules are in `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFL
 
 File size is a maintainability signal, not an architecture by itself.
 
-For the current Clocktower decomposition work:
+For Clocktower decomposition work:
 
 - prefer handwritten production files at or below roughly 50 KiB when a natural ownership boundary supports it;
 - do **not** introduce poor abstractions, giant parameter bags, state-lifetime changes, or unnecessary `internal` exposure merely to satisfy a byte threshold;
 - cohesion, stable ownership, transaction ordering, and future feature isolation outrank the numeric size target;
-- `ClocktowerJudgeScreen` may remain larger than 50 KiB if the remaining code is genuinely coordinator/orchestration responsibility;
 - decomposition should stop when further extraction would increase coupling or regression risk more than it improves maintainability.
 
-The current detailed decomposition plan and stop criteria live in `docs/CURRENT_DEVELOPMENT_ROADMAP.md`.
+### Post-PR #43 Host growth rule
+
+`ClocktowerHostScreen.kt` is now a protected orchestration owner. It may remain substantially larger than 50 KiB, but it must not become the default destination for new feature implementation.
+
+For new Clocktower work:
+
+- new algorithms belong in domain / epistemic / history / recommendation / session owners as appropriate;
+- new role/interaction presentation should prefer dedicated materializer/UI owners when a cohesive seam exists;
+- new persistence/history/session behavior must not be embedded into Host merely because current state is available there;
+- Host changes should normally be limited to derived orchestration state, phase routing, wiring and protected transaction/callback boundaries;
+- if a feature would add hundreds of lines of new policy/UI/algorithm code to Host, stop and identify a natural owner before implementation.
+
+This is a **growth freeze on new responsibility**, not a byte freeze and not a mandate to mechanically shrink the current file.
+
+### Next large-file priority after PR #43
+
+The next structural task is **App-root decomposition of `CampBoardGameHostApp.kt`**, before A3 historical multi-night product development. Current large-file order of concern is:
+
+```text
+CampBoardGameHostApp.kt   ~325 KiB   next structural priority
+ClocktowerHostScreen.kt   ~296 KiB   first high-value decomposition complete; growth-frozen
+ClocktowerDayScreen.kt     ~63 KiB   audit only; split only if a natural low-coupling owner exists
+```
+
+The detailed current plan and stop criteria live in `docs/CURRENT_DEVELOPMENT_ROADMAP.md`.
 
 ## 4. Protected architectural invariants
 
@@ -127,8 +150,9 @@ A structural refactor must not become a hidden product change.
 Read these when relevant:
 
 1. `docs/CURRENT_DEVELOPMENT_ROADMAP.md` — current execution authority;
-2. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-23.md` — immediate continuation context;
-3. `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` — connector workflow;
-4. `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` — large-file / local execution workflow.
+2. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md` — next task after PR #43 merge;
+3. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-23_POST_A13.md` — PR #43 completion/final-review evidence;
+4. `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` — connector workflow;
+5. `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` — large-file / local execution workflow.
 
 If these documents disagree about current state, re-query GitHub and prefer the most recent explicit user decision plus the current roadmap; then correct stale documentation before proceeding.
