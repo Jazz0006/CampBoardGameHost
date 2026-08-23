@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.flow
 
 import com.codex.campboardgamehost.clocktower.catalog.NightOrderToken
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 
 /**
  * Converts the pure base night-token plan into stable flow interactions without touching Compose.
@@ -14,16 +15,33 @@ internal class ClocktowerHostInteractionProjector(
         phase: ClocktowerNightFlowPhase,
         basePlan: List<NightOrderToken>,
         resolvedFacts: ClocktowerResolvedFlowFacts = ClocktowerResolvedFlowFacts.EMPTY,
+        actualRoleIds: Set<RoleId>? = null,
     ): List<ClocktowerHostInteraction> {
+        val effectiveActualRoleIds = actualRoleIds ?: basePlan
+            .filterIsInstance<NightOrderToken.Character>()
+            .mapTo(linkedSetOf()) { it.roleId }
+
+        fun retainSetupForActualRole(
+            roleId: RoleId,
+            interaction: ClocktowerHostInteraction,
+        ): Boolean = interaction.kind != ClocktowerHostInteractionKind.STORYTELLER_SETUP ||
+            roleId in effectiveActualRoleIds
+
         val interactions = buildList {
             basePlan.forEach { token ->
                 when (token) {
                     is NightOrderToken.Character -> {
-                        addAll(registry.beforeRoleInteractions(token.roleId, phase, resolvedFacts))
+                        addAll(
+                            registry.beforeRoleInteractions(token.roleId, phase, resolvedFacts)
+                                .filter { retainSetupForActualRole(token.roleId, it) },
+                        )
                         if (registry.isRoleInteractionEligible(token.roleId, phase, resolvedFacts)) {
                             add(roleInteraction(phase, token))
                         }
-                        addAll(registry.afterRoleInteractions(token.roleId, phase, resolvedFacts))
+                        addAll(
+                            registry.afterRoleInteractions(token.roleId, phase, resolvedFacts)
+                                .filter { retainSetupForActualRole(token.roleId, it) },
+                        )
                     }
                     NightOrderToken.System.DUSK -> add(
                         systemInteraction(
