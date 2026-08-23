@@ -43,6 +43,38 @@ internal class EnumeratedHistoricalWorldSetSnapshot private constructor(
         })
     }
 
+    /**
+     * Expires the prior Poisoner choice at dusk, then branches the new hidden choice independently
+     * in every exact world where the Poisoner still has their ability. The target is deliberately
+     * selected from every player seat, including dead players; no storyteller-selected target is
+     * consumed here. A Drunk target keeps the existing collapsed MALFUNCTIONING_DRUNK encoding.
+     */
+    internal fun beginNight(): EnumeratedHistoricalWorldSetSnapshot = copy(
+        worlds.flatMap { world ->
+            val expiredAbilityStates = world.abilityStatesBySeat.filterValues {
+                it != AbilityState.MALFUNCTIONING_POISONED
+            }
+            val expiredWorld = world.copy(abilityStatesBySeat = expiredAbilityStates)
+            val poisonerSeat = world.rolesBySeat.entries.singleOrNull {
+                it.value.value.equals("Poisoner", ignoreCase = true)
+            }?.key
+            if (poisonerSeat == null || poisonerSeat !in world.aliveSeats) {
+                listOf(expiredWorld)
+            } else {
+                world.rolesBySeat.keys.map { targetSeat ->
+                    val nextAbilityStates = if (
+                        expiredAbilityStates[targetSeat] == AbilityState.MALFUNCTIONING_DRUNK
+                    ) {
+                        expiredAbilityStates
+                    } else {
+                        expiredAbilityStates + (targetSeat to AbilityState.MALFUNCTIONING_POISONED)
+                    }
+                    expiredWorld.copy(abilityStatesBySeat = nextAbilityStates)
+                }
+            }
+        },
+    )
+
     internal fun require(
         record: RecordedEpistemicObservation,
         formalSnapshotId: String,
@@ -119,6 +151,9 @@ internal object EnumeratedHistoricalWorldReplay {
                 }
                 is PlayerHistoricalEvent.PhaseAdvance -> {
                     require(event.round > 0) { "Historical phase advance round must be positive." }
+                    if (phase == StorytellerPhase.DAY && event.phase == StorytellerPhase.NIGHT) {
+                        worldSet = worldSet.beginNight()
+                    }
                     phase = event.phase
                     round = event.round
                 }
