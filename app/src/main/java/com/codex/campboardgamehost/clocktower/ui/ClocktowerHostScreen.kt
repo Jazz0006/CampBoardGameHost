@@ -224,9 +224,6 @@ import java.security.MessageDigest
 import java.util.Locale
 import java.util.UUID
 
-internal fun isClocktowerEvil(card: PlayerCard): Boolean =
-    card.clocktowerTeam == ClocktowerTeam.Minion || card.clocktowerTeam == ClocktowerTeam.Demon
-
 private fun clocktowerRedHerringCandidates(aliveCards: List<PlayerCard>): List<PlayerCard> =
     aliveCards.filter { card -> card.clocktowerTeam?.isLegalRedHerringTeam() == true }
 
@@ -272,9 +269,6 @@ private fun storytellerPairHint(
     return target to decoy
 }
 
-internal fun PlayerCard.clocktowerShownAsDifferentRole(): Boolean =
-    clocktowerRole?.enName != null && clocktowerShownRole?.enName != null && clocktowerRole?.enName != clocktowerShownRole?.enName
-
 private data class ClocktowerDisplayOption(
     val label: String,
     val displayKind: ClocktowerDisplayKind,
@@ -309,23 +303,6 @@ private fun clocktowerInformationCandidateId(option: ClocktowerDisplayOption): S
     option.recluseRegisteredRoleEnName.orEmpty(),
     option.isTruthful.toString(),
 ).joinToString("|")
-
-internal fun clocktowerPrivateObservationRecordId(
-    gameId: String,
-    phase: ClocktowerPhase,
-    round: Int,
-    roleEnName: String,
-    actorSeat: Int,
-    proposition: InformationProposition,
-): String {
-    val statementKey = MessageDigest
-        .getInstance("SHA-256")
-        .digest(EpistemicSemanticJson.encode(proposition).toByteArray(Charsets.UTF_8))
-        .joinToString("") { byte ->
-            (byte.toInt() and 0xff).toString(16).padStart(2, '0')
-        }
-    return "private-$gameId-${phase.name}-$round-$roleEnName-$actorSeat-$statementKey"
-}
 
 private data class ClocktowerDecisionOption(
     val label: String,
