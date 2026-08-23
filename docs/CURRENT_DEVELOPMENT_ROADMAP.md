@@ -217,12 +217,12 @@ ClocktowerSetupScreen.kt     17,362 bytes
 Representative extracted owners outside `clocktower/ui`:
 
 ```text
-ClocktowerHostCoreSemantics.kt          3,660 bytes
-ClocktowerHostPresentationModels.kt     5,172 bytes
-ClocktowerHostSelectionSemantics.kt     6,035 bytes
-ClocktowerInformationStepBuilder.kt     9,095 bytes
-ClocktowerNightStepMaterializerRegistry.kt 2,539 bytes
-ClocktowerPlayerDisplayUi.kt           16,688 bytes
+ClocktowerHostCoreSemantics.kt              3,660 bytes
+ClocktowerHostPresentationModels.kt         5,172 bytes
+ClocktowerHostSelectionSemantics.kt         6,035 bytes
+ClocktowerInformationStepBuilder.kt         9,095 bytes
+ClocktowerNightStepMaterializerRegistry.kt  2,539 bytes
+ClocktowerPlayerDisplayUi.kt                16,688 bytes
 ```
 
 Host remains large because it still contains high-coupling orchestration, recommendation-derived facts, registration state and lazy night materializer closures. A13 intentionally changed authority rather than shrinking bytes.
