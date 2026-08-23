@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
+import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
@@ -30,7 +31,15 @@ internal class EnumeratedHistoricalWorldSetSnapshot private constructor(
             "Historical elimination references unknown seat $seat."
         }
         return copy(worlds.map { world ->
-            world.copy(aliveSeats = world.aliveSeats - seat)
+            val abilityStates = if (world.rolesBySeat.getValue(seat).value.equals("Poisoner", ignoreCase = true)) {
+                world.abilityStatesBySeat.filterValues { it != AbilityState.MALFUNCTIONING_POISONED }
+            } else {
+                world.abilityStatesBySeat
+            }
+            world.copy(
+                aliveSeats = world.aliveSeats - seat,
+                abilityStatesBySeat = abilityStates,
+            )
         })
     }
 
