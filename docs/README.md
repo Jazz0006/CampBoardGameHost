@@ -23,10 +23,10 @@
 ## 2. 当前必须阅读
 
 - [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **CURRENT / 唯一状态权威**  
-  PR #43 A1–A13 已完成并通过 final merge-readiness audit；用户已授权 merge。下一 structural task 改为 App-root decomposition，A3 顺延。
+  PR #43 A1–A13 已完成并合并；下一 structural task 是 App-root decomposition，A3 顺延。
 
 - [`NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md) — **NEXT TASK HANDOFF**  
-  PR #43 merge 后，在新对话 / fresh branch 中审计并拆分 `CampBoardGameHostApp.kt`；先做 ownership inventory 和 slice plan，不直接 mass extraction。
+  在新对话 / fresh branch 中审计并拆分 `CampBoardGameHostApp.kt`；先做 ownership inventory 和 slice plan，不直接 mass extraction。
 
 - [`NEXT_DEVELOPMENT_HANDOFF_2026-08-23_POST_A13.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-23_POST_A13.md) — **PR #43 COMPLETION EVIDENCE**  
   记录 A13 planner-first Other Night materialization、post-A13 audit、Host protected transaction boundary 和 PR #43 completion evidence。
@@ -44,13 +44,13 @@ PR #40 Structured Manual UI — Empath numeric slice     MERGED
 PR #41 workflow / LF policy docs-infra                 MERGED
 PR #42 Historical Action + Observation Capture         MERGED
 PR #44 Drunk / Fortune Teller correctness hotfix       MERGED
-PR #43 Clocktower host source decomposition            MERGE-READY / A1–A13 GREEN
+PR #43 Clocktower host source decomposition            MERGED / A1–A13 GREEN
 
-PR #43 validated implementation:
-b37f0067b674a0cd4bee5ff311840d1c52ce8c05
+PR #43 merge:
+520be741fabb47f03ab1fb8852139a1c4cccb9fd
 
 current execution point:
-finish docs + merge PR #43
+start App-root decomposition in a NEW conversation / fresh branch
 
 next structural task:
 CampBoardGameHostApp.kt APP-ROOT DECOMPOSITION
@@ -59,7 +59,7 @@ next product task after structural pass:
 A3 HISTORICAL MULTI-NIGHT EXACT BASELINE
 ```
 
-PR #43 merge 前必须重新确认 live head / mergeability / latest CI。用户已经在 2026-08-23 明确授权本次 merge。
+不得继续在 PR #43 的 feature branch 上追加下一任务。
 
 ## 4. Large-file state
 
@@ -80,9 +80,8 @@ MainActivity.kt                1,102 bytes   earlier R2 decomposition complete
 ## 5. Revised development sequence
 
 ```text
-PR #43 docs + final guard
--> merge PR #43
--> stop this conversation
+PR #43 merged
+-> stop previous decomposition conversation
 -> new conversation / fresh branch from merged main
 -> audit + decompose CampBoardGameHostApp.kt
 -> remeasure large source files
@@ -113,8 +112,8 @@ Luna push 后必须返回 commit SHA；ChatGPT 必须从 GitHub 重新确认 liv
 2. 读本文；
 3. 读 `CURRENT_DEVELOPMENT_ROADMAP.md`；
 4. 读 `NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md`；
-5. 查询 live `main` 并确认 PR #43 已 merge；
-6. 记录实际 merge SHA；
+5. 查询 live `main` 并记录当前 SHA；
+6. 确认 PR #43 已 merge（merge baseline `520be741fabb47f03ab1fb8852139a1c4cccb9fd`）；
 7. 从 live `main` 创建 fresh structural branch；
 8. 审计 `CampBoardGameHostApp.kt` 当前大小与 responsibility inventory；
 9. 返回候选 slices、风险排序、protected state/effect boundaries 和 first characterization plan；
