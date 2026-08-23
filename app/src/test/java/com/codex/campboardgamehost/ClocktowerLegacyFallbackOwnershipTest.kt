@@ -5,7 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class ClocktowerNightStepUiOwnershipTest {
+class ClocktowerLegacyFallbackOwnershipTest {
     private fun findRepositoryRoot(): File {
         val knownHostSource = "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt"
         val workingDirectory = System.getProperty("user.dir") ?: error("Working directory is unavailable")
@@ -18,31 +18,38 @@ class ClocktowerNightStepUiOwnershipTest {
         }
     }
 
-    private val repoRoot = findRepositoryRoot()
     private val host = File(
-        repoRoot,
+        findRepositoryRoot(),
         "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt",
-    )
-    private val nightStepUi = File(
-        repoRoot,
-        "app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt",
     )
 
     @Test
-    fun `night step presentation has dedicated owner`() {
+    fun `active themed host UI remains present`() {
         assertTrue("Host source must exist", host.isFile)
-        assertTrue("Dedicated night-step UI source must exist", nightStepUi.isFile)
+        assertTrue(
+            "Active ClocktowerDarkTheme UI must remain in ClocktowerHostScreen.kt",
+            host.readText().contains("ClocktowerDarkTheme {"),
+        )
+    }
 
+    @Test
+    fun `unreachable legacy fallback is absent`() {
+        assertTrue("Host source must exist", host.isFile)
         val hostText = host.readText()
-        val nightStepUiText = nightStepUi.readText()
+        val returnThenLegacyLazyColumn = Regex("""(?s)\n    return\s*\n\s*LazyColumn\(""")
 
         assertFalse(
-            "ClocktowerNightStepCardLocalized must no longer live in ClocktowerHostScreen.kt",
-            hostText.contains("fun ClocktowerNightStepCardLocalized("),
+            "Unreachable legacy LazyColumn must not remain after the active UI return",
+            returnThenLegacyLazyColumn.containsMatchIn(hostText),
         )
-        assertTrue(
-            "ClocktowerNightStepCardLocalized must be cross-file visible in the dedicated night-step UI source",
-            nightStepUiText.contains("internal fun ClocktowerNightStepCardLocalized("),
+    }
+
+    @Test
+    fun `legacy info card is absent`() {
+        assertTrue("Host source must exist", host.isFile)
+        assertFalse(
+            "ClocktowerInfoCard must be removed with its unreachable call sites",
+            host.readText().contains("fun ClocktowerInfoCard("),
         )
     }
 }
