@@ -14,14 +14,12 @@ internal object ClocktowerProductionOtherNightFlow {
     private val planner = ClocktowerFlowPlanner()
     private val projector = ClocktowerHostInteractionProjector()
 
-    fun <T> order(
+    fun interactions(
         ruleset: ValidatedClocktowerRuleset,
         playerCount: Int,
         wakingRoleIds: Set<RoleId>,
         resolvedFacts: ClocktowerResolvedFlowFacts,
-        productionSteps: List<T>,
-        identityOf: (T) -> ClocktowerProductionNightStepIdentity,
-    ): List<T> {
+    ): List<ClocktowerHostInteraction> {
         val phase = ClocktowerNightFlowPhase.OTHER_NIGHT
         val basePlan = planner.planNight(
             ruleset = ruleset,
@@ -31,14 +29,30 @@ internal object ClocktowerProductionOtherNightFlow {
                 inPlayRoleIds = wakingRoleIds,
             ),
         )
-        val interactions = projector.projectNight(
+        return projector.projectNight(
             phase = phase,
             basePlan = basePlan,
             resolvedFacts = resolvedFacts,
         )
+    }
+
+    fun <T> order(
+        ruleset: ValidatedClocktowerRuleset,
+        playerCount: Int,
+        wakingRoleIds: Set<RoleId>,
+        resolvedFacts: ClocktowerResolvedFlowFacts,
+        productionSteps: List<T>,
+        identityOf: (T) -> ClocktowerProductionNightStepIdentity,
+    ): List<T> {
+        val phase = ClocktowerNightFlowPhase.OTHER_NIGHT
         return ClocktowerProductionInteractionOrderer.order(
             phase = phase,
-            projectedInteractions = interactions,
+            projectedInteractions = interactions(
+                ruleset = ruleset,
+                playerCount = playerCount,
+                wakingRoleIds = wakingRoleIds,
+                resolvedFacts = resolvedFacts,
+            ),
             productionSteps = productionSteps,
             identityOf = identityOf,
         )
