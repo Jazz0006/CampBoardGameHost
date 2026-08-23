@@ -2,10 +2,11 @@
 
 > Project: `Jazz0006/CampBoardGameHost`  
 > Parent roadmap: `docs/CURRENT_DEVELOPMENT_ROADMAP.md`  
+> Project AI instructions: `AGENTS.md`  
 > Development operations: `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`  
 > Large-file execution: `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`  
 > Current task: **PR #43 Clocktower host source decomposition**  
-> Immediate next step: **A10 boundary re-audit only — no implementation yet**  
+> Immediate next step: **A10 Information / Step Builder seam — Chat designs, executor only implements**  
 > Status: **CURRENT HANDOFF**
 
 ## 1. Trusted live state
@@ -106,52 +107,132 @@ CI #506:                      SUCCESS
 R2 #446:                      SUCCESS
 ```
 
-## 6. Remaining host state
+## 6. Remaining host state and revised completion criterion
 
 ```text
 ClocktowerHostScreen.kt: 294,769 bytes
 ClocktowerHostScreen.kt: 4,818 lines
 ```
 
-The <= 50 KiB objective is not complete. The remaining file is now almost entirely one large active `ClocktowerJudgeScreen`; there is no longer a dead fallback or tail `ClocktowerInfoCard` seam.
+The previous plan treated <= 50 KiB as a hard end-state. That has now been revised.
 
-## 7. Immediate next step — A10 boundary re-audit
+The remaining file is almost entirely one large active `ClocktowerJudgeScreen`. File size remains a useful maintainability signal, but it is **not a hard merge gate** when the only way to satisfy it would be to create weak abstractions, giant parameter bags, move Compose state/effect lifetime, or expose tightly coupled internals across files.
 
-A10 has not started. Do not write tests or production code until the active screen is re-audited.
+The new architectural completion criterion is:
 
-The re-audit must identify:
+> `ClocktowerJudgeScreen` becomes a coherent coordinator/orchestrator. Role-information construction, first-night step construction, other-night step construction, and suitable presentation routing move to stable owners; state/effect lifetime and transaction ordering remain in the host when that is the safer ownership boundary.
 
-1. cohesive state/model construction that can move without changing Compose state lifetime;
-2. active phase-presentation blocks with stable parameter/callback boundaries;
-3. callback invocation and selection-audit ordering that must remain exact;
-4. cross-file visibility changes required by any candidate;
-5. expected new-file size before choosing a move;
-6. a focused ownership/characterization contract that can produce a real RED.
+A remaining host in roughly the 100–150 KiB range may be acceptable if what remains is genuinely orchestration and further extraction would increase coupling or regression risk.
 
-Stop if the candidate would change product behavior, recommendation ranking, information lifecycle, registration semantics, persistence/history, or session authority.
+## 7. Planned remaining decomposition
 
-## 8. Validation rules for any later slice
+### A10 — Information / Step Builder seam
+
+Create a non-state-owning builder boundary for the current nested information/step construction helpers.
+
+Target responsibilities include, where the boundary is natural:
+
+- reliable/unreliable information display-option construction;
+- number / yes-no / role-reveal / pair-information recommendation-backed options;
+- registration-aware information modeling;
+- `infoStep`-style model construction.
+
+Constraints:
+
+- no `remember` ownership moves;
+- no `LaunchedEffect` ownership moves;
+- no transaction commit ordering changes;
+- no product behavior, recommendation ranking, registration, information lifecycle, history, persistence, or session-authority change.
+
+A10 is a seam/foundation slice, not a broad product refactor.
+
+### A11 — First Night Step Factory
+
+Move first-night role-by-role step construction behind a cohesive factory returning `List<ClocktowerNightStepUi>` (or the smallest equivalent stable model boundary).
+
+The host remains responsible for state/effect lifetime and commit sequencing.
+
+### A12 — Other Night Step Factory
+
+Move other-night role-by-role step construction behind a separate cohesive factory.
+
+Do **not** move the sensitive `advanceNightStep` transaction merely to reduce file size. Confirm/audit/registration/event/index/finalization ordering stays host-owned unless a later dedicated architecture decision proves a safer transaction boundary.
+
+### A13 — Day routing consolidation
+
+Consolidate low-coupling day presentation/routing only where callbacks form a clean boundary. Overview/Vote/EndConfirm are likely candidates.
+
+Nomination/Virgin, Slayer, Artist, and Klutz remain optional follow-up candidates. Stop rather than force them across files if doing so requires exporting large amounts of registration/recommendation/state internals.
+
+### Post-A13 re-audit
+
+Re-measure the host, inspect responsibility cohesion, and decide whether PR #43 is complete.
+
+Do **not** pre-commit to reaching <= 50 KiB. Stop when further extraction would be architecture-negative.
+
+## 8. Explicit host-owned responsibilities that are not current decomposition targets
+
+The following should remain in `ClocktowerJudgeScreen` during the current plan unless Chat makes a later explicit architecture decision:
+
+- Compose `remember` state ownership;
+- Compose effect lifecycle (`LaunchedEffect`, related lifecycle-bound work);
+- setup recommendation lifecycle;
+- first-night migration lifecycle;
+- telemetry recorder lifetime;
+- registration mutable maps/state;
+- night commit transaction and callback ordering;
+- top-level phase routing where it is truly orchestration;
+- debug/A4 benchmark lifecycle when extraction has little maintainability value.
+
+## 9. Working model — Chat decides, connector first, Codex/Luna executes heavy edits
+
+The project-level authority is `AGENTS.md`.
+
+Default flow:
+
+```text
+Chat
+  -> query live state
+  -> perform architecture / risk / boundary audit
+  -> decide exact slice and validation strategy
+
+If GitHub connector can safely read/write the target
+  -> Chat performs the edit directly through connector
+  -> exact remote diff audit
+  -> appropriate GitHub checks / CI
+
+If file size/truncation/mechanical complexity makes connector editing unsafe
+  -> Chat writes a precise implementation task
+  -> user sends it to Codex/Luna
+  -> Codex/Luna performs only the specified implementation + local validation + commit/push
+  -> Chat re-reads GitHub and audits the remote result
+```
+
+Codex/Luna is not the default architecture decision-maker. Do not ask it to choose decomposition boundaries unless the user explicitly changes this working model.
+
+## 10. Validation rules for each later slice
 
 ```text
 live head recheck
--> focused tests-only RED
--> remote RED provenance
--> Luna local mechanical GREEN for large-file changes
--> focused/full unit tests + assembleDebug
--> exact move/deletion audit
--> GitHub CI + ASP + Real Clingo + R2
--> stop and re-audit
+-> Chat architecture/scope decision
+-> focused characterization or tests-only RED where required
+-> connector direct GREEN when safe, otherwise Luna local mechanical GREEN
+-> focused/full unit tests + assembleDebug as appropriate
+-> exact move/deletion/diff audit
+-> GitHub CI + ASP + Real Clingo + R2 as required
+-> Chat boundary re-audit before next slice
 ```
 
 Use `GRADLE_USER_HOME="$PWD/.gradle-codex"`; keep `.gradle-codex/` untracked.
 
-## 9. Stop conditions
+## 11. Stop conditions
 
 - PR #43 must remain draft and unmerged;
 - no A3 product work in this PR;
-- no A10 implementation before the boundary audit is complete;
-- no state lifetime, callback ordering, recommendation, registration, information, history or session-authority changes.
+- no file-size-driven state-lifetime move;
+- no callback ordering, recommendation, registration, information, history or session-authority changes without a dedicated explicit decision;
+- do not continue decomposition solely to satisfy a byte threshold once the host is a coherent coordinator.
 
-## 10. Merge boundary
+## 12. Merge boundary
 
-PR #43 remains draft. Do not mark ready or merge until the full decomposition goal, final size audit, full CI/R2 and final review are complete, and the user explicitly authorizes merge.
+PR #43 remains draft. Do not mark ready or merge until the planned high-value decomposition is complete, the post-A13 architecture/size audit is satisfactory, the latest full CI/R2 gates are GREEN, and the user explicitly authorizes merge.
