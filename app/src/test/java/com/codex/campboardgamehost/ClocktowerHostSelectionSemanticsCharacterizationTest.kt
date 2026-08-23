@@ -73,7 +73,7 @@ class ClocktowerHostSelectionSemanticsCharacterizationTest {
 
     @Test
     fun `first night pool preserves the existing three rank bands`() {
-        val default = displayOption(label = "default", style = RecommendationStyle.CONSERVATIVE, isDefault = true)
+        val default = displayOption(label = "default", style = RecommendationStyle.GENTLE, isDefault = true)
         val styleMatch = displayOption(label = "match", primary = "match", style = RecommendationStyle.AGGRESSIVE)
         val other = displayOption(label = "other", primary = "other", style = RecommendationStyle.BALANCED)
 
