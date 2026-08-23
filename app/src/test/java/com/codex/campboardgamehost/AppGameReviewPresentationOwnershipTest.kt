@@ -100,12 +100,14 @@ class AppGameReviewPresentationOwnershipTest {
 
     @Test
     fun `shared review dependencies remain outside S5 owner`() {
+        val extractedSource = extractedFile.readText(Charsets.UTF_8)
+
         assertTrue(rootSource.contains("internal fun PlayerCard.hostRoleLabel("))
         assertTrue(rootSource.contains("internal fun Role.labelResId(): Int = when (this)"))
         assertTrue(rootSource.contains("internal fun ClocktowerRole.nameFor(language: String): String"))
         assertTrue(rootSource.contains("internal fun ClocktowerDarkTheme("))
-        assertTrue(rootSource.contains("private fun GameScreen("))
-        assertTrue(rootSource.contains("private fun PlayerStatusRow("))
+        assertFalse(extractedSource.contains("fun GameScreen("))
+        assertFalse(extractedSource.contains("fun PlayerStatusRow("))
         assertTrue(rootSource.contains("ClocktowerResultsDialog("))
     }
 }
