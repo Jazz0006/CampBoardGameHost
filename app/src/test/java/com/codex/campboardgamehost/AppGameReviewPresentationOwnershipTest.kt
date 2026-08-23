@@ -105,7 +105,7 @@ class AppGameReviewPresentationOwnershipTest {
         assertTrue(rootSource.contains("internal fun PlayerCard.hostRoleLabel("))
         assertTrue(rootSource.contains("internal fun Role.labelResId(): Int = when (this)"))
         assertTrue(rootSource.contains("internal fun ClocktowerRole.nameFor(language: String): String"))
-        assertTrue(rootSource.contains("internal fun ClocktowerDarkTheme("))
+        assertFalse(extractedSource.contains("fun ClocktowerDarkTheme("))
         assertFalse(extractedSource.contains("fun GameScreen("))
         assertFalse(extractedSource.contains("fun PlayerStatusRow("))
         assertTrue(rootSource.contains("ClocktowerResultsDialog("))
