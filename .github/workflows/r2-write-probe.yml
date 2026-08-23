@@ -99,7 +99,14 @@ jobs:
             exit 1
           fi
           grep -q "internal fun ClocktowerNightStepCardLocalized" "$night_step_ui"
-          grep -q "private fun ClocktowerInfoCard" "$host"
+          if grep -q "fun ClocktowerInfoCard(" "$host"; then
+            echo "ClocktowerInfoCard remains in ClocktowerHostScreen.kt" >&2
+            exit 1
+          fi
+          if grep -Pzq '\n    return\s*\n\s*LazyColumn\(' "$host"; then
+            echo "Unreachable legacy LazyColumn remains after the active UI return" >&2
+            exit 1
+          fi
 
           if grep -q "internal fun PlayerCard.clocktowerShownAsDifferentRole" "$host"; then
             echo "clocktowerShownAsDifferentRole still lives in ClocktowerHostScreen.kt" >&2
