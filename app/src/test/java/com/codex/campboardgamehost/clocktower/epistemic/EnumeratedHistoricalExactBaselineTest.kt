@@ -100,6 +100,43 @@ class EnumeratedHistoricalExactBaselineTest {
     }
 
     @Test
+    fun `exact baseline refuses hidden attack and protect until successor branching is modeled`() {
+        listOf(
+            ActionFact.Attack("hidden-attack", 10L, 2) to "Attack",
+            ActionFact.Protect("hidden-protect", 10L, 2) to "Protect",
+        ).forEach { (fact, expectedName) ->
+            val actions = ActionFactTimeline(
+                listOf(
+                    action(
+                        fact,
+                        StorytellerPhase.NIGHT,
+                        round = 1,
+                        localSequence = 1,
+                        globalSequence = 10L,
+                    ),
+                ),
+            )
+
+            try {
+                EnumeratedHistoricalExactBaseline.build(
+                    rulesetRef = ruleset,
+                    setupKnowledge = setupKnowledge,
+                    hypothesis = EpistemicHypothesis.FUNCTIONING_ONLY,
+                    roleDefinitions = roles,
+                    initialPhase = StorytellerPhase.FIRST_NIGHT,
+                    initialRound = 1,
+                    actionTimeline = actions,
+                    observationLog = EpistemicObservationLog(),
+                )
+                fail("Expected incomplete $expectedName semantics to block an exact result.")
+            } catch (expected: IllegalArgumentException) {
+                assertTrue(expected.message.orEmpty().contains(expectedName))
+                assertTrue(expected.message.orEmpty().contains("exact", ignoreCase = true))
+            }
+        }
+    }
+
+    @Test
     fun `exact baseline refuses hidden role changes until successor branching is modeled`() {
         val actions = ActionFactTimeline(
             listOf(
