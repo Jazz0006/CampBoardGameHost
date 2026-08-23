@@ -51,16 +51,11 @@ class AppSettingsPresentationOwnershipTest {
     }
 
     @Test
-    fun `shared settings primitives remain root owned in S2`() {
-        assertTrue(rootSource.contains("internal fun GameSettingsHeader("))
-        assertTrue(rootSource.contains("internal fun EmptyStateCard("))
-        assertTrue(rootSource.contains("internal fun StepperRow("))
+    fun `shared settings primitives remain outside S2 owner`() {
+        val extractedSource = extractedFile.readText(Charsets.UTF_8)
 
-        if (extractedFile.exists()) {
-            val extractedSource = extractedFile.readText(Charsets.UTF_8)
-            assertFalse(extractedSource.contains("fun GameSettingsHeader("))
-            assertFalse(extractedSource.contains("fun EmptyStateCard("))
-            assertFalse(extractedSource.contains("fun StepperRow("))
-        }
+        assertFalse(extractedSource.contains("fun GameSettingsHeader("))
+        assertFalse(extractedSource.contains("fun EmptyStateCard("))
+        assertFalse(extractedSource.contains("fun StepperRow("))
     }
 }
