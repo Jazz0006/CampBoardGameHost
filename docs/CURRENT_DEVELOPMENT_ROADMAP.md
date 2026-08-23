@@ -2,10 +2,10 @@
 
 > 状态日期：2026-08-23  
 > 文档角色：**CURRENT / 当前状态唯一权威**  
-> 当前 live `main`（PR #43 merge 前）：`efd63b360ca9aba8c7890594449aa5e21817f560`  
-> 当前工作：**PR #43 Clocktower host source decomposition — MERGE-READY / user authorized merge**  
-> 当前 validated implementation head：`b37f0067b674a0cd4bee5ff311840d1c52ce8c05`  
-> 当前执行点：**完成 PR #43 文档收尾与 merge；下一任务在新对话中做 `CampBoardGameHostApp.kt` App-root decomposition；A3 顺延**  
+> 当前 live `main`：`520be741fabb47f03ab1fb8852139a1c4cccb9fd`（PR #43 merge）  
+> 当前工作：**下一 structural task：`CampBoardGameHostApp.kt` App-root decomposition**  
+> PR #43 validated implementation head：`b37f0067b674a0cd4bee5ff311840d1c52ce8c05`  
+> 当前执行点：**PR #43 已合并；下一任务必须在新对话 / fresh branch 中开始 App-root decomposition；A3 顺延**  
 > 下一任务交接：`NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md`
 
 > 新会话实施前必须重新查询 live `main`、目标 PR/branch 和 checks，不得把本文 SHA 当作永久 HEAD。
@@ -21,13 +21,20 @@ PR #40 Structured Manual UI — Empath numeric slice     CLOSED / MERGED
 PR #41 developer workflow + LF policy                  CLOSED / MERGED
 PR #42 Historical Action + Observation Capture         CLOSED / MERGED
 PR #44 Drunk / Fortune Teller setup correctness hotfix CLOSED / MERGED
-PR #43 Clocktower host source decomposition            MERGE-READY / A1–A13 GREEN
+PR #43 Clocktower host source decomposition            CLOSED / MERGED / A1–A13 GREEN
 Optional A14 Host day-routing extraction               SKIPPED
+Current execution point                                START APP-ROOT DECOMPOSITION IN NEW CONVERSATION
 Next structural task                                   APP-ROOT DECOMPOSITION
 Next product task after structural pass                A3 HISTORICAL MULTI-NIGHT EXACT BASELINE
 ```
 
-PR #43 保持 structural refactor only。最终 review 已通过；用户已明确授权文档更新和 merge。merge 后不得在旧 feature branch 上继续下一任务。
+PR #43 merge commit：
+
+```text
+520be741fabb47f03ab1fb8852139a1c4cccb9fd
+```
+
+PR #43 已结束。不得继续在 `codex/source-decomposition-clocktower-host` 上叠加下一任务；下一 structural work 从 live `main` 新开 branch。
 
 ## 2. PR #43 — Clocktower host decomposition summary
 
@@ -80,10 +87,12 @@ A13 RED                                   4e638c345ed50a3bc65abdc22ac5487172bf9f
 A13 New-Demon contract migration          bae29d5fccb988f641a95e743f899be56ae84299
 A13 GREEN / validated implementation      b37f0067b674a0cd4bee5ff311840d1c52ce8c05
 A13 CI / R2                               #534 SUCCESS / #473 SUCCESS
-Final docs-head CI / R2 before merge      SUCCESS / SUCCESS
+Final PR head before merge                3082462fe450db491a8b2c8ed8795fdca60f4b80
+Final head CI / R2                        #546 SUCCESS / #485 SUCCESS
+PR #43 merge                              520be741fabb47f03ab1fb8852139a1c4cccb9fd
 ```
 
-A13 final remote audit confirmed Android tests/build, ASP contract and Real Clingo cross-validation all GREEN.
+Final pre-merge CI confirmed Android tests/build, ASP contract and Real Clingo cross-validation all GREEN.
 
 ## 3. Night-flow architecture after A13
 
@@ -168,7 +177,7 @@ This is not a byte freeze. It is a responsibility-growth constraint.
 
 ## 6. Large-file inventory and revised priority
 
-At the end of PR #43, the main handwritten production large files are approximately:
+At PR #43 merge, the main handwritten production large files are approximately:
 
 ```text
 CampBoardGameHostApp.kt      325,556 bytes   NEXT STRUCTURAL PRIORITY
@@ -189,7 +198,7 @@ Important distinction:
 - `MainActivity.kt` is now only Android Activity/window/`setContent` shell；
 - the remaining root monolith is `CampBoardGameHostApp.kt` (~325 KiB)。
 
-Therefore “大文件治理”尚未结束，即使 PR #43 本身已经完成。
+Therefore “大文件治理”尚未结束，即使 PR #43 已经完成并合并。
 
 ## 7. 50 KiB policy
 
@@ -215,20 +224,19 @@ Therefore “大文件治理”尚未结束，即使 PR #43 本身已经完成�
 
 不得仅为达成阈值制造 context bag、额外 `internal` 泄漏或弱 owner。
 
-## 8. Revised next sequence
+## 8. Current next sequence
 
 用户已决定采用以下顺序：
 
 ```text
-1. 更新 PR #43 文档与长期规则
-2. live-head / CI guard
-3. merge PR #43
-4. 本对话停止
-5. 新对话从 merged main 创建 fresh structural branch
-6. audit + decompose CampBoardGameHostApp.kt
-7. remeasure all large production files
-8. audit ClocktowerDayScreen.kt (~63 KiB); only split on clean seam
-9. structural pass 完成后再进入 A3 historical multi-night exact baseline
+1. PR #43 merged on main
+2. 本对话停止
+3. 新对话确认 live main = merged baseline（或更新）
+4. 从 live main 创建 fresh structural branch
+5. audit + decompose CampBoardGameHostApp.kt
+6. remeasure all large production files
+7. audit ClocktowerDayScreen.kt (~63 KiB); only split on clean seam
+8. structural pass 完成后再进入 A3 historical multi-night exact baseline
 ```
 
 **A3 不再是 PR #43 merge 后的直接下一任务。**
@@ -332,8 +340,8 @@ Never merge, mark ready, rebase or force-push without explicit user authorizatio
 
 For the next task:
 
-1. confirm PR #43 is actually merged and record the merge SHA；
-2. confirm live `main`；
+1. confirm live `main` and record the current SHA；
+2. confirm PR #43 is merged（expected merge baseline `520be741fabb47f03ab1fb8852139a1c4cccb9fd`）；
 3. read `AGENTS.md`；
 4. read this roadmap；
 5. read `NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md`；
