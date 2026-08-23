@@ -10,13 +10,19 @@ class ClocktowerProductionFirstNightWiringTest {
         "src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt",
     ).readText(Charsets.UTF_8)
 
-    private val ordering = source
-        .substringAfter("val filteredNightSteps = unfilteredNightSteps.filter")
+    private val nightRouting = source
+        .substringAfter("val nightSteps = if (phase == ClocktowerPhase.FirstNight) {")
         .substringBefore("playerDisplayStep?.let")
 
-    private val firstNightRouting = source
-        .substringAfter("val nightSteps = if (phase == ClocktowerPhase.FirstNight) {")
-        .substringBefore("ClocktowerProductionOtherNightFlow.order(")
+    private val firstNightMaterializeCall =
+        "firstNightMaterializers.materialize(firstNightInteractions)"
+
+    private val firstNightRouting = nightRouting
+        .substringBefore(firstNightMaterializeCall) + firstNightMaterializeCall
+
+    private val firstNightPlannerInputs = source
+        .substringAfter("val firstNightActualRoleIds = buildSet")
+        .substringBefore("val otherNightWakingRoleIds = buildSet")
 
     @Test
     fun `production host uses canonical first-night planner seam`() {
@@ -27,7 +33,7 @@ class ClocktowerProductionFirstNightWiringTest {
 
     @Test
     fun `production first night is planner-first and lazily materialized`() {
-        assertTrue(ordering.contains("val nightSteps = if (phase == ClocktowerPhase.FirstNight) {"))
+        assertTrue(nightRouting.contains("val nightSteps = if (phase == ClocktowerPhase.FirstNight) {").not())
         assertTrue(firstNightRouting.contains("ClocktowerProductionFirstNightFlow.interactions("))
         assertTrue(firstNightRouting.contains("BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script)"))
         assertTrue(firstNightRouting.contains("playerCount = cards.size"))
@@ -47,43 +53,34 @@ class ClocktowerProductionFirstNightWiringTest {
 
     @Test
     fun `first-night materializer registry binds stable production identities`() {
-        assertTrue(source.contains("ClocktowerProductionNightStepIdentity.minionInfo()"))
-        assertTrue(source.contains("ClocktowerProductionNightStepIdentity.demonInfo()"))
-        assertTrue(source.contains("ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring()"))
-        assertTrue(source.contains("ClocktowerProductionNightStepIdentity.role("))
+        assertTrue(firstNightRouting.contains("ClocktowerProductionNightStepIdentity.minionInfo()"))
+        assertTrue(firstNightRouting.contains("ClocktowerProductionNightStepIdentity.demonInfo()"))
+        assertTrue(firstNightRouting.contains("ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring()"))
+        assertTrue(firstNightRouting.contains("ClocktowerProductionNightStepIdentity.role("))
     }
 
     @Test
     fun `production first-night planner input preserves actual and Drunk waking identities separately`() {
-        assertTrue(ordering.contains("val firstNightActualRoleIds = buildSet"))
-        assertTrue(ordering.contains("val firstNightWakingRoleIds = buildSet"))
-        assertTrue(ordering.contains("cards.forEach { card ->"))
-        assertTrue(ordering.contains("card.clocktowerRole?.enName?.let { add(RoleId(it)) }"))
-        assertTrue(ordering.contains("if (card.clocktowerRole?.enName == \"Drunk\") {"))
-        assertTrue(ordering.contains("card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }"))
+        assertTrue(firstNightPlannerInputs.contains("val firstNightWakingRoleIds = buildSet"))
+        assertTrue(firstNightPlannerInputs.contains("cards.forEach { card ->"))
+        assertTrue(firstNightPlannerInputs.contains("card.clocktowerRole?.enName?.let { add(RoleId(it)) }"))
+        assertTrue(firstNightPlannerInputs.contains("if (card.clocktowerRole?.enName == \"Drunk\") {"))
+        assertTrue(firstNightPlannerInputs.contains("card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }"))
         assertTrue(firstNightRouting.contains("inPlayRoleIds = firstNightWakingRoleIds"))
         assertTrue(firstNightRouting.contains("actualRoleIds = firstNightActualRoleIds"))
 
-        val actualRolesBlock = ordering
+        val actualRolesBlock = source
             .substringAfter("val firstNightActualRoleIds = buildSet")
             .substringBefore("val firstNightWakingRoleIds = buildSet")
         assertFalse(actualRolesBlock.contains("clocktowerShownRole"))
     }
 
     @Test
-    fun `other night remains on its dedicated event-aware orderer until A13`() {
-        assertTrue(ordering.contains("ClocktowerProductionOtherNightFlow.order("))
-        assertTrue(ordering.contains("productionSteps = filteredNightSteps"))
-        assertFalse(ordering.contains("fun legacyOtherNightOrder(step: ClocktowerNightStepUi): Int"))
-        assertFalse(ordering.contains("filteredNightSteps.sortedBy(::legacyOtherNightOrder)"))
-    }
-
-    @Test
     fun `first-night legacy numeric order table remains absent`() {
-        assertFalse(ordering.contains("fun officialNightOrder"))
-        assertFalse(ordering.contains("step.title == minionInfoTitle -> 0"))
-        assertFalse(ordering.contains("step.title == demonInfoTitle -> 1"))
-        assertFalse(ordering.contains("step.roleEnName == \"Clockmaker\" -> 4"))
-        assertFalse(ordering.contains("step.action == ClocktowerNightAction.RedHerring -> 10"))
+        assertFalse(source.contains("fun officialNightOrder"))
+        assertFalse(source.contains("step.title == minionInfoTitle -> 0"))
+        assertFalse(source.contains("step.title == demonInfoTitle -> 1"))
+        assertFalse(source.contains("step.roleEnName == \"Clockmaker\" -> 4"))
+        assertFalse(source.contains("step.action == ClocktowerNightAction.RedHerring -> 10"))
     }
 }
