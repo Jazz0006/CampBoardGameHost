@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
+import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
@@ -26,6 +27,7 @@ class EnumeratedHistoricalWorldReplayTest {
         role("Empath", CharacterType.TOWNSFOLK),
         role("Chef", CharacterType.TOWNSFOLK),
         role("Fortune Teller", CharacterType.TOWNSFOLK),
+        role("Drunk", CharacterType.OUTSIDER),
         role("Poisoner", CharacterType.MINION),
         role("Imp", CharacterType.DEMON),
     )
@@ -78,6 +80,93 @@ class EnumeratedHistoricalWorldReplayTest {
         assertEquals(12L, result.lastGlobalSequence)
     }
 
+    @Test
+    fun `public Poisoner death clears poison only in worlds where the eliminated seat is Poisoner`() {
+        val poisonerDies = EnumeratedWorld(
+            rolesBySeat = linkedMapOf(
+                1 to RoleId("Empath"),
+                2 to RoleId("Chef"),
+                3 to RoleId("Poisoner"),
+                4 to RoleId("Imp"),
+                5 to RoleId("Fortune Teller"),
+            ),
+            abilityStatesBySeat = mapOf(2 to AbilityState.MALFUNCTIONING_POISONED),
+        )
+        val poisonerSurvives = EnumeratedWorld(
+            rolesBySeat = linkedMapOf(
+                1 to RoleId("Empath"),
+                2 to RoleId("Chef"),
+                3 to RoleId("Fortune Teller"),
+                4 to RoleId("Imp"),
+                5 to RoleId("Poisoner"),
+            ),
+            abilityStatesBySeat = mapOf(2 to AbilityState.MALFUNCTIONING_POISONED),
+        )
+
+        val result = EnumeratedHistoricalWorldReplay.replay(
+            initialWorldSet = worldSet(listOf(poisonerDies, poisonerSurvives)),
+            formalSnapshotId = formalSnapshotId,
+            initialPhase = StorytellerPhase.DAY,
+            initialRound = 1,
+            events = listOf(
+                PlayerHistoricalEvent.PublicExecution(
+                    actionId = "execution-seat-3",
+                    targetSeat = 3,
+                    point = TimelinePoint(StorytellerPhase.DAY, 1, 7, 10L),
+                ),
+            ),
+        )
+
+        val worlds = result.worldSet.enumeratedWorlds().associateBy { it.rolesBySeat.getValue(3) }
+        assertEquals(emptyMap<Int, AbilityState>(), worlds.getValue(RoleId("Poisoner")).abilityStatesBySeat)
+        assertEquals(
+            mapOf(2 to AbilityState.MALFUNCTIONING_POISONED),
+            worlds.getValue(RoleId("Fortune Teller")).abilityStatesBySeat,
+        )
+        assertEquals(setOf(1, 2, 4, 5), worlds.getValue(RoleId("Poisoner")).aliveSeats)
+        assertEquals(setOf(1, 2, 4, 5), worlds.getValue(RoleId("Fortune Teller")).aliveSeats)
+    }
+
+    @Test
+    fun `Poisoner death preserves intrinsic Drunk malfunction while clearing poison`() {
+        val world = EnumeratedWorld(
+            rolesBySeat = linkedMapOf(
+                1 to RoleId("Empath"),
+                2 to RoleId("Drunk"),
+                3 to RoleId("Poisoner"),
+                4 to RoleId("Imp"),
+                5 to RoleId("Chef"),
+            ),
+            shownRolesBySeat = mapOf(2 to RoleId("Fortune Teller")),
+            abilityStatesBySeat = mapOf(
+                2 to AbilityState.MALFUNCTIONING_DRUNK,
+                5 to AbilityState.MALFUNCTIONING_POISONED,
+            ),
+        )
+
+        val result = EnumeratedHistoricalWorldReplay.replay(
+            initialWorldSet = worldSet(
+                worlds = listOf(world),
+                setupProfile = InformationProposition.SetupProfile(2, 1, 1, 1),
+            ),
+            formalSnapshotId = formalSnapshotId,
+            initialPhase = StorytellerPhase.DAY,
+            initialRound = 1,
+            events = listOf(
+                PlayerHistoricalEvent.PublicDeath(
+                    actionId = "death-poisoner",
+                    targetSeat = 3,
+                    point = TimelinePoint(StorytellerPhase.DAY, 1, 8, 20L),
+                ),
+            ),
+        )
+
+        assertEquals(
+            mapOf(2 to AbilityState.MALFUNCTIONING_DRUNK),
+            result.worldSet.enumeratedWorlds().single().abilityStatesBySeat,
+        )
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun `exact historical replay rejects noncanonical event order`() {
         val later = TimelinePoint(StorytellerPhase.DAY, 1, 2, 20L)
@@ -95,18 +184,8 @@ class EnumeratedHistoricalWorldReplayTest {
         )
     }
 
-    private fun worldSet(): EnumeratedWorldSet = EnumeratedWorldSet.fromWorlds(
-        rulesetRef = ruleset,
-        knowledge = PlayerKnowledgeSnapshot(
-            knowledgeSnapshotId = "knowledge-a3-historical",
-            formalSnapshotId = formalSnapshotId,
-            recipientSeat = 1,
-            perceivedRole = RoleId("Empath"),
-            setupKnowledge = listOf(InformationProposition.SetupProfile(3, 0, 1, 1)),
-        ),
-        hypothesis = EpistemicHypothesis.FUNCTIONING_ONLY,
-        roleDefinitions = roles,
-        worlds = listOf(
+    private fun worldSet(
+        worlds: List<EnumeratedWorld> = listOf(
             EnumeratedWorld(
                 rolesBySeat = linkedMapOf(
                     1 to RoleId("Empath"),
@@ -117,6 +196,19 @@ class EnumeratedHistoricalWorldReplayTest {
                 ),
             ),
         ),
+        setupProfile: InformationProposition.SetupProfile = InformationProposition.SetupProfile(3, 0, 1, 1),
+    ): EnumeratedWorldSet = EnumeratedWorldSet.fromWorlds(
+        rulesetRef = ruleset,
+        knowledge = PlayerKnowledgeSnapshot(
+            knowledgeSnapshotId = "knowledge-a3-historical-${setupProfile.outsiders}",
+            formalSnapshotId = formalSnapshotId,
+            recipientSeat = 1,
+            perceivedRole = RoleId("Empath"),
+            setupKnowledge = listOf(setupProfile),
+        ),
+        hypothesis = EpistemicHypothesis.FUNCTIONING_ONLY,
+        roleDefinitions = roles,
+        worlds = worlds,
     )
 
     private fun role(name: String, type: CharacterType) = RoleDefinition(
