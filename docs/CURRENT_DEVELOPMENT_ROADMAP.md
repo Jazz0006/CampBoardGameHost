@@ -2,314 +2,342 @@
 
 > 状态日期：2026-08-23  
 > 文档角色：**CURRENT / 当前状态唯一权威**  
-> 最近已验证 live source baseline：`205473868b50e159977a8ad34e2cf239a711a79d`（PR #40 merge commit）  
-> 当前开发重点：**Historical Action + Observation Capture 准备**  
-> 当前交接：`NEXT_DEVELOPMENT_HANDOFF_2026-08-23.md`
+> 当前 live `main`（PR #43 merge 前）：`efd63b360ca9aba8c7890594449aa5e21817f560`  
+> 当前工作：**PR #43 Clocktower host source decomposition — MERGE-READY / user authorized merge**  
+> 当前 validated implementation head：`b37f0067b674a0cd4bee5ff311840d1c52ce8c05`  
+> 当前执行点：**完成 PR #43 文档收尾与 merge；下一任务在新对话中做 `CampBoardGameHostApp.kt` App-root decomposition；A3 顺延**  
+> 下一任务交接：`NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md`
 
-> 新会话实施前仍必须重新查询 live `main`，不得把本文 SHA 当作永久 HEAD。
+> 新会话实施前必须重新查询 live `main`、目标 PR/branch 和 checks，不得把本文 SHA 当作永久 HEAD。
 
 ## 1. 当前状态
 
 ```text
 Phase A correctness foundation                         PASS
 R5.5 Script & Dynamic Flow Foundation                  CLOSED / MERGED
-R6 P1 semantic prerequisites                           CLOSED
-PR #28 Drunk/Poison mechanical correctness             CLOSED / MERGED
-PR #24 Production Semantic-History Foundation          CLOSED / MERGED
-PR #29 Impaired Information Semantics                  CLOSED / MERGED
-PR #27 New-game Global Observation Ownership           CLOSED / MERGED
+R6 semantic prerequisites                              CLOSED
 PR #39 Storyteller Information Decision Foundation     CLOSED / MERGED
-PR #40 Structured Manual Storyteller UI — Empath       CLOSED / MERGED
-PR #41 developer workflow + LF policy                  DRAFT / DOCS-INFRA ONLY
-Next product source slice                              HISTORICAL ACTION + OBSERVATION CAPTURE
+PR #40 Structured Manual UI — Empath numeric slice     CLOSED / MERGED
+PR #41 developer workflow + LF policy                  CLOSED / MERGED
+PR #42 Historical Action + Observation Capture         CLOSED / MERGED
+PR #44 Drunk / Fortune Teller setup correctness hotfix CLOSED / MERGED
+PR #43 Clocktower host source decomposition            MERGE-READY / A1–A13 GREEN
+Optional A14 Host day-routing extraction               SKIPPED
+Next structural task                                   APP-ROOT DECOMPOSITION
+Next product task after structural pass                A3 HISTORICAL MULTI-NIGHT EXACT BASELINE
 ```
 
-当前 live `main`：
+PR #43 保持 structural refactor only。最终 review 已通过；用户已明确授权文档更新和 merge。merge 后不得在旧 feature branch 上继续下一任务。
+
+## 2. PR #43 — Clocktower host decomposition summary
+
+### 2.1 目标
+
+PR #43 的目标不是机械把 `ClocktowerHostScreen.kt` 压到 50 KiB，而是：
+
+- 提取有清晰 ownership 的 semantics / UI / materialization seam；
+- 保留 Blood on the Clocktower 规则、recommendation ordering、registration semantics；
+- 保留 persistence/history/global timeline identity；
+- 保留 Compose state/effect lifetime；
+- 保留 callback/audit/commit transaction ordering；
+- 让 R5.5 planner/projector 真正成为 First Night / Other Night interaction existence/order authority；
+- 避免 giant parameter bags、弱抽象和仅为 byte threshold 的高风险移动。
+
+### 2.2 已完成 slices
 
 ```text
-205473868b50e159977a8ad34e2cf239a711a79d
+A1   ClocktowerHostCoreSemantics.kt
+A2   ClocktowerHostSelectionSemantics.kt
+A3   ClocktowerHostPresentationModels.kt
+A4   ClocktowerStorytellerRecommendationUi.kt — recommendation screen/reason
+A5   ClocktowerStorytellerRecommendationUi.kt — card/editor
+A6   ClocktowerPlayerDisplayUi.kt
+A7   ClocktowerRegistrationUi.kt
+A8   ClocktowerNightStepUi.kt
+A9   unreachable legacy fallback cleanup
+A10  ClocktowerInformationStepBuilder.kt
+A11  ClocktowerNightStepMaterializerRegistry + interactions() seams
+A11.1 integrate PR #44 actual-role vs waking-role correctness baseline
+A12  First Night planner-first lazy materialization
+A13  Other Night planner-first lazy materialization
 ```
 
-该 commit 是 PR #40 merge commit。
-
-## 2. PR #39 — Storyteller Information Decision Foundation
-
-PR #39 已合并，Foundation 现在提供统一 decision authority seam：
+### 2.3 Key evidence
 
 ```text
-Actual / registered state
-  ↓
-role-specific legal information builder
-  ↓
-impairment policy
-  ↓
-InformationDecisionContext
-  ├ recommended candidate
-  └ manual legal candidates
-  ↓
-Storyteller confirm
-  ↓
-shared validator
-  ↓
-EpistemicObservationDraft
-  ↓
-ClocktowerGameSession
+PR #44 merge / correctness baseline       efd63b360ca9aba8c7890594449aa5e21817f560
+A9 RED                                    3ecbcadbd728ac83f7ab1f8d1d40175795e44078
+A9 GREEN                                  00a2d19e45415614fbd8e93e83a53ba4d2cf9d35
+A10 RED                                   3377fdbea83727a797afce28064b924a074df5c3
+A10 GREEN                                 363629ed45f0f044da021f77bb52c5c3ff3c9e20
+A11 RED                                   19bdaf5525c4979f36d44ed0213c0b3c60f4ff7d
+A11 GREEN                                 c893300b8d8dbc7ea845849b81416259da32d485
+A11.1 integration                         4eaa9863070b1eee571169bde737b249379e28ee
+A12 RED                                   43f64fc6b2123a35bd9e89b3f6120a8adb7ec809
+A12 source-contract migration             3715c5428b52bcce87781fb48ab715338227e19f
+A12 GREEN                                 854c2464d8a742ba0438fa700bdd2848aa88f4cf
+A13 RED                                   4e638c345ed50a3bc65abdc22ac5487172bf9f32
+A13 New-Demon contract migration          bae29d5fccb988f641a95e743f899be56ae84299
+A13 GREEN / validated implementation      b37f0067b674a0cd4bee5ff311840d1c52ce8c05
+A13 CI / R2                               #534 SUCCESS / #473 SUCCESS
+Final docs-head CI / R2 before merge      SUCCESS / SUCCESS
 ```
 
-关键 contract：
+A13 final remote audit confirmed Android tests/build, ASP contract and Real Clingo cross-validation all GREEN.
 
-- recommendation 与 manual 是 peer inputs；
-- recommendation 是 advice，不是 durable authority；
-- manual 不是 free-text bypass；
-- functioning information 只能确认 legal truthful/registered result；
-- Drunk/Poisoned 可在 legal unreliable candidate space 中选择；
-- hard block 与 soft warning 分离；
-- Foundation 只产生 unbound draft；Global identity 仍由 session 分配；
-- provenance 维持 `MANUAL` / `RECOMMENDATION_ACCEPTED`。
+## 3. Night-flow architecture after A13
 
-Foundation merge 后 live main 曾为：
+First Night and Other Night now use the same authority shape:
 
 ```text
-faad0e52dbbe55e1a7cc09c642318d0f6ef99342
+ValidatedClocktowerRuleset
+        ↓
+ClocktowerFlowPlanner
+        ↓
+ClocktowerHostInteractionProjector
+        ↓
+stable / conditional ClocktowerHostInteraction
+        ↓
+ClocktowerProductionFirstNightFlow.interactions(...)
+        or
+ClocktowerProductionOtherNightFlow.interactions(...)
+        ↓
+ClocktowerNightStepMaterializerRegistry(FIRST_NIGHT / OTHER_NIGHT)
+        ↓
+lazy materialize only projected actionable interactions
+        ↓
+ClocktowerNightStepUi
 ```
 
-## 3. PR #40 — Structured Manual Storyteller Information UI
+Planner/projector owns **what exists and canonical order**. Materializer registry owns **stable interaction identity -> lazy production UI step**. Host owns **Compose lifetime, derived orchestration state and protected transaction ordering**.
 
-PR #40 已于 2026-08-23 前完成全部 gate 并合并。
-
-最终 feature head：
+First Night identity split remains protected:
 
 ```text
-4a083b45e1f0525ca49ff7d6968da7e6d373ca1e
+firstNightWakingRoleIds
+  = actual roles + Drunk shown role
+
+firstNightActualRoleIds
+  = actual roles only
 ```
 
-merge commit：
+Projector only treats actual roles as setup-ability identity while still allowing Drunk to wake/act in the shown role slot.
+
+## 4. Protected Host ownership
+
+`ClocktowerHostScreen.kt` still legitimately owns some stateful coordinator responsibilities:
+
+- Compose `remember` / `LaunchedEffect` lifetime；
+- recommendation coordinator / telemetry lifetime；
+- Spy/Recluse mutable registration state；
+- current-snapshot derived orchestration facts；
+- first-night information migration lifecycle；
+- player display / observation commit ordering；
+- history/session integration wiring；
+- phase routing；
+- stateful day-action transactions；
+- `advanceNightStep` transaction。
+
+`advanceNightStep` conceptual order remains:
 
 ```text
-205473868b50e159977a8ad34e2cf239a711a79d
+confirm poison / monk / demon draft
+-> Mayor redirect audit + confirm
+-> Demon successor audit
+-> Spy registration record
+-> Recluse registration record
+-> semantic night-step record
+-> index advance OR onConfirmNight()
 ```
 
-当前 production rollout 是**第一切片：Empath numeric information**，不是所有信息角色的完整 manual UI rollout。
+A13 added characterization coverage to prevent accidental relocation/reordering.
 
-已完成：
+## 5. Post-PR #43 Host growth rule
 
-- structured number model / panel / adapter；
-- Empath manual legal values；
-- recommendation/manual 共用 Foundation validation；
-- healthy no-recommendation fallback；
-- prior shown value handling；
-- later-night previousShownNumber；
-- assisted recommendation 与 `step.displayOptions` 对齐；
-- telemetry 只在 selector 实际产生 preview 时 commit；
-- fallback display 不依赖 telemetry preview。
+PR #43 does **not** mean `ClocktowerHostScreen.kt` is the permanent home for future Clocktower feature code.
 
-最终 gate：
+From this point forward it is under a **new-responsibility growth freeze**:
+
+- new algorithms -> domain / epistemic / history / recommendation / session owner；
+- new role/interaction presentation -> dedicated materializer/UI owner when a cohesive seam exists；
+- new persistence/history/session behavior -> dedicated owner；
+- Host additions should normally remain thin orchestration, phase routing, current-snapshot wiring or protected stateful transactions；
+- if a feature would add hundreds of lines of new policy/UI/algorithm code to Host, stop and identify a natural owner before implementation。
+
+This is not a byte freeze. It is a responsibility-growth constraint.
+
+## 6. Large-file inventory and revised priority
+
+At the end of PR #43, the main handwritten production large files are approximately:
 
 ```text
-CI #439                          GREEN
-  Android tests + debug APK      GREEN
-  ASP contract tests             GREEN
-  Real Clingo                    GREEN
-R2 #382                          GREEN
-fresh Codex review               CLEAN / 👍
-all review threads               RESOLVED
+CampBoardGameHostApp.kt      325,556 bytes   NEXT STRUCTURAL PRIORITY
+ClocktowerHostScreen.kt      295,644 bytes   A1–A13 high-value pass complete; growth-frozen
+ClocktowerDayScreen.kt        63,135 bytes   audit later; split only on natural seam
+ClocktowerNightStepUi.kt      45,251 bytes
+ClocktowerHistoryScreen.kt    38,365 bytes
+ClocktowerStorytellerRecommendationUi.kt 33,459 bytes
+WerewolfHostScreen.kt         29,673 bytes
+ClocktowerNightScreen.kt      17,833 bytes
+ClocktowerSetupScreen.kt      17,362 bytes
+MainActivity.kt                1,102 bytes
 ```
 
-## 4. 当前开发工作流决策
+Important distinction:
 
-PR #40 的大文件最终修复，以及 PR #41 的后续验证，形成新的开发运行结论。
+- earlier R2 **MainActivity decomposition** is complete；
+- `MainActivity.kt` is now only Android Activity/window/`setContent` shell；
+- the remaining root monolith is `CampBoardGameHostApp.kt` (~325 KiB)。
 
-### 4.1 Remote writer 探索结果
+Therefore “大文件治理”尚未结束，即使 PR #43 本身已经完成。
 
-曾实现 permanent `issue_comment` trusted patch writer，并通过静态 CI/安全 contract，但 pre-merge canary 无法端到端触发：该类 workflow 必须先存在于 default branch。
+## 7. 50 KiB policy
 
-项目决定不先把尚未端到端验证的 write-enabled workflow 部署到 `main`。
+约 50 KiB 是 maintainability guideline，不是机械 gate。
 
-状态：
+正式优先级：
 
 ```text
-Permanent remote patch writer
-  EXPLORED
-  STATICALLY VALIDATED
-  NOT END-TO-END VALIDATED
-  NOT ADOPTED
+1. cohesive ownership
+2. semantic/product correctness
+3. Compose state/effect lifetime stability
+4. transaction/callback ordering
+5. future feature isolation
+6. file-size guideline
 ```
 
-### 4.2 正式采用的大文件流程
-
-当 connector 无法可靠取得大文件完整内容时：
+实践信号：
 
 ```text
-ChatGPT
-  -> 生成最小 patch + tests + Luna prompt
-Codex Luna local worktree
-  -> apply/check/test
-  -> commit
-  -> push feature branch
-ChatGPT
-  -> GitHub exact diff / CI / review / merge gate
+> 50 KiB   review warning / seek natural owner
+> 100 KiB  strong warning / explicit architecture audit
 ```
 
-规范：
+不得仅为达成阈值制造 context bag、额外 `internal` 泄漏或弱 owner。
 
-- `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`
-- `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`
+## 8. Revised next sequence
 
-Luna 只负责机械执行；不自行扩大修改范围，不 merge。
-
-## 5. PR #41 当前定位
-
-PR #41 最初用于 permanent remote writer 探索。经过端到端验证后已收缩为 **developer workflow / portability docs-infra PR**。
-
-最终目标只保留：
-
-- `.gitattributes` 跨平台 LF policy；
-- ChatGPT ↔ Codex Luna 本地 patch 工作流规范；
-- connector 工作流规范更新；
-- roadmap / handoff / README 状态更新；
-- remote writer 探索结论作为文档历史。
-
-明确不进入最终 tree：
-
-- permanent writer workflow；
-- remote writer parser；
-- remote writer runtime tests；
-- production source behavior changes。
-
-PR #41 不改变 R6 产品语义。
-
-## 6. NEXT — Historical Action + Observation Capture
-
-PR #39 和 #40 已建立“信息 decision → observation draft → session authority”的生产路径。下一产品 source slice 转向历史动作/观察捕获，为后续 multi-night exact baseline 提供完整输入。
-
-目标方向：
+用户已决定采用以下顺序：
 
 ```text
-physical/game action
-  ↓
-semantic action capture
-  ↓
-information decision / observation capture
-  ↓
-Global semantic timeline
-  ↓
-historical reconstruction inputs
+1. 更新 PR #43 文档与长期规则
+2. live-head / CI guard
+3. merge PR #43
+4. 本对话停止
+5. 新对话从 merged main 创建 fresh structural branch
+6. audit + decompose CampBoardGameHostApp.kt
+7. remeasure all large production files
+8. audit ClocktowerDayScreen.kt (~63 KiB); only split on clean seam
+9. structural pass 完成后再进入 A3 historical multi-night exact baseline
 ```
 
-下一 slice 开始前必须重新审计当前生产事件类型、history persistence、Global sequence ownership 和已有 observation coverage，再决定最小 tests-first 边界。
+**A3 不再是 PR #43 merge 后的直接下一任务。**
 
-### 明确 non-goals
+下一任务 authority：
 
-不要在第一 Historical Capture PR 同时扩展：
+```text
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md
+```
 
+## 9. App-root decomposition scope
+
+下一 structural PR 的第一步必须是 live audit，不是直接 mass extraction。
+
+重点盘点 `CampBoardGameHostApp.kt` 的 ownership，包括但不限于：
+
+- app navigation / landing / settings shell；
+- shared game lifecycle；
+- Undercover root state/wiring；
+- Werewolf root state/wiring；
+- Clocktower root setup/game state；
+- Clocktower persistence / restore / archive integration；
+- Clocktower session/history/observation wiring；
+- role/card pass-phone / reveal；
+- result/end-game routing；
+- shared root models；
+- app-scoped Compose effects/persistence effects。
+
+优先顺序：pure models/helpers -> isolated presentation -> game-specific root wiring -> characterized persistence/history adapters -> only then consider larger state-owner movement if a natural owner has emerged.
+
+禁止把“拆大文件”偷换成 ViewModel/MVI/Redux 全量重构。
+
+## 10. App-root protected invariants
+
+下一 structural PR 必须保持：
+
+- 三游戏入口和导航行为；
+- Clocktower 规则和 precedence；
+- setup/recommendation ordering；
+- registration / impairment semantics；
+- persistence / restore / archive；
+- historical action / observation ordering and identity；
+- `ClocktowerGameSession` global timeline authority；
+- Compose state/effect/lifecycle/cancellation semantics；
+- cross-game reset behavior；
+- transaction/callback ordering；
+- PR #43 First/Other Night planner-first architecture；
+- Demon transition semantics。
+
+## 11. Explicitly out of scope for the App-root PR
+
+Do not mix:
+
+- A3 historical multi-night product behavior；
+- B4/ZDD production promotion；
 - history UI redesign；
-- misinformation tuning；
-- Investigator 小人数平衡；
-- broad evil-side win-rate tuning；
-- Spy/Recluse registration rewrite；
-- A3 multi-night solver implementation；
-- B4 / ZDD production promotion；
-- 全角色 structured manual UI rollout；
-- ML / personalized tuning。
+- misinformation expansion；
+- broader manual Storyteller UI rollout；
+- new roles/scripts；
+- state-management framework migration。
 
-## 7. 更新后的 rollout 顺序
+## 12. Product work after structural pass
 
-```text
-1. Production Semantic-History Foundation                    DONE / #24
-2. Impaired Information Semantics                            DONE / #29
-3. New-game Global Observation Ownership                     DONE / #27
-4. Storyteller Information Decision Foundation               DONE / #39
-5. Structured Manual UI first production slice (Empath)      DONE / #40
-6. Historical Action + Observation Capture                   NEXT
-7. A3 historical multi-night exact baseline
-8. Authoritative physical Grimoire ledger / Spy VerifiedExact
-9. B4 historical expansion
-10. Revision-driven recommendation/history unification
-11. Broader structured manual role rollout as prioritized
-12. Reconsider ZDD production promotion
-```
+After App-root decomposition is complete and audited, resume:
 
-## 8. 当前长期架构边界
+# A3 historical multi-night exact baseline
 
-### Registration 与 impairment 分层
+Primary direction remains `EnumeratedWorldSet` as exact correctness baseline before any ZDD production reconsideration.
+
+## 13. Working model and CI
+
+Project-level execution rules live in `AGENTS.md`.
 
 ```text
-actual world
-  ↓
-registration projection
-  ↓
-truthful result / legal information space
-  ↓
-impairment policy
-  ↓
-storyteller decision
+ChatGPT / Chat
+  -> live-state audit
+  -> architecture / scope / risk decision
+  -> characterization/test plan
+  -> constrained implementation spec
+  -> remote exact-diff / CI review
+
+GitHub connector
+  -> preferred safe small-file writer
+
+Codex / Luna
+  -> constrained local executor for large/mechanical changes
 ```
 
-### Session authority
+For structural slices require as appropriate:
 
-UI / recommendation / manual selector / history adapter 都不得自行分配 Global timeline identity。Global identity / sequence 仍由 `ClocktowerGameSession` authority 负责。
+- focused characterization tests；
+- full `:app:testDebugUnitTest`；
+- `:app:assembleDebug`；
+- `git diff --check`；
+- ASP / Real Clingo remote gates；
+- exact changed-file audit。
 
-### Recommendation status
+Never merge, mark ready, rebase or force-push without explicit user authorization.
 
-Recommendation 是候选建议；只有经过 Storyteller confirmation + shared validation 的结果才能进入 observation pipeline。
+## 14. New-conversation startup
 
-### A3 / A4 / B4
+For the next task:
 
-- A3 `EnumeratedWorldSet`：exact correctness baseline；
-- A4 ZDD：exact shadow/prototype，未获 production promotion；
-- B4：isolated shadow；
-- historical multi-night authority 尚未授权扩展。
-
-## 9. 开发与 CI 策略
-
-Behavior-changing PR：
-
-```text
-query live main / live PR head
--> focused branch
--> tests-only RED commit
--> real CI RED evidence
--> smallest GREEN implementation
--> focused tests
--> full Android unit tests + debug APK
--> ASP
--> Real Clingo
--> R2
--> exact diff audit
--> final Codex review / threads
--> explicit user merge authorization
-```
-
-对于 connector 无法安全修改的大文件，GREEN implementation 默认交付为最小 patch，由 Codex Luna 在本地完整 worktree 中 apply/test/commit/push，然后 ChatGPT 从 GitHub 接回后半段。
-
-## 10. 关键历史证据
-
-```text
-R5.5 merge                                   7add8569e2484a350f6cf1512a730e9f4db469c5
-PR #28 Drunk/Poison correctness              241cb34a848833b27842d1233c37daabea244899
-PR #24 Semantic-History Foundation           9c1996dfc6b615a12014fb11dbb5ca9a43064b99
-PR #29 Impaired Information merge            b2c0b2c7a91290670d908292b3db5719d6bd6ddb
-PR #27 Global Observation merge              5bbb607ae408d5d9d25812825200304054a7aced
-PR #39 Decision Foundation main baseline      faad0e52dbbe55e1a7cc09c642318d0f6ef99342
-PR #40 final head                            4a083b45e1f0525ca49ff7d6968da7e6d373ca1e
-PR #40 merge / current validated main         205473868b50e159977a8ad34e2cf239a711a79d
-```
-
-## 11. 新会话启动顺序
-
-1. 读 `docs/README.md`；
-2. 读 `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`；
-3. 读 `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`；
-4. 读本 `CURRENT_DEVELOPMENT_ROADMAP.md`；
-5. 读 `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-23.md`；
-6. 查询 live `main` / open PR；
-7. 不重复实现 permanent writer；
-8. 下一 product source slice 从 Historical Action + Observation Capture 的 audit / RED contracts 开始。
-
-## 12. 文档维护规则
-
-- 本文件是当前执行点唯一权威；
-- handoff 服务下一次开发；
-- specialized design 维护语义边界，不维护 live branch 状态；
-- 历史 handoff / audit 不得覆盖本文件；
-- 开发运行规范以 `SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` 和 Luna patch 文档为准。
+1. confirm PR #43 is actually merged and record the merge SHA；
+2. confirm live `main`；
+3. read `AGENTS.md`；
+4. read this roadmap；
+5. read `NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md`；
+6. create a fresh structural branch from live `main`；
+7. audit `CampBoardGameHostApp.kt` before editing；
+8. return responsibility inventory + proposed slice plan + first RED/characterization strategy；
+9. only then implement。

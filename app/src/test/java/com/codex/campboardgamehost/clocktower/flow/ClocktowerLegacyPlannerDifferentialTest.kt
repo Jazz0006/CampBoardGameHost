@@ -42,6 +42,11 @@ class ClocktowerLegacyPlannerDifferentialTest {
             .readText(Charsets.UTF_8)
     }
 
+    private val otherNightFlowSource by lazy {
+        File("src/main/java/com/codex/campboardgamehost/clocktower/flow/ClocktowerProductionOtherNightFlow.kt")
+            .readText(Charsets.UTF_8)
+    }
+
     private val planner = ClocktowerFlowPlanner()
     private val projector = ClocktowerHostInteractionProjector()
 
@@ -60,12 +65,16 @@ class ClocktowerLegacyPlannerDifferentialTest {
             legacyHostSource.contains("filteredNightSteps.sortedBy(::legacyOtherNightOrder)"),
         )
         assertTrue(
-            "Production first night must be owned by the canonical planner seam.",
+            "Production first night must project canonical planner interactions before materialization.",
+            legacyHostSource.contains("ClocktowerProductionFirstNightFlow.interactions("),
+        )
+        assertFalse(
+            "Production first night must no longer route eager UI steps through the legacy-compatible orderer.",
             legacyHostSource.contains("ClocktowerProductionFirstNightFlow.order("),
         )
         assertTrue(
-            "Production other night must be owned by the event-aware canonical planner seam.",
-            legacyHostSource.contains("ClocktowerProductionOtherNightFlow.order("),
+            "Other-night production flow must expose the event-aware canonical interaction seam used by lazy materialization.",
+            otherNightFlowSource.contains("fun interactions("),
         )
     }
 

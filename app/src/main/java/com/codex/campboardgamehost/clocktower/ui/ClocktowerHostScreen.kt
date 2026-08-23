@@ -129,6 +129,7 @@ import com.codex.campboardgamehost.clocktower.domain.kind
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerPlayerStates
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNightFlow
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionOtherNightFlow
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
@@ -148,10 +149,6 @@ import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditRecor
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionPoolParityRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLegality
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicStatus
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPoolDeviceBenchmark
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPoolDeviceBenchmarkReport
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
@@ -223,298 +220,6 @@ import kotlin.math.sin
 import java.security.MessageDigest
 import java.util.Locale
 import java.util.UUID
-
-internal fun isClocktowerEvil(card: PlayerCard): Boolean =
-    card.clocktowerTeam == ClocktowerTeam.Minion || card.clocktowerTeam == ClocktowerTeam.Demon
-
-private fun clocktowerRedHerringCandidates(aliveCards: List<PlayerCard>): List<PlayerCard> =
-    aliveCards.filter { card -> card.clocktowerTeam?.isLegalRedHerringTeam() == true }
-
-private fun actualClocktowerRoleCards(cards: List<PlayerCard>, enName: String): List<PlayerCard> =
-    cards.filter { it.clocktowerRole?.enName == enName }
-
-private fun chefEvilPairs(cards: List<PlayerCard>, isEvil: (PlayerCard) -> Boolean = ::isClocktowerEvil): Int {
-    val evilSeats = cards.mapIndexedNotNull { index, card -> (index + 1).takeIf { isEvil(card) } }.toSet()
-    return FixedInformationEvaluator.chefEvilPairs(cards.toClocktowerPlayerStates()) { it.seat in evilSeats }
-}
-
-private fun livingNeighbors(cards: List<PlayerCard>, playerName: String): List<PlayerCard> {
-    val sourceSeat = cards.indexOfFirst { it.name == playerName } + 1
-    if (sourceSeat <= 0) return emptyList()
-    val neighborSeats = FixedInformationEvaluator
-        .livingNeighbors(cards.toClocktowerPlayerStates(), sourceSeat)
-        .map { it.seat }
-    return neighborSeats.mapNotNull { seat -> cards.getOrNull(seat - 1) }
-}
-
-private fun empathEvilNeighborCount(
-    cards: List<PlayerCard>,
-    playerName: String,
-    isEvil: (PlayerCard) -> Boolean = ::isClocktowerEvil,
-): Int {
-    val sourceSeat = cards.indexOfFirst { it.name == playerName } + 1
-    if (sourceSeat <= 0) return 0
-    val evilSeats = cards.mapIndexedNotNull { index, card -> (index + 1).takeIf { isEvil(card) } }.toSet()
-    return FixedInformationEvaluator.empathEvilNeighborCount(cards.toClocktowerPlayerStates(), sourceSeat) {
-        it.seat in evilSeats
-    }
-}
-
-private fun storytellerPairHint(
-    target: PlayerCard,
-    cards: List<PlayerCard>,
-    fallbackPool: List<PlayerCard> = cards,
-    excludeNames: Set<String> = emptySet(),
-): Pair<PlayerCard, PlayerCard>? {
-    val decoy = fallbackPool.firstOrNull { it.name != target.name && it.name !in excludeNames }
-        ?: fallbackPool.firstOrNull { it.name != target.name }
-        ?: return null
-    return target to decoy
-}
-
-internal fun PlayerCard.clocktowerShownAsDifferentRole(): Boolean =
-    clocktowerRole?.enName != null && clocktowerShownRole?.enName != null && clocktowerRole?.enName != clocktowerShownRole?.enName
-
-private data class ClocktowerDisplayOption(
-    val label: String,
-    val displayKind: ClocktowerDisplayKind,
-    val displayTitle: String,
-    val displayPrimary: String?,
-    val displaySecondary: String?,
-    val displayFooter: String?,
-    /** Exact player-visible statement; never reconstruct it from localized display strings. */
-    val proposition: InformationProposition? = null,
-    val spyRegistersGood: Boolean? = null,
-    val spyRegisteredRoleEnName: String? = null,
-    val recluseRegistersEvil: Boolean? = null,
-    val recluseRegisteredRoleEnName: String? = null,
-    val recommendationStyle: RecommendationStyle = RecommendationStyle.BALANCED,
-    val isTruthful: Boolean = true,
-    val misinformationPressure: Int = 0,
-    val isDefaultRecommendation: Boolean = false,
-    val reasonCodes: List<String> = emptyList(),
-    val warningCodes: List<String> = emptyList(),
-)
-
-/** Canonical semantic ID shared by legacy, unified-pool and first-night shadow paths. */
-private fun clocktowerInformationCandidateId(option: ClocktowerDisplayOption): String = listOf(
-    option.displayKind.name,
-    option.proposition?.toString().orEmpty(),
-    option.displayPrimary.orEmpty(),
-    option.displaySecondary.orEmpty(),
-    option.displayFooter.orEmpty(),
-    option.spyRegistersGood?.toString().orEmpty(),
-    option.spyRegisteredRoleEnName.orEmpty(),
-    option.recluseRegistersEvil?.toString().orEmpty(),
-    option.recluseRegisteredRoleEnName.orEmpty(),
-    option.isTruthful.toString(),
-).joinToString("|")
-
-internal fun clocktowerPrivateObservationRecordId(
-    gameId: String,
-    phase: ClocktowerPhase,
-    round: Int,
-    roleEnName: String,
-    actorSeat: Int,
-    proposition: InformationProposition,
-): String {
-    val statementKey = MessageDigest
-        .getInstance("SHA-256")
-        .digest(EpistemicSemanticJson.encode(proposition).toByteArray(Charsets.UTF_8))
-        .joinToString("") { byte ->
-            (byte.toInt() and 0xff).toString(16).padStart(2, '0')
-        }
-    return "private-$gameId-${phase.name}-$round-$roleEnName-$actorSeat-$statementKey"
-}
-
-private data class ClocktowerDecisionOption(
-    val label: String,
-    val targetName: String,
-    val explanation: String,
-    val recommendationStyle: RecommendationStyle = RecommendationStyle.BALANCED,
-    val isDefaultRecommendation: Boolean = false,
-    val reasonCodes: List<String> = emptyList(),
-    val warningCodes: List<String> = emptyList(),
-)
-
-private fun unifiedDecisionPool(
-    options: List<ClocktowerDecisionOption>,
-    familyId: String,
-): UnifiedSelectionPool<ClocktowerDecisionOption>? = options
-    .takeIf { it.isNotEmpty() }
-    ?.let { candidates ->
-        UnifiedSelectionPool(candidates.map { option ->
-            UnifiedSelectionCandidate(
-                candidateId = listOf(option.recommendationStyle.name, option.targetName).joinToString("|"),
-                familyId = familyId,
-                legality = UnifiedCandidateLegality.LEGAL,
-                epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
-                qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
-                rankFixedPoint = if (option.isDefaultRecommendation) 1_000_000L else 800_000L,
-                reasonCodes = option.reasonCodes,
-                warningCodes = option.warningCodes,
-                payload = option,
-            )
-        })
-    }
-
-private fun unifiedFirstNightInformationPool(
-    options: List<ClocktowerDisplayOption>,
-    familyId: String,
-    automaticStyle: RecommendationStyle,
-): UnifiedSelectionPool<ClocktowerDisplayOption> = UnifiedSelectionPool(options.map { option ->
-    UnifiedSelectionCandidate(
-        candidateId = clocktowerInformationCandidateId(option),
-        familyId = familyId,
-        legality = UnifiedCandidateLegality.LEGAL,
-        epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
-        qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
-        rankFixedPoint = when {
-            option.isDefaultRecommendation -> 1_000_000L
-            option.recommendationStyle == automaticStyle -> 900_000L
-            else -> 800_000L
-        },
-        reasonCodes = option.reasonCodes,
-        warningCodes = option.warningCodes,
-        payload = option,
-    )
-})
-
-private data class ClocktowerRegistrationRecommendationOption(
-    val label: String,
-    val usesSpecialRegistration: Boolean,
-    val registeredRoleEnName: String?,
-    val style: RecommendationStyle,
-    val isDefaultRecommendation: Boolean = false,
-    val reasonCodes: List<String> = emptyList(),
-    val warningCodes: List<String> = emptyList(),
-)
-
-/** Shared registration pool: style changes selection, never candidate legality or ordering data. */
-private fun unifiedRegistrationPool(
-    options: List<ClocktowerRegistrationRecommendationOption>,
-): UnifiedSelectionPool<ClocktowerRegistrationRecommendationOption>? = options
-    .takeIf { it.isNotEmpty() }
-    ?.let { candidates ->
-        UnifiedSelectionPool(candidates.map { option ->
-            UnifiedSelectionCandidate(
-                candidateId = listOf(
-                    option.style.name,
-                    option.usesSpecialRegistration,
-                    option.registeredRoleEnName.orEmpty(),
-                ).joinToString("|"),
-                familyId = if (option.usesSpecialRegistration) "special-registration" else "actual-registration",
-                legality = UnifiedCandidateLegality.LEGAL,
-                epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
-                qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
-                rankFixedPoint = if (option.isDefaultRecommendation) 1_000_000L else 800_000L,
-                reasonCodes = option.reasonCodes,
-                warningCodes = option.warningCodes,
-                payload = option,
-            )
-        })
-    }
-
-private fun recommendationReasonLabel(code: String, language: String): String {
-    fun text(zh: String, en: String): String = if (language == "en") en else zh
-    return when (code) {
-        "truth-distance" -> text("结果与真实值的距离符合当前风格", "Distance from truth fits the selected style")
-        "extreme-pressure" -> text("限制极端数字造成的压力", "Limits pressure from extreme numbers")
-        "history-continuity" -> text("与此前信息保持可解释的连续性", "Maintains explainable continuity with earlier information")
-        "dynamic.categorical-score", "dynamic.pair-score" -> text("完整信息结果通过场景评分", "The complete information result passed scenario scoring")
-        "special-registration" -> text("本结果使用一次合法的特殊登记", "This result uses a legal special registration")
-        "registration-discussion-value" -> text("登记结果保留有意义的讨论空间", "The registration preserves useful discussion")
-        "registration-pressure" -> text("登记造成的信息压力符合当前风格", "Registration pressure fits the selected style")
-        "registration-history" -> text("已考虑该玩家此前的登记次数", "Prior registrations for this player were considered")
-        "global-balance", "consequence.alignment-advantage-adjustment" -> text("根据当前阵营优势修正", "Adjusted for the current alignment advantage")
-        "pressure.repeated-target-penalty" -> text("避免持续针对同一名玩家", "Avoids repeatedly targeting the same player")
-        "consequence.one-shot-ability-protection" -> text("保护一次性能力的核心体验", "Protects the core experience of a one-shot ability")
-        "consequence.high-impact-misinformation-penalty" -> text("近期高冲击误导较多，已降低权重", "Recent high-impact misinformation lowers this option's weight")
-        "consequence.final-day-impact-penalty" -> text("终局结果可能直接决定胜负", "This final-day result could decide the game")
-        "successor-role-suitability" -> text("继任角色与当前局面相符", "The successor role fits the current state")
-        "successor-public-pressure" -> text("已考虑该玩家的公开压力", "Public pressure on this player was considered")
-        "scarlet-woman-mandatory" -> text("当前人数下必须由红唇女郎继任", "The Scarlet Woman must succeed at this player count")
-        "mayor-survival" -> text("市长存活价值已纳入评估", "The value of keeping the Mayor alive was considered")
-        else -> code
-    }
-}
-
-@Composable
-private fun RecommendationReasonSummary(
-    reasonCodes: List<String>,
-    warningCodes: List<String>,
-    language: String,
-) {
-    if (reasonCodes.isEmpty() && warningCodes.isEmpty()) return
-    val reasons = reasonCodes.distinct().take(2).joinToString(" · ") { recommendationReasonLabel(it, language) }
-    if (reasons.isNotBlank()) {
-        Text(
-            (if (language == "en") "Why: " else "理由：") + reasons,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodySmall,
-        )
-    }
-    if (warningCodes.isNotEmpty()) {
-        Text(
-            (if (language == "en") "Review: " else "注意：") +
-                warningCodes.distinct().take(2).joinToString(" · ") { recommendationReasonLabel(it, language) },
-            color = MaterialTheme.colorScheme.secondary,
-            style = MaterialTheme.typography.bodySmall,
-        )
-    }
-}
-
-private enum class ClocktowerRegistrationDetail {
-    AlignmentOnly,
-    Role,
-}
-
-private enum class ClocktowerPairInformationAbility {
-    Washerwoman,
-    Librarian,
-    Investigator,
-}
-
-private data class ClocktowerNightStepUi(
-    val title: String,
-    val actor: PlayerCard?,
-    val isRealAction: Boolean,
-    val reason: String,
-    val storytellerAction: String,
-    val tellPlayer: String?,
-    val explanation: String,
-    val action: ClocktowerNightAction = ClocktowerNightAction.None,
-    val displayKind: ClocktowerDisplayKind = ClocktowerDisplayKind.None,
-    val displayTitle: String = title,
-    val displayPrimary: String? = null,
-    val displaySecondary: String? = null,
-    val displayFooter: String? = null,
-    val displayProposition: InformationProposition? = null,
-    val displayOptions: List<ClocktowerDisplayOption> = emptyList(),
-    val recommendedDisplayOptions: List<ClocktowerDisplayOption> = emptyList(),
-    /**
-     * The complete candidate pool emitted by the legacy helper.  This is kept
-     * separate from the UI lists because automatic mode deliberately renders
-     * only its selected recommendation.  Batch 4 compares this full pool at
-     * the display boundary before allowing the migrated lifecycle to commit.
-     */
-    val legacyInformationCandidates: List<ClocktowerDisplayOption> = emptyList(),
-    val decisionOptions: List<ClocktowerDecisionOption> = emptyList(),
-    val wakeText: String? = null,
-    val roleEnName: String? = null,
-    val informationReliability: InformationReliability = InformationReliability.RELIABLE,
-    val recentMisinformationStreak: Int = 0,
-    val previousShownNumber: Int? = null,
-    val selectedInformationTruthful: Boolean? = null,
-    /** Confirmed Foundation draft; when present, the existing display path commits this exact draft. */
-    val informationDecisionDraft: EpistemicObservationDraft? = null,
-    val spyRegistrationKey: String? = null,
-    val spyRegistrationTeams: List<ClocktowerTeam> = emptyList(),
-    val spyRegistrationDetail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,
-    val spyRegistrationHint: String? = null,
-    val recluseRegistrationKey: String? = null,
-    val recluseRegistrationTeams: List<ClocktowerTeam> = emptyList(),
-)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -2141,144 +1846,18 @@ internal fun ClocktowerJudgeScreen(
         }
     }
 
-    fun infoStep(
-        roleName: String,
-        enName: String,
-        tellPlayer: String?,
-        explanation: String,
-        action: ClocktowerNightAction = ClocktowerNightAction.None,
-        displayKind: ClocktowerDisplayKind = ClocktowerDisplayKind.Plain,
-        displayPrimary: String? = tellPlayer,
-        displaySecondary: String? = null,
-        displayFooter: String? = explanation,
-        displayTitle: String? = null,
-        displayProposition: InformationProposition? = null,
-        hostInstruction: String? = null,
-        displayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
-        reliableDisplayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
-        previousShownNumber: Int? = null,
-        spyRegistrationKey: String? = null,
-        spyRegistrationTeams: List<ClocktowerTeam> = emptyList(),
-        spyRegistrationDetail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,
-        spyRegistrationHint: String? = null,
-        recluseRegistrationKey: String? = null,
-        recluseRegistrationTeams: List<ClocktowerTeam> = emptyList(),
-    ): ClocktowerNightStepUi {
-        val actor = roleActor(enName)
-        val localizedRoleName = if (language == "en") enName else roleName
-        val localizedDisplayTitle = displayTitle ?: text("$roleName 信息", "$enName information")
-        val abilityState = actor?.let { AbilityFunctioningSemantics.stateFor(it.abilitySubject(poisonTarget), enName) }
-        val actorIsDrunkShownRole = abilityState == AbilityFunctioningState.DRUNK
-        val informationReliability = when (abilityState) {
-            AbilityFunctioningState.POISONED -> InformationReliability.POISONED
-            AbilityFunctioningState.DRUNK -> InformationReliability.DRUNK
-            else -> InformationReliability.RELIABLE
-        }
-        val hostUnreliableNote = if (actorIsDrunkShownRole) {
-            text(
-                "注意：这名玩家真实身份是酒鬼，显示为$roleName。请照常唤醒并给信息，但信息可以不可靠或完全错误。",
-                "This player is actually the Drunk but appears as $enName. Wake them normally and give information that may be unreliable or entirely false.",
-            )
-        } else if (actorIsPoisoned(actor)) {
-            text(
-                "注意：这名玩家今晚中毒，能力信息可以不可靠或错误。",
-                "This player is poisoned tonight, so their ability information may be unreliable or false.",
-            )
-        } else {
-            null
-        }
-        val actorAbilityUnreliable = actor != null && actorIsUnreliable(enName, actor)
-        val unreliableOptions = actor?.takeIf { actorAbilityUnreliable }?.let(displayOptions).orEmpty()
-        val reliableRecommendations = actor?.takeUnless { actorAbilityUnreliable }?.let(reliableDisplayOptions).orEmpty()
-        val automaticRecommendations = when {
-            !automaticStorytellerInfo -> reliableRecommendations
-            actorAbilityUnreliable -> unreliableOptions
-            else -> reliableRecommendations
-        }
-        val resolvedDisplayKind = when (enName) {
-            "Chef", "Empath", "Clockmaker", "Chambermaid" -> ClocktowerDisplayKind.Number
-            "Fortune Teller" -> ClocktowerDisplayKind.YesNo
-            "Ravenkeeper", "Undertaker" -> ClocktowerDisplayKind.RoleReveal
-            "Washerwoman", "Librarian", "Investigator" -> ClocktowerDisplayKind.EitherOne
-            else -> displayKind
-        }
-        val directLegacyCandidate = actor
-            ?.takeIf { unreliableOptions.isEmpty() && !tellPlayer.isNullOrBlank() }
-            ?.let {
-                ClocktowerDisplayOption(
-                    label = "direct-legacy",
-                    displayKind = resolvedDisplayKind,
-                    displayTitle = localizedDisplayTitle,
-                    displayPrimary = displayPrimary ?: tellPlayer,
-                    displaySecondary = displaySecondary,
-                    displayFooter = displayFooter ?: explanation,
-                    proposition = displayProposition,
-                )
-            }
-        val completeLegacyCandidates = (unreliableOptions + reliableRecommendations + listOfNotNull(directLegacyCandidate))
-            .distinctBy { option ->
-                listOf(
-                    option.displayKind.name,
-                    option.proposition?.toString().orEmpty(),
-                    option.displayPrimary.orEmpty(),
-                    option.displaySecondary.orEmpty(),
-                    option.displayFooter.orEmpty(),
-                    option.spyRegistersGood?.toString().orEmpty(),
-                    option.spyRegisteredRoleEnName.orEmpty(),
-                    option.recluseRegistersEvil?.toString().orEmpty(),
-                    option.recluseRegisteredRoleEnName.orEmpty(),
-                    option.isTruthful.toString(),
-                ).joinToString("|")
-            }
-        return ClocktowerNightStepUi(
-            title = localizedRoleName,
-            actor = actor,
-            isRealAction = actor != null,
-            reason = if (actor != null) "" else roleMissingReason(enName),
-            storytellerAction = if (actor != null) {
-                listOfNotNull(
-                    hostInstruction ?: text(
-                        "轻拍 ${actor.seatLabel(cards)}，示意睁眼。把本步骤信息只给他看；看完后收回手机，示意闭眼。",
-                        "Tap ${actor.seatLabel(cards)} to wake them. Show this information only to that player, then take the phone back and signal them to close their eyes.",
-                    ),
-                    hostUnreliableNote,
-                ).joinToString("\n")
-            } else {
-                text(
-                    "不要唤醒任何玩家。为了避免玩家通过流程判断角色是否在场，请停顿 2-3 秒，然后点击下一步。",
-                    "Do not wake anyone. Pause for 2–3 seconds so players cannot infer whether this character is in play, then continue.",
-                )
-            },
-            tellPlayer = if (actor != null && unreliableOptions.isEmpty()) tellPlayer else null,
-            explanation = listOfNotNull(explanation, hostUnreliableNote).joinToString("\n"),
-            action = action,
-            displayKind = if (actor != null && unreliableOptions.isEmpty() && !tellPlayer.isNullOrBlank()) resolvedDisplayKind else ClocktowerDisplayKind.None,
-            displayTitle = localizedDisplayTitle,
-            displayProposition = displayProposition,
-            displayPrimary = if (actor != null && unreliableOptions.isEmpty()) displayPrimary ?: tellPlayer else null,
-            displaySecondary = if (actor != null && unreliableOptions.isEmpty()) displaySecondary else null,
-            displayFooter = if (actor != null && unreliableOptions.isEmpty()) displayFooter ?: explanation else null,
-            displayOptions = if (automaticStorytellerInfo) emptyList() else unreliableOptions,
-            recommendedDisplayOptions = automaticRecommendations,
-            legacyInformationCandidates = completeLegacyCandidates,
-            roleEnName = enName,
-            informationReliability = informationReliability,
-            recentMisinformationStreak = recentMisinformationStreak(actor),
-            previousShownNumber = previousShownNumber,
-            spyRegistrationKey = RegistrationInteractionRules.effectiveRegistrationKey(
-                spyRegistrationKey,
-                informationAbilityReliable = !actorAbilityUnreliable,
-            ),
-            spyRegistrationTeams = spyRegistrationTeams,
-            spyRegistrationDetail = spyRegistrationDetail,
-            spyRegistrationHint = spyRegistrationHint,
-            recluseRegistrationKey = RegistrationInteractionRules.effectiveRegistrationKey(
-                recluseRegistrationKey,
-                informationAbilityReliable = !actorAbilityUnreliable,
-            ),
-            recluseRegistrationTeams = recluseRegistrationTeams,
-        )
-    }
+    val informationStepBuilder = ClocktowerInformationStepBuilder(
+        cards = cards,
+        language = language,
+        poisonTarget = poisonTarget,
+        automaticStorytellerInfo = automaticStorytellerInfo,
+        text = ::text,
+        roleActor = ::roleActor,
+        roleMissingReason = ::roleMissingReason,
+        actorIsPoisoned = ::actorIsPoisoned,
+        actorIsUnreliable = ::actorIsUnreliable,
+        recentMisinformationStreak = ::recentMisinformationStreak,
+    )
 
     val washerwomanActor = roleActor("Washerwoman")
     val washerwomanRegistrationKey = washerwomanActor?.let { registrationKey("Washerwoman") }
@@ -2533,281 +2112,446 @@ internal fun ClocktowerJudgeScreen(
     }.joinToString("\n")
     val minionInfoTitle = stringResource(R.string.clocktower_first_night_minion_title)
     val demonInfoTitle = stringResource(R.string.clocktower_first_night_demon_title)
-    val unfilteredNightSteps = if (phase == ClocktowerPhase.FirstNight) {
-        listOf(
-            ClocktowerNightStepUi(
-                title = stringResource(R.string.clocktower_first_night_minion_title),
-                actor = minionCards.firstOrNull().takeIf { shouldGiveFirstNightEvilInfo },
-                isRealAction = minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo,
-                reason = when {
-                    !shouldGiveFirstNightEvilInfo -> stringResource(R.string.clocktower_first_night_small_game_no_evil_info_reason)
-                    minionCards.isEmpty() -> stringResource(R.string.clocktower_first_night_no_minions_reason)
-                    else -> ""
-                },
-                storytellerAction = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
-                    stringResource(
-                        R.string.clocktower_first_night_minion_action_format,
-                        minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) },
-                    )
-                } else {
-                    stringResource(R.string.clocktower_first_night_placeholder_action)
-                },
-                tellPlayer = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) minionInfoText else null,
-                explanation = if (shouldGiveFirstNightEvilInfo) {
-                    stringResource(R.string.clocktower_first_night_minion_explain)
-                } else {
-                    stringResource(R.string.clocktower_first_night_small_game_no_evil_info_explain)
-                },
-                displayKind = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo && minionInfoText != null) ClocktowerDisplayKind.EvilInfo else ClocktowerDisplayKind.None,
-                displayTitle = stringResource(R.string.clocktower_first_night_minion_title),
-                displayPrimary = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) "${stringResource(R.string.clocktower_evil_display_demon)}\n${demonCard?.seatLabel(cards).orEmpty()}" else null,
-                displayFooter = null,
-                wakeText = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
-                    stringResource(
-                        R.string.clocktower_first_night_minion_wake_format,
-                        minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) },
-                    )
-                } else {
-                    null
-                },
-            ),
-            ClocktowerNightStepUi(
-                title = stringResource(R.string.clocktower_first_night_demon_title),
-                actor = demonCard.takeIf { shouldGiveFirstNightEvilInfo },
-                isRealAction = demonCard != null && shouldGiveFirstNightEvilInfo,
-                reason = when {
-                    !shouldGiveFirstNightEvilInfo -> stringResource(R.string.clocktower_first_night_small_game_no_evil_info_reason)
-                    demonCard == null -> stringResource(R.string.clocktower_first_night_no_demon_reason)
-                    else -> ""
-                },
-                storytellerAction = if (demonCard != null && shouldGiveFirstNightEvilInfo) {
-                    stringResource(R.string.clocktower_first_night_demon_action_format, demonCard.seatLabel(cards))
-                } else {
-                    stringResource(R.string.clocktower_first_night_placeholder_action)
-                },
-                tellPlayer = if (demonCard != null && shouldGiveFirstNightEvilInfo) demonInfoText else null,
-                explanation = if (shouldGiveFirstNightEvilInfo) {
-                    stringResource(R.string.clocktower_first_night_demon_explain)
-                } else {
-                    stringResource(R.string.clocktower_first_night_small_game_no_evil_info_explain)
-                },
-                displayKind = if (demonCard != null && shouldGiveFirstNightEvilInfo) ClocktowerDisplayKind.EvilInfo else ClocktowerDisplayKind.None,
-                displayTitle = stringResource(R.string.clocktower_first_night_demon_title),
-                displayPrimary = if (demonCard != null && shouldGiveFirstNightEvilInfo) "${stringResource(R.string.clocktower_evil_display_minions)}\n${if (minionCards.isEmpty()) stringResource(R.string.clocktower_first_night_demon_no_minions) else minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) }}" else null,
-                displaySecondary = if (demonCard != null && shouldGiveFirstNightEvilInfo) "${stringResource(R.string.clocktower_evil_display_bluffs)}\n${demonBluffs.joinToString(stringResource(R.string.name_separator)) { it.nameFor(language) }}" else null,
-                displayFooter = null,
-            ),
-            infoStep(
-                roleName = "投毒者",
-                enName = "Poisoner",
-                tellPlayer = poisonTarget?.let { text("已选择：${playerSeatLabel(cards, it)}", "Selected: ${playerSeatLabel(cards, it)}") },
-                explanation = text("投毒者选择一名玩家，使其能力暂时失效。", "The Poisoner chooses a player whose ability stops working temporarily."),
-                action = ClocktowerNightAction.Poison,
-                displayKind = ClocktowerDisplayKind.None,
-                hostInstruction = text("轻拍投毒者，示意睁眼。让他指一名玩家，在下面记录为今晚中毒目标。", "Tap the Poisoner to wake them. Have them point to one player and record that player as tonight's poisoned target."),
-            ),
-            ClocktowerNightStepUi(
-                title = text("占卜师红鲱鱼", "Fortune Teller red herring"),
-                actor = null,
-                isRealAction = actualClocktowerRoleCards(cards, "Fortune Teller").isNotEmpty(),
-                reason = if (actualClocktowerRoleCards(cards, "Fortune Teller").isEmpty()) text("本局没有占卜师，此步骤只用于首夜配置。", "No Fortune Teller is in play; this is only a first-night setup step.") else "",
-                storytellerAction = text("不要公开说明这个选择。请选择一名善良玩家作为红鲱鱼；可以选择占卜师本人。", "Keep this choice private. Choose a good player as the red herring; the Fortune Teller may be chosen."),
-                tellPlayer = redHerring?.let { text("已选择：${playerSeatLabel(cards, it)}", "Selected: ${playerSeatLabel(cards, it)}") },
-                explanation = text("选择一名善良玩家成为红鲱鱼。占卜师查询他时，结果为“有”，他会被标记为恶魔。", "Choose a good player as the red herring. The Fortune Teller detects that player as a Demon."),
-                action = ClocktowerNightAction.RedHerring,
-                roleEnName = "Fortune Teller",
-            ),
-            infoStep(
-                roleName = "钟表匠",
-                enName = "Clockmaker",
-                tellPlayer = clockmakerNumber,
-                explanation = text("这个数字表示恶魔到最近爪牙相隔几步。", "This number is the distance from the Demon to the nearest Minion."),
-                displayFooter = text("恶魔到最近爪牙的距离", "Distance from Demon to nearest Minion"),
-                hostInstruction = text("轻拍钟表匠，示意睁眼。把数字只给他看；确认后收回手机，示意闭眼。", "Tap the Clockmaker to wake them. Show the number only to that player, then take the phone back and signal them to close their eyes."),
-                displayOptions = { actor -> recommendedNumberOptions(text("钟表匠信息", "Clockmaker information"), actor, clockmakerValue, cards.size / 2, text("恶魔到最近爪牙的距离", "Distance from Demon to nearest Minion")) },
-            ),
-            infoStep(
-                roleName = "洗衣妇",
-                enName = "Washerwoman",
-                tellPlayer = washerwomanTarget?.let { text("${if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${washerwomanOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${washerwomanOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} is one of these two players: ${washerwomanOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${washerwomanOrderedPair?.second?.seatLabel(cards).orEmpty()}") },
-                explanation = text("洗衣妇会得知某个镇民在两名玩家之一中。", "The Washerwoman learns that a particular Townsfolk is one of two players."),
-                displayPrimary = washerwomanTarget?.let { if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk))?.nameFor(language) else it.clocktowerRole?.nameFor(language) },
-                displaySecondary = seatNumbersText(washerwomanOrderedPair),
-                displayFooter = text("在下面两位玩家之中", "One of these two players"),
-                hostInstruction = text("轻拍洗衣妇，示意睁眼。点击“全屏展示给玩家”，只给她看；看完后收回手机，示意闭眼。", "Tap the Washerwoman to wake them. Show the full-screen information only to that player, then take the phone back and signal them to close their eyes."),
-                displayOptions = { actor ->
-                    recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
-                },
-                reliableDisplayOptions = { actor ->
-                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
-                },
-                spyRegistrationKey = washerwomanRegistrationKey,
-                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk),
-            ),
-            infoStep(
-                roleName = "图书管理员",
-                enName = "Librarian",
-                tellPlayer = librarianTarget?.let { text("${if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${librarianOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${librarianOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} is one of these two players: ${librarianOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${librarianOrderedPair?.second?.seatLabel(cards).orEmpty()}") } ?: text("本局没有外来者。", "There are no Outsiders in play."),
-                explanation = text("图书管理员会得知某个外来者在两名玩家之一中，或得知没有外来者。", "The Librarian learns that an Outsider is one of two players, or that no Outsiders are in play."),
-                displayPrimary = librarianTarget?.let { if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider))?.nameFor(language) else it.clocktowerRole?.nameFor(language) } ?: text("没有外来者", "No Outsiders"),
-                displaySecondary = seatNumbersText(librarianOrderedPair),
-                displayFooter = if (librarianTarget == null) "" else text("在下面两位玩家之中", "One of these two players"),
-                hostInstruction = text("轻拍图书管理员，示意睁眼。把结果只给他看；如果显示“没有外来者”，也只告诉他本人。", "Tap the Librarian to wake them. Show the result only to that player, including a No Outsiders result."),
-                displayOptions = { actor ->
-                    recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
-                },
-                reliableDisplayOptions = { actor ->
-                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
-                },
-                spyRegistrationKey = librarianRegistrationKey,
-                spyRegistrationTeams = listOf(ClocktowerTeam.Outsider),
-            ),
-            infoStep(
-                roleName = "调查员",
-                enName = "Investigator",
-                tellPlayer = investigatorTarget?.let { text("${investigatorRevealedRole?.nameFor(language).orEmpty()} 在这两人之中：${investigatorOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${investigatorOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${investigatorRevealedRole?.nameFor(language).orEmpty()} is one of these two players: ${investigatorOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${investigatorOrderedPair?.second?.seatLabel(cards).orEmpty()}") } ?: text("本局没有爪牙。", "There are no Minions in play."),
-                explanation = text("调查员会得知某个爪牙在两名玩家之一中，或得知没有爪牙。", "The Investigator learns that a Minion is one of two players, or that no Minions are in play."),
-                displayPrimary = investigatorRevealedRole?.nameFor(language) ?: text("没有爪牙", "No Minions"),
-                displaySecondary = seatNumbersText(investigatorOrderedPair),
-                displayFooter = if (investigatorTarget == null) "" else text("在下面两位玩家之中", "One of these two players"),
-                hostInstruction = text("轻拍调查员，示意睁眼。把结果只给他看；不要让其他玩家看到被点名的两人。", "Tap the Investigator to wake them. Show the result only to that player; do not let anyone else see the two named players."),
-                displayOptions = { actor ->
-                    listOfNotNull(recommendedDrunkInvestigatorOption(actor)) +
-                        recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
-                },
-                reliableDisplayOptions = { actor ->
-                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
-                },
-                spyRegistrationKey = investigatorRegistrationKey,
-                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
-                recluseRegistrationKey = investigatorRecluseRegistrationKey,
-                recluseRegistrationTeams = listOf(ClocktowerTeam.Minion),
-            ),
-            infoStep(
-                roleName = "厨师",
-                enName = "Chef",
-                tellPlayer = chefNumber,
-                explanation = listOfNotNull(text("这个数字表示有几对邪恶玩家相邻而坐。", "This number is the number of adjacent evil pairs."), chefRegistrationHint).joinToString("\n"),
-                hostInstruction = text("轻拍厨师，示意睁眼。把数字只给他看；确认后收回手机，示意闭眼。", "Tap the Chef to wake them. Show the number only to that player, then take the phone back and signal them to close their eyes."),
-                displayOptions = { actor -> recommendedNumberOptions(text("厨师信息", "Chef information"), actor, chefReferenceValue, chefMaximumValue, text("邪恶玩家相邻对数", "Adjacent evil pairs"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.ADJACENT_EVIL_PAIRS, cards.indexOf(actor) + 1, cards.indices.map { it + 1 }, value) }) },
-                spyRegistrationKey = chefRegistrationKey,
-                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
-                spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
-                spyRegistrationHint = chefRegistrationHint,
-                recluseRegistrationKey = chefRecluseRegistrationKey,
-            ),
-            infoStep(
-                roleName = "共情者",
-                enName = "Empath",
-                tellPlayer = empathNumber,
-                explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
-                hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
-                displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, livingNeighbors(cards, actor.name).map { cards.indexOf(it) + 1 }, value) }) },
-                previousShownNumber = empathActor?.let { actor ->
-                    previousUnreliableNumber(text("共情者信息", "Empath information"), actor)
-                        ?.takeIf { it in 0..2 }
-                },
-                spyRegistrationKey = empathRegistrationKey,
-                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
-                spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
-                spyRegistrationHint = empathRegistrationHint,
-                recluseRegistrationKey = empathRecluseRegistrationKey,
-            ),
-            infoStep(
-                roleName = "侍女",
-                enName = "Chambermaid",
-                tellPlayer = chambermaidResult,
-                explanation = text("侍女选择两名玩家，得知其中有几人今晚因自己的能力醒来。", "The Chambermaid chooses two players and learns how many woke tonight because of their own ability."),
-                action = ClocktowerNightAction.Chambermaid,
-                displaySecondary = listOfNotNull(chambermaidFirst, chambermaidSecond)
-                    .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                    .joinToString("   ") { seatNumberText(it) }
-                    .takeIf { it.isNotBlank() },
-                displayFooter = text("查询这两名玩家", "Checking these two players"),
-                hostInstruction = text("轻拍侍女，示意睁眼。让她依次指两名玩家，不能选自己；点查询后只展示数字。", "Tap the Chambermaid to wake them. Have them point to two players other than themself, then show only the number."),
-                displayOptions = { actor ->
-                    chambermaidResult?.toIntOrNull()?.let { trueValue ->
-                        recommendedNumberOptions(
-                            title = text("侍女信息", "Chambermaid information"),
-                            actor = actor,
-                            trueValue = trueValue,
-                            maxValue = 2,
-                            footer = text("查询这两名玩家", "Checking these two players"),
-                            pressureCostPerPoint = 1,
-                            secondary = listOfNotNull(chambermaidFirst, chambermaidSecond)
-                                .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                                .joinToString("   ") { seatNumberText(it) }
-                                .takeIf { it.isNotBlank() },
-                        )
-                    }.orEmpty()
-                },
-            ),
-            infoStep(
-                roleName = "占卜师",
-                enName = "Fortune Teller",
-                tellPlayer = fortuneTellerResult,
-                explanation = text("如果两名玩家中包含恶魔或红鲱鱼，向占卜师展示“有”；否则展示“没有”。", "Show Yes if either selected player is the Demon or red herring; otherwise show No."),
-                action = ClocktowerNightAction.FortuneTeller,
-                displaySecondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
-                    .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                    .joinToString("   ") { seatNumberText(it) }
-                    .takeIf { it.isNotBlank() },
-                displayFooter = text("查询这两名玩家", "Checking these two players"),
-                hostInstruction = text("轻拍占卜师，示意睁眼。让他依次指两名玩家，在下面记录；结果出现后展示“有”或“没有”。", "Tap the Fortune Teller to wake them. Have them point to two players, record both, then show Yes or No."),
-                displayOptions = { actor ->
-                    fortuneTellerMatched?.let { matched ->
-                        recommendedYesNoOptions(
-                            title = text("占卜师信息", "Fortune Teller information"),
-                            truthfulYes = matched,
-                            secondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
-                                .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                                .joinToString("   ") { seatNumberText(it) }
-                                .takeIf { it.isNotBlank() },
-                            footer = text("查询这两名玩家", "Checking these two players"),
-                            propositionForValue = { value -> InformationProposition.BooleanResult(
-                                BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
-                                cards.indexOf(actor) + 1,
-                                listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).mapNotNull { name ->
-                                    cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
-                                },
-                                value,
-                            ) },
-                        )
-                    }.orEmpty()
-                },
-                recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,
-                recluseRegistrationTeams = listOf(ClocktowerTeam.Demon),
-            ),
-            infoStep(
-                roleName = "管家",
-                enName = "Butler",
-                tellPlayer = butlerMaster?.let { text("今天的主人：${playerSeatLabel(cards, it)}", "Today's master: ${playerSeatLabel(cards, it)}") },
-                explanation = text("管家每天选择一名主人，白天只能在主人投票时投票。", "The Butler chooses a master each day and may vote only when that master votes."),
-                action = ClocktowerNightAction.ButlerMaster,
-                displayKind = ClocktowerDisplayKind.None,
-                hostInstruction = text("轻拍管家，示意睁眼。让他指一名玩家作为今天的主人；记在心里，白天投票时提醒自己核对。", "Tap the Butler to wake them. Have them point to today's master and keep the choice available for checking during voting."),
-            ),
-            infoStep(
-                roleName = "间谍",
-                enName = "Spy",
-                tellPlayer = if (poisonTarget == spyCard?.name) null else {
-                    val grimoire = cards.joinToString("\n") { "${it.seatLabel(cards)}${text("：", ": ")}${it.hostRoleLabel(context, GameKind.Clocktower)}" }
-                    listOfNotNull(spyDelta, grimoire).joinToString("\n\n")
-                },
-                explanation = if (poisonTarget == spyCard?.name) text("间谍已中毒：仍照常唤醒，但不要展示真实魔典，也不能改变登记身份。", "The Spy is poisoned: wake them normally, but do not show the real grimoire or alter registration.") else text("存活间谍每晚可以查看所有玩家的真实身份。", "A living Spy may view every player's true identity each night."),
-                displayKind = ClocktowerDisplayKind.Grimoire,
-                displayTitle = text("魔典", "Grimoire"),
-                displayFooter = text("这些是所有玩家的真实身份。只给间谍短暂查看。", "These are every player's true identities. Show this only briefly to the Spy."),
-                displayProposition = if (poisonTarget == spyCard?.name) null else InformationProposition.GrimoireState(
-                    cards.mapIndexed { index, card -> GrimoireSeatView(index + 1, RoleId(requireNotNull(card.clocktowerRole).enName), card.eliminatedRound == null) },
-                ),
-                hostInstruction = if (poisonTarget == spyCard?.name) text("照常轻拍间谍示意睁眼，但不要展示真实魔典；停顿后示意闭眼。", "Wake the Spy normally, but do not show the real grimoire. Pause, then signal them to close their eyes.") else text("轻拍间谍，示意睁眼。把说书人总览给他短暂查看；收回手机后示意闭眼。", "Tap the Spy to wake them. Briefly show the Storyteller overview, then take the phone back and signal them to close their eyes."),
-            ),
+    val firstNightNameSeparator = stringResource(R.string.name_separator)
+    val firstNightSmallGameNoEvilInfoReason =
+        stringResource(R.string.clocktower_first_night_small_game_no_evil_info_reason)
+    val firstNightNoMinionsReason =
+        stringResource(R.string.clocktower_first_night_no_minions_reason)
+    val firstNightPlaceholderAction =
+        stringResource(R.string.clocktower_first_night_placeholder_action)
+    val firstNightMinionActionText = stringResource(
+        R.string.clocktower_first_night_minion_action_format,
+        minionCards.joinToString(firstNightNameSeparator) { it.seatLabel(cards) },
+    )
+    val firstNightMinionExplain =
+        stringResource(R.string.clocktower_first_night_minion_explain)
+    val firstNightSmallGameNoEvilInfoExplain =
+        stringResource(R.string.clocktower_first_night_small_game_no_evil_info_explain)
+    val firstNightMinionDisplayPrimary =
+        if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
+            "${stringResource(R.string.clocktower_evil_display_demon)}\n${demonCard?.seatLabel(cards).orEmpty()}"
+        } else {
+            null
+        }
+    val firstNightMinionWakeText = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
+        stringResource(
+            R.string.clocktower_first_night_minion_wake_format,
+            minionCards.joinToString(firstNightNameSeparator) { it.seatLabel(cards) },
         )
     } else {
-        buildList {
-            add(
-            infoStep(
+        null
+    }
+    val firstNightNoDemonReason =
+        stringResource(R.string.clocktower_first_night_no_demon_reason)
+    val firstNightDemonActionText = demonCard?.let {
+        stringResource(R.string.clocktower_first_night_demon_action_format, it.seatLabel(cards))
+    }.orEmpty()
+    val firstNightDemonExplain =
+        stringResource(R.string.clocktower_first_night_demon_explain)
+    val firstNightDemonDisplayPrimary =
+        if (demonCard != null && shouldGiveFirstNightEvilInfo) {
+            "${stringResource(R.string.clocktower_evil_display_minions)}\n${if (minionCards.isEmpty()) stringResource(R.string.clocktower_first_night_demon_no_minions) else minionCards.joinToString(firstNightNameSeparator) { it.seatLabel(cards) }}"
+        } else {
+            null
+        }
+    val firstNightDemonDisplaySecondary =
+        if (demonCard != null && shouldGiveFirstNightEvilInfo) {
+            "${stringResource(R.string.clocktower_evil_display_bluffs)}\n${demonBluffs.joinToString(firstNightNameSeparator) { it.nameFor(language) }}"
+        } else {
+            null
+        }
+    val firstNightActualRoleIds = buildSet {
+        cards.forEach { card ->
+            card.clocktowerRole?.enName?.let { add(RoleId(it)) }
+        }
+    }
+    val firstNightWakingRoleIds = buildSet {
+        cards.forEach { card ->
+            card.clocktowerRole?.enName?.let { add(RoleId(it)) }
+            if (card.clocktowerRole?.enName == "Drunk") {
+                card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
+            }
+        }
+    }
+    val otherNightWakingRoleIds = buildSet {
+        aliveCards.forEach { card ->
+            card.clocktowerRole?.enName?.let { add(RoleId(it)) }
+            if (card.clocktowerRole?.enName == "Drunk") {
+                card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
+            }
+        }
+    }
+    val otherNightResolvedFacts = ClocktowerResolvedFlowFacts(
+        buildSet {
+            if (pendingNightNewDemonIdentityName != null) add(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON)
+            if (lastExecutedName != null) add(ClocktowerResolvedFlowFact.EXECUTION_OCCURRED_TODAY)
+            if (ravenkeeperTrigger != null) add(ClocktowerResolvedFlowFact.RAVENKEEPER_DIED_AT_NIGHT)
+            if (mayorCanRedirect) add(ClocktowerResolvedFlowFact.MAYOR_REDIRECT_ELIGIBLE)
+            if (impSelfKillNeedsSuccessor) add(ClocktowerResolvedFlowFact.DEMON_SUCCESSION_REQUIRED)
+            if (sageNightDeath != null) add(ClocktowerResolvedFlowFact.SAGE_KILLED_BY_DEMON)
+        },
+    )
+    val nightSteps = if (phase == ClocktowerPhase.FirstNight) {
+        val firstNightInteractions =
+            ClocktowerProductionFirstNightFlow.interactions(
+                ruleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script),
+                playerCount = cards.size,
+                inPlayRoleIds = firstNightWakingRoleIds,
+                actualRoleIds = firstNightActualRoleIds,
+            )
+        val firstNightMaterializers = ClocktowerNightStepMaterializerRegistry(
+            phase = ClocktowerNightFlowPhase.FIRST_NIGHT,
+            entries = listOf(
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.minionInfo(),
+            build = {
+                ClocktowerNightStepUi(
+                                title = minionInfoTitle,
+                                actor = minionCards.firstOrNull().takeIf { shouldGiveFirstNightEvilInfo },
+                                isRealAction = minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo,
+                                reason = when {
+                                    !shouldGiveFirstNightEvilInfo -> firstNightSmallGameNoEvilInfoReason
+                                    minionCards.isEmpty() -> firstNightNoMinionsReason
+                                    else -> ""
+                                },
+                                storytellerAction = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
+                                    firstNightMinionActionText
+                                } else {
+                                    firstNightPlaceholderAction
+                                },
+                                tellPlayer = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) minionInfoText else null,
+                                explanation = if (shouldGiveFirstNightEvilInfo) {
+                                    firstNightMinionExplain
+                                } else {
+                                    firstNightSmallGameNoEvilInfoExplain
+                                },
+                                displayKind = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo && minionInfoText != null) ClocktowerDisplayKind.EvilInfo else ClocktowerDisplayKind.None,
+                                displayTitle = minionInfoTitle,
+                                displayPrimary = firstNightMinionDisplayPrimary,
+                                displayFooter = null,
+                                wakeText = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
+                                    firstNightMinionWakeText
+                                } else {
+                                    null
+                                },
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.demonInfo(),
+            build = {
+                ClocktowerNightStepUi(
+                                title = demonInfoTitle,
+                                actor = demonCard.takeIf { shouldGiveFirstNightEvilInfo },
+                                isRealAction = demonCard != null && shouldGiveFirstNightEvilInfo,
+                                reason = when {
+                                    !shouldGiveFirstNightEvilInfo -> firstNightSmallGameNoEvilInfoReason
+                                    demonCard == null -> firstNightNoDemonReason
+                                    else -> ""
+                                },
+                                storytellerAction = if (demonCard != null && shouldGiveFirstNightEvilInfo) {
+                                    firstNightDemonActionText
+                                } else {
+                                    firstNightPlaceholderAction
+                                },
+                                tellPlayer = if (demonCard != null && shouldGiveFirstNightEvilInfo) demonInfoText else null,
+                                explanation = if (shouldGiveFirstNightEvilInfo) {
+                                    firstNightDemonExplain
+                                } else {
+                                    firstNightSmallGameNoEvilInfoExplain
+                                },
+                                displayKind = if (demonCard != null && shouldGiveFirstNightEvilInfo) ClocktowerDisplayKind.EvilInfo else ClocktowerDisplayKind.None,
+                                displayTitle = demonInfoTitle,
+                                displayPrimary = firstNightDemonDisplayPrimary,
+                                displaySecondary = firstNightDemonDisplaySecondary,
+                                displayFooter = null,
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Poisoner")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "投毒者",
+                                enName = "Poisoner",
+                                tellPlayer = poisonTarget?.let { text("已选择：${playerSeatLabel(cards, it)}", "Selected: ${playerSeatLabel(cards, it)}") },
+                                explanation = text("投毒者选择一名玩家，使其能力暂时失效。", "The Poisoner chooses a player whose ability stops working temporarily."),
+                                action = ClocktowerNightAction.Poison,
+                                displayKind = ClocktowerDisplayKind.None,
+                                hostInstruction = text("轻拍投毒者，示意睁眼。让他指一名玩家，在下面记录为今晚中毒目标。", "Tap the Poisoner to wake them. Have them point to one player and record that player as tonight's poisoned target."),
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring(),
+            build = {
+                ClocktowerNightStepUi(
+                                title = text("占卜师红鲱鱼", "Fortune Teller red herring"),
+                                actor = null,
+                                isRealAction = actualClocktowerRoleCards(cards, "Fortune Teller").isNotEmpty(),
+                                reason = if (actualClocktowerRoleCards(cards, "Fortune Teller").isEmpty()) text("本局没有占卜师，此步骤只用于首夜配置。", "No Fortune Teller is in play; this is only a first-night setup step.") else "",
+                                storytellerAction = text("不要公开说明这个选择。请选择一名善良玩家作为红鲱鱼；可以选择占卜师本人。", "Keep this choice private. Choose a good player as the red herring; the Fortune Teller may be chosen."),
+                                tellPlayer = redHerring?.let { text("已选择：${playerSeatLabel(cards, it)}", "Selected: ${playerSeatLabel(cards, it)}") },
+                                explanation = text("选择一名善良玩家成为红鲱鱼。占卜师查询他时，结果为“有”，他会被标记为恶魔。", "Choose a good player as the red herring. The Fortune Teller detects that player as a Demon."),
+                                action = ClocktowerNightAction.RedHerring,
+                                roleEnName = "Fortune Teller",
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Clockmaker")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "钟表匠",
+                                enName = "Clockmaker",
+                                tellPlayer = clockmakerNumber,
+                                explanation = text("这个数字表示恶魔到最近爪牙相隔几步。", "This number is the distance from the Demon to the nearest Minion."),
+                                displayFooter = text("恶魔到最近爪牙的距离", "Distance from Demon to nearest Minion"),
+                                hostInstruction = text("轻拍钟表匠，示意睁眼。把数字只给他看；确认后收回手机，示意闭眼。", "Tap the Clockmaker to wake them. Show the number only to that player, then take the phone back and signal them to close their eyes."),
+                                displayOptions = { actor -> recommendedNumberOptions(text("钟表匠信息", "Clockmaker information"), actor, clockmakerValue, cards.size / 2, text("恶魔到最近爪牙的距离", "Distance from Demon to nearest Minion")) },
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Washerwoman")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "洗衣妇",
+                                enName = "Washerwoman",
+                                tellPlayer = washerwomanTarget?.let { text("${if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${washerwomanOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${washerwomanOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} is one of these two players: ${washerwomanOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${washerwomanOrderedPair?.second?.seatLabel(cards).orEmpty()}") },
+                                explanation = text("洗衣妇会得知某个镇民在两名玩家之一中。", "The Washerwoman learns that a particular Townsfolk is one of two players."),
+                                displayPrimary = washerwomanTarget?.let { if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk))?.nameFor(language) else it.clocktowerRole?.nameFor(language) },
+                                displaySecondary = seatNumbersText(washerwomanOrderedPair),
+                                displayFooter = text("在下面两位玩家之中", "One of these two players"),
+                                hostInstruction = text("轻拍洗衣妇，示意睁眼。点击“全屏展示给玩家”，只给她看；看完后收回手机，示意闭眼。", "Tap the Washerwoman to wake them. Show the full-screen information only to that player, then take the phone back and signal them to close their eyes."),
+                                displayOptions = { actor ->
+                                    recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
+                                },
+                                reliableDisplayOptions = { actor ->
+                                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
+                                },
+                                spyRegistrationKey = washerwomanRegistrationKey,
+                                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk),
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Librarian")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "图书管理员",
+                                enName = "Librarian",
+                                tellPlayer = librarianTarget?.let { text("${if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${librarianOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${librarianOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} is one of these two players: ${librarianOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${librarianOrderedPair?.second?.seatLabel(cards).orEmpty()}") } ?: text("本局没有外来者。", "There are no Outsiders in play."),
+                                explanation = text("图书管理员会得知某个外来者在两名玩家之一中，或得知没有外来者。", "The Librarian learns that an Outsider is one of two players, or that no Outsiders are in play."),
+                                displayPrimary = librarianTarget?.let { if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider))?.nameFor(language) else it.clocktowerRole?.nameFor(language) } ?: text("没有外来者", "No Outsiders"),
+                                displaySecondary = seatNumbersText(librarianOrderedPair),
+                                displayFooter = if (librarianTarget == null) "" else text("在下面两位玩家之中", "One of these two players"),
+                                hostInstruction = text("轻拍图书管理员，示意睁眼。把结果只给他看；如果显示“没有外来者”，也只告诉他本人。", "Tap the Librarian to wake them. Show the result only to that player, including a No Outsiders result."),
+                                displayOptions = { actor ->
+                                    recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
+                                },
+                                reliableDisplayOptions = { actor ->
+                                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
+                                },
+                                spyRegistrationKey = librarianRegistrationKey,
+                                spyRegistrationTeams = listOf(ClocktowerTeam.Outsider),
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Investigator")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "调查员",
+                                enName = "Investigator",
+                                tellPlayer = investigatorTarget?.let { text("${investigatorRevealedRole?.nameFor(language).orEmpty()} 在这两人之中：${investigatorOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${investigatorOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${investigatorRevealedRole?.nameFor(language).orEmpty()} is one of these two players: ${investigatorOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${investigatorOrderedPair?.second?.seatLabel(cards).orEmpty()}") } ?: text("本局没有爪牙。", "There are no Minions in play."),
+                                explanation = text("调查员会得知某个爪牙在两名玩家之一中，或得知没有爪牙。", "The Investigator learns that a Minion is one of two players, or that no Minions are in play."),
+                                displayPrimary = investigatorRevealedRole?.nameFor(language) ?: text("没有爪牙", "No Minions"),
+                                displaySecondary = seatNumbersText(investigatorOrderedPair),
+                                displayFooter = if (investigatorTarget == null) "" else text("在下面两位玩家之中", "One of these two players"),
+                                hostInstruction = text("轻拍调查员，示意睁眼。把结果只给他看；不要让其他玩家看到被点名的两人。", "Tap the Investigator to wake them. Show the result only to that player; do not let anyone else see the two named players."),
+                                displayOptions = { actor ->
+                                    listOfNotNull(recommendedDrunkInvestigatorOption(actor)) +
+                                        recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
+                                },
+                                reliableDisplayOptions = { actor ->
+                                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
+                                },
+                                spyRegistrationKey = investigatorRegistrationKey,
+                                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
+                                recluseRegistrationKey = investigatorRecluseRegistrationKey,
+                                recluseRegistrationTeams = listOf(ClocktowerTeam.Minion),
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Chef")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "厨师",
+                                enName = "Chef",
+                                tellPlayer = chefNumber,
+                                explanation = listOfNotNull(text("这个数字表示有几对邪恶玩家相邻而坐。", "This number is the number of adjacent evil pairs."), chefRegistrationHint).joinToString("\n"),
+                                hostInstruction = text("轻拍厨师，示意睁眼。把数字只给他看；确认后收回手机，示意闭眼。", "Tap the Chef to wake them. Show the number only to that player, then take the phone back and signal them to close their eyes."),
+                                displayOptions = { actor -> recommendedNumberOptions(text("厨师信息", "Chef information"), actor, chefReferenceValue, chefMaximumValue, text("邪恶玩家相邻对数", "Adjacent evil pairs"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.ADJACENT_EVIL_PAIRS, cards.indexOf(actor) + 1, cards.indices.map { it + 1 }, value) }) },
+                                spyRegistrationKey = chefRegistrationKey,
+                                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
+                                spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
+                                spyRegistrationHint = chefRegistrationHint,
+                                recluseRegistrationKey = chefRecluseRegistrationKey,
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Empath")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "共情者",
+                                enName = "Empath",
+                                tellPlayer = empathNumber,
+                                explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
+                                hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
+                                displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, livingNeighbors(cards, actor.name).map { cards.indexOf(it) + 1 }, value) }) },
+                                previousShownNumber = empathActor?.let { actor ->
+                                    previousUnreliableNumber(text("共情者信息", "Empath information"), actor)
+                                        ?.takeIf { it in 0..2 }
+                                },
+                                spyRegistrationKey = empathRegistrationKey,
+                                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
+                                spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
+                                spyRegistrationHint = empathRegistrationHint,
+                                recluseRegistrationKey = empathRecluseRegistrationKey,
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Chambermaid")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "侍女",
+                                enName = "Chambermaid",
+                                tellPlayer = chambermaidResult,
+                                explanation = text("侍女选择两名玩家，得知其中有几人今晚因自己的能力醒来。", "The Chambermaid chooses two players and learns how many woke tonight because of their own ability."),
+                                action = ClocktowerNightAction.Chambermaid,
+                                displaySecondary = listOfNotNull(chambermaidFirst, chambermaidSecond)
+                                    .mapNotNull { name -> cards.firstOrNull { it.name == name } }
+                                    .joinToString("   ") { seatNumberText(it) }
+                                    .takeIf { it.isNotBlank() },
+                                displayFooter = text("查询这两名玩家", "Checking these two players"),
+                                hostInstruction = text("轻拍侍女，示意睁眼。让她依次指两名玩家，不能选自己；点查询后只展示数字。", "Tap the Chambermaid to wake them. Have them point to two players other than themself, then show only the number."),
+                                displayOptions = { actor ->
+                                    chambermaidResult?.toIntOrNull()?.let { trueValue ->
+                                        recommendedNumberOptions(
+                                            title = text("侍女信息", "Chambermaid information"),
+                                            actor = actor,
+                                            trueValue = trueValue,
+                                            maxValue = 2,
+                                            footer = text("查询这两名玩家", "Checking these two players"),
+                                            pressureCostPerPoint = 1,
+                                            secondary = listOfNotNull(chambermaidFirst, chambermaidSecond)
+                                                .mapNotNull { name -> cards.firstOrNull { it.name == name } }
+                                                .joinToString("   ") { seatNumberText(it) }
+                                                .takeIf { it.isNotBlank() },
+                                        )
+                                    }.orEmpty()
+                                },
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "占卜师",
+                                enName = "Fortune Teller",
+                                tellPlayer = fortuneTellerResult,
+                                explanation = text("如果两名玩家中包含恶魔或红鲱鱼，向占卜师展示“有”；否则展示“没有”。", "Show Yes if either selected player is the Demon or red herring; otherwise show No."),
+                                action = ClocktowerNightAction.FortuneTeller,
+                                displaySecondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+                                    .mapNotNull { name -> cards.firstOrNull { it.name == name } }
+                                    .joinToString("   ") { seatNumberText(it) }
+                                    .takeIf { it.isNotBlank() },
+                                displayFooter = text("查询这两名玩家", "Checking these two players"),
+                                hostInstruction = text("轻拍占卜师，示意睁眼。让他依次指两名玩家，在下面记录；结果出现后展示“有”或“没有”。", "Tap the Fortune Teller to wake them. Have them point to two players, record both, then show Yes or No."),
+                                displayOptions = { actor ->
+                                    fortuneTellerMatched?.let { matched ->
+                                        recommendedYesNoOptions(
+                                            title = text("占卜师信息", "Fortune Teller information"),
+                                            truthfulYes = matched,
+                                            secondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+                                                .mapNotNull { name -> cards.firstOrNull { it.name == name } }
+                                                .joinToString("   ") { seatNumberText(it) }
+                                                .takeIf { it.isNotBlank() },
+                                            footer = text("查询这两名玩家", "Checking these two players"),
+                                            propositionForValue = { value -> InformationProposition.BooleanResult(
+                                                BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+                                                cards.indexOf(actor) + 1,
+                                                listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).mapNotNull { name ->
+                                                    cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
+                                                },
+                                                value,
+                                            ) },
+                                        )
+                                    }.orEmpty()
+                                },
+                                recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,
+                                recluseRegistrationTeams = listOf(ClocktowerTeam.Demon),
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Butler")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "管家",
+                                enName = "Butler",
+                                tellPlayer = butlerMaster?.let { text("今天的主人：${playerSeatLabel(cards, it)}", "Today's master: ${playerSeatLabel(cards, it)}") },
+                                explanation = text("管家每天选择一名主人，白天只能在主人投票时投票。", "The Butler chooses a master each day and may vote only when that master votes."),
+                                action = ClocktowerNightAction.ButlerMaster,
+                                displayKind = ClocktowerDisplayKind.None,
+                                hostInstruction = text("轻拍管家，示意睁眼。让他指一名玩家作为今天的主人；记在心里，白天投票时提醒自己核对。", "Tap the Butler to wake them. Have them point to today's master and keep the choice available for checking during voting."),
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Spy")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "间谍",
+                                enName = "Spy",
+                                tellPlayer = if (poisonTarget == spyCard?.name) null else {
+                                    val grimoire = cards.joinToString("\n") { "${it.seatLabel(cards)}${text("：", ": ")}${it.hostRoleLabel(context, GameKind.Clocktower)}" }
+                                    listOfNotNull(spyDelta, grimoire).joinToString("\n\n")
+                                },
+                                explanation = if (poisonTarget == spyCard?.name) text("间谍已中毒：仍照常唤醒，但不要展示真实魔典，也不能改变登记身份。", "The Spy is poisoned: wake them normally, but do not show the real grimoire or alter registration.") else text("存活间谍每晚可以查看所有玩家的真实身份。", "A living Spy may view every player's true identity each night."),
+                                displayKind = ClocktowerDisplayKind.Grimoire,
+                                displayTitle = text("魔典", "Grimoire"),
+                                displayFooter = text("这些是所有玩家的真实身份。只给间谍短暂查看。", "These are every player's true identities. Show this only briefly to the Spy."),
+                                displayProposition = if (poisonTarget == spyCard?.name) null else InformationProposition.GrimoireState(
+                                    cards.mapIndexed { index, card -> GrimoireSeatView(index + 1, RoleId(requireNotNull(card.clocktowerRole).enName), card.eliminatedRound == null) },
+                                ),
+                                hostInstruction = if (poisonTarget == spyCard?.name) text("照常轻拍间谍示意睁眼，但不要展示真实魔典；停顿后示意闭眼。", "Wake the Spy normally, but do not show the real grimoire. Pause, then signal them to close their eyes.") else text("轻拍间谍，示意睁眼。把说书人总览给他短暂查看；收回手机后示意闭眼。", "Tap the Spy to wake them. Briefly show the Storyteller overview, then take the phone back and signal them to close their eyes."),
+                            )
+            },
+        )
+            ),
+        )
+        firstNightMaterializers.materialize(firstNightInteractions)
+    } else {
+        val otherNightInteractions =
+            ClocktowerProductionOtherNightFlow.interactions(
+            ruleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script),
+            playerCount = cards.size,
+            wakingRoleIds = otherNightWakingRoleIds,
+            resolvedFacts = otherNightResolvedFacts,
+        )
+    val otherNightMaterializers = ClocktowerNightStepMaterializerRegistry(
+        phase = ClocktowerNightFlowPhase.OTHER_NIGHT,
+        entries = listOf(
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Poisoner")),
+            build = {
+            informationStepBuilder.build(
                 roleName = "投毒者",
                 enName = "Poisoner",
                 tellPlayer = poisonTarget?.let { text("已选择：${playerSeatLabel(cards, it)}", "Selected: ${playerSeatLabel(cards, it)}") },
@@ -2815,10 +2559,13 @@ internal fun ClocktowerJudgeScreen(
                 action = ClocktowerNightAction.Poison,
                 displayKind = ClocktowerDisplayKind.None,
                 hostInstruction = text("轻拍投毒者，示意睁眼。让他指一名玩家，在下面记录为今晚中毒目标。", "Tap the Poisoner to wake them. Have them point to one player and record that player as tonight's poisoned target."),
-            ),
             )
-            add(
-            infoStep(
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Butler")),
+            build = {
+            informationStepBuilder.build(
                 roleName = "管家",
                 enName = "Butler",
                 tellPlayer = butlerMaster?.let { text("今天的主人：${playerSeatLabel(cards, it)}", "Today's master: ${playerSeatLabel(cards, it)}") },
@@ -2826,10 +2573,13 @@ internal fun ClocktowerJudgeScreen(
                 action = ClocktowerNightAction.ButlerMaster,
                 displayKind = ClocktowerDisplayKind.None,
                 hostInstruction = text("轻拍管家，示意睁眼。让他指今天的主人；白天投票时用这个记录提醒自己。", "Tap the Butler to wake them and have them point to today's master. Keep the choice available for checking during voting."),
-            ),
             )
-            add(
-            infoStep(
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Empath")),
+            build = {
+            informationStepBuilder.build(
                 roleName = "共情者",
                 enName = "Empath",
                 tellPlayer = empathNumber,
@@ -2845,10 +2595,13 @@ internal fun ClocktowerJudgeScreen(
                 spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
                 spyRegistrationHint = empathRegistrationHint,
                 recluseRegistrationKey = empathRecluseRegistrationKey,
-            ),
             )
-            add(
-            infoStep(
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Chambermaid")),
+            build = {
+            informationStepBuilder.build(
                 roleName = "侍女",
                 enName = "Chambermaid",
                 tellPlayer = chambermaidResult,
@@ -2876,10 +2629,13 @@ internal fun ClocktowerJudgeScreen(
                         )
                     }.orEmpty()
                 },
-            ),
             )
-            add(
-            infoStep(
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller")),
+            build = {
+            informationStepBuilder.build(
                 roleName = "占卜师",
                 enName = "Fortune Teller",
                 tellPlayer = fortuneTellerResult,
@@ -2913,18 +2669,21 @@ internal fun ClocktowerJudgeScreen(
                 },
                 recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,
                 recluseRegistrationTeams = listOf(ClocktowerTeam.Demon),
-            ),
             )
-            if (lastExecutedName != null) {
-                add(
-                    infoStep(
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Undertaker")),
+            build = {
+            val executedName = requireNotNull(lastExecutedName)
+                    informationStepBuilder.build(
                         roleName = "送葬者",
                         enName = "Undertaker",
-                        tellPlayer = text("${playerSeatLabel(cards, lastExecutedName)} 的角色是 ${when (undertakerTarget?.name) {
+                        tellPlayer = text("${playerSeatLabel(cards, executedName)} 的角色是 ${when (undertakerTarget?.name) {
                             spyCard?.name -> registeredRole(undertakerRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider))?.nameFor(language).orEmpty()
                             recluseCard?.name -> recluseRegisteredRole(undertakerRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon))?.nameFor(language).orEmpty()
                             else -> undertakerTarget?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()
-                        }}", "${playerSeatLabel(cards, lastExecutedName)} was ${when (undertakerTarget?.name) {
+                        }}", "${playerSeatLabel(cards, executedName)} was ${when (undertakerTarget?.name) {
                             spyCard?.name -> registeredRole(undertakerRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider))?.nameFor(language).orEmpty()
                             recluseCard?.name -> recluseRegisteredRole(undertakerRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon))?.nameFor(language).orEmpty()
                             else -> undertakerTarget?.hostRoleLabel(context, GameKind.Clocktower).orEmpty()
@@ -2945,24 +2704,26 @@ internal fun ClocktowerJudgeScreen(
                             } ?: return@let null
                             InformationProposition.RoleAt(cards.indexOf(target) + 1, RoleId(shownRole.enName))
                         },
-                        displayFooter = text("今天被处决：${playerSeatLabel(cards, lastExecutedName)}", "Executed today: ${playerSeatLabel(cards, lastExecutedName)}"),
+                        displayFooter = text("今天被处决：${playerSeatLabel(cards, executedName)}", "Executed today: ${playerSeatLabel(cards, executedName)}"),
                         hostInstruction = text("轻拍送葬者，示意睁眼。把今天被处决玩家的真实身份只给他看；看完后收回手机，示意闭眼。", "Tap the Undertaker to wake them. Show the executed player's identity only to that player, then take the phone back and signal them to close their eyes."),
                         displayOptions = {
                             recommendedRoleRevealOptions(
                                 title = text("送葬者信息", "Undertaker information"),
                                 truthfulRole = undertakerTarget?.clocktowerRole,
-                                footer = text("今天被处决：${playerSeatLabel(cards, lastExecutedName)}", "Executed today: ${playerSeatLabel(cards, lastExecutedName)}"),
+                                footer = text("今天被处决：${playerSeatLabel(cards, executedName)}", "Executed today: ${playerSeatLabel(cards, executedName)}"),
                             )
                         },
                         spyRegistrationKey = undertakerRegistrationKey,
                         spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
                         recluseRegistrationKey = undertakerRecluseRegistrationKey,
                         recluseRegistrationTeams = listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon),
-                    ),
-                )
-            }
-            add(
-            infoStep(
+                    )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Monk")),
+            build = {
+            informationStepBuilder.build(
                 roleName = "僧侣",
                 enName = "Monk",
                 tellPlayer = monkProtectedTarget?.let { text("已选择保护：${playerSeatLabel(cards, it)}。如果恶魔今晚选择该玩家，他不会死亡。", "Protected: ${playerSeatLabel(cards, it)}. If the Demon chooses this player tonight, they will not die.") },
@@ -2970,18 +2731,20 @@ internal fun ClocktowerJudgeScreen(
                 action = ClocktowerNightAction.MonkProtect,
                 displayKind = ClocktowerDisplayKind.None,
                 hostInstruction = text("轻拍僧侣，示意睁眼。让他指一名除自己以外的玩家，在下面记录为今晚保护目标。", "Tap the Monk to wake them. Have them point to another player and record that player as tonight's protected target."),
-            ),
             )
-            if (pendingNightNewDemonIdentityName != null) {
-                val newDemon = requireNotNull(
-                    aliveCards.firstOrNull {
-                        it.name == pendingNightNewDemonIdentityName &&
-                            it.clocktowerRole?.enName == "Imp"
-                    },
-                ) {
-                    "Pending next-night new-Demon identity must reference the current living Imp."
-                }
-                add(
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.newDemonIdentity(),
+            build = {
+            val newDemon = requireNotNull(
+                aliveCards.firstOrNull {
+                    it.name == pendingNightNewDemonIdentityName &&
+                        it.clocktowerRole?.enName == "Imp"
+                },
+            ) {
+                "Pending next-night new-Demon identity must reference the current living Imp."
+            }
                     ClocktowerNightStepUi(
                         title = text("新恶魔身份", "New Demon identity"),
                         actor = newDemon,
@@ -3002,10 +2765,12 @@ internal fun ClocktowerJudgeScreen(
                         displayPrimary = text("小恶魔", "Imp"),
                         displayFooter = "",
                         roleEnName = "Imp",
-                    ),
-                )
-            }
-            add(
+                    )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Imp")),
+            build = {
             ClocktowerNightStepUi(
                 title = text("恶魔行动", "Demon action"),
                 actor = aliveCards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon },
@@ -3025,11 +2790,12 @@ internal fun ClocktowerJudgeScreen(
                 },
                 explanation = if (demonPoisonedTonight) text("可以记录恶魔选择，但天亮不会因此死亡。", "Record the Demon's choice, but it will not cause a death at dawn.") else text("恶魔选择的死亡目标会在天亮时统一公布。", "The Demon's chosen target is announced at dawn."),
                 action = ClocktowerNightAction.DemonKill,
-            ),
             )
-
-            if (impSelfKillNeedsSuccessor) {
-                add(
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.demonSuccessor(),
+            build = {
                     ClocktowerNightStepUi(
                         title = text("选择新小恶魔", "Choose the new Imp"),
                         actor = null,
@@ -3047,12 +2813,13 @@ internal fun ClocktowerJudgeScreen(
                         action = ClocktowerNightAction.DemonSuccessor,
                         roleEnName = "Imp",
                         decisionOptions = demonSuccessorDecisionOptions(),
-                    ),
-                )
-            }
-            if (mayorCanRedirect) {
-                val targetedMayor = requireNotNull(mayorTarget)
-                add(
+                    )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.mayorRedirect(),
+            build = {
+            val targetedMayor = requireNotNull(mayorTarget)
                     ClocktowerNightStepUi(
                         title = text("市长死亡裁定", "Mayor death ruling"),
                         actor = null,
@@ -3071,32 +2838,37 @@ internal fun ClocktowerJudgeScreen(
                         displayKind = ClocktowerDisplayKind.None,
                         roleEnName = "Mayor",
                         decisionOptions = mayorDecisionOptions(targetedMayor),
-                    ),
-                )
-            }
-            if (sageNightDeath != null && demonCard != null && sagePair != null) {
-                add(
-                    infoStep(
+                    )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Sage")),
+            build = {
+            val sageDemon = requireNotNull(demonCard)
+            val resolvedSagePair = requireNotNull(sagePair)
+                    informationStepBuilder.build(
                         roleName = "贤者",
                         enName = "Sage",
-                        tellPlayer = "${demonCard.seatLabel(cards)} / ${sagePair.second.seatLabel(cards)}",
+                        tellPlayer = "${sageDemon.seatLabel(cards)} / ${resolvedSagePair.second.seatLabel(cards)}",
                         explanation = text("贤者被恶魔杀死时，得知恶魔是两名玩家之一。", "When killed by the Demon, the Sage learns that the Demon is one of two players."),
                         displayKind = ClocktowerDisplayKind.EitherOne,
                         displayTitle = text("贤者信息", "Sage information"),
                         displayPrimary = text("恶魔", "Demon"),
-                        displaySecondary = twoSeatNumbers(demonCard, sagePair.second),
+                        displaySecondary = twoSeatNumbers(sageDemon, resolvedSagePair.second),
                         displayFooter = text("在下面两位玩家之中", "One of these two players"),
                         hostInstruction = text("如果恶魔今晚杀死贤者，轻拍贤者，示意睁眼。把两名玩家只给他看；这两人之中有一名是恶魔。", "If the Demon killed the Sage tonight, wake the Sage and show only them two players, one of whom is the Demon."),
-                        displayOptions = { actor -> recommendedSageOptions(actor, demonCard) },
+                        displayOptions = { actor -> recommendedSageOptions(actor, sageDemon) },
                         reliableDisplayOptions = { actor ->
-                            recommendedSageOptions(actor, demonCard, truthfulOnly = true)
+                            recommendedSageOptions(actor, sageDemon, truthfulOnly = true)
                         },
-                    ),
-                )
-            }
-            if (ravenkeeperTrigger != null) {
-                add(
-                    infoStep(
+                    )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Ravenkeeper")),
+            build = {
+            val trigger = requireNotNull(ravenkeeperTrigger)
+                    informationStepBuilder.build(
                         roleName = "守鸦人",
                         enName = "Ravenkeeper",
                         tellPlayer = ravenkeeperTarget?.let { text("${playerSeatLabel(cards, it)} 的角色是 ${when (ravenkeeperTargetCard?.name) {
@@ -3126,7 +2898,7 @@ internal fun ClocktowerJudgeScreen(
                             InformationProposition.RoleAt(cards.indexOf(target) + 1, RoleId(shownRole.enName))
                         },
                         displayFooter = ravenkeeperTarget?.let { text("查询目标：${playerSeatLabel(cards, it)}", "Checked player: ${playerSeatLabel(cards, it)}") },
-                        hostInstruction = text("轻拍 ${ravenkeeperTrigger.seatLabel(cards)}，示意睁眼。让他指一名玩家，在下面记录后把该玩家角色只给他看。", "Tap ${ravenkeeperTrigger.seatLabel(cards)} to wake them. Have them point to a player, record the target, and show that character only to the Ravenkeeper."),
+                        hostInstruction = text("轻拍 ${trigger.seatLabel(cards)}，示意睁眼。让他指一名玩家，在下面记录后把该玩家角色只给他看。", "Tap ${trigger.seatLabel(cards)} to wake them. Have them point to a player, record the target, and show that character only to the Ravenkeeper."),
                         displayOptions = {
                             recommendedRoleRevealOptions(
                                 title = text("守鸦人信息", "Ravenkeeper information"),
@@ -3138,11 +2910,13 @@ internal fun ClocktowerJudgeScreen(
                         spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
                         recluseRegistrationKey = ravenkeeperRecluseRegistrationKey,
                         recluseRegistrationTeams = listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon),
-                    ),
-                )
-            }
-            add(
-                infoStep(
+                    )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Spy")),
+            build = {
+                informationStepBuilder.build(
                     roleName = "间谍",
                     enName = "Spy",
                     tellPlayer = if (poisonTarget == spyCard?.name) null else {
@@ -3157,93 +2931,12 @@ internal fun ClocktowerJudgeScreen(
                         cards.mapIndexed { index, card -> GrimoireSeatView(index + 1, RoleId(requireNotNull(card.clocktowerRole).enName), card.eliminatedRound == null) },
                     ),
                     hostInstruction = if (poisonTarget == spyCard?.name) text("照常唤醒间谍，但不要展示真实魔典。", "Wake the Spy normally, but do not show the real grimoire.") else text("轻拍间谍，示意睁眼。把说书人总览给他短暂查看；收回手机后示意闭眼。", "Tap the Spy to wake them. Briefly show the Storyteller overview, then take the phone back and signal them to close their eyes."),
-                ),
-            )
-        }
-    }
-
-    val filteredNightSteps = unfilteredNightSteps.filter { step ->
-        step.isRealAction &&
-            (step.roleEnName == null || step.roleEnName in scriptRoleNames) &&
-            !(script == ClocktowerScript.NoGreaterJoy && step.title in setOf(minionInfoTitle, demonInfoTitle))
-    }
-    val firstNightActualRoleIds = buildSet {
-        cards.forEach { card ->
-            card.clocktowerRole?.enName?.let { add(RoleId(it)) }
-        }
-    }
-    val firstNightWakingRoleIds = buildSet {
-        cards.forEach { card ->
-            card.clocktowerRole?.enName?.let { add(RoleId(it)) }
-            if (card.clocktowerRole?.enName == "Drunk") {
-                card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
-            }
-        }
-    }
-    val otherNightWakingRoleIds = buildSet {
-        aliveCards.forEach { card ->
-            card.clocktowerRole?.enName?.let { add(RoleId(it)) }
-            if (card.clocktowerRole?.enName == "Drunk") {
-                card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
-            }
-        }
-    }
-    val otherNightResolvedFacts = ClocktowerResolvedFlowFacts(
-        buildSet {
-            if (pendingNightNewDemonIdentityName != null) add(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON)
-            if (lastExecutedName != null) add(ClocktowerResolvedFlowFact.EXECUTION_OCCURRED_TODAY)
-            if (ravenkeeperTrigger != null) add(ClocktowerResolvedFlowFact.RAVENKEEPER_DIED_AT_NIGHT)
-            if (mayorCanRedirect) add(ClocktowerResolvedFlowFact.MAYOR_REDIRECT_ELIGIBLE)
-            if (impSelfKillNeedsSuccessor) add(ClocktowerResolvedFlowFact.DEMON_SUCCESSION_REQUIRED)
-            if (sageNightDeath != null) add(ClocktowerResolvedFlowFact.SAGE_KILLED_BY_DEMON)
-        },
+                )
+            },
+        ),
+        ),
     )
-    val nightSteps = if (phase == ClocktowerPhase.FirstNight) {
-        ClocktowerProductionFirstNightFlow.order(
-            ruleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script),
-            playerCount = cards.size,
-            inPlayRoleIds = firstNightWakingRoleIds,
-            actualRoleIds = firstNightActualRoleIds,
-            productionSteps = filteredNightSteps,
-            identityOf = { step ->
-                when {
-                    step.title == minionInfoTitle -> ClocktowerProductionNightStepIdentity.minionInfo()
-                    step.title == demonInfoTitle -> ClocktowerProductionNightStepIdentity.demonInfo()
-                    step.action == ClocktowerNightAction.RedHerring ->
-                        ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring()
-                    else -> ClocktowerProductionNightStepIdentity.role(
-                        RoleId(requireNotNull(step.roleEnName) {
-                            "First-night production step is missing a stable role identity."
-                        }),
-                    )
-                }
-            },
-        )
-    } else {
-        ClocktowerProductionOtherNightFlow.order(
-            ruleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script),
-            playerCount = cards.size,
-            wakingRoleIds = otherNightWakingRoleIds,
-            resolvedFacts = otherNightResolvedFacts,
-            productionSteps = filteredNightSteps,
-            identityOf = { step ->
-                when {
-                    step.action == ClocktowerNightAction.NewDemonIdentity ->
-                        ClocktowerProductionNightStepIdentity.newDemonIdentity()
-                    step.action == ClocktowerNightAction.DemonSuccessor ->
-                        ClocktowerProductionNightStepIdentity.demonSuccessor()
-                    step.action == ClocktowerNightAction.MayorRedirect ->
-                        ClocktowerProductionNightStepIdentity.mayorRedirect()
-                    step.action == ClocktowerNightAction.DemonKill ->
-                        ClocktowerProductionNightStepIdentity.role(RoleId("Imp"))
-                    else -> ClocktowerProductionNightStepIdentity.role(
-                        RoleId(requireNotNull(step.roleEnName) {
-                            "Other-night production step is missing a stable role identity."
-                        }),
-                    )
-                }
-            },
-        )
+        otherNightMaterializers.materialize(otherNightInteractions)
     }
 
     playerDisplayStep?.let { displayStep ->
@@ -5117,2506 +4810,4 @@ internal fun ClocktowerJudgeScreen(
 
     return
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.clocktower_judge_assistant), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Text(gameOutcome?.title ?: phaseTitle, color = Color(0xFF5C6A63))
-                }
-            }
-        }
-
-        item {
-            HostProgressCard(
-                title = stringResource(R.string.host_current_stage),
-                subtitle = phaseTitle,
-                progress = phaseProgress,
-            )
-        }
-
-        item {
-            HostScriptCard(
-                title = phaseTitle,
-                script = phaseScript,
-                action = phaseAction,
-            ) {
-                Text(stringResource(R.string.clocktower_storyteller_hint_body), color = Color(0xFF6F7B74))
-            }
-        }
-
-        if (gameOutcome != null) {
-            item {
-                Card(
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFEAF2EA)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Text(gameOutcome.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Text(gameOutcome.summary)
-                        Text(gameOutcome.reason, color = Color(0xFF5C6A63))
-                    }
-                }
-            }
-        }
-
-        when (phase) {
-            ClocktowerPhase.FirstNight -> {
-                item {
-                    Card(
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Text(stringResource(R.string.clocktower_red_herring_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text(stringResource(R.string.clocktower_red_herring_hint), color = Color(0xFF6F7B74))
-                            SelectablePlayerChips(
-                                cards = clocktowerRedHerringCandidates(aliveCards),
-                                selectedName = redHerring,
-                                onSelect = { onSelectRedHerring(if (redHerring == it) null else it) },
-                                enabled = gameOutcome == null,
-                            )
-                        }
-                    }
-                }
-                firstNightWasherwoman?.let { washerwoman ->
-                    val target = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Townsfolk && it.name != washerwoman.name }
-                    val pair = target?.let { storytellerPairHint(it, cards) }
-                    if (pair != null && target.clocktowerRole != null) {
-                        item {
-                            ClocktowerInfoCard(
-                                title = stringResource(R.string.clocktower_role_info_format, washerwoman.name, washerwoman.hostRoleLabel(context, GameKind.Clocktower)),
-                                body = stringResource(
-                                    R.string.clocktower_washerwoman_info,
-                                    target.clocktowerRole!!.nameFor(language),
-                                    pair.first.name,
-                                    pair.second.name,
-                                ),
-                            )
-                        }
-                    }
-                }
-                firstNightLibrarian?.let { librarian ->
-                    val outsider = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Outsider }
-                    item {
-                        ClocktowerInfoCard(
-                            title = stringResource(R.string.clocktower_role_info_format, librarian.name, librarian.hostRoleLabel(context, GameKind.Clocktower)),
-                            body = if (outsider?.clocktowerRole != null) {
-                                val pair = storytellerPairHint(outsider, cards)
-                                if (pair != null) {
-                                    stringResource(
-                                        R.string.clocktower_librarian_info,
-                                        outsider.clocktowerRole!!.nameFor(language),
-                                        pair.first.name,
-                                        pair.second.name,
-                                    )
-                                } else {
-                                    stringResource(R.string.clocktower_no_info)
-                                }
-                            } else {
-                                stringResource(R.string.clocktower_librarian_none)
-                            },
-                        )
-                    }
-                }
-                firstNightInvestigator?.let { investigator ->
-                    val minion = cards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Minion }
-                    item {
-                        ClocktowerInfoCard(
-                            title = stringResource(R.string.clocktower_role_info_format, investigator.name, investigator.hostRoleLabel(context, GameKind.Clocktower)),
-                            body = if (minion?.clocktowerRole != null) {
-                                val pair = storytellerPairHint(minion, cards)
-                                if (pair != null) {
-                                    stringResource(
-                                        R.string.clocktower_investigator_info,
-                                        minion.clocktowerRole!!.nameFor(language),
-                                        pair.first.name,
-                                        pair.second.name,
-                                    )
-                                } else {
-                                    stringResource(R.string.clocktower_no_info)
-                                }
-                            } else {
-                                stringResource(R.string.clocktower_investigator_none)
-                            },
-                        )
-                    }
-                }
-                chefPlayer?.let { chef ->
-                    item {
-                        ClocktowerInfoCard(
-                            title = stringResource(R.string.clocktower_role_info_format, chef.name, chef.hostRoleLabel(context, GameKind.Clocktower)),
-                            body = stringResource(R.string.clocktower_chef_info, chefEvilPairs(cards)),
-                        )
-                    }
-                }
-                if (actualClocktowerRoleCards(cards, "Spy").isNotEmpty() || actualClocktowerRoleCards(cards, "Baron").isNotEmpty()) {
-                    item {
-                        ClocktowerInfoCard(
-                            title = stringResource(R.string.clocktower_special_reminders_title),
-                            body = buildList {
-                                if (actualClocktowerRoleCards(cards, "Spy").isNotEmpty()) {
-                                    add(stringResource(R.string.clocktower_spy_hint))
-                                }
-                                if (actualClocktowerRoleCards(cards, "Baron").isNotEmpty()) {
-                                    add(stringResource(R.string.clocktower_baron_hint))
-                                }
-                            }.joinToString("\n"),
-                        )
-                    }
-                }
-                item {
-                    Button(
-                        onClick = onAdvanceFromFirstNight,
-                        enabled = gameOutcome == null,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Text(stringResource(R.string.clocktower_start_day_one))
-                    }
-                }
-            }
-
-            ClocktowerPhase.Dawn -> Unit
-
-            ClocktowerPhase.Day -> {
-                if (butlerPlayers.isNotEmpty()) {
-                    item {
-                        Card(
-                            shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                Text(stringResource(R.string.clocktower_butler_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Text(stringResource(R.string.clocktower_butler_hint), color = Color(0xFF6F7B74))
-                                SelectablePlayerChips(
-                                    cards = aliveCards.filter { it.name !in butlerPlayers.map(PlayerCard::name) },
-                                    selectedName = butlerMaster,
-                                    onSelect = { onSelectButlerMaster(if (butlerMaster == it) null else it) },
-                                    enabled = gameOutcome == null,
-                                )
-                            }
-                        }
-                    }
-                }
-                item {
-                    Card(
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Text(stringResource(R.string.clocktower_execution_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text(stringResource(R.string.clocktower_execution_hint), color = Color(0xFF6F7B74))
-                            SelectablePlayerChips(
-                                cards = aliveCards,
-                                selectedName = selectedExecution,
-                                onSelect = { onSelectExecution(if (selectedExecution == it) null else it) },
-                                enabled = gameOutcome == null,
-                            )
-                            Button(
-                                onClick = onConfirmDay,
-                                enabled = gameOutcome == null,
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(
-                                    if (selectedExecution == null) {
-                                        stringResource(R.string.clocktower_no_execution)
-                                    } else {
-                                        stringResource(R.string.clocktower_confirm_execution)
-                                    },
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            ClocktowerPhase.Night -> {
-                if (poisonerPlayers.isNotEmpty()) {
-                    item {
-                        Card(
-                            shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                Text(stringResource(R.string.clocktower_poisoner_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Text(stringResource(R.string.clocktower_poisoner_hint), color = Color(0xFF6F7B74))
-                                SelectablePlayerChips(
-                                    cards = aliveCards,
-                                    selectedName = poisonTarget,
-                                    onSelect = { onSelectPoisonTarget(if (poisonTarget == it) null else it) },
-                                    enabled = gameOutcome == null,
-                                )
-                            }
-                        }
-                    }
-                }
-                empathPlayers.forEach { empath ->
-                    val neighbors = livingNeighbors(cards, empath.name)
-                    item {
-                        ClocktowerInfoCard(
-                            title = stringResource(R.string.clocktower_role_info_format, empath.name, empath.hostRoleLabel(context, GameKind.Clocktower)),
-                            body = stringResource(
-                                R.string.clocktower_empath_info,
-                                neighbors.joinToString(stringResource(R.string.name_separator)) { it.name },
-                                empathEvilNeighborCount(cards, empath.name),
-                            ),
-                        )
-                    }
-                }
-                fortuneTellerPlayers.forEach { fortuneTeller ->
-                    item {
-                        Card(
-                            shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                Text(
-                                    stringResource(R.string.clocktower_role_info_format, fortuneTeller.name, fortuneTeller.hostRoleLabel(context, GameKind.Clocktower)),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                                Text(stringResource(R.string.clocktower_fortune_teller_hint), color = Color(0xFF6F7B74))
-                                Text(stringResource(R.string.clocktower_choose_first_target), fontWeight = FontWeight.SemiBold)
-                                SelectablePlayerChips(
-                                    cards = aliveCards,
-                                    selectedName = fortuneTellerFirst,
-                                    onSelect = { onSelectFortuneTellerFirst(if (fortuneTellerFirst == it) null else it) },
-                                    enabled = gameOutcome == null,
-                                )
-                                Text(stringResource(R.string.clocktower_choose_second_target), fontWeight = FontWeight.SemiBold)
-                                SelectablePlayerChips(
-                                    cards = aliveCards.filter { it.name != fortuneTellerFirst },
-                                    selectedName = fortuneTellerSecond,
-                                    onSelect = { onSelectFortuneTellerSecond(if (fortuneTellerSecond == it) null else it) },
-                                    enabled = gameOutcome == null,
-                                )
-                                fortuneTellerResult?.let { result ->
-                                    Text(
-                                        stringResource(
-                                            R.string.clocktower_fortune_teller_result,
-                                            fortuneTellerFirst ?: "",
-                                            fortuneTellerSecond ?: "",
-                                            result,
-                                        ),
-                                        color = Color(0xFF2F5D50),
-                                        fontWeight = FontWeight.SemiBold,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-                item {
-                    Card(
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            Text(stringResource(R.string.clocktower_demon_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text(stringResource(R.string.clocktower_demon_hint), color = Color(0xFF6F7B74))
-                            SelectablePlayerChips(
-                                cards = aliveCards,
-                                selectedName = pendingNightDeath,
-                                onSelect = { onSelectNightDeath(if (pendingNightDeath == it) null else it) },
-                                enabled = gameOutcome == null,
-                            )
-                            ravenkeeperTrigger?.let {
-                                Text(stringResource(R.string.clocktower_ravenkeeper_hint), fontWeight = FontWeight.SemiBold)
-                                SelectablePlayerChips(
-                                    cards = aliveCards.filter { card -> card.name != ravenkeeperTrigger.name },
-                                    selectedName = ravenkeeperTarget,
-                                    onSelect = { onSelectRavenkeeperTarget(if (ravenkeeperTarget == it) null else it) },
-                                    enabled = gameOutcome == null,
-                                )
-                                ravenkeeperTarget?.let { targetName ->
-                                    val target = cards.firstOrNull { it.name == targetName }
-                                    if (target != null) {
-                                        Text(
-                                            stringResource(
-                                                R.string.clocktower_ravenkeeper_result,
-                                                target.name,
-                                                target.hostRoleLabel(context, GameKind.Clocktower),
-                                            ),
-                                            color = Color(0xFF2F5D50),
-                                            fontWeight = FontWeight.SemiBold,
-                                        )
-                                    }
-                                }
-                            }
-                            Button(
-                                onClick = onConfirmNight,
-                                enabled = gameOutcome == null,
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(stringResource(R.string.clocktower_confirm_night))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
-                    onClick = {
-                        when (phase) {
-                            ClocktowerPhase.FirstNight -> Unit
-                            ClocktowerPhase.Dawn -> onPhaseChange(ClocktowerPhase.Night)
-                            ClocktowerPhase.Day -> onPhaseChange(ClocktowerPhase.FirstNight)
-                            ClocktowerPhase.Night -> onPhaseChange(ClocktowerPhase.Day)
-                        }
-                    },
-                    enabled = phase != ClocktowerPhase.FirstNight,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(8.dp),
-                ) {
-                    Text(stringResource(R.string.previous_step))
-                }
-                Button(
-                    onClick = {
-                        when (phase) {
-                            ClocktowerPhase.FirstNight -> onAdvanceFromFirstNight()
-                            ClocktowerPhase.Dawn -> onAdvanceFromFirstNight()
-                            ClocktowerPhase.Day -> onPhaseChange(ClocktowerPhase.Night)
-                            ClocktowerPhase.Night -> onPhaseChange(ClocktowerPhase.Day)
-                        }
-                    },
-                    enabled = gameOutcome == null,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(8.dp),
-                ) {
-                    Text(stringResource(R.string.next_step))
-                }
-            }
-        }
-
-        item {
-            HorizontalDivider()
-            Text(stringResource(R.string.player_status), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        }
-
-        items(cards) { card ->
-            ClocktowerPlayerStatusRow(card)
-        }
-
-        item {
-            HorizontalDivider()
-            Text(stringResource(R.string.elimination_records), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            if (records.isEmpty()) {
-                Text(stringResource(R.string.no_eliminations), color = Color(0xFF6F7B74))
-            }
-        }
-
-        items(records) { record ->
-            Text(record.displayText(), modifier = Modifier.padding(vertical = 4.dp))
-        }
-
-        item {
-            Button(
-                onClick = onShowResults,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-            ) {
-                Text(if (gameOutcome == null) stringResource(R.string.end_and_reveal) else stringResource(R.string.view_results))
-            }
-        }
-    }
-}
-
-@Composable
-private fun EvilInfoDisplay(
-    primary: String,
-    secondary: String?,
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(18.dp),
-    ) {
-        listOfNotNull(primary, secondary?.takeIf { it.isNotBlank() }).forEach { section ->
-            val lines = section.lines()
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF2B3833), RoundedCornerShape(12.dp))
-                    .padding(horizontal = 18.dp, vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    lines.firstOrNull().orEmpty(),
-                    color = Color(0xFFAFC7BC),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-                Text(
-                    lines.drop(1).joinToString("\n"),
-                    color = Color.White,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Black,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ClocktowerStorytellerRecommendationScreen(
-    title: String,
-    subtitle: String,
-    description: String,
-    buttonLabel: String,
-    onStartNight: () -> Unit,
-    content: @Composable () -> Unit,
-) {
-    val language = LocalContext.current.resources.configuration.locales[0].language
-    fun text(zh: String, en: String): String = if (language == "en") en else zh
-
-    ClocktowerDarkTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-        ) {
-            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 18.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Text(
-                        title,
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.2.sp,
-                    )
-                    Text(
-                        subtitle,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Black,
-                    )
-                    Text(
-                        description,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                item {
-                    Surface(
-                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.10f),
-                        shape = RoundedCornerShape(16.dp),
-                    ) {
-                        Text(
-                            text(
-                                "不要向玩家展示推荐、真实角色或说书人裁定。",
-                                "Do not show recommendations, actual roles, or Storyteller rulings to players.",
-                            ),
-                            modifier = Modifier.padding(14.dp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-                item { content() }
-            }
-            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
-                Button(
-                    onClick = onStartNight,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                        .height(54.dp),
-                    shape = RoundedCornerShape(14.dp),
-                ) {
-                    Text(buttonLabel, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun StorytellerRecommendationCard(
-    automaticStorytellerInfo: Boolean,
-    state: RecommendationUiState,
-    selectedStyle: RecommendationStyle,
-    appliedStyle: RecommendationStyle?,
-    cards: List<PlayerCard>,
-    script: ClocktowerScript,
-    language: String,
-    lockedDecisions: List<StorytellerDecision>,
-    onSelectStyle: (RecommendationStyle) -> Unit,
-    onApply: (RecommendationPlan) -> Unit,
-    onReevaluate: (List<StorytellerDecision>) -> Unit,
-    onClearLocks: () -> Unit,
-) {
-    fun text(zh: String, en: String): String = if (language == "en") en else zh
-    fun styleName(style: RecommendationStyle): String = when (style) {
-        RecommendationStyle.GENTLE -> text("稳健", "Gentle")
-        RecommendationStyle.BALANCED -> text("平衡", "Balanced")
-        RecommendationStyle.AGGRESSIVE -> text("激进", "Aggressive")
-    }
-    fun roleName(roleId: RoleId): String = clocktowerRolesForScript(script)
-        .firstOrNull { it.enName == roleId.value }
-        ?.nameFor(language)
-        ?: roleId.value
-    fun seatLabel(seat: Int): String = cards.getOrNull(seat - 1)?.seatLabel(cards)
-        ?: text("${seat}号", "Seat $seat")
-    fun scoreReason(ruleId: String): String = when (ruleId) {
-        "red-herring-role-suitability" -> text("红鲱鱼身份适合制造可解释的误导", "The red herring creates explainable misinformation")
-        "red-herring-sensitive-role" -> text("避免让关键善良角色承受过重压力", "Avoids excessive pressure on a key good role")
-        "drunk-shown-role-suitability" -> text("酒鬼展示身份适合持续提供错误信息", "The Drunk's shown role supports ongoing misinformation")
-        "drunk-non-information-role" -> text("酒鬼展示为非信息角色，误导空间较少", "A non-information shown role gives the Drunk less useful misinformation")
-        "investigator-display-suitability" -> text("调查员假信息具有清晰的讨论价值", "The Investigator misinformation creates a clear discussion hook")
-        "drunk-info-avoids-real-evil" -> text("假信息不会直接压中真实邪恶玩家", "The misinformation avoids directly naming real evil")
-        "drunk-info-hits-real-evil" -> text("假信息会直接命中真实邪恶玩家", "The misinformation directly names real evil")
-        "red-herring-overlaps-drunk-info" -> text("不同误导线索没有堆在同一名玩家身上", "Different misinformation threads do not pile onto one player")
-        "one-empath-protected-candidate" -> text("候选人中保留一名可被邻座信息交叉验证的玩家", "One candidate can be cross-checked by neighboring information")
-        "both-candidates-empath-protected" -> text("两名候选人都容易被邻座信息快速洗清", "Both candidates may be cleared too quickly by neighboring information")
-        "drunk-points-to-self" -> text("避免让酒鬼自己的信息指向自己", "Avoids having the Drunk's information point to themself")
-        "candidate-critical-exposure" -> text("控制关键角色被集中怀疑的风险", "Controls the risk of exposing a critical role")
-        "candidate-discussion-value" -> text("候选组合能产生有价值的桌面讨论", "The candidate pair should generate useful discussion")
-        "candidate-seat-spacing" -> text("候选座位距离符合当前风格", "Candidate spacing fits this recommendation style")
-        "demon-bluff-ease" -> text("恶魔伪装较容易解释和维持", "The Demon bluffs are practical to maintain")
-        else -> ruleId
-    }
-
-    var showOtherPlans by remember { mutableStateOf(false) }
-    var showDetails by remember(selectedStyle) { mutableStateOf(false) }
-    var editingDecisions by remember { mutableStateOf(false) }
-    val plans = (state as? RecommendationUiState.Ready)?.plans.orEmpty()
-    val selectedPlan = plans.firstOrNull { it.style == selectedStyle } ?: plans.firstOrNull()
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.30f)),
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(
-                text("说书人首夜推荐", "Storyteller first-night recommendation"),
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Black,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                if (automaticStorytellerInfo) {
-                    text("全自动模式已采用平衡方案，不显示其他候选裁定。", "Automatic mode has applied the balanced plan; alternative rulings are hidden.")
-                } else {
-                    text("默认选择平衡方案；熟练说书人可比较三种风格。", "Balanced is the default; experienced Storytellers can compare all three styles.")
-                },
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-            )
-            if (!automaticStorytellerInfo && lockedDecisions.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text("已锁定 ${lockedDecisions.size} 项裁定", "${lockedDecisions.size} decision(s) locked"),
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    TextButton(onClick = onClearLocks) { Text(text("解除全部", "Clear all")) }
-                }
-            }
-
-            if (!automaticStorytellerInfo && plans.isNotEmpty() && showOtherPlans) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    RecommendationStyle.entries.forEach { style ->
-                        val enabled = plans.any { it.style == style }
-                        if (style == selectedStyle) {
-                            Button(
-                                onClick = { onSelectStyle(style) },
-                                enabled = enabled,
-                                shape = RoundedCornerShape(18.dp),
-                            ) { Text(styleName(style)) }
-                        } else {
-                            OutlinedButton(
-                                onClick = { onSelectStyle(style) },
-                                enabled = enabled,
-                                shape = RoundedCornerShape(18.dp),
-                            ) { Text(styleName(style)) }
-                        }
-                    }
-                }
-            }
-            if (!automaticStorytellerInfo && plans.size > 1) {
-                TextButton(
-                    onClick = {
-                        showOtherPlans = !showOtherPlans
-                        if (!showOtherPlans) onSelectStyle(RecommendationStyle.BALANCED)
-                    },
-                ) {
-                    Text(if (showOtherPlans) text("只看默认方案", "Show default only") else text("查看其他方案", "View other plans"))
-                }
-            }
-
-            when (state) {
-                RecommendationUiState.Loading -> Text(text("正在计算高质量线索…", "Calculating high-quality information…"), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                RecommendationUiState.Empty -> Text(text("当前配置没有找到合法推荐，请使用首夜手动流程。", "No legal recommendation was found; use the manual first-night flow."), color = MaterialTheme.colorScheme.secondary)
-                is RecommendationUiState.InvalidLocks -> {
-                    Text(text("锁定的裁定不合法或互相冲突，请解除锁定后重试。", "The locked decisions are illegal or incompatible. Clear the locks and try again."), color = MaterialTheme.colorScheme.error)
-                    Button(onClick = onClearLocks, modifier = Modifier.fillMaxWidth()) {
-                        Text(text("解除锁定并恢复推荐", "Clear locks and restore recommendations"))
-                    }
-                }
-                is RecommendationUiState.Error -> Text(text("推荐暂时不可用：", "Recommendation unavailable: ") + state.message, color = MaterialTheme.colorScheme.error)
-                is RecommendationUiState.Ready -> selectedPlan?.let { plan ->
-                    val drunkPlayer = cards.firstOrNull { it.clocktowerRole?.enName == "Drunk" }
-                    val actionLines = plan.decisions.map { decision ->
-                        val line = when (decision) {
-                            is StorytellerDecision.RedHerring -> text("红鲱鱼：", "Red herring: ") + seatLabel(decision.seat)
-                            is StorytellerDecision.DrunkShownRole -> text("酒鬼展示身份：", "Show the Drunk as: ") + roleName(decision.role) + drunkPlayer?.let { " · ${it.seatLabel(cards)}" }.orEmpty()
-                            is StorytellerDecision.DrunkInvestigatorInfo -> text("酒鬼调查员信息：", "Drunk Investigator information: ") + roleName(decision.shownMinion) + " · " + decision.candidateSeats.joinToString(" / ") { seatLabel(it) }
-                            is StorytellerDecision.DemonBluffs -> text("恶魔伪装：", "Demon bluffs: ") + decision.roles.joinToString(text("、", ", ")) { roleName(it) }
-                        }
-                        if (lockedDecisions.any { it.kind() == decision.kind() }) "🔒 $line" else line
-                    }
-                    actionLines.forEach { line -> Text("• $line", style = MaterialTheme.typography.bodyMedium) }
-
-                    if (!automaticStorytellerInfo && editingDecisions) {
-                        RecommendationDecisionEditor(
-                            plan = plan,
-                            lockedDecisions = lockedDecisions,
-                            cards = cards,
-                            script = script,
-                            language = language,
-                            onCancel = { editingDecisions = false },
-                            onSubmit = { nextLocks ->
-                                editingDecisions = false
-                                onReevaluate(nextLocks)
-                            },
-                        )
-                    } else if (!automaticStorytellerInfo) {
-                        OutlinedButton(
-                            onClick = { editingDecisions = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                        ) {
-                            Text(text("修改裁定", "Edit decisions"))
-                        }
-                    }
-
-                    val qualityLabel = when (plan.qualityTier) {
-                        QualityTier.RECOMMENDED -> text("推荐", "Recommended")
-                        QualityTier.ACCEPTABLE_WITH_WARNING -> text("可用，但需留意警告", "Usable with warnings")
-                        QualityTier.EXPERT_ONLY -> text("仅建议熟练说书人使用", "Expert only")
-                        QualityTier.REJECTED -> text("不可用", "Rejected")
-                    }
-                    Text(
-                        text("质量：", "Quality: ") + qualityLabel,
-                        color = if (plan.qualityTier == QualityTier.RECOMMENDED) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-
-                    if (showDetails) {
-                        Text(text("评分：${plan.totalScore}", "Score: ${plan.totalScore}"), fontWeight = FontWeight.SemiBold)
-                        plan.scoreItems
-                            .sortedByDescending { kotlin.math.abs(it.delta) }
-                            .take(6)
-                            .forEach { item ->
-                                val sign = if (item.delta >= 0) "+" else ""
-                                Text("$sign${item.delta} · ${scoreReason(item.ruleId)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        plan.warnings.forEach { warning ->
-                            Text(text("注意：", "Warning: ") + scoreReason(warning.ruleId), color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(onClick = { showDetails = !showDetails }, modifier = Modifier.weight(1f)) {
-                            Text(if (showDetails) text("收起理由", "Hide reasons") else text("查看推荐理由", "Why this plan"))
-                        }
-                        if (!automaticStorytellerInfo) {
-                            Button(
-                                onClick = { onApply(plan) },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(if (appliedStyle == plan.style) text("已采用", "Applied") else text("采用推荐", "Apply plan"))
-                            }
-                        }
-                    }
-                    Text(
-                        if (automaticStorytellerInfo) {
-                            text("以下首夜步骤将直接使用当前自动模式的信息。", "The first-night steps below will use the selected automatic style.")
-                        } else {
-                            text("采用后仍可在下方首夜步骤中手动修改具体裁定。", "After applying, you can still edit individual decisions in the first-night steps below.")
-                        },
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun RecommendationDecisionEditor(
-    plan: RecommendationPlan,
-    lockedDecisions: List<StorytellerDecision>,
-    cards: List<PlayerCard>,
-    script: ClocktowerScript,
-    language: String,
-    onCancel: () -> Unit,
-    onSubmit: (List<StorytellerDecision>) -> Unit,
-) {
-    fun text(zh: String, en: String): String = if (language == "en") en else zh
-    fun roleName(role: ClocktowerRole): String = role.nameFor(language)
-    val scriptRoles = clocktowerRolesForScript(script)
-    val inPlayRoleNames = cards.mapNotNull { it.clocktowerRole?.enName }.toSet()
-    val redHerringOptions = cards.filter {
-        it.clocktowerTeam == ClocktowerTeam.Townsfolk || it.clocktowerTeam == ClocktowerTeam.Outsider
-    }
-    val drunkShownRoleOptions = scriptRoles.filter {
-        it.team == ClocktowerTeam.Townsfolk && it.enName !in inPlayRoleNames
-    }
-    val minionRoleOptions = scriptRoles.filter { it.team == ClocktowerTeam.Minion }
-    val demonBluffOptions = scriptRoles.filter {
-        it.team in setOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider) && it.enName !in inPlayRoleNames
-    }
-    var draftDecisions by remember(plan.effectSignature) { mutableStateOf(plan.decisions) }
-    var modifiedKinds by remember(plan.effectSignature) { mutableStateOf<Set<StorytellerDecisionKind>>(emptySet()) }
-
-    fun replaceDecision(kind: StorytellerDecisionKind, decision: StorytellerDecision?) {
-        draftDecisions = draftDecisions.filterNot { it.kind() == kind } + listOfNotNull(decision)
-        modifiedKinds = modifiedKinds + kind
-    }
-
-    val redHerring = draftDecisions.filterIsInstance<StorytellerDecision.RedHerring>().singleOrNull()
-    val drunkShownRole = draftDecisions.filterIsInstance<StorytellerDecision.DrunkShownRole>().singleOrNull()
-    val drunkInfo = draftDecisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().singleOrNull()
-    val demonBluffs = draftDecisions.filterIsInstance<StorytellerDecision.DemonBluffs>().singleOrNull()
-    val isValidDraft = (drunkShownRole?.role != RoleId("Investigator") || drunkInfo?.candidateSeats?.size == 2) &&
-        (demonBluffs == null || demonBluffs.roles.size == 3)
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = RoundedCornerShape(16.dp),
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(text("修改后，该项会被锁定；其他项目将重新计算。", "Changed items will be locked; all other items will be recalculated."), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-
-            redHerring?.let { current ->
-                Text(text("红鲱鱼", "Red herring"), fontWeight = FontWeight.Bold)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    redHerringOptions.forEach { card ->
-                        val seat = cards.indexOf(card) + 1
-                        val selected = current.seat == seat
-                        if (selected) {
-                            Button(onClick = { }, shape = RoundedCornerShape(16.dp), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)) {
-                                Text("$seat. ${card.name}")
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = { replaceDecision(StorytellerDecisionKind.RED_HERRING, StorytellerDecision.RedHerring(seat)) },
-                                shape = RoundedCornerShape(16.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                            ) { Text("${cards.indexOf(card) + 1}. ${card.name}") }
-                        }
-                    }
-                }
-                HorizontalDivider()
-            }
-
-            drunkShownRole?.let { current ->
-                Text(text("酒鬼展示身份", "Drunk shown role"), fontWeight = FontWeight.Bold)
-                val committedShownRole = cards.firstOrNull { it.clocktowerRole?.enName == "Drunk" }
-                    ?.clocktowerShownRole
-                Text(
-                    committedShownRole?.let { roleName(it) } ?: roleName(
-                        drunkShownRoleOptions.first { it.enName == current.role.value },
-                    ),
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text(
-                        "该身份已经向玩家展示；后续推荐只能围绕它重新优化。",
-                        "This identity has already been shown; later recommendations optimize around it.",
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                HorizontalDivider()
-            }
-
-            if (drunkShownRole?.role == RoleId("Investigator") && drunkInfo != null) {
-                Text(text("酒鬼调查员展示的爪牙", "Minion shown to the Drunk Investigator"), fontWeight = FontWeight.Bold)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    minionRoleOptions.forEach { role ->
-                        val selected = drunkInfo.shownMinion.value == role.enName
-                        if (selected) {
-                            Button(onClick = { }, shape = RoundedCornerShape(16.dp), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)) { Text(roleName(role)) }
-                        } else {
-                            OutlinedButton(
-                                onClick = {
-                                    replaceDecision(
-                                        StorytellerDecisionKind.DRUNK_INVESTIGATOR_INFO,
-                                        drunkInfo.copy(shownMinion = RoleId(role.enName)),
-                                    )
-                                },
-                                shape = RoundedCornerShape(16.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                            ) { Text(roleName(role)) }
-                        }
-                    }
-                }
-                Text(text("选择两名候选玩家", "Select two candidate players"), fontWeight = FontWeight.Bold)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    cards.forEachIndexed { index, card ->
-                        val seat = index + 1
-                        val selected = seat in drunkInfo.candidateSeats
-                        if (selected) {
-                            Button(
-                                onClick = {
-                                    replaceDecision(
-                                        StorytellerDecisionKind.DRUNK_INVESTIGATOR_INFO,
-                                        drunkInfo.copy(candidateSeats = drunkInfo.candidateSeats.filterNot { it == seat }),
-                                    )
-                                },
-                                shape = RoundedCornerShape(16.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                            ) { Text("$seat. ${card.name}") }
-                        } else {
-                            OutlinedButton(
-                                onClick = {
-                                    if (drunkInfo.candidateSeats.size < 2) {
-                                        replaceDecision(
-                                            StorytellerDecisionKind.DRUNK_INVESTIGATOR_INFO,
-                                            drunkInfo.copy(candidateSeats = (drunkInfo.candidateSeats + seat).sorted()),
-                                        )
-                                    }
-                                },
-                                enabled = drunkInfo.candidateSeats.size < 2,
-                                shape = RoundedCornerShape(16.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                            ) { Text("$seat. ${card.name}") }
-                        }
-                    }
-                }
-                if (drunkInfo.candidateSeats.size != 2) {
-                    Text(text("必须选择正好两名玩家。", "Select exactly two players."), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                }
-                HorizontalDivider()
-            }
-
-            demonBluffs?.let { current ->
-                Text(text("恶魔伪装（选择三个）", "Demon bluffs (select three)"), fontWeight = FontWeight.Bold)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    demonBluffOptions.forEach { role ->
-                        val roleId = RoleId(role.enName)
-                        val selected = roleId in current.roles
-                        if (selected) {
-                            Button(
-                                onClick = {
-                                    replaceDecision(
-                                        StorytellerDecisionKind.DEMON_BLUFFS,
-                                        current.copy(roles = current.roles.filterNot { it == roleId }),
-                                    )
-                                },
-                                shape = RoundedCornerShape(16.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                            ) { Text(roleName(role)) }
-                        } else {
-                            OutlinedButton(
-                                onClick = {
-                                    if (current.roles.size < 3) {
-                                        replaceDecision(
-                                            StorytellerDecisionKind.DEMON_BLUFFS,
-                                            current.copy(
-                                                roles = (current.roles + roleId).sortedBy { selectedRole ->
-                                                    demonBluffOptions.indexOfFirst { it.enName == selectedRole.value }
-                                                },
-                                            ),
-                                        )
-                                    }
-                                },
-                                enabled = current.roles.size < 3,
-                                shape = RoundedCornerShape(16.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                            ) { Text(roleName(role)) }
-                        }
-                    }
-                }
-                if (current.roles.size != 3) {
-                    Text(text("必须选择正好三个伪装角色。", "Select exactly three bluff roles."), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f)) { Text(text("取消", "Cancel")) }
-                Button(
-                    onClick = {
-                        val affectedKinds = modifiedKinds
-                        val nextLocks = lockedDecisions.filterNot { it.kind() in affectedKinds } +
-                            draftDecisions.filter { it.kind() in affectedKinds }
-                        onSubmit(nextLocks)
-                    },
-                    enabled = modifiedKinds.isNotEmpty() && isValidDraft,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(text("锁定并重新评价", "Lock and re-evaluate"))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ClocktowerPlayerDisplayCardLocalized(
-    step: ClocktowerNightStepUi,
-    onDismiss: () -> Unit,
-) {
-    val primary = step.displayPrimary ?: step.tellPlayer.orEmpty()
-    val secondary = step.displaySecondary
-    val footer = step.displayFooter ?: step.explanation
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF0B0D10),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                step.displayTitle,
-                color = Color(0xFFF1EADC),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(22.dp),
-            ) {
-                when (step.displayKind) {
-                    ClocktowerDisplayKind.Number, ClocktowerDisplayKind.YesNo -> {
-                        Text(
-                            primary,
-                            color = Color(0xFFC5A56A),
-                            fontSize = 88.sp,
-                            fontWeight = FontWeight.Black,
-                            textAlign = TextAlign.Center,
-                        )
-                        secondary?.takeIf { it.isNotBlank() }?.let {
-                            Text(
-                                it,
-                                color = Color(0xFFF7F1E6),
-                                fontSize = 64.sp,
-                                fontWeight = FontWeight.Black,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                        Text(
-                            footer,
-                            color = Color(0xFFF1EADC),
-                            style = MaterialTheme.typography.headlineSmall,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-
-                    ClocktowerDisplayKind.EitherOne -> {
-                        Text(
-                            primary,
-                            color = Color(0xFFF7F1E6),
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                        )
-                        if (footer.isNotBlank()) {
-                            Text(
-                                footer,
-                                color = Color(0xFFAAA397),
-                                style = MaterialTheme.typography.titleLarge,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                        secondary?.let {
-                            Text(
-                                it,
-                                color = Color(0xFFC5A56A),
-                                fontSize = 64.sp,
-                                fontWeight = FontWeight.Black,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-
-                    ClocktowerDisplayKind.EvilInfo -> EvilInfoDisplay(primary, secondary)
-
-                    ClocktowerDisplayKind.RoleReveal, ClocktowerDisplayKind.Plain -> {
-                        Text(
-                            primary,
-                            color = Color(0xFFF7F1E6),
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.Black,
-                            textAlign = TextAlign.Center,
-                        )
-                        if (footer.isNotBlank()) {
-                            Text(
-                                footer,
-                                color = Color(0xFFAAA397),
-                                style = MaterialTheme.typography.titleLarge,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-
-                    ClocktowerDisplayKind.Grimoire -> {
-                        val lines = primary.lines().filter { it.isNotBlank() }
-                        val rowFontSize = if (lines.size >= 10) 14.sp else 16.sp
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(5.dp),
-                        ) {
-                            lines.forEach { line ->
-                                val parts = line.split(Regex("[：:]"), limit = 2)
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(Color(0xFF1B1F25), RoundedCornerShape(10.dp))
-                                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        parts.firstOrNull().orEmpty(),
-                                        color = Color(0xFFF1EADC),
-                                        fontSize = rowFontSize,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier = Modifier.weight(1.35f),
-                                    )
-                                    Text(
-                                        parts.getOrNull(1).orEmpty(),
-                                        color = Color(0xFFC5A56A),
-                                        fontSize = rowFontSize,
-                                        fontWeight = FontWeight.Bold,
-                                        textAlign = TextAlign.End,
-                                        modifier = Modifier.weight(0.85f),
-                                    )
-                                }
-                            }
-                        }
-                        if (footer.isNotBlank()) {
-                            Text(
-                                footer,
-                                color = Color(0xFFAAA397),
-                                style = MaterialTheme.typography.bodyMedium,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-
-                    ClocktowerDisplayKind.None -> Unit
-                }
-            }
-            OutlinedButton(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFC5A56A)),
-            ) {
-                Text(stringResource(R.string.clocktower_display_close))
-            }
-        }
-    }
-}
-
-@Composable
-private fun ClocktowerPlayerDisplayCard(
-    step: ClocktowerNightStepUi,
-    onDismiss: () -> Unit,
-) {
-    val primary = step.displayPrimary ?: step.tellPlayer.orEmpty()
-    val secondary = step.displaySecondary
-    val footer = step.displayFooter ?: step.explanation
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF1F2925),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                step.displayTitle,
-                color = Color(0xFFEAF2EA),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(22.dp),
-            ) {
-                when (step.displayKind) {
-                    ClocktowerDisplayKind.Number, ClocktowerDisplayKind.YesNo -> {
-                        Text(
-                            primary,
-                            color = Color(0xFFFFF4DC),
-                            fontSize = 88.sp,
-                            fontWeight = FontWeight.Black,
-                            textAlign = TextAlign.Center,
-                        )
-                        Text(
-                            footer,
-                            color = Color.White,
-                            style = MaterialTheme.typography.headlineSmall,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-
-                    ClocktowerDisplayKind.EitherOne -> {
-                        Text(
-                            primary,
-                            color = Color.White,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                        )
-                        secondary?.let {
-                            Text(
-                                it,
-                                color = Color(0xFFFFF4DC),
-                                style = MaterialTheme.typography.headlineLarge,
-                                fontWeight = FontWeight.Black,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                        Text(
-                            footer,
-                            color = Color(0xFFEAF2EA),
-                            style = MaterialTheme.typography.titleLarge,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-
-                    ClocktowerDisplayKind.EvilInfo -> EvilInfoDisplay(primary, secondary)
-
-                    ClocktowerDisplayKind.RoleReveal, ClocktowerDisplayKind.Plain -> {
-                        Text(
-                            primary,
-                            color = Color.White,
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.Black,
-                            textAlign = TextAlign.Center,
-                        )
-                        if (footer.isNotBlank()) {
-                            Text(
-                                footer,
-                                color = Color(0xFFEAF2EA),
-                                style = MaterialTheme.typography.titleLarge,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-
-                    ClocktowerDisplayKind.Grimoire -> {
-                        val lines = primary.lines().filter { it.isNotBlank() }
-                        val rowFontSize = if (lines.size >= 10) 14.sp else 16.sp
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(5.dp),
-                        ) {
-                            lines.forEach { line ->
-                                val parts = line.split("：", limit = 2)
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(Color(0xFF2B3833), RoundedCornerShape(6.dp))
-                                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        parts.firstOrNull().orEmpty(),
-                                        color = Color.White,
-                                        fontSize = rowFontSize,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier = Modifier.weight(1.35f),
-                                    )
-                                    Text(
-                                        parts.getOrNull(1).orEmpty(),
-                                        color = Color(0xFFFFF4DC),
-                                        fontSize = rowFontSize,
-                                        fontWeight = FontWeight.Bold,
-                                        textAlign = TextAlign.End,
-                                        modifier = Modifier.weight(0.85f),
-                                    )
-                                }
-                            }
-                        }
-                        if (footer.isNotBlank()) {
-                            Text(
-                                footer,
-                                color = Color(0xFFEAF2EA),
-                                style = MaterialTheme.typography.bodyMedium,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-
-                    ClocktowerDisplayKind.None -> Unit
-                }
-            }
-            OutlinedButton(
-                onClick = onDismiss,
-                shape = RoundedCornerShape(8.dp),
-            ) {
-                Text(stringResource(R.string.clocktower_display_close))
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun SpyRegistrationPanel(
-    cards: List<PlayerCard>,
-    spy: PlayerCard,
-    teams: List<ClocktowerTeam>,
-    registersGood: Boolean,
-    registeredRoleEnName: String?,
-    detail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,
-    hint: String? = null,
-    recommendations: List<ClocktowerRegistrationRecommendationOption> = emptyList(),
-    automaticStorytellerInfo: Boolean = false,
-    automaticStorytellerStyle: RecommendationStyle = RecommendationStyle.BALANCED,
-    selectionAudit: SelectionAuditContext? = null,
-    enabled: Boolean,
-    onRegistersGoodChange: (Boolean) -> Unit,
-    onRoleChange: (String) -> Unit,
-) {
-    val language = LocalContext.current.resources.configuration.locales[0].language
-    val roles = completeTroubleBrewingRoles.filter { it.team in teams && it.enName != "Spy" }
-    val registrationPool = unifiedRegistrationPool(recommendations)
-    val assistedRecommendations = registrationPool
-        ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
-        ?.map { it.payload }
-        ?: recommendations
-    val automaticRecommendation = WeightedStableSelector.selectStyle(
-        registrationPool?.candidatesFor(SelectionExecutionPolicy.AUTO)?.map { it.payload }.orEmpty(),
-        automaticStorytellerStyle,
-        ClocktowerRegistrationRecommendationOption::style,
-    )
-    val automaticStyleLabel = when (automaticStorytellerStyle) {
-        RecommendationStyle.GENTLE -> if (language == "en") "gentle" else "稳健"
-        RecommendationStyle.BALANCED -> if (language == "en") "balanced" else "均衡"
-        RecommendationStyle.AGGRESSIVE -> if (language == "en") "aggressive" else "激进"
-    }
-    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRecommendation, selectionAudit?.selectionId) {
-        if (automaticStorytellerInfo && enabled && automaticRecommendation != null) {
-            selectionAudit?.let { audit ->
-                audit.recorder.recordPreview(
-                    SelectionAuditRecord(
-                        selectionId = audit.selectionId,
-                        dimensions = audit.dimensions,
-                        candidates = recommendations.map { option ->
-                            SelectionAuditCandidate(
-                                familyId = if (option.usesSpecialRegistration) "special-registration" else "actual-registration",
-                                qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
-                            )
-                        },
-                    ),
-                )
-                audit.recorder.recordCommittedSelection(
-                    SelectionAuditCommit(
-                        selectionId = audit.selectionId,
-                        dimensions = audit.dimensions,
-                        selectedFamilyId = if (automaticRecommendation.usesSpecialRegistration) "special-registration" else "actual-registration",
-                    ),
-                )
-            }
-            onRegistersGoodChange(automaticRecommendation.usesSpecialRegistration)
-            if (automaticRecommendation.usesSpecialRegistration && detail == ClocktowerRegistrationDetail.Role) {
-                automaticRecommendation.registeredRoleEnName?.let(onRoleChange)
-            }
-        }
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                if (enabled) {
-                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.16f)
-                } else {
-                    MaterialTheme.colorScheme.error.copy(alpha = 0.12f)
-                },
-                RoundedCornerShape(14.dp),
-            )
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(if (language == "en") "Private Storyteller ruling" else "说书人私密裁定", fontWeight = FontWeight.Black)
-        Text(
-            "${spy.seatLabel(cards)} · ${if (language == "en") "this interaction only" else "仅影响本次交互"}",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        hint?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
-        if (!enabled) {
-            Text(
-                if (language == "en") "The Spy is poisoned; registration cannot change." else "间谍已中毒，本次不能改变登记身份。",
-                color = MaterialTheme.colorScheme.error,
-            )
-        } else {
-            if (automaticStorytellerInfo && automaticRecommendation != null) {
-                Text(
-                    if (language == "en") "Automatic $automaticStyleLabel ruling" else "已自动采用${automaticStyleLabel}裁定",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(automaticRecommendation.label, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                RecommendationReasonSummary(
-                    automaticRecommendation.reasonCodes,
-                    automaticRecommendation.warningCodes,
-                    language,
-                )
-            } else if (assistedRecommendations.isNotEmpty()) {
-                Text(
-                    if (language == "en") "Recommended ruling" else "推荐裁定",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-                assistedRecommendations.forEach { recommendation ->
-                    val apply = {
-                        onRegistersGoodChange(recommendation.usesSpecialRegistration)
-                        if (recommendation.usesSpecialRegistration && detail == ClocktowerRegistrationDetail.Role) {
-                            recommendation.registeredRoleEnName?.let(onRoleChange)
-                        }
-                    }
-                    if (recommendation.isDefaultRecommendation) {
-                        Button(onClick = apply, modifier = Modifier.fillMaxWidth()) {
-                            Text(recommendation.label)
-                        }
-                    } else {
-                        OutlinedButton(onClick = apply, modifier = Modifier.fillMaxWidth()) {
-                            Text(recommendation.label)
-                        }
-                    }
-                    RecommendationReasonSummary(recommendation.reasonCodes, recommendation.warningCodes, language)
-                }
-                Text(
-                    if (language == "en") "Or choose manually" else "或手动裁定",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            if (!automaticStorytellerInfo) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (registersGood) {
-                    OutlinedButton(onClick = { onRegistersGoodChange(false) }, modifier = Modifier.weight(1f)) {
-                        Text(if (language == "en") "Actual" else "真实身份")
-                    }
-                    Button(onClick = { onRegistersGoodChange(true) }, modifier = Modifier.weight(1f)) {
-                        Text(if (language == "en") "Register good" else "登记善良")
-                    }
-                } else {
-                    Button(onClick = { onRegistersGoodChange(false) }, modifier = Modifier.weight(1f)) {
-                        Text(if (language == "en") "Actual" else "真实身份")
-                    }
-                    OutlinedButton(onClick = { onRegistersGoodChange(true) }, modifier = Modifier.weight(1f)) {
-                        Text(if (language == "en") "Register good" else "登记善良")
-                    }
-                }
-            }
-            if (registersGood && detail == ClocktowerRegistrationDetail.Role && roles.isNotEmpty()) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    roles.forEach { role ->
-                        if (registeredRoleEnName == role.enName) {
-                            Button(onClick = { onRoleChange(role.enName) }) { Text(role.nameFor(language)) }
-                        } else {
-                            OutlinedButton(onClick = { onRoleChange(role.enName) }) { Text(role.nameFor(language)) }
-                        }
-                    }
-                }
-            }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun RecluseRegistrationPanel(
-    cards: List<PlayerCard>,
-    recluse: PlayerCard,
-    teams: List<ClocktowerTeam>,
-    registersEvil: Boolean,
-    registeredRoleEnName: String?,
-    recommendations: List<ClocktowerRegistrationRecommendationOption> = emptyList(),
-    automaticStorytellerInfo: Boolean = false,
-    automaticStorytellerStyle: RecommendationStyle = RecommendationStyle.BALANCED,
-    selectionAudit: SelectionAuditContext? = null,
-    enabled: Boolean,
-    onRegistersEvilChange: (Boolean) -> Unit,
-    onRoleChange: (String) -> Unit,
-) {
-    val language = LocalContext.current.resources.configuration.locales[0].language
-    val roles = completeTroubleBrewingRoles.filter { it.team in teams }
-    val registrationPool = unifiedRegistrationPool(recommendations)
-    val assistedRecommendations = registrationPool
-        ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
-        ?.map { it.payload }
-        ?: recommendations
-    val automaticRecommendation = WeightedStableSelector.selectStyle(
-        registrationPool?.candidatesFor(SelectionExecutionPolicy.AUTO)?.map { it.payload }.orEmpty(),
-        automaticStorytellerStyle,
-        ClocktowerRegistrationRecommendationOption::style,
-    )
-    val automaticStyleLabel = when (automaticStorytellerStyle) {
-        RecommendationStyle.GENTLE -> if (language == "en") "gentle" else "稳健"
-        RecommendationStyle.BALANCED -> if (language == "en") "balanced" else "均衡"
-        RecommendationStyle.AGGRESSIVE -> if (language == "en") "aggressive" else "激进"
-    }
-    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRecommendation, selectionAudit?.selectionId) {
-        if (automaticStorytellerInfo && enabled && automaticRecommendation != null) {
-            selectionAudit?.let { audit ->
-                audit.recorder.recordPreview(
-                    SelectionAuditRecord(
-                        selectionId = audit.selectionId,
-                        dimensions = audit.dimensions,
-                        candidates = recommendations.map { option ->
-                            SelectionAuditCandidate(
-                                familyId = if (option.usesSpecialRegistration) "special-registration" else "actual-registration",
-                                qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
-                            )
-                        },
-                    ),
-                )
-                audit.recorder.recordCommittedSelection(
-                    SelectionAuditCommit(
-                        selectionId = audit.selectionId,
-                        dimensions = audit.dimensions,
-                        selectedFamilyId = if (automaticRecommendation.usesSpecialRegistration) "special-registration" else "actual-registration",
-                    ),
-                )
-            }
-            onRegistersEvilChange(automaticRecommendation.usesSpecialRegistration)
-            if (automaticRecommendation.usesSpecialRegistration) {
-                automaticRecommendation.registeredRoleEnName?.let(onRoleChange)
-            }
-        }
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                if (enabled) {
-                    MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
-                } else {
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
-                },
-                RoundedCornerShape(14.dp),
-            )
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(if (language == "en") "Recluse registration" else "隐士登记裁定", fontWeight = FontWeight.Black)
-        Text(
-            "${recluse.seatLabel(cards)} · ${if (language == "en") "this interaction only" else "仅影响本次交互"}",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (!enabled) {
-            Text(
-                if (language == "en") "The Recluse is poisoned and must register normally." else "隐士已中毒，本次只能按真实身份登记。",
-                color = MaterialTheme.colorScheme.error,
-            )
-        } else {
-            if (automaticStorytellerInfo && automaticRecommendation != null) {
-                Text(
-                    if (language == "en") "Automatic $automaticStyleLabel ruling" else "已自动采用${automaticStyleLabel}裁定",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(automaticRecommendation.label, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                RecommendationReasonSummary(
-                    automaticRecommendation.reasonCodes,
-                    automaticRecommendation.warningCodes,
-                    language,
-                )
-            } else if (assistedRecommendations.isNotEmpty()) {
-                Text(
-                    if (language == "en") "Recommended ruling" else "推荐裁定",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-                assistedRecommendations.forEach { recommendation ->
-                    val apply = {
-                        onRegistersEvilChange(recommendation.usesSpecialRegistration)
-                        if (recommendation.usesSpecialRegistration) {
-                            recommendation.registeredRoleEnName?.let(onRoleChange)
-                        }
-                    }
-                    if (recommendation.isDefaultRecommendation) {
-                        Button(onClick = apply, modifier = Modifier.fillMaxWidth()) {
-                            Text(recommendation.label)
-                        }
-                    } else {
-                        OutlinedButton(onClick = apply, modifier = Modifier.fillMaxWidth()) {
-                            Text(recommendation.label)
-                        }
-                    }
-                    RecommendationReasonSummary(recommendation.reasonCodes, recommendation.warningCodes, language)
-                }
-                Text(
-                    if (language == "en") "Or choose manually" else "或手动裁定",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            if (!automaticStorytellerInfo) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (!registersEvil) {
-                    Button(onClick = { onRegistersEvilChange(false) }, modifier = Modifier.weight(1f)) { Text(if (language == "en") "Actual" else "真实身份") }
-                } else {
-                    OutlinedButton(onClick = { onRegistersEvilChange(false) }, modifier = Modifier.weight(1f)) { Text(if (language == "en") "Actual" else "真实身份") }
-                }
-                if (registersEvil) {
-                    Button(onClick = { onRegistersEvilChange(true) }, modifier = Modifier.weight(1f)) { Text(if (language == "en") "Register evil" else "登记邪恶") }
-                } else {
-                    OutlinedButton(onClick = { onRegistersEvilChange(true) }, modifier = Modifier.weight(1f)) { Text(if (language == "en") "Register evil" else "登记邪恶") }
-                }
-            }
-            if (registersEvil && roles.isNotEmpty()) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    roles.forEach { role ->
-                        if (registeredRoleEnName == role.enName) {
-                            Button(onClick = { onRoleChange(role.enName) }) { Text(role.nameFor(language)) }
-                        } else {
-                            OutlinedButton(onClick = { onRoleChange(role.enName) }) { Text(role.nameFor(language)) }
-                        }
-                    }
-                }
-            }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ClocktowerNightStepCardLocalized(
-    recommendationCoordinator: ClocktowerRecommendationCoordinator,
-    automaticStorytellerInfo: Boolean,
-    automaticStorytellerStyle: RecommendationStyle,
-    phase: ClocktowerPhase,
-    gameId: String,
-    round: Int,
-    sequence: Int,
-    gameStateRevision: Long,
-    playerInputRevision: Long,
-    debugDiagnosticsExpanded: Boolean,
-    selectionDistributionTelemetry: SelectionDistributionTelemetryRecorder,
-    evilAdvantage: Int,
-    informationDecisionKey: String,
-    cards: List<PlayerCard>,
-    aliveCards: List<PlayerCard>,
-    step: ClocktowerNightStepUi,
-    spyCard: PlayerCard?,
-    spyRegistrationGood: Boolean,
-    spyRegisteredRoleEnName: String?,
-    spyRegistrationRecommendations: List<ClocktowerRegistrationRecommendationOption>,
-    spyCanRegister: Boolean,
-    onSpyRegistrationGoodChange: (Boolean) -> Unit,
-    onSpyRegistrationRoleChange: (String) -> Unit,
-    recluseCard: PlayerCard?,
-    recluseRegistrationEvil: Boolean,
-    recluseRegisteredRoleEnName: String?,
-    recluseRegistrationRecommendations: List<ClocktowerRegistrationRecommendationOption>,
-    recluseCanRegister: Boolean,
-    onRecluseRegistrationEvilChange: (Boolean) -> Unit,
-    onRecluseRegistrationRoleChange: (String) -> Unit,
-    selectedName: String?,
-    fortuneTellerFirst: String?,
-    fortuneTellerSecond: String?,
-    chambermaidFirst: String?,
-    chambermaidSecond: String?,
-    onSelectName: (String) -> Unit,
-    onSelectFortuneTellerFirst: (String) -> Unit,
-    onSelectFortuneTellerSecond: (String) -> Unit,
-    onSelectChambermaidFirst: (String) -> Unit,
-    onSelectChambermaidSecond: (String) -> Unit,
-    onApplyRecommendedDisplayOption: (ClocktowerDisplayOption) -> Unit,
-    onShowPlayerDisplay: (ClocktowerNightStepUi) -> Unit,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
-    onNext: () -> Unit,
-    showNavigationActions: Boolean = true,
-) {
-    val language = LocalContext.current.resources.configuration.locales[0].language
-    fun optionId(option: ClocktowerDisplayOption): String = clocktowerInformationCandidateId(option)
-    // B7.3's first production slice: a single complete first-night pool is
-    // projected differently by execution policy. Later-night families retain
-    // their legacy lists until individually migrated.
-    val firstNightPool = step.legacyInformationCandidates
-        .takeIf { phase == ClocktowerPhase.FirstNight && it.isNotEmpty() }
-        ?.let { options -> unifiedFirstNightInformationPool(
-            options = options,
-            familyId = step.roleEnName ?: "first-night-information",
-            automaticStyle = automaticStorytellerStyle,
-        ) }
-    var firstNightPoolBenchmarkRuns by remember(
-        phase,
-        step.roleEnName,
-        step.legacyInformationCandidates,
-        automaticStorytellerStyle,
-    ) { mutableStateOf(0) }
-    var firstNightPoolBenchmarkReport by remember { mutableStateOf<UnifiedSelectionPoolDeviceBenchmarkReport?>(null) }
-    var firstNightPoolBenchmarkError by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(firstNightPoolBenchmarkRuns) {
-        if (firstNightPoolBenchmarkRuns == 0) return@LaunchedEffect
-        firstNightPoolBenchmarkReport = null
-        firstNightPoolBenchmarkError = null
-        runCatching {
-            val options = requireNotNull(step.legacyInformationCandidates.takeIf {
-                phase == ClocktowerPhase.FirstNight && it.isNotEmpty()
-            })
-            val family = step.roleEnName ?: "first-night-information"
-            withContext(Dispatchers.Default) {
-                UnifiedSelectionPoolDeviceBenchmark.run(
-                    poolFactory = {
-                        unifiedFirstNightInformationPool(options, family, automaticStorytellerStyle)
-                    },
-                    playerCount = cards.size,
-                    phase = StorytellerPhase.FIRST_NIGHT,
-                    style = automaticStorytellerStyle,
-                    styleOf = ClocktowerDisplayOption::recommendationStyle,
-                )
-            }
-        }.onSuccess { report ->
-            firstNightPoolBenchmarkReport = report
-            Log.i(
-                UNIFIED_FIRST_NIGHT_POOL_BENCHMARK_LOG_TAG,
-                report.toLogLine(step.roleEnName ?: "first-night-information"),
-            )
-        }.onFailure { error ->
-            firstNightPoolBenchmarkError = error.message ?: error.javaClass.simpleName
-            Log.e(UNIFIED_FIRST_NIGHT_POOL_BENCHMARK_LOG_TAG, "Unified first-night pool diagnostic failed", error)
-        }
-    }
-    val automaticInformationOptions = firstNightPool
-        ?.candidatesFor(SelectionExecutionPolicy.AUTO)
-        ?.map { it.payload }
-        ?: step.recommendedDisplayOptions
-    val assistedInformationOptions = firstNightPool
-        ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
-        ?.map { it.payload }
-        ?: step.recommendedDisplayOptions
-    val displayedInformationOptions = if (automaticStorytellerInfo) automaticInformationOptions else assistedInformationOptions
-    val dynamicDecisionFamily = when (step.action) {
-        ClocktowerNightAction.MayorRedirect -> "mayor-redirect"
-        ClocktowerNightAction.DemonSuccessor -> "demon-succession"
-        else -> null
-    }
-    val dynamicDecisionPool = dynamicDecisionFamily
-        ?.let { family -> unifiedDecisionPool(step.decisionOptions, family) }
-    val automaticDecisionOptions = dynamicDecisionPool
-        ?.candidatesFor(SelectionExecutionPolicy.AUTO)
-        ?.map { it.payload }
-        ?: step.decisionOptions
-    val assistedDecisionOptions = dynamicDecisionPool
-        ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
-        ?.map { it.payload }
-        ?: step.decisionOptions
-    val automaticDecision = WeightedStableSelector.selectStyle(
-        automaticDecisionOptions,
-        automaticStorytellerStyle,
-        ClocktowerDecisionOption::recommendationStyle,
-    )
-    val selectionAudit = if (automaticStorytellerInfo) {
-        SelectionAuditContext(
-            selectionId = informationDecisionKey,
-            dimensions = SelectionAuditDimensions(
-                playerCount = cards.size,
-                phase = if (phase == ClocktowerPhase.FirstNight) StorytellerPhase.FIRST_NIGHT else StorytellerPhase.NIGHT,
-                style = automaticStorytellerStyle,
-            ),
-            recorder = selectionDistributionTelemetry,
-        )
-    } else {
-        null
-    }
-    val automaticDisplayOption = recommendationCoordinator.selectInformation(
-        options = automaticInformationOptions,
-        reliability = step.informationReliability,
-        style = automaticStorytellerStyle,
-        evilAdvantage = evilAdvantage,
-        stableKey = informationDecisionKey,
-        recentMisinformationStreak = step.recentMisinformationStreak,
-        stableIdOf = ::optionId,
-        isTruthful = ClocktowerDisplayOption::isTruthful,
-        misinformationPressure = ClocktowerDisplayOption::misinformationPressure,
-        styleOf = ClocktowerDisplayOption::recommendationStyle,
-        selectionAudit = selectionAudit,
-    )
-    fun numericOptionValue(option: ClocktowerDisplayOption?): Int? =
-        (option?.proposition as? InformationProposition.NumericResult)?.value
-            ?: option?.displayPrimary?.toIntOrNull()
-    val structuredEmpathActorSeat = step.actor
-        ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
-    val structuredEmpathSubjectSeats = step.actor
-        ?.let { actor -> livingNeighbors(cards, actor.name).map { cards.indexOf(it) + 1 }.filter { it > 0 } }
-        .orEmpty()
-    val structuredEmpathTruthValue = step
-        .takeIf { it.roleEnName == "Empath" }
-        ?.legacyInformationCandidates
-        ?.firstOrNull { it.isTruthful }
-        ?.let(::numericOptionValue)
-        ?: (step.displayProposition as? InformationProposition.NumericResult)?.value
-        ?: step.tellPlayer?.toIntOrNull()
-    val structuredEmpathRecommendedOption = if (automaticStorytellerInfo) {
-        automaticDisplayOption
-    } else {
-        displayedInformationOptions.firstOrNull { it.isDefaultRecommendation }
-            ?: step.displayOptions.firstOrNull { it.isDefaultRecommendation }
-            ?: automaticDisplayOption
-    }
-    val structuredEmpathRecommendedValue = numericOptionValue(structuredEmpathRecommendedOption)
-    val structuredEmpathUiModel = if (
-        step.roleEnName == "Empath" &&
-        step.spyRegistrationKey == null &&
-        step.recluseRegistrationKey == null &&
-        structuredEmpathActorSeat != null &&
-        structuredEmpathSubjectSeats.isNotEmpty() &&
-        structuredEmpathTruthValue != null
-    ) {
-        prepareEmpathNumberInformationUiModel(
-            coordinator = recommendationCoordinator,
-            gameId = gameId,
-            phase = phase,
-            round = round,
-            sequence = sequence,
-            actorSeat = structuredEmpathActorSeat,
-            subjectSeats = structuredEmpathSubjectSeats,
-            trueValue = structuredEmpathTruthValue,
-            reliability = step.informationReliability,
-            recommendationStyle = if (automaticStorytellerInfo) automaticStorytellerStyle else RecommendationStyle.BALANCED,
-            revision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
-            recommendedValue = structuredEmpathRecommendedValue,
-            previousShownValue = step.previousShownNumber,
-            pressureCostPerPoint = 1,
-        )
-    } else {
-        null
-    }
-
-    fun showRecommendedDisplayOption(option: ClocktowerDisplayOption) {
-        onApplyRecommendedDisplayOption(option)
-        selectionAudit?.let { audit ->
-            audit.recorder.recordCommittedSelection(
-                SelectionAuditCommit(
-                    selectionId = audit.selectionId,
-                    dimensions = audit.dimensions,
-                    selectedFamilyId = DynamicCandidateGenerator.selectionAuditFamilyId(
-                        reliability = step.informationReliability,
-                        truthful = option.isTruthful,
-                    ),
-                ),
-            )
-        }
-        onShowPlayerDisplay(
-            step.copy(
-                tellPlayer = option.displayPrimary,
-                displayKind = option.displayKind,
-                displayTitle = option.displayTitle,
-                displayPrimary = option.displayPrimary,
-                displaySecondary = option.displaySecondary,
-                displayFooter = option.displayFooter,
-                displayProposition = option.proposition,
-                selectedInformationTruthful = option.isTruthful,
-                displayOptions = emptyList(),
-                recommendedDisplayOptions = emptyList(),
-            ),
-        )
-    }
-    LaunchedEffect(automaticStorytellerInfo, step.title, automaticDecision?.targetName) {
-        if (automaticStorytellerInfo && automaticDecision != null && selectedName != automaticDecision.targetName) {
-            onSelectName(automaticDecision.targetName)
-        }
-    }
-    var fortuneTellerLimitExceeded by remember(step.actor?.name, step.title) { mutableStateOf(false) }
-    var showFortuneTellerDisplayOptions by remember(step.actor?.name, step.title) { mutableStateOf(false) }
-    val command = when {
-        step.action == ClocktowerNightAction.FortuneTeller && step.actor != null -> {
-            if (language == "en") {
-                "Ask ${step.actor.seatLabel(cards)} to choose two players to check"
-            } else {
-                "让 ${step.actor.seatLabel(cards)} 选择两名想要查验的玩家"
-            }
-        }
-        step.wakeText != null -> step.wakeText
-        step.actor != null -> if (language == "en") "Wake ${step.actor.seatLabel(cards)}" else "唤醒 ${step.actor.seatLabel(cards)}"
-        else -> step.title
-    }
-    val helper = when {
-        step.action == ClocktowerNightAction.Chambermaid -> if (language == "en") "Have them choose two players, then show only the number." else "让她选择两名玩家，点查询后直接展示数字。"
-        step.action == ClocktowerNightAction.FortuneTeller -> if (language == "en") "Have them choose two players, then show Yes or No." else "让他选择两名玩家，点查询后展示“有”或“没有”。"
-        step.action == ClocktowerNightAction.RedHerring -> if (language == "en") "Choose a good player as the red herring. The Fortune Teller detects that player as a Demon." else "选择一名善良玩家成为红鲱鱼。占卜师查询他时，结果为“有”，他会被标记为恶魔。"
-        step.action == ClocktowerNightAction.Poison -> if (language == "en") "Record the poisoned player." else "记录中毒的玩家。"
-        step.action == ClocktowerNightAction.ButlerMaster -> if (language == "en") "Have the Butler choose a master. During voting, the Butler may vote only if their master votes." else "让他选择主人。白天计票时，只有主人投票时，管家才能投票，需要管家自律。"
-        step.action == ClocktowerNightAction.MonkProtect -> if (language == "en") "Record the protected player." else "记录被保护的玩家。"
-        step.action == ClocktowerNightAction.DemonKill -> if (language == "en") "Record the selected kill target." else "记录被击杀的玩家。"
-        step.action == ClocktowerNightAction.MayorRedirect -> if (language == "en") "Let the Mayor die or redirect the death to another player." else "选择让市长死亡，或将死亡转移给另一名玩家。"
-        step.action == ClocktowerNightAction.DemonSuccessor -> if (language == "en") "Choose an eligible living Minion to become the new Imp." else "选择一名合法的存活爪牙成为新的小恶魔。"
-        step.action == ClocktowerNightAction.Ravenkeeper -> if (language == "en") "After choosing a target, show that character only to the Ravenkeeper." else "选目标后，把该玩家角色只给他看。"
-        step.displayKind != ClocktowerDisplayKind.None -> if (language == "en") "Show the information to the player." else "展示信息给玩家。"
-        else -> step.explanation
-    }
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Text(
-                if (step.actor != null) {
-                    if (language == "en") "CURRENT PLAYER" else "当前玩家"
-                } else {
-                    if (language == "en") "CURRENT STEP" else "当前步骤"
-                },
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Black,
-            )
-            Text(
-                command.orEmpty(),
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 30.sp,
-                lineHeight = 36.sp,
-                fontWeight = FontWeight.Black,
-            )
-
-            if (step.spyRegistrationKey != null && spyCard != null) {
-                SpyRegistrationPanel(
-                    automaticStorytellerInfo = automaticStorytellerInfo,
-                    cards = cards,
-                    spy = spyCard,
-                    teams = step.spyRegistrationTeams,
-                    registersGood = spyRegistrationGood,
-                    registeredRoleEnName = spyRegisteredRoleEnName,
-                    detail = step.spyRegistrationDetail,
-                    hint = step.spyRegistrationHint,
-                    recommendations = spyRegistrationRecommendations,
-                    enabled = spyCanRegister,
-                    selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|spy-registration"),
-                    onRegistersGoodChange = onSpyRegistrationGoodChange,
-                    onRoleChange = onSpyRegistrationRoleChange,
-                )
-            }
-            if (step.recluseRegistrationKey != null && recluseCard != null) {
-                RecluseRegistrationPanel(
-                    automaticStorytellerInfo = automaticStorytellerInfo,
-                    automaticStorytellerStyle = automaticStorytellerStyle,
-                    cards = cards,
-                    recluse = recluseCard,
-                    teams = step.recluseRegistrationTeams,
-                    registersEvil = recluseRegistrationEvil,
-                    registeredRoleEnName = recluseRegisteredRoleEnName,
-                    recommendations = recluseRegistrationRecommendations,
-                    enabled = recluseCanRegister,
-                    selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|recluse-registration"),
-                    onRegistersEvilChange = onRecluseRegistrationEvilChange,
-                    onRoleChange = onRecluseRegistrationRoleChange,
-                )
-            }
-            if (step.decisionOptions.isNotEmpty()) {
-                HostActionSection(
-                    title = if (language == "en") "Recommended ruling" else "推荐裁定",
-                    helper = if (automaticStorytellerInfo) {
-                        if (language == "en") "The selected automatic ruling has been applied." else "已采用当前自动模式的裁定。"
-                    } else if (language == "en") {
-                        "The balanced option is the beginner default. You can still choose manually below."
-                    } else {
-                        if (language == "en") "The balanced option is the beginner default; you can still choose manually below." else "平衡方案是新手默认建议；仍可在下方手动裁定。"
-                    },
-                ) {
-                    step.decisionOptions
-                        .filter { !automaticStorytellerInfo || it == automaticDecision }
-                        .forEach { option ->
-                        if (automaticStorytellerInfo) {
-                            Text(option.label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                        } else
-                        if (automaticStorytellerInfo || option.isDefaultRecommendation) {
-                            Button(
-                                onClick = { onSelectName(option.targetName) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(option.label)
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = { onSelectName(option.targetName) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(option.label)
-                            }
-                        }
-                        RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
-                    }
-                }
-            }
-
-        when (step.action) {
-            ClocktowerNightAction.RedHerring -> {
-                if (step.isRealAction) {
-                    val candidates = clocktowerRedHerringCandidates(aliveCards)
-                    HostActionSection(
-                        title = stringResource(R.string.clocktower_host_choose_red_herring),
-                        helper = stringResource(R.string.clocktower_host_choose_red_herring_hint),
-                    ) {
-                        if (candidates.isEmpty()) {
-                            Text(
-                                stringResource(R.string.clocktower_host_no_red_herring_candidates),
-                                color = Color(0xFF6F7B74),
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        } else {
-                            SelectablePlayerChips(
-                                cards = candidates,
-                                selectedName = selectedName,
-                                enabled = true,
-                                allCards = cards,
-                                onSelect = onSelectName,
-                            )
-                        }
-                    }
-                }
-            }
-
-            ClocktowerNightAction.Poison -> {
-                HostActionSection(title = stringResource(R.string.clocktower_host_choose_poison_target)) {
-                    SelectablePlayerChips(
-                        cards = aliveCards,
-                        selectedName = selectedName,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectName,
-                    )
-                }
-            }
-
-            ClocktowerNightAction.ButlerMaster -> {
-                HostActionSection(
-                    title = if (LocalContext.current.resources.configuration.locales[0].language == "en") "Choose the Butler's master" else "选择管家的主人",
-                ) {
-                    SelectablePlayerChips(
-                        cards = aliveCards.filter { it.name != step.actor?.name },
-                        selectedName = selectedName,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectName,
-                    )
-                }
-            }
-
-            ClocktowerNightAction.MonkProtect -> {
-                HostActionSection(
-                    title = stringResource(R.string.clocktower_host_choose_monk_protect),
-                    helper = stringResource(R.string.clocktower_host_choose_monk_protect_hint),
-                ) {
-                    SelectablePlayerChips(
-                        cards = aliveCards.filter { it.name != step.actor?.name },
-                        selectedName = selectedName,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectName,
-                    )
-                }
-            }
-
-            ClocktowerNightAction.FortuneTeller -> {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SelectableTwoPlayerChips(
-                        cards = cards,
-                        firstSelectedName = fortuneTellerFirst,
-                        secondSelectedName = fortuneTellerSecond,
-                        enabled = step.isRealAction,
-                        onSelect = { name ->
-                            showFortuneTellerDisplayOptions = false
-                            when (twoPlayerSelectionAction(fortuneTellerFirst, fortuneTellerSecond, name)) {
-                                TwoPlayerSelectionAction.ToggleFirst -> {
-                                    fortuneTellerLimitExceeded = false
-                                    onSelectFortuneTellerFirst(name)
-                                }
-                                TwoPlayerSelectionAction.ToggleSecond -> {
-                                    fortuneTellerLimitExceeded = false
-                                    onSelectFortuneTellerSecond(name)
-                                }
-                                TwoPlayerSelectionAction.RejectLimit -> {
-                                    fortuneTellerLimitExceeded = true
-                                }
-                            }
-                        },
-                    )
-                    if (fortuneTellerLimitExceeded) {
-                        Text(
-                            stringResource(R.string.clocktower_fortune_cannot_select_more_than_two),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    } else if (fortuneTellerFirst == null || fortuneTellerSecond == null) {
-                        Text(
-                            stringResource(R.string.clocktower_fortune_must_select_two),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                    Button(
-                        onClick = {
-                            if (automaticStorytellerInfo && automaticDisplayOption != null) {
-                                showRecommendedDisplayOption(automaticDisplayOption)
-                            } else if (step.displayOptions.isNotEmpty() || displayedInformationOptions.isNotEmpty()) {
-                                showFortuneTellerDisplayOptions = true
-                            } else {
-                                onShowPlayerDisplay(step)
-                            }
-                        },
-                        enabled = step.isRealAction && fortuneTellerFirst != null && fortuneTellerSecond != null,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Text(stringResource(R.string.clocktower_fortune_show_result))
-                    }
-                    if (showFortuneTellerDisplayOptions) {
-                        Text(
-                            stringResource(R.string.clocktower_fortune_unreliable_choose_result),
-                            color = Color(0xFF8C4B20),
-                        )
-                    }
-                }
-            }
-
-            ClocktowerNightAction.Chambermaid -> {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    val candidates = aliveCards.filter { it.name != step.actor?.name }
-                    SelectableSeatNumbers(
-                        cards = candidates,
-                        selectedName = chambermaidFirst,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectChambermaidFirst,
-                    )
-                    SelectableSeatNumbers(
-                        cards = candidates.filter { it.name != chambermaidFirst },
-                        selectedName = chambermaidSecond,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectChambermaidSecond,
-                    )
-                    if (step.displayOptions.isEmpty()) {
-                        Button(
-                            onClick = { onShowPlayerDisplay(step) },
-                            enabled = step.isRealAction && chambermaidFirst != null && chambermaidSecond != null,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                        ) {
-                            Text(if (language == "en") "Check and show" else "查询并展示")
-                        }
-                    } else {
-                        Text(if (language == "en") "This ability is unreliable. Choose the final result below." else "能力不可靠：请在下方选择最终展示结果。", color = Color(0xFF8C4B20))
-                    }
-                }
-            }
-
-            ClocktowerNightAction.DemonKill -> {
-                HostActionSection(
-                    title = stringResource(R.string.clocktower_host_choose_night_death),
-                    helper = stringResource(R.string.clocktower_host_choose_night_death_hint),
-                ) {
-                    SelectablePlayerChips(
-                        cards = aliveCards,
-                        selectedName = selectedName,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectName,
-                    )
-                }
-            }
-
-            ClocktowerNightAction.MayorRedirect -> {
-                val mayor = aliveCards.firstOrNull { it.clocktowerRole?.enName == "Mayor" }
-                if (!automaticStorytellerInfo) {
-                HostActionSection(
-                    title = if (language == "en") "The Demon attacked the Mayor" else "市长被恶魔击杀",
-                    helper = if (language == "en") "Choosing a dead or protected player as the redirect target can result in no death tonight." else "选择死亡或受保护的玩家作为转移目标，可能导致今夜无人死亡。",
-                ) {
-                    if (mayor != null) {
-                        if (selectedName == mayor.name) {
-                            Button(
-                                onClick = { onSelectName(mayor.name) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(if (language == "en") "Mayor dies" else "市长死亡")
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = { onSelectName(mayor.name) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(if (language == "en") "Mayor dies" else "市长死亡")
-                            }
-                        }
-                        Text(if (language == "en") "Or redirect the death to:" else "或将死亡转移给：", fontWeight = FontWeight.SemiBold)
-                        SelectablePlayerChips(
-                            cards = cards.filter { it.name != mayor.name && it.name in assistedDecisionOptions.map(ClocktowerDecisionOption::targetName) },
-                            selectedName = selectedName,
-                            enabled = step.isRealAction,
-                            allCards = cards,
-                            onSelect = onSelectName,
-                        )
-                    }
-                }
-                }
-            }
-
-            ClocktowerNightAction.DemonSuccessor -> {
-                val legalNames = assistedDecisionOptions.map { it.targetName }.toSet()
-                if (!automaticStorytellerInfo) {
-                HostActionSection(
-                    title = if (language == "en") "Choose the new Imp" else "选择新小恶魔",
-                    helper = step.explanation,
-                ) {
-                    SelectablePlayerChips(
-                        cards = aliveCards.filter { it.name in legalNames },
-                        selectedName = selectedName,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectName,
-                    )
-                }
-                }
-            }
-
-            ClocktowerNightAction.Ravenkeeper -> {
-                HostActionSection(
-                    title = stringResource(R.string.clocktower_host_ravenkeeper_target),
-                    helper = stringResource(R.string.clocktower_host_ravenkeeper_target_hint),
-                ) {
-                    SelectablePlayerChips(
-                        cards = aliveCards.filter { it.name != step.actor?.name },
-                        selectedName = selectedName,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectName,
-                    )
-                }
-            }
-
-            else -> Unit
-        }
-
-            step.tellPlayer
-                ?.takeIf { step.isRealAction && it.isNotBlank() && step.displayKind == ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid }
-                ?.let {
-                    Text(it, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
-                }
-
-            structuredEmpathUiModel?.let { model ->
-                val template = structuredEmpathRecommendedOption
-                    ?: displayedInformationOptions.firstOrNull()
-                    ?: step.displayOptions.firstOrNull()
-                StructuredNumberInformationDecisionPanel(
-                    model = model,
-                    currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
-                    automaticStorytellerInfo = automaticStorytellerInfo,
-                    language = language,
-                    onConfirmed = { confirmed, value ->
-                        if (automaticDisplayOption != null) {
-                            selectionAudit?.let { audit ->
-                                audit.recorder.recordCommittedSelection(
-                                    SelectionAuditCommit(
-                                        selectionId = audit.selectionId,
-                                        dimensions = audit.dimensions,
-                                        selectedFamilyId = DynamicCandidateGenerator.selectionAuditFamilyId(
-                                            reliability = step.informationReliability,
-                                            truthful = value == structuredEmpathTruthValue,
-                                        ),
-                                    ),
-                                )
-                            }
-                        }
-                        onShowPlayerDisplay(
-                            step.copy(
-                                tellPlayer = value.toString(),
-                                displayKind = ClocktowerDisplayKind.Number,
-                                displayTitle = template?.displayTitle ?: step.displayTitle,
-                                displayPrimary = value.toString(),
-                                displaySecondary = template?.displaySecondary ?: step.displaySecondary,
-                                displayFooter = template?.displayFooter ?: step.displayFooter ?: step.explanation,
-                                displayProposition = confirmed.draft.proposition,
-                                selectedInformationTruthful = value == structuredEmpathTruthValue,
-                                informationDecisionDraft = confirmed.draft,
-                                displayOptions = emptyList(),
-                                recommendedDisplayOptions = emptyList(),
-                            ),
-                        )
-                    },
-                )
-            }
-
-            if (
-                structuredEmpathUiModel == null &&
-                displayedInformationOptions.isNotEmpty() &&
-                (step.action != ClocktowerNightAction.FortuneTeller || showFortuneTellerDisplayOptions)
-            ) {
-                Text(if (language == "en") "Recommended information" else "推荐给说书人的完整信息", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                Text(
-                    if (automaticStorytellerInfo) {
-                        if (language == "en") "The automatic mode selected this information. Use the button below to show it." else "已按当前自动模式选定信息；点击下方按钮即可向玩家展示。"
-                    } else {
-                        if (language == "en") "The balanced option is the default; other options apply different pressure. Choosing one also updates this interaction's Spy or Recluse registration." else "平衡方案适合直接采用；其他方案提供不同压力。选择后会同步本次间谍或隐士登记。"
-                    },
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                displayedInformationOptions
-                    .filter { !automaticStorytellerInfo || it == automaticDisplayOption }
-                    .sortedBy { if (it.isDefaultRecommendation) 0 else 1 }
-                    .forEach { option ->
-                        val onClick = {
-                            showRecommendedDisplayOption(option)
-                        }
-                        if (option.isDefaultRecommendation) {
-                            Button(
-                                onClick = onClick,
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text("${if (automaticStorytellerInfo) { if (language == "en") "Auto" else "自动" } else { if (language == "en") "Default" else "默认" }} · ${option.label}")
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = onClick,
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(option.label)
-                            }
-                        }
-                        RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
-                    }
-                if (!automaticStorytellerInfo && firstNightPool == null) {
-                    OutlinedButton(
-                        onClick = { onShowPlayerDisplay(step.copy(recommendedDisplayOptions = emptyList())) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Text(if (language == "en") "Use the manual ruling above" else "使用上方手动裁定")
-                    }
-                }
-            }
-
-            if (
-                structuredEmpathUiModel == null &&
-                firstNightPool == null && step.displayOptions.isNotEmpty() &&
-                (step.action != ClocktowerNightAction.FortuneTeller || showFortuneTellerDisplayOptions)
-            ) {
-                Text(if (language == "en") "This ability is unreliable. Choose a result to show." else "能力不可靠：请选择一个结果展示。", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
-                step.displayOptions.forEach { option ->
-                    OutlinedButton(
-                        onClick = {
-                            onShowPlayerDisplay(
-                                step.copy(
-                                    tellPlayer = option.displayPrimary,
-                                    displayKind = option.displayKind,
-                                    displayTitle = option.displayTitle,
-                                    displayPrimary = option.displayPrimary,
-                                    displaySecondary = option.displaySecondary,
-                                    displayFooter = option.displayFooter,
-                                    displayProposition = option.proposition,
-                                    selectedInformationTruthful = option.isTruthful,
-                                    displayOptions = emptyList(),
-                                ),
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Text(option.label)
-                    }
-                    RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
-                }
-            } else if (structuredEmpathUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
-                OutlinedButton(
-                    onClick = { onShowPlayerDisplay(step) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                ) {
-                    Text(stringResource(R.string.clocktower_host_show_to_player))
-                }
-            }
-
-            if (showNavigationActions) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
-                        onClick = onPrevious,
-                        enabled = canGoPrevious,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(14.dp),
-                    ) {
-                        Text(stringResource(R.string.previous_step))
-                    }
-                    Button(
-                        onClick = onNext,
-                        enabled = step.action !in setOf(
-                            ClocktowerNightAction.MayorRedirect,
-                            ClocktowerNightAction.DemonSuccessor,
-                        ) || selectedName != null,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(14.dp),
-                    ) {
-                        Text(stringResource(R.string.clocktower_host_finish_next))
-                    }
-                }
-            }
-
-            Surface(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(14.dp),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        if (language == "en") "STEP NOTE" else "步骤提示",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        helper,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ClocktowerInfoCard(
-    title: String,
-    body: String,
-) {
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(body, color = Color(0xFF5C6A63))
-        }
-    }
 }

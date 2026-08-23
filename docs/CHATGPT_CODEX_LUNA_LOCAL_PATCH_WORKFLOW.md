@@ -1,55 +1,84 @@
-# ChatGPT ↔ Codex Luna 本地 Patch 工作流
+# ChatGPT ↔ Codex Luna 本地实现与验证工作流
 
 > 文档角色：**NORMATIVE / DEVELOPMENT OPERATIONS**  
 > 生效日期：2026-08-23  
 > 适用仓库：`Jazz0006/CampBoardGameHost`
 
-## 1. 采用结论
+## 1. 定位：这是按需启用的备用执行路径，不是所有任务的强制流程
 
-对于 GitHub connector 无法可靠读取完整内容的大文件，尤其是 `ClocktowerHostScreen.kt` 这类数百 KB 文件，本项目不再优先尝试 remote writer / temporary writer。
+本工作流解决的是 GitHub connector 对超大源文件、完整 worktree 重构、本地 Android/Gradle 验证等场景的能力缺口。
 
-正式采用：
+它不是项目永久的唯一开发路径。随着 `ClocktowerHostScreen.kt`、`CampBoardGameHostApp.kt` 等 monolith 被拆分到正常规模，很多日常修改应重新优先采用更轻量的 GitHub connector 路径。
+
+默认选择应是：
+
+```text
+任务开始
+  -> connector 是否能可靠取得完整目标文件？
+  -> whole-file update 风险是否合理？
+  -> 是否需要完整 Git worktree / 本地重型验证？
+
+若普通 connector 足够安全
+  -> connector direct update + exact diff + GitHub CI
+
+若存在大文件、截断、复杂机械重构或本地验证优势
+  -> Luna complete-worktree workflow
+```
+
+因此本工作流应理解为 **capability fallback / heavy-task path**，不是为了使用 Luna 而使用 Luna。
+
+## 2. 核心分工
+
+```text
+ChatGPT
+  = architecture / scope / invariants / review authority
+
+Codex Luna
+  = constrained local implementation / validation executor
+
+GitHub
+  = source of truth + independent clean-environment merge gate
+```
+
+典型流程：
 
 ```text
 ChatGPT
   -> 审计 live main / PR / feature head
-  -> 设计 tests-first 最小修改
-  -> 输出最小 unified diff patch
-  -> 输出精确本地测试命令
-  -> 输出给 Codex Luna 的机械执行 prompt
+  -> 划定当前 slice 边界与不变量
+  -> 设计 tests-first / characterization-first 验证矩阵
+  -> 给出声明级机械编辑要求
 
-Codex Luna（本地完整 Git worktree）
-  -> 校验当前 branch/head
-  -> git apply --check
-  -> git apply
-  -> git diff --check + exact local diff audit
-  -> 运行指定测试
-  -> 测试 GREEN 后 commit
-  -> push 当前 feature branch
-  -> 返回 commit SHA / diff / test result
+Luna（完整本地 Git worktree）
+  -> 安全收敛 workspace 到目标 branch/head
+  -> 按 allowlist 实施修改
+  -> focused tests
+  -> full local Android / build / contract validation
+  -> exact local diff audit
+  -> GREEN 后 commit + push
 
 ChatGPT
-  -> 从 GitHub 重新读取 live PR/head
-  -> 校验 parent / exact changed files / hunks
-  -> 检查 CI / R2
-  -> 处理 review threads / final Codex review
+  -> 从 GitHub 重新读取 live head
+  -> exact remote diff audit
+  -> 检查 CI / R2 / review
   -> 仅在用户明确授权后 merge
 ```
 
-这个流程把“架构判断与代码设计”和“真实 worktree 机械执行”分开。
+## 3. 为什么升级自最初的 patch-only 流程
 
-## 2. 为什么采用这个方案
+最初采用 Luna patch 流程，是因为 GitHub connector 对大文件采用 whole-file replacement；当内容读取被截断时，为几行修改重建数百 KB 文件风险过高。
 
-PR #40 最终 P1 修复仅修改 `ClocktowerHostScreen.kt` 中不到十行，但该文件约 433 KB。GitHub connector 的普通 file update 是完整文件 replacement，不是 patch-level write；一旦读取内容出现截断，为几行修改重建整个文件风险过高。
+Source Decomposition A1 又暴露出第二类风险：人工拼写 unified diff hunk header 可能产生结构错误。即使逻辑修改正确，只要 hunk 行号、上下文或计数不匹配，`git apply` 就会失败。
 
-2026-08-23 又验证了 permanent `issue_comment` writer 方案：
+因此：
 
-- workflow / parser 静态实现可通过 Android / ASP / Real Clingo / R2；
-- 但 pre-merge canary 无法真正触发 writer；
-- `issue_comment` workflow 只有在 workflow 已存在于 default branch 时才会响应；
-- 因而必须先把尚未端到端验证的 write-enabled workflow 部署到 `main`，才能验证其完整写入链路。
+- 不把人工手写 unified-diff hunk header 作为默认路径；
+- 大文件 declaration extraction 优先让 Luna 在真实 worktree 中机械移动；
+- 如需要 patch，必须由真实旧/新文件自动生成并尽可能先验证；
+- Luna 本地承担主要开发验证；
+- GitHub CI/R2 保留为独立 merge gate。
 
-本项目决定不承担这个 bootstrap 风险。remote writer 方案状态：
+Remote writer 方案仍保持：
 
 ```text
 EXPLORED
@@ -58,202 +87,334 @@ NOT END-TO-END VALIDATED
 NOT ADOPTED
 ```
 
-相比之下，本地 Codex worktree 已经是完整 Git 环境，`git apply`、Gradle tests、commit、push 都是成熟路径，而且 Luna 只需机械执行小 patch，不需要重新阅读大文件或做架构推理。
+## 4. 何时优先使用 Luna
 
-## 3. 什么时候必须切换到 Luna patch 流程
+满足任一条件时优先考虑本流程：
 
-满足任一条件即优先使用本流程：
+- connector 返回大文件 truncated / incomplete；
+- whole-file replacement 对小改动产生不合理风险；
+- declaration extraction / 多处机械移动需要完整 worktree；
+- 修改跨多个强关联生产文件；
+- 本地 Gradle / Android / Clingo / Python 验证更适合作为开发循环；
+- 需要提交前看到真实 Git diff、编译和完整测试结果。
 
-- GitHub connector 返回大文件内容 truncated / incomplete；
-- 无法证明获得的是目标 branch 当前完整文件；
-- whole-file replacement 对一个很小的修改产生不合理风险；
-- 修改可以表示成清晰、确定性的 unified diff；
-- 目标文件很大，而 Codex 本地 worktree 可用。
+反之，若文件已经拆小、connector 可可靠读写、修改局部且风险可控，则不必使用 Luna。
 
-不要因为“只有 5–10 行修改”就继续使用 connector whole-file replacement；API 风险由完整文件大小决定，而不是 hunk 大小。
+## 5. Workspace Reconciliation：Luna 应主动安全收敛环境，而不是因 branch 不对就立即停止
 
-## 4. ChatGPT 必须提供的三个交付物
+旧规则“branch/head 不匹配即停止”过于机械。新的目标是：**能无损自动恢复的环境问题由 Luna 自行解决；只有存在覆盖风险时才停止。**
 
-每次需要 Luna 执行大文件 patch 时，ChatGPT 默认给用户三块内容。
-
-### A. PATCH
-
-- 最小 unified diff；
-- 只包含当前任务允许的文件；
-- 尽量一个或极少数 hunk；
-- 不做无关格式化；
-- 不夹带 docs/workflow/其他 R6 工作。
-
-### B. TEST COMMANDS
-
-优先给 focused tests，再给必要的 full validation。例如 Android production 修改通常至少包含：
-
-```powershell
-.\gradlew.bat :app:testDebugUnitTest `
-  --tests "<focused-test-1>" `
-  --tests "<focused-test-2>" `
-  --no-daemon
-
-.\gradlew.bat :app:testDebugUnitTest :app:assembleDebug --no-daemon --build-cache
-```
-
-如果当前 slice 不需要 full local suite，可以明确只要求 focused tests，并由 GitHub CI 承担 full gate。
-
-### C. LUNA EXECUTION PROMPT
-
-推荐固定模板：
+ChatGPT 应声明目标状态，例如：
 
 ```text
-在当前 Git 工作区执行下面任务，不做任何额外修改。
-
-1. 确认当前 branch 和 HEAD，不切换 branch。
-2. 将提供的 patch 保存为临时 patch 文件。
-3. 执行 git apply --check <patch-file>。
-4. 如果成功，执行 git apply <patch-file>。
-5. 执行：
-   git diff --check
-   git status --short
-   git diff --stat
-   git diff
-6. 运行提供的测试命令。
-7. 只有测试全部通过且 diff 只包含预期修改时：
-   git add <明确指定文件>
-   git diff --cached --check
-   git diff --cached --stat
-   git diff --cached
-8. 提交：
-   git commit -m "<指定 commit message>"
-9. push 当前 branch：
-   git push origin HEAD
-10. 不要 merge，不要修改任何其他文件。
-
-最后返回：
-- branch 名
-- apply 前原 HEAD
-- 新 commit SHA
-- git status --short
-- changed files / diff stat
-- 测试结果
-- push 是否成功
+repository: Jazz0006/CampBoardGameHost
+remote: origin
+target branch: codex/source-decomposition-clocktower-host
+expected remote head: <sha or explicitly allowed live head>
+workspace policy:
+  preserve all existing uncommitted work
+  prefer existing clean target worktree
+  otherwise safely switch or create isolated worktree
+  fetch before execution
+  fast-forward only
+  never reset --hard
+  never force push
+  never auto-merge
 ```
 
-## 5. Luna 的职责边界
+### 5.1 Level 1：可自动修复
 
-Luna 用于**机械执行**，不是重新设计修改。
+Luna 可以直接执行：
+
+```text
+git fetch origin
+
+workspace clean + 当前 branch 不正确
+  -> git switch <target>
+
+本地不存在 target，但 origin/target 存在
+  -> 创建 tracking branch
+
+本地 target 落后 origin 且可 fast-forward
+  -> git pull --ff-only origin <target>
+```
+
+这些不应成为需要用户手工介入的常规阻塞点。
+
+### 5.2 Level 2：自动隔离，不触碰用户现有工作
+
+如果当前工作目录 dirty，默认不要自动 stash、reset 或覆盖。
+
+优先策略：
+
+```text
+current workspace dirty
+  -> 保留原工作区完全不动
+  -> 如条件允许，为目标 branch 建立 isolated git worktree
+  -> 在 isolated worktree 中继续任务
+```
+
+推荐优先级：
+
+```text
+已有 clean target worktree
+  -> 使用它
+
+否则当前 workspace clean
+  -> 安全 switch + ff-only sync
+
+否则当前 workspace dirty
+  -> 创建 isolated worktree
+
+否则发现分叉/覆盖风险
+  -> 停止并报告
+```
+
+专用 worktree 尤其适合长期 AI 协同开发，因为主工作区可以继续停在 `main` 或用户自己的工作 branch，Luna 任务与 feature branch 天然隔离。
+
+### 5.3 Level 3：必须停止
+
+以下情况不得擅自解决：
+
+- 本地与远端 target branch 已 diverged；
+- 存在未 push commit，自动操作可能覆盖；
+- 远端目标 branch 不存在且任务未授权创建；
+- expected remote head 与实际 live head 发生不可解释变化；
+- worktree 路径被另一 active task 占用；
+- 需要 `reset --hard`、force push、自动 rebase/merge 才能继续。
+
+此时 Luna 应返回精确状态，而不是破坏性“修复”。
+
+## 6. ChatGPT 必须提供的执行规格
+
+每次交给 Luna 的任务至少包含四部分。
+
+### A. TARGET STATE
+
+- repository / remote；
+- target branch；
+- expected live head 或允许的同步规则；
+- workspace reconciliation policy；
+- 允许修改的文件 allowlist；
+- 禁止修改的相邻功能范围。
+
+### B. IMPLEMENTATION INSTRUCTIONS
+
+优先描述声明级机械操作，例如：
+
+```text
+move exact top-level declarations A/B/C
+from file X
+to file Y
+preserve package/signatures/bodies/call sites
+no semantic change
+no unrelated formatting
+```
+
+如提供 patch：
+
+- 必须来自真实旧/新文件自动生成；
+- 不允许人工伪造 hunk 行号；
+- 先 `git apply --check`；
+- check 失败不得自行重写 patch。
+
+### C. LOCAL VALIDATION MATRIX
+
+默认顺序：
+
+```text
+1. git diff --check
+2. focused characterization / unit tests
+3. :app:testDebugUnitTest
+4. :app:assembleDebug
+5. task-specific ASP / Real Clingo / Python contract checks（若本地可执行）
+6. exact local diff audit
+```
+
+Android production 修改通常至少要求：
+
+```powershell
+.\gradlew.bat :app:testDebugUnitTest --no-daemon
+.\gradlew.bat :app:assembleDebug --no-daemon --build-cache
+```
+
+### D. COMMIT / PUSH CONTRACT
+
+仅当：
+
+- 指定 tests 全部 GREEN；
+- `git diff --check` GREEN；
+- changed files 全部在 allowlist；
+- exact diff 没有无关 churn；
+
+才允许 commit + push。
+
+默认永远禁止 merge。
+
+## 7. Luna 的职责边界
+
+Luna 是受约束的本地开发代理，不是架构决策者。
 
 允许：
 
-- 保存 patch；
-- `git apply --check` / `git apply`；
-- 运行明确指定的测试；
-- 检查 diff；
-- 测试 GREEN 后 commit；
-- push 当前 feature branch；
-- 返回结果。
+- 安全 fetch / switch / ff-only sync；
+- 在必要时创建 isolated worktree；
+- 按精确指令编辑完整 worktree；
+- declaration extraction / file move / compile-required import adjustment；
+- apply 已验证 patch；
+- 运行 focused/full Android tests 和 build；
+- 运行任务指定 contract tests；
+- 检查 diff / stat / status；
+- GREEN 后 commit + push。
 
 默认禁止：
 
-- 自己扩大修改范围；
-- 自己重写 patch；
-- 顺手修 unrelated failures；
-- 切换到另一个 branch；
+- 扩大 scope；
+- 顺手修 unrelated failure；
+- 改变架构目标或游戏规则语义；
+- destructive stash/reset/clean；
+- 自动 rebase / merge；
 - force push；
 - merge PR；
-- 修改用户未授权的文件。
+- 修改 allowlist 外文件，除非任务规格明确允许结构测试/文档同步。
 
-如果 patch 不适用或测试失败，Luna 应停止并返回错误，不自行探索大范围修复。
-
-## 6. 为什么 Luna 可以省 token
-
-大文件任务中，昂贵步骤通常是：
+若测试失败，先分类：
 
 ```text
-读取数百 KB 源码
--> 理解架构
--> 定位修改点
--> 设计改法
--> 编辑
+A. 当前修改真实回归
+B. stale structural boundary test
+C. environment/tooling failure
+D. unrelated pre-existing failure
 ```
 
-在本流程中这些由 ChatGPT / 当前开发会话完成。Luna 只处理：
+未经授权不得扩大修复范围。
+
+## 8. 本地测试与 GitHub CI 的职责分工
+
+Luna 本地测试是 **primary development gate**：验证真实工作区中的修改能否编译、通过 focused/full tests，且 diff 精确。
+
+GitHub CI / R2 是 **independent merge gate**：验证 clean checkout、Linux runner、仓库标准 workflow 下仍然成立。
+
+因此：
+
+- 不取消 GitHub CI；
+- 也不要求每个小 extraction 都等待远端 CI 才能继续；
+- 本地 full validation GREEN 后可继续同 PR 内下一安全 slice；
+- merge 前最新 head 的 GitHub CI / R2 必须全部 GREEN。
+
+GitHub CI 仍负责发现：
+
+- 未提交文件依赖；
+- 本地缓存掩盖问题；
+- Windows/Linux 差异；
+- 大小写问题；
+- 环境变量/工具依赖；
+- stale repository boundary contract；
+- clean checkout 才出现的问题。
+
+## 9. Structural boundary tests 必须随架构演进
+
+R2 一类结构测试属于架构契约，不是永久固定的文件位置断言。
+
+当 declaration 被有意迁出原文件：
+
+1. 确认 extraction 符合 refactor plan；
+2. 保留“旧位置不应再存在”的断言；
+3. 更新“新位置必须存在”的断言到新的 owner；
+4. 不为让旧 R2 GREEN 而把代码搬回错误位置。
+
+Source Decomposition A1：
 
 ```text
-小 patch
--> apply
--> test
--> commit
--> push
+clocktowerShownAsDifferentRole
+  old owner: ClocktowerHostScreen.kt
+  new owner: ClocktowerHostCoreSemantics.kt
 ```
 
-因此 Luna 不需要把完整大文件重新放入模型上下文，适合使用较低成本模型执行。Gradle 编译/测试主要消耗 runner/本机计算时间，不需要大量模型推理 token。
+## 10. Patch 使用规则
 
-## 7. Push 是流程必需步骤
+Patch 仍可使用，但不再是大文件任务默认媒介。
 
-只做本地 apply/test 不足以让 ChatGPT 后续审计远端仓库。
+适合 patch：
 
-因此只要测试 GREEN 且 diff 正确，Luna 必须：
+- 小而稳定的文本修改；
+- 上下文完整；
+- 可由真实文件自动生成；
+- 可可靠 `git apply --check`。
 
-```text
-commit
--> git push origin HEAD
-```
+不适合 patch：
 
-然后把新 commit SHA 返回给用户/ChatGPT。
+- 数百 KB monolith 的大范围 extraction；
+- 需要大量人工 hunk header；
+- 文件持续变化；
+- producer 无法验证完整原文件。
 
-ChatGPT 收到 SHA 后必须重新从 GitHub 获取数据，不根据 Luna 的文字报告直接假设远端成功。
+严禁把“手写 hunk + 希望 Git 接受”作为标准流程。
 
-## 8. ChatGPT 收回后的远端 gate
-
-Luna push 后，ChatGPT 至少重新验证：
-
-```text
-live PR head == Luna returned commit SHA
-new commit parent == expected previous head
-changed files == expected allowlist
-exact hunk == expected patch semantics
-no unrelated churn
-CI / R2 result
-review findings / threads
-live main has not unexpectedly moved
-```
-
-需要 tests-first 的任务还要保留真实 RED provenance，不能因为执行者换成 Luna 就跳过 RED。
-
-## 9. Windows / line-ending 规则
+## 11. Windows / line-ending 规则
 
 仓库根目录 `.gitattributes` 是文本行尾权威：
 
 - Kotlin/KTS/Java/Markdown/YAML/Python/JSON/XML/shell/properties 等使用 LF；
 - `.bat` / `.cmd` 保持 CRLF。
 
-不要通过 PowerShell `>` 手工生成 patch 作为默认路径；Windows PowerShell 版本可能产生 UTF-16 或 CRLF 差异。优先让 Codex/Luna 在完整 worktree 中直接保存用户提供的 patch，再运行 `git apply --check`。
+不要通过 Windows PowerShell `>` 手工拼 patch 作为默认路径。
 
-如果 working tree 已有真实未提交修改，不要使用 destructive `git restore .` / reset 来处理行尾问题。
+若已有真实未提交修改，不使用 destructive `git restore .`、`reset --hard` 或 `git clean -fd` 来“恢复环境”。
 
-## 10. 与其他写入方式的优先级
+## 12. Push 后 ChatGPT 的远端 gate
+
+Luna / 用户 push 后，ChatGPT 必须重新验证 GitHub 实际状态：
 
 ```text
-A. 小/中等文本文件，connector 能可靠得到完整内容
-   -> GitHub connector direct update + exact diff audit
-
-B. 大文件但完整内容仍可安全获得，且 whole-file replacement 风险可证明可控
-   -> direct / Git Data API 可考虑
-
-C. 大文件出现 truncation / incomplete content，且修改是确定性 patch
-   -> ChatGPT patch + Codex Luna apply/test/commit/push（默认）
-
-D. 大范围、多文件复杂重构
-   -> 完整 Codex/local worktree，让执行模型拥有必要上下文
+live PR head
+parent chain
+changed-file allowlist
+exact diff semantics
+no unrelated churn
+CI / R2 status
+review findings / threads
+live main movement
 ```
 
-Temporary/permanent remote writer 不再是本项目常规路径。
+Luna 的文字报告不是远端事实来源。
 
-## 11. 不改变的治理规则
+## 13. Worktree 生命周期
+
+若 Luna 为任务创建专用 worktree：
+
+- PR 未 merge 前保留，便于继续同一 feature branch；
+- 不自动删除存在未提交修改的 worktree；
+- merge 后可以提示用户清理；
+- 除非用户明确授权，不自动删除可能承载工作的目录/branch。
+
+## 14. 写入方式优先级
+
+```text
+A. 小/中等文件，connector 能可靠完整读写
+   -> GitHub connector direct update + exact diff audit
+
+B. 较大文件但完整内容可安全获得，小范围修改
+   -> direct edit / automatically generated patch
+
+C. 大文件出现 truncation，或 declaration extraction / 多处机械移动
+   -> Luna complete-worktree direct implementation
+
+D. 多文件复杂重构 / 重型本地验证
+   -> Luna isolated worktree + ChatGPT architecture/review
+```
+
+重要目标不是让更多任务进入 Luna，而是让每个任务使用**最简单且足够安全的路径**。
+
+如果 source decomposition 成功消除了超大文件和 whole-file replacement 风险，本工作流完全可能在一段时间内很少被使用；这是架构改善后的正常结果，不代表工作流失去价值。
+
+## 15. 不改变的治理规则
 
 - live main/head 必须重新确认；
-- tests-first 工作仍需真实 RED；
+- tests-first 任务保留真实 RED；纯重构使用 characterization-first；
 - exact diff audit 强制；
-- full CI / R2 / review gate 仍生效；
-- unfinished stacked work 不得混入当前 patch；
+- 本地 full validation 不能替代 merge 前 GitHub CI / R2；
+- unfinished stacked work 不得混入当前 task；
 - Luna push 不等于批准 merge；
+- 所有自动 workspace reconciliation 都以“不丢用户工作”为最高优先级；
 - **未经用户明确授权，ChatGPT 和 Codex 都不得 merge。**

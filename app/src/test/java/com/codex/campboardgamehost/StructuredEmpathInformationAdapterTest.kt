@@ -117,7 +117,7 @@ class StructuredEmpathInformationAdapterTest {
 
     @Test
     fun `structured Empath confirmation commits telemetry only when selector produced a preview`() {
-        val source = hostScreenSource()
+        val source = nightStepUiSource()
         val panelBlock = source
             .substringAfter("StructuredNumberInformationDecisionPanel(")
             .substringBefore("\n            if (\n                structuredEmpathUiModel == null")
@@ -135,7 +135,7 @@ class StructuredEmpathInformationAdapterTest {
 
     @Test
     fun `assisted impaired Empath derives recommendation from unreliable display options`() {
-        val source = hostScreenSource()
+        val source = nightStepUiSource()
         val recommendationBlock = source
             .substringAfter("val structuredEmpathRecommendedOption =")
             .substringBefore("val structuredEmpathRecommendedValue")
@@ -236,6 +236,17 @@ class StructuredEmpathInformationAdapterTest {
         revision = revision,
         recommendedValue = 2,
     )
+
+    private fun nightStepUiSource(): String {
+        val relative = Path.of("src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt")
+        val fromRoot = Path.of("app").resolve(relative)
+        val path = when {
+            Files.exists(relative) -> relative
+            Files.exists(fromRoot) -> fromRoot
+            else -> error("ClocktowerNightStepUi.kt source not found from ${Path.of("").toAbsolutePath()}")
+        }
+        return String(Files.readAllBytes(path), Charsets.UTF_8)
+    }
 
     private fun hostScreenSource(): String {
         val relative = Path.of("src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt")

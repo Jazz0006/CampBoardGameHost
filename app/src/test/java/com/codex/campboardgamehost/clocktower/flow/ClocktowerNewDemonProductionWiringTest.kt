@@ -52,7 +52,7 @@ class ClocktowerNewDemonProductionWiringTest {
     }
 
     @Test
-    fun `host projects queued daytime promotion as the planner new-Demon interaction`() {
+    fun `host projects queued daytime promotion through resolved fact and lazy new-Demon materializer`() {
         assertTrue(appSource.contains("NewDemonIdentity,"))
         assertTrue(appSource.contains(
             "pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,",
@@ -64,16 +64,33 @@ class ClocktowerNewDemonProductionWiringTest {
             "if (pendingNightNewDemonIdentityName != null) add(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON)",
         ))
         assertTrue(hostSource.contains(
-            "step.action == ClocktowerNightAction.NewDemonIdentity ->",
+            "ClocktowerProductionOtherNightFlow.interactions(",
+        ))
+        assertTrue(hostSource.contains(
+            "phase = ClocktowerNightFlowPhase.OTHER_NIGHT",
         ))
         assertTrue(hostSource.contains("ClocktowerProductionNightStepIdentity.newDemonIdentity()"))
+        assertTrue(hostSource.contains(
+            "otherNightMaterializers.materialize(otherNightInteractions)",
+        ))
     }
 
     @Test
-    fun `night self-kill confirmation screen remains separate while next-night identity is planner ordered`() {
+    fun `night self-kill confirmation remains separate from next-night lazy identity interaction`() {
         assertTrue(hostSource.contains("pendingNewDemonName?.let { newDemonName ->"))
         assertTrue(hostSource.contains("ClocktowerNewDemonConfirmationScreen("))
-        assertTrue(hostSource.contains("ClocktowerProductionOtherNightFlow.order("))
+        assertTrue(hostSource.contains(
+            "ClocktowerProductionOtherNightFlow.interactions(",
+        ))
+        assertTrue(hostSource.contains(
+            "phase = ClocktowerNightFlowPhase.OTHER_NIGHT",
+        ))
+        assertTrue(hostSource.contains(
+            "ClocktowerProductionNightStepIdentity.newDemonIdentity()",
+        ))
+        assertTrue(hostSource.contains(
+            "otherNightMaterializers.materialize(otherNightInteractions)",
+        ))
     }
 
     @Test
