@@ -2,7 +2,8 @@
 
 > 状态日期：2026-08-23  
 > 文档角色：**CURRENT / 当前状态唯一权威**  
-> 当前 live `main`：`520be741fabb47f03ab1fb8852139a1c4cccb9fd`（PR #43 merge）  
+> PR #43 merge baseline：`520be741fabb47f03ab1fb8852139a1c4cccb9fd`  
+> 当前 live `main`：**每次新会话重新查询；可能包含 merge 后的 docs-only commits**  
 > 当前工作：**下一 structural task：`CampBoardGameHostApp.kt` App-root decomposition**  
 > PR #43 validated implementation head：`b37f0067b674a0cd4bee5ff311840d1c52ce8c05`  
 > 当前执行点：**PR #43 已合并；下一任务必须在新对话 / fresh branch 中开始 App-root decomposition；A3 顺延**  
@@ -231,7 +232,7 @@ Therefore “大文件治理”尚未结束，即使 PR #43 已经完成并合�
 ```text
 1. PR #43 merged on main
 2. 本对话停止
-3. 新对话确认 live main = merged baseline（或更新）
+3. 新对话确认 live main
 4. 从 live main 创建 fresh structural branch
 5. audit + decompose CampBoardGameHostApp.kt
 6. remeasure all large production files
@@ -341,7 +342,7 @@ Never merge, mark ready, rebase or force-push without explicit user authorizatio
 For the next task:
 
 1. confirm live `main` and record the current SHA；
-2. confirm PR #43 is merged（expected merge baseline `520be741fabb47f03ab1fb8852139a1c4cccb9fd`）；
+2. confirm PR #43 is merged（merge baseline `520be741fabb47f03ab1fb8852139a1c4cccb9fd`）；
 3. read `AGENTS.md`；
 4. read this roadmap；
 5. read `NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md`；
