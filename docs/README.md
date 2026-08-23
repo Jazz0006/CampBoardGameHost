@@ -21,10 +21,10 @@
 ## 2. 当前必须阅读
 
 - [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **CURRENT / 唯一状态权威**  
-  PR #42 Historical Action + Observation Capture 已合并；当前正在 PR #43 中拆分 `ClocktowerHostScreen.kt`，A1–A8 已完成，A9 规划中。
+  PR #42 Historical Action + Observation Capture 已合并；当前正在 PR #43 中拆分 `ClocktowerHostScreen.kt`，A1–A9 已完成，A10 边界重新审计中。
 
 - [`NEXT_DEVELOPMENT_HANDOFF_2026-08-23.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-23.md) — **CURRENT HANDOFF**  
-  记录 PR #43 live head、A1–A8 证据、A9 unreachable legacy fallback 候选和 stop conditions。
+  记录 PR #43 live head、A1–A9 证据、A9 final gates、剩余规模和 A10 re-audit stop conditions。
 
 - [`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`](SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md) — **NORMATIVE**
 
@@ -38,16 +38,16 @@ PR #39 Storyteller Information Decision Foundation     MERGED
 PR #40 Structured Manual UI — Empath numeric slice     MERGED
 PR #41 workflow / LF policy docs-infra                 MERGED
 PR #42 Historical Action + Observation Capture         MERGED
-PR #43 Clocktower host source decomposition            DRAFT / A1–A8 GREEN
+PR #43 Clocktower host source decomposition            DRAFT / A1–A9 GREEN
 
 live main:
 88164a5bba1fa80695a0247538e632d127e5cfa1
 
 PR #43 validated head:
-e1f94fbe01ab95312555ae4524bbc6ad9204b820
+00a2d19e45415614fbd8e93e83a53ba4d2cf9d35
 
 current execution point:
-A9 PLANNING — remove unreachable legacy fallback before deeper extraction
+A10 BOUNDARY RE-AUDIT — no implementation yet
 
 next product slice after decomposition:
 A3 HISTORICAL MULTI-NIGHT EXACT BASELINE
@@ -57,7 +57,7 @@ PR #43 仍为 draft、未 merge。未经用户明确授权不得 merge。
 
 ## 4. PR #43 摘要
 
-A1–A8 已建立以下新 owner：
+A1–A9 已完成以下 owner extraction / cleanup：
 
 - `ClocktowerHostCoreSemantics.kt`
 - `ClocktowerHostSelectionSemantics.kt`
@@ -66,6 +66,7 @@ A1–A8 已建立以下新 owner：
 - `ClocktowerPlayerDisplayUi.kt`
 - `ClocktowerRegistrationUi.kt`
 - `ClocktowerNightStepUi.kt`
+- A9 unreachable legacy fallback / `ClocktowerInfoCard` cleanup
 
 A8 final gate：
 
@@ -75,15 +76,23 @@ CI #503                    SUCCESS
 R2 #443                    SUCCESS
 ```
 
-A8 后 host 仍为 319,837 bytes / 5,303 lines，50 KiB 目标尚未完成。
+A9 final gate：
 
-## 5. 当前 A9 规划
+```text
+RED commit                  3ecbcadbd728ac83f7ab1f8d1d40175795e44078
+GREEN commit                00a2d19e45415614fbd8e93e83a53ba4d2cf9d35
+exact deletion audit        PASS
+CI #506                     SUCCESS
+R2 #446                     SUCCESS
+```
 
-当前最安全候选是删除 active themed UI 之后、unconditional `return` 后面的 unreachable legacy `LazyColumn` 与其专用 `ClocktowerInfoCard`。该候选约 25.8 KB / 513 lines。
+A9 后 Host 为 294,769 bytes / 4,818 lines；共删除 25,068 bytes / 484 lines。50 KiB 目标尚未完成。
 
-这是 structural cleanup，不得改变 active UI、day/night flow、recommendation、registration、information decision、history/persistence 或 session authority。
+## 5. 当前 A10 边界审计
 
-A9 尚未实施；先建立真实 source-contract RED，再交给 Luna 做精确删除。
+A10 尚未开始。下一步只审计 active `ClocktowerJudgeScreen` 内可独立拥有的 state/model construction 或 phase-presentation 边界，再建立真实 tests-first contract。
+
+不得直接移动 stateful Compose block；不得改变 active UI、day/night flow、callback ordering、recommendation、registration、information decision、history/persistence 或 session authority。
 
 ## 6. 大文件工作流
 
@@ -109,7 +118,7 @@ Luna push 后必须返回 commit SHA；ChatGPT 必须从 GitHub 重新确认 liv
 5. 读 `NEXT_DEVELOPMENT_HANDOFF_2026-08-23.md`；
 6. 查询 live `main`、PR #43 和 feature head；
 7. 若 PR #43 仍 open，从其 live head 继续；
-8. 当前从 A9 source-contract planning 开始；
+8. 当前从 A10 boundary re-audit 开始，尚不实施；
 9. 不提前进入 A3 product work；
 10. 未经用户明确授权不得 merge。
 

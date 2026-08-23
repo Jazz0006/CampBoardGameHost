@@ -5,7 +5,7 @@
 > Development operations: `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`  
 > Large-file execution: `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`  
 > Current task: **PR #43 Clocktower host source decomposition**  
-> Immediate next step: **A9 planning — unreachable legacy fallback cleanup**  
+> Immediate next step: **A10 boundary re-audit only — no implementation yet**  
 > Status: **CURRENT HANDOFF**
 
 ## 1. Trusted live state
@@ -18,7 +18,7 @@ main source: PR #42 Historical Action + Observation Capture merge
 PR: #43 — Refactor: decompose Clocktower host monolith
 branch: codex/source-decomposition-clocktower-host
 state: DRAFT / OPEN / NOT MERGED
-validated head: e1f94fbe01ab95312555ae4524bbc6ad9204b820
+validated A9 implementation head: 00a2d19e45415614fbd8e93e83a53ba4d2cf9d35
 ```
 
 New sessions must query live state again. Do not assume these SHAs remain current.
@@ -57,9 +57,12 @@ A7 Spy/Recluse registration UI
 
 A8 Night-step presentation UI
    ClocktowerNightStepUi.kt
+
+A9 Unreachable legacy fallback cleanup
+   ClocktowerHostScreen.kt
 ```
 
-All A1–A8 slices passed independent local/remote validation before moving on.
+All A1–A9 slices passed independent local/remote validation before moving on.
 
 ## 4. A8 final evidence
 
@@ -81,96 +84,73 @@ CI #503:                SUCCESS
 R2 #443:                SUCCESS
 ```
 
-## 5. Remaining host state
+## 5. A9 final evidence
+
+A9 removed only the unreachable legacy `LazyColumn` after the active themed UI's unconditional return, its six `ClocktowerInfoCard` call sites, and the now-unused private helper.
 
 ```text
-ClocktowerHostScreen.kt: 319,837 bytes
-ClocktowerHostScreen.kt: 5,303 lines
+RED commit:                   3ecbcadbd728ac83f7ab1f8d1d40175795e44078
+CI #505:                      EXPECTED FAILURE
+unit tests:                   657 total / 2 expected failures
+assembleDebug:                SUCCESS
+ASP contract tests:           SUCCESS
+Real Clingo:                  SUCCESS
+R2 #445:                      SUCCESS
+
+GREEN commit:                 00a2d19e45415614fbd8e93e83a53ba4d2cf9d35
+changed GREEN files:          ClocktowerHostScreen.kt + r2-write-probe.yml only
+exact deletion audit:         PASS
+active prefix through return: byte-for-byte identical
+removed:                      25,068 bytes / 484 lines
+CI #506:                      SUCCESS
+R2 #446:                      SUCCESS
 ```
 
-The file now consists primarily of one very large `ClocktowerJudgeScreen` plus a small tail helper. The <= 50 KiB objective is not complete.
-
-## 6. Immediate A9 candidate
-
-Static control-flow inspection found an unconditional return after the active themed UI:
+## 6. Remaining host state
 
 ```text
-ClocktowerDarkTheme { ... active production UI ... }
-return
-LazyColumn { ... old legacy fallback ... }
+ClocktowerHostScreen.kt: 294,769 bytes
+ClocktowerHostScreen.kt: 4,818 lines
 ```
 
-The fallback and `ClocktowerInfoCard` occupy about 25.8 KB / 513 lines. All six `ClocktowerInfoCard` calls are inside that unreachable fallback; the helper has no active call site.
+The <= 50 KiB objective is not complete. The remaining file is now almost entirely one large active `ClocktowerJudgeScreen`; there is no longer a dead fallback or tail `ClocktowerInfoCard` seam.
 
-A9 should first prove and remove this dead block before introducing any new state-owner abstraction.
+## 7. Immediate next step — A10 boundary re-audit
 
-### Proposed A9 tests-first boundary
+A10 has not started. Do not write tests or production code until the active screen is re-audited.
 
-1. Add a source contract that rejects the `return` followed by legacy `LazyColumn` pattern.
-2. Update `ClocktowerNightStepUiOwnershipTest` so it no longer requires `ClocktowerInfoCard` to remain in host.
-3. Require `ClocktowerInfoCard` to be absent after cleanup.
-4. Confirm the active `ClocktowerDarkTheme` block remains present.
-5. RED must fail only because the unreachable block/helper still exist.
+The re-audit must identify:
 
-### Proposed A9 GREEN allowlist
+1. cohesive state/model construction that can move without changing Compose state lifetime;
+2. active phase-presentation blocks with stable parameter/callback boundaries;
+3. callback invocation and selection-audit ordering that must remain exact;
+4. cross-file visibility changes required by any candidate;
+5. expected new-file size before choosing a move;
+6. a focused ownership/characterization contract that can produce a real RED.
 
-```text
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
-app/src/test/java/com/codex/campboardgamehost/ClocktowerNightStepUiOwnershipTest.kt
-app/src/test/java/com/codex/campboardgamehost/ClocktowerLegacyFallbackOwnershipTest.kt
-.github/workflows/r2-write-probe.yml
-```
+Stop if the candidate would change product behavior, recommendation ranking, information lifecycle, registration semantics, persistence/history, or session authority.
 
-Tests should be committed separately before the large deletion. Luna should perform the production deletion in a complete local worktree.
-
-## 7. A9 invariants
-
-- structural cleanup only;
-- do not change active themed UI;
-- do not change phase/day/night flow;
-- do not change recommendation ranking or telemetry;
-- do not change Spy/Recluse registration semantics;
-- do not change information decision lifecycle;
-- do not change persistence/history/session authority;
-- do not begin A3 product work;
-- do not merge PR #43.
-
-## 8. A9 validation
+## 8. Validation rules for any later slice
 
 ```text
-focused ownership/source contract
--> full :app:testDebugUnitTest
--> :app:assembleDebug
--> git diff --check
--> exact deletion audit
--> verify only unreachable fallback/helper were removed
--> measure remaining host bytes/lines
--> push feature branch
+live head recheck
+-> focused tests-only RED
+-> remote RED provenance
+-> Luna local mechanical GREEN for large-file changes
+-> focused/full unit tests + assembleDebug
+-> exact move/deletion audit
 -> GitHub CI + ASP + Real Clingo + R2
--> re-audit next decomposition boundary
+-> stop and re-audit
 ```
 
-Use:
-
-```bash
-GRADLE_USER_HOME="$PWD/.gradle-codex"
-```
-
-Keep `.gradle-codex/` untracked.
+Use `GRADLE_USER_HOME="$PWD/.gradle-codex"`; keep `.gradle-codex/` untracked.
 
 ## 9. Stop conditions
 
-Stop and report if:
-
-- live head differs from the expected head without explanation;
-- local target diverged and cannot fast-forward;
-- the fallback is not provably after the unconditional return;
-- any `ClocktowerInfoCard` call exists in active code;
-- deletion changes active production code;
-- focused/full tests expose a product behavior dependency;
-- work would require modifying history, recommendation, registration or session semantics.
-
-After A9 GREEN and remote gates, stop before A10 and re-measure/re-plan.
+- PR #43 must remain draft and unmerged;
+- no A3 product work in this PR;
+- no A10 implementation before the boundary audit is complete;
+- no state lifetime, callback ordering, recommendation, registration, information, history or session-authority changes.
 
 ## 10. Merge boundary
 

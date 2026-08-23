@@ -4,8 +4,8 @@
 > 文档角色：**CURRENT / 当前状态唯一权威**  
 > 当前 live `main`：`88164a5bba1fa80695a0247538e632d127e5cfa1`（PR #42 merge）  
 > 当前工作：**PR #43 Clocktower host source decomposition**  
-> 当前 feature head：`e1f94fbe01ab95312555ae4524bbc6ad9204b820`  
-> 当前执行点：**A1–A8 完成；A9 规划中；PR 仍为 draft、未 merge**  
+> 当前 validated A9 head：`00a2d19e45415614fbd8e93e83a53ba4d2cf9d35`  
+> 当前执行点：**A1–A9 完成；A10 边界重新审计中；PR 仍为 draft、未 merge**  
 > 当前交接：`NEXT_DEVELOPMENT_HANDOFF_2026-08-23.md`
 
 > 新会话实施前必须重新查询 live `main`、PR #43 和 feature head，不得把本文 SHA 当作永久 HEAD。
@@ -20,8 +20,8 @@ PR #39 Storyteller Information Decision Foundation     CLOSED / MERGED
 PR #40 Structured Manual UI — Empath numeric slice     CLOSED / MERGED
 PR #41 developer workflow + LF policy                  CLOSED / MERGED
 PR #42 Historical Action + Observation Capture         CLOSED / MERGED
-PR #43 Clocktower host source decomposition            DRAFT / A1–A8 GREEN
-Current implementation point                           A9 PLANNING
+PR #43 Clocktower host source decomposition            DRAFT / A1–A9 GREEN
+Current implementation point                           A10 BOUNDARY RE-AUDIT ONLY
 Next product source slice after decomposition          A3 HISTORICAL MULTI-NIGHT EXACT BASELINE
 ```
 
@@ -80,7 +80,7 @@ base main: 88164a5bba1fa80695a0247538e632d127e5cfa1
 branch:    codex/source-decomposition-clocktower-host
 PR:        #43 — Refactor: decompose Clocktower host monolith
 state:     DRAFT / NOT MERGED
-head:      e1f94fbe01ab95312555ae4524bbc6ad9204b820
+validated implementation head: 00a2d19e45415614fbd8e93e83a53ba4d2cf9d35
 ```
 
 目标：
@@ -91,7 +91,7 @@ head:      e1f94fbe01ab95312555ae4524bbc6ad9204b820
 - 每个 slice 使用 characterization/ownership contract、local validation、exact diff、GitHub CI/R2；
 - 未完成整个 decomposition 前不 merge。
 
-### 3.2 A1–A8 已完成
+### 3.2 A1–A9 已完成
 
 ```text
 A1  ClocktowerHostCoreSemantics.kt
@@ -117,6 +117,9 @@ A7  ClocktowerRegistrationUi.kt
 
 A8  ClocktowerNightStepUi.kt
     ClocktowerNightStepCardLocalized only
+
+A9  ClocktowerHostScreen.kt dead-code cleanup
+    unreachable legacy LazyColumn + ClocktowerInfoCard removed
 ```
 
 A8 纠正记录：`ClocktowerInfoCard` 有 6 个 host 调用点，不能在跨文件后继续保持 file-private，因此 A8 最终只移动 night-step composable。A8 production commit：
@@ -146,38 +149,41 @@ R2 #443                                  SUCCESS
 
 ### 3.3 当前剩余规模
 
-在 A8 后：
+在 A9 后：
 
 ```text
-ClocktowerHostScreen.kt   319,837 bytes
-ClocktowerHostScreen.kt   5,303 lines
+ClocktowerHostScreen.kt   294,769 bytes
+ClocktowerHostScreen.kt   4,818 lines
 ```
 
-50 KiB 目标尚未完成。当前文件几乎只剩一个超大的 `ClocktowerJudgeScreen` 与尾部 helper，后续不再只是简单 top-level move；必须先处理可证明的 dead fallback，再逐步分离 state/model construction 与 phase presentation。
+A9 删除了 unconditional `return` 后可证明不可达的 legacy `LazyColumn`、其中 6 个 `ClocktowerInfoCard` 调用点及尾部私有 helper，共 25,068 bytes / 484 lines。`return` 之前的 active `ClocktowerDarkTheme` production UI 与 RED baseline 完全一致。
 
-## 4. NEXT — A9 规划边界
+50 KiB 目标尚未完成。Host 现在几乎完全由单个大型 `ClocktowerJudgeScreen` 构成，下一步必须重新审计内部 state/model construction 与 active phase presentation 的真实边界。
 
-当前最安全的下一候选不是立即拆分 state ownership，而是先删除 A8 后确认存在的 unreachable legacy fallback：
+## 4. A9 完成证据与 A10 停止点
+
+A9 tests-first provenance：
 
 ```text
-ClocktowerDarkTheme { ... }
-return
-LazyColumn { ... legacy fallback ... }   <- unreachable
-private fun ClocktowerInfoCard(...)       <- only used by that fallback
+RED commit:              3ecbcadbd728ac83f7ab1f8d1d40175795e44078
+CI #505:                 EXPECTED FAILURE
+unit tests:              657 total / 2 expected ownership failures
+assembleDebug:           SUCCESS
+ASP contract tests:      SUCCESS
+Real Clingo:             SUCCESS
+R2 #445:                 SUCCESS
+
+GREEN commit:            00a2d19e45415614fbd8e93e83a53ba4d2cf9d35
+exact deletion audit:    PASS
+active prefix audit:     byte-for-byte identical through unconditional return
+Host reduction:          25,068 bytes / 484 lines
+CI #506:                 SUCCESS
+R2 #446:                 SUCCESS
 ```
 
-候选范围约 25.8 KB / 513 lines。A9 目前是**规划状态，尚未提交 tests 或 production 改动**。
+当前停止在 **A10 boundary re-audit**：尚未授权 A10 tests 或 production implementation。下一步只能先分析 `ClocktowerJudgeScreen` 内部责任、Compose state lifetime、callback ordering 和可独立 owner 的最小候选，再决定 tests-first 范围。
 
-进入 A9 前必须：
-
-1. 用 source contract 锁定 unconditional `return` 后 legacy `LazyColumn` 不应存在；
-2. 更新 A8 ownership test，不再把 `ClocktowerInfoCard` 固定为 host owner；
-3. GREEN 只删除 unreachable fallback 与其私有专用 helper；
-4. 不触碰 `ClocktowerDarkTheme` 内实际 production UI；
-5. 不修改 day/night flow、registration、recommendation、history/session ownership；
-6. local focused/full tests + assembleDebug；
-7. exact deletion audit + GitHub CI/R2；
-8. A9 完成后重新测量 host，并重新规划更深层 extraction。
+不得为了追求文件尺寸直接移动 stateful block；不得改变 day/night flow、recommendation、registration、information decision、history/persistence 或 session authority。
 
 ## 5. PR #43 后的下一产品阶段
 
@@ -253,7 +259,8 @@ PR #42 merge / historical capture         88164a5bba1fa80695a0247538e632d127e5cf
 PR #43 A6 GREEN                           0cdc8fec53980da986e7bb723e9dd73833b177a8
 PR #43 A7 GREEN                           be7234210f8d6249e6da8237cbd0f48ee4708dd7
 PR #43 A8 production GREEN                fdab916dd8f7e9b4614bf16b79355036ff45fe41
-PR #43 current validated head             e1f94fbe01ab95312555ae4524bbc6ad9204b820
+PR #43 A9 RED                            3ecbcadbd728ac83f7ab1f8d1d40175795e44078
+PR #43 A9 GREEN / validated implementation 00a2d19e45415614fbd8e93e83a53ba4d2cf9d35
 ```
 
 ## 9. 新会话启动顺序
@@ -265,7 +272,7 @@ PR #43 current validated head             e1f94fbe01ab95312555ae4524bbc6ad9204b8
 5. 读 `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-23.md`；
 6. 查询 live `main`、PR #43、feature head 和 checks；
 7. 若 PR #43 仍在开发，从其 live head 继续，不从 main 另开重复 branch；
-8. 当前只规划/实施 A9，不提前进入 A3 product work；
+8. 当前从 A10 boundary re-audit 开始，不直接实施、不提前进入 A3 product work；
 9. 未经用户明确授权不得 merge。
 
 ## 10. 文档维护规则
