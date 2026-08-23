@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.domain
 
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 
 data class GameSnapshot(
@@ -12,11 +13,13 @@ data class GameSnapshot(
     val gameState: GameState,
     val decisionHistory: DecisionHistoryArchive = DecisionHistoryArchive(),
     val crossGameHistory: CrossGameHistory = CrossGameHistory(),
+    /** Mechanical facts committed to the same game-wide timeline as epistemic observations. */
+    val actionTimeline: ActionFactTimeline = ActionFactTimeline(),
     /** Recipient-scoped facts already delivered during this game; actual roles are never inferred from it. */
     val epistemicObservationLog: EpistemicObservationLog = EpistemicObservationLog(),
     /** Explicit chronology mode; new/default snapshots stay LegacyLocal until the later producer cutover. */
     val semanticHistoryMode: ClocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
-    /** Next game-wide monotonic identity reserved for a committed epistemic timeline point. */
+    /** Next game-wide monotonic identity reserved for any committed semantic timeline point. */
     val nextTimelineGlobalSequence: Long = 0L,
 ) {
     init {
@@ -31,6 +34,7 @@ data class GameSnapshot(
             "RulesetRef and GameState must identify the same script."
         }
         semanticHistoryMode.requireCompatible(
+            actionTimeline = actionTimeline,
             observationLog = epistemicObservationLog,
             nextTimelineGlobalSequence = nextTimelineGlobalSequence,
         )

@@ -6,11 +6,16 @@ import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.requireCompatible
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
+import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
 import com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint
+import com.codex.campboardgamehost.clocktower.epistemic.bindGlobal
+import com.codex.campboardgamehost.clocktower.epistemic.matches
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 
 /** Transient result of one session-owned Global observation transition; never persisted as a second state model. */
@@ -19,6 +24,13 @@ internal data class GlobalEpistemicObservationCommit(
     val observationLog: EpistemicObservationLog,
     val nextTimelineGlobalSequence: Long,
     val playerInputRevision: Long,
+)
+
+/** Transient result of one session-owned Global action transition; never persisted as a second state model. */
+internal data class GlobalActionFactCommit(
+    val entry: TimelineBoundActionFact,
+    val actionTimeline: ActionFactTimeline,
+    val nextTimelineGlobalSequence: Long,
 )
 
 internal class ClocktowerGameSession private constructor(
@@ -63,6 +75,28 @@ internal class ClocktowerGameSession private constructor(
         return point
     }
 
+    /** Atomic instance authority for newly produced Global actions. */
+    fun commitGlobalActionFact(draft: ActionFactDraft): TimelineBoundActionFact {
+        val committed = commitGlobalActionFact(
+            semanticHistoryMode = snapshot.semanticHistoryMode,
+            actionTimeline = snapshot.actionTimeline,
+            observationLog = snapshot.epistemicObservationLog,
+            nextTimelineGlobalSequence = snapshot.nextTimelineGlobalSequence,
+            draft = draft,
+        )
+        if (
+            committed.actionTimeline === snapshot.actionTimeline &&
+            committed.nextTimelineGlobalSequence == snapshot.nextTimelineGlobalSequence
+        ) {
+            return committed.entry
+        }
+        snapshot = snapshot.copy(
+            actionTimeline = committed.actionTimeline,
+            nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
+        )
+        return committed.entry
+    }
+
     /** Atomic instance authority for newly produced Global observations. */
     fun commitGlobalEpistemicObservation(draft: EpistemicObservationDraft): RecordedEpistemicObservation {
         val committed = commitGlobalEpistemicObservation(
@@ -71,6 +105,7 @@ internal class ClocktowerGameSession private constructor(
             nextTimelineGlobalSequence = snapshot.nextTimelineGlobalSequence,
             playerInputRevision = snapshot.playerInputRevision,
             draft = draft,
+            actionTimeline = snapshot.actionTimeline,
         )
         if (
             committed.observationLog === snapshot.epistemicObservationLog &&
@@ -110,6 +145,61 @@ internal class ClocktowerGameSession private constructor(
     companion object {
         /**
          * Stateless session transition used by the production Compose adapter until the full game
+         * state is session-owned. It owns the same cursor/log semantics as the instance API without
+         * requiring a synthetic RulesetRef for scripts whose advanced ruleset is not loaded.
+         * Mechanical action capture does not increment game/input revisions: the production state
+         * mutation that the fact records remains the owner of those revisions.
+         */
+        fun commitGlobalActionFact(
+            semanticHistoryMode: ClocktowerSemanticHistoryMode,
+            actionTimeline: ActionFactTimeline,
+            observationLog: EpistemicObservationLog,
+            nextTimelineGlobalSequence: Long,
+            draft: ActionFactDraft,
+        ): GlobalActionFactCommit {
+            require(semanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1) {
+                "Global action commit requires GLOBAL_V1 semantic history."
+            }
+            semanticHistoryMode.requireCompatible(
+                actionTimeline = actionTimeline,
+                observationLog = observationLog,
+                nextTimelineGlobalSequence = nextTimelineGlobalSequence,
+            )
+
+            actionTimeline.entries.firstOrNull { it.fact.actionId == draft.actionId }?.let { existing ->
+                require(draft.matches(existing)) {
+                    "Action ID '${draft.actionId}' is already committed with different content."
+                }
+                return GlobalActionFactCommit(
+                    entry = existing,
+                    actionTimeline = actionTimeline,
+                    nextTimelineGlobalSequence = nextTimelineGlobalSequence,
+                )
+            }
+
+            val point = nextTimelinePoint(
+                phase = draft.phase,
+                round = draft.round,
+                sequence = draft.sequence,
+                nextTimelineGlobalSequence = nextTimelineGlobalSequence,
+            )
+            val entry = draft.bindGlobal(point)
+            val nextTimeline = actionTimeline.append(entry)
+            val nextCursor = point.globalSequence + 1
+            semanticHistoryMode.requireCompatible(
+                actionTimeline = nextTimeline,
+                observationLog = observationLog,
+                nextTimelineGlobalSequence = nextCursor,
+            )
+            return GlobalActionFactCommit(
+                entry = entry,
+                actionTimeline = nextTimeline,
+                nextTimelineGlobalSequence = nextCursor,
+            )
+        }
+
+        /**
+         * Stateless session transition used by the production Compose adapter until the full game
          * state is session-owned. It owns the same cursor/log/revision semantics as the instance API
          * without requiring a synthetic RulesetRef for scripts whose advanced ruleset is not loaded.
          */
@@ -119,12 +209,17 @@ internal class ClocktowerGameSession private constructor(
             nextTimelineGlobalSequence: Long,
             playerInputRevision: Long,
             draft: EpistemicObservationDraft,
+            actionTimeline: ActionFactTimeline = ActionFactTimeline(),
         ): GlobalEpistemicObservationCommit {
             require(semanticHistoryMode == ClocktowerSemanticHistoryMode.GLOBAL_V1) {
                 "Global observation commit requires GLOBAL_V1 semantic history."
             }
             require(playerInputRevision >= 0L) { "playerInputRevision cannot be negative." }
-            semanticHistoryMode.requireCompatible(observationLog, nextTimelineGlobalSequence)
+            semanticHistoryMode.requireCompatible(
+                actionTimeline = actionTimeline,
+                observationLog = observationLog,
+                nextTimelineGlobalSequence = nextTimelineGlobalSequence,
+            )
 
             observationLog.records.firstOrNull { it.recordId == draft.recordId }?.let { existing ->
                 require(draft.matches(existing)) {
@@ -150,10 +245,16 @@ internal class ClocktowerGameSession private constructor(
             )
             val record = draft.bindGlobal(point)
             val nextLog = observationLog.append(record)
+            val nextCursor = point.globalSequence + 1
+            semanticHistoryMode.requireCompatible(
+                actionTimeline = actionTimeline,
+                observationLog = nextLog,
+                nextTimelineGlobalSequence = nextCursor,
+            )
             return GlobalEpistemicObservationCommit(
                 record = record,
                 observationLog = nextLog,
-                nextTimelineGlobalSequence = point.globalSequence + 1,
+                nextTimelineGlobalSequence = nextCursor,
                 playerInputRevision = playerInputRevision + 1,
             )
         }
