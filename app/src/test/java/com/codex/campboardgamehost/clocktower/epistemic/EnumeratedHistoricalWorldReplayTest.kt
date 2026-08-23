@@ -127,6 +127,6 @@ class EnumeratedHistoricalWorldReplayTest {
             Alignment.EVIL
         },
         type = type,
-        scripts = setOf(script),
+        scriptIds = setOf(script),
     )
 }
