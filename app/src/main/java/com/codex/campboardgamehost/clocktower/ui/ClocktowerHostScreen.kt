@@ -224,51 +224,6 @@ import java.security.MessageDigest
 import java.util.Locale
 import java.util.UUID
 
-private fun clocktowerRedHerringCandidates(aliveCards: List<PlayerCard>): List<PlayerCard> =
-    aliveCards.filter { card -> card.clocktowerTeam?.isLegalRedHerringTeam() == true }
-
-private fun actualClocktowerRoleCards(cards: List<PlayerCard>, enName: String): List<PlayerCard> =
-    cards.filter { it.clocktowerRole?.enName == enName }
-
-private fun chefEvilPairs(cards: List<PlayerCard>, isEvil: (PlayerCard) -> Boolean = ::isClocktowerEvil): Int {
-    val evilSeats = cards.mapIndexedNotNull { index, card -> (index + 1).takeIf { isEvil(card) } }.toSet()
-    return FixedInformationEvaluator.chefEvilPairs(cards.toClocktowerPlayerStates()) { it.seat in evilSeats }
-}
-
-private fun livingNeighbors(cards: List<PlayerCard>, playerName: String): List<PlayerCard> {
-    val sourceSeat = cards.indexOfFirst { it.name == playerName } + 1
-    if (sourceSeat <= 0) return emptyList()
-    val neighborSeats = FixedInformationEvaluator
-        .livingNeighbors(cards.toClocktowerPlayerStates(), sourceSeat)
-        .map { it.seat }
-    return neighborSeats.mapNotNull { seat -> cards.getOrNull(seat - 1) }
-}
-
-private fun empathEvilNeighborCount(
-    cards: List<PlayerCard>,
-    playerName: String,
-    isEvil: (PlayerCard) -> Boolean = ::isClocktowerEvil,
-): Int {
-    val sourceSeat = cards.indexOfFirst { it.name == playerName } + 1
-    if (sourceSeat <= 0) return 0
-    val evilSeats = cards.mapIndexedNotNull { index, card -> (index + 1).takeIf { isEvil(card) } }.toSet()
-    return FixedInformationEvaluator.empathEvilNeighborCount(cards.toClocktowerPlayerStates(), sourceSeat) {
-        it.seat in evilSeats
-    }
-}
-
-private fun storytellerPairHint(
-    target: PlayerCard,
-    cards: List<PlayerCard>,
-    fallbackPool: List<PlayerCard> = cards,
-    excludeNames: Set<String> = emptySet(),
-): Pair<PlayerCard, PlayerCard>? {
-    val decoy = fallbackPool.firstOrNull { it.name != target.name && it.name !in excludeNames }
-        ?: fallbackPool.firstOrNull { it.name != target.name }
-        ?: return null
-    return target to decoy
-}
-
 private data class ClocktowerDisplayOption(
     val label: String,
     val displayKind: ClocktowerDisplayKind,
