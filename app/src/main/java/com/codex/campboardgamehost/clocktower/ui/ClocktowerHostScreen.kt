@@ -2745,6 +2745,11 @@ internal fun ClocktowerJudgeScreen(
             (step.roleEnName == null || step.roleEnName in scriptRoleNames) &&
             !(script == ClocktowerScript.NoGreaterJoy && step.title in setOf(minionInfoTitle, demonInfoTitle))
     }
+    val firstNightActualRoleIds = buildSet {
+        cards.forEach { card ->
+            card.clocktowerRole?.enName?.let { add(RoleId(it)) }
+        }
+    }
     val firstNightWakingRoleIds = buildSet {
         cards.forEach { card ->
             card.clocktowerRole?.enName?.let { add(RoleId(it)) }
@@ -2776,6 +2781,7 @@ internal fun ClocktowerJudgeScreen(
             ruleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script),
             playerCount = cards.size,
             inPlayRoleIds = firstNightWakingRoleIds,
+            actualRoleIds = firstNightActualRoleIds,
             productionSteps = filteredNightSteps,
             identityOf = { step ->
                 when {

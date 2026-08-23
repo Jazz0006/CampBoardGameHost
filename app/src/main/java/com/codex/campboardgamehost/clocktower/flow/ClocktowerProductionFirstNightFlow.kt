@@ -18,6 +18,7 @@ internal object ClocktowerProductionFirstNightFlow {
         ruleset: ValidatedClocktowerRuleset,
         playerCount: Int,
         inPlayRoleIds: Set<RoleId>,
+        actualRoleIds: Set<RoleId> = inPlayRoleIds,
     ): List<ClocktowerHostInteraction> {
         val phase = ClocktowerNightFlowPhase.FIRST_NIGHT
         val basePlan = planner.planNight(
@@ -31,6 +32,7 @@ internal object ClocktowerProductionFirstNightFlow {
         return projector.projectNight(
             phase = phase,
             basePlan = basePlan,
+            actualRoleIds = actualRoleIds,
         )
     }
 
@@ -38,17 +40,20 @@ internal object ClocktowerProductionFirstNightFlow {
         ruleset: ValidatedClocktowerRuleset,
         playerCount: Int,
         inPlayRoleIds: Set<RoleId>,
+        actualRoleIds: Set<RoleId> = inPlayRoleIds,
         productionSteps: List<T>,
         identityOf: (T) -> ClocktowerProductionNightStepIdentity,
     ): List<T> {
         val phase = ClocktowerNightFlowPhase.FIRST_NIGHT
+        val projectedInteractions = interactions(
+            ruleset = ruleset,
+            playerCount = playerCount,
+            inPlayRoleIds = inPlayRoleIds,
+            actualRoleIds = actualRoleIds,
+        )
         return ClocktowerProductionInteractionOrderer.order(
             phase = phase,
-            projectedInteractions = interactions(
-                ruleset = ruleset,
-                playerCount = playerCount,
-                inPlayRoleIds = inPlayRoleIds,
-            ),
+            projectedInteractions = projectedInteractions,
             productionSteps = productionSteps,
             identityOf = identityOf,
         )
