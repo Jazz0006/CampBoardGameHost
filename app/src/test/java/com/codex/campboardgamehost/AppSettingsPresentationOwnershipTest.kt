@@ -19,6 +19,8 @@ class AppSettingsPresentationOwnershipTest {
         val extractedSource = extractedFile.readText(Charsets.UTF_8)
 
         assertTrue(extractedSource.contains("internal fun SettingsScreen("))
+        assertFalse(extractedSource.contains("enum class LanguageMode"))
+        assertFalse(extractedSource.contains("fun LanguageMode.labelResId"))
         assertFalse(extractedSource.contains("fun addCommonPlayer("))
         assertFalse(extractedSource.contains("fun removeCommonPlayer("))
         assertFalse(extractedSource.contains("saveLanguageMode("))
@@ -34,7 +36,7 @@ class AppSettingsPresentationOwnershipTest {
     }
 
     @Test
-    fun `app root retains settings state mutation and persistence ownership`() {
+    fun `app root retains settings state mutation persistence and language ownership`() {
         assertTrue(rootSource.contains("var languageMode by remember { mutableStateOf(baseContext.loadLanguageMode()) }"))
         assertTrue(rootSource.contains("var storytellerAutomationMode by remember { mutableStateOf(baseContext.loadStorytellerAutomationMode()) }"))
         assertTrue(rootSource.contains("var newCommonPlayerName by remember { mutableStateOf(\"\") }"))
@@ -44,6 +46,8 @@ class AppSettingsPresentationOwnershipTest {
         assertTrue(rootSource.contains("baseContext.saveLanguageMode(nextMode)"))
         assertTrue(rootSource.contains("baseContext.saveStorytellerAutomationMode(mode)"))
         assertTrue(rootSource.contains("baseContext.saveCommonPlayers(commonPlayers)"))
+        assertTrue(rootSource.contains("internal enum class LanguageMode"))
+        assertTrue(rootSource.contains("internal fun LanguageMode.labelResId(): Int"))
     }
 
     @Test
