@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
+import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
@@ -51,6 +52,13 @@ class EnumeratedHistoricalExactBaselineTest {
                     globalSequence = 10L,
                 ),
                 action(
+                    ActionFact.PhaseAdvance("day-1", 15L, StorytellerPhase.DAY, 1),
+                    StorytellerPhase.NIGHT,
+                    round = 1,
+                    localSequence = 2,
+                    globalSequence = 15L,
+                ),
+                action(
                     ActionFact.Execution("execution-seat-2", 20L, 2),
                     StorytellerPhase.DAY,
                     round = 1,
@@ -83,10 +91,11 @@ class EnumeratedHistoricalExactBaselineTest {
         assertEquals(StorytellerPhase.NIGHT, result.phase)
         assertEquals(2, result.round)
         assertEquals(30L, result.lastGlobalSequence)
-        assertTrue(
-            result.worldSet.enumeratedWorlds().any { world ->
-                world.abilityStatesBySeat.entries.any { it.value == com.codex.campboardgamehost.clocktower.domain.AbilityState.MALFUNCTIONING_POISONED }
-            },
+        assertEquals(
+            setOf(1, 2, 3, 4, 5),
+            result.worldSet.enumeratedWorlds().flatMap { world ->
+                world.abilityStatesBySeat.filterValues { it == AbilityState.MALFUNCTIONING_POISONED }.keys
+            }.toSet(),
         )
     }
 
