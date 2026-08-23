@@ -129,6 +129,7 @@ import com.codex.campboardgamehost.clocktower.domain.kind
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerPlayerStates
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNightFlow
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionOtherNightFlow
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
@@ -2111,277 +2112,56 @@ internal fun ClocktowerJudgeScreen(
     }.joinToString("\n")
     val minionInfoTitle = stringResource(R.string.clocktower_first_night_minion_title)
     val demonInfoTitle = stringResource(R.string.clocktower_first_night_demon_title)
-    val unfilteredNightSteps = if (phase == ClocktowerPhase.FirstNight) {
-        listOf(
-            ClocktowerNightStepUi(
-                title = stringResource(R.string.clocktower_first_night_minion_title),
-                actor = minionCards.firstOrNull().takeIf { shouldGiveFirstNightEvilInfo },
-                isRealAction = minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo,
-                reason = when {
-                    !shouldGiveFirstNightEvilInfo -> stringResource(R.string.clocktower_first_night_small_game_no_evil_info_reason)
-                    minionCards.isEmpty() -> stringResource(R.string.clocktower_first_night_no_minions_reason)
-                    else -> ""
-                },
-                storytellerAction = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
-                    stringResource(
-                        R.string.clocktower_first_night_minion_action_format,
-                        minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) },
-                    )
-                } else {
-                    stringResource(R.string.clocktower_first_night_placeholder_action)
-                },
-                tellPlayer = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) minionInfoText else null,
-                explanation = if (shouldGiveFirstNightEvilInfo) {
-                    stringResource(R.string.clocktower_first_night_minion_explain)
-                } else {
-                    stringResource(R.string.clocktower_first_night_small_game_no_evil_info_explain)
-                },
-                displayKind = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo && minionInfoText != null) ClocktowerDisplayKind.EvilInfo else ClocktowerDisplayKind.None,
-                displayTitle = stringResource(R.string.clocktower_first_night_minion_title),
-                displayPrimary = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) "${stringResource(R.string.clocktower_evil_display_demon)}\n${demonCard?.seatLabel(cards).orEmpty()}" else null,
-                displayFooter = null,
-                wakeText = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
-                    stringResource(
-                        R.string.clocktower_first_night_minion_wake_format,
-                        minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) },
-                    )
-                } else {
-                    null
-                },
-            ),
-            ClocktowerNightStepUi(
-                title = stringResource(R.string.clocktower_first_night_demon_title),
-                actor = demonCard.takeIf { shouldGiveFirstNightEvilInfo },
-                isRealAction = demonCard != null && shouldGiveFirstNightEvilInfo,
-                reason = when {
-                    !shouldGiveFirstNightEvilInfo -> stringResource(R.string.clocktower_first_night_small_game_no_evil_info_reason)
-                    demonCard == null -> stringResource(R.string.clocktower_first_night_no_demon_reason)
-                    else -> ""
-                },
-                storytellerAction = if (demonCard != null && shouldGiveFirstNightEvilInfo) {
-                    stringResource(R.string.clocktower_first_night_demon_action_format, demonCard.seatLabel(cards))
-                } else {
-                    stringResource(R.string.clocktower_first_night_placeholder_action)
-                },
-                tellPlayer = if (demonCard != null && shouldGiveFirstNightEvilInfo) demonInfoText else null,
-                explanation = if (shouldGiveFirstNightEvilInfo) {
-                    stringResource(R.string.clocktower_first_night_demon_explain)
-                } else {
-                    stringResource(R.string.clocktower_first_night_small_game_no_evil_info_explain)
-                },
-                displayKind = if (demonCard != null && shouldGiveFirstNightEvilInfo) ClocktowerDisplayKind.EvilInfo else ClocktowerDisplayKind.None,
-                displayTitle = stringResource(R.string.clocktower_first_night_demon_title),
-                displayPrimary = if (demonCard != null && shouldGiveFirstNightEvilInfo) "${stringResource(R.string.clocktower_evil_display_minions)}\n${if (minionCards.isEmpty()) stringResource(R.string.clocktower_first_night_demon_no_minions) else minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) }}" else null,
-                displaySecondary = if (demonCard != null && shouldGiveFirstNightEvilInfo) "${stringResource(R.string.clocktower_evil_display_bluffs)}\n${demonBluffs.joinToString(stringResource(R.string.name_separator)) { it.nameFor(language) }}" else null,
-                displayFooter = null,
-            ),
-            informationStepBuilder.build(
-                roleName = "投毒者",
-                enName = "Poisoner",
-                tellPlayer = poisonTarget?.let { text("已选择：${playerSeatLabel(cards, it)}", "Selected: ${playerSeatLabel(cards, it)}") },
-                explanation = text("投毒者选择一名玩家，使其能力暂时失效。", "The Poisoner chooses a player whose ability stops working temporarily."),
-                action = ClocktowerNightAction.Poison,
-                displayKind = ClocktowerDisplayKind.None,
-                hostInstruction = text("轻拍投毒者，示意睁眼。让他指一名玩家，在下面记录为今晚中毒目标。", "Tap the Poisoner to wake them. Have them point to one player and record that player as tonight's poisoned target."),
-            ),
-            ClocktowerNightStepUi(
-                title = text("占卜师红鲱鱼", "Fortune Teller red herring"),
-                actor = null,
-                isRealAction = actualClocktowerRoleCards(cards, "Fortune Teller").isNotEmpty(),
-                reason = if (actualClocktowerRoleCards(cards, "Fortune Teller").isEmpty()) text("本局没有占卜师，此步骤只用于首夜配置。", "No Fortune Teller is in play; this is only a first-night setup step.") else "",
-                storytellerAction = text("不要公开说明这个选择。请选择一名善良玩家作为红鲱鱼；可以选择占卜师本人。", "Keep this choice private. Choose a good player as the red herring; the Fortune Teller may be chosen."),
-                tellPlayer = redHerring?.let { text("已选择：${playerSeatLabel(cards, it)}", "Selected: ${playerSeatLabel(cards, it)}") },
-                explanation = text("选择一名善良玩家成为红鲱鱼。占卜师查询他时，结果为“有”，他会被标记为恶魔。", "Choose a good player as the red herring. The Fortune Teller detects that player as a Demon."),
-                action = ClocktowerNightAction.RedHerring,
-                roleEnName = "Fortune Teller",
-            ),
-            informationStepBuilder.build(
-                roleName = "钟表匠",
-                enName = "Clockmaker",
-                tellPlayer = clockmakerNumber,
-                explanation = text("这个数字表示恶魔到最近爪牙相隔几步。", "This number is the distance from the Demon to the nearest Minion."),
-                displayFooter = text("恶魔到最近爪牙的距离", "Distance from Demon to nearest Minion"),
-                hostInstruction = text("轻拍钟表匠，示意睁眼。把数字只给他看；确认后收回手机，示意闭眼。", "Tap the Clockmaker to wake them. Show the number only to that player, then take the phone back and signal them to close their eyes."),
-                displayOptions = { actor -> recommendedNumberOptions(text("钟表匠信息", "Clockmaker information"), actor, clockmakerValue, cards.size / 2, text("恶魔到最近爪牙的距离", "Distance from Demon to nearest Minion")) },
-            ),
-            informationStepBuilder.build(
-                roleName = "洗衣妇",
-                enName = "Washerwoman",
-                tellPlayer = washerwomanTarget?.let { text("${if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${washerwomanOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${washerwomanOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} is one of these two players: ${washerwomanOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${washerwomanOrderedPair?.second?.seatLabel(cards).orEmpty()}") },
-                explanation = text("洗衣妇会得知某个镇民在两名玩家之一中。", "The Washerwoman learns that a particular Townsfolk is one of two players."),
-                displayPrimary = washerwomanTarget?.let { if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk))?.nameFor(language) else it.clocktowerRole?.nameFor(language) },
-                displaySecondary = seatNumbersText(washerwomanOrderedPair),
-                displayFooter = text("在下面两位玩家之中", "One of these two players"),
-                hostInstruction = text("轻拍洗衣妇，示意睁眼。点击“全屏展示给玩家”，只给她看；看完后收回手机，示意闭眼。", "Tap the Washerwoman to wake them. Show the full-screen information only to that player, then take the phone back and signal them to close their eyes."),
-                displayOptions = { actor ->
-                    recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
-                },
-                reliableDisplayOptions = { actor ->
-                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
-                },
-                spyRegistrationKey = washerwomanRegistrationKey,
-                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk),
-            ),
-            informationStepBuilder.build(
-                roleName = "图书管理员",
-                enName = "Librarian",
-                tellPlayer = librarianTarget?.let { text("${if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${librarianOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${librarianOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} is one of these two players: ${librarianOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${librarianOrderedPair?.second?.seatLabel(cards).orEmpty()}") } ?: text("本局没有外来者。", "There are no Outsiders in play."),
-                explanation = text("图书管理员会得知某个外来者在两名玩家之一中，或得知没有外来者。", "The Librarian learns that an Outsider is one of two players, or that no Outsiders are in play."),
-                displayPrimary = librarianTarget?.let { if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider))?.nameFor(language) else it.clocktowerRole?.nameFor(language) } ?: text("没有外来者", "No Outsiders"),
-                displaySecondary = seatNumbersText(librarianOrderedPair),
-                displayFooter = if (librarianTarget == null) "" else text("在下面两位玩家之中", "One of these two players"),
-                hostInstruction = text("轻拍图书管理员，示意睁眼。把结果只给他看；如果显示“没有外来者”，也只告诉他本人。", "Tap the Librarian to wake them. Show the result only to that player, including a No Outsiders result."),
-                displayOptions = { actor ->
-                    recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
-                },
-                reliableDisplayOptions = { actor ->
-                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
-                },
-                spyRegistrationKey = librarianRegistrationKey,
-                spyRegistrationTeams = listOf(ClocktowerTeam.Outsider),
-            ),
-            informationStepBuilder.build(
-                roleName = "调查员",
-                enName = "Investigator",
-                tellPlayer = investigatorTarget?.let { text("${investigatorRevealedRole?.nameFor(language).orEmpty()} 在这两人之中：${investigatorOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${investigatorOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${investigatorRevealedRole?.nameFor(language).orEmpty()} is one of these two players: ${investigatorOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${investigatorOrderedPair?.second?.seatLabel(cards).orEmpty()}") } ?: text("本局没有爪牙。", "There are no Minions in play."),
-                explanation = text("调查员会得知某个爪牙在两名玩家之一中，或得知没有爪牙。", "The Investigator learns that a Minion is one of two players, or that no Minions are in play."),
-                displayPrimary = investigatorRevealedRole?.nameFor(language) ?: text("没有爪牙", "No Minions"),
-                displaySecondary = seatNumbersText(investigatorOrderedPair),
-                displayFooter = if (investigatorTarget == null) "" else text("在下面两位玩家之中", "One of these two players"),
-                hostInstruction = text("轻拍调查员，示意睁眼。把结果只给他看；不要让其他玩家看到被点名的两人。", "Tap the Investigator to wake them. Show the result only to that player; do not let anyone else see the two named players."),
-                displayOptions = { actor ->
-                    listOfNotNull(recommendedDrunkInvestigatorOption(actor)) +
-                        recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
-                },
-                reliableDisplayOptions = { actor ->
-                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
-                },
-                spyRegistrationKey = investigatorRegistrationKey,
-                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
-                recluseRegistrationKey = investigatorRecluseRegistrationKey,
-                recluseRegistrationTeams = listOf(ClocktowerTeam.Minion),
-            ),
-            informationStepBuilder.build(
-                roleName = "厨师",
-                enName = "Chef",
-                tellPlayer = chefNumber,
-                explanation = listOfNotNull(text("这个数字表示有几对邪恶玩家相邻而坐。", "This number is the number of adjacent evil pairs."), chefRegistrationHint).joinToString("\n"),
-                hostInstruction = text("轻拍厨师，示意睁眼。把数字只给他看；确认后收回手机，示意闭眼。", "Tap the Chef to wake them. Show the number only to that player, then take the phone back and signal them to close their eyes."),
-                displayOptions = { actor -> recommendedNumberOptions(text("厨师信息", "Chef information"), actor, chefReferenceValue, chefMaximumValue, text("邪恶玩家相邻对数", "Adjacent evil pairs"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.ADJACENT_EVIL_PAIRS, cards.indexOf(actor) + 1, cards.indices.map { it + 1 }, value) }) },
-                spyRegistrationKey = chefRegistrationKey,
-                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
-                spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
-                spyRegistrationHint = chefRegistrationHint,
-                recluseRegistrationKey = chefRecluseRegistrationKey,
-            ),
-            informationStepBuilder.build(
-                roleName = "共情者",
-                enName = "Empath",
-                tellPlayer = empathNumber,
-                explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
-                hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
-                displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, livingNeighbors(cards, actor.name).map { cards.indexOf(it) + 1 }, value) }) },
-                previousShownNumber = empathActor?.let { actor ->
-                    previousUnreliableNumber(text("共情者信息", "Empath information"), actor)
-                        ?.takeIf { it in 0..2 }
-                },
-                spyRegistrationKey = empathRegistrationKey,
-                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
-                spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
-                spyRegistrationHint = empathRegistrationHint,
-                recluseRegistrationKey = empathRecluseRegistrationKey,
-            ),
-            informationStepBuilder.build(
-                roleName = "侍女",
-                enName = "Chambermaid",
-                tellPlayer = chambermaidResult,
-                explanation = text("侍女选择两名玩家，得知其中有几人今晚因自己的能力醒来。", "The Chambermaid chooses two players and learns how many woke tonight because of their own ability."),
-                action = ClocktowerNightAction.Chambermaid,
-                displaySecondary = listOfNotNull(chambermaidFirst, chambermaidSecond)
-                    .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                    .joinToString("   ") { seatNumberText(it) }
-                    .takeIf { it.isNotBlank() },
-                displayFooter = text("查询这两名玩家", "Checking these two players"),
-                hostInstruction = text("轻拍侍女，示意睁眼。让她依次指两名玩家，不能选自己；点查询后只展示数字。", "Tap the Chambermaid to wake them. Have them point to two players other than themself, then show only the number."),
-                displayOptions = { actor ->
-                    chambermaidResult?.toIntOrNull()?.let { trueValue ->
-                        recommendedNumberOptions(
-                            title = text("侍女信息", "Chambermaid information"),
-                            actor = actor,
-                            trueValue = trueValue,
-                            maxValue = 2,
-                            footer = text("查询这两名玩家", "Checking these two players"),
-                            pressureCostPerPoint = 1,
-                            secondary = listOfNotNull(chambermaidFirst, chambermaidSecond)
-                                .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                                .joinToString("   ") { seatNumberText(it) }
-                                .takeIf { it.isNotBlank() },
-                        )
-                    }.orEmpty()
-                },
-            ),
-            informationStepBuilder.build(
-                roleName = "占卜师",
-                enName = "Fortune Teller",
-                tellPlayer = fortuneTellerResult,
-                explanation = text("如果两名玩家中包含恶魔或红鲱鱼，向占卜师展示“有”；否则展示“没有”。", "Show Yes if either selected player is the Demon or red herring; otherwise show No."),
-                action = ClocktowerNightAction.FortuneTeller,
-                displaySecondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
-                    .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                    .joinToString("   ") { seatNumberText(it) }
-                    .takeIf { it.isNotBlank() },
-                displayFooter = text("查询这两名玩家", "Checking these two players"),
-                hostInstruction = text("轻拍占卜师，示意睁眼。让他依次指两名玩家，在下面记录；结果出现后展示“有”或“没有”。", "Tap the Fortune Teller to wake them. Have them point to two players, record both, then show Yes or No."),
-                displayOptions = { actor ->
-                    fortuneTellerMatched?.let { matched ->
-                        recommendedYesNoOptions(
-                            title = text("占卜师信息", "Fortune Teller information"),
-                            truthfulYes = matched,
-                            secondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
-                                .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                                .joinToString("   ") { seatNumberText(it) }
-                                .takeIf { it.isNotBlank() },
-                            footer = text("查询这两名玩家", "Checking these two players"),
-                            propositionForValue = { value -> InformationProposition.BooleanResult(
-                                BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
-                                cards.indexOf(actor) + 1,
-                                listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).mapNotNull { name ->
-                                    cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
-                                },
-                                value,
-                            ) },
-                        )
-                    }.orEmpty()
-                },
-                recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,
-                recluseRegistrationTeams = listOf(ClocktowerTeam.Demon),
-            ),
-            informationStepBuilder.build(
-                roleName = "管家",
-                enName = "Butler",
-                tellPlayer = butlerMaster?.let { text("今天的主人：${playerSeatLabel(cards, it)}", "Today's master: ${playerSeatLabel(cards, it)}") },
-                explanation = text("管家每天选择一名主人，白天只能在主人投票时投票。", "The Butler chooses a master each day and may vote only when that master votes."),
-                action = ClocktowerNightAction.ButlerMaster,
-                displayKind = ClocktowerDisplayKind.None,
-                hostInstruction = text("轻拍管家，示意睁眼。让他指一名玩家作为今天的主人；记在心里，白天投票时提醒自己核对。", "Tap the Butler to wake them. Have them point to today's master and keep the choice available for checking during voting."),
-            ),
-            informationStepBuilder.build(
-                roleName = "间谍",
-                enName = "Spy",
-                tellPlayer = if (poisonTarget == spyCard?.name) null else {
-                    val grimoire = cards.joinToString("\n") { "${it.seatLabel(cards)}${text("：", ": ")}${it.hostRoleLabel(context, GameKind.Clocktower)}" }
-                    listOfNotNull(spyDelta, grimoire).joinToString("\n\n")
-                },
-                explanation = if (poisonTarget == spyCard?.name) text("间谍已中毒：仍照常唤醒，但不要展示真实魔典，也不能改变登记身份。", "The Spy is poisoned: wake them normally, but do not show the real grimoire or alter registration.") else text("存活间谍每晚可以查看所有玩家的真实身份。", "A living Spy may view every player's true identity each night."),
-                displayKind = ClocktowerDisplayKind.Grimoire,
-                displayTitle = text("魔典", "Grimoire"),
-                displayFooter = text("这些是所有玩家的真实身份。只给间谍短暂查看。", "These are every player's true identities. Show this only briefly to the Spy."),
-                displayProposition = if (poisonTarget == spyCard?.name) null else InformationProposition.GrimoireState(
-                    cards.mapIndexed { index, card -> GrimoireSeatView(index + 1, RoleId(requireNotNull(card.clocktowerRole).enName), card.eliminatedRound == null) },
-                ),
-                hostInstruction = if (poisonTarget == spyCard?.name) text("照常轻拍间谍示意睁眼，但不要展示真实魔典；停顿后示意闭眼。", "Wake the Spy normally, but do not show the real grimoire. Pause, then signal them to close their eyes.") else text("轻拍间谍，示意睁眼。把说书人总览给他短暂查看；收回手机后示意闭眼。", "Tap the Spy to wake them. Briefly show the Storyteller overview, then take the phone back and signal them to close their eyes."),
-            ),
+    val firstNightNameSeparator = stringResource(R.string.name_separator)
+    val firstNightSmallGameNoEvilInfoReason =
+        stringResource(R.string.clocktower_first_night_small_game_no_evil_info_reason)
+    val firstNightNoMinionsReason =
+        stringResource(R.string.clocktower_first_night_no_minions_reason)
+    val firstNightPlaceholderAction =
+        stringResource(R.string.clocktower_first_night_placeholder_action)
+    val firstNightMinionActionText = stringResource(
+        R.string.clocktower_first_night_minion_action_format,
+        minionCards.joinToString(firstNightNameSeparator) { it.seatLabel(cards) },
+    )
+    val firstNightMinionExplain =
+        stringResource(R.string.clocktower_first_night_minion_explain)
+    val firstNightSmallGameNoEvilInfoExplain =
+        stringResource(R.string.clocktower_first_night_small_game_no_evil_info_explain)
+    val firstNightMinionDisplayPrimary =
+        if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
+            "${stringResource(R.string.clocktower_evil_display_demon)}\n${demonCard?.seatLabel(cards).orEmpty()}"
+        } else {
+            null
+        }
+    val firstNightMinionWakeText = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
+        stringResource(
+            R.string.clocktower_first_night_minion_wake_format,
+            minionCards.joinToString(firstNightNameSeparator) { it.seatLabel(cards) },
         )
+    } else {
+        null
+    }
+    val firstNightNoDemonReason =
+        stringResource(R.string.clocktower_first_night_no_demon_reason)
+    val firstNightDemonActionText = demonCard?.let {
+        stringResource(R.string.clocktower_first_night_demon_action_format, it.seatLabel(cards))
+    }.orEmpty()
+    val firstNightDemonExplain =
+        stringResource(R.string.clocktower_first_night_demon_explain)
+    val firstNightDemonDisplayPrimary =
+        if (demonCard != null && shouldGiveFirstNightEvilInfo) {
+            "${stringResource(R.string.clocktower_evil_display_minions)}\n${if (minionCards.isEmpty()) stringResource(R.string.clocktower_first_night_demon_no_minions) else minionCards.joinToString(firstNightNameSeparator) { it.seatLabel(cards) }}"
+        } else {
+            null
+        }
+    val firstNightDemonDisplaySecondary =
+        if (demonCard != null && shouldGiveFirstNightEvilInfo) {
+            "${stringResource(R.string.clocktower_evil_display_bluffs)}\n${demonBluffs.joinToString(firstNightNameSeparator) { it.nameFor(language) }}"
+        } else {
+            null
+        }
+    val unfilteredNightSteps = if (phase == ClocktowerPhase.FirstNight) {
+        emptyList()
     } else {
         buildList {
             add(
@@ -2777,26 +2557,351 @@ internal fun ClocktowerJudgeScreen(
         },
     )
     val nightSteps = if (phase == ClocktowerPhase.FirstNight) {
-        ClocktowerProductionFirstNightFlow.order(
-            ruleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script),
-            playerCount = cards.size,
-            inPlayRoleIds = firstNightWakingRoleIds,
-            actualRoleIds = firstNightActualRoleIds,
-            productionSteps = filteredNightSteps,
-            identityOf = { step ->
-                when {
-                    step.title == minionInfoTitle -> ClocktowerProductionNightStepIdentity.minionInfo()
-                    step.title == demonInfoTitle -> ClocktowerProductionNightStepIdentity.demonInfo()
-                    step.action == ClocktowerNightAction.RedHerring ->
-                        ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring()
-                    else -> ClocktowerProductionNightStepIdentity.role(
-                        RoleId(requireNotNull(step.roleEnName) {
-                            "First-night production step is missing a stable role identity."
-                        }),
-                    )
-                }
+        val firstNightInteractions =
+            ClocktowerProductionFirstNightFlow.interactions(
+                ruleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script),
+                playerCount = cards.size,
+                inPlayRoleIds = firstNightWakingRoleIds,
+                actualRoleIds = firstNightActualRoleIds,
+            )
+        val firstNightMaterializers = ClocktowerNightStepMaterializerRegistry(
+            phase = ClocktowerNightFlowPhase.FIRST_NIGHT,
+            entries = listOf(
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.minionInfo(),
+            build = {
+                ClocktowerNightStepUi(
+                                title = minionInfoTitle,
+                                actor = minionCards.firstOrNull().takeIf { shouldGiveFirstNightEvilInfo },
+                                isRealAction = minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo,
+                                reason = when {
+                                    !shouldGiveFirstNightEvilInfo -> firstNightSmallGameNoEvilInfoReason
+                                    minionCards.isEmpty() -> firstNightNoMinionsReason
+                                    else -> ""
+                                },
+                                storytellerAction = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
+                                    firstNightMinionActionText
+                                } else {
+                                    firstNightPlaceholderAction
+                                },
+                                tellPlayer = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) minionInfoText else null,
+                                explanation = if (shouldGiveFirstNightEvilInfo) {
+                                    firstNightMinionExplain
+                                } else {
+                                    firstNightSmallGameNoEvilInfoExplain
+                                },
+                                displayKind = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo && minionInfoText != null) ClocktowerDisplayKind.EvilInfo else ClocktowerDisplayKind.None,
+                                displayTitle = minionInfoTitle,
+                                displayPrimary = firstNightMinionDisplayPrimary,
+                                displayFooter = null,
+                                wakeText = if (minionCards.isNotEmpty() && shouldGiveFirstNightEvilInfo) {
+                                    firstNightMinionWakeText
+                                } else {
+                                    null
+                                },
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.demonInfo(),
+            build = {
+                ClocktowerNightStepUi(
+                                title = demonInfoTitle,
+                                actor = demonCard.takeIf { shouldGiveFirstNightEvilInfo },
+                                isRealAction = demonCard != null && shouldGiveFirstNightEvilInfo,
+                                reason = when {
+                                    !shouldGiveFirstNightEvilInfo -> firstNightSmallGameNoEvilInfoReason
+                                    demonCard == null -> firstNightNoDemonReason
+                                    else -> ""
+                                },
+                                storytellerAction = if (demonCard != null && shouldGiveFirstNightEvilInfo) {
+                                    firstNightDemonActionText
+                                } else {
+                                    firstNightPlaceholderAction
+                                },
+                                tellPlayer = if (demonCard != null && shouldGiveFirstNightEvilInfo) demonInfoText else null,
+                                explanation = if (shouldGiveFirstNightEvilInfo) {
+                                    firstNightDemonExplain
+                                } else {
+                                    firstNightSmallGameNoEvilInfoExplain
+                                },
+                                displayKind = if (demonCard != null && shouldGiveFirstNightEvilInfo) ClocktowerDisplayKind.EvilInfo else ClocktowerDisplayKind.None,
+                                displayTitle = demonInfoTitle,
+                                displayPrimary = firstNightDemonDisplayPrimary,
+                                displaySecondary = firstNightDemonDisplaySecondary,
+                                displayFooter = null,
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Poisoner")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "投毒者",
+                                enName = "Poisoner",
+                                tellPlayer = poisonTarget?.let { text("已选择：${playerSeatLabel(cards, it)}", "Selected: ${playerSeatLabel(cards, it)}") },
+                                explanation = text("投毒者选择一名玩家，使其能力暂时失效。", "The Poisoner chooses a player whose ability stops working temporarily."),
+                                action = ClocktowerNightAction.Poison,
+                                displayKind = ClocktowerDisplayKind.None,
+                                hostInstruction = text("轻拍投毒者，示意睁眼。让他指一名玩家，在下面记录为今晚中毒目标。", "Tap the Poisoner to wake them. Have them point to one player and record that player as tonight's poisoned target."),
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring(),
+            build = {
+                ClocktowerNightStepUi(
+                                title = text("占卜师红鲱鱼", "Fortune Teller red herring"),
+                                actor = null,
+                                isRealAction = actualClocktowerRoleCards(cards, "Fortune Teller").isNotEmpty(),
+                                reason = if (actualClocktowerRoleCards(cards, "Fortune Teller").isEmpty()) text("本局没有占卜师，此步骤只用于首夜配置。", "No Fortune Teller is in play; this is only a first-night setup step.") else "",
+                                storytellerAction = text("不要公开说明这个选择。请选择一名善良玩家作为红鲱鱼；可以选择占卜师本人。", "Keep this choice private. Choose a good player as the red herring; the Fortune Teller may be chosen."),
+                                tellPlayer = redHerring?.let { text("已选择：${playerSeatLabel(cards, it)}", "Selected: ${playerSeatLabel(cards, it)}") },
+                                explanation = text("选择一名善良玩家成为红鲱鱼。占卜师查询他时，结果为“有”，他会被标记为恶魔。", "Choose a good player as the red herring. The Fortune Teller detects that player as a Demon."),
+                                action = ClocktowerNightAction.RedHerring,
+                                roleEnName = "Fortune Teller",
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Clockmaker")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "钟表匠",
+                                enName = "Clockmaker",
+                                tellPlayer = clockmakerNumber,
+                                explanation = text("这个数字表示恶魔到最近爪牙相隔几步。", "This number is the distance from the Demon to the nearest Minion."),
+                                displayFooter = text("恶魔到最近爪牙的距离", "Distance from Demon to nearest Minion"),
+                                hostInstruction = text("轻拍钟表匠，示意睁眼。把数字只给他看；确认后收回手机，示意闭眼。", "Tap the Clockmaker to wake them. Show the number only to that player, then take the phone back and signal them to close their eyes."),
+                                displayOptions = { actor -> recommendedNumberOptions(text("钟表匠信息", "Clockmaker information"), actor, clockmakerValue, cards.size / 2, text("恶魔到最近爪牙的距离", "Distance from Demon to nearest Minion")) },
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Washerwoman")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "洗衣妇",
+                                enName = "Washerwoman",
+                                tellPlayer = washerwomanTarget?.let { text("${if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${washerwomanOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${washerwomanOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} is one of these two players: ${washerwomanOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${washerwomanOrderedPair?.second?.seatLabel(cards).orEmpty()}") },
+                                explanation = text("洗衣妇会得知某个镇民在两名玩家之一中。", "The Washerwoman learns that a particular Townsfolk is one of two players."),
+                                displayPrimary = washerwomanTarget?.let { if (it.name == spyCard?.name) registeredRole(washerwomanRegistrationKey, listOf(ClocktowerTeam.Townsfolk))?.nameFor(language) else it.clocktowerRole?.nameFor(language) },
+                                displaySecondary = seatNumbersText(washerwomanOrderedPair),
+                                displayFooter = text("在下面两位玩家之中", "One of these two players"),
+                                hostInstruction = text("轻拍洗衣妇，示意睁眼。点击“全屏展示给玩家”，只给她看；看完后收回手机，示意闭眼。", "Tap the Washerwoman to wake them. Show the full-screen information only to that player, then take the phone back and signal them to close their eyes."),
+                                displayOptions = { actor ->
+                                    recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
+                                },
+                                reliableDisplayOptions = { actor ->
+                                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
+                                },
+                                spyRegistrationKey = washerwomanRegistrationKey,
+                                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk),
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Librarian")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "图书管理员",
+                                enName = "Librarian",
+                                tellPlayer = librarianTarget?.let { text("${if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} 在这两人之中：${librarianOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${librarianOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider))?.nameFor(language).orEmpty() else it.clocktowerRole?.nameFor(language).orEmpty()} is one of these two players: ${librarianOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${librarianOrderedPair?.second?.seatLabel(cards).orEmpty()}") } ?: text("本局没有外来者。", "There are no Outsiders in play."),
+                                explanation = text("图书管理员会得知某个外来者在两名玩家之一中，或得知没有外来者。", "The Librarian learns that an Outsider is one of two players, or that no Outsiders are in play."),
+                                displayPrimary = librarianTarget?.let { if (it.name == spyCard?.name) registeredRole(librarianRegistrationKey, listOf(ClocktowerTeam.Outsider))?.nameFor(language) else it.clocktowerRole?.nameFor(language) } ?: text("没有外来者", "No Outsiders"),
+                                displaySecondary = seatNumbersText(librarianOrderedPair),
+                                displayFooter = if (librarianTarget == null) "" else text("在下面两位玩家之中", "One of these two players"),
+                                hostInstruction = text("轻拍图书管理员，示意睁眼。把结果只给他看；如果显示“没有外来者”，也只告诉他本人。", "Tap the Librarian to wake them. Show the result only to that player, including a No Outsiders result."),
+                                displayOptions = { actor ->
+                                    recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
+                                },
+                                reliableDisplayOptions = { actor ->
+                                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
+                                },
+                                spyRegistrationKey = librarianRegistrationKey,
+                                spyRegistrationTeams = listOf(ClocktowerTeam.Outsider),
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Investigator")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "调查员",
+                                enName = "Investigator",
+                                tellPlayer = investigatorTarget?.let { text("${investigatorRevealedRole?.nameFor(language).orEmpty()} 在这两人之中：${investigatorOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${investigatorOrderedPair?.second?.seatLabel(cards).orEmpty()}", "${investigatorRevealedRole?.nameFor(language).orEmpty()} is one of these two players: ${investigatorOrderedPair?.first?.seatLabel(cards).orEmpty()} / ${investigatorOrderedPair?.second?.seatLabel(cards).orEmpty()}") } ?: text("本局没有爪牙。", "There are no Minions in play."),
+                                explanation = text("调查员会得知某个爪牙在两名玩家之一中，或得知没有爪牙。", "The Investigator learns that a Minion is one of two players, or that no Minions are in play."),
+                                displayPrimary = investigatorRevealedRole?.nameFor(language) ?: text("没有爪牙", "No Minions"),
+                                displaySecondary = seatNumbersText(investigatorOrderedPair),
+                                displayFooter = if (investigatorTarget == null) "" else text("在下面两位玩家之中", "One of these two players"),
+                                hostInstruction = text("轻拍调查员，示意睁眼。把结果只给他看；不要让其他玩家看到被点名的两人。", "Tap the Investigator to wake them. Show the result only to that player; do not let anyone else see the two named players."),
+                                displayOptions = { actor ->
+                                    listOfNotNull(recommendedDrunkInvestigatorOption(actor)) +
+                                        recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
+                                },
+                                reliableDisplayOptions = { actor ->
+                                    recommendedPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
+                                },
+                                spyRegistrationKey = investigatorRegistrationKey,
+                                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
+                                recluseRegistrationKey = investigatorRecluseRegistrationKey,
+                                recluseRegistrationTeams = listOf(ClocktowerTeam.Minion),
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Chef")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "厨师",
+                                enName = "Chef",
+                                tellPlayer = chefNumber,
+                                explanation = listOfNotNull(text("这个数字表示有几对邪恶玩家相邻而坐。", "This number is the number of adjacent evil pairs."), chefRegistrationHint).joinToString("\n"),
+                                hostInstruction = text("轻拍厨师，示意睁眼。把数字只给他看；确认后收回手机，示意闭眼。", "Tap the Chef to wake them. Show the number only to that player, then take the phone back and signal them to close their eyes."),
+                                displayOptions = { actor -> recommendedNumberOptions(text("厨师信息", "Chef information"), actor, chefReferenceValue, chefMaximumValue, text("邪恶玩家相邻对数", "Adjacent evil pairs"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.ADJACENT_EVIL_PAIRS, cards.indexOf(actor) + 1, cards.indices.map { it + 1 }, value) }) },
+                                spyRegistrationKey = chefRegistrationKey,
+                                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
+                                spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
+                                spyRegistrationHint = chefRegistrationHint,
+                                recluseRegistrationKey = chefRecluseRegistrationKey,
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Empath")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "共情者",
+                                enName = "Empath",
+                                tellPlayer = empathNumber,
+                                explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
+                                hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
+                                displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, livingNeighbors(cards, actor.name).map { cards.indexOf(it) + 1 }, value) }) },
+                                previousShownNumber = empathActor?.let { actor ->
+                                    previousUnreliableNumber(text("共情者信息", "Empath information"), actor)
+                                        ?.takeIf { it in 0..2 }
+                                },
+                                spyRegistrationKey = empathRegistrationKey,
+                                spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
+                                spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
+                                spyRegistrationHint = empathRegistrationHint,
+                                recluseRegistrationKey = empathRecluseRegistrationKey,
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Chambermaid")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "侍女",
+                                enName = "Chambermaid",
+                                tellPlayer = chambermaidResult,
+                                explanation = text("侍女选择两名玩家，得知其中有几人今晚因自己的能力醒来。", "The Chambermaid chooses two players and learns how many woke tonight because of their own ability."),
+                                action = ClocktowerNightAction.Chambermaid,
+                                displaySecondary = listOfNotNull(chambermaidFirst, chambermaidSecond)
+                                    .mapNotNull { name -> cards.firstOrNull { it.name == name } }
+                                    .joinToString("   ") { seatNumberText(it) }
+                                    .takeIf { it.isNotBlank() },
+                                displayFooter = text("查询这两名玩家", "Checking these two players"),
+                                hostInstruction = text("轻拍侍女，示意睁眼。让她依次指两名玩家，不能选自己；点查询后只展示数字。", "Tap the Chambermaid to wake them. Have them point to two players other than themself, then show only the number."),
+                                displayOptions = { actor ->
+                                    chambermaidResult?.toIntOrNull()?.let { trueValue ->
+                                        recommendedNumberOptions(
+                                            title = text("侍女信息", "Chambermaid information"),
+                                            actor = actor,
+                                            trueValue = trueValue,
+                                            maxValue = 2,
+                                            footer = text("查询这两名玩家", "Checking these two players"),
+                                            pressureCostPerPoint = 1,
+                                            secondary = listOfNotNull(chambermaidFirst, chambermaidSecond)
+                                                .mapNotNull { name -> cards.firstOrNull { it.name == name } }
+                                                .joinToString("   ") { seatNumberText(it) }
+                                                .takeIf { it.isNotBlank() },
+                                        )
+                                    }.orEmpty()
+                                },
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "占卜师",
+                                enName = "Fortune Teller",
+                                tellPlayer = fortuneTellerResult,
+                                explanation = text("如果两名玩家中包含恶魔或红鲱鱼，向占卜师展示“有”；否则展示“没有”。", "Show Yes if either selected player is the Demon or red herring; otherwise show No."),
+                                action = ClocktowerNightAction.FortuneTeller,
+                                displaySecondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+                                    .mapNotNull { name -> cards.firstOrNull { it.name == name } }
+                                    .joinToString("   ") { seatNumberText(it) }
+                                    .takeIf { it.isNotBlank() },
+                                displayFooter = text("查询这两名玩家", "Checking these two players"),
+                                hostInstruction = text("轻拍占卜师，示意睁眼。让他依次指两名玩家，在下面记录；结果出现后展示“有”或“没有”。", "Tap the Fortune Teller to wake them. Have them point to two players, record both, then show Yes or No."),
+                                displayOptions = { actor ->
+                                    fortuneTellerMatched?.let { matched ->
+                                        recommendedYesNoOptions(
+                                            title = text("占卜师信息", "Fortune Teller information"),
+                                            truthfulYes = matched,
+                                            secondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+                                                .mapNotNull { name -> cards.firstOrNull { it.name == name } }
+                                                .joinToString("   ") { seatNumberText(it) }
+                                                .takeIf { it.isNotBlank() },
+                                            footer = text("查询这两名玩家", "Checking these two players"),
+                                            propositionForValue = { value -> InformationProposition.BooleanResult(
+                                                BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+                                                cards.indexOf(actor) + 1,
+                                                listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).mapNotNull { name ->
+                                                    cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
+                                                },
+                                                value,
+                                            ) },
+                                        )
+                                    }.orEmpty()
+                                },
+                                recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,
+                                recluseRegistrationTeams = listOf(ClocktowerTeam.Demon),
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Butler")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "管家",
+                                enName = "Butler",
+                                tellPlayer = butlerMaster?.let { text("今天的主人：${playerSeatLabel(cards, it)}", "Today's master: ${playerSeatLabel(cards, it)}") },
+                                explanation = text("管家每天选择一名主人，白天只能在主人投票时投票。", "The Butler chooses a master each day and may vote only when that master votes."),
+                                action = ClocktowerNightAction.ButlerMaster,
+                                displayKind = ClocktowerDisplayKind.None,
+                                hostInstruction = text("轻拍管家，示意睁眼。让他指一名玩家作为今天的主人；记在心里，白天投票时提醒自己核对。", "Tap the Butler to wake them. Have them point to today's master and keep the choice available for checking during voting."),
+                            )
+            },
+        ),
+        ClocktowerNightStepMaterializerRegistry.Entry(
+            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Spy")),
+            build = {
+                informationStepBuilder.build(
+                                roleName = "间谍",
+                                enName = "Spy",
+                                tellPlayer = if (poisonTarget == spyCard?.name) null else {
+                                    val grimoire = cards.joinToString("\n") { "${it.seatLabel(cards)}${text("：", ": ")}${it.hostRoleLabel(context, GameKind.Clocktower)}" }
+                                    listOfNotNull(spyDelta, grimoire).joinToString("\n\n")
+                                },
+                                explanation = if (poisonTarget == spyCard?.name) text("间谍已中毒：仍照常唤醒，但不要展示真实魔典，也不能改变登记身份。", "The Spy is poisoned: wake them normally, but do not show the real grimoire or alter registration.") else text("存活间谍每晚可以查看所有玩家的真实身份。", "A living Spy may view every player's true identity each night."),
+                                displayKind = ClocktowerDisplayKind.Grimoire,
+                                displayTitle = text("魔典", "Grimoire"),
+                                displayFooter = text("这些是所有玩家的真实身份。只给间谍短暂查看。", "These are every player's true identities. Show this only briefly to the Spy."),
+                                displayProposition = if (poisonTarget == spyCard?.name) null else InformationProposition.GrimoireState(
+                                    cards.mapIndexed { index, card -> GrimoireSeatView(index + 1, RoleId(requireNotNull(card.clocktowerRole).enName), card.eliminatedRound == null) },
+                                ),
+                                hostInstruction = if (poisonTarget == spyCard?.name) text("照常轻拍间谍示意睁眼，但不要展示真实魔典；停顿后示意闭眼。", "Wake the Spy normally, but do not show the real grimoire. Pause, then signal them to close their eyes.") else text("轻拍间谍，示意睁眼。把说书人总览给他短暂查看；收回手机后示意闭眼。", "Tap the Spy to wake them. Briefly show the Storyteller overview, then take the phone back and signal them to close their eyes."),
+                            )
             },
         )
+            ),
+        )
+        firstNightMaterializers.materialize(firstNightInteractions)
     } else {
         ClocktowerProductionOtherNightFlow.order(
             ruleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script),
