@@ -6,7 +6,7 @@
 > Development operations: `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`  
 > Large-file execution: `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`  
 > Current task: **PR #43 Clocktower host source decomposition**  
-> Immediate next step: **A10 Information / Step Builder seam — Chat designs, executor only implements**  
+> Immediate next step: **A11 Night Step Materialization seam / registry — Chat designs, connector can implement because target files are small**  
 > Status: **CURRENT HANDOFF**
 
 ## 1. Trusted live state
@@ -19,7 +19,8 @@ main source: PR #42 Historical Action + Observation Capture merge
 PR: #43 — Refactor: decompose Clocktower host monolith
 branch: codex/source-decomposition-clocktower-host
 state: DRAFT / OPEN / NOT MERGED
-validated A9 implementation head: 00a2d19e45415614fbd8e93e83a53ba4d2cf9d35
+validated A10 implementation head: 363629ed45f0f044da021f77bb52c5c3ff3c9e20
+latest documentation head after roadmap update: b795d2b91560033a537debf0f0ce472191ccdf52
 ```
 
 New sessions must query live state again. Do not assume these SHAs remain current.
@@ -61,9 +62,12 @@ A8 Night-step presentation UI
 
 A9 Unreachable legacy fallback cleanup
    ClocktowerHostScreen.kt
+
+A10 Generic information-step packaging owner
+    ClocktowerInformationStepBuilder.kt
 ```
 
-All A1–A9 slices passed independent local/remote validation before moving on.
+All A1–A10 slices passed independent remote validation before moving on.
 
 ## 4. A8 final evidence
 
@@ -99,7 +103,6 @@ Real Clingo:                  SUCCESS
 R2 #445:                      SUCCESS
 
 GREEN commit:                 00a2d19e45415614fbd8e93e83a53ba4d2cf9d35
-changed GREEN files:          ClocktowerHostScreen.kt + r2-write-probe.yml only
 exact deletion audit:         PASS
 active prefix through return: byte-for-byte identical
 removed:                      25,068 bytes / 484 lines
@@ -107,70 +110,137 @@ CI #506:                      SUCCESS
 R2 #446:                      SUCCESS
 ```
 
-## 6. Remaining host state and revised completion criterion
+## 6. A10 final evidence
+
+A10 deliberately used a narrow seam rather than moving recommendation/registration logic wholesale.
+
+Moved owner:
 
 ```text
-ClocktowerHostScreen.kt: 294,769 bytes
-ClocktowerHostScreen.kt: 4,818 lines
+ClocktowerInformationStepBuilder.kt
 ```
 
-The previous plan treated <= 50 KiB as a hard end-state. That has now been revised.
+It owns only the previous generic `infoStep` packaging behavior and receives the former captured dependencies explicitly. It does not own Compose state/effects, recommendation calculation, dynamic decision, registration mutable maps, history/session authority or transaction ordering.
 
-The remaining file is almost entirely one large active `ClocktowerJudgeScreen`. File size remains a useful maintainability signal, but it is **not a hard merge gate** when the only way to satisfy it would be to create weak abstractions, giant parameter bags, move Compose state/effect lifetime, or expose tightly coupled internals across files.
+```text
+RED commit:                         3377fdbea83727a797afce28064b924a074df5c3
+CI #513:                            EXPECTED FAILURE
+Android tests:                      658 total / 1 expected ownership failure
+ASP contract tests:                 SUCCESS
+Real Clingo:                        SUCCESS
+R2 #453:                            SUCCESS
 
-The new architectural completion criterion is:
+GREEN commit:                       363629ed45f0f044da021f77bb52c5c3ff3c9e20
+new builder size:                   9,095 bytes
+Host after GREEN:                   287,597 bytes
+infoStep call sites replaced:       21
+exact move / scope audit:           PASS
+CI #514:                            SUCCESS
+R2 #454:                            SUCCESS
+```
 
-> `ClocktowerJudgeScreen` becomes a coherent coordinator/orchestrator. Role-information construction, first-night step construction, other-night step construction, and suitable presentation routing move to stable owners; state/effect lifetime and transaction ordering remain in the host when that is the safer ownership boundary.
+## 7. Dynamic multi-script night flow — precise current state
 
-A remaining host in roughly the 100–150 KiB range may be acceptable if what remains is genuinely orchestration and further extraction would increase coupling or regression risk.
+Do not describe multi-script dynamic flow as either “not implemented” or “fully complete”. The current production state is split at a clear boundary.
 
-## 7. Planned remaining decomposition
+Already implemented and production-authoritative since R5.5:
 
-### A10 — Information / Step Builder seam
+```text
+ValidatedClocktowerRuleset
+        ↓
+ClocktowerFlowPlanner
+        ↓
+ClocktowerHostInteractionProjector
+        ↓
+stable + conditional ClocktowerHostInteraction
+        ↓
+ClocktowerProductionFirstNightFlow / OtherNightFlow
+        ↓
+canonical production ordering
+```
 
-Create a non-state-owning builder boundary for the current nested information/step construction helpers.
+This layer already makes script composition, night ordering and conditional/event interaction existence dynamic. Trouble Brewing and No Greater Joy use the same catalog/planner seam.
 
-Target responsibilities include, where the boundary is natural:
+Still transitional:
 
-- reliable/unreliable information display-option construction;
-- number / yes-no / role-reveal / pair-information recommendation-backed options;
-- registration-aware information modeling;
-- `infoStep`-style model construction.
+```text
+ClocktowerJudgeScreen
+  -> constructs hardcoded unfilteredNightSteps for currently supported roles/events
+  -> filters them
+  -> asks planner-backed production flow to exact-match/reorder them
+```
 
-Constraints:
+Therefore the remaining architectural gap is **production step materialization**, not flow-order authority.
 
-- no `remember` ownership moves;
-- no `LaunchedEffect` ownership moves;
-- no transaction commit ordering changes;
-- no product behavior, recommendation ranking, registration, information lifecycle, history, persistence, or session-authority change.
+Target direction:
 
-A10 is a seam/foundation slice, not a broad product refactor.
+```text
+planner/projector interaction plan first
+        ↓
+materializer registry keyed by stable interaction identity
+        ↓
+lazy ClocktowerNightStepUi construction
+```
 
-### A11 — First Night Step Factory
+Do not simply move the current hardcoded list into large FirstNight/OtherNight factory files.
 
-Move first-night role-by-role step construction behind a cohesive factory returning `List<ClocktowerNightStepUi>` (or the smallest equivalent stable model boundary).
+## 8. Revised remaining decomposition
 
-The host remains responsible for state/effect lifetime and commit sequencing.
+### A11 — Night Step Materialization seam / registry
 
-### A12 — Other Night Step Factory
+A11 is a small seam slice and should not touch the huge Host list yet.
 
-Move other-night role-by-role step construction behind a separate cohesive factory.
+Required design:
 
-Do **not** move the sensitive `advanceNightStep` transaction merely to reduce file size. Confirm/audit/registration/event/index/finalization ordering stays host-owned unless a later dedicated architecture decision proves a safer transaction boundary.
+- add canonical interaction-projection access to `ClocktowerProductionFirstNightFlow` and `ClocktowerProductionOtherNightFlow` while preserving existing `.order(...)` behavior;
+- add a stateless `ClocktowerNightStepMaterializerRegistry` outside Compose;
+- registry registration uses stable `ClocktowerProductionNightStepIdentity` / `ClocktowerInteractionId` semantics;
+- projected interaction order is authoritative;
+- `SYSTEM_BOUNDARY` interactions do not create current production UI steps;
+- only projected actionable interactions invoke their lazy materializer;
+- missing projected materializer fails closed;
+- duplicate registered identity fails closed;
+- extra registered materializers are allowed and remain unevaluated, enabling a registry to support roles not present in the current script/table.
 
-### A13 — Day routing consolidation
+A11 must not:
 
-Consolidate low-coupling day presentation/routing only where callbacks form a clean boundary. Overview/Vote/EndConfirm are likely candidates.
+- cut over `ClocktowerJudgeScreen` yet;
+- move role-specific construction;
+- absorb Compose state/effects;
+- absorb recommendation/dynamic-decision logic;
+- alter ordering or behavior.
 
-Nomination/Virgin, Slayer, Artist, and Klutz remain optional follow-up candidates. Stop rather than force them across files if doing so requires exporting large amounts of registration/recommendation/state internals.
+### A12 — planner-driven First Night materialization
 
-### Post-A13 re-audit
+Cut first night over from:
 
-Re-measure the host, inspect responsibility cohesion, and decide whether PR #43 is complete.
+```text
+prebuild all supported first-night steps -> planner order
+```
 
-Do **not** pre-commit to reaching <= 50 KiB. Stop when further extraction would be architecture-negative.
+to:
 
-## 8. Explicit host-owned responsibilities that are not current decomposition targets
+```text
+planner interactions -> lazy materialize requested first-night steps
+```
+
+Keep planner/projector as sole order authority. Keep state/effect lifetime, recommendation/registration semantics and first-night information migration host-owned unless Chat explicitly proves another safe owner.
+
+### A13 — planner-driven Other Night materialization
+
+Perform the same cutover for other night and conditional/event interactions.
+
+Do **not** move `advanceNightStep`. Confirm/audit/registration/event/index/finalization ordering remains Host-owned.
+
+### A14 — optional clean day routing
+
+Only after A13 re-audit. Overview/Vote/EndConfirm remain likely low-coupling candidates. Nomination/Virgin, Slayer, Artist and Klutz are optional and should stay in Host if extraction worsens coupling.
+
+### Post-A13/A14 re-audit
+
+Re-measure the host and inspect responsibility cohesion. Do not pre-commit to <=50 KiB. A14 is optional; stop when further extraction is architecture-negative.
+
+## 9. Explicit host-owned responsibilities that are not current decomposition targets
 
 The following should remain in `ClocktowerJudgeScreen` during the current plan unless Chat makes a later explicit architecture decision:
 
@@ -184,7 +254,7 @@ The following should remain in `ClocktowerJudgeScreen` during the current plan u
 - top-level phase routing where it is truly orchestration;
 - debug/A4 benchmark lifecycle when extraction has little maintainability value.
 
-## 9. Working model — Chat decides, connector first, Codex/Luna executes heavy edits
+## 10. Working model — Chat decides, connector first, Codex/Luna executes heavy edits
 
 The project-level authority is `AGENTS.md`.
 
@@ -210,7 +280,9 @@ If file size/truncation/mechanical complexity makes connector editing unsafe
 
 Codex/Luna is not the default architecture decision-maker. Do not ask it to choose decomposition boundaries unless the user explicitly changes this working model.
 
-## 10. Validation rules for each later slice
+A11 target files are small enough for connector-first implementation. A12/A13 are expected to touch the large Host and may require the Luna local-worktree path after Chat fixes the exact boundary.
+
+## 11. Validation rules for each later slice
 
 ```text
 live head recheck
@@ -225,14 +297,15 @@ live head recheck
 
 Use `GRADLE_USER_HOME="$PWD/.gradle-codex"`; keep `.gradle-codex/` untracked.
 
-## 11. Stop conditions
+## 12. Stop conditions
 
 - PR #43 must remain draft and unmerged;
 - no A3 product work in this PR;
 - no file-size-driven state-lifetime move;
 - no callback ordering, recommendation, registration, information, history or session-authority changes without a dedicated explicit decision;
+- do not reintroduce UI/script order authority beside the R5.5 planner;
 - do not continue decomposition solely to satisfy a byte threshold once the host is a coherent coordinator.
 
-## 12. Merge boundary
+## 13. Merge boundary
 
-PR #43 remains draft. Do not mark ready or merge until the planned high-value decomposition is complete, the post-A13 architecture/size audit is satisfactory, the latest full CI/R2 gates are GREEN, and the user explicitly authorizes merge.
+PR #43 remains draft. Do not mark ready or merge until the planned high-value decomposition is complete, the final architecture/size audit is satisfactory, the latest full CI/R2 gates are GREEN, and the user explicitly authorizes merge.
