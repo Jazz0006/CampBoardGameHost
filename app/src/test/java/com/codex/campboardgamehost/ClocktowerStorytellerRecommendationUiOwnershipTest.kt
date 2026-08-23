@@ -6,7 +6,19 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerStorytellerRecommendationUiOwnershipTest {
-    private val repoRoot = File(System.getProperty("user.dir"))
+    private fun findRepositoryRoot(): File {
+        val knownHostSource = "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt"
+        val workingDirectory = System.getProperty("user.dir") ?: error("Working directory is unavailable")
+        var directory = File(workingDirectory).absoluteFile
+        while (true) {
+            if (File(directory, knownHostSource).isFile) return directory
+            val parent = directory.parentFile ?: error("Repository root not found from ${directory.path}")
+            if (parent == directory) error("Repository root not found from ${directory.path}")
+            directory = parent
+        }
+    }
+
+    private val repoRoot = findRepositoryRoot()
     private val host = File(
         repoRoot,
         "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt",

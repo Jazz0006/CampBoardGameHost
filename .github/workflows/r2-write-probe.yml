@@ -12,6 +12,7 @@ on:
       - app/src/main/java/com/codex/campboardgamehost/ClocktowerHostCoreSemantics.kt
       - app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSelectionSemantics.kt
       - app/src/main/java/com/codex/campboardgamehost/ClocktowerHostPresentationModels.kt
+      - app/src/main/java/com/codex/campboardgamehost/ClocktowerStorytellerRecommendationUi.kt
       - app/src/main/java/com/codex/campboardgamehost/MainActivity.kt
       - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt
       - app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
@@ -38,6 +39,7 @@ jobs:
           core=app/src/main/java/com/codex/campboardgamehost/ClocktowerHostCoreSemantics.kt
           selection=app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSelectionSemantics.kt
           presentation=app/src/main/java/com/codex/campboardgamehost/ClocktowerHostPresentationModels.kt
+          recommendation_ui=app/src/main/java/com/codex/campboardgamehost/ClocktowerStorytellerRecommendationUi.kt
           main=app/src/main/java/com/codex/campboardgamehost/MainActivity.kt
           setup=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt
           day=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
@@ -45,7 +47,7 @@ jobs:
           host=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
           history=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHistoryScreen.kt
 
-          for file in "$root" "$core" "$selection" "$presentation" "$main" "$setup" "$day" "$night" "$host" "$history"; do
+          for file in "$root" "$core" "$selection" "$presentation" "$recommendation_ui" "$main" "$setup" "$day" "$night" "$host" "$history"; do
             test -f "$file"
           done
 
@@ -86,7 +88,6 @@ jobs:
             exit 1
           fi
           grep -q "internal fun ClocktowerJudgeScreen" "$host"
-          grep -q "private fun ClocktowerStorytellerRecommendationScreen" "$host"
           grep -q "private fun ClocktowerNightStepCardLocalized" "$host"
 
           if grep -q "internal fun PlayerCard.clocktowerShownAsDifferentRole" "$host"; then
@@ -131,6 +132,17 @@ jobs:
             fi
             grep -q "$symbol" "$presentation"
           done
+
+          if grep -q "fun RecommendationReasonSummary(" "$host"; then
+            echo "RecommendationReasonSummary still lives in ClocktowerHostScreen.kt" >&2
+            exit 1
+          fi
+          if grep -q "fun ClocktowerStorytellerRecommendationScreen(" "$host"; then
+            echo "ClocktowerStorytellerRecommendationScreen still lives in ClocktowerHostScreen.kt" >&2
+            exit 1
+          fi
+          grep -q "internal fun RecommendationReasonSummary" "$recommendation_ui"
+          grep -q "internal fun ClocktowerStorytellerRecommendationScreen" "$recommendation_ui"
 
           for name in ClocktowerGameRecordPanel ClocktowerPlayerStatusRow ClocktowerResultsDialog; do
             if grep -q "fun ${name}(" "$root"; then
