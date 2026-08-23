@@ -25,7 +25,7 @@ class AppGameScreenPresentationOwnershipTest {
         assertFalse(extractedSource.contains("records.add("))
         assertFalse(extractedSource.contains("cards[index] ="))
         assertFalse(extractedSource.contains("round += 1"))
-        assertFalse(extractedSource.contains("selectedElimination ="))
+        assertFalse(Regex("""selectedElimination\s*=(?!=)""").containsMatchIn(extractedSource))
         assertFalse(extractedSource.contains("gameOutcome ="))
         assertFalse(extractedSource.contains("showResults ="))
         assertFalse(extractedSource.contains("Screen.Game ->"))
