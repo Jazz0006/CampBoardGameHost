@@ -290,6 +290,48 @@ class EnumeratedHistoricalWorldReplayTest {
         )
     }
 
+    @Test
+    fun `expired hidden poison paths converge before the next night is counted`() {
+        val rolesBySeat = linkedMapOf(
+            1 to RoleId("Empath"),
+            2 to RoleId("Chef"),
+            3 to RoleId("Poisoner"),
+            4 to RoleId("Imp"),
+            5 to RoleId("Fortune Teller"),
+        )
+        val priorNightWorlds = rolesBySeat.keys.map { poisonTarget ->
+            EnumeratedWorld(
+                rolesBySeat = rolesBySeat,
+                abilityStatesBySeat = mapOf(poisonTarget to AbilityState.MALFUNCTIONING_POISONED),
+            )
+        }
+
+        val result = EnumeratedHistoricalWorldReplay.replay(
+            initialWorldSet = worldSet(priorNightWorlds),
+            formalSnapshotId = formalSnapshotId,
+            initialPhase = StorytellerPhase.DAY,
+            initialRound = 1,
+            events = listOf(
+                PlayerHistoricalEvent.PhaseAdvance(
+                    actionId = "phase-night-2",
+                    phase = StorytellerPhase.NIGHT,
+                    round = 2,
+                    point = TimelinePoint(StorytellerPhase.DAY, 1, 9, 30L),
+                ),
+            ),
+        )
+
+        val worlds = result.worldSet.enumeratedWorlds()
+        assertEquals(5, worlds.size)
+        assertEquals(5, worlds.distinct().size)
+        assertEquals(
+            setOf(1, 2, 3, 4, 5),
+            worlds.map { candidate ->
+                candidate.abilityStatesBySeat.entries.single { it.value == AbilityState.MALFUNCTIONING_POISONED }.key
+            }.toSet(),
+        )
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun `exact historical replay rejects noncanonical event order`() {
         val later = TimelinePoint(StorytellerPhase.DAY, 1, 2, 20L)
