@@ -143,6 +143,16 @@ jobs:
           fi
           grep -q "internal fun RecommendationReasonSummary" "$recommendation_ui"
           grep -q "internal fun ClocktowerStorytellerRecommendationScreen" "$recommendation_ui"
+          if grep -q "fun StorytellerRecommendationCard(" "$host"; then
+            echo "StorytellerRecommendationCard still lives in ClocktowerHostScreen.kt" >&2
+            exit 1
+          fi
+          if grep -q "fun RecommendationDecisionEditor(" "$host"; then
+            echo "RecommendationDecisionEditor still lives in ClocktowerHostScreen.kt" >&2
+            exit 1
+          fi
+          grep -q "internal fun StorytellerRecommendationCard" "$recommendation_ui"
+          grep -q "internal fun RecommendationDecisionEditor" "$recommendation_ui"
 
           for name in ClocktowerGameRecordPanel ClocktowerPlayerStatusRow ClocktowerResultsDialog; do
             if grep -q "fun ${name}(" "$root"; then
