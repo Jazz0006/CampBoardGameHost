@@ -40,17 +40,13 @@ class ClocktowerNightStepUiOwnershipTest {
             "ClocktowerNightStepCardLocalized must no longer live in ClocktowerHostScreen.kt",
             hostText.contains("fun ClocktowerNightStepCardLocalized("),
         )
-        assertFalse(
-            "ClocktowerInfoCard must no longer live in ClocktowerHostScreen.kt",
-            hostText.contains("fun ClocktowerInfoCard("),
+        assertTrue(
+            "ClocktowerInfoCard must remain a private helper in ClocktowerHostScreen.kt",
+            hostText.contains("private fun ClocktowerInfoCard("),
         )
         assertTrue(
             "ClocktowerNightStepCardLocalized must be cross-file visible in the dedicated night-step UI source",
             nightStepUiText.contains("internal fun ClocktowerNightStepCardLocalized("),
-        )
-        assertTrue(
-            "ClocktowerInfoCard must remain a private helper in the dedicated night-step UI source",
-            nightStepUiText.contains("private fun ClocktowerInfoCard("),
         )
     }
 }
