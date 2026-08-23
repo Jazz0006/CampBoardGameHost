@@ -94,7 +94,7 @@ internal class EnumeratedHistoricalWorldSetSnapshot private constructor(
         recipientSeat = recipientSeat,
         hypothesis = hypothesis,
         roles = roles,
-        worlds = nextWorlds,
+        worlds = nextWorlds.distinct(),
     )
 
     companion object {
