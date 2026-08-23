@@ -9,12 +9,13 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
  * End-to-end exact historical baseline for one player's knowledge-safe timeline.
  *
  * Setup enumeration remains the seed authority. Durable actions and observations are then merged
- * under GLOBAL_V1 ordering and projected through [PlayerHistoricalTimeline], so storyteller-only
- * Poison/Protect/Attack targets never become player knowledge.
+ * under GLOBAL_V1 ordering and projected through [PlayerHistoricalTimeline]. Hidden Poison targets
+ * are safe to omit from that projection because the replay independently branches every legal
+ * Poisoner target; the storyteller-selected target never becomes player knowledge.
  *
- * Hidden role transitions are persistent mechanical state. Until A3 models their rule-derived
- * successor branching, any durable [ActionFact.RoleChange] makes the historical engine incomplete;
- * this constructor rejects such histories rather than reporting a partial replay as exact.
+ * Attack, Protect, and RoleChange can alter persistent or same-night mechanical state, but their
+ * rule-derived hidden successor branching is not modeled yet. Histories containing those actions
+ * are rejected rather than allowing a knowledge-safe projection to be mistaken for an exact replay.
  */
 internal object EnumeratedHistoricalExactBaseline {
     fun build(
@@ -28,8 +29,16 @@ internal object EnumeratedHistoricalExactBaseline {
         observationLog: EpistemicObservationLog,
     ): EnumeratedHistoricalReplayResult {
         actionTimeline.requireCompatibleWith(observationLog)
-        require(actionTimeline.entries.none { it.fact is ActionFact.RoleChange }) {
-            "A3 exact historical baseline does not yet model hidden RoleChange successor worlds; " +
+        val unsupportedHiddenMechanic = actionTimeline.entries.firstNotNullOfOrNull { entry ->
+            when (entry.fact) {
+                is ActionFact.Attack -> "Attack"
+                is ActionFact.Protect -> "Protect"
+                is ActionFact.RoleChange -> "RoleChange"
+                else -> null
+            }
+        }
+        require(unsupportedHiddenMechanic == null) {
+            "A3 exact historical baseline does not yet model hidden $unsupportedHiddenMechanic successor worlds; " +
                 "refusing to report a partial replay as exact."
         }
 
