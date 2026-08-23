@@ -176,3 +176,140 @@ ChatGPT should first return:
 - recommendation for the first implementation slice.
 
 Only then begin constrained implementation.
+
+---
+
+## 11. Live progress update — 2026-08-24
+
+The start condition above has been completed. The active structural branch is:
+
+```text
+codex/source-decomposition-app-root
+```
+
+It was created from stable live main:
+
+```text
+c444694e4ab3420ee8a79e7146b736923b81c8f0
+```
+
+The structural pass is now in progress and **S0–S4 are CLOSED**.
+
+Last validated production head before the resume documentation commits:
+
+```text
+cb18ead36b19fb43cac8ea799a7a4b2adc06da28
+refactor: extract deal presentation
+```
+
+Detailed resume authority for the next session:
+
+```text
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_APP_ROOT_S5.md
+```
+
+## 12. Completed App-root slices
+
+```text
+S0  dynamic-flow preservation guard                         CLOSED
+S1  player setup presentation -> AppPlayerSetupScreens.kt   CLOSED
+S2  settings presentation -> AppSettingsScreen.kt           CLOSED
+S3  Clocktower landing -> AppClocktowerLandingScreen.kt     CLOSED
+S4  deal/reveal presentation -> AppDealScreens.kt           CLOSED
+```
+
+Validated GREEN production commits:
+
+```text
+S1  85a57d550db627c310a429a5812746af24165cba
+S2  44e9661615396c9dfe1f0501370521ba1a3f4cad
+S3  af43581b94301c2d57dfff121a941895dabb6e6d
+S4  cb18ead36b19fb43cac8ea799a7a4b2adc06da28
+```
+
+Root size progress:
+
+```text
+Start     325,556 bytes
+After S1  293,536 bytes
+After S2  283,470 bytes
+After S3  277,453 bytes
+After S4  261,232 bytes
+```
+
+Net reduction through S4 is 64,324 bytes (~19.8%).
+
+## 13. Current workflow rule after S1–S4
+
+The user explicitly requested that Luna perform less architectural reasoning.
+
+For S5 and later, Chat must decide before handoff:
+
+- exact target file;
+- exact declarations;
+- direct helper dependencies;
+- exact visibility changes;
+- exact Root symbols/state/callbacks that stay;
+- allowed / forbidden files;
+- expected diff shape;
+- RED failure reasons;
+- focused/full/assemble commands;
+- exact diff audit criteria;
+- stop conditions;
+- commit message.
+
+Luna is a constrained mechanical executor. If an unplanned dependency appears, Luna stops and reports instead of broadening scope.
+
+This discipline caught an important S4 dependency before production work: `PassPhoneScreen` and `RevealCardScreen` also depended on two Root-private Clocktower presentation functions, so the final S4 boundary was corrected in Chat before Luna moved code.
+
+## 14. Current protected boundaries
+
+S0 remains active throughout the rest of this pass.
+
+Do not move/freeze transitional night-flow hardcode into permanent-looking owners.
+
+Protected authority remains:
+
+```text
+script/content
+-> interactions
+-> planner ordering
+-> stable identities
+-> lazy materialization
+-> Host UI
+```
+
+Root still owns high-risk responsibilities including:
+
+- Clocktower live transaction/callback ordering;
+- `ClocktowerGameSession` integration;
+- active-game persistence / restore / archive wiring;
+- A4 identity-reveal prewarm `LaunchedEffect`;
+- A4 observation rebuild `LaunchedEffect`;
+- lifecycle `DisposableEffect`;
+- `SideEffect` / `rememberUpdatedState` lifetime;
+- persistence/durability effects;
+- deal navigation/index ownership despite S4 presentation extraction.
+
+## 15. Exact next step
+
+**S5 has not yet been selected.**
+
+The next session starts with a fresh Chat-owned S5 architecture audit against the live branch head and current ~261 KiB Root.
+
+Do not automatically use an old candidate ranking.
+
+Only after the audit should Chat choose one slice, establish RED where appropriate, and send Luna a highly prescriptive mechanical task.
+
+The broader route remains:
+
+```text
+continue small characterized App-root slices
+-> stop before ownership becomes artificial/high-risk
+-> remeasure production files
+-> audit ClocktowerDayScreen.kt only for a natural seam
+-> complete structural pass
+-> resume A3 historical multi-night exact baseline
+```
+
+Do not merge this structural branch without explicit user authorization.
