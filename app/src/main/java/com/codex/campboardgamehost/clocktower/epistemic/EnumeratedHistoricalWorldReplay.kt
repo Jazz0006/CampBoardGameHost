@@ -84,10 +84,26 @@ internal class EnumeratedHistoricalWorldSetSnapshot private constructor(
         }
         val observation = record.bindTo(formalSnapshotId)
         val retained = worlds.mapNotNull { world ->
+            if (!sourceEligibleAtCurrentState(world, record)) return@mapNotNull null
             val result = TroubleBrewingWorldObservationEvaluator.evaluate(world, roles, observation, hypothesis)
             if (result.matches) world.withClusters(result.clusters) else null
         }
         return copy(retained)
+    }
+
+    private fun sourceEligibleAtCurrentState(
+        world: EnumeratedWorld,
+        record: RecordedEpistemicObservation,
+    ): Boolean {
+        if (record.reliability == ObservationReliability.NOT_ABILITY_INFORMATION) return true
+        if (record.phase != StorytellerPhase.FIRST_NIGHT && record.phase != StorytellerPhase.NIGHT) return true
+        val sourceSeat = record.sourceSeat ?: return false
+        val sourceAbility = record.sourceAbility ?: return false
+        return EnumeratedWorldNightObservationAliveStateCompatibility.isCompatible(
+            world = world,
+            sourceSeat = sourceSeat,
+            sourceAbility = sourceAbility,
+        )
     }
 
     private fun copy(nextWorlds: List<EnumeratedWorld>) = EnumeratedHistoricalWorldSetSnapshot(
