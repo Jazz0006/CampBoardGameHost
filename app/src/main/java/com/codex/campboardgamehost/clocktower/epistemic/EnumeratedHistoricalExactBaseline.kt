@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
+import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 
@@ -26,6 +27,8 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
  * are rejected rather than allowing a knowledge-safe projection to be mistaken for an exact replay.
  */
 internal object EnumeratedHistoricalExactBaseline {
+    private val SUPPORTED_SCRIPT = ScriptId("trouble_brewing")
+
     fun build(
         validatedRuleset: ValidatedClocktowerRuleset,
         rulesetRef: RulesetRef,
@@ -45,6 +48,10 @@ internal object EnumeratedHistoricalExactBaseline {
         }
         require(validatedRuleset.coverage == rulesetRef.coverage) {
             "Validated ruleset coverage does not match exact-baseline RulesetRef."
+        }
+        require(rulesetRef.scriptId == SUPPORTED_SCRIPT) {
+            "A3 historical exact support currently covers Trouble Brewing only; " +
+                "refusing to apply Trouble Brewing exact reasoning to script ${rulesetRef.scriptId.value}."
         }
         actionTimeline.requireCompatibleWith(observationLog)
         val unsupportedHiddenMechanic = actionTimeline.entries.firstNotNullOfOrNull { entry ->
