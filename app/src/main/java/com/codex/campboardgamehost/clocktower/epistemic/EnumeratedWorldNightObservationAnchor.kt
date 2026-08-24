@@ -27,7 +27,11 @@ internal object EnumeratedWorldNightObservationAnchoring {
         world: EnumeratedWorld,
         record: RecordedEpistemicObservation,
     ): EnumeratedWorldNightObservationAnchor? {
-        if (record.phase != StorytellerPhase.NIGHT) return null
+        val expectedStorytellerPhase = when (phase) {
+            ClocktowerNightFlowPhase.FIRST_NIGHT -> StorytellerPhase.FIRST_NIGHT
+            ClocktowerNightFlowPhase.OTHER_NIGHT -> StorytellerPhase.NIGHT
+        }
+        if (record.phase != expectedStorytellerPhase) return null
         val sourceSeat = record.sourceSeat ?: return null
         val sourceAbility = record.sourceAbility ?: return null
 
