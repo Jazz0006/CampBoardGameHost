@@ -1,25 +1,35 @@
 # CampBoardGameHost — App-root Decomposition Handoff (S7+)
 
-> Refreshed: 2026-08-24 Australia/Sydney  
+> Refreshed: 2026-08-25 Australia/Sydney  
 > Structural branch: `codex/source-decomposition-app-root-s7-main65c0ba`  
 > Structural base: `main@65c0ba47a6f2c0b76263b3f3a1fbf2e26a427024`  
-> Current structural status: **S0–S6 CLOSED; S7 re-audited and ready for tests-first implementation**  
+> Current structural status: **S0–S6 CLOSED; S7.1 CLOSED; next = S7.2 selection semantics audit**  
 > PR #48 A3 historical exact/B4 shadow checkpoint is merged into `main`; future A3 setup-snapshot/authority work remains out of scope here.  
-> Never merge, force-push, rebase, or broaden scope without explicit user authorization.
+> Never merge, force-push, rebase, mark ready, or broaden scope without explicit user authorization.
 
-## 1. Why this branch exists
+## 1. Current branch lineage
 
-The old structural branches were based on the pre-A3 `main` checkpoint and are no longer appropriate production continuation points.
-
-The current branch starts from the post-PR #48 `main` merge:
+The structural branch starts from the post-PR #48 main merge:
 
 ```text
 65c0ba47a6f2c0b76263b3f3a1fbf2e26a427024
 ```
 
-This preserves the completed A3 historical exact/B4 shadow checkpoint while keeping future A3 setup-snapshot/authority promotion out of the structural workstream.
+The S7 planning checkpoint was:
 
-Do **not** restore the unfinished S7 RED that was removed by PR #47.
+```text
+9d5499a278135e9ab642f76a565b52c2a74cd289
+```
+
+S7.1 then established a real RED/GREEN history:
+
+```text
+9d5499a278135e9ab642f76a565b52c2a74cd289
+  -> 78b4a1dce9e4990d348354d900c9339f3047db95  test: redefine Clocktower theme ownership
+  -> 4062a65355fedad5e13b5e874657db46cd0368ad  refactor: extract Clocktower presentation theme
+```
+
+The documentation closeout commit follows those code commits. Re-query the live branch head before any new implementation; do not rely on the SHA printed here as a substitute for a live check.
 
 ## 2. Current app-root progress
 
@@ -29,25 +39,32 @@ Original Root at the start of the decomposition pass:
 CampBoardGameHostApp.kt = 325,556 bytes
 ```
 
-Validated sizes after completed slices:
+Validated structural sizes:
 
 ```text
-After S1 = 293,536 bytes
-After S2 = 283,470 bytes
-After S3 = 277,453 bytes
-After S4 = 261,232 bytes
-After S5 = 235,741 bytes
-After S6 = 229,822 bytes
+After S1   = 293,536 bytes
+After S2   = 283,470 bytes
+After S3   = 277,453 bytes
+After S4   = 261,232 bytes
+After S5   = 235,741 bytes
+After S6   = 229,822 bytes
+After S7.1 = 229,007 bytes
 ```
 
-Net reduction through S6:
+S7.1 new owner:
 
 ```text
-95,734 bytes
-~29.4%
+ClocktowerPresentationTheme.kt = 985 bytes
 ```
 
-The 50 KiB target is a **maintainability guideline, not a hard gate**.
+Net Root reduction through S7.1:
+
+```text
+96,549 bytes
+~29.7% from the original Root
+```
+
+The 50 KiB target remains a **maintainability guideline, not a hard gate**.
 
 Preferred interpretation:
 
@@ -62,9 +79,9 @@ ordinary feature/model/semantics/presentation file:
     requires an architecture audit before accepting further growth
 ```
 
-The objective is not byte minimization by itself. The objective is to prevent normal feature work from defaulting to a 200–300 KiB monolith.
+The objective is to prevent ordinary feature work from defaulting to a 200–300 KiB monolith, not to manufacture abstractions solely to satisfy a byte threshold.
 
-## 3. Completed slices S0–S6
+## 3. Completed slices S0–S7.1
 
 ### S0 — dynamic-flow preservation guard — CLOSED
 
@@ -130,58 +147,83 @@ AppGameScreen.kt = 7,285 bytes
 
 Root retained the generic game mutation transaction and `evaluateGameOutcome`.
 
-The validated S0–S6 checkpoint before PR #48 was:
+### S7.1 — shared Clocktower theme — CLOSED
+
+Ownership moved:
 
 ```text
-84a062378f13b90ce71f3801982ba3b2d3b22d80
+ClocktowerDarkTheme
+
+CampBoardGameHostApp.kt
+  -> ClocktowerPresentationTheme.kt
 ```
 
-PR #48 was then merged on top without touching the App-root S1–S6 production extraction surfaces.
-
-## 4. Fresh architecture audit
-
-Current large Android handwritten production files of interest:
+RED:
 
 ```text
-ClocktowerHostScreen.kt    ~295,644 bytes
-CampBoardGameHostApp.kt    ~229,822 bytes
-ClocktowerDayScreen.kt      ~63,135 bytes
-ClocktowerNightStepUi.kt    ~45,251 bytes
-ClocktowerHistoryScreen.kt  ~38,365 bytes
-WerewolfHostScreen.kt       ~29,673 bytes
+78b4a1dce9e4990d348354d900c9339f3047db95
 ```
 
-### Key conclusion
+GREEN:
 
-`CampBoardGameHostApp.kt` remains the highest-value structural target.
+```text
+4062a65355fedad5e13b5e874657db46cd0368ad
+```
 
-`ClocktowerHostScreen.kt` is **not** a byte-target campaign. A1–A13 already extracted its strongest natural seams. The remaining file is largely a state/effect/transaction orchestrator and remains under new-responsibility growth freeze.
+Remote exact-diff audit from the S7.1 planning checkpoint found exactly four changed files:
 
-`ClocktowerDayScreen.kt` is only moderately above the guideline and appears to retain a stale import surface from earlier extraction. Clean/re-measure it after the Root pass before deciding whether another split is justified.
+```text
+app/src/test/java/com/codex/campboardgamehost/AppDealPresentationOwnershipTest.kt
+app/src/test/java/com/codex/campboardgamehost/AppClocktowerPresentationThemeOwnershipTest.kt
+app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+app/src/main/java/com/codex/campboardgamehost/ClocktowerPresentationTheme.kt
+```
 
-## 5. Current Root structure after S1–S6
+The RED correctly migrated two stale S4 file-location assertions: the preserved invariant is that `AppDealScreens.kt` does not own the shared Clocktower theme; S7.1 replaces the historical temporary fact that Root owned it with a dedicated unique-owner contract.
+
+The GREEN production diff is declaration-only:
+
+- Root deletes only `ClocktowerDarkTheme`;
+- the new owner contains the same `@Composable internal` signature and the same theme body/color values;
+- existing consumers are unchanged;
+- no visibility widening;
+- no state, effect, lifecycle, session, persistence, A3/B4, Host transaction, or recommendation semantics moved.
+
+The branch push for `4062a653...` did **not** trigger a GitHub Actions run or combined status. Therefore do not describe that head as remotely CI-green. The remote closeout proves lineage, ownership and exact diff; GitHub CI/R2 remains an independent merge gate when a PR/head is later prepared for merge.
+
+## 4. Current large-file audit after S7.1
+
+Current handwritten Android production files of interest include:
+
+```text
+ClocktowerHostScreen.kt     295,644 bytes
+CampBoardGameHostApp.kt     229,007 bytes
+ClocktowerDayScreen.kt       63,135 bytes
+ClocktowerNightStepUi.kt     45,251 bytes
+ClocktowerHistoryScreen.kt   38,365 bytes
+WerewolfHostScreen.kt        29,673 bytes
+```
+
+`CampBoardGameHostApp.kt` remains the active structural target because it still contains declarations with clearer semantic/presentation owners.
+
+`ClocktowerHostScreen.kt` is **not** a byte-target campaign. A1–A13 already extracted its strongest natural seams; it remains under new-responsibility growth freeze.
+
+`ClocktowerDayScreen.kt` should receive only stale-import cleanup/re-measure after the Root pass before any further split is considered.
+
+## 5. Current Root ownership model
 
 The remaining `CampBoardGameHostApp.kt` has three broad zones.
 
 ### 5.1 Front — models / prefs / JSON / setup helpers
 
-Contains candidates such as:
+Potential later S8 candidates include app-level models/enums, pure setup/card helpers, runtime-ruleset adapters and pure labels. Persistence/restore contracts make this area riskier than the remaining S7 seams.
 
-- app-level models and enums;
-- preference/schema constants;
-- active-game JSON encode/decode support;
-- Clocktower setup/card helpers;
-- runtime ruleset helpers;
-- pure label/adapter helpers.
+### 5.2 Middle — protected real app orchestrator
 
-These are possible S8 candidates, but persistence/restore contracts make this section riskier than the remaining presentation seams.
-
-### 5.2 Middle — real app orchestrator
-
-Protected ownership includes:
+Do not move merely for size:
 
 - `remember` state;
-- `LaunchedEffect` / `DisposableEffect` / `SideEffect` lifetimes;
+- `LaunchedEffect` / `DisposableEffect` / `SideEffect` / `rememberUpdatedState` lifetimes;
 - navigation state;
 - active-game persistence and restore timing;
 - `ClocktowerGameSession` ownership;
@@ -192,15 +234,23 @@ Protected ownership includes:
 - day/night transaction callbacks;
 - Demon transition/public-history ordering.
 
-Do **not** move these merely to reduce byte count.
-
 ### 5.3 Tail — declarations with better owners
 
-Current low-risk candidates include:
+Remaining S7 candidates include:
 
 ```text
-ClocktowerDarkTheme
+TwoPlayerSelectionAction
+twoPlayerSelectionAction
+shouldAutoAdvanceRedHerring
+
+SelectablePlayerChips
+SelectableTwoPlayerChips
+SelectableSeatNumbers
+
 ClocktowerNewDemonConfirmationScreen
+
+WerewolfRoleLine
+WerewolfPlayerStatusRow
 
 GameSettingsHeader
 EmptyStateCard
@@ -209,53 +259,15 @@ HostProgressCard
 HostScriptCard
 HostInstructionBlock
 HostActionSection
-
-SelectablePlayerChips
-SelectableTwoPlayerChips
-SelectableSeatNumbers
-
-TwoPlayerSelectionAction
-twoPlayerSelectionAction
-shouldAutoAdvanceRedHerring
-
-WerewolfRoleLine
-WerewolfPlayerStatusRow
-
-PlayerCard host/seat display helpers and similar pure labels
 ```
 
-Several are already `internal` because extracted screens call them cross-file. That is evidence that Root is no longer their natural owner.
+Several are already `internal` because extracted files call them cross-file. That is evidence that Root is no longer their natural owner.
 
-## 6. S7 plan — shared presentation / selection ownership cleanup
+## 6. Exact next task — S7.2 selection semantics
 
-Implement S7 as small tests-first slices, not one large move.
+S7.2 is **semantics only**. Do not combine it with S7.3 selection UI.
 
-### S7.1 — Clocktower shared theme
-
-Move ownership of:
-
-```kotlin
-ClocktowerDarkTheme
-```
-
-from `CampBoardGameHostApp.kt` to a dedicated owner such as:
-
-```text
-ClocktowerPresentationTheme.kt
-```
-
-Requirements:
-
-- declaration body unchanged except visibility only if required;
-- existing consumers unchanged semantically;
-- Root no longer owns the declaration;
-- no state/effect/lifecycle movement.
-
-This is the preferred first slice because it should have a very small dependency surface.
-
-### S7.2 — Clocktower selection semantics
-
-Move:
+Audit and, if the live code confirms the boundary, move exactly:
 
 ```kotlin
 TwoPlayerSelectionAction
@@ -263,17 +275,86 @@ twoPlayerSelectionAction(...)
 shouldAutoAdvanceRedHerring(...)
 ```
 
-into:
+from:
+
+```text
+CampBoardGameHostApp.kt
+```
+
+to the existing natural semantic owner:
 
 ```text
 ClocktowerHostSelectionSemantics.kt
 ```
 
-Use existing selection characterization/tests. Do not alter selection behavior.
+Current size of that owner at the S7.1 GREEN tree:
+
+```text
+ClocktowerHostSelectionSemantics.kt = 6,035 bytes
+```
+
+### S7.2 preflight requirement
+
+S7.1 exposed two kinds of stale/incomplete assumptions before implementation:
+
+1. an initially omitted production consumer;
+2. stale structural tests that encoded a previous slice's temporary file-location fact.
+
+Therefore S7.2 must begin with **complete production and test inventory before RED design**.
+
+At minimum:
+
+```text
+rg all three target symbols across app/src/main
+rg all three target symbols across app/src/test
+identify every declaration, caller and structural location assertion
+classify any stale boundary assertion before changing production
+```
+
+Do not tell Luna to broaden scope when a surprise appears. Luna should STOP; Chat should classify the finding and issue a corrected architecture/test contract.
+
+### Existing safety nets to inspect first
+
+```text
+app/src/test/java/com/codex/campboardgamehost/ClocktowerHostSelectionSemanticsCharacterizationTest.kt
+app/src/test/java/com/codex/campboardgamehost/TwoPlayerSelectionActionTest.kt
+```
+
+Do not assume those are the only relevant tests. Search the full test tree for all three symbols and for Root-positive ownership assertions.
+
+### S7.2 hard boundary
+
+Do **not** move or edit as part of S7.2:
+
+```text
+SelectablePlayerChips
+SelectableTwoPlayerChips
+SelectableSeatNumbers
+```
+
+Those belong to S7.3.
+
+Also do not alter:
+
+- selection behavior or limit semantics;
+- automatic red-herring behavior;
+- Compose state/effect lifetime;
+- Host recommendation/registration transactions;
+- persistence/session/history;
+- A3/B4/A4 authority;
+- call-site behavior except compile-required visibility/import consequences explicitly approved by Chat after audit.
+
+## 7. Remaining S7 route after S7.2
 
 ### S7.3 — Clocktower selection UI
 
-Move:
+Potential owner:
+
+```text
+ClocktowerSelectionUi.kt
+```
+
+Candidates:
 
 ```kotlin
 SelectablePlayerChips
@@ -281,25 +362,17 @@ SelectableTwoPlayerChips
 SelectableSeatNumbers
 ```
 
-into a dedicated reusable owner such as:
-
-```text
-ClocktowerSelectionUi.kt
-```
-
 Do not create a generic `Utils.kt` bucket.
 
 ### S7.4 — New Demon presentation
 
-Move:
+Move only after exact dependency audit:
 
 ```kotlin
 ClocktowerNewDemonConfirmationScreen
 ```
 
-out of Root.
-
-Preferred owner after exact dependency audit:
+Preferred owner candidate:
 
 ```text
 clocktower/ui/ClocktowerNightScreen.kt
@@ -307,14 +380,14 @@ clocktower/ui/ClocktowerNightScreen.kt
 
 ### S7.5 — Werewolf presentation leftovers
 
-Move after exact usage/visibility audit:
+Audit:
 
 ```kotlin
 WerewolfRoleLine
 WerewolfPlayerStatusRow
 ```
 
-preferably into:
+Preferred owner candidate:
 
 ```text
 werewolf/WerewolfHostScreen.kt
@@ -334,15 +407,9 @@ HostInstructionBlock
 HostActionSection
 ```
 
-If genuinely shared, use a narrow owner such as:
+Use a narrow shared owner only if usage proves they are genuinely cross-feature; otherwise move to the actual feature owner.
 
-```text
-AppHostPresentationPrimitives.kt
-```
-
-If usage proves a single feature owner, move them there instead.
-
-## 7. S8 — pure models / setup / catalog helpers
+## 8. S8 — pure models / setup / catalog helpers
 
 After S7, remeasure Root and audit its front section.
 
@@ -357,45 +424,25 @@ buildPlayerKnowledgeSnapshots(...)
 pure display/seat label adapters
 ```
 
-Map actual call sites and choose domain-specific owners before moving anything.
+Map actual call sites and select domain-specific owners before moving anything.
 
-## 8. S9 — persistence codec/schema extraction, conditional only
+## 9. S9 — persistence codec/schema extraction, conditional only
 
-Persistence is higher risk because it touches:
+Persistence is higher risk because it touches active-game restore, game/ruleset identity, semantic history, action/observation timelines, GLOBAL sequence identity and saved-game compatibility.
 
-- active-game restore;
-- persisted game/ruleset identity;
-- Clocktower semantic history;
-- action timeline;
-- observation timeline;
-- GLOBAL sequence identity;
-- old saved-game compatibility.
+If S9 is still justified after S7/S8, extract only pure codec/schema/serialization responsibilities first. Root should continue to own restore timing and Compose lifecycle/effect orchestration unless an independently tested coordinator boundary already exists.
 
-If S9 is still justified after S7/S8, only extract **pure codec/schema/serialization** responsibilities first.
+Stop S9 if the only way to reduce Root is broad lifecycle movement.
 
-Root should continue to own restore timing and Compose lifecycle/effect orchestration unless an independently tested coordinator boundary already exists.
-
-Required approach:
-
-```text
-characterization RED
--> pure codec/schema extraction
--> preserve old JSON compatibility
--> preserve restore ordering/lifetime
--> full persistence + production wiring regression suite
-```
-
-Stop if extraction requires broad lifecycle movement merely to reduce file size.
-
-## 9. ClocktowerDayScreen follow-up
+## 10. ClocktowerDayScreen follow-up
 
 ### D1 — unused-import cleanup + remeasure
 
-Before splitting `ClocktowerDayScreen.kt`, clean stale imports left by earlier mechanical extraction and remeasure.
+Clean stale imports after the Root pass and remeasure.
 
 ### D2 — split only if still justified
 
-Natural screen seams include:
+Potential natural screen seams include:
 
 ```text
 ClocktowerDayOverviewScreen
@@ -406,17 +453,11 @@ ClocktowerExecutionConfirmScreen
 ClocktowerSpecialDayActionScreen
 ```
 
-A likely cluster is nomination/vote/execution confirmation, but choose only after a fresh dependency audit.
+Do not split solely because the file once measured ~63 KiB.
 
-## 10. ClocktowerHostScreen policy
+## 11. ClocktowerHostScreen policy
 
 `ClocktowerHostScreen.kt` remains under **new-responsibility growth freeze**.
-
-Do not set a target such as:
-
-```text
-295 KiB -> 50 KiB
-```
 
 Further extraction is allowed only when a cohesive owner is obvious and behavior can be characterized without weakening:
 
@@ -426,12 +467,12 @@ Further extraction is allowed only when a cohesive owner is obvious and behavior
 - persistence/history identity;
 - planner/projector/materializer authority.
 
-## 11. Protected boundaries for S7+
+## 12. Protected boundaries for S7+
 
 Do not move merely for byte reduction:
 
 - Clocktower live transaction ordering;
-- `LaunchedEffect`, `DisposableEffect`, `SideEffect`, `rememberUpdatedState` lifetime;
+- Compose effect lifetime;
 - persistence / restore / archive ownership;
 - A4 cache/prewarm/runtime lifecycle;
 - `ClocktowerGameSession` global timeline identity/sequence;
@@ -440,11 +481,11 @@ Do not move merely for byte reduction:
 - merged A3/B4 historical-exact semantics;
 - Host recommendation/registration transaction semantics.
 
-Future A3 setup-snapshot/authority work is out of scope on this branch.
+Future A3 setup-snapshot/authority work remains out of scope on this branch.
 
-## 12. Large-file execution workflow — HARD RULE
+## 13. Large-file execution workflow — HARD RULE
 
-`CampBoardGameHostApp.kt` is approximately 230 KiB. Do **not** use the GitHub Connector for production rewrites/moves in this file.
+`CampBoardGameHostApp.kt` remains approximately 229 KiB. Do **not** use the GitHub Connector for production rewrites/moves in this file.
 
 For any S7/S8 slice touching Root:
 
@@ -452,7 +493,9 @@ For any S7/S8 slice touching Root:
 
 - live-state audit;
 - architecture/ownership decision;
+- complete production + test symbol inventory;
 - dependency and visibility audit;
+- stale structural-contract classification;
 - tests-first RED design;
 - exact declaration move specification;
 - allowed/forbidden changed files;
@@ -463,55 +506,37 @@ For any S7/S8 slice touching Root:
 
 ### Codex Luna in the user's full local Git worktree owns
 
-- writing/running the RED;
+- writing/running the approved RED;
 - mechanical declaration move;
-- minimal imports/visibility edits;
+- minimal compile-required imports/visibility edits;
 - focused and full local tests;
 - assemble;
 - `git diff --check`;
-- commit and push.
+- exact local diff review;
+- commit and push when the approved gates pass.
 
 ChatGPT must not directly edit Root production code through the connector for these slices.
 
-## 13. Tests-first contract for every structural slice
+## 14. Tests-first contract for every structural slice
 
 For each S7/S8/D2 extraction:
 
-1. audit exact current owner and every call site;
-2. design a focused ownership/characterization RED;
-3. confirm RED fails for the intended ownership reason only;
-4. perform the smallest behavior-preserving move;
-5. minimize visibility widening;
-6. run focused test;
-7. run full `:app:testDebugUnitTest`;
-8. run `:app:assembleDebug`;
-9. run `git diff --check`;
-10. perform exact diff audit against the pre-move baseline;
-11. stop on any unexpected dependency/visibility/lifecycle requirement.
+1. re-check live `main`, structural branch head and parent chain;
+2. inventory every production declaration/caller for all target symbols;
+3. inventory every test reference/location assertion for all target symbols;
+4. classify stale structural boundary tests before RED design;
+5. design a focused ownership/characterization RED;
+6. confirm RED fails for the intended ownership reason only;
+7. perform the smallest behavior-preserving move;
+8. minimize visibility widening;
+9. run focused tests;
+10. run full `:app:testDebugUnitTest`;
+11. run `:app:assembleDebug`;
+12. run `git diff --check`;
+13. perform exact diff audit against the pre-move baseline;
+14. stop on any unexpected dependency/visibility/lifecycle requirement.
 
-## 14. Exact next task — S7.1
-
-Start with `ClocktowerDarkTheme` only.
-
-Before GREEN, establish a focused ownership RED proving at minimum:
-
-```text
-CampBoardGameHostApp.kt no longer owns ClocktowerDarkTheme
-ClocktowerPresentationTheme.kt is the sole declaration owner
-existing consumers continue to reference the same symbol
-no Root state/effect/persistence/transaction code moves
-```
-
-Expected production allowlist:
-
-```text
-app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-app/src/main/java/com/codex/campboardgamehost/ClocktowerPresentationTheme.kt   # new
-```
-
-plus one focused ownership test.
-
-If compilation requires unrelated production changes, stop and report rather than expanding the slice.
+A pushed local commit is not merge authorization. GitHub CI/R2 remains an independent merge gate before eventual integration.
 
 ## 15. Overall stop condition
 
@@ -531,8 +556,8 @@ A remaining Root above 50 KiB is acceptable when those responsibilities are cohe
 ## 16. Planned route
 
 ```text
-S7.1 shared Clocktower theme
--> S7.2 selection semantics
+S7.1 shared Clocktower theme — CLOSED
+-> S7.2 selection semantics — NEXT
 -> S7.3 selection UI
 -> S7.4 New Demon presentation
 -> S7.5 Werewolf presentation leftovers
