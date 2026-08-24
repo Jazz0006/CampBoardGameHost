@@ -101,6 +101,33 @@ class EnumeratedWorldNightReplayPlanTest {
     }
 
     @Test
+    fun `single night plan refuses observations from multiple rounds`() {
+        val empathRoundTwo = observation(
+            sourceSeat = 1,
+            sourceAbility = "Empath",
+            globalSequence = 900L,
+            localSequence = 1,
+            round = 2,
+        )
+        val fortuneTellerRoundThree = observation(
+            sourceSeat = 2,
+            sourceAbility = "Fortune Teller",
+            globalSequence = 901L,
+            localSequence = 1,
+            round = 3,
+        )
+
+        assertNull(
+            EnumeratedWorldNightReplayPlanning.planAbilityObservationsOrNull(
+                ruleset = ruleset,
+                phase = ClocktowerNightFlowPhase.OTHER_NIGHT,
+                world = world,
+                observations = listOf(empathRoundTwo, fortuneTellerRoundThree),
+            ),
+        )
+    }
+
+    @Test
     fun `observation whose source identity is incompatible with world makes plan incompatible`() {
         val impossibleEmpath = observation(3, "Empath", globalSequence = 900L, localSequence = 1)
 
@@ -119,17 +146,18 @@ class EnumeratedWorldNightReplayPlanTest {
         sourceAbility: String,
         globalSequence: Long,
         localSequence: Int,
+        round: Int = 2,
     ): RecordedEpistemicObservation {
         val point = TimelinePoint(
             phase = StorytellerPhase.NIGHT,
-            round = 2,
+            round = round,
             sequence = localSequence,
             globalSequence = globalSequence,
         )
         return RecordedEpistemicObservation(
             recordId = "plan-$sourceSeat-$sourceAbility-$globalSequence",
             phase = StorytellerPhase.NIGHT,
-            round = 2,
+            round = round,
             sequence = localSequence,
             sourceSeat = sourceSeat,
             sourceAbility = RoleId(sourceAbility),
