@@ -31,7 +31,7 @@ internal class EnumeratedHistoricalWorldSetSnapshot private constructor(
             "Historical elimination references unknown seat $seat."
         }
         return copy(worlds.map { world ->
-            val abilityStates = if (world.rolesBySeat.getValue(seat).value.equals("Poisoner", ignoreCase = true)) {
+            val abilityStates = if (world.currentRolesBySeat.getValue(seat).value.equals("Poisoner", ignoreCase = true)) {
                 world.abilityStatesBySeat.filterValues { it != AbilityState.MALFUNCTIONING_POISONED }
             } else {
                 world.abilityStatesBySeat
@@ -55,7 +55,7 @@ internal class EnumeratedHistoricalWorldSetSnapshot private constructor(
                 it != AbilityState.MALFUNCTIONING_POISONED
             }
             val expiredWorld = world.copy(abilityStatesBySeat = expiredAbilityStates)
-            val poisonerSeat = world.rolesBySeat.entries.singleOrNull {
+            val poisonerSeat = world.currentRolesBySeat.entries.singleOrNull {
                 it.value.value.equals("Poisoner", ignoreCase = true)
             }?.key
             if (poisonerSeat == null || poisonerSeat !in world.aliveSeats) {
