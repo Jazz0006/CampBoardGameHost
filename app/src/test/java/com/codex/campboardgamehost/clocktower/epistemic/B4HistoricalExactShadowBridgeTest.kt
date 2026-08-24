@@ -5,10 +5,12 @@ import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCa
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import java.io.File
+import java.math.BigInteger
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -72,6 +74,16 @@ class B4HistoricalExactShadowBridgeTest {
             actionTimeline = timeline,
             observationLog = EpistemicObservationLog(),
         ).worldSet
+        val expectedWorlds = expected.enumeratedWorlds()
+        val rolesById = roles.associateBy(RoleDefinition::id)
+        val expectedAfterWorlds = expectedWorlds.filter { world ->
+            TroubleBrewingWorldObservationEvaluator.evaluate(
+                world = world,
+                roles = rolesById,
+                observation = candidate,
+                hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            ).matches
+        }
 
         val report = B4DynamicPlayerWorldSetShadow(
             validatedRuleset = validatedRuleset,
@@ -90,9 +102,12 @@ class B4HistoricalExactShadowBridgeTest {
         )
 
         assertEquals(B4ShadowOutcome.READY, report.outcome)
-        assertEquals(expected.cardinality(), report.queries.single().before)
-        assertEquals(expected.require(candidate).cardinality(), report.queries.single().after)
+        assertEquals(exact(expectedWorlds.size), report.queries.single().before)
+        assertEquals(exact(expectedAfterWorlds.size), report.queries.single().after)
     }
+
+    private fun exact(count: Int): WorldCardinality.Exact =
+        WorldCardinality.Exact(BigInteger.valueOf(count.toLong()))
 
     private fun timelineOf(facts: List<ActionFact>): ActionFactTimeline =
         ActionFactTimeline(
