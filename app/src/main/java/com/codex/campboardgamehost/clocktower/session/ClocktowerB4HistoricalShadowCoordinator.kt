@@ -66,7 +66,6 @@ internal class ClocktowerB4HistoricalShadowCoordinator(
         setupSnapshot.gameId == currentSnapshot.gameId &&
             setupSnapshot.gameSeed == currentSnapshot.gameSeed &&
             setupSnapshot.rulesetRef == currentSnapshot.rulesetRef &&
-            setupSnapshot.gameState.scriptId == currentSnapshot.gameState.scriptId &&
             setupSnapshot.gameState.players.map { it.seat }.toSet() ==
                 currentSnapshot.gameState.players.map { it.seat }.toSet() &&
             currentSnapshot.gameStateRevision >= setupSnapshot.gameStateRevision
