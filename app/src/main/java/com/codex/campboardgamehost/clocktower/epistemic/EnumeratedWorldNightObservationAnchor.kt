@@ -20,6 +20,30 @@ internal data class EnumeratedWorldNightObservationAnchor(
     }
 }
 
+/**
+ * Coarse possible-world compatibility between current alive/dead state and a visible night
+ * observation source.
+ *
+ * This is intentionally not complete trigger authority. A dead Ravenkeeper can still be compatible
+ * because its ability may trigger on a night death, but proving that the death happened at the
+ * correct historical moment belongs to incremental historical replay. Conversely, an ordinary
+ * nightly information role that is already dead is incompatible with a normal later-night wake.
+ *
+ * Trouble Brewing is the current exact-baseline support boundary, so Ravenkeeper is the only
+ * death-triggered observation source represented here. Do not replace this with Host resolved facts
+ * or storyteller actual hidden chronology.
+ */
+internal object EnumeratedWorldNightObservationAliveStateCompatibility {
+    private val deathTriggeredObservationRoleIds = setOf(RoleId("Ravenkeeper"))
+
+    fun isCompatible(
+        world: EnumeratedWorld,
+        sourceSeat: Int,
+        sourceAbility: RoleId,
+    ): Boolean =
+        sourceSeat in world.aliveSeats || sourceAbility in deathTriggeredObservationRoleIds
+}
+
 internal object EnumeratedWorldNightObservationAnchoring {
     fun anchorOrNull(
         ruleset: ValidatedClocktowerRuleset,
@@ -38,6 +62,15 @@ internal object EnumeratedWorldNightObservationAnchoring {
         val actualRole = world.rolesBySeat[sourceSeat] ?: return null
         val shownRole = world.shownRolesBySeat[sourceSeat]
         if (sourceAbility != actualRole && sourceAbility != shownRole) return null
+        if (
+            !EnumeratedWorldNightObservationAliveStateCompatibility.isCompatible(
+                world = world,
+                sourceSeat = sourceSeat,
+                sourceAbility = sourceAbility,
+            )
+        ) {
+            return null
+        }
 
         val token = NightOrderToken.Character(sourceAbility)
         val scheduleIndex = EnumeratedWorldNightSchedule.plan(
