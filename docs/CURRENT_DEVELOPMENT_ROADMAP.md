@@ -6,9 +6,9 @@
 > Stable `main`: `84a062378f13b90ce71f3801982ba3b2d3b22d80`  
 > Active branch: `codex/a3-historical-multinight-exact-baseline-clean`  
 > Draft PR: **#48 `A3: historical multi-night exact baseline`**  
-> Latest fully validated **code** checkpoint: `8e49772707835e0071774cf6b8ef38ad842041a1`  
-> Gates: **CI #619 SUCCESS / R2 #552 SUCCESS / Android + ASP + Real Clingo GREEN**  
-> Current execution point: **A3 Architecture Hardening — H7.2 GREEN; STOP before end-to-end hidden Attack/Protect replay**  
+> Latest fully validated **code** checkpoint: `c20a8a8f3392d82f08fe1ab57f97988ef8db4da8`  
+> Gates: **CI #623 SUCCESS / R2 #556 SUCCESS / Android + ASP + Real Clingo GREEN**  
+> Current execution point: **A3 Architecture Hardening — H7.3 mechanics materialization boundary GREEN; STOP before historical replay wiring / guard relaxation**  
 > Detailed handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`
 
 > Documentation-only commits may move the branch/PR head beyond the validated code SHA. New conversations must re-query live `main`, PR #48 head/state/checks before editing.
@@ -30,7 +30,8 @@ PR #48 historical multi-night exact baseline       OPEN / DRAFT / ACTIVE
 A3 hardening H1–H6                                 GREEN
 A3 H7.1 current-Demon attack helper                GREEN
 A3 H7.2 current-Monk protection helper             GREEN
-End-to-end hidden Attack/Protect replay             NOT STARTED / STOPPED
+A3 H7.3 other-night mechanics materializer         GREEN
+End-to-end hidden Attack/Protect replay             NOT WIRED / BLOCKED
 Production Host / A4 / ZDD authority promotion     NOT STARTED / BLOCKED
 ```
 
@@ -94,8 +95,9 @@ No synthetic hidden `globalSequence` values are invented.
 ## 4. H7 status
 
 ```text
-H7.1 dynamic current-Demon attack branching     GREEN
-H7.2 dynamic current-Monk protection branching  GREEN
+H7.1 dynamic current-Demon attack branching      GREEN
+H7.2 dynamic current-Monk protection branching   GREEN
+H7.3 resolved mechanics materialization boundary GREEN
 ```
 
 H7.1 RED/GREEN:
@@ -136,7 +138,33 @@ current role seat 3 != Monk
 => seat 3 does not produce functioning Monk protection branches
 ```
 
-`EnumeratedWorldOtherNightProtectionBranching` now discovers a living Monk from `currentRolesBySeat + aliveSeats` and builds `AbilitySubject.actualRole` from `currentRolesBySeat`. Stable protection target-seat enumeration remains `rolesBySeat.keys` because seat identity is stable.
+`EnumeratedWorldOtherNightProtectionBranching` discovers a living Monk from `currentRolesBySeat + aliveSeats` and builds `AbilitySubject.actualRole` from `currentRolesBySeat`. Stable protection target-seat enumeration remains `rolesBySeat.keys` because seat identity is stable.
+
+H7.3 RED/GREEN:
+
+```text
+RED   9b6127d517b3cf4bca6add72fcc14dce99bef3e5
+      CI #622 FAILURE as expected at test compilation
+      missing EnumeratedWorldOtherNightMechanicsMaterializer API
+      production changes = 0
+      ASP + Real Clingo + R2 #555 GREEN
+
+GREEN c20a8a8f3392d82f08fe1ab57f97988ef8db4da8
+      CI #623 SUCCESS
+      R2 #556 SUCCESS
+      Android + ASP + Real Clingo GREEN
+```
+
+`EnumeratedWorldOtherNightMechanicsMaterializer` now composes only rule-derived possible-world Monk protection and Imp attack branches. It:
+
+```text
+NO_DEATH      -> materializes unchanged mechanical state
+TARGET_DIES   -> materializes death state
+resolved paths -> mechanical convergence
+Mayor redirect / Imp self-kill -> explicit unresolvedBranches
+```
+
+It consumes no Storyteller-selected `Protect` or `Attack` target. Hidden branch provenance is not counted as extra exact worlds.
 
 ## 5. Hidden-information invariant
 
@@ -153,7 +181,7 @@ current possible world
 
 Actual `Poison` / `Protect` / `Attack` / `RoleChange` payloads remain forbidden as player-world truth.
 
-## 6. Guards and out-of-scope work
+## 6. Guards and still-out-of-scope work
 
 `EnumeratedHistoricalExactBaseline.build(...)` must still fail closed on:
 
@@ -162,6 +190,8 @@ Attack
 Protect
 RoleChange
 ```
+
+H7.3 does **not** wire the new materializer into historical replay and does **not** relax those guards.
 
 Do not yet implement or wire:
 
@@ -177,22 +207,29 @@ other scripts
 App-root S7
 ```
 
-Unresolved legal branches such as Mayor redirect or Imp self-kill successor must never be silently dropped to claim a partial “exact” result.
+Unresolved legal branches must never be silently dropped to claim a partial “exact” result.
 
 ## 7. Next possible slice — NOT STARTED
 
-Only with explicit authorization should the next RED move toward:
+The next exact-replay step is currently blocked by unresolved legal branches.
+
+A functioning Imp's legal target domain includes itself, so a complete other-night exact transition can produce:
 
 ```text
-rule-derived Monk protection
--> rule-derived Imp attack
--> mechanical outcome materialization
--> convergence
+IMP_SELF_KILL_SUCCESSOR_REQUIRED
 ```
 
-This is the end-to-end Attack/Protect replay slice and is deliberately **not started** at this checkpoint.
+and Mayor worlds can produce:
 
-Relax `Attack` / `Protect` / `RoleChange` constructor guards only when the corresponding exact transition semantics are complete.
+```text
+MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED
+```
+
+Because those outcomes remain legal possible worlds, historical replay must not wire only the resolved H7.3 subset and call it exact.
+
+The next slice therefore requires an explicit decision/authorization about the unresolved transition boundary — especially Imp self-kill succession, and separately Mayor redirect — before `Attack` / `Protect` guards can safely be relaxed.
+
+Production Host / A4 / ZDD work remains blocked and must not be mixed into this decision.
 
 ## 8. Working discipline
 
