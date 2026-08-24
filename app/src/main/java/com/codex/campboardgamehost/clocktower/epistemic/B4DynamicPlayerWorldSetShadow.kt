@@ -24,12 +24,12 @@ class B4DynamicPlayerWorldSetShadow private constructor(
 ) {
     constructor(
         runtime: A4PlayerWorldSetRuntime = A4PlayerWorldSetRuntime(),
-    ) : this(runtime = runtime, validatedRuleset = null)
+    ) : this(runtime, null)
 
     internal constructor(
         validatedRuleset: ValidatedClocktowerRuleset,
         runtime: A4PlayerWorldSetRuntime = A4PlayerWorldSetRuntime(),
-    ) : this(runtime = runtime, validatedRuleset = validatedRuleset)
+    ) : this(runtime, validatedRuleset)
 
     fun evaluate(request: B4ShadowRequest): B4ShadowReport {
         validatedRuleset?.let { ruleset ->
