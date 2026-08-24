@@ -6,9 +6,9 @@
 > Stable `main`: `84a062378f13b90ce71f3801982ba3b2d3b22d80`  
 > Active branch: `codex/a3-historical-multinight-exact-baseline-clean`  
 > Draft PR: **#48 `A3: historical multi-night exact baseline`**  
-> Latest fully validated **code** checkpoint: `c20a8a8f3392d82f08fe1ab57f97988ef8db4da8`  
-> Gates: **CI #623 SUCCESS / R2 #556 SUCCESS / Android + ASP + Real Clingo GREEN**  
-> Current execution point: **A3 Architecture Hardening — H7.3 mechanics materialization boundary GREEN; STOP before historical replay wiring / guard relaxation**  
+> Latest fully validated **code** checkpoint: `e4e8932821db4a785ea783479a3cff1cd54bb75d`  
+> Gates: **CI #627 SUCCESS / R2 #560 SUCCESS / Android + ASP + Real Clingo GREEN**  
+> Current execution point: **A3 Architecture Hardening — H7.4 Imp self-kill succession branching GREEN; STOP before H7.4→H7.3 materializer integration**  
 > Detailed handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`
 
 > Documentation-only commits may move the branch/PR head beyond the validated code SHA. New conversations must re-query live `main`, PR #48 head/state/checks before editing.
@@ -31,6 +31,7 @@ A3 hardening H1–H6                                 GREEN
 A3 H7.1 current-Demon attack helper                GREEN
 A3 H7.2 current-Monk protection helper             GREEN
 A3 H7.3 other-night mechanics materializer         GREEN
+A3 H7.4 Imp self-kill succession helper            GREEN
 End-to-end hidden Attack/Protect replay             NOT WIRED / BLOCKED
 Production Host / A4 / ZDD authority promotion     NOT STARTED / BLOCKED
 ```
@@ -98,6 +99,7 @@ No synthetic hidden `globalSequence` values are invented.
 H7.1 dynamic current-Demon attack branching      GREEN
 H7.2 dynamic current-Monk protection branching   GREEN
 H7.3 resolved mechanics materialization boundary GREEN
+H7.4 Imp self-kill succession branching          GREEN
 ```
 
 H7.1 RED/GREEN:
@@ -155,16 +157,41 @@ GREEN c20a8a8f3392d82f08fe1ab57f97988ef8db4da8
       Android + ASP + Real Clingo GREEN
 ```
 
-`EnumeratedWorldOtherNightMechanicsMaterializer` now composes only rule-derived possible-world Monk protection and Imp attack branches. It:
+`EnumeratedWorldOtherNightMechanicsMaterializer` composes rule-derived possible-world Monk protection and Imp attack branches. It currently materializes `NO_DEATH` / `TARGET_DIES`, converges resolved worlds, and returns Mayor redirect / Imp self-kill as explicit unresolved branches. It consumes no Storyteller-selected `Protect` or `Attack` target.
+
+H7.4 RED/GREEN:
 
 ```text
-NO_DEATH      -> materializes unchanged mechanical state
-TARGET_DIES   -> materializes death state
-resolved paths -> mechanical convergence
-Mayor redirect / Imp self-kill -> explicit unresolvedBranches
+RED   6b8de75b6e864ca733d5cc08a2ba031b5355b182
+      CI #626 FAILURE as expected at :app:compileDebugUnitTestKotlin
+      missing EnumeratedWorldImpSelfKillSuccessionBranching API
+      production changes = 0
+      ASP + Real Clingo + R2 #559 GREEN
+
+GREEN e4e8932821db4a785ea783479a3cff1cd54bb75d
+      CI #627 SUCCESS
+      R2 #560 SUCCESS
+      Android + ASP + Real Clingo GREEN
 ```
 
-It consumes no Storyteller-selected `Protect` or `Attack` target. Hidden branch provenance is not counted as extra exact worlds.
+Locked H7.4 contracts:
+
+```text
+functioning Scarlet Woman + >=5 alive before Imp self-kill
+-> Scarlet Woman is the forced successor
+
+poisoned Scarlet Woman
+-> forced Scarlet Woman priority does not apply
+-> branch every living current Trouble Brewing Minion as legal successor
+
+no living current Minion
+-> Imp dies
+-> one null-successor branch
+```
+
+`EnumeratedWorldImpSelfKillSuccessionBranching` consumes only current possible-world state. It kills the current Imp, derives successor seats from `currentRolesBySeat + aliveSeats`, and applies the successor role with `withCurrentRoles`. This preserves a dead former Imp plus living successor Imp and preserves existing Poisoner-role-change poison cleanup semantics. No persisted `RoleChange` target is consumed as player knowledge.
+
+H7.4 is deliberately **not wired into H7.3 yet**. Therefore `EnumeratedWorldOtherNightMechanicsMaterializer` still exposes `IMP_SELF_KILL_SUCCESSOR_REQUIRED` as unresolved at this checkpoint.
 
 ## 5. Hidden-information invariant
 
@@ -191,15 +218,14 @@ Protect
 RoleChange
 ```
 
-H7.3 does **not** wire the new materializer into historical replay and does **not** relax those guards.
+H7.4 does **not** wire succession into H7.3, historical replay, or relax those guards.
 
 Do not yet implement or wire:
 
 ```text
-end-to-end Monk/Imp replay
+H7.4 successor branching into H7.3 materializer
+end-to-end Monk/Imp historical replay
 Mayor redirect branching
-Imp self-kill successor selection
-Scarlet Woman succession transition
 Host integration
 A4/ZDD promotion
 history UI / misinformation expansion
@@ -211,25 +237,21 @@ Unresolved legal branches must never be silently dropped to claim a partial “e
 
 ## 7. Next possible slice — NOT STARTED
 
-The next exact-replay step is currently blocked by unresolved legal branches.
-
-A functioning Imp's legal target domain includes itself, so a complete other-night exact transition can produce:
+The next smallest slice is:
 
 ```text
-IMP_SELF_KILL_SUCCESSOR_REQUIRED
+H7.5
+IMP_SELF_KILL_SUCCESSOR_REQUIRED branch
+-> EnumeratedWorldImpSelfKillSuccessionBranching
+-> resolved successor mechanical worlds
+-> mechanical convergence
 ```
 
-and Mayor worlds can produce:
+That slice should modify only the H7.3 materialization boundary plus focused tests. It must leave `MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED` explicit and unresolved.
 
-```text
-MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED
-```
+Even after H7.5, historical exact replay and `Attack` / `Protect` guards must remain fail-closed while Mayor redirect remains unresolved. Do not consume Storyteller `RoleChange` payloads to shortcut succession.
 
-Because those outcomes remain legal possible worlds, historical replay must not wire only the resolved H7.3 subset and call it exact.
-
-The next slice therefore requires an explicit decision/authorization about the unresolved transition boundary — especially Imp self-kill succession, and separately Mayor redirect — before `Attack` / `Protect` guards can safely be relaxed.
-
-Production Host / A4 / ZDD work remains blocked and must not be mixed into this decision.
+Production Host / A4 / ZDD work remains blocked and must not be mixed into this slice.
 
 ## 8. Working discipline
 
