@@ -1,17 +1,18 @@
 # CampBoardGameHost 自动说书人 — 当前开发路线
 
-> 状态日期：2026-08-23  
+> 状态日期：2026-08-24  
 > 文档角色：**CURRENT / 当前状态唯一权威**  
-> PR #43 merge baseline：`520be741fabb47f03ab1fb8852139a1c4cccb9fd`  
-> 当前 live `main`：**每次新会话重新查询；可能包含 merge 后的 docs-only commits**  
-> 当前工作：**下一 structural task：`CampBoardGameHostApp.kt` App-root decomposition**  
-> PR #43 validated implementation head：`b37f0067b674a0cd4bee5ff311840d1c52ce8c05`  
-> 当前执行点：**PR #43 已合并；下一任务必须在新对话 / fresh branch 中开始 App-root decomposition；A3 顺延**  
-> 下一任务交接：`NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md`
+> 当前 live `main`（本次文档更新前已确认）：`84a062378f13b90ce71f3801982ba3b2d3b22d80`  
+> 当前工作分支：`codex/a3-historical-multinight-exact-baseline-clean`  
+> 当前 draft PR：**#48 `A3: historical multi-night exact baseline`**  
+> 最后完全验证的代码 checkpoint：`9909e7fc76c0ef700d617ee1c70ae465b1565e67`  
+> 该代码 checkpoint gates：**CI #591 SUCCESS / R2 #524 SUCCESS / Android + ASP + Real Clingo GREEN**  
+> 当前执行点：**A3 Historical Multi-Night Exact Baseline — Architecture Hardening H1**  
+> 下一任务 handoff：`NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`
 
-> 新会话实施前必须重新查询 live `main`、目标 PR/branch 和 checks，不得把本文 SHA 当作永久 HEAD。
+> 新会话实施前必须重新查询 live `main`、PR #48/head 和 checks。本文记录的 branch/code SHA 可能因 docs-only commits 或后续 slices 前进，不能当作永久 HEAD。
 
-## 1. 当前状态
+## 1. 当前状态总览
 
 ```text
 Phase A correctness foundation                         PASS
@@ -21,332 +22,643 @@ PR #39 Storyteller Information Decision Foundation     CLOSED / MERGED
 PR #40 Structured Manual UI — Empath numeric slice     CLOSED / MERGED
 PR #41 developer workflow + LF policy                  CLOSED / MERGED
 PR #42 Historical Action + Observation Capture         CLOSED / MERGED
-PR #44 Drunk / Fortune Teller setup correctness hotfix CLOSED / MERGED
+PR #44 Drunk / Fortune Teller correctness hotfix       CLOSED / MERGED
 PR #43 Clocktower host source decomposition            CLOSED / MERGED / A1–A13 GREEN
-Optional A14 Host day-routing extraction               SKIPPED
-Current execution point                                START APP-ROOT DECOMPOSITION IN NEW CONVERSATION
-Next structural task                                   APP-ROOT DECOMPOSITION
-Next product task after structural pass                A3 HISTORICAL MULTI-NIGHT EXACT BASELINE
+App-root structural decomposition S0–S6               CLOSED / MERGED CHECKPOINT
+App-root S7                                             PAUSED
+PR #48 historical multi-night exact baseline           OPEN / DRAFT / ACTIVE
+Current execution point                                A3 ARCHITECTURE HARDENING H1
+Mayor / Demon-transition expansion                     PAUSED UNTIL HARDENING
+Production Host/A4/ZDD promotion                       NOT STARTED / BLOCKED
 ```
 
-PR #43 merge commit：
+## 2. Stable `main` checkpoint
+
+The corrected current structural baseline is:
 
 ```text
-520be741fabb47f03ab1fb8852139a1c4cccb9fd
+84a062378f13b90ce71f3801982ba3b2d3b22d80
 ```
 
-PR #43 已结束。不得继续在 `codex/source-decomposition-clocktower-host` 上叠加下一任务；下一 structural work 从 live `main` 新开 branch。
+This is the merge of PR #47 that removed the unfinished S7 RED accidentally included in the earlier checkpoint.
 
-## 2. PR #43 — Clocktower host decomposition summary
+Therefore the true App-root structural checkpoint contains **S0–S6 only**.
 
-### 2.1 目标
+Do not reintroduce unfinished S7 work into A3.
 
-PR #43 的目标不是机械把 `ClocktowerHostScreen.kt` 压到 50 KiB，而是：
+## 3. App-root decomposition is complete for the current structural pass
 
-- 提取有清晰 ownership 的 semantics / UI / materialization seam；
-- 保留 Blood on the Clocktower 规则、recommendation ordering、registration semantics；
-- 保留 persistence/history/global timeline identity；
-- 保留 Compose state/effect lifetime；
-- 保留 callback/audit/commit transaction ordering；
-- 让 R5.5 planner/projector 真正成为 First Night / Other Night interaction existence/order authority；
-- 避免 giant parameter bags、弱抽象和仅为 byte threshold 的高风险移动。
+The old roadmap said App-root decomposition was still next. That is now historical and must not drive new work.
 
-### 2.2 已完成 slices
+Completed slices:
 
 ```text
-A1   ClocktowerHostCoreSemantics.kt
-A2   ClocktowerHostSelectionSemantics.kt
-A3   ClocktowerHostPresentationModels.kt
-A4   ClocktowerStorytellerRecommendationUi.kt — recommendation screen/reason
-A5   ClocktowerStorytellerRecommendationUi.kt — card/editor
-A6   ClocktowerPlayerDisplayUi.kt
-A7   ClocktowerRegistrationUi.kt
-A8   ClocktowerNightStepUi.kt
-A9   unreachable legacy fallback cleanup
-A10  ClocktowerInformationStepBuilder.kt
-A11  ClocktowerNightStepMaterializerRegistry + interactions() seams
-A11.1 integrate PR #44 actual-role vs waking-role correctness baseline
-A12  First Night planner-first lazy materialization
-A13  Other Night planner-first lazy materialization
+S0  dynamic-flow decomposition guard
+S1  player setup presentation
+S2  settings presentation
+S3  Clocktower landing presentation
+S4  deal / reveal presentation
+S5  results / host-tools / history presentation
+S6  legacy generic GameScreen presentation
 ```
 
-### 2.3 Key evidence
+Approximate result:
 
 ```text
-PR #44 merge / correctness baseline       efd63b360ca9aba8c7890594449aa5e21817f560
-A9 RED                                    3ecbcadbd728ac83f7ab1f8d1d40175795e44078
-A9 GREEN                                  00a2d19e45415614fbd8e93e83a53ba4d2cf9d35
-A10 RED                                   3377fdbea83727a797afce28064b924a074df5c3
-A10 GREEN                                 363629ed45f0f044da021f77bb52c5c3ff3c9e20
-A11 RED                                   19bdaf5525c4979f36d44ed0213c0b3c60f4ff7d
-A11 GREEN                                 c893300b8d8dbc7ea845849b81416259da32d485
-A11.1 integration                         4eaa9863070b1eee571169bde737b249379e28ee
-A12 RED                                   43f64fc6b2123a35bd9e89b3f6120a8adb7ec809
-A12 source-contract migration             3715c5428b52bcce87781fb48ab715338227e19f
-A12 GREEN                                 854c2464d8a742ba0438fa700bdd2848aa88f4cf
-A13 RED                                   4e638c345ed50a3bc65abdc22ac5487172bf9f32
-A13 New-Demon contract migration          bae29d5fccb988f641a95e743f899be56ae84299
-A13 GREEN / validated implementation      b37f0067b674a0cd4bee5ff311840d1c52ce8c05
-A13 CI / R2                               #534 SUCCESS / #473 SUCCESS
-Final PR head before merge                3082462fe450db491a8b2c8ed8795fdca60f4b80
-Final head CI / R2                        #546 SUCCESS / #485 SUCCESS
-PR #43 merge                              520be741fabb47f03ab1fb8852139a1c4cccb9fd
+CampBoardGameHostApp.kt
+~325,556 bytes
+-> ~229,822 bytes
 ```
 
-Final pre-merge CI confirmed Android tests/build, ASP contract and Real Clingo cross-validation all GREEN.
-
-## 3. Night-flow architecture after A13
-
-First Night and Other Night now use the same authority shape:
+This did not reach the soft 50 KiB guideline, but the current pass stopped because the remaining root responsibilities have significantly higher state/effect/transaction coupling. The project policy remains:
 
 ```text
-ValidatedClocktowerRuleset
-        ↓
-ClocktowerFlowPlanner
-        ↓
-ClocktowerHostInteractionProjector
-        ↓
-stable / conditional ClocktowerHostInteraction
-        ↓
-ClocktowerProductionFirstNightFlow.interactions(...)
-        or
-ClocktowerProductionOtherNightFlow.interactions(...)
-        ↓
-ClocktowerNightStepMaterializerRegistry(FIRST_NIGHT / OTHER_NIGHT)
-        ↓
-lazy materialize only projected actionable interactions
-        ↓
-ClocktowerNightStepUi
+cohesive ownership
+> correctness
+> state/effect lifetime stability
+> transaction ordering
+> file-size guideline
 ```
 
-Planner/projector owns **what exists and canonical order**. Materializer registry owns **stable interaction identity -> lazy production UI step**. Host owns **Compose lifetime, derived orchestration state and protected transaction ordering**.
+S7 is paused and is **not** part of PR #48.
 
-First Night identity split remains protected:
+## 4. Important terminology — old A3 vs current A3 extension
+
+### 4.1 Original A3 already completed
+
+The older algorithm-plan A3 created the transparent exact `EnumeratedWorldSet` setup/first-night correctness baseline.
+
+It passed the 2026-08-12 exit review.
+
+See:
 
 ```text
-firstNightWakingRoleIds
-  = actual roles + Drunk shown role
-
-firstNightActualRoleIds
-  = actual roles only
+docs/archive/storyteller_a3_exit_review.md
 ```
 
-Projector only treats actual roles as setup-ability identity while still allowing Drunk to wake/act in the shown role slot.
+That A3 is not being redone.
 
-## 4. Protected Host ownership
+### 4.2 Current A3 / PR #48
 
-`ClocktowerHostScreen.kt` still legitimately owns some stateful coordinator responsibilities:
-
-- Compose `remember` / `LaunchedEffect` lifetime；
-- recommendation coordinator / telemetry lifetime；
-- Spy/Recluse mutable registration state；
-- current-snapshot derived orchestration facts；
-- first-night information migration lifecycle；
-- player display / observation commit ordering；
-- history/session integration wiring；
-- phase routing；
-- stateful day-action transactions；
-- `advanceNightStep` transaction。
-
-`advanceNightStep` conceptual order remains:
+The active work extends the exact enumerated baseline into:
 
 ```text
-confirm poison / monk / demon draft
--> Mayor redirect audit + confirm
--> Demon successor audit
--> Spy registration record
--> Recluse registration record
--> semantic night-step record
--> index advance OR onConfirmNight()
+historical multi-night possible-world evolution
 ```
 
-A13 added characterization coverage to prevent accidental relocation/reordering.
-
-## 5. Post-PR #43 Host growth rule
-
-PR #43 does **not** mean `ClocktowerHostScreen.kt` is the permanent home for future Clocktower feature code.
-
-From this point forward it is under a **new-responsibility growth freeze**:
-
-- new algorithms -> domain / epistemic / history / recommendation / session owner；
-- new role/interaction presentation -> dedicated materializer/UI owner when a cohesive seam exists；
-- new persistence/history/session behavior -> dedicated owner；
-- Host additions should normally remain thin orchestration, phase routing, current-snapshot wiring or protected stateful transactions；
-- if a feature would add hundreds of lines of new policy/UI/algorithm code to Host, stop and identify a natural owner before implementation。
-
-This is not a byte freeze. It is a responsibility-growth constraint.
-
-## 6. Large-file inventory and revised priority
-
-At PR #43 merge, the main handwritten production large files are approximately:
+This requires semantics that the setup-only baseline deliberately did not own:
 
 ```text
-CampBoardGameHostApp.kt      325,556 bytes   NEXT STRUCTURAL PRIORITY
-ClocktowerHostScreen.kt      295,644 bytes   A1–A13 high-value pass complete; growth-frozen
-ClocktowerDayScreen.kt        63,135 bytes   audit later; split only on natural seam
-ClocktowerNightStepUi.kt      45,251 bytes
-ClocktowerHistoryScreen.kt    38,365 bytes
-ClocktowerStorytellerRecommendationUi.kt 33,459 bytes
-WerewolfHostScreen.kt         29,673 bytes
-ClocktowerNightScreen.kt      17,833 bytes
-ClocktowerSetupScreen.kt      17,362 bytes
-MainActivity.kt                1,102 bytes
+GLOBAL historical chronology
+alive/dead evolution
+persistent ability-state evolution
+hidden-mechanics rule branching
+historical actor eligibility
+role transitions / Demon succession
+mechanical-state convergence
 ```
 
-Important distinction:
+## 5. PR #48 active branch and boundary
 
-- earlier R2 **MainActivity decomposition** is complete；
-- `MainActivity.kt` is now only Android Activity/window/`setContent` shell；
-- the remaining root monolith is `CampBoardGameHostApp.kt` (~325 KiB)。
-
-Therefore “大文件治理”尚未结束，即使 PR #43 已经完成并合并。
-
-## 7. 50 KiB policy
-
-约 50 KiB 是 maintainability guideline，不是机械 gate。
-
-正式优先级：
+Active branch:
 
 ```text
-1. cohesive ownership
-2. semantic/product correctness
-3. Compose state/effect lifetime stability
-4. transaction/callback ordering
-5. future feature isolation
-6. file-size guideline
+codex/a3-historical-multinight-exact-baseline-clean
 ```
 
-实践信号：
+Draft PR:
 
 ```text
-> 50 KiB   review warning / seek natural owner
-> 100 KiB  strong warning / explicit architecture audit
+#48  A3: historical multi-night exact baseline
 ```
 
-不得仅为达成阈值制造 context bag、额外 `internal` 泄漏或弱 owner。
-
-## 8. Current next sequence
-
-用户已决定采用以下顺序：
+Base:
 
 ```text
-1. PR #43 merged on main
-2. 本对话停止
-3. 新对话确认 live main
-4. 从 live main 创建 fresh structural branch
-5. audit + decompose CampBoardGameHostApp.kt
-6. remeasure all large production files
-7. audit ClocktowerDayScreen.kt (~63 KiB); only split on clean seam
-8. structural pass 完成后再进入 A3 historical multi-night exact baseline
+main @ 84a062378f13b90ce71f3801982ba3b2d3b22d80
 ```
 
-**A3 不再是 PR #43 merge 后的直接下一任务。**
-
-下一任务 authority：
+Last fully validated code checkpoint before the 2026-08-24 documentation update:
 
 ```text
-docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md
+9909e7fc76c0ef700d617ee1c70ae465b1565e67
+CI #591 SUCCESS
+R2 #524 SUCCESS
+Android GREEN
+ASP GREEN
+Real Clingo GREEN
 ```
 
-## 9. App-root decomposition scope
+PR remains draft. No merge/ready action is authorized.
 
-下一 structural PR 的第一步必须是 live audit，不是直接 mass extraction。
+Before this documentation update, production/test changes were confined to:
 
-重点盘点 `CampBoardGameHostApp.kt` 的 ownership，包括但不限于：
+```text
+clocktower/epistemic
+clocktower/rules
+corresponding tests
+```
 
-- app navigation / landing / settings shell；
-- shared game lifecycle；
-- Undercover root state/wiring；
-- Werewolf root state/wiring；
-- Clocktower root setup/game state；
-- Clocktower persistence / restore / archive integration；
-- Clocktower session/history/observation wiring；
-- role/card pass-phone / reveal；
-- result/end-game routing；
-- shared root models；
-- app-scoped Compose effects/persistence effects。
+No Host/App-root/persistence/B4/ZDD production authority wiring has been added.
 
-优先顺序：pure models/helpers -> isolated presentation -> game-specific root wiring -> characterized persistence/history adapters -> only then consider larger state-owner movement if a natural owner has emerged.
+Keep that boundary during hardening.
 
-禁止把“拆大文件”偷换成 ViewModel/MVI/Redux 全量重构。
+## 6. Historical exact baseline already implemented
 
-## 10. App-root protected invariants
+### 6.1 Knowledge-safe historical timeline
 
-下一 structural PR 必须保持：
+`PlayerHistoricalTimeline` merges recipient-visible durable history from:
 
-- 三游戏入口和导航行为；
-- Clocktower 规则和 precedence；
-- setup/recommendation ordering；
-- registration / impairment semantics；
-- persistence / restore / archive；
-- historical action / observation ordering and identity；
-- `ClocktowerGameSession` global timeline authority；
-- Compose state/effect/lifecycle/cancellation semantics；
-- cross-game reset behavior；
-- transaction/callback ordering；
-- PR #43 First/Other Night planner-first architecture；
-- Demon transition semantics。
+```text
+ActionFactTimeline
++
+EpistemicObservationLog
+```
 
-## 11. Explicitly out of scope for the App-root PR
+It preserves compatible GLOBAL_V1 chronology.
 
-Do not mix:
+Allowed player-safe historical events currently include:
 
-- A3 historical multi-night product behavior；
-- B4/ZDD production promotion；
-- history UI redesign；
-- misinformation expansion；
-- broader manual Storyteller UI rollout；
-- new roles/scripts；
-- state-management framework migration。
+```text
+PublicExecution
+PublicDeath
+PhaseAdvance
+visible Observation
+```
 
-## 12. Product work after structural pass
+Actual storyteller-hidden mechanics are intentionally not exposed:
 
-After App-root decomposition is complete and audited, resume:
+```text
+Poison
+Protect
+Attack
+RoleChange
+```
 
-# A3 historical multi-night exact baseline
+Critical rule:
 
-Primary direction remains `EnumeratedWorldSet` as exact correctness baseline before any ZDD production reconsideration.
+> Never use actual storyteller-hidden ActionFacts, targets or hidden action occurrence as player possible-world constraints or hidden timing checkpoints.
 
-## 13. Working model and CI
+### 6.2 Exact historical replay
 
-Project-level execution rules live in `AGENTS.md`.
+`EnumeratedHistoricalWorldReplay` can evolve exact worlds through:
+
+```text
+Execution / Death -> aliveSeats
+PhaseAdvance       -> phase / round
+Observation        -> exact world filtering
+Poisoner lifecycle -> rule-derived possible hidden targets
+```
+
+It requires strictly increasing `globalSequence` for historical events.
+
+### 6.3 Poisoner lifecycle
+
+Validated semantics include:
+
+```text
+Poisoner death -> persistent poison ends
+dusk / DAY->NIGHT -> previous poison expires
+new night -> living Poisoner branches legal possible targets
+actual hidden Poison target is ignored
+Drunk remains DRUNK in the collapsed ability-state model
+converged current mechanical states dedupe
+```
+
+These conclusions remain valid after the global audit.
+
+### 6.4 End-to-end constructor
+
+`EnumeratedHistoricalExactBaseline.build(...)` currently composes:
+
+```text
+TroubleBrewingWorldEnumerator
+-> PlayerHistoricalTimeline.project(...)
+-> per-world night chronology compatibility
+-> EnumeratedHistoricalWorldReplay
+```
+
+It still fails closed for:
+
+```text
+Attack
+Protect
+RoleChange
+```
+
+Those guards must not be relaxed until exact hidden successor mechanics are fully modeled.
+
+### 6.5 Per-world canonical night schedule
+
+`EnumeratedWorldNightSchedule` reuses `ClocktowerFlowPlanner` to derive canonical role order for each possible world.
+
+Waking identities follow the existing Drunk split:
+
+```text
+actual roles
++
+shown role for waking slot only
+```
+
+Actual role remains mechanical identity.
+
+### 6.6 Visible observation anchoring
+
+`EnumeratedWorldNightObservationAnchor` relates visible night observations to:
+
+```text
+source seat
+source ability
+actual/shown identity
+canonical night role slot
+```
+
+This is a canonical-order seam only. It is **not** a complete historical ability eligibility or trigger model.
+
+### 6.7 Demon attack rule seam
+
+`DemonNightAttackSemantics` provides a pure direct Imp-target resolution seam:
+
+```text
+NO_DEATH
+TARGET_DIES
+MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED
+IMP_SELF_KILL_SUCCESSOR_REQUIRED
+```
+
+It uses existing ability-functioning semantics and handles dead target / Monk protection / Soldier / Mayor / self-target precedence.
+
+Mayor redirect choice and Demon successor choice remain separate branching boundaries.
+
+### 6.8 Hidden Monk and Imp branch helpers
+
+Pure rule-derived possible-world helper seams exist for:
+
+```text
+Monk protection choices
+Imp attack choices
+```
+
+They do not consume the actual storyteller Protect/Attack target.
+
+Their direction is correct, but further horizontal mechanics expansion is paused until the architecture issues in Section 7 are resolved.
+
+## 7. 2026-08-24 global audit findings
+
+A global audit compared current discoveries against v2.2, P1 boundaries, earlier exact-world conclusions and the newest Monk/Imp/night-order work.
+
+Overall verdict:
+
+> **The original direction remains correct. The engine has now reached the boundary where a static setup-world model must be hardened into a dynamic historical-world model.**
+
+The audit found the following blockers.
+
+### 7.1 P0 — durable observations can be consumed through the setup path more than once
+
+`PlayerKnowledgeSnapshot` contains setup knowledge plus durable public/private observations.
+
+The setup-only `TroubleBrewingWorldEnumerator` rejects observations outside FIRST_NIGHT / round 1.
+
+However `EnumeratedHistoricalExactBaseline.build()` currently passes the full snapshot through setup enumeration, and later rebuilds `EnumeratedWorldSet` using the same full snapshot.
+
+`EnumeratedWorldSet.fromWorlds(...)` itself applies:
+
+```text
+knowledge.setupKnowledge
++
+knowledge.worldReplayObservationsInTimelineOrder()
+```
+
+The historical path then applies GLOBAL chronology/replay again.
+
+This creates two risks:
+
+```text
+multi-night observation rejected before historical replay starts
+same durable observation statically/historically applied more than once
+```
+
+Earlier this was usually invisible because observation filtering was time-insensitive. It is no longer acceptable once historical state changes semantics.
+
+Required boundary:
+
+```text
+full knowledge snapshot
+    -> setup-only seed without durable observations
+    -> GLOBAL historical timeline consumes durable observations exactly once
+```
+
+This is **H1 and the next implementation slice**.
+
+### 7.2 P0 — canonical night order does not prove historical actor eligibility
+
+The schedule answers:
+
+```text
+where does this role belong in canonical night order?
+```
+
+It does not fully answer:
+
+```text
+was this seat alive/functioning/triggered and legally able to produce this observation at that historical moment?
+```
+
+A standard nightly information role killed before its later normal wake should not simply keep producing ordinary later-night information.
+
+But triggered death roles are exceptions; therefore a naive `dead -> cannot act` rule is also wrong.
+
+Required split:
+
+```text
+NightSchedule / FlowPlanner
+    -> canonical rank/order authority
+
+historical current-world state + role semantics
+    -> ability eligibility / trigger authority
+```
+
+### 7.3 P0 — `EnumeratedWorld` still represents setup, not dynamic historical identity
+
+Current setup worlds enforce character uniqueness. That is correct for setup.
+
+Historical role transitions can produce states such as:
+
+```text
+dead former Imp
++
+living successor Imp
+```
+
+Therefore simply mutating setup `rolesBySeat` is not a safe dynamic role model.
+
+Preferred direction:
+
+```text
+immutable setup world identity
++
+dynamic historical current role/alive/effect state
+```
+
+`RoleChange` remains fail-closed until this representation exists.
+
+### 7.4 P1 — mechanical identity must be separated from explanation/provenance
+
+`explanationClusters` currently participates in `EnumeratedWorld` equality because the type is a data class.
+
+That means two mechanically identical states with different explanation paths can survive `distinct()` as separate worlds.
+
+Required semantic rule:
+
+```text
+same mechanical state
++ different provenance/explanation
+=> one exact possible world
+   + merged explanation metadata
+```
+
+### 7.5 P1 — hidden branch count must not become world count
+
+Monk/Imp hidden-choice helpers may produce many choices that converge to the same mechanical result.
+
+Therefore:
+
+```text
+hidden choice path != possible-world identity
+```
+
+When wired into replay, materialize current mechanical results and dedupe/converge them by the explicit mechanical-state contract.
+
+### 7.6 P1 — Trouble Brewing support must fail closed explicitly
+
+The current exact evaluator is TB-specific even though the repository supports multiple scripts structurally.
+
+The historical exact baseline must explicitly reject unsupported scripts rather than accidentally produce an empty or misleading “exact” result.
+
+Current supported exact target:
+
+```text
+Trouble Brewing only
+```
+
+### 7.7 P1 — whole-night static prefilter is not the final historical model
+
+Static night chronology compatibility remains useful characterization, but exact historical semantics must eventually become incremental and state-aware:
+
+```text
+current historical world
+-> canonical hidden mechanic / durable event
+-> mutate current state
+-> visible observation at its semantic slot
+-> validate using the state at that moment
+```
+
+Do not replace GLOBAL_V1 with synthetic hidden sequences. Durable history and hidden canonical night ordering remain separate authorities.
+
+## 8. Prior architecture decisions that remain protected
+
+The global audit confirmed these earlier decisions:
+
+```text
+1. actual hidden storyteller actions never constrain player worlds directly
+2. GLOBAL_V1 remains durable chronology authority
+3. EnumeratedWorldSet remains exact transparent correctness baseline before ZDD
+4. rule-derived hidden branching is correct
+5. Drunk actual vs shown identity split is correct
+6. RoleChange fail-closed is correct
+7. no production Host/App-root integration yet
+8. no A4/ZDD production promotion yet
+9. no synthetic globalSequence for hidden mechanics
+10. no reuse of resolved storyteller-fact interaction registry as hidden player-world truth
+```
+
+## 9. Current next sequence — A3 Architecture Hardening
+
+Do **not** continue directly with Mayor branching.
+
+The revised tests-first sequence is:
+
+```text
+H1  historical seed / exactly-once observation consumption
+H2  state-aware standard/triggered ability eligibility
+H3  mechanical world identity + convergence independent of provenance
+H4  explicit Trouble Brewing historical-exact support guard
+H5  dynamic historical role representation / Demon succession state
+H6  incremental state-aware night replay
+H7  wire Monk -> Imp -> Mayor -> successor mechanics with convergence
+```
+
+### H1 — immediate next slice
+
+First RED should prove:
+
+- multi-night durable observations do not enter setup-only enumeration;
+- setup-only propositions still constrain initial worlds;
+- durable observations are consumed exactly once by the GLOBAL historical replay path;
+- fixing the seed does not expose hidden actual ActionFact targets;
+- no ZDD/Host authority changes.
+
+Likely scope:
+
+```text
+EnumeratedHistoricalExactBaselineTest.kt
+EnumeratedHistoricalExactBaseline.kt
+```
+
+Keep the slice narrow unless the RED proves a dedicated tiny seed type/helper is required.
+
+### H2 — ability eligibility
+
+Add tests for both:
+
+```text
+standard nightly role killed before ordinary later wake -> no ordinary observation
+triggered death ability -> not globally rejected just because source is dead
+```
+
+Do not implement `dead players never act`.
+
+### H3 — mechanical convergence
+
+Lock:
+
+```text
+same mechanical state + different explanation/provenance = cardinality 1
+```
+
+while retaining merged explanation metadata.
+
+### H4 — script guard
+
+Unsupported script must fail closed clearly.
+
+### H5 — dynamic historical roles
+
+Tests-first model must support at least:
+
+```text
+Imp self-kill
+former Imp remains dead historical character
+legal successor becomes living Imp
+current Demon queries identify successor
+setup uniqueness remains intact
+```
+
+Also ensure persistent Poisoner poison ends if the source ceases to be Poisoner through a role change.
+
+### H6 — incremental replay
+
+Move observation/mechanical validation to the correct historical state rather than a single initial/static world snapshot.
+
+### H7 — mechanics integration
+
+Only after H1–H6:
+
+```text
+Monk hidden protection branching
+Imp hidden attack branching
+Mayor redirect alternatives
+Imp self-kill / Scarlet Woman / successor transition
+mechanical-state convergence
+```
+
+Relax `Attack` / `Protect` / `RoleChange` fail-closed guards only when each corresponding exact transition is complete.
+
+## 10. PlayerWorldSet identity/cache warning
+
+R6/P1.2 deliberately kept `globalSequence` outside `PlayerWorldSetIdentity` while the world evaluator was time-insensitive.
+
+Historical multi-night reasoning is becoming time-aware now.
+
+Therefore identity/cache semantics must be revisited tests-first when chronology actually changes world semantics.
+
+Do not add timeline fields speculatively merely for cache invalidation. First define the semantic identity of the historical world snapshot.
+
+Relevant background:
+
+```text
+docs/r6_p1_2_knowledge_timeline_semantics_2026-08-21.md
+docs/r6_p1_2_closeout_2026-08-21.md
+```
+
+## 11. PR #48 completion definition
+
+PR #48 remains draft until the exact historical baseline has at least:
+
+```text
+single durable chronology authority
+exactly-once observation consumption
+knowledge-safe hidden mechanics
+state-aware ability eligibility
+mechanical identity independent of branch provenance
+explicit supported-script boundary
+dynamic historical role state / Demon succession representation
+fail-closed unsupported mechanics
+no Host/A4/ZDD production promotion
+full CI/R2/Android/ASP/Real-Clingo GREEN
+exact changed-file audit
+```
+
+A function that merely returns a multi-night replay result is no longer sufficient to call the baseline complete.
+
+## 12. Explicitly out of scope now
+
+Do not mix into H1–H7:
+
+```text
+production Host wiring
+A4/ZDD authority promotion
+history UI redesign
+misinformation expansion
+new scripts or roles
+App-root S7
+state-management framework migration
+broad refactor of all epistemic types
+```
+
+## 13. Working model
+
+Project-level execution rules remain in root `AGENTS.md`.
 
 ```text
 ChatGPT / Chat
   -> live-state audit
-  -> architecture / scope / risk decision
-  -> characterization/test plan
-  -> constrained implementation spec
-  -> remote exact-diff / CI review
+  -> architecture / scope / risk decisions
+  -> RED/characterization design
+  -> constrained implementation
+  -> remote diff / CI / merge review
 
 GitHub connector
-  -> preferred safe small-file writer
+  -> preferred small/medium-file implementation and docs writer
 
 Codex / Luna
-  -> constrained local executor for large/mechanical changes
+  -> large/mechanical/full-worktree executor when needed
 ```
 
-For structural slices require as appropriate:
-
-- focused characterization tests；
-- full `:app:testDebugUnitTest`；
-- `:app:assembleDebug`；
-- `git diff --check`；
-- ASP / Real Clingo remote gates；
-- exact changed-file audit。
+Do not let Luna independently redefine architecture/scope.
 
 Never merge, mark ready, rebase or force-push without explicit user authorization.
 
 ## 14. New-conversation startup
 
-For the next task:
+For the immediate next conversation:
 
-1. confirm live `main` and record the current SHA；
-2. confirm PR #43 is merged（merge baseline `520be741fabb47f03ab1fb8852139a1c4cccb9fd`）；
-3. read `AGENTS.md`；
-4. read this roadmap；
-5. read `NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md`；
-6. create a fresh structural branch from live `main`；
-7. audit `CampBoardGameHostApp.kt` before editing；
-8. return responsibility inventory + proposed slice plan + first RED/characterization strategy；
-9. only then implement。
+1. read root `AGENTS.md`;
+2. read this roadmap;
+3. read `NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`;
+4. re-query live `main`;
+5. re-query PR #48 live head/draft state/checks;
+6. distinguish docs-only head advancement from the last validated code checkpoint;
+7. audit the concrete observation-consumption path:
+
+```text
+PlayerKnowledgeSnapshot
+-> TroubleBrewingWorldEnumerator
+-> EnumeratedWorldSet.fromWorlds
+-> PlayerHistoricalTimeline
+-> EnumeratedHistoricalWorldReplay
+```
+
+8. design and establish **H1 RED only** first;
+9. do not start Mayor branching / RoleChange GREEN / Host-A4-ZDD wiring;
+10. do not merge PR #48.
