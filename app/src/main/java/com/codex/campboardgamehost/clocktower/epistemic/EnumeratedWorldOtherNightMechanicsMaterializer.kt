@@ -7,12 +7,12 @@ import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackOutcome
  * Knowledge-safe materialization boundary for one possible world's rule-derived Other Night
  * protection and Imp-attack alternatives.
  *
- * Resolved direct outcomes and Imp self-kill succession are converted into mechanical worlds and
- * converged without counting hidden choice provenance as distinct worlds. Mayor redirect remains an
- * explicit unresolved branch so callers cannot silently discard legal alternatives and claim
- * exactness.
+ * Resolved direct outcomes, Imp self-kill succession, and Mayor night-death alternatives are
+ * converted into mechanical worlds and converged without counting hidden choice provenance as
+ * distinct worlds.
  *
- * This helper consumes no Storyteller-selected Protect, Attack, or RoleChange target.
+ * This helper consumes no Storyteller-selected Protect, Attack, Mayor resolution, or RoleChange
+ * target.
  */
 internal data class EnumeratedWorldOtherNightMechanicsMaterializationResult(
     val resolvedWorlds: List<EnumeratedWorld>,
@@ -46,7 +46,9 @@ internal object EnumeratedWorldOtherNightMechanicsMaterializer {
                             .map { it.world }
                     }
                     DemonNightAttackOutcome.MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED -> {
-                        unresolvedBranches += branch
+                        resolvedWorlds += EnumeratedWorldMayorNightDeathBranching
+                            .branches(branch)
+                            .map { it.world }
                     }
                 }
             }
