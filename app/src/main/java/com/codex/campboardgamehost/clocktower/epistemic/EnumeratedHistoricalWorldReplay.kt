@@ -80,32 +80,66 @@ internal class EnumeratedHistoricalWorldSetSnapshot private constructor(
 
     /**
      * Applies the complete rule-derived Trouble Brewing Other Night transition to each current
-     * possible world. A Ravenkeeper observation may additionally prove that its source changed from
-     * alive to dead at this Demon step; that is transition evidence, not a Storyteller hidden target.
+     * possible world. Triggered Ravenkeeper information or a public night-death fact may prove that
+     * one publicly alive seat changed to dead at this Demon step; neither supplies a hidden target.
      */
     internal fun materializeOtherNight(
         triggeredObservation: RecordedEpistemicObservation? = null,
-    ): EnumeratedHistoricalWorldSetSnapshot = copy(
-        worlds.flatMap { world ->
-            val materialized = EnumeratedWorldOtherNightMechanicsMaterializer.materialize(world)
-            require(materialized.unresolvedBranches.isEmpty()) {
-                "Historical Other Night replay cannot continue with unresolved rule-derived branches."
+        confirmedPublicDeathSeat: Int? = null,
+    ): EnumeratedHistoricalWorldSetSnapshot {
+        require(triggeredObservation == null || confirmedPublicDeathSeat == null) {
+            "One Other Night transition cannot use two independent death confirmations."
+        }
+        confirmedPublicDeathSeat?.let { seat ->
+            require(seat > 0) { "Confirmed public night-death seat must be positive." }
+            require(worlds.all { seat in it.rolesBySeat }) {
+                "Confirmed public night death references unknown seat $seat."
             }
-            val resolved = materialized.resolvedWorlds
-            if (triggeredObservation.isRavenkeeperNightObservation()) {
-                val sourceSeat = requireNotNull(triggeredObservation?.sourceSeat) {
-                    "Ravenkeeper night observation must identify its source seat."
+        }
+        return copy(
+            worlds.flatMap { world ->
+                val materialized = EnumeratedWorldOtherNightMechanicsMaterializer.materialize(world)
+                require(materialized.unresolvedBranches.isEmpty()) {
+                    "Historical Other Night replay cannot continue with unresolved rule-derived branches."
                 }
-                if (sourceSeat !in world.aliveSeats) {
+                val requiredDeathSeat = when {
+                    triggeredObservation.isRavenkeeperNightObservation() ->
+                        requireNotNull(triggeredObservation?.sourceSeat) {
+                            "Ravenkeeper night observation must identify its source seat."
+                        }
+                    confirmedPublicDeathSeat != null -> confirmedPublicDeathSeat
+                    else -> null
+                }
+                if (requiredDeathSeat == null) {
+                    materialized.resolvedWorlds
+                } else if (requiredDeathSeat !in world.aliveSeats) {
                     emptyList()
                 } else {
-                    resolved.filter { nextWorld -> sourceSeat !in nextWorld.aliveSeats }
+                    materialized.resolvedWorlds.filter { nextWorld ->
+                        requiredDeathSeat !in nextWorld.aliveSeats
+                    }
                 }
-            } else {
-                resolved
-            }
-        },
-    )
+            },
+        )
+    }
+
+    /**
+     * Retains the current successor states which are mechanically present in [other]. Explanation
+     * clusters are deliberately ignored so later visible observations can keep their provenance while
+     * public outcomes constrain only mechanical state.
+     */
+    internal fun intersectMechanicalStates(
+        other: EnumeratedHistoricalWorldSetSnapshot,
+    ): EnumeratedHistoricalWorldSetSnapshot {
+        require(recipientSeat == other.recipientSeat && hypothesis == other.hypothesis && roles == other.roles) {
+            "Historical mechanical-state intersection requires snapshots from the same world set."
+        }
+        return copy(
+            worlds.filter { current ->
+                other.worlds.any { candidate -> current.sameMechanicalState(candidate) }
+            },
+        )
+    }
 
     internal fun require(
         record: RecordedEpistemicObservation,
@@ -137,6 +171,14 @@ internal class EnumeratedHistoricalWorldSetSnapshot private constructor(
             sourceAbility = sourceAbility,
         )
     }
+
+    private fun EnumeratedWorld.sameMechanicalState(other: EnumeratedWorld): Boolean =
+        rolesBySeat == other.rolesBySeat &&
+            currentRolesBySeat == other.currentRolesBySeat &&
+            redHerringSeat == other.redHerringSeat &&
+            shownRolesBySeat == other.shownRolesBySeat &&
+            aliveSeats == other.aliveSeats &&
+            abilityStatesBySeat == other.abilityStatesBySeat
 
     private fun copy(nextWorlds: List<EnumeratedWorld>) = EnumeratedHistoricalWorldSetSnapshot(
         recipientSeat = recipientSeat,
@@ -190,6 +232,19 @@ internal object EnumeratedHistoricalWorldReplay {
         var round = initialRound
         var lastGlobalSequence: Long? = null
         var otherNightMechanicsApplied = false
+        var otherNightPreMechanicsWorldSet: EnumeratedHistoricalWorldSetSnapshot? = null
+
+        fun materializeOtherNight(
+            triggeredObservation: RecordedEpistemicObservation? = null,
+            confirmedPublicDeathSeat: Int? = null,
+        ) {
+            otherNightPreMechanicsWorldSet = worldSet
+            worldSet = worldSet.materializeOtherNight(
+                triggeredObservation = triggeredObservation,
+                confirmedPublicDeathSeat = confirmedPublicDeathSeat,
+            )
+            otherNightMechanicsApplied = true
+        }
 
         events.forEach { event ->
             when (event) {
@@ -197,7 +252,21 @@ internal object EnumeratedHistoricalWorldReplay {
                     worldSet = worldSet.eliminate(event.targetSeat)
                 }
                 is PlayerHistoricalEvent.PublicDeath -> {
-                    worldSet = worldSet.eliminate(event.targetSeat)
+                    if (phase == StorytellerPhase.NIGHT && validatedRuleset != null) {
+                        if (!otherNightMechanicsApplied) {
+                            materializeOtherNight(confirmedPublicDeathSeat = event.targetSeat)
+                        } else {
+                            val preMechanics = requireNotNull(otherNightPreMechanicsWorldSet) {
+                                "Applied Other Night mechanics must retain their pre-transition snapshot."
+                            }
+                            val deathCompatible = preMechanics.materializeOtherNight(
+                                confirmedPublicDeathSeat = event.targetSeat,
+                            )
+                            worldSet = worldSet.intersectMechanicalStates(deathCompatible)
+                        }
+                    } else {
+                        worldSet = worldSet.eliminate(event.targetSeat)
+                    }
                 }
                 is PlayerHistoricalEvent.PhaseAdvance -> {
                     require(event.round > 0) { "Historical phase advance round must be positive." }
@@ -207,12 +276,12 @@ internal object EnumeratedHistoricalWorldReplay {
                         !otherNightMechanicsApplied &&
                         validatedRuleset != null
                     ) {
-                        worldSet = worldSet.materializeOtherNight()
-                        otherNightMechanicsApplied = true
+                        materializeOtherNight()
                     }
                     if (phase == StorytellerPhase.DAY && event.phase == StorytellerPhase.NIGHT) {
                         worldSet = worldSet.beginNight()
                         otherNightMechanicsApplied = false
+                        otherNightPreMechanicsWorldSet = null
                     }
                     phase = event.phase
                     round = event.round
@@ -235,12 +304,11 @@ internal object EnumeratedHistoricalWorldReplay {
                             record = event.record,
                         )
                     ) {
-                        worldSet = worldSet.materializeOtherNight(
+                        materializeOtherNight(
                             triggeredObservation = event.record.takeIf {
                                 it.isRavenkeeperNightObservation()
                             },
                         )
-                        otherNightMechanicsApplied = true
                     }
                     worldSet = worldSet.require(event.record, formalSnapshotId)
                 }
