@@ -3,12 +3,12 @@
 > Date: 2026-08-24  
 > Status: **PAUSED AT SAFE CHECKPOINT / PR #48 DRAFT / DO NOT MERGE**  
 > Repository: `Jazz0006/CampBoardGameHost`  
-> Active branch: `codex/a3-historical-multinight-exact-baseline-clean`  
+> Active A3 branch: `codex/a3-historical-multinight-exact-baseline-clean`  
 > Stable `main` at closeout: `84a062378f13b90ce71f3801982ba3b2d3b22d80`  
-> Latest fully validated **code** checkpoint: `c678b25cd2a750a02f0cb1a05632d31e58ffd048`  
+> Latest fully validated **A3 code** checkpoint: `c678b25cd2a750a02f0cb1a05632d31e58ffd048`  
 > Gates: **CI #675 SUCCESS / R2 #608 SUCCESS / Android + ASP + Real Clingo GREEN**
 
-This handoff intentionally freezes A3/B4 work before setup-snapshot ownership and returns project focus to source decomposition.
+This handoff intentionally freezes A3/B4 work before setup-snapshot ownership and returns project focus to App-root source decomposition S7.
 
 ## 1. Resume protocol for A3 later
 
@@ -142,7 +142,7 @@ ClocktowerRecommendationCoordinator        unchanged
 Host recommendation authority              unchanged
 A4/ZDD selector authority                  unchanged
 other scripts                              unsupported by A3 exact baseline
-App-root S7                                paused
+App-root decomposition                     separate workstream
 ```
 
 Therefore PR #48 remains a safe draft checkpoint rather than an authority rollout.
@@ -163,27 +163,71 @@ Historical exact replay needs an immutable setup snapshot. Current app/session p
 
 Do not simply add a second state copy to `ClocktowerGameSession` or persistence. Restore/schema semantics must be resolved first.
 
-Do not combine that future work with Host authority, A4/ZDD promotion, other scripts, history UI, misinformation work, or App-root S7.
+Do not combine that future work with Host authority, A4/ZDD promotion, other scripts, history UI, misinformation work, or App-root decomposition.
 
-## 7. Immediate next project task: source decomposition
+## 7. Immediate next project task: App-root source decomposition S7
 
-A3/B4 is now intentionally paused. The next conversation should resume the existing source-decomposition project.
+The earlier Clocktower Host source decomposition is already complete through **A13** and merged. Do not resume at A9/A10.
 
-The remembered decomposition context is that A1–A8 had been progressing on the source-decomposition branch and **A9** was the next/active area, with the engineering goal of keeping source files at or below approximately **50 KiB**. Do not trust remembered SHAs or branch state: re-query live repository state and read the decomposition progress/handoff documents before editing.
-
-For the decomposition continuation:
+The remaining structural workstream is App-root decomposition:
 
 ```text
-- keep it on its own decomposition branch/PR;
-- preserve behavior exactly;
-- prefer mechanical extraction/moves;
-- characterize ownership boundaries before moves that change Kotlin visibility;
-- use tests-first where behavior/ownership risk exists;
-- exact-diff audit every slice;
-- do not mix A3/B4 changes into decomposition commits;
-- do not restart App-root S7;
-- do not merge without explicit user authorization.
+S0–S6  CLOSED / MERGED checkpoint
+S7     NEXT = fresh architecture audit
 ```
+
+Read first:
+
+```text
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_S7.md
+```
+
+That handoff records:
+
+```text
+CampBoardGameHostApp.kt original   325,556 bytes
+after S6                         229,822 bytes
+net reduction                     95,734 bytes (~29.4%)
+```
+
+The 50 KiB target is a maintainability guideline, not a hard gate. S7 must begin with a **fresh architecture audit**, not automatic implementation and not an old candidate ranking.
+
+Important live-state correction at this A3 closeout:
+
+```text
+old branch: codex/source-decomposition-app-root
+relative to current main: ahead 0 / behind 3
+```
+
+So do not continue writing directly on that stale branch. Re-query live `main` and relevant PR/branch state, then choose the correct fresh branch/worktree strategy from current main before creating an S7 RED.
+
+S7 audit must determine:
+
+```text
+1. exact next cohesive owner filename;
+2. exact declarations to move;
+3. all direct cross-file dependencies;
+4. required visibility changes;
+5. Root state/effect/transaction ownership that must remain;
+6. stale characterization tests needing semantic updates;
+7. focused RED failure reasons;
+8. production allowlist;
+9. full validation commands;
+10. exact-diff criteria and STOP conditions.
+```
+
+Protected boundaries:
+
+```text
+- Clocktower live transaction ordering
+- Compose effect lifetime (`LaunchedEffect`, `DisposableEffect`, `SideEffect`, `rememberUpdatedState`)
+- persistence / restore / archive ownership
+- A4 lifecycle/cache/prewarm effects
+- Clocktower planner/projector/materializer/session authority
+- A3/B4 behavior
+```
+
+If no natural low-risk slice remains, stop the App-root pass rather than manufacturing an artificial owner solely to reduce bytes.
 
 ## 8. Documentation discipline
 
@@ -197,4 +241,4 @@ Update authoritative docs only when one of these is true:
 - a cross-conversation handoff is needed.
 ```
 
-This file is being updated because A3 is intentionally paused and the project is switching back to source decomposition.
+This file is being updated because A3 is intentionally paused and the project is switching back to App-root source decomposition S7.
