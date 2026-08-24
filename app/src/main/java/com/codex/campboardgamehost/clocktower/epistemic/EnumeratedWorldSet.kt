@@ -35,6 +35,45 @@ data class EnumeratedWorld(
         copy(explanationClusters = explanationClusters + clusters)
 }
 
+/**
+ * Identity of the current exact mechanical state. Explanation/provenance is deliberately excluded:
+ * multiple hidden paths which reach this same state are one possible world, not several.
+ */
+private data class EnumeratedWorldMechanicalIdentity(
+    val rolesBySeat: Map<Int, RoleId>,
+    val redHerringSeat: Int?,
+    val shownRolesBySeat: Map<Int, RoleId>,
+    val aliveSeats: Set<Int>,
+    val abilityStatesBySeat: Map<Int, AbilityState>,
+)
+
+internal object EnumeratedWorldMechanicalConvergence {
+    fun converge(worlds: Collection<EnumeratedWorld>): List<EnumeratedWorld> {
+        val converged = linkedMapOf<EnumeratedWorldMechanicalIdentity, EnumeratedWorld>()
+        worlds.forEach { world ->
+            val identity = world.mechanicalIdentity()
+            val existing = converged[identity]
+            converged[identity] = if (existing == null) {
+                world
+            } else {
+                existing.copy(
+                    explanationClusters = existing.explanationClusters + world.explanationClusters,
+                )
+            }
+        }
+        return converged.values.toList()
+    }
+
+    private fun EnumeratedWorld.mechanicalIdentity(): EnumeratedWorldMechanicalIdentity =
+        EnumeratedWorldMechanicalIdentity(
+            rolesBySeat = rolesBySeat,
+            redHerringSeat = redHerringSeat,
+            shownRolesBySeat = shownRolesBySeat,
+            aliveSeats = aliveSeats,
+            abilityStatesBySeat = abilityStatesBySeat,
+        )
+}
+
 /** Transparent A3 correctness baseline. It deliberately materializes every surviving world. */
 class EnumeratedWorldSet private constructor(
     override val recipientSeat: Int,
@@ -145,7 +184,7 @@ class EnumeratedWorldSet private constructor(
                 hypothesis,
                 identity,
                 roles,
-                recipientCompatibleWorlds.distinct(),
+                EnumeratedWorldMechanicalConvergence.converge(recipientCompatibleWorlds),
             )
             knowledge.setupKnowledge.forEach { proposition ->
                 result = result.filterProposition(proposition)
