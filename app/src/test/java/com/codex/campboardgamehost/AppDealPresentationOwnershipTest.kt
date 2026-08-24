@@ -77,7 +77,6 @@ class AppDealPresentationOwnershipTest {
         assertFalse(rootSource.contains("private fun ClocktowerRole.descriptionFor(language: String): String"))
 
         assertTrue(rootSource.contains("internal fun ClocktowerTeam.label(context: Context): String"))
-        assertTrue(rootSource.contains("internal fun ClocktowerDarkTheme("))
     }
 
     @Test
@@ -86,7 +85,10 @@ class AppDealPresentationOwnershipTest {
         assertTrue(rootSource.contains("internal fun EmptyStateCard("))
         assertTrue(rootSource.contains("internal fun StepperRow("))
         assertTrue(rootSource.contains("internal fun HostProgressCard("))
-        assertTrue(rootSource.contains("internal fun ClocktowerDarkTheme("))
+        assertFalse(
+            extractedFile.readText(Charsets.UTF_8)
+                .contains("fun ClocktowerDarkTheme("),
+        )
         assertTrue(rootSource.contains("internal fun SelectableSeatNumbers("))
         assertTrue(rootSource.contains("internal fun WerewolfPlayerStatusRow("))
     }
