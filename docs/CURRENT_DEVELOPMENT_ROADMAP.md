@@ -6,9 +6,9 @@
 > Stable `main`: `84a062378f13b90ce71f3801982ba3b2d3b22d80`  
 > Active branch: `codex/a3-historical-multinight-exact-baseline-clean`  
 > Draft PR: **#48 `A3: historical multi-night exact baseline`**  
-> Latest fully validated **code** checkpoint: `a81b5949e00b18a24f4f1b0522a3f41aa892efa1`  
-> Gates: **CI #658 SUCCESS / R2 #591 SUCCESS / Android + ASP + Real Clingo GREEN**  
-> Current execution point: **A3 Architecture Hardening — H7.9 public night-death reconciliation GREEN; STOP before no-public-death dawn reconciliation / guard relaxation**  
+> Latest fully validated **code** checkpoint: `3d446937b7cbef36b3fed679fff64b9582e450ac`  
+> Gates: **CI #662 SUCCESS / R2 #595 SUCCESS / Android + ASP + Real Clingo GREEN**  
+> Current execution point: **A3 Architecture Hardening — H7.10 no-public-death dawn reconciliation GREEN; STOP before persisted hidden-action guard relaxation**  
 > Detailed handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`
 
 > Documentation-only commits may move the branch/PR head beyond the validated code SHA. New conversations must re-query live `main`, PR #48 head/state/checks before editing.
@@ -37,8 +37,8 @@ A3 H7.6 Mayor night-death branching helper         GREEN
 A3 H7.7 Mayor materializer integration             GREEN
 A3 H7.8 canonical Other Night replay transition    GREEN
 A3 H7.9 public night-death reconciliation          GREEN
-No-public-death dawn reconciliation                NOT MODELED / BLOCKER
-Attack / Protect / RoleChange guard relaxation     NOT STARTED
+A3 H7.10 no-public-death dawn reconciliation       GREEN
+Attack / Protect / RoleChange guard relaxation     NOT STARTED / NEXT BLOCKER
 Production Host / A4 / ZDD authority promotion     NOT STARTED / BLOCKED
 ```
 
@@ -68,18 +68,19 @@ currentRolesBySeat  dynamic historical current-role state
 ### H6 — incremental state-aware replay
 GLOBAL history is replayed incrementally. Visible night observations are validated against the mechanical world state at their own historical point. Hidden mechanics must not invent synthetic `globalSequence` values.
 
-## 3. H7 status and provenance
+## 3. H7 status and checkpoints
 
 ```text
-H7.1 dynamic current-Demon attack branching      GREEN
-H7.2 dynamic current-Monk protection branching   GREEN
-H7.3 mechanics materialization boundary          GREEN
-H7.4 Imp self-kill succession branching          GREEN
-H7.5 self-kill materializer integration          GREEN
-H7.6 Mayor night-death branching primitive       GREEN
-H7.7 Mayor materializer integration              GREEN
-H7.8 canonical Other Night replay transition     GREEN
-H7.9 public night-death reconciliation           GREEN
+H7.1  dynamic current-Demon attack branching      GREEN
+H7.2  dynamic current-Monk protection branching   GREEN
+H7.3  mechanics materialization boundary          GREEN
+H7.4  Imp self-kill succession branching          GREEN
+H7.5  self-kill materializer integration          GREEN
+H7.6  Mayor night-death branching primitive       GREEN
+H7.7  Mayor materializer integration              GREEN
+H7.8  canonical Other Night replay transition     GREEN
+H7.9  public night-death reconciliation           GREEN
+H7.10 no-public-death dawn reconciliation         GREEN
 ```
 
 Key checkpoints:
@@ -103,11 +104,13 @@ H7.8 RED   938aeb42196ee886c5fffe142c3dc3a839d37c3c  CI #648 expected runtime FA
      GREEN 4bdf317ec16ab316331a2c322338446620e43631  CI #650 / R2 #583 GREEN
 H7.9 RED   6fad4ed5f51590ab884af88437b711a494c2e3c9  CI #656 expected runtime FAILURE
      GREEN a81b5949e00b18a24f4f1b0522a3f41aa892efa1  CI #658 / R2 #591 GREEN
+H7.10 RED  28b56c83b3c8efbca570f3b8c3c40219b3076535  CI #661 expected runtime FAILURE
+      GREEN 3d446937b7cbef36b3fed679fff64b9582e450ac  CI #662 / R2 #595 GREEN
 ```
 
-## 4. Complete current Trouble Brewing Other Night materializer
+## 4. Complete Trouble Brewing Other Night materializer
 
-The standalone rule-derived pipeline remains:
+The rule-derived pipeline is:
 
 ```text
 possible world
@@ -121,104 +124,87 @@ possible world
 -> H3 mechanical convergence
 ```
 
-No known Trouble Brewing Other Night attack outcome remains unresolved at this materializer boundary. No Storyteller-selected `Protect`, `Attack`, Mayor resolution, death target, or `RoleChange` target is consumed.
+No known Trouble Brewing Other Night attack outcome remains unresolved at this materializer boundary. No Storyteller-selected `Protect`, `Attack`, Mayor resolution/death target, or `RoleChange` target is consumed.
 
-## 5. H7.8 historical replay transition contract
+## 5. Historical Other Night replay contract after H7.8–H7.10
 
-Other Night mechanics cannot simply be deferred to `NIGHT -> DAY`: Trouble Brewing has visible ability slots after the Imp, including Ravenkeeper, Empath and Fortune Teller. Those observations must see the mechanical state after the Demon step.
-
-H7.8 therefore uses the validated ruleset only as a knowledge-neutral canonical-order authority:
+The validated ruleset is used only as knowledge-neutral canonical-order authority. Hidden mechanics receive no synthetic durable timeline point.
 
 ```text
 DAY -> NIGHT
 -> beginNight() poison expiration + rule-derived Poisoner target branching
 -> replay visible GLOBAL events
--> before the first visible ability observation whose canonical slot is after Imp:
-     apply EnumeratedWorldOtherNightMechanicsMaterializer once
--> evaluate that durable observation against the successor world
--> if no post-Imp visible observation occurs, materialize before NIGHT -> DAY
+-> before first visible ability observation canonically after Imp:
+     materialize Other Night mechanics once
+-> evaluate that durable observation against successor worlds
 ```
 
-The hidden transition receives **no synthetic `TimelinePoint` or GLOBAL sequence**. Durable `lastGlobalSequence` remains the identity of the actual visible event.
+Ravenkeeper information additionally requires proof that its source changed alive -> dead at that materialized Demon step.
 
-Ravenkeeper additionally requires proof that its source changed alive -> dead at the materialized Demon step before its observation is consumed.
-
-## 6. H7.9 public night-death reconciliation
-
-Once H7.8 materializes hidden night mechanics, a later durable `PublicDeath(target)` must not blindly call `eliminate(target)` across every world. H7.9 now treats a NIGHT public death as public outcome evidence when it is mechanically compatible with the rule-derived Demon transition.
-
-The replay keeps a transient snapshot immediately before the Other Night transition. A public night death is handled as follows:
+Public night outcomes are then reconciled as follows:
 
 ```text
-if Other Night mechanics have not yet materialized:
-  PublicDeath(target)
-  -> materialize the hidden transition
-  -> retain only worlds where target changed alive -> dead at that transition
+PublicDeath(target) compatible with the Demon transition
+-> retain only compatible target alive -> dead successor worlds
+-> do not kill target a second time
 
-if Other Night mechanics already materialized:
-  -> re-materialize from the saved pre-transition snapshot with target as public death evidence
-  -> intersect that compatible successor set with the current, observation-filtered successor worlds
-  -> compare mechanical state only; explanation provenance is ignored
+PublicDeath(target) proven by earlier GLOBAL evidence to occur later
+-> keep chronology intact
+-> eliminate at the PublicDeath event's own GLOBAL point
 
-if that intersection is empty because earlier GLOBAL evidence proves the death occurred later:
-  -> preserve the public death at its actual GLOBAL point
-  -> apply ordinary elimination to the current worlds
+completed NIGHT -> DAY with no PublicDeath during that night
+-> this is the durable semantic-history no-death evidence in the current producer model
+-> retain only Other Night successor states whose aliveSeats did not change
 ```
 
-This preserves both contracts:
+If a post-Imp observation already forced early materialization, dawn no-death reconciliation re-materializes no-death-compatible states from the saved pre-transition snapshot and mechanically intersects them with the current observation-filtered worlds. Explanation provenance remains excluded from identity.
 
-```text
-compatible public night death
--> confirms/selects the already-derived hidden outcome
--> does not create a second death
+The absence of `PublicDeath` is **not** interpreted before the night completes; it becomes evidence only at the durable phase boundary.
 
-ordinary later public night death
--> remains ordered by its durable GLOBAL point
--> does not retroactively invalidate an earlier legal observation
-```
+## 6. H7.10 RED/GREEN details
 
-### H7.9 RED/GREEN details
+Production chronology audit confirmed that the current Host commits an actual night death before the phase transition. A “No night death” display event exists, but there is no separate durable `ActionFact.NoDeath`; therefore the current GLOBAL semantic-history representation of a completed peaceful night is the `NIGHT -> DAY` boundary with no preceding durable `PublicDeath` in that night.
 
-RED `6fad4ed5f51590ab884af88437b711a494c2e3c9` added only:
+RED `28b56c83b3c8efbca570f3b8c3c40219b3076535` added only:
 
 ```text
 app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/
-  EnumeratedHistoricalPublicNightDeathReconciliationTest.kt
+  EnumeratedHistoricalNoPublicDeathDawnReconciliationTest.kt
 
-227 additions
+184 additions
 production changes = 0
+docs changes = 0
 ```
 
-CI #656 reached runtime tests:
+The tests lock both paths:
 
 ```text
-760 tests completed, exactly 2 failed
-1. public night death after post-Imp observation filters materialized worlds instead of killing twice
-2. public night death materializes hidden mechanics before reconciliation when it is first post-Imp evidence
+1. no post-Imp observation, no PublicDeath, then NIGHT -> DAY
+   -> materialize and retain only no-death outcomes
+
+2. post-Imp Fortune Teller observation materializes mechanics early,
+   then no PublicDeath before NIGHT -> DAY
+   -> reconcile the current observation-filtered worlds to no-death outcomes
 ```
 
-ASP + Real Clingo + R2 #589 stayed green.
+CI #661 reached runtime tests: **762 tests completed, exactly 2 failed**, exactly these H7.10 tests. R2 #594 / ASP / Real Clingo were green.
 
-The first GREEN attempt `6626d9f97c43b901b60b17385ec791d52fa12274` made both H7.9 tests pass but exposed one H6 regression: a legal Empath observation at GLOBAL sequence 8 followed by that Empath's public death at sequence 9 was being retroactively forced into the earlier Imp step. CI #657 therefore failed exactly one pre-existing H6 test; R2 #590 / ASP / Real Clingo remained green.
+GREEN `3d446937b7cbef36b3fed679fff64b9582e450ac` changes only `EnumeratedHistoricalWorldReplay.kt` (`+39/-12` from RED); RED tests are unchanged. It tracks whether a public death occurred in the current night and applies no-death filtering only at the completed `NIGHT -> DAY` boundary. CI #662 / R2 #595 / Android + ASP + Real Clingo all passed.
 
-The final correction `a81b5949e00b18a24f4f1b0522a3f41aa892efa1` adds the compatibility fallback described above. From the H7.9 RED to the final GREEN, only `EnumeratedHistoricalWorldReplay.kt` changed (`+97/-24`); RED tests were unchanged. The correction from the first GREEN attempt was only `+6/-1` in the same production file.
-
-CI #658 / R2 #591 / Android + ASP + Real Clingo all passed.
-
-## 7. Hidden-information invariant and guards
+## 7. Hidden-information invariant and remaining guards
 
 Never feed Storyteller actual hidden targets or hidden action occurrence points into player possible worlds.
 
 ```text
 current possible world
 -> generate all legal hidden alternatives from rules
--> materialize mechanical outcomes at a rule-owned canonical boundary
+-> materialize at rule-owned canonical boundaries
 -> reconcile recipient-visible public outcomes
 -> converge mechanically identical states
 -> consume only recipient-visible durable GLOBAL history
 ```
 
-`EnumeratedHistoricalExactBaseline.build(...)` must **still** fail closed on persisted:
+`EnumeratedHistoricalExactBaseline.build(...)` still fails closed on persisted:
 
 ```text
 Attack
@@ -226,26 +212,25 @@ Protect
 RoleChange
 ```
 
-H7.9 deliberately did not relax these guards.
+H7.10 deliberately did not relax those guards.
 
-## 8. Next correctness blocker — NOT STARTED / NOT AUTHORIZED
+## 8. Next correctness slice — NOT STARTED / NOT AUTHORIZED
 
-The next distinct exactness question is the **absence of a `PublicDeath` before `NIGHT -> DAY`**. At present a night with no durable public-death event may still retain materialized death branches at the phase transition. Whether and how the transition to day itself proves “no one died tonight” must be locked by a separate chronology test; do not infer this by absence without that contract.
+With positive public night death and completed no-death outcomes both reconciled, the next blocker is the persisted hidden-action guard itself.
 
-Tentative next slice: **H7.10 no-public-death / dawn reconciliation**.
+Tentative next slice: **H7.11 persisted Attack / Protect / RoleChange guard-relaxation audit**.
 
-Do **not** combine it with:
+The audit must prove tests-first that persisted hidden facts may be present in the Storyteller history without their hidden payloads becoming player knowledge. The expected direction is to continue projecting only knowledge-safe `PlayerHistoricalTimeline` events and reproduce hidden mechanics from rules/world state, not from actual Storyteller targets.
+
+Do **not** combine guard relaxation with:
 
 ```text
-Attack / Protect / RoleChange guard relaxation
 Host integration
 A4/ZDD promotion
 history UI / misinformation expansion
 other scripts
 App-root S7
 ```
-
-Only after public death and no-public-death night outcomes are both reconciled should a later separate slice reconsider persisted hidden-action guards.
 
 ## 9. Working discipline
 
