@@ -5,13 +5,14 @@ import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackOutcome
 
 /**
  * Knowledge-safe materialization boundary for one possible world's rule-derived Other Night
- * protection and direct Imp-attack alternatives.
+ * protection and Imp-attack alternatives.
  *
- * Resolved branches are converted into mechanical worlds and converged without counting hidden
- * choice provenance as distinct worlds. Mayor redirect and Imp self-kill succession remain explicit
- * unresolved branches so callers cannot silently discard legal alternatives and claim exactness.
+ * Resolved direct outcomes and Imp self-kill succession are converted into mechanical worlds and
+ * converged without counting hidden choice provenance as distinct worlds. Mayor redirect remains an
+ * explicit unresolved branch so callers cannot silently discard legal alternatives and claim
+ * exactness.
  *
- * This helper consumes no Storyteller-selected Protect or Attack target.
+ * This helper consumes no Storyteller-selected Protect, Attack, or RoleChange target.
  */
 internal data class EnumeratedWorldOtherNightMechanicsMaterializationResult(
     val resolvedWorlds: List<EnumeratedWorld>,
@@ -39,9 +40,14 @@ internal object EnumeratedWorldOtherNightMechanicsMaterializer {
                             targetSeat = targetSeat,
                         )
                     }
-                    DemonNightAttackOutcome.MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED,
-                    DemonNightAttackOutcome.IMP_SELF_KILL_SUCCESSOR_REQUIRED,
-                    -> unresolvedBranches += branch
+                    DemonNightAttackOutcome.IMP_SELF_KILL_SUCCESSOR_REQUIRED -> {
+                        resolvedWorlds += EnumeratedWorldImpSelfKillSuccessionBranching
+                            .branches(branch.protectionBranch.world)
+                            .map { it.world }
+                    }
+                    DemonNightAttackOutcome.MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED -> {
+                        unresolvedBranches += branch
+                    }
                 }
             }
 
