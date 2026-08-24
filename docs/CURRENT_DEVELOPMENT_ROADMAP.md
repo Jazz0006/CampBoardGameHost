@@ -6,9 +6,9 @@
 > Stable `main`: `84a062378f13b90ce71f3801982ba3b2d3b22d80`  
 > Active branch: `codex/a3-historical-multinight-exact-baseline-clean`  
 > Draft PR: **#48 `A3: historical multi-night exact baseline`**  
-> Latest fully validated **code** checkpoint: `4bdf317ec16ab316331a2c322338446620e43631`  
-> Gates: **CI #650 SUCCESS / R2 #583 SUCCESS / Android + ASP + Real Clingo GREEN**  
-> Current execution point: **A3 Architecture Hardening — H7.8 canonical Other Night replay transition GREEN; STOP before H7.9 public night-death reconciliation / guard relaxation**  
+> Latest fully validated **code** checkpoint: `a81b5949e00b18a24f4f1b0522a3f41aa892efa1`  
+> Gates: **CI #658 SUCCESS / R2 #591 SUCCESS / Android + ASP + Real Clingo GREEN**  
+> Current execution point: **A3 Architecture Hardening — H7.9 public night-death reconciliation GREEN; STOP before no-public-death dawn reconciliation / guard relaxation**  
 > Detailed handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`
 
 > Documentation-only commits may move the branch/PR head beyond the validated code SHA. New conversations must re-query live `main`, PR #48 head/state/checks before editing.
@@ -36,7 +36,8 @@ A3 H7.5 self-kill materializer integration         GREEN
 A3 H7.6 Mayor night-death branching helper         GREEN
 A3 H7.7 Mayor materializer integration             GREEN
 A3 H7.8 canonical Other Night replay transition    GREEN
-Public night-death reconciliation                  NOT MODELED / BLOCKER
+A3 H7.9 public night-death reconciliation          GREEN
+No-public-death dawn reconciliation                NOT MODELED / BLOCKER
 Attack / Protect / RoleChange guard relaxation     NOT STARTED
 Production Host / A4 / ZDD authority promotion     NOT STARTED / BLOCKED
 ```
@@ -78,6 +79,7 @@ H7.5 self-kill materializer integration          GREEN
 H7.6 Mayor night-death branching primitive       GREEN
 H7.7 Mayor materializer integration              GREEN
 H7.8 canonical Other Night replay transition     GREEN
+H7.9 public night-death reconciliation           GREEN
 ```
 
 Key checkpoints:
@@ -99,6 +101,8 @@ H7.7 RED   917531e377f0715fb45b8605a0cc7bfbb2a92af0  CI #643 expected runtime FA
      GREEN 32f246341c986275342c95fa65e15df9e9486a5a  CI #644 / R2 #577 GREEN
 H7.8 RED   938aeb42196ee886c5fffe142c3dc3a839d37c3c  CI #648 expected runtime FAILURE
      GREEN 4bdf317ec16ab316331a2c322338446620e43631  CI #650 / R2 #583 GREEN
+H7.9 RED   6fad4ed5f51590ab884af88437b711a494c2e3c9  CI #656 expected runtime FAILURE
+     GREEN a81b5949e00b18a24f4f1b0522a3f41aa892efa1  CI #658 / R2 #591 GREEN
 ```
 
 ## 4. Complete current Trouble Brewing Other Night materializer
@@ -121,7 +125,7 @@ No known Trouble Brewing Other Night attack outcome remains unresolved at this m
 
 ## 5. H7.8 historical replay transition contract
 
-The audit established that Other Night mechanics cannot simply be deferred to `NIGHT -> DAY`: Trouble Brewing has visible ability slots after the Imp, including Ravenkeeper, Empath and Fortune Teller. Those observations must see the mechanical state after the Demon step.
+Other Night mechanics cannot simply be deferred to `NIGHT -> DAY`: Trouble Brewing has visible ability slots after the Imp, including Ravenkeeper, Empath and Fortune Teller. Those observations must see the mechanical state after the Demon step.
 
 H7.8 therefore uses the validated ruleset only as a knowledge-neutral canonical-order authority:
 
@@ -137,63 +141,71 @@ DAY -> NIGHT
 
 The hidden transition receives **no synthetic `TimelinePoint` or GLOBAL sequence**. Durable `lastGlobalSequence` remains the identity of the actual visible event.
 
-Ravenkeeper receives an additional transition proof:
+Ravenkeeper additionally requires proof that its source changed alive -> dead at the materialized Demon step before its observation is consumed.
+
+## 6. H7.9 public night-death reconciliation
+
+Once H7.8 materializes hidden night mechanics, a later durable `PublicDeath(target)` must not blindly call `eliminate(target)` across every world. H7.9 now treats a NIGHT public death as public outcome evidence when it is mechanically compatible with the rule-derived Demon transition.
+
+The replay keeps a transient snapshot immediately before the Other Night transition. A public night death is handled as follows:
 
 ```text
-Ravenkeeper night observation
--> source must have been alive immediately before this materialized Demon step
--> retain only successor worlds where the source became dead at this step
--> then evaluate the Ravenkeeper information
+if Other Night mechanics have not yet materialized:
+  PublicDeath(target)
+  -> materialize the hidden transition
+  -> retain only worlds where target changed alive -> dead at that transition
+
+if Other Night mechanics already materialized:
+  -> re-materialize from the saved pre-transition snapshot with target as public death evidence
+  -> intersect that compatible successor set with the current, observation-filtered successor worlds
+  -> compare mechanical state only; explanation provenance is ignored
+
+if that intersection is empty because earlier GLOBAL evidence proves the death occurred later:
+  -> preserve the public death at its actual GLOBAL point
+  -> apply ordinary elimination to the current worlds
 ```
 
-This preserves the H2 triggered exception without allowing an already-dead Ravenkeeper to manufacture a later-night trigger.
+This preserves both contracts:
 
-### H7.8 RED/GREEN details
+```text
+compatible public night death
+-> confirms/selects the already-derived hidden outcome
+-> does not create a second death
 
-The first test-file creation commit `0456449ce4689674c84fe6472734314194e82c6e` contained only a test import-path mistake. `938aeb42196ee886c5fffe142c3dc3a839d37c3c` corrected that import and is the authoritative H7.8 RED checkpoint.
+ordinary later public night death
+-> remains ordered by its durable GLOBAL point
+-> does not retroactively invalidate an earlier legal observation
+```
 
-Net H7.7 docs-head -> H7.8 RED diff:
+### H7.9 RED/GREEN details
+
+RED `6fad4ed5f51590ab884af88437b711a494c2e3c9` added only:
 
 ```text
 app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/
-  EnumeratedHistoricalOtherNightTransitionIntegrationTest.kt
+  EnumeratedHistoricalPublicNightDeathReconciliationTest.kt
 
-new test file only
-190 additions
+227 additions
 production changes = 0
 ```
 
-CI #648 reached runtime tests and produced exactly the intended failures:
+CI #656 reached runtime tests:
 
 ```text
-758 tests completed, 2 failed
-1. post Imp Fortune Teller observation is evaluated after rule derived other-night mechanics
-2. Ravenkeeper observation survives only worlds where the Imp step killed the Ravenkeeper that night
+760 tests completed, exactly 2 failed
+1. public night death after post-Imp observation filters materialized worlds instead of killing twice
+2. public night death materializes hidden mechanics before reconciliation when it is first post-Imp evidence
 ```
 
-ASP + Real Clingo + R2 #581 stayed green.
+ASP + Real Clingo + R2 #589 stayed green.
 
-GREEN consists of two production commits:
+The first GREEN attempt `6626d9f97c43b901b60b17385ec791d52fa12274` made both H7.9 tests pass but exposed one H6 regression: a legal Empath observation at GLOBAL sequence 8 followed by that Empath's public death at sequence 9 was being retroactively forced into the earlier Imp step. CI #657 therefore failed exactly one pre-existing H6 test; R2 #590 / ASP / Real Clingo remained green.
 
-```text
-d3e227813fd012531073ebd9d649bc3827d00398
-  replay rule-derived Other Night transition
+The final correction `a81b5949e00b18a24f4f1b0522a3f41aa892efa1` adds the compatibility fallback described above. From the H7.9 RED to the final GREEN, only `EnumeratedHistoricalWorldReplay.kt` changed (`+97/-24`); RED tests were unchanged. The correction from the first GREEN attempt was only `+6/-1` in the same production file.
 
-4bdf317ec16ab316331a2c322338446620e43631
-  provide validated night-order authority to replay
-```
+CI #658 / R2 #591 / Android + ASP + Real Clingo all passed.
 
-RED -> GREEN exact diff:
-
-```text
-EnumeratedHistoricalWorldReplay.kt  +101 / -3
-EnumeratedHistoricalExactBaseline.kt +9 / -6
-RED tests unchanged
-```
-
-CI #650 / R2 #583 / Android + ASP + Real Clingo all passed.
-
-## 6. Hidden-information invariant and guards
+## 7. Hidden-information invariant and guards
 
 Never feed Storyteller actual hidden targets or hidden action occurrence points into player possible worlds.
 
@@ -201,6 +213,7 @@ Never feed Storyteller actual hidden targets or hidden action occurrence points 
 current possible world
 -> generate all legal hidden alternatives from rules
 -> materialize mechanical outcomes at a rule-owned canonical boundary
+-> reconcile recipient-visible public outcomes
 -> converge mechanically identical states
 -> consume only recipient-visible durable GLOBAL history
 ```
@@ -213,15 +226,15 @@ Protect
 RoleChange
 ```
 
-H7.8 deliberately did not relax these guards.
+H7.9 deliberately did not relax these guards.
 
-## 7. Next correctness blocker — H7.9 NOT STARTED / NOT AUTHORIZED
+## 8. Next correctness blocker — NOT STARTED / NOT AUTHORIZED
 
-The H7.8 audit exposed the next distinct issue: once a night death has already been materialized from rule-derived hidden mechanics, a later durable `PublicDeath(target)` cannot blindly call `eliminate(target)` in every possible world. The public death is evidence about which hidden branch actually occurred and must reconcile/filter the already-materialized worlds; otherwise replay can create impossible double/multiple deaths.
+The next distinct exactness question is the **absence of a `PublicDeath` before `NIGHT -> DAY`**. At present a night with no durable public-death event may still retain materialized death branches at the phase transition. Whether and how the transition to day itself proves “no one died tonight” must be locked by a separate chronology test; do not infer this by absence without that contract.
 
-The next smallest slice should therefore be **H7.9 public night-death reconciliation**, tests-first. It should distinguish public death evidence that confirms an already materialized night outcome from ordinary public/day elimination semantics.
+Tentative next slice: **H7.10 no-public-death / dawn reconciliation**.
 
-Do **not** combine H7.9 with:
+Do **not** combine it with:
 
 ```text
 Attack / Protect / RoleChange guard relaxation
@@ -232,9 +245,9 @@ other scripts
 App-root S7
 ```
 
-Only after public death reconciliation is proven should a later separate slice reconsider persisted hidden-action guards.
+Only after public death and no-public-death night outcomes are both reconciled should a later separate slice reconsider persisted hidden-action guards.
 
-## 8. Working discipline
+## 9. Working discipline
 
 For each RED/GREEN slice:
 
@@ -246,5 +259,7 @@ For each RED/GREEN slice:
 6. wait for CI, R2, ASP and Real Clingo;
 7. recheck PR remains open/draft/not merged;
 8. stop before the next slice unless explicitly instructed.
+
+Documentation should be updated automatically only at meaningful architecture/phase checkpoints; do not create a docs commit for every small code change.
 
 Do not merge, mark ready, rebase, force-push, or broaden scope without explicit user authorization.
