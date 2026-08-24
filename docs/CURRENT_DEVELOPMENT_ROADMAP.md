@@ -6,9 +6,9 @@
 > Stable `main`: `84a062378f13b90ce71f3801982ba3b2d3b22d80`  
 > Active branch: `codex/a3-historical-multinight-exact-baseline-clean`  
 > Draft PR: **#48 `A3: historical multi-night exact baseline`**  
-> Latest fully validated **code** checkpoint: `32f246341c986275342c95fa65e15df9e9486a5a`  
-> Gates: **CI #644 SUCCESS / R2 #577 SUCCESS / Android + ASP + Real Clingo GREEN**  
-> Current execution point: **A3 Architecture Hardening — H7.7 Mayor materializer integration GREEN; STOP before historical replay wiring / guard relaxation**  
+> Latest fully validated **code** checkpoint: `4bdf317ec16ab316331a2c322338446620e43631`  
+> Gates: **CI #650 SUCCESS / R2 #583 SUCCESS / Android + ASP + Real Clingo GREEN**  
+> Current execution point: **A3 Architecture Hardening — H7.8 canonical Other Night replay transition GREEN; STOP before H7.9 public night-death reconciliation / guard relaxation**  
 > Detailed handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`
 
 > Documentation-only commits may move the branch/PR head beyond the validated code SHA. New conversations must re-query live `main`, PR #48 head/state/checks before editing.
@@ -35,7 +35,9 @@ A3 H7.4 Imp self-kill succession helper            GREEN
 A3 H7.5 self-kill materializer integration         GREEN
 A3 H7.6 Mayor night-death branching helper         GREEN
 A3 H7.7 Mayor materializer integration             GREEN
-End-to-end hidden Attack/Protect replay             NOT WIRED / BLOCKED
+A3 H7.8 canonical Other Night replay transition    GREEN
+Public night-death reconciliation                  NOT MODELED / BLOCKER
+Attack / Protect / RoleChange guard relaxation     NOT STARTED
 Production Host / A4 / ZDD authority promotion     NOT STARTED / BLOCKED
 ```
 
@@ -62,10 +64,8 @@ rolesBySeat         immutable setup identity
 currentRolesBySeat  dynamic historical current-role state
 ```
 
-This permits a dead former Imp plus a living successor Imp without weakening setup uniqueness.
-
 ### H6 — incremental state-aware replay
-GLOBAL history is replayed incrementally. Visible night ability observations are validated against current historical state at their own GLOBAL point. No synthetic hidden `globalSequence` values are invented.
+GLOBAL history is replayed incrementally. Visible night observations are validated against the mechanical world state at their own historical point. Hidden mechanics must not invent synthetic `globalSequence` values.
 
 ## 3. H7 status and provenance
 
@@ -77,6 +77,7 @@ H7.4 Imp self-kill succession branching          GREEN
 H7.5 self-kill materializer integration          GREEN
 H7.6 Mayor night-death branching primitive       GREEN
 H7.7 Mayor materializer integration              GREEN
+H7.8 canonical Other Night replay transition     GREEN
 ```
 
 Key checkpoints:
@@ -84,29 +85,25 @@ Key checkpoints:
 ```text
 H7.1 RED   f4eeeb967fd0b55ce4fee9d1b3e19e20ad8d15ae  CI #609 expected FAILURE
      GREEN 5cc3bbc64b9ba47c788a8a97eb8a8992d9befa01  CI #610 / R2 #543 GREEN
-
 H7.2 RED   2b103eaa8386359460e986e8ee35a9e550b76fcd  CI #618 expected FAILURE
      GREEN 8e49772707835e0071774cf6b8ef38ad842041a1  CI #619 / R2 #552 GREEN
-
 H7.3 RED   9b6127d517b3cf4bca6add72fcc14dce99bef3e5  CI #622 expected compile FAILURE
      GREEN c20a8a8f3392d82f08fe1ab57f97988ef8db4da8  CI #623 / R2 #556 GREEN
-
 H7.4 RED   6b8de75b6e864ca733d5cc08a2ba031b5355b182  CI #626 expected compile FAILURE
      GREEN e4e8932821db4a785ea783479a3cff1cd54bb75d  CI #627 / R2 #560 GREEN
-
 H7.5 RED   630b2bb8532c915ec9bf317ed66fd7eb121af3b3  CI #630 expected runtime FAILURE
      GREEN c8a53ca2b5eb8b4fe94e10d9c962b7e597d9e953  CI #631 / R2 #564 GREEN
-
 H7.6 RED   a94c4c37d245adf709802b5e7e86d20ed4b01004  CI #639 expected compile FAILURE
      GREEN 3236c7747941cf2feac416e095f3d5de0135a899  CI #640 / R2 #573 GREEN
-
 H7.7 RED   917531e377f0715fb45b8605a0cc7bfbb2a92af0  CI #643 expected runtime FAILURE
      GREEN 32f246341c986275342c95fa65e15df9e9486a5a  CI #644 / R2 #577 GREEN
+H7.8 RED   938aeb42196ee886c5fffe142c3dc3a839d37c3c  CI #648 expected runtime FAILURE
+     GREEN 4bdf317ec16ab316331a2c322338446620e43631  CI #650 / R2 #583 GREEN
 ```
 
-## 4. Current complete Trouble Brewing Other Night materializer
+## 4. Complete current Trouble Brewing Other Night materializer
 
-The rule-derived pipeline is now:
+The standalone rule-derived pipeline remains:
 
 ```text
 possible world
@@ -120,80 +117,95 @@ possible world
 -> H3 mechanical convergence
 ```
 
-H7.4/H7.5 succession contract remains:
+No known Trouble Brewing Other Night attack outcome remains unresolved at this materializer boundary. No Storyteller-selected `Protect`, `Attack`, Mayor resolution, death target, or `RoleChange` target is consumed.
+
+## 5. H7.8 historical replay transition contract
+
+The audit established that Other Night mechanics cannot simply be deferred to `NIGHT -> DAY`: Trouble Brewing has visible ability slots after the Imp, including Ravenkeeper, Empath and Fortune Teller. Those observations must see the mechanical state after the Demon step.
+
+H7.8 therefore uses the validated ruleset only as a knowledge-neutral canonical-order authority:
 
 ```text
-functioning Scarlet Woman + >=5 alive before Imp self-kill
--> forced Scarlet Woman successor
-
-poisoned Scarlet Woman
--> no forced priority
--> branch every living current Trouble Brewing Minion
-
-no living current Minion
--> old Imp dies
--> one null-successor branch
+DAY -> NIGHT
+-> beginNight() poison expiration + rule-derived Poisoner target branching
+-> replay visible GLOBAL events
+-> before the first visible ability observation whose canonical slot is after Imp:
+     apply EnumeratedWorldOtherNightMechanicsMaterializer once
+-> evaluate that durable observation against the successor world
+-> if no post-Imp visible observation occurs, materialize before NIGHT -> DAY
 ```
 
-H7.6 Mayor contract remains:
+The hidden transition receives **no synthetic `TimelinePoint` or GLOBAL sequence**. Durable `lastGlobalSequence` remains the identity of the actual visible event.
+
+Ravenkeeper receives an additional transition proof:
 
 ```text
-Mayor may die
-OR Mayor remains alive and another stable seat is selected
-
-dead redirect target             -> no death
-functioning Soldier              -> no death
-functioning Monk-protected seat  -> no death
-ordinary living redirect target  -> redirect target dies
-current living Imp               -> reuse Imp succession branching
+Ravenkeeper night observation
+-> source must have been alive immediately before this materialized Demon step
+-> retain only successor worlds where the source became dead at this step
+-> then evaluate the Ravenkeeper information
 ```
 
-Redirected current-Poisoner death clears active poison state.
+This preserves the H2 triggered exception without allowing an already-dead Ravenkeeper to manufacture a later-night trigger.
 
-### H7.7 RED/GREEN details
+### H7.8 RED/GREEN details
 
-RED `917531e3...` changed only the existing materializer test (`+8/-10`, production changes = 0). CI #643 reached runtime tests and produced:
+The first test-file creation commit `0456449ce4689674c84fe6472734314194e82c6e` contained only a test import-path mistake. `938aeb42196ee886c5fffe142c3dc3a839d37c3c` corrected that import and is the authoritative H7.8 RED checkpoint.
+
+Net H7.7 docs-head -> H7.8 RED diff:
 
 ```text
-756 tests completed, 1 failed
-only failure:
-EnumeratedWorldOtherNightMechanicsMaterializerTest
-  Mayor redirect materializes and converges with direct attack and self kill outcomes
+app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/
+  EnumeratedHistoricalOtherNightTransitionIntegrationTest.kt
+
+new test file only
+190 additions
+production changes = 0
 ```
 
-ASP + Real Clingo + R2 #576 remained green.
-
-GREEN `32f24634...` changed only `EnumeratedWorldOtherNightMechanicsMaterializer.kt` (`+8/-6`, RED test unchanged). `MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED` now delegates to `EnumeratedWorldMayorNightDeathBranching`, and its derived worlds enter the same final H3 convergence as direct attacks and Imp self-kill branches.
-
-The focused 5-player Mayor test proves:
+CI #648 reached runtime tests and produced exactly the intended failures:
 
 ```text
-unresolvedBranches == empty
-5 mechanically distinct final worlds
-Mayor redirects that duplicate direct attack outcomes converge
-Mayor redirect to Imp duplicates the existing self-kill succession world and converges
+758 tests completed, 2 failed
+1. post Imp Fortune Teller observation is evaluated after rule derived other-night mechanics
+2. Ravenkeeper observation survives only worlds where the Imp step killed the Ravenkeeper that night
 ```
 
-CI #644 / R2 #577 / Android + ASP + Real Clingo all passed.
+ASP + Real Clingo + R2 #581 stayed green.
 
-No Storyteller-selected `Protect`, `Attack`, Mayor resolution, death target, or `RoleChange` target is consumed.
+GREEN consists of two production commits:
 
-## 5. Hidden-information invariant
+```text
+d3e227813fd012531073ebd9d649bc3827d00398
+  replay rule-derived Other Night transition
+
+4bdf317ec16ab316331a2c322338446620e43631
+  provide validated night-order authority to replay
+```
+
+RED -> GREEN exact diff:
+
+```text
+EnumeratedHistoricalWorldReplay.kt  +101 / -3
+EnumeratedHistoricalExactBaseline.kt +9 / -6
+RED tests unchanged
+```
+
+CI #650 / R2 #583 / Android + ASP + Real Clingo all passed.
+
+## 6. Hidden-information invariant and guards
 
 Never feed Storyteller actual hidden targets or hidden action occurrence points into player possible worlds.
 
 ```text
 current possible world
 -> generate all legal hidden alternatives from rules
--> materialize mechanical outcomes
+-> materialize mechanical outcomes at a rule-owned canonical boundary
 -> converge mechanically identical states
+-> consume only recipient-visible durable GLOBAL history
 ```
 
-Actual `Poison` / `Protect` / `Attack` / `RoleChange` payloads remain forbidden as player-world truth.
-
-## 6. Guards and still-out-of-scope work
-
-`EnumeratedHistoricalExactBaseline.build(...)` must **still** fail closed on:
+`EnumeratedHistoricalExactBaseline.build(...)` must **still** fail closed on persisted:
 
 ```text
 Attack
@@ -201,12 +213,17 @@ Protect
 RoleChange
 ```
 
-H7.7 completes the currently known Trouble Brewing Other Night materializer outcomes, but does **not** wire that transition into `EnumeratedHistoricalWorldReplay` and does **not** relax any exact-baseline guard.
+H7.8 deliberately did not relax these guards.
 
-Do not yet implement or wire:
+## 7. Next correctness blocker — H7.9 NOT STARTED / NOT AUTHORIZED
+
+The H7.8 audit exposed the next distinct issue: once a night death has already been materialized from rule-derived hidden mechanics, a later durable `PublicDeath(target)` cannot blindly call `eliminate(target)` in every possible world. The public death is evidence about which hidden branch actually occurred and must reconcile/filter the already-materialized worlds; otherwise replay can create impossible double/multiple deaths.
+
+The next smallest slice should therefore be **H7.9 public night-death reconciliation**, tests-first. It should distinguish public death evidence that confirms an already materialized night outcome from ordinary public/day elimination semantics.
+
+Do **not** combine H7.9 with:
 
 ```text
-historical replay consumption of Other Night materialization
 Attack / Protect / RoleChange guard relaxation
 Host integration
 A4/ZDD promotion
@@ -215,25 +232,7 @@ other scripts
 App-root S7
 ```
 
-## 7. Next possible slice — NOT STARTED / NOT AUTHORIZED
-
-The next smallest architecture slice is tentatively **H7.8 historical replay transition integration**.
-
-Before writing RED, audit exactly where the complete Other Night mechanical transition belongs in `EnumeratedHistoricalWorldReplay` relative to `PhaseAdvance`, `beginNight()` poison refresh, visible night observations, and transition to day. Do not invent hidden GLOBAL points.
-
-Target direction:
-
-```text
-current historical world-set snapshot
--> at the correct rule-owned night boundary
--> apply complete rule-derived Other Night materializer to every possible world
--> converge mechanically identical successor worlds
--> continue visible GLOBAL replay
-```
-
-Keep `Attack` / `Protect` / `RoleChange` guards fail-closed until a separate tests-first slice proves end-to-end exact replay is complete and identifies which guards can safely move. Do not combine replay wiring and guard relaxation by default.
-
-Production Host / A4 / ZDD remain separately blocked.
+Only after public death reconciliation is proven should a later separate slice reconsider persisted hidden-action guards.
 
 ## 8. Working discipline
 
