@@ -80,6 +80,7 @@ class EnumeratedWorldNightObservationAnchorTest {
             localSequence = 3,
             globalSequence = 901L,
             round = 1,
+            storytellerPhase = StorytellerPhase.FIRST_NIGHT,
         )
 
         val anchor = EnumeratedWorldNightObservationAnchoring.anchorOrNull(
@@ -94,13 +95,35 @@ class EnumeratedWorldNightObservationAnchorTest {
     }
 
     @Test
+    fun `storyteller phase must match the requested canonical night phase`() {
+        val world = world("Empath", "Chef", "Monk", "Poisoner", "Imp")
+        val firstNightRecord = nightObservation(
+            sourceSeat = 1,
+            sourceAbility = "Empath",
+            localSequence = 2,
+            globalSequence = 902L,
+            round = 1,
+            storytellerPhase = StorytellerPhase.FIRST_NIGHT,
+        )
+
+        assertNull(
+            EnumeratedWorldNightObservationAnchoring.anchorOrNull(
+                ruleset = ruleset,
+                phase = ClocktowerNightFlowPhase.OTHER_NIGHT,
+                world = world,
+                record = firstNightRecord,
+            ),
+        )
+    }
+
+    @Test
     fun `role existing elsewhere does not anchor observation from an incompatible source seat`() {
         val world = world("Chef", "Empath", "Monk", "Poisoner", "Imp")
         val record = nightObservation(
             sourceSeat = 1,
             sourceAbility = "Empath",
             localSequence = 2,
-            globalSequence = 902L,
+            globalSequence = 903L,
         )
 
         assertNull(
@@ -116,7 +139,7 @@ class EnumeratedWorldNightObservationAnchorTest {
     @Test
     fun `public or non-ability observation has no canonical role-slot anchor`() {
         val world = world("Empath", "Chef", "Monk", "Poisoner", "Imp")
-        val point = TimelinePoint(StorytellerPhase.NIGHT, 2, 8, 903L)
+        val point = TimelinePoint(StorytellerPhase.NIGHT, 2, 8, 904L)
         val record = RecordedEpistemicObservation(
             recordId = "public-night-fact",
             phase = StorytellerPhase.NIGHT,
@@ -147,11 +170,12 @@ class EnumeratedWorldNightObservationAnchorTest {
         localSequence: Int,
         globalSequence: Long,
         round: Int = 2,
+        storytellerPhase: StorytellerPhase = StorytellerPhase.NIGHT,
     ): RecordedEpistemicObservation {
-        val point = TimelinePoint(StorytellerPhase.NIGHT, round, localSequence, globalSequence)
+        val point = TimelinePoint(storytellerPhase, round, localSequence, globalSequence)
         return RecordedEpistemicObservation(
             recordId = "night-observation-$sourceSeat-$sourceAbility-$globalSequence",
-            phase = StorytellerPhase.NIGHT,
+            phase = storytellerPhase,
             round = round,
             sequence = localSequence,
             sourceSeat = sourceSeat,
