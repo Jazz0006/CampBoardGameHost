@@ -1,9 +1,12 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
+import com.codex.campboardgamehost.clocktower.catalog.NightOrderToken
+import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 
 /**
  * Time-aware exact-world snapshot used by the A3 historical baseline.
@@ -75,6 +78,35 @@ internal class EnumeratedHistoricalWorldSetSnapshot private constructor(
         },
     )
 
+    /**
+     * Applies the complete rule-derived Trouble Brewing Other Night transition to each current
+     * possible world. A Ravenkeeper observation may additionally prove that its source changed from
+     * alive to dead at this Demon step; that is transition evidence, not a Storyteller hidden target.
+     */
+    internal fun materializeOtherNight(
+        triggeredObservation: RecordedEpistemicObservation? = null,
+    ): EnumeratedHistoricalWorldSetSnapshot = copy(
+        worlds.flatMap { world ->
+            val materialized = EnumeratedWorldOtherNightMechanicsMaterializer.materialize(world)
+            require(materialized.unresolvedBranches.isEmpty()) {
+                "Historical Other Night replay cannot continue with unresolved rule-derived branches."
+            }
+            val resolved = materialized.resolvedWorlds
+            if (triggeredObservation.isRavenkeeperNightObservation()) {
+                val sourceSeat = requireNotNull(triggeredObservation?.sourceSeat) {
+                    "Ravenkeeper night observation must identify its source seat."
+                }
+                if (sourceSeat !in world.aliveSeats) {
+                    emptyList()
+                } else {
+                    resolved.filter { nextWorld -> sourceSeat !in nextWorld.aliveSeats }
+                }
+            } else {
+                resolved
+            }
+        },
+    )
+
     internal fun require(
         record: RecordedEpistemicObservation,
         formalSnapshotId: String,
@@ -134,9 +166,9 @@ internal data class EnumeratedHistoricalReplayResult(
 /**
  * Replays only the knowledge-safe [PlayerHistoricalEvent] projection.
  *
- * Hidden Poison/Protect/Attack/RoleChange truth is intentionally absent from this input type. Later
- * A3 slices may branch hidden successor worlds from public rule constraints, but must never consume
- * the Storyteller's actual hidden target as player knowledge.
+ * Hidden Poison/Protect/Attack/RoleChange truth is intentionally absent from this input type. When
+ * [validatedRuleset] is supplied, rule-derived Other Night mechanics are inserted at the canonical
+ * Imp boundary relative to visible ability observations, without inventing a durable timeline point.
  */
 internal object EnumeratedHistoricalWorldReplay {
     fun replay(
@@ -145,6 +177,7 @@ internal object EnumeratedHistoricalWorldReplay {
         initialPhase: StorytellerPhase,
         initialRound: Int,
         events: List<PlayerHistoricalEvent>,
+        validatedRuleset: ValidatedClocktowerRuleset? = null,
     ): EnumeratedHistoricalReplayResult {
         require(formalSnapshotId.isNotBlank()) { "Historical replay formal snapshot ID cannot be blank." }
         require(initialRound > 0) { "Historical replay initial round must be positive." }
@@ -156,6 +189,7 @@ internal object EnumeratedHistoricalWorldReplay {
         var phase = initialPhase
         var round = initialRound
         var lastGlobalSequence: Long? = null
+        var otherNightMechanicsApplied = false
 
         events.forEach { event ->
             when (event) {
@@ -167,8 +201,18 @@ internal object EnumeratedHistoricalWorldReplay {
                 }
                 is PlayerHistoricalEvent.PhaseAdvance -> {
                     require(event.round > 0) { "Historical phase advance round must be positive." }
+                    if (
+                        phase == StorytellerPhase.NIGHT &&
+                        event.phase == StorytellerPhase.DAY &&
+                        !otherNightMechanicsApplied &&
+                        validatedRuleset != null
+                    ) {
+                        worldSet = worldSet.materializeOtherNight()
+                        otherNightMechanicsApplied = true
+                    }
                     if (phase == StorytellerPhase.DAY && event.phase == StorytellerPhase.NIGHT) {
                         worldSet = worldSet.beginNight()
+                        otherNightMechanicsApplied = false
                     }
                     phase = event.phase
                     round = event.round
@@ -180,6 +224,23 @@ internal object EnumeratedHistoricalWorldReplay {
                         )
                     require(recordPoint == event.point) {
                         "Historical observation event point must match its durable record binding."
+                    }
+                    if (
+                        phase == StorytellerPhase.NIGHT &&
+                        !otherNightMechanicsApplied &&
+                        validatedRuleset != null &&
+                        occursAfterImp(
+                            ruleset = validatedRuleset,
+                            worldSet = worldSet,
+                            record = event.record,
+                        )
+                    ) {
+                        worldSet = worldSet.materializeOtherNight(
+                            triggeredObservation = event.record.takeIf {
+                                it.isRavenkeeperNightObservation()
+                            },
+                        )
+                        otherNightMechanicsApplied = true
                     }
                     worldSet = worldSet.require(event.record, formalSnapshotId)
                 }
@@ -194,4 +255,41 @@ internal object EnumeratedHistoricalWorldReplay {
             lastGlobalSequence = lastGlobalSequence,
         )
     }
+
+    private fun occursAfterImp(
+        ruleset: ValidatedClocktowerRuleset,
+        worldSet: EnumeratedHistoricalWorldSetSnapshot,
+        record: RecordedEpistemicObservation,
+    ): Boolean {
+        if (record.reliability == ObservationReliability.NOT_ABILITY_INFORMATION) return false
+        if (record.phase != StorytellerPhase.NIGHT) return false
+
+        val placements = worldSet.enumeratedWorlds().mapNotNull { world ->
+            val anchor = EnumeratedWorldNightObservationAnchoring.anchorOrNull(
+                ruleset = ruleset,
+                phase = ClocktowerNightFlowPhase.OTHER_NIGHT,
+                world = world,
+                record = record,
+            ) ?: return@mapNotNull null
+            val schedule = EnumeratedWorldNightSchedule.plan(
+                ruleset = ruleset,
+                phase = ClocktowerNightFlowPhase.OTHER_NIGHT,
+                world = world,
+            )
+            val impIndex = schedule.indexOf(NightOrderToken.Character(RoleId("Imp")))
+            if (impIndex < 0) return@mapNotNull null
+            anchor.scheduleIndex > impIndex
+        }.toSet()
+
+        require(placements.size <= 1) {
+            "The same durable observation cannot occur on both sides of the canonical Imp boundary."
+        }
+        return placements.singleOrNull() == true
+    }
 }
+
+private fun RecordedEpistemicObservation?.isRavenkeeperNightObservation(): Boolean =
+    this != null &&
+        phase == StorytellerPhase.NIGHT &&
+        reliability != ObservationReliability.NOT_ABILITY_INFORMATION &&
+        sourceAbility?.value.equals("Ravenkeeper", ignoreCase = true)
