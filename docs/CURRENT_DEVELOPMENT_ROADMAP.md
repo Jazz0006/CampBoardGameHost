@@ -4,14 +4,15 @@
 > 文档角色：**CURRENT / 当前状态唯一权威**  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Stable `main`: `84a062378f13b90ce71f3801982ba3b2d3b22d80`  
-> Active branch: `codex/a3-historical-multinight-exact-baseline-clean`  
+> Active A3 branch: `codex/a3-historical-multinight-exact-baseline-clean`  
 > Draft PR: **#48 `A3: historical multi-night exact baseline`**  
-> Latest fully validated **code** checkpoint: `9eea8142c0dd04c2fdf8164c78b5a1799b0b7698`  
-> Gates: **CI #666 SUCCESS / R2 #599 SUCCESS / Android + ASP + Real Clingo GREEN**  
-> Current execution point: **A3 Architecture Hardening H1–H7 COMPLETE at the Trouble Brewing exact-baseline boundary; STOP before production authority / Host-A4-ZDD integration**  
-> Detailed handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`
+> Latest fully validated **A3 code** checkpoint: `c678b25cd2a750a02f0cb1a05632d31e58ffd048`  
+> Gates: **CI #675 SUCCESS / R2 #608 SUCCESS / Android + ASP + Real Clingo GREEN**  
+> Current A3 execution point: **historical exact baseline + production-isolated B4 shadow/session bridge GREEN; STOP before setup-snapshot ownership / persistence / runtime authority integration**  
+> Immediate project priority: **pause PR #48 and return to source decomposition work (resume from the live decomposition branch/status, expected next area A9)**  
+> Detailed A3 handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`
 
-> Documentation-only commits may move the branch/PR head beyond the validated code SHA. New conversations must re-query live `main`, PR #48 head/state/checks before editing.
+> Documentation-only commits may move PR #48 head beyond the validated code SHA. Before resuming A3, re-query live `main`, PR #48 head/state/checks and exact-compare any docs-only head back to `c678b25cd2a750a02f0cb1a05632d31e58ffd048`.
 
 ## 1. Project status
 
@@ -26,12 +27,16 @@ PR #44 Drunk / Fortune Teller hotfix               CLOSED / MERGED
 PR #43 Clocktower host decomposition A1–A13        CLOSED / MERGED
 App-root decomposition S0–S6                       CLOSED / MERGED CHECKPOINT
 App-root S7                                        PAUSED
-PR #48 historical multi-night exact baseline       OPEN / DRAFT / ACTIVE
+PR #48 historical multi-night exact baseline       OPEN / DRAFT / PAUSED AT SAFE CHECKPOINT
 A3 Architecture Hardening H1–H7                    COMPLETE / GREEN
-Production Host / A4 / ZDD authority integration   NOT STARTED / NOT AUTHORIZED
+B4 historical-exact shadow bridge                  GREEN
+Session -> B4 historical shadow seam               GREEN
+Setup snapshot ownership / persistence             NOT STARTED
+Production recommendation authority promotion      NOT STARTED / NOT AUTHORIZED
+Source decomposition                               RESUME NEXT
 ```
 
-App-root S7 stays paused. Do not mix it into PR #48.
+App-root S7 remains paused. Do not mix S7 into PR #48 or the source-decomposition continuation.
 
 ## 2. Protected architecture contracts
 
@@ -39,13 +44,13 @@ App-root S7 stays paused. Do not mix it into PR #48.
 Historical construction separates setup seed knowledge from GLOBAL_V1 durable observation replay. Durable observations are consumed exactly once.
 
 ### H2 — order != eligibility
-Night schedule owns canonical order. Current historical possible-world state and role semantics own actor eligibility. Triggered exceptions such as Ravenkeeper remain explicit.
+Night schedule owns canonical order. Historical possible-world state and role semantics own actor eligibility. Triggered exceptions such as Ravenkeeper remain explicit.
 
 ### H3 — mechanical identity != provenance
 Mechanically identical states converge even when hidden paths/explanations differ. Hidden branch count is not exact world count.
 
 ### H4 — support boundary
-Historical exact construction is explicitly Trouble Brewing-only and fails closed for unsupported scripts.
+Historical exact construction remains explicitly Trouble Brewing-only and fails closed outside that boundary.
 
 ### H5 — setup role vs current role
 
@@ -55,10 +60,10 @@ currentRolesBySeat  dynamic historical current-role state
 ```
 
 ### H6 — incremental state-aware replay
-GLOBAL history is replayed incrementally. Visible night observations are validated against the mechanical world state at their own historical point. Hidden mechanics never invent synthetic `globalSequence` values.
+GLOBAL history is replayed incrementally. Visible observations are evaluated against the mechanical world state at their own historical point. Hidden mechanics never invent synthetic `globalSequence` values.
 
-### H7 — knowledge-safe hidden-mechanics replay
-Storyteller-hidden choices may exist in persisted history, but player possible worlds reproduce hidden mechanics from rules + possible-world state and reconcile only recipient-visible public outcomes. Actual hidden targets and their occurrence points are not player constraints.
+### H7 — knowledge-safe hidden mechanics
+Storyteller-hidden choices may exist in persisted history, but player possible worlds regenerate hidden mechanics from rules + possible-world state. Actual hidden targets and hidden occurrence points never become player constraints.
 
 ## 3. H7 completed checkpoints
 
@@ -76,100 +81,24 @@ H7.10 no-public-death dawn reconciliation          GREEN
 H7.11 persisted hidden-action payload isolation    GREEN
 ```
 
-Latest checkpoints:
+Key recent checkpoints:
 
 ```text
-H7.8 RED   938aeb42196ee886c5fffe142c3dc3a839d37c3c  CI #648 expected FAILURE
-     GREEN 4bdf317ec16ab316331a2c322338446620e43631  CI #650 / R2 #583 GREEN
-H7.9 RED   6fad4ed5f51590ab884af88437b711a494c2e3c9  CI #656 expected FAILURE
-     GREEN a81b5949e00b18a24f4f1b0522a3f41aa892efa1  CI #658 / R2 #591 GREEN
-H7.10 RED  28b56c83b3c8efbca570f3b8c3c40219b3076535  CI #661 expected FAILURE
+H7.10 RED   28b56c83b3c8efbca570f3b8c3c40219b3076535
       GREEN 3d446937b7cbef36b3fed679fff64b9582e450ac  CI #662 / R2 #595 GREEN
-H7.11 RED  55fd836a7616d9e15a8f57691138ae3ecddc6567  CI #665 expected FAILURE
+H7.11 RED   55fd836a7616d9e15a8f57691138ae3ecddc6567
       GREEN 9eea8142c0dd04c2fdf8164c78b5a1799b0b7698  CI #666 / R2 #599 GREEN
 ```
 
-Earlier H7.1–H7.7 provenance remains in git history and the PR discussion; no architecture contract from those slices is superseded.
+H7.11 established that persisted `Poison` / `Protect` / `Attack` / `RoleChange` may remain Storyteller truth while `PlayerHistoricalTimeline` projects their payloads and hidden GLOBAL occurrence points to nothing. Rule-derived hidden mechanics remain authoritative for player reasoning.
 
-## 4. Final Trouble Brewing historical exact pipeline
-
-The hidden Other Night pipeline is rule-derived:
-
-```text
-possible world
--> all legal living-current-Monk protection alternatives
--> all legal living-current-Imp attack alternatives
--> resolve attack outcome
-   NO_DEATH                         -> unchanged mechanical world
-   TARGET_DIES                      -> death mechanical world
-   IMP_SELF_KILL_SUCCESSOR_REQUIRED -> rule-derived successor world(s)
-   MAYOR_TARGET_OR_REDIRECT...      -> rule-derived Mayor world(s)
--> H3 mechanical convergence
-```
-
-Historical replay places that transition at the canonical Imp boundary relative to visible observations. Ravenkeeper information requires proof of its death-trigger state. Compatible `PublicDeath` confirms/selects an already-derived hidden outcome without killing twice; a later public death proven by GLOBAL chronology is applied at its own point. A completed night with no `PublicDeath` supplies the current producer's public no-death evidence only when the night closes.
-
-No known Trouble Brewing Other Night attack outcome remains unresolved at this exact materializer/replay boundary.
-
-## 5. H7.11 persisted hidden-action isolation
-
-`PlayerHistoricalTimeline` already projects only:
-
-```text
-PublicExecution
-PublicDeath
-PhaseAdvance
-recipient-visible Observation
-```
-
-and deliberately projects persisted:
-
-```text
-Poison
-Protect
-Attack
-RoleChange
-```
-
-to **nothing**. Their target payloads and hidden GLOBAL occurrence points therefore never enter player replay.
-
-H7.11 replaced the obsolete fail-closed guard tests with positive invariance contracts.
-
-RED `55fd836a7616d9e15a8f57691138ae3ecddc6567`:
-
-```text
-EnumeratedHistoricalExactBaselineTest.kt only
-+221 / -60
-production changes = 0
-docs changes = 0
-CI #665: 762 tests completed, exactly 2 failed
-R2 #598 / ASP / Real Clingo GREEN
-```
-
-The two RED contracts prove:
-
-1. two different persisted `Protect` + `Attack` target payloads must produce exactly the same mechanical player world set as a control history containing no hidden facts;
-2. in a fixed 10-player world with two legal living Minion successors, persisted `RoleChange` selecting either successor must not collapse the two rule-derived Imp succession possibilities.
-
-GREEN `9eea8142c0dd04c2fdf8164c78b5a1799b0b7698`:
-
-```text
-EnumeratedHistoricalExactBaseline.kt only
-+5 / -21 from RED
-RED tests unchanged
-```
-
-The explicit `Attack` / `Protect` / `RoleChange` rejection block was removed. No projection or replay logic changed. The KDoc now states the actual boundary: hidden facts may be persisted Storyteller truth, but hidden payloads and occurrence points are omitted before player reasoning; mechanics are regenerated from rules/world state.
-
-CI #666 / R2 #599 / Android + ASP + Real Clingo all passed.
-
-## 6. Knowledge-safety invariant after H7 completion
+## 4. Historical exact pipeline
 
 ```text
 full Storyteller GLOBAL history
 -> validate shared timeline identity
 -> PlayerHistoricalTimeline projection
-   keep public/recipient-visible facts only
+   keep public / recipient-visible facts only
    discard hidden targets + hidden occurrence points
 -> setup-only exact enumeration
 -> rule-derived hidden branching at canonical boundaries
@@ -178,38 +107,156 @@ full Storyteller GLOBAL history
 -> exact player world set
 ```
 
-Persisted hidden truth is **allowed to exist** but is **not evidence for the player**.
-
-Unsupported script boundaries remain fail-closed; H7.11 does not broaden exact support beyond Trouble Brewing.
-
-## 7. Next phase — NOT STARTED / NOT AUTHORIZED
-
-A3 Architecture Hardening has no remaining known H1–H7 correctness blocker at the current Trouble Brewing exact-baseline boundary.
-
-The next work should begin with a **production integration readiness audit**, not immediate wiring. Re-audit current production authority/call sites and determine how the validated exact baseline should interact with Host/A4/ZDD rollout, caching and shadow/authority boundaries before assigning the next implementation slice or number.
-
-Do not start or combine:
+Trouble Brewing Other Night mechanics are rule-derived:
 
 ```text
-production Host authority wiring
+possible world
+-> legal living-current-Monk protection alternatives
+-> legal living-current-Imp attack alternatives
+-> resolve Demon attack outcome
+   NO_DEATH
+   TARGET_DIES
+   IMP_SELF_KILL_SUCCESSOR_REQUIRED
+   MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED
+-> mechanical convergence
+```
+
+No known Trouble Brewing H1–H7 correctness blocker remains at this exact-baseline boundary.
+
+## 5. Production-isolated B4 integration checkpoints
+
+After H7.11, integration readiness was audited before touching Host or recommendation authority.
+
+### B4 historical-exact shadow bridge — GREEN
+
+Validated code checkpoint before the session seam:
+
+```text
+01a9aea20b4f224c6e7f911eef6c3fadb3f62be9
+CI #672 SUCCESS
+R2 #605 SUCCESS
+```
+
+`B4DynamicPlayerWorldSetShadow` now has two intentionally separate paths:
+
+```text
+B4DynamicPlayerWorldSetShadow()
+-> legacy shadow path
+-> hidden transitions may still DEFERRED_B4
+
+internal validated-ruleset opt-in
+-> EnumeratedHistoricalExactBaseline
+-> historical exact replay
+-> shadow cardinality report only
+```
+
+The validated-ruleset constructor is internal so this work does not accidentally widen public authority.
+
+### Session -> B4 historical shadow seam — GREEN
+
+RED:
+
+```text
+91016ba67d2ceabdfdd0d6e31a127d6023e40c89
+ClocktowerB4HistoricalShadowCoordinatorTest.kt only
++137
+production changes = 0
+docs changes = 0
+CI #673 expected compile RED: coordinator missing
+R2 #606 / ASP / Real Clingo GREEN
+```
+
+GREEN:
+
+```text
+c678b25cd2a750a02f0cb1a05632d31e58ffd048
+ClocktowerB4HistoricalShadowCoordinator.kt only from RED
++75
+RED test unchanged
+CI #675 SUCCESS
+R2 #608 SUCCESS
+Android / ASP / Real Clingo SUCCESS
+```
+
+The new internal session-layer coordinator consumes a real `ClocktowerGameSession` current snapshot as GLOBAL history authority and forwards its `actionTimeline` + `epistemicObservationLog` to the exact B4 shadow. The focused test commits real persisted `Protect`, `Attack` and `RoleChange` through `ClocktowerGameSession` and proves the coordinator report equals the direct exact-shadow report.
+
+It remains fail-closed unless setup/current snapshots share compatible game/seed/ruleset/seat identity, current revision is not older than setup, and current semantic history mode is `GLOBAL_V1`.
+
+## 6. Authority boundary at the pause point
+
+Current production-isolated chain:
+
+```text
+real ClocktowerGameSession
+-> GLOBAL action + observation history
+-> ClocktowerB4HistoricalShadowCoordinator
+-> B4DynamicPlayerWorldSetShadow(validated ruleset)
+-> EnumeratedHistoricalExactBaseline
+-> B4 shadow cardinality report
+```
+
+Still deliberately **not connected**:
+
+```text
+ClocktowerRecommendationCoordinator
+Host recommendation authority
+A4/ZDD selector authority
+history UI
+other scripts
+```
+
+No persistence schema or `ClocktowerGameSession` state model was changed for this seam.
+
+## 7. A3 next blocker — PAUSED, NOT STARTED
+
+The next A3 design problem is **setup snapshot ownership**.
+
+The exact replay requires an explicit immutable setup snapshot, while current app/session persistence stores the current snapshot and GLOBAL history rather than a second durable setup snapshot. Before any runtime authority wiring, decide tests-first:
+
+```text
+1. who owns the immutable setup snapshot during a live session;
+2. whether it is persisted;
+3. how restore reconstructs or retrieves it;
+4. whether restored sessions temporarily fail closed for B4 shadow when setup provenance is unavailable;
+5. only after that, where a real runtime shadow invocation belongs.
+```
+
+Do not casually add a second state copy to `ClocktowerGameSession` or persistence without resolving restore and schema semantics.
+
+Do not start or combine with:
+
+```text
+Host authority promotion
 A4/ZDD promotion
 other scripts
 history UI / misinformation expansion
 App-root S7
-PR merge / ready-for-review transition
+PR #48 merge / ready-for-review transition
 ```
 
-without explicit authorization.
+## 8. Immediate priority — resume source decomposition
 
-## 8. Working discipline
+A3 is intentionally frozen at `c678b25cd2a750a02f0cb1a05632d31e58ffd048` plus documentation-only closeout commits.
 
-For the next phase:
+The next conversation should return to the existing source-decomposition effort. Do **not** assume its branch/head from this document; re-query live repository state and read the decomposition progress/handoff documents first. The previous working context expected continuation around **A9**, after earlier A1–A8 decomposition work, with the long-term engineering goal that source files remain at or below approximately **50 KiB** without semantic changes.
 
-1. recheck live `main` and PR #48 head/state/checks;
-2. compare any docs-only head back to code checkpoint `9eea8142c0dd04c2fdf8164c78b5a1799b0b7698`;
-3. audit production integration boundaries before choosing the next tests-first slice;
-4. do not consume Storyteller-hidden payloads as player knowledge;
-5. keep App-root S7 separate;
-6. do not merge, mark ready, rebase, force-push, or broaden scope without explicit user authorization.
+For decomposition work:
 
-Documentation should be updated automatically only at meaningful architecture/phase checkpoints; do not create a docs commit for every small code change.
+```text
+- preserve behavior exactly;
+- keep moves/extractions mechanical where possible;
+- use focused characterization/ownership tests before risky moves;
+- exact-diff audit each slice;
+- do not mix A3/B4 code into decomposition commits;
+- do not restart App-root S7;
+- do not merge without explicit authorization.
+```
+
+## 9. Working discipline
+
+1. Re-query live branch/head/checks before editing.
+2. Keep RED and GREEN separate where tests-first semantics apply.
+3. Treat hidden Storyteller payload isolation as a protected invariant.
+4. Keep decomposition and A3/B4 work on their own branches/PRs.
+5. Do not merge, mark ready, rebase, force-push, or broaden scope without explicit user authorization.
+6. **Do not update documentation for every small RED/GREEN slice or SHA/CI change.** Update docs only for meaningful phase closure, roadmap change, or cross-conversation handoff.
