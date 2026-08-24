@@ -80,15 +80,23 @@ internal class EnumeratedHistoricalWorldSetSnapshot private constructor(
 
     /**
      * Applies the complete rule-derived Trouble Brewing Other Night transition to each current
-     * possible world. Triggered Ravenkeeper information or a public night-death fact may prove that
-     * one publicly alive seat changed to dead at this Demon step; neither supplies a hidden target.
+     * possible world. Triggered Ravenkeeper information, a public night-death fact, or a completed
+     * night with no public death may constrain the resulting public death state; none supplies a
+     * Storyteller-hidden target.
      */
     internal fun materializeOtherNight(
         triggeredObservation: RecordedEpistemicObservation? = null,
         confirmedPublicDeathSeat: Int? = null,
+        confirmedNoPublicDeath: Boolean = false,
     ): EnumeratedHistoricalWorldSetSnapshot {
-        require(triggeredObservation == null || confirmedPublicDeathSeat == null) {
-            "One Other Night transition cannot use two independent death confirmations."
+        require(
+            listOf(
+                triggeredObservation != null,
+                confirmedPublicDeathSeat != null,
+                confirmedNoPublicDeath,
+            ).count { it } <= 1,
+        ) {
+            "One Other Night transition cannot use multiple independent public death confirmations."
         }
         confirmedPublicDeathSeat?.let { seat ->
             require(seat > 0) { "Confirmed public night-death seat must be positive." }
@@ -110,12 +118,13 @@ internal class EnumeratedHistoricalWorldSetSnapshot private constructor(
                     confirmedPublicDeathSeat != null -> confirmedPublicDeathSeat
                     else -> null
                 }
-                if (requiredDeathSeat == null) {
-                    materialized.resolvedWorlds
-                } else if (requiredDeathSeat !in world.aliveSeats) {
-                    emptyList()
-                } else {
-                    materialized.resolvedWorlds.filter { nextWorld ->
+                when {
+                    confirmedNoPublicDeath -> materialized.resolvedWorlds.filter { nextWorld ->
+                        nextWorld.aliveSeats == world.aliveSeats
+                    }
+                    requiredDeathSeat == null -> materialized.resolvedWorlds
+                    requiredDeathSeat !in world.aliveSeats -> emptyList()
+                    else -> materialized.resolvedWorlds.filter { nextWorld ->
                         requiredDeathSeat !in nextWorld.aliveSeats
                     }
                 }
@@ -233,15 +242,18 @@ internal object EnumeratedHistoricalWorldReplay {
         var lastGlobalSequence: Long? = null
         var otherNightMechanicsApplied = false
         var otherNightPreMechanicsWorldSet: EnumeratedHistoricalWorldSetSnapshot? = null
+        var publicDeathObservedThisNight = false
 
         fun materializeOtherNight(
             triggeredObservation: RecordedEpistemicObservation? = null,
             confirmedPublicDeathSeat: Int? = null,
+            confirmedNoPublicDeath: Boolean = false,
         ) {
             otherNightPreMechanicsWorldSet = worldSet
             worldSet = worldSet.materializeOtherNight(
                 triggeredObservation = triggeredObservation,
                 confirmedPublicDeathSeat = confirmedPublicDeathSeat,
+                confirmedNoPublicDeath = confirmedNoPublicDeath,
             )
             otherNightMechanicsApplied = true
         }
@@ -252,6 +264,9 @@ internal object EnumeratedHistoricalWorldReplay {
                     worldSet = worldSet.eliminate(event.targetSeat)
                 }
                 is PlayerHistoricalEvent.PublicDeath -> {
+                    if (phase == StorytellerPhase.NIGHT) {
+                        publicDeathObservedThisNight = true
+                    }
                     if (phase == StorytellerPhase.NIGHT && validatedRuleset != null) {
                         if (!otherNightMechanicsApplied) {
                             materializeOtherNight(confirmedPublicDeathSeat = event.targetSeat)
@@ -278,15 +293,27 @@ internal object EnumeratedHistoricalWorldReplay {
                     if (
                         phase == StorytellerPhase.NIGHT &&
                         event.phase == StorytellerPhase.DAY &&
-                        !otherNightMechanicsApplied &&
                         validatedRuleset != null
                     ) {
-                        materializeOtherNight()
+                        if (!otherNightMechanicsApplied) {
+                            materializeOtherNight(
+                                confirmedNoPublicDeath = !publicDeathObservedThisNight,
+                            )
+                        } else if (!publicDeathObservedThisNight) {
+                            val preMechanics = requireNotNull(otherNightPreMechanicsWorldSet) {
+                                "Applied Other Night mechanics must retain their pre-transition snapshot."
+                            }
+                            val noDeathCompatible = preMechanics.materializeOtherNight(
+                                confirmedNoPublicDeath = true,
+                            )
+                            worldSet = worldSet.intersectMechanicalStates(noDeathCompatible)
+                        }
                     }
                     if (phase == StorytellerPhase.DAY && event.phase == StorytellerPhase.NIGHT) {
                         worldSet = worldSet.beginNight()
                         otherNightMechanicsApplied = false
                         otherNightPreMechanicsWorldSet = null
+                        publicDeathObservedThisNight = false
                     }
                     phase = event.phase
                     round = event.round
