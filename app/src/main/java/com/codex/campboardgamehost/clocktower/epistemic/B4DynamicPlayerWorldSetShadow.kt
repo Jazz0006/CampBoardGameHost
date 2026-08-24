@@ -14,14 +14,23 @@ import java.math.BigInteger
  * only candidate satisfiability/cardinality, never a formal state or a hidden Storyteller target.
  * The A4 production cache and recommendation selectors do not call this class.
  *
- * Supplying [validatedRuleset] opts this shadow into the A3 historical exact baseline. The default
- * constructor deliberately preserves the legacy B4 path until a caller explicitly provides the
- * canonical night-order authority required by historical replay.
+ * Supplying a validated ruleset through the internal opt-in constructor enables the A3 historical
+ * exact baseline. The public/default constructor deliberately preserves the legacy B4 path until
+ * an in-module caller explicitly provides canonical night-order authority for historical replay.
  */
-class B4DynamicPlayerWorldSetShadow(
-    private val runtime: A4PlayerWorldSetRuntime = A4PlayerWorldSetRuntime(),
-    private val validatedRuleset: ValidatedClocktowerRuleset? = null,
+class B4DynamicPlayerWorldSetShadow private constructor(
+    private val runtime: A4PlayerWorldSetRuntime,
+    private val validatedRuleset: ValidatedClocktowerRuleset?,
 ) {
+    constructor(
+        runtime: A4PlayerWorldSetRuntime = A4PlayerWorldSetRuntime(),
+    ) : this(runtime = runtime, validatedRuleset = null)
+
+    internal constructor(
+        validatedRuleset: ValidatedClocktowerRuleset,
+        runtime: A4PlayerWorldSetRuntime = A4PlayerWorldSetRuntime(),
+    ) : this(runtime = runtime, validatedRuleset = validatedRuleset)
+
     fun evaluate(request: B4ShadowRequest): B4ShadowReport {
         validatedRuleset?.let { ruleset ->
             return evaluateHistoricalExact(request, ruleset)
