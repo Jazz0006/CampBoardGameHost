@@ -9,8 +9,9 @@
 > Latest fully validated **A3 code** checkpoint: `c678b25cd2a750a02f0cb1a05632d31e58ffd048`  
 > Gates: **CI #675 SUCCESS / R2 #608 SUCCESS / Android + ASP + Real Clingo GREEN**  
 > Current A3 execution point: **historical exact baseline + production-isolated B4 shadow/session bridge GREEN; STOP before setup-snapshot ownership / persistence / runtime authority integration**  
-> Immediate project priority: **pause PR #48 and return to source decomposition work (resume from the live decomposition branch/status, expected next area A9)**  
-> Detailed A3 handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`
+> Immediate project priority: **pause PR #48 and resume App-root source decomposition from S7 fresh architecture audit, based on current `main` rather than the stale pre-merge branch**  
+> Detailed A3 handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`  
+> App-root S7 handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_S7.md`
 
 > Documentation-only commits may move PR #48 head beyond the validated code SHA. Before resuming A3, re-query live `main`, PR #48 head/state/checks and exact-compare any docs-only head back to `c678b25cd2a750a02f0cb1a05632d31e58ffd048`.
 
@@ -26,17 +27,16 @@ PR #42 Historical Action + Observation Capture     CLOSED / MERGED
 PR #44 Drunk / Fortune Teller hotfix               CLOSED / MERGED
 PR #43 Clocktower host decomposition A1–A13        CLOSED / MERGED
 App-root decomposition S0–S6                       CLOSED / MERGED CHECKPOINT
-App-root S7                                        PAUSED
+App-root S7                                        NEXT / FRESH ARCHITECTURE AUDIT
 PR #48 historical multi-night exact baseline       OPEN / DRAFT / PAUSED AT SAFE CHECKPOINT
 A3 Architecture Hardening H1–H7                    COMPLETE / GREEN
 B4 historical-exact shadow bridge                  GREEN
 Session -> B4 historical shadow seam               GREEN
 Setup snapshot ownership / persistence             NOT STARTED
 Production recommendation authority promotion      NOT STARTED / NOT AUTHORIZED
-Source decomposition                               RESUME NEXT
 ```
 
-App-root S7 remains paused. Do not mix S7 into PR #48 or the source-decomposition continuation.
+Do not mix App-root S7 changes into PR #48. The old `codex/source-decomposition-app-root` branch is currently behind `main` (`ahead 0 / behind 3` at this closeout) after the S0–S6 checkpoint merges, so S7 must start from a fresh live-state audit rather than blindly continuing that stale branch.
 
 ## 2. Protected architecture contracts
 
@@ -234,29 +234,71 @@ App-root S7
 PR #48 merge / ready-for-review transition
 ```
 
-## 8. Immediate priority — resume source decomposition
+## 8. Immediate priority — resume App-root decomposition S7
 
 A3 is intentionally frozen at `c678b25cd2a750a02f0cb1a05632d31e58ffd048` plus documentation-only closeout commits.
 
-The next conversation should return to the existing source-decomposition effort. Do **not** assume its branch/head from this document; re-query live repository state and read the decomposition progress/handoff documents first. The previous working context expected continuation around **A9**, after earlier A1–A8 decomposition work, with the long-term engineering goal that source files remain at or below approximately **50 KiB** without semantic changes.
-
-For decomposition work:
+The earlier Clocktower Host decomposition is **already complete through A13 and merged**. The structural work that remains paused is the separate **App-root decomposition**:
 
 ```text
+S0–S6  CLOSED / MERGED checkpoint
+S7     NEXT = fresh architecture audit
+```
+
+Authoritative S7 handoff:
+
+```text
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_S7.md
+```
+
+Known structural state at the S7 handoff:
+
+```text
+CampBoardGameHostApp.kt
+original: 325,556 bytes
+after S6: 229,822 bytes
+net reduction: 95,734 bytes (~29.4%)
+```
+
+The 50 KiB target remains a maintainability guideline rather than a hard gate. S7 must **not automatically reuse an old ranking**. Re-audit the live `CampBoardGameHostApp.kt` and choose the next highest-value, lowest-risk cohesive ownership slice. If no natural low-risk seam remains, stop rather than manufacture an artificial owner.
+
+At this closeout, the old branch:
+
+```text
+codex/source-decomposition-app-root
+```
+
+is behind current `main` (`ahead 0 / behind 3`). Therefore the next conversation should begin from live `main` and determine the correct fresh branch/worktree strategy before writing tests or production code.
+
+Protected S7 boundaries include:
+
+```text
+- Clocktower live transaction ordering
+- Compose effect lifetime
+- persistence / restore / archive ownership
+- A4 lifecycle/cache/prewarm effects
+- Clocktower planner/projector/materializer/session authority
+- A3/B4 behavior
+```
+
+For S7:
+
+```text
+- audit first; do not immediately implement;
+- identify exact new owner/declarations/dependencies/visibility changes;
+- characterize Root state/effect/transaction ownership that must remain;
+- define focused RED, production allowlist, validation commands and STOP conditions;
 - preserve behavior exactly;
-- keep moves/extractions mechanical where possible;
-- use focused characterization/ownership tests before risky moves;
-- exact-diff audit each slice;
+- exact-diff audit every implementation slice;
 - do not mix A3/B4 code into decomposition commits;
-- do not restart App-root S7;
 - do not merge without explicit authorization.
 ```
 
 ## 9. Working discipline
 
-1. Re-query live branch/head/checks before editing.
+1. Re-query live `main`, relevant decomposition branches/PRs and checks before editing.
 2. Keep RED and GREEN separate where tests-first semantics apply.
-3. Treat hidden Storyteller payload isolation as a protected invariant.
+3. Treat hidden Storyteller payload isolation as a protected invariant even while A3 is paused.
 4. Keep decomposition and A3/B4 work on their own branches/PRs.
 5. Do not merge, mark ready, rebase, force-push, or broaden scope without explicit user authorization.
 6. **Do not update documentation for every small RED/GREEN slice or SHA/CI change.** Update docs only for meaningful phase closure, roadmap change, or cross-conversation handoff.
