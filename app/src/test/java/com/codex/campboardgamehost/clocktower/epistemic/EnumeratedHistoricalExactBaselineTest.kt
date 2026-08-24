@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
+import com.codex.campboardgamehost.clocktower.catalog.ClocktowerScriptSource
+import com.codex.campboardgamehost.clocktower.catalog.LegacyRulesetCatalogAdapter
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.Alignment
@@ -7,9 +9,11 @@ import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
-import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
+import com.codex.campboardgamehost.clocktower.rules.RulesetJsonLoader
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -18,13 +22,32 @@ import org.junit.Test
 
 class EnumeratedHistoricalExactBaselineTest {
     private val script = ScriptId("trouble_brewing")
-    private val ruleset = RulesetRef(
-        script,
-        "0123456789abcdef0123456789abcdef",
-        "a3-historical-constructor-test",
-        "official",
-        RuleCoverage.VERIFIED,
-    )
+    private val legacyKnowledge by lazy {
+        RulesetJsonLoader.parse(
+            File("src/main/assets/rules/trouble_brewing.json").readText(Charsets.UTF_8),
+        )
+    }
+    private val registry by lazy {
+        LegacyRulesetCatalogAdapter.characterRegistry(
+            knowledge = legacyKnowledge,
+            roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
+            coverage = RuleCoverage.PARTIAL,
+        )
+    }
+    private val validatedRuleset by lazy {
+        RulesetJsonLoader.parseScript(
+            json = File("src/main/assets/scripts/trouble_brewing.json").readText(Charsets.UTF_8),
+            requestedScriptId = script,
+            registry = registry,
+            source = ClocktowerScriptSource.BUILTIN_OFFICIAL,
+        )
+    }
+    private val ruleset by lazy {
+        validatedRuleset.toRulesetRef(
+            rulesetVersion = "a3-historical-constructor-test",
+            sourceRevision = "official",
+        )
+    }
     private val roles = listOf(
         role("Empath", CharacterType.TOWNSFOLK),
         role("Chef", CharacterType.TOWNSFOLK),
@@ -76,6 +99,7 @@ class EnumeratedHistoricalExactBaselineTest {
         )
 
         val result = EnumeratedHistoricalExactBaseline.build(
+            validatedRuleset = validatedRuleset,
             rulesetRef = ruleset,
             setupKnowledge = setupKnowledge,
             hypothesis = EpistemicHypothesis.FUNCTIONING_ONLY,
@@ -100,6 +124,54 @@ class EnumeratedHistoricalExactBaselineTest {
     }
 
     @Test
+    fun `exact baseline uses validated night order to reject reversed ability chronology`() {
+        val actions = ActionFactTimeline(
+            listOf(
+                action(
+                    ActionFact.PhaseAdvance("day-1", 1L, StorytellerPhase.DAY, 1),
+                    StorytellerPhase.FIRST_NIGHT,
+                    round = 1,
+                    localSequence = 1,
+                    globalSequence = 1L,
+                ),
+                action(
+                    ActionFact.PhaseAdvance("night-2", 2L, StorytellerPhase.NIGHT, 2),
+                    StorytellerPhase.DAY,
+                    round = 1,
+                    localSequence = 2,
+                    globalSequence = 2L,
+                ),
+            ),
+        )
+        val fortuneTellerFirst = nightAbilityObservation(
+            recordId = "fortune-teller-first",
+            sourceSeat = 2,
+            sourceAbility = RoleId("Fortune Teller"),
+            globalSequence = 10L,
+        )
+        val empathSecond = nightAbilityObservation(
+            recordId = "empath-second",
+            sourceSeat = 1,
+            sourceAbility = RoleId("Empath"),
+            globalSequence = 11L,
+        )
+
+        val result = EnumeratedHistoricalExactBaseline.build(
+            validatedRuleset = validatedRuleset,
+            rulesetRef = ruleset,
+            setupKnowledge = setupKnowledge,
+            hypothesis = EpistemicHypothesis.FUNCTIONING_ONLY,
+            roleDefinitions = roles,
+            initialPhase = StorytellerPhase.FIRST_NIGHT,
+            initialRound = 1,
+            actionTimeline = actions,
+            observationLog = EpistemicObservationLog(listOf(fortuneTellerFirst, empathSecond)),
+        )
+
+        assertTrue(result.worldSet.isEmpty())
+    }
+
+    @Test
     fun `exact baseline refuses hidden attack and protect until successor branching is modeled`() {
         listOf(
             ActionFact.Attack("hidden-attack", 10L, 2) to "Attack",
@@ -119,6 +191,7 @@ class EnumeratedHistoricalExactBaselineTest {
 
             try {
                 EnumeratedHistoricalExactBaseline.build(
+                    validatedRuleset = validatedRuleset,
                     rulesetRef = ruleset,
                     setupKnowledge = setupKnowledge,
                     hypothesis = EpistemicHypothesis.FUNCTIONING_ONLY,
@@ -159,6 +232,7 @@ class EnumeratedHistoricalExactBaselineTest {
 
         try {
             EnumeratedHistoricalExactBaseline.build(
+                validatedRuleset = validatedRuleset,
                 rulesetRef = ruleset,
                 setupKnowledge = setupKnowledge,
                 hypothesis = EpistemicHypothesis.FUNCTIONING_ONLY,
@@ -173,6 +247,33 @@ class EnumeratedHistoricalExactBaselineTest {
             assertTrue(expected.message.orEmpty().contains("RoleChange"))
             assertTrue(expected.message.orEmpty().contains("exact", ignoreCase = true))
         }
+    }
+
+    private fun nightAbilityObservation(
+        recordId: String,
+        sourceSeat: Int,
+        sourceAbility: RoleId,
+        globalSequence: Long,
+    ): RecordedEpistemicObservation {
+        val point = TimelinePoint(
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = globalSequence.toInt(),
+            globalSequence = globalSequence,
+        )
+        return RecordedEpistemicObservation(
+            recordId = recordId,
+            phase = StorytellerPhase.NIGHT,
+            round = 2,
+            sequence = globalSequence.toInt(),
+            sourceSeat = sourceSeat,
+            sourceAbility = sourceAbility,
+            visibility = ObservationVisibility.PRIVATE,
+            recipientSeats = setOf(setupKnowledge.recipientSeat),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = InformationProposition.AliveAt(3, true),
+            timelineBinding = ObservationTimelineBinding.Global(point),
+        )
     }
 
     private fun action(
