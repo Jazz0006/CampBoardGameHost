@@ -23,6 +23,10 @@ internal object EnumeratedWorldNightReplayPlanning {
         world: EnumeratedWorld,
         observations: List<RecordedEpistemicObservation>,
     ): EnumeratedWorldNightReplayPlan? {
+        if (observations.map(RecordedEpistemicObservation::round).distinct().size > 1) {
+            return null
+        }
+
         val schedule = EnumeratedWorldNightSchedule.plan(
             ruleset = ruleset,
             phase = phase,
