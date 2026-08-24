@@ -6,9 +6,9 @@
 > Stable `main`: `84a062378f13b90ce71f3801982ba3b2d3b22d80`  
 > Active branch: `codex/a3-historical-multinight-exact-baseline-clean`  
 > Draft PR: **#48 `A3: historical multi-night exact baseline`**  
-> Latest fully validated **code** checkpoint: `5cc3bbc64b9ba47c788a8a97eb8a8992d9befa01`  
-> Gates: **CI #610 SUCCESS / R2 #543 SUCCESS / Android + ASP + Real Clingo GREEN**  
-> Current execution point: **A3 Architecture Hardening — H7.2 dynamic current-Monk protection**  
+> Latest fully validated **code** checkpoint: `8e49772707835e0071774cf6b8ef38ad842041a1`  
+> Gates: **CI #619 SUCCESS / R2 #552 SUCCESS / Android + ASP + Real Clingo GREEN**  
+> Current execution point: **A3 Architecture Hardening — H7.2 GREEN; STOP before end-to-end hidden Attack/Protect replay**  
 > Detailed handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`
 
 > Documentation-only commits may move the branch/PR head beyond the validated code SHA. New conversations must re-query live `main`, PR #48 head/state/checks before editing.
@@ -28,7 +28,9 @@ App-root decomposition S0–S6                       CLOSED / MERGED CHECKPOINT
 App-root S7                                        PAUSED
 PR #48 historical multi-night exact baseline       OPEN / DRAFT / ACTIVE
 A3 hardening H1–H6                                 GREEN
-A3 H7 hidden mechanics integration                 IN PROGRESS
+A3 H7.1 current-Demon attack helper                GREEN
+A3 H7.2 current-Monk protection helper             GREEN
+End-to-end hidden Attack/Protect replay             NOT STARTED / STOPPED
 Production Host / A4 / ZDD authority promotion     NOT STARTED / BLOCKED
 ```
 
@@ -93,7 +95,7 @@ No synthetic hidden `globalSequence` values are invented.
 
 ```text
 H7.1 dynamic current-Demon attack branching     GREEN
-H7.2 dynamic current-Monk protection branching  NEXT
+H7.2 dynamic current-Monk protection branching  GREEN
 ```
 
 H7.1 RED/GREEN:
@@ -110,31 +112,33 @@ GREEN 5cc3bbc64b9ba47c788a8a97eb8a8992d9befa01
       Android + ASP + Real Clingo GREEN
 ```
 
-`EnumeratedWorldOtherNightAttackBranching` now finds the attacking Imp from `currentRolesBySeat + aliveSeats` and builds `AbilitySubject.actualRole` from current role identity.
+`EnumeratedWorldOtherNightAttackBranching` finds the attacking Imp from `currentRolesBySeat + aliveSeats` and builds `AbilitySubject.actualRole` from current role identity.
 
-## 5. Immediate next task — H7.2
+H7.2 RED/GREEN:
 
-`EnumeratedWorldOtherNightProtectionBranching` still uses setup `rolesBySeat` to discover Monk ownership and build the actor subject.
+```text
+RED   2b103eaa8386359460e986e8ee35a9e550b76fcd
+      CI #618 FAILURE as expected
+      Android 749 tests / exactly 1 new H7.2 failure
+      ASP + Real Clingo + R2 #551 GREEN
 
-Next tests-first slice:
+GREEN 8e49772707835e0071774cf6b8ef38ad842041a1
+      CI #619 SUCCESS
+      R2 #552 SUCCESS
+      Android + ASP + Real Clingo GREEN
+```
+
+Locked H7.2 contract:
 
 ```text
 setup seat 3 = Monk
 current role seat 3 != Monk
-=> seat 3 must not continue producing functioning Monk protection branches
+=> seat 3 does not produce functioning Monk protection branches
 ```
 
-A complementary current-state consumer case may prove that an alive/functioning current Monk is recognized even when setup identity differs.
+`EnumeratedWorldOtherNightProtectionBranching` now discovers a living Monk from `currentRolesBySeat + aliveSeats` and builds `AbilitySubject.actualRole` from `currentRolesBySeat`. Stable protection target-seat enumeration remains `rolesBySeat.keys` because seat identity is stable.
 
-Expected GREEN ownership is narrow:
-
-```text
-EnumeratedWorldOtherNightProtectionBranching.kt
-```
-
-Stable target-seat domain may remain `rolesBySeat.keys`; seat identity is stable even when roles change.
-
-## 6. Hidden-information invariant
+## 5. Hidden-information invariant
 
 Never feed storyteller actual hidden targets or hidden action occurrence points into player possible worlds.
 
@@ -149,7 +153,7 @@ current possible world
 
 Actual `Poison` / `Protect` / `Attack` / `RoleChange` payloads remain forbidden as player-world truth.
 
-## 7. Guards and out-of-scope work
+## 6. Guards and out-of-scope work
 
 `EnumeratedHistoricalExactBaseline.build(...)` must still fail closed on:
 
@@ -175,9 +179,9 @@ App-root S7
 
 Unresolved legal branches such as Mayor redirect or Imp self-kill successor must never be silently dropped to claim a partial “exact” result.
 
-## 8. After H7.2
+## 7. Next possible slice — NOT STARTED
 
-Only after H7.2 is GREEN should the next RED move toward:
+Only with explicit authorization should the next RED move toward:
 
 ```text
 rule-derived Monk protection
@@ -186,9 +190,11 @@ rule-derived Monk protection
 -> convergence
 ```
 
+This is the end-to-end Attack/Protect replay slice and is deliberately **not started** at this checkpoint.
+
 Relax `Attack` / `Protect` / `RoleChange` constructor guards only when the corresponding exact transition semantics are complete.
 
-## 9. Working discipline
+## 8. Working discipline
 
 For each RED/GREEN slice:
 
