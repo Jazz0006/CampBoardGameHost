@@ -17,7 +17,6 @@ import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
 import org.junit.Test
 
 class EnumeratedHistoricalExactBaselineTest {
@@ -172,82 +171,229 @@ class EnumeratedHistoricalExactBaselineTest {
     }
 
     @Test
-    fun `exact baseline refuses hidden attack and protect until successor branching is modeled`() {
-        listOf(
-            ActionFact.Attack("hidden-attack", 10L, 2) to "Attack",
-            ActionFact.Protect("hidden-protect", 10L, 2) to "Protect",
-        ).forEach { (fact, expectedName) ->
-            val actions = ActionFactTimeline(
-                listOf(
-                    action(
-                        fact,
-                        StorytellerPhase.NIGHT,
-                        round = 1,
-                        localSequence = 1,
-                        globalSequence = 10L,
-                    ),
-                ),
-            )
+    fun `persisted hidden attack and protect payloads do not constrain exact player worlds`() {
+        val rolesBySeat = linkedMapOf(
+            1 to RoleId("Empath"),
+            2 to RoleId("Chef"),
+            3 to RoleId("Monk"),
+            4 to RoleId("Poisoner"),
+            5 to RoleId("Imp"),
+        )
+        val roleDefinitions = listOf(
+            role("Empath", CharacterType.TOWNSFOLK),
+            role("Chef", CharacterType.TOWNSFOLK),
+            role("Monk", CharacterType.TOWNSFOLK),
+            role("Poisoner", CharacterType.MINION),
+            role("Imp", CharacterType.DEMON),
+        )
+        val controlActions = ActionFactTimeline(
+            listOf(
+                phaseAdvance("day-1", StorytellerPhase.FIRST_NIGHT, 1, StorytellerPhase.DAY, 1, 1L),
+                phaseAdvance("night-2", StorytellerPhase.DAY, 1, StorytellerPhase.NIGHT, 2, 2L),
+                phaseAdvance("day-2", StorytellerPhase.NIGHT, 2, StorytellerPhase.DAY, 2, 7L),
+            ),
+        )
+        val hiddenPayloadA = ActionFactTimeline(
+            listOf(
+                phaseAdvance("day-1", StorytellerPhase.FIRST_NIGHT, 1, StorytellerPhase.DAY, 1, 1L),
+                phaseAdvance("night-2", StorytellerPhase.DAY, 1, StorytellerPhase.NIGHT, 2, 2L),
+                action(ActionFact.Protect("protect-a", 3L, 1), StorytellerPhase.NIGHT, 2, 3, 3L),
+                action(ActionFact.Attack("attack-a", 4L, 1), StorytellerPhase.NIGHT, 2, 4, 4L),
+                phaseAdvance("day-2", StorytellerPhase.NIGHT, 2, StorytellerPhase.DAY, 2, 7L),
+            ),
+        )
+        val hiddenPayloadB = ActionFactTimeline(
+            listOf(
+                phaseAdvance("day-1", StorytellerPhase.FIRST_NIGHT, 1, StorytellerPhase.DAY, 1, 1L),
+                phaseAdvance("night-2", StorytellerPhase.DAY, 1, StorytellerPhase.NIGHT, 2, 2L),
+                action(ActionFact.Protect("protect-b", 3L, 5), StorytellerPhase.NIGHT, 2, 3, 3L),
+                action(ActionFact.Attack("attack-b", 4L, 5), StorytellerPhase.NIGHT, 2, 4, 4L),
+                phaseAdvance("day-2", StorytellerPhase.NIGHT, 2, StorytellerPhase.DAY, 2, 7L),
+            ),
+        )
 
-            try {
-                EnumeratedHistoricalExactBaseline.build(
-                    validatedRuleset = validatedRuleset,
-                    rulesetRef = ruleset,
-                    setupKnowledge = setupKnowledge,
-                    hypothesis = EpistemicHypothesis.FUNCTIONING_ONLY,
-                    roleDefinitions = roles,
-                    initialPhase = StorytellerPhase.FIRST_NIGHT,
-                    initialRound = 1,
-                    actionTimeline = actions,
-                    observationLog = EpistemicObservationLog(),
-                )
-                fail("Expected incomplete $expectedName semantics to block an exact result.")
-            } catch (expected: IllegalArgumentException) {
-                assertTrue(expected.message.orEmpty().contains(expectedName))
-                assertTrue(expected.message.orEmpty().contains("exact", ignoreCase = true))
-            }
-        }
+        val control = buildFixed(
+            rolesBySeat = rolesBySeat,
+            profile = InformationProposition.SetupProfile(3, 0, 1, 1),
+            roleDefinitions = roleDefinitions,
+            actions = controlActions,
+            id = "hidden-attack-protect-control",
+        )
+        val payloadA = buildFixed(
+            rolesBySeat = rolesBySeat,
+            profile = InformationProposition.SetupProfile(3, 0, 1, 1),
+            roleDefinitions = roleDefinitions,
+            actions = hiddenPayloadA,
+            id = "hidden-attack-protect-a",
+        )
+        val payloadB = buildFixed(
+            rolesBySeat = rolesBySeat,
+            profile = InformationProposition.SetupProfile(3, 0, 1, 1),
+            roleDefinitions = roleDefinitions,
+            actions = hiddenPayloadB,
+            id = "hidden-attack-protect-b",
+        )
+
+        assertFalse(control.worldSet.isEmpty())
+        assertReplayMechanicallyEquivalent(control, payloadA)
+        assertReplayMechanicallyEquivalent(control, payloadB)
+        assertEquals(7L, payloadA.lastGlobalSequence)
+        assertEquals(7L, payloadB.lastGlobalSequence)
     }
 
     @Test
-    fun `exact baseline refuses hidden role changes until successor branching is modeled`() {
-        val actions = ActionFactTimeline(
+    fun `persisted hidden role change target does not select a rule derived Imp successor`() {
+        val rolesBySeat = linkedMapOf(
+            1 to RoleId("Washerwoman"),
+            2 to RoleId("Librarian"),
+            3 to RoleId("Investigator"),
+            4 to RoleId("Chef"),
+            5 to RoleId("Empath"),
+            6 to RoleId("Monk"),
+            7 to RoleId("Ravenkeeper"),
+            8 to RoleId("Poisoner"),
+            9 to RoleId("Spy"),
+            10 to RoleId("Imp"),
+        )
+        val roleDefinitions = listOf(
+            role("Washerwoman", CharacterType.TOWNSFOLK),
+            role("Librarian", CharacterType.TOWNSFOLK),
+            role("Investigator", CharacterType.TOWNSFOLK),
+            role("Chef", CharacterType.TOWNSFOLK),
+            role("Empath", CharacterType.TOWNSFOLK),
+            role("Monk", CharacterType.TOWNSFOLK),
+            role("Ravenkeeper", CharacterType.TOWNSFOLK),
+            role("Poisoner", CharacterType.MINION),
+            role("Spy", CharacterType.MINION),
+            role("Imp", CharacterType.DEMON),
+        )
+        val controlActions = ActionFactTimeline(
             listOf(
+                phaseAdvance("day-1", StorytellerPhase.FIRST_NIGHT, 1, StorytellerPhase.DAY, 1, 1L),
+                phaseAdvance("night-2", StorytellerPhase.DAY, 1, StorytellerPhase.NIGHT, 2, 2L),
+                action(ActionFact.Death("imp-public-death", 4L, 10), StorytellerPhase.NIGHT, 2, 4, 4L),
+                phaseAdvance("day-2", StorytellerPhase.NIGHT, 2, StorytellerPhase.DAY, 2, 7L),
+            ),
+        )
+        fun actionsWithPersistedSuccessor(targetSeat: Int, suffix: String) = ActionFactTimeline(
+            listOf(
+                phaseAdvance("day-1", StorytellerPhase.FIRST_NIGHT, 1, StorytellerPhase.DAY, 1, 1L),
+                phaseAdvance("night-2", StorytellerPhase.DAY, 1, StorytellerPhase.NIGHT, 2, 2L),
+                action(ActionFact.Death("imp-public-death", 4L, 10), StorytellerPhase.NIGHT, 2, 4, 4L),
                 action(
                     ActionFact.RoleChange(
-                        actionId = "starpass",
-                        sequence = 10L,
-                        targetSeat = 5,
+                        actionId = "persisted-starpass-$suffix",
+                        sequence = 5L,
+                        targetSeat = targetSeat,
                         role = RoleId("Imp"),
                         alignment = Alignment.EVIL,
                         type = CharacterType.DEMON,
                     ),
                     StorytellerPhase.NIGHT,
-                    round = 1,
-                    localSequence = 1,
-                    globalSequence = 10L,
+                    2,
+                    5,
+                    5L,
                 ),
+                phaseAdvance("day-2", StorytellerPhase.NIGHT, 2, StorytellerPhase.DAY, 2, 7L),
             ),
         )
 
-        try {
-            EnumeratedHistoricalExactBaseline.build(
-                validatedRuleset = validatedRuleset,
-                rulesetRef = ruleset,
-                setupKnowledge = setupKnowledge,
-                hypothesis = EpistemicHypothesis.FUNCTIONING_ONLY,
-                roleDefinitions = roles,
-                initialPhase = StorytellerPhase.FIRST_NIGHT,
-                initialRound = 1,
-                actionTimeline = actions,
-                observationLog = EpistemicObservationLog(),
-            )
-            fail("Expected incomplete RoleChange semantics to block an exact result.")
-        } catch (expected: IllegalArgumentException) {
-            assertTrue(expected.message.orEmpty().contains("RoleChange"))
-            assertTrue(expected.message.orEmpty().contains("exact", ignoreCase = true))
-        }
+        val control = buildFixed(
+            rolesBySeat = rolesBySeat,
+            profile = InformationProposition.SetupProfile(7, 0, 2, 1),
+            roleDefinitions = roleDefinitions,
+            actions = controlActions,
+            id = "hidden-role-change-control",
+        )
+        val poisonerPayload = buildFixed(
+            rolesBySeat = rolesBySeat,
+            profile = InformationProposition.SetupProfile(7, 0, 2, 1),
+            roleDefinitions = roleDefinitions,
+            actions = actionsWithPersistedSuccessor(8, "poisoner"),
+            id = "hidden-role-change-poisoner",
+        )
+        val spyPayload = buildFixed(
+            rolesBySeat = rolesBySeat,
+            profile = InformationProposition.SetupProfile(7, 0, 2, 1),
+            roleDefinitions = roleDefinitions,
+            actions = actionsWithPersistedSuccessor(9, "spy"),
+            id = "hidden-role-change-spy",
+        )
+
+        assertFalse(control.worldSet.isEmpty())
+        assertReplayMechanicallyEquivalent(control, poisonerPayload)
+        assertReplayMechanicallyEquivalent(control, spyPayload)
+        assertEquals(
+            setOf(8, 9),
+            control.worldSet.enumeratedWorlds().map { world ->
+                world.currentRolesBySeat.entries.single { (seat, role) ->
+                    seat in world.aliveSeats && role.value.equals("Imp", ignoreCase = true)
+                }.key
+            }.toSet(),
+        )
+        assertEquals(7L, poisonerPayload.lastGlobalSequence)
+        assertEquals(7L, spyPayload.lastGlobalSequence)
     }
+
+    private fun buildFixed(
+        rolesBySeat: LinkedHashMap<Int, RoleId>,
+        profile: InformationProposition.SetupProfile,
+        roleDefinitions: List<RoleDefinition>,
+        actions: ActionFactTimeline,
+        id: String,
+    ): EnumeratedHistoricalReplayResult {
+        val knowledge = PlayerKnowledgeSnapshot(
+            knowledgeSnapshotId = "knowledge-$id",
+            formalSnapshotId = "snapshot-$id",
+            recipientSeat = 1,
+            perceivedRole = rolesBySeat.getValue(1),
+            setupKnowledge = listOf(profile) + rolesBySeat.map { (seat, role) ->
+                InformationProposition.RoleAt(seat, role)
+            },
+        )
+        return EnumeratedHistoricalExactBaseline.build(
+            validatedRuleset = validatedRuleset,
+            rulesetRef = ruleset,
+            setupKnowledge = knowledge,
+            hypothesis = EpistemicHypothesis.FUNCTIONING_ONLY,
+            roleDefinitions = roleDefinitions,
+            initialPhase = StorytellerPhase.FIRST_NIGHT,
+            initialRound = 1,
+            actionTimeline = actions,
+            observationLog = EpistemicObservationLog(),
+        )
+    }
+
+    private fun assertReplayMechanicallyEquivalent(
+        expected: EnumeratedHistoricalReplayResult,
+        actual: EnumeratedHistoricalReplayResult,
+    ) {
+        assertEquals(expected.phase, actual.phase)
+        assertEquals(expected.round, actual.round)
+        assertEquals(expected.lastGlobalSequence, actual.lastGlobalSequence)
+        assertEquals(mechanicalStates(expected), mechanicalStates(actual))
+    }
+
+    private fun mechanicalStates(result: EnumeratedHistoricalReplayResult): Set<MechanicalStateKey> =
+        result.worldSet.enumeratedWorlds().map { world ->
+            MechanicalStateKey(
+                rolesBySeat = world.rolesBySeat,
+                currentRolesBySeat = world.currentRolesBySeat,
+                redHerringSeat = world.redHerringSeat,
+                shownRolesBySeat = world.shownRolesBySeat,
+                aliveSeats = world.aliveSeats,
+                abilityStatesBySeat = world.abilityStatesBySeat,
+            )
+        }.toSet()
+
+    private data class MechanicalStateKey(
+        val rolesBySeat: Map<Int, RoleId>,
+        val currentRolesBySeat: Map<Int, RoleId>,
+        val redHerringSeat: Int?,
+        val shownRolesBySeat: Map<Int, RoleId>,
+        val aliveSeats: Set<Int>,
+        val abilityStatesBySeat: Map<Int, AbilityState>,
+    )
 
     private fun nightAbilityObservation(
         recordId: String,
@@ -275,6 +421,21 @@ class EnumeratedHistoricalExactBaselineTest {
             timelineBinding = ObservationTimelineBinding.Global(point),
         )
     }
+
+    private fun phaseAdvance(
+        actionId: String,
+        pointPhase: StorytellerPhase,
+        pointRound: Int,
+        nextPhase: StorytellerPhase,
+        nextRound: Int,
+        globalSequence: Long,
+    ): TimelineBoundActionFact = action(
+        ActionFact.PhaseAdvance(actionId, globalSequence, nextPhase, nextRound),
+        pointPhase,
+        pointRound,
+        globalSequence.toInt(),
+        globalSequence,
+    )
 
     private fun action(
         fact: ActionFact,
