@@ -18,8 +18,8 @@ internal data class EnumeratedWorldOtherNightProtectionBranch(
 
 internal object EnumeratedWorldOtherNightProtectionBranching {
     fun branches(world: EnumeratedWorld): List<EnumeratedWorldOtherNightProtectionBranch> {
-        val monkSeat = world.rolesBySeat.entries.singleOrNull { (_, role) ->
-            role.value.equals("Monk", ignoreCase = true)
+        val monkSeat = world.currentRolesBySeat.entries.singleOrNull { (seat, role) ->
+            seat in world.aliveSeats && role.value.equals("Monk", ignoreCase = true)
         }?.key ?: return listOf(branch(world, null))
 
         val monk = subject(world, monkSeat)
@@ -41,7 +41,7 @@ internal object EnumeratedWorldOtherNightProtectionBranching {
     )
 
     private fun subject(world: EnumeratedWorld, seat: Int) = AbilitySubject(
-        actualRole = world.rolesBySeat.getValue(seat).value,
+        actualRole = world.currentRolesBySeat.getValue(seat).value,
         shownRole = world.shownRolesBySeat[seat]?.value,
         isPoisoned = world.abilityStatesBySeat[seat] == AbilityState.MALFUNCTIONING_POISONED,
         isAlive = seat in world.aliveSeats,
