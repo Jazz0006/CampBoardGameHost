@@ -2,7 +2,7 @@
 
 > Date: 2026-08-24  
 > Status: **ACTIVE / PR #48 DRAFT / DO NOT MERGE**  
-> Immediate state: **H7.2 dynamic current-Monk protection GREEN / STOP before end-to-end Attack/Protect replay**  
+> Immediate state: **H7.3 other-night mechanics materialization GREEN / STOP before historical replay wiring or guard relaxation**  
 > Repository: `Jazz0006/CampBoardGameHost`
 
 ## 1. Startup in the next conversation
@@ -33,9 +33,9 @@ Stable `main` at handoff time:
 Latest fully validated **code** checkpoint:
 
 ```text
-8e49772707835e0071774cf6b8ef38ad842041a1
-CI #619 SUCCESS
-R2 #552 SUCCESS
+c20a8a8f3392d82f08fe1ab57f97988ef8db4da8
+CI #623 SUCCESS
+R2 #556 SUCCESS
 Android SUCCESS
 ASP SUCCESS
 Real Clingo SUCCESS
@@ -43,7 +43,7 @@ Real Clingo SUCCESS
 
 Documentation-only commits may advance the branch/PR head beyond this code checkpoint.
 
-PR #48 was open, draft, mergeable, and not merged after H7.2 GREEN validation.
+PR #48 remains open, draft, mergeable, and not merged after H7.3 GREEN validation.
 
 ## 2. Current hardening state
 
@@ -57,9 +57,10 @@ H6 GREEN  incremental state-aware observation replay
 H7 IN PROGRESS
   H7.1 GREEN  hidden attack helper uses living current Demon
   H7.2 GREEN  hidden protection helper uses living current Monk
+  H7.3 GREEN  resolved other-night mechanics materialization + explicit unresolved branch boundary
 ```
 
-The next end-to-end hidden Attack/Protect replay slice is **not started**. App-root S7 remains paused and must not be restarted in this A3 branch.
+End-to-end hidden Attack/Protect historical replay is **not wired**. App-root S7 remains paused and must not be restarted in this A3 branch.
 
 ## 3. Core architecture that must remain true
 
@@ -85,15 +86,7 @@ rolesBySeat         immutable setup identity
 currentRolesBySeat  dynamic current historical role
 ```
 
-This supports states such as:
-
-```text
-dead former Imp
-+
-living successor Imp
-```
-
-without weakening setup uniqueness.
+This supports states such as a dead former Imp plus a living successor Imp without weakening setup uniqueness.
 
 ### Canonical order vs eligibility
 
@@ -131,21 +124,7 @@ R2 #543 SUCCESS
 Android + ASP + Real Clingo GREEN
 ```
 
-Locked scenario:
-
-```text
-setup:
-seat 3 = Scarlet Woman
-seat 4 = Imp
-
-current:
-seat 3 = living Imp
-seat 4 = dead former Imp
-```
-
-`EnumeratedWorldOtherNightAttackBranching` branches from seat 3.
-
-The helper:
+`EnumeratedWorldOtherNightAttackBranching`:
 
 ```text
 finds attacking Imp from currentRolesBySeat + aliveSeats
@@ -169,34 +148,13 @@ Real Clingo SUCCESS
 R2 #551 SUCCESS
 ```
 
-The RED was test-only:
-
-```text
-app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/
-  EnumeratedWorldOtherNightProtectionBranchingTest.kt
-
-+16 lines
-production changes = 0
-```
-
 GREEN:
 
 ```text
 8e49772707835e0071774cf6b8ef38ad842041a1
 CI #619 SUCCESS
 R2 #552 SUCCESS
-Android SUCCESS
-ASP SUCCESS
-Real Clingo SUCCESS
-```
-
-RED -> GREEN exact production diff:
-
-```text
-app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/
-  EnumeratedWorldOtherNightProtectionBranching.kt
-
-3 additions / 3 deletions
+Android + ASP + Real Clingo GREEN
 ```
 
 Semantic change:
@@ -211,23 +169,97 @@ rolesBySeat
 -> currentRolesBySeat
 ```
 
-Stable target-seat choice domain remains:
+Stable target-seat choice domain remains `rolesBySeat.keys`.
+
+## 6. H7.3 result to preserve
+
+H7.3 introduced a knowledge-safe materialization boundary without wiring historical replay and without relaxing exact-baseline guards.
+
+RED:
 
 ```text
-rolesBySeat.keys
+9b6127d517b3cf4bca6add72fcc14dce99bef3e5
+CI #622 expected FAILURE at :app:compileDebugUnitTestKotlin
+root cause:
+  unresolved reference EnumeratedWorldOtherNightMechanicsMaterializer
+production changes = 0
+ASP SUCCESS
+Real Clingo SUCCESS
+R2 #555 SUCCESS
 ```
 
-Locked scenario:
+RED file only:
 
 ```text
-setup seat 3 = Monk
-current seat 3 = Soldier
-=> no functioning Monk protection branch from seat 3
+app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/
+  EnumeratedWorldOtherNightMechanicsMaterializerTest.kt
 ```
 
-This is a current-state consumer contract only. It does not claim a generic Trouble Brewing mechanic can arbitrarily transform Monk into Soldier.
+GREEN:
 
-## 6. Explicitly still fail-closed / out of scope
+```text
+c20a8a8f3392d82f08fe1ab57f97988ef8db4da8
+CI #623 SUCCESS
+R2 #556 SUCCESS
+Android SUCCESS
+ASP SUCCESS
+Real Clingo SUCCESS
+```
+
+RED -> GREEN exact production diff:
+
+```text
+app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/
+  EnumeratedWorldOtherNightMechanicsMaterializer.kt
+
+new file only
+74 additions
+```
+
+The materializer accepts only an `EnumeratedWorld` and composes the existing rule-derived protection/attack helpers:
+
+```text
+possible world
+-> all legal current-Monk protection branches
+-> all legal current-Imp direct attack branches
+-> materialize NO_DEATH / TARGET_DIES
+-> converge resolved mechanical worlds
+```
+
+It deliberately keeps these outcomes explicit rather than discarding them:
+
+```text
+MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED
+IMP_SELF_KILL_SUCCESSOR_REQUIRED
+```
+
+Those are returned in `unresolvedBranches` with their branch context. They are **not** counted as resolved exact worlds.
+
+Locked H7.3 test world:
+
+```text
+seat 1 Empath
+seat 2 Chef
+seat 3 Monk
+seat 4 Poisoner
+seat 5 Imp
+```
+
+The resolved branch set converges to the mechanically distinct outcomes:
+
+```text
+no death
+death seat 1
+death seat 2
+death seat 3
+death seat 4
+```
+
+Imp self-target remains unresolved for the legal Monk-protection branches where seat 5 is not protected. Hidden path multiplicity is not mistaken for exact world cardinality.
+
+The materializer consumes no storyteller-selected `Protect` or `Attack` target.
+
+## 7. Explicitly still fail-closed / out of scope
 
 `EnumeratedHistoricalExactBaseline.build(...)` must continue to fail closed on:
 
@@ -237,10 +269,18 @@ Protect
 RoleChange
 ```
 
-Do not:
+H7.3 did **not** modify:
 
 ```text
-wire hidden Monk/Imp helpers into historical replay
+EnumeratedHistoricalExactBaseline.kt
+EnumeratedHistoricalWorldReplay.kt
+PlayerHistoricalTimeline.kt
+```
+
+Do not yet:
+
+```text
+wire H7.3 materialization into historical replay
 relax Attack guard
 relax Protect guard
 relax RoleChange guard
@@ -255,30 +295,45 @@ expand to other scripts
 
 Actual hidden storyteller `Attack` / `Protect` / `RoleChange` payloads remain forbidden as player possible-world truth.
 
-## 7. Next possible slice — NOT AUTHORIZED / NOT STARTED
+## 8. Why replay wiring must still stop
 
-Only after explicit user authorization should the next RED move toward end-to-end rule-derived other-night mechanics:
-
-```text
-Monk protection alternatives
--> Imp attack alternatives
--> mechanical outcome materialization
--> convergence
-```
-
-That future slice must preserve fail-closed handling for unresolved legal outcomes such as:
+A functioning Imp's legal target set includes the Imp itself. Therefore a complete rule-derived other-night transition can legally produce:
 
 ```text
-MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED
 IMP_SELF_KILL_SUCCESSOR_REQUIRED
 ```
 
-If those possibilities cannot yet be represented, the exact path must remain fail-closed rather than claim partial exactness.
+A world containing a functioning Mayor can also produce:
 
-## 8. Validation discipline for the next authorized slice
+```text
+MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED
+```
+
+Because those are legal possible branches, wiring only H7.3 `resolvedWorlds` into historical replay would silently delete possible worlds and would falsely report a partial result as exact.
+
+The exact path must therefore remain fail-closed until the unresolved branch boundary is resolved or otherwise represented completely.
+
+## 9. Next possible slice — NOT AUTHORIZED / NOT STARTED
+
+The next architectural decision is no longer “how to enumerate Monk/Imp choices”; H7.1–H7.3 now provide that substrate.
+
+The next blocker is how to complete unresolved legal outcomes, especially:
+
+```text
+Imp self-kill -> successor selection / role transition
+Mayor target -> death or redirect branching
+```
+
+The user previously excluded Imp succession and Mayor redirect from the H7.2 scope. Do not begin either one automatically. Obtain explicit authorization for the next blocker slice before changing their semantics.
+
+Only after unresolved outcomes are complete should a later slice wire rule-derived other-night mechanics into `EnumeratedHistoricalWorldReplay` and consider relaxing `Attack` / `Protect` guards.
+
+Host / A4 / ZDD remain separately out of scope.
+
+## 10. Validation discipline for the next authorized slice
 
 1. recheck live `main` and PR #48 head/state/checks;
-2. compare any docs-only head back to `8e49772707835e0071774cf6b8ef38ad842041a1`;
+2. compare any docs-only head back to `c20a8a8f3392d82f08fe1ab57f97988ef8db4da8`;
 3. keep the next RED test-only;
 4. prove the RED is the intended semantic failure;
 5. keep GREEN production diff minimal;
