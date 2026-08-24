@@ -10,10 +10,11 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 /**
  * End-to-end exact historical baseline for one player's knowledge-safe timeline.
  *
- * Setup enumeration remains the seed authority. Durable actions and observations are then merged
- * under GLOBAL_V1 ordering and projected through [PlayerHistoricalTimeline]. Hidden Poison targets
- * are safe to omit from that projection because setup enumeration branches the first-night target
- * and historical replay independently branches every legal later-night Poisoner target; the
+ * Setup enumeration remains the seed authority. Durable observations are stripped from that seed
+ * and consumed only through the GLOBAL_V1 historical timeline. Durable actions and observations are
+ * merged under GLOBAL_V1 ordering and projected through [PlayerHistoricalTimeline]. Hidden Poison
+ * targets are safe to omit from that projection because setup enumeration branches the first-night
+ * target and historical replay independently branches every legal later-night Poisoner target; the
  * storyteller-selected target never becomes player knowledge.
  *
  * [validatedRuleset] is the canonical night-order authority. Visible ability observations retain
@@ -59,9 +60,13 @@ internal object EnumeratedHistoricalExactBaseline {
                 "refusing to report a partial replay as exact."
         }
 
+        val historicalSeedKnowledge = setupKnowledge.copy(
+            publicObservations = emptyList(),
+            privateObservations = emptyList(),
+        )
         val initialWorldSet = TroubleBrewingWorldEnumerator.enumerate(
             rulesetRef = rulesetRef,
-            knowledge = setupKnowledge,
+            knowledge = historicalSeedKnowledge,
             hypothesis = hypothesis,
             roleDefinitions = roleDefinitions,
         )
@@ -77,7 +82,7 @@ internal object EnumeratedHistoricalExactBaseline {
         )
         val chronologyCompatibleWorldSet = EnumeratedWorldSet.fromWorlds(
             rulesetRef = rulesetRef,
-            knowledge = setupKnowledge,
+            knowledge = historicalSeedKnowledge,
             hypothesis = hypothesis,
             roleDefinitions = roleDefinitions,
             worlds = chronologyCompatibleWorlds,
