@@ -262,7 +262,12 @@ internal object EnumeratedHistoricalWorldReplay {
                             val deathCompatible = preMechanics.materializeOtherNight(
                                 confirmedPublicDeathSeat = event.targetSeat,
                             )
-                            worldSet = worldSet.intersectMechanicalStates(deathCompatible)
+                            val reconciled = worldSet.intersectMechanicalStates(deathCompatible)
+                            worldSet = if (reconciled.isEmpty()) {
+                                worldSet.eliminate(event.targetSeat)
+                            } else {
+                                reconciled
+                            }
                         }
                     } else {
                         worldSet = worldSet.eliminate(event.targetSeat)
