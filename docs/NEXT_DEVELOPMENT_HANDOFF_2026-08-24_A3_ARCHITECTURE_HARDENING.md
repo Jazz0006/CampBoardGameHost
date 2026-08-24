@@ -2,7 +2,7 @@
 
 > Date: 2026-08-24  
 > Status: **ACTIVE / PR #48 DRAFT / DO NOT MERGE**  
-> Immediate target: **H7.2 dynamic current-Monk protection RED -> GREEN**  
+> Immediate state: **H7.2 dynamic current-Monk protection GREEN / STOP before end-to-end Attack/Protect replay**  
 > Repository: `Jazz0006/CampBoardGameHost`
 
 ## 1. Startup in the next conversation
@@ -15,7 +15,7 @@ Before editing code:
 4. query live `main`;
 5. query PR #48 live head/state/checks;
 6. if the branch head is newer because of docs-only commits, compare back to the validated code checkpoint below;
-7. continue on the existing A3 branch;
+7. continue on the existing A3 branch only if the user explicitly authorizes the next slice;
 8. do not merge, mark ready, rebase, force-push, or widen scope without explicit authorization.
 
 Active branch:
@@ -33,15 +33,17 @@ Stable `main` at handoff time:
 Latest fully validated **code** checkpoint:
 
 ```text
-5cc3bbc64b9ba47c788a8a97eb8a8992d9befa01
-CI #610 SUCCESS
-R2 #543 SUCCESS
+8e49772707835e0071774cf6b8ef38ad842041a1
+CI #619 SUCCESS
+R2 #552 SUCCESS
 Android SUCCESS
 ASP SUCCESS
 Real Clingo SUCCESS
 ```
 
-PR #48 was open, draft, mergeable, and not merged at that checkpoint.
+Documentation-only commits may advance the branch/PR head beyond this code checkpoint.
+
+PR #48 was open, draft, mergeable, and not merged after H7.2 GREEN validation.
 
 ## 2. Current hardening state
 
@@ -54,10 +56,10 @@ H5 GREEN  immutable setup roles + dynamic currentRolesBySeat
 H6 GREEN  incremental state-aware observation replay
 H7 IN PROGRESS
   H7.1 GREEN  hidden attack helper uses living current Demon
-  H7.2 NEXT   hidden protection helper uses current historical Monk
+  H7.2 GREEN  hidden protection helper uses living current Monk
 ```
 
-App-root S7 remains paused and must not be restarted in this A3 branch.
+The next end-to-end hidden Attack/Protect replay slice is **not started**. App-root S7 remains paused and must not be restarted in this A3 branch.
 
 ## 3. Core architecture that must remain true
 
@@ -76,7 +78,7 @@ Actual storyteller-hidden `Poison` / `Protect` / `Attack` / `RoleChange` targets
 
 ### Setup identity vs current identity
 
-`EnumeratedWorld` now separates:
+`EnumeratedWorld` separates:
 
 ```text
 rolesBySeat         immutable setup identity
@@ -141,9 +143,9 @@ seat 3 = living Imp
 seat 4 = dead former Imp
 ```
 
-`EnumeratedWorldOtherNightAttackBranching` must branch from seat 3.
+`EnumeratedWorldOtherNightAttackBranching` branches from seat 3.
 
-The helper now:
+The helper:
 
 ```text
 finds attacking Imp from currentRolesBySeat + aliveSeats
@@ -151,97 +153,81 @@ builds AbilitySubject.actualRole from currentRolesBySeat
 keeps stable seat choices over rolesBySeat.keys
 ```
 
-Existing poisoned/dead Imp, Soldier, Mayor, Monk-protection and self-target semantics remain GREEN.
+## 5. H7.2 result to preserve
 
-## 5. Immediate task — H7.2 RED
+H7.2 proved that hidden Monk protection branching must consume current historical role state rather than immutable setup identity.
 
-Current problem:
-
-`EnumeratedWorldOtherNightProtectionBranching` still discovers Monk ownership and builds the actor subject from setup `rolesBySeat`.
-
-Create a new focused test first.
-
-Minimum RED contract:
+RED:
 
 ```text
-setup:
-seat 3 = Monk
-
-current:
-seat 3 != Monk
-
-=> seat 3 must not continue generating functioning Monk protection branches
+2b103eaa8386359460e986e8ee35a9e550b76fcd
+CI #618 expected FAILURE
+Android 749 tests / exactly 1 failure:
+  former setup Monk that is no longer current Monk has no effective protection branch
+ASP SUCCESS
+Real Clingo SUCCESS
+R2 #551 SUCCESS
 ```
 
-A complementary current-state consumer case may prove:
+The RED was test-only:
 
 ```text
-setup seat is not Monk
-current seat is alive/functioning Monk
-=> helper recognizes current Monk and branches legal other-seat protections
-```
+app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/
+  EnumeratedWorldOtherNightProtectionBranchingTest.kt
 
-These are representation/current-state consumer contracts only. They do not claim a generic Trouble Brewing mechanic can arbitrarily turn someone into Monk. Historical exact support remains Trouble Brewing-only and actual `RoleChange` remains fail-closed.
-
-Expected RED:
-
-```text
-new focused H7.2 test only
++16 lines
 production changes = 0
-compile succeeds
-one intended semantic failure
-ASP / Real Clingo / R2 remain GREEN
 ```
 
-Stop if the failure comes from fixture/setup invariants instead of the stale setup-role lookup.
-
-## 6. H7.2 GREEN ownership
-
-Preferred GREEN scope:
+GREEN:
 
 ```text
-EnumeratedWorldOtherNightProtectionBranching.kt
+8e49772707835e0071774cf6b8ef38ad842041a1
+CI #619 SUCCESS
+R2 #552 SUCCESS
+Android SUCCESS
+ASP SUCCESS
+Real Clingo SUCCESS
 ```
 
-Expected semantic change:
+RED -> GREEN exact production diff:
+
+```text
+app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/
+  EnumeratedWorldOtherNightProtectionBranching.kt
+
+3 additions / 3 deletions
+```
+
+Semantic change:
 
 ```text
 Monk discovery:
 rolesBySeat
--> currentRolesBySeat + alive/current ability functioning
+-> currentRolesBySeat + aliveSeats
 
 AbilitySubject.actualRole:
 rolesBySeat
 -> currentRolesBySeat
 ```
 
-Stable target-seat choice domain may remain:
+Stable target-seat choice domain remains:
 
 ```text
 rolesBySeat.keys
 ```
 
-because seats are stable even when current roles change.
-
-Do not modify the RED test in GREEN unless the RED itself reveals a test bug.
-
-## 7. Explicitly out of scope for H7.2
-
-Do not:
+Locked scenario:
 
 ```text
-relax Attack guard
-relax Protect guard
-relax RoleChange guard
-wire hidden Monk/Imp helpers into historical replay
-implement Mayor redirect
-implement Imp self-kill successor selection
-implement Scarlet Woman succession transition
-change PlayerWorldSet cache identity
-wire Host / A4 / ZDD
-restart App-root S7
-expand to other scripts
+setup seat 3 = Monk
+current seat 3 = Soldier
+=> no functioning Monk protection branch from seat 3
 ```
+
+This is a current-state consumer contract only. It does not claim a generic Trouble Brewing mechanic can arbitrarily transform Monk into Soldier.
+
+## 6. Explicitly still fail-closed / out of scope
 
 `EnumeratedHistoricalExactBaseline.build(...)` must continue to fail closed on:
 
@@ -251,9 +237,27 @@ Protect
 RoleChange
 ```
 
-## 8. After H7.2 GREEN
+Do not:
 
-Only then should the next RED move toward end-to-end rule-derived other-night mechanics:
+```text
+wire hidden Monk/Imp helpers into historical replay
+relax Attack guard
+relax Protect guard
+relax RoleChange guard
+implement Mayor redirect
+implement Imp self-kill successor selection
+implement Scarlet Woman succession transition
+change PlayerWorldSet cache identity
+wire Host / A4 / ZDD
+restart App-root S7
+expand to other scripts
+```
+
+Actual hidden storyteller `Attack` / `Protect` / `RoleChange` payloads remain forbidden as player possible-world truth.
+
+## 7. Next possible slice — NOT AUTHORIZED / NOT STARTED
+
+Only after explicit user authorization should the next RED move toward end-to-end rule-derived other-night mechanics:
 
 ```text
 Monk protection alternatives
@@ -262,7 +266,7 @@ Monk protection alternatives
 -> convergence
 ```
 
-Do not silently discard unresolved legal outcomes such as:
+That future slice must preserve fail-closed handling for unresolved legal outcomes such as:
 
 ```text
 MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED
@@ -271,15 +275,14 @@ IMP_SELF_KILL_SUCCESSOR_REQUIRED
 
 If those possibilities cannot yet be represented, the exact path must remain fail-closed rather than claim partial exactness.
 
-## 9. Validation discipline
+## 8. Validation discipline for the next authorized slice
 
-For H7.2 RED/GREEN:
-
-1. recheck live PR head before writing;
-2. keep RED test-only;
-3. prove the RED is the intended semantic failure;
-4. keep GREEN production diff minimal;
-5. exact-compare RED -> GREEN;
-6. wait for CI, R2, ASP, and Real Clingo;
-7. recheck PR remains open/draft/not merged;
-8. stop before the next slice unless the user explicitly says continue.
+1. recheck live `main` and PR #48 head/state/checks;
+2. compare any docs-only head back to `8e49772707835e0071774cf6b8ef38ad842041a1`;
+3. keep the next RED test-only;
+4. prove the RED is the intended semantic failure;
+5. keep GREEN production diff minimal;
+6. exact-compare RED -> GREEN;
+7. wait for CI, R2, ASP, and Real Clingo;
+8. recheck PR remains open/draft/not merged;
+9. stop before any subsequent slice unless explicitly instructed.
