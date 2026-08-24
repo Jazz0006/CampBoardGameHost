@@ -24,8 +24,8 @@ internal object EnumeratedWorldOtherNightAttackBranching {
         protectionBranch: EnumeratedWorldOtherNightProtectionBranch,
     ): List<EnumeratedWorldOtherNightAttackBranch> {
         val world = protectionBranch.world
-        val impSeat = world.rolesBySeat.entries.singleOrNull { (_, role) ->
-            role.value.equals("Imp", ignoreCase = true)
+        val impSeat = world.currentRolesBySeat.entries.singleOrNull { (seat, role) ->
+            seat in world.aliveSeats && role.value.equals("Imp", ignoreCase = true)
         }?.key ?: return listOf(noChoice(protectionBranch))
 
         val attacker = subject(world, impSeat)
@@ -60,7 +60,7 @@ internal object EnumeratedWorldOtherNightAttackBranching {
     )
 
     private fun subject(world: EnumeratedWorld, seat: Int) = AbilitySubject(
-        actualRole = world.rolesBySeat.getValue(seat).value,
+        actualRole = world.currentRolesBySeat.getValue(seat).value,
         shownRole = world.shownRolesBySeat[seat]?.value,
         isPoisoned = world.abilityStatesBySeat[seat] == AbilityState.MALFUNCTIONING_POISONED,
         isAlive = seat in world.aliveSeats,
