@@ -19,12 +19,16 @@ data class EnumeratedWorld(
     val aliveSeats: Set<Int> = rolesBySeat.keys,
     val abilityStatesBySeat: Map<Int, AbilityState> = emptyMap(),
     val explanationClusters: Set<WorldExplanationClusterId> = emptySet(),
+    val currentRolesBySeat: Map<Int, RoleId> = rolesBySeat,
 ) {
     init {
         require(rolesBySeat.isNotEmpty())
         require(rolesBySeat.keys.all { it > 0 })
         require(rolesBySeat.keys.toList() == rolesBySeat.keys.sorted()) { "World seats must use canonical order." }
         require(rolesBySeat.values.distinct().size == rolesBySeat.size) { "Characters are unique in a legal setup." }
+        require(currentRolesBySeat.keys == rolesBySeat.keys) {
+            "Historical current-role state must cover exactly the setup seats."
+        }
         require(redHerringSeat == null || redHerringSeat in rolesBySeat)
         require(shownRolesBySeat.keys.all { it in rolesBySeat })
         require(aliveSeats.all { it in rolesBySeat })
@@ -33,6 +37,74 @@ data class EnumeratedWorld(
 
     fun withClusters(clusters: Set<WorldExplanationClusterId>): EnumeratedWorld =
         copy(explanationClusters = explanationClusters + clusters)
+
+    /**
+     * Applies an explicit historical current-role state without mutating immutable setup identity.
+     * Historical transitions may legitimately duplicate a character (for example a dead former Imp
+     * plus a living successor Imp), so setup uniqueness is intentionally not applied to this map.
+     */
+    fun withCurrentRoles(currentRoles: Map<Int, RoleId>): EnumeratedWorld {
+        require(currentRoles.keys == rolesBySeat.keys) {
+            "Historical current-role state must cover exactly the setup seats."
+        }
+        val canonicalCurrentRoles = currentRoles.toSortedMap()
+        val previousPoisonerSeat = currentRolesBySeat.entries.singleOrNull {
+            it.value.value.equals("Poisoner", ignoreCase = true)
+        }?.key
+        val nextPoisonerSeat = canonicalCurrentRoles.entries.singleOrNull {
+            it.value.value.equals("Poisoner", ignoreCase = true)
+        }?.key
+        val nextAbilityStates = if (previousPoisonerSeat != nextPoisonerSeat) {
+            abilityStatesBySeat.filterValues { it != AbilityState.MALFUNCTIONING_POISONED }
+        } else {
+            abilityStatesBySeat
+        }
+        return copy(
+            currentRolesBySeat = canonicalCurrentRoles,
+            abilityStatesBySeat = nextAbilityStates,
+        )
+    }
+}
+
+/**
+ * Identity of the current exact mechanical state. Explanation/provenance is deliberately excluded:
+ * multiple hidden paths which reach this same state are one possible world, not several.
+ */
+private data class EnumeratedWorldMechanicalIdentity(
+    val rolesBySeat: Map<Int, RoleId>,
+    val currentRolesBySeat: Map<Int, RoleId>,
+    val redHerringSeat: Int?,
+    val shownRolesBySeat: Map<Int, RoleId>,
+    val aliveSeats: Set<Int>,
+    val abilityStatesBySeat: Map<Int, AbilityState>,
+)
+
+internal object EnumeratedWorldMechanicalConvergence {
+    fun converge(worlds: Collection<EnumeratedWorld>): List<EnumeratedWorld> {
+        val converged = linkedMapOf<EnumeratedWorldMechanicalIdentity, EnumeratedWorld>()
+        worlds.forEach { world ->
+            val identity = world.mechanicalIdentity()
+            val existing = converged[identity]
+            converged[identity] = if (existing == null) {
+                world
+            } else {
+                existing.copy(
+                    explanationClusters = existing.explanationClusters + world.explanationClusters,
+                )
+            }
+        }
+        return converged.values.toList()
+    }
+
+    private fun EnumeratedWorld.mechanicalIdentity(): EnumeratedWorldMechanicalIdentity =
+        EnumeratedWorldMechanicalIdentity(
+            rolesBySeat = rolesBySeat,
+            currentRolesBySeat = currentRolesBySeat,
+            redHerringSeat = redHerringSeat,
+            shownRolesBySeat = shownRolesBySeat,
+            aliveSeats = aliveSeats,
+            abilityStatesBySeat = abilityStatesBySeat,
+        )
 }
 
 /** Transparent A3 correctness baseline. It deliberately materializes every surviving world. */
@@ -53,18 +125,22 @@ class EnumeratedWorldSet private constructor(
 
     override fun exclude(observation: EpistemicObservation): EnumeratedWorldSet = filtered(observation, retainMatches = false)
 
-    override fun possibleRoles(seat: Int): Set<RoleId> = worlds.mapNotNullTo(linkedSetOf()) { it.rolesBySeat[seat] }
+    override fun possibleRoles(seat: Int): Set<RoleId> = worlds.mapNotNullTo(linkedSetOf()) { it.currentRolesBySeat[seat] }
 
-    override fun possibleDemonSeats(): Set<Int> = possibleSeatsOfType(CharacterType.DEMON)
+    override fun possibleDemonSeats(): Set<Int> = worlds.flatMapTo(linkedSetOf()) { world ->
+        world.currentRolesBySeat.filter { (seat, role) ->
+            seat in world.aliveSeats && roles.getValue(role).type == CharacterType.DEMON
+        }.keys
+    }
 
     override fun possibleMinionSeats(): Set<Int> = possibleSeatsOfType(CharacterType.MINION)
 
     override fun roleWorldCount(seat: Int, role: RoleId): WorldCardinality = exactCount {
-        it.rolesBySeat[seat] == role
+        it.currentRolesBySeat[seat] == role
     }
 
     override fun demonWorldCount(seat: Int): WorldCardinality = exactCount {
-        it.rolesBySeat[seat]?.let(roles::get)?.type == CharacterType.DEMON
+        seat in it.aliveSeats && it.currentRolesBySeat[seat]?.let(roles::get)?.type == CharacterType.DEMON
     }
 
     override fun explanationClusters(): ExplanationClusterSummary {
@@ -108,7 +184,7 @@ class EnumeratedWorldSet private constructor(
     }
 
     private fun possibleSeatsOfType(type: CharacterType): Set<Int> = worlds.flatMapTo(linkedSetOf()) { world ->
-        world.rolesBySeat.filterValues { roles.getValue(it).type == type }.keys
+        world.currentRolesBySeat.filterValues { roles.getValue(it).type == type }.keys
     }
 
     private fun exactCount(predicate: (EnumeratedWorld) -> Boolean): WorldCardinality.Exact =
@@ -127,6 +203,7 @@ class EnumeratedWorldSet private constructor(
             val perceived = roles[knowledge.perceivedRole]
                 ?: throw IllegalArgumentException("Perceived role ${knowledge.perceivedRole.value} is not in the ruleset.")
             require(worlds.all { world -> world.rolesBySeat.values.all(roles::containsKey) })
+            require(worlds.all { world -> world.currentRolesBySeat.values.all(roles::containsKey) })
             require(worlds.all { world ->
                 world.redHerringSeat == null ||
                     roles.getValue(world.rolesBySeat.getValue(world.redHerringSeat)).alignment == Alignment.GOOD
@@ -145,7 +222,7 @@ class EnumeratedWorldSet private constructor(
                 hypothesis,
                 identity,
                 roles,
-                recipientCompatibleWorlds.distinct(),
+                EnumeratedWorldMechanicalConvergence.converge(recipientCompatibleWorlds),
             )
             knowledge.setupKnowledge.forEach { proposition ->
                 result = result.filterProposition(proposition)
