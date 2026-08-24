@@ -23,6 +23,22 @@ class EnumeratedWorldOtherNightProtectionBranchingTest {
     }
 
     @Test
+    fun `former setup Monk that is no longer current Monk has no effective protection branch`() {
+        val setupWorld = world(
+            roles = listOf("Empath", "Chef", "Monk", "Poisoner", "Imp"),
+        )
+        val world = setupWorld.withCurrentRoles(
+            setupWorld.currentRolesBySeat + (3 to RoleId("Soldier")),
+        )
+
+        assertEquals(
+            listOf(null),
+            EnumeratedWorldOtherNightProtectionBranching.branches(world)
+                .map { it.functioningMonkProtectedSeat },
+        )
+    }
+
+    @Test
     fun `poisoned or dead Monk has no effective protection branch`() {
         val poisoned = world(
             roles = listOf("Empath", "Chef", "Monk", "Poisoner", "Imp"),
