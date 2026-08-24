@@ -20,11 +20,13 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
  *
  * [validatedRuleset] is the canonical night-order authority. Visible ability observations retain
  * their durable GLOBAL_V1 identities, while each possible world must independently prove that the
- * observed chronology can be anchored to the ruleset's canonical night schedule.
+ * observed chronology can be anchored to the ruleset's canonical night schedule. Historical replay
+ * also uses that schedule only as a knowledge-neutral ordering substrate for rule-derived hidden
+ * Other Night mechanics; it never invents hidden GLOBAL_V1 events.
  *
- * Attack, Protect, and RoleChange can alter persistent or same-night mechanical state, but their
- * rule-derived hidden successor branching is not modeled yet. Histories containing those actions
- * are rejected rather than allowing a knowledge-safe projection to be mistaken for an exact replay.
+ * Attack, Protect, and RoleChange persisted action facts remain fail-closed. The rule-derived hidden
+ * Other Night transition is now replayable without consuming those Storyteller-selected payloads,
+ * but guard relaxation is a separate architecture slice.
  */
 internal object EnumeratedHistoricalExactBaseline {
     private val SUPPORTED_SCRIPT = ScriptId("trouble_brewing")
@@ -63,8 +65,8 @@ internal object EnumeratedHistoricalExactBaseline {
             }
         }
         require(unsupportedHiddenMechanic == null) {
-            "A3 exact historical baseline does not yet model hidden $unsupportedHiddenMechanic successor worlds; " +
-                "refusing to report a partial replay as exact."
+            "A3 exact historical baseline does not yet accept persisted hidden $unsupportedHiddenMechanic facts; " +
+                "refusing to consume Storyteller-selected hidden payloads before the guard-relaxation slice."
         }
 
         val historicalSeedKnowledge = setupKnowledge.copy(
@@ -100,6 +102,7 @@ internal object EnumeratedHistoricalExactBaseline {
             initialPhase = initialPhase,
             initialRound = initialRound,
             events = events,
+            validatedRuleset = validatedRuleset,
         )
     }
 
