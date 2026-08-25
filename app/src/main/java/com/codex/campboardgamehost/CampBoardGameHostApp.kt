@@ -3918,29 +3918,6 @@ internal fun HostProgressCard(
 }
 
 @Composable
-internal fun ClocktowerDarkTheme(content: @Composable () -> Unit) {
-    val typography = MaterialTheme.typography
-    MaterialTheme(
-        colorScheme = androidx.compose.material3.darkColorScheme(
-            primary = Color(0xFFC5A56A),
-            onPrimary = Color(0xFF17120A),
-            secondary = Color(0xFF61798A),
-            onSecondary = Color(0xFFF7F1E6),
-            background = Color(0xFF0B0D10),
-            onBackground = Color(0xFFF1EADC),
-            surface = Color(0xFF14171C),
-            onSurface = Color(0xFFF1EADC),
-            surfaceVariant = Color(0xFF1B1F25),
-            onSurfaceVariant = Color(0xFFAAA397),
-            error = Color(0xFFC9574A),
-            onError = Color(0xFFF7F1E6),
-        ),
-        typography = typography,
-        content = content,
-    )
-}
-
-@Composable
 internal fun ClocktowerNewDemonConfirmationScreen(
     newDemonLabel: String,
     hasNewDemon: Boolean,
@@ -4205,33 +4182,6 @@ internal fun SelectablePlayerChips(
         }
     }
 }
-
-internal enum class TwoPlayerSelectionAction {
-    ToggleFirst,
-    ToggleSecond,
-    RejectLimit,
-}
-
-internal fun twoPlayerSelectionAction(
-    first: String?,
-    second: String?,
-    selectedName: String,
-): TwoPlayerSelectionAction = when {
-    selectedName == first -> TwoPlayerSelectionAction.ToggleFirst
-    selectedName == second -> TwoPlayerSelectionAction.ToggleSecond
-    first == null -> TwoPlayerSelectionAction.ToggleFirst
-    second == null -> TwoPlayerSelectionAction.ToggleSecond
-    else -> TwoPlayerSelectionAction.RejectLimit
-}
-
-internal fun shouldAutoAdvanceRedHerring(
-    automaticStorytellerInfo: Boolean,
-    isRedHerringStep: Boolean,
-    isRealAction: Boolean,
-    hasSelectedRedHerring: Boolean,
-): Boolean = automaticStorytellerInfo &&
-    isRedHerringStep &&
-    (!isRealAction || hasSelectedRedHerring)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
