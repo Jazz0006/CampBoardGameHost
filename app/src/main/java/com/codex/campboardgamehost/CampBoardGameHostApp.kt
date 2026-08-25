@@ -3813,42 +3813,6 @@ internal fun EmptyStateCard(text: String) {
 }
 
 @Composable
-internal fun WerewolfRoleLine(roleName: String, players: List<PlayerCard>) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(roleName, fontWeight = FontWeight.SemiBold)
-        Text(
-            text = if (players.isEmpty()) stringResource(R.string.no_role_players) else players.joinToString { it.name },
-            color = Color(0xFF6F7B74),
-        )
-    }
-}
-
-@Composable
-internal fun WerewolfPlayerStatusRow(card: PlayerCard) {
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(card.name, fontWeight = FontWeight.SemiBold)
-                Text(card.roleLabel ?: stringResource(card.role.labelResId()), color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
-            }
-            val status = card.eliminatedRound?.let { stringResource(R.string.eliminated_round_format, it) }
-                ?: stringResource(R.string.active_status)
-            Text(status, color = if (card.eliminatedRound == null) Color(0xFF2F5D50) else Color(0xFF9A4B36))
-        }
-    }
-}
-
-@Composable
 internal fun EliminationRecord.displayText(): String {
     val base = stringResource(R.string.elimination_record_format, round, playerName)
     return note?.let { stringResource(R.string.elimination_record_with_note_format, base, it) } ?: base
