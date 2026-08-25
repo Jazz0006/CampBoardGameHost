@@ -58,7 +58,7 @@ jobs:
               base="$(git rev-parse "${head}^")"
             fi
 
-            git diff --name-only "$base" "$head" > "$RUNNER_TEMP/changed-files.txt"
+            git diff --name-only --no-renames "$base" "$head" > "$RUNNER_TEMP/changed-files.txt"
             echo "Changed files:"
             cat "$RUNNER_TEMP/changed-files.txt"
 
