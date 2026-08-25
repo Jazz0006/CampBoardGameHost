@@ -9,7 +9,7 @@
 > PR #49: **merged — app-root S7.1/S7.2 structural checkpoint**
 > Latest fully validated A3 code checkpoint: preserve the current merged repository status; do not revive stale PR #48 language
 > Current project priority: **TEST EXECUTION WORKFLOW OPTIMIZATION**
-> Current S1 status: **S1.1 COMPLETE / S1.2 COMPLETE / S1.3 COMPLETE / S1.4 ACTIVE**
+> Current test-workflow status: **S1 COMPLETE / S2 NEXT / S3 NOT STARTED**
 > Detailed test strategy: `docs/TESTING_STRATEGY.md`
 > App-root S7 handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_S7.md`
 
@@ -36,8 +36,8 @@ Production recommendation authority promotion      NOT STARTED / NOT AUTHORIZED
 S1.1 test execution baseline timing                 COMPLETE
 S1.2 slow-test/root-cause audit                     COMPLETE
 S1.3 tier/escalation design                         COMPLETE
-S1.4 documentation/governance sync                 ACTIVE
-S2 executable Gradle suites                         NOT STARTED
+S1.4 documentation/governance sync                 COMPLETE
+S2 executable Gradle suites                         NEXT / NOT STARTED
 S3 CI impact/path-aware optimization                NOT STARTED
 ```
 
