@@ -36,6 +36,15 @@ Six Android classes account for approximately 90% of testcase duration:
 
 The repository therefore has a small expensive tail, alongside significant Gradle/configuration/compile/startup cost. The 770 tests are not generally slow.
 
+S2.1 established executable Android JVM suites at commit `99b340635e04abd64341e5aa2fc202d6c46d9842`:
+
+- `:app:testFast`: 751 tests, 0 failures/errors/skipped
+- `:app:testFull`: 770 tests, 0 failures/errors/skipped
+- `FULL - FAST`: exactly 19 testcases from the five approved excluded classes
+- warmed no-change `testFast`: approximately 5.75–6.25s, with tasks `UP-TO-DATE`
+
+`testFast` retains `A3EnumerationBenchmarkTest`, representative utility tests, integration/wiring tests, and ownership/characterization tests.
+
 ## 3. T0–T4 execution model
 
 ### T0 — FOCUSED
@@ -46,7 +55,13 @@ The exact test method, class, or small directly related class set for the behavi
 
 Broad, cheap regression confidence. T1 includes ordinary Android JVM tests, pure domain and rule tests, cheap deterministic contracts, ownership and characterization tests, narrow integration/production-wiring tests, and cheap golden tests.
 
-The planned governance is default inclusion of all Android JVM tests except a small explicit list of measured expensive or broad tests. This is safer than a large whitelist because newly added tests naturally enter the default set.
+The executable Android JVM entry point is:
+
+```text
+:app:testFast
+```
+
+Its governance is default inclusion of all Android JVM tests except a small explicit list of measured expensive or broad tests. This is safer than a large whitelist because newly added tests naturally enter the default set.
 
 ### T2 — AFFECTED
 
@@ -59,6 +74,14 @@ T3 contains high-volume regression corpora, simulations, large or repeated enume
 ### T4 — FULL
 
 T4 is the complete repository regression gate: all Android JVM tests, debug assemble/compile checks, ASP validation, ASP Python tests, real Clingo cross-validation, and other existing CI-required validation.
+
+The executable Android JVM full-suite entry point is:
+
+```text
+:app:testFull
+```
+
+`testFull` delegates to the existing AGP `:app:testDebugUnitTest` task so Android JVM full coverage remains anchored to the current source of truth.
 
 ## 4. Tier is not trigger
 
@@ -73,26 +96,34 @@ Expensive does not mean PR-only, and FAST exclusion does not mean coverage exclu
 
 ## 5. Default FAST policy
 
-All Android JVM tests should default to FAST unless explicit measured evidence identifies them as expensive, broad, simulation-based, benchmark-based, or otherwise unsuitable for every edit loop.
+All Android JVM tests default to FAST unless explicit measured evidence identifies them as expensive, broad, simulation-based, benchmark-based, or otherwise unsuitable for every edit loop.
 
-Future S2 implementation should prefer default inclusion plus a small explicit exclusion set. It must not use a large manual whitelist that allows new tests to silently miss FAST.
+The implemented `:app:testFast` task uses default inclusion plus a small explicit exclusion set. It does not use a large manual whitelist, so newly added ordinary tests naturally enter FAST unless explicitly excluded later with measured justification.
 
-Executable `testFast` and `testFull` tasks do not exist yet. They are planned future S2 work.
+The current FAST exclusions are exactly:
 
-## 6. Known non-FAST candidates
+- `com.codex.campboardgamehost.clocktower.recommendation.setup.SetupMigrationTest`
+- `com.codex.campboardgamehost.clocktower.epistemic.ZddPlayerWorldSetTest`
+- `com.codex.campboardgamehost.clocktower.review.ExpertRecommendationReviewTest`
+- `com.codex.campboardgamehost.clocktower.simulation.StorytellerV4BaselineSimulationTest`
+- `com.codex.campboardgamehost.clocktower.epistemic.A4ZddBenchmarkTest`
 
-These are candidates, not permanent measurements. Re-measure them when the test, algorithm, Gradle behavior, or surrounding suite materially changes.
+`A3EnumerationBenchmarkTest` remains in FAST because its measured cost is low.
 
-| Class | Approximate measured cost | Reason | Candidate role | Trigger family |
+## 6. Known non-FAST classes and specialized triggers
+
+These classifications are not permanent measurements. Re-measure them when the test, algorithm, Gradle behavior, or surrounding suite materially changes.
+
+| Class | Approximate measured cost | Reason | Role | Trigger family |
 |---|---:|---|---|---|
 | `SetupMigrationTest` | 31–34s testcase | 1000-sample and 200+200 recommendation/history loops | T3 | setup generation, scoring, family selection, history, determinism |
 | `ZddPlayerWorldSetTest` | 10–11s | repeated enumeration, ZDD conversion, filtering and representation parity | affected T2 / T3 execution | ZDD, epistemic worlds, filtering, registration, checkpoint/restore |
 | `ExpertRecommendationReviewTest` | 5–6s | 24-scenario recommendation quality corpus | T3 | recommendation scoring, legality, setup plans, quality/diversity |
 | `StorytellerV4BaselineSimulationTest` | 3–4s | 1000 setup samples plus 1000 dynamic selections | T3 | selection distribution and simulation semantics |
 | `A4ZddBenchmarkTest` | 2–3s | repeated benchmark, heap and GC measurements | T3 | ZDD construction/filter performance |
-| `A3EnumerationBenchmarkTest` | approximately 1s | 20 exact enumerations and performance guards | T1/T2 specialized candidate | world enumeration and scalability |
+| `A3EnumerationBenchmarkTest` | approximately 1s | 20 exact enumerations and performance guards | T1/T2 specialized | world enumeration and scalability |
 
-`A3EnumerationBenchmarkTest` is not excluded solely because its name contains “Benchmark”; its current measured cost is low.
+T3 tests are invoked through the existing full test machinery with exact `--tests` filters when triggered; S2 intentionally does not create a static `testAffected` or `testExpensive` suite.
 
 ## 7. Dependency-aware escalation matrix
 
@@ -164,7 +195,7 @@ Real Clingo is external and expensive. It is T3 validation triggered by changes 
 These are goals, not hard correctness guarantees:
 
 - T0: near the Gradle floor; prefer below 10s warmed where practical
-- T1: approximately 15–30s warmed
+- T1: approximately 15–30s warmed for actual execution; no-change cached runs may approach the Gradle floor
 - T2: normally below 60s where practical
 - T3: no strict edit-loop budget
 - T4: several minutes is acceptable
@@ -177,11 +208,29 @@ Coverage must not be removed merely to satisfy a time target.
 
 Use `--rerun-tasks` only when intentionally measuring forced execution. It is not the default normal-development invocation.
 
-## 13. S2 implementation direction
+S2.1 verified that `testFast` and `testFull` have separate execution identities, that `testFast` does not invoke `testDebugUnitTest`, and that `testFull` does.
 
-The planned S2 direction is custom Gradle tasks with default-all behavior and a small explicit expensive exclusion list. S2 must validate actual Gradle semantics before adoption.
+## 13. Executable suite contract
 
-Future `testFull` must preserve every test currently covered by `:app:testDebugUnitTest`. No test may disappear from full validation.
+Current Android JVM commands:
+
+```text
+./gradlew :app:testFast
+./gradlew :app:testFull
+```
+
+`testFast` is an independent `Test` task that reuses the AGP debug-unit-test classes/runtime classpath and excludes only the five approved classes above.
+
+`testFull` is a verification/lifecycle task that depends on `:app:testDebugUnitTest` without filtering.
+
+The validated coverage invariant is:
+
+```text
+testFull Android JVM coverage = :app:testDebugUnitTest coverage = 770 tests
+FULL - FAST = exactly 19 testcases from the five approved excluded classes
+```
+
+No test may disappear from full validation.
 
 ## 14. Maintenance
 
