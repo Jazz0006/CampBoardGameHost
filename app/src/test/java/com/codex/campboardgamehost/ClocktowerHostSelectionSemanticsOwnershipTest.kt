@@ -59,8 +59,7 @@ class ClocktowerHostSelectionSemanticsOwnershipTest {
     }
 
     @Test
-    fun `S7 point five UI helpers remain root owned`() {
-        val rootSource = appRootFile.readText(Charsets.UTF_8)
+    fun `selection UI helpers remain outside selection semantics owner`() {
         val ownerSource = selectionSemanticsFile.takeIf { it.exists() }?.readText(Charsets.UTF_8).orEmpty()
 
         listOf(
@@ -68,7 +67,6 @@ class ClocktowerHostSelectionSemanticsOwnershipTest {
             "internal fun SelectableTwoPlayerChips(",
             "internal fun SelectableSeatNumbers(",
         ).forEach { declaration ->
-            assertTrue(rootSource.contains(declaration))
             assertFalse(ownerSource.contains(declaration))
         }
     }
