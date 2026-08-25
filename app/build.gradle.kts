@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.testing.Test
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -43,4 +45,30 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
+}
+
+afterEvaluate {
+    val debugUnitTest = tasks.named<Test>("testDebugUnitTest")
+
+    tasks.register("testFull") {
+        group = "verification"
+        description = "Runs the complete Android debug JVM unit-test suite."
+        dependsOn(debugUnitTest)
+    }
+
+    tasks.register<Test>("testFast") {
+        group = "verification"
+        description = "Runs the Android JVM fast regression suite."
+        val sourceTask = debugUnitTest.get()
+        testClassesDirs = sourceTask.testClassesDirs
+        classpath = sourceTask.classpath
+
+        filter {
+            excludeTestsMatching("com.codex.campboardgamehost.clocktower.recommendation.setup.SetupMigrationTest")
+            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.ZddPlayerWorldSetTest")
+            excludeTestsMatching("com.codex.campboardgamehost.clocktower.review.ExpertRecommendationReviewTest")
+            excludeTestsMatching("com.codex.campboardgamehost.clocktower.simulation.StorytellerV4BaselineSimulationTest")
+            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.A4ZddBenchmarkTest")
+        }
+    }
 }
