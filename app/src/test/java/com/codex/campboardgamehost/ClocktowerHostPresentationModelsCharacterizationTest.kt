@@ -39,7 +39,7 @@ class ClocktowerHostPresentationModelsCharacterizationTest {
         assertEquals(0, step.recentMisinformationStreak)
         assertNull(step.previousShownNumber)
         assertNull(step.selectedInformationTruthful)
-        assertNull(step.informationDecisionDraft)
+        assertNull(step.informationDecisionConfirmation)
         assertNull(step.spyRegistrationKey)
         assertTrue(step.spyRegistrationTeams.isEmpty())
         assertEquals(ClocktowerRegistrationDetail.Role, step.spyRegistrationDetail)

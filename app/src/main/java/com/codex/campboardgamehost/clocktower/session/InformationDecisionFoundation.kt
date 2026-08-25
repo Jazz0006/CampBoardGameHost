@@ -44,6 +44,24 @@ internal data class InformationDecisionWarning(
     }
 }
 
+/** Immutable identity of the validated candidate space that produced a confirmation. */
+internal data class InformationDecisionSnapshot(
+    val semanticIdentity: String,
+    val revision: InformationDecisionRevision,
+    val legalCandidateIds: List<String>,
+    val recommendedCandidateIds: Set<String>,
+) {
+    init {
+        require(semanticIdentity.isNotBlank()) { "Information decision snapshot identity cannot be blank." }
+        require(legalCandidateIds.isNotEmpty()) { "Information decision snapshot requires legal candidates." }
+        require(recommendedCandidateIds.all(legalCandidateIds::contains)) {
+            "Snapshot recommendations must belong to the snapshot legal candidates."
+        }
+    }
+
+    fun isCurrentFor(currentRevision: InformationDecisionRevision): Boolean = revision == currentRevision
+}
+
 internal sealed interface InformationDecisionValidationResult {
     data class Allowed(
         val warnings: List<InformationDecisionWarning> = emptyList(),
@@ -59,6 +77,7 @@ internal data class ConfirmedInformationDecision(
     val source: InformationDecisionSource,
     val warnings: List<InformationDecisionWarning>,
     val draft: EpistemicObservationDraft,
+    val contextSnapshot: InformationDecisionSnapshot,
 )
 
 internal data class InformationDecisionConfirmation(
@@ -96,6 +115,13 @@ internal class InformationDecisionContext<T : DynamicInformationOutcome> private
             "Recommended information candidates must belong to the validated legal candidate set."
         }
     }
+
+    val snapshot: InformationDecisionSnapshot = InformationDecisionSnapshot(
+        semanticIdentity = semanticIdentity,
+        revision = revision,
+        legalCandidateIds = legalCandidates.map(InformationDecisionCandidate<T>::candidateId),
+        recommendedCandidateIds = recommendedCandidateIds,
+    )
 
     fun validate(
         candidateId: String,
@@ -148,6 +174,7 @@ internal class InformationDecisionContext<T : DynamicInformationOutcome> private
                 source = source,
                 warnings = validation.warnings,
                 draft = selected.draft,
+                contextSnapshot = snapshot,
             ),
         )
     }

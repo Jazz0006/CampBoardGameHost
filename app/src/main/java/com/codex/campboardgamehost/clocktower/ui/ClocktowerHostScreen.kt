@@ -1962,8 +1962,11 @@ internal fun ClocktowerJudgeScreen(
     fun recordReliablePrivateInformation(displayStep: ClocktowerNightStepUi) {
         val actor = displayStep.actor ?: return
         val actorSeat = cards.indexOf(actor).takeIf { it >= 0 }?.plus(1) ?: return
-        if (displayStep.informationDecisionDraft != null) {
-            onRecordEpistemicObservation(requireNotNull(displayStep.informationDecisionDraft))
+        displayStep.informationDecisionConfirmation?.let { confirmation ->
+            val currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision)
+            if (confirmation.contextSnapshot.isCurrentFor(currentRevision)) {
+                onRecordEpistemicObservation(confirmation.draft)
+            }
             return
         }
         if (displayStep.displayProposition == null &&

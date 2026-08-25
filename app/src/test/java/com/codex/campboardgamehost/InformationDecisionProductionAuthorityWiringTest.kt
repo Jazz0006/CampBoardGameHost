@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost
 
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
@@ -33,6 +34,20 @@ class InformationDecisionProductionAuthorityWiringTest {
             "The InformationDecision path must preserve immutable confirmation provenance through " +
                 "the display boundary instead of retaining only EpistemicObservationDraft.",
             nightStepUiSource.contains("informationDecisionDraft = confirmed.draft"),
+        )
+    }
+
+    @Test
+    fun `durable information decision authority must retain confirmation and current revision`() {
+        val privateProducer = hostSource
+            .substringAfter("fun recordReliablePrivateInformation(")
+            .substringBefore("val undertakerTarget =")
+
+        assertTrue(
+            "The durable InformationDecision path must carry a confirmation envelope, " +
+                "not a draft whose revision can become stale after display preparation.",
+            privateProducer.contains("informationDecisionConfirmation") &&
+                privateProducer.contains("InformationDecisionRevision"),
         )
     }
 }

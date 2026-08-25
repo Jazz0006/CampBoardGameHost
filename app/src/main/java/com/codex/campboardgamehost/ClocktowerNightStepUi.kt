@@ -705,7 +705,7 @@ internal fun ClocktowerNightStepCardLocalized(
                                 displayFooter = template?.displayFooter ?: step.displayFooter ?: step.explanation,
                                 displayProposition = confirmed.draft.proposition,
                                 selectedInformationTruthful = value == structuredEmpathTruthValue,
-                                informationDecisionDraft = confirmed.draft,
+                                informationDecisionConfirmation = confirmed,
                                 displayOptions = emptyList(),
                                 recommendedDisplayOptions = emptyList(),
                             ),
