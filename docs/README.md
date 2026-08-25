@@ -1,213 +1,99 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-08-24  
-> **任何新的开发或审计任务先读本文，再读 `CURRENT_DEVELOPMENT_ROADMAP.md`。**  
-> 通过 ChatGPT / GitHub connector / Codex 修改代码时，还必须读根目录 `AGENTS.md` 和对应工作流文档。
+> 最后整理：2026-08-25
+> 目标：让新的开发会话只读少量真正有权威性的文档，不再被历史 handoff/closeout 淹没。
 
-## 1. 当前权威顺序
+## 1. 新任务的默认阅读顺序
 
-出现冲突时：
+1. 根目录 `AGENTS.md` — 项目级 AI / Git / 测试执行规范；
+2. `CURRENT_DEVELOPMENT_ROADMAP.md` — **唯一当前状态权威**；
+3. 当前任务对应的 handoff；
+4. `TESTING_STRATEGY.md`；
+5. 当前任务需要的 specialized design / reference；
+6. 查询 live GitHub state 后再实施。
 
-1. 游戏规则正确性：官方 Blood on the Clocktower 规则 / Almanac / published rulings；
-2. 项目级 AI 执行规范：根目录 `AGENTS.md`；
-3. 当前开发状态 / 下一步：`CURRENT_DEVELOPMENT_ROADMAP.md`；
-4. 当前下一任务 handoff：`NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`；
-5. Possible Worlds 总体架构：`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`；
-6. R6 timeline / knowledge-safe boundaries：`r6_p1_2_closeout_2026-08-21.md`、`r6_p1_3_closeout_2026-08-21.md`；
-7. impaired information / Storyteller decision：`R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md`；
-8. 多剧本 / 动态流程：`多剧本多板子与动态游戏流程架构设计_v1.md`；
-9. GitHub / Codex 写入流程：`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`；
-10. 大文件本地实现流程：`CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`；
-11. 旧 structural handoff / historical audit / `archive/` 仅用于追溯，不得覆盖当前 roadmap。
+不要从旧 commit SHA、旧 PR 状态或历史 handoff 推断当前状态。
 
-## 2. 当前必须阅读
+## 2. 当前任务
 
-- [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **CURRENT / 唯一状态权威**  
-  App-root S0–S6 structural checkpoint 已完成；S7 paused；当前工作是 draft PR #48 的 historical multi-night exact baseline，进入 A3 Architecture Hardening。
+当前最高优先级是 Clocktower **Information Decision correctness bug**：自动信息推荐必须经过与手动选择相同的 `InformationDecisionContext` validation/confirmation authority，旧/stale recommendation 或裸 `EpistemicObservationDraft` 不能绕过当前 revision/context 检查进入 durable observation history。
 
-- [`NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md) — **NEXT TASK HANDOFF**  
-  记录 PR #48 当前 exact-baseline architecture、2026-08-24 全局审计发现、H1–H7 hardening 顺序，以及新对话的 first RED contract。
+当前 handoff：
 
-- [`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`](CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md) — **POSSIBLE WORLDS ARCHITECTURE**
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-08-25_INFORMATION_DECISION_CORRECTNESS_BUG.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-25_INFORMATION_DECISION_CORRECTNESS_BUG.md) — **CURRENT BUG HANDOFF**
+- [`R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md`](R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md) — information legality / impairment / Storyteller decision specialized design
 
-- [`r6_p1_2_closeout_2026-08-21.md`](r6_p1_2_closeout_2026-08-21.md) / [`r6_p1_2_knowledge_timeline_semantics_2026-08-21.md`](r6_p1_2_knowledge_timeline_semantics_2026-08-21.md) — **GLOBAL TIMELINE / CHRONOLOGY CONTRACTS**
-
-- [`r6_p1_3_closeout_2026-08-21.md`](r6_p1_3_closeout_2026-08-21.md) — **KNOWLEDGE-SAFE WORLD-BUILDER BOUNDARY**
-
-- [`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`](SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md) — **NORMATIVE**
-
-- [`CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`](CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md) — **NORMATIVE**  
-  大文件 declaration move / mechanical cleanup 默认由 Luna 在完整本地 worktree 中实施、测试、commit、push；ChatGPT 负责远端 exact diff 与 CI/R2。
-
-## 3. 当前准确开发状态
+Current stable code baseline at this cleanup:
 
 ```text
-PR #39 Storyteller Information Decision Foundation     MERGED
-PR #40 Structured Manual UI — Empath numeric slice     MERGED
-PR #41 workflow / LF policy docs-infra                 MERGED
-PR #42 Historical Action + Observation Capture         MERGED
-PR #44 Drunk / Fortune Teller correctness hotfix       MERGED
-PR #43 Clocktower host source decomposition            MERGED / A1–A13 GREEN
-App-root structural S0–S6                             MERGED CHECKPOINT
-App-root S7                                             PAUSED
-PR #48 A3 historical multi-night exact baseline        OPEN / DRAFT / ACTIVE
+main = 5367603d2d7150e7ba88f19d061eb04f8da20aeb
+PR #51 = MERGED / App-root through S9.1
 ```
 
-Corrected stable `main` checkpoint at this documentation update:
+Always re-query before implementation.
+
+## 3. Intentionally deferred handoffs
+
+These are **not current work**, but still contain unfinished future architecture and therefore remain in the repository.
+
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-08-25_APP_ROOT_S9.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-25_APP_ROOT_S9.md) — S9.2 Active Game Persistence Boundary; architecture audit complete, implementation deferred until the correctness bug is merged.
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-08-25_A3_SETUP_SNAPSHOT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-25_A3_SETUP_SNAPSHOT.md) — historical exact H1–H7 is complete; only immutable setup-snapshot ownership/persistence remains deferred/not started.
+
+A deferred handoff must never override `CURRENT_DEVELOPMENT_ROADMAP.md`.
+
+## 4. Long-lived design / semantic references
+
+Keep these because they define architecture or semantics rather than a temporary branch state:
+
+- [`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`](CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md) — Possible Worlds / epistemic architecture;
+- [`R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md`](R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md) — impaired information + Storyteller decision authority;
+- [`r6_p1_2_knowledge_timeline_semantics_2026-08-21.md`](r6_p1_2_knowledge_timeline_semantics_2026-08-21.md) — chronology / knowledge timeline semantics;
+- [`epistemic_reference_matrix.md`](epistemic_reference_matrix.md) — reference matrix;
+- [`unified_semantic_model.md`](unified_semantic_model.md) — unified semantic model;
+- [`storyteller_revision_driven_dynamic_decision_engine_plan.md`](storyteller_revision_driven_dynamic_decision_engine_plan.md) — revision-driven dynamic-decision architecture;
+- [`storyteller_a4_zdd_prototype.md`](storyteller_a4_zdd_prototype.md) and [`storyteller_a4_5_observation_cache_rebuild_spec.md`](storyteller_a4_5_observation_cache_rebuild_spec.md) — A4/ZDD design/spec;
+- [`多剧本多板子与动态游戏流程架构设计_v1.md`](多剧本多板子与动态游戏流程架构设计_v1.md) — multi-script / dynamic-flow architecture;
+- [`asp_oracle_cross_validation.md`](asp_oracle_cross_validation.md), [`external_solver_evaluation.md`](external_solver_evaluation.md) — solver/reference validation.
+
+These documents may describe earlier milestones, but they are kept because their primary role is semantic/design reference, not “what branch do I work on next?”.
+
+## 5. Normative development workflow
+
+- [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md) — T0/T1/T2/T3/T4 test strategy;
+- [`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`](SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md) — GitHub connector workflow;
+- [`CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`](CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md) — large-file local/Luna workflow;
+- [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md) — connector large-file constraints/playbook.
+
+## 6. Historical documentation policy
+
+The repository previously accumulated many date-stamped files after each slice:
 
 ```text
-84a062378f13b90ce71f3801982ba3b2d3b22d80
+NEXT_DEVELOPMENT_HANDOFF_...
+*_closeout_...
+*_entry_audit_...
+merge-preflight notes
 ```
 
-Last fully validated code checkpoint on PR #48 before docs-only updates:
+Once a task is merged/closed and no unfinished future decision depends on that handoff, those files should be removed from the active docs root. Their history remains available through Git and the merged PR.
+
+Do not create a new handoff for every GREEN micro-step. Prefer updating:
 
 ```text
-9909e7fc76c0ef700d617ee1c70ae465b1565e67
-CI #591 SUCCESS
-R2 #524 SUCCESS
-Android / ASP / Real Clingo GREEN
+CURRENT_DEVELOPMENT_ROADMAP.md
++ one active task handoff
++ one specialized design document when a durable architecture decision is needed
 ```
 
-New conversations must re-query live `main`, PR #48 head and checks because documentation commits may have advanced the branch.
+Keep a deferred handoff only when it carries genuinely unfinished future work that would be expensive or risky to reconstruct.
 
-## 4. App-root structural state
+## 7. Status authority rule
 
-The earlier App-root decomposition task is no longer current.
+If documents disagree:
 
-Completed:
-
-```text
-S0 dynamic-flow guard
-S1 player setup presentation
-S2 settings presentation
-S3 Clocktower landing presentation
-S4 deal / reveal presentation
-S5 results / host-tools / history presentation
-S6 legacy generic GameScreen presentation
-```
-
-Approximate result:
-
-```text
-CampBoardGameHostApp.kt
-~325,556 bytes -> ~229,822 bytes
-```
-
-S7 was explicitly paused after the corrected PR #47 checkpoint. Do not resume it inside A3.
-
-Old handoffs such as:
-
-```text
-NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_DECOMPOSITION.md
-NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_S7.md
-```
-
-are historical context only for the current execution point.
-
-## 5. Current A3 scope
-
-The original setup/first-night `EnumeratedWorldSet` A3 baseline was completed earlier and remains valid.
-
-PR #48 is the **historical multi-night extension**.
-
-Already established tests-first:
-
-```text
-knowledge-safe PlayerHistoricalTimeline
-GLOBAL_V1 visible chronology
-Execution / Death / PhaseAdvance historical replay
-visible observation replay
-Poisoner persistent-effect lifecycle
-rule-derived later-night Poisoner branching
-per-world canonical night schedule
-Drunk actual vs shown waking identity split
-visible night observation anchoring
-Demon direct-attack rules seam
-pure hidden Monk/Imp possible-choice helpers
-```
-
-Still deliberately fail-closed / not production authority:
-
-```text
-Attack integration
-Protect integration
-RoleChange / Demon succession integration
-Mayor redirect integration
-Host wiring
-A4/ZDD production promotion
-```
-
-## 6. 2026-08-24 global audit result
-
-The audit concluded that the overall direction remains correct, but the engine has crossed from a static setup-world model into a time-aware historical-world problem.
-
-Before further Mayor/Demon mechanics expansion, harden these boundaries:
-
-```text
-H1  setup seed vs durable observation exactly-once consumption
-H2  historical ability eligibility / triggered exceptions
-H3  mechanical world identity independent of explanation/provenance
-H4  explicit Trouble Brewing support guard
-H5  dynamic historical role representation / Demon succession state
-H6  incremental state-aware night replay
-H7  then wire Monk -> Imp -> Mayor -> successor mechanics
-```
-
-Critical invariants:
-
-```text
-actual storyteller hidden ActionFacts never constrain player worlds directly
-GLOBAL_V1 remains durable chronology authority
-hidden choice path != possible-world identity
-canonical night rank != historical ability eligibility
-setup character identity != necessarily current historical role identity
-RoleChange remains fail-closed until dynamic state is modeled
-```
-
-## 7. Immediate next slice
-
-The next conversation starts with **H1 only**.
-
-Audit and characterize:
-
-```text
-PlayerKnowledgeSnapshot
--> TroubleBrewingWorldEnumerator
--> EnumeratedWorldSet.fromWorlds
--> PlayerHistoricalTimeline
--> EnumeratedHistoricalWorldReplay
-```
-
-First RED must prove:
-
-- multi-night durable observations do not enter setup-only enumeration;
-- setup-only knowledge still constrains initial worlds;
-- each durable visible observation is consumed exactly once by the GLOBAL historical path;
-- the fix does not introduce hidden actual ActionFact targets;
-- no Host/A4/ZDD authority change.
-
-Do not start Mayor branching before this is GREEN and audited.
-
-## 8. New-conversation startup order
-
-1. read root `AGENTS.md`;
-2. read this document;
-3. read `CURRENT_DEVELOPMENT_ROADMAP.md`;
-4. read `NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`;
-5. query live `main` and record current SHA;
-6. query draft PR #48/head/checks;
-7. distinguish docs-only head advancement from the last validated code checkpoint;
-8. audit the H1 observation-consumption path;
-9. establish H1 RED first;
-10. only then implement the narrow GREEN;
-11. do not merge, mark ready, rebase or force-push without explicit user authorization.
-
-## 9. 文档维护规则
-
-- `AGENTS.md` 维护长期 AI 执行规范；
-- 只有 `CURRENT_DEVELOPMENT_ROADMAP.md` 维护当前执行点；
-- 当前 handoff 服务下一次开发；
-- design 文档维护语义/架构，不维护 live branch；
-- historical handoff 不得覆盖 current roadmap；
-- 每个 A3 hardening slice 完成后更新 validated head / gate / remaining blockers；
-- PR #48 merge discussion 前必须同步 roadmap、PR body、handoff 和 exact diff audit。
+1. official Blood on the Clocktower rules/rulings control gameplay correctness;
+2. root `AGENTS.md` controls project execution rules;
+3. `CURRENT_DEVELOPMENT_ROADMAP.md` controls current project state;
+4. the current task handoff controls the approved narrow implementation plan;
+5. specialized design docs control their semantic/architecture domain;
+6. historical Git/PR records are evidence, not current instructions.
