@@ -3,292 +3,122 @@
 > 状态日期：2026-08-25
 > 文档角色：**CURRENT / 当前状态唯一权威**
 > Repository: `Jazz0006/CampBoardGameHost`
-> Stable `main`: `0311c3bb54ea71be69bc60a4aae642e0f39cd900`
-> Current structural code checkpoint: `561fc3240c88c0f9c532bbf131e152aa99bad33e` (S9.1 GREEN)
-> Current branch docs checkpoint: `1998db7ac06ae38295d95af698fc9707abeb1804`
-> PR #48: **MERGED / CLOSED — historical multi-night exact baseline**
-> PR #49: **MERGED / CLOSED — app-root S7.1/S7.2 structural checkpoint**
-> PR #50: **MERGED / CLOSED — test execution tiers + path-aware CI**
-> Current project priority: **AUDIT/MERGE S9.1, THEN FIX INFORMATION-DECISION CORRECTNESS BUG**
-> S9.2 status: **PERSISTENCE ARCHITECTURE AUDIT COMPLETE / IMPLEMENTATION DEFERRED UNTIL BUG FIX MERGES**
-> Detailed test strategy: `docs/TESTING_STRATEGY.md`
-> App-root S9 handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_APP_ROOT_S9.md`
+> Stable `main`: `5367603d2d7150e7ba88f19d061eb04f8da20aeb`
+> Current priority: **fix Information Decision correctness bug tests-first**
+> S9.2: **architecture audit complete / implementation deferred until bug fix merges**
 
-## 1. Project status
+## 1. Current project state
 
 ```text
-Phase A correctness foundation                     PASS
+Phase A correctness foundation                     CLOSED
 R5.5 Script & Dynamic Flow Foundation              CLOSED / MERGED
-R6 semantic prerequisites                          CLOSED
+R6 semantic/history prerequisites                  CLOSED / MERGED
 PR #39 Information Decision Foundation             CLOSED / MERGED
 PR #40 Structured Manual UI                        CLOSED / MERGED
 PR #42 Historical Action + Observation Capture     CLOSED / MERGED
-PR #44 Drunk / Fortune Teller hotfix               CLOSED / MERGED
-PR #43 Clocktower host decomposition A1–A13        CLOSED / MERGED
-App-root decomposition S0–S6                       CLOSED / MERGED CHECKPOINT
-App-root S7.1/S7.2                                  CLOSED / MERGED via PR #49
-App-root S7.3                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
-App-root S7.4                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
-App-root S7.5                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
-App-root S7.6                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
-App-root S8.1                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
-App-root S8.2                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
-App-root S9.1                                       CLOSED / STACKED STRUCTURAL CHECKPOINT — MERGE NEXT
-App-root S9.2 persistence boundary                  AUDIT COMPLETE / IMPLEMENTATION DEFERRED
-Information-decision correctness bug               NEXT AFTER S9.1 MERGE
-PR #48 historical multi-night exact baseline       MERGED / CLOSED
+PR #44 Drunk / Fortune Teller correctness hotfix   CLOSED / MERGED
+PR #43 Clocktower Host decomposition A1–A13        CLOSED / MERGED
+PR #48 historical multi-night exact baseline       CLOSED / MERGED
+PR #49 App-root S7.1/S7.2                          CLOSED / MERGED
+PR #50 test execution tiers + path-aware CI        CLOSED / MERGED
+PR #51 App-root S7.3–S9.1                          CLOSED / MERGED
 A3 Architecture Hardening H1–H7                    COMPLETE / GREEN
-B4 historical-exact shadow bridge                  GREEN
-Session -> B4 historical shadow seam               GREEN
-Setup snapshot ownership / persistence             NOT STARTED
+B4 historical-exact shadow bridge                  GREEN / production-isolated
+App-root S9.1 JSON primitives                      CLOSED / MERGED
+Information-decision correctness bug               CURRENT / NEXT IMPLEMENTATION
+App-root S9.2 Active Game Persistence Boundary     AUDIT COMPLETE / DEFERRED
+A3 setup-snapshot ownership / persistence          DEFERRED / NOT STARTED
 Production recommendation authority promotion      NOT STARTED / NOT AUTHORIZED
-Test execution workflow S1–S3                      COMPLETE / MERGED via PR #50
 ```
 
-## 2. Validation workflow
+PR #51 integrated the audited App-root stack through S9.1 with full Android unit tests + debug APK build and the CI gate GREEN.
 
-PR #50 established the authoritative local/CI validation strategy:
+Current `CampBoardGameHostApp.kt` size after S9.1 is approximately:
 
 ```text
-T0 focused RED/GREEN
+325,556 bytes original
+-> 205,456 bytes after S9.1
+```
+
+The 50 KiB target is a maintainability guideline, not a hard requirement. Do not resume 1–5 KiB micro-slices. Any further App-root decomposition must expose a genuine coherent responsibility of roughly >=15–20 KiB, preferably >=20–30 KiB.
+
+## 2. Current correctness priority — Information Decision authority bug
+
+A newly confirmed correctness defect exists in the Clocktower automatic-information path.
+
+The intended authority is:
+
+```text
+legal candidate generation
+-> InformationDecisionContext
+-> MANUAL or RECOMMENDATION_ACCEPTED confirmation
+-> ConfirmedInformationDecision
+-> observation draft
+-> display / durable session observation
+```
+
+The production Host currently has a weaker final seam: when `ClocktowerNightStepUi.informationDecisionDraft` is non-null, `recordReliablePrivateInformation(...)` can directly call the durable observation callback.
+
+That bare draft does not, by itself, prove at commit time that it still belongs to the current immutable decision context/revision or that recommendation/legal-candidate membership was revalidated.
+
+This matters because automatic recommendations may be generated under one state/input snapshot and survive until display after state/input changes or recomposition. Candidate IDs must remain bound to the immutable decision snapshot that produced the confirmation; an old candidate/draft must never be treated as valid merely because the same textual candidate ID still exists.
+
+Required invariant:
+
+```text
+automatic recommendation
+-> InformationDecisionContext.confirm(
+       source = RECOMMENDATION_ACCEPTED,
+       currentRevision = current revision
+   )
+-> Allowed confirmation only
+-> durable observation
+```
+
+Hard blocks already defined by the semantic authority must remain effective in production:
+
+```text
+STALE_CONTEXT
+ILLEGAL_CANDIDATE
+NOT_RECOMMENDED
+```
+
+Do **not** add a new `InformationDecisionSource.AUTO`; automatic mode still means semantic `RECOMMENDATION_ACCEPTED`.
+
+Detailed bug diagnosis, RED plan, scope and STOP gates:
+
+```text
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_INFORMATION_DECISION_CORRECTNESS_BUG.md
+```
+
+Specialized semantic design authority:
+
+```text
+docs/R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md
+```
+
+## 3. Approved immediate sequence
+
+```text
+current docs cleanup
+-> create dedicated information-decision hotfix branch from live main
+-> RED: automatic path cannot bypass stale/legal/recommendation confirmation
+-> minimal GREEN
 -> T1 :app:testFast
--> T2 affected regression / compile checks
--> triggered T3 only when semantic area requires
--> PR T4 applicable FULL gate
+-> affected T2 + assembleDebug where applicable
+-> PR full applicable gate
+-> exact diff audit
+-> merge correctness fix
+-> then reconsider S9.2
 ```
 
-Stable `main` remains `0311c3bb54ea71be69bc60a4aae642e0f39cd900` until the current S9.1 stack is formally merged.
+Do not mix the correctness bug with persistence extraction or size-driven Host decomposition.
 
-For S7.3–S9.1 the remote audits prove lineage and exact structural diffs. No GitHub Actions workflow runs were observed on the stacked branch heads through S9.1 GREEN, so do **not** describe them as remotely CI-green. Local execution evidence is separate from remote structural evidence. Before merging S9.1, create/use a PR and require the applicable current CI gate to run successfully.
+## 4. S9.2 — deferred Active Game Persistence Boundary
 
-## 3. Protected architecture contracts
+The post-S9.1 architecture audit concluded that persistence is the only remaining Root responsibility currently large/coherent enough to justify another structural slice.
 
-### Historical exact / A3-B4
-
-- Durable observations are consumed exactly once by GLOBAL historical replay; setup-only knowledge constrains initial worlds only.
-- Historical order and actor eligibility are separate concerns.
-- Mechanically identical possible worlds converge even when hidden provenance differs.
-- Exact historical construction remains Trouble Brewing-only and fails closed outside that boundary.
-- `rolesBySeat` is immutable setup identity; `currentRolesBySeat` is dynamic historical current-role state.
-- Storyteller-hidden targets and occurrence points never become player knowledge constraints.
-
-Current production-isolated chain remains:
-
-```text
-real ClocktowerGameSession
--> GLOBAL action + observation history
--> ClocktowerB4HistoricalShadowCoordinator
--> B4DynamicPlayerWorldSetShadow(validated ruleset)
--> EnumeratedHistoricalExactBaseline
--> B4 shadow cardinality report
-```
-
-Still deliberately not connected to Host recommendation authority, A4/ZDD selector authority, history UI or other scripts.
-
-### App-root decomposition
-
-Do not move merely for byte reduction:
-
-- `CampBoardGameHostApp()` orchestration/state ownership;
-- Compose effect lifetime;
-- persistence / restore / archive timing;
-- Clocktower live transaction ordering;
-- `ClocktowerGameSession` authority;
-- action/observation/history ordering;
-- A4 lifecycle/cache/prewarm effects;
-- planner/projector/materializer authority;
-- Host recommendation/registration transaction semantics;
-- A3/B4 historical-exact behavior.
-
-`ClocktowerHostScreen.kt` remains under new-responsibility growth freeze. The 50 KiB target remains a maintainability guideline rather than a hard gate.
-
-The previous micro-slice strategy is now retired. After S9.1, continue App-root decomposition only for a genuine coherent responsibility of roughly >=15–20 KiB, preferably >=20–30 KiB. If no such boundary remains, stop decomposition instead of manufacturing abstractions.
-
-## 4. App-root decomposition progress
-
-Original Root:
-
-```text
-CampBoardGameHostApp.kt = 325,556 bytes
-```
-
-Validated progression:
-
-```text
-After S1   = 293,536 bytes
-After S2   = 283,470 bytes
-After S3   = 277,453 bytes
-After S4   = 261,232 bytes
-After S5   = 235,741 bytes
-After S6   = 229,822 bytes
-After S7.1 = 229,007 bytes
-After S7.2 = 228,172 bytes
-After S7.3 = 220,403 bytes
-After S7.4 = 218,086 bytes
-After S7.5 = 210,856 bytes
-After S7.6 = 209,336 bytes
-After S8.1 = 208,126 bytes
-After S8.2 = 206,692 bytes
-After S9.1 = 205,456 bytes
-```
-
-### S7.3 — shared host interaction UI — CLOSED
-
-```text
-head: b6d5d407d8d753bfe1fd4f9a5b16f58881468fa7
-owner: HostInteractionUi.kt = 8,901 bytes
-moved:
-  HostProgressCard
-  HostScriptCard
-  HostInstructionBlock
-  HostActionSection
-  SelectablePlayerChips
-  SelectableTwoPlayerChips
-  SelectableSeatNumbers
-remote exact-diff audit: PASS
-GitHub Actions: none observed
-```
-
-### S7.4 — shared game-settings presentation — CLOSED
-
-```text
-RED:    4a46210cf11a0c45ceffef7bfaa647e53e99747f
-repair: 843f61e5106b704417b1cd347c47393264215bb8
-GREEN:  bcd8b9b2dad4f3cde42bef2cdb6d1eea7839dd7e
-owner:  GameSettingsUi.kt = 3,112 bytes
-moved:  GameSettingsHeader, StepperRow
-remote exact-diff audit: PASS
-GitHub Actions: none observed
-```
-
-`EmptyStateCard` remains Root-owned and deferred. Do not create `Utils.kt` / `CommonUi.kt` merely to move it.
-
-### S7.5 — New Demon presentation — CLOSED
-
-```text
-BASE:   ea940199dd768aa6f35a418ab333c40401af658c
-RED:    5ea3829631b33a13d4245b3932fc21662767a3a8
-GREEN:  91ce3da44ec4b824c4e3e750ec9f6c5b99b618a3
-owner:  clocktower/ui/ClocktowerNightScreen.kt
-moved:  ClocktowerNewDemonConfirmationScreen
-Root:   210,856 bytes
-owner:  25,063 bytes
-remote exact-diff audit: PASS
-GitHub Actions: none observed
-```
-
-`ClocktowerHostScreen.kt` had the same blob SHA before and after S7.5, so new-Demon state, display routing and confirmation/transaction wiring were byte-for-byte unchanged.
-
-### S7.6 — Werewolf presentation leftovers — CLOSED
-
-```text
-BASE:   91ce3da44ec4b824c4e3e750ec9f6c5b99b618a3
-RED:    6e72afe4372a0ed7d329354a3bce018cb5799614
-GREEN:  c2ab6dcba6e1d0fe862255160b782a8c6dab5fda
-owner:  werewolf/WerewolfHostScreen.kt
-moved:  WerewolfRoleLine, WerewolfPlayerStatusRow
-Root:   209,336 bytes
-owner:  31,193 bytes
-remote exact-diff audit: PASS
-GitHub Actions: none observed
-```
-
-S7 is complete. The required STOP / remeasure / fresh S8 audit was performed.
-
-## 5. S8 closeout
-
-### S8.1 — pure app game models — CLOSED
-
-```text
-BASE:   a8e17af78cda13ee6f504f24142d02f3dcfdacb3
-RED:    9b9d9c411a5d9c6c96cdf3315146338002123da7
-repair: c58d8bda8dc04144d039f828918f1edafd8bc983
-GREEN:  7b52eab31fb7c0e78156c5f3487cb062de03edfe
-owner:  AppGameModels.kt = 1,245 bytes
-root:   208,126 bytes
-remote exact-diff audit: PASS
-GitHub Actions: none observed
-```
-
-S8.1 moved exactly seven already-`internal` declarations with no production visibility widening.
-
-### S8.2 — Clocktower app value models — CLOSED
-
-```text
-docs base: 879148f9b150fd688b43446705ba8e3debb1af9a
-RED: 798c83878825e6d7f9d7630449a673b6160c6447
-planned stale repair: cf182bdfa2108bff00b02507fb5309bd4abf667f
-T1 stale repair: 28afa7e7ebb8d69e09a628c96d15bbd41889bfae
-GREEN: 78cbaab473f433fb98d69f1bebfd7a69ae11edaa
-root: 206,692 bytes
-owner: ClocktowerAppModels.kt = 1,469 bytes
-remote exact-diff / structural audit: PASS
-GitHub Actions: none observed
-```
-
-S8 pure declaration extraction is complete. S8.2 moved exactly the nine Clocktower app value models with no consumer changes and no production visibility widening.
-
-## 6. S9 closeout and deferred persistence boundary
-
-### S9.1 — app JSON primitives seam — CLOSED
-
-Branch:
-
-```text
-codex/source-decomposition-app-root-s9-1-json-primitives
-```
-
-Lineage:
-
-```text
-78cbaab473f433fb98d69f1bebfd7a69ae11edaa  S8.2 GREEN
-  -> 377a3cd25691e50e04df31ae211bc069e3456364  docs closeout / handoff
-  -> d0ba789984eaf18db01c331f9a21dc842a6ae2eb  RED
-  -> 561fc3240c88c0f9c532bbf131e152aa99bad33e  GREEN
-```
-
-Created:
-
-```text
-persistence/AppJsonPrimitives.kt
-```
-
-Moved exactly:
-
-```text
-enumByName
-JSONObject.putNullableString
-JSONObject.putNullableInt
-JSONObject.putNullableBoolean
-JSONObject.optNullableString
-JSONObject.optNullableInt
-JSONObject.optNullableBoolean
-stringsToJsonArray
-JSONArray.toStringList
-```
-
-Production/test BASE->GREEN allowlist was exactly:
-
-```text
-CampBoardGameHostApp.kt
-persistence/AppJsonPrimitives.kt
-persistence/AppJsonPrimitivesTest.kt
-```
-
-Production visibility widening was exactly nine `private -> internal` changes for the moved helpers. Consumer/callsite behavior, JSON keys/schema, snapshot/restore semantics and SharedPreferences behavior were unchanged.
-
-```text
-Root after S9.1: ~205,456 bytes
-new owner:          ~1,335 bytes
-remote exact-diff / structural audit: PASS
-GitHub Actions on S9.1 GREEN: none observed; do not claim remote CI green
-```
-
-### S9.2 — Active Game Persistence Boundary — AUDIT COMPLETE / DEFERRED
-
-The fresh post-S9.1 audit concluded that persistence is the **only** remaining Root responsibility currently large/coherent enough to justify one more App-root structural slice.
-
-Planning estimate:
+Planning estimate only:
 
 ```text
 raw persistence-related surface        ~45–55 KiB
@@ -303,61 +133,111 @@ untrusted persisted JSON
 -> Root live Compose commit
 ```
 
-Candidate owners:
+Likely owners:
 
 ```text
 persistence/ActiveGameSnapshotCodec.kt
 persistence/ActiveGameRestoreParser.kt
-optional persistence/AppPreferencesStore.kt or GameHistoryStore.kt
+optional coherent AppPreferencesStore / GameHistoryStore
 ```
 
-Root must retain:
+Root retains persistence timing, Compose state capture/mutation, lifecycle effects, restore transaction commit, archive timing and A4 durability timing.
 
-- when to persist / restore;
-- live Compose state capture and mutation;
-- lifecycle timing;
-- restore transaction commit;
-- archive transaction timing;
-- A4 durability timing.
-
-Key implementation constraints:
-
-- preserve `ActiveGamePersistenceCoordinator` schema/version/identity/compatibility authority;
-- validation must complete before the first live state mutation;
-- preserve exact ruleset, semantic-history, epistemic and `ClocktowerNightCheckpoint` semantics;
-- do not widen legacy role-catalog declarations;
-- use a narrow role resolver dependency if PlayerCard restore needs `clocktowerRoleByName` semantics;
-- do not move/expose private `Screen` or presentation-heavy `savedGamePreviewFromJson` merely for byte reduction;
-- target zero existing production symbol visibility widenings;
-- do not create a giant flat DTO mirroring Compose variables.
-
-Detailed RED tests, allowlist, validation ladder, abort gates and Luna execution plan are authoritative in:
+Detailed architecture, RED tests, allowlist and abort gates:
 
 ```text
 docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_APP_ROOT_S9.md
 ```
 
-S9.2 is **not implemented** and is intentionally paused until the newly confirmed information-decision correctness bug is fixed and merged on an independent branch.
+After S9.2, re-audit Root. If no natural >=15–20 KiB low-coupling responsibility remains, **END App-root decomposition**.
 
-Approved order:
+## 5. Deferred A3 setup-snapshot work
+
+A3/B4 historical hardening H1–H7 is complete and PR #48 is merged. The remaining architectural blocker is explicit immutable setup-snapshot ownership/persistence before any future production authority promotion.
+
+This remains intentionally separate from the current bug and S9.2.
+
+Do not promote B4/A4/recommendation authority or broaden historical-exact script support merely while fixing the current information-decision bug.
+
+Deferred A3 detail is kept in:
 
 ```text
-audit + merge S9.1
--> fix information-decision correctness bug from new main
--> merge bug fix
--> re-evaluate and, only if still justified, implement S9.2 tests-first
--> remeasure / fresh Root audit
--> END App-root decomposition if no natural >=15–20 KiB boundary remains
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md
 ```
 
-Do not return to 3–5 KiB micro-slices and do not force the Root below 50 KiB.
+until that deferred task is either resumed or consolidated into a newer design handoff.
 
-## 7. Working discipline
+## 6. Protected architecture contracts
 
-1. Re-query live `main`, structural branch head and parent chain before each slice or merge.
-2. ChatGPT owns architecture/boundary judgment, test design, exact-diff criteria and remote audit.
-3. Luna performs large-Root mechanical edits in the user's full local Git worktree.
-4. Keep tests-first RED and GREEN provenance explicit.
-5. Do not preserve obsolete temporary Root-location assertions; preserve the actual architectural invariant.
-6. Do not merge, mark ready, rebase, force-push or broaden scope without explicit user authorization.
-7. Do not update `docs/TESTING_STRATEGY.md` for structural slice bookkeeping.
+### Information decision / observation
+
+- legal information space is rules-owned, not recommendation-owned;
+- Drunk/Poison policy and registration semantics remain separate;
+- manual and recommendation acceptance share one `InformationDecisionContext` authority;
+- generated/recommended candidates are not durable facts;
+- durable observations require a valid confirmation/display boundary;
+- current revision and candidate snapshot identity must be respected;
+- GLOBAL observation/history ordering remains unchanged.
+
+### Historical exact / A3-B4
+
+- durable observations are consumed exactly once by GLOBAL historical replay;
+- setup-only knowledge constrains initial worlds only;
+- mechanically identical possible worlds converge despite hidden provenance differences;
+- exact historical construction remains Trouble Brewing-only and fails closed outside that boundary;
+- `rolesBySeat` is immutable setup identity; `currentRolesBySeat` is dynamic historical role state;
+- Storyteller-hidden targets never become player knowledge constraints.
+
+### App-root / Host
+
+Do not move merely for byte reduction:
+
+- `CampBoardGameHostApp()` orchestration/state ownership;
+- Compose effect lifetime;
+- persistence/restore/archive timing;
+- Clocktower live transaction ordering;
+- `ClocktowerGameSession` authority;
+- action/observation/history ordering;
+- A4 lifecycle/cache/prewarm/rebuild;
+- planner/projector/materializer authority;
+- Host recommendation/registration transaction semantics.
+
+`ClocktowerHostScreen.kt` remains under new-responsibility growth freeze.
+
+## 7. Validation workflow
+
+`docs/TESTING_STRATEGY.md` is authoritative.
+
+Default escalation:
+
+```text
+T0 focused RED/GREEN
+-> T1 :app:testFast
+-> T2 affected regression / compile checks
+-> triggered T3 only when semantic area requires
+-> PR T4 applicable FULL gate
+```
+
+`UP-TO-DATE` / `FROM-CACHE` alone is not proof that required tests executed.
+
+## 8. Documentation authority / startup order
+
+For a new development conversation:
+
+1. root `AGENTS.md`;
+2. `docs/README.md`;
+3. this `CURRENT_DEVELOPMENT_ROADMAP.md`;
+4. the one handoff for the active task;
+5. `docs/TESTING_STRATEGY.md`;
+6. only then read specialized design/reference docs required by that task;
+7. query live GitHub state before editing.
+
+Historical handoffs/closeout documents are not current authority and should not be recreated for every completed micro-step. Git history and merged PRs are the historical record.
+
+## 9. Working discipline
+
+1. ChatGPT owns architecture/boundary judgment, RED design, exact-diff criteria and remote audit.
+2. Luna/local Codex performs large-file mechanical edits in the user's full local worktree when required.
+3. Keep tests-first RED/GREEN provenance explicit.
+4. Do not broaden scope to opportunistic cleanup during correctness fixes.
+5. Do not merge, mark ready, rebase or force-push without explicit user authorization.
