@@ -9,7 +9,7 @@
 > PR #49: **merged — app-root S7.1/S7.2 structural checkpoint**
 > Latest fully validated A3 code checkpoint: preserve the current merged repository status; do not revive stale PR #48 language
 > Current project priority: **TEST EXECUTION WORKFLOW OPTIMIZATION**
-> Current test-workflow status: **S1 COMPLETE / S2 NEXT / S3 NOT STARTED**
+> Current test-workflow status: **S1 COMPLETE / S2 COMPLETE / S3 NEXT**
 > Detailed test strategy: `docs/TESTING_STRATEGY.md`
 > App-root S7 handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_S7.md`
 
@@ -37,9 +37,19 @@ S1.1 test execution baseline timing                 COMPLETE
 S1.2 slow-test/root-cause audit                     COMPLETE
 S1.3 tier/escalation design                         COMPLETE
 S1.4 documentation/governance sync                 COMPLETE
-S2 executable Gradle suites                         NEXT / NOT STARTED
-S3 CI impact/path-aware optimization                NOT STARTED
+S2 executable Gradle suites                         COMPLETE
+S3 CI impact/path-aware optimization                NEXT / NOT STARTED
 ```
+
+S2 established executable Android JVM validation on `codex/test-execution-tiering`:
+
+```text
+:app:testFast   751 tests / 0 failures / 0 errors / 0 skipped
+:app:testFull   770 tests / 0 failures / 0 errors / 0 skipped
+FULL - FAST     exactly 19 testcases from the five approved expensive classes
+```
+
+`testFast` does not depend on `testDebugUnitTest`; `testFull` intentionally does. The detailed contract and trigger policy live in `docs/TESTING_STRATEGY.md`.
 
 PR #48 is merged/closed. Keep the completed A3 history separate from the current test-execution workflow work. The old `codex/source-decomposition-app-root` branch is behind `main`, so any future S7 work must start from a fresh live-state audit rather than blindly continuing that stale branch.
 
@@ -236,7 +246,6 @@ A4/ZDD promotion
 other scripts
 history UI / misinformation expansion
 App-root S7
-S2 executable Gradle suites
 S3 CI optimization
 ```
 
@@ -255,7 +264,7 @@ S7.3       PAUSED / NOT STARTED
 Current sequence:
 
 ```text
-1. complete test workflow optimization S1 -> S2 -> S3
+1. implement and validate S3 CI impact/path-aware routing using the S2 testFast/testFull contract
 2. validate the new workflow and CI behavior
 3. resume App-root decomposition from S7.3 using a fresh live-state audit
 4. return to later A3/product roadmap work according to the then-current priority
