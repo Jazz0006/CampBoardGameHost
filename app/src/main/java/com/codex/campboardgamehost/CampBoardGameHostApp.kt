@@ -374,47 +374,6 @@ private fun Context.loadSavedGamePreview(localizedContext: Context): SavedGamePr
     return preview
 }
 
-private inline fun <reified T : Enum<T>> enumByName(name: String?): T? {
-    if (name.isNullOrBlank()) return null
-    return runCatching { enumValueOf<T>(name) }.getOrNull()
-}
-
-private fun JSONObject.putNullableString(key: String, value: String?) {
-    put(key, value ?: JSONObject.NULL)
-}
-
-private fun JSONObject.putNullableInt(key: String, value: Int?) {
-    put(key, value ?: JSONObject.NULL)
-}
-
-private fun JSONObject.putNullableBoolean(key: String, value: Boolean?) {
-    put(key, value ?: JSONObject.NULL)
-}
-
-private fun JSONObject.optNullableString(key: String): String? {
-    return if (has(key) && !isNull(key)) optString(key) else null
-}
-
-private fun JSONObject.optNullableInt(key: String): Int? {
-    return if (has(key) && !isNull(key)) optInt(key) else null
-}
-
-private fun JSONObject.optNullableBoolean(key: String): Boolean? {
-    return if (has(key) && !isNull(key)) optBoolean(key) else null
-}
-
-private fun stringsToJsonArray(values: List<String>): JSONArray {
-    val json = JSONArray()
-    values.forEach { json.put(it) }
-    return json
-}
-
-private fun JSONArray.toStringList(): List<String> = buildList {
-    for (index in 0 until length()) {
-        optString(index).takeIf { it.isNotBlank() }?.let(::add)
-    }
-}
-
 private fun clocktowerRoleByName(enName: String?): ClocktowerRole? {
     if (enName.isNullOrBlank()) return null
     return completeClocktowerRoles.firstOrNull { it.enName == enName }
