@@ -17,8 +17,127 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Classify changes
+    runs-on: ubuntu-latest
+    outputs:
+      android: ${{ steps.classify.outputs.android }}
+      asp: ${{ steps.classify.outputs.asp }}
+      oracle: ${{ steps.classify.outputs.oracle }}
+
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Classify changed paths
+        id: classify
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          android=false
+          asp=false
+          oracle=false
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            android=true
+            asp=true
+            oracle=true
+          else
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              base="${{ github.event.pull_request.base.sha }}"
+              head="${{ github.event.pull_request.head.sha }}"
+            else
+              base="${{ github.event.before }}"
+              head="${{ github.sha }}"
+            fi
+
+            if [[ -z "$base" || "$base" =~ ^0+$ ]] || ! git cat-file -e "${base}^{commit}" 2>/dev/null; then
+              base="$(git rev-parse "${head}^")"
+            fi
+
+            git diff --name-only --no-renames "$base" "$head" > "$RUNNER_TEMP/changed-files.txt"
+            echo "Changed files:"
+            cat "$RUNNER_TEMP/changed-files.txt"
+
+            while IFS= read -r path; do
+              [[ -z "$path" ]] && continue
+
+              # Explicitly safe non-executable surfaces.
+              case "$path" in
+                docs/*|AGENTS.md|README.md|player/*)
+                  continue
+                  ;;
+              esac
+
+              # Changes to CI routing validate every gate.
+              case "$path" in
+                .github/workflows/*)
+                  android=true
+                  asp=true
+                  oracle=true
+                  continue
+                  ;;
+              esac
+
+              classified=false
+
+              # ASP harness/corpus changes require both Python contracts and the real Oracle.
+              case "$path" in
+                tools/asp_oracle/*)
+                  asp=true
+                  oracle=true
+                  classified=true
+                  ;;
+              esac
+
+              # Android application, tests, assets, and build-system changes require FULL Android validation.
+              case "$path" in
+                app/*|build.gradle.kts|settings.gradle.kts|gradle.properties|gradle/*|gradlew|gradlew.bat)
+                  android=true
+                  classified=true
+                  ;;
+              esac
+
+              # Exact Clocktower semantic surfaces additionally require Real Clingo cross-validation.
+              case "$path" in
+                app/src/main/java/com/codex/campboardgamehost/clocktower/domain/*|\
+                app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/*|\
+                app/src/main/java/com/codex/campboardgamehost/clocktower/history/*|\
+                app/src/main/java/com/codex/campboardgamehost/clocktower/rules/*|\
+                app/src/test/java/com/codex/campboardgamehost/clocktower/domain/*|\
+                app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/*|\
+                app/src/test/java/com/codex/campboardgamehost/clocktower/history/*|\
+                app/src/test/java/com/codex/campboardgamehost/clocktower/rules/*|\
+                app/src/main/java/com/codex/campboardgamehost/Clocktower*Semantics.kt|\
+                app/src/main/assets/rules/*|\
+                app/src/main/assets/scripts/*)
+                  oracle=true
+                  classified=true
+                  ;;
+              esac
+
+              # Fail safe: an unknown new repository surface receives complete validation
+              # until it is deliberately classified above.
+              if [[ "$classified" == false ]]; then
+                android=true
+                asp=true
+                oracle=true
+              fi
+            done < "$RUNNER_TEMP/changed-files.txt"
+          fi
+
+          echo "android=$android" >> "$GITHUB_OUTPUT"
+          echo "asp=$asp" >> "$GITHUB_OUTPUT"
+          echo "oracle=$oracle" >> "$GITHUB_OUTPUT"
+          echo "Routing: android=$android asp=$asp oracle=$oracle"
+
   android-tests:
     name: Android tests
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -39,11 +158,13 @@ jobs:
       - name: Ensure Gradle wrapper is executable
         run: chmod +x ./gradlew
 
-      - name: Run Android unit tests and build debug APK
-        run: ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --build-cache
+      - name: Run full Android unit tests and build debug APK
+        run: ./gradlew :app:testFull :app:assembleDebug --no-daemon --build-cache
 
   asp-contract-tests:
     name: ASP contract tests
+    needs: changes
+    if: needs.changes.outputs.asp == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -68,6 +189,8 @@ jobs:
 
   asp-oracle:
     name: Real Clingo cross-validation
+    needs: changes
+    if: needs.changes.outputs.oracle == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -106,3 +229,32 @@ jobs:
             --botc-asp-dir build/oracles/botc-asp \
             --report build/reports/asp-oracle-a2.json \
             --timeout 30
+
+  ci-gate:
+    name: CI gate
+    needs:
+      - changes
+      - android-tests
+      - asp-contract-tests
+      - asp-oracle
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Require every selected validation to pass
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          ANDROID_RESULT: ${{ needs.android-tests.result }}
+          ASP_RESULT: ${{ needs.asp-contract-tests.result }}
+          ORACLE_RESULT: ${{ needs.asp-oracle.result }}
+        run: |
+          set -euo pipefail
+
+          [[ "$CHANGES_RESULT" == "success" ]]
+
+          for result in "$ANDROID_RESULT" "$ASP_RESULT" "$ORACLE_RESULT"; do
+            if [[ "$result" != "success" && "$result" != "skipped" ]]; then
+              echo "Selected validation did not pass: $result"
+              exit 1
+            fi
+          done
