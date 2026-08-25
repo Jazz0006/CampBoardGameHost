@@ -1,14 +1,13 @@
-# CampBoardGameHost — App-root Decomposition Handoff (S7+)
+# CampBoardGameHost — App-root Decomposition Handoff (S7 closure / S8+)
 
 > Refreshed: 2026-08-25 Australia/Sydney
 > Stable main: `0311c3bb54ea71be69bc60a4aae642e0f39cd900`
-> Current structural branch: `codex/source-decomposition-app-root-s7-5-new-demon-presentation`
-> Latest closed structural code checkpoint: `bcd8b9b2dad4f3cde42bef2cdb6d1eea7839dd7e` (S7.4 GREEN)
-> Current structural status: **S0–S7.4 CLOSED; S7.5 New Demon presentation ACTIVE**
+> Latest closed structural code checkpoint: `c2ab6dcba6e1d0fe862255160b782a8c6dab5fda` (S7.6 GREEN)
+> Current structural status: **S0–S7.6 CLOSED; STOP/remeasure completed; S8.1 pure app game models NEXT**
 > Future A3 setup-snapshot/authority work remains out of scope here.
 > Never merge, force-push, rebase, mark ready or broaden scope without explicit user authorization.
 
-## 1. Branch lineage and checkpoints
+## 1. Current structural lineage
 
 Stable integration base after PR #50:
 
@@ -16,36 +15,35 @@ Stable integration base after PR #50:
 0311c3bb54ea71be69bc60a4aae642e0f39cd900
 ```
 
-S7.3 checkpoint:
+Recent stacked structural checkpoints:
 
 ```text
+S7.3 GREEN
 b6d5d407d8d753bfe1fd4f9a5b16f58881468fa7
-refactor: extract shared host interaction UI
+
+S7.4
+b6d5d407...
+  -> 4a46210cf11a0c45ceffef7bfaa647e53e99747f  RED
+  -> 843f61e5106b704417b1cd347c47393264215bb8  stale structural-test repair
+  -> bcd8b9b2dad4f3cde42bef2cdb6d1eea7839dd7e  GREEN
+  -> 7c36d7d1fb95d9bae66439acd3523e86ab9b6e72  clean docs checkpoint
+
+S7.5
+  -> ea940199dd768aa6f35a418ab333c40401af658c  docs/preflight base
+  -> 5ea3829631b33a13d4245b3932fc21662767a3a8  RED
+  -> 91ce3da44ec4b824c4e3e750ec9f6c5b99b618a3  GREEN
+
+S7.6
+  -> 6e72afe4372a0ed7d329354a3bce018cb5799614  RED
+  -> c2ab6dcba6e1d0fe862255160b782a8c6dab5fda  GREEN
 ```
 
-S7.4 tests-first lineage:
-
-```text
-b6d5d407d8d753bfe1fd4f9a5b16f58881468fa7
-  -> 4a46210cf11a0c45ceffef7bfaa647e53e99747f  test: define shared game settings UI ownership
-  -> 843f61e5106b704417b1cd347c47393264215bb8  test: retire stale root ownership assertions
-  -> bcd8b9b2dad4f3cde42bef2cdb6d1eea7839dd7e  refactor: extract shared game settings UI
-  -> 7c36d7d1fb95d9bae66439acd3523e86ab9b6e72  docs: sync post-S7.4 decomposition plan
-```
-
-S7.5 is stacked from the clean S7.4 docs checkpoint `7c36d7d1...`; the separate S7.4 documentation-recovery history is deliberately not part of this branch lineage.
+The separate S7.4 documentation-recovery history is intentionally not part of the clean S7.5/S7.6 lineage.
 
 ## 2. Root-size progress
 
-Original Root:
-
 ```text
-CampBoardGameHostApp.kt = 325,556 bytes
-```
-
-Validated progression:
-
-```text
+Original   = 325,556 bytes
 After S1   = 293,536 bytes
 After S2   = 283,470 bytes
 After S3   = 277,453 bytes
@@ -55,46 +53,26 @@ After S6   = 229,822 bytes
 After S7.1 = 229,007 bytes
 After S7.2 = 228,172 bytes
 After S7.3 = 220,403 bytes
-After S7.4 = 218,086 bytes (~213 KiB)
+After S7.4 = 218,086 bytes
+After S7.5 = 210,856 bytes
+After S7.6 = 209,336 bytes
 ```
 
 Current dedicated owners of note:
 
 ```text
-ClocktowerPresentationTheme.kt =   985 bytes
-HostInteractionUi.kt           = 8,901 bytes
-GameSettingsUi.kt              = 3,112 bytes
+ClocktowerPresentationTheme.kt       985 bytes
+HostInteractionUi.kt               8,901 bytes
+GameSettingsUi.kt                  3,112 bytes
+clocktower/ui/ClocktowerNightScreen.kt 25,063 bytes
+werewolf/WerewolfHostScreen.kt     31,193 bytes
 ```
 
-The 50 KiB target remains a maintainability guideline, not a hard correctness gate. Do not manufacture artificial abstractions just to reach a byte target.
+The 50 KiB target remains a maintainability guideline. Do not manufacture abstractions solely to reach a byte threshold.
 
-## 3. Closed slices relevant to current work
-
-### S7.1 — shared Clocktower theme — CLOSED
-
-Moved `ClocktowerDarkTheme` from Root to `ClocktowerPresentationTheme.kt`.
-
-### S7.2 — Clocktower selection semantics — CLOSED
-
-Moved:
-
-```text
-TwoPlayerSelectionAction
-twoPlayerSelectionAction(...)
-shouldAutoAdvanceRedHerring(...)
-```
-
-into `ClocktowerHostSelectionSemantics.kt`.
-
-The permanent invariant is semantics ownership; UI helper location is not part of the S7.2 contract.
+## 3. S7 closeout
 
 ### S7.3 — shared host interaction UI — CLOSED
-
-Owner:
-
-```text
-HostInteractionUi.kt
-```
 
 Moved exactly:
 
@@ -108,15 +86,9 @@ SelectableTwoPlayerChips
 SelectableSeatNumbers
 ```
 
-Root after S7.3: 220,403 bytes. Owner size: 8,901 bytes. Remote exact-diff audit passed. No GitHub Actions run was observed on that head, so do not describe it as remotely CI-green.
+Owner: `HostInteractionUi.kt`. Remote exact-diff audit passed. No GitHub Actions run was observed on the branch head.
 
 ### S7.4 — shared game-settings presentation — CLOSED
-
-Owner:
-
-```text
-GameSettingsUi.kt
-```
 
 Moved exactly:
 
@@ -125,37 +97,72 @@ GameSettingsHeader
 StepperRow
 ```
 
-The first T1 run exposed two stale structural assertions. Their real invariants were migrated:
+Owner: `GameSettingsUi.kt`.
 
-- `AppDealPresentationOwnershipTest` now protects that shared primitives remain outside the S4 deal owner rather than requiring permanent Root ownership.
-- `ClocktowerHostSelectionSemanticsOwnershipTest` now protects that selection UI remains outside the semantics owner rather than requiring permanent Root ownership.
+The initial T1 exposed stale location assertions in `AppDealPresentationOwnershipTest` and `ClocktowerHostSelectionSemanticsOwnershipTest`. Those were repaired to protect their real S4/S7.2 boundaries instead of freezing temporary Root ownership.
 
-`GameSettingsUiOwnershipTest` independently owns the current S7.4 location contract.
+Remote exact-diff audit passed. No GitHub Actions run was observed on the branch head.
 
-Reported local gates after repair:
+### S7.5 — New Demon presentation — CLOSED
+
+Moved exactly:
 
 ```text
-T0 focused ownership tests     GREEN
-T1 :app:testFast               GREEN
-T2 :app:assembleDebug          GREEN
-git diff --check               PASS
-exact local diff audit         PASS
-remote exact-diff audit        PASS
+ClocktowerNewDemonConfirmationScreen
+CampBoardGameHostApp.kt
+  -> clocktower/ui/ClocktowerNightScreen.kt
 ```
 
-No GitHub Actions run was observed on the S7.4 branch. Remote CI GREEN is therefore not claimed.
+Remote audit found exactly three BASE->GREEN files: Root, NightScreen and the new ownership test. The production move was `-159/+159` lines. `ClocktowerHostScreen.kt` had identical blob SHA before and after the move, proving byte-for-byte preservation of:
 
-`EmptyStateCard` remains Root-owned and intentionally deferred.
+- `pendingNewDemonName` ownership;
+- `newDemon` lookup;
+- `newDemonStep` construction;
+- `playerDisplayStep` mutation;
+- `onConfirmNewDemon` wiring;
+- adjacent night transaction authority.
 
-## 4. Current Root ownership model
+Root after S7.5: 210,856 bytes. NightScreen: 25,063 bytes. No GitHub Actions run was observed.
 
-The remaining Root has three broad zones.
+### S7.6 — Werewolf presentation leftovers — CLOSED
 
-### Front — models / prefs / JSON / setup helpers
+Moved exactly:
 
-Potential future S8 candidates exist here, but this area is materially riskier because of setup identity, saved-game compatibility, persistence and A3 semantics. Do not enter it during remaining S7 work.
+```text
+WerewolfRoleLine
+WerewolfPlayerStatusRow
+CampBoardGameHostApp.kt
+  -> werewolf/WerewolfHostScreen.kt
+```
 
-### Middle — protected application orchestrator
+Tests-first lineage:
+
+```text
+RED   6e72afe4372a0ed7d329354a3bce018cb5799614
+GREEN c2ab6dcba6e1d0fe862255160b782a8c6dab5fda
+```
+
+Remote audit found exactly three BASE->GREEN files: Root, WerewolfHostScreen and the new ownership test. Production move was `-36/+36` lines with unchanged signatures, visibility and bodies; no imports or consumers were changed. `AppDealPresentationOwnershipTest.kt` remained zero-diff.
+
+Root after S7.6: 209,336 bytes. WerewolfHostScreen: 31,193 bytes. No GitHub Actions run was observed.
+
+S7 is now complete. The mandatory STOP / remeasure / fresh S8 architecture audit has been performed.
+
+## 4. Current Root ownership model after S7
+
+### 4.1 Front — mixed responsibilities requiring selective S8 work
+
+The front now contains:
+
+```text
+A. pure app-level value models
+B. preferences / JSON / persistence / restore / archive code
+C. legacy Clocktower role/setup/catalog/assignment code
+```
+
+These must not be treated as one extraction simply because they are adjacent.
+
+### 4.2 Middle — protected application orchestrator
 
 Do not move merely for size:
 
@@ -169,205 +176,182 @@ Do not move merely for size:
 - async recommendation lifetime;
 - cross-game reset behavior;
 - day/night transaction callbacks;
-- Demon transition and public-history ordering.
+- Demon transition and public-history ordering;
+- A4 cache/prewarm/rebuild lifetime.
 
-### Tail — remaining presentation candidates
+### 4.3 Tail
 
-After S7.4, the only planned S7 candidates are:
+`EmptyStateCard` remains deferred. Do not create a generic `Utils.kt`, `Common.kt` or `CommonUi.kt` bucket solely to relocate it.
 
-```text
-ClocktowerNewDemonConfirmationScreen
-WerewolfRoleLine
-WerewolfPlayerStatusRow
-```
+## 5. Fresh S8 audit result
 
-`EmptyStateCard` is deferred; do not create a generic `Utils.kt` or `CommonUi.kt` bucket for it.
+### S8.1 — pure app game models — NEXT
 
-## 5. S7.5 — New Demon presentation — ACTIVE
-
-Fresh preflight confirms the move candidate:
+Preferred new owner:
 
 ```text
-ClocktowerNewDemonConfirmationScreen
-
-CampBoardGameHostApp.kt
-  -> clocktower/ui/ClocktowerNightScreen.kt
+app/src/main/java/com/codex/campboardgamehost/AppGameModels.kt
 ```
 
-Current declaration is a presentation-only composable taking only:
+Move exactly these seven already-`internal` declarations:
 
 ```text
-newDemonLabel: String
-hasNewDemon: Boolean
-onShowPlayerDisplay: () -> Unit
-onConfirm: () -> Unit
+GameKind
+Role
+PlayerCard
+EliminationRecord
+GameOutcome
+SavedGamePreview
+ArchivedGameReview
 ```
 
-It owns no `remember`, mutable state, effect, session, persistence, planner or transaction authority.
+These are cross-game app-level value types, have no state/effects, and can remain in the same Kotlin package with unchanged visibility.
 
-Current Host wiring is:
-
-```kotlin
-pendingNewDemonName?.let { newDemonName ->
-    val newDemon = cards.firstOrNull { it.name == newDemonName }
-    val newDemonStep = ClocktowerNightStepUi(...)
-    ClocktowerNewDemonConfirmationScreen(
-        newDemonLabel = newDemon?.seatLabel(cards).orEmpty(),
-        hasNewDemon = newDemon != null,
-        onShowPlayerDisplay = { playerDisplayStep = newDemonStep },
-        onConfirm = onConfirmNewDemon,
-    )
-    return
-}
-```
-
-Protected boundaries for S7.5:
-
-- Host keeps `pendingNewDemonName` handling;
-- Host keeps `newDemon` lookup;
-- Host keeps `newDemonStep` construction;
-- Host keeps `playerDisplayStep` mutation;
-- Host/session keeps Imp self-kill succession transaction authority;
-- do not change `onConfirmNewDemon` behavior;
-- do not change actual successor selection;
-- do not change identity-display routing;
-- do not change public history/audit ordering;
-- do not change night-step advancement;
-- do not move or edit planner/projector/materializer/session authority;
-- do not touch A3/B4/A4, persistence or recommendation authority.
-
-The preferred owner is confirmed as `clocktower/ui/ClocktowerNightScreen.kt`: it already owns stateless Clocktower night presentation (`ClocktowerNightActiveScreen`, `ClocktowerNightReadyCard`), uses the same Kotlin package, already imports the Compose/theme dependencies required by the moved function, and currently measures 17,833 bytes.
-
-No visibility widening or consumer edit should be required.
-
-## 6. S7.5 tests-first guard
-
-Add a focused ownership/characterization RED that proves:
-
-1. Root, NightScreen and HostScreen sources exist.
-2. `ClocktowerNightScreen.kt` declares `internal fun ClocktowerNewDemonConfirmationScreen(`.
-3. Root no longer declares the function.
-4. Host still retains the `pendingNewDemonName?.let` branch, new-Demon lookup and `ClocktowerNightStepUi` construction.
-5. Host wiring still contains exactly the protected values/callbacks:
-   - `newDemonLabel = newDemon?.seatLabel(cards).orEmpty()`
-   - `hasNewDemon = newDemon != null`
-   - `onShowPlayerDisplay = { playerDisplayStep = newDemonStep }`
-   - `onConfirm = onConfirmNewDemon`
-6. Do not add UI-string/body-copy assertions.
-7. Do not add a file-size assertion.
-
-Affected regression protection includes:
-
-- `ClocktowerAdvanceNightStepTransactionOwnershipTest`
-- `ClocktowerPlayerDisplayUiOwnershipTest`
-- `ClocktowerNightStepUiOwnershipTest`
-- `AppRootDynamicFlowDecompositionGuardTest`
-
-The existing advance-night-step test protects confirmation/audit/registration/semantic-record/finalization ordering in Host. The dynamic-flow guard protects planner/projector/materializer authority from returning to Root.
-
-## 7. S7.6 — Werewolf presentation leftovers
-
-Only after S7.5 closes, audit:
+Explicitly keep in Root for S8.1:
 
 ```text
-WerewolfRoleLine
-WerewolfPlayerStatusRow
--> werewolf/WerewolfHostScreen.kt
+private enum class Screen
+internal enum class LanguageMode
+internal fun PlayerCard.abilitySubject(...)
+ClocktowerEventType
+ClocktowerEvent
+ClocktowerTeam
+ClocktowerPhase
+ClocktowerDayMode
+ClocktowerNightAction
+ClocktowerDisplayKind
+ClocktowerScript
+ClocktowerRole
 ```
 
-After S7.6: STOP, remeasure Root and run a fresh S8 architecture audit. Do not automatically continue into models, setup or persistence.
+Why `PlayerCard.abilitySubject` stays out: it is a rules adapter to `clocktower.rules.AbilitySubject`, not a value-model declaration.
 
-## 8. Protected boundaries for all remaining S7 work
+Why `LanguageMode` stays out: it is settings/preferences-facing (`prefsValue`) rather than a game value model.
 
-Do not move merely for byte reduction:
+Why Clocktower-specific types stay out: they deserve a separate domain-specific audit instead of turning `AppGameModels.kt` into a mixed bucket.
 
-- Clocktower live transaction ordering;
-- Compose effect lifetime;
-- persistence / restore / archive ownership;
-- A4 cache/prewarm/runtime lifecycle;
-- `ClocktowerGameSession` global timeline identity/sequence;
-- action/observation commit ordering;
-- planner/projector/materializer authority;
-- merged A3/B4 historical-exact semantics;
-- Host recommendation/registration transaction semantics.
+### Persistence / JSON — DEFER / CONDITIONAL S9
 
-`ClocktowerHostScreen.kt` remains under new-responsibility growth freeze. Further extraction is allowed only when a cohesive owner is obvious and behavior can be characterized without weakening lifecycle, callback ordering, recommendation/session ownership or timeline identity.
+Do not include in S8.1:
 
-## 9. Large-file execution workflow — HARD RULE
+- prefs keys or SharedPreferences access;
+- active-game save/load/clear;
+- saved-game preview restore behavior;
+- game archive/history persistence;
+- nullable JSON helpers/codecs;
+- `PlayerCard`/event/outcome JSON codecs;
+- epistemic observation JSON serialization;
+- saved-game version/schema handling.
 
-`CampBoardGameHostApp.kt` is 218,086 bytes (~213 KiB) after S7.4. Do **not** use the GitHub Connector for production rewrites/moves in this file.
+These touch restore compatibility and history/schema semantics.
+
+### Legacy Clocktower role/setup/catalog — AUDIT LATER
+
+Root still owns legacy role lists, script mapping, player-count distribution and random assignment helpers. Although cohesive, several are `private`; moving them would widen visibility and must be reconciled with the newer `clocktower/catalog` architecture. Do not combine this work with S8.1.
+
+## 6. S8.1 tests-first contract
+
+Add a focused ownership RED that proves:
+
+1. `AppGameModels.kt` exists.
+2. It declares exactly the approved app game model symbols needed for this slice.
+3. Root no longer declares those seven symbols.
+4. Root still declares:
+   - `private enum class Screen`
+   - `internal enum class LanguageMode`
+   - `internal fun PlayerCard.abilitySubject(`
+   - `internal enum class ClocktowerEventType`
+   - `internal enum class ClocktowerTeam`
+5. The new owner contains none of:
+   - `remember`
+   - `mutableStateOf`
+   - `LaunchedEffect`
+   - `DisposableEffect`
+   - `SideEffect`
+   - `JSONObject`
+   - `JSONArray`
+   - `SharedPreferences`
+   - `ClocktowerGameSession`
+6. Do not add byte-size assertions.
+7. Do not modify consumers simply because declarations move within the same package.
+
+Expected code/test allowlist:
+
+```text
+app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+app/src/main/java/com/codex/campboardgamehost/AppGameModels.kt
+app/src/test/java/com/codex/campboardgamehost/AppGameModelsOwnershipTest.kt
+```
+
+No fourth code/test file unless T1 exposes a genuinely stale structural location assertion; if so, STOP and report before editing it.
+
+Validation:
+
+```text
+T0 AppGameModelsOwnershipTest RED/GREEN
+-> T1 :app:testFast
+-> T2 :app:assembleDebug
+-> no T3 expected
+-> applicable PR T4 later
+-> git diff --check + exact declaration-only diff audit
+```
+
+## 7. Large-file execution workflow — HARD RULE
+
+`CampBoardGameHostApp.kt` is 209,336 bytes after S7.6. Do **not** use the GitHub Connector for production rewrites/moves in this file.
 
 ### ChatGPT owns
 
 - live-state audit;
-- architecture and ownership decision;
+- architecture/ownership decision;
 - production/test symbol inventory;
-- dependency and visibility audit;
-- stale structural-contract classification;
-- tests-first RED design;
-- exact declaration-move specification;
+- dependency/visibility audit;
+- stale structural-test classification;
+- RED design;
 - changed-file allowlist;
 - validation commands;
 - exact-diff acceptance criteria;
 - STOP conditions;
 - post-push remote audit.
 
-### Luna in the user's full local Git worktree owns
+### Luna owns in the user's full local Git worktree
 
 - writing/running the approved RED;
-- mechanical declaration move;
-- minimal compile-required imports/visibility edits;
-- focused T0 tests;
-- T1 `:app:testFast`;
-- affected T2 checks;
-- `:app:assembleDebug` for moved Compose production declarations;
+- mechanical Root declaration movement;
+- minimal compile-required import changes;
+- T0/T1/T2 execution;
 - `git diff --check`;
 - exact local diff review;
 - commit and push after approved gates pass.
 
-ChatGPT must not directly rewrite Root production code through the connector for these slices.
+## 8. Global protected boundaries
 
-## 10. Tests-first contract
+Do not weaken or relocate without dedicated design/tests:
 
-For every remaining S7 extraction:
+- Clocktower live transaction ordering;
+- Compose effect lifetime;
+- persistence / restore / archive ownership;
+- A4 lifecycle/cache/prewarm/rebuild;
+- `ClocktowerGameSession` global timeline identity/sequence;
+- action/observation commit ordering;
+- planner/projector/materializer authority;
+- merged A3/B4 historical-exact semantics;
+- Host recommendation/registration transaction semantics.
 
-1. re-check live `main`, structural head and parent chain;
-2. inventory every declaration/caller/test reference for target symbols;
-3. classify stale structural tests before RED design;
-4. add focused ownership/characterization RED;
-5. observe RED for the intended ownership reason;
-6. perform the smallest behavior-preserving move;
-7. minimize visibility widening;
-8. run T0 focused GREEN;
-9. run T1 `:app:testFast`;
-10. run T2 affected regression/compile checks;
-11. trigger T3 only if the semantic area requires it;
-12. leave applicable FULL coverage to the PR T4 gate unless uncertainty requires earlier escalation;
-13. run `git diff --check` and exact diff audit;
-14. STOP on unexpected dependency, visibility, lifecycle or transaction requirements.
+`ClocktowerHostScreen.kt` remains under new-responsibility growth freeze.
 
-Structural flow:
+## 9. Current planned route
 
 ```text
-T0 focused RED/GREEN
--> T1 :app:testFast
--> T2 affected checks / assemble
--> triggered T3 only when required
--> PR T4 applicable FULL
+S7.1–S7.6                         CLOSED
+-> STOP / remeasure / S8 audit    COMPLETE
+-> S8.1 pure app game models      NEXT
+-> remeasure + fresh audit
+-> possible Clocktower legacy model/catalog slice only if natural
+-> persistence/codec S9 only if independently justified
+-> D1 ClocktowerDayScreen stale-import cleanup + remeasure
+-> D2 split DayScreen only if still architecturally justified
+-> structural exit audit
 ```
 
-If impact is uncertain, escalate upward. Do not weaken T4.
-
-## 11. Planned route
-
-```text
-S7.1 shared Clocktower theme             CLOSED
--> S7.2 selection semantics              CLOSED
--> S7.3 shared host interaction UI       CLOSED
--> S7.4 shared game settings UI          CLOSED
--> S7.5 New Demon presentation           ACTIVE
--> S7.6 Werewolf presentation leftovers
--> STOP / remeasure Root / fresh S8 audit
-```
-
-Future A3 setup-snapshot/authority work remains separate. Do not resume it on the structural branch.
+Future A3 setup-snapshot/authority work remains separate from this structural branch.
