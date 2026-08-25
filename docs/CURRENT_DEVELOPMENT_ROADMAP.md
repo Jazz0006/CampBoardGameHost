@@ -4,11 +4,11 @@
 > 文档角色：**CURRENT / 当前状态唯一权威**
 > Repository: `Jazz0006/CampBoardGameHost`
 > Stable `main`: `0311c3bb54ea71be69bc60a4aae642e0f39cd900`
-> Current structural checkpoint: `c2ab6dcba6e1d0fe862255160b782a8c6dab5fda`
+> Current structural checkpoint: `7b52eab31fb7c0e78156c5f3487cb062de03edfe`
 > PR #48: **MERGED / CLOSED — historical multi-night exact baseline**
 > PR #49: **MERGED / CLOSED — app-root S7.1/S7.2 structural checkpoint**
 > PR #50: **MERGED / CLOSED — test execution tiers + path-aware CI**
-> Current project priority: **APP-ROOT DECOMPOSITION — S8.1 PURE APP GAME MODELS**
+> Current project priority: **APP-ROOT DECOMPOSITION — S8.2 CLOCKTOWER APP VALUE MODELS**
 > Detailed test strategy: `docs/TESTING_STRATEGY.md`
 > App-root handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_S7.md`
 
@@ -29,7 +29,8 @@ App-root S7.3                                       CLOSED / STACKED STRUCTURAL 
 App-root S7.4                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
 App-root S7.5                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
 App-root S7.6                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
-App-root S8.1                                       NEXT — PURE APP GAME MODELS
+App-root S8.1                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
+App-root S8.2                                       NEXT — CLOCKTOWER APP VALUE MODELS
 PR #48 historical multi-night exact baseline       MERGED / CLOSED
 A3 Architecture Hardening H1–H7                    COMPLETE / GREEN
 B4 historical-exact shadow bridge                  GREEN
@@ -119,6 +120,7 @@ After S7.3 = 220,403 bytes
 After S7.4 = 218,086 bytes
 After S7.5 = 210,856 bytes
 After S7.6 = 209,336 bytes
+After S8.1 = 208,126 bytes
 ```
 
 ### S7.3 — shared host interaction UI — CLOSED
@@ -245,33 +247,56 @@ These are restore/schema-sensitive and remain conditional S9 work unless an inde
 
 The Root still owns legacy role lists, script mappings, distribution and random assignment helpers. This area is more domain-cohesive but several declarations are currently `private`; extracting them would require visibility widening and careful comparison with the newer normalized `clocktower/catalog` architecture. Do not combine this with S8.1.
 
-## 6. S8.1 acceptance boundary
+## 6. S8.1 closeout and S8.2 route
 
-S8.1 must be a mechanical declaration move only:
+### S8.1 — pure app game models — CLOSED
+
+```text
+BASE:   a8e17af78cda13ee6f504f24142d02f3dcfdacb3
+RED:    9b9d9c411a5d9c6c96cdf3315146338002123da7
+repair: c58d8bda8dc04144d039f828918f1edafd8bc983
+GREEN:  7b52eab31fb7c0e78156c5f3487cb062de03edfe
+owner:  AppGameModels.kt = 1,245 bytes
+root:   208,126 bytes
+remote exact-diff audit: PASS
+GitHub Actions: none observed
+```
+
+S8.1 moved exactly seven already-`internal` declarations with no production visibility widening. The next slice is a separate Clocktower-specific app value-model owner.
+
+### S8.2 — Clocktower app value models — NEXT
+
+S8.2 must be a mechanical declaration move only:
 
 ```text
 CampBoardGameHostApp.kt
-  -> AppGameModels.kt
+  -> ClocktowerAppModels.kt
 ```
 
-No consumer file should change because the new owner remains in package `com.codex.campboardgamehost` and all seven targets are already `internal`.
-
-The ownership RED must also prove that Root retains:
+Move exactly these nine declarations:
 
 ```text
-private enum class Screen
-internal enum class LanguageMode
-internal fun PlayerCard.abilitySubject(
-internal enum class ClocktowerEventType
-internal enum class ClocktowerTeam
+ClocktowerEventType
+ClocktowerEvent
+ClocktowerTeam
+ClocktowerPhase
+ClocktowerDayMode
+ClocktowerNightAction
+ClocktowerDisplayKind
+ClocktowerScript
+ClocktowerRole
 ```
 
-The new owner must not contain Compose state/effects, JSON/persistence APIs or `ClocktowerGameSession` authority.
+Keep prefs/JSON/persistence/restore, legacy role lists/catalog/helpers, distribution/assignment, state/effects/session, recommendation logic, and A3/B4 semantics out of S8.2.
+
+No consumer file should change because the new owner remains in package `com.codex.campboardgamehost` and all nine targets are already `internal`.
+
+The new owner must not contain Compose state/effects, JSON/persistence APIs, `ClocktowerGameSession`, loader/assignment/catalog logic, or session authority.
 
 Validation remains:
 
 ```text
-T0 focused ownership RED/GREEN
+T0 focused RED/GREEN ownership tests
 -> T1 :app:testFast
 -> T2 :app:assembleDebug
 -> no T3 expected for declaration-only model movement

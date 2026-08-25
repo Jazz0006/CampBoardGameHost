@@ -2,8 +2,8 @@
 
 > Refreshed: 2026-08-25 Australia/Sydney
 > Stable main: `0311c3bb54ea71be69bc60a4aae642e0f39cd900`
-> Latest closed structural code checkpoint: `c2ab6dcba6e1d0fe862255160b782a8c6dab5fda` (S7.6 GREEN)
-> Current structural status: **S0–S7.6 CLOSED; STOP/remeasure completed; S8.1 pure app game models NEXT**
+> Latest closed structural code checkpoint: `7b52eab31fb7c0e78156c5f3487cb062de03edfe` (S8.1 GREEN)
+> Current structural status: **S0–S8.1 CLOSED; S8.2 Clocktower app value models NEXT**
 > Future A3 setup-snapshot/authority work remains out of scope here.
 > Never merge, force-push, rebase, mark ready or broaden scope without explicit user authorization.
 
@@ -36,6 +36,11 @@ S7.5
 S7.6
   -> 6e72afe4372a0ed7d329354a3bce018cb5799614  RED
   -> c2ab6dcba6e1d0fe862255160b782a8c6dab5fda  GREEN
+
+S8.1
+  -> 9b9d9c411a5d9c6c96cdf3315146338002123da7  RED
+  -> c58d8bda8dc04144d039f828918f1edafd8bc983  stale structural-test repair
+  -> 7b52eab31fb7c0e78156c5f3487cb062de03edfe  GREEN
 ```
 
 The separate S7.4 documentation-recovery history is intentionally not part of the clean S7.5/S7.6 lineage.
@@ -56,6 +61,7 @@ After S7.3 = 220,403 bytes
 After S7.4 = 218,086 bytes
 After S7.5 = 210,856 bytes
 After S7.6 = 209,336 bytes
+After S8.1 = 208,126 bytes
 ```
 
 Current dedicated owners of note:
@@ -66,6 +72,7 @@ HostInteractionUi.kt               8,901 bytes
 GameSettingsUi.kt                  3,112 bytes
 clocktower/ui/ClocktowerNightScreen.kt 25,063 bytes
 werewolf/WerewolfHostScreen.kt     31,193 bytes
+AppGameModels.kt                    1,245 bytes
 ```
 
 The 50 KiB target remains a maintainability guideline. Do not manufacture abstractions solely to reach a byte threshold.
@@ -183,36 +190,40 @@ Do not move merely for size:
 
 `EmptyStateCard` remains deferred. Do not create a generic `Utils.kt`, `Common.kt` or `CommonUi.kt` bucket solely to relocate it.
 
-## 5. Fresh S8 audit result
+## 5. S8.1 closeout and S8.2 implementation contract
 
-### S8.1 — pure app game models — NEXT
-
-Preferred new owner:
+### S8.1 — pure app game models — CLOSED
 
 ```text
-app/src/main/java/com/codex/campboardgamehost/AppGameModels.kt
+BASE:   a8e17af78cda13ee6f504f24142d02f3dcfdacb3
+RED:    9b9d9c411a5d9c6c96cdf3315146338002123da7
+repair: c58d8bda8dc04144d039f828918f1edafd8bc983
+GREEN:  7b52eab31fb7c0e78156c5f3487cb062de03edfe
+root:   208,126 bytes
+owner:  AppGameModels.kt = 1,245 bytes
+remote exact-diff audit: PASS
+GitHub Actions: none observed; do not claim remote CI green
 ```
 
-Move exactly these seven already-`internal` declarations:
+S8.1 moved exactly `GameKind`, `Role`, `PlayerCard`, `EliminationRecord`, `GameOutcome`, `SavedGamePreview`, and `ArchivedGameReview`. It caused no production visibility widening.
+
+### S8.2 — Clocktower app value models — NEXT
+
+Remote branch:
 
 ```text
-GameKind
-Role
-PlayerCard
-EliminationRecord
-GameOutcome
-SavedGamePreview
-ArchivedGameReview
+codex/source-decomposition-app-root-s8-2-clocktower-app-models
 ```
 
-These are cross-game app-level value types, have no state/effects, and can remain in the same Kotlin package with unchanged visibility.
-
-Explicitly keep in Root for S8.1:
+Expected base/head before implementation:
 
 ```text
-private enum class Screen
-internal enum class LanguageMode
-internal fun PlayerCard.abilitySubject(...)
+7b52eab31fb7c0e78156c5f3487cb062de03edfe
+```
+
+Create `app/src/main/java/com/codex/campboardgamehost/ClocktowerAppModels.kt` and move exactly these nine `internal` declarations from `CampBoardGameHostApp.kt`:
+
+```text
 ClocktowerEventType
 ClocktowerEvent
 ClocktowerTeam
@@ -224,77 +235,36 @@ ClocktowerScript
 ClocktowerRole
 ```
 
-Why `PlayerCard.abilitySubject` stays out: it is a rules adapter to `clocktower.rules.AbilitySubject`, not a value-model declaration.
+Defer prefs/JSON/persistence/restore, legacy role lists/catalog/helpers, distribution/assignment, and all state/effects/session/recommendation/A3/B4 logic. Do not change consumers or widen visibility.
 
-Why `LanguageMode` stays out: it is settings/preferences-facing (`prefsValue`) rather than a game value model.
+## 6. S8.2 tests-first contract
 
-Why Clocktower-specific types stay out: they deserve a separate domain-specific audit instead of turning `AppGameModels.kt` into a mixed bucket.
+Add `ClocktowerAppModelsOwnershipTest.kt` and run only its exact test for RED. It must prove the new owner exists, owns all nine declarations, Root no longer owns them, and the new owner contains no state/effect/JSON/prefs/session/loader/assignment/catalog strings. It must also prove `AppGameModels.kt` does not contain any of the nine declarations. Do not add byte-size assertions or UI/implementation-detail assertions.
 
-### Persistence / JSON — DEFER / CONDITIONAL S9
+Expected RED commit:
 
-Do not include in S8.1:
+```text
+test: define Clocktower app model ownership
+```
 
-- prefs keys or SharedPreferences access;
-- active-game save/load/clear;
-- saved-game preview restore behavior;
-- game archive/history persistence;
-- nullable JSON helpers/codecs;
-- `PlayerCard`/event/outcome JSON codecs;
-- epistemic observation JSON serialization;
-- saved-game version/schema handling.
+The existing `AppGameModelsOwnershipTest.kt` has stale temporary Root-location assertions for three Clocktower declarations. Repair only those assertions so the Clocktower group checks `AppGameModels.kt` exclusion without requiring Root ownership, then commit:
 
-These touch restore compatibility and history/schema semantics.
+```text
+test: decouple shared models from Clocktower model location
+```
 
-### Legacy Clocktower role/setup/catalog — AUDIT LATER
+The repair must leave its actual app-model ownership assertions unchanged. The new Clocktower ownership test must remain RED after the repair.
 
-Root still owns legacy role lists, script mapping, player-count distribution and random assignment helpers. Although cohesive, several are `private`; moving them would widen visibility and must be reconciled with the newer `clocktower/catalog` architecture. Do not combine this work with S8.1.
-
-## 6. S8.1 tests-first contract
-
-Add a focused ownership RED that proves:
-
-1. `AppGameModels.kt` exists.
-2. It declares exactly the approved app game model symbols needed for this slice.
-3. Root no longer declares those seven symbols.
-4. Root still declares:
-   - `private enum class Screen`
-   - `internal enum class LanguageMode`
-   - `internal fun PlayerCard.abilitySubject(`
-   - `internal enum class ClocktowerEventType`
-   - `internal enum class ClocktowerTeam`
-5. The new owner contains none of:
-   - `remember`
-   - `mutableStateOf`
-   - `LaunchedEffect`
-   - `DisposableEffect`
-   - `SideEffect`
-   - `JSONObject`
-   - `JSONArray`
-   - `SharedPreferences`
-   - `ClocktowerGameSession`
-6. Do not add byte-size assertions.
-7. Do not modify consumers simply because declarations move within the same package.
-
-Expected code/test allowlist:
+GREEN is a mechanical move only. Allowed code/test files are exactly:
 
 ```text
 app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-app/src/main/java/com/codex/campboardgamehost/AppGameModels.kt
+app/src/main/java/com/codex/campboardgamehost/ClocktowerAppModels.kt
+app/src/test/java/com/codex/campboardgamehost/ClocktowerAppModelsOwnershipTest.kt
 app/src/test/java/com/codex/campboardgamehost/AppGameModelsOwnershipTest.kt
 ```
 
-No fourth code/test file unless T1 exposes a genuinely stale structural location assertion; if so, STOP and report before editing it.
-
-Validation:
-
-```text
-T0 AppGameModelsOwnershipTest RED/GREEN
--> T1 :app:testFast
--> T2 :app:assembleDebug
--> no T3 expected
--> applicable PR T4 later
--> git diff --check + exact declaration-only diff audit
-```
+Run the specified T0 ownership/characterization tests, then T1 `:app:testFast`, then T2 `:app:assembleDebug`. Do not run `testFull`, ASP, Clingo, benchmarks, or unrelated suites. Commit `refactor: extract Clocktower app models`, push the named branch, and stop.
 
 ## 7. Large-file execution workflow — HARD RULE
 
@@ -344,8 +314,8 @@ Do not weaken or relocate without dedicated design/tests:
 
 ```text
 S7.1–S7.6                         CLOSED
--> STOP / remeasure / S8 audit    COMPLETE
--> S8.1 pure app game models      NEXT
+S8.1 pure app game models         CLOSED
+-> S8.2 Clocktower app models     NEXT
 -> remeasure + fresh audit
 -> possible Clocktower legacy model/catalog slice only if natural
 -> persistence/codec S9 only if independently justified
