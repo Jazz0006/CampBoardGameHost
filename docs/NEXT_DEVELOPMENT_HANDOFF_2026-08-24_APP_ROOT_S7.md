@@ -2,8 +2,8 @@
 
 > Refreshed: 2026-08-25 Australia/Sydney
 > Stable main: `0311c3bb54ea71be69bc60a4aae642e0f39cd900`
-> Latest closed structural code checkpoint: `7b52eab31fb7c0e78156c5f3487cb062de03edfe` (S8.1 GREEN)
-> Current structural status: **S0–S8.1 CLOSED; S8.2 Clocktower app value models NEXT**
+> Latest closed structural code checkpoint: `78cbaab473f433fb98d69f1bebfd7a69ae11edaa` (S8.2 GREEN)
+> Current structural status: **S0–S8.2 CLOSED; S9.1 app JSON primitives seam NEXT**
 > Future A3 setup-snapshot/authority work remains out of scope here.
 > Never merge, force-push, rebase, mark ready or broaden scope without explicit user authorization.
 
@@ -41,6 +41,12 @@ S8.1
   -> 9b9d9c411a5d9c6c96cdf3315146338002123da7  RED
   -> c58d8bda8dc04144d039f828918f1edafd8bc983  stale structural-test repair
   -> 7b52eab31fb7c0e78156c5f3487cb062de03edfe  GREEN
+
+S8.2
+  -> 798c83878825e6d7f9d7630449a673b6160c6447  RED
+  -> cf182bdfa2108bff00b02507fb5309bd4abf667f  planned stale structural-test repair
+  -> 28afa7e7ebb8d69e09a628c96d15bbd41889bfae  T1 stale-test repair
+  -> 78cbaab473f433fb98d69f1bebfd7a69ae11edaa  GREEN
 ```
 
 The separate S7.4 documentation-recovery history is intentionally not part of the clean S7.5/S7.6 lineage.
@@ -62,6 +68,7 @@ After S7.4 = 218,086 bytes
 After S7.5 = 210,856 bytes
 After S7.6 = 209,336 bytes
 After S8.1 = 208,126 bytes
+After S8.2 = 206,692 bytes
 ```
 
 Current dedicated owners of note:
@@ -73,6 +80,7 @@ GameSettingsUi.kt                  3,112 bytes
 clocktower/ui/ClocktowerNightScreen.kt 25,063 bytes
 werewolf/WerewolfHostScreen.kt     31,193 bytes
 AppGameModels.kt                    1,245 bytes
+ClocktowerAppModels.kt              1,469 bytes
 ```
 
 The 50 KiB target remains a maintainability guideline. Do not manufacture abstractions solely to reach a byte threshold.
@@ -190,7 +198,7 @@ Do not move merely for size:
 
 `EmptyStateCard` remains deferred. Do not create a generic `Utils.kt`, `Common.kt` or `CommonUi.kt` bucket solely to relocate it.
 
-## 5. S8.1 closeout and S8.2 implementation contract
+## 5. S8 closeout and S9.1 implementation contract
 
 ### S8.1 — pure app game models — CLOSED
 
@@ -207,64 +215,63 @@ GitHub Actions: none observed; do not claim remote CI green
 
 S8.1 moved exactly `GameKind`, `Role`, `PlayerCard`, `EliminationRecord`, `GameOutcome`, `SavedGamePreview`, and `ArchivedGameReview`. It caused no production visibility widening.
 
-### S8.2 — Clocktower app value models — NEXT
-
-Remote branch:
+### S8.2 — Clocktower app value models — CLOSED
 
 ```text
-codex/source-decomposition-app-root-s8-2-clocktower-app-models
+docs base: 879148f9b150fd688b43446705ba8e3debb1af9a
+RED: 798c83878825e6d7f9d7630449a673b6160c6447
+planned stale repair: cf182bdfa2108bff00b02507fb5309bd4abf667f
+T1 stale repair: 28afa7e7ebb8d69e09a628c96d15bbd41889bfae
+GREEN: 78cbaab473f433fb98d69f1bebfd7a69ae11edaa
+root: 206,692 bytes
+owner: ClocktowerAppModels.kt = 1,469 bytes
+remote exact-diff / structural audit: PASS
+GitHub Actions: none observed; do not claim remote CI green
 ```
 
-Expected base/head before implementation:
+S8 pure declaration extraction is complete. S8.2 moved exactly the nine Clocktower app value models with no consumer changes and no production visibility widening.
+
+### S9.1 — app JSON primitives seam — NEXT
+
+Branch:
 
 ```text
-7b52eab31fb7c0e78156c5f3487cb062de03edfe
+codex/source-decomposition-app-root-s9-1-json-primitives
 ```
 
-Create `app/src/main/java/com/codex/campboardgamehost/ClocktowerAppModels.kt` and move exactly these nine `internal` declarations from `CampBoardGameHostApp.kt`:
+Base before docs closeout:
 
 ```text
-ClocktowerEventType
-ClocktowerEvent
-ClocktowerTeam
-ClocktowerPhase
-ClocktowerDayMode
-ClocktowerNightAction
-ClocktowerDisplayKind
-ClocktowerScript
-ClocktowerRole
+78cbaab473f433fb98d69f1bebfd7a69ae11edaa
 ```
 
-Defer prefs/JSON/persistence/restore, legacy role lists/catalog/helpers, distribution/assignment, and all state/effects/session/recommendation/A3/B4 logic. Do not change consumers or widen visibility.
-
-## 6. S8.2 tests-first contract
-
-Add `ClocktowerAppModelsOwnershipTest.kt` and run only its exact test for RED. It must prove the new owner exists, owns all nine declarations, Root no longer owns them, and the new owner contains no state/effect/JSON/prefs/session/loader/assignment/catalog strings. It must also prove `AppGameModels.kt` does not contain any of the nine declarations. Do not add byte-size assertions or UI/implementation-detail assertions.
-
-Expected RED commit:
+Create `app/src/main/java/com/codex/campboardgamehost/persistence/AppJsonPrimitives.kt` with package `com.codex.campboardgamehost`, and move exactly these nine helpers from `CampBoardGameHostApp.kt`:
 
 ```text
-test: define Clocktower app model ownership
+enumByName
+JSONObject.putNullableString
+JSONObject.putNullableInt
+JSONObject.putNullableBoolean
+JSONObject.optNullableString
+JSONObject.optNullableInt
+JSONObject.optNullableBoolean
+stringsToJsonArray
+JSONArray.toStringList
 ```
 
-The existing `AppGameModelsOwnershipTest.kt` has stale temporary Root-location assertions for three Clocktower declarations. Repair only those assertions so the Clocktower group checks `AppGameModels.kt` exclusion without requiring Root ownership, then commit:
+The only approved production visibility changes are `private -> internal` for those nine helpers. Keep persistence coordinator, SharedPreferences, full snapshot, restore transaction, archive, model codecs, role catalog, session/state, and A3/A4/B4/recommendation logic deferred.
+
+## 6. S9.1 tests-first contract
+
+Add only `app/src/test/java/com/codex/campboardgamehost/persistence/AppJsonPrimitivesTest.kt` with package `com.codex.campboardgamehost`. Its focused tests must cover ownership, enum lookup behavior, nullable primitive JSON behavior, and blank-filtering string-array behavior. The new owner must contain no Context/prefs, Compose state/effects, `ClocktowerGameSession`, persistence coordinator, model codecs, or epistemic JSON authority. Do not add byte-size assertions.
+
+Run the focused test alone for RED and commit:
 
 ```text
-test: decouple shared models from Clocktower model location
+test: define app JSON primitive boundary
 ```
 
-The repair must leave its actual app-model ownership assertions unchanged. The new Clocktower ownership test must remain RED after the repair.
-
-GREEN is a mechanical move only. Allowed code/test files are exactly:
-
-```text
-app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-app/src/main/java/com/codex/campboardgamehost/ClocktowerAppModels.kt
-app/src/test/java/com/codex/campboardgamehost/ClocktowerAppModelsOwnershipTest.kt
-app/src/test/java/com/codex/campboardgamehost/AppGameModelsOwnershipTest.kt
-```
-
-Run the specified T0 ownership/characterization tests, then T1 `:app:testFast`, then T2 `:app:assembleDebug`. Do not run `testFull`, ASP, Clingo, benchmarks, or unrelated suites. Commit `refactor: extract Clocktower app models`, push the named branch, and stop.
+After the mechanical move, run the specified T0 persistence characterization tests, then T1 `:app:testFast`, then T2 `:app:assembleDebug`. If T1 exposes any new stale structural-location assertion, stop and report it without repair. GREEN production allowlist is exactly the Root and `persistence/AppJsonPrimitives.kt`; commit `refactor: extract app JSON primitives`, push the named branch, and stop.
 
 ## 7. Large-file execution workflow — HARD RULE
 
@@ -315,7 +322,8 @@ Do not weaken or relocate without dedicated design/tests:
 ```text
 S7.1–S7.6                         CLOSED
 S8.1 pure app game models         CLOSED
--> S8.2 Clocktower app models     NEXT
+S8.2 Clocktower app models        CLOSED
+-> S9.1 app JSON primitives       NEXT
 -> remeasure + fresh audit
 -> possible Clocktower legacy model/catalog slice only if natural
 -> persistence/codec S9 only if independently justified

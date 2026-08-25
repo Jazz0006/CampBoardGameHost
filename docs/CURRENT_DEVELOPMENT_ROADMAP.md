@@ -4,11 +4,11 @@
 > 文档角色：**CURRENT / 当前状态唯一权威**
 > Repository: `Jazz0006/CampBoardGameHost`
 > Stable `main`: `0311c3bb54ea71be69bc60a4aae642e0f39cd900`
-> Current structural checkpoint: `7b52eab31fb7c0e78156c5f3487cb062de03edfe`
+> Current structural checkpoint: `78cbaab473f433fb98d69f1bebfd7a69ae11edaa`
 > PR #48: **MERGED / CLOSED — historical multi-night exact baseline**
 > PR #49: **MERGED / CLOSED — app-root S7.1/S7.2 structural checkpoint**
 > PR #50: **MERGED / CLOSED — test execution tiers + path-aware CI**
-> Current project priority: **APP-ROOT DECOMPOSITION — S8.2 CLOCKTOWER APP VALUE MODELS**
+> Current project priority: **APP-ROOT DECOMPOSITION — S9.1 APP JSON PRIMITIVES SEAM**
 > Detailed test strategy: `docs/TESTING_STRATEGY.md`
 > App-root handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_S7.md`
 
@@ -30,7 +30,8 @@ App-root S7.4                                       CLOSED / STACKED STRUCTURAL 
 App-root S7.5                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
 App-root S7.6                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
 App-root S8.1                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
-App-root S8.2                                       NEXT — CLOCKTOWER APP VALUE MODELS
+App-root S8.2                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
+App-root S9.1                                       NEXT — APP JSON PRIMITIVES SEAM
 PR #48 historical multi-night exact baseline       MERGED / CLOSED
 A3 Architecture Hardening H1–H7                    COMPLETE / GREEN
 B4 historical-exact shadow bridge                  GREEN
@@ -121,6 +122,7 @@ After S7.4 = 218,086 bytes
 After S7.5 = 210,856 bytes
 After S7.6 = 209,336 bytes
 After S8.1 = 208,126 bytes
+After S8.2 = 206,692 bytes
 ```
 
 ### S7.3 — shared host interaction UI — CLOSED
@@ -247,7 +249,7 @@ These are restore/schema-sensitive and remain conditional S9 work unless an inde
 
 The Root still owns legacy role lists, script mappings, distribution and random assignment helpers. This area is more domain-cohesive but several declarations are currently `private`; extracting them would require visibility widening and careful comparison with the newer normalized `clocktower/catalog` architecture. Do not combine this with S8.1.
 
-## 6. S8.1 closeout and S8.2 route
+## 6. S8 closeout and S9.1 route
 
 ### S8.1 — pure app game models — CLOSED
 
@@ -264,34 +266,54 @@ GitHub Actions: none observed
 
 S8.1 moved exactly seven already-`internal` declarations with no production visibility widening. The next slice is a separate Clocktower-specific app value-model owner.
 
-### S8.2 — Clocktower app value models — NEXT
+### S8.2 — Clocktower app value models — CLOSED
 
-S8.2 must be a mechanical declaration move only:
+```text
+docs base: 879148f9b150fd688b43446705ba8e3debb1af9a
+RED: 798c83878825e6d7f9d7630449a673b6160c6447
+planned stale repair: cf182bdfa2108bff00b02507fb5309bd4abf667f
+T1 stale repair: 28afa7e7ebb8d69e09a628c96d15bbd41889bfae
+GREEN: 78cbaab473f433fb98d69f1bebfd7a69ae11edaa
+root: 206,692 bytes
+owner: ClocktowerAppModels.kt = 1,469 bytes
+remote exact-diff / structural audit: PASS
+GitHub Actions: none observed
+```
+
+S8 pure declaration extraction is complete. S8.2 moved exactly the nine Clocktower app value models with no consumer changes and no production visibility widening.
+
+### S9.1 — app JSON primitives seam — NEXT
+
+Create `persistence/AppJsonPrimitives.kt` and move exactly nine pure JSON helpers from the Root. The only approved production visibility change is `private -> internal` for those nine helpers.
+
+Persistence coordinator, SharedPreferences, full snapshot, restore transaction, archive, model codecs, role catalog, and session/state remain deferred.
+
+S9.1 must be a mechanical declaration move only:
 
 ```text
 CampBoardGameHostApp.kt
-  -> ClocktowerAppModels.kt
+  -> persistence/AppJsonPrimitives.kt
 ```
 
-Move exactly these nine declarations:
+Move exactly these nine pure JSON helpers, with the only approved production visibility changes being `private -> internal`:
 
 ```text
-ClocktowerEventType
-ClocktowerEvent
-ClocktowerTeam
-ClocktowerPhase
-ClocktowerDayMode
-ClocktowerNightAction
-ClocktowerDisplayKind
-ClocktowerScript
-ClocktowerRole
+enumByName
+JSONObject.putNullableString
+JSONObject.putNullableInt
+JSONObject.putNullableBoolean
+JSONObject.optNullableString
+JSONObject.optNullableInt
+JSONObject.optNullableBoolean
+stringsToJsonArray
+JSONArray.toStringList
 ```
 
-Keep prefs/JSON/persistence/restore, legacy role lists/catalog/helpers, distribution/assignment, state/effects/session, recommendation logic, and A3/B4 semantics out of S8.2.
+Keep persistence coordinator, SharedPreferences, full snapshot, restore transaction, archive, model codecs, role catalog, session/state, and A3/B4 semantics out of S9.1.
 
-No consumer file should change because the new owner remains in package `com.codex.campboardgamehost` and all nine targets are already `internal`.
+No callsite changes should be needed because the new owner remains in package `com.codex.campboardgamehost`.
 
-The new owner must not contain Compose state/effects, JSON/persistence APIs, `ClocktowerGameSession`, loader/assignment/catalog logic, or session authority.
+The new owner must not contain Context/prefs, Compose state/effects, `ClocktowerGameSession`, persistence coordinator, model codecs, or epistemic JSON authority.
 
 Validation remains:
 
