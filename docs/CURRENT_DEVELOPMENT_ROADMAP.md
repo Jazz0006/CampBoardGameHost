@@ -162,10 +162,10 @@ Do not promote B4/A4/recommendation authority or broaden historical-exact script
 Deferred A3 detail is kept in:
 
 ```text
-docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_A3_SETUP_SNAPSHOT.md
 ```
 
-until that deferred task is either resumed or consolidated into a newer design handoff.
+It contains only the unfinished setup-origin ownership/persistence problem; old PR #48 draft and App-root S7 execution instructions are historical and removed.
 
 ## 6. Protected architecture contracts
 
