@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,10 +32,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -52,7 +49,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -87,7 +83,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -3801,27 +3796,6 @@ private fun evaluateGameOutcome(context: Context, cards: List<PlayerCard>, gameK
 
 
 @Composable
-internal fun GameSettingsHeader(
-    title: String,
-    subtitle: String,
-    onBack: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text(subtitle, color = Color(0xFF5C6A63))
-        }
-        TextButton(onClick = onBack) {
-            Text(stringResource(R.string.back))
-        }
-    }
-}
-
-@Composable
 internal fun EmptyStateCard(text: String) {
     Card(
         shape = RoundedCornerShape(8.dp),
@@ -3837,49 +3811,6 @@ internal fun EmptyStateCard(text: String) {
         )
     }
 }
-
-@Composable
-internal fun StepperRow(
-    label: String,
-    value: Int,
-    range: IntRange,
-    onChange: (Int) -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(label, fontWeight = FontWeight.SemiBold)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedButton(
-                onClick = { onChange((value - 1).coerceAtLeast(range.first)) },
-                enabled = value > range.first,
-                modifier = Modifier.size(44.dp),
-                shape = CircleShape,
-                contentPadding = PaddingValues(0.dp),
-            ) {
-                Text("-", fontSize = 22.sp, textAlign = TextAlign.Center)
-            }
-            Text(
-                value.toString(),
-                modifier = Modifier.width(48.dp),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleMedium,
-            )
-            OutlinedButton(
-                onClick = { onChange((value + 1).coerceAtMost(range.last)) },
-                enabled = value < range.last,
-                modifier = Modifier.size(44.dp),
-                shape = CircleShape,
-                contentPadding = PaddingValues(0.dp),
-            ) {
-                Text("+", fontSize = 22.sp, textAlign = TextAlign.Center)
-            }
-        }
-    }
-}
-
 
 @Composable
 internal fun ClocktowerNewDemonConfirmationScreen(
