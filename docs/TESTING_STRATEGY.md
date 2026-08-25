@@ -73,7 +73,9 @@ T3 contains high-volume regression corpora, simulations, large or repeated enume
 
 ### T4 — FULL
 
-T4 is the complete repository regression gate: all Android JVM tests, debug assemble/compile checks, ASP validation, ASP Python tests, real Clingo cross-validation, and other existing CI-required validation.
+T4 is the complete applicable repository regression gate. For each validation component selected by the S3 change classifier, T4 preserves full-strength coverage: all Android JVM tests plus debug assemble/compile checks when Android is selected, ASP validation and ASP Python tests when the ASP contract surface is selected, and real Clingo cross-validation when exact/oracle semantics are selected.
+
+S3 may skip an entire validation component only when the changed-path classification explicitly establishes that the component is irrelevant. A selected component must not be downgraded from FULL merely to save CI time.
 
 The executable Android JVM full-suite entry point is:
 
@@ -90,7 +92,7 @@ Trigger answers: “When must this test run?”
 
 For example, `SetupMigrationTest` is a T3 expensive test because its high-volume recommendation loops consume most of Android testcase time. A change to `SetupRecommendationService`, history/cooldown, setup scoring, or family selection triggers it at the T2 checkpoint. An unrelated UI-only change does not need to run it during every local edit loop.
 
-Similarly, `ZddPlayerWorldSetTest` has T3-like execution characteristics but is an affected T2 requirement for ZDD and epistemic representation changes. Real Clingo is T3 external validation, but it is mandatory in T4 and is triggered by ASP, solver, or exact epistemic contract changes.
+Similarly, `ZddPlayerWorldSetTest` has T3-like execution characteristics but is an affected T2 requirement for ZDD and epistemic representation changes. Real Clingo is T3 external validation, but it is mandatory whenever the S3 classifier selects exact/oracle semantics and remains part of applicable T4 validation.
 
 Expensive does not mean PR-only, and FAST exclusion does not mean coverage exclusion.
 
@@ -129,20 +131,20 @@ T3 tests are invoked through the existing full test machinery with exact `--test
 
 | Change family | T0 | T1 | T2 affected validation | T3 trigger | T4 |
 |---|---|---|---|---|---|
-| Documentation-only | none | none | none | none | normal PR gate when required |
-| Utility/helper or hashing | exact utility test | cheap domain tests | direct consumers if shared | normally none | full |
-| Rule semantics | exact rule test | rule/domain tests | related flow and recommendation tests | simulation if distribution changes | full |
-| Night/day flow | exact flow test | flow/session tests | transaction, integration, and wiring tests | simulation if behavior changes | full |
-| Setup recommendation | exact setup test | recommendation tests | `SetupMigrationTest`, expert review | simulation if selection distribution changes | full |
-| Scoring/selection | exact scoring test | recommendation/selection tests | review, distribution, and setup tests | simulation/benchmark when relevant | full |
-| Epistemic/enumeration | exact epistemic test | cheap epistemic tests | ZDD, A3 golden, and end-to-end golden tests | A3/A4 benchmarks | full |
-| ZDD | exact ZDD method | cheap epistemic tests | `ZddPlayerWorldSetTest` and golden tests | `A4ZddBenchmarkTest`, A3 benchmark | full |
-| Persistence/schema | exact persistence test | persistence tests | restore, migration, and production-wiring tests | broad migration if applicable | full |
-| Historical timeline/identity | exact history test | history/session tests | historical action/observation wiring | migration corpus if applicable | full |
-| Production wiring/orchestration | exact ownership/wiring test | ownership and wiring tests | relevant integration/session tests | simulation if central behavior changes | full |
-| ASP/oracle/scenarios | exact harness command | ASP validation and Python tests | affected scenario tests | real Clingo | full |
-| Gradle/build/dependency | exact build check | affected JVM tests | dependent Android tests | all external validation when contract changes | full |
-| Shared interfaces/game-state authority | exact contract test | all cheap consumers | broad dependent integration tests | all affected expensive tests | full |
+| Documentation-only | none | none | none | none | CI classifier/gate only unless another executable surface changes |
+| Utility/helper or hashing | exact utility test | cheap domain tests | direct consumers if shared | normally none | applicable full |
+| Rule semantics | exact rule test | rule/domain tests | related flow and recommendation tests | simulation if distribution changes | Android full + exact/oracle gates when selected |
+| Night/day flow | exact flow test | flow/session tests | transaction, integration, and wiring tests | simulation if behavior changes | applicable full |
+| Setup recommendation | exact setup test | recommendation tests | `SetupMigrationTest`, expert review | simulation if selection distribution changes | applicable full |
+| Scoring/selection | exact scoring test | recommendation/selection tests | review, distribution, and setup tests | simulation/benchmark when relevant | applicable full |
+| Epistemic/enumeration | exact epistemic test | cheap epistemic tests | ZDD, A3 golden, and end-to-end golden tests | A3/A4 benchmarks | Android full + Real Clingo |
+| ZDD | exact ZDD method | cheap epistemic tests | `ZddPlayerWorldSetTest` and golden tests | `A4ZddBenchmarkTest`, A3 benchmark | applicable full |
+| Persistence/schema | exact persistence test | persistence tests | restore, migration, and production-wiring tests | broad migration if applicable | applicable full |
+| Historical timeline/identity | exact history test | history/session tests | historical action/observation wiring | migration corpus if applicable | Android full + Real Clingo |
+| Production wiring/orchestration | exact ownership/wiring test | ownership and wiring tests | relevant integration/session tests | simulation if central behavior changes | applicable full |
+| ASP/oracle/scenarios | exact harness command | ASP validation and Python tests | affected scenario tests | real Clingo | ASP contracts + Real Clingo |
+| Gradle/build/dependency | exact build check | affected JVM tests | dependent Android tests | all external validation when contract changes | Android full and any additionally selected gates |
+| Shared interfaces/game-state authority | exact contract test | all cheap consumers | broad dependent integration tests | all affected expensive tests | applicable full |
 
 The mapping is semantic rather than a giant fragile file-path list.
 
@@ -156,8 +158,10 @@ GREEN                  -> T0 focused tests pass
 local iteration        -> owning/local focused tests
 logical checkpoint     -> T1 + T2 affected validation
 larger slice/pre-commit-> T1 + triggered T3 tests
-PR                     -> T4 FULL
+PR                     -> T4 applicable gates selected by S3 routing
 ```
+
+When the S3 classifier selects Android validation for a PR, the Android gate runs `:app:testFull` plus debug assemble; `testFast` is not a substitute for that selected PR gate.
 
 For a structural-only refactor:
 
@@ -165,10 +169,10 @@ For a structural-only refactor:
 focused ownership/characterization tests
 -> T1
 -> affected integration when a boundary changes
--> T4 at PR
+-> applicable T4 at PR
 ```
 
-Documentation-only changes do not require local Android regression unless executable configuration or contracts change.
+Documentation-only changes do not require local Android regression unless executable configuration or contracts change. In CI, explicitly classified documentation-only changes retain the lightweight change-classification and aggregate gate while unrelated heavy validation jobs are skipped.
 
 ## 9. Conservative escalation rules
 
@@ -188,7 +192,7 @@ If impact is uncertain, escalate upward. Do not optimize for minimal test execut
 
 ASP corpus validation and ASP Python tests are cheap and should be T1 for ASP-related work and remain CI checkpoint validation.
 
-Real Clingo is external and expensive. It is T3 validation triggered by changes to the ASP oracle, scenario corpus, exact epistemic semantics, solver integration, or the external solver contract. It remains mandatory in T4.
+Real Clingo is external and expensive. It is T3 validation triggered by changes to the ASP oracle, scenario corpus, exact epistemic semantics, solver integration, or the external solver contract. S3 routes it for the corresponding exact semantic surfaces and for any workflow change or unknown repository surface that requires fail-safe validation.
 
 ## 11. Engineering time targets
 
@@ -240,6 +244,40 @@ Re-audit when:
 - a new simulation or benchmark is introduced;
 - new external validation is added;
 - a large integration suite appears;
-- Gradle or build behavior changes.
+- Gradle or build behavior changes;
+- a new top-level repository surface or new semantic owner is added;
+- CI routing or branch-protection expectations change.
 
-Review value, duplication, flakiness, semantic layer, and cost. Do not delete tests merely because they have aged or become expensive.
+Review value, duplication, flakiness, semantic layer, cost, and routing coverage. Do not delete tests merely because they have aged or become expensive.
+
+## 15. CI routing contract
+
+S3 establishes path-aware GitHub CI routing without weakening selected PR validation. The classifier is implemented directly in `.github/workflows/ci.yml` using repository-native `git diff`; it does not depend on a third-party path-filter action.
+
+Routing principles:
+
+- `docs/**`, `AGENTS.md`, `README.md`, and `player/**` are explicitly classified as non-executable surfaces and skip Android, ASP, and Clingo heavy jobs.
+- Android application/test/assets and Gradle/build-system changes select Android FULL validation plus debug assemble.
+- `tools/asp_oracle/**` selects ASP contract tests and Real Clingo.
+- Clocktower `domain/**`, `epistemic/**`, `history/**`, `rules/**`, matching test packages, core `Clocktower*Semantics.kt`, and built-in rules/script assets additionally select Real Clingo because they can affect exact semantic contracts.
+- `.github/workflows/**` changes select every gate so routing changes validate themselves.
+- `workflow_dispatch` selects every gate.
+- Any repository path that is not deliberately classified fails safe to every gate rather than silently skipping validation.
+- Changed-path discovery uses `git diff --name-only --no-renames`, so a rename/move cannot hide the old executable path behind a newly safe destination.
+
+A stable `CI gate` job always runs after classification. Selected validation jobs must succeed; deliberately irrelevant jobs may be `skipped`. This gives one aggregate check whose meaning remains stable even when the heavy job set varies by change.
+
+S3 was validated on draft PR #50 at head `2135ea19d09ee19a3cb5e9357414efb6acf33f72`:
+
+```text
+CI #684
+Classify changes             SUCCESS
+Android tests (FULL+assemble) SUCCESS
+ASP contract tests           SUCCESS
+Real Clingo cross-validation SUCCESS
+CI gate                      SUCCESS
+
+R2 #615                      SUCCESS
+```
+
+The PR deliberately includes `.github/workflows/ci.yml`, so the classifier correctly selected all gates during this validation. PR #50 remains draft and is not merge-authorized by this document.
