@@ -60,11 +60,16 @@ class AppGameModelsOwnershipTest {
             "private enum class Screen {",
             "internal enum class LanguageMode(val prefsValue: String) {",
             "internal fun PlayerCard.abilitySubject(poisonTarget: String?): AbilitySubject",
+        ).forEach { declaration ->
+            assertTrue("CampBoardGameHostApp.kt must retain $declaration", rootText.contains(declaration))
+            assertFalse("AppGameModels.kt must not contain $declaration", appGameModelsText.contains(declaration))
+        }
+
+        listOf(
             "internal enum class ClocktowerEventType {",
             "internal data class ClocktowerEvent(",
             "internal enum class ClocktowerTeam {",
         ).forEach { declaration ->
-            assertTrue("CampBoardGameHostApp.kt must retain $declaration", rootText.contains(declaration))
             assertFalse("AppGameModels.kt must not contain $declaration", appGameModelsText.contains(declaration))
         }
 
