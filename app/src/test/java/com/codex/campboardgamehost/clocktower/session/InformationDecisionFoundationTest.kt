@@ -16,6 +16,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -134,6 +135,75 @@ class InformationDecisionFoundationTest {
     }
 
     @Test
+    fun `confirmation retains exact immutable context snapshot beyond candidate id and revision`() {
+        val truth = evaluation("truth", AbilityState.FUNCTIONING, TruthRelation.TRUE_TO_ACTUAL_STATE)
+        val contextA = context(
+            evaluations = listOf(truth),
+            recommendedCandidateIds = setOf("truth"),
+            semanticIdentity = "context-a",
+        )
+        val contextB = context(
+            evaluations = listOf(truth),
+            recommendedCandidateIds = setOf("truth"),
+            semanticIdentity = "context-b",
+        )
+
+        val confirmationA = requireNotNull(
+            contextA.confirm("truth", InformationDecisionSource.MANUAL, currentRevision).confirmed,
+        )
+        val confirmationB = requireNotNull(
+            contextB.confirm("truth", InformationDecisionSource.MANUAL, currentRevision).confirmed,
+        )
+
+        val snapshotField = confirmationA.javaClass.getDeclaredField("contextSnapshot")
+        snapshotField.isAccessible = true
+        val snapshotA = snapshotField.get(confirmationA)
+        val snapshotB = snapshotField.get(confirmationB)
+
+        assertNotNull(snapshotA)
+        assertNotNull(snapshotB)
+        assertTrue(snapshotA!!.toString().contains("context-a"))
+        assertTrue(snapshotB!!.toString().contains("context-b"))
+        assertTrue("Each confirmation must retain its own immutable snapshot.", snapshotA != snapshotB)
+    }
+
+    @Test
+    fun `confirmed authority is stale when durable publication revision advances`() {
+        val truth = evaluation("truth", AbilityState.FUNCTIONING, TruthRelation.TRUE_TO_ACTUAL_STATE)
+        val confirmation = requireNotNull(
+            context(listOf(truth), recommendedCandidateIds = setOf("truth"))
+                .confirm("truth", InformationDecisionSource.RECOMMENDATION_ACCEPTED, currentRevision)
+                .confirmed,
+        )
+
+        assertFalse(
+            confirmation.contextSnapshot.isCurrentFor(
+                InformationDecisionRevision(gameStateRevision = 7, playerInputRevision = 12),
+            ),
+        )
+    }
+
+    @Test
+    fun `confirmation from context A cannot authorize successor context B with the same id and revision`() {
+        val truth = evaluation("truth", AbilityState.FUNCTIONING, TruthRelation.TRUE_TO_ACTUAL_STATE)
+        val contextA = context(listOf(truth), setOf("truth"), semanticIdentity = "context-a")
+        val contextB = context(listOf(truth), setOf("truth"), semanticIdentity = "context-b")
+        val confirmationA = requireNotNull(
+            contextA.confirm("truth", InformationDecisionSource.MANUAL, currentRevision).confirmed,
+        )
+
+        val authorizes = confirmationA.javaClass.getDeclaredMethod(
+            "authorizes",
+            InformationDecisionSnapshot::class.java,
+            InformationDecisionRevision::class.java,
+        )
+        authorizes.isAccessible = true
+
+        assertTrue(authorizes.invoke(confirmationA, contextA.snapshot, currentRevision) as Boolean)
+        assertFalse(authorizes.invoke(confirmationA, contextB.snapshot, currentRevision) as Boolean)
+    }
+
+    @Test
     fun `decision provenance is intentionally limited to manual and accepted recommendation`() {
         assertEquals(
             setOf("MANUAL", "RECOMMENDATION_ACCEPTED"),
@@ -144,10 +214,12 @@ class InformationDecisionFoundationTest {
     private fun context(
         evaluations: List<DecisionEvaluation<DynamicInformationOutcome.Category>>,
         recommendedCandidateIds: Set<String>,
+        semanticIdentity: String = "test-information-decision",
     ): InformationDecisionContext<DynamicInformationOutcome.Category> = InformationDecisionContext.fromEvaluations(
         evaluations = evaluations,
         recommendedCandidateIds = recommendedCandidateIds,
         revision = currentRevision,
+        semanticIdentity = semanticIdentity,
         draftOf = { evaluation -> draft(evaluation) },
     )
 

@@ -20,6 +20,9 @@ internal class StructuredNumberInformationUiModel private constructor(
         val recommended: Boolean,
     )
 
+    val contextSnapshot: InformationDecisionSnapshot
+        get() = context.snapshot
+
     /** Stable across recomposition when the semantic decision projection has not changed. */
     val semanticStateKey: String = buildString {
         append(context.semanticIdentity)
