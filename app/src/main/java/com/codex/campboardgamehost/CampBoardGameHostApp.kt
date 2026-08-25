@@ -4183,33 +4183,6 @@ internal fun SelectablePlayerChips(
     }
 }
 
-internal enum class TwoPlayerSelectionAction {
-    ToggleFirst,
-    ToggleSecond,
-    RejectLimit,
-}
-
-internal fun twoPlayerSelectionAction(
-    first: String?,
-    second: String?,
-    selectedName: String,
-): TwoPlayerSelectionAction = when {
-    selectedName == first -> TwoPlayerSelectionAction.ToggleFirst
-    selectedName == second -> TwoPlayerSelectionAction.ToggleSecond
-    first == null -> TwoPlayerSelectionAction.ToggleFirst
-    second == null -> TwoPlayerSelectionAction.ToggleSecond
-    else -> TwoPlayerSelectionAction.RejectLimit
-}
-
-internal fun shouldAutoAdvanceRedHerring(
-    automaticStorytellerInfo: Boolean,
-    isRedHerringStep: Boolean,
-    isRealAction: Boolean,
-    hasSelectedRedHerring: Boolean,
-): Boolean = automaticStorytellerInfo &&
-    isRedHerringStep &&
-    (!isRealAction || hasSelectedRedHerring)
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun SelectableTwoPlayerChips(
