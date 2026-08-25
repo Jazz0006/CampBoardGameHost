@@ -706,6 +706,7 @@ internal fun ClocktowerNightStepCardLocalized(
                                 displayProposition = confirmed.draft.proposition,
                                 selectedInformationTruthful = value == structuredEmpathTruthValue,
                                 informationDecisionConfirmation = confirmed,
+                                informationDecisionExpectedSnapshot = structuredEmpathUiModel.contextSnapshot,
                                 displayOptions = emptyList(),
                                 recommendedDisplayOptions = emptyList(),
                             ),

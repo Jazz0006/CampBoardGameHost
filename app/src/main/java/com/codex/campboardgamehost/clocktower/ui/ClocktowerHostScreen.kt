@@ -1959,14 +1959,20 @@ internal fun ClocktowerJudgeScreen(
         else -> null
     }
     val empathNumber = empathValue.toString()
+    fun informationDecisionPublicationAllowed(displayStep: ClocktowerNightStepUi): Boolean {
+        val confirmation = displayStep.informationDecisionConfirmation ?: return true
+        val expectedSnapshot = displayStep.informationDecisionExpectedSnapshot ?: return false
+        return confirmation.authorizes(
+            expectedCurrentSnapshot = expectedSnapshot,
+            currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
+        )
+    }
     fun recordReliablePrivateInformation(displayStep: ClocktowerNightStepUi) {
         val actor = displayStep.actor ?: return
         val actorSeat = cards.indexOf(actor).takeIf { it >= 0 }?.plus(1) ?: return
+        if (!informationDecisionPublicationAllowed(displayStep)) return
         displayStep.informationDecisionConfirmation?.let { confirmation ->
-            val currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision)
-            if (confirmation.contextSnapshot.isCurrentFor(currentRevision)) {
-                onRecordEpistemicObservation(confirmation.draft)
-            }
+            onRecordEpistemicObservation(confirmation.draft)
             return
         }
         if (displayStep.displayProposition == null &&
@@ -3880,6 +3886,7 @@ internal fun ClocktowerJudgeScreen(
                     )
                 },
                 onShowPlayerDisplay = showPlayerDisplay@{ displayStep ->
+                    if (!informationDecisionPublicationAllowed(displayStep)) return@showPlayerDisplay
                     firstNightMigrationRequest(displayStep)?.let { request ->
                         val shadow = firstNightInformationMigration.shadow(request)
                         firstNightPoolParity.recordResult(
@@ -4101,7 +4108,8 @@ internal fun ClocktowerJudgeScreen(
                                 currentStep.recluseRegistrationTeams,
                             )
                         },
-                        onShowPlayerDisplay = { displayStep ->
+                        onShowPlayerDisplay = showPlayerDisplay@{ displayStep ->
+                            if (!informationDecisionPublicationAllowed(displayStep)) return@showPlayerDisplay
                             recordReliablePrivateInformation(displayStep)
                             val actor = displayStep.actor
                             val unreliable = actor?.clocktowerRole?.enName == "Drunk" || actor?.name == poisonTarget

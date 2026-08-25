@@ -78,7 +78,13 @@ internal data class ConfirmedInformationDecision(
     val warnings: List<InformationDecisionWarning>,
     val draft: EpistemicObservationDraft,
     val contextSnapshot: InformationDecisionSnapshot,
-)
+) {
+    /** Narrow durable-publication authority: exact immutable snapshot plus current revision. */
+    fun authorizes(
+        expectedCurrentSnapshot: InformationDecisionSnapshot,
+        currentRevision: InformationDecisionRevision,
+    ): Boolean = contextSnapshot == expectedCurrentSnapshot && contextSnapshot.isCurrentFor(currentRevision)
+}
 
 internal data class InformationDecisionConfirmation(
     val validation: InformationDecisionValidationResult,

@@ -39,15 +39,22 @@ class InformationDecisionProductionAuthorityWiringTest {
 
     @Test
     fun `durable information decision authority must retain confirmation and current revision`() {
-        val privateProducer = hostSource
-            .substringAfter("fun recordReliablePrivateInformation(")
-            .substringBefore("val undertakerTarget =")
-
         assertTrue(
             "The durable InformationDecision path must carry a confirmation envelope, " +
                 "not a draft whose revision can become stale after display preparation.",
-            privateProducer.contains("informationDecisionConfirmation") &&
-                privateProducer.contains("InformationDecisionRevision"),
+            hostSource.contains("informationDecisionConfirmation") &&
+                hostSource.contains("informationDecisionExpectedSnapshot") &&
+                hostSource.contains("confirmation.authorizes(") &&
+                hostSource.contains("InformationDecisionRevision"),
         )
+    }
+
+    @Test
+    fun `stale or wrong-context confirmation blocks the complete display publication`() {
+        val guard = "if (!informationDecisionPublicationAllowed(displayStep)) return@showPlayerDisplay"
+        assertTrue(hostSource.contains(guard))
+        assertTrue(hostSource.contains("recordReliablePrivateInformation(displayStep)"))
+        assertTrue(hostSource.contains("onRecordEvent("))
+        assertTrue(hostSource.contains("playerDisplayStep = displayStep"))
     }
 }

@@ -3,6 +3,7 @@ package com.codex.campboardgamehost
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
+import com.codex.campboardgamehost.clocktower.session.InformationDecisionSnapshot
 
 internal fun recommendationReasonLabel(code: String, language: String): String {
     fun text(zh: String, en: String): String = if (language == "en") en else zh
@@ -72,6 +73,7 @@ internal data class ClocktowerNightStepUi(
     val selectedInformationTruthful: Boolean? = null,
     /** Confirmed Foundation authority; the draft is only publishable through this envelope. */
     val informationDecisionConfirmation: ConfirmedInformationDecision? = null,
+    val informationDecisionExpectedSnapshot: InformationDecisionSnapshot? = null,
     val spyRegistrationKey: String? = null,
     val spyRegistrationTeams: List<ClocktowerTeam> = emptyList(),
     val spyRegistrationDetail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,

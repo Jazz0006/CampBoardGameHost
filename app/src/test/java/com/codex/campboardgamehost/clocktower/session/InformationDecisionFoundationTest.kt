@@ -184,6 +184,26 @@ class InformationDecisionFoundationTest {
     }
 
     @Test
+    fun `confirmation from context A cannot authorize successor context B with the same id and revision`() {
+        val truth = evaluation("truth", AbilityState.FUNCTIONING, TruthRelation.TRUE_TO_ACTUAL_STATE)
+        val contextA = context(listOf(truth), setOf("truth"), semanticIdentity = "context-a")
+        val contextB = context(listOf(truth), setOf("truth"), semanticIdentity = "context-b")
+        val confirmationA = requireNotNull(
+            contextA.confirm("truth", InformationDecisionSource.MANUAL, currentRevision).confirmed,
+        )
+
+        val authorizes = confirmationA.javaClass.getDeclaredMethod(
+            "authorizes",
+            InformationDecisionSnapshot::class.java,
+            InformationDecisionRevision::class.java,
+        )
+        authorizes.isAccessible = true
+
+        assertTrue(authorizes.invoke(confirmationA, contextA.snapshot, currentRevision) as Boolean)
+        assertFalse(authorizes.invoke(confirmationA, contextB.snapshot, currentRevision) as Boolean)
+    }
+
+    @Test
     fun `decision provenance is intentionally limited to manual and accepted recommendation`() {
         assertEquals(
             setOf("MANUAL", "RECOMMENDATION_ACCEPTED"),
