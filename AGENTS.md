@@ -148,11 +148,11 @@ A structural refactor must not become a hidden product change.
 ### Test execution and escalation
 
 - Use T0 exact focused tests for RED/GREEN feedback.
+- Use `:app:testFast` for the executable T1 Android JVM fast regression suite.
 - At logical checkpoints, run T1 FAST plus T2 affected validation.
 - T2 is dependency-aware and may pull T3 tests into an earlier checkpoint.
 - T3 expensive tests are not deleted or permanently skipped; they remain required when triggered and in FULL validation.
-- PR/full validation uses T4.
-- Future `testFull` must preserve today’s complete `:app:testDebugUnitTest` Android JVM coverage.
+- PR/full validation uses T4; `:app:testFull` is the complete Android JVM entry point and must preserve `:app:testDebugUnitTest` coverage.
 - If impact is uncertain, escalate validation upward.
 - Do not treat `UP-TO-DATE` or `FROM-CACHE` as proof that tests executed.
 - The detailed tier and subsystem mapping is authoritative in [`docs/TESTING_STRATEGY.md`](docs/TESTING_STRATEGY.md).
