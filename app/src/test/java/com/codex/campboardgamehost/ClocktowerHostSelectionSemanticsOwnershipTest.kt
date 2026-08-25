@@ -8,12 +8,12 @@ import java.io.File
 
 class ClocktowerHostSelectionSemanticsOwnershipTest {
     private val productionRoot = File(
-        "/Users/hlin5616/Jazz/repo/CampBoardGameHost/app/src/main/java/com/codex/campboardgamehost",
+        "src/main/java/com/codex/campboardgamehost",
     )
 
     private val appRootFile = File(
         productionRoot,
-        "CampBoardGameHost.kt",
+        "CampBoardGameHostApp.kt",
     )
 
     private val selectionSemanticsFile = File(
@@ -25,7 +25,7 @@ class ClocktowerHostSelectionSemanticsOwnershipTest {
     fun `selection semantics have a dedicated owner`() {
         assertTrue(selectionSemanticsFile.exists())
 
-        val rootSource = productionRoot.walkTopDown().first { it.name == "CampBoardGameHostApp.kt" }.readText(Charsets.UTF_8)
+        val rootSource = appRootFile.readText(Charsets.UTF_8)
         val ownerSource = selectionSemanticsFile.takeIf { it.exists() }?.readText(Charsets.UTF_8).orEmpty()
 
         assertFalse(rootSource.contains("internal enum class TwoPlayerSelectionAction"))
@@ -60,7 +60,7 @@ class ClocktowerHostSelectionSemanticsOwnershipTest {
 
     @Test
     fun `S7 point five UI helpers remain root owned`() {
-        val rootSource = productionRoot.walkTopDown().first { it.name == "CampBoardGameHostApp.kt" }.readText(Charsets.UTF_8)
+        val rootSource = appRootFile.readText(Charsets.UTF_8)
         val ownerSource = selectionSemanticsFile.takeIf { it.exists() }?.readText(Charsets.UTF_8).orEmpty()
 
         listOf(
