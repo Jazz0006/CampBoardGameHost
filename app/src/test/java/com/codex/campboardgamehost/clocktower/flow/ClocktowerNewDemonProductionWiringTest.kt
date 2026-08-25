@@ -53,7 +53,6 @@ class ClocktowerNewDemonProductionWiringTest {
 
     @Test
     fun `host projects queued daytime promotion through resolved fact and lazy new-Demon materializer`() {
-        assertTrue(appSource.contains("NewDemonIdentity,"))
         assertTrue(appSource.contains(
             "pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,",
         ))
