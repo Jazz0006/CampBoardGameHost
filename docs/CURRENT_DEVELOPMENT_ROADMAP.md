@@ -7,9 +7,10 @@
 > Current branch/worktree: `codex/test-execution-tiering` / `CampBoardGameHost-test-execution-tiering`
 > PR #48: **historical multi-night exact baseline — merged/closed; preserve current merged status**
 > PR #49: **merged — app-root S7.1/S7.2 structural checkpoint**
+> PR #50: **DRAFT — test execution tiers + path-aware CI; current validation GREEN; NOT merge-authorized**
 > Latest fully validated A3 code checkpoint: preserve the current merged repository status; do not revive stale PR #48 language
-> Current project priority: **TEST EXECUTION WORKFLOW OPTIMIZATION**
-> Current test-workflow status: **S1 COMPLETE / S2 COMPLETE / S3 NEXT**
+> Current project priority: **TEST EXECUTION WORKFLOW FINAL REVIEW / PR #50 MERGE GATE**
+> Current test-workflow status: **S1 COMPLETE / S2 COMPLETE / S3 COMPLETE / PR #50 DRAFT GREEN**
 > Detailed test strategy: `docs/TESTING_STRATEGY.md`
 > App-root S7 handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_S7.md`
 
@@ -38,7 +39,7 @@ S1.2 slow-test/root-cause audit                     COMPLETE
 S1.3 tier/escalation design                         COMPLETE
 S1.4 documentation/governance sync                 COMPLETE
 S2 executable Gradle suites                         COMPLETE
-S3 CI impact/path-aware optimization                NEXT / NOT STARTED
+S3 CI impact/path-aware optimization                COMPLETE / PR #50 DRAFT GREEN
 ```
 
 S2 established executable Android JVM validation on `codex/test-execution-tiering`:
@@ -50,6 +51,24 @@ FULL - FAST     exactly 19 testcases from the five approved expensive classes
 ```
 
 `testFast` does not depend on `testDebugUnitTest`; `testFull` intentionally does. The detailed contract and trigger policy live in `docs/TESTING_STRATEGY.md`.
+
+S3 established conservative path-aware CI routing while preserving FULL validation for every selected component. The validated S3 implementation checkpoint is:
+
+```text
+PR #50                                      DRAFT / OPEN / NOT MERGE-AUTHORIZED
+S3 workflow head                            2135ea19d09ee19a3cb5e9357414efb6acf33f72
+CI #684                                     SUCCESS
+  Classify changes                          SUCCESS
+  Android tests (:app:testFull + assemble)  SUCCESS
+  ASP contract tests                        SUCCESS
+  Real Clingo cross-validation              SUCCESS
+  CI gate                                   SUCCESS
+R2 #615                                     SUCCESS
+```
+
+The workflow change intentionally routes all gates, so PR #50 exercised the complete GitHub validation graph. The classifier uses base-to-head changed paths, explicit safe skips for docs/player surfaces, semantic escalation for exact Clocktower areas, fail-safe full routing for unknown surfaces, and `--no-renames` so moves cannot hide an executable old path behind a safe new destination.
+
+The latest docs-only S3 closeout commits may move PR #50 head beyond the validated workflow SHA above. Before any ready/merge decision, re-query the live PR head and checks and confirm those docs-only commits retain GREEN CI/R2. Do not treat the historical `2135ea19…` evidence as authorization to merge a newer unchecked head.
 
 PR #48 is merged/closed. Keep the completed A3 history separate from the current test-execution workflow work. The old `codex/source-decomposition-app-root` branch is behind `main`, so any future S7 work must start from a fresh live-state audit rather than blindly continuing that stale branch.
 
@@ -246,31 +265,25 @@ A4/ZDD promotion
 other scripts
 history UI / misinformation expansion
 App-root S7
-S3 CI optimization
 ```
 
-## 8. Immediate priority — test execution workflow optimization
+## 8. Immediate priority — PR #50 final gate, then fresh S7.3 audit
 
-A3 is intentionally frozen at `c678b25cd2a750a02f0cb1a05632d31e58ffd048` plus documentation-only closeout commits.
-
-The earlier Clocktower Host decomposition is **already complete through A13 and merged**. The separate App-root decomposition remains paused while the test execution workflow is completed:
-
-```text
-S0–S6       CLOSED / MERGED checkpoint
-S7.1/S7.2  CLOSED / MERGED via PR #49
-S7.3       PAUSED / NOT STARTED
-```
+The test execution workflow optimization is implementation-complete through S3. PR #50 remains deliberately draft until its final live head has passed GitHub CI/R2 and the user explicitly authorizes the next PR transition.
 
 Current sequence:
 
 ```text
-1. implement and validate S3 CI impact/path-aware routing using the S2 testFast/testFull contract
-2. validate the new workflow and CI behavior
-3. resume App-root decomposition from S7.3 using a fresh live-state audit
-4. return to later A3/product roadmap work according to the then-current priority
+1. re-query PR #50 current head and final CI/R2 after the docs-only S3 closeout
+2. perform final exact-diff / routing audit
+3. merge or mark ready only with explicit user authorization
+4. after any authorized merge, re-query live main
+5. perform a fresh App-root S7.3 architecture audit from the merged main state
+6. start no S7.3 implementation until that audit defines an explicit low-risk slice
+7. return to later A3/product roadmap work according to the then-current priority
 ```
 
-S7.3 must not be assumed to start automatically after S3; it requires a fresh live-state audit and an explicit implementation slice.
+S7.3 must not be assumed to start automatically. It requires a fresh live-state audit and an explicit implementation slice.
 
 Authoritative S7 handoff:
 
@@ -289,13 +302,13 @@ net reduction: 95,734 bytes (~29.4%)
 
 The 50 KiB target remains a maintainability guideline rather than a hard gate. S7 must **not automatically reuse an old ranking**. Re-audit the live `CampBoardGameHostApp.kt` and choose the next highest-value, lowest-risk cohesive ownership slice. If no natural low-risk seam remains, stop rather than manufacture an artificial owner.
 
-At this closeout, the old branch:
+At the pre-S3 closeout, the old branch:
 
 ```text
 codex/source-decomposition-app-root
 ```
 
-is behind current `main` (`ahead 0 / behind 3`). Therefore the next conversation should begin from live `main` and determine the correct fresh branch/worktree strategy before writing tests or production code.
+was behind `main`. Therefore future S7 work must begin from then-live `main` and determine the correct fresh branch/worktree strategy before writing tests or production code.
 
 Protected S7 boundaries include:
 
@@ -323,7 +336,7 @@ For S7:
 
 ## 9. Working discipline
 
-1. Re-query live `main`, relevant decomposition branches/PRs and checks before editing.
+1. Re-query live `main`, relevant branches/PRs and checks before editing.
 2. Keep RED and GREEN separate where tests-first semantics apply.
 3. Treat hidden Storyteller payload isolation as a protected invariant even while A3 is paused.
 4. Keep decomposition and A3/B4 work on their own branches/PRs.
