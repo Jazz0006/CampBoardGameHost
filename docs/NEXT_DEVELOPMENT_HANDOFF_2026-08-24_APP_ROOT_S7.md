@@ -1,18 +1,18 @@
 # CampBoardGameHost — App-root Decomposition Handoff (S7+)
 
 > Refreshed: 2026-08-25 Australia/Sydney  
-> Structural branch: `codex/source-decomposition-app-root-s7-main65c0ba`  
-> Structural base: `main@65c0ba47a6f2c0b76263b3f3a1fbf2e26a427024`  
-> Current structural status: **S0–S6 CLOSED; S7.1 CLOSED; S7.2 CLOSED; structural work PAUSED before S7.3 for test-workflow optimization**  
+> Structural branch: `codex/source-decomposition-app-root-s7-4-game-settings-ui`
+> Structural base: `main@0311c3bb54ea71be69bc60a4aae642e0f39cd900`
+> Current structural status: **S0–S7.3 CLOSED; S7.4 shared game-settings presentation COMPLETE on the current local slice**
 > PR #48 A3 historical exact/B4 shadow checkpoint is merged into `main`; future A3 setup-snapshot/authority work remains out of scope here.  
 > Never merge, force-push, rebase, mark ready, or broaden scope without explicit user authorization.
 
 ## 1. Current branch lineage
 
-The structural branch starts from the post-PR #48 main merge:
+The current lineage starts from stable main:
 
 ```text
-65c0ba47a6f2c0b76263b3f3a1fbf2e26a427024
+0311c3bb54ea71be69bc60a4aae642e0f39cd900
 ```
 
 The S7 planning checkpoint was:
@@ -38,7 +38,18 @@ eb158077ce382526330071d8d44fab67817a472d
   -> 5ca925ae38e69376d768bb73c1a2f0fe6e06fab5  test: make S7.2 ownership contract portable
 ```
 
-The S7.2 remote exact-diff audit passed. The structural campaign is intentionally paused before S7.3 so test-workflow optimization can be completed on a clean `main` checkpoint. After that optimization is merged, restart S7.3 from then-current live `main`; do not blindly continue from this old structural branch.
+The S7.2 remote exact-diff audit passed. S7.3 and S7.4 then continued as stacked structural slices after the test-workflow optimization merge:
+
+```text
+b6d5d407d8d753bfe1fd4f9a5b16f58881468fa7
+  -> 4a46210c  test: define shared game settings UI ownership
+  -> 843f61e5  test: retire stale root ownership assertions
+  -> bcd8b9b2  refactor: extract shared game settings UI
+```
+
+S7.3 owner: `HostInteractionUi.kt`, with exactly `HostProgressCard`, `HostScriptCard`, `HostInstructionBlock`, `HostActionSection`, `SelectablePlayerChips`, `SelectableTwoPlayerChips`, and `SelectableSeatNumbers`. S7.3 Root size was 220,403 bytes and the new owner was 8,901 bytes; remote exact-diff audit passed and no GitHub workflow run was observed on that head.
+
+S7.4 owner: `GameSettingsUi.kt`, with exactly `GameSettingsHeader` and `StepperRow`. The S7.4 focused tests, `:app:testFast`, `:app:assembleDebug`, and exact diff audit passed. No GitHub workflow run was observed on the S7.4 head.
 
 ## 2. Current app-root progress
 
@@ -59,6 +70,8 @@ After S5   = 235,741 bytes
 After S6   = 229,822 bytes
 After S7.1 = 229,007 bytes
 After S7.2 = 228,172 bytes
+After S7.3 = 220,403 bytes
+After S7.4 = 218,086 bytes
 ```
 
 S7.1 new owner:
@@ -73,11 +86,23 @@ S7.2 moved the pure selection semantics into the existing owner:
 ClocktowerHostSelectionSemantics.kt
 ```
 
-Net Root reduction through S7.2:
+S7.3 moved shared host interaction presentation into:
 
 ```text
-97,384 bytes
-~29.9% from the original Root
+HostInteractionUi.kt = 8,901 bytes
+```
+
+S7.4 moved shared game-settings presentation into:
+
+```text
+GameSettingsUi.kt = 3,112 bytes
+```
+
+Net Root reduction through S7.4:
+
+```text
+107,470 bytes
+~33.0% from the original Root
 ```
 
 The 50 KiB target remains a **maintainability guideline, not a hard gate**.
@@ -289,68 +314,60 @@ Do not move merely for size:
 
 ### 5.3 Tail — declarations with better owners
 
-Remaining S7 candidates include:
+Remaining S7 candidates after S7.4 include:
 
 ```text
-SelectablePlayerChips
-SelectableTwoPlayerChips
-SelectableSeatNumbers
-
 ClocktowerNewDemonConfirmationScreen
 
 WerewolfRoleLine
 WerewolfPlayerStatusRow
 
-GameSettingsHeader
 EmptyStateCard
-StepperRow
-HostProgressCard
-HostScriptCard
-HostInstructionBlock
-HostActionSection
 ```
 
 Several are already `internal` because extracted files call them cross-file. That is evidence that Root is no longer their natural owner.
 
-## 6. Structural pause before S7.3
+## 6. S7.3/S7.4 structural closeout
 
-S7.2 is closed. **Do not start S7.3 on this branch now.**
+S7.3 and S7.4 are closed on the stacked local branch. The exact production moves were behavior-preserving and did not change visibility, Compose lifetime, persistence/session/history authority, transaction callbacks, recommendation logic, or A3/B4 semantics.
 
-The next project task is test-workflow optimization. The intended integration sequence is:
-
-```text
-S7.1 + S7.2 checkpoint
--> merge checkpoint to main after PR CI/R2 gates
--> test-workflow optimization from fresh main
--> merge test-workflow optimization
--> create a fresh S7.3 branch from then-current main
-```
-
-When structural work resumes, re-read the live repository and re-run the full S7.3 preflight rather than treating this document's current candidate list as authority.
-
-## 7. Remaining S7 route when structural work resumes
-
-### S7.3 — Clocktower selection UI
-
-Potential owner:
+S7.4 stale structural-contract migration changed only:
 
 ```text
-ClocktowerSelectionUi.kt
+AppDealPresentationOwnershipTest.kt
+ClocktowerHostSelectionSemanticsOwnershipTest.kt
 ```
 
-Candidates:
+Those tests now protect their actual S4/S7.2 boundaries rather than historical temporary Root ownership. `GameSettingsUiOwnershipTest.kt` independently protects the S7.4 owner contract.
 
-```kotlin
-SelectablePlayerChips
-SelectableTwoPlayerChips
-SelectableSeatNumbers
+## 7. Remaining S7 route
+
+### S7.3 — shared host interaction UI — CLOSED
+
+Owner:
+
+```text
+HostInteractionUi.kt
 ```
 
-Do not create a generic `Utils.kt` bucket.
+### S7.4 — shared game-settings presentation — CLOSED
 
-### S7.4 — New Demon presentation
+Owner:
 
-Move only after exact dependency audit:
+```text
+GameSettingsUi.kt
+```
+
+Declarations:
+
+```text
+GameSettingsHeader
+StepperRow
+```
+
+### S7.5 — New Demon presentation
+
+Move only after exact dependency/transaction guard:
 
 ```kotlin
 ClocktowerNewDemonConfirmationScreen
@@ -362,7 +379,7 @@ Preferred owner candidate:
 clocktower/ui/ClocktowerNightScreen.kt
 ```
 
-### S7.5 — Werewolf presentation leftovers
+### S7.6 — Werewolf presentation leftovers
 
 Audit:
 
@@ -377,21 +394,21 @@ Preferred owner candidate:
 werewolf/WerewolfHostScreen.kt
 ```
 
-### S7.6 — generic app host presentation primitives
+### Deferred generic app presentation
 
-Audit:
+`EmptyStateCard` remains deferred. Do not create a generic `Utils.kt` or `CommonUi.kt` bucket merely to move it.
+
+The completed S7.3 owner contains:
 
 ```text
-GameSettingsHeader
-EmptyStateCard
-StepperRow
 HostProgressCard
 HostScriptCard
 HostInstructionBlock
 HostActionSection
+SelectablePlayerChips
+SelectableTwoPlayerChips
+SelectableSeatNumbers
 ```
-
-Use a narrow shared owner only if usage proves they are genuinely cross-feature; otherwise move to the actual feature owner.
 
 ## 8. S8 — pure models / setup / catalog helpers
 
@@ -493,7 +510,7 @@ For any future S7/S8 slice touching Root:
 - writing/running the approved RED;
 - mechanical declaration move;
 - minimal compile-required imports/visibility edits;
-- focused and full local tests;
+- focused T0 tests, T1 `:app:testFast`, and affected T2 checks;
 - assemble;
 - `git diff --check`;
 - exact local diff review;
@@ -513,12 +530,25 @@ For each future S7/S8/D2 extraction:
 6. confirm RED fails for the intended ownership reason only;
 7. perform the smallest behavior-preserving move;
 8. minimize visibility widening;
-9. run focused tests;
-10. run full `:app:testDebugUnitTest`;
-11. run `:app:assembleDebug`;
-12. run `git diff --check`;
-13. perform exact diff audit against the pre-move baseline;
-14. stop on any unexpected dependency/visibility/lifecycle requirement.
+9. run focused T0 ownership/characterization RED/GREEN;
+10. run T1 `:app:testFast`;
+11. run T2 affected regression/compile checks, including `:app:assembleDebug` when production Compose declarations move;
+12. trigger T3 only when the semantic area requires it;
+13. run the applicable PR T4 FULL gate in CI;
+14. run `git diff --check` and perform exact diff audit against the pre-move baseline;
+15. stop on any unexpected dependency/visibility/lifecycle requirement.
+
+Structural refactor workflow is therefore:
+
+```text
+T0 focused ownership/characterization RED/GREEN
+-> T1 :app:testFast
+-> T2 affected regression/compile checks
+-> triggered T3 only when semantic area requires
+-> PR T4 applicable FULL
+```
+
+If impact is uncertain, escalate validation upward. Do not weaken the PR T4 gate.
 
 A pushed local commit is not merge authorization. GitHub CI/R2 remains an independent merge gate before eventual integration.
 
@@ -542,16 +572,11 @@ A remaining Root above 50 KiB is acceptable when those responsibilities are cohe
 ```text
 S7.1 shared Clocktower theme — CLOSED
 -> S7.2 selection semantics — CLOSED
--> CHECKPOINT MERGE
--> PAUSE structural decomposition
--> test-workflow optimization on fresh main
--> merge test-workflow optimization
--> restart S7.3 from then-current live main
--> S7.3 selection UI
--> S7.4 New Demon presentation
--> S7.5 Werewolf presentation leftovers
--> S7.6 generic host presentation primitives
--> remeasure Root
+-> S7.3 shared host interaction UI — CLOSED
+-> S7.4 shared game settings UI — CLOSED
+-> S7.5 New Demon presentation
+-> S7.6 Werewolf presentation leftovers
+-> STOP / remeasure Root / fresh S8 audit
 -> S8 pure models/setup/catalog helpers where natural
 -> remeasure and decide whether S9 is justified
 -> D1 DayScreen import cleanup + remeasure

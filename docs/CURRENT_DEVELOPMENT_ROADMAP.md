@@ -3,14 +3,14 @@
 > 状态日期：2026-08-25
 > 文档角色：**CURRENT / 当前状态唯一权威**
 > Repository: `Jazz0006/CampBoardGameHost`
-> Stable `main`: `d52f53b4a1821cc000368c393721d1d5a073aafc`
-> Current branch/worktree: `codex/test-execution-tiering` / `CampBoardGameHost-test-execution-tiering`
+> Stable `main`: `0311c3bb54ea71be69bc60a4aae642e0f39cd900`
+> Current branch/worktree: `codex/source-decomposition-app-root-s7-4-game-settings-ui`
 > PR #48: **historical multi-night exact baseline — merged/closed; preserve current merged status**
 > PR #49: **merged — app-root S7.1/S7.2 structural checkpoint**
-> PR #50: **DRAFT — test execution tiers + path-aware CI; current validation GREEN; NOT merge-authorized**
+> PR #50: **MERGED / CLOSED — test execution tiers + path-aware CI**
 > Latest fully validated A3 code checkpoint: preserve the current merged repository status; do not revive stale PR #48 language
-> Current project priority: **TEST EXECUTION WORKFLOW FINAL REVIEW / PR #50 MERGE GATE**
-> Current test-workflow status: **S1 COMPLETE / S2 COMPLETE / S3 COMPLETE / PR #50 DRAFT GREEN**
+> Current project priority: **APP-ROOT DECOMPOSITION / POST-S7.3 ROUTE**
+> Current test-workflow status: **S1–S3 COMPLETE / MERGED**
 > Detailed test strategy: `docs/TESTING_STRATEGY.md`
 > App-root S7 handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_S7.md`
 
@@ -27,7 +27,8 @@ PR #44 Drunk / Fortune Teller hotfix               CLOSED / MERGED
 PR #43 Clocktower host decomposition A1–A13        CLOSED / MERGED
 App-root decomposition S0–S6                       CLOSED / MERGED CHECKPOINT
 App-root S7.1/S7.2                                  CLOSED / MERGED via PR #49
-App-root S7.3                                      PAUSED / NOT STARTED
+App-root S7.3                                      COMPLETE / STACKED STRUCTURAL BRANCH
+App-root S7.4                                      COMPLETE / LOCAL GREEN SLICE
 PR #48 historical multi-night exact baseline       MERGED / CLOSED
 A3 Architecture Hardening H1–H7                    COMPLETE / GREEN
 B4 historical-exact shadow bridge                  GREEN
@@ -39,7 +40,7 @@ S1.2 slow-test/root-cause audit                     COMPLETE
 S1.3 tier/escalation design                         COMPLETE
 S1.4 documentation/governance sync                 COMPLETE
 S2 executable Gradle suites                         COMPLETE
-S3 CI impact/path-aware optimization                COMPLETE / PR #50 DRAFT GREEN
+S3 CI impact/path-aware optimization                COMPLETE / MERGED via PR #50
 ```
 
 S2 established executable Android JVM validation on `codex/test-execution-tiering`:
@@ -70,7 +71,38 @@ The workflow change intentionally routes all gates, so PR #50 exercised the comp
 
 The latest docs-only S3 closeout commits may move PR #50 head beyond the validated workflow SHA above. Before any ready/merge decision, re-query the live PR head and checks and confirm those docs-only commits retain GREEN CI/R2. Do not treat the historical `2135ea19…` evidence as authorization to merge a newer unchecked head.
 
-PR #48 is merged/closed. Keep the completed A3 history separate from the current test-execution workflow work. The old `codex/source-decomposition-app-root` branch is behind `main`, so any future S7 work must start from a fresh live-state audit rather than blindly continuing that stale branch.
+S7.3 is complete on stacked branch `codex/source-decomposition-app-root-s7-3-host-interaction-ui`:
+
+```text
+head: b6d5d407d8d753bfe1fd4f9a5b16f58881468fa7
+owner: HostInteractionUi.kt
+root: CampBoardGameHostApp.kt = 220,403 bytes
+owner: HostInteractionUi.kt = 8,901 bytes
+exact moved declarations:
+  HostProgressCard
+  HostScriptCard
+  HostInstructionBlock
+  HostActionSection
+  SelectablePlayerChips
+  SelectableTwoPlayerChips
+  SelectableSeatNumbers
+remote exact-diff audit: PASS
+GitHub Actions on b6d5d407 head: none observed
+```
+
+S7.4 is the completed local slice on `codex/source-decomposition-app-root-s7-4-game-settings-ui`:
+
+```text
+RED:    4a46210c  test: define shared game settings UI ownership
+repair: 843f61e5  test: retire stale root ownership assertions
+GREEN:  bcd8b9b2  refactor: extract shared game settings UI
+owner: GameSettingsUi.kt
+moved: GameSettingsHeader, StepperRow
+```
+
+The S7.4 local gates passed: focused T0 ownership tests, `:app:testFast`, `:app:assembleDebug`, and exact diff audit. No remote workflow run was observed for the S7.4 head.
+
+PR #48 is merged/closed. Keep the completed A3 history separate from the current App-root S7 work. Future S7 slices still require a fresh live-state and dependency audit before implementation.
 
 ## 2. Protected architecture contracts
 
@@ -267,23 +299,20 @@ history UI / misinformation expansion
 App-root S7
 ```
 
-## 8. Immediate priority — PR #50 final gate, then fresh S7.3 audit
+## 8. Immediate priority — APP-ROOT DECOMPOSITION / POST-S7.3 ROUTE
 
-The test execution workflow optimization is implementation-complete through S3. PR #50 remains deliberately draft until its final live head has passed GitHub CI/R2 and the user explicitly authorizes the next PR transition.
-
-Current sequence:
+PR #50 is merged/closed and S7.1–S7.4 have completed their defined local structural slices. The current route is:
 
 ```text
-1. re-query PR #50 current head and final CI/R2 after the docs-only S3 closeout
-2. perform final exact-diff / routing audit
-3. merge or mark ready only with explicit user authorization
-4. after any authorized merge, re-query live main
-5. perform a fresh App-root S7.3 architecture audit from the merged main state
-6. start no S7.3 implementation until that audit defines an explicit low-risk slice
-7. return to later A3/product roadmap work according to the then-current priority
+S7.1/S7.2 merged via PR #49
+-> S7.3 COMPLETE: HostInteractionUi.kt
+-> S7.4 COMPLETE: GameSettingsUi.kt
+-> S7.5 ClocktowerNewDemonConfirmationScreen -> clocktower/ui/ClocktowerNightScreen.kt
+-> S7.6 WerewolfRoleLine + WerewolfPlayerStatusRow -> werewolf/WerewolfHostScreen.kt
+-> STOP / remeasure / fresh S8 audit
 ```
 
-S7.3 must not be assumed to start automatically. It requires a fresh live-state audit and an explicit implementation slice.
+S7.5 remains subject to a fresh dependency/transaction guard. Do not jump directly into persistence, setup, or model extraction. `EmptyStateCard` remains a deferred generic app presentation primitive; do not create a `Utils.kt` or `CommonUi.kt` bucket merely because it is small.
 
 Authoritative S7 handoff:
 
@@ -291,24 +320,18 @@ Authoritative S7 handoff:
 docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_S7.md
 ```
 
-Known structural state at the S7 handoff:
+Known structural state at the S7.4 local checkpoint:
 
 ```text
 CampBoardGameHostApp.kt
-original: 325,556 bytes
-after S6: 229,822 bytes
-net reduction: 95,734 bytes (~29.4%)
+after S7.3: 220,403 bytes
+after S7.4: 218,086 bytes
+GameSettingsUi.kt: 3,112 bytes
 ```
 
 The 50 KiB target remains a maintainability guideline rather than a hard gate. S7 must **not automatically reuse an old ranking**. Re-audit the live `CampBoardGameHostApp.kt` and choose the next highest-value, lowest-risk cohesive ownership slice. If no natural low-risk seam remains, stop rather than manufacture an artificial owner.
 
-At the pre-S3 closeout, the old branch:
-
-```text
-codex/source-decomposition-app-root
-```
-
-was behind `main`. Therefore future S7 work must begin from then-live `main` and determine the correct fresh branch/worktree strategy before writing tests or production code.
+S7.4 was created from S7.3 checkpoint `b6d5d407d8d753bfe1fd4f9a5b16f58881468fa7`, whose parent is stable main `0311c3bb54ea71be69bc60a4aae642e0f39cd900`.
 
 Protected S7 boundaries include:
 
