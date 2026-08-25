@@ -3,7 +3,7 @@
 > Refreshed: 2026-08-25 Australia/Sydney  
 > Structural branch: `codex/source-decomposition-app-root-s7-main65c0ba`  
 > Structural base: `main@65c0ba47a6f2c0b76263b3f3a1fbf2e26a427024`  
-> Current structural status: **S0–S6 CLOSED; S7.1 CLOSED; next = S7.2 selection semantics audit**  
+> Current structural status: **S0–S6 CLOSED; S7.1 CLOSED; S7.2 CLOSED; structural work PAUSED before S7.3 for test-workflow optimization**  
 > PR #48 A3 historical exact/B4 shadow checkpoint is merged into `main`; future A3 setup-snapshot/authority work remains out of scope here.  
 > Never merge, force-push, rebase, mark ready, or broaden scope without explicit user authorization.
 
@@ -29,7 +29,16 @@ S7.1 then established a real RED/GREEN history:
   -> 4062a65355fedad5e13b5e874657db46cd0368ad  refactor: extract Clocktower presentation theme
 ```
 
-The documentation closeout commit follows those code commits. Re-query the live branch head before any new implementation; do not rely on the SHA printed here as a substitute for a live check.
+S7.2 then established the selection-semantics ownership contract and behavior-preserving move:
+
+```text
+eb158077ce382526330071d8d44fab67817a472d
+  -> 7829291c90af7d09b6b444eb561d34c935437319  test: define S7.2 selection semantics ownership
+  -> eda75cd3bd7cb4177e13d1792fde17ca229aa644  refactor: move Clocktower selection semantics
+  -> 5ca925ae38e69376d768bb73c1a2f0fe6e06fab5  test: make S7.2 ownership contract portable
+```
+
+The S7.2 remote exact-diff audit passed. The structural campaign is intentionally paused before S7.3 so test-workflow optimization can be completed on a clean `main` checkpoint. After that optimization is merged, restart S7.3 from then-current live `main`; do not blindly continue from this old structural branch.
 
 ## 2. Current app-root progress
 
@@ -49,6 +58,7 @@ After S4   = 261,232 bytes
 After S5   = 235,741 bytes
 After S6   = 229,822 bytes
 After S7.1 = 229,007 bytes
+After S7.2 = 228,172 bytes
 ```
 
 S7.1 new owner:
@@ -57,11 +67,17 @@ S7.1 new owner:
 ClocktowerPresentationTheme.kt = 985 bytes
 ```
 
-Net Root reduction through S7.1:
+S7.2 moved the pure selection semantics into the existing owner:
 
 ```text
-96,549 bytes
-~29.7% from the original Root
+ClocktowerHostSelectionSemantics.kt
+```
+
+Net Root reduction through S7.2:
+
+```text
+97,384 bytes
+~29.9% from the original Root
 ```
 
 The 50 KiB target remains a **maintainability guideline, not a hard gate**.
@@ -81,7 +97,7 @@ ordinary feature/model/semantics/presentation file:
 
 The objective is to prevent ordinary feature work from defaulting to a 200–300 KiB monolith, not to manufacture abstractions solely to satisfy a byte threshold.
 
-## 3. Completed slices S0–S7.1
+## 3. Completed slices S0–S7.2
 
 ### S0 — dynamic-flow preservation guard — CLOSED
 
@@ -191,20 +207,57 @@ The GREEN production diff is declaration-only:
 
 The branch push for `4062a653...` did **not** trigger a GitHub Actions run or combined status. Therefore do not describe that head as remotely CI-green. The remote closeout proves lineage, ownership and exact diff; GitHub CI/R2 remains an independent merge gate when a PR/head is later prepared for merge.
 
-## 4. Current large-file audit after S7.1
+### S7.2 — Clocktower selection semantics — CLOSED
+
+Ownership moved:
+
+```text
+TwoPlayerSelectionAction
+twoPlayerSelectionAction(...)
+shouldAutoAdvanceRedHerring(...)
+
+CampBoardGameHostApp.kt
+  -> ClocktowerHostSelectionSemantics.kt
+```
+
+Provenance:
+
+```text
+RED:
+7829291c90af7d09b6b444eb561d34c935437319
+
+GREEN:
+eda75cd3bd7cb4177e13d1792fde17ca229aa644
+
+portable ownership-test repair:
+5ca925ae38e69376d768bb73c1a2f0fe6e06fab5
+```
+
+Remote exact-diff audit passed:
+
+- RED added only `ClocktowerHostSelectionSemanticsOwnershipTest.kt`;
+- GREEN deleted exactly the 27-line semantic block from Root and added the same block to `ClocktowerHostSelectionSemantics.kt`;
+- `ClocktowerHostScreen.kt` remained zero-diff;
+- `SelectablePlayerChips`, `SelectableTwoPlayerChips`, and `SelectableSeatNumbers` remained Root-owned for future S7.3;
+- no visibility widening, behavioral change, Compose lifetime change, persistence/session/history change, or A3/B4/A4 authority change occurred;
+- the follow-up repair changed only the ownership test, replacing a machine-specific absolute path with the repository-relative source path and using `CampBoardGameHostApp.kt` directly.
+
+Branch pushes through the S7.2 closeout still did **not** produce GitHub Actions workflow runs/statuses. Local focused/full unit tests, assemble and diff-check are execution evidence only; GitHub CI/R2 remains the independent checkpoint-PR merge gate.
+
+## 4. Current large-file audit after S7.2
 
 Current handwritten Android production files of interest include:
 
 ```text
 ClocktowerHostScreen.kt     295,644 bytes
-CampBoardGameHostApp.kt     229,007 bytes
+CampBoardGameHostApp.kt     228,172 bytes
 ClocktowerDayScreen.kt       63,135 bytes
 ClocktowerNightStepUi.kt     45,251 bytes
 ClocktowerHistoryScreen.kt   38,365 bytes
 WerewolfHostScreen.kt        29,673 bytes
 ```
 
-`CampBoardGameHostApp.kt` remains the active structural target because it still contains declarations with clearer semantic/presentation owners.
+`CampBoardGameHostApp.kt` remains the future structural target because it still contains declarations with clearer semantic/presentation owners.
 
 `ClocktowerHostScreen.kt` is **not** a byte-target campaign. A1–A13 already extracted its strongest natural seams; it remains under new-responsibility growth freeze.
 
@@ -239,10 +292,6 @@ Do not move merely for size:
 Remaining S7 candidates include:
 
 ```text
-TwoPlayerSelectionAction
-twoPlayerSelectionAction
-shouldAutoAdvanceRedHerring
-
 SelectablePlayerChips
 SelectableTwoPlayerChips
 SelectableSeatNumbers
@@ -263,88 +312,23 @@ HostActionSection
 
 Several are already `internal` because extracted files call them cross-file. That is evidence that Root is no longer their natural owner.
 
-## 6. Exact next task — S7.2 selection semantics
+## 6. Structural pause before S7.3
 
-S7.2 is **semantics only**. Do not combine it with S7.3 selection UI.
+S7.2 is closed. **Do not start S7.3 on this branch now.**
 
-Audit and, if the live code confirms the boundary, move exactly:
-
-```kotlin
-TwoPlayerSelectionAction
-twoPlayerSelectionAction(...)
-shouldAutoAdvanceRedHerring(...)
-```
-
-from:
+The next project task is test-workflow optimization. The intended integration sequence is:
 
 ```text
-CampBoardGameHostApp.kt
+S7.1 + S7.2 checkpoint
+-> merge checkpoint to main after PR CI/R2 gates
+-> test-workflow optimization from fresh main
+-> merge test-workflow optimization
+-> create a fresh S7.3 branch from then-current main
 ```
 
-to the existing natural semantic owner:
+When structural work resumes, re-read the live repository and re-run the full S7.3 preflight rather than treating this document's current candidate list as authority.
 
-```text
-ClocktowerHostSelectionSemantics.kt
-```
-
-Current size of that owner at the S7.1 GREEN tree:
-
-```text
-ClocktowerHostSelectionSemantics.kt = 6,035 bytes
-```
-
-### S7.2 preflight requirement
-
-S7.1 exposed two kinds of stale/incomplete assumptions before implementation:
-
-1. an initially omitted production consumer;
-2. stale structural tests that encoded a previous slice's temporary file-location fact.
-
-Therefore S7.2 must begin with **complete production and test inventory before RED design**.
-
-At minimum:
-
-```text
-rg all three target symbols across app/src/main
-rg all three target symbols across app/src/test
-identify every declaration, caller and structural location assertion
-classify any stale boundary assertion before changing production
-```
-
-Do not tell Luna to broaden scope when a surprise appears. Luna should STOP; Chat should classify the finding and issue a corrected architecture/test contract.
-
-### Existing safety nets to inspect first
-
-```text
-app/src/test/java/com/codex/campboardgamehost/ClocktowerHostSelectionSemanticsCharacterizationTest.kt
-app/src/test/java/com/codex/campboardgamehost/TwoPlayerSelectionActionTest.kt
-```
-
-Do not assume those are the only relevant tests. Search the full test tree for all three symbols and for Root-positive ownership assertions.
-
-### S7.2 hard boundary
-
-Do **not** move or edit as part of S7.2:
-
-```text
-SelectablePlayerChips
-SelectableTwoPlayerChips
-SelectableSeatNumbers
-```
-
-Those belong to S7.3.
-
-Also do not alter:
-
-- selection behavior or limit semantics;
-- automatic red-herring behavior;
-- Compose state/effect lifetime;
-- Host recommendation/registration transactions;
-- persistence/session/history;
-- A3/B4/A4 authority;
-- call-site behavior except compile-required visibility/import consequences explicitly approved by Chat after audit.
-
-## 7. Remaining S7 route after S7.2
+## 7. Remaining S7 route when structural work resumes
 
 ### S7.3 — Clocktower selection UI
 
@@ -485,9 +469,9 @@ Future A3 setup-snapshot/authority work remains out of scope on this branch.
 
 ## 13. Large-file execution workflow — HARD RULE
 
-`CampBoardGameHostApp.kt` remains approximately 229 KiB. Do **not** use the GitHub Connector for production rewrites/moves in this file.
+`CampBoardGameHostApp.kt` remains approximately 228 KiB. Do **not** use the GitHub Connector for production rewrites/moves in this file.
 
-For any S7/S8 slice touching Root:
+For any future S7/S8 slice touching Root:
 
 ### ChatGPT owns
 
@@ -519,7 +503,7 @@ ChatGPT must not directly edit Root production code through the connector for th
 
 ## 14. Tests-first contract for every structural slice
 
-For each S7/S8/D2 extraction:
+For each future S7/S8/D2 extraction:
 
 1. re-check live `main`, structural branch head and parent chain;
 2. inventory every production declaration/caller for all target symbols;
@@ -557,7 +541,12 @@ A remaining Root above 50 KiB is acceptable when those responsibilities are cohe
 
 ```text
 S7.1 shared Clocktower theme — CLOSED
--> S7.2 selection semantics — NEXT
+-> S7.2 selection semantics — CLOSED
+-> CHECKPOINT MERGE
+-> PAUSE structural decomposition
+-> test-workflow optimization on fresh main
+-> merge test-workflow optimization
+-> restart S7.3 from then-current live main
 -> S7.3 selection UI
 -> S7.4 New Demon presentation
 -> S7.5 Werewolf presentation leftovers
