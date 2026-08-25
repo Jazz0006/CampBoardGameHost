@@ -1,139 +1,82 @@
-# CampBoardGameHost — App-root S9 Handoff / Persistence Boundary Audit
+# CampBoardGameHost — Deferred S9.2 Active Game Persistence Boundary Handoff
 
 > Refreshed: 2026-08-25 Australia/Sydney
 > Repository: `Jazz0006/CampBoardGameHost`
-> Purpose: preserve the completed S9.1 state plus the audited-but-not-yet-implemented S9.2 plan so work can resume after the current correctness bug is fixed.
-> This document supersedes the S9 planning sections of `NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_S7.md`.
-> `docs/CURRENT_DEVELOPMENT_ROADMAP.md` remains the project-level status document; this file is the detailed S9 execution handoff.
+> Status: **DEFERRED / architecture audit complete / implementation not started**
+> Current stable code baseline at deferral: `5367603d2d7150e7ba88f19d061eb04f8da20aeb`
+> PR #51: **MERGED / CLOSED — App-root through S9.1**
+> Current priority before this task: `NEXT_DEVELOPMENT_HANDOFF_2026-08-25_INFORMATION_DECISION_CORRECTNESS_BUG.md`
 
-## 1. Live structural checkpoint
+This file is the detailed execution handoff for **one possible future App-root slice only**. It is not the current project-status authority; `docs/CURRENT_DEVELOPMENT_ROADMAP.md` is.
 
-Stable integration base before merging the current decomposition stack:
+## 1. Current structural state
 
-```text
-main = 0311c3bb54ea71be69bc60a4aae642e0f39cd900
-```
+S9.1 is complete and merged through PR #51.
 
-S9.1 branch:
-
-```text
-codex/source-decomposition-app-root-s9-1-json-primitives
-```
-
-Known lineage before this documentation commit:
-
-```text
-78cbaab473f433fb98d69f1bebfd7a69ae11edaa  S8.2 GREEN
-  -> 377a3cd25691e50e04df31ae211bc069e3456364  docs closeout / S9.1 handoff
-  -> d0ba789984eaf18db01c331f9a21dc842a6ae2eb  S9.1 RED
-  -> 561fc3240c88c0f9c532bbf131e152aa99bad33e  S9.1 GREEN
-```
-
-S9.1 remote structural / exact-diff audit: **PASS**.
-
-No GitHub Actions workflow runs were observed on `561fc3240c88c0f9c532bbf131e152aa99bad33e`, so do **not** describe S9.1 as remotely CI-green until a PR/full applicable gate has actually run.
-
-## 2. S9.1 — App JSON primitives — CLOSED
-
-S9.1 moved exactly nine JSON primitives from `CampBoardGameHostApp.kt` to:
-
-```text
-app/src/main/java/com/codex/campboardgamehost/persistence/AppJsonPrimitives.kt
-```
-
-Moved symbols:
-
-```text
-enumByName
-JSONObject.putNullableString
-JSONObject.putNullableInt
-JSONObject.putNullableBoolean
-JSONObject.optNullableString
-JSONObject.optNullableInt
-JSONObject.optNullableBoolean
-stringsToJsonArray
-JSONArray.toStringList
-```
-
-Production visibility change was exactly nine instances of:
-
-```text
-private -> internal
-```
-
-S9.1 did **not** change:
-
-- JSON keys or schema;
-- snapshot / restore behavior;
-- SharedPreferences keys or timing;
-- persistence identity;
-- model codecs;
-- consumers / callsites;
-- Clocktower catalog authority;
-- Compose state / effects;
-- Clocktower live transaction ordering;
-- A3/A4/B4/recommendation authority.
-
-Post-S9.1 sizes:
+Final S9.1 result:
 
 ```text
 CampBoardGameHostApp.kt          ~205,456 bytes
 persistence/AppJsonPrimitives.kt ~1,335 bytes
 ```
 
-The previous strategy of continuing with 1–5 KiB micro-slices is now abandoned. Future App-root decomposition must remove a genuine responsibility module of roughly >=15–20 KiB, preferably >=20–30 KiB, or the decomposition should stop.
+S9.1 moved exactly nine pure JSON helpers into `persistence/AppJsonPrimitives.kt`, with exactly nine `private -> internal` visibility changes and no schema/callsite/persistence behavior changes.
 
-## 3. Priority interruption — correctness bug before S9.2 implementation
+PR #51 ran the current applicable remote gates successfully, including full Android unit tests + debug APK build and the final CI gate.
 
-A newly confirmed important correctness bug exists in the Clocktower information-decision / automatic recommendation path. It is not part of the App-root persistence subsystem.
+The old 1–5 KiB micro-slice strategy is retired. Future App-root work is justified only when it exposes a real responsibility module of roughly >=15–20 KiB, preferably >=20–30 KiB.
 
-Therefore the approved sequence is:
+## 2. Why S9.2 is deferred
+
+A correctness bug was confirmed in the Clocktower information-decision / automatic-recommendation authority path.
+
+Approved order:
 
 ```text
-S9.1 audit + merge
--> branch from new main
--> fix information-decision correctness bug tests-first
--> merge bug fix
--> only then consider resuming S9.2
+PR #51 / S9.1 merged
+-> fix information-decision correctness bug on a dedicated hotfix branch
+-> merge correctness fix
+-> re-query/re-audit live main
+-> only then decide whether S9.2 still proceeds
 ```
 
-Do not mix the correctness fix with S9.2 persistence extraction.
+Do not combine the correctness fix with this persistence extraction.
 
-The bug fix may establish a small correct authority boundary if needed, but must not trigger a new size-driven `ClocktowerHostScreen.kt` decomposition. `ClocktowerHostScreen.kt` remains under new-responsibility growth freeze.
+## 3. Architecture audit conclusion
 
-## 4. S9 persistence architecture audit — COMPLETE / PASS
-
-A fresh audit of the remaining ~205 KiB Root concluded that **persistence is the only remaining App-root responsibility currently large and coherent enough to justify another structural slice**.
-
-Estimated persistence-related surface:
+The fresh post-S9.1 Root audit found only one remaining responsibility currently large and coherent enough to justify another structural slice:
 
 ```text
-raw persistence-related code            ~45–55 KiB
-safe expected Root reduction             ~25–35 KiB
-possible with coherent prefs/history     ~35–45 KiB
+Active Game Persistence Boundary
 ```
 
-These are planning estimates, not acceptance targets. Do not maximize extracted byte count at the cost of coupling or authority clarity.
-
-Other remaining Root candidates were rejected or deferred:
+Planning estimates only:
 
 ```text
-legacy Clocktower catalog/distribution/assignment  ~12–16 KiB  medium risk; too coupled to legacy/private catalog authority
+raw persistence-related surface            ~45–55 KiB
+safe expected Root reduction                ~25–35 KiB
+possible with coherent prefs/history        ~35–45 KiB
+```
+
+Do not optimize for the upper byte estimate. Stop if the clean architecture boundary yields less.
+
+Other candidates were rejected/deferred:
+
+```text
+legacy Clocktower catalog/distribution/assignment  ~12–16 KiB  coupled to private/legacy catalog authority
 prefs/common-player/game-history alone             ~8–12 KiB  too small alone
 leaf JSON codecs                                    ~4–6 KiB   too small alone
-A4 prewarm/cache/lifecycle                          ~18–25 KiB  protected/high risk; no size-driven move
-setup/reset/start orchestration                     ~15–20 KiB  medium-high orchestration risk
+A4 prewarm/cache/lifecycle                          ~18–25 KiB  protected/high risk
+setup/reset/start orchestration                     ~15–20 KiB  orchestration/high coupling
 outcome/presentation helpers                        ~5–8 KiB   too small
-Clocktower Judge/live transaction wiring            ~50–60+ KiB extremely high risk; protected
+Clocktower Judge/live transaction wiring            ~50–60+ KiB protected/extremely high risk
 ```
 
-Conclusion:
+If S9.2 completes successfully, perform a fresh Root audit. If no new natural >=15–20 KiB low-coupling owner remains, formally **END App-root decomposition**. Do not force Root below 50 KiB.
 
-> If App-root decomposition resumes, perform at most one meaningful **Active Game Persistence Boundary** extraction, then re-audit. If no new natural >=15–20 KiB low-coupling responsibility remains, formally end App-root decomposition. Do not force Root to 50 KiB.
+## 4. Correct conceptual seam
 
-## 5. Recommended S9.2 architecture — Active Game Persistence Boundary
-
-The correct conceptual seam is:
+The architecture should become:
 
 ```text
 untrusted persisted JSON
@@ -141,41 +84,43 @@ untrusted persisted JSON
 -> Root live Compose commit
 ```
 
-The decomposition should separate serialization/parsing from live application state ownership and mutation.
+The structural goal is not “move JSON code”. The goal is to separate **serialization/parsing** from **live application state ownership and mutation**.
+
+## 5. Recommended production owners
 
 ### 5.1 `ActiveGameSnapshotCodec`
 
-Recommended owner:
+Recommended path:
 
 ```text
 app/src/main/java/com/codex/campboardgamehost/persistence/ActiveGameSnapshotCodec.kt
 ```
 
-Responsibility:
+Responsibilities:
 
 - encode an immutable persistence state into `JSONObject`;
-- own/delegate common model encoding for PlayerCard, EliminationRecord, GameOutcome and ClocktowerEvent where architecture permits;
+- own/delegate common encoding for PlayerCard, EliminationRecord, GameOutcome and ClocktowerEvent when clean;
 - delegate semantic-history, epistemic, night-checkpoint and ruleset representations to their existing authorities;
-- preserve exact existing keys/null behavior/schema semantics.
+- preserve exact existing keys/null/schema behavior.
 
-Must **not** own:
+Must not own:
 
 - when persistence happens;
 - Compose lifecycle/effects;
 - SharedPreferences timing;
-- A4 durability timing;
 - archive transaction timing;
+- A4 durability timing;
 - live Clocktower state mutation.
 
 ### 5.2 `ActiveGameRestoreParser`
 
-Recommended owner:
+Recommended path:
 
 ```text
 app/src/main/java/com/codex/campboardgamehost/persistence/ActiveGameRestoreParser.kt
 ```
 
-Responsibility:
+Responsibilities:
 
 ```text
 JSONObject
@@ -187,39 +132,39 @@ JSONObject
 -> ValidatedActiveGameRestore
 ```
 
-It must never mutate live Compose/application state.
+The parser must never mutate live Compose/application state.
 
 Root must receive a completely validated immutable result before the first live state mutation.
 
 ### 5.3 Optional `AppPreferencesStore` / `GameHistoryStore`
 
-Only include storage adapters if they remain a coherent responsibility and materially improve the boundary.
+Include only if storage adapters remain a coherent responsibility and materially improve the boundary.
 
-Possible responsibility:
+Possible responsibilities:
 
 - raw save/load/clear of active-game JSON;
 - general preferences/common-player persistence;
 - history/archive storage.
 
-Root still owns *when* those operations are invoked and the live/archive transaction boundaries.
+Root still owns **when** these operations occur and the live/archive transaction boundaries.
 
 ### 5.4 Keep `savedGamePreviewFromJson` presentation-side unless proven otherwise
 
-`savedGamePreviewFromJson` is not an ordinary leaf codec. It depends on presentation/application context such as `Context`, resources, private `Screen`, game-specific presentation and persistence coordinator behavior.
+`savedGamePreviewFromJson` depends on application/presentation context (`Context`, resources, private `Screen`, game presentation, persistence coordinator behavior).
 
-Do not widen `Screen`, move presentation authority, or drag resource-based preview construction into the persistence codec merely to reduce Root size.
+Do not widen `Screen` or drag presentation construction into persistence just to remove bytes from Root.
 
-## 6. Contracts S9.2 must preserve exactly
+## 6. Restore contracts that must remain exact
 
 `ActiveGamePersistenceCoordinator` remains the authority for current schema/version, persisted identity, compatibility and fail-closed restore gating.
 
-The existing restore ordering contract must remain semantically equivalent:
+Required semantic ordering:
 
 ```text
 schema version
 -> persistence identity
 -> ruleset basis/ref validation
--> semantic-history / checkpoint / representation compatibility
+-> semantic-history/checkpoint/representation compatibility
 -> only then live state mutation
 ```
 
@@ -232,11 +177,11 @@ Protect all of the following:
 - semantic-history compatibility remains unchanged;
 - unfinished-night checkpoint restore remains exact;
 - draft versus confirmed night targets remain distinct;
-- no live Compose state mutation occurs before validation completes;
+- no live Compose mutation occurs before validation completes;
 - archive/history behavior remains unchanged;
 - restored-session behavior remains unchanged;
 - active-state save/load/clear behavior remains unchanged;
-- saved-game preview decoding behavior remains unchanged;
+- saved-game preview behavior remains unchanged;
 - semantic-history persistence remains unchanged;
 - epistemic observation persistence remains unchanged;
 - `ClocktowerNightCheckpoint` persistence remains unchanged;
@@ -248,7 +193,7 @@ No schema/version bump is expected or allowed for a pure structural extraction.
 
 ### 7.1 PlayerCard role resolution
 
-Current PlayerCard restore is not a leaf operation:
+Current restore dependency:
 
 ```text
 playerCardFromJson
@@ -256,7 +201,7 @@ playerCardFromJson
 -> completeClocktowerRoles
 ```
 
-Do **not** widen or relocate the legacy catalog simply to make the parser compile.
+Do **not** widen or relocate the legacy catalog merely to make a new parser compile.
 
 Preferred seam:
 
@@ -264,39 +209,37 @@ Preferred seam:
 (String?) -> ClocktowerRole?
 ```
 
-Pass a narrow role resolver dependency into the restore parser from Root, preserving the current `clocktowerRoleByName` semantics and catalog authority exactly.
+Supply the existing semantics through a narrow resolver dependency from Root.
 
-Abort the extraction if implementation would require:
+Abort if implementation requires:
 
 - widening `clocktowerRoleByName`;
 - widening/moving `completeClocktowerRoles`;
-- duplicating a Clocktower catalog;
+- duplicating Clocktower catalog authority;
 - changing unknown-role/fallback behavior.
 
 ### 7.2 Epistemic persistence
 
-Existing epistemic persistence delegates to `EpistemicSemanticJson` with explicit fail-closed/error semantics.
-
-The new parser/codec may delegate to that authority, but must not silently normalize malformed entries or create a second epistemic serialization authority.
+Continue delegating to `EpistemicSemanticJson` and preserve its explicit fail-closed/error behavior. Do not create a second epistemic serializer or silently normalize malformed entries.
 
 ### 7.3 Night checkpoint
 
-Reuse `ClocktowerNightCheckpoint`; do not flatten its authority into a new giant persistence DTO.
+Reuse `ClocktowerNightCheckpoint`. Do not flatten it into a giant persistence DTO.
 
-An unfinished night must continue to preserve independently:
+An unfinished night must still distinguish:
 
-- confirmed Demon attack vs draft attack target;
-- confirmed Poison target vs draft;
-- confirmed Monk target vs draft;
-- confirmed Mayor redirect vs draft;
-- pending new Demon / successor information;
+- confirmed Demon attack vs draft attack;
+- confirmed Poison vs draft Poison;
+- confirmed Monk vs draft Monk;
+- confirmed Mayor redirect vs draft redirect;
+- pending new Demon/successor state;
 - timeline cursor.
 
-## 8. Data model / visibility guidance
+## 8. Visibility / data-model guidance
 
-Target **zero existing production symbol visibility widenings** in S9.2.
+Target **zero existing production symbol visibility widenings**.
 
-New architecture types may be `internal` where needed, but do not change existing private declarations such as:
+New architecture types may be `internal`, but do not change existing private declarations such as:
 
 ```text
 private Screen
@@ -305,19 +248,17 @@ private completeClocktowerRoles
 private savedGamePreviewFromJson
 ```
 
-If many existing private symbols must become `internal`, treat that as evidence that the proposed boundary is wrong and stop.
+If many existing private symbols must become `internal`, the boundary is probably wrong. Stop and re-audit.
 
-Do not introduce a giant flat DTO whose only purpose is to mirror dozens of Compose variables and pass them to another file. A persistence model is justified only if it represents a genuine cohesive persisted schema/state and is protected by round-trip tests.
+Do not introduce a flat DTO whose main purpose is to mirror dozens of Compose variables. A persistence model is justified only if it is a genuine cohesive persisted-state representation protected by round-trip tests.
 
-Prefer cohesive nested persistence models and reuse existing domain/session representations.
+## 9. Tests-first RED plan
 
-## 9. S9.2 tests-first plan
+Resume with tests only. Do not edit production in the first step.
 
-When S9.2 is resumed, start with RED only. Do not edit production in the same first step.
+### RED A — `ActiveGameRestoreParserTest`
 
-### 9.1 `ActiveGameRestoreParserTest`
-
-Add focused behavior tests for at least:
+Cover at least:
 
 ```text
 unknown schema -> reject
@@ -330,9 +271,9 @@ malformed night checkpoint -> reject
 parse failure -> no partially usable restore result
 ```
 
-### 9.2 Production ownership/boundary test
+### RED B — production restore boundary
 
-Add a structural/production-wiring test that protects the real invariant:
+Protect the real ownership invariant:
 
 ```text
 Root restoreSavedGame()
@@ -340,7 +281,7 @@ Root restoreSavedGame()
 -> only then performs first live mutation
 ```
 
-The parser owner must not contain Compose/live state constructs such as:
+The parser owner must not contain live Compose/application mutation constructs such as:
 
 ```text
 remember
@@ -351,11 +292,11 @@ cards.clear()
 playerNames.clear()
 ```
 
-Existing source-string tests that merely freeze validation text inside Root should be evolved to protect this new owner/ordering boundary rather than preserving obsolete temporary code location.
+Existing source-string tests that freeze validation text inside Root should be evolved to assert the new owner/ordering boundary rather than obsolete file location.
 
-### 9.3 Mid-night exact restore fixture
+### RED C — exact unfinished-night fixture
 
-Create a fixture that round-trips/restores a nontrivial unfinished night containing distinct confirmed and draft state, for example:
+Round-trip/restore a nontrivial checkpoint, for example:
 
 ```text
 confirmed attack = P8
@@ -370,9 +311,9 @@ semantic mode    = GLOBAL_V1
 cursor           = N
 ```
 
-Verify exact preservation. Reuse `ClocktowerNightCheckpoint` semantics rather than reimplementing them.
+Verify exact preservation through existing `ClocktowerNightCheckpoint` semantics.
 
-### 9.4 Snapshot/restore schema round-trip
+### RED D — snapshot/restore round-trip
 
 Protect:
 
@@ -382,29 +323,20 @@ ActiveGameSnapshotCodec.encode(state)
 -> equivalent persisted/validated state
 ```
 
-Compare exact behavior for:
+Compare exact behavior for keys/nulls, cards, records, events, outcome, identity, ruleset, semantic history, epistemic history and night checkpoint.
 
-- keys and nullable values;
-- cards and elimination records;
-- events and game outcome;
-- persistence identity;
-- ruleset basis/ref;
-- semantic-history state;
-- epistemic history;
-- unfinished-night checkpoint.
+### RED E — PlayerCard role lookup authority
 
-### 9.5 PlayerCard lookup authority test
+Prove:
 
-Protect that the parser uses the supplied existing role resolver semantics:
-
-- known role resolves identically;
-- unknown role behaves identically to current production;
+- known role resolves exactly as current production;
+- unknown role behavior is unchanged;
 - no fallback/inference is introduced;
-- no catalog duplication exists in persistence owners.
+- no catalog duplication appears in persistence owners.
 
-## 10. Existing regression contracts that remain required
+## 10. Existing regression contracts
 
-At minimum preserve and run the relevant existing tests around:
+At minimum preserve/execute relevant coverage around:
 
 ```text
 ActiveGameProductionPersistenceWiringTest
@@ -412,23 +344,23 @@ ActiveGameSemanticHistoryProductionWiringTest
 ClocktowerGlobalObservationProductionWiringTest
 ClocktowerNightCheckpointTest
 ActiveGamePersistenceCoordinator / identity / ruleset persistence tests
-restore / migration tests affected by the change
+affected restore / migration tests
 ```
 
-Important current contracts include:
+Key contracts include:
 
-- `identityForSave` remains used on snapshot;
-- persisted identity remains encoded and validated on restore;
-- immutable ruleset basis/ref is persisted and resolved before mutation;
+- `identityForSave` still participates in snapshot persistence;
+- persisted identity is encoded and validated on restore;
+- immutable ruleset basis/ref resolves before mutation;
 - selected script is not inferred from player count or assigned roles;
-- semantic mode/cursor/observations/checkpoint are validated before mutation;
-- restored semantic mode/cursor are written only after validation;
-- GLOBAL observation duplicate/revision/durability ordering remains unchanged;
-- night checkpoint legacy compatibility and malformed cursor rejection remain unchanged.
+- semantic mode/cursor/observations/checkpoint validate before mutation;
+- restored semantic state is written only after validation;
+- GLOBAL observation duplicate/revision/durability ordering is unchanged;
+- legacy checkpoint compatibility and malformed cursor rejection are unchanged.
 
-## 11. S9.2 production/test allowlist
+## 11. Preferred allowlist
 
-Preferred production allowlist:
+Production:
 
 ```text
 app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
@@ -446,9 +378,9 @@ ClocktowerHostScreen.kt
 clocktower/catalog/**
 ClocktowerGameSession authority
 A4 planner/projector/materializer/cache/prewarm authority
-recommendation selection authority
+recommendation authority
 ASP/rules semantics
-build configuration/resources
+build/resources
 ```
 
 Also forbidden:
@@ -457,107 +389,87 @@ Also forbidden:
 - SharedPreferences key changes;
 - live transaction reordering;
 - archive/history behavior changes;
-- restore semantics changes;
+- restore behavior changes;
 - existing production visibility widening;
 - unrelated cleanup.
 
-## 12. Validation ladder for resumed S9.2
+## 12. Validation ladder
 
 Follow `docs/TESTING_STRATEGY.md`.
 
-Expected ladder:
+Expected:
 
 ```text
 RED / T0:
   new parser/codec/boundary tests
-  + existing focused persistence wiring contracts
+  + focused existing persistence contracts
 
 GREEN / T0:
-  same focused set after mechanical extraction
+  same focused set
 
 T1:
   :app:testFast
 
 T2:
-  affected persistence coordinator / identity / ruleset / semantic-history /
-  epistemic-observation / ClocktowerNightCheckpoint / restore / migration tests
+  affected persistence / identity / ruleset / semantic-history /
+  epistemic / checkpoint / restore / migration tests
   + :app:assembleDebug where applicable
 
 T3:
-  only if the actual implementation changes representation/semantic areas that trigger it
+  only if the actual change triggers a semantic family under TESTING_STRATEGY
 
 PR T4:
-  applicable Android full gate under TESTING_STRATEGY
+  applicable full Android gate
 ```
 
-Do not treat `UP-TO-DATE` or `FROM-CACHE` alone as proof that tests executed.
+Do not treat `UP-TO-DATE` / `FROM-CACHE` alone as proof that tests executed.
 
-## 13. Execution workflow when S9.2 resumes
+## 13. Large-file execution workflow
 
-`CampBoardGameHostApp.kt` remains a very large file. Use the established Path B workflow.
+`CampBoardGameHostApp.kt` remains very large. Use the established ChatGPT + Luna/local workflow.
 
-### ChatGPT owns
+ChatGPT owns:
 
-- re-querying live `main` and target branch lineage;
-- architecture/boundary decisions;
+- live-state audit;
+- boundary/authority decisions;
+- RED design;
 - exact symbol inventory;
-- RED test design;
-- changed-file allowlist;
 - visibility/dependency audit;
+- allowlist;
 - validation ladder;
-- exact-diff acceptance criteria;
-- STOP/abort decisions;
+- exact-diff criteria;
+- STOP decisions;
 - post-push remote audit.
 
-### Luna/local Codex owns mechanical execution
+Luna/local Codex owns mechanical execution in the user's full worktree after the RED contract is fixed.
 
-- work in the user's full local Git worktree;
-- create the approved RED first;
-- run focused RED and commit it separately;
-- mechanically move only approved code;
-- make minimal compile-required imports/wiring changes;
-- run approved T0/T1/T2;
-- `git diff --check` and exact local diff audit;
-- commit/push only after gates pass.
+## 14. Hard STOP / abort gates
 
-Luna must not choose a different architecture, widen scope, repair unrelated tests, move protected authority, rebase, merge or force-push.
-
-## 14. Hard abort / STOP gates
-
-Abort S9.2 rather than forcing the decomposition if implementation requires any of the following:
+Abort S9.2 rather than forcing the extraction if it requires:
 
 - widening the legacy Clocktower role catalog;
 - moving/exposing private `Screen`;
-- duplicating Clocktower catalog authority;
+- duplicating catalog authority;
 - changing role lookup semantics;
 - changing persistence timing;
-- moving A4 durability timing;
-- moving archive transaction timing;
-- touching protected Clocktower live transaction callbacks;
-- creating a giant flat parameter/DTO bag solely to move bytes;
-- broad existing production visibility widening;
-- schema/key/version changes not independently required by product behavior.
+- changing A4 durability timing;
+- changing archive transaction timing;
+- a giant flat parameter/DTO bag solely to move bytes;
+- touching protected Clocktower live-transaction callbacks;
+- changing schema/restore behavior.
 
-After a successful S9.2, remeasure Root and perform a fresh responsibility audit.
+After any successful S9.2 implementation, remeasure and re-audit. If no natural >=15–20 KiB boundary remains, end App-root decomposition.
 
-If no remaining natural low-coupling responsibility reaches roughly >=15–20 KiB, record:
+## 15. Resume protocol
 
-```text
-APP-ROOT DECOMPOSITION = ENDED
-```
+When this task is eventually resumed:
 
-Do not return to 3–5 KiB micro-slices and do not force the Root below 50 KiB.
-
-## 15. Resume checklist after the correctness bug is merged
-
-When returning to this work:
-
-1. Read root `AGENTS.md`.
-2. Read `docs/CURRENT_DEVELOPMENT_ROADMAP.md`.
-3. Read `docs/TESTING_STRATEGY.md`.
-4. Read this S9 handoff.
-5. Re-query live `main`, S9/decomposition branch history and relevant checks; do not trust stale SHAs blindly.
-6. Confirm the information-decision bug fix is already merged and outside the S9.2 diff.
-7. Decide whether S9.2 is still worth doing under the >=15–20 KiB natural-module threshold.
-8. If yes, start a fresh S9.2 branch from the then-current stable `main` and begin with RED only.
-9. After S9.2 GREEN, perform a fresh Root audit and stop decomposition unless another genuinely large coherent boundary exists.
+1. confirm the Information Decision correctness bug has been merged;
+2. read root `AGENTS.md`;
+3. read `docs/README.md` and `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
+4. read this handoff and `docs/TESTING_STRATEGY.md`;
+5. query live `main` and record the actual SHA;
+6. re-audit the persistence region because the Root may have changed since `5367603d...`;
+7. proceed only if the same architecture remains valid and the >=15–20 KiB threshold is still met;
+8. establish RED before production edits;
+9. stop on any abort gate above.
