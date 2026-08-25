@@ -4,13 +4,15 @@
 > 文档角色：**CURRENT / 当前状态唯一权威**
 > Repository: `Jazz0006/CampBoardGameHost`
 > Stable `main`: `0311c3bb54ea71be69bc60a4aae642e0f39cd900`
-> Current structural checkpoint: `78cbaab473f433fb98d69f1bebfd7a69ae11edaa`
+> Current structural code checkpoint: `561fc3240c88c0f9c532bbf131e152aa99bad33e` (S9.1 GREEN)
+> Current branch docs checkpoint: `1998db7ac06ae38295d95af698fc9707abeb1804`
 > PR #48: **MERGED / CLOSED — historical multi-night exact baseline**
 > PR #49: **MERGED / CLOSED — app-root S7.1/S7.2 structural checkpoint**
 > PR #50: **MERGED / CLOSED — test execution tiers + path-aware CI**
-> Current project priority: **APP-ROOT DECOMPOSITION — S9.1 APP JSON PRIMITIVES SEAM**
+> Current project priority: **AUDIT/MERGE S9.1, THEN FIX INFORMATION-DECISION CORRECTNESS BUG**
+> S9.2 status: **PERSISTENCE ARCHITECTURE AUDIT COMPLETE / IMPLEMENTATION DEFERRED UNTIL BUG FIX MERGES**
 > Detailed test strategy: `docs/TESTING_STRATEGY.md`
-> App-root handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_S7.md`
+> App-root S9 handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_APP_ROOT_S9.md`
 
 ## 1. Project status
 
@@ -31,7 +33,9 @@ App-root S7.5                                       CLOSED / STACKED STRUCTURAL 
 App-root S7.6                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
 App-root S8.1                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
 App-root S8.2                                       CLOSED / STACKED STRUCTURAL CHECKPOINT
-App-root S9.1                                       NEXT — APP JSON PRIMITIVES SEAM
+App-root S9.1                                       CLOSED / STACKED STRUCTURAL CHECKPOINT — MERGE NEXT
+App-root S9.2 persistence boundary                  AUDIT COMPLETE / IMPLEMENTATION DEFERRED
+Information-decision correctness bug               NEXT AFTER S9.1 MERGE
 PR #48 historical multi-night exact baseline       MERGED / CLOSED
 A3 Architecture Hardening H1–H7                    COMPLETE / GREEN
 B4 historical-exact shadow bridge                  GREEN
@@ -53,9 +57,9 @@ T0 focused RED/GREEN
 -> PR T4 applicable FULL gate
 ```
 
-Stable `main` remains `0311c3bb54ea71be69bc60a4aae642e0f39cd900`.
+Stable `main` remains `0311c3bb54ea71be69bc60a4aae642e0f39cd900` until the current S9.1 stack is formally merged.
 
-For S7.3–S7.6 the remote audits prove lineage and exact structural diffs. No GitHub Actions workflow runs were observed on those stacked branch heads, so do **not** describe them as remotely CI-green. Local execution evidence is separate from remote structural evidence.
+For S7.3–S9.1 the remote audits prove lineage and exact structural diffs. No GitHub Actions workflow runs were observed on the stacked branch heads through S9.1 GREEN, so do **not** describe them as remotely CI-green. Local execution evidence is separate from remote structural evidence. Before merging S9.1, create/use a PR and require the applicable current CI gate to run successfully.
 
 ## 3. Protected architecture contracts
 
@@ -98,6 +102,8 @@ Do not move merely for byte reduction:
 
 `ClocktowerHostScreen.kt` remains under new-responsibility growth freeze. The 50 KiB target remains a maintainability guideline rather than a hard gate.
 
+The previous micro-slice strategy is now retired. After S9.1, continue App-root decomposition only for a genuine coherent responsibility of roughly >=15–20 KiB, preferably >=20–30 KiB. If no such boundary remains, stop decomposition instead of manufacturing abstractions.
+
 ## 4. App-root decomposition progress
 
 Original Root:
@@ -123,6 +129,7 @@ After S7.5 = 210,856 bytes
 After S7.6 = 209,336 bytes
 After S8.1 = 208,126 bytes
 After S8.2 = 206,692 bytes
+After S9.1 = 205,456 bytes
 ```
 
 ### S7.3 — shared host interaction UI — CLOSED
@@ -186,70 +193,9 @@ remote exact-diff audit: PASS
 GitHub Actions: none observed
 ```
 
-S7 is now complete. The required STOP / remeasure / fresh S8 audit has been performed.
+S7 is complete. The required STOP / remeasure / fresh S8 audit was performed.
 
-## 5. Fresh S8 audit and chosen first slice
-
-The remaining Root front contains three qualitatively different areas:
-
-```text
-A. pure app-level value models
-B. prefs / JSON / persistence / restore / archive code
-C. legacy Clocktower role/setup/catalog/assignment code
-```
-
-### A — preferred S8.1: pure app game models
-
-Create a same-package owner:
-
-```text
-AppGameModels.kt
-```
-
-Move exactly these already-`internal` pure declarations:
-
-```text
-GameKind
-Role
-PlayerCard
-EliminationRecord
-GameOutcome
-SavedGamePreview
-ArchivedGameReview
-```
-
-Keep these out of S8.1:
-
-```text
-private Screen
-LanguageMode
-PlayerCard.abilitySubject(...)
-all Clocktower-specific enums/models
-all prefs/JSON/persistence helpers
-all Clocktower role/setup/catalog/assignment helpers
-```
-
-Rationale: this slice is declaration-only, cross-game, same-package, requires no visibility widening, and has no state/effect/session/schema behavior.
-
-### B — persistence / JSON: DEFER
-
-Do not include in S8.1:
-
-- SharedPreferences keys and load/save functions;
-- active-game save/load/clear;
-- saved-game preview restore behavior;
-- archive/history persistence;
-- JSON nullable helpers/codecs;
-- epistemic JSON serialization;
-- saved-game schema/version logic.
-
-These are restore/schema-sensitive and remain conditional S9 work unless an independently tested codec boundary is justified later.
-
-### C — legacy Clocktower setup/catalog: AUDIT LATER
-
-The Root still owns legacy role lists, script mappings, distribution and random assignment helpers. This area is more domain-cohesive but several declarations are currently `private`; extracting them would require visibility widening and careful comparison with the newer normalized `clocktower/catalog` architecture. Do not combine this with S8.1.
-
-## 6. S8 closeout and S9.1 route
+## 5. S8 closeout
 
 ### S8.1 — pure app game models — CLOSED
 
@@ -264,7 +210,7 @@ remote exact-diff audit: PASS
 GitHub Actions: none observed
 ```
 
-S8.1 moved exactly seven already-`internal` declarations with no production visibility widening. The next slice is a separate Clocktower-specific app value-model owner.
+S8.1 moved exactly seven already-`internal` declarations with no production visibility widening.
 
 ### S8.2 — Clocktower app value models — CLOSED
 
@@ -282,20 +228,32 @@ GitHub Actions: none observed
 
 S8 pure declaration extraction is complete. S8.2 moved exactly the nine Clocktower app value models with no consumer changes and no production visibility widening.
 
-### S9.1 — app JSON primitives seam — NEXT
+## 6. S9 closeout and deferred persistence boundary
 
-Create `persistence/AppJsonPrimitives.kt` and move exactly nine pure JSON helpers from the Root. The only approved production visibility change is `private -> internal` for those nine helpers.
+### S9.1 — app JSON primitives seam — CLOSED
 
-Persistence coordinator, SharedPreferences, full snapshot, restore transaction, archive, model codecs, role catalog, and session/state remain deferred.
-
-S9.1 must be a mechanical declaration move only:
+Branch:
 
 ```text
-CampBoardGameHostApp.kt
-  -> persistence/AppJsonPrimitives.kt
+codex/source-decomposition-app-root-s9-1-json-primitives
 ```
 
-Move exactly these nine pure JSON helpers, with the only approved production visibility changes being `private -> internal`:
+Lineage:
+
+```text
+78cbaab473f433fb98d69f1bebfd7a69ae11edaa  S8.2 GREEN
+  -> 377a3cd25691e50e04df31ae211bc069e3456364  docs closeout / handoff
+  -> d0ba789984eaf18db01c331f9a21dc842a6ae2eb  RED
+  -> 561fc3240c88c0f9c532bbf131e152aa99bad33e  GREEN
+```
+
+Created:
+
+```text
+persistence/AppJsonPrimitives.kt
+```
+
+Moved exactly:
 
 ```text
 enumByName
@@ -309,25 +267,94 @@ stringsToJsonArray
 JSONArray.toStringList
 ```
 
-Keep persistence coordinator, SharedPreferences, full snapshot, restore transaction, archive, model codecs, role catalog, session/state, and A3/B4 semantics out of S9.1.
-
-No callsite changes should be needed because the new owner remains in package `com.codex.campboardgamehost`.
-
-The new owner must not contain Context/prefs, Compose state/effects, `ClocktowerGameSession`, persistence coordinator, model codecs, or epistemic JSON authority.
-
-Validation remains:
+Production/test BASE->GREEN allowlist was exactly:
 
 ```text
-T0 focused RED/GREEN ownership tests
--> T1 :app:testFast
--> T2 :app:assembleDebug
--> no T3 expected for declaration-only model movement
--> applicable PR T4 later
+CampBoardGameHostApp.kt
+persistence/AppJsonPrimitives.kt
+persistence/AppJsonPrimitivesTest.kt
 ```
+
+Production visibility widening was exactly nine `private -> internal` changes for the moved helpers. Consumer/callsite behavior, JSON keys/schema, snapshot/restore semantics and SharedPreferences behavior were unchanged.
+
+```text
+Root after S9.1: ~205,456 bytes
+new owner:          ~1,335 bytes
+remote exact-diff / structural audit: PASS
+GitHub Actions on S9.1 GREEN: none observed; do not claim remote CI green
+```
+
+### S9.2 — Active Game Persistence Boundary — AUDIT COMPLETE / DEFERRED
+
+The fresh post-S9.1 audit concluded that persistence is the **only** remaining Root responsibility currently large/coherent enough to justify one more App-root structural slice.
+
+Planning estimate:
+
+```text
+raw persistence-related surface        ~45–55 KiB
+safe expected Root reduction           ~25–35 KiB
+```
+
+Recommended seam:
+
+```text
+untrusted persisted JSON
+-> completely validated immutable restore state
+-> Root live Compose commit
+```
+
+Candidate owners:
+
+```text
+persistence/ActiveGameSnapshotCodec.kt
+persistence/ActiveGameRestoreParser.kt
+optional persistence/AppPreferencesStore.kt or GameHistoryStore.kt
+```
+
+Root must retain:
+
+- when to persist / restore;
+- live Compose state capture and mutation;
+- lifecycle timing;
+- restore transaction commit;
+- archive transaction timing;
+- A4 durability timing.
+
+Key implementation constraints:
+
+- preserve `ActiveGamePersistenceCoordinator` schema/version/identity/compatibility authority;
+- validation must complete before the first live state mutation;
+- preserve exact ruleset, semantic-history, epistemic and `ClocktowerNightCheckpoint` semantics;
+- do not widen legacy role-catalog declarations;
+- use a narrow role resolver dependency if PlayerCard restore needs `clocktowerRoleByName` semantics;
+- do not move/expose private `Screen` or presentation-heavy `savedGamePreviewFromJson` merely for byte reduction;
+- target zero existing production symbol visibility widenings;
+- do not create a giant flat DTO mirroring Compose variables.
+
+Detailed RED tests, allowlist, validation ladder, abort gates and Luna execution plan are authoritative in:
+
+```text
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_APP_ROOT_S9.md
+```
+
+S9.2 is **not implemented** and is intentionally paused until the newly confirmed information-decision correctness bug is fixed and merged on an independent branch.
+
+Approved order:
+
+```text
+audit + merge S9.1
+-> fix information-decision correctness bug from new main
+-> merge bug fix
+-> re-evaluate and, only if still justified, implement S9.2 tests-first
+-> remeasure / fresh Root audit
+-> END App-root decomposition if no natural >=15–20 KiB boundary remains
+```
+
+Do not return to 3–5 KiB micro-slices and do not force the Root below 50 KiB.
 
 ## 7. Working discipline
 
-1. Re-query live `main`, structural branch head and parent chain before each slice.
+1. Re-query live `main`, structural branch head and parent chain before each slice or merge.
 2. ChatGPT owns architecture/boundary judgment, test design, exact-diff criteria and remote audit.
 3. Luna performs large-Root mechanical edits in the user's full local Git worktree.
 4. Keep tests-first RED and GREEN provenance explicit.
