@@ -108,9 +108,9 @@ For new Clocktower work:
 
 This is a **growth freeze on new responsibility**, not a byte freeze and not a mandate to mechanically shrink the current file.
 
-### Next large-file priority after PR #43
+### Next large-file priority after PR #49
 
-The next structural task is **App-root decomposition of `CampBoardGameHostApp.kt`**, before A3 historical multi-night product development. Current large-file order of concern is:
+App-root decomposition S7.1/S7.2 is now merged through PR #49 and is paused before S7.3. The immediate engineering priority is test execution workflow optimization. After that work completes, App-root decomposition may resume from S7.3 subject to a fresh live-state audit. Current large-file order of concern is:
 
 ```text
 CampBoardGameHostApp.kt   ~325 KiB   next structural priority
@@ -144,6 +144,19 @@ A structural refactor must not become a hidden product change.
 - Local validation does not replace GitHub CI/R2 before merge.
 - A pushed commit is not merge authorization.
 - **Never merge, mark ready, force-push, rebase, or broaden the active PR without explicit user authorization.**
+
+### Test execution and escalation
+
+- Use T0 exact focused tests for RED/GREEN feedback.
+- At logical checkpoints, run T1 FAST plus T2 affected validation.
+- T2 is dependency-aware and may pull T3 tests into an earlier checkpoint.
+- T3 expensive tests are not deleted or permanently skipped; they remain required when triggered and in FULL validation.
+- PR/full validation uses T4.
+- Future `testFull` must preserve today’s complete `:app:testDebugUnitTest` Android JVM coverage.
+- If impact is uncertain, escalate validation upward.
+- Do not treat `UP-TO-DATE` or `FROM-CACHE` as proof that tests executed.
+- The detailed tier and subsystem mapping is authoritative in [`docs/TESTING_STRATEGY.md`](docs/TESTING_STRATEGY.md).
+- In Codex/Luna sandboxed local worktrees, use `export GRADLE_USER_HOME="$PWD/.gradle-codex"` and pass that task-local Gradle home explicitly to every Gradle invocation.
 
 ## 6. Current project documents
 

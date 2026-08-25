@@ -1,19 +1,17 @@
 # CampBoardGameHost 自动说书人 — 当前开发路线
 
-> 状态日期：2026-08-24  
-> 文档角色：**CURRENT / 当前状态唯一权威**  
-> Repository: `Jazz0006/CampBoardGameHost`  
-> Stable `main`: `84a062378f13b90ce71f3801982ba3b2d3b22d80`  
-> Active A3 branch: `codex/a3-historical-multinight-exact-baseline-clean`  
-> Draft PR: **#48 `A3: historical multi-night exact baseline`**  
-> Latest fully validated **A3 code** checkpoint: `c678b25cd2a750a02f0cb1a05632d31e58ffd048`  
-> Gates: **CI #675 SUCCESS / R2 #608 SUCCESS / Android + ASP + Real Clingo GREEN**  
-> Current A3 execution point: **historical exact baseline + production-isolated B4 shadow/session bridge GREEN; STOP before setup-snapshot ownership / persistence / runtime authority integration**  
-> Immediate project priority: **pause PR #48 and resume App-root source decomposition from S7 fresh architecture audit, based on current `main` rather than the stale pre-merge branch**  
-> Detailed A3 handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`  
+> 状态日期：2026-08-25
+> 文档角色：**CURRENT / 当前状态唯一权威**
+> Repository: `Jazz0006/CampBoardGameHost`
+> Stable `main`: `d52f53b4a1821cc000368c393721d1d5a073aafc`
+> Current branch/worktree: `codex/test-execution-tiering` / `CampBoardGameHost-test-execution-tiering`
+> PR #48: **historical multi-night exact baseline — merged/closed; preserve current merged status**
+> PR #49: **merged — app-root S7.1/S7.2 structural checkpoint**
+> Latest fully validated A3 code checkpoint: preserve the current merged repository status; do not revive stale PR #48 language
+> Current project priority: **TEST EXECUTION WORKFLOW OPTIMIZATION**
+> Current S1 status: **S1.1 COMPLETE / S1.2 COMPLETE / S1.3 COMPLETE / S1.4 ACTIVE**
+> Detailed test strategy: `docs/TESTING_STRATEGY.md`
 > App-root S7 handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-24_APP_ROOT_S7.md`
-
-> Documentation-only commits may move PR #48 head beyond the validated code SHA. Before resuming A3, re-query live `main`, PR #48 head/state/checks and exact-compare any docs-only head back to `c678b25cd2a750a02f0cb1a05632d31e58ffd048`.
 
 ## 1. Project status
 
@@ -27,16 +25,23 @@ PR #42 Historical Action + Observation Capture     CLOSED / MERGED
 PR #44 Drunk / Fortune Teller hotfix               CLOSED / MERGED
 PR #43 Clocktower host decomposition A1–A13        CLOSED / MERGED
 App-root decomposition S0–S6                       CLOSED / MERGED CHECKPOINT
-App-root S7                                        NEXT / FRESH ARCHITECTURE AUDIT
-PR #48 historical multi-night exact baseline       OPEN / DRAFT / PAUSED AT SAFE CHECKPOINT
+App-root S7.1/S7.2                                  CLOSED / MERGED via PR #49
+App-root S7.3                                      PAUSED / NOT STARTED
+PR #48 historical multi-night exact baseline       MERGED / CLOSED
 A3 Architecture Hardening H1–H7                    COMPLETE / GREEN
 B4 historical-exact shadow bridge                  GREEN
 Session -> B4 historical shadow seam               GREEN
 Setup snapshot ownership / persistence             NOT STARTED
 Production recommendation authority promotion      NOT STARTED / NOT AUTHORIZED
+S1.1 test execution baseline timing                 COMPLETE
+S1.2 slow-test/root-cause audit                     COMPLETE
+S1.3 tier/escalation design                         COMPLETE
+S1.4 documentation/governance sync                 ACTIVE
+S2 executable Gradle suites                         NOT STARTED
+S3 CI impact/path-aware optimization                NOT STARTED
 ```
 
-Do not mix App-root S7 changes into PR #48. The old `codex/source-decomposition-app-root` branch is currently behind `main` (`ahead 0 / behind 3` at this closeout) after the S0–S6 checkpoint merges, so S7 must start from a fresh live-state audit rather than blindly continuing that stale branch.
+PR #48 is merged/closed. Keep the completed A3 history separate from the current test-execution workflow work. The old `codex/source-decomposition-app-root` branch is behind `main`, so any future S7 work must start from a fresh live-state audit rather than blindly continuing that stale branch.
 
 ## 2. Protected architecture contracts
 
@@ -231,19 +236,32 @@ A4/ZDD promotion
 other scripts
 history UI / misinformation expansion
 App-root S7
-PR #48 merge / ready-for-review transition
+S2 executable Gradle suites
+S3 CI optimization
 ```
 
-## 8. Immediate priority — resume App-root decomposition S7
+## 8. Immediate priority — test execution workflow optimization
 
 A3 is intentionally frozen at `c678b25cd2a750a02f0cb1a05632d31e58ffd048` plus documentation-only closeout commits.
 
-The earlier Clocktower Host decomposition is **already complete through A13 and merged**. The structural work that remains paused is the separate **App-root decomposition**:
+The earlier Clocktower Host decomposition is **already complete through A13 and merged**. The separate App-root decomposition remains paused while the test execution workflow is completed:
 
 ```text
-S0–S6  CLOSED / MERGED checkpoint
-S7     NEXT = fresh architecture audit
+S0–S6       CLOSED / MERGED checkpoint
+S7.1/S7.2  CLOSED / MERGED via PR #49
+S7.3       PAUSED / NOT STARTED
 ```
+
+Current sequence:
+
+```text
+1. complete test workflow optimization S1 -> S2 -> S3
+2. validate the new workflow and CI behavior
+3. resume App-root decomposition from S7.3 using a fresh live-state audit
+4. return to later A3/product roadmap work according to the then-current priority
+```
+
+S7.3 must not be assumed to start automatically after S3; it requires a fresh live-state audit and an explicit implementation slice.
 
 Authoritative S7 handoff:
 
