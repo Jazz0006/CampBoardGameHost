@@ -37,7 +37,7 @@ Always re-query before implementation.
 These are **not current work**, but still contain unfinished future architecture and therefore remain in the repository.
 
 - [`NEXT_DEVELOPMENT_HANDOFF_2026-08-25_APP_ROOT_S9.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-25_APP_ROOT_S9.md) — S9.2 Active Game Persistence Boundary; architecture audit complete, implementation deferred until the correctness bug is merged.
-- [`NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-24_A3_ARCHITECTURE_HARDENING.md) — A3/B4 historical hardening is complete; retained only because explicit setup-snapshot ownership/persistence remains deferred/not started.
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-08-25_A3_SETUP_SNAPSHOT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-25_A3_SETUP_SNAPSHOT.md) — historical exact H1–H7 is complete; only immutable setup-snapshot ownership/persistence remains deferred/not started.
 
 A deferred handoff must never override `CURRENT_DEVELOPMENT_ROADMAP.md`.
 
