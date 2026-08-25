@@ -82,9 +82,6 @@ class AppGameReviewPresentationOwnershipTest {
         assertTrue(rootSource.contains("var showResults by remember"))
         assertTrue(rootSource.contains("var gameOutcome by remember"))
 
-        assertTrue(rootSource.contains("internal data class ArchivedGameReview("))
-        assertFalse(rootSource.contains("private data class ArchivedGameReview("))
-
         assertTrue(rootSource.contains("fun archiveCurrentGameForRestart(): Boolean"))
         assertTrue(rootSource.contains("fun archiveAndReturnToPlayerManagement()"))
         assertTrue(rootSource.contains("fun archiveAndStartNewGame()"))

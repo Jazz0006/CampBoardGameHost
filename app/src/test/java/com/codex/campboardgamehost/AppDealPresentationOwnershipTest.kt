@@ -80,16 +80,19 @@ class AppDealPresentationOwnershipTest {
     }
 
     @Test
-    fun `shared root presentation primitives remain outside S4 deal slice`() {
-        assertTrue(rootSource.contains("internal fun GameSettingsHeader("))
-        assertTrue(rootSource.contains("internal fun EmptyStateCard("))
-        assertTrue(rootSource.contains("internal fun StepperRow("))
-        assertTrue(rootSource.contains("internal fun HostProgressCard("))
-        assertFalse(
-            extractedFile.readText(Charsets.UTF_8)
-                .contains("fun ClocktowerDarkTheme("),
-        )
-        assertTrue(rootSource.contains("internal fun SelectableSeatNumbers("))
-        assertTrue(rootSource.contains("internal fun WerewolfPlayerStatusRow("))
+    fun `shared presentation primitives remain outside S4 deal slice`() {
+        val extractedSource = extractedFile.readText(Charsets.UTF_8)
+
+        listOf(
+            "fun GameSettingsHeader(",
+            "fun EmptyStateCard(",
+            "fun StepperRow(",
+            "fun HostProgressCard(",
+            "fun SelectableSeatNumbers(",
+            "fun WerewolfPlayerStatusRow(",
+            "fun ClocktowerDarkTheme(",
+        ).forEach { declaration ->
+            assertFalse(extractedSource.contains(declaration))
+        }
     }
 }
