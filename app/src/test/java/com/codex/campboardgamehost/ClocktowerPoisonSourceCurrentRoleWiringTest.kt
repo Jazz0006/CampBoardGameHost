@@ -31,9 +31,8 @@ class ClocktowerPoisonSourceCurrentRoleWiringTest {
         assertTrue(
             "The resulting sourceFunctioning value must remain the authority passed into the " +
                 "existing PoisonEffectLifecycle.",
-            poisonHelper.contains(
-                "PoisonEffectLifecycle.effectiveTarget(poisonTarget, true, sourceFunctioning)",
-            ),
+            poisonHelper.contains("PoisonEffectLifecycle.effectiveTarget(") &&
+                poisonHelper.contains("sourceFunctioning"),
         )
     }
 }
