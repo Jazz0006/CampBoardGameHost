@@ -696,24 +696,40 @@ internal fun ClocktowerJudgeScreen(
     }
     val impSelfKillActuallyKilledImp =
         livingImp != null &&
+            pendingNightDeath == livingImp.name &&
             nightDeathWillOccur &&
             resolvedNightDeathCard?.name == livingImp.name
     val functioningScarletWoman = actualClocktowerRoleCards(cards, "Scarlet Woman")
-        .firstOrNull { AbilityFunctioningSemantics.functionsAs(it.abilitySubject(poisonTarget), "Scarlet Woman") }
+        .firstOrNull {
+            AbilityFunctioningSemantics.functionsAs(
+                it.abilitySubject(poisonTarget),
+                "Scarlet Woman",
+            )
+        }
+    val livingMinionSeats = publicAliveCards
+        .mapNotNull { card ->
+            card.takeIf {
+                it.clocktowerTeam == ClocktowerTeam.Minion
+            }?.let {
+                cards.indexOf(card).plus(1)
+                    .takeIf { seat -> seat > 0 }
+            }
+        }
+        .toSet()
+
     val demonSuccessionResolution = DemonSuccessionSemantics.resolve(
         DemonSuccessionContext(
-            demonActuallyDied = nightDeathWillOccur && resolvedNightDeathCard?.clocktowerTeam == ClocktowerTeam.Demon,
+            demonActuallyDied = impSelfKillActuallyKilledImp,
             demonDeathWasImpSelfKill = impSelfKillActuallyKilledImp,
             aliveCountBeforeDemonDeath = publicAliveCards.size,
-            functioningScarletWomanSeat = functioningScarletWoman?.let { cards.indexOf(it) + 1 },
-            livingMinionSeats = publicAliveCards
-                .mapIndexedNotNull { index, card ->
-                    card.takeIf { it.clocktowerTeam == ClocktowerTeam.Minion }?.let { index + 1 }
-                }
-                .toSet(),
+            functioningScarletWomanSeat = functioningScarletWoman
+                ?.let { cards.indexOf(it).plus(1) }
+                ?.takeIf { it > 0 },
+            livingMinionSeats = livingMinionSeats,
         ),
     )
-    val impSelfKillNeedsSuccessor = demonSuccessionResolution != DemonSuccessionResolution.None
+    val impSelfKillNeedsSuccessor =
+        demonSuccessionResolution != DemonSuccessionResolution.None
     val sageNightDeath = resolvedNightDeathCard
         ?.takeIf { nightDeathWillOccur && AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Sage") }
     val otherNightWakingRoleIds = buildSet {
