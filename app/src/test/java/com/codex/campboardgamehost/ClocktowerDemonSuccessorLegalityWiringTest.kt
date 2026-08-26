@@ -66,7 +66,7 @@ class ClocktowerDemonSuccessorLegalityWiringTest {
         )
 
         val successorUiBlock = nightStepUiSource
-            .substringAfterLast("ClocktowerNightAction.DemonSuccessor ->")
+            .substringAfter("ClocktowerNightAction.DemonSuccessor -> {")
             .substringBefore("ClocktowerNightAction.Ravenkeeper ->")
 
         assertTrue(
