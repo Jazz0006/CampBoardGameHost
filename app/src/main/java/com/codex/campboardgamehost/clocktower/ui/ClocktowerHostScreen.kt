@@ -6,6 +6,7 @@ import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionContext
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionSemantics
+import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
 
 import android.content.Context
 import android.content.res.Configuration
@@ -691,7 +692,22 @@ internal fun ClocktowerJudgeScreen(
             !demonPoisonedTonight &&
             poisonTarget != mayorTarget.name &&
             !(functioningMonkProtection && monkProtectedTarget == mayorTarget.name)
-    val resolvedNightDeathName = if (mayorCanRedirect && mayorRedirectTarget != null) mayorRedirectTarget else pendingNightDeath
+    val mayorRedirectTargetCards = cards.filter { card ->
+        card.name != mayorTarget?.name &&
+            MayorRedirectLegality.canReceiveRedirect(
+                targetIsDemon = card.clocktowerTeam == ClocktowerTeam.Demon,
+            )
+    }
+    val effectiveMayorRedirectTarget = mayorRedirectTarget
+        ?.takeIf { confirmedName ->
+            mayorRedirectTargetCards.any { it.name == confirmedName }
+        }
+    val resolvedNightDeathName =
+        if (mayorCanRedirect && effectiveMayorRedirectTarget != null) {
+            effectiveMayorRedirectTarget
+        } else {
+            pendingNightDeath
+        }
     val resolvedNightDeathCard = resolvedNightDeathName?.let { name -> cards.firstOrNull { it.name == name } }
     val nightDeathWillOccur =
         resolvedNightDeathCard != null &&
@@ -4102,6 +4118,7 @@ internal fun ClocktowerJudgeScreen(
                 cards = cards,
                 aliveCards = publicAliveCards,
                 chambermaidTargetCards = chambermaidTargetCards,
+                mayorRedirectTargetCards = mayorRedirectTargetCards,
                 demonSuccessorTargetCards = demonSuccessorTargetCards,
                 step = currentStep,
                 spyCard = spyCard,
@@ -4341,6 +4358,7 @@ internal fun ClocktowerJudgeScreen(
                         cards = cards,
                         aliveCards = publicAliveCards,
                         chambermaidTargetCards = chambermaidTargetCards,
+                        mayorRedirectTargetCards = mayorRedirectTargetCards,
                         demonSuccessorTargetCards = demonSuccessorTargetCards,
                         step = currentStep,
                         spyCard = spyCard,

@@ -64,6 +64,7 @@ internal fun ClocktowerNightStepCardLocalized(
     cards: List<PlayerCard>,
     aliveCards: List<PlayerCard>,
     chambermaidTargetCards: List<PlayerCard>,
+    mayorRedirectTargetCards: List<PlayerCard>,
     demonSuccessorTargetCards: List<PlayerCard>,
     step: ClocktowerNightStepUi,
     spyCard: PlayerCard?,
@@ -632,7 +633,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         }
                         Text(if (language == "en") "Or redirect the death to:" else "或将死亡转移给：", fontWeight = FontWeight.SemiBold)
                         SelectablePlayerChips(
-                            cards = cards.filter { it.name != mayor.name && it.name in assistedDecisionOptions.map(ClocktowerDecisionOption::targetName) },
+                        cards = mayorRedirectTargetCards,
                             selectedName = selectedName,
                             enabled = step.isRealAction,
                             allCards = cards,
