@@ -2,6 +2,7 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
+import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 
 import android.content.Context
 import android.content.res.Configuration
@@ -206,6 +207,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.epistemic.ZddFilterStrategy
 import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
+import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightChronology
 import com.codex.campboardgamehost.clocktower.rules.RegistrationInteractionRules
 import com.codex.campboardgamehost.clocktower.rules.RulesetContentHasher
 import com.codex.campboardgamehost.clocktower.rules.RulesetJsonLoader
@@ -591,8 +593,9 @@ internal fun ClocktowerJudgeScreen(
     val recluseRegistrationRole = remember { mutableStateMapOf<String, String>() }
     val recordedRecluseRegistrations = remember { mutableStateMapOf<String, Boolean>() }
     val recordedNightSteps = remember { mutableStateMapOf<String, Boolean>() }
+    var effectivePoisonForRole: (String) -> String? = { poisonTarget }
     fun registrationKey(ability: String, subject: String = "spy") = "${phase.name}:$round:$ability:$subject"
-    fun spyCanRegister(): Boolean = spyCard != null && poisonTarget != spyCard.name
+    fun spyCanRegister(): Boolean = spyCard != null && effectivePoisonForRole("Spy") != spyCard.name
     fun spyRegistersGood(key: String?): Boolean = key != null && spyCanRegister() && spyRegistrationGood[key] == true
     fun registeredRole(key: String?, teams: List<ClocktowerTeam>): ClocktowerRole? {
         if (!spyRegistersGood(key)) return spyCard?.clocktowerRole
@@ -624,7 +627,7 @@ internal fun ClocktowerJudgeScreen(
             listOf(spyCard.name),
         )
     }
-    fun recluseCanRegister(): Boolean = recluseCard != null && poisonTarget != recluseCard.name
+    fun recluseCanRegister(): Boolean = recluseCard != null && effectivePoisonForRole("Spy") != recluseCard.name
     fun recluseRegistersEvil(key: String?): Boolean =
         key != null && recluseCanRegister() && recluseRegistrationEvil[key] == true
     fun recluseRegisteredRole(key: String?, teams: List<ClocktowerTeam>): ClocktowerRole? {
@@ -755,6 +758,50 @@ internal fun ClocktowerJudgeScreen(
         confirmedEvents = resolvedMechanicalEvents,
         cursor = ClocktowerEffectiveNightCursor(interactionId, boundary),
     )
+
+    fun effectivePoisonTargetAt(
+        interactionId: ClocktowerInteractionId,
+        boundary: ClocktowerInteractionBoundary,
+    ): String? {
+        val source = actualClocktowerRoleCards(cards, "Poisoner").firstOrNull() ?: return null
+        val sourceSeat = cards.indexOf(source).plus(1).takeIf { it > 0 } ?: return null
+        val cursor = ClocktowerEffectiveNightCursor(interactionId, boundary)
+        val sourceAfter = ClocktowerEffectiveNightCursor(
+            ClocktowerProductionNightStepIdentity.role(RoleId("Poisoner"))
+                .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT),
+            ClocktowerInteractionBoundary.AFTER,
+        )
+        if (interactionId !in otherNightCanonicalInteractionIds ||
+            !ClocktowerEffectiveNightChronology.isAtOrAfter(otherNightCanonicalInteractionIds, cursor, sourceAfter)
+        ) return null
+        val effectiveState = effectiveNightStateAt(interactionId, boundary)
+        val sourceFunctioning = AbilityFunctioningSemantics.functionsAs(
+            source.abilitySubject(null).copy(isAlive = effectiveState.isMechanicallyAlive(sourceSeat)),
+            "Poisoner",
+        )
+        return PoisonEffectLifecycle.effectiveTarget(poisonTarget, true, sourceFunctioning)
+    }
+
+    fun effectiveAbilitySubjectForRole(enName: String, actor: PlayerCard?): AbilitySubject? {
+        if (actor == null) return null
+        val interactionId = ClocktowerProductionNightStepIdentity.role(RoleId(enName))
+            .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+        if (phase != ClocktowerPhase.Night || interactionId !in otherNightCanonicalInteractionIds) {
+            return actor.abilitySubject(poisonTarget)
+        }
+        val seat = cards.indexOf(actor).plus(1).takeIf { it > 0 } ?: return actor.abilitySubject(poisonTarget)
+        val state = effectiveNightStateAt(interactionId, ClocktowerInteractionBoundary.BEFORE)
+        return actor.abilitySubject(effectivePoisonTargetAt(interactionId, ClocktowerInteractionBoundary.BEFORE))
+            .copy(isAlive = state.isMechanicallyAlive(seat))
+    }
+
+    effectivePoisonForRole = { enName ->
+        if (phase != ClocktowerPhase.Night) poisonTarget else effectivePoisonTargetAt(
+            ClocktowerProductionNightStepIdentity.role(RoleId(enName))
+                .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT),
+            ClocktowerInteractionBoundary.BEFORE,
+        )
+    }
 
     val fortuneTellerRecluseRegistrationKey = recluseCard
         ?.takeIf { it.name == fortuneTellerFirst || it.name == fortuneTellerSecond }
@@ -1095,7 +1142,7 @@ internal fun ClocktowerJudgeScreen(
     }
 
     fun roleActor(enName: String): PlayerCard? {
-        val candidate = cards.firstOrNull { AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), enName) }
+        val candidate = cards.firstOrNull { AbilityFunctioningSemantics.interactsAs(it.abilitySubject(null), enName) }
             ?: return null
         if (phase != ClocktowerPhase.Night) return candidate
         val interactionId = ClocktowerProductionNightStepIdentity.role(RoleId(enName))
@@ -1104,9 +1151,7 @@ internal fun ClocktowerJudgeScreen(
         val seat = cards.indexOf(candidate).plus(1)
         if (seat <= 0) return null
         val effectiveState = effectiveNightStateAt(interactionId, ClocktowerInteractionBoundary.BEFORE)
-        val effectiveSubject = candidate.abilitySubject(poisonTarget).copy(
-            isAlive = effectiveState.isMechanicallyAlive(seat),
-        )
+        val effectiveSubject = effectiveAbilitySubjectForRole(enName, candidate) ?: return null
         return candidate.takeIf { AbilityFunctioningSemantics.interactsAs(effectiveSubject, enName) }
     }
 
@@ -1125,10 +1170,12 @@ internal fun ClocktowerJudgeScreen(
     }
 
     fun stableIndex(key: String, size: Int): Int = if (size <= 0) 0 else Math.floorMod(key.hashCode(), size)
-    fun actorIsPoisoned(actor: PlayerCard?): Boolean = actor != null && actor.eliminatedRound == null && poisonTarget == actor.name
     fun actorIsUnreliable(enName: String, actor: PlayerCard?): Boolean =
-        actor != null && AbilityFunctioningSemantics.stateFor(actor.abilitySubject(poisonTarget), enName) in
+        (effectiveAbilitySubjectForRole(enName, actor)?.let { subject ->
+            AbilityFunctioningSemantics.stateFor(subject, enName)
+        } in
             setOf(AbilityFunctioningState.DRUNK, AbilityFunctioningState.POISONED)
+        )
     fun orderedPair(first: PlayerCard?, second: PlayerCard?, key: String): Pair<PlayerCard, PlayerCard>? =
         if (first == null || second == null) null else if (stableIndex(key, 2) == 0) first to second else second to first
     fun seatNumberFor(card: PlayerCard): String = ((cards.indexOf(card) + 1).takeIf { it > 0 } ?: 0).toString()
@@ -1940,12 +1987,15 @@ internal fun ClocktowerJudgeScreen(
     val informationStepBuilder = ClocktowerInformationStepBuilder(
         cards = cards,
         language = language,
-        poisonTarget = poisonTarget,
         automaticStorytellerInfo = automaticStorytellerInfo,
         text = ::text,
         roleActor = ::roleActor,
         roleMissingReason = ::roleMissingReason,
-        actorIsPoisoned = ::actorIsPoisoned,
+        abilityStateFor = { enName, actor ->
+            effectiveAbilitySubjectForRole(enName, actor)?.let { subject ->
+                AbilityFunctioningSemantics.stateFor(subject, enName)
+            }
+        },
         actorIsUnreliable = ::actorIsUnreliable,
         recentMisinformationStreak = ::recentMisinformationStreak,
     )
@@ -2993,18 +3043,18 @@ internal fun ClocktowerJudgeScreen(
                 informationStepBuilder.build(
                     roleName = "间谍",
                     enName = "Spy",
-                    tellPlayer = if (poisonTarget == spyCard?.name) null else {
+                    tellPlayer = if (effectivePoisonForRole("Spy") == spyCard?.name) null else {
                         val grimoire = cards.joinToString("\n") { "${it.seatLabel(cards)}${text("：", ": ")}${it.hostRoleLabel(context, GameKind.Clocktower)}" }
                         listOfNotNull(spyDelta, grimoire).joinToString("\n\n")
                     },
-                    explanation = if (poisonTarget == spyCard?.name) text("间谍已中毒：仍照常唤醒，但不要展示真实魔典，也不能改变登记身份。", "The Spy is poisoned: wake them normally, but do not show the real grimoire or alter registration.") else text("存活间谍每晚查看真实魔典。", "A living Spy views the true grimoire each night."),
+                    explanation = if (effectivePoisonForRole("Spy") == spyCard?.name) text("间谍已中毒：仍照常唤醒，但不要展示真实魔典，也不能改变登记身份。", "The Spy is poisoned: wake them normally, but do not show the real grimoire or alter registration.") else text("存活间谍每晚查看真实魔典。", "A living Spy views the true grimoire each night."),
                     displayKind = ClocktowerDisplayKind.Grimoire,
                     displayTitle = text("魔典", "Grimoire"),
                     displayFooter = text("这些是所有玩家的真实身份。只给间谍短暂查看。", "These are every player's true identities. Show this only briefly to the Spy."),
-                    displayProposition = if (poisonTarget == spyCard?.name) null else InformationProposition.GrimoireState(
+                    displayProposition = if (effectivePoisonForRole("Spy") == spyCard?.name) null else InformationProposition.GrimoireState(
                         cards.mapIndexed { index, card -> GrimoireSeatView(index + 1, RoleId(requireNotNull(card.clocktowerRole).enName), card.eliminatedRound == null) },
                     ),
-                    hostInstruction = if (poisonTarget == spyCard?.name) text("照常唤醒间谍，但不要展示真实魔典。", "Wake the Spy normally, but do not show the real grimoire.") else text("轻拍间谍，示意睁眼。把说书人总览给他短暂查看；收回手机后示意闭眼。", "Tap the Spy to wake them. Briefly show the Storyteller overview, then take the phone back and signal them to close their eyes."),
+                    hostInstruction = if (effectivePoisonForRole("Spy") == spyCard?.name) text("照常唤醒间谍，但不要展示真实魔典。", "Wake the Spy normally, but do not show the real grimoire.") else text("轻拍间谍，示意睁眼。把说书人总览给他短暂查看；收回手机后示意闭眼。", "Tap the Spy to wake them. Briefly show the Storyteller overview, then take the phone back and signal them to close their eyes."),
                 )
             },
         ),
@@ -3970,7 +4020,7 @@ internal fun ClocktowerJudgeScreen(
                     }
                     recordReliablePrivateInformation(displayStep)
                     val actor = displayStep.actor
-                    val unreliable = actor?.clocktowerRole?.enName == "Drunk" || actor?.name == poisonTarget
+                    val unreliable = actor?.clocktowerRole?.enName == "Drunk" || actorIsUnreliable(displayStep.roleEnName.orEmpty(), actor)
                     val primary = displayStep.displayPrimary ?: displayStep.tellPlayer
                     val secondary = displayStep.displaySecondary
                     val recordDetail = when (displayStep.displayKind) {
@@ -4177,7 +4227,7 @@ internal fun ClocktowerJudgeScreen(
                             if (!informationDecisionPublicationAllowed(displayStep)) return@showPlayerDisplay
                             recordReliablePrivateInformation(displayStep)
                             val actor = displayStep.actor
-                            val unreliable = actor?.clocktowerRole?.enName == "Drunk" || actor?.name == poisonTarget
+                            val unreliable = actor?.clocktowerRole?.enName == "Drunk" || actorIsUnreliable(displayStep.roleEnName.orEmpty(), actor)
                             val shownInformation = listOfNotNull(
                                 displayStep.displayPrimary ?: displayStep.tellPlayer,
                                 displayStep.displaySecondary,

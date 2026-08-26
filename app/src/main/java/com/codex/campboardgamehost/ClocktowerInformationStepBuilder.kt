@@ -9,12 +9,11 @@ import com.codex.campboardgamehost.clocktower.rules.RegistrationInteractionRules
 internal class ClocktowerInformationStepBuilder(
     private val cards: List<PlayerCard>,
     private val language: String,
-    private val poisonTarget: String?,
     private val automaticStorytellerInfo: Boolean,
     private val text: (String, String) -> String,
     private val roleActor: (String) -> PlayerCard?,
     private val roleMissingReason: (String) -> String,
-    private val actorIsPoisoned: (PlayerCard?) -> Boolean,
+    private val abilityStateFor: (String, PlayerCard?) -> AbilityFunctioningState?,
     private val actorIsUnreliable: (String, PlayerCard?) -> Boolean,
     private val recentMisinformationStreak: (PlayerCard?) -> Int,
 ) {
@@ -44,7 +43,7 @@ internal class ClocktowerInformationStepBuilder(
         val actor = roleActor(enName)
         val localizedRoleName = if (language == "en") enName else roleName
         val localizedDisplayTitle = displayTitle ?: text("$roleName 信息", "$enName information")
-        val abilityState = actor?.let { AbilityFunctioningSemantics.stateFor(it.abilitySubject(poisonTarget), enName) }
+        val abilityState = abilityStateFor(enName, actor)
         val actorIsDrunkShownRole = abilityState == AbilityFunctioningState.DRUNK
         val informationReliability = when (abilityState) {
             AbilityFunctioningState.POISONED -> InformationReliability.POISONED
@@ -56,7 +55,7 @@ internal class ClocktowerInformationStepBuilder(
                 "注意：这名玩家真实身份是酒鬼，显示为$roleName。请照常唤醒并给信息，但信息可以不可靠或完全错误。",
                 "This player is actually the Drunk but appears as $enName. Wake them normally and give information that may be unreliable or entirely false.",
             )
-        } else if (actorIsPoisoned(actor)) {
+        } else if (abilityState == AbilityFunctioningState.POISONED) {
             text(
                 "注意：这名玩家今晚中毒，能力信息可以不可靠或错误。",
                 "This player is poisoned tonight, so their ability information may be unreliable or false.",

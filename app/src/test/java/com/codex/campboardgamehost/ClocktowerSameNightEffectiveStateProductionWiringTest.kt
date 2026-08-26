@@ -56,14 +56,20 @@ class ClocktowerSameNightEffectiveStateProductionWiringTest {
 
     @Test
     fun `confirmed poison must not remain active after the Poisoner loses the ability`() {
-        val lifecycleCalls = Regex("PoisonEffectLifecycle\\.").findAll(hostSource).count()
+        val effectivePoisonHelper = hostSource
+            .substringAfter("fun effectiveNightStateAt(")
+            .substringBefore("val fortuneTellerRecluseRegistrationKey")
 
         assertTrue(
-            "Production imports PoisonEffectLifecycle but does not consume its source-lifetime " +
-                "semantics. A poison confirmation and an effectively active poison are different: " +
-                "if the Poisoner dies later that night, subsequent interactions must see the target " +
-                "as healthy.",
-            lifecycleCalls > 0,
+            "Production must derive poison at the requested interaction cursor: the helper must " +
+                "consume the confirmed target, canonical effective night state, Poisoner ability " +
+                "functioning semantics, and PoisonEffectLifecycle rather than treating the raw " +
+                "confirmed target as current poison authority.",
+            hostSource.contains("effectivePoisonTargetAt(") &&
+                effectivePoisonHelper.contains("PoisonEffectLifecycle.") &&
+                effectivePoisonHelper.contains("effectiveNightStateAt") &&
+                effectivePoisonHelper.contains("AbilityFunctioningSemantics.functionsAs") &&
+                effectivePoisonHelper.contains("Poisoner"),
         )
     }
 
