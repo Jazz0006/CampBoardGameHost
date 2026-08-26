@@ -151,4 +151,20 @@ class ClocktowerSameNightEffectiveStateProductionWiringTest {
                 hostSource.contains("currentStep.recluseRegistrationKey?.let { key ->"),
         )
     }
+
+    @Test
+    fun `Chambermaid targets must use effective alive state at its interaction cursor`() {
+        assertTrue(
+            "Chambermaid target legality must project mechanically alive cards at the Chambermaid " +
+                "interaction BEFORE cursor in both Host call sites, rather than reusing generic " +
+                "public alive cards.",
+            hostSource.contains("val chambermaidInteractionId =") &&
+                hostSource.contains("RoleId(\"Chambermaid\")") &&
+                hostSource.contains("ClocktowerInteractionBoundary.BEFORE") &&
+                hostSource.contains("val chambermaidTargetCards =") &&
+                hostSource.contains("chambermaidTargetCards = chambermaidTargetCards") &&
+                nightStepUiSource.contains("chambermaidTargetCards:") &&
+                nightStepUiSource.contains("val candidates = chambermaidTargetCards.filter"),
+        )
+    }
 }

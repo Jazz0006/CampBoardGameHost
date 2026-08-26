@@ -63,6 +63,7 @@ internal fun ClocktowerNightStepCardLocalized(
     informationDecisionKey: String,
     cards: List<PlayerCard>,
     aliveCards: List<PlayerCard>,
+    chambermaidTargetCards: List<PlayerCard>,
     step: ClocktowerNightStepUi,
     spyCard: PlayerCard?,
     spyRegistrationGood: Boolean,
@@ -554,7 +555,7 @@ internal fun ClocktowerNightStepCardLocalized(
 
             ClocktowerNightAction.Chambermaid -> {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    val candidates = aliveCards.filter { it.name != step.actor?.name }
+                    val candidates = chambermaidTargetCards.filter { it.name != step.actor?.name }
                     SelectableSeatNumbers(
                         cards = candidates,
                         selectedName = chambermaidFirst,

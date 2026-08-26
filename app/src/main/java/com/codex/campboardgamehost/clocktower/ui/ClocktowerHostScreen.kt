@@ -760,6 +760,21 @@ internal fun ClocktowerJudgeScreen(
         cursor = ClocktowerEffectiveNightCursor(interactionId, boundary),
     )
 
+    val chambermaidInteractionId = ClocktowerProductionNightStepIdentity
+        .role(RoleId("Chambermaid"))
+        .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+    val chambermaidTargetCards = if (
+        phase == ClocktowerPhase.Night && chambermaidInteractionId in otherNightCanonicalInteractionIds
+    ) {
+        val chambermaidState = effectiveNightStateAt(
+            chambermaidInteractionId,
+            ClocktowerInteractionBoundary.BEFORE,
+        )
+        cards.filterIndexed { index, _ -> chambermaidState.isMechanicallyAlive(index + 1) }
+    } else {
+        publicAliveCards
+    }
+
     fun effectivePoisonTargetAt(
         interactionId: ClocktowerInteractionId,
         boundary: ClocktowerInteractionBoundary,
@@ -3902,6 +3917,7 @@ internal fun ClocktowerJudgeScreen(
                 informationDecisionKey = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}",
                 cards = cards,
                 aliveCards = publicAliveCards,
+                chambermaidTargetCards = chambermaidTargetCards,
                 step = currentStep,
                 spyCard = spyCard,
                 spyRegistrationGood = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null) {
@@ -4139,6 +4155,7 @@ internal fun ClocktowerJudgeScreen(
                         informationDecisionKey = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}",
                         cards = cards,
                         aliveCards = publicAliveCards,
+                        chambermaidTargetCards = chambermaidTargetCards,
                         step = currentStep,
                         spyCard = spyCard,
                         spyRegistrationGood = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null) {
