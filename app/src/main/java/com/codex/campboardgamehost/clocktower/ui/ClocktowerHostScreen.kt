@@ -902,8 +902,15 @@ internal fun ClocktowerJudgeScreen(
         }
         val seat = cards.indexOf(actor).plus(1).takeIf { it > 0 } ?: return actor.abilitySubject(poisonTarget)
         val state = effectiveNightStateAt(interactionId, ClocktowerInteractionBoundary.BEFORE)
-        return actor.abilitySubject(effectivePoisonTargetAt(interactionId, ClocktowerInteractionBoundary.BEFORE))
-            .copy(isAlive = state.isMechanicallyAlive(seat))
+        return actor.abilitySubject(
+            effectivePoisonTargetAt(
+                interactionId,
+                ClocktowerInteractionBoundary.BEFORE,
+            ),
+        ).copy(
+            actualRole = state.currentRoleId(seat)?.value,
+            isAlive = state.isMechanicallyAlive(seat),
+        )
     }
 
     effectivePoisonForRole = { enName ->
@@ -1253,17 +1260,32 @@ internal fun ClocktowerJudgeScreen(
     }
 
     fun roleActor(enName: String): PlayerCard? {
-        val candidate = cards.firstOrNull { AbilityFunctioningSemantics.interactsAs(it.abilitySubject(null), enName) }
-            ?: return null
-        if (phase != ClocktowerPhase.Night) return candidate
-        val interactionId = ClocktowerProductionNightStepIdentity.role(RoleId(enName))
+        if (phase != ClocktowerPhase.Night) {
+            return cards.firstOrNull {
+                AbilityFunctioningSemantics.interactsAs(
+                    it.abilitySubject(null),
+                    enName,
+                )
+            }
+        }
+        val interactionId = ClocktowerProductionNightStepIdentity
+            .role(RoleId(enName))
             .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
-        if (interactionId !in otherNightCanonicalInteractionIds) return null
-        val seat = cards.indexOf(candidate).plus(1)
-        if (seat <= 0) return null
-        val effectiveState = effectiveNightStateAt(interactionId, ClocktowerInteractionBoundary.BEFORE)
-        val effectiveSubject = effectiveAbilitySubjectForRole(enName, candidate) ?: return null
-        return candidate.takeIf { AbilityFunctioningSemantics.interactsAs(effectiveSubject, enName) }
+
+        if (interactionId !in otherNightCanonicalInteractionIds) {
+            return null
+        }
+
+        return cards.firstOrNull { candidate ->
+            val effectiveSubject =
+                effectiveAbilitySubjectForRole(enName, candidate)
+                    ?: return@firstOrNull false
+
+            AbilityFunctioningSemantics.interactsAs(
+                effectiveSubject,
+                enName,
+            )
+        }
     }
 
     fun roleMissingReason(enName: String): String {
