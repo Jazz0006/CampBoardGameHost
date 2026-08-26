@@ -35,11 +35,12 @@ class ClocktowerSameNightEffectiveStateProductionWiringTest {
             .substringAfter("fun roleActor(enName: String): PlayerCard? =")
             .substringBefore("fun roleMissingReason(enName: String)")
 
-        assertFalse(
-            "A role killed earlier in the same night must not remain a normal later actor merely " +
-                "because its public PlayerCard still looks alive; actor eligibility must consume " +
-                "the effective same-night state and effective impairment state.",
-            roleActor.contains("abilitySubject(poisonTarget)"),
+        assertTrue(
+            "Normal actor eligibility must query the effective state at the role interaction BEFORE " +
+                "boundary, while preserving the existing impairment subject composition.",
+            roleActor.contains("effectiveNightStateAt") &&
+                roleActor.contains("ClocktowerInteractionBoundary.BEFORE") &&
+                roleActor.contains("isMechanicallyAlive"),
         )
     }
 
@@ -75,7 +76,8 @@ class ClocktowerSameNightEffectiveStateProductionWiringTest {
         assertFalse(
             "Fortune Teller may choose living or dead players; a dead Demon must still produce Yes, " +
                 "so truthful detection cannot search only aliveCards.",
-            fortuneTellerTruth.contains("aliveCards.any"),
+            fortuneTellerTruth.contains("aliveCards.any") ||
+                fortuneTellerTruth.contains("publicAliveCards.any"),
         )
     }
 

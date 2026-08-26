@@ -133,8 +133,13 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNightFlow
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionOtherNightFlow
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerResolvedFlowFact
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerResolvedFlowFacts
+import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightCursor
+import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightStateProjector
+import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
+import com.codex.campboardgamehost.clocktower.rules.ResolvedNightMechanicalEvent
 import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
 import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
@@ -338,7 +343,7 @@ internal fun ClocktowerJudgeScreen(
     var unifiedSetupSelectorBenchmarkError by remember { mutableStateOf<String?>(null) }
     var debugDiagnosticsExpanded by remember { mutableStateOf(false) }
     fun text(zh: String, en: String): String = if (language == "en") en else zh
-    val aliveCards = cards.filter { it.eliminatedRound == null }
+    val publicAliveCards = cards.filter { it.eliminatedRound == null }
     // The UI still owns rendering, but first-night information now crosses one
     // common lifecycle boundary before it is committed to the event log.
     var firstNightInformationMigration by remember(gameId, round) {
@@ -678,12 +683,85 @@ internal fun ClocktowerJudgeScreen(
     val ravenkeeperTrigger = resolvedNightDeathCard
         ?.takeIf { nightDeathWillOccur && AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Ravenkeeper") }
 
+    val demonCard = cards.firstOrNull { it.clocktowerRole?.team == ClocktowerTeam.Demon }
+    val livingImp = demonCard?.takeIf {
+        it.eliminatedRound == null && it.clocktowerRole?.enName == "Imp"
+    }
+    val impSelfKillNeedsSuccessor =
+        livingImp != null &&
+            pendingNightDeath == livingImp.name &&
+            !demonPoisonedTonight &&
+            publicAliveCards.any { it.clocktowerTeam == ClocktowerTeam.Minion }
+    val sageNightDeath = resolvedNightDeathCard
+        ?.takeIf { nightDeathWillOccur && AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Sage") }
+    val otherNightWakingRoleIds = buildSet {
+        publicAliveCards.forEach { card ->
+            card.clocktowerRole?.enName?.let { add(RoleId(it)) }
+            if (card.clocktowerRole?.enName == "Drunk") {
+                card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
+            }
+        }
+    }
+    val otherNightResolvedFacts = ClocktowerResolvedFlowFacts(
+        buildSet {
+            if (pendingNightNewDemonIdentityName != null) add(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON)
+            if (lastExecutedName != null) add(ClocktowerResolvedFlowFact.EXECUTION_OCCURRED_TODAY)
+            if (ravenkeeperTrigger != null) add(ClocktowerResolvedFlowFact.RAVENKEEPER_DIED_AT_NIGHT)
+            if (mayorCanRedirect) add(ClocktowerResolvedFlowFact.MAYOR_REDIRECT_ELIGIBLE)
+            if (impSelfKillNeedsSuccessor) add(ClocktowerResolvedFlowFact.DEMON_SUCCESSION_REQUIRED)
+            if (sageNightDeath != null) add(ClocktowerResolvedFlowFact.SAGE_KILLED_BY_DEMON)
+        },
+    )
+    val otherNightInteractions = if (phase == ClocktowerPhase.Night) {
+        ClocktowerProductionOtherNightFlow.interactions(
+            ruleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script),
+            playerCount = cards.size,
+            wakingRoleIds = otherNightWakingRoleIds,
+            resolvedFacts = otherNightResolvedFacts,
+        )
+    } else {
+        emptyList()
+    }
+    val otherNightCanonicalInteractionIds = otherNightInteractions.map { it.id }
+    val resolvedMechanicalEvents = if (phase == ClocktowerPhase.Night && nightDeathWillOccur) {
+        val targetSeat = cards.indexOf(resolvedNightDeathCard).plus(1)
+        require(targetSeat > 0) { "Resolved night death must identify a valid target seat." }
+        val effectiveInteractionId = if (mayorCanRedirect) {
+            ClocktowerProductionNightStepIdentity.mayorRedirect().interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+        } else {
+            val demonRoleId = demonCard?.clocktowerRole?.enName?.let(::RoleId)
+            requireNotNull(demonRoleId) { "Resolved night death requires a canonical Demon interaction." }
+            ClocktowerProductionNightStepIdentity.role(demonRoleId)
+                .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+        }
+        listOf(
+            ResolvedNightMechanicalEvent.MechanicalDeath(
+                targetSeat = targetSeat,
+                effectiveAt = ClocktowerEffectiveNightCursor(
+                    effectiveInteractionId,
+                    ClocktowerInteractionBoundary.AFTER,
+                ),
+            ),
+        )
+    } else {
+        emptyList()
+    }
+    fun effectiveNightStateAt(
+        interactionId: ClocktowerInteractionId,
+        boundary: ClocktowerInteractionBoundary,
+    ) = ClocktowerEffectiveNightStateProjector.projectAt(
+        baseAliveSeats = publicAliveCards.map { cards.indexOf(it).plus(1) }.toSet(),
+        canonicalInteractionIds = otherNightCanonicalInteractionIds,
+        confirmedEvents = resolvedMechanicalEvents,
+        cursor = ClocktowerEffectiveNightCursor(interactionId, boundary),
+    )
+
     val fortuneTellerRecluseRegistrationKey = recluseCard
         ?.takeIf { it.name == fortuneTellerFirst || it.name == fortuneTellerSecond }
         ?.let { registrationKey("FortuneTellerRecluse", it.name) }
     val fortuneTellerMatched = if (fortuneTellerFirst != null && fortuneTellerSecond != null) {
         val targets = setOf(fortuneTellerFirst, fortuneTellerSecond)
-        aliveCards.any {
+        publicAliveCards.any {
             it.name in targets && (
                 it.clocktowerTeam == ClocktowerTeam.Demon ||
                     it.name == redHerring ||
@@ -991,7 +1069,7 @@ internal fun ClocktowerJudgeScreen(
             Log.e(UNIFIED_SETUP_SELECTOR_BENCHMARK_LOG_TAG, "Unified setup selector diagnostic failed", error)
         }
     }
-    val executionThreshold = (aliveCards.size + 1) / 2
+    val executionThreshold = (publicAliveCards.size + 1) / 2
     fun recordCurrentVote(): String? {
         if (currentVoteCount >= executionThreshold) {
             when {
@@ -1009,15 +1087,28 @@ internal fun ClocktowerJudgeScreen(
     val scriptRoleNames = clocktowerRolesForScript(script).map { it.enName }.toSet()
     val scriptHasSlayer = "Slayer" in scriptRoleNames
     val scriptHasArtist = "Artist" in scriptRoleNames
-    val slayerClaimantCandidates = aliveCards.filter { card ->
+    val slayerClaimantCandidates = publicAliveCards.filter { card ->
         card.name !in slayerClaimedNames && !(slayerUsed && card.clocktowerRole?.enName == "Slayer")
     }
-    val artistClaimantCandidates = aliveCards.filter { card ->
+    val artistClaimantCandidates = publicAliveCards.filter { card ->
         card.name !in artistClaimedNames && !(artistUsed && card.clocktowerRole?.enName == "Artist")
     }
 
-    fun roleActor(enName: String): PlayerCard? =
-        cards.firstOrNull { AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), enName) }
+    fun roleActor(enName: String): PlayerCard? {
+        val candidate = cards.firstOrNull { AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), enName) }
+            ?: return null
+        if (phase != ClocktowerPhase.Night) return candidate
+        val interactionId = ClocktowerProductionNightStepIdentity.role(RoleId(enName))
+            .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+        if (interactionId !in otherNightCanonicalInteractionIds) return null
+        val seat = cards.indexOf(candidate).plus(1)
+        if (seat <= 0) return null
+        val effectiveState = effectiveNightStateAt(interactionId, ClocktowerInteractionBoundary.BEFORE)
+        val effectiveSubject = candidate.abilitySubject(poisonTarget).copy(
+            isAlive = effectiveState.isMechanicallyAlive(seat),
+        )
+        return candidate.takeIf { AbilityFunctioningSemantics.interactsAs(effectiveSubject, enName) }
+    }
 
     fun roleMissingReason(enName: String): String {
         val roleCard = actualClocktowerRoleCards(cards, enName).firstOrNull()
@@ -1895,7 +1986,17 @@ internal fun ClocktowerJudgeScreen(
     val clockmakerValue = clockmakerNumber()
     val clockmakerNumber = clockmakerValue.toString()
     val empathActor = roleActor("Empath")
-    val empathNeighbors = empathActor?.let { livingNeighbors(cards, it.name) }.orEmpty()
+    val empathInteractionId = ClocktowerProductionNightStepIdentity.role(RoleId("Empath"))
+        .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+    val empathStateBefore = empathActor?.takeIf { phase == ClocktowerPhase.Night }
+        ?.let { effectiveNightStateAt(empathInteractionId, ClocktowerInteractionBoundary.BEFORE) }
+    val effectiveEmpathCards = empathStateBefore?.let { state ->
+        cards.filter { card ->
+            val seat = cards.indexOf(card).plus(1)
+            seat > 0 && state.isMechanicallyAlive(seat)
+        }
+    } ?: cards
+    val empathNeighbors = empathActor?.let { livingNeighbors(effectiveEmpathCards, it.name) }.orEmpty()
     val empathAbilityUnreliable = empathActor?.let { actorIsUnreliable("Empath", it) } == true
     val empathRegistrationKey = empathActor?.takeIf { actor -> empathNeighbors.any { it.name == spyCard?.name } }?.let { registrationKey("Empath", it.name) }
     val empathRecluseRegistrationKey = empathActor
@@ -1935,8 +2036,8 @@ internal fun ClocktowerJudgeScreen(
     )
     val chefNumber = chefValue.toString()
     val empathValue = empathActor?.let { actor ->
-        empathEvilNeighborCount(cards, actor.name) {
-            registeredIsEvil(it, empathRegistrationKey, empathRecluseRegistrationKey)
+        empathNeighbors.count { neighbor ->
+            registeredIsEvil(neighbor, empathRegistrationKey, empathRecluseRegistrationKey)
         }
     } ?: 0
     val empathActualIdentityValue = empathNeighbors.count(::isClocktowerEvil)
@@ -2048,17 +2149,6 @@ internal fun ClocktowerJudgeScreen(
     val ravenkeeperRecluseRegistrationKey = ravenkeeperTargetCard?.takeIf { it.name == recluseCard?.name }?.let { registrationKey("RavenkeeperRecluse", it.name) }
     // Evil-team introductions always use true identities. Registration choices
     // for the Spy/Recluse only affect abilities that explicitly allow them.
-    val demonCard = cards.firstOrNull { it.clocktowerRole?.team == ClocktowerTeam.Demon }
-    val livingImp = demonCard?.takeIf {
-        it.eliminatedRound == null && it.clocktowerRole?.enName == "Imp"
-    }
-    val impSelfKillNeedsSuccessor =
-        livingImp != null &&
-            pendingNightDeath == livingImp.name &&
-            !demonPoisonedTonight &&
-            aliveCards.any { it.clocktowerTeam == ClocktowerTeam.Minion }
-    val sageNightDeath = resolvedNightDeathCard
-        ?.takeIf { nightDeathWillOccur && AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Sage") }
     val sagePair = demonCard?.let { storytellerPairHint(it, cards) }
     val spyDelta: String? = run {
         if (spyCard == null || phase == ClocktowerPhase.FirstNight) return@run null
@@ -2182,24 +2272,6 @@ internal fun ClocktowerJudgeScreen(
             }
         }
     }
-    val otherNightWakingRoleIds = buildSet {
-        aliveCards.forEach { card ->
-            card.clocktowerRole?.enName?.let { add(RoleId(it)) }
-            if (card.clocktowerRole?.enName == "Drunk") {
-                card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
-            }
-        }
-    }
-    val otherNightResolvedFacts = ClocktowerResolvedFlowFacts(
-        buildSet {
-            if (pendingNightNewDemonIdentityName != null) add(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON)
-            if (lastExecutedName != null) add(ClocktowerResolvedFlowFact.EXECUTION_OCCURRED_TODAY)
-            if (ravenkeeperTrigger != null) add(ClocktowerResolvedFlowFact.RAVENKEEPER_DIED_AT_NIGHT)
-            if (mayorCanRedirect) add(ClocktowerResolvedFlowFact.MAYOR_REDIRECT_ELIGIBLE)
-            if (impSelfKillNeedsSuccessor) add(ClocktowerResolvedFlowFact.DEMON_SUCCESSION_REQUIRED)
-            if (sageNightDeath != null) add(ClocktowerResolvedFlowFact.SAGE_KILLED_BY_DEMON)
-        },
-    )
     val nightSteps = if (phase == ClocktowerPhase.FirstNight) {
         val firstNightInteractions =
             ClocktowerProductionFirstNightFlow.interactions(
@@ -2420,7 +2492,7 @@ internal fun ClocktowerJudgeScreen(
                                 tellPlayer = empathNumber,
                                 explanation = listOfNotNull(text("这个数字表示共情者两个存活邻居中有几个邪恶玩家。", "This number is how many of the Empath's living neighbors are evil."), empathRegistrationHint).joinToString("\n"),
                                 hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
-                                displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, livingNeighbors(cards, actor.name).map { cards.indexOf(it) + 1 }, value) }) },
+                                    displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, empathNeighbors.map { cards.indexOf(it) + 1 }, value) }) },
                                 previousShownNumber = empathActor?.let { actor ->
                                     previousUnreliableNumber(text("共情者信息", "Empath information"), actor)
                                         ?.takeIf { it in 0..2 }
@@ -2547,13 +2619,6 @@ internal fun ClocktowerJudgeScreen(
         )
         firstNightMaterializers.materialize(firstNightInteractions)
     } else {
-        val otherNightInteractions =
-            ClocktowerProductionOtherNightFlow.interactions(
-            ruleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script),
-            playerCount = cards.size,
-            wakingRoleIds = otherNightWakingRoleIds,
-            resolvedFacts = otherNightResolvedFacts,
-        )
     val otherNightMaterializers = ClocktowerNightStepMaterializerRegistry(
         phase = ClocktowerNightFlowPhase.OTHER_NIGHT,
         entries = listOf(
@@ -2747,7 +2812,7 @@ internal fun ClocktowerJudgeScreen(
             identity = ClocktowerProductionNightStepIdentity.newDemonIdentity(),
             build = {
             val newDemon = requireNotNull(
-                aliveCards.firstOrNull {
+                publicAliveCards.firstOrNull {
                     it.name == pendingNightNewDemonIdentityName &&
                         it.clocktowerRole?.enName == "Imp"
                 },
@@ -2782,13 +2847,13 @@ internal fun ClocktowerJudgeScreen(
             build = {
             ClocktowerNightStepUi(
                 title = text("恶魔行动", "Demon action"),
-                actor = aliveCards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon },
-                isRealAction = aliveCards.any { it.clocktowerTeam == ClocktowerTeam.Demon },
-                reason = if (aliveCards.none { it.clocktowerTeam == ClocktowerTeam.Demon }) text("当前没有存活恶魔。", "There is no living Demon.") else "",
-                storytellerAction = aliveCards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon }?.let {
+                actor = publicAliveCards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon },
+                isRealAction = publicAliveCards.any { it.clocktowerTeam == ClocktowerTeam.Demon },
+                reason = if (publicAliveCards.none { it.clocktowerTeam == ClocktowerTeam.Demon }) text("当前没有存活恶魔。", "There is no living Demon.") else "",
+                storytellerAction = publicAliveCards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon }?.let {
                     text("轻拍 ${it.seatLabel(cards)}，示意睁眼。让他指今晚要杀死的玩家，在下面记录；记录后示意闭眼。", "Tap ${it.seatLabel(cards)} to wake them. Have them point to tonight's kill target, record it, then signal them to close their eyes.")
                 } ?: text("不要唤醒任何玩家，停顿 2-3 秒后继续。", "Do not wake anyone. Pause for 2–3 seconds, then continue."),
-                tellPlayer = if (aliveCards.any { it.clocktowerTeam == ClocktowerTeam.Demon }) {
+                tellPlayer = if (publicAliveCards.any { it.clocktowerTeam == ClocktowerTeam.Demon }) {
                     if (demonPoisonedTonight) {
                         text("恶魔已中毒，今晚杀人会失效。", "The Demon is poisoned, so tonight's kill will fail.")
                     } else {
@@ -3006,7 +3071,7 @@ internal fun ClocktowerJudgeScreen(
         ClocktowerDayOverviewScreen(
             round = round,
             cards = cards,
-            aliveCount = aliveCards.size,
+            aliveCount = publicAliveCards.size,
             executionThreshold = executionThreshold,
             highestVoteText = highestVoteText,
             showSlayerAction = scriptHasSlayer,
@@ -3066,7 +3131,7 @@ internal fun ClocktowerJudgeScreen(
         ClocktowerNominationScreen(
             round = round,
             cards = cards,
-            aliveCards = aliveCards,
+            aliveCards = publicAliveCards,
             executionThreshold = executionThreshold,
             nominatorName = nominatorName,
             nomineeName = nomineeName,
@@ -3169,7 +3234,7 @@ internal fun ClocktowerJudgeScreen(
         ClocktowerVoteScreen(
             round = round,
             cards = cards,
-            aliveCount = aliveCards.size,
+            aliveCount = publicAliveCards.size,
             executionThreshold = executionThreshold,
             nominatorName = nominatorName,
             nomineeName = nomineeName,
@@ -3290,7 +3355,7 @@ internal fun ClocktowerJudgeScreen(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
                 HostActionSection(title = text("选择目标", "Choose target")) {
                     SelectablePlayerChips(
-                        cards = aliveCards.filter { it.name != slayerClaimantName },
+                        cards = publicAliveCards.filter { it.name != slayerClaimantName },
                         selectedName = slayerTargetName,
                         enabled = gameOutcome == null,
                         allCards = cards,
@@ -3542,7 +3607,7 @@ internal fun ClocktowerJudgeScreen(
             }
             HostActionSection(title = text("选择一名存活玩家", "Choose a living player")) {
                 SelectablePlayerChips(
-                    cards = aliveCards.filter { it.name != pendingKlutzName },
+                    cards = publicAliveCards.filter { it.name != pendingKlutzName },
                     selectedName = klutzChoiceName,
                     enabled = gameOutcome == null,
                     allCards = cards,
@@ -3781,7 +3846,7 @@ internal fun ClocktowerJudgeScreen(
                 evilAdvantage = currentDynamicStorytellerState.evilAdvantage,
                 informationDecisionKey = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}",
                 cards = cards,
-                aliveCards = aliveCards,
+                aliveCards = publicAliveCards,
                 step = currentStep,
                 spyCard = spyCard,
                 spyRegistrationGood = spyRegistersGood(currentStep.spyRegistrationKey),
@@ -4009,7 +4074,7 @@ internal fun ClocktowerJudgeScreen(
                         evilAdvantage = currentDynamicStorytellerState.evilAdvantage,
                         informationDecisionKey = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}",
                         cards = cards,
-                        aliveCards = aliveCards,
+                        aliveCards = publicAliveCards,
                         step = currentStep,
                         spyCard = spyCard,
                         spyRegistrationGood = spyRegistersGood(currentStep.spyRegistrationKey),
@@ -4194,7 +4259,7 @@ internal fun ClocktowerJudgeScreen(
             item {
                 HostProgressCard(
                     title = text("第 $round 天 白天", "Day $round"),
-                    subtitle = text("存活玩家：${aliveCards.size}，处决所需票数：$executionThreshold", "Alive: ${aliveCards.size}; votes required to execute: $executionThreshold"),
+                    subtitle = text("存活玩家：${publicAliveCards.size}，处决所需票数：$executionThreshold", "Alive: ${publicAliveCards.size}; votes required to execute: $executionThreshold"),
                     progress = when {
                         highestVoteName != null -> text("最高票：${playerSeatLabel(cards, highestVoteName)}，$highestVoteCount 票", "Highest vote: ${playerSeatLabel(cards, highestVoteName)}, $highestVoteCount")
                         highestVoteCount >= executionThreshold -> text("最高票：平票，$highestVoteCount 票（无人被处决）", "Highest vote: tied at $highestVoteCount; nobody is executed")
@@ -4297,7 +4362,7 @@ internal fun ClocktowerJudgeScreen(
                                 }
                                 HostActionSection(title = text("选择目标", "Choose target")) {
                                     SelectablePlayerChips(
-                                        cards = aliveCards.filter { it.name != slayerClaimantName },
+                                        cards = publicAliveCards.filter { it.name != slayerClaimantName },
                                         selectedName = slayerTargetName,
                                         enabled = gameOutcome == null,
                                         allCards = cards,
@@ -4529,7 +4594,7 @@ internal fun ClocktowerJudgeScreen(
                         ) {
                             HostActionSection(title = text("选择呆瓜公开指定的玩家", "Choose the player named by the Klutz")) {
                                 SelectablePlayerChips(
-                                    cards = aliveCards.filter { it.name != pendingKlutzName },
+                                    cards = publicAliveCards.filter { it.name != pendingKlutzName },
                                     selectedName = klutzChoiceName,
                                     enabled = gameOutcome == null,
                                     allCards = cards,
@@ -4604,7 +4669,7 @@ internal fun ClocktowerJudgeScreen(
                         ) {
                             HostActionSection(title = text("选择提名人", "Choose nominator")) {
                                 SelectablePlayerChips(
-                                    cards = aliveCards,
+                                    cards = publicAliveCards,
                                     selectedName = nominatorName,
                                     enabled = gameOutcome == null,
                                     allCards = cards,
@@ -4613,7 +4678,7 @@ internal fun ClocktowerJudgeScreen(
                             }
                             HostActionSection(title = text("选择被提名人", "Choose nominee")) {
                                 SelectablePlayerChips(
-                                    cards = aliveCards,
+                                    cards = publicAliveCards,
                                     selectedName = nomineeName,
                                     enabled = gameOutcome == null,
                                     allCards = cards,
@@ -4713,7 +4778,7 @@ internal fun ClocktowerJudgeScreen(
                             StepperRow(
                                 label = text("票数", "Votes"),
                                 value = currentVoteCount,
-                                range = 0..aliveCards.size,
+                                range = 0..publicAliveCards.size,
                                 onChange = { currentVoteCount = it },
                             )
                             val reached = currentVoteCount >= executionThreshold

@@ -40,6 +40,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelec
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import kotlinx.coroutines.Dispatchers
@@ -205,9 +206,16 @@ internal fun ClocktowerNightStepCardLocalized(
             ?: option?.displayPrimary?.toIntOrNull()
     val structuredEmpathActorSeat = step.actor
         ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
-    val structuredEmpathSubjectSeats = step.actor
-        ?.let { actor -> livingNeighbors(cards, actor.name).map { cards.indexOf(it) + 1 }.filter { it > 0 } }
-        .orEmpty()
+    val structuredEmpathSubjectSeats = step
+        .legacyInformationCandidates
+        .asSequence()
+        .mapNotNull { it.proposition as? InformationProposition.NumericResult }
+        .firstOrNull { it.metric == NumericMetric.LIVING_EVIL_NEIGHBOURS }
+        ?.subjectSeats
+        ?: (step.displayProposition as? InformationProposition.NumericResult)
+            ?.takeIf { it.metric == NumericMetric.LIVING_EVIL_NEIGHBOURS }
+            ?.subjectSeats
+        ?: emptyList()
     val structuredEmpathTruthValue = step
         .takeIf { it.roleEnName == "Empath" }
         ?.legacyInformationCandidates
