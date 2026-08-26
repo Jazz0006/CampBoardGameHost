@@ -2281,28 +2281,45 @@ internal fun CampBoardGameHostApp() {
         return scarletWoman.name
     }
 
-    fun promoteDemonSuccessorIfNeeded(
-        impDeathWasSelfChosen: Boolean,
-        preferredMinionName: String? = null,
-    ): String? {
-        promoteScarletWomanIfNeeded()?.let { return it }
-        if (!impDeathWasSelfChosen) return null
-        val imp = completeTroubleBrewingRoles.first { it.enName == "Imp" }
-        val livingMinions = cards.filter {
-            it.eliminatedRound == null && it.clocktowerTeam == ClocktowerTeam.Minion
-        }
-        val minion = livingMinions.firstOrNull { it.name == preferredMinionName }
-            ?: livingMinions.firstOrNull()
-            ?: return null
-        setClocktowerActualRole(minion.name, imp)
-        records.add(EliminationRecord(round, minion.name, context.getString(R.string.clocktower_record_imp_passed)))
+    fun materializeConfirmedNightDemonSuccessor(): Boolean {
+        val pendingName = clocktowerPendingNewDemonName ?: return false
+        val confirmedName = clocktowerConfirmedDemonSuccessorTarget ?: return false
+        if (pendingName != confirmedName) return false
+        val successor = cards.firstOrNull {
+            it.name == confirmedName &&
+                it.eliminatedRound == null &&
+                it.clocktowerTeam == ClocktowerTeam.Minion
+        } ?: return false
+
+        val demonRole = cards.firstOrNull {
+            it.clocktowerTeam == ClocktowerTeam.Demon
+        }?.clocktowerRole ?: return false
+
+        setClocktowerActualRole(successor.name, demonRole)
+        records.add(
+            EliminationRecord(
+                round,
+                successor.name,
+                context.getString(R.string.clocktower_record_imp_passed),
+            ),
+        )
         addClocktowerEvent(
             ClocktowerEventType.RoleChange,
             localizedText("角色变化", "Role changed"),
-            localizedText("${playerSeatLabel(cards, minion.name)} 成为新的小恶魔。", "${playerSeatLabel(cards, minion.name)} became the new Imp."),
-            listOf(minion.name),
+            localizedText(
+                "${playerSeatLabel(cards, successor.name)} 成为新的小恶魔。",
+                "${playerSeatLabel(cards, successor.name)} became the new Imp.",
+            ),
+            listOf(successor.name),
         )
-        return minion.name
+        return true
+    }
+
+    fun promoteDemonSuccessorIfNeeded(
+        impDeathWasSelfChosen: Boolean,
+    ): String? {
+        if (impDeathWasSelfChosen) return null
+        return promoteScarletWomanIfNeeded()
     }
 
     CompositionLocalProvider(LocalContext provides context) {
@@ -2841,11 +2858,23 @@ internal fun CampBoardGameHostApp() {
                             }
                         },
                         onConfirmNewDemon = {
-                            clocktowerPendingNewDemonName = null
-                            recordClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
-                            clocktowerPhase = ClocktowerPhase.Dawn
-                            advanceClocktowerGameStateRevision()
-                            resetClocktowerNightFlow()
+                            val pendingName = clocktowerPendingNewDemonName
+                            val canEnterDawn =
+                                if (clocktowerConfirmedDemonSuccessorTarget != null) {
+                                    materializeConfirmedNightDemonSuccessor()
+                                } else {
+                                    pendingName != null &&
+                                        cards.firstOrNull {
+                                            it.name == pendingName
+                                        }?.clocktowerTeam == ClocktowerTeam.Demon
+                                }
+                            if (canEnterDawn) {
+                                clocktowerPendingNewDemonName = null
+                                recordClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
+                                clocktowerPhase = ClocktowerPhase.Dawn
+                                advanceClocktowerGameStateRevision()
+                                resetClocktowerNightFlow()
+                            }
                         },
                         onSelectKlutzChoice = {
                             advanceClocktowerPlayerInputRevision()
@@ -3267,6 +3296,7 @@ internal fun CampBoardGameHostApp() {
                             } == true
                             var nightKlutzName: String? = null
                             var newDemonName: String? = null
+                            var unresolvedDemonSuccessor = false
                             val originalDeathName = clocktowerPendingNightDeath
                             val originalDeathCard = originalDeathName?.let { name -> cards.firstOrNull { it.name == name } }
                             val mayorCanRedirect = originalDeathCard?.let {
@@ -3356,10 +3386,19 @@ internal fun CampBoardGameHostApp() {
                                             listOf(deathName),
                                         )
                                         if (demonDied) {
-                                            newDemonName = promoteDemonSuccessorIfNeeded(
-                                                impDeathWasSelfChosen = impSelfChosen,
-                                                preferredMinionName = clocktowerDemonSuccessorTarget,
-                                            )
+                                            if (impSelfChosen) {
+                                                newDemonName = clocktowerConfirmedDemonSuccessorTarget
+                                                unresolvedDemonSuccessor =
+                                                    newDemonName == null &&
+                                                        cards.any {
+                                                            it.eliminatedRound == null &&
+                                                                it.clocktowerTeam == ClocktowerTeam.Minion
+                                                        }
+                                            } else {
+                                                newDemonName = promoteDemonSuccessorIfNeeded(
+                                                    impDeathWasSelfChosen = false,
+                                                )
+                                            }
                                         }
                                         if (nightDeathCard.clocktowerRole?.enName == "Klutz") {
                                             nightKlutzName = deathName
@@ -3405,14 +3444,23 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerPhase = ClocktowerPhase.Day
                                 clocktowerDayModeState.value = ClocktowerDayMode.Klutz
                             }
-                            val nightOutcome = if (nightKlutzName == null) evaluateGameOutcome(context, cards, currentGameKind) else null
+                            val nightOutcome =
+                                if (
+                                    nightKlutzName == null &&
+                                    newDemonName == null &&
+                                    !unresolvedDemonSuccessor
+                                ) {
+                                    evaluateGameOutcome(context, cards, currentGameKind)
+                                } else {
+                                    null
+                                }
                             gameOutcome = nightOutcome
                             if (nightOutcome != null) {
                                 showResults = true
                                 addOutcomeEvent(nightOutcome)
                             } else if (nightKlutzName == null && newDemonName != null) {
                                 clocktowerPendingNewDemonName = newDemonName
-                            } else if (nightKlutzName == null) {
+                            } else if (nightKlutzName == null && !unresolvedDemonSuccessor) {
                                 recordClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
                                 clocktowerPhase = ClocktowerPhase.Dawn
                                 resetClocktowerNightFlow()
