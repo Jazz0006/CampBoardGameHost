@@ -809,7 +809,7 @@ internal fun ClocktowerJudgeScreen(
         ?.let { registrationKey("FortuneTellerRecluse", it.name) }
     val fortuneTellerMatched = if (fortuneTellerFirst != null && fortuneTellerSecond != null) {
         val targets = setOf(fortuneTellerFirst, fortuneTellerSecond)
-        publicAliveCards.any {
+        cards.any {
             it.name in targets && (
                 it.clocktowerTeam == ClocktowerTeam.Demon ||
                     it.name == redHerring ||

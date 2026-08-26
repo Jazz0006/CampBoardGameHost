@@ -466,7 +466,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     title = if (LocalContext.current.resources.configuration.locales[0].language == "en") "Choose the Butler's master" else "选择管家的主人",
                 ) {
                     SelectablePlayerChips(
-                        cards = aliveCards.filter { it.name != step.actor?.name },
+                        cards = cards.filter { it.name != step.actor?.name },
                         selectedName = selectedName,
                         enabled = step.isRealAction,
                         allCards = cards,
