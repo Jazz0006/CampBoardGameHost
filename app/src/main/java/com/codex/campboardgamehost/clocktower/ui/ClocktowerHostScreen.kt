@@ -314,6 +314,7 @@ internal fun ClocktowerJudgeScreen(
     onSelectMayorRedirectTarget: (String?) -> Unit,
     onConfirmMayorRedirectTarget: () -> Unit,
     onSelectDemonSuccessor: (String?) -> Unit,
+    onConfirmDemonSuccessorTarget: (String) -> Unit,
     onConfirmNewDemon: () -> Unit,
     onSelectKlutzChoice: (String?) -> Unit,
     onConfirmKlutzChoice: (Boolean) -> Unit,
@@ -3919,6 +3920,15 @@ internal fun ClocktowerJudgeScreen(
                         SelectionAuditCommit(auditId, dimensions, "demon-succession"),
                     )
                 }
+            }
+            if (currentStep.action == ClocktowerNightAction.DemonSuccessor) {
+                val selectedTarget = requireNotNull(demonSuccessorTarget) {
+                    "Demon successor confirmation requires a selected target."
+                }
+                require(demonSuccessorTargetCards.any { it.name == selectedTarget }) {
+                    "Demon successor confirmation requires a rules-legal target."
+                }
+                onConfirmDemonSuccessorTarget(selectedTarget)
             }
             currentStep.spyRegistrationKey?.let { key ->
                 currentStep.roleEnName?.let { role ->
