@@ -159,7 +159,7 @@ internal fun ClocktowerNightStepCardLocalized(
     val displayedInformationOptions = if (automaticStorytellerInfo) automaticInformationOptions else assistedInformationOptions
     val dynamicDecisionFamily = when (step.action) {
         ClocktowerNightAction.MayorRedirect -> "mayor-redirect"
-        ClocktowerNightAction.DemonSuccessor /* dynamic family */ -> "demon-succession"
+        ClocktowerNightAction.DemonSuccessor -> "demon-succession"
         else -> null
     }
     val dynamicDecisionPool = dynamicDecisionFamily
@@ -322,7 +322,7 @@ internal fun ClocktowerNightStepCardLocalized(
         step.action == ClocktowerNightAction.MonkProtect -> if (language == "en") "Record the protected player." else "记录被保护的玩家。"
         step.action == ClocktowerNightAction.DemonKill -> if (language == "en") "Record the selected kill target." else "记录被击杀的玩家。"
         step.action == ClocktowerNightAction.MayorRedirect -> if (language == "en") "Let the Mayor die or redirect the death to another player." else "选择让市长死亡，或将死亡转移给另一名玩家。"
-        step.action == ClocktowerNightAction.DemonSuccessor /* action hint */ -> if (language == "en") "Choose an eligible living Minion to become the new Imp." else "选择一名合法的存活爪牙成为新的小恶魔。"
+        step.action == ClocktowerNightAction.DemonSuccessor -> if (language == "en") "Choose an eligible living Minion to become the new Imp." else "选择一名合法的存活爪牙成为新的小恶魔。"
         step.action == ClocktowerNightAction.Ravenkeeper -> if (language == "en") "After choosing a target, show that character only to the Ravenkeeper." else "选目标后，把该玩家角色只给他看。"
         step.displayKind != ClocktowerDisplayKind.None -> if (language == "en") "Show the information to the player." else "展示信息给玩家。"
         else -> step.explanation
