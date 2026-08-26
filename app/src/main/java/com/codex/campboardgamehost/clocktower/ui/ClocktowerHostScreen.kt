@@ -851,11 +851,19 @@ internal fun ClocktowerJudgeScreen(
             !ClocktowerEffectiveNightChronology.isAtOrAfter(otherNightCanonicalInteractionIds, cursor, sourceAfter)
         ) return null
         val effectiveState = effectiveNightStateAt(interactionId, boundary)
-        val sourceFunctioning = AbilityFunctioningSemantics.functionsAs(
-            source.abilitySubject(null).copy(isAlive = effectiveState.isMechanicallyAlive(sourceSeat)),
-            "Poisoner",
+        val sourceFunctioning =
+            effectiveState.currentRoleId(sourceSeat) == RoleId("Poisoner") &&
+                AbilityFunctioningSemantics.functionsAs(
+                    source.abilitySubject(null).copy(
+                        isAlive = effectiveState.isMechanicallyAlive(sourceSeat),
+                    ),
+                    "Poisoner",
+                )
+        return PoisonEffectLifecycle.effectiveTarget(
+            poisonTarget,
+            true,
+            sourceFunctioning,
         )
-        return PoisonEffectLifecycle.effectiveTarget(poisonTarget, true, sourceFunctioning)
     }
 
     fun deathTriggerAbilityState(
