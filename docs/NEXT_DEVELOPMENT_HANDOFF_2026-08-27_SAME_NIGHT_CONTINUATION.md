@@ -21,9 +21,9 @@ Before changing code, read:
 
 Then re-query live `main`, branch head, PR #54 state/head, and latest checks. Do not rely on this SHA list if GitHub has advanced.
 
-## 2. Accepted production checkpoints
+## 2. Last accepted production checkpoints
 
-The last fully accepted same-night production checkpoint is:
+### SNE-6B2.6 — exact Dawn Demon successor materialization
 
 ```text
 51179ecca667d5450550375735ca49aae932c06d
@@ -40,16 +40,23 @@ R2 #675 SUCCESS
 CI #748 SUCCESS
 ```
 
-Immediately before that:
+### SNE-6B2.5 A–D — current-role consumer migration
 
 ```text
 5a94c63536c04382f59963843c2ac10544962b02
-SNE-6B2.5 A–D stage checkpoint
+```
+
+Validation:
+
+```text
+focused GREEN
+:app:testFast GREEN
+git diff --check GREEN
 R2 #673 SUCCESS
 CI #746 SUCCESS
 ```
 
-Do not regress these contracts:
+Protected contracts from 6B2.5/6B2.6:
 
 - effective current-role actor lookup;
 - Poisoner effect ends when source loses Poisoner role;
@@ -77,7 +84,7 @@ revert: defer generic non-self Demon succession
 
 Do not resurrect that RED during the current Trouble Brewing closeout.
 
-## 4. New product decision — Mayor cannot redirect to Demon
+## 4. Product decision — Mayor cannot redirect to Demon
 
 Current product restriction:
 
@@ -87,50 +94,117 @@ Mayor redirect target cannot be the current Demon.
 
 This is an intentional house-rule/product simplification, not official BotC semantics.
 
-Generic non-self Demon death / Scarlet Woman succession remains deferred for future arbitrary dynamic/custom scripts. See `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md`.
+Generic non-self Demon death / Scarlet Woman succession remains deferred for future arbitrary dynamic/custom scripts. Examples include Assassin, Godfather, Gossip, Pit-Hag, Fang Gu and future night-death mechanics combined with Scarlet Woman.
 
-## 5. Mayor restriction work already committed
+See:
 
-After the 6C1 revert, ChatGPT created the following work on the same branch:
+```text
+docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md
+```
+
+## 5. Mayor Demon-exclusion checkpoint — production complete
+
+Small-file rules/recommendation work:
 
 ```text
 b864db41c2c1aa46728b45925312a7fd10322316
-  RED source-wiring contract:
-  ClocktowerMayorDemonExclusionWiringTest.kt
+  initial Mayor source-wiring RED
 
 30e00f28fd7b31f74e0b5aca5d8af2dac4aca8bd
   MayorRedirectLegality.kt
 
 625ff5b03593860f920605bd9989281e50e6bb6b
-  MayorRedirectRecommender excludes CharacterType.DEMON
-  resolveOutcome rejects a direct Demon target
+  recommender excludes CharacterType.DEMON
+  direct Demon resolveOutcome is rejected
 
 36eb5b1165752b0bc714abe305f342a484eed412
-  MayorRedirectRecommenderTest adds Demon exclusion coverage
+  recommender Demon-exclusion tests
 ```
 
-The source-wiring RED intentionally remains RED until the large Host/UI wiring below is completed.
-
-## 6. Documentation/workflow closeout already committed
+Source-test corrections after brittle anchors were discovered:
 
 ```text
-eba6aadb021dd859cac789681cbfacd11c3f0aea
-  AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
-
-62413a3bd7630acc0551651957007ff01c5ec65c
-  DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md
-
-c81673d8513a1b2075a3dad3dd239bdc11aa35c5
-  SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md
-
-9d3940e0e8ac316d54f036fbc3ae08428be4fa0b
-  root AGENTS.md tightened
-
-61db454d7133516c6f2a3bbe7e9cc2652c3e3396
-  CURRENT_DEVELOPMENT_ROADMAP.md updated
+b8c3d39eac8167725d83d272fb9c271a699dd9e8
+2c50aa3f38a89baee7d42526f9162d178e0e91de
+7fd5494b18852ffe984f1ed728639ddd8bf9257b
 ```
 
-The new workflow explicitly fixes the problems observed today:
+Final production Host/UI wiring:
+
+```text
+2e8cb6a6a4763f9926956e5407d1c465e112e2bd
+fix: enforce Mayor Demon exclusion in host UI
+```
+
+Canonical remote audit of `7fd5494b... -> 2e8cb6a6...`:
+
+```text
+exactly 1 commit ahead
+only 2 files changed:
+  ClocktowerHostScreen.kt
+  ClocktowerNightStepUi.kt
+```
+
+Behavior now implemented:
+
+```text
+MayorRedirectLegality
+→ rules-owned mayorRedirectTargetCards
+→ manual UI consumes all legal targets
+→ recommender only ranks legal targets
+→ restored/raw Demon redirect target fails closed before mechanical death resolution
+```
+
+The old manual legality dependency is removed:
+
+```text
+assistedDecisionOptions.map(ClocktowerDecisionOption::targetName)
+```
+
+Local checkpoint validation reported by Luna:
+
+```text
+focused Mayor wiring + recommender tests: BUILD SUCCESSFUL
+:app:testFast --rerun-tasks: BUILD SUCCESSFUL
+git diff --check: PASS
+```
+
+PR #54 was verified after the push as:
+
+```text
+open
+draft
+not merged
+head = 2e8cb6a6a4763f9926956e5407d1c465e112e2bd
+```
+
+At the time of this documentation closeout, GitHub had not yet exposed workflow runs/statuses for the `2e8cb6a6...` production head. Re-query checks at the start of the next conversation; do not interpret “no run visible yet” as SUCCESS or FAILURE.
+
+## 6. Documentation-only head after production checkpoint
+
+After `2e8cb6a6...`, documentation-only commits may advance the branch head. Distinguish:
+
+```text
+last validated production code checkpoint:
+2e8cb6a6a4763f9926956e5407d1c465e112e2bd
+
+later branch head:
+docs-only closeout commits may follow
+```
+
+Always verify the live lineage before using a SHA from this handoff.
+
+## 7. Workflow corrections made today
+
+New/updated authority:
+
+```text
+docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
+docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md
+AGENTS.md
+```
+
+Rules now explicitly require:
 
 - connector owns safe small/medium edits;
 - Luna only executes large/truncated/local-only file changes;
@@ -139,107 +213,47 @@ The new workflow explicitly fixes the problems observed today:
 - no duplicate rerun of a Luna-passed focused test;
 - T0 per micro-slice, broad tests at logical checkpoint;
 - no old-head CI wait between micro-slices;
-- source-wiring tests lock semantic structure, not formatting.
+- recommendation never defines legality;
+- source-wiring tests must be semantic and formatter-independent.
 
-## 7. Immediate remaining implementation — Mayor Host/UI wiring
+The Mayor closeout added a stronger source-test lesson: after a second failure at the same semantic boundary, stop refining chained positional `substringAfter(...)` anchors and replace them with position-independent semantic checks / whitespace-insensitive regex plus explicit forbidden-legacy assertions.
 
-At the time this handoff was written, the next required production edit is limited to two large files:
+## 8. Immediate next work — SNE-7 final restore/recomposition matrix
+
+Do not reopen 6C generic non-self Demon succession. The next development slice is **SNE-7 final restore/recomposition matrix**.
+
+Required matrix includes at least:
+
+1. restore before successor confirmation → target remains Minion;
+2. restore after successor confirmation → effective current role is Demon;
+3. confirmed successor + Previous → confirmed role change remains mechanically authoritative;
+4. edit draft without Next → old confirmed successor remains authoritative;
+5. upstream reconfirm invalidates stale successor;
+6. Poisoner→Demon ends active poison while preserving raw confirmed target;
+7. Fortune Teller targeting new Demon → Yes;
+8. Fortune Teller targeting old dead Demon → Yes;
+9. exactly one normal Demon action remains in canonical plan after succession;
+10. Monk-protected Imp self-kill → no successor;
+11. functioning Scarlet Woman at 5+ on Imp self-kill → mandatory Scarlet Woman;
+12. poisoned/nonfunctioning Scarlet Woman at 5+ → ordinary living-Minion choice;
+13. legacy draft-only successor data → no invented RoleChanged / reconfirm required;
+14. Mayor restored/confirmed redirect target that is Demon → fail closed and does not kill Demon;
+15. same persisted base + same confirmed checkpoint + same canonical plan + same cursor → identical `ClocktowerEffectiveNightState` after recomposition.
+
+Prefer pure/projector/restore tests where possible. Do not add another source-string wiring test when behavior can be tested through a typed seam.
+
+## 9. Stage-completion gate after SNE-7
+
+After SNE-7 focused GREEN:
 
 ```text
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
-app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+:app:testFast --rerun-tasks
++ affected T2/T3 if TESTING_STRATEGY triggers them
++ latest production-head GitHub CI / R2
++ exact PR diff / architecture audit
 ```
 
-Required behavior:
-
-### Host
-
-Import:
-
-```kotlin
-import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
-```
-
-After `mayorCanRedirect`, derive an independent manual legality set:
-
-```kotlin
-val mayorRedirectTargetCards = cards.filter { card ->
-    card.name != mayorTarget?.name &&
-        MayorRedirectLegality.canReceiveRedirect(
-            targetIsDemon = card.clocktowerTeam == ClocktowerTeam.Demon,
-        )
-}
-```
-
-Validate the confirmed/restored Mayor target before it becomes mechanical authority:
-
-```kotlin
-val effectiveMayorRedirectTarget = mayorRedirectTarget
-    ?.takeIf { confirmedName ->
-        mayorRedirectTargetCards.any { it.name == confirmedName }
-    }
-```
-
-Then `resolvedNightDeathName` must use `effectiveMayorRedirectTarget`, not raw `mayorRedirectTarget`:
-
-```kotlin
-val resolvedNightDeathName =
-    if (mayorCanRedirect && effectiveMayorRedirectTarget != null) {
-        effectiveMayorRedirectTarget
-    } else {
-        pendingNightDeath
-    }
-```
-
-Pass `mayorRedirectTargetCards` into every `ClocktowerNightStepCardLocalized(...)` call immediately alongside the other target-card sets.
-
-### Night UI
-
-Add parameter:
-
-```kotlin
-mayorRedirectTargetCards: List<PlayerCard>,
-```
-
-In `ClocktowerNightAction.MayorRedirect`, replace the recommendation-derived manual card filter with:
-
-```kotlin
-cards = mayorRedirectTargetCards
-```
-
-The Mayor manual UI must not contain:
-
-```kotlin
-assistedDecisionOptions.map(ClocktowerDecisionOption::targetName)
-```
-
-as its legality source.
-
-No App change is required for this slice: an invalid restored confirmed target may remain stored, but Host fails closed and treats it as non-authoritative until a legal target is confirmed.
-
-## 8. Required focused validation for Mayor closeout
-
-Before production edit, the focused source-wiring test should fail as expected.
-
-After production edit, run only:
-
-```bash
-./gradlew :app:testDebugUnitTest \
-  --tests "com.codex.campboardgamehost.ClocktowerMayorDemonExclusionWiringTest" \
-  --tests "com.codex.campboardgamehost.clocktower.recommendation.MayorRedirectRecommenderTest" \
-  --rerun-tasks \
-  --no-daemon
-```
-
-Then `git diff --check`.
-
-Because this Mayor restriction is intended as the final end-of-day logical checkpoint, run `:app:testFast --rerun-tasks --no-daemon` once after the Host/UI GREEN patch. After push, ChatGPT should audit the remote diff and then use the latest-head GitHub CI/R2 as the checkpoint gate.
-
-## 9. Next work after Mayor checkpoint
-
-After Mayor Demon exclusion is GREEN and accepted, proceed to **SNE-7 final restore/recomposition matrix**. Do not reopen generic non-self Demon succession during this Trouble Brewing closeout.
-
-SNE-7 must include the Mayor restriction restore case in addition to the existing succession/current-role matrix.
+Do not merge or mark PR #54 ready without explicit user authorization.
 
 ## 10. Do not do
 
@@ -249,4 +263,5 @@ SNE-7 must include the Mayor restriction restore case in addition to the existin
 - do not let recommendations define Mayor legality;
 - do not reintroduce early public role mutation;
 - do not run broad CI/test gates after every micro-edit;
-- do not ask Luna to redesign or audit the architecture.
+- do not ask Luna to redesign or audit the architecture;
+- do not treat a docs-only branch head as the last validated code checkpoint.
