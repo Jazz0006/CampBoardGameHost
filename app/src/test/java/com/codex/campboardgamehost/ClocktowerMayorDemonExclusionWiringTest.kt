@@ -45,8 +45,8 @@ class ClocktowerMayorDemonExclusionWiringTest {
             .substringAfter("ClocktowerNightAction.MayorRedirect ->")
             .substringBefore("ClocktowerNightAction.DemonSuccessor ->")
         assertTrue(
-            "Manual Mayor selection must render the legal target set, not recommendation target names.",
-            mayorUiBlock.contains("cards = mayorRedirectTargetCards"),
+            "Manual Mayor selection must consume the rules-owned legal target set.",
+            mayorUiBlock.contains("mayorRedirectTargetCards"),
         )
         assertFalse(
             "Mayor manual legality must not be reconstructed from assisted recommendations.",
