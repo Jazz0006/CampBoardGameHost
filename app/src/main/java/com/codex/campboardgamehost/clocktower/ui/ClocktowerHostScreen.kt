@@ -798,6 +798,33 @@ internal fun ClocktowerJudgeScreen(
         return PoisonEffectLifecycle.effectiveTarget(poisonTarget, true, sourceFunctioning)
     }
 
+    fun deathTriggerAbilityState(
+        roleEnName: String,
+        triggerActor: PlayerCard?,
+    ): AbilityFunctioningState? {
+        if (triggerActor == null) return null
+        val deathEvent = resolvedMechanicalEvents.singleOrNull()
+            as? ResolvedNightMechanicalEvent.MechanicalDeath
+            ?: return null
+        val deathInteractionId = deathEvent.effectiveAt.interactionId
+        val beforeDeathState = effectiveNightStateAt(
+            deathInteractionId,
+            ClocktowerInteractionBoundary.BEFORE,
+        )
+        val effectivePoison = effectivePoisonTargetAt(
+            deathInteractionId,
+            ClocktowerInteractionBoundary.BEFORE,
+        )
+        val seat = cards.indexOf(triggerActor).plus(1).takeIf { it > 0 } ?: return null
+        val subject = triggerActor.abilitySubject(effectivePoison).copy(
+            isAlive = beforeDeathState.isMechanicallyAlive(seat),
+        )
+        return AbilityFunctioningSemantics.stateFor(subject, roleEnName)
+    }
+
+    val ravenkeeperDeathTriggerAbilityState = deathTriggerAbilityState("Ravenkeeper", ravenkeeperTrigger)
+    val sageDeathTriggerAbilityState = deathTriggerAbilityState("Sage", sageNightDeath)
+
     fun effectiveAbilitySubjectForRole(enName: String, actor: PlayerCard?): AbilitySubject? {
         if (actor == null) return null
         val interactionId = ClocktowerProductionNightStepIdentity.role(RoleId(enName))
@@ -2986,9 +3013,12 @@ internal fun ClocktowerJudgeScreen(
             build = {
             val sageDemon = requireNotNull(demonCard)
             val resolvedSagePair = requireNotNull(sagePair)
+            val trigger = requireNotNull(sageNightDeath)
                     informationStepBuilder.build(
                         roleName = "贤者",
                         enName = "Sage",
+                        actorOverride = trigger,
+                        abilityStateOverride = sageDeathTriggerAbilityState,
                         tellPlayer = "${sageDemon.seatLabel(cards)} / ${resolvedSagePair.second.seatLabel(cards)}",
                         explanation = text("贤者被恶魔杀死时，得知恶魔是两名玩家之一。", "When killed by the Demon, the Sage learns that the Demon is one of two players."),
                         displayKind = ClocktowerDisplayKind.EitherOne,
@@ -3011,6 +3041,8 @@ internal fun ClocktowerJudgeScreen(
                     informationStepBuilder.build(
                         roleName = "守鸦人",
                         enName = "Ravenkeeper",
+                        actorOverride = trigger,
+                        abilityStateOverride = ravenkeeperDeathTriggerAbilityState,
                         tellPlayer = ravenkeeperTarget?.let { text("${playerSeatLabel(cards, it)} 的角色是 ${when (ravenkeeperTargetCard?.name) {
                             spyCard?.name -> registeredRole(ravenkeeperRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Ravenkeeper")?.nameFor(language).orEmpty()
                             recluseCard?.name -> recluseRegisteredRole(ravenkeeperRecluseRegistrationKey, listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon), "Ravenkeeper")?.nameFor(language).orEmpty()

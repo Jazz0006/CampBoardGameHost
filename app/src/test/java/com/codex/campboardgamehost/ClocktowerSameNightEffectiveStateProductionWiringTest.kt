@@ -167,4 +167,46 @@ class ClocktowerSameNightEffectiveStateProductionWiringTest {
                 nightStepUiSource.contains("val candidates = chambermaidTargetCards.filter"),
         )
     }
+
+    @Test
+    fun `Ravenkeeper death trigger must override the later normal actor lookup`() {
+        val ravenkeeperMaterializer = hostSource
+            .substringAfter("identity = ClocktowerProductionNightStepIdentity.role(RoleId(\"Ravenkeeper\"))")
+            .substringBefore("identity = ClocktowerProductionNightStepIdentity.role(RoleId(\"Spy\"))")
+
+        assertTrue(
+            "Ravenkeeper must pass the resolved death trigger actor explicitly to the information " +
+                "builder instead of relying on roleActor at the later post-death cursor.",
+            ravenkeeperMaterializer.contains("val trigger = requireNotNull(ravenkeeperTrigger)") &&
+                ravenkeeperMaterializer.contains("actorOverride = trigger"),
+        )
+    }
+
+    @Test
+    fun `Sage death trigger must override the later normal actor lookup`() {
+        val sageMaterializer = hostSource
+            .substringAfter("identity = ClocktowerProductionNightStepIdentity.role(RoleId(\"Sage\"))")
+            .substringBefore("identity = ClocktowerProductionNightStepIdentity.role(RoleId(\"Ravenkeeper\"))")
+
+        assertTrue(
+            "Sage must pass the explicit Demon-killed trigger actor to the information builder " +
+                "instead of relying on roleActor at the later post-death cursor.",
+            sageMaterializer.contains("val sageDemon = requireNotNull(demonCard)") &&
+                sageMaterializer.contains("val trigger = requireNotNull(sageNightDeath)") &&
+                sageMaterializer.contains("actorOverride = trigger"),
+        )
+    }
+
+    @Test
+    fun `death trigger ability state must use the mechanical death BEFORE cursor`() {
+        assertTrue(
+            "Death-trigger ability state must use the resolved mechanical death interaction BEFORE " +
+                "cursor, including cursor-relative poison, rather than the later role cursor.",
+            hostSource.contains("fun deathTriggerAbilityState") &&
+                hostSource.contains("effectiveAt.interactionId") &&
+                hostSource.contains("effectivePoisonTargetAt(") &&
+                hostSource.contains("AbilityFunctioningSemantics.stateFor") &&
+                hostSource.contains("ClocktowerInteractionBoundary.BEFORE"),
+        )
+    }
 }

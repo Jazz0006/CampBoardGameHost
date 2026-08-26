@@ -39,11 +39,13 @@ internal class ClocktowerInformationStepBuilder(
         spyRegistrationHint: String? = null,
         recluseRegistrationKey: String? = null,
         recluseRegistrationTeams: List<ClocktowerTeam> = emptyList(),
+        actorOverride: PlayerCard? = null,
+        abilityStateOverride: AbilityFunctioningState? = null,
     ): ClocktowerNightStepUi {
-        val actor = roleActor(enName)
+        val actor = actorOverride ?: roleActor(enName)
         val localizedRoleName = if (language == "en") enName else roleName
         val localizedDisplayTitle = displayTitle ?: text("$roleName 信息", "$enName information")
-        val abilityState = abilityStateFor(enName, actor)
+        val abilityState = abilityStateOverride ?: abilityStateFor(enName, actor)
         val actorIsDrunkShownRole = abilityState == AbilityFunctioningState.DRUNK
         val informationReliability = when (abilityState) {
             AbilityFunctioningState.POISONED -> InformationReliability.POISONED
