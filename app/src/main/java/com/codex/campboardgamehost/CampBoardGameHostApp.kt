@@ -2608,6 +2608,7 @@ internal fun CampBoardGameHostApp() {
                         pendingNewDemonName = clocktowerPendingNewDemonName,
                         pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
                         demonSuccessorTarget = clocktowerDemonSuccessorTarget,
+                        confirmedDemonSuccessorTarget = clocktowerConfirmedDemonSuccessorTarget,
                         virginUsed = clocktowerVirginUsed,
                         slayerUsed = clocktowerSlayerUsed,
                         slayerClaimedNames = clocktowerSlayerClaimedNames,

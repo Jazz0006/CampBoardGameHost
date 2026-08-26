@@ -271,6 +271,7 @@ internal fun ClocktowerJudgeScreen(
     pendingNewDemonName: String?,
     pendingNightNewDemonIdentityName: String?,
     demonSuccessorTarget: String?,
+    confirmedDemonSuccessorTarget: String?,
     virginUsed: Boolean,
     slayerUsed: Boolean,
     slayerClaimedNames: List<String>,
@@ -770,28 +771,43 @@ internal fun ClocktowerJudgeScreen(
         emptyList()
     }
     val otherNightCanonicalInteractionIds = otherNightInteractions.map { it.id }
-    val resolvedMechanicalEvents = if (phase == ClocktowerPhase.Night && nightDeathWillOccur) {
-        val targetSeat = cards.indexOf(resolvedNightDeathCard).plus(1)
-        require(targetSeat > 0) { "Resolved night death must identify a valid target seat." }
-        val effectiveInteractionId = if (mayorCanRedirect) {
-            ClocktowerProductionNightStepIdentity.mayorRedirect().interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
-        } else {
-            val demonRoleId = demonCard?.clocktowerRole?.enName?.let(::RoleId)
-            requireNotNull(demonRoleId) { "Resolved night death requires a canonical Demon interaction." }
-            ClocktowerProductionNightStepIdentity.role(demonRoleId)
-                .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
-        }
-        listOf(
-            ResolvedNightMechanicalEvent.MechanicalDeath(
+    val baseRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
+        card.clocktowerRole?.enName?.let { roleName -> index + 1 to RoleId(roleName) }
+    }.toMap()
+    val confirmedDemonSuccessorSeat = confirmedDemonSuccessorTarget
+        ?.let { confirmedName -> cards.indexOfFirst { it.name == confirmedName }.takeIf { it >= 0 }?.plus(1) }
+        ?.takeIf { it in demonSuccessorTargetSeats }
+    val demonSuccessorRoleId = demonCard?.clocktowerRole?.enName?.let(::RoleId)
+    val demonSuccessorInteractionId = ClocktowerProductionNightStepIdentity.demonSuccessor()
+        .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+    val resolvedMechanicalEvents = buildList<ResolvedNightMechanicalEvent> {
+        if (phase == ClocktowerPhase.Night && nightDeathWillOccur) {
+            val targetSeat = cards.indexOf(resolvedNightDeathCard).plus(1)
+            require(targetSeat > 0) { "Resolved night death must identify a valid target seat." }
+            val effectiveInteractionId = if (mayorCanRedirect) {
+                ClocktowerProductionNightStepIdentity.mayorRedirect().interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+            } else {
+                val demonRoleId = demonCard?.clocktowerRole?.enName?.let(::RoleId)
+                requireNotNull(demonRoleId) { "Resolved night death requires a canonical Demon interaction." }
+                ClocktowerProductionNightStepIdentity.role(demonRoleId).interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+            }
+            add(ResolvedNightMechanicalEvent.MechanicalDeath(
                 targetSeat = targetSeat,
+                effectiveAt = ClocktowerEffectiveNightCursor(effectiveInteractionId, ClocktowerInteractionBoundary.AFTER),
+            ))
+        }
+        if (phase == ClocktowerPhase.Night && confirmedDemonSuccessorSeat != null) {
+            add(ResolvedNightMechanicalEvent.RoleChanged(
+                targetSeat = confirmedDemonSuccessorSeat,
+                roleId = requireNotNull(demonSuccessorRoleId) {
+                    "Confirmed Demon successor requires a canonical Demon role."
+                },
                 effectiveAt = ClocktowerEffectiveNightCursor(
-                    effectiveInteractionId,
+                    demonSuccessorInteractionId,
                     ClocktowerInteractionBoundary.AFTER,
                 ),
-            ),
-        )
-    } else {
-        emptyList()
+            ))
+        }
     }
     fun effectiveNightStateAt(
         interactionId: ClocktowerInteractionId,
@@ -801,6 +817,7 @@ internal fun ClocktowerJudgeScreen(
         canonicalInteractionIds = otherNightCanonicalInteractionIds,
         confirmedEvents = resolvedMechanicalEvents,
         cursor = ClocktowerEffectiveNightCursor(interactionId, boundary),
+        baseRoleIdsBySeat = baseRoleIdsBySeat,
     )
 
     val chambermaidInteractionId = ClocktowerProductionNightStepIdentity
