@@ -60,6 +60,36 @@ class ClocktowerEffectiveNightStateTest {
         assertEquals(first, second)
     }
 
+    @Test fun `chronology orders before before after at the same interaction`() {
+        assertTrue(
+            ClocktowerEffectiveNightChronology.rankOf(plan, ClocktowerEffectiveNightCursor(imp, ClocktowerInteractionBoundary.BEFORE)) <
+                ClocktowerEffectiveNightChronology.rankOf(plan, ClocktowerEffectiveNightCursor(imp, ClocktowerInteractionBoundary.AFTER)),
+        )
+    }
+
+    @Test fun `chronology orders after before before the next interaction`() {
+        assertTrue(
+            ClocktowerEffectiveNightChronology.rankOf(plan, ClocktowerEffectiveNightCursor(imp, ClocktowerInteractionBoundary.AFTER)) <
+                ClocktowerEffectiveNightChronology.rankOf(plan, ClocktowerEffectiveNightCursor(empath, ClocktowerInteractionBoundary.BEFORE)),
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `chronology rejects unknown interaction`() {
+        ClocktowerEffectiveNightChronology.rankOf(
+            plan,
+            ClocktowerEffectiveNightCursor(ClocktowerInteractionId("unknown"), ClocktowerInteractionBoundary.BEFORE),
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `chronology rejects duplicate interaction ids`() {
+        ClocktowerEffectiveNightChronology.rankOf(
+            listOf(poisoner, poisoner),
+            ClocktowerEffectiveNightCursor(poisoner, ClocktowerInteractionBoundary.BEFORE),
+        )
+    }
+
     @Test fun `input collections remain unchanged`() {
         val base = linkedSetOf(1, 2, 3, 4)
         val events = listOf(impDeath)

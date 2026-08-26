@@ -19,20 +19,24 @@ internal data class ClocktowerEffectiveNightCursor(
 )
 
 internal object ClocktowerEffectiveNightChronology {
+    fun rankOf(
+        canonicalInteractionIds: List<ClocktowerInteractionId>,
+        position: ClocktowerEffectiveNightCursor,
+    ): Int {
+        require(canonicalInteractionIds.distinct().size == canonicalInteractionIds.size) {
+            "Canonical interaction IDs must be unique."
+        }
+        val index = canonicalInteractionIds.indexOf(position.interactionId)
+        require(index >= 0) { "Unknown effective-state interaction: ${position.interactionId.value}" }
+        return index * 2 + position.boundary.ordinal
+    }
+
     fun isAtOrAfter(
         canonicalInteractionIds: List<ClocktowerInteractionId>,
         cursor: ClocktowerEffectiveNightCursor,
         boundary: ClocktowerEffectiveNightCursor,
     ): Boolean {
-        require(canonicalInteractionIds.distinct().size == canonicalInteractionIds.size) {
-            "Canonical interaction IDs must be unique."
-        }
-        fun rankOf(position: ClocktowerEffectiveNightCursor): Int {
-            val index = canonicalInteractionIds.indexOf(position.interactionId)
-            require(index >= 0) { "Unknown effective-state interaction: ${position.interactionId.value}" }
-            return index * 2 + position.boundary.ordinal
-        }
-        return rankOf(cursor) >= rankOf(boundary)
+        return rankOf(canonicalInteractionIds, cursor) >= rankOf(canonicalInteractionIds, boundary)
     }
 }
 
@@ -50,25 +54,17 @@ internal object ClocktowerEffectiveNightStateProjector {
         confirmedEvents: List<ResolvedNightMechanicalEvent>,
         cursor: ClocktowerEffectiveNightCursor,
     ): ClocktowerEffectiveNightState {
-        require(canonicalInteractionIds.distinct().size == canonicalInteractionIds.size) {
-            "Canonical interaction IDs must be unique."
-        }
-        fun rankOf(position: ClocktowerEffectiveNightCursor): Int {
-            val index = canonicalInteractionIds.indexOf(position.interactionId)
-            require(index >= 0) { "Unknown effective-state interaction: ${position.interactionId.value}" }
-            return index * 2 + position.boundary.ordinal
-        }
-        val cursorRank = rankOf(cursor)
+        val cursorRank = ClocktowerEffectiveNightChronology.rankOf(canonicalInteractionIds, cursor)
         val effectiveDeaths = confirmedEvents
             .map { event ->
                 when (event) {
                     is ResolvedNightMechanicalEvent.MechanicalDeath -> {
-                        rankOf(event.effectiveAt)
+                        ClocktowerEffectiveNightChronology.rankOf(canonicalInteractionIds, event.effectiveAt)
                         event
                     }
                 }
             }
-            .filter { event -> rankOf(event.effectiveAt) <= cursorRank }
+        .filter { event -> ClocktowerEffectiveNightChronology.rankOf(canonicalInteractionIds, event.effectiveAt) <= cursorRank }
             .map { event -> event.targetSeat }
             .toSet()
         return ClocktowerEffectiveNightState(baseAliveSeats - effectiveDeaths)

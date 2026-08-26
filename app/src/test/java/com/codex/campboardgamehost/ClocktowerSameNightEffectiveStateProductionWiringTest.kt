@@ -110,4 +110,30 @@ class ClocktowerSameNightEffectiveStateProductionWiringTest {
                 hostSource.contains("ravenkeeperTrigger"),
         )
     }
+
+    @Test
+    fun `Spy and Recluse registration poison status must use the querying interaction cursor`() {
+        val registrationHelpers = hostSource
+            .substringAfter("fun spyCanRegister")
+            .substringBefore("val firstNightWasherwoman")
+
+        assertFalse(
+            "Registration poison status must receive the querying role/interaction identity; " +
+                "a generic registration helper must not silently query the Spy cursor.",
+            registrationHelpers.contains("effectivePoisonForRole(\"Spy\")"),
+        )
+    }
+
+    @Test
+    fun `durable private information reliability must use effective cursor state`() {
+        val publication = hostSource
+            .substringAfter("fun recordReliablePrivateInformation")
+            .substringBefore("val informationStepBuilder")
+
+        assertFalse(
+            "Durable night information publication must share the interaction-specific effective " +
+                "reliability authority and must not use raw confirmed poison directly.",
+            publication.contains("actor.name == poisonTarget"),
+        )
+    }
 }
