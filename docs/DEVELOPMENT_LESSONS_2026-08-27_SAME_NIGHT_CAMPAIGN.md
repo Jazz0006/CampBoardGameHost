@@ -223,3 +223,38 @@ ChatGPT's independent verification should instead be:
 - exact canonical diff;
 - changed-file scope;
 - stage-level CI when it is actually the gate.
+
+## 16. Source-wiring tests must not discover structure by repeated common-token substring anchors
+
+The Mayor Demon-exclusion closeout produced three consecutive false failures in the same source-wiring test. The underlying production wiring was correct, but the test attempted to locate a UI block using common tokens such as `ClocktowerNightAction.MayorRedirect ->` and later required one exact formatted expression.
+
+In a large multi-branch file, the same action token can legitimately appear in:
+
+- action-family classification;
+- automatic decision handling;
+- navigation/confirmation handling;
+- the actual rendering branch.
+
+Therefore chained `substringAfter(commonToken)` calls are not a reliable semantic locator. Even a seemingly better preceding anchor can still select the wrong occurrence.
+
+For source-wiring tests, prefer the narrowest invariant that does not require reconstructing source structure:
+
+```text
+required declaration/type exists
++ required semantic symbol is consumed somewhere on the intended wiring surface
++ forbidden legacy expression is absent
+```
+
+When an expression itself matters, use a whitespace-insensitive regex or normalize whitespace first. Do not assert formatter output such as `cards = value` on one line.
+
+Escalation rule:
+
+```text
+first unexpected source-test RED
+→ inspect assertion and production
+second failure at the same semantic boundary
+→ stop refining positional substring anchors
+→ replace the test with a position-independent semantic contract
+```
+
+This avoids spending implementation cycles making correct production conform to a brittle textual representation.
