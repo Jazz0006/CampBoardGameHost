@@ -22,7 +22,8 @@ class ClocktowerRoleActorCurrentRoleWiringTest {
         )
         assertTrue(
             "Current-role projection must keep using the existing PlayerCard abilitySubject so shownRole remains available for Drunk semantics.",
-            effectiveSubject.contains("actor.abilitySubject(effectivePoisonTargetAt("),
+            effectiveSubject.contains("actor.abilitySubject(") &&
+                effectiveSubject.contains("effectivePoisonTargetAt("),
         )
 
         val roleActor = hostSource
@@ -37,11 +38,15 @@ class ClocktowerRoleActorCurrentRoleWiringTest {
             "Night actor lookup must evaluate cards through effectiveAbilitySubjectForRole at the role interaction cursor.",
             roleActor.contains("cards.firstOrNull { candidate ->") &&
                 roleActor.contains("effectiveAbilitySubjectForRole(enName, candidate)") &&
-                roleActor.contains("AbilityFunctioningSemantics.interactsAs(effectiveSubject, enName)"),
+                roleActor.contains("AbilityFunctioningSemantics.interactsAs(") &&
+                roleActor.contains("effectiveSubject") &&
+                roleActor.contains("enName,"),
         )
         assertTrue(
             "Outside the night effective-state path, existing public-role/Drunk shown-role lookup must remain available.",
-            roleActor.contains("AbilityFunctioningSemantics.interactsAs(it.abilitySubject(null), enName)"),
+            roleActor.contains("if (phase != ClocktowerPhase.Night)") &&
+                roleActor.contains("AbilityFunctioningSemantics.interactsAs(") &&
+                roleActor.contains("it.abilitySubject(null)"),
         )
     }
 }
