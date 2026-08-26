@@ -136,4 +136,19 @@ class ClocktowerSameNightEffectiveStateProductionWiringTest {
             publication.contains("actor.name == poisonTarget"),
         )
     }
+
+    @Test
+    fun `registration-free night steps must not require a role identity`() {
+        assertTrue(
+            "Registration-free system steps must not evaluate roleEnName eagerly. Registration " +
+                "authority must be entered only when a registration key exists, while a keyed " +
+                "registration still requires an explicit querying role.",
+            hostSource.contains("spyRegistrationGood = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null)") &&
+                hostSource.contains("spyCanRegister = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null)") &&
+                hostSource.contains("recluseRegistrationEvil = if (currentStep.recluseRegistrationKey != null && currentStep.roleEnName != null)") &&
+                hostSource.contains("recluseCanRegister = if (currentStep.recluseRegistrationKey != null && currentStep.roleEnName != null)") &&
+                hostSource.contains("currentStep.spyRegistrationKey?.let { key ->") &&
+                hostSource.contains("currentStep.recluseRegistrationKey?.let { key ->"),
+        )
+    }
 }

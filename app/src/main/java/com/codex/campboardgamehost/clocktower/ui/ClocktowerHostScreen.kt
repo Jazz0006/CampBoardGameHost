@@ -3829,13 +3829,16 @@ internal fun ClocktowerJudgeScreen(
                     )
                 }
             }
-            recordSpyRegistration(
-                currentStep.spyRegistrationKey,
-                currentStep.spyRegistrationTeams,
-                requireNotNull(currentStep.roleEnName),
-                currentStep.spyRegistrationDetail,
-            )
-            recordRecluseRegistration(currentStep.recluseRegistrationKey, currentStep.recluseRegistrationTeams, requireNotNull(currentStep.roleEnName))
+            currentStep.spyRegistrationKey?.let { key ->
+                currentStep.roleEnName?.let { role ->
+                    recordSpyRegistration(key, currentStep.spyRegistrationTeams, role, currentStep.spyRegistrationDetail)
+                }
+            }
+            currentStep.recluseRegistrationKey?.let { key ->
+                currentStep.roleEnName?.let { role ->
+                    recordRecluseRegistration(key, currentStep.recluseRegistrationTeams, role)
+                }
+            }
             recordNightStep(currentStep)
             if (currentStepIndex < nightSteps.lastIndex) {
                 nightStepIndex = currentStepIndex + 1
@@ -3901,10 +3904,14 @@ internal fun ClocktowerJudgeScreen(
                 aliveCards = publicAliveCards,
                 step = currentStep,
                 spyCard = spyCard,
-                spyRegistrationGood = spyRegistersGood(currentStep.spyRegistrationKey, requireNotNull(currentStep.roleEnName)),
+                spyRegistrationGood = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null) {
+                    spyRegistersGood(currentStep.spyRegistrationKey, currentStep.roleEnName)
+                } else false,
                 spyRegisteredRoleEnName = currentStep.spyRegistrationKey?.let { spyRegistrationRole[it] },
                 spyRegistrationRecommendations = registrationRecommendationOptions(currentStep, spyCard, isSpy = true),
-                spyCanRegister = spyCanRegister(requireNotNull(currentStep.roleEnName)),
+                spyCanRegister = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null) {
+                    spyCanRegister(currentStep.roleEnName)
+                } else false,
                 onSpyRegistrationGoodChange = { good ->
                     currentStep.spyRegistrationKey?.let { key ->
                         spyRegistrationGood[key] = good
@@ -3923,10 +3930,14 @@ internal fun ClocktowerJudgeScreen(
                     currentStep.spyRegistrationKey?.let { spyRegistrationRole[it] = roleName }
                 },
                 recluseCard = recluseCard,
-                recluseRegistrationEvil = recluseRegistersEvil(currentStep.recluseRegistrationKey, requireNotNull(currentStep.roleEnName)),
+                recluseRegistrationEvil = if (currentStep.recluseRegistrationKey != null && currentStep.roleEnName != null) {
+                    recluseRegistersEvil(currentStep.recluseRegistrationKey, currentStep.roleEnName)
+                } else false,
                 recluseRegisteredRoleEnName = currentStep.recluseRegistrationKey?.let { recluseRegistrationRole[it] },
                 recluseRegistrationRecommendations = registrationRecommendationOptions(currentStep, recluseCard, isSpy = false),
-                recluseCanRegister = recluseCanRegister(requireNotNull(currentStep.roleEnName)),
+                recluseCanRegister = if (currentStep.recluseRegistrationKey != null && currentStep.roleEnName != null) {
+                    recluseCanRegister(currentStep.roleEnName)
+                } else false,
                 onRecluseRegistrationEvilChange = { evil ->
                     currentStep.recluseRegistrationKey?.let { key ->
                         recluseRegistrationEvil[key] = evil
@@ -3992,17 +4003,16 @@ internal fun ClocktowerJudgeScreen(
                             }
                         }
                     }
-                    recordSpyRegistration(
-                        currentStep.spyRegistrationKey,
-                        currentStep.spyRegistrationTeams,
-                        requireNotNull(currentStep.roleEnName),
-                        currentStep.spyRegistrationDetail,
-                    )
-                    recordRecluseRegistration(
-                        currentStep.recluseRegistrationKey,
-                        currentStep.recluseRegistrationTeams,
-                        requireNotNull(currentStep.roleEnName),
-                    )
+                    currentStep.spyRegistrationKey?.let { key ->
+                        currentStep.roleEnName?.let { role ->
+                            recordSpyRegistration(key, currentStep.spyRegistrationTeams, role, currentStep.spyRegistrationDetail)
+                        }
+                    }
+                    currentStep.recluseRegistrationKey?.let { key ->
+                        currentStep.roleEnName?.let { role ->
+                            recordRecluseRegistration(key, currentStep.recluseRegistrationTeams, role)
+                        }
+                    }
                 },
                 onShowPlayerDisplay = showPlayerDisplay@{ displayStep ->
                     if (!informationDecisionPublicationAllowed(displayStep)) return@showPlayerDisplay
@@ -4131,10 +4141,14 @@ internal fun ClocktowerJudgeScreen(
                         aliveCards = publicAliveCards,
                         step = currentStep,
                         spyCard = spyCard,
-                        spyRegistrationGood = spyRegistersGood(currentStep.spyRegistrationKey, requireNotNull(currentStep.roleEnName)),
+                        spyRegistrationGood = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null) {
+                            spyRegistersGood(currentStep.spyRegistrationKey, currentStep.roleEnName)
+                        } else false,
                         spyRegisteredRoleEnName = currentStep.spyRegistrationKey?.let { spyRegistrationRole[it] },
                         spyRegistrationRecommendations = registrationRecommendationOptions(currentStep, spyCard, isSpy = true),
-                        spyCanRegister = spyCanRegister(requireNotNull(currentStep.roleEnName)),
+                        spyCanRegister = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null) {
+                            spyCanRegister(currentStep.roleEnName)
+                        } else false,
                         onSpyRegistrationGoodChange = { good ->
                             currentStep.spyRegistrationKey?.let { key ->
                                 spyRegistrationGood[key] = good
@@ -4146,10 +4160,14 @@ internal fun ClocktowerJudgeScreen(
                         },
                         onSpyRegistrationRoleChange = { roleName -> currentStep.spyRegistrationKey?.let { spyRegistrationRole[it] = roleName } },
                         recluseCard = recluseCard,
-                        recluseRegistrationEvil = recluseRegistersEvil(currentStep.recluseRegistrationKey, requireNotNull(currentStep.roleEnName)),
+                        recluseRegistrationEvil = if (currentStep.recluseRegistrationKey != null && currentStep.roleEnName != null) {
+                            recluseRegistersEvil(currentStep.recluseRegistrationKey, currentStep.roleEnName)
+                        } else false,
                         recluseRegisteredRoleEnName = currentStep.recluseRegistrationKey?.let { recluseRegistrationRole[it] },
                         recluseRegistrationRecommendations = registrationRecommendationOptions(currentStep, recluseCard, isSpy = false),
-                        recluseCanRegister = recluseCanRegister(requireNotNull(currentStep.roleEnName)),
+                        recluseCanRegister = if (currentStep.recluseRegistrationKey != null && currentStep.roleEnName != null) {
+                            recluseCanRegister(currentStep.roleEnName)
+                        } else false,
                         onRecluseRegistrationEvilChange = { evil ->
                             currentStep.recluseRegistrationKey?.let { key ->
                                 recluseRegistrationEvil[key] = evil
@@ -4217,17 +4235,16 @@ internal fun ClocktowerJudgeScreen(
                                     }
                                 }
                             }
-                            recordSpyRegistration(
-                                currentStep.spyRegistrationKey,
-                                currentStep.spyRegistrationTeams,
-                                requireNotNull(currentStep.roleEnName),
-                                currentStep.spyRegistrationDetail,
-                            )
-                            recordRecluseRegistration(
-                                currentStep.recluseRegistrationKey,
-                                currentStep.recluseRegistrationTeams,
-                                requireNotNull(currentStep.roleEnName),
-                            )
+                            currentStep.spyRegistrationKey?.let { key ->
+                                currentStep.roleEnName?.let { role ->
+                                    recordSpyRegistration(key, currentStep.spyRegistrationTeams, role, currentStep.spyRegistrationDetail)
+                                }
+                            }
+                            currentStep.recluseRegistrationKey?.let { key ->
+                                currentStep.roleEnName?.let { role ->
+                                    recordRecluseRegistration(key, currentStep.recluseRegistrationTeams, role)
+                                }
+                            }
                         },
                         onShowPlayerDisplay = showPlayerDisplay@{ displayStep ->
                             if (!informationDecisionPublicationAllowed(displayStep)) return@showPlayerDisplay
@@ -4265,13 +4282,16 @@ internal fun ClocktowerJudgeScreen(
                             }
                         },
                         onNext = {
-                            recordSpyRegistration(
-                                currentStep.spyRegistrationKey,
-                                currentStep.spyRegistrationTeams,
-                                requireNotNull(currentStep.roleEnName),
-                                currentStep.spyRegistrationDetail,
-                            )
-                            recordRecluseRegistration(currentStep.recluseRegistrationKey, currentStep.recluseRegistrationTeams, requireNotNull(currentStep.roleEnName))
+                            currentStep.spyRegistrationKey?.let { key ->
+                                currentStep.roleEnName?.let { role ->
+                                    recordSpyRegistration(key, currentStep.spyRegistrationTeams, role, currentStep.spyRegistrationDetail)
+                                }
+                            }
+                            currentStep.recluseRegistrationKey?.let { key ->
+                                currentStep.roleEnName?.let { role ->
+                                    recordRecluseRegistration(key, currentStep.recluseRegistrationTeams, role)
+                                }
+                            }
                             recordNightStep(currentStep)
                             if (currentStepIndex < nightSteps.lastIndex) {
                                 nightStepIndex = currentStepIndex + 1
