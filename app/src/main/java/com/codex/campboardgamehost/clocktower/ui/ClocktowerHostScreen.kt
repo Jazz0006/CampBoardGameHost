@@ -106,6 +106,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
@@ -926,11 +927,33 @@ internal fun ClocktowerJudgeScreen(
         ?.let { registrationKey("FortuneTellerRecluse", it.name) }
     val fortuneTellerMatched = if (fortuneTellerFirst != null && fortuneTellerSecond != null) {
         val targets = setOf(fortuneTellerFirst, fortuneTellerSecond)
-        cards.any {
-            it.name in targets && (
-                it.clocktowerTeam == ClocktowerTeam.Demon ||
-                    it.name == redHerring ||
-                    (it.name == recluseCard?.name && recluseRegistersEvil(fortuneTellerRecluseRegistrationKey, "Fortune Teller"))
+        val fortuneTellerInteractionId = ClocktowerProductionNightStepIdentity
+            .role(RoleId("Fortune Teller"))
+            .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+        val fortuneTellerEffectiveState = effectiveNightStateAt(
+            fortuneTellerInteractionId,
+            ClocktowerInteractionBoundary.BEFORE,
+        )
+        val roleDefinitionsById = clocktowerRoleDefinitionsForScript(script)
+            .associateBy { it.id }
+        cards.any { card ->
+            val seat = cards.indexOf(card).plus(1)
+            val currentRoleIsDemon =
+                seat > 0 &&
+                    fortuneTellerEffectiveState.currentRoleId(seat)
+                        ?.let(roleDefinitionsById::get)
+                        ?.type == CharacterType.DEMON
+
+            card.name in targets && (
+                currentRoleIsDemon ||
+                    card.name == redHerring ||
+                    (
+                        card.name == recluseCard?.name &&
+                            recluseRegistersEvil(
+                                fortuneTellerRecluseRegistrationKey,
+                                "Fortune Teller",
+                            )
+                        )
                 )
         }
     } else {
