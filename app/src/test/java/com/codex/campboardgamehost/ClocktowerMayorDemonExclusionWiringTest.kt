@@ -41,6 +41,7 @@ class ClocktowerMayorDemonExclusionWiringTest {
         )
 
         val mayorUiBlock = nightUiSource
+            .substringAfter("ClocktowerNightAction.DemonKill ->")
             .substringAfter("ClocktowerNightAction.MayorRedirect ->")
             .substringBefore("ClocktowerNightAction.DemonSuccessor ->")
         assertTrue(
