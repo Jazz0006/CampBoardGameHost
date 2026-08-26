@@ -47,9 +47,9 @@ class MayorRedirectRecommenderTest {
         )
 
         val recommendations = MayorRedirectRecommender.recommend(game, mayorSeat = 1)
-        val allOutcomes = game.state.game.players.associate { player ->
-            val outcome = MayorRedirectRecommender.resolveOutcome(game, mayorSeat = 1, targetSeat = player.seat)
-            player.seat to outcome
+        val legalOutcomeSeats = listOf(1, 2, 3, 4)
+        val allOutcomes = legalOutcomeSeats.associateWith { seat ->
+            MayorRedirectRecommender.resolveOutcome(game, mayorSeat = 1, targetSeat = seat)
         }
 
         assertNull(allOutcomes.getValue(2).actualDeathSeat)
@@ -57,6 +57,21 @@ class MayorRedirectRecommenderTest {
         assertNull(allOutcomes.getValue(4).actualDeathSeat)
         assertEquals(1, allOutcomes.getValue(1).actualDeathSeat)
         assertTrue(recommendations.isNotEmpty())
+    }
+
+    @Test
+    fun `Demon is never a Mayor redirect recommendation or legal resolved target`() {
+        val request = request()
+
+        val recommendationSeats = MayorRedirectRecommender.recommend(request, mayorSeat = 1)
+            .map { it.targetSeat() }
+
+        assertTrue(5 !in recommendationSeats)
+        assertTrue(
+            runCatching {
+                MayorRedirectRecommender.resolveOutcome(request, mayorSeat = 1, targetSeat = 5)
+            }.exceptionOrNull() is IllegalArgumentException,
+        )
     }
 
     @Test
@@ -117,5 +132,4 @@ class MayorRedirectRecommenderTest {
 
     private fun com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRecommendation.targetSeat(): Int =
         (candidate.choice as DynamicStorytellerChoice.MayorDeathResolution).targetSeat
-
 }
