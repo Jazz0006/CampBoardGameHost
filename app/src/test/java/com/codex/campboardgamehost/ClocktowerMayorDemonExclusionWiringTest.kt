@@ -40,17 +40,19 @@ class ClocktowerMayorDemonExclusionWiringTest {
                 mayorStateBlock.contains("effectiveMayorRedirectTarget"),
         )
 
-        val mayorUiBlock = nightUiSource
-            .substringAfter("ClocktowerNightAction.DemonKill ->")
-            .substringAfter("ClocktowerNightAction.MayorRedirect ->")
-            .substringBefore("ClocktowerNightAction.DemonSuccessor ->")
         assertTrue(
-            "Manual Mayor selection must consume the rules-owned legal target set.",
-            mayorUiBlock.contains("mayorRedirectTargetCards"),
+            "Mayor UI must expose a dedicated rules-owned legal target parameter.",
+            Regex("""mayorRedirectTargetCards\s*:\s*List<PlayerCard>""")
+                .containsMatchIn(nightUiSource),
+        )
+        assertTrue(
+            "Manual Mayor selection must consume the rules-owned legal target set regardless of formatting.",
+            Regex("""cards\s*=\s*mayorRedirectTargetCards\s*,""")
+                .containsMatchIn(nightUiSource),
         )
         assertFalse(
             "Mayor manual legality must not be reconstructed from assisted recommendations.",
-            mayorUiBlock.contains("assistedDecisionOptions.map(ClocktowerDecisionOption::targetName)"),
+            nightUiSource.contains("assistedDecisionOptions.map(ClocktowerDecisionOption::targetName)"),
         )
     }
 }
