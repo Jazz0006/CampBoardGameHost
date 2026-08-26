@@ -3,6 +3,9 @@ package com.codex.campboardgamehost
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
 import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionContext
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionSemantics
 
 import android.content.Context
 import android.content.res.Configuration
@@ -691,11 +694,26 @@ internal fun ClocktowerJudgeScreen(
     val livingImp = demonCard?.takeIf {
         it.eliminatedRound == null && it.clocktowerRole?.enName == "Imp"
     }
-    val impSelfKillNeedsSuccessor =
+    val impSelfKillActuallyKilledImp =
         livingImp != null &&
-            pendingNightDeath == livingImp.name &&
-            !demonPoisonedTonight &&
-            publicAliveCards.any { it.clocktowerTeam == ClocktowerTeam.Minion }
+            nightDeathWillOccur &&
+            resolvedNightDeathCard?.name == livingImp.name
+    val functioningScarletWoman = actualClocktowerRoleCards(cards, "Scarlet Woman")
+        .firstOrNull { AbilityFunctioningSemantics.functionsAs(it.abilitySubject(poisonTarget), "Scarlet Woman") }
+    val demonSuccessionResolution = DemonSuccessionSemantics.resolve(
+        DemonSuccessionContext(
+            demonActuallyDied = nightDeathWillOccur && resolvedNightDeathCard?.clocktowerTeam == ClocktowerTeam.Demon,
+            demonDeathWasImpSelfKill = impSelfKillActuallyKilledImp,
+            aliveCountBeforeDemonDeath = publicAliveCards.size,
+            functioningScarletWomanSeat = functioningScarletWoman?.let { cards.indexOf(it) + 1 },
+            livingMinionSeats = publicAliveCards
+                .mapIndexedNotNull { index, card ->
+                    card.takeIf { it.clocktowerTeam == ClocktowerTeam.Minion }?.let { index + 1 }
+                }
+                .toSet(),
+        ),
+    )
+    val impSelfKillNeedsSuccessor = demonSuccessionResolution != DemonSuccessionResolution.None
     val sageNightDeath = resolvedNightDeathCard
         ?.takeIf { nightDeathWillOccur && AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Sage") }
     val otherNightWakingRoleIds = buildSet {

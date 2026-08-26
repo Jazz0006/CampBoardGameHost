@@ -209,4 +209,31 @@ class ClocktowerSameNightEffectiveStateProductionWiringTest {
                 hostSource.contains("ClocktowerInteractionBoundary.BEFORE"),
         )
     }
+
+    @Test
+    fun `Imp self kill succession must require the Imp to actually die`() {
+        val successionBlock = hostSource
+            .substringAfter("val demonCard =")
+            .substringBefore("val sageNightDeath =")
+
+        assertTrue(
+            "Imp succession must be derived through the pure DemonSuccessionSemantics authority.",
+            successionBlock.contains("DemonSuccessionSemantics.resolve"),
+        )
+        assertTrue(
+            "Selecting the Imp is insufficient: production must prove the resolved victim is the Imp " +
+                "and that the mechanical death actually occurs.",
+            successionBlock.contains("val impSelfKillActuallyKilledImp =") &&
+                successionBlock.contains("nightDeathWillOccur") &&
+                successionBlock.contains("resolvedNightDeathCard?.name == livingImp.name"),
+        )
+        assertFalse(
+            "Production must not derive succession directly from self-target + poison + any living Minion.",
+            successionBlock.contains(
+                "pendingNightDeath == livingImp.name &&\n" +
+                    "            !demonPoisonedTonight &&\n" +
+                    "            publicAliveCards.any",
+            ),
+        )
+    }
 }
