@@ -600,8 +600,14 @@ internal fun ClocktowerJudgeScreen(
     val recordedRecluseRegistrations = remember { mutableStateMapOf<String, Boolean>() }
     val recordedNightSteps = remember { mutableStateMapOf<String, Boolean>() }
     var effectivePoisonForRole: (String) -> String? = { poisonTarget }
+    var effectiveRoleForRegistration: (String, PlayerCard) -> RoleId? = { _, card ->
+        card.clocktowerRole?.enName?.let(::RoleId)
+    }
     fun registrationKey(ability: String, subject: String = "spy") = "${phase.name}:$round:$ability:$subject"
-    fun spyCanRegister(queryingRoleEnName: String): Boolean = spyCard != null && effectivePoisonForRole(queryingRoleEnName) != spyCard.name
+    fun spyCanRegister(queryingRoleEnName: String): Boolean =
+        spyCard != null &&
+            effectiveRoleForRegistration(queryingRoleEnName, spyCard) == RoleId("Spy") &&
+            effectivePoisonForRole(queryingRoleEnName) != spyCard.name
     fun spyRegistersGood(key: String?, queryingRoleEnName: String): Boolean = key != null && spyCanRegister(queryingRoleEnName) && spyRegistrationGood[key] == true
     fun registeredRole(key: String?, teams: List<ClocktowerTeam>, queryingRoleEnName: String): ClocktowerRole? {
         if (!spyRegistersGood(key, queryingRoleEnName)) return spyCard?.clocktowerRole
@@ -634,7 +640,10 @@ internal fun ClocktowerJudgeScreen(
             listOf(spyCard.name),
         )
     }
-    fun recluseCanRegister(queryingRoleEnName: String): Boolean = recluseCard != null && effectivePoisonForRole(queryingRoleEnName) != recluseCard.name
+    fun recluseCanRegister(queryingRoleEnName: String): Boolean =
+        recluseCard != null &&
+            effectiveRoleForRegistration(queryingRoleEnName, recluseCard) == RoleId("Recluse") &&
+            effectivePoisonForRole(queryingRoleEnName) != recluseCard.name
     fun recluseRegistersEvil(key: String?, queryingRoleEnName: String): Boolean =
         key != null && recluseCanRegister(queryingRoleEnName) && recluseRegistrationEvil[key] == true
     fun recluseRegisteredRole(key: String?, teams: List<ClocktowerTeam>, queryingRoleEnName: String): ClocktowerRole? {
@@ -920,6 +929,25 @@ internal fun ClocktowerJudgeScreen(
                 .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT),
             ClocktowerInteractionBoundary.BEFORE,
         )
+    }
+
+    effectiveRoleForRegistration = { enName, card ->
+        if (phase != ClocktowerPhase.Night) {
+            card.clocktowerRole?.enName?.let(::RoleId)
+        } else {
+            val interactionId = ClocktowerProductionNightStepIdentity
+                .role(RoleId(enName))
+                .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+            val seat = cards.indexOf(card).plus(1)
+            if (interactionId !in otherNightCanonicalInteractionIds || seat <= 0) {
+                null
+            } else {
+                effectiveNightStateAt(
+                    interactionId,
+                    ClocktowerInteractionBoundary.BEFORE,
+                ).currentRoleId(seat)
+            }
+        }
     }
 
     val fortuneTellerRecluseRegistrationKey = recluseCard
