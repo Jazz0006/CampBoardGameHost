@@ -728,8 +728,16 @@ internal fun ClocktowerJudgeScreen(
             livingMinionSeats = livingMinionSeats,
         ),
     )
+    val demonSuccessorTargetSeats = when (val resolution = demonSuccessionResolution) {
+        DemonSuccessionResolution.None -> emptySet()
+        is DemonSuccessionResolution.Forced -> setOf(resolution.targetSeat)
+        is DemonSuccessionResolution.Choice -> resolution.targetSeats
+    }
+    val demonSuccessorTargetCards = cards.filterIndexed { index, _ ->
+        index + 1 in demonSuccessorTargetSeats
+    }
     val impSelfKillNeedsSuccessor =
-        demonSuccessionResolution != DemonSuccessionResolution.None
+        demonSuccessorTargetSeats.isNotEmpty()
     val sageNightDeath = resolvedNightDeathCard
         ?.takeIf { nightDeathWillOccur && AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Sage") }
     val otherNightWakingRoleIds = buildSet {
@@ -1703,7 +1711,8 @@ internal fun ClocktowerJudgeScreen(
         }
     }
 
-    fun demonSuccessorDecisionOptions(): List<ClocktowerDecisionOption> {
+    fun demonSuccessorDecisionOptions(legalTargetSeats: Set<Int>): List<ClocktowerDecisionOption> {
+        if (legalTargetSeats.isEmpty()) return emptyList()
         val request = DynamicDecisionRequest(
             id = registrationKey("DemonSuccessor"),
             type = StorytellerDecisionType.DEMON_SUCCESSION,
@@ -1715,6 +1724,7 @@ internal fun ClocktowerJudgeScreen(
         ).mapNotNull { recommendation ->
             val explanation = recommendationCoordinator.explainDecision(recommendation)
             val choice = recommendation.candidate.choice as DynamicStorytellerChoice.DemonSuccessor
+            if (choice.targetSeat !in legalTargetSeats) return@mapNotNull null
             val target = cards.getOrNull(choice.targetSeat - 1) ?: return@mapNotNull null
             val warning = when {
                 recommendation.warnings.any { it.ruleId == "scarlet-woman-mandatory" } ->
@@ -3013,7 +3023,7 @@ internal fun ClocktowerJudgeScreen(
                         ),
                         action = ClocktowerNightAction.DemonSuccessor,
                         roleEnName = "Imp",
-                        decisionOptions = demonSuccessorDecisionOptions(),
+                        decisionOptions = demonSuccessorDecisionOptions(demonSuccessorTargetSeats),
                     )
             },
         ),
@@ -3984,6 +3994,7 @@ internal fun ClocktowerJudgeScreen(
                 cards = cards,
                 aliveCards = publicAliveCards,
                 chambermaidTargetCards = chambermaidTargetCards,
+                demonSuccessorTargetCards = demonSuccessorTargetCards,
                 step = currentStep,
                 spyCard = spyCard,
                 spyRegistrationGood = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null) {
@@ -4222,6 +4233,7 @@ internal fun ClocktowerJudgeScreen(
                         cards = cards,
                         aliveCards = publicAliveCards,
                         chambermaidTargetCards = chambermaidTargetCards,
+                        demonSuccessorTargetCards = demonSuccessorTargetCards,
                         step = currentStep,
                         spyCard = spyCard,
                         spyRegistrationGood = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null) {

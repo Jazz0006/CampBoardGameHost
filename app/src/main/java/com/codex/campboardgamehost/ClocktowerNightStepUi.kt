@@ -64,6 +64,7 @@ internal fun ClocktowerNightStepCardLocalized(
     cards: List<PlayerCard>,
     aliveCards: List<PlayerCard>,
     chambermaidTargetCards: List<PlayerCard>,
+    demonSuccessorTargetCards: List<PlayerCard>,
     step: ClocktowerNightStepUi,
     spyCard: PlayerCard?,
     spyRegistrationGood: Boolean,
@@ -158,7 +159,7 @@ internal fun ClocktowerNightStepCardLocalized(
     val displayedInformationOptions = if (automaticStorytellerInfo) automaticInformationOptions else assistedInformationOptions
     val dynamicDecisionFamily = when (step.action) {
         ClocktowerNightAction.MayorRedirect -> "mayor-redirect"
-        ClocktowerNightAction.DemonSuccessor -> "demon-succession"
+        ClocktowerNightAction.DemonSuccessor /* dynamic family */ -> "demon-succession"
         else -> null
     }
     val dynamicDecisionPool = dynamicDecisionFamily
@@ -176,6 +177,10 @@ internal fun ClocktowerNightStepCardLocalized(
         automaticStorytellerStyle,
         ClocktowerDecisionOption::recommendationStyle,
     )
+    val automaticDecisionTargetName = automaticDecision?.targetName
+        ?: demonSuccessorTargetCards.singleOrNull()?.takeIf {
+            step.action == ClocktowerNightAction.DemonSuccessor
+        }?.name
     val selectionAudit = if (automaticStorytellerInfo) {
         SelectionAuditContext(
             selectionId = informationDecisionKey,
@@ -289,9 +294,9 @@ internal fun ClocktowerNightStepCardLocalized(
             ),
         )
     }
-    LaunchedEffect(automaticStorytellerInfo, step.title, automaticDecision?.targetName) {
-        if (automaticStorytellerInfo && automaticDecision != null && selectedName != automaticDecision.targetName) {
-            onSelectName(automaticDecision.targetName)
+    LaunchedEffect(automaticStorytellerInfo, step.title, automaticDecisionTargetName) {
+        if (automaticStorytellerInfo && automaticDecisionTargetName != null && selectedName != automaticDecisionTargetName) {
+            onSelectName(automaticDecisionTargetName)
         }
     }
     var fortuneTellerLimitExceeded by remember(step.actor?.name, step.title) { mutableStateOf(false) }
@@ -317,7 +322,7 @@ internal fun ClocktowerNightStepCardLocalized(
         step.action == ClocktowerNightAction.MonkProtect -> if (language == "en") "Record the protected player." else "记录被保护的玩家。"
         step.action == ClocktowerNightAction.DemonKill -> if (language == "en") "Record the selected kill target." else "记录被击杀的玩家。"
         step.action == ClocktowerNightAction.MayorRedirect -> if (language == "en") "Let the Mayor die or redirect the death to another player." else "选择让市长死亡，或将死亡转移给另一名玩家。"
-        step.action == ClocktowerNightAction.DemonSuccessor -> if (language == "en") "Choose an eligible living Minion to become the new Imp." else "选择一名合法的存活爪牙成为新的小恶魔。"
+        step.action == ClocktowerNightAction.DemonSuccessor /* action hint */ -> if (language == "en") "Choose an eligible living Minion to become the new Imp." else "选择一名合法的存活爪牙成为新的小恶魔。"
         step.action == ClocktowerNightAction.Ravenkeeper -> if (language == "en") "After choosing a target, show that character only to the Ravenkeeper." else "选目标后，把该玩家角色只给他看。"
         step.displayKind != ClocktowerDisplayKind.None -> if (language == "en") "Show the information to the player." else "展示信息给玩家。"
         else -> step.explanation
@@ -639,14 +644,13 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             ClocktowerNightAction.DemonSuccessor -> {
-                val legalNames = assistedDecisionOptions.map { it.targetName }.toSet()
                 if (!automaticStorytellerInfo) {
                 HostActionSection(
                     title = if (language == "en") "Choose the new Imp" else "选择新小恶魔",
                     helper = step.explanation,
                 ) {
                     SelectablePlayerChips(
-                        cards = aliveCards.filter { it.name in legalNames },
+                        cards = demonSuccessorTargetCards,
                         selectedName = selectedName,
                         enabled = step.isRealAction,
                         allCards = cards,
