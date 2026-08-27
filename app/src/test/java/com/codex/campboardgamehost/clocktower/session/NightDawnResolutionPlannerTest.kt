@@ -79,4 +79,23 @@ class NightDawnResolutionPlannerTest {
                 afterMaterializationDecision.contains("clocktowerPoisonTarget ="),
         )
     }
+
+    @Test
+    fun `stale restored Mayor redirect to Demon fails closed at Dawn`() {
+        val confirmNight = appSource
+            .substringAfter("onConfirmNight = {")
+            .substringBefore("onShowResults = {")
+
+        val redirectResolution = confirmNight
+            .substringAfter("val mayorCanRedirect =")
+            .substringBefore("val deathName =")
+
+        assertTrue(
+            "Dawn must revalidate a persisted confirmed Mayor redirect before consuming it. UI and " +
+                "recommendation filtering are insufficient because restored or stale checkpoint data " +
+                "can still contain a Demon target.",
+            redirectResolution.contains("MayorRedirectLegality.canReceiveRedirect(") &&
+                redirectResolution.contains("clocktowerConfirmedMayorRedirectTarget"),
+        )
+    }
 }
