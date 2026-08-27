@@ -78,10 +78,118 @@ class NightCheckpointReducerTest {
         assertEquals("Player 7", reduced.confirmedDemonSuccessorTarget)
     }
 
+    @Test
+    fun `editing Poison draft does not invalidate confirmed successor`() {
+        val checkpoint = checkpoint(
+            confirmedPoisonTarget = "Player 2",
+            poisonDraftTarget = "Player 2",
+            confirmedDemonSuccessorTarget = "Player 7",
+        )
+
+        val reduced = NightCheckpointReducer.reduce(
+            checkpoint = checkpoint,
+            event = NightResolutionEvent.EditPoisonDraft("Player 6"),
+        )
+
+        assertEquals("Player 2", reduced.confirmedPoisonTarget)
+        assertEquals("Player 6", reduced.poisonDraftTarget)
+        assertEquals("Player 7", reduced.confirmedDemonSuccessorTarget)
+    }
+
+    @Test
+    fun `reconfirming changed Poison commits draft and invalidates dependent successor`() {
+        val checkpoint = checkpoint(
+            confirmedPoisonTarget = "Player 2",
+            poisonDraftTarget = "Player 6",
+            confirmedDemonSuccessorTarget = "Player 7",
+        )
+
+        val reduced = NightCheckpointReducer.reduce(
+            checkpoint = checkpoint,
+            event = NightResolutionEvent.ConfirmPoison,
+        )
+
+        assertEquals("Player 6", reduced.confirmedPoisonTarget)
+        assertNull(reduced.confirmedDemonSuccessorTarget)
+    }
+
+    @Test
+    fun `reconfirming unchanged Poison preserves dependent successor`() {
+        val checkpoint = checkpoint(
+            confirmedPoisonTarget = "Player 2",
+            poisonDraftTarget = "Player 2",
+            confirmedDemonSuccessorTarget = "Player 7",
+        )
+
+        val reduced = NightCheckpointReducer.reduce(
+            checkpoint = checkpoint,
+            event = NightResolutionEvent.ConfirmPoison,
+        )
+
+        assertEquals("Player 2", reduced.confirmedPoisonTarget)
+        assertEquals("Player 7", reduced.confirmedDemonSuccessorTarget)
+    }
+
+    @Test
+    fun `editing Monk draft does not invalidate confirmed successor`() {
+        val checkpoint = checkpoint(
+            confirmedMonkTarget = "Player 3",
+            monkDraftTarget = "Player 3",
+            confirmedDemonSuccessorTarget = "Player 7",
+        )
+
+        val reduced = NightCheckpointReducer.reduce(
+            checkpoint = checkpoint,
+            event = NightResolutionEvent.EditMonkProtectionDraft("Player 8"),
+        )
+
+        assertEquals("Player 3", reduced.confirmedMonkTarget)
+        assertEquals("Player 8", reduced.monkDraftTarget)
+        assertEquals("Player 7", reduced.confirmedDemonSuccessorTarget)
+    }
+
+    @Test
+    fun `reconfirming changed Monk protection commits draft and invalidates dependent successor`() {
+        val checkpoint = checkpoint(
+            confirmedMonkTarget = "Player 3",
+            monkDraftTarget = "Player 8",
+            confirmedDemonSuccessorTarget = "Player 7",
+        )
+
+        val reduced = NightCheckpointReducer.reduce(
+            checkpoint = checkpoint,
+            event = NightResolutionEvent.ConfirmMonkProtection,
+        )
+
+        assertEquals("Player 8", reduced.confirmedMonkTarget)
+        assertNull(reduced.confirmedDemonSuccessorTarget)
+    }
+
+    @Test
+    fun `reconfirming unchanged Monk protection preserves dependent successor`() {
+        val checkpoint = checkpoint(
+            confirmedMonkTarget = "Player 3",
+            monkDraftTarget = "Player 3",
+            confirmedDemonSuccessorTarget = "Player 7",
+        )
+
+        val reduced = NightCheckpointReducer.reduce(
+            checkpoint = checkpoint,
+            event = NightResolutionEvent.ConfirmMonkProtection,
+        )
+
+        assertEquals("Player 3", reduced.confirmedMonkTarget)
+        assertEquals("Player 7", reduced.confirmedDemonSuccessorTarget)
+    }
+
     private fun checkpoint(
         nightStepIndex: Int = 4,
         confirmedAttackTarget: String? = null,
         attackDraftTarget: String? = null,
+        confirmedPoisonTarget: String? = "Player 2",
+        poisonDraftTarget: String? = "Player 2",
+        confirmedMonkTarget: String? = "Player 3",
+        monkDraftTarget: String? = "Player 3",
         confirmedDemonSuccessorTarget: String? = null,
     ): ClocktowerNightCheckpoint = ClocktowerNightCheckpoint(
         phaseName = "Night",
@@ -92,10 +200,10 @@ class NightCheckpointReducerTest {
         nightStepIndex = nightStepIndex,
         confirmedAttackTarget = confirmedAttackTarget,
         attackDraftTarget = attackDraftTarget,
-        confirmedPoisonTarget = "Player 2",
-        poisonDraftTarget = "Player 2",
-        confirmedMonkTarget = "Player 3",
-        monkDraftTarget = "Player 3",
+        confirmedPoisonTarget = confirmedPoisonTarget,
+        poisonDraftTarget = poisonDraftTarget,
+        confirmedMonkTarget = confirmedMonkTarget,
+        monkDraftTarget = monkDraftTarget,
         confirmedMayorRedirectTarget = null,
         mayorRedirectDraftTarget = null,
         pendingNewDemonName = null,
