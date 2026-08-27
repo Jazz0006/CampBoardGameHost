@@ -65,15 +65,41 @@ internal object NightDawnResolutionPlanner {
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
     fun confirmNewDemonIdentity(
         baseGameState: GameState,
         checkpoint: ClocktowerNightCheckpoint,
         demonRoleId: RoleId,
-    ): NightDawnResolutionTransition = NightDawnResolutionTransition(
-        checkpoint = checkpoint,
-        continuation = NightResolutionContinuation.AWAIT_DEMON_SUCCESSOR,
-        dawnCommitIntent = null,
-        outcomeEvaluationAllowed = false,
-    )
+    ): NightDawnResolutionTransition {
+        val pendingName = checkpoint.pendingNewDemonName
+        val pendingSeat = pendingName
+            ?.let { name -> baseGameState.players.firstOrNull { it.name == name }?.seat }
+
+        if (pendingSeat == null) {
+            return NightDawnResolutionTransition(
+                checkpoint = checkpoint,
+                continuation = NightResolutionContinuation.AWAIT_DEMON_SUCCESSOR,
+                dawnCommitIntent = null,
+                outcomeEvaluationAllowed = false,
+            )
+        }
+
+        return NightDawnResolutionTransition(
+            checkpoint = checkpoint.copy(
+                pendingNewDemonName = null,
+                pendingNightNewDemonIdentityName = null,
+                demonSuccessorDraftTarget = null,
+                confirmedDemonSuccessorTarget = null,
+            ),
+            continuation = NightResolutionContinuation.DAWN,
+            dawnCommitIntent = DawnCommitIntent(
+                roleChanges = listOf(
+                    DawnRoleChangeIntent(
+                        targetSeat = pendingSeat,
+                        roleId = demonRoleId,
+                    ),
+                ),
+            ),
+            outcomeEvaluationAllowed = true,
+        )
+    }
 }
