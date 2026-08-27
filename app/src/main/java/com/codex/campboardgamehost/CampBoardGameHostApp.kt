@@ -2813,15 +2813,22 @@ internal fun CampBoardGameHostApp() {
                             advanceClocktowerPlayerInputRevision()
                             clocktowerButlerMaster = it
                         },
-                        onSelectMonkProtectedTarget = {
+                        onSelectMonkProtectedTarget = { selectedTarget ->
                             advanceClocktowerPlayerInputRevision()
-                            clocktowerMonkProtectedTarget = it
+                            val reducedCheckpoint = NightCheckpointReducer.reduce(
+                                checkpoint = currentClocktowerNightCheckpoint(),
+                                event = NightResolutionEvent.EditMonkProtectionDraft(selectedTarget),
+                            )
+                            clocktowerMonkProtectedTarget = reducedCheckpoint.monkDraftTarget
                         },
                         onConfirmMonkProtectedTarget = {
-                            if (clocktowerConfirmedMonkProtectedTarget != clocktowerMonkProtectedTarget) {
-                                clocktowerConfirmedDemonSuccessorTarget = null
-                                clocktowerDemonSuccessorTarget = null
-                                val targetName = clocktowerMonkProtectedTarget
+                            val checkpoint = currentClocktowerNightCheckpoint()
+                            val reducedCheckpoint = NightCheckpointReducer.reduce(
+                                checkpoint = checkpoint,
+                                event = NightResolutionEvent.ConfirmMonkProtection,
+                            )
+                            if (reducedCheckpoint.confirmedMonkTarget != checkpoint.confirmedMonkTarget) {
+                                val targetName = reducedCheckpoint.confirmedMonkTarget
                                 if (targetName != null) {
                                     val targetSeat = clocktowerSeatFor(targetName)
                                     val localSequence = clocktowerEventCounter + 1
@@ -2837,7 +2844,8 @@ internal fun CampBoardGameHostApp() {
                                         targetSeat = targetSeat,
                                     ))
                                 }
-                                clocktowerConfirmedMonkProtectedTarget = clocktowerMonkProtectedTarget
+                                clocktowerConfirmedMonkProtectedTarget = reducedCheckpoint.confirmedMonkTarget
+                                clocktowerConfirmedDemonSuccessorTarget = reducedCheckpoint.confirmedDemonSuccessorTarget
                                 advanceClocktowerGameStateRevision()
                             }
                         },
