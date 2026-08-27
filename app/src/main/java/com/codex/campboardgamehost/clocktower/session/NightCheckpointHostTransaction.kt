@@ -35,6 +35,63 @@ internal object NightCheckpointHostTransaction {
         revisionIntent = NightCheckpointRevisionIntent.PLAYER_INPUT,
     )
 
+    fun confirmPoison(
+        checkpoint: ClocktowerNightCheckpoint,
+    ): NightCheckpointHostTransactionResult {
+        val reducedCheckpoint = NightCheckpointReducer.reduce(
+            checkpoint = checkpoint,
+            event = NightResolutionEvent.ConfirmPoison,
+        )
+        return NightCheckpointHostTransactionResult(
+            checkpoint = reducedCheckpoint,
+            revisionIntent = if (
+                reducedCheckpoint.confirmedPoisonTarget != checkpoint.confirmedPoisonTarget
+            ) {
+                NightCheckpointRevisionIntent.GAME_STATE
+            } else {
+                NightCheckpointRevisionIntent.NONE
+            },
+        )
+    }
+
+    fun confirmMonkProtection(
+        checkpoint: ClocktowerNightCheckpoint,
+    ): NightCheckpointHostTransactionResult {
+        val reducedCheckpoint = NightCheckpointReducer.reduce(
+            checkpoint = checkpoint,
+            event = NightResolutionEvent.ConfirmMonkProtection,
+        )
+        return NightCheckpointHostTransactionResult(
+            checkpoint = reducedCheckpoint,
+            revisionIntent = if (
+                reducedCheckpoint.confirmedMonkTarget != checkpoint.confirmedMonkTarget
+            ) {
+                NightCheckpointRevisionIntent.GAME_STATE
+            } else {
+                NightCheckpointRevisionIntent.NONE
+            },
+        )
+    }
+
+    fun confirmDemonAttack(
+        checkpoint: ClocktowerNightCheckpoint,
+    ): NightCheckpointHostTransactionResult {
+        val reducedCheckpoint = NightCheckpointReducer.reduce(
+            checkpoint = checkpoint,
+            event = NightResolutionEvent.ConfirmDemonAttack,
+        )
+        return NightCheckpointHostTransactionResult(
+            checkpoint = reducedCheckpoint,
+            revisionIntent = if (
+                reducedCheckpoint.confirmedAttackTarget != checkpoint.confirmedAttackTarget
+            ) {
+                NightCheckpointRevisionIntent.GAME_STATE
+            } else {
+                NightCheckpointRevisionIntent.NONE
+            },
+        )
+    }
+
     fun confirmDemonSuccessor(
         checkpoint: ClocktowerNightCheckpoint,
     ): NightCheckpointHostTransactionResult {
