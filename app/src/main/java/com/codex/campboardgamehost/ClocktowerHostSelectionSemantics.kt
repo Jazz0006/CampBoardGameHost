@@ -47,6 +47,34 @@ internal fun revalidateTwoPlayerSelection(
     )
 }
 
+internal data class ChambermaidSelectionResolution(
+    val selection: RevalidatedTwoPlayerSelection,
+    val wokeCount: Int?,
+)
+
+internal fun resolveChambermaidSelection(
+    first: String?,
+    second: String?,
+    eligibleNames: Set<String>,
+    wokeBecauseOwnAbilityNames: Set<String>,
+): ChambermaidSelectionResolution {
+    val selection = revalidateTwoPlayerSelection(
+        first = first,
+        second = second,
+        eligibleNames = eligibleNames,
+    )
+    val wokeCount = if (selection.isComplete) {
+        listOfNotNull(selection.first, selection.second)
+            .count { it in wokeBecauseOwnAbilityNames }
+    } else {
+        null
+    }
+    return ChambermaidSelectionResolution(
+        selection = selection,
+        wokeCount = wokeCount,
+    )
+}
+
 internal fun shouldAutoAdvanceRedHerring(
     automaticStorytellerInfo: Boolean,
     isRedHerringStep: Boolean,

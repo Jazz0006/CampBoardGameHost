@@ -1033,12 +1033,15 @@ internal fun ClocktowerJudgeScreen(
             if (ravenkeeperTrigger != null) add("Ravenkeeper")
         }
     }
-    val chambermaidResult = if (chambermaidFirst != null && chambermaidSecond != null) {
-        val targets = setOf(chambermaidFirst, chambermaidSecond)
-        cards.count { it.name in targets && it.clocktowerRole?.enName in chambermaidWakeRoles() }.toString()
-    } else {
-        null
-    }
+    val chambermaidResolution = resolveChambermaidSelection(
+        first = chambermaidFirst,
+        second = chambermaidSecond,
+        eligibleNames = chambermaidTargetCards.mapTo(mutableSetOf()) { it.name },
+        wokeBecauseOwnAbilityNames = cards
+            .filter { it.clocktowerRole?.enName in chambermaidWakeRoles() }
+            .mapTo(mutableSetOf()) { it.name },
+    )
+    val chambermaidResult = chambermaidResolution.wokeCount?.toString()
     fun recordNightStep(step: ClocktowerNightStepUi) {
         if (!step.isRealAction || step.action == ClocktowerNightAction.DemonKill) return
         // Information shown to a player is recorded by onShowPlayerDisplay with the
@@ -1074,7 +1077,7 @@ internal fun ClocktowerJudgeScreen(
             ClocktowerNightAction.ButlerMaster -> listOfNotNull(step.actor?.name, butlerMaster)
             ClocktowerNightAction.MonkProtect -> listOfNotNull(step.actor?.name, monkProtectedTarget)
             ClocktowerNightAction.FortuneTeller -> listOfNotNull(step.actor?.name, fortuneTellerFirst, fortuneTellerSecond)
-            ClocktowerNightAction.Chambermaid -> listOfNotNull(step.actor?.name, chambermaidFirst, chambermaidSecond)
+            ClocktowerNightAction.Chambermaid -> listOfNotNull(step.actor?.name, chambermaidResolution.selection.first, chambermaidResolution.selection.second)
             ClocktowerNightAction.NewDemonIdentity -> listOfNotNull(step.actor?.name)
             ClocktowerNightAction.DemonKill -> listOfNotNull(step.actor?.name, pendingNightDeath)
             ClocktowerNightAction.MayorRedirect -> listOfNotNull(mayorRedirectTarget)
@@ -1096,7 +1099,7 @@ internal fun ClocktowerJudgeScreen(
                 text("查验 $targets：$fortuneTellerResult", "Checked $targets: $fortuneTellerResult")
             }
             ClocktowerNightAction.Chambermaid -> {
-                val targets = listOfNotNull(chambermaidFirst, chambermaidSecond).joinToString(" + ") { playerSeatLabel(cards, it) }
+                val targets = listOfNotNull(chambermaidResolution.selection.first, chambermaidResolution.selection.second).joinToString(" + ") { playerSeatLabel(cards, it) }
                 text("查验 $targets：$chambermaidResult 人今晚醒来", "Checked $targets: $chambermaidResult woke tonight")
             }
             ClocktowerNightAction.NewDemonIdentity -> step.tellPlayer ?: step.storytellerAction
@@ -2767,7 +2770,7 @@ internal fun ClocktowerJudgeScreen(
                                 tellPlayer = chambermaidResult,
                                 explanation = text("侍女选择两名玩家，得知其中有几人今晚因自己的能力醒来。", "The Chambermaid chooses two players and learns how many woke tonight because of their own ability."),
                                 action = ClocktowerNightAction.Chambermaid,
-                                displaySecondary = listOfNotNull(chambermaidFirst, chambermaidSecond)
+                                displaySecondary = listOfNotNull(chambermaidResolution.selection.first, chambermaidResolution.selection.second)
                                     .mapNotNull { name -> cards.firstOrNull { it.name == name } }
                                     .joinToString("   ") { seatNumberText(it) }
                                     .takeIf { it.isNotBlank() },
@@ -2782,7 +2785,7 @@ internal fun ClocktowerJudgeScreen(
                                             maxValue = 2,
                                             footer = text("查询这两名玩家", "Checking these two players"),
                                             pressureCostPerPoint = 1,
-                                            secondary = listOfNotNull(chambermaidFirst, chambermaidSecond)
+                                            secondary = listOfNotNull(chambermaidResolution.selection.first, chambermaidResolution.selection.second)
                                                 .mapNotNull { name -> cards.firstOrNull { it.name == name } }
                                                 .joinToString("   ") { seatNumberText(it) }
                                                 .takeIf { it.isNotBlank() },
@@ -2934,7 +2937,7 @@ internal fun ClocktowerJudgeScreen(
                 tellPlayer = chambermaidResult,
                 explanation = text("侍女选择两名玩家，得知其中有几人今晚因自己的能力醒来。", "The Chambermaid chooses two players and learns how many woke tonight because of their own ability."),
                 action = ClocktowerNightAction.Chambermaid,
-                displaySecondary = listOfNotNull(chambermaidFirst, chambermaidSecond)
+                displaySecondary = listOfNotNull(chambermaidResolution.selection.first, chambermaidResolution.selection.second)
                     .mapNotNull { name -> cards.firstOrNull { it.name == name } }
                     .joinToString("   ") { seatNumberText(it) }
                     .takeIf { it.isNotBlank() },
@@ -2949,7 +2952,7 @@ internal fun ClocktowerJudgeScreen(
                             maxValue = 2,
                             footer = text("查询这两名玩家", "Checking these two players"),
                             pressureCostPerPoint = 1,
-                            secondary = listOfNotNull(chambermaidFirst, chambermaidSecond)
+                            secondary = listOfNotNull(chambermaidResolution.selection.first, chambermaidResolution.selection.second)
                                 .mapNotNull { name -> cards.firstOrNull { it.name == name } }
                                 .joinToString("   ") { seatNumberText(it) }
                                 .takeIf { it.isNotBlank() },
@@ -4170,8 +4173,8 @@ internal fun ClocktowerJudgeScreen(
                 selectedName = selectedNightName,
                 fortuneTellerFirst = fortuneTellerFirst,
                 fortuneTellerSecond = fortuneTellerSecond,
-                chambermaidFirst = chambermaidFirst,
-                chambermaidSecond = chambermaidSecond,
+                chambermaidFirst = chambermaidResolution.selection.first,
+                chambermaidSecond = chambermaidResolution.selection.second,
                 onSelectName = { name ->
                     when (currentStep.action) {
                         ClocktowerNightAction.RedHerring -> onSelectRedHerring(if (redHerring == name) null else name)
@@ -4409,8 +4412,8 @@ internal fun ClocktowerJudgeScreen(
                         },
                         fortuneTellerFirst = fortuneTellerFirst,
                         fortuneTellerSecond = fortuneTellerSecond,
-                        chambermaidFirst = chambermaidFirst,
-                        chambermaidSecond = chambermaidSecond,
+                        chambermaidFirst = chambermaidResolution.selection.first,
+                        chambermaidSecond = chambermaidResolution.selection.second,
                         onSelectName = { name ->
                             when (currentStep.action) {
                                 ClocktowerNightAction.RedHerring -> onSelectRedHerring(if (redHerring == name) null else name)
