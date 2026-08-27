@@ -25,6 +25,18 @@ internal sealed interface NightResolutionEvent {
     ) : NightResolutionEvent
 
     data object ConfirmDemonAttack : NightResolutionEvent
+
+    data class EditMayorRedirectDraft(
+        val target: String?,
+    ) : NightResolutionEvent
+
+    data object ConfirmMayorRedirect : NightResolutionEvent
+
+    data class EditDemonSuccessorDraft(
+        val target: String?,
+    ) : NightResolutionEvent
+
+    data object ConfirmDemonSuccessor : NightResolutionEvent
 }
 
 /**
@@ -79,6 +91,22 @@ internal object NightCheckpointReducer {
                 nextConfirmedValue = checkpoint.attackDraftTarget,
                 confirmedDemonSuccessorTarget = checkpoint.confirmedDemonSuccessorTarget,
             ),
+        )
+
+        is NightResolutionEvent.EditMayorRedirectDraft -> checkpoint.copy(
+            mayorRedirectDraftTarget = event.target,
+        )
+
+        NightResolutionEvent.ConfirmMayorRedirect -> checkpoint.copy(
+            confirmedMayorRedirectTarget = checkpoint.mayorRedirectDraftTarget,
+        )
+
+        is NightResolutionEvent.EditDemonSuccessorDraft -> checkpoint.copy(
+            demonSuccessorDraftTarget = event.target,
+        )
+
+        NightResolutionEvent.ConfirmDemonSuccessor -> checkpoint.copy(
+            confirmedDemonSuccessorTarget = checkpoint.demonSuccessorDraftTarget,
         )
     }
 
