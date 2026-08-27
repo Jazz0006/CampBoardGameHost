@@ -3,6 +3,7 @@ package com.codex.campboardgamehost.clocktower.session
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
+import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackOutcome
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
@@ -49,6 +50,7 @@ internal data class NightDawnDeathResolutionInput(
     val originalDeathSeat: Int?,
     val mayorSeat: Int?,
     val mayorRedirectMayApply: Boolean,
+    val attackOutcome: DemonNightAttackOutcome? = null,
     val effectiveNightState: ClocktowerEffectiveNightState,
     val demonRoleIds: Set<RoleId>,
 )
@@ -151,6 +153,22 @@ internal object NightDawnResolutionPlanner {
         checkpoint: ClocktowerNightCheckpoint,
         input: NightDawnDeathResolutionInput,
     ): NightDawnResolutionTransition {
+        val canonicalOriginalDeathSeat = when (input.attackOutcome) {
+            DemonNightAttackOutcome.NO_DEATH -> null
+            DemonNightAttackOutcome.TARGET_DIES,
+            DemonNightAttackOutcome.MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED,
+            DemonNightAttackOutcome.IMP_SELF_KILL_SUCCESSOR_REQUIRED,
+            null,
+            -> input.originalDeathSeat
+        }
+        val canonicalMayorRedirectMayApply = when (input.attackOutcome) {
+            DemonNightAttackOutcome.MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED -> true
+            DemonNightAttackOutcome.NO_DEATH,
+            DemonNightAttackOutcome.TARGET_DIES,
+            DemonNightAttackOutcome.IMP_SELF_KILL_SUCCESSOR_REQUIRED,
+            -> false
+            null -> input.mayorRedirectMayApply
+        }
         val confirmedRedirectSeat = checkpoint.confirmedMayorRedirectTarget
             ?.let { name -> baseGameState.players.firstOrNull { it.name == name }?.seat }
         val confirmedRedirectIsLegal = confirmedRedirectSeat?.let { targetSeat ->
@@ -159,14 +177,14 @@ internal object NightDawnResolutionPlanner {
             )
         } == true
         val redirectApplies =
-            input.mayorRedirectMayApply &&
-                input.originalDeathSeat != null &&
-                input.originalDeathSeat == input.mayorSeat &&
+            canonicalMayorRedirectMayApply &&
+                canonicalOriginalDeathSeat != null &&
+                canonicalOriginalDeathSeat == input.mayorSeat &&
                 confirmedRedirectIsLegal
         val resolvedDeathSeat = if (redirectApplies) {
             confirmedRedirectSeat?.takeIf(input.effectiveNightState::isMechanicallyAlive)
         } else {
-            input.originalDeathSeat
+            canonicalOriginalDeathSeat
         }
 
         return NightDawnResolutionTransition(
