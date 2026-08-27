@@ -11,15 +11,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 
 /**
- * SNE-7.1 typed RED for the not-yet-extracted Dawn planner.
+ * SNE-7.1 typed RED contracts for the Dawn planner.
  *
  * The planner computes transition/commit intent only. It must not mutate GameState or become a
- * second timeline/persistence authority. Future contracts stay compiled but ignored until their
- * individual RED -> GREEN micro-cycle is activated.
+ * second timeline/persistence authority.
  */
 class NightDawnResolutionPlannerContractTest {
     @Test
@@ -79,7 +77,6 @@ class NightDawnResolutionPlannerContractTest {
         assertFalse(transition.outcomeEvaluationAllowed)
     }
 
-    @Ignore("Activate after the legal-successor planner contract is GREEN")
     @Test
     fun `identity confirmation materializes exact pending successor then permits Dawn`() {
         val base = gameState()
@@ -106,7 +103,6 @@ class NightDawnResolutionPlannerContractTest {
         assertTrue(transition.outcomeEvaluationAllowed)
     }
 
-    @Ignore("Activate after the legal-successor planner contract is GREEN")
     @Test
     fun `pending Demon identity keeps outcome evaluation closed`() {
         val transition = NightDawnResolutionPlanner.planDemonSuccession(
