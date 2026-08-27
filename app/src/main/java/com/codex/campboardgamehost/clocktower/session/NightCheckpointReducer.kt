@@ -60,10 +60,15 @@ internal object NightCheckpointReducer {
 
         NightResolutionEvent.ConfirmPoison -> checkpoint.copy(
             confirmedPoisonTarget = checkpoint.poisonDraftTarget,
-            confirmedDemonSuccessorTarget = preserveSuccessorUnlessConfirmedValueChanged(
+            confirmedMayorRedirectTarget = preserveDependentConfirmationUnlessConfirmedValueChanged(
                 previousConfirmedValue = checkpoint.confirmedPoisonTarget,
                 nextConfirmedValue = checkpoint.poisonDraftTarget,
-                confirmedDemonSuccessorTarget = checkpoint.confirmedDemonSuccessorTarget,
+                confirmedDependentTarget = checkpoint.confirmedMayorRedirectTarget,
+            ),
+            confirmedDemonSuccessorTarget = preserveDependentConfirmationUnlessConfirmedValueChanged(
+                previousConfirmedValue = checkpoint.confirmedPoisonTarget,
+                nextConfirmedValue = checkpoint.poisonDraftTarget,
+                confirmedDependentTarget = checkpoint.confirmedDemonSuccessorTarget,
             ),
         )
 
@@ -73,10 +78,15 @@ internal object NightCheckpointReducer {
 
         NightResolutionEvent.ConfirmMonkProtection -> checkpoint.copy(
             confirmedMonkTarget = checkpoint.monkDraftTarget,
-            confirmedDemonSuccessorTarget = preserveSuccessorUnlessConfirmedValueChanged(
+            confirmedMayorRedirectTarget = preserveDependentConfirmationUnlessConfirmedValueChanged(
                 previousConfirmedValue = checkpoint.confirmedMonkTarget,
                 nextConfirmedValue = checkpoint.monkDraftTarget,
-                confirmedDemonSuccessorTarget = checkpoint.confirmedDemonSuccessorTarget,
+                confirmedDependentTarget = checkpoint.confirmedMayorRedirectTarget,
+            ),
+            confirmedDemonSuccessorTarget = preserveDependentConfirmationUnlessConfirmedValueChanged(
+                previousConfirmedValue = checkpoint.confirmedMonkTarget,
+                nextConfirmedValue = checkpoint.monkDraftTarget,
+                confirmedDependentTarget = checkpoint.confirmedDemonSuccessorTarget,
             ),
         )
 
@@ -86,10 +96,15 @@ internal object NightCheckpointReducer {
 
         NightResolutionEvent.ConfirmDemonAttack -> checkpoint.copy(
             confirmedAttackTarget = checkpoint.attackDraftTarget,
-            confirmedDemonSuccessorTarget = preserveSuccessorUnlessConfirmedValueChanged(
+            confirmedMayorRedirectTarget = preserveDependentConfirmationUnlessConfirmedValueChanged(
                 previousConfirmedValue = checkpoint.confirmedAttackTarget,
                 nextConfirmedValue = checkpoint.attackDraftTarget,
-                confirmedDemonSuccessorTarget = checkpoint.confirmedDemonSuccessorTarget,
+                confirmedDependentTarget = checkpoint.confirmedMayorRedirectTarget,
+            ),
+            confirmedDemonSuccessorTarget = preserveDependentConfirmationUnlessConfirmedValueChanged(
+                previousConfirmedValue = checkpoint.confirmedAttackTarget,
+                nextConfirmedValue = checkpoint.attackDraftTarget,
+                confirmedDependentTarget = checkpoint.confirmedDemonSuccessorTarget,
             ),
         )
 
@@ -110,12 +125,12 @@ internal object NightCheckpointReducer {
         )
     }
 
-    private fun preserveSuccessorUnlessConfirmedValueChanged(
+    private fun preserveDependentConfirmationUnlessConfirmedValueChanged(
         previousConfirmedValue: String?,
         nextConfirmedValue: String?,
-        confirmedDemonSuccessorTarget: String?,
+        confirmedDependentTarget: String?,
     ): String? = if (previousConfirmedValue == nextConfirmedValue) {
-        confirmedDemonSuccessorTarget
+        confirmedDependentTarget
     } else {
         null
     }
