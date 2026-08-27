@@ -3511,15 +3511,30 @@ internal fun CampBoardGameHostApp() {
                             val resolvedDeathName = deathTransition.dawnCommitIntent?.death?.targetSeat
                                 ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
                             val deathName = resolvedDeathName
-                            if (mayorCanRedirect && resolvedDeathName != null && resolvedDeathName != originalDeathName) {
+                            val safeMayorRedirectName = clocktowerConfirmedMayorRedirectTarget
+                                ?.takeIf { targetName ->
+                                    val targetSeat = cards.indexOfFirst { it.name == targetName }
+                                        .takeIf { it >= 0 }
+                                        ?.plus(1)
+                                    mayorCanRedirect &&
+                                        resolvedDeathName == null &&
+                                        targetSeat != null &&
+                                        targetSeat in dawnDeathFacts.demonSafeSeats
+                                }
+                            val redirectEventTargetName = when {
+                                mayorCanRedirect && resolvedDeathName != null && resolvedDeathName != originalDeathName -> resolvedDeathName
+                                safeMayorRedirectName != null -> safeMayorRedirectName
+                                else -> null
+                            }
+                            if (redirectEventTargetName != null) {
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
                                     localizedText("市长死亡转移", "Mayor death redirect"),
                                     localizedText(
-                                        playerSeatLabel(cards, originalDeathName) + " → " + playerSeatLabel(cards, resolvedDeathName),
-                                        playerSeatLabel(cards, originalDeathName) + " → " + playerSeatLabel(cards, resolvedDeathName),
+                                        playerSeatLabel(cards, originalDeathName) + " → " + playerSeatLabel(cards, redirectEventTargetName),
+                                        playerSeatLabel(cards, originalDeathName) + " → " + playerSeatLabel(cards, redirectEventTargetName),
                                     ),
-                                    listOfNotNull(originalDeathName, resolvedDeathName),
+                                    listOfNotNull(originalDeathName, redirectEventTargetName),
                                 )
                             }
                             if (demonPoisonedTonight) {
@@ -3536,74 +3551,91 @@ internal fun CampBoardGameHostApp() {
                                 }
                                 clocktowerPendingNightDeath = null
                             }
+                            var detailedAttackFailureRecorded = false
+                            val canonicalOriginalDeathSeat = dawnDeathFacts.originalDeathSeat
+                            val failedProtectedAttackName = when {
+                                demonPoisonedTonight || deathName != null -> null
+                                safeMayorRedirectName != null -> safeMayorRedirectName
+                                canonicalOriginalDeathSeat != null &&
+                                    canonicalOriginalDeathSeat in dawnDeathFacts.demonSafeSeats -> originalDeathName
+                                else -> null
+                            }
+                            if (failedProtectedAttackName != null) {
+                                val failedAttackCard = cards.firstOrNull { it.name == failedProtectedAttackName }
+                                val apparentMonk = cards.firstOrNull {
+                                    AbilityFunctioningSemantics.interactsAs(
+                                        it.abilitySubject(clocktowerConfirmedPoisonTarget),
+                                        "Monk",
+                                    )
+                                }
+                                val protectedByMonkForRecord = AbilityFunctioningSemantics.selectedMechanicalEffectApplies(
+                                    subject = apparentMonk?.abilitySubject(clocktowerConfirmedPoisonTarget),
+                                    role = "Monk",
+                                    selectionMatches = clocktowerConfirmedMonkProtectedTarget == failedProtectedAttackName,
+                                )
+                                val protectedBySoldierForRecord = failedAttackCard?.let { card ->
+                                    AbilityFunctioningSemantics.functionsAs(
+                                        card.abilitySubject(clocktowerConfirmedPoisonTarget),
+                                        "Soldier",
+                                    )
+                                } == true
+                                val protectionNote = when {
+                                    protectedBySoldierForRecord -> context.getString(R.string.clocktower_record_soldier_safe)
+                                    protectedByMonkForRecord -> context.getString(R.string.clocktower_record_monk_protected)
+                                    else -> null
+                                }
+                                if (protectionNote != null) {
+                                    records.add(EliminationRecord(round, failedProtectedAttackName, protectionNote))
+                                    addClocktowerEvent(
+                                        ClocktowerEventType.RoleAction,
+                                        localizedText("恶魔击杀", "Demon kill"),
+                                        localizedText(
+                                            "${playerSeatLabel(cards, failedProtectedAttackName)} · 失败（$protectionNote）",
+                                            "${playerSeatLabel(cards, failedProtectedAttackName)} · failed ($protectionNote)",
+                                        ),
+                                        listOf(failedProtectedAttackName),
+                                    )
+                                    clocktowerPendingNightDeath = null
+                                    detailedAttackFailureRecorded = true
+                                }
+                            }
                             if (deathName != null) {
                                 clocktowerPendingNightDeath = deathName
                                 val index = cards.indexOfFirst { it.name == deathName }
                                 val nightDeathCard = cards.getOrNull(index)
                                 if (index >= 0 && nightDeathCard != null && nightDeathCard.eliminatedRound == null) {
-                                    val apparentMonk = cards.firstOrNull {
-                                        AbilityFunctioningSemantics.interactsAs(it.abilitySubject(clocktowerConfirmedPoisonTarget), "Monk")
-                                    }
-                                    val protectedByMonk = AbilityFunctioningSemantics.selectedMechanicalEffectApplies(
-                                        subject = apparentMonk?.abilitySubject(clocktowerConfirmedPoisonTarget),
-                                        role = "Monk",
-                                        selectionMatches = clocktowerConfirmedMonkProtectedTarget == deathName,
+                                    val demonDied = nightDeathCard.clocktowerTeam == ClocktowerTeam.Demon
+                                    val impSelfChosen = demonDied && originalDeathName == deathName
+                                    cards[index] = nightDeathCard.copy(eliminatedRound = round)
+                                    records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
+                                    addClocktowerEvent(
+                                        ClocktowerEventType.Death,
+                                        localizedText("恶魔击杀", "Demon kill"),
+                                        localizedText(
+                                            "${playerSeatLabel(cards, deathName)} · 死亡",
+                                            "${playerSeatLabel(cards, deathName)} · killed",
+                                        ),
+                                        listOf(deathName),
                                     )
-                                    val protectedBySoldier = AbilityFunctioningSemantics.functionsAs(
-                                        nightDeathCard.abilitySubject(clocktowerConfirmedPoisonTarget),
-                                        "Soldier",
-                                    )
-                                    if (protectedByMonk || protectedBySoldier) {
-                                        val note = if (protectedBySoldier) {
-                                            context.getString(R.string.clocktower_record_soldier_safe)
+                                    if (demonDied) {
+                                        if (impSelfChosen) {
+                                            newDemonName = clocktowerConfirmedDemonSuccessorTarget
+                                            unresolvedDemonSuccessor =
+                                                newDemonName == null &&
+                                                    cards.any {
+                                                        it.eliminatedRound == null &&
+                                                            it.clocktowerTeam == ClocktowerTeam.Minion
+                                                    }
                                         } else {
-                                            context.getString(R.string.clocktower_record_monk_protected)
-                                        }
-                                        records.add(EliminationRecord(round, deathName, note))
-                                        addClocktowerEvent(
-                                            ClocktowerEventType.RoleAction,
-                                            localizedText("恶魔击杀", "Demon kill"),
-                                            localizedText(
-                                                "${playerSeatLabel(cards, deathName)} · 失败（$note）",
-                                                "${playerSeatLabel(cards, deathName)} · failed ($note)",
-                                            ),
-                                            listOf(deathName),
-                                        )
-                                        clocktowerPendingNightDeath = null
-                                    } else {
-                                        val demonDied = nightDeathCard.clocktowerTeam == ClocktowerTeam.Demon
-                                        val impSelfChosen = demonDied && originalDeathName == deathName
-                                        cards[index] = nightDeathCard.copy(eliminatedRound = round)
-                                        records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
-                                        addClocktowerEvent(
-                                            ClocktowerEventType.Death,
-                                            localizedText("恶魔击杀", "Demon kill"),
-                                            localizedText(
-                                                "${playerSeatLabel(cards, deathName)} · 死亡",
-                                                "${playerSeatLabel(cards, deathName)} · killed",
-                                            ),
-                                            listOf(deathName),
-                                        )
-                                        if (demonDied) {
-                                            if (impSelfChosen) {
-                                                newDemonName = clocktowerConfirmedDemonSuccessorTarget
-                                                unresolvedDemonSuccessor =
-                                                    newDemonName == null &&
-                                                        cards.any {
-                                                            it.eliminatedRound == null &&
-                                                                it.clocktowerTeam == ClocktowerTeam.Minion
-                                                        }
-                                            } else {
-                                                newDemonName = promoteDemonSuccessorIfNeeded(
-                                                    impDeathWasSelfChosen = false,
-                                                )
-                                            }
-                                        }
-                                        if (nightDeathCard.clocktowerRole?.enName == "Klutz") {
-                                            nightKlutzName = deathName
+                                            newDemonName = promoteDemonSuccessorIfNeeded(
+                                                impDeathWasSelfChosen = false,
+                                            )
                                         }
                                     }
-                                    if (!protectedByMonk && !protectedBySoldier &&
+                                    if (nightDeathCard.clocktowerRole?.enName == "Klutz") {
+                                        nightKlutzName = deathName
+                                    }
+                                    if (
                                         AbilityFunctioningSemantics.interactsAs(
                                             nightDeathCard.abilitySubject(clocktowerConfirmedPoisonTarget),
                                             "Ravenkeeper",
@@ -3628,7 +3660,11 @@ internal fun CampBoardGameHostApp() {
                                         "",
                                     )
                                 }
-                            } else if (!demonPoisonedTonight && clocktowerPhase != ClocktowerPhase.FirstNight) {
+                            } else if (
+                                !demonPoisonedTonight &&
+                                !detailedAttackFailureRecorded &&
+                                clocktowerPhase != ClocktowerPhase.FirstNight
+                            ) {
                                 addClocktowerEvent(
                                     ClocktowerEventType.Death,
                                     localizedText("平安夜", "No night death"),
