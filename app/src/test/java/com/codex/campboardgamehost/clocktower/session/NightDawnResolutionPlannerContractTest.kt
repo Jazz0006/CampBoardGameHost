@@ -6,6 +6,7 @@ import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
+import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -100,6 +101,38 @@ class NightDawnResolutionPlannerContractTest {
         assertNull(transition.checkpoint.pendingNewDemonName)
         assertNull(transition.checkpoint.demonSuccessorDraftTarget)
         assertNull(transition.checkpoint.confirmedDemonSuccessorTarget)
+        assertTrue(transition.outcomeEvaluationAllowed)
+    }
+
+    @Test
+    fun `Poisoner successor identity confirmation ends poison in the same Dawn transaction`() {
+        val transition = NightDawnResolutionPlanner.confirmNewDemonIdentity(
+            baseGameState = gameState(),
+            checkpoint = checkpoint(
+                pendingNewDemonName = "Poisoner",
+                demonSuccessorDraftTarget = "Poisoner",
+                confirmedDemonSuccessorTarget = "Poisoner",
+            ),
+            demonRoleId = RoleId("Imp"),
+            poisonResolutionInput = NightDawnPoisonResolutionInput(
+                poisonerSeat = 2,
+                poisonerRoleId = RoleId("Poisoner"),
+                effectiveNightState = ClocktowerEffectiveNightState(
+                    effectiveAliveSeats = setOf(2, 3),
+                    effectiveRoleIdsBySeat = mapOf(
+                        2 to RoleId("Poisoner"),
+                        3 to RoleId("Monk"),
+                    ),
+                ),
+            ),
+        )
+
+        val intent = transition.dawnCommitIntent
+        assertEquals(NightResolutionContinuation.DAWN, transition.continuation)
+        assertEquals(1, intent?.roleChanges?.size)
+        assertEquals(2, intent?.roleChanges?.single()?.targetSeat)
+        assertEquals(RoleId("Imp"), intent?.roleChanges?.single()?.roleId)
+        assertNull(intent?.poisonCarry)
         assertTrue(transition.outcomeEvaluationAllowed)
     }
 
