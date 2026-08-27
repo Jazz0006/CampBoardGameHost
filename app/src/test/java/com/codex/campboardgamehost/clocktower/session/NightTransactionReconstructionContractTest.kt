@@ -114,6 +114,27 @@ class NightTransactionReconstructionContractTest {
     }
 
     @Test
+    fun `restored successor draft edit leaves prior confirmed successor authoritative`() {
+        val baseGameState = gameState()
+        val reconstruction = NightTransactionReconstructor.reconstruct(
+            baseGameState = baseGameState,
+            checkpoint = checkpoint(
+                nightStepIndex = 2,
+                demonSuccessorDraftTarget = "Empath",
+                confirmedDemonSuccessorTarget = "Poisoner",
+            ),
+            canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
+            demonSuccessorInteractionId = successorInteraction,
+            demonRoleId = RoleId("Imp"),
+        )
+
+        assertEquals(empathInteraction, reconstruction.currentInteractionId)
+        assertEquals(RoleId("Imp"), reconstruction.effectiveState.currentRoleId(2))
+        assertEquals(RoleId("Empath"), reconstruction.effectiveState.currentRoleId(3))
+        assertEquals(RoleId("Poisoner"), baseGameState.playerAt(2)?.actualRole)
+    }
+
+    @Test
     fun `stale confirmed successor without confirmed Demon self attack fails closed`() {
         val reconstruction = NightTransactionReconstructor.reconstruct(
             baseGameState = gameState(),
