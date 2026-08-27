@@ -299,6 +299,7 @@ internal fun ClocktowerJudgeScreen(
     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
     onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
     onPhaseChange: (ClocktowerPhase) -> Unit,
+    onMovePreviousNightStep: () -> Unit,
     onSelectNightDeath: (String?) -> Unit,
     onConfirmDemonAttack: () -> Unit,
     onSelectExecution: (String?) -> Unit,
@@ -4094,11 +4095,7 @@ internal fun ClocktowerJudgeScreen(
                 ClocktowerNightAction.MayorRedirect,
                 ClocktowerNightAction.DemonSuccessor,
             ) || selectedNightName != null,
-            onPrevious = {
-                if (currentStepIndex > 0) {
-                    nightStepIndex = currentStepIndex - 1
-                }
-            },
+            onPrevious = onMovePreviousNightStep,
             onNext = advanceNightStep,
         ) {
             ClocktowerNightStepCardLocalized(
@@ -4296,11 +4293,7 @@ internal fun ClocktowerJudgeScreen(
                     playerDisplayStep = displayStep
                 },
                 canGoPrevious = currentStepIndex > 0,
-                onPrevious = {
-                    if (currentStepIndex > 0) {
-                        nightStepIndex = currentStepIndex - 1
-                    }
-                },
+                onPrevious = onMovePreviousNightStep,
                 onNext = advanceNightStep,
                 showNavigationActions = false,
             )
@@ -4497,11 +4490,7 @@ internal fun ClocktowerJudgeScreen(
                             playerDisplayStep = displayStep
                         },
                         canGoPrevious = currentStepIndex > 0,
-                        onPrevious = {
-                            if (currentStepIndex > 0) {
-                                nightStepIndex = currentStepIndex - 1
-                            }
-                        },
+                        onPrevious = onMovePreviousNightStep,
                         onNext = {
                             currentStep.spyRegistrationKey?.let { key ->
                                 currentStep.roleEnName?.let { role ->

@@ -155,6 +155,8 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCo
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointReducer
+import com.codex.campboardgamehost.clocktower.session.NightCheckpointHostTransaction
+import com.codex.campboardgamehost.clocktower.session.NightCheckpointRevisionIntent
 import com.codex.campboardgamehost.clocktower.session.NightResolutionEvent
 import com.codex.campboardgamehost.clocktower.session.DawnCommitIntent
 import com.codex.campboardgamehost.clocktower.session.NightDawnPoisonResolutionInput
@@ -2635,6 +2637,17 @@ internal fun CampBoardGameHostApp() {
                         klutzChoiceName = clocktowerKlutzChoiceName,
                         nightStartedState = clocktowerNightStartedState,
                         nightStepIndexState = clocktowerNightStepIndexState,
+                        onMovePreviousNightStep = {
+                            val transaction = NightCheckpointHostTransaction.movePrevious(
+                                checkpoint = currentClocktowerNightCheckpoint(),
+                            )
+                            when (transaction.revisionIntent) {
+                                NightCheckpointRevisionIntent.NONE -> Unit
+                                NightCheckpointRevisionIntent.PLAYER_INPUT -> advanceClocktowerPlayerInputRevision()
+                                NightCheckpointRevisionIntent.GAME_STATE -> advanceClocktowerGameStateRevision()
+                            }
+                            clocktowerNightStepIndexState.value = transaction.checkpoint.nightStepIndex
+                        },
                         dayModeState = clocktowerDayModeState,
                         nominatorNameState = clocktowerNominatorNameState,
                         nomineeNameState = clocktowerNomineeNameState,
@@ -2871,22 +2884,31 @@ internal fun CampBoardGameHostApp() {
                             }
                         },
                         onSelectDemonSuccessor = { selectedTarget ->
-                            advanceClocktowerPlayerInputRevision()
-                            val reducedCheckpoint = NightCheckpointReducer.reduce(
+                            val transaction = NightCheckpointHostTransaction.editDemonSuccessor(
                                 checkpoint = currentClocktowerNightCheckpoint(),
-                                event = NightResolutionEvent.EditDemonSuccessorDraft(selectedTarget),
+                                selectedTarget = selectedTarget,
                             )
-                            clocktowerDemonSuccessorTarget = reducedCheckpoint.demonSuccessorDraftTarget
+                            when (transaction.revisionIntent) {
+                                NightCheckpointRevisionIntent.NONE -> Unit
+                                NightCheckpointRevisionIntent.PLAYER_INPUT -> advanceClocktowerPlayerInputRevision()
+                                NightCheckpointRevisionIntent.GAME_STATE -> advanceClocktowerGameStateRevision()
+                            }
+                            clocktowerDemonSuccessorTarget = transaction.checkpoint.demonSuccessorDraftTarget
                         },
                         onConfirmDemonSuccessorTarget = { _ ->
-                            val checkpoint = currentClocktowerNightCheckpoint()
-                            val reducedCheckpoint = NightCheckpointReducer.reduce(
-                                checkpoint = checkpoint,
-                                event = NightResolutionEvent.ConfirmDemonSuccessor,
+                            val transaction = NightCheckpointHostTransaction.confirmDemonSuccessor(
+                                checkpoint = currentClocktowerNightCheckpoint(),
                             )
-                            if (reducedCheckpoint.confirmedDemonSuccessorTarget != checkpoint.confirmedDemonSuccessorTarget) {
-                                clocktowerConfirmedDemonSuccessorTarget = reducedCheckpoint.confirmedDemonSuccessorTarget
-                                advanceClocktowerGameStateRevision()
+                            when (transaction.revisionIntent) {
+                                NightCheckpointRevisionIntent.NONE -> Unit
+                                NightCheckpointRevisionIntent.PLAYER_INPUT -> {
+                                    clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
+                                    advanceClocktowerPlayerInputRevision()
+                                }
+                                NightCheckpointRevisionIntent.GAME_STATE -> {
+                                    clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
+                                    advanceClocktowerGameStateRevision()
+                                }
                             }
                         },
                         onConfirmNewDemon = {
