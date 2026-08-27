@@ -2898,27 +2898,7 @@ internal fun CampBoardGameHostApp() {
                                         clocktowerGameSeed,
                                         poisonedPlayerName = clocktowerConfirmedPoisonTarget,
                                     )
-                                    val checkpoint = ClocktowerNightCheckpoint(
-                                        phaseName = clocktowerPhase.name,
-                                        round = round,
-                                        gameStateRevision = clocktowerGameStateRevision,
-                                        playerInputRevision = clocktowerPlayerInputRevision,
-                                        nightStarted = clocktowerNightStartedState.value,
-                                        nightStepIndex = clocktowerNightStepIndexState.value,
-                                        confirmedAttackTarget = clocktowerPendingNightDeath,
-                                        attackDraftTarget = clocktowerDemonAttackDraftTarget,
-                                        confirmedPoisonTarget = clocktowerConfirmedPoisonTarget,
-                                        poisonDraftTarget = clocktowerPoisonTarget,
-                                        confirmedMonkTarget = clocktowerConfirmedMonkProtectedTarget,
-                                        monkDraftTarget = clocktowerMonkProtectedTarget,
-                                        confirmedMayorRedirectTarget = clocktowerConfirmedMayorRedirectTarget,
-                                        mayorRedirectDraftTarget = clocktowerMayorRedirectTarget,
-                                        pendingNewDemonName = clocktowerPendingNewDemonName,
-                                        pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
-                                        demonSuccessorDraftTarget = clocktowerDemonSuccessorTarget,
-                                        confirmedDemonSuccessorTarget = clocktowerConfirmedDemonSuccessorTarget,
-                                        nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
-                                    )
+                                    val checkpoint = currentClocktowerNightCheckpoint()
                                     val effectiveNightState = ClocktowerEffectiveNightState(
                                         effectiveAliveSeats = cards.mapIndexedNotNull { index, card ->
                                             (index + 1).takeIf { card.eliminatedRound == null }
