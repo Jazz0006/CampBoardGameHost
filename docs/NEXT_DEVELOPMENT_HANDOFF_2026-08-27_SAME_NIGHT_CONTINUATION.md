@@ -13,11 +13,12 @@ Before changing code, read:
 1. root `AGENTS.md`;
 2. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 3. this handoff;
-4. `docs/SAME_NIGHT_EFFECTIVE_STATE_ARCHITECTURE_2026-08-25.md`;
-5. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md`;
-6. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md`;
-7. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`;
-8. `docs/TESTING_STRATEGY.md`.
+4. `docs/SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md`;
+5. `docs/SAME_NIGHT_EFFECTIVE_STATE_ARCHITECTURE_2026-08-25.md`;
+6. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md`;
+7. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md`;
+8. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`;
+9. `docs/TESTING_STRATEGY.md`.
 
 Then re-query live `main`, branch head, PR #54 state/head, and latest checks. Do not rely on this SHA list if GitHub has advanced.
 
@@ -178,18 +179,18 @@ not merged
 head = 2e8cb6a6a4763f9926956e5407d1c465e112e2bd
 ```
 
-At the time of this documentation closeout, GitHub had not yet exposed workflow runs/statuses for the `2e8cb6a6...` production head. Re-query checks at the start of the next conversation; do not interpret “no run visible yet” as SUCCESS or FAILURE.
+At the time of that production closeout, GitHub had not yet exposed workflow runs/statuses for the `2e8cb6a6...` production head. Re-query checks at the start of the next implementation turn; do not interpret “no run visible yet” as SUCCESS or FAILURE.
 
 ## 6. Documentation-only head after production checkpoint
 
-After `2e8cb6a6...`, documentation-only commits may advance the branch head. Distinguish:
+After `2e8cb6a6...`, documentation-only commits have advanced the branch head. Distinguish:
 
 ```text
 last validated production code checkpoint:
 2e8cb6a6a4763f9926956e5407d1c465e112e2bd
 
 later branch head:
-docs-only closeout commits may follow
+docs-only SNE-7 design / roadmap / handoff commits follow
 ```
 
 Always verify the live lineage before using a SHA from this handoff.
@@ -218,17 +219,88 @@ Rules now explicitly require:
 
 The Mayor closeout added a stronger source-test lesson: after a second failure at the same semantic boundary, stop refining chained positional `substringAfter(...)` anchors and replace them with position-independent semantic checks / whitespace-insensitive regex plus explicit forbidden-legacy assertions.
 
-## 8. Immediate next work — SNE-7 final restore/recomposition matrix
+SNE-7 goes further: where a real typed behavioral seam can execute the lifecycle, replace source inspection with behavior instead of continuing to harden source-string anchors.
 
-Do not reopen 6C generic non-self Demon succession. The next development slice is **SNE-7 final restore/recomposition matrix**.
+## 8. Accepted SNE-7 architecture decision
 
-Required matrix includes at least:
+The next development slice is:
+
+```text
+SNE-7 — Authoritative Night Transaction Boundary
+```
+
+This does **not** reopen A3 and does **not** begin with a production refactor.
+
+Authoritative model:
+
+```text
+ClocktowerNightCheckpoint
+  = sole durable night UI/transaction checkpoint state
+
+GameState + existing ClocktowerGameSession timeline
+  = durable game-history authority
+
+NightResolutionEvent
+  = transient command only, never a persisted event log
+
+NightCheckpointReducer
+  = draft / confirm / navigation / dependent invalidation
+
+ClocktowerEffectiveNightStateProjector
+  = existing same-night derived mechanical-state authority
+
+NightDawnResolutionPlanner
+  = validated night consequences + DawnCommitIntent
+
+ClocktowerGameSession / App boundary
+  = durable sequence/timeline/role/death/history/phase commit authority
+```
+
+Do not add a stored `interactionIndex`: `checkpoint.nightStepIndex + canonical plan` derives current interaction/cursor.
+
+Protected lifecycle contract:
+
+```text
+confirmed A
+→ MovePrevious
+→ confirmed A remains authoritative
+
+Edit draft to B
+→ confirmed A remains authoritative
+
+MoveNext / Confirm B
+→ authoritative upstream fact changes A → B
+→ only then invalidate dependent downstream confirmed facts
+```
+
+Therefore:
+
+- Previous/Next navigation alone does not invalidate mechanical facts;
+- draft editing alone does not invalidate mechanical facts;
+- changed reconfirmation is the invalidation boundary;
+- restore must never promote draft state into confirmed mechanical fact.
+
+Full design record:
+
+```text
+docs/SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md
+```
+
+## 9. Immediate next work — SNE-7.1 behavioral REDs
+
+**The immediate next task is test work, not production-code modification.**
+
+Do not begin by refactoring `ClocktowerHostScreen.kt`, `CampBoardGameHostApp.kt`, `ClocktowerGameSession`, or other production files.
+
+SNE-7.1 should add behavior-first RED contracts that prove the real cross-layer lifecycle gaps. Prioritize contracts that are currently represented only by source-string wiring or isolated projection tests.
+
+Required behavior/restore targets include at least:
 
 1. restore before successor confirmation → target remains Minion;
 2. restore after successor confirmation → effective current role is Demon;
 3. confirmed successor + Previous → confirmed role change remains mechanically authoritative;
-4. edit draft without Next → old confirmed successor remains authoritative;
-5. upstream reconfirm invalidates stale successor;
+4. edit draft without Next/Confirm → old confirmed successor remains authoritative;
+5. reconfirmed upstream fact changing value → stale dependent confirmation invalidated;
 6. Poisoner→Demon ends active poison while preserving raw confirmed target;
 7. Fortune Teller targeting new Demon → Yes;
 8. Fortune Teller targeting old dead Demon → Yes;
@@ -236,15 +308,72 @@ Required matrix includes at least:
 10. Monk-protected Imp self-kill → no successor;
 11. functioning Scarlet Woman at 5+ on Imp self-kill → mandatory Scarlet Woman;
 12. poisoned/nonfunctioning Scarlet Woman at 5+ → ordinary living-Minion choice;
-13. legacy draft-only successor data → no invented RoleChanged / reconfirm required;
-14. Mayor restored/confirmed redirect target that is Demon → fail closed and does not kill Demon;
-15. same persisted base + same confirmed checkpoint + same canonical plan + same cursor → identical `ClocktowerEffectiveNightState` after recomposition.
+13. legacy draft-only successor data → no invented confirmation / `RoleChanged`;
+14. stale restored Mayor redirect to Demon → fail closed and does not kill Demon;
+15. missing interaction and out-of-range `nightStepIndex` restore safely;
+16. same durable inputs + reconstructed ruleset/canonical plan → identical effective state;
+17. current effective role can differ from public/base role and reconstruct correctly.
 
-Prefer pure/projector/restore tests where possible. Do not add another source-string wiring test when behavior can be tested through a typed seam.
+For restore, do not stop at `derive(input) == derive(input)`. Exercise the real boundary where feasible:
 
-## 9. Stage-completion gate after SNE-7
+```text
+checkpoint encode/save
+→ process-death / lifecycle boundary as applicable
+→ decode
+→ ruleset + canonical plan rebuild
+→ effective-state reconstruction
+```
 
-After SNE-7 focused GREEN:
+Prefer pure reducer/projector/planner/restore tests where possible. Do not add another source-string wiring test when the behavior can be exercised through a typed seam.
+
+## 10. SNE-7 implementation sequence after RED
+
+Only after the SNE-7.1 behavioral REDs are established:
+
+```text
+SNE-7.2  extract NightCheckpointReducer
+         draft / confirm / navigation / invalidation
+
+SNE-7.3  extract NightDawnResolutionPlanner
+         validated resolution + DawnCommitIntent
+
+SNE-7.4  switch production Compose/App wiring to typed seams
+         Compose ceases to be transaction authority
+
+SNE-7.5  restore / process-death reconstruction matrix
+
+SNE-7.6  2–4 Compose smoke/integration tests
+
+SNE-7.7  remove source-string assertions only when fully superseded by GREEN behavior
+
+SNE-7.8  retain only minimal architecture guards, preferring types/APIs
+```
+
+A thin facade may compose reducer/projector/planner, but must not become a second rules engine, durable state model, or persistence/timeline authority.
+
+Use existing domain types such as `GameState` / `GameSnapshot`; do not introduce a meaning-overlapping `ClocktowerGameState`.
+
+## 11. Source-test migration rule
+
+Do not delete all source-string tests at once.
+
+```text
+behavior RED
+→ typed production seam
+→ behavior GREEN
+→ identify exactly which source assertion is fully superseded
+→ delete that assertion/test
+```
+
+Keep high-value pure rule tests.
+
+Keep only a small number of Compose smoke tests proving UI wiring.
+
+Prefer type/API architecture constraints over broad text bans. For example, do not forbid `eliminatedRound` across an entire file when it remains a legitimate public-death field; instead constrain the specific same-night mechanical consumer to receive effective-state authority.
+
+## 12. Stage-completion gate after SNE-7
+
+After the complete SNE-7 logical checkpoint is GREEN:
 
 ```text
 :app:testFast --rerun-tasks
@@ -255,13 +384,19 @@ After SNE-7 focused GREEN:
 
 Do not merge or mark PR #54 ready without explicit user authorization.
 
-## 10. Do not do
+## 13. Do not do
 
 - do not merge or mark PR #54 ready;
+- do not reopen A3 Architecture Hardening;
 - do not resume App-root decomposition;
 - do not broaden to arbitrary custom-script Demon death;
+- do not introduce event sourcing for UI commands;
+- do not create a second durable night-state/navigation authority;
+- do not move sequence/timeline commit authority out of `ClocktowerGameSession`;
+- do not make Previous or draft edits invalidate confirmed mechanics;
 - do not let recommendations define Mayor legality;
 - do not reintroduce early public role mutation;
 - do not run broad CI/test gates after every micro-edit;
 - do not ask Luna to redesign or audit the architecture;
+- do not delete source-string tests before behavioral replacement is GREEN;
 - do not treat a docs-only branch head as the last validated code checkpoint.
