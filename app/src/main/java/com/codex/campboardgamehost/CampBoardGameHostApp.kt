@@ -2851,13 +2851,22 @@ internal fun CampBoardGameHostApp() {
                                 advanceClocktowerGameStateRevision()
                             }
                         },
-                        onSelectMayorRedirectTarget = {
+                        onSelectMayorRedirectTarget = { selectedTarget ->
                             advanceClocktowerPlayerInputRevision()
-                            clocktowerMayorRedirectTarget = it
+                            val reducedCheckpoint = NightCheckpointReducer.reduce(
+                                checkpoint = currentClocktowerNightCheckpoint(),
+                                event = NightResolutionEvent.EditMayorRedirectDraft(selectedTarget),
+                            )
+                            clocktowerMayorRedirectTarget = reducedCheckpoint.mayorRedirectDraftTarget
                         },
                         onConfirmMayorRedirectTarget = {
-                            if (clocktowerConfirmedMayorRedirectTarget != clocktowerMayorRedirectTarget) {
-                                clocktowerConfirmedMayorRedirectTarget = clocktowerMayorRedirectTarget
+                            val checkpoint = currentClocktowerNightCheckpoint()
+                            val reducedCheckpoint = NightCheckpointReducer.reduce(
+                                checkpoint = checkpoint,
+                                event = NightResolutionEvent.ConfirmMayorRedirect,
+                            )
+                            if (reducedCheckpoint.confirmedMayorRedirectTarget != checkpoint.confirmedMayorRedirectTarget) {
+                                clocktowerConfirmedMayorRedirectTarget = reducedCheckpoint.confirmedMayorRedirectTarget
                                 advanceClocktowerGameStateRevision()
                             }
                         },
