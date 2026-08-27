@@ -2,7 +2,7 @@
 
 > Date: 2026-08-27  
 > Scope: same-night correctness closeout  
-> Status: **IMPLEMENTATION IN PROGRESS — 7.1–7.3 ESTABLISHED / 7.4A–E COMPLETE / 7.4F NEXT**  
+> Status: **IMPLEMENTATION IN PROGRESS — 7.1–7.3 ESTABLISHED / SNE-7.4A–F COMPLETE / SNE-7.5 NEXT**
 > Branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54
 
@@ -25,7 +25,7 @@ SNE-7.3  NightDawnResolutionPlanner + DawnCommitIntent
          IMPLEMENTED as a typed pure seam
 
 SNE-7.4  production Compose/App wiring consumes typed seams
-         PARTIAL / CURRENT FUNCTIONAL FRONTIER
+         COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
 
   SNE-7.4A  Poison production reducer wiring
              COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
@@ -43,10 +43,10 @@ SNE-7.4  production Compose/App wiring consumes typed seams
              COMPLETE / FOCUSED GREEN / REMOTE AUDITED
 
   SNE-7.4F  Dawn planner authority closeout
-             NEXT
+             COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
 
 SNE-7.5  restore / process-death reconstruction matrix
-         SCAFFOLD EXISTS, NOT GREEN / NOT COMPLETE
+         NEXT / SCAFFOLD EXISTS, NOT GREEN / NOT COMPLETE
 
 SNE-7.6  small Compose smoke/integration set
          NOT COMPLETE
@@ -83,6 +83,17 @@ SNE-7.4D Mayor redirect
 SNE-7.4E Demon successor
   RED      fac430f4b40a219fcd92d91a6f45dacc2e89cc2b
   GREEN    034b050c1656324766c1df3d2fbcd170af201389
+
+SNE-7.4F Dawn planner authority closeout
+  F-1 RED  c7b76ca4ca131da36f49634a081bbd9f47ab12bd
+  F-1 GREEN 508b82a29054c2a89b402bce2605734bea307c7b
+  broad    CI #835 + R2 #762 SUCCESS
+  F-2 RED  ce15d84d819d400ae481d47c9a36c4cefac43962
+  F-2 GREEN 6188978b96059d176fe1647f7bd8d068237a0d6f
+  broad    CI #839 + R2 #766 SUCCESS
+  poison RED 84643d5bb12583ad65f688cae3215a70df9efa2c
+  poison GREEN b4bf9379db4de3f8fb7dc152fd93db088f857df0
+  broad    CI #842 + R2 #769 SUCCESS
 ```
 
 RED evidence for 7.4E:
@@ -295,32 +306,26 @@ For 7.4A–E, the App/session boundary still owns sequence allocation where appl
 
 `currentClocktowerNightCheckpoint()` is the shared App snapshot projection for these slices. It does not persist or independently own state.
 
-### 6.6 SNE-7.4F Dawn planner authority closeout — next
+### 6.6 SNE-7.4F Dawn planner authority closeout — accepted
 
-The next task is not to invent new Dawn semantics. Audit production for remaining duplicate handwritten semantics already represented by `NightDawnResolutionPlanner` / `DawnCommitIntent`.
-
-Audit at minimum:
+7.4F completed three narrow authority cuts without moving durable commit ownership out of App/session:
 
 ```text
+onConfirmNight
+  → NightDawnResolutionPlanner.planValidatedNightDeath(...)
+  → planner-validated death / Mayor redirect intent
+  → App materializes durable/public consequences
+
 onConfirmNewDemon
-night outcome / unresolved-successor gating
-Mayor redirect / night death Dawn resolution
-role-change materialization
-poison carry/lifetime handling
-outcome-evaluation gating
+  → currentClocktowerNightCheckpoint() canonical snapshot
+  → NightDawnResolutionPlanner.confirmNewDemonIdentity(...)
+  → DawnCommitIntent roleChanges + poisonCarry
+  → App records/materializes durable consequences exactly once
 ```
 
-Acceptance direction:
+Planner-backed succession no longer re-runs `PoisonEffectLifecycle.afterNight()` after consuming `DawnCommitIntent.poisonCarry`; that legacy lifecycle remains only on the non-planner path. The final cleanup audit found only idempotent successor-field clearing with no extra revision, timeline or mechanical side effect, so no further 7.4F production slice is warranted.
 
-1. Identify a concrete remaining duplicate production seam before writing RED.
-2. Use the smallest behavior/ownership RED that demonstrates the missing planner authority.
-3. Keep `NightDawnResolutionPlanner` pure; it returns validated checkpoint/continuation/commit intent only.
-4. Keep App/session as sole durable commit authority for public death, public/base role, timeline/history and sequence allocation.
-5. Exact confirmed successor remains the only Dawn successor authority; no draft fallback.
-6. Preserve current Mayor Demon-exclusion and other legality seams.
-7. Do not mutate public role/death early to simulate same-night mechanics.
-8. Reuse existing checkpoint/effective-state projections; introduce no second coordinator.
-9. Focused T0 GREEN and `git diff --check` before proceeding to reconstruction.
+SNE-7.4 is therefore complete. Durable sequence allocation, action/history recording, public role/death materialization and phase/revision changes remain App/session-owned.
 
 ## 7. Restore and reconstruction — SNE-7.5
 
@@ -400,11 +405,14 @@ COMPLETED
   SNE-7.4D Mayor redirect production reducer wiring
   SNE-7.4E Demon successor production reducer wiring
 
-CURRENT NEXT
+COMPLETED
   SNE-7.4F Dawn planner production authority closeout
 
+CURRENT NEXT
+  SNE-7.5A activate confirmed-successor reconstruction RED/GREEN
+
 THEN
-  SNE-7.5 restore/process-death reconstruction matrix GREEN
+  SNE-7.5 remaining restore/process-death reconstruction matrix GREEN
   SNE-7.6 2–4 Compose smoke/integration tests
   SNE-7.7 finish source-string retirement
   SNE-7.8 retain only minimal architecture guards

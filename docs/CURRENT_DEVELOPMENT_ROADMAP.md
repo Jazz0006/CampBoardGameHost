@@ -6,7 +6,7 @@
 > Stable `main`: `c8985cb4991f6c7e5ea02adedb932d2d86452da1`  
 > Active branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54  
-> Current priority: **SNE-7.4 production typed-seam migration — 7.4A–E COMPLETE; next 7.4F Dawn planner authority closeout**
+> Current priority: **SNE-7.5 restore/reconstruction — SNE-7.4A–F COMPLETE; next 7.5A confirmed-successor reconstruction**
 
 ## 1. Current campaign state
 
@@ -72,7 +72,7 @@ SNE-7.3  NightDawnResolutionPlanner + DawnCommitIntent
          IMPLEMENTED / typed pure seam
 
 SNE-7.4  switch production Compose/App wiring to typed seams
-         PARTIAL / CURRENT FUNCTIONAL FRONTIER
+         COMPLETE / FOCUSED + BROAD GREEN / REMOTE DIFF AUDITED
 
   SNE-7.4A  Poison
              COMPLETE / FOCUSED + BROAD GREEN / REMOTE DIFF AUDITED
@@ -90,10 +90,10 @@ SNE-7.4  switch production Compose/App wiring to typed seams
              COMPLETE / FOCUSED GREEN / REMOTE DIFF AUDITED
 
   SNE-7.4F  Dawn planner authority closeout
-             NEXT
+             COMPLETE / FOCUSED + BROAD GREEN / REMOTE DIFF AUDITED
 
 SNE-7.5  restore / process-death reconstruction matrix
-         SCAFFOLD EXISTS / INCOMPLETE
+         NEXT / SCAFFOLD EXISTS / INCOMPLETE
 
 SNE-7.6  limited Compose smoke/integration coverage
          NOT COMPLETE
@@ -167,9 +167,36 @@ CI #828 at RED head
 
 034b050c1656324766c1df3d2fbcd170af201389
   production: route Demon successor checkpoint transitions through NightCheckpointReducer
+
+c7b76ca4ca131da36f49634a081bbd9f47ab12bd
+  SNE-7.4F-1 RED: Dawn death planner production wiring
+
+508b82a29054c2a89b402bce2605734bea307c7b
+  production: route Dawn death planning through NightDawnResolutionPlanner
+
+CI #835 + R2 #762
+  broad SUCCESS
+
+ce15d84d819d400ae481d47c9a36c4cefac43962
+  SNE-7.4F-2 corrected RED: canonical new-Demon checkpoint ownership
+
+6188978b96059d176fe1647f7bd8d068237a0d6f
+  production: reuse currentClocktowerNightCheckpoint() for new-Demon Dawn
+
+CI #839 + R2 #766
+  broad SUCCESS
+
+84643d5bb12583ad65f688cae3215a70df9efa2c
+  SNE-7.4F poison-authority RED: 901 tests, exactly 1 intended failure, 4 skipped
+
+b4bf9379db4de3f8fb7dc152fd93db088f857df0
+  production: keep planner poison intent authoritative at Dawn
+
+CI #842 + R2 #769
+  broad SUCCESS
 ```
 
-The 7.4A–E production cut-overs were validated in complete GitHub worktrees with:
+The 7.4A–F production cut-overs were validated in complete GitHub worktrees with:
 
 ```text
 exact target-head guard
@@ -242,7 +269,7 @@ Hard contracts:
 - `NightDawnResolutionPlanner` owns pure validated consequences/intent only;
 - `ClocktowerGameSession` / App boundary retains sequence, timeline and durable commit authority.
 
-## 5. SNE-7.4A–E accepted result
+## 5. SNE-7.4A–F accepted result
 
 Poison, Monk, Demon attack, Mayor redirect and Demon successor production callbacks now consume the typed checkpoint seam:
 
@@ -279,34 +306,31 @@ Demon successor draft editing now leaves the old confirmed successor authoritati
 
 Reuse `currentClocktowerNightCheckpoint()`; do not introduce another durable or snapshot state owner.
 
-## 6. Immediate next slice — SNE-7.4F Dawn planner authority closeout
+SNE-7.4F also completed the Dawn planner authority closeout: `onConfirmNight` consumes planner-validated night death/Mayor intent; `onConfirmNewDemon` reuses the canonical checkpoint snapshot; planner-backed succession materializes poison from `DawnCommitIntent.poisonCarry` exactly once, while the legacy `PoisonEffectLifecycle.afterNight()` path remains only for the non-planner flow. Final audit found the remaining successor cleanup to be idempotent plain assignment with no revision/timeline/mechanical side effect, so no additional low-value source-string slice is justified.
 
-Do not jump directly to reconstruction. First audit the remaining production Dawn/new-Demon callbacks against `NightDawnResolutionPlanner` and `DawnCommitIntent`.
+## 6. Immediate next slice — SNE-7.5A confirmed-successor reconstruction
 
-The 7.4F objective is to remove any remaining duplicate handwritten Dawn transaction semantics from App while preserving App/session ownership of actual durable commits.
+Activate the existing typed `NightTransactionReconstructionContractTest` against the real `NightTransactionReconstructor` scaffold. Do not invent a second reconstruction model and do not replay transient `NightResolutionEvent` commands.
 
-Audit at minimum:
+Expected first gap:
 
 ```text
-onConfirmNewDemon
-night outcome / unresolved-successor gating
-Mayor redirect / night death Dawn resolution
-role-change materialization
-poison carry/lifetime handling
-outcome-evaluation gating
+decoded ClocktowerNightCheckpoint
++ canonical interaction plan
++ confirmed Demon successor
+→ reconstruct same-night effective Demon role
+→ leave public/base GameState role unchanged
 ```
 
-Acceptance direction:
+Tests-first direction:
 
-1. Establish the smallest behavior/ownership RED only after identifying a concrete remaining duplicate production seam.
-2. `NightDawnResolutionPlanner` remains pure and returns validated checkpoint/continuation/commit intent.
-3. App/session remains the sole durable commit authority for public death, public/base role materialization, timeline/history and sequence allocation.
-4. Exact confirmed successor remains the only Dawn successor authority; no draft/fallback.
-5. Mayor Demon-exclusion and existing target-legality seams remain unchanged.
-6. Do not mutate public death/role early to simulate same-night state.
-7. Reuse the existing checkpoint and effective-state projections; no second coordinator.
-8. Focused RED/GREEN, `git diff --check`, remote exact diff audit.
-9. Stop before SNE-7.5 until 7.4F is explicitly accepted.
+1. Remove/narrow the class-level reconstruction `@Ignore` and verify the exact RED set rather than assuming it.
+2. Draft-only successor must not become effective Demon.
+3. Missing successor interaction and out-of-range `nightStepIndex` must fail closed without applying stale role effect.
+4. A valid confirmed successor applies only when canonical-plan position proves the successor interaction has been passed.
+5. Reconstruction is deterministic from identical persisted inputs.
+6. `baseGameState` remains immutable; only derived `ClocktowerEffectiveNightState` changes.
+7. Focused RED/GREEN + `git diff --check` + exact remote diff audit before broadening the reconstruction matrix.
 
 ## 7. Restore/reconstruction boundary
 

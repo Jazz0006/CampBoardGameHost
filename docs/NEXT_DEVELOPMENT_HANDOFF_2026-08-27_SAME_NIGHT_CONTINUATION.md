@@ -5,7 +5,7 @@
 > Branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54  
 > Stable `main`: `c8985cb4991f6c7e5ea02adedb932d2d86452da1`  
-> Handoff status: **SNE-7.4 active — Poison + Monk + Demon attack + Mayor redirect + Demon successor cut-overs complete; Dawn planner authority closeout is next**
+> Handoff status: **SNE-7.4 COMPLETE — Poison + Monk + Demon attack + Mayor redirect + Demon successor + Dawn planner authority closeout accepted; SNE-7.5A reconstruction is next**
 
 ## 1. Startup contract
 
@@ -46,17 +46,17 @@ SNE-7.3  NightDawnResolutionPlanner + DawnCommitIntent
          IMPLEMENTED
 
 SNE-7.4  production Compose/App typed-seam cutover
-         PARTIAL / CURRENT FRONTIER
+         COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
 
   7.4A Poison            COMPLETE / FOCUSED + BROAD GREEN
   7.4B Monk              COMPLETE / FOCUSED + BROAD GREEN
   7.4C Demon attack      COMPLETE / FOCUSED GREEN / REMOTE AUDITED
   7.4D Mayor redirect    COMPLETE / FOCUSED GREEN / REMOTE AUDITED
   7.4E Demon successor   COMPLETE / FOCUSED GREEN / REMOTE AUDITED
-  7.4F Dawn planner      NEXT
+  7.4F Dawn planner      COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
 
 SNE-7.5  NightTransactionReconstructor
-         SCAFFOLD EXISTS / INCOMPLETE
+         NEXT / SCAFFOLD EXISTS / INCOMPLETE
 
 SNE-7.6  small Compose integration/smoke set
          NOT COMPLETE
@@ -140,7 +140,26 @@ SNE7NightTransactionBehaviorMatrixTest
 
 It also passed exact target-head guard, exact patch preconditions, `git diff --check`, single-production-file scope audit, and remote-head recheck before push.
 
-## 5. Accepted authority split through 7.4E
+### Dawn planner authority closeout
+
+```text
+c7b76ca4ca131da36f49634a081bbd9f47ab12bd  F-1 RED
+508b82a29054c2a89b402bce2605734bea307c7b  Dawn death planner production
+CI #835 + R2 #762                            broad SUCCESS
+
+ce15d84d819d400ae481d47c9a36c4cefac43962  F-2 corrected RED
+6188978b96059d176fe1647f7bd8d068237a0d6f  canonical new-Demon checkpoint production
+CI #839 + R2 #766                            broad SUCCESS
+
+84643d5bb12583ad65f688cae3215a70df9efa2c  poison-authority RED
+CI #840: 901 tests, exactly 1 intended failure, 4 skipped
+b4bf9379db4de3f8fb7dc152fd93db088f857df0  planner poison intent authoritative at Dawn
+CI #842 + R2 #769                            broad SUCCESS
+```
+
+Final 7.4F audit found only idempotent successor cleanup (`clocktowerConfirmedDemonSuccessorTarget = null`) after planner projection; it has no additional revision/timeline/invalidation side effect and is not a second mechanical authority.
+
+## 5. Accepted authority split through 7.4F
 
 Production now follows the typed checkpoint seam for Poison, Monk, Demon attack, Mayor redirect and Demon successor.
 
@@ -166,33 +185,30 @@ Demon successor confirmation now commits the checkpoint's current successor draf
 
 Reuse the existing `currentClocktowerNightCheckpoint()` helper. Do not add another durable/snapshot state owner.
 
-## 6. Exact next functional slice — SNE-7.4F Dawn planner authority closeout
+## 6. Exact next functional slice — SNE-7.5A confirmed-successor reconstruction
 
-First audit the remaining production Dawn/new-Demon path against `NightDawnResolutionPlanner` and `DawnCommitIntent`; do not assume a single broad patch is needed.
+`NightTransactionReconstructor` currently restores only cursor + base alive/current-role state; its `demonSuccessorInteractionId` and `demonRoleId` inputs are scaffold-only. The existing reconstruction contract is still class-level ignored.
 
-Audit at minimum:
+Activate the existing typed contract first. The first expected missing behavior is the valid confirmed-successor case:
 
 ```text
-onConfirmNewDemon
-night outcome / unresolved-successor gating
-Mayor redirect / night death Dawn resolution
-role-change materialization
-poison carry/lifetime handling
-outcome-evaluation gating
+same persisted checkpoint inputs
++ canonical plan containing the successor interaction
++ checkpoint position after that interaction
+→ deterministic effective role override to Demon
+→ public/base actualRole remains unchanged
 ```
 
-### SNE-7.4F acceptance direction
+### SNE-7.5A acceptance direction
 
-1. Identify concrete duplicate handwritten production semantics before creating RED.
-2. Establish the smallest behavior/ownership RED that demonstrates the missing planner authority.
-3. `NightDawnResolutionPlanner` remains pure; it produces validated checkpoint/continuation/`DawnCommitIntent` only.
-4. App/session remains the sole durable commit authority for public death, public/base role materialization, timeline/history and sequence allocation.
-5. Exact confirmed successor remains the only Dawn successor authority; no draft fallback.
-6. Preserve current Mayor Demon-exclusion and other legality seams.
-7. Do not mutate public role/death early to fake same-night state.
-8. Reuse existing checkpoint/effective-state projections; no second coordinator.
-9. Focused RED/GREEN with `--rerun-tasks`, `git diff --check`, and remote exact diff audit.
-10. Stop before SNE-7.5 until 7.4F is explicitly accepted.
+1. Remove/narrow the reconstruction class-level `@Ignore`; verify exact RED rather than assuming the count.
+2. Draft-only successor does not become effective Demon.
+3. Missing successor interaction and out-of-range navigation fail closed and do not apply stale role effect.
+4. Confirmed successor applies only after its canonical interaction has been passed.
+5. Reconstruction is deterministic from the same decoded durable inputs.
+6. Do not replay `NightResolutionEvent`; derive from checkpoint + base game state + canonical plan.
+7. Keep base/public `GameState` immutable and project only `ClocktowerEffectiveNightState`.
+8. Focused RED/GREEN with `--rerun-tasks`, `git diff --check`, and exact remote diff audit.
 
 ## 7. Large-file writer constraint
 
@@ -218,9 +234,9 @@ complete-worktree executor
 
 A one-shot temporary GitHub Actions runner branch outside PR #54 has been used because the current container cannot safely edit the complete App file. It is not production authority and must never be added to the PR branch.
 
-## 8. SNE-7.5 remains future work
+## 8. SNE-7.5 is the current frontier
 
-`NightTransactionReconstructor` exists but remains a scaffold. Do not jump there before 7.4F is accepted.
+`NightTransactionReconstructor` exists but remains a scaffold. Proceed one reconstruction behavior at a time; do not activate the matrix by faking public role changes or replaying UI commands.
 
 Required later reconstruction boundary:
 
@@ -280,12 +296,12 @@ Do not merge or mark PR #54 ready; do not rebase/force-push; do not reopen A3/Ap
 
 ```text
 1. re-query live PR #54 head/checks;
-2. audit live onConfirmNewDemon / onConfirmNight / Dawn resolution path against NightDawnResolutionPlanner;
-3. identify the smallest remaining duplicate production semantic;
-4. establish SNE-7.4F RED only for that concrete seam;
-5. cut planner authority without moving durable commit ownership out of App/session;
+2. activate the existing NightTransactionReconstructionContractTest against the scaffold;
+3. verify the exact 7.5A RED set;
+4. implement only confirmed-successor effective-role reconstruction;
+5. preserve fail-closed behavior for draft-only / missing-interaction / out-of-range cases;
 6. focused GREEN + diff check + remote parent/diff audit;
-7. stop before SNE-7.5 until 7.4F is accepted.
+7. continue the remaining reconstruction matrix one behavior at a time.
 ```
 
 Never merge, mark ready, rebase, force-push, or broaden PR #54 without explicit user authorization.
