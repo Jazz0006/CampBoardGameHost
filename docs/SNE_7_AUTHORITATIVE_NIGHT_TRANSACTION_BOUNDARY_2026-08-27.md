@@ -2,21 +2,73 @@
 
 > Date: 2026-08-27  
 > Scope: same-night correctness closeout  
-> Status: **DESIGN ACCEPTED / IMPLEMENTATION NOT STARTED**  
-> Branch: `codex/clocktower-same-night-effective-state-correctness`
+> Status: **IMPLEMENTATION IN PROGRESS — 7.1–7.3 ESTABLISHED / 7.4 CURRENT FRONTIER**  
+> Branch: `codex/clocktower-same-night-effective-state-correctness`  
+> Draft PR: #54
 
 ## 1. Purpose
 
-SNE-7 is not a generic architecture rewrite and does not reopen A3. Its purpose is to replace brittle source-string wiring verification with executable behavioral contracts at the real night-transaction boundary, while preserving the current persistence and timeline authorities.
+SNE-7 is not a generic architecture rewrite and does not reopen A3. Its purpose is to replace brittle implementation-shaped wiring checks with executable behavioral contracts at the real night-transaction boundary while preserving the existing persistence and timeline authorities.
 
-The immediate task is **tests-first behavioral RED work**. Production extraction follows only after the RED contracts are established.
+The design is accepted and implementation has advanced materially beyond the original handoff. The current work is no longer SNE-7.1 design-only work.
 
-## 2. Authority model
+## 2. Live implementation status
 
-The authoritative model is:
+As of the live PR #54 audit on 2026-08-27:
 
 ```text
-Durable night UI/transaction state
+SNE-7.1  behavior-first transaction matrix
+         ESTABLISHED / GREEN coverage exists
+
+SNE-7.2  NightCheckpointReducer
+         IMPLEMENTED as a typed pure seam
+
+SNE-7.3  NightDawnResolutionPlanner + DawnCommitIntent
+         IMPLEMENTED as a typed pure seam
+
+SNE-7.4  production Compose/App wiring consumes typed seams
+         PARTIAL / CURRENT FUNCTIONAL FRONTIER
+
+SNE-7.5  restore / process-death reconstruction matrix
+         SCAFFOLD EXISTS, NOT GREEN / NOT COMPLETE
+
+SNE-7.6  small Compose smoke/integration set
+         NOT COMPLETE
+
+SNE-7.7  source-string retirement
+         IN PROGRESS; cleanup started before 7.4 is fully closed
+
+SNE-7.8  minimal architecture guards only
+         NOT COMPLETE
+```
+
+Known live head before the documentation refresh:
+
+```text
+2aa528dbb898313c51b1a7fb06d11a60c883b84f
+  test: remove low-value same-night wiring assertions
+```
+
+At that head:
+
+```text
+R2 #730  SUCCESS
+CI  #803  FAILURE
+```
+
+CI #803 completed 879 tests with 4 failures, all in legacy source-inspection tests:
+
+- one assertion in `ClocktowerSameNightEffectiveStateProductionWiringTest`;
+- three assertions in `ClocktowerProductionOtherNightWiringTest`.
+
+These failures are a test-debt cleanup gate, not authorization to reshape correct production code around obsolete source strings. Apply `AGENTS.md` and `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md`: retire or narrow a source assertion only after identifying the typed/behavioral contract that supersedes it.
+
+## 3. Authority model
+
+The authoritative model remains:
+
+```text
+Durable unfinished-night state
     ClocktowerNightCheckpoint
 
 Durable game-history authority
@@ -39,126 +91,142 @@ Durable commit authority
 
 Hard rules:
 
-1. `ClocktowerNightCheckpoint` remains the sole durable night transaction/checkpoint state.
-2. `GameState` and the existing session/timeline remain the durable game-history authority.
+1. `ClocktowerNightCheckpoint` remains the sole durable unfinished-night checkpoint state.
+2. `GameState` and the existing `ClocktowerGameSession` timeline remain durable game-history authority.
 3. No second persisted coordinator state is introduced.
 4. `NightResolutionEvent` is a transient command only; it is not a durable event log and does not introduce event sourcing.
 5. Restore reconstructs from checkpoint + game state + ruleset/canonical plan, not from replaying UI commands.
+6. Compose callbacks may orchestrate durable side effects, but must stop duplicating checkpoint transition semantics once the corresponding reducer seam is cut over.
 
-## 3. Navigation and identity
+## 4. Navigation, draft, confirmation, and invalidation
 
-`ClocktowerNightCheckpoint` already owns `nightStepIndex`. Do not add another `interactionIndex` or navigation cursor as stored authority.
+`ClocktowerNightCheckpoint.nightStepIndex` remains the sole stored navigation position. Do not add another interaction index.
 
-```text
-checkpoint.nightStepIndex
-+ canonicalInteractions
-→ currentInteraction
-→ effective cursor
-```
-
-The cursor and current interaction are derived values.
-
-Stable seat and interaction identity must continue to come from canonical/stable ordering, never from re-indexing filtered views.
-
-## 4. Draft, confirmation, navigation, and invalidation
-
-These lifecycle stages are distinct:
+Protected lifecycle:
 
 ```text
 confirmed A
 → MovePrevious
-→ confirmed A still authoritative
+→ confirmed A remains authoritative
 
 Edit draft to B
-→ confirmed A still authoritative
+→ confirmed A remains authoritative
 
-MoveNext / Confirm B
-→ confirmed upstream fact changes A → B
+Confirm B
+→ if B != A, authoritative upstream fact changes
 → only then invalidate dependent downstream confirmed facts
 ```
 
-Protected contract:
+Therefore:
 
-> Navigation does not invalidate mechanical facts. Draft editing does not invalidate mechanical facts. Dependent invalidation occurs only when an upstream confirmed fact is reconfirmed to a changed authoritative value.
+- navigation alone never invalidates confirmed mechanics;
+- editing a draft alone never invalidates confirmed mechanics;
+- changed reconfirmation is the invalidation boundary;
+- restore never promotes draft state into confirmed mechanical fact.
 
-Typed commands must therefore distinguish edit from confirm/navigation. Conceptually:
+`NightCheckpointReducer` already owns the typed semantics for Poison, Monk protection, Demon attack, Mayor redirect, Demon successor, and Previous navigation. Production callbacks must converge on those semantics instead of retaining parallel handwritten transition logic.
+
+## 5. Established typed seams
+
+### 5.1 `NightCheckpointReducer`
+
+Current reducer responsibilities include:
 
 ```text
-EditPoisonDraft(target)
-ConfirmPoison
-
-EditDemonAttackDraft(target)
-ConfirmDemonAttack
-
-EditMayorRedirectDraft(target)
-ConfirmMayorRedirect
-
-EditDemonSuccessorDraft(target)
-ConfirmDemonSuccessor
-
+EditPoisonDraft / ConfirmPoison
+EditMonkProtectionDraft / ConfirmMonkProtection
+EditDemonAttackDraft / ConfirmDemonAttack
+EditMayorRedirectDraft / ConfirmMayorRedirect
+EditDemonSuccessorDraft / ConfirmDemonSuccessor
 MovePrevious
-MoveNext
 ```
 
-Exact generic/event type design should reuse existing repository types where possible rather than proliferating role-specific wrappers unnecessarily.
+The reducer returns a replacement `ClocktowerNightCheckpoint`. It does not allocate global sequence numbers and does not commit durable timeline/history facts.
 
-## 5. Internal production seams
+### 5.2 `NightDawnResolutionPlanner`
 
-Do not create one large coordinator that reimplements all night rules.
+The planner now owns typed pure planning for:
 
-Preferred internal responsibilities:
+- Demon succession continuation;
+- new-Demon identity confirmation;
+- Dawn role-change intent;
+- validated night death / Mayor redirect resolution;
+- poison carry/lifetime handling;
+- outcome-evaluation gating.
+
+It remains pure and returns checkpoint/continuation/commit intent rather than mutating durable game state.
+
+### 5.3 `ClocktowerEffectiveNightStateProjector`
+
+The projector remains the derived same-night mechanical authority for:
+
+- effective alive state;
+- effective current role;
+- same-night chronology;
+- projected mechanical death;
+- projected `RoleChanged` facts.
+
+A role change must not mutate public/base role state early merely to make later-night mechanics work.
+
+## 6. Current production migration frontier — SNE-7.4
+
+SNE-7.4 is complete only when production Compose/App wiring consumes the typed seams and stops independently owning the same transition semantics.
+
+The live audit shows partial migration:
+
+- `NightDawnResolutionPlanner.confirmNewDemonIdentity(...)` is already consumed from App production wiring;
+- other planner/reducer responsibilities remain partially duplicated in Compose/App callbacks;
+- in particular Poison draft/confirm callbacks still directly mutate draft/confirmed poison and dependent successor state.
+
+The next narrow functional slice is therefore:
 
 ```text
-NightCheckpointReducer
-  draft edit
-  confirm
-  navigation
-  dependent-fact invalidation
-
-ClocktowerEffectiveNightStateProjector
-  existing same-night derived mechanical state authority
-
-NightDawnResolutionPlanner
-  validated deaths
-  succession consequences
-  poison carry
-  outcome gate
-  DawnCommitIntent
+SNE-7.4A — Poison production reducer wiring
 ```
 
-A production facade may compose these seams, but it must stay thin and must not duplicate Mayor legality, Demon succession, poison functioning, effective role, effective alive, or other existing pure semantics.
-
-Use existing domain types such as `GameState` / `GameSnapshot`; do not introduce a meaning-overlapping `ClocktowerGameState` model.
-
-## 6. Dawn responsibility
-
-The reducer/planner computes what should happen; it does not become a second persistence or timeline authority.
-
-Conceptually:
+Required behavior:
 
 ```text
-Reducer / projector / planner
-→ next checkpoint
-→ validated mechanical consequences
-→ DawnCommitIntent
+onSelectPoisonTarget
+  → NightResolutionEvent.EditPoisonDraft
+  → NightCheckpointReducer.reduce(...)
 
-ClocktowerGameSession / App transaction boundary
-→ sequence allocation
-→ role-change commit
-→ death commit
-→ history/observation commit
-→ phase transition
+onConfirmPoisonTarget
+  → NightResolutionEvent.ConfirmPoison
+  → NightCheckpointReducer.reduce(...)
 ```
 
-The exact commit order remains owned by the existing durable transaction boundary.
+The reducer owns checkpoint-local transition semantics. Existing App/session code may still own durable side effects that are outside reducer scope, including sequence/timeline/history commitments and revision/phase orchestration.
 
-`NightTransition.mechanicalEvents`, if retained, must represent transition consequences/output rather than a second complete mechanical source of truth. If the complete set is fully derivable from checkpoint + projected state, do not persist or duplicate it.
+### SNE-7.4A acceptance criteria
 
-## 7. Restore and reconstruction contracts
+1. RED first at the smallest callable typed application boundary that can prove the migration.
+2. Poison draft editing does not alter the confirmed poison fact.
+3. Poison draft editing does not invalidate confirmed successor mechanics.
+4. Confirming an unchanged poison fact preserves dependent successor confirmation.
+5. Confirming a changed poison fact commits the draft and invalidates the dependent successor confirmation.
+6. Existing raw event/timeline side effects are preserved exactly once and remain outside `NightCheckpointReducer`.
+7. No second durable night-state owner is introduced.
+8. Focused T0 GREEN and `git diff --check` before proceeding to Monk/attack/Mayor/successor migration.
 
-A simple `derive(input) == derive(input)` determinism check is useful but insufficient.
+Expected follow-on slices:
 
-SNE-7 restore testing must exercise the real reconstruction boundary:
+```text
+SNE-7.4A Poison
+SNE-7.4B Monk
+SNE-7.4C Demon attack
+SNE-7.4D Mayor redirect
+SNE-7.4E Demon successor
+SNE-7.4F Dawn planner authority closeout
+```
+
+Do not combine these into a broad App rewrite unless a later audit proves that a smaller cut is unsafe.
+
+## 7. Restore and reconstruction — SNE-7.5
+
+`NightTransactionReconstructor` and its contract test now exist, but the current implementation is still a scaffold. It must not be treated as completed merely because the types/files exist.
+
+SNE-7.5 must exercise a real reconstruction boundary:
 
 ```text
 checkpoint encode/save
@@ -168,7 +236,7 @@ checkpoint encode/save
 → derived effective state reconstruction
 ```
 
-Required restore cases include:
+Required restore cases remain:
 
 - legacy draft-only successor data does not invent confirmation or `RoleChanged`;
 - invalid confirmed successor fails closed / requires valid reconfirmation;
@@ -177,100 +245,78 @@ Required restore cases include:
 - stale Mayor redirect to Demon fails closed;
 - current effective role may differ from public/base role and reconstructs correctly;
 - confirmed successor + Previous remains confirmed;
-- draft edit without Next/Confirm leaves the old confirmed fact authoritative.
-
-Additional persistence invariant:
-
-> Restore must never promote draft state into confirmed mechanical fact.
-
-## 8. Testing strategy
-
-The goal is behavior-first verification, not wholesale deletion of all source tests.
-
-### Keep
-
-Fast pure semantics tests remain high-value, including examples such as:
-
-- `ClocktowerEffectiveNightStateTest`
-- `DemonSuccessionSemanticsTest`
-- `PoisonEffectLifecycleTest`
-- `MayorRedirectRecommenderTest`
-
-### Add / migrate to behavioral contracts
-
-Priority cross-layer behaviors:
-
-- Imp self-kill → confirm successor → resolve → identity confirmation → Dawn intent;
-- successor confirmation survives navigation to the identity-confirmation stage;
-- Poisoner→Demon ends effective poison immediately and does not carry poison into day;
-- next night uses the current living Imp rather than a dead old Imp;
-- a new Imp can self-kill and produce the succession step again;
-- Sage/other Demon-sensitive information uses current effective Demon identity;
-- stale restored Mayor→Demon redirect fails closed at final resolution;
-- Monk-protected Mayor cannot use an old redirect confirmation to kill another player;
-- reconfirmed upstream Imp target invalidates stale dependent Chambermaid/other downstream confirmations as specified;
+- draft edit without Confirm leaves the old confirmed fact authoritative;
 - same durable inputs reconstruct the same effective state.
 
-### Compose/UI smoke tests
+Do not activate the ignored reconstruction matrix by faking role changes or replaying UI commands. The reconstructor must derive from durable state plus canonical semantics.
 
-Keep only a small set proving UI-to-typed-seam wiring, for example:
+## 8. Source-string retirement
 
-- Fortune Teller two-target flow does not crash and displays the result;
-- Previous → edit Imp target → Next uses the newly confirmed fact;
-- Chambermaid only exposes current effective legal/alive targets;
-- new Demon identity confirmation completes the handoff to Dawn.
+Source inspection is not the primary correctness layer.
 
-### Source guards
-
-Source-string tests are a last resort, not the primary correctness layer.
-
-Prefer API/type constraints such as:
+Preferred proof order:
 
 ```text
-Empath calculation consumes EffectiveNightState
-Chambermaid legality consumes effectiveAliveSeats
-Dawn resolution consumes validated resolved death / commit intent
+typed pure/domain behavior
+→ typed reducer/planner/session behavior
+→ typed adapter/integration behavior
+→ minimal source ownership guard only when runtime proof is impractical
 ```
 
-Do not ban legitimate domain fields such as `eliminatedRound` across an entire file. Only retain narrowly scoped negative guards for a specific known-dangerous consumer path when the invariant cannot yet be expressed through types or APIs.
+For every source-string assertion removed, identify the behavioral or typed contract that replaces it.
 
-## 9. Safe implementation order
+Current immediate cleanup gate from CI #803:
+
+- do not modify production formatting/local variable spelling to satisfy the four failing assertions;
+- remove or narrow only those assertions whose semantics are already covered elsewhere;
+- if a unique behavior is not covered, add the smallest typed behavior test first.
+
+Retain coarse source guards only for genuine ownership boundaries, not local expression shape.
+
+## 9. Validation cadence
+
+Follow `AGENTS.md` and `docs/TESTING_STRATEGY.md`:
 
 ```text
-SNE-7.1  behavioral REDs for real cross-layer failures
-         no production changes yet
+micro-slice
+  T0 RED
+  exact production patch
+  T0 GREEN --rerun-tasks
+  git diff --check
+  commit + push
+  remote exact diff audit
 
-SNE-7.2  extract NightCheckpointReducer
-         draft / confirm / navigation / invalidation GREEN
-
-SNE-7.3  extract NightDawnResolutionPlanner
-         validated resolution + DawnCommitIntent GREEN
-
-SNE-7.4  switch production Compose/App wiring to typed seams
-         Compose ceases to be transaction authority
-
-SNE-7.5  restore / process-death reconstruction matrix
-
-SNE-7.6  2–4 Compose smoke/integration tests
-
-SNE-7.7  delete source-string assertions only when a real behavioral contract fully supersedes them
-
-SNE-7.8  retain only minimal architecture guards, preferring types/APIs over source inspection
+logical checkpoint
+  :app:testFast + triggered T2/T3
+  latest-head GitHub CI/R2
 ```
 
-For every source-string test removed, identify the behavioral contract that replaces it.
+Do not wait for old-head CI after every micro-slice. Do not treat a failing obsolete source assertion as a reason to preserve implementation shape.
 
-## 10. Immediate execution boundary
+## 10. Updated implementation order
 
-**Current immediate task:** SNE-7.1 tests-first RED design and implementation.
-
-Do not begin by refactoring `ClocktowerHostScreen.kt`, `CampBoardGameHostApp.kt`, `ClocktowerGameSession`, or other production files. The next production extraction is authorized only after the behavioral REDs establish the intended lifecycle contract.
-
-This means the answer to “are we currently changing production code?” is:
+The live sequence is now:
 
 ```text
-Immediate next slice: NO — tests/contracts first.
-Whole SNE-7 stage: YES — production reducer/planner/seam extraction follows after RED is proven.
+CURRENT GATE
+  finish source-string cleanup exposed by CI #803
+  restore latest head to a trustworthy green baseline
+
+SNE-7.4A  Poison production reducer wiring
+SNE-7.4B  Monk production reducer wiring
+SNE-7.4C  Demon attack production reducer wiring
+SNE-7.4D  Mayor redirect production reducer wiring
+SNE-7.4E  Demon successor production reducer wiring
+SNE-7.4F  Dawn planner production authority closeout
+
+SNE-7.5   restore/process-death reconstruction matrix GREEN
+SNE-7.6   2–4 Compose smoke/integration tests
+SNE-7.7   finish source-string retirement
+SNE-7.8   retain only minimal architecture guards
+
+→ logical checkpoint validation
+→ exact campaign audit
+→ PR remains draft until explicit user authorization
 ```
 
 ## 11. Non-goals
@@ -284,4 +330,6 @@ Do not:
 - move sequence/timeline commit authority out of `ClocktowerGameSession`;
 - broaden to generic arbitrary non-self Demon death / Scarlet Woman succession;
 - use recommendations as legality authority;
-- delete source-string tests before replacement behavioral coverage is GREEN.
+- mutate public death/role early to simulate same-night mechanics;
+- restore obsolete source-string tests merely to recover coverage count;
+- merge, mark ready, rebase, force-push, or broaden PR #54 without explicit user authorization.
