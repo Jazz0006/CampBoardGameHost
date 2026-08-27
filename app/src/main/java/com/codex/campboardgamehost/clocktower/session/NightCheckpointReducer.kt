@@ -8,6 +8,18 @@ package com.codex.campboardgamehost.clocktower.session
 internal sealed interface NightResolutionEvent {
     data object MovePrevious : NightResolutionEvent
 
+    data class EditPoisonDraft(
+        val target: String?,
+    ) : NightResolutionEvent
+
+    data object ConfirmPoison : NightResolutionEvent
+
+    data class EditMonkProtectionDraft(
+        val target: String?,
+    ) : NightResolutionEvent
+
+    data object ConfirmMonkProtection : NightResolutionEvent
+
     data class EditDemonAttackDraft(
         val target: String?,
     ) : NightResolutionEvent
@@ -30,20 +42,53 @@ internal object NightCheckpointReducer {
             nightStepIndex = (checkpoint.nightStepIndex - 1).coerceAtLeast(0),
         )
 
+        is NightResolutionEvent.EditPoisonDraft -> checkpoint.copy(
+            poisonDraftTarget = event.target,
+        )
+
+        NightResolutionEvent.ConfirmPoison -> checkpoint.copy(
+            confirmedPoisonTarget = checkpoint.poisonDraftTarget,
+            confirmedDemonSuccessorTarget = preserveSuccessorUnlessConfirmedValueChanged(
+                previousConfirmedValue = checkpoint.confirmedPoisonTarget,
+                nextConfirmedValue = checkpoint.poisonDraftTarget,
+                confirmedDemonSuccessorTarget = checkpoint.confirmedDemonSuccessorTarget,
+            ),
+        )
+
+        is NightResolutionEvent.EditMonkProtectionDraft -> checkpoint.copy(
+            monkDraftTarget = event.target,
+        )
+
+        NightResolutionEvent.ConfirmMonkProtection -> checkpoint.copy(
+            confirmedMonkTarget = checkpoint.monkDraftTarget,
+            confirmedDemonSuccessorTarget = preserveSuccessorUnlessConfirmedValueChanged(
+                previousConfirmedValue = checkpoint.confirmedMonkTarget,
+                nextConfirmedValue = checkpoint.monkDraftTarget,
+                confirmedDemonSuccessorTarget = checkpoint.confirmedDemonSuccessorTarget,
+            ),
+        )
+
         is NightResolutionEvent.EditDemonAttackDraft -> checkpoint.copy(
             attackDraftTarget = event.target,
         )
 
-        NightResolutionEvent.ConfirmDemonAttack -> {
-            val confirmedValueChanged = checkpoint.confirmedAttackTarget != checkpoint.attackDraftTarget
-            checkpoint.copy(
-                confirmedAttackTarget = checkpoint.attackDraftTarget,
-                confirmedDemonSuccessorTarget = if (confirmedValueChanged) {
-                    null
-                } else {
-                    checkpoint.confirmedDemonSuccessorTarget
-                },
-            )
-        }
+        NightResolutionEvent.ConfirmDemonAttack -> checkpoint.copy(
+            confirmedAttackTarget = checkpoint.attackDraftTarget,
+            confirmedDemonSuccessorTarget = preserveSuccessorUnlessConfirmedValueChanged(
+                previousConfirmedValue = checkpoint.confirmedAttackTarget,
+                nextConfirmedValue = checkpoint.attackDraftTarget,
+                confirmedDemonSuccessorTarget = checkpoint.confirmedDemonSuccessorTarget,
+            ),
+        )
+    }
+
+    private fun preserveSuccessorUnlessConfirmedValueChanged(
+        previousConfirmedValue: String?,
+        nextConfirmedValue: String?,
+        confirmedDemonSuccessorTarget: String?,
+    ): String? = if (previousConfirmedValue == nextConfirmedValue) {
+        confirmedDemonSuccessorTarget
+    } else {
+        null
     }
 }
