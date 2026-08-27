@@ -2870,6 +2870,8 @@ internal fun CampBoardGameHostApp() {
                                 }
                             if (canEnterDawn) {
                                 clocktowerPendingNewDemonName = null
+                                clocktowerDemonSuccessorTarget = null
+                                clearConfirmedDemonSuccessorTarget()
                                 recordClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
                                 clocktowerPhase = ClocktowerPhase.Dawn
                                 advanceClocktowerGameStateRevision()
@@ -3500,8 +3502,10 @@ internal fun CampBoardGameHostApp() {
                             clocktowerConfirmedMonkProtectedTarget = null
                             clocktowerMayorRedirectTarget = null
                             clocktowerConfirmedMayorRedirectTarget = null
-                            clocktowerDemonSuccessorTarget = null
-                            clearConfirmedDemonSuccessorTarget()
+                            if (clocktowerPendingNewDemonName == null) {
+                                clocktowerDemonSuccessorTarget = null
+                                clearConfirmedDemonSuccessorTarget()
+                            }
                         },
                         onShowResults = {
                             gameOutcome = gameOutcome ?: GameOutcome(
