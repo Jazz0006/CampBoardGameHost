@@ -51,6 +51,7 @@ internal data class NightDawnDeathResolutionInput(
     val mayorSeat: Int?,
     val mayorRedirectMayApply: Boolean,
     val attackOutcome: DemonNightAttackOutcome? = null,
+    val demonSafeSeats: Set<Int> = emptySet(),
     val effectiveNightState: ClocktowerEffectiveNightState,
     val demonRoleIds: Set<RoleId>,
 )
@@ -182,7 +183,9 @@ internal object NightDawnResolutionPlanner {
                 canonicalOriginalDeathSeat == input.mayorSeat &&
                 confirmedRedirectIsLegal
         val resolvedDeathSeat = if (redirectApplies) {
-            confirmedRedirectSeat?.takeIf(input.effectiveNightState::isMechanicallyAlive)
+            confirmedRedirectSeat
+                ?.takeIf(input.effectiveNightState::isMechanicallyAlive)
+                ?.takeUnless { it in input.demonSafeSeats }
         } else {
             canonicalOriginalDeathSeat
         }
