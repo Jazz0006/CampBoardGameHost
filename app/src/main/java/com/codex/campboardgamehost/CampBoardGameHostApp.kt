@@ -194,6 +194,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObserva
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.epistemic.ZddFilterStrategy
 import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
+import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
@@ -3332,8 +3333,21 @@ internal fun CampBoardGameHostApp() {
                                 )
                             } == true &&
                                 !demonPoisonedTonight
+                            val validatedMayorRedirectTarget =
+                                if (mayorCanRedirect) {
+                                    clocktowerConfirmedMayorRedirectTarget?.takeIf { targetName ->
+                                        val targetCard = cards.firstOrNull { it.name == targetName }
+                                        targetCard != null &&
+                                            targetCard.eliminatedRound == null &&
+                                            MayorRedirectLegality.canReceiveRedirect(
+                                                targetIsDemon = targetCard.clocktowerTeam == ClocktowerTeam.Demon,
+                                            )
+                                    }
+                                } else {
+                                    null
+                                }
                             val resolvedDeathName = if (mayorCanRedirect) {
-                                clocktowerConfirmedMayorRedirectTarget ?: originalDeathName
+                                validatedMayorRedirectTarget ?: originalDeathName
                             } else {
                                 originalDeathName
                             }
