@@ -5,10 +5,10 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 
 /**
- * SNE-7 typed planner seam scaffold.
+ * SNE-7 typed planner seam.
  *
- * This file deliberately defines the compile-time contract before behavior is implemented.
- * The planner remains pure and does not mutate GameState or own durable timeline state.
+ * The planner remains pure: it returns checkpoint/continuation/commit intent and does not mutate
+ * GameState or own durable timeline state.
  */
 internal enum class NightResolutionContinuation {
     AWAIT_DEMON_SUCCESSOR,
@@ -33,34 +33,47 @@ internal data class NightDawnResolutionTransition(
 )
 
 internal object NightDawnResolutionPlanner {
+    @Suppress("UNUSED_PARAMETER")
     fun planDemonSuccession(
         baseGameState: GameState,
         checkpoint: ClocktowerNightCheckpoint,
         successionResolution: DemonSuccessionResolution,
         demonRoleId: RoleId,
     ): NightDawnResolutionTransition {
-        @Suppress("UNUSED_VARIABLE")
-        val contractInputs = listOf(baseGameState.seed, successionResolution.hashCode(), demonRoleId.value.hashCode())
-        return NightDawnResolutionTransition(
-            checkpoint = checkpoint,
-            continuation = NightResolutionContinuation.AWAIT_DEMON_SUCCESSOR,
-            dawnCommitIntent = null,
-            outcomeEvaluationAllowed = false,
-        )
+        val confirmedName = checkpoint.confirmedDemonSuccessorTarget
+        val confirmedSeat = confirmedName
+            ?.let { name -> baseGameState.players.firstOrNull { it.name == name }?.seat }
+        val confirmedChoiceIsLegal =
+            successionResolution is DemonSuccessionResolution.Choice &&
+                confirmedSeat != null &&
+                confirmedSeat in successionResolution.targetSeats
+
+        return if (confirmedChoiceIsLegal) {
+            NightDawnResolutionTransition(
+                checkpoint = checkpoint.copy(pendingNewDemonName = confirmedName),
+                continuation = NightResolutionContinuation.AWAIT_NEW_DEMON_IDENTITY,
+                dawnCommitIntent = null,
+                outcomeEvaluationAllowed = false,
+            )
+        } else {
+            NightDawnResolutionTransition(
+                checkpoint = checkpoint,
+                continuation = NightResolutionContinuation.AWAIT_DEMON_SUCCESSOR,
+                dawnCommitIntent = null,
+                outcomeEvaluationAllowed = false,
+            )
+        }
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun confirmNewDemonIdentity(
         baseGameState: GameState,
         checkpoint: ClocktowerNightCheckpoint,
         demonRoleId: RoleId,
-    ): NightDawnResolutionTransition {
-        @Suppress("UNUSED_VARIABLE")
-        val contractInputs = listOf(baseGameState.seed, demonRoleId.value.hashCode())
-        return NightDawnResolutionTransition(
-            checkpoint = checkpoint,
-            continuation = NightResolutionContinuation.AWAIT_DEMON_SUCCESSOR,
-            dawnCommitIntent = null,
-            outcomeEvaluationAllowed = false,
-        )
-    }
+    ): NightDawnResolutionTransition = NightDawnResolutionTransition(
+        checkpoint = checkpoint,
+        continuation = NightResolutionContinuation.AWAIT_DEMON_SUCCESSOR,
+        dawnCommitIntent = null,
+        outcomeEvaluationAllowed = false,
+    )
 }
