@@ -129,24 +129,54 @@ The detailed tier and subsystem mapping is authoritative in `docs/TESTING_STRATE
 
 In Codex/Luna sandboxed local worktrees, use task-local Gradle state when needed, e.g. `GRADLE_USER_HOME="$PWD/.gradle-codex"`.
 
-## 4. Source-wiring test quality
+## 4. Source-wiring test policy
 
-Source-level wiring tests are acceptable when runtime seams are impractical, but they must lock semantics rather than formatting.
+Source-level wiring tests are temporary migration tools when a production boundary cannot yet be exercised through a callable typed seam. They are **not** the preferred long-lived proof of gameplay/rules behavior.
+
+### Mandatory preference
+
+When a callable typed seam exists or can reasonably be introduced, business/rules behavior **MUST** be tested through that seam instead of by reading production `.kt` source text.
+
+Preferred proof order:
+
+```text
+typed pure/domain behavior
+-> typed reducer/planner/session behavior
+-> typed adapter/integration behavior
+-> minimal architecture/ownership source guard only where runtime proof is impractical
+```
+
+### Temporary wiring tests
+
+A source-string behavior/wiring test may remain only while it protects a unique production wiring gap that typed lower-layer tests cannot prove. It must have a clear retirement trigger.
+
+When the corresponding production path is cut over to the typed seam, the superseded source-string assertion **MUST** be deleted or narrowed in the same campaign. Do not preserve a legacy helper, local variable name, inline expression, formatting, or call spelling merely to keep an obsolete source-string test GREEN.
+
+If a deliberate typed-seam refactor makes a source-string test fail while the owning typed behavior tests remain GREEN, first assess whether the string assertion has been superseded. Do not automatically change correct production code to restore the old source shape.
+
+### Long-lived architecture guards
+
+Source inspection remains acceptable for explicit coarse architecture/ownership invariants, such as preventing App root from reclaiming an extracted responsibility. These tests should protect ownership boundaries rather than local variable names, exact whitespace, exact formatted calls, or incidental implementation order.
+
+For any retained source-based guard:
 
 Prefer:
 
 - unique function/block anchors;
 - multiple independent structural tokens;
-- explicit absence checks for forbidden legacy paths.
+- explicit absence checks for forbidden legacy ownership paths.
 
 Avoid:
 
 - ambiguous first textual occurrences;
 - exact whitespace/line-break matching;
 - complete formatted call strings;
+- exact local variable names when a coarser ownership assertion is possible;
 - changing correct production formatting or inserting meaningless comments solely to satisfy a source-string test.
 
-If several assertions in one source-wiring test share the same brittle assumption, repair the whole test in one test-only correction rather than discovering the same defect one assertion at a time.
+If several assertions in one source-wiring test share the same brittle assumption, repair or retire the whole affected test section rather than discovering the same defect one assertion at a time.
+
+Current retirement inventory and SNE-specific triggers are tracked in `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md`.
 
 ## 5. Source-decomposition principle
 
@@ -228,8 +258,9 @@ Read these when relevant:
 4. `docs/TESTING_STRATEGY.md` — authoritative test tiers and subsystem mapping;
 5. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md` — known failure patterns and proven improvements;
 6. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md` — current same-night product/architecture decisions;
-7. `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` — connector workflow;
-8. `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` — older local-worktree guidance, subordinate where it conflicts with V2.
+7. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md` — source-string debt and retirement triggers;
+8. `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` — connector workflow;
+9. `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` — older local-worktree guidance, subordinate where it conflicts with V2.
 
 If documents disagree, apply this precedence:
 
