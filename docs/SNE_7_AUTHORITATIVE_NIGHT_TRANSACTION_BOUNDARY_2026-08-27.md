@@ -2,7 +2,7 @@
 
 > Date: 2026-08-27  
 > Scope: same-night correctness closeout  
-> Status: **IMPLEMENTATION IN PROGRESS — 7.1–7.3 ESTABLISHED / 7.4A–D COMPLETE / 7.4E NEXT**  
+> Status: **IMPLEMENTATION IN PROGRESS — 7.1–7.3 ESTABLISHED / 7.4A–E COMPLETE / 7.4F NEXT**  
 > Branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54
 
@@ -39,11 +39,11 @@ SNE-7.4  production Compose/App wiring consumes typed seams
   SNE-7.4D  Mayor redirect production reducer wiring
              COMPLETE / FOCUSED GREEN / REMOTE AUDITED
 
-  SNE-7.4E  Demon successor
-             NEXT
+  SNE-7.4E  Demon successor production reducer wiring
+             COMPLETE / FOCUSED GREEN / REMOTE AUDITED
 
   SNE-7.4F  Dawn planner authority closeout
-             NOT COMPLETE
+             NEXT
 
 SNE-7.5  restore / process-death reconstruction matrix
          SCAFFOLD EXISTS, NOT GREEN / NOT COMPLETE
@@ -79,28 +79,32 @@ SNE-7.4C Demon attack
 SNE-7.4D Mayor redirect
   RED      35659899745077f4f43cf914faa2bbf82eef3afa
   GREEN    21a7694ee340364485a283598cf7c2fa6fe2ae94
+
+SNE-7.4E Demon successor
+  RED      fac430f4b40a219fcd92d91a6f45dacc2e89cc2b
+  GREEN    034b050c1656324766c1df3d2fbcd170af201389
 ```
 
-RED evidence for 7.4D:
+RED evidence for 7.4E:
 
 ```text
-CI #823 at 35659899
-  891 tests
+CI #828 at fac430f4
+  894 tests
   exactly 2 failures
-  both are intended ClocktowerMayorRedirectReducerProductionWiringTest REDs
+  both are intended ClocktowerDemonSuccessorReducerProductionWiringTest REDs
   4 skipped
   Real Clingo SUCCESS
-  R2 #750 SUCCESS
+  R2 #755 SUCCESS
 ```
 
-7.4D focused GREEN passed with `--rerun-tasks` for the Mayor redirect production ownership guard, the existing Mayor Demon-exclusion legality wiring test, the prior Demon attack ownership guard, `NightCheckpointReducerTest`, and `SNE7NightTransactionBehaviorMatrixTest`. The patch also passed exact-head guard, exact patch preconditions, `git diff --check`, single-production-file scope audit, and remote-head recheck before push.
+7.4E focused GREEN passed with `--rerun-tasks` for the successor production ownership guard, `ClocktowerDawnExactDemonSuccessorWiringTest`, `ClocktowerNewDemonPresentationOwnershipTest`, the prior Demon attack ownership guard, `NightCheckpointReducerTest`, and `SNE7NightTransactionBehaviorMatrixTest`. The patch also passed exact-head guard, exact patch preconditions, `git diff --check`, single-production-file scope audit, and remote-head recheck before push.
 
-Remote RED→GREEN compare for 7.4D is exactly one commit and one production file:
+Remote RED→GREEN compare for 7.4E is exactly one commit and one production file:
 
 ```text
-35659899 → 21a7694e
+fac430f4 → 034b050c
 app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-13 additions / 4 deletions
+14 additions / 5 deletions
 ```
 
 ## 3. Authority model
@@ -166,7 +170,7 @@ Therefore:
 - restore never promotes draft state into confirmed mechanical fact;
 - invalidating a dependent confirmed fact does not imply deleting its editable draft.
 
-`NightCheckpointReducer` owns typed semantics for Poison, Monk protection, Demon attack, Mayor redirect, Demon successor, and Previous navigation. Production callbacks must converge on those semantics instead of retaining parallel handwritten transition logic.
+`NightCheckpointReducer` owns typed semantics for Poison, Monk protection, Demon attack, Mayor redirect, Demon successor, and Previous navigation. Production callbacks for all five decision families now consume those transitions.
 
 ## 5. Established typed seams
 
@@ -198,8 +202,6 @@ The projector remains the derived same-night mechanical authority for effective 
 A role change must not mutate public/base role state early merely to make later-night mechanics work.
 
 ## 6. SNE-7.4 production migration
-
-SNE-7.4 is complete only when production Compose/App wiring consumes the typed seams and stops independently owning the same transition semantics.
 
 ### 6.1 SNE-7.4A Poison — accepted
 
@@ -246,7 +248,7 @@ onConfirmDemonAttack
   → project confirmedDemonSuccessorTarget
 ```
 
-The old production attack callbacks manually cleared `clocktowerDemonSuccessorTarget` both while editing away from the living Demon and while confirming a changed attack. That handwritten cross-mechanic ownership is removed. Draft editing no longer invalidates successor state, and changed attack reconfirmation invalidates only the dependent confirmed successor while preserving the editable successor draft.
+Draft editing no longer invalidates successor state, and changed attack reconfirmation invalidates only the dependent confirmed successor while preserving the editable successor draft.
 
 ### 6.4 SNE-7.4D Mayor redirect — accepted
 
@@ -262,45 +264,63 @@ onConfirmMayorRedirectTarget
   → project confirmedMayorRedirectTarget
 ```
 
-Mayor redirect legality is deliberately not moved into the reducer transition. The existing typed Host/rules/UI boundary still owns the current Trouble Brewing product restriction that the redirect target cannot be the current Demon. `ClocktowerMayorDemonExclusionWiringTest` remained GREEN in the 7.4D focused gate.
+Mayor redirect legality is deliberately not moved into the reducer transition. The existing typed Host/rules/UI boundary still owns the current Trouble Brewing product restriction that the redirect target cannot be the current Demon.
 
-For 7.4A–D, the App/session boundary still owns sequence allocation where applicable, durable `ActionFactDraft` recording, player/game-state revision, and other timeline/history side effects exactly once.
-
-`currentClocktowerNightCheckpoint()` is the shared App snapshot projection for these slices. It does not persist or independently own state.
-
-### 6.5 SNE-7.4E Demon successor — next
-
-Required target flow:
+### 6.5 SNE-7.4E Demon successor — accepted
 
 ```text
 onSelectDemonSuccessor
-  → NightResolutionEvent.EditDemonSuccessorDraft
+  → EditDemonSuccessorDraft
   → NightCheckpointReducer.reduce(...)
   → project demonSuccessorDraftTarget
 
 onConfirmDemonSuccessorTarget
-  → NightResolutionEvent.ConfirmDemonSuccessor
+  → ConfirmDemonSuccessor
   → NightCheckpointReducer.reduce(...)
   → project confirmedDemonSuccessorTarget
 ```
 
-Acceptance criteria:
+Successor draft editing leaves an existing confirmed successor mechanically authoritative until explicit Confirm. Production confirm no longer trusts the transient callback `selectedTarget` as independent authority; it commits the checkpoint's current draft through the reducer.
 
-1. RED first at the smallest practical application ownership boundary.
-2. Successor draft edit leaves existing confirmed successor authoritative.
-3. Confirm commits exactly the reducer's current successor draft.
-4. Preserve existing successor legality and required-selection semantics; recommendations remain downstream of legality.
-5. Preserve exact same-night `RoleChanged` projection and Dawn materialization; do not mutate public/base role early.
-6. Preserve App/session revision and durable side effects exactly once.
-7. Reuse `currentClocktowerNightCheckpoint()`.
-8. Do not introduce a draft fallback when confirmed successor is absent.
-9. Focused T0 GREEN and `git diff --check` before proceeding to Dawn planner closeout.
-
-Expected follow-on:
+Existing Dawn contracts remain intact:
 
 ```text
-SNE-7.4F Dawn planner authority closeout
+exact confirmed successor only
+no successor draft fallback
+missing required confirmation fails closed
+same-night RoleChanged remains projected before public/base-role materialization
 ```
+
+For 7.4A–E, the App/session boundary still owns sequence allocation where applicable, durable `ActionFactDraft` recording, player/game-state revision, and other timeline/history side effects exactly once.
+
+`currentClocktowerNightCheckpoint()` is the shared App snapshot projection for these slices. It does not persist or independently own state.
+
+### 6.6 SNE-7.4F Dawn planner authority closeout — next
+
+The next task is not to invent new Dawn semantics. Audit production for remaining duplicate handwritten semantics already represented by `NightDawnResolutionPlanner` / `DawnCommitIntent`.
+
+Audit at minimum:
+
+```text
+onConfirmNewDemon
+night outcome / unresolved-successor gating
+Mayor redirect / night death Dawn resolution
+role-change materialization
+poison carry/lifetime handling
+outcome-evaluation gating
+```
+
+Acceptance direction:
+
+1. Identify a concrete remaining duplicate production seam before writing RED.
+2. Use the smallest behavior/ownership RED that demonstrates the missing planner authority.
+3. Keep `NightDawnResolutionPlanner` pure; it returns validated checkpoint/continuation/commit intent only.
+4. Keep App/session as sole durable commit authority for public death, public/base role, timeline/history and sequence allocation.
+5. Exact confirmed successor remains the only Dawn successor authority; no draft fallback.
+6. Preserve current Mayor Demon-exclusion and other legality seams.
+7. Do not mutate public role/death early to simulate same-night mechanics.
+8. Reuse existing checkpoint/effective-state projections; introduce no second coordinator.
+9. Focused T0 GREEN and `git diff --check` before proceeding to reconstruction.
 
 ## 7. Restore and reconstruction — SNE-7.5
 
@@ -378,12 +398,12 @@ COMPLETED
   SNE-7.4B Monk production reducer wiring
   SNE-7.4C Demon attack production reducer wiring
   SNE-7.4D Mayor redirect production reducer wiring
-
-CURRENT NEXT
   SNE-7.4E Demon successor production reducer wiring
 
-THEN
+CURRENT NEXT
   SNE-7.4F Dawn planner production authority closeout
+
+THEN
   SNE-7.5 restore/process-death reconstruction matrix GREEN
   SNE-7.6 2–4 Compose smoke/integration tests
   SNE-7.7 finish source-string retirement
