@@ -122,12 +122,27 @@ internal object NightDawnResolutionPlanner {
         baseGameState: GameState,
         checkpoint: ClocktowerNightCheckpoint,
         input: NightDawnDeathResolutionInput,
-    ): NightDawnResolutionTransition = NightDawnResolutionTransition(
-        checkpoint = checkpoint,
-        continuation = NightResolutionContinuation.DAWN,
-        dawnCommitIntent = DawnCommitIntent(
-            death = input.originalDeathSeat?.let(::DawnDeathIntent),
-        ),
-        outcomeEvaluationAllowed = true,
-    )
+    ): NightDawnResolutionTransition {
+        val confirmedRedirectSeat = checkpoint.confirmedMayorRedirectTarget
+            ?.let { name -> baseGameState.players.firstOrNull { it.name == name }?.seat }
+        val redirectApplies =
+            input.mayorRedirectMayApply &&
+                input.originalDeathSeat != null &&
+                input.originalDeathSeat == input.mayorSeat &&
+                confirmedRedirectSeat != null
+        val resolvedDeathSeat = if (redirectApplies) {
+            confirmedRedirectSeat.takeIf(input.effectiveNightState::isMechanicallyAlive)
+        } else {
+            input.originalDeathSeat
+        }
+
+        return NightDawnResolutionTransition(
+            checkpoint = checkpoint,
+            continuation = NightResolutionContinuation.DAWN,
+            dawnCommitIntent = DawnCommitIntent(
+                death = resolvedDeathSeat?.let(::DawnDeathIntent),
+            ),
+            outcomeEvaluationAllowed = true,
+        )
+    }
 }
