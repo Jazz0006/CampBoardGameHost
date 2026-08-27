@@ -2870,13 +2870,22 @@ internal fun CampBoardGameHostApp() {
                                 advanceClocktowerGameStateRevision()
                             }
                         },
-                        onSelectDemonSuccessor = {
+                        onSelectDemonSuccessor = { selectedTarget ->
                             advanceClocktowerPlayerInputRevision()
-                            clocktowerDemonSuccessorTarget = it
+                            val reducedCheckpoint = NightCheckpointReducer.reduce(
+                                checkpoint = currentClocktowerNightCheckpoint(),
+                                event = NightResolutionEvent.EditDemonSuccessorDraft(selectedTarget),
+                            )
+                            clocktowerDemonSuccessorTarget = reducedCheckpoint.demonSuccessorDraftTarget
                         },
-                        onConfirmDemonSuccessorTarget = { selectedTarget ->
-                            if (clocktowerConfirmedDemonSuccessorTarget != selectedTarget) {
-                                clocktowerConfirmedDemonSuccessorTarget = selectedTarget
+                        onConfirmDemonSuccessorTarget = { _ ->
+                            val checkpoint = currentClocktowerNightCheckpoint()
+                            val reducedCheckpoint = NightCheckpointReducer.reduce(
+                                checkpoint = checkpoint,
+                                event = NightResolutionEvent.ConfirmDemonSuccessor,
+                            )
+                            if (reducedCheckpoint.confirmedDemonSuccessorTarget != checkpoint.confirmedDemonSuccessorTarget) {
+                                clocktowerConfirmedDemonSuccessorTarget = reducedCheckpoint.confirmedDemonSuccessorTarget
                                 advanceClocktowerGameStateRevision()
                             }
                         },
