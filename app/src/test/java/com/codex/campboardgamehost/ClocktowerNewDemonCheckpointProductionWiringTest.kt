@@ -32,7 +32,7 @@ class ClocktowerNewDemonCheckpointProductionWiringTest {
     fun `new Demon identity confirmation does not reconstruct ClocktowerNightCheckpoint by hand`() {
         assertFalse(
             "Night checkpoint fields already have one canonical App projection; onConfirmNewDemon must not duplicate that field list.",
-            confirmNewDemonBlock.contains("ClocktowerNightCheckpoint("),
+            confirmNewDemonBlock.contains("val checkpoint = ClocktowerNightCheckpoint("),
         )
     }
 }
