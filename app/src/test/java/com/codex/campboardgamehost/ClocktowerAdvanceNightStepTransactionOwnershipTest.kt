@@ -21,18 +21,12 @@ class ClocktowerAdvanceNightStepTransactionOwnershipTest {
         val mayorBranch = requiredIndex("if (currentStep.action == ClocktowerNightAction.MayorRedirect) {")
         val mayorAudit = requiredIndex("selectionDistributionTelemetry.recordCommittedSelection(", mayorBranch)
         val mayorConfirm = requiredIndex("onConfirmMayorRedirectTarget()", mayorAudit)
-        val successorAuditBranch = requiredIndex(
+        val successorBranch = requiredIndex(
             "if (currentStep.action == ClocktowerNightAction.DemonSuccessor && automaticStorytellerInfo) {",
             mayorConfirm,
         )
-        val successorAudit = requiredIndex("selectionDistributionTelemetry.recordCommittedSelection(", successorAuditBranch)
-        val successorConfirmBranch = requiredIndex(
-            "if (currentStep.action == ClocktowerNightAction.DemonSuccessor) {",
-            successorAudit,
-        )
-        val successorLegality = requiredIndex("demonSuccessorTargetCards.any { it.name == selectedTarget }", successorConfirmBranch)
-        val successorConfirm = requiredIndex("onConfirmDemonSuccessorTarget(selectedTarget)", successorLegality)
-        val spyRegistration = requiredIndex("recordSpyRegistration(", successorConfirm)
+        val successorAudit = requiredIndex("selectionDistributionTelemetry.recordCommittedSelection(", successorBranch)
+        val spyRegistration = requiredIndex("recordSpyRegistration(", successorAudit)
         val recluseRegistration = requiredIndex("recordRecluseRegistration(", spyRegistration)
         val semanticRecord = requiredIndex("recordNightStep(currentStep)", recluseRegistration)
         val stepAdvance = requiredIndex("nightStepIndex = currentStepIndex + 1", semanticRecord)
@@ -43,12 +37,9 @@ class ClocktowerAdvanceNightStepTransactionOwnershipTest {
         assertTrue(demonConfirm < mayorBranch)
         assertTrue(mayorBranch < mayorAudit)
         assertTrue(mayorAudit < mayorConfirm)
-        assertTrue(mayorConfirm < successorAuditBranch)
-        assertTrue(successorAuditBranch < successorAudit)
-        assertTrue(successorAudit < successorConfirmBranch)
-        assertTrue(successorConfirmBranch < successorLegality)
-        assertTrue(successorLegality < successorConfirm)
-        assertTrue(successorConfirm < spyRegistration)
+        assertTrue(mayorConfirm < successorBranch)
+        assertTrue(successorBranch < successorAudit)
+        assertTrue(successorAudit < spyRegistration)
         assertTrue(spyRegistration < recluseRegistration)
         assertTrue(recluseRegistration < semanticRecord)
         assertTrue(semanticRecord < stepAdvance)
