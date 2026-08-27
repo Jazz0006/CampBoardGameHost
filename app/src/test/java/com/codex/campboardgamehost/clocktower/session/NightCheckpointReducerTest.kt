@@ -182,6 +182,70 @@ class NightCheckpointReducerTest {
         assertEquals("Player 7", reduced.confirmedDemonSuccessorTarget)
     }
 
+    @Test
+    fun `editing Mayor redirect draft leaves confirmed redirect unchanged`() {
+        val checkpoint = checkpoint(
+            confirmedMayorRedirectTarget = "Player 5",
+            mayorRedirectDraftTarget = "Player 5",
+        )
+
+        val reduced = NightCheckpointReducer.reduce(
+            checkpoint = checkpoint,
+            event = NightResolutionEvent.EditMayorRedirectDraft("Player 6"),
+        )
+
+        assertEquals("Player 5", reduced.confirmedMayorRedirectTarget)
+        assertEquals("Player 6", reduced.mayorRedirectDraftTarget)
+    }
+
+    @Test
+    fun `confirming Mayor redirect commits the current draft`() {
+        val checkpoint = checkpoint(
+            confirmedMayorRedirectTarget = "Player 5",
+            mayorRedirectDraftTarget = "Player 6",
+        )
+
+        val reduced = NightCheckpointReducer.reduce(
+            checkpoint = checkpoint,
+            event = NightResolutionEvent.ConfirmMayorRedirect,
+        )
+
+        assertEquals("Player 6", reduced.confirmedMayorRedirectTarget)
+        assertEquals("Player 6", reduced.mayorRedirectDraftTarget)
+    }
+
+    @Test
+    fun `editing Demon successor draft leaves confirmed successor unchanged`() {
+        val checkpoint = checkpoint(
+            confirmedDemonSuccessorTarget = "Player 7",
+            demonSuccessorDraftTarget = "Player 7",
+        )
+
+        val reduced = NightCheckpointReducer.reduce(
+            checkpoint = checkpoint,
+            event = NightResolutionEvent.EditDemonSuccessorDraft("Player 8"),
+        )
+
+        assertEquals("Player 7", reduced.confirmedDemonSuccessorTarget)
+        assertEquals("Player 8", reduced.demonSuccessorDraftTarget)
+    }
+
+    @Test
+    fun `confirming Demon successor commits the current draft`() {
+        val checkpoint = checkpoint(
+            confirmedDemonSuccessorTarget = "Player 7",
+            demonSuccessorDraftTarget = "Player 8",
+        )
+
+        val reduced = NightCheckpointReducer.reduce(
+            checkpoint = checkpoint,
+            event = NightResolutionEvent.ConfirmDemonSuccessor,
+        )
+
+        assertEquals("Player 8", reduced.confirmedDemonSuccessorTarget)
+        assertEquals("Player 8", reduced.demonSuccessorDraftTarget)
+    }
+
     private fun checkpoint(
         nightStepIndex: Int = 4,
         confirmedAttackTarget: String? = null,
@@ -190,7 +254,10 @@ class NightCheckpointReducerTest {
         poisonDraftTarget: String? = "Player 2",
         confirmedMonkTarget: String? = "Player 3",
         monkDraftTarget: String? = "Player 3",
+        confirmedMayorRedirectTarget: String? = null,
+        mayorRedirectDraftTarget: String? = confirmedMayorRedirectTarget,
         confirmedDemonSuccessorTarget: String? = null,
+        demonSuccessorDraftTarget: String? = confirmedDemonSuccessorTarget,
     ): ClocktowerNightCheckpoint = ClocktowerNightCheckpoint(
         phaseName = "Night",
         round = 3,
@@ -204,11 +271,11 @@ class NightCheckpointReducerTest {
         poisonDraftTarget = poisonDraftTarget,
         confirmedMonkTarget = confirmedMonkTarget,
         monkDraftTarget = monkDraftTarget,
-        confirmedMayorRedirectTarget = null,
-        mayorRedirectDraftTarget = null,
+        confirmedMayorRedirectTarget = confirmedMayorRedirectTarget,
+        mayorRedirectDraftTarget = mayorRedirectDraftTarget,
         pendingNewDemonName = null,
         pendingNightNewDemonIdentityName = null,
-        demonSuccessorDraftTarget = confirmedDemonSuccessorTarget,
+        demonSuccessorDraftTarget = demonSuccessorDraftTarget,
         confirmedDemonSuccessorTarget = confirmedDemonSuccessorTarget,
         nextTimelineGlobalSequence = 17L,
     )
