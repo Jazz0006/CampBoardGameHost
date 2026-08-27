@@ -2869,6 +2869,30 @@ internal fun CampBoardGameHostApp() {
                                         }?.clocktowerTeam == ClocktowerTeam.Demon
                                 }
                             if (canEnterDawn) {
+                                val poisonCarriedAfterSuccession = PoisonEffectLifecycle.afterNight(
+                                    target = clocktowerConfirmedPoisonTarget,
+                                    poisonerAlive = cards.any {
+                                        it.eliminatedRound == null &&
+                                            it.clocktowerRole?.enName == "Poisoner"
+                                    },
+                                )
+                                if (poisonCarriedAfterSuccession != clocktowerConfirmedPoisonTarget) {
+                                    val targetSeat = poisonCarriedAfterSuccession?.let(::clocktowerSeatFor)
+                                    val localSequence = clocktowerEventCounter + 1
+                                    recordClocktowerAction(ActionFactDraft.Poison(
+                                        actionId = clocktowerActionId(
+                                            kind = "poison-after-night",
+                                            localSequence = localSequence,
+                                            targetSeat = targetSeat,
+                                        ),
+                                        phase = storytellerPhaseFor(),
+                                        round = round,
+                                        sequence = localSequence,
+                                        targetSeat = targetSeat,
+                                    ))
+                                }
+                                clocktowerConfirmedPoisonTarget = poisonCarriedAfterSuccession
+                                clocktowerPoisonTarget = poisonCarriedAfterSuccession
                                 clocktowerPendingNewDemonName = null
                                 clocktowerDemonSuccessorTarget = null
                                 clearConfirmedDemonSuccessorTarget()
