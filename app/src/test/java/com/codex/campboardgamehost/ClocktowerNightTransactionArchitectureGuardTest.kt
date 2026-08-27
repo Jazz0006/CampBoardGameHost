@@ -55,6 +55,35 @@ class ClocktowerNightTransactionArchitectureGuardTest {
     }
 
     @Test
+    fun `upstream confirmation callbacks project dependent invalidation from Host transaction`() {
+        val poisonConfirmBlock = appSource
+            .substringAfter("onConfirmPoisonTarget = {")
+            .substringBefore("onSelectFortuneTellerFirst = {")
+        val attackConfirmBlock = appSource
+            .substringAfter("onConfirmDemonAttack = {")
+            .substringBefore("onSelectExecution = {")
+        val monkConfirmBlock = appSource
+            .substringAfter("onConfirmMonkProtectedTarget = {")
+            .substringBefore("onSelectMayorRedirectTarget = {")
+
+        listOf(
+            poisonConfirmBlock to "NightCheckpointHostTransaction.confirmPoison(",
+            attackConfirmBlock to "NightCheckpointHostTransaction.confirmDemonAttack(",
+            monkConfirmBlock to "NightCheckpointHostTransaction.confirmMonkProtection(",
+        ).forEach { (block, adapterCall) ->
+            assertTrue("Upstream confirmation must consume the callable Host transaction adapter.", block.contains(adapterCall))
+            assertTrue(
+                "App must project reducer-owned Mayor invalidation back to its checkpoint state.",
+                block.contains("clocktowerConfirmedMayorRedirectTarget = transaction.checkpoint.confirmedMayorRedirectTarget"),
+            )
+            assertTrue(
+                "App must keep projecting reducer-owned successor invalidation from the same transaction.",
+                block.contains("clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget"),
+            )
+        }
+    }
+
+    @Test
     fun `Dawn planner remains pure while App retains durable commit authority`() {
         val pureTransitionSources = reducerSource + plannerSource + hostTransactionSource
         listOf(
