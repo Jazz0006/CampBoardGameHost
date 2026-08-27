@@ -27,6 +27,10 @@ internal data class DawnDeathIntent(
     val targetSeat: Int,
 )
 
+internal data class DawnPoisonCarryIntent(
+    val targetSeat: Int,
+)
+
 internal data class DawnCommitIntent(
     val roleChanges: List<DawnRoleChangeIntent> = emptyList(),
     val death: DawnDeathIntent? = null,
@@ -45,6 +49,12 @@ internal data class NightDawnDeathResolutionInput(
     val mayorRedirectMayApply: Boolean,
     val effectiveNightState: ClocktowerEffectiveNightState,
     val demonRoleIds: Set<RoleId>,
+)
+
+internal data class NightDawnPoisonResolutionInput(
+    val poisonerSeat: Int,
+    val poisonerRoleId: RoleId,
+    val effectiveNightState: ClocktowerEffectiveNightState,
 )
 
 internal object NightDawnResolutionPlanner {
@@ -149,5 +159,16 @@ internal object NightDawnResolutionPlanner {
             ),
             outcomeEvaluationAllowed = true,
         )
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    fun planPoisonCarry(
+        baseGameState: GameState,
+        checkpoint: ClocktowerNightCheckpoint,
+        input: NightDawnPoisonResolutionInput,
+    ): DawnPoisonCarryIntent? {
+        val targetSeat = checkpoint.confirmedPoisonTarget
+            ?.let { name -> baseGameState.players.firstOrNull { it.name == name }?.seat }
+        return targetSeat?.let(::DawnPoisonCarryIntent)
     }
 }
