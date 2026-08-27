@@ -41,6 +41,33 @@ class NightDawnResolutionPlannerMayorContractTest {
         assertTrue(transition.outcomeEvaluationAllowed)
     }
 
+    @Test
+    fun `restored Mayor redirect to current effective Demon falls back to Mayor death`() {
+        val transition = NightDawnResolutionPlanner.planValidatedNightDeath(
+            baseGameState = promotedDemonGameState(),
+            checkpoint = checkpoint(confirmedMayorRedirectTarget = "Poisoner"),
+            input = NightDawnDeathResolutionInput(
+                originalDeathSeat = 2,
+                mayorSeat = 2,
+                mayorRedirectMayApply = true,
+                effectiveNightState = ClocktowerEffectiveNightState(
+                    effectiveAliveSeats = setOf(1, 2, 3),
+                    effectiveRoleIdsBySeat = mapOf(
+                        1 to RoleId("Imp"),
+                        2 to RoleId("Mayor"),
+                        3 to RoleId("Monk"),
+                    ),
+                ),
+                demonRoleIds = setOf(RoleId("Imp")),
+            ),
+        )
+
+        assertEquals(NightResolutionContinuation.DAWN, transition.continuation)
+        assertTrue(transition.dawnCommitIntent?.roleChanges?.isEmpty() == true)
+        assertEquals(2, transition.dawnCommitIntent?.death?.targetSeat)
+        assertTrue(transition.outcomeEvaluationAllowed)
+    }
+
     private fun gameState() = GameState(
         script = ScriptId("Trouble Brewing"),
         players = listOf(
@@ -70,6 +97,37 @@ class NightDawnResolutionPlannerMayorContractTest {
             ),
         ),
         seed = 11L,
+    )
+
+    private fun promotedDemonGameState() = GameState(
+        script = ScriptId("Trouble Brewing"),
+        players = listOf(
+            PlayerState(
+                seat = 1,
+                name = "Poisoner",
+                actualRole = RoleId("Poisoner"),
+                actualAlignment = Alignment.EVIL,
+                actualType = CharacterType.MINION,
+                alive = true,
+            ),
+            PlayerState(
+                seat = 2,
+                name = "Mayor",
+                actualRole = RoleId("Mayor"),
+                actualAlignment = Alignment.GOOD,
+                actualType = CharacterType.TOWNSFOLK,
+                alive = true,
+            ),
+            PlayerState(
+                seat = 3,
+                name = "Monk",
+                actualRole = RoleId("Monk"),
+                actualAlignment = Alignment.GOOD,
+                actualType = CharacterType.TOWNSFOLK,
+                alive = true,
+            ),
+        ),
+        seed = 13L,
     )
 
     private fun checkpoint(
