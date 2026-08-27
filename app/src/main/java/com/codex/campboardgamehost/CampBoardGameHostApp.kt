@@ -2703,43 +2703,43 @@ internal fun CampBoardGameHostApp() {
                             clocktowerSelectedExecution = it
                         },
                         onSelectPoisonTarget = { selectedTarget ->
-          advanceClocktowerPlayerInputRevision()
-          val reducedCheckpoint = NightCheckpointReducer.reduce(
-              checkpoint = currentClocktowerNightCheckpoint(),
-              event = NightResolutionEvent.EditPoisonDraft(selectedTarget),
-          )
-          clocktowerPoisonTarget = reducedCheckpoint.poisonDraftTarget
-      },
-      onConfirmPoisonTarget = {
-          val checkpoint = currentClocktowerNightCheckpoint()
-          val reducedCheckpoint = NightCheckpointReducer.reduce(
-              checkpoint = checkpoint,
-              event = NightResolutionEvent.ConfirmPoison,
-          )
-          if (reducedCheckpoint.confirmedPoisonTarget != checkpoint.confirmedPoisonTarget) {
-              val targetSeat = reducedCheckpoint.confirmedPoisonTarget?.let(::clocktowerSeatFor)
-              val localSequence = clocktowerEventCounter + 1
-              recordClocktowerAction(ActionFactDraft.Poison(
-                  actionId = clocktowerActionId(
-                      kind = "poison",
-                      localSequence = localSequence,
-                      targetSeat = targetSeat,
-                  ),
-                  phase = storytellerPhaseFor(),
-                  round = round,
-                  sequence = localSequence,
-                  targetSeat = targetSeat,
-              ))
-              clocktowerConfirmedPoisonTarget = reducedCheckpoint.confirmedPoisonTarget
-              clocktowerConfirmedDemonSuccessorTarget = reducedCheckpoint.confirmedDemonSuccessorTarget
-              advanceClocktowerGameStateRevision()
-              // A Drunk's shown role is committed, but any concrete
-              // first-night clue remains provisional until displayed.
-              clocktowerRecommendedDrunkInvestigatorRoleName = null
-              clocktowerRecommendedDrunkInvestigatorSeats = emptyList()
-          }
-      },
-                onSelectFortuneTellerFirst = {
+                            advanceClocktowerPlayerInputRevision()
+                            val reducedCheckpoint = NightCheckpointReducer.reduce(
+                                checkpoint = currentClocktowerNightCheckpoint(),
+                                event = NightResolutionEvent.EditPoisonDraft(selectedTarget),
+                            )
+                            clocktowerPoisonTarget = reducedCheckpoint.poisonDraftTarget
+                        },
+                        onConfirmPoisonTarget = {
+                            val checkpoint = currentClocktowerNightCheckpoint()
+                            val reducedCheckpoint = NightCheckpointReducer.reduce(
+                                checkpoint = checkpoint,
+                                event = NightResolutionEvent.ConfirmPoison,
+                            )
+                            if (reducedCheckpoint.confirmedPoisonTarget != checkpoint.confirmedPoisonTarget) {
+                                val targetSeat = reducedCheckpoint.confirmedPoisonTarget?.let(::clocktowerSeatFor)
+                                val localSequence = clocktowerEventCounter + 1
+                                recordClocktowerAction(ActionFactDraft.Poison(
+                                    actionId = clocktowerActionId(
+                                        kind = "poison",
+                                        localSequence = localSequence,
+                                        targetSeat = targetSeat,
+                                    ),
+                                    phase = storytellerPhaseFor(),
+                                    round = round,
+                                    sequence = localSequence,
+                                    targetSeat = targetSeat,
+                                ))
+                                clocktowerConfirmedPoisonTarget = reducedCheckpoint.confirmedPoisonTarget
+                                clocktowerConfirmedDemonSuccessorTarget = reducedCheckpoint.confirmedDemonSuccessorTarget
+                                advanceClocktowerGameStateRevision()
+                                // A Drunk's shown role is committed, but any concrete
+                                // first-night clue remains provisional until displayed.
+                                clocktowerRecommendedDrunkInvestigatorRoleName = null
+                                clocktowerRecommendedDrunkInvestigatorSeats = emptyList()
+                            }
+                        },
+                        onSelectFortuneTellerFirst = {
                             advanceClocktowerPlayerInputRevision()
                             clocktowerFortuneTellerFirst = it
                         },
