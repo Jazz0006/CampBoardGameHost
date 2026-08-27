@@ -78,6 +78,24 @@ class NightTransactionReconstructionContractTest {
     }
 
     @Test
+    fun `stale confirmed non Minion successor fails closed without role effect`() {
+        val reconstruction = NightTransactionReconstructor.reconstruct(
+            baseGameState = gameState(),
+            checkpoint = checkpoint(
+                nightStepIndex = 2,
+                demonSuccessorDraftTarget = "Empath",
+                confirmedDemonSuccessorTarget = "Empath",
+            ),
+            canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
+            demonSuccessorInteractionId = successorInteraction,
+            demonRoleId = RoleId("Imp"),
+        )
+
+        assertEquals(empathInteraction, reconstruction.currentInteractionId)
+        assertEquals(RoleId("Empath"), reconstruction.effectiveState.currentRoleId(3))
+    }
+
+    @Test
     fun `valid confirmed successor reconstructs effective Demon from same durable inputs`() {
         val input = checkpoint(
             nightStepIndex = 2,
