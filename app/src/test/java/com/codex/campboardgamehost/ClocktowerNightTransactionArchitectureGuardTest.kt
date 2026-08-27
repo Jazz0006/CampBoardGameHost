@@ -112,4 +112,36 @@ class ClocktowerNightTransactionArchitectureGuardTest {
             appSource.contains("MayorRedirectLegality.canReceiveRedirect("),
         )
     }
+
+    @Test
+    fun `Dawn death transaction consumes canonical Trouble Brewing death facts`() {
+        val dawnBlock = appSource
+            .substringAfter("onConfirmNight = {")
+            .substringBefore("onConfirmNewDemon = {")
+
+        assertTrue(
+            "Real Dawn must derive direct-attack facts through the canonical Trouble Brewing adapter.",
+            dawnBlock.contains("resolveTroubleBrewingDawnDeathFacts("),
+        )
+        assertTrue(
+            "Dawn planner input must consume the canonical attack outcome.",
+            dawnBlock.contains("attackOutcome = dawnDeathFacts.attackOutcome"),
+        )
+        assertTrue(
+            "Dawn planner input must consume the canonical original death seat.",
+            dawnBlock.contains("originalDeathSeat = dawnDeathFacts.originalDeathSeat"),
+        )
+        assertTrue(
+            "Dawn planner input must consume the canonical Mayor seat.",
+            dawnBlock.contains("mayorSeat = dawnDeathFacts.mayorSeat"),
+        )
+        assertTrue(
+            "Dawn planner input must consume canonical Demon-safe seats for redirect validation.",
+            dawnBlock.contains("demonSafeSeats = dawnDeathFacts.demonSafeSeats"),
+        )
+        assertFalse(
+            "Dawn must not keep an inline originalDeathCard Mayor-ability calculation as a second death authority.",
+            dawnBlock.contains("val originalDeathCard ="),
+        )
+    }
 }
