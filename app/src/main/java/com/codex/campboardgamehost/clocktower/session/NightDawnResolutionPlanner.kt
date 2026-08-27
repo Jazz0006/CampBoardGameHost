@@ -5,6 +5,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
+import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
 
 /**
  * SNE-7 typed planner seam.
@@ -161,13 +162,19 @@ internal object NightDawnResolutionPlanner {
         )
     }
 
-    @Suppress("UNUSED_PARAMETER")
     fun planPoisonCarry(
         baseGameState: GameState,
         checkpoint: ClocktowerNightCheckpoint,
         input: NightDawnPoisonResolutionInput,
     ): DawnPoisonCarryIntent? {
-        val targetSeat = checkpoint.confirmedPoisonTarget
+        val sourceStillOwnsPoisonerAbility =
+            input.effectiveNightState.isMechanicallyAlive(input.poisonerSeat) &&
+                input.effectiveNightState.currentRoleId(input.poisonerSeat) == input.poisonerRoleId
+        val carriedTargetName = PoisonEffectLifecycle.afterNight(
+            target = checkpoint.confirmedPoisonTarget,
+            poisonerAlive = sourceStillOwnsPoisonerAbility,
+        )
+        val targetSeat = carriedTargetName
             ?.let { name -> baseGameState.players.firstOrNull { it.name == name }?.seat }
         return targetSeat?.let(::DawnPoisonCarryIntent)
     }
