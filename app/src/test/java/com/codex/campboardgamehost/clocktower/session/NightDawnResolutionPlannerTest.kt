@@ -60,4 +60,23 @@ class NightDawnResolutionPlannerTest {
                 successfulConfirmation.contains("clearConfirmedDemonSuccessorTarget()"),
         )
     }
+
+    @Test
+    fun `Poisoner successor becoming Demon must end poison before Dawn`() {
+        val confirmNewDemon = appSource
+            .substringAfter("onConfirmNewDemon = {")
+            .substringBefore("onSelectKlutzChoice")
+
+        val afterMaterializationDecision = confirmNewDemon
+            .substringAfter("materializeConfirmedNightDemonSuccessor()")
+
+        assertTrue(
+            "After the exact successor is materialized, poison lifecycle must be re-evaluated using " +
+                "the successor's new current role before Dawn. Otherwise a Poisoner promoted to Imp " +
+                "can incorrectly carry their old poison effect into the following day.",
+            afterMaterializationDecision.contains("PoisonEffectLifecycle.afterNight(") &&
+                afterMaterializationDecision.contains("clocktowerConfirmedPoisonTarget =") &&
+                afterMaterializationDecision.contains("clocktowerPoisonTarget ="),
+        )
+    }
 }
