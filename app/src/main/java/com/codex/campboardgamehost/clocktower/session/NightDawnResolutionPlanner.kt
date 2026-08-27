@@ -35,6 +35,7 @@ internal data class DawnPoisonCarryIntent(
 internal data class DawnCommitIntent(
     val roleChanges: List<DawnRoleChangeIntent> = emptyList(),
     val death: DawnDeathIntent? = null,
+    val poisonCarry: DawnPoisonCarryIntent? = null,
 )
 
 internal data class NightDawnResolutionTransition(
@@ -95,6 +96,7 @@ internal object NightDawnResolutionPlanner {
         baseGameState: GameState,
         checkpoint: ClocktowerNightCheckpoint,
         demonRoleId: RoleId,
+        poisonResolutionInput: NightDawnPoisonResolutionInput? = null,
     ): NightDawnResolutionTransition {
         val pendingName = checkpoint.pendingNewDemonName
         val pendingSeat = pendingName
@@ -106,6 +108,14 @@ internal object NightDawnResolutionPlanner {
                 continuation = NightResolutionContinuation.AWAIT_DEMON_SUCCESSOR,
                 dawnCommitIntent = null,
                 outcomeEvaluationAllowed = false,
+            )
+        }
+
+        val poisonCarry = poisonResolutionInput?.let { input ->
+            planPoisonCarry(
+                baseGameState = baseGameState,
+                checkpoint = checkpoint,
+                input = input,
             )
         }
 
@@ -124,6 +134,7 @@ internal object NightDawnResolutionPlanner {
                         roleId = demonRoleId,
                     ),
                 ),
+                poisonCarry = poisonCarry,
             ),
             outcomeEvaluationAllowed = true,
         )
