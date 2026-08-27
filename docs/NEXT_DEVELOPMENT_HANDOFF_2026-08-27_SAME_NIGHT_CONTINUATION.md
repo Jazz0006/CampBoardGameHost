@@ -5,7 +5,7 @@
 > Branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54  
 > Stable `main`: `c8985cb4991f6c7e5ea02adedb932d2d86452da1`  
-> Handoff status: **SNE-7.4 + SNE-7.5 COMPLETE / BROAD GREEN — reconstruction accepted through 7.5G; SNE-7.6 limited integration smoke is next**
+> Handoff status: **SNE-7.1–7.8 IMPLEMENTATION COMPLETE — final latest-head broad validation and PR acceptance remain; PR #54 stays draft/unmerged**
 
 ## 1. Startup contract
 
@@ -59,13 +59,13 @@ SNE-7.5  NightTransactionReconstructor
          COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
 
 SNE-7.6  limited integration/smoke set
-         NEXT / 2–4 JVM-callable Host/App smokes
+         COMPLETE / HOST LIFECYCLE TYPED SMOKES GREEN
 
 SNE-7.7  source-string retirement
-         IN PROGRESS; CI #803 stale failures cleaned up
+         COMPLETE / SUPERSEDED TEMPORARY WIRING TESTS RETIRED
 
 SNE-7.8  minimal architecture guards only
-         NOT COMPLETE
+         COMPLETE / COARSE OWNERSHIP GUARD GREEN
 ```
 
 ## 4. Accepted SNE-7.4 checkpoints
@@ -206,28 +206,24 @@ Confirmed self-kill succession now reconstructs the old Demon as mechanically de
 
 The stale Mayor redirect case is coverage-only: reconstruction supplies the effective current-Demon role and the existing `NightDawnResolutionPlanner` correctly rejects redirecting to that Demon. Do not duplicate Mayor legality inside the reconstructor.
 
-## 7. Exact next functional slice — SNE-7.6 limited integration smoke
-
-Do not add a Compose instrumentation stack by default. `app` currently has JVM unit-test support but no Compose UI-test dependency. First audit existing callable Host/App seams and add only 2–4 integration smokes that cross real production boundaries.
-
-Target shape:
+## 7. SNE-7.6–7.8 accepted implementation closeout
 
 ```text
-production Host/App adapter input
-→ typed reducer/planner/reconstructor seam
-→ projected callback/result
-→ verify durable ownership remains at App/session boundary
+70c8c3d8  callable NightCheckpointHostTransaction adapter
+5e1bc08d  7.6A production-wiring RED (3/3 intended failures)
+64b6019a  real App successor + Host Previous adapter cut-over
+93213388  lifecycle integration smokes
+5686a5e4  minimal architecture guard
+70ddd4f9  retire 9 superseded temporary wiring tests
 ```
 
-Preferred smoke coverage:
+7.6A remote production compare was exactly one commit: two production files plus retirement of the old successor reducer wiring test. The adapter does not commit timeline/history/public state. Previous navigation now reaches `NightCheckpointReducer.MovePrevious` through the App-owned callback and has revision intent `NONE`.
 
-1. one edit/confirm path proving reducer-owned checkpoint semantics are reached through a callable production adapter;
-2. Previous/navigation proving confirmed mechanics remain authoritative through the adapter;
-3. one Dawn planner or successor materialization handoff proving intent is consumed without duplicating durable ownership;
-4. one reconstruction/restore handoff if a direct callable boundary exists.
+7.6B is coverage-only and composes the production Host adapter with checkpoint persistence/restoration, `NightTransactionReconstructor`, and `NightDawnResolutionPlanner`. It proves navigation does not roll back confirmed mechanics and Poisoner→Imp succession does not carry obsolete poison into Dawn.
 
-If a callable seam is missing, extract only the smallest JVM-callable adapter. Do not replace missing integration coverage with new formatting-sensitive source-string assertions.
+7.7/7.8 replace fine-grained temporary wiring strings with typed contracts plus one minimal architecture ownership guard. `ClocktowerSameNightEffectiveStateProductionWiringTest` and Mayor rules/UI ownership coverage remain because those consumer boundaries are still not directly JVM-callable.
 
+Implementation is complete. The next action is final latest-head broad CI/R2/Real Clingo acceptance and exact PR audit; do not add another functional slice unless that validation exposes a real regression.
 ## 7. Large-file writer constraint
 
 `CampBoardGameHostApp.kt` remains a large/truncated production file. Chat/GitHub connector is appropriate for tests/docs/small files; large production edits require a complete worktree and exact diff validation.
@@ -252,7 +248,7 @@ complete-worktree executor
 
 A one-shot temporary GitHub Actions runner branch outside PR #54 has been used because the current container cannot safely edit the complete App file. It is not production authority and must never be added to the PR branch.
 
-## 8. SNE-7.6 is the current frontier
+## 8. SNE-7 implementation is complete; final validation is the current frontier
 
 SNE-7.5 is complete. Do not reopen reconstruction merely to duplicate ordinary Demon-attack outcome rules inside `NightTransactionReconstructor`; confirmed attack target alone is not a validated death because Monk, Soldier and Mayor semantics remain rule-owned elsewhere.
 
@@ -292,12 +288,11 @@ Do not merge or mark PR #54 ready; do not rebase/force-push; do not reopen A3/Ap
 
 ```text
 1. re-query live PR #54 head/checks;
-2. audit existing JVM-callable Host/App transaction seams; do not add instrumentation by default;
-3. select only 2–4 high-value SNE-7.6 integration smokes;
-4. prefer typed callable behavior over source-string implementation shape;
-5. if a callable seam is missing, extract the smallest adapter without moving durable authority;
-6. focused GREEN + diff check + remote parent/diff audit;
-7. run the next logical checkpoint before 7.7/7.8 closeout.
+2. confirm the latest implementation/doc checkpoint and final CI/R2/Real Clingo results;
+3. run remote parent/diff/scope acceptance for the final SNE-7 commits;
+4. if all latest-head gates are GREEN, record SNE-7 COMPLETE in docs;
+5. do not start another functional slice unless validation exposes a real regression;
+6. keep PR #54 draft/unmerged until explicit user authorization changes that state.
 ```
 
 Never merge, mark ready, rebase, force-push, or broaden PR #54 without explicit user authorization.

@@ -49,3 +49,22 @@ Do not recreate the deleted tests merely to recover old coverage counts.
 ## Remaining source-based tests
 
 Older source-based ownership/decomposition/wiring tests still exist in the repository. Their existence is not an endorsement of the pattern. Review them when their protected boundary is changed, and retire them when typed production coverage becomes available.
+
+## SNE-7 closeout retirement
+
+After typed Host transaction, reconstruction and Dawn lifecycle integration became executable, the following temporary implementation-shaped guards were retired:
+
+- `ClocktowerDemonSuccessorReducerProductionWiringTest.kt` during the 7.6A production adapter cut-over;
+- `ClocktowerPoisonReducerProductionWiringTest.kt`;
+- `ClocktowerMonkReducerProductionWiringTest.kt`;
+- `ClocktowerDemonAttackReducerProductionWiringTest.kt`;
+- `ClocktowerMayorRedirectReducerProductionWiringTest.kt`;
+- `ClocktowerDawnDeathPlannerProductionWiringTest.kt`;
+- `ClocktowerNewDemonCheckpointProductionWiringTest.kt`;
+- `ClocktowerNewDemonPoisonAuthorityProductionWiringTest.kt`;
+- `ClocktowerHostTransactionProductionWiringTest.kt`;
+- `ClocktowerDawnExactDemonSuccessorWiringTest.kt`.
+
+Their behavioral replacements are the typed reducer/planner/reconstruction contracts plus `NightCheckpointHostTransactionTest` and `NightTransactionHostIntegrationSmokeTest`. `ClocktowerNightTransactionArchitectureGuardTest` is the consolidated coarse ownership guard for the remaining non-callable Compose/App boundary.
+
+`ClocktowerSameNightEffectiveStateProductionWiringTest` and the Mayor rules/UI ownership guard remain intentionally because they still protect coarse production-consumer boundaries that are not directly callable from JVM tests. Their retention does not make source-string testing the primary correctness layer.

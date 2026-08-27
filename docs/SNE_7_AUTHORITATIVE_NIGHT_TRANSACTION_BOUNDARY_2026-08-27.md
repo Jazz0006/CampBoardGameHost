@@ -2,7 +2,7 @@
 
 > Date: 2026-08-27  
 > Scope: same-night correctness closeout  
-> Status: **IMPLEMENTATION IN PROGRESS — 7.1–7.3 ESTABLISHED / SNE-7.4A–F + SNE-7.5A–G COMPLETE / SNE-7.6 NEXT**
+> Status: **IMPLEMENTATION COMPLETE — SNE-7.1–7.8 ESTABLISHED / final latest-head broad validation pending**
 > Branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54
 
@@ -49,13 +49,13 @@ SNE-7.5  restore / process-death reconstruction matrix
          COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
 
 SNE-7.6  limited integration smoke set
-         NEXT / 2–4 JVM-callable Host/App smokes
+         COMPLETE / JVM-CALLABLE HOST LIFECYCLE GREEN
 
 SNE-7.7  source-string retirement
-         IN PROGRESS; CI #803 stale assertion failures cleaned up
+         COMPLETE / SUPERSEDED TEMPORARY WIRING TESTS RETIRED
 
 SNE-7.8  minimal architecture guards only
-         NOT COMPLETE
+         COMPLETE / COARSE OWNERSHIP GUARD GREEN
 ```
 
 ### Accepted 7.4 evidence
@@ -348,9 +348,11 @@ The mechanical projection cursor used to apply already-confirmed reconstructed f
 
 Do not turn the reconstructor into a second attack-resolution engine. `confirmedAttackTarget` alone is not sufficient to infer ordinary death because Monk protection, Soldier immunity and Mayor redirect semantics remain validated by existing rule/planner seams.
 
-## 7.1 SNE-7.6 integration boundary direction
+## 7.1 SNE-7.6–7.8 accepted closeout
 
-SNE-7.6 should add only 2–4 integration smokes through real production Host/App adapters. The module currently lacks Compose UI-test dependencies, so JVM-callable typed integration is the default. Add instrumentation only if a required product boundary genuinely cannot be exercised otherwise.
+`NightCheckpointHostTransaction` is the minimal JVM-callable Host transaction adapter. It delegates to `NightCheckpointReducer`, returns only reduced checkpoint + revision intent, and owns no sequence/timeline/public materialization. Real App successor callbacks and all Host Previous navigation paths consume it.
+
+The lifecycle integration smoke composes that adapter with checkpoint persistence/restoration, `NightTransactionReconstructor`, and `NightDawnResolutionPlanner`; no second coordinator was introduced. Fine-grained temporary SNE wiring tests were retired after the typed replacements and the minimal architecture guard passed focused validation. Implementation checkpoint `5686a5e4` was broad GREEN at CI #862 + R2 #789; retirement checkpoint `70ddd4f9` changes tests only.
 
 ## 8. Source-string retirement
 

@@ -6,7 +6,7 @@
 > Stable `main`: `c8985cb4991f6c7e5ea02adedb932d2d86452da1`  
 > Active branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54  
-> Current priority: **SNE-7.6 integration smoke — SNE-7.4A–F + SNE-7.5A–G COMPLETE; next 2–4 JVM-callable Host/App integration smokes**
+> Current priority: **SNE-7 final validation — SNE-7.1–7.8 implementation COMPLETE; final broad CI/R2 and PR acceptance next**
 
 ## 1. Current campaign state
 
@@ -18,7 +18,7 @@ A3 Architecture Hardening H1–H7                    COMPLETE / GREEN
 B4 historical-exact shadow bridge                  GREEN / production-isolated
 App-root decomposition through S9.1                CLOSED / MERGED
 App-root S9.2 Active Game Persistence Boundary     AUDIT COMPLETE / DEFERRED
-Same-night effective mechanical state              CURRENT / SNE-7 CLOSEOUT
+Same-night effective mechanical state              IMPLEMENTATION COMPLETE / FINAL VALIDATION
 A3 setup-snapshot ownership / persistence          DEFERRED
 Production recommendation authority promotion      NOT AUTHORIZED
 ```
@@ -96,13 +96,13 @@ SNE-7.5  restore / process-death reconstruction matrix
          COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
 
 SNE-7.6  limited integration smoke coverage
-         NEXT / 2–4 JVM-callable Host/App smokes
+         COMPLETE / JVM-CALLABLE HOST LIFECYCLE GREEN
 
 SNE-7.7  source-string retirement
-         IN PROGRESS; CI #803 stale failures CLEANED UP
+         COMPLETE / SUPERSEDED TEMPORARY WIRING TESTS RETIRED
 
 SNE-7.8  minimal architecture guards only
-         NOT COMPLETE
+         COMPLETE / COARSE OWNERSHIP GUARD GREEN
 ```
 
 ### Latest accepted SNE-7.4 checkpoints
@@ -344,19 +344,27 @@ Key reconstruction contracts now executable and GREEN:
 
 Do not broaden the reconstructor into a second Demon-attack rules engine. In particular, a generic confirmed attack target is not by itself a validated death because Monk, Soldier and Mayor semantics still matter. Reuse existing typed rules/planner/effective-state seams if later integration work needs ordinary attack reconstruction.
 
-## 7. Immediate next slice — SNE-7.6 limited integration smoke
+## 7. SNE-7.6–7.8 implementation closeout
 
-SNE-7.6 should add only 2–4 high-value integration smokes around the real Host/App transaction boundary. The current module has JVM unit-test support but no Compose UI-test dependency, so do not introduce Android instrumentation merely to satisfy the word “Compose”.
+SNE-7.6 established a JVM-callable production Host transaction boundary without introducing a second state owner. `NightCheckpointHostTransaction` delegates checkpoint-local edit/confirm/Previous semantics to `NightCheckpointReducer` and returns only a transient revision intent; App/session still performs the actual revisions and all durable side effects.
 
-Acceptance direction:
+Accepted closeout checkpoints:
 
-1. Audit existing JVM-callable Host/App seams first and choose the smallest 2–4 transaction paths.
-2. Cover at least one edit/confirm/Previous flow and one Dawn/reconstruction handoff through typed production seams.
-3. Prefer typed callable integration over new source-string shape assertions.
-4. If a direct callable seam is genuinely missing, extract the smallest adapter boundary; do not create a second coordinator/state owner.
-5. Preserve App/session durable sequence, timeline, public death/role and revision ownership.
-6. Focused GREEN, `git diff --check`, remote exact diff audit, then logical checkpoint validation.
+```text
+70c8c3d8127dfe193eb7921e99cdfb41acc637b6  add NightCheckpointHostTransaction adapter
+5e1bc08d070422e099e32d76f57409a6143f6017  production wiring RED: exactly 3 intended failures
+64b6019a7847e425208f62eca15d4c4308e012eb  wire successor + Previous production paths through adapter
+932133880f66388564b86fff372c1e7827ccae90  Host adapter → persist/restore → reconstruction → Dawn planner integration smokes
+5686a5e4cd616ae6607f8a657696c3d96f9487f7  minimal night-transaction architecture guard
+CI #862 + R2 #789                              broad SUCCESS at architecture-guard head
+70ddd4f9b90803a63293621198c9014fe446dbde  retire 9 superseded temporary source-wiring tests
+```
 
+The 7.6 lifecycle smoke proves that confirmed successor mechanics survive Previous navigation and checkpoint persistence/restoration, reconstruct the old Demon mechanical death/current Demon role, and reach Dawn planning without incorrectly carrying a Poisoner effect after that player has become the Imp.
+
+SNE-7.7 retired the implementation-shaped Poison/Monk/Attack/Mayor/Dawn/new-Demon/successor/Previous wiring guards that are now superseded by typed reducer/planner/reconstruction/integration coverage. SNE-7.8 retains only coarse ownership guards where the Compose/App surface is still not directly callable from JVM tests. No production code changed during 7.7 retirement.
+
+Implementation is complete. The only remaining same-night campaign gate is final latest-head broad validation plus remote/PR acceptance. Do not reopen generic attack resolution, A3, App-root decomposition, or custom-script Demon succession during that final gate.
 ## 8. Testing and source-inspection policy
 
 Preferred proof order:
