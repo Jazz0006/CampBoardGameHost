@@ -158,6 +158,7 @@ import com.codex.campboardgamehost.clocktower.session.NightCheckpointReducer
 import com.codex.campboardgamehost.clocktower.session.NightResolutionEvent
 import com.codex.campboardgamehost.clocktower.session.DawnCommitIntent
 import com.codex.campboardgamehost.clocktower.session.NightDawnPoisonResolutionInput
+import com.codex.campboardgamehost.clocktower.session.NightDawnDeathResolutionInput
 import com.codex.campboardgamehost.clocktower.session.NightDawnResolutionPlanner
 import com.codex.campboardgamehost.clocktower.session.NightResolutionContinuation
 import com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest
@@ -201,7 +202,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.epistemic.ZddFilterStrategy
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
-import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
@@ -3475,32 +3475,50 @@ internal fun CampBoardGameHostApp() {
                                 )
                             } == true &&
                                 !demonPoisonedTonight
-                            val validatedMayorRedirectTarget =
-                                if (mayorCanRedirect) {
-                                    clocktowerConfirmedMayorRedirectTarget?.takeIf { targetName ->
-                                        val targetCard = cards.firstOrNull { it.name == targetName }
-                                        targetCard != null &&
-                                            targetCard.eliminatedRound == null &&
-                                            MayorRedirectLegality.canReceiveRedirect(
-                                                targetIsDemon = targetCard.clocktowerTeam == ClocktowerTeam.Demon,
-                                            )
-                                    }
-                                } else {
-                                    null
-                                }
-                            val resolvedDeathName = if (mayorCanRedirect) {
-                                validatedMayorRedirectTarget ?: originalDeathName
-                            } else {
-                                originalDeathName
+                            val baseGameState = cards.toClocktowerGameState(
+                                currentClocktowerScript,
+                                clocktowerGameSeed,
+                                poisonedPlayerName = clocktowerConfirmedPoisonTarget,
+                            )
+                            val effectiveNightState = ClocktowerEffectiveNightState(
+                                effectiveAliveSeats = cards.mapIndexedNotNull { index, card ->
+                                    (index + 1).takeIf { card.eliminatedRound == null }
+                                }.toSet(),
+                                effectiveRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
+                                    card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
+                                }.toMap(),
+                            )
+                            val originalDeathSeat = originalDeathName?.let { name ->
+                                cards.indexOfFirst { it.name == name }
+                                    .takeIf { it >= 0 }
+                                    ?.plus(1)
                             }
+                            val demonRoleIds = cards.mapNotNull { card ->
+                                card.clocktowerRole
+                                    ?.takeIf { card.clocktowerTeam == ClocktowerTeam.Demon }
+                                    ?.let { role -> RoleId(role.enName) }
+                            }.toSet()
+                            val deathTransition = NightDawnResolutionPlanner.planValidatedNightDeath(
+                                baseGameState = baseGameState,
+                                checkpoint = currentClocktowerNightCheckpoint(),
+                                input = NightDawnDeathResolutionInput(
+                                    originalDeathSeat = originalDeathSeat,
+                                    mayorSeat = originalDeathSeat?.takeIf { mayorCanRedirect },
+                                    mayorRedirectMayApply = mayorCanRedirect,
+                                    effectiveNightState = effectiveNightState,
+                                    demonRoleIds = demonRoleIds,
+                                ),
+                            )
+                            val resolvedDeathName = deathTransition.dawnCommitIntent?.death?.targetSeat
+                                ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
                             val deathName = resolvedDeathName.takeUnless { demonPoisonedTonight }
-                            if (mayorCanRedirect && resolvedDeathName != originalDeathName) {
+                            if (mayorCanRedirect && resolvedDeathName != null && resolvedDeathName != originalDeathName) {
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
                                     localizedText("市长死亡转移", "Mayor death redirect"),
                                     localizedText(
-                                        "${playerSeatLabel(cards, originalDeathName)} → ${playerSeatLabel(cards, resolvedDeathName)}",
-                                        "${playerSeatLabel(cards, originalDeathName)} → ${playerSeatLabel(cards, resolvedDeathName)}",
+                                        playerSeatLabel(cards, originalDeathName) + " → " + playerSeatLabel(cards, resolvedDeathName),
+                                        playerSeatLabel(cards, originalDeathName) + " → " + playerSeatLabel(cards, resolvedDeathName),
                                     ),
                                     listOfNotNull(originalDeathName, resolvedDeathName),
                                 )
