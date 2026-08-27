@@ -3470,14 +3470,13 @@ internal fun CampBoardGameHostApp() {
                             var newDemonName: String? = null
                             var unresolvedDemonSuccessor = false
                             val originalDeathName = clocktowerPendingNightDeath
-                            val originalDeathCard = originalDeathName?.let { name -> cards.firstOrNull { it.name == name } }
-                            val mayorCanRedirect = originalDeathCard?.let {
-                                AbilityFunctioningSemantics.functionsAs(
-                                    it.abilitySubject(clocktowerConfirmedPoisonTarget),
-                                    "Mayor",
-                                )
-                            } == true &&
-                                !demonPoisonedTonight
+                            val dawnDeathFacts = resolveTroubleBrewingDawnDeathFacts(
+                                cards = cards,
+                                targetName = originalDeathName,
+                                poisonedPlayerName = clocktowerConfirmedPoisonTarget,
+                                monkProtectedTargetName = clocktowerConfirmedMonkProtectedTarget,
+                            )
+                            val mayorCanRedirect = dawnDeathFacts.mayorSeat != null
                             val baseGameState = cards.toClocktowerGameState(
                                 currentClocktowerScript,
                                 clocktowerGameSeed,
@@ -3491,11 +3490,6 @@ internal fun CampBoardGameHostApp() {
                                     card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
                                 }.toMap(),
                             )
-                            val originalDeathSeat = originalDeathName?.let { name ->
-                                cards.indexOfFirst { it.name == name }
-                                    .takeIf { it >= 0 }
-                                    ?.plus(1)
-                            }
                             val demonRoleIds = cards.mapNotNull { card ->
                                 card.clocktowerRole
                                     ?.takeIf { card.clocktowerTeam == ClocktowerTeam.Demon }
@@ -3505,16 +3499,18 @@ internal fun CampBoardGameHostApp() {
                                 baseGameState = baseGameState,
                                 checkpoint = currentClocktowerNightCheckpoint(),
                                 input = NightDawnDeathResolutionInput(
-                                    originalDeathSeat = originalDeathSeat,
-                                    mayorSeat = originalDeathSeat?.takeIf { mayorCanRedirect },
+                                    originalDeathSeat = dawnDeathFacts.originalDeathSeat,
+                                    mayorSeat = dawnDeathFacts.mayorSeat,
                                     mayorRedirectMayApply = mayorCanRedirect,
+                                    attackOutcome = dawnDeathFacts.attackOutcome,
+                                    demonSafeSeats = dawnDeathFacts.demonSafeSeats,
                                     effectiveNightState = effectiveNightState,
                                     demonRoleIds = demonRoleIds,
                                 ),
                             )
                             val resolvedDeathName = deathTransition.dawnCommitIntent?.death?.targetSeat
                                 ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
-                            val deathName = resolvedDeathName.takeUnless { demonPoisonedTonight }
+                            val deathName = resolvedDeathName
                             if (mayorCanRedirect && resolvedDeathName != null && resolvedDeathName != originalDeathName) {
                                 addClocktowerEvent(
                                     ClocktowerEventType.RoleAction,
