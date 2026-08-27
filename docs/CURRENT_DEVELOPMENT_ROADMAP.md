@@ -6,7 +6,7 @@
 > Stable `main`: `c8985cb4991f6c7e5ea02adedb932d2d86452da1`  
 > Active branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54  
-> Current priority: **SNE-7.5 restore/reconstruction — SNE-7.4A–F COMPLETE; next 7.5A confirmed-successor reconstruction**
+> Current priority: **SNE-7.6 integration smoke — SNE-7.4A–F + SNE-7.5A–G COMPLETE; next 2–4 JVM-callable Host/App integration smokes**
 
 ## 1. Current campaign state
 
@@ -93,10 +93,10 @@ SNE-7.4  switch production Compose/App wiring to typed seams
              COMPLETE / FOCUSED + BROAD GREEN / REMOTE DIFF AUDITED
 
 SNE-7.5  restore / process-death reconstruction matrix
-         NEXT / SCAFFOLD EXISTS / INCOMPLETE
+         COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
 
-SNE-7.6  limited Compose smoke/integration coverage
-         NOT COMPLETE
+SNE-7.6  limited integration smoke coverage
+         NEXT / 2–4 JVM-callable Host/App smokes
 
 SNE-7.7  source-string retirement
          IN PROGRESS; CI #803 stale failures CLEANED UP
@@ -308,55 +308,54 @@ Reuse `currentClocktowerNightCheckpoint()`; do not introduce another durable or 
 
 SNE-7.4F also completed the Dawn planner authority closeout: `onConfirmNight` consumes planner-validated night death/Mayor intent; `onConfirmNewDemon` reuses the canonical checkpoint snapshot; planner-backed succession materializes poison from `DawnCommitIntent.poisonCarry` exactly once, while the legacy `PoisonEffectLifecycle.afterNight()` path remains only for the non-planner flow. Final audit found the remaining successor cleanup to be idempotent plain assignment with no revision/timeline/mechanical side effect, so no additional low-value source-string slice is justified.
 
-## 6. Immediate next slice — SNE-7.5A confirmed-successor reconstruction
+## 6. SNE-7.5 accepted result
 
-Activate the existing typed `NightTransactionReconstructionContractTest` against the real `NightTransactionReconstructor` scaffold. Do not invent a second reconstruction model and do not replay transient `NightResolutionEvent` commands.
+`NightTransactionReconstructor` is no longer scaffold-only. The typed reconstruction matrix is active and reconstructs confirmed same-night successor mechanics from durable checkpoint + base `GameState` + canonical interaction plan without replaying transient UI commands.
 
-Expected first gap:
-
-```text
-decoded ClocktowerNightCheckpoint
-+ canonical interaction plan
-+ confirmed Demon successor
-→ reconstruct same-night effective Demon role
-→ leave public/base GameState role unchanged
-```
-
-Tests-first direction:
-
-1. Remove/narrow the class-level reconstruction `@Ignore` and verify the exact RED set rather than assuming it.
-2. Draft-only successor must not become effective Demon.
-3. Missing successor interaction and out-of-range `nightStepIndex` must fail closed without applying stale role effect.
-4. A valid confirmed successor applies only when canonical-plan position proves the successor interaction has been passed.
-5. Reconstruction is deterministic from identical persisted inputs.
-6. `baseGameState` remains immutable; only derived `ClocktowerEffectiveNightState` changes.
-7. Focused RED/GREEN + `git diff --check` + exact remote diff audit before broadening the reconstruction matrix.
-
-## 7. Restore/reconstruction boundary
-
-`NightTransactionReconstructor` exists but is not a completed authority. Do not treat a scaffold or ignored contract as GREEN.
-
-Required reconstruction model:
+Accepted checkpoints:
 
 ```text
-GameState
-+ decoded ClocktowerNightCheckpoint
-+ reconstructed ruleset/canonical plan
-→ derived effective night state
+fc2165a2260531e5b63a5d917bcb15bd1ef54aef  7.5A confirmed successor effective role
+482016861da04627401dddd86dab7179dde6a4fb  7.5B reject stale invalid/non-Minion successor
+22ef9fb1006176d5716cffaf7ba4dd286d203528  7.5C Previous navigation cannot roll back confirmed mechanics
+b149790f3ea7e88ccb76ce546b432ae03e079126  7.5D require confirmed Demon self-attack before succession restore
+b99bd9c25c92d84ad026a42bf4ec5d5c62a0688f  7.5E reconstruct old Demon MechanicalDeath + successor RoleChanged
+74345e3587bfc9914e57b1efe1ffb349191f9055  7.5F coverage: stale Mayor redirect to reconstructed Demon fails closed
+1136dbaba42fa8be93dffd11cd98d2ff2d257c14  7.5G coverage: draft edit preserves prior confirmed successor
+
+CI #855 + R2 #782 at 1136dbab
+  broad SUCCESS
+  Android tests/build SUCCESS
+  Real Clingo cross-validation SUCCESS
 ```
 
-Required cases include:
+Key reconstruction contracts now executable and GREEN:
 
-- legacy draft-only successor does not invent confirmation/`RoleChanged`;
-- confirmed successor + Previous remains authoritative;
-- draft edit without Confirm leaves prior confirmation authoritative;
-- invalid confirmed successor fails closed;
-- missing interaction and out-of-range navigation restore safely;
-- stale Mayor redirect to Demon fails closed;
-- current effective role may differ from public/base role;
+- draft-only successor never becomes `RoleChanged`;
+- missing successor interaction and out-of-range navigation fail closed;
+- invalid/non-living/non-Minion confirmed successor fails closed;
+- confirmed successor requires a confirmed old-Demon self attack;
+- `nightStepIndex` remains UI navigation only: Previous does not roll back confirmed mechanics;
+- editing a successor draft without Confirm leaves the prior confirmed successor authoritative;
+- confirmed self-kill reconstructs old-Demon `MechanicalDeath` at successor `BEFORE` and successor `RoleChanged` at `AFTER`;
+- effective role/alive state may differ from public/base state without mutating `GameState` early;
+- a restored Mayor redirect to the reconstructed current Demon fails closed through the existing Dawn planner legality seam;
 - identical durable inputs reconstruct identical effective state.
 
-Do not reconstruct by replaying transient UI commands.
+Do not broaden the reconstructor into a second Demon-attack rules engine. In particular, a generic confirmed attack target is not by itself a validated death because Monk, Soldier and Mayor semantics still matter. Reuse existing typed rules/planner/effective-state seams if later integration work needs ordinary attack reconstruction.
+
+## 7. Immediate next slice — SNE-7.6 limited integration smoke
+
+SNE-7.6 should add only 2–4 high-value integration smokes around the real Host/App transaction boundary. The current module has JVM unit-test support but no Compose UI-test dependency, so do not introduce Android instrumentation merely to satisfy the word “Compose”.
+
+Acceptance direction:
+
+1. Audit existing JVM-callable Host/App seams first and choose the smallest 2–4 transaction paths.
+2. Cover at least one edit/confirm/Previous flow and one Dawn/reconstruction handoff through typed production seams.
+3. Prefer typed callable integration over new source-string shape assertions.
+4. If a direct callable seam is genuinely missing, extract the smallest adapter boundary; do not create a second coordinator/state owner.
+5. Preserve App/session durable sequence, timeline, public death/role and revision ownership.
+6. Focused GREEN, `git diff --check`, remote exact diff audit, then logical checkpoint validation.
 
 ## 8. Testing and source-inspection policy
 

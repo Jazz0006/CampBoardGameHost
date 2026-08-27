@@ -2,7 +2,7 @@
 
 > Date: 2026-08-27  
 > Scope: same-night correctness closeout  
-> Status: **IMPLEMENTATION IN PROGRESS — 7.1–7.3 ESTABLISHED / SNE-7.4A–F COMPLETE / SNE-7.5 NEXT**
+> Status: **IMPLEMENTATION IN PROGRESS — 7.1–7.3 ESTABLISHED / SNE-7.4A–F + SNE-7.5A–G COMPLETE / SNE-7.6 NEXT**
 > Branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54
 
@@ -46,10 +46,10 @@ SNE-7.4  production Compose/App wiring consumes typed seams
              COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
 
 SNE-7.5  restore / process-death reconstruction matrix
-         NEXT / SCAFFOLD EXISTS, NOT GREEN / NOT COMPLETE
+         COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
 
-SNE-7.6  small Compose smoke/integration set
-         NOT COMPLETE
+SNE-7.6  limited integration smoke set
+         NEXT / 2–4 JVM-callable Host/App smokes
 
 SNE-7.7  source-string retirement
          IN PROGRESS; CI #803 stale assertion failures cleaned up
@@ -327,33 +327,30 @@ Planner-backed succession no longer re-runs `PoisonEffectLifecycle.afterNight()`
 
 SNE-7.4 is therefore complete. Durable sequence allocation, action/history recording, public role/death materialization and phase/revision changes remain App/session-owned.
 
-## 7. Restore and reconstruction — SNE-7.5
+## 7. Restore and reconstruction — SNE-7.5 accepted
 
-`NightTransactionReconstructor` and its contract test exist, but the current implementation remains a scaffold. It must not be treated as completed merely because the types/files exist.
+SNE-7.5 is complete and broad GREEN at code/test checkpoint `1136dbab` (CI #855 + R2 #782). Reconstruction derives effective same-night state from durable checkpoint + base `GameState` + canonical plan; it never replays transient UI commands and never mutates public/base role or alive state early.
 
-SNE-7.5 must exercise a real reconstruction boundary:
+Accepted reconstruction semantics:
 
-```text
-checkpoint encode/save
-→ process-death / lifecycle boundary as applicable
-→ checkpoint decode
-→ ruleset + canonical interaction plan rebuild
-→ derived effective state reconstruction
-```
+- draft-only successor data does not invent confirmation or `RoleChanged`;
+- missing successor interaction and out-of-range `nightStepIndex` fail closed;
+- invalid/non-living/non-Minion confirmed successor fails closed;
+- confirmed succession requires a confirmed old-Demon self attack;
+- UI `nightStepIndex` remains navigation only; `MovePrevious` cannot roll back confirmed mechanics;
+- editing a draft without Confirm leaves the prior confirmed fact authoritative;
+- confirmed self-kill succession reconstructs old-Demon `MechanicalDeath` at successor `BEFORE` and successor `RoleChanged` at `AFTER`;
+- current effective alive/role may differ from public/base state without early durable mutation;
+- stale Mayor redirect to a reconstructed current Demon fails closed through the existing Dawn planner legality seam;
+- identical durable inputs reconstruct identical effective state.
 
-Required restore cases remain:
+The mechanical projection cursor used to apply already-confirmed reconstructed facts is therefore not the same thing as the stored UI navigation cursor. This is required by the protected lifecycle in section 4.
 
-- legacy draft-only successor data does not invent confirmation or `RoleChanged`;
-- invalid confirmed successor fails closed / requires valid reconfirmation;
-- missing interaction is handled safely;
-- out-of-range `nightStepIndex` is handled safely;
-- stale Mayor redirect to Demon fails closed;
-- current effective role may differ from public/base role and reconstructs correctly;
-- confirmed successor + Previous remains confirmed;
-- draft edit without Confirm leaves the old confirmed fact authoritative;
-- same durable inputs reconstruct the same effective state.
+Do not turn the reconstructor into a second attack-resolution engine. `confirmedAttackTarget` alone is not sufficient to infer ordinary death because Monk protection, Soldier immunity and Mayor redirect semantics remain validated by existing rule/planner seams.
 
-Do not activate the ignored reconstruction matrix by faking role changes or replaying UI commands. The reconstructor must derive from durable state plus canonical semantics.
+## 7.1 SNE-7.6 integration boundary direction
+
+SNE-7.6 should add only 2–4 integration smokes through real production Host/App adapters. The module currently lacks Compose UI-test dependencies, so JVM-callable typed integration is the default. Add instrumentation only if a required product boundary genuinely cannot be exercised otherwise.
 
 ## 8. Source-string retirement
 
@@ -404,16 +401,13 @@ COMPLETED
   SNE-7.4C Demon attack production reducer wiring
   SNE-7.4D Mayor redirect production reducer wiring
   SNE-7.4E Demon successor production reducer wiring
-
-COMPLETED
   SNE-7.4F Dawn planner production authority closeout
+  SNE-7.5A–G restore/reconstruction matrix
 
 CURRENT NEXT
-  SNE-7.5A activate confirmed-successor reconstruction RED/GREEN
+  SNE-7.6 2–4 JVM-callable Host/App integration smokes
 
 THEN
-  SNE-7.5 remaining restore/process-death reconstruction matrix GREEN
-  SNE-7.6 2–4 Compose smoke/integration tests
   SNE-7.7 finish source-string retirement
   SNE-7.8 retain only minimal architecture guards
 

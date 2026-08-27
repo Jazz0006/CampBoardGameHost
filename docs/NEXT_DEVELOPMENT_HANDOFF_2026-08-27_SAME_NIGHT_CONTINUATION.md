@@ -5,7 +5,7 @@
 > Branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54  
 > Stable `main`: `c8985cb4991f6c7e5ea02adedb932d2d86452da1`  
-> Handoff status: **SNE-7.4 COMPLETE — Poison + Monk + Demon attack + Mayor redirect + Demon successor + Dawn planner authority closeout accepted; SNE-7.5A reconstruction is next**
+> Handoff status: **SNE-7.4 + SNE-7.5 COMPLETE / BROAD GREEN — reconstruction accepted through 7.5G; SNE-7.6 limited integration smoke is next**
 
 ## 1. Startup contract
 
@@ -56,10 +56,10 @@ SNE-7.4  production Compose/App typed-seam cutover
   7.4F Dawn planner      COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
 
 SNE-7.5  NightTransactionReconstructor
-         NEXT / SCAFFOLD EXISTS / INCOMPLETE
+         COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
 
-SNE-7.6  small Compose integration/smoke set
-         NOT COMPLETE
+SNE-7.6  limited integration/smoke set
+         NEXT / 2–4 JVM-callable Host/App smokes
 
 SNE-7.7  source-string retirement
          IN PROGRESS; CI #803 stale failures cleaned up
@@ -185,30 +185,48 @@ Demon successor confirmation now commits the checkpoint's current successor draf
 
 Reuse the existing `currentClocktowerNightCheckpoint()` helper. Do not add another durable/snapshot state owner.
 
-## 6. Exact next functional slice — SNE-7.5A confirmed-successor reconstruction
+## 6. Accepted SNE-7.5 reconstruction closeout
 
-`NightTransactionReconstructor` currently restores only cursor + base alive/current-role state; its `demonSuccessorInteractionId` and `demonRoleId` inputs are scaffold-only. The existing reconstruction contract is still class-level ignored.
-
-Activate the existing typed contract first. The first expected missing behavior is the valid confirmed-successor case:
+The reconstruction matrix is active and GREEN through SNE-7.5G. `NightTransactionReconstructor` derives same-night mechanics from durable inputs; it does not replay `NightResolutionEvent`, mutate public/base state early, or use the UI navigation position as a reversible event-history cursor.
 
 ```text
-same persisted checkpoint inputs
-+ canonical plan containing the successor interaction
-+ checkpoint position after that interaction
-→ deterministic effective role override to Demon
-→ public/base actualRole remains unchanged
+7.5A  fc2165a2260531e5b63a5d917bcb15bd1ef54aef  confirmed successor effective role
+7.5B  482016861da04627401dddd86dab7179dde6a4fb  invalid successor fail-closed
+7.5C  22ef9fb1006176d5716cffaf7ba4dd286d203528  Previous preserves confirmed mechanics
+7.5D  b149790f3ea7e88ccb76ce546b432ae03e079126  self-attack prerequisite
+7.5E  b99bd9c25c92d84ad026a42bf4ec5d5c62a0688f  self-kill MechanicalDeath reconstruction
+7.5F  74345e3587bfc9914e57b1efe1ffb349191f9055  Mayor→new-Demon restore coverage
+7.5G  1136dbaba42fa8be93dffd11cd98d2ff2d257c14  draft edit preserves prior confirmation
+CI #855 + R2 #782                                  broad SUCCESS
 ```
 
-### SNE-7.5A acceptance direction
+Most important correction from the original 7.5A wording: `nightStepIndex` is a navigation cursor only. A confirmed mechanical fact remains authoritative after `MovePrevious`; reconstruction therefore must not decide whether a confirmed successor exists by asking whether the current UI screen is “past” the successor interaction.
 
-1. Remove/narrow the reconstruction class-level `@Ignore`; verify exact RED rather than assuming the count.
-2. Draft-only successor does not become effective Demon.
-3. Missing successor interaction and out-of-range navigation fail closed and do not apply stale role effect.
-4. Confirmed successor applies only after its canonical interaction has been passed.
-5. Reconstruction is deterministic from the same decoded durable inputs.
-6. Do not replay `NightResolutionEvent`; derive from checkpoint + base game state + canonical plan.
-7. Keep base/public `GameState` immutable and project only `ClocktowerEffectiveNightState`.
-8. Focused RED/GREEN with `--rerun-tasks`, `git diff --check`, and exact remote diff audit.
+Confirmed self-kill succession now reconstructs the old Demon as mechanically dead and the successor as effective Demon while leaving public/base `alive` and `actualRole` untouched until the normal durable Dawn boundary.
+
+The stale Mayor redirect case is coverage-only: reconstruction supplies the effective current-Demon role and the existing `NightDawnResolutionPlanner` correctly rejects redirecting to that Demon. Do not duplicate Mayor legality inside the reconstructor.
+
+## 7. Exact next functional slice — SNE-7.6 limited integration smoke
+
+Do not add a Compose instrumentation stack by default. `app` currently has JVM unit-test support but no Compose UI-test dependency. First audit existing callable Host/App seams and add only 2–4 integration smokes that cross real production boundaries.
+
+Target shape:
+
+```text
+production Host/App adapter input
+→ typed reducer/planner/reconstructor seam
+→ projected callback/result
+→ verify durable ownership remains at App/session boundary
+```
+
+Preferred smoke coverage:
+
+1. one edit/confirm path proving reducer-owned checkpoint semantics are reached through a callable production adapter;
+2. Previous/navigation proving confirmed mechanics remain authoritative through the adapter;
+3. one Dawn planner or successor materialization handoff proving intent is consumed without duplicating durable ownership;
+4. one reconstruction/restore handoff if a direct callable boundary exists.
+
+If a callable seam is missing, extract only the smallest JVM-callable adapter. Do not replace missing integration coverage with new formatting-sensitive source-string assertions.
 
 ## 7. Large-file writer constraint
 
@@ -234,33 +252,11 @@ complete-worktree executor
 
 A one-shot temporary GitHub Actions runner branch outside PR #54 has been used because the current container cannot safely edit the complete App file. It is not production authority and must never be added to the PR branch.
 
-## 8. SNE-7.5 is the current frontier
+## 8. SNE-7.6 is the current frontier
 
-`NightTransactionReconstructor` exists but remains a scaffold. Proceed one reconstruction behavior at a time; do not activate the matrix by faking public role changes or replaying UI commands.
+SNE-7.5 is complete. Do not reopen reconstruction merely to duplicate ordinary Demon-attack outcome rules inside `NightTransactionReconstructor`; confirmed attack target alone is not a validated death because Monk, Soldier and Mayor semantics remain rule-owned elsewhere.
 
-Required later reconstruction boundary:
-
-```text
-checkpoint encode/save
-→ lifecycle/process boundary
-→ checkpoint decode
-→ ruleset + canonical plan rebuild
-→ derived effective-state reconstruction
-```
-
-Still required:
-
-- legacy draft-only successor invents no confirmation/`RoleChanged`;
-- invalid confirmed successor fails closed;
-- missing interaction handled safely;
-- out-of-range `nightStepIndex` handled safely;
-- stale Mayor→Demon redirect fails closed;
-- effective role can differ from public/base role;
-- Previous preserves confirmation;
-- draft edit without Confirm preserves old mechanical fact;
-- same durable inputs reconstruct same state.
-
-Do not reconstruct by replaying transient `NightResolutionEvent` commands.
+SNE-7.6 is deliberately small: 2–4 JVM-callable integration smokes around existing production seams, with the smallest adapter extraction only if required.
 
 ## 9. Mayor product restriction remains unchanged
 
@@ -296,12 +292,12 @@ Do not merge or mark PR #54 ready; do not rebase/force-push; do not reopen A3/Ap
 
 ```text
 1. re-query live PR #54 head/checks;
-2. activate the existing NightTransactionReconstructionContractTest against the scaffold;
-3. verify the exact 7.5A RED set;
-4. implement only confirmed-successor effective-role reconstruction;
-5. preserve fail-closed behavior for draft-only / missing-interaction / out-of-range cases;
+2. audit existing JVM-callable Host/App transaction seams; do not add instrumentation by default;
+3. select only 2–4 high-value SNE-7.6 integration smokes;
+4. prefer typed callable behavior over source-string implementation shape;
+5. if a callable seam is missing, extract the smallest adapter without moving durable authority;
 6. focused GREEN + diff check + remote parent/diff audit;
-7. continue the remaining reconstruction matrix one behavior at a time.
+7. run the next logical checkpoint before 7.7/7.8 closeout.
 ```
 
 Never merge, mark ready, rebase, force-push, or broaden PR #54 without explicit user authorization.
