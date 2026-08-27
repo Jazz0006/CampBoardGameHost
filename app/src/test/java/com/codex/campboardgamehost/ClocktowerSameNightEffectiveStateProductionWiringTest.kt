@@ -6,11 +6,11 @@ import org.junit.Test
 import java.io.File
 
 /**
- * RED production-wiring contracts for same-night mechanical state.
+ * Narrow production ownership guards for same-night mechanical state.
  *
- * These tests deliberately assert the required authority boundary against the current production
- * source. They must fail by JUnit assertion on the pre-fix implementation; production code is not
- * changed in this checkpoint.
+ * Gameplay semantics belong in typed behavior tests. These source checks are retained only where
+ * they protect a coarse production-consumer boundary that is not yet callable as an integration
+ * seam; they deliberately avoid exact formatting/local-expression shape.
  */
 class ClocktowerSameNightEffectiveStateProductionWiringTest {
     private val hostSource = File(
@@ -30,16 +30,20 @@ class ClocktowerSameNightEffectiveStateProductionWiringTest {
     }
 
     @Test
-    fun `later normal actor eligibility must consume effective same-night state`() {
+    fun `later normal actor eligibility consumes the effective ability subject seam`() {
         val roleActor = hostSource
-            .substringAfter("fun roleActor(enName: String): PlayerCard? =")
+            .substringAfter("fun roleActor(enName: String): PlayerCard? {")
             .substringBefore("fun roleMissingReason(enName: String)")
 
+        assertTrue(
+            "Normal night actor eligibility must consume the effective subject seam so same-night " +
+                "alive/current-role/poison state is applied at the interaction cursor.",
+            roleActor.contains("effectiveAbilitySubjectForRole(enName, candidate)"),
+        )
         assertFalse(
-            "A role killed earlier in the same night must not remain a normal later actor merely " +
-                "because its public PlayerCard still looks alive; actor eligibility must consume " +
-                "the effective same-night state and effective impairment state.",
-            roleActor.contains("abilitySubject(poisonTarget)"),
+            "roleActor must not independently rebuild public-state ability semantics once the " +
+                "effective subject seam owns that projection.",
+            roleActor.contains("candidate.abilitySubject("),
         )
     }
 
@@ -58,10 +62,8 @@ class ClocktowerSameNightEffectiveStateProductionWiringTest {
         val lifecycleCalls = Regex("PoisonEffectLifecycle\\.").findAll(hostSource).count()
 
         assertTrue(
-            "Production imports PoisonEffectLifecycle but does not consume its source-lifetime " +
-                "semantics. A poison confirmation and an effectively active poison are different: " +
-                "if the Poisoner dies later that night, subsequent interactions must see the target " +
-                "as healthy.",
+            "Production must consume PoisonEffectLifecycle source-lifetime semantics. A raw poison " +
+                "confirmation and an effectively active poison are different facts.",
             lifecycleCalls > 0,
         )
     }
