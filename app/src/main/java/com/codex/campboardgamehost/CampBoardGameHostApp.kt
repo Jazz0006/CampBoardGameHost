@@ -154,6 +154,10 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableN
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
+import com.codex.campboardgamehost.clocktower.session.DawnCommitIntent
+import com.codex.campboardgamehost.clocktower.session.NightDawnPoisonResolutionInput
+import com.codex.campboardgamehost.clocktower.session.NightDawnResolutionPlanner
+import com.codex.campboardgamehost.clocktower.session.NightResolutionContinuation
 import com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest
 import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
 import com.codex.campboardgamehost.clocktower.session.UnifiedSetupSelectorDeviceBenchmark
@@ -193,6 +197,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.PlayerKnowledgeSnapshot
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.epistemic.ZddFilterStrategy
+import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
 import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
@@ -2282,40 +2287,6 @@ internal fun CampBoardGameHostApp() {
         return scarletWoman.name
     }
 
-    fun materializeConfirmedNightDemonSuccessor(): Boolean {
-        val pendingName = clocktowerPendingNewDemonName ?: return false
-        val confirmedName = clocktowerConfirmedDemonSuccessorTarget ?: return false
-        if (pendingName != confirmedName) return false
-        val successor = cards.firstOrNull {
-            it.name == confirmedName &&
-                it.eliminatedRound == null &&
-                it.clocktowerTeam == ClocktowerTeam.Minion
-        } ?: return false
-
-        val demonRole = cards.firstOrNull {
-            it.clocktowerTeam == ClocktowerTeam.Demon
-        }?.clocktowerRole ?: return false
-
-        setClocktowerActualRole(successor.name, demonRole)
-        records.add(
-            EliminationRecord(
-                round,
-                successor.name,
-                context.getString(R.string.clocktower_record_imp_passed),
-            ),
-        )
-        addClocktowerEvent(
-            ClocktowerEventType.RoleChange,
-            localizedText("角色变化", "Role changed"),
-            localizedText(
-                "${playerSeatLabel(cards, successor.name)} 成为新的小恶魔。",
-                "${playerSeatLabel(cards, successor.name)} became the new Imp.",
-            ),
-            listOf(successor.name),
-        )
-        return true
-    }
-
     fun promoteDemonSuccessorIfNeeded(
         impDeathWasSelfChosen: Boolean,
     ): String? {
@@ -2862,7 +2833,118 @@ internal fun CampBoardGameHostApp() {
                             val pendingName = clocktowerPendingNewDemonName
                             val canEnterDawn =
                                 if (clocktowerConfirmedDemonSuccessorTarget != null) {
-                                    materializeConfirmedNightDemonSuccessor()
+                                    val baseGameState = cards.toClocktowerGameState(
+                                        currentClocktowerScript,
+                                        clocktowerGameSeed,
+                                        poisonedPlayerName = clocktowerConfirmedPoisonTarget,
+                                    )
+                                    val checkpoint = ClocktowerNightCheckpoint(
+                                        phaseName = clocktowerPhase.name,
+                                        round = round,
+                                        gameStateRevision = clocktowerGameStateRevision,
+                                        playerInputRevision = clocktowerPlayerInputRevision,
+                                        nightStarted = clocktowerNightStartedState.value,
+                                        nightStepIndex = clocktowerNightStepIndexState.value,
+                                        confirmedAttackTarget = clocktowerPendingNightDeath,
+                                        attackDraftTarget = clocktowerDemonAttackDraftTarget,
+                                        confirmedPoisonTarget = clocktowerConfirmedPoisonTarget,
+                                        poisonDraftTarget = clocktowerPoisonTarget,
+                                        confirmedMonkTarget = clocktowerConfirmedMonkProtectedTarget,
+                                        monkDraftTarget = clocktowerMonkProtectedTarget,
+                                        confirmedMayorRedirectTarget = clocktowerConfirmedMayorRedirectTarget,
+                                        mayorRedirectDraftTarget = clocktowerMayorRedirectTarget,
+                                        pendingNewDemonName = clocktowerPendingNewDemonName,
+                                        pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
+                                        demonSuccessorDraftTarget = clocktowerDemonSuccessorTarget,
+                                        confirmedDemonSuccessorTarget = clocktowerConfirmedDemonSuccessorTarget,
+                                        nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
+                                    )
+                                    val effectiveNightState = ClocktowerEffectiveNightState(
+                                        effectiveAliveSeats = cards.mapIndexedNotNull { index, card ->
+                                            (index + 1).takeIf { card.eliminatedRound == null }
+                                        }.toSet(),
+                                        effectiveRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
+                                            card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
+                                        }.toMap(),
+                                    )
+                                    val poisoner = cards.mapIndexedNotNull { index, card ->
+                                        card.clocktowerRole
+                                            ?.takeIf { role -> card.eliminatedRound == null && role.enName == "Poisoner" }
+                                            ?.let { role -> index + 1 to role }
+                                    }.firstOrNull()
+                                    val demonRole = requireNotNull(cards.firstOrNull {
+                                        it.clocktowerTeam == ClocktowerTeam.Demon
+                                    }?.clocktowerRole)
+                                    val transition = NightDawnResolutionPlanner.confirmNewDemonIdentity(
+                                        baseGameState = baseGameState,
+                                        checkpoint = checkpoint,
+                                        demonRoleId = RoleId(demonRole.enName),
+                                        poisonResolutionInput = poisoner?.let { (poisonerSeat, poisonerRole) ->
+                                            NightDawnPoisonResolutionInput(
+                                                poisonerSeat = poisonerSeat,
+                                                poisonerRoleId = RoleId(poisonerRole.enName),
+                                                effectiveNightState = effectiveNightState,
+                                            )
+                                        },
+                                    )
+                                    val dawnCommitIntent = transition.dawnCommitIntent
+                                    if (transition.continuation == NightResolutionContinuation.DAWN && dawnCommitIntent != null) {
+                                        dawnCommitIntent.roleChanges.forEach { roleChange ->
+                                            val targetName = cards.getOrNull(roleChange.targetSeat - 1)?.name
+                                            val nextRole = clocktowerRolesForScript(currentClocktowerScript)
+                                                .firstOrNull { role -> RoleId(role.enName) == roleChange.roleId }
+                                            if (targetName != null && nextRole != null) {
+                                                setClocktowerActualRole(targetName, nextRole)
+                                                records.add(
+                                                    EliminationRecord(
+                                                        round,
+                                                        targetName,
+                                                        context.getString(R.string.clocktower_record_imp_passed),
+                                                    ),
+                                                )
+                                                addClocktowerEvent(
+                                                    ClocktowerEventType.RoleChange,
+                                                    localizedText("角色变化", "Role changed"),
+                                                    localizedText(
+                                                        "${playerSeatLabel(cards, targetName)} 成为新的小恶魔。",
+                                                        "${playerSeatLabel(cards, targetName)} became the new Imp.",
+                                                    ),
+                                                    listOf(targetName),
+                                                )
+                                            }
+                                        }
+                                        val poisonTargetName = dawnCommitIntent.poisonCarry?.targetSeat
+                                            ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
+                                        if (poisonTargetName != clocktowerConfirmedPoisonTarget) {
+                                            val targetSeat = dawnCommitIntent.poisonCarry?.targetSeat
+                                            val localSequence = clocktowerEventCounter + 1
+                                            recordClocktowerAction(ActionFactDraft.Poison(
+                                                actionId = clocktowerActionId(
+                                                    kind = "poison-after-night",
+                                                    localSequence = localSequence,
+                                                    targetSeat = targetSeat,
+                                                ),
+                                                phase = storytellerPhaseFor(),
+                                                round = round,
+                                                sequence = localSequence,
+                                                targetSeat = targetSeat,
+                                            ))
+                                        }
+                                        if (dawnCommitIntent.poisonCarry == null) {
+                                            clocktowerConfirmedPoisonTarget = null
+                                            clocktowerPoisonTarget = null
+                                        } else if (poisonTargetName != null) {
+                                            clocktowerConfirmedPoisonTarget = poisonTargetName
+                                            clocktowerPoisonTarget = poisonTargetName
+                                        }
+                                        clocktowerPendingNewDemonName = transition.checkpoint.pendingNewDemonName
+                                        clocktowerPendingNightNewDemonIdentityName = transition.checkpoint.pendingNightNewDemonIdentityName
+                                        clocktowerDemonSuccessorTarget = transition.checkpoint.demonSuccessorDraftTarget
+                                        clocktowerConfirmedDemonSuccessorTarget = transition.checkpoint.confirmedDemonSuccessorTarget
+                                        true
+                                    } else {
+                                        false
+                                    }
                                 } else {
                                     pendingName != null &&
                                         cards.firstOrNull {

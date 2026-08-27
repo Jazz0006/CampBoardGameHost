@@ -12,23 +12,6 @@ class ClocktowerDawnExactDemonSuccessorWiringTest {
 
     @Test
     fun `Imp self kill defers exact confirmed successor materialization until Dawn`() {
-        val materializer = appSource
-            .substringAfter("fun materializeConfirmedNightDemonSuccessor")
-            .substringBefore("fun promoteDemonSuccessorIfNeeded")
-
-        assertTrue(
-            "Dawn materialization must require the pending new Demon to equal the confirmed successor.",
-            materializer.contains("clocktowerPendingNewDemonName") &&
-                materializer.contains("clocktowerConfirmedDemonSuccessorTarget") &&
-                materializer.contains("pendingName != confirmedName"),
-        )
-        assertTrue(
-            "Dawn materialization must validate an alive Minion and use the existing Demon role before mutating public state.",
-            materializer.contains("ClocktowerTeam.Minion") &&
-                materializer.contains("ClocktowerTeam.Demon") &&
-                materializer.contains("setClocktowerActualRole"),
-        )
-
         val nightResolution = appSource
             .substringAfter("var newDemonName: String? = null")
             .substringBefore("val nightOutcome =")
@@ -60,14 +43,5 @@ class ClocktowerDawnExactDemonSuccessorWiringTest {
             nightOutcomeAndAdvance.contains("!unresolvedDemonSuccessor"),
         )
 
-        val confirmNewDemon = appSource
-            .substringAfter("onConfirmNewDemon = {")
-            .substringBefore("onSelectKlutzChoice")
-
-        assertTrue(
-            "New-Demon confirmation must materialize the exact confirmed successor before entering Dawn.",
-            confirmNewDemon.contains("materializeConfirmedNightDemonSuccessor()") &&
-                confirmNewDemon.contains("ClocktowerPhase.Dawn"),
-        )
     }
 }
