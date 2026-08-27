@@ -133,6 +133,26 @@ class NightTransactionReconstructionContractTest {
     }
 
     @Test
+    fun `confirmed successor reconstructs old Demon mechanical death without mutating public alive`() {
+        val baseGameState = gameState(demonAlive = true)
+        val reconstruction = NightTransactionReconstructor.reconstruct(
+            baseGameState = baseGameState,
+            checkpoint = checkpoint(
+                nightStepIndex = 2,
+                demonSuccessorDraftTarget = "Poisoner",
+                confirmedDemonSuccessorTarget = "Poisoner",
+            ),
+            canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
+            demonSuccessorInteractionId = successorInteraction,
+            demonRoleId = RoleId("Imp"),
+        )
+
+        assertEquals(false, reconstruction.effectiveState.isMechanicallyAlive(1))
+        assertEquals(RoleId("Imp"), reconstruction.effectiveState.currentRoleId(2))
+        assertEquals(true, baseGameState.playerAt(1)?.alive)
+    }
+
+    @Test
     fun `valid confirmed successor reconstructs effective Demon from same durable inputs`() {
         val input = checkpoint(
             nightStepIndex = 2,
@@ -165,7 +185,7 @@ class NightTransactionReconstructionContractTest {
         assertEquals(RoleId("Poisoner"), gameState().playerAt(2)?.actualRole)
     }
 
-    private fun gameState() = GameState(
+    private fun gameState(demonAlive: Boolean = false) = GameState(
         script = ScriptId("Trouble Brewing"),
         players = listOf(
             PlayerState(
@@ -174,7 +194,7 @@ class NightTransactionReconstructionContractTest {
                 actualRole = RoleId("Imp"),
                 actualAlignment = Alignment.EVIL,
                 actualType = CharacterType.DEMON,
-                alive = false,
+                alive = demonAlive,
             ),
             PlayerState(
                 seat = 2,
