@@ -1,11 +1,12 @@
-# Next Development Handoff — Same-Night Effective State Continuation
+# Next Development Handoff — SNE-7.9 Corrective Continuation
 
-> Date: 2026-08-27  
+> Date: 2026-08-28  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54  
 > Stable `main`: `c8985cb4991f6c7e5ea02adedb932d2d86452da1`  
-> Handoff status: **SNE-7.1–7.8 IMPLEMENTATION COMPLETE — final latest-head broad validation and PR acceptance remain; PR #54 stays draft/unmerged**
+> Latest verified code checkpoint before this docs correction: `7fa38d47d682cfb324052d8b56c46563ffc0b815`  
+> Handoff status: **SNE-7 REOPENED — SNE-7.9 corrective campaign active; 7.9A/B complete, 7.9C in progress, C2C next; PR #54 stays draft/unmerged**
 
 ## 1. Startup contract
 
@@ -21,278 +22,340 @@ Before changing code, read:
 8. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`;
 9. `docs/TESTING_STRATEGY.md`.
 
-Then re-query live `main`, branch head, PR #54 state/head and checks. Do not assume any SHA below remains live after further work.
+Then re-query live `main`, active branch, PR #54 state/head and latest checks. Never assume a SHA below is still live after further work.
 
-## 2. Stable baseline and active PR
+## 2. Why this handoff supersedes the earlier closeout wording
 
-`main` remained:
+The earlier handoff said `SNE-7.1–7.8 IMPLEMENTATION COMPLETE` and treated final CI/PR acceptance as the only remaining work. Final acceptance audit later found blocking production defects and integration gaps that the existing typed seams and smoke tests did not cover.
+
+The authoritative correction is:
+
+> **SNE-7 REOPENED — blocking correctness findings discovered during final acceptance audit.**
+
+Do not mark PR #54 ready or merge it while SNE-7.9 remains active.
+
+## 3. Corrective route
 
 ```text
-c8985cb4991f6c7e5ea02adedb932d2d86452da1
+SNE-7.9A  Mayor redirect dependency invalidation
+SNE-7.9B  Chambermaid stale-target revalidation
+SNE-7.9C  canonical night-death resolution
+SNE-7.9D  succession legality / Dawn
+SNE-7.9E  real restore + durable Dawn integration
 ```
 
-PR #54 remains open, draft and not merged. Do not merge, mark ready, rebase, force-push, or broaden it without explicit user authorization.
+This order is deliberate. Fix the proven dependency bugs first, then converge death authority, then fix succession, then activate restore/durable integration.
 
-## 3. Current SNE-7 progress
+## 4. Completed corrective slices
+
+### 7.9A — Mayor redirect dependency invalidation
+
+**COMPLETE**
+
+Production checkpoint:
 
 ```text
-SNE-7.1  behavior-first transaction matrix
-         ESTABLISHED
-
-SNE-7.2  NightCheckpointReducer
-         IMPLEMENTED
-
-SNE-7.3  NightDawnResolutionPlanner + DawnCommitIntent
-         IMPLEMENTED
-
-SNE-7.4  production Compose/App typed-seam cutover
-         COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
-
-  7.4A Poison            COMPLETE / FOCUSED + BROAD GREEN
-  7.4B Monk              COMPLETE / FOCUSED + BROAD GREEN
-  7.4C Demon attack      COMPLETE / FOCUSED GREEN / REMOTE AUDITED
-  7.4D Mayor redirect    COMPLETE / FOCUSED GREEN / REMOTE AUDITED
-  7.4E Demon successor   COMPLETE / FOCUSED GREEN / REMOTE AUDITED
-  7.4F Dawn planner      COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
-
-SNE-7.5  NightTransactionReconstructor
-         COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
-
-SNE-7.6  limited integration/smoke set
-         COMPLETE / HOST LIFECYCLE TYPED SMOKES GREEN
-
-SNE-7.7  source-string retirement
-         COMPLETE / SUPERSEDED TEMPORARY WIRING TESTS RETIRED
-
-SNE-7.8  minimal architecture guards only
-         COMPLETE / COARSE OWNERSHIP GUARD GREEN
+12d84cc9ed8076df9833d2fa268bc523283211b2
+fix: invalidate stale Mayor redirect on upstream reconfirm
 ```
 
-## 4. Accepted SNE-7.4 checkpoints
-
-### Poison / Monk
+Contracts now held by `NightCheckpointReducer`:
 
 ```text
-09bea7ffc028833d3c893d740a5e9b6f90919bf6  Poison RED
-db2a3746cedc2b667b0e5abd20e722ba8866263b  Poison production
-e34598d60c012b6cb7c60e0e19da22b4483c600b  Poison formatting
-CI #814 + R2 #741                            broad SUCCESS
+ConfirmPoison value changed
+→ clear confirmedMayorRedirectTarget
+→ clear confirmedDemonSuccessorTarget
+→ keep editable drafts
 
-6deb9d42f1b8ce5dfa1ca999778c22a49f714a91  Monk RED
-b1679f1b648e0de1d1aabaadb59715e53f9843f9  Monk production
-CI #817 + R2 #744                            broad SUCCESS
+ConfirmMonkProtection value changed
+→ same invalidation
+
+ConfirmDemonAttack value changed
+→ same invalidation
+
+idempotent reconfirm
+→ preserve dependent confirmations
 ```
 
-### Demon attack
+Do not broaden the dependency direction. Mayor confirmation does not automatically invalidate successor confirmation.
+
+### 7.9B — Chambermaid stale-target revalidation
+
+**COMPLETE**
+
+Production checkpoint:
 
 ```text
-0ea9d0b4c46dd69a0672a0c3fdc600d6e52dbe3d  RED
-CI #818: 888 tests, exactly 2 intended failures, 4 skipped
-Real Clingo SUCCESS / R2 #745 SUCCESS
-062e000afad1c407ba17ad7cef915dae0c487b30  production
+f9300f72b4ef63a521a87e9d2a087c7ae9db2f03
+fix: revalidate Chambermaid selection authority
 ```
 
-### Mayor redirect
+Canonical selection path:
 
 ```text
-35659899745077f4f43cf914faa2bbf82eef3afa  RED
-CI #823: 891 tests, exactly 2 intended failures, 4 skipped
-Real Clingo SUCCESS / R2 #750 SUCCESS
-21a7694ee340364485a283598cf7c2fa6fe2ae94  production
+stored Chambermaid first/second
++ eligible names at current effective cursor
+→ revalidateTwoPlayerSelection
+→ resolveChambermaidSelection
+→ revalidated selection + wokeCount
 ```
 
-### Demon successor
+Production result, visible target labels, recorded targets, and active selection consume the revalidated result.
+
+## 5. SNE-7.9C progress
+
+### C1 — planner attack-outcome authority
+
+Accepted checkpoint:
 
 ```text
-fac430f4b40a219fcd92d91a6f45dacc2e89cc2b  RED: ClocktowerDemonSuccessorReducerProductionWiringTest
-
-CI #828 at RED head
-  894 tests
-  exactly 2 failures, both intended successor wiring REDs
-  4 skipped
-  Real Clingo SUCCESS
-  R2 #755 SUCCESS
-
-034b050c1656324766c1df3d2fbcd170af201389
-  production: route Demon successor checkpoint transitions through reducer
+58fe6cd4e927128c3cb208dab9d12c8423ca5188
+refactor: route Dawn death through attack outcome authority
 ```
 
-Remote 7.4E RED→GREEN compare:
+`NightDawnDeathResolutionInput` can consume `DemonNightAttackOutcome`; the planner treats canonical `NO_DEATH` as authoritative and derives Mayor redirect applicability from canonical outcome when supplied.
+
+### C2A — Trouble Brewing Demon attack production adapter
 
 ```text
-fac430f4 → 034b050c
-one commit
-one production file
-app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-14 additions / 5 deletions
+dee41713e25b2387b77419a74ea256082fe2a44a  RED
+e0b25a8d822bd348e33b6e7a9378be89bd564da9  GREEN
 ```
 
-Focused 7.4E validation passed with `--rerun-tasks` for:
+Established:
 
 ```text
-ClocktowerDemonSuccessorReducerProductionWiringTest
-ClocktowerDawnExactDemonSuccessorWiringTest
-ClocktowerNewDemonPresentationOwnershipTest
-ClocktowerDemonAttackReducerProductionWiringTest
-NightCheckpointReducerTest
-SNE7NightTransactionBehaviorMatrixTest
+resolveTroubleBrewingDemonNightAttackOutcome(
+    cards,
+    targetName,
+    poisonedPlayerName,
+    monkProtectedTargetName,
+)
 ```
 
-It also passed exact target-head guard, exact patch preconditions, `git diff --check`, single-production-file scope audit, and remote-head recheck before push.
+This adapter owns only the direct Imp attack outcome. Mayor redirect and Demon succession remain separate rule-owned choice boundaries. Do not generalize it into arbitrary custom-script Demon death.
 
-### Dawn planner authority closeout
+### C2B — canonical Dawn death facts
 
 ```text
-c7b76ca4ca131da36f49634a081bbd9f47ab12bd  F-1 RED
-508b82a29054c2a89b402bce2605734bea307c7b  Dawn death planner production
-CI #835 + R2 #762                            broad SUCCESS
-
-ce15d84d819d400ae481d47c9a36c4cefac43962  F-2 corrected RED
-6188978b96059d176fe1647f7bd8d068237a0d6f  canonical new-Demon checkpoint production
-CI #839 + R2 #766                            broad SUCCESS
-
-84643d5bb12583ad65f688cae3215a70df9efa2c  poison-authority RED
-CI #840: 901 tests, exactly 1 intended failure, 4 skipped
-b4bf9379db4de3f8fb7dc152fd93db088f857df0  planner poison intent authoritative at Dawn
-CI #842 + R2 #769                            broad SUCCESS
+b2830c5846c14320e37371d706f678db7b10e996  RED
+7fa38d47d682cfb324052d8b56c46563ffc0b815  GREEN
 ```
 
-Final 7.4F audit found only idempotent successor cleanup (`clocktowerConfirmedDemonSuccessorTarget = null`) after planner projection; it has no additional revision/timeline/invalidation side effect and is not a second mechanical authority.
-
-## 5. Accepted authority split through 7.4F
-
-Production now follows the typed checkpoint seam for Poison, Monk, Demon attack, Mayor redirect and Demon successor.
+Established:
 
 ```text
-Edit draft callback
-  → NightResolutionEvent.Edit...
-  → NightCheckpointReducer.reduce(currentClocktowerNightCheckpoint(), event)
-  → project reduced draft field back to App state
-
-Confirm callback
-  → NightResolutionEvent.Confirm...
-  → NightCheckpointReducer.reduce(currentClocktowerNightCheckpoint(), event)
-  → project reduced confirmed field
+TroubleBrewingDawnDeathFacts
+  attackOutcome
+  originalDeathSeat
+  mayorSeat
+  demonSafeSeats
 ```
 
-For upstream Poison/Monk/Attack changes, reducer-owned dependent confirmed-successor invalidation is projected without erasing the editable successor draft.
+`demonSafeSeats` reuses the same attack adapter for Soldier/Monk/poison safety instead of rebuilding those rules independently. Stable seat identity comes from original `cards` ordering.
 
-The App/session transaction boundary still owns sequence allocation, `ActionFactDraft.Poison / Protect / Attack` durable recording, player/game-state revision, timeline/history and other durable side effects.
-
-Mayor redirect legality remains in the existing Host/rules/UI seam and still excludes the current Demon.
-
-Demon successor confirmation now commits the checkpoint's current successor draft through `NightResolutionEvent.ConfirmDemonSuccessor`; the transient `(String)` confirm callback argument is no longer a second mechanical authority. Existing exact-Dawn contracts remain unchanged: only `clocktowerConfirmedDemonSuccessorTarget` may materialize the new Demon at Dawn; the editable draft is not a fallback.
-
-Reuse the existing `currentClocktowerNightCheckpoint()` helper. Do not add another durable/snapshot state owner.
-
-## 6. Accepted SNE-7.5 reconstruction closeout
-
-The reconstruction matrix is active and GREEN through SNE-7.5G. `NightTransactionReconstructor` derives same-night mechanics from durable inputs; it does not replay `NightResolutionEvent`, mutate public/base state early, or use the UI navigation position as a reversible event-history cursor.
+Latest-head broad validation at `7fa38d47...`:
 
 ```text
-7.5A  fc2165a2260531e5b63a5d917bcb15bd1ef54aef  confirmed successor effective role
-7.5B  482016861da04627401dddd86dab7179dde6a4fb  invalid successor fail-closed
-7.5C  22ef9fb1006176d5716cffaf7ba4dd286d203528  Previous preserves confirmed mechanics
-7.5D  b149790f3ea7e88ccb76ce546b432ae03e079126  self-attack prerequisite
-7.5E  b99bd9c25c92d84ad026a42bf4ec5d5c62a0688f  self-kill MechanicalDeath reconstruction
-7.5F  74345e3587bfc9914e57b1efe1ffb349191f9055  Mayor→new-Demon restore coverage
-7.5G  1136dbaba42fa8be93dffd11cd98d2ff2d257c14  draft edit preserves prior confirmation
-CI #855 + R2 #782                                  broad SUCCESS
+CI #882 SUCCESS
+R2 #809 SUCCESS
+Android full unit tests/build SUCCESS
+Real Clingo cross-validation SUCCESS
 ```
 
-Most important correction from the original 7.5A wording: `nightStepIndex` is a navigation cursor only. A confirmed mechanical fact remains authoritative after `MovePrevious`; reconstruction therefore must not decide whether a confirmed successor exists by asking whether the current UI screen is “past” the successor interaction.
+This does **not** mean 7.9C is complete. The new facts exist, but the real App Dawn consumer has not yet cut over to them.
 
-Confirmed self-kill succession now reconstructs the old Demon as mechanically dead and the successor as effective Demon while leaving public/base `alive` and `actualRole` untouched until the normal durable Dawn boundary.
+## 6. Exact next slice — SNE-7.9C2C
 
-The stale Mayor redirect case is coverage-only: reconstruction supplies the effective current-Demon role and the existing `NightDawnResolutionPlanner` correctly rejects redirecting to that Demon. Do not duplicate Mayor legality inside the reconstructor.
+### Goal
 
-## 7. SNE-7.6–7.8 accepted implementation closeout
+**Cut the real App Dawn death transaction over to `resolveTroubleBrewingDawnDeathFacts()` and make `NightDawnResolutionPlanner` the consumer of those canonical facts.**
+
+Current production gap:
 
 ```text
-70c8c3d8  callable NightCheckpointHostTransaction adapter
-5e1bc08d  7.6A production-wiring RED (3/3 intended failures)
-64b6019a  real App successor + Host Previous adapter cut-over
-93213388  lifecycle integration smokes
-5686a5e4  minimal architecture guard
-70ddd4f9  retire 9 superseded temporary wiring tests
+App Dawn currently re-derives:
+  originalDeathCard
+  mayorCanRedirect
+  originalDeathSeat
+
+then calls planner without:
+  attackOutcome
+  demonSafeSeats
+
+then later performs another Monk/Soldier protection check
 ```
 
-7.6A remote production compare was exactly one commit: two production files plus retirement of the old successor reducer wiring test. The adapter does not commit timeline/history/public state. Previous navigation now reaches `NightCheckpointReducer.MovePrevious` through the App-owned callback and has revision intent `NONE`.
-
-7.6B is coverage-only and composes the production Host adapter with checkpoint persistence/restoration, `NightTransactionReconstructor`, and `NightDawnResolutionPlanner`. It proves navigation does not roll back confirmed mechanics and Poisoner→Imp succession does not carry obsolete poison into Dawn.
-
-7.7/7.8 replace fine-grained temporary wiring strings with typed contracts plus one minimal architecture ownership guard. `ClocktowerSameNightEffectiveStateProductionWiringTest` and Mayor rules/UI ownership coverage remain because those consumer boundaries are still not directly JVM-callable.
-
-Implementation is complete. The next action is final latest-head broad CI/R2/Real Clingo acceptance and exact PR audit; do not add another functional slice unless that validation exposes a real regression.
-## 7. Large-file writer constraint
-
-`CampBoardGameHostApp.kt` remains a large/truncated production file. Chat/GitHub connector is appropriate for tests/docs/small files; large production edits require a complete worktree and exact diff validation.
-
-The proven 7.4A–E pattern is:
+C2C target flow:
 
 ```text
-Chat
-  audit live code
-  author RED / small-file contract
-  define exact narrow production patch
-  inspect remote parent/diff/scope
+clocktowerPendingNightDeath
++ clocktowerConfirmedPoisonTarget
++ clocktowerConfirmedMonkProtectedTarget
++ cards
+→ resolveTroubleBrewingDawnDeathFacts(...)
+→ NightDawnDeathResolutionInput(
+     attackOutcome = facts.attackOutcome,
+     originalDeathSeat = facts.originalDeathSeat,
+     mayorSeat = facts.mayorSeat,
+     mayorRedirectMayApply = legacy compatibility value only if signature still requires it,
+     demonSafeSeats = facts.demonSafeSeats,
+     effectiveNightState = ...,
+     demonRoleIds = ...,
+   )
+→ NightDawnResolutionPlanner.planValidatedNightDeath(...)
+→ DawnCommitIntent.death
+```
 
-complete-worktree executor
-  verify exact target head
-  apply exact localized App patch
+### C2C scope
+
+Allowed behavior change:
+
+- Dawn direct-attack / Mayor applicability / Soldier / functioning-Monk safety decision consumes the canonical typed facts instead of a second App-owned rule copy.
+
+Keep unchanged unless minimally required by the cut-over:
+
+- checkpoint ownership;
+- durable event sequence allocation;
+- ActionFact / observation writing outside this direct Dawn decision;
+- Ravenkeeper/Klutz consequence handling after the canonical death intent is known;
+- phase transition;
+- Demon successor behavior;
+- restore/reconstructor behavior;
+- Host UI calculation;
+- observation preflight calculation.
+
+Explicitly **do not** migrate Host or observation preflight in C2C. Those are later 7.9C consumer slices.
+
+### C2C RED strategy
+
+Because the large Compose/App Dawn boundary is not directly JVM-callable, use a narrow coarse ownership guard only for the missing production cut-over, while keeping gameplay semantics in the existing typed adapter/planner tests.
+
+RED should prove the Dawn transaction must:
+
+1. call `resolveTroubleBrewingDawnDeathFacts`;
+2. pass canonical `attackOutcome` into `NightDawnDeathResolutionInput`;
+3. pass canonical `demonSafeSeats` into `NightDawnDeathResolutionInput`;
+4. stop using the Dawn block's inline `originalDeathCard → functionsAs("Mayor")` computation as death authority.
+
+Do not write exact-whitespace/source-format assertions. Anchor the real Dawn block and check structural tokens/forbidden legacy ownership only.
+
+### Focused GREEN set
+
+At minimum:
+
+```text
+ClocktowerDemonAttackDawnFactsTest
+NightDawnResolutionPlannerAttackOutcomeContractTest
+NightDawnResolutionPlannerMayorContractTest
+new C2C Dawn production ownership RED/GREEN test
+```
+
+Also run any directly affected existing Dawn/source ownership test discovered during implementation. Use `--rerun-tasks`; then `git diff --check`.
+
+C2C is a production transaction-boundary cut-over. After focused GREEN and remote diff audit, run the appropriate checkpoint broader gate (`:app:testFast` plus GitHub CI/R2) before accepting the slice if the current testing strategy classifies it as a logical checkpoint.
+
+## 7. What remains after C2C
+
+Do not jump directly to 7.9D merely because C2C is GREEN. Re-audit the remaining 7.9C consumers.
+
+Known remaining duplicate authorities from the acceptance audit:
+
+```text
+Host
+  resolvedNightDeathName / nightDeathWillOccur
+
+observation preflight
+  independent Demon poison / Mayor / Monk / Soldier death reconstruction
+
+Dawn
+  C2C target: canonical cut-over
+```
+
+After C2C, choose the next narrow 7.9C consumer slice based on which remaining path can consume the canonical result without introducing a second state owner.
+
+Only after Host / observation / Dawn have converged sufficiently should SNE-7.9C be marked complete.
+
+## 8. Deferred corrective slices
+
+### 7.9D — succession legality / Dawn
+
+**NOT STARTED**
+
+Must address:
+
+- production Imp self-kill successor path must consume validated `DemonSuccessionResolution / planDemonSuccession()` rather than trusting a stale confirmed name;
+- `NightTransactionReconstructor` must not accept a successor solely because the player exists, is alive, and is a Minion;
+- do not broaden into generic non-self Demon death / Scarlet Woman/custom-script behavior beyond the already-authorized Trouble Brewing path.
+
+### 7.9E — real restore + durable Dawn integration
+
+**NOT STARTED**
+
+Must address:
+
+- real App restore consumes `NightTransactionReconstructor` rather than direct field projection only;
+- add integration coverage crossing real restore to canonical resolution and App-owned durable Dawn effects;
+- cover ActionFact/observation/phase materialization as appropriate;
+- existing lifecycle smoke remains useful but is insufficient because it stops before App-owned durable side effects.
+
+## 9. Protected architecture rules
+
+- rules determine legality; recommendation only ranks legal choices;
+- stable identity never comes from a filtered list index;
+- draft state cannot become a confirmed mechanical fact without the explicit confirmation boundary;
+- navigation alone does not roll back confirmed mechanics;
+- changed reconfirmation invalidates dependent confirmation while preserving editable draft;
+- same-night mechanics use projected effective state; do not mutate persisted/public role/death early;
+- persistent effects follow source ability lifetime;
+- pure semantics may support future cases, but production activates only validated slices;
+- `ClocktowerNightCheckpoint` remains the sole durable unfinished-night checkpoint;
+- do not introduce event sourcing by replaying transient `NightResolutionEvent` commands;
+- source ownership tests must protect structural responsibility, not formatting.
+
+## 10. Writer and validation contract
+
+Follow `AGENTS.md`.
+
+```text
+Chat / GitHub connector
+  small tests/docs/source edits
+  architecture / exact patch decisions
+  remote diff / parent / scope audit
+
+complete-worktree-safe path
+  large CampBoardGameHostApp.kt edit
+  exact localized patch
+  focused Gradle execution
   git diff --check
-  run focused --rerun-tasks tests
-  recheck remote head
-  commit + push only after GREEN
 ```
 
-A one-shot temporary GitHub Actions runner branch outside PR #54 has been used because the current container cannot safely edit the complete App file. It is not production authority and must never be added to the PR branch.
-
-## 8. SNE-7 implementation is complete; final validation is the current frontier
-
-SNE-7.5 is complete. Do not reopen reconstruction merely to duplicate ordinary Demon-attack outcome rules inside `NightTransactionReconstructor`; confirmed attack target alone is not a validated death because Monk, Soldier and Mayor semantics remain rule-owned elsewhere.
-
-SNE-7.6 is deliberately small: 2–4 JVM-callable integration smokes around existing production seams, with the smallest adapter extraction only if required.
-
-## 9. Mayor product restriction remains unchanged
-
-For current Trouble Brewing automatic-host production:
+Micro-cycle:
 
 ```text
-Mayor redirect target cannot be the current Demon.
+RED
+→ prove intended failure
+→ minimal GREEN
+→ focused --rerun-tasks
+→ git diff --check
+→ push
+→ remote parent/diff/scope audit
 ```
 
-This remains an intentional product/house-rule restriction. Generic non-self Demon death / Scarlet Woman succession remains deferred and must not be reopened during SNE-7.4.
-
-## 10. Validation cadence and do-not-do list
-
-Follow `AGENTS.md`:
-
-```text
-micro-slice
-  T0 RED
-  exact production patch
-  T0 GREEN --rerun-tasks
-  git diff --check
-  push
-  Chat remote parent/diff/scope audit
-
-logical checkpoint
-  :app:testFast + triggered T2/T3
-  latest-head GitHub CI/R2
-```
-
-Do not merge or mark PR #54 ready; do not rebase/force-push; do not reopen A3/App-root work; do not broaden to arbitrary custom-script Demon death; do not introduce event sourcing or a second night state owner; do not let recommendations define legality; do not mutate public role/death state early; do not activate reconstruction by replaying transient UI commands.
+Do not wait for old-head CI between focused-GREEN micro-slices. Do not repeat an identical focused test merely to duplicate already-valid evidence.
 
 ## 11. Exact next-start instruction
 
 ```text
-1. re-query live PR #54 head/checks;
-2. confirm the latest implementation/doc checkpoint and final CI/R2/Real Clingo results;
-3. run remote parent/diff/scope acceptance for the final SNE-7 commits;
-4. if all latest-head gates are GREEN, record SNE-7 COMPLETE in docs;
-5. do not start another functional slice unless validation exposes a real regression;
-6. keep PR #54 draft/unmerged until explicit user authorization changes that state.
+1. verify live PR #54 head still descends from 7fa38d47;
+2. create C2C production-ownership RED only; no production change in the RED commit;
+3. prove the RED fails specifically because real Dawn does not consume canonical Dawn death facts;
+4. apply the smallest Dawn production cut-over;
+5. run focused GREEN with --rerun-tasks and git diff --check;
+6. remote-audit parent/diff/scope;
+7. run checkpoint broader validation if required by TESTING_STRATEGY;
+8. keep PR #54 draft/unmerged;
+9. do not begin 7.9D/7.9E until 7.9C consumer convergence is complete.
 ```
 
 Never merge, mark ready, rebase, force-push, or broaden PR #54 without explicit user authorization.
