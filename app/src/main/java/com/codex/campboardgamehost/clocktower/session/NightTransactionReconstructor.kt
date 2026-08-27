@@ -80,8 +80,8 @@ internal object NightTransactionReconstructor {
                 canonicalInteractionIds = canonicalInteractionIds,
                 confirmedEvents = confirmedEvents,
                 cursor = ClocktowerEffectiveNightCursor(
-                    interactionId = currentInteractionId,
-                    boundary = ClocktowerInteractionBoundary.BEFORE,
+                    interactionId = canonicalInteractionIds.last(),
+                    boundary = ClocktowerInteractionBoundary.AFTER,
                 ),
                 baseRoleIdsBySeat = baseRoleIdsBySeat,
             ),
