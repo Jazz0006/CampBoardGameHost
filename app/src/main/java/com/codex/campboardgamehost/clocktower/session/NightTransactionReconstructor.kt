@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
@@ -47,7 +48,11 @@ internal object NightTransactionReconstructor {
 
         val confirmedSuccessorSeat = checkpoint.confirmedDemonSuccessorTarget
             ?.let { targetName ->
-                baseGameState.players.singleOrNull { it.name == targetName }?.seat
+                baseGameState.players.singleOrNull { player ->
+                    player.name == targetName &&
+                        player.alive &&
+                        player.actualType == CharacterType.MINION
+                }?.seat
             }
         val confirmedEvents: List<ResolvedNightMechanicalEvent> =
             if (
