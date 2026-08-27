@@ -9,16 +9,15 @@ import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Ignore
 import org.junit.Test
 
 /**
- * SNE-7.1 typed contracts for restore/reconstruction safety.
+ * SNE-7.5 typed contracts for restore/reconstruction safety.
  *
- * These compile with the seam scaffold but stay ignored until the planner micro-cycles are GREEN;
- * reconstruction will then be activated one behavior at a time against the real rebuild boundary.
+ * These contracts are now active against the real reconstruction boundary. Each reconstruction
+ * behavior must fail closed from durable checkpoint + canonical-plan inputs without replaying UI
+ * commands or mutating public/base GameState.
  */
-@Ignore("Activate reconstruction contracts after the initial planner RED -> GREEN micro-cycles")
 class NightTransactionReconstructionContractTest {
     private val impInteraction = ClocktowerInteractionId("other_night:role:Imp")
     private val successorInteraction = ClocktowerInteractionId("other_night:event:imp:demon_successor")
