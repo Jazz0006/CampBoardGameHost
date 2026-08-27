@@ -2666,19 +2666,20 @@ internal fun CampBoardGameHostApp() {
                         },
                         onSelectNightDeath = { selected ->
                             advanceClocktowerPlayerInputRevision()
-                            clocktowerDemonAttackDraftTarget = selected
-                            val livingDemonName = cards.firstOrNull {
-                                it.eliminatedRound == null && it.clocktowerTeam == ClocktowerTeam.Demon
-                            }?.name
-                            if (selected != livingDemonName) {
-                                clocktowerDemonSuccessorTarget = null
-                            }
+                            val reducedCheckpoint = NightCheckpointReducer.reduce(
+                                checkpoint = currentClocktowerNightCheckpoint(),
+                                event = NightResolutionEvent.EditDemonAttackDraft(selected),
+                            )
+                            clocktowerDemonAttackDraftTarget = reducedCheckpoint.attackDraftTarget
                         },
                         onConfirmDemonAttack = {
-                            if (clocktowerPendingNightDeath != clocktowerDemonAttackDraftTarget) {
-                                clocktowerConfirmedDemonSuccessorTarget = null
-                                clocktowerDemonSuccessorTarget = null
-                                val targetName = clocktowerDemonAttackDraftTarget
+                            val checkpoint = currentClocktowerNightCheckpoint()
+                            val reducedCheckpoint = NightCheckpointReducer.reduce(
+                                checkpoint = checkpoint,
+                                event = NightResolutionEvent.ConfirmDemonAttack,
+                            )
+                            if (reducedCheckpoint.confirmedAttackTarget != checkpoint.confirmedAttackTarget) {
+                                val targetName = reducedCheckpoint.confirmedAttackTarget
                                 if (targetName != null) {
                                     val targetSeat = clocktowerSeatFor(targetName)
                                     val localSequence = clocktowerEventCounter + 1
@@ -2694,7 +2695,8 @@ internal fun CampBoardGameHostApp() {
                                         targetSeat = targetSeat,
                                     ))
                                 }
-                                clocktowerPendingNightDeath = clocktowerDemonAttackDraftTarget
+                                clocktowerPendingNightDeath = reducedCheckpoint.confirmedAttackTarget
+                                clocktowerConfirmedDemonSuccessorTarget = reducedCheckpoint.confirmedDemonSuccessorTarget
                                 advanceClocktowerGameStateRevision()
                             }
                         },
