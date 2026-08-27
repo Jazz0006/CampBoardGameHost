@@ -46,6 +46,12 @@ internal object NightTransactionReconstructor {
             )
         }
 
+        val confirmedAttackIsDemonSelfTarget = checkpoint.confirmedAttackTarget
+            ?.let { targetName ->
+                baseGameState.players.singleOrNull { player ->
+                    player.name == targetName && player.actualRole == demonRoleId
+                } != null
+            } == true
         val confirmedSuccessorSeat = checkpoint.confirmedDemonSuccessorTarget
             ?.let { targetName ->
                 baseGameState.players.singleOrNull { player ->
@@ -56,6 +62,7 @@ internal object NightTransactionReconstructor {
             }
         val confirmedEvents: List<ResolvedNightMechanicalEvent> =
             if (
+                confirmedAttackIsDemonSelfTarget &&
                 confirmedSuccessorSeat != null &&
                 demonSuccessorInteractionId in canonicalInteractionIds
             ) {
