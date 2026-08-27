@@ -5,7 +5,7 @@
 > Branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54  
 > Stable `main`: `c8985cb4991f6c7e5ea02adedb932d2d86452da1`  
-> Handoff status: **SNE-7 implementation active; 7.4 is the current functional frontier**
+> Handoff status: **SNE-7.4 active — Poison cut-over complete; Monk is next**
 
 ## 1. Startup contract
 
@@ -21,9 +21,9 @@ Before changing code, read:
 8. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`;
 9. `docs/TESTING_STRATEGY.md`.
 
-Then re-query live `main`, branch head, PR #54 state/head and checks. Do not assume the SHA below is still live after further work.
+Then re-query live `main`, branch head, PR #54 state/head and checks. Do not assume any SHA below remains live after further work.
 
-## 2. Stable baseline and PR state
+## 2. Stable baseline and active PR
 
 `main` remained:
 
@@ -31,72 +31,17 @@ Then re-query live `main`, branch head, PR #54 state/head and checks. Do not ass
 c8985cb4991f6c7e5ea02adedb932d2d86452da1
 ```
 
-Before this documentation refresh, PR #54 was verified as:
+PR #54 remains:
 
 ```text
 open
 draft
 not merged
-head = 2aa528dbb898313c51b1a7fb06d11a60c883b84f
-commits = 105
 ```
 
-That head was:
+Do not merge, mark ready, rebase, force-push, or broaden it without explicit user authorization.
 
-```text
-2aa528dbb898313c51b1a7fb06d11a60c883b84f
-  test: remove low-value same-night wiring assertions
-```
-
-Checks:
-
-```text
-R2 #730  SUCCESS
-CI  #803  FAILURE
-```
-
-CI #803 completed 879 tests with 4 failures, all from source-inspection tests rather than compile/runtime crashes:
-
-```text
-ClocktowerSameNightEffectiveStateProductionWiringTest
-  later normal actor eligibility must consume effective same-night state
-
-ClocktowerProductionOtherNightWiringTest
-  other-night planner input uses only currently waking roles including living Drunk shown role
-  other-night planner receives existing resolved rule outcomes rather than deriving rules
-  production other night is planner-first and lazily materialized by stable identity
-```
-
-Treat this as the immediate baseline-cleanup gate.
-
-## 3. Important accepted pre-SNE-7 checkpoints
-
-Keep these historical production checkpoints as evidence:
-
-```text
-5a94c63536c04382f59963843c2ac10544962b02
-  SNE-6B2.5 A–D current-role consumer migration
-
-51179ecca667d5450550375735ca49aae932c06d
-  SNE-6B2.6 exact Dawn Demon successor materialization
-
-2e8cb6a6a4763f9926956e5407d1c465e112e2bd
-  Mayor Demon-exclusion Host/UI production wiring
-```
-
-Mayor product decision remains:
-
-```text
-Mayor redirect target cannot be the current Demon.
-```
-
-This is an intentional product/house-rule restriction. Generic non-self Demon death / Scarlet Woman succession remains deferred and must not be reopened in the current Trouble Brewing closeout.
-
-## 4. Actual SNE-7 progress
-
-The previous handoff section saying “immediate next work = SNE-7.1 behavioral REDs” is obsolete.
-
-Live implementation has advanced to:
+## 3. Current SNE-7 progress
 
 ```text
 SNE-7.1  behavior-first transaction matrix
@@ -111,153 +56,181 @@ SNE-7.3  NightDawnResolutionPlanner + DawnCommitIntent
 SNE-7.4  production Compose/App typed-seam cutover
          PARTIAL / CURRENT FRONTIER
 
-SNE-7.5  NightTransactionReconstructor + contract scaffold
-         EXISTS / INCOMPLETE
+  7.4A Poison            COMPLETE / FOCUSED GREEN
+  7.4B Monk              NEXT
+  7.4C Demon attack      NOT STARTED
+  7.4D Mayor redirect    NOT STARTED
+  7.4E Demon successor   NOT STARTED
+  7.4F Dawn planner      NOT COMPLETE
+
+SNE-7.5  NightTransactionReconstructor
+         SCAFFOLD EXISTS / INCOMPLETE
 
 SNE-7.6  small Compose integration/smoke set
          NOT COMPLETE
 
 SNE-7.7  source-string retirement
-         IN PROGRESS
+         IN PROGRESS; CI #803 stale failures cleaned up
 
 SNE-7.8  minimal architecture guards only
          NOT COMPLETE
 ```
 
-Existing behavioral coverage already proves important lifecycle semantics through typed seams, including:
+## 4. SNE-7.4A Poison — completed checkpoint
 
-- confirmed successor survives checkpoint restore + Previous;
-- editing successor draft leaves old confirmation mechanically authoritative;
-- changed upstream reconfirmation invalidates stale successor confirmation;
-- Poisoner becoming Demon ends effective poison while raw confirmation remains durable;
-- Fortune Teller sees the new Demon and the old dead Demon correctly for the night;
-- Monk-protected Imp self-kill produces no succession;
-- functioning Scarlet Woman at 5+ is forced on successful self-kill;
-- nonfunctioning Scarlet Woman leaves ordinary living-Minion choice;
-- same persisted checkpoint/canonical plan reconstructs deterministic projected state;
-- canonical plan still contains exactly one normal Imp interaction.
+The stale CI #803 source-wiring failures were first cleaned up without reshaping correct production code.
 
-`NightCheckpointReducer` also has direct typed tests for Poison/Monk/attack/Mayor/successor draft/confirm/invalidation semantics.
-
-## 5. Immediate gate — finish CI #803 source-test cleanup
-
-Do this before treating the current branch as a clean baseline.
-
-Apply the project source-test rule:
+Checkpoint chain:
 
 ```text
-existing typed behavior covers the invariant
-→ retire/narrow obsolete source-string assertion
+70bd9fbe37ac0286428e34497b027661fd7dd511
+  hardened remaining source ownership guards
 
-unique behavior not covered
-→ add smallest typed behavior contract first
-→ then retire/narrow source assertion
+09bea7ffc028833d3c893d740a5e9b6f90919bf6
+  RED: ClocktowerPoisonReducerProductionWiringTest
+
+CI #809 at RED head
+  882 tests
+  exactly 2 failures, both intended new Poison reducer REDs
+  previous four CI #803 failures absent
+  R2 #736 SUCCESS
+
+db2a3746cedc2b667b0e5abd20e722ba8866263b
+  refactor: route Poison checkpoint transitions through reducer
+
+e34598d60c012b6cb7c60e0e19da22b4483c600b
+  style: align Poison reducer callback wiring
 ```
 
-Do **not** modify production formatting, local variables or otherwise correct behavior merely to satisfy old source-text shape.
-
-The retirement policy already records that same-night source wiring tests are temporary migration debt and should be replaced by typed behavior when available.
-
-## 6. Next functional slice — SNE-7.4A Poison production reducer wiring
-
-After the cleanup gate, continue tests-first with:
+The production and formatting work were executed in complete GitHub worktrees with exact-head guards. Both passed:
 
 ```text
-SNE-7.4A — Poison production reducer wiring
+git diff --check
+single-production-file scope audit
+ClocktowerPoisonReducerProductionWiringTest
+NightCheckpointReducerTest
+SNE7NightTransactionBehaviorMatrixTest
+--rerun-tasks
+remote-head recheck before push
 ```
 
-Current issue:
+### Accepted Poison authority split
 
-Production App callbacks still directly own checkpoint semantics for Poison draft/confirmation and successor invalidation even though `NightCheckpointReducer` already owns these rules.
-
-Target flow:
+Production now behaves as:
 
 ```text
 onSelectPoisonTarget
-  → NightResolutionEvent.EditPoisonDraft(target)
-  → NightCheckpointReducer.reduce(checkpoint, event)
-  → replacement checkpoint
+  → NightResolutionEvent.EditPoisonDraft
+  → NightCheckpointReducer.reduce
+  → project reduced poisonDraftTarget back to App state
 
 onConfirmPoisonTarget
   → NightResolutionEvent.ConfirmPoison
-  → NightCheckpointReducer.reduce(checkpoint, event)
-  → replacement checkpoint
+  → NightCheckpointReducer.reduce
+  → project reduced confirmed poison and dependent confirmed successor back to App state
 ```
 
-Important responsibility split:
+`NightCheckpointReducer` owns checkpoint-local transition semantics.
+
+The App/session transaction boundary still owns:
 
 ```text
-NightCheckpointReducer
-  owns checkpoint-local draft/confirmed/invalidation semantics
-
-existing App / ClocktowerGameSession transaction boundary
-  keeps sequence allocation
-  keeps raw timeline/history/event commit
-  keeps game-state revision / phase orchestration
-  keeps durable side effects outside the reducer
+sequence allocation
+ActionFactDraft.Poison durable recording
+game-state revision
+other durable timeline/history side effects
 ```
 
-### SNE-7.4A acceptance criteria
+Changing a confirmed upstream Poison fact invalidates the dependent confirmed successor but no longer erases the editable successor draft.
 
-1. Establish a real typed RED at the smallest callable application boundary.
-2. Poison draft edit leaves confirmed poison unchanged.
-3. Poison draft edit leaves confirmed successor unchanged.
-4. Confirming unchanged poison preserves confirmed successor.
-5. Confirming changed poison commits the new poison and invalidates confirmed successor.
-6. Existing durable Poison action/timeline side effects still occur exactly once.
-7. Reducer remains pure; no global sequence/timeline authority moves into it.
-8. Focused T0 GREEN with `--rerun-tasks` and `git diff --check`.
-9. Remote exact diff audit before proceeding.
+A shared `currentClocktowerNightCheckpoint()` snapshot helper now exists in App and should be reused by later 7.4 slices rather than adding another durable/snapshot state owner.
 
-Expected continuation:
+## 5. Exact next functional slice — SNE-7.4B Monk
+
+Continue tests-first with only Monk protection production wiring.
+
+Current expected legacy shape to audit:
 
 ```text
-SNE-7.4B Monk
-SNE-7.4C Demon attack
-SNE-7.4D Mayor redirect
-SNE-7.4E Demon successor
-SNE-7.4F Dawn planner production authority closeout
+onSelectMonkProtectedTarget
+  directly edits Monk draft App state
+
+onConfirmMonkProtectedTarget
+  directly owns confirmed Monk transition and downstream successor invalidation
 ```
 
-Do not combine these into an uncontrolled App rewrite.
+Do not assume exact spelling before re-reading the live callback block.
 
-## 7. Large-file writer constraint
+Target typed flow:
 
-`CampBoardGameHostApp.kt` is a large/truncated source file. Under root `AGENTS.md`:
+```text
+onSelectMonkProtectedTarget
+  → NightResolutionEvent.EditMonkProtectionDraft(target)
+  → NightCheckpointReducer.reduce(currentClocktowerNightCheckpoint(), event)
+  → project reduced monkDraftTarget
 
-- tests/docs/small-medium files should be written by Chat through the GitHub connector;
-- large/truncated production edits must use a complete worktree executor such as Codex/Luna when whole-file replacement through the connector is unsafe.
+onConfirmMonkProtectedTarget
+  → NightResolutionEvent.ConfirmMonkProtection
+  → NightCheckpointReducer.reduce(currentClocktowerNightCheckpoint(), event)
+  → project reduced confirmedMonkTarget
+  → project reduced confirmedDemonSuccessorTarget
+```
 
-Therefore the safe SNE-7.4A execution split is:
+### SNE-7.4B acceptance criteria
+
+1. Establish RED first at the smallest practical production ownership/application boundary.
+2. Monk draft edit leaves confirmed Monk protection unchanged.
+3. Monk draft edit leaves confirmed Demon successor unchanged.
+4. Confirming unchanged Monk protection preserves confirmed successor.
+5. Confirming changed Monk protection commits the new Monk confirmation and invalidates only dependent successor confirmation.
+6. Do **not** clear `demonSuccessorDraftTarget` merely because Monk confirmation changed.
+7. Any existing durable Monk action/timeline side effect remains exactly once outside `NightCheckpointReducer`.
+8. Reuse `currentClocktowerNightCheckpoint()`.
+9. No new durable coordinator/checkpoint/navigation state.
+10. Focused T0 RED/GREEN with `--rerun-tasks`, `git diff --check`, then remote parent/diff audit.
+11. Stop before 7.4C Demon attack until Monk is fully accepted.
+
+## 6. Large-file writer constraint
+
+`CampBoardGameHostApp.kt` remains a large/truncated production file.
+
+Under root `AGENTS.md`:
+
+- Chat/GitHub connector is appropriate for tests/docs/small files;
+- large production edits require a complete worktree and exact diff validation.
+
+The successful SNE-7.4A pattern is now proven:
 
 ```text
 Chat
-  live audit
-  RED/test design and small-file edits
-  exact deterministic production patch specification
-  remote diff/checkpoint acceptance
+  audit live code
+  author RED / small-file contract
+  define exact narrow production patch
+  inspect remote parent/diff/scope
 
-Luna/Codex when needed
-  exact localized CampBoardGameHostApp.kt edit
-  exact focused local RED/GREEN command
+complete-worktree executor
+  verify exact target head
+  apply exact localized App patch
   git diff --check
-  commit + push
+  run focused --rerun-tasks tests
+  recheck remote head
+  commit + push only after GREEN
 ```
 
-Do not ask Luna/Codex to redesign the slice.
+A one-shot temporary GitHub Actions runner was used for 7.4A because the current container could not safely obtain/edit the complete App file. That runner branch is outside PR #54 and is not production authority. Reuse a complete-worktree method only if still necessary; do not put temporary runner workflow files into the PR branch.
 
-## 8. SNE-7.5 reconstruction remains future work
+## 7. SNE-7.5 remains future work
 
-`NightTransactionReconstructor` exists but is still a scaffold. Do not jump to it before production transaction authority is sufficiently cut over.
+`NightTransactionReconstructor` exists but remains a scaffold. Do not jump there before production transaction authority is sufficiently cut over.
 
-Required reconstruction boundary later:
+Required later reconstruction boundary:
 
 ```text
 checkpoint encode/save
-→ process/lifecycle boundary
+→ lifecycle/process boundary
 → checkpoint decode
-→ ruleset + canonical interaction plan rebuild
-→ effective-state reconstruction
+→ ruleset + canonical plan rebuild
+→ derived effective-state reconstruction
 ```
 
 Still required:
@@ -269,10 +242,20 @@ Still required:
 - stale Mayor→Demon redirect fails closed;
 - effective role can differ from public/base role;
 - Previous preserves confirmation;
-- draft edit without confirm preserves old mechanical fact;
+- draft edit without Confirm preserves old mechanical fact;
 - same durable inputs reconstruct same state.
 
 Do not reconstruct by replaying transient `NightResolutionEvent` commands.
+
+## 8. Mayor product restriction remains unchanged
+
+For current Trouble Brewing automatic-host production:
+
+```text
+Mayor redirect target cannot be the current Demon.
+```
+
+This is an intentional product/house-rule restriction. Generic non-self Demon death / Scarlet Woman succession remains deferred and must not be reopened during SNE-7.4.
 
 ## 9. Validation cadence
 
@@ -292,7 +275,7 @@ logical checkpoint
   latest-head GitHub CI/R2
 ```
 
-Do not wait for old-head CI after every related micro-slice.
+Do not wait for an old-head CI after every related micro-slice.
 
 ## 10. Do not do
 
@@ -316,13 +299,13 @@ At the next continuation point:
 
 ```text
 1. re-query live PR #54 head and checks;
-2. verify whether CI #803 source-test failures have already been cleaned up;
-3. if not, finish the source-test cleanup with typed replacement mapping;
-4. establish SNE-7.4A Poison production-wiring RED;
-5. cut only Poison draft/confirm semantics over to NightCheckpointReducer;
-6. preserve durable side-effect ownership;
-7. focused GREEN + diff check + remote audit;
-8. stop before Monk unless the Poison slice is fully accepted.
+2. inspect live Monk select/confirm callbacks and durable side effects;
+3. establish SNE-7.4B Monk reducer production-wiring RED;
+4. prove the RED fails only on missing Monk reducer cut-over;
+5. cut only Monk draft/confirm semantics over to NightCheckpointReducer;
+6. preserve durable side-effect ownership and successor draft state;
+7. focused GREEN + diff check + remote parent/diff audit;
+8. stop before Demon attack unless Monk is fully accepted.
 ```
 
 Never merge, mark ready, rebase, force-push, or broaden PR #54 without explicit user authorization.
