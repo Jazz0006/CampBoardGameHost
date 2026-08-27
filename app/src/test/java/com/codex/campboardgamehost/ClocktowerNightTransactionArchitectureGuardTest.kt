@@ -143,5 +143,9 @@ class ClocktowerNightTransactionArchitectureGuardTest {
             "Dawn must not keep an inline originalDeathCard Mayor-ability calculation as a second death authority.",
             dawnBlock.contains("val originalDeathCard ="),
         )
+        assertFalse(
+            "Once the planner returns DawnDeathIntent, App must not re-gate materialization on Monk/Soldier protection.",
+            dawnBlock.contains("if (protectedByMonk || protectedBySoldier)"),
+        )
     }
 }
