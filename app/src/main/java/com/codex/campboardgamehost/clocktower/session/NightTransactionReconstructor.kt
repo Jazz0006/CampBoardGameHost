@@ -3,13 +3,17 @@ package com.codex.campboardgamehost.clocktower.session
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
+import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightCursor
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
+import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightStateProjector
+import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
+import com.codex.campboardgamehost.clocktower.rules.ResolvedNightMechanicalEvent
 
 /**
- * SNE-7 pure reconstruction seam scaffold.
+ * SNE-7 pure reconstruction seam.
  *
- * Durable authority remains GameState + ClocktowerNightCheckpoint. This scaffold intentionally
- * applies no same-night role changes yet; individual reconstruction behaviors are activated later.
+ * Durable authority remains GameState + ClocktowerNightCheckpoint. Reconstruction derives
+ * effective same-night mechanics from those persisted inputs plus the canonical interaction plan.
  */
 internal data class NightTransactionReconstruction(
     val currentInteractionId: ClocktowerInteractionId?,
@@ -24,16 +28,57 @@ internal object NightTransactionReconstructor {
         demonSuccessorInteractionId: ClocktowerInteractionId,
         demonRoleId: RoleId,
     ): NightTransactionReconstruction {
-        @Suppress("UNUSED_VARIABLE")
-        val contractInputs = demonSuccessorInteractionId to demonRoleId
+        val currentInteractionId = canonicalInteractionIds.getOrNull(checkpoint.nightStepIndex)
+        val baseAliveSeats = baseGameState.players
+            .filter { it.alive }
+            .map { it.seat }
+            .toSet()
+        val baseRoleIdsBySeat = baseGameState.players.associate { it.seat to it.actualRole }
+
+        if (currentInteractionId == null) {
+            return NightTransactionReconstruction(
+                currentInteractionId = null,
+                effectiveState = ClocktowerEffectiveNightState(
+                    effectiveAliveSeats = baseAliveSeats,
+                    effectiveRoleIdsBySeat = baseRoleIdsBySeat,
+                ),
+            )
+        }
+
+        val confirmedSuccessorSeat = checkpoint.confirmedDemonSuccessorTarget
+            ?.let { targetName ->
+                baseGameState.players.singleOrNull { it.name == targetName }?.seat
+            }
+        val confirmedEvents: List<ResolvedNightMechanicalEvent> =
+            if (
+                confirmedSuccessorSeat != null &&
+                demonSuccessorInteractionId in canonicalInteractionIds
+            ) {
+                listOf(
+                    ResolvedNightMechanicalEvent.RoleChanged(
+                        targetSeat = confirmedSuccessorSeat,
+                        roleId = demonRoleId,
+                        effectiveAt = ClocktowerEffectiveNightCursor(
+                            interactionId = demonSuccessorInteractionId,
+                            boundary = ClocktowerInteractionBoundary.AFTER,
+                        ),
+                    ),
+                )
+            } else {
+                emptyList()
+            }
+
         return NightTransactionReconstruction(
-            currentInteractionId = canonicalInteractionIds.getOrNull(checkpoint.nightStepIndex),
-            effectiveState = ClocktowerEffectiveNightState(
-                effectiveAliveSeats = baseGameState.players
-                    .filter { it.alive }
-                    .map { it.seat }
-                    .toSet(),
-                effectiveRoleIdsBySeat = baseGameState.players.associate { it.seat to it.actualRole },
+            currentInteractionId = currentInteractionId,
+            effectiveState = ClocktowerEffectiveNightStateProjector.projectAt(
+                baseAliveSeats = baseAliveSeats,
+                canonicalInteractionIds = canonicalInteractionIds,
+                confirmedEvents = confirmedEvents,
+                cursor = ClocktowerEffectiveNightCursor(
+                    interactionId = currentInteractionId,
+                    boundary = ClocktowerInteractionBoundary.BEFORE,
+                ),
+                baseRoleIdsBySeat = baseRoleIdsBySeat,
             ),
         )
     }
