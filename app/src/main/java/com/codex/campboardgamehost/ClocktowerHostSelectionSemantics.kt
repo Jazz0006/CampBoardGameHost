@@ -26,6 +26,27 @@ internal fun twoPlayerSelectionAction(
     else -> TwoPlayerSelectionAction.RejectLimit
 }
 
+internal data class RevalidatedTwoPlayerSelection(
+    val first: String?,
+    val second: String?,
+) {
+    val isComplete: Boolean
+        get() = first != null && second != null && first != second
+}
+
+internal fun revalidateTwoPlayerSelection(
+    first: String?,
+    second: String?,
+    eligibleNames: Set<String>,
+): RevalidatedTwoPlayerSelection {
+    val revalidatedFirst = first?.takeIf { it in eligibleNames }
+    val revalidatedSecond = second?.takeIf { it in eligibleNames && it != revalidatedFirst }
+    return RevalidatedTwoPlayerSelection(
+        first = revalidatedFirst,
+        second = revalidatedSecond,
+    )
+}
+
 internal fun shouldAutoAdvanceRedHerring(
     automaticStorytellerInfo: Boolean,
     isRedHerringStep: Boolean,
