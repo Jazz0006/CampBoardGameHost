@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 
 /**
@@ -21,8 +22,13 @@ internal data class DawnRoleChangeIntent(
     val roleId: RoleId,
 )
 
+internal data class DawnDeathIntent(
+    val targetSeat: Int,
+)
+
 internal data class DawnCommitIntent(
     val roleChanges: List<DawnRoleChangeIntent> = emptyList(),
+    val death: DawnDeathIntent? = null,
 )
 
 internal data class NightDawnResolutionTransition(
@@ -30,6 +36,14 @@ internal data class NightDawnResolutionTransition(
     val continuation: NightResolutionContinuation,
     val dawnCommitIntent: DawnCommitIntent?,
     val outcomeEvaluationAllowed: Boolean,
+)
+
+internal data class NightDawnDeathResolutionInput(
+    val originalDeathSeat: Int?,
+    val mayorSeat: Int?,
+    val mayorRedirectMayApply: Boolean,
+    val effectiveNightState: ClocktowerEffectiveNightState,
+    val demonRoleIds: Set<RoleId>,
 )
 
 internal object NightDawnResolutionPlanner {
@@ -102,4 +116,18 @@ internal object NightDawnResolutionPlanner {
             outcomeEvaluationAllowed = true,
         )
     }
+
+    @Suppress("UNUSED_PARAMETER")
+    fun planValidatedNightDeath(
+        baseGameState: GameState,
+        checkpoint: ClocktowerNightCheckpoint,
+        input: NightDawnDeathResolutionInput,
+    ): NightDawnResolutionTransition = NightDawnResolutionTransition(
+        checkpoint = checkpoint,
+        continuation = NightResolutionContinuation.DAWN,
+        dawnCommitIntent = DawnCommitIntent(
+            death = input.originalDeathSeat?.let(::DawnDeathIntent),
+        ),
+        outcomeEvaluationAllowed = true,
+    )
 }
