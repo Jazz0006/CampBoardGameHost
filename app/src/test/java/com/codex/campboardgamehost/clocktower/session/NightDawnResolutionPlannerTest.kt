@@ -1,158 +1,54 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.clocktower.domain.Alignment
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
-import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.PlayerState
-import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.ScriptId
-import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
+import java.io.File
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/**
+ * Temporary executable regression proof for the pre-planner production lifecycle.
+ *
+ * This test deliberately targets the existing App transaction wiring so SNE-7 can distinguish
+ * a real lifecycle bug from the earlier compile-only RED caused by a not-yet-created planner seam.
+ * Replace this source-level proof with planner/transaction behavior coverage once that seam exists.
+ */
 class NightDawnResolutionPlannerTest {
+    private val appSource = File(
+        "src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt",
+    ).readText(Charsets.UTF_8)
+
     @Test
-    fun `resolved Imp self kill preserves exact confirmed successor until identity confirmation`() {
-        val checkpoint = checkpoint(
-            demonSuccessorDraftTarget = "Poisoner",
-            confirmedDemonSuccessorTarget = "Poisoner",
-        )
+    fun `Imp self kill must preserve confirmed successor while new Demon identity is pending`() {
+        val confirmNight = appSource
+            .substringAfter("onConfirmNight = {")
+            .substringBefore("onShowResults = {")
 
-        val transition = NightDawnResolutionPlanner.planDemonSuccession(
-            baseGameState = gameState(),
-            checkpoint = checkpoint,
-            successionResolution = DemonSuccessionResolution.Choice(setOf(2, 3)),
-            demonRoleId = RoleId("Imp"),
-        )
+        val afterPendingSuccessor = confirmNight
+            .substringAfter("clocktowerPendingNewDemonName = newDemonName")
 
-        assertEquals(NightResolutionContinuation.AWAIT_NEW_DEMON_IDENTITY, transition.continuation)
-        assertEquals("Poisoner", transition.checkpoint.pendingNewDemonName)
-        assertEquals("Poisoner", transition.checkpoint.confirmedDemonSuccessorTarget)
-        assertEquals("Poisoner", transition.checkpoint.demonSuccessorDraftTarget)
-        assertNull(transition.dawnCommitIntent)
-        assertTrue(!transition.outcomeEvaluationAllowed)
+        assertFalse(
+            "BUG: after Confirm Night has created pendingNewDemonName, the exact confirmed " +
+                "successor must survive until Confirm New Demon materializes that identity.",
+            afterPendingSuccessor.contains("clearConfirmedDemonSuccessorTarget()"),
+        )
     }
 
     @Test
-    fun `draft successor without confirmation cannot become pending Demon`() {
-        val checkpoint = checkpoint(
-            demonSuccessorDraftTarget = "Poisoner",
-            confirmedDemonSuccessorTarget = null,
-        )
+    fun `new Demon confirmation requires exact confirmed successor to materialize a Minion`() {
+        val confirmNewDemon = appSource
+            .substringAfter("onConfirmNewDemon = {")
+            .substringBefore("onSelectKlutzChoice")
 
-        val transition = NightDawnResolutionPlanner.planDemonSuccession(
-            baseGameState = gameState(),
-            checkpoint = checkpoint,
-            successionResolution = DemonSuccessionResolution.Choice(setOf(2, 3)),
-            demonRoleId = RoleId("Imp"),
+        assertTrue(
+            "A still-Minon successor can only materialize through the exact confirmed successor path.",
+            confirmNewDemon.contains("clocktowerConfirmedDemonSuccessorTarget != null") &&
+                confirmNewDemon.contains("materializeConfirmedNightDemonSuccessor()"),
         )
-
-        assertEquals(NightResolutionContinuation.AWAIT_DEMON_SUCCESSOR, transition.continuation)
-        assertNull(transition.checkpoint.pendingNewDemonName)
-        assertNull(transition.dawnCommitIntent)
-        assertTrue(!transition.outcomeEvaluationAllowed)
+        assertTrue(
+            "The fallback path only accepts a pending card that is already publicly a Demon, so it " +
+                "cannot recover a cleared exact Minion successor confirmation.",
+            confirmNewDemon.contains("pendingName != null") &&
+                confirmNewDemon.contains("?.clocktowerTeam == ClocktowerTeam.Demon"),
+        )
     }
-
-    @Test
-    fun `restored confirmed successor outside current legal choice fails closed`() {
-        val checkpoint = checkpoint(
-            demonSuccessorDraftTarget = "Monk",
-            confirmedDemonSuccessorTarget = "Monk",
-        )
-
-        val transition = NightDawnResolutionPlanner.planDemonSuccession(
-            baseGameState = gameState(),
-            checkpoint = checkpoint,
-            successionResolution = DemonSuccessionResolution.Choice(setOf(2)),
-            demonRoleId = RoleId("Imp"),
-        )
-
-        assertEquals(NightResolutionContinuation.AWAIT_DEMON_SUCCESSOR, transition.continuation)
-        assertNull(transition.checkpoint.pendingNewDemonName)
-        assertEquals("Monk", transition.checkpoint.confirmedDemonSuccessorTarget)
-        assertNull(transition.dawnCommitIntent)
-        assertTrue(!transition.outcomeEvaluationAllowed)
-    }
-
-    @Test
-    fun `identity confirmation materializes exact pending confirmed successor then permits Dawn`() {
-        val checkpoint = checkpoint(
-            pendingNewDemonName = "Poisoner",
-            demonSuccessorDraftTarget = "Poisoner",
-            confirmedDemonSuccessorTarget = "Poisoner",
-        )
-
-        val transition = NightDawnResolutionPlanner.confirmNewDemonIdentity(
-            baseGameState = gameState(),
-            checkpoint = checkpoint,
-            demonRoleId = RoleId("Imp"),
-        )
-
-        assertEquals(NightResolutionContinuation.DAWN, transition.continuation)
-        val intent = assertNotNull(transition.dawnCommitIntent)
-        assertEquals(1, intent.roleChanges.size)
-        assertEquals(2, intent.roleChanges.single().targetSeat)
-        assertEquals(RoleId("Imp"), intent.roleChanges.single().roleId)
-        assertNull(transition.checkpoint.pendingNewDemonName)
-        assertNull(transition.checkpoint.confirmedDemonSuccessorTarget)
-        assertNull(transition.checkpoint.demonSuccessorDraftTarget)
-        assertTrue(transition.outcomeEvaluationAllowed)
-    }
-
-    private fun gameState(): GameState = GameState(
-        script = ScriptId("TroubleBrewing"),
-        seed = 42L,
-        players = listOf(
-            PlayerState(
-                seat = 1,
-                name = "Imp",
-                actualRole = RoleId("Imp"),
-                actualAlignment = Alignment.EVIL,
-                actualType = CharacterType.DEMON,
-            ),
-            PlayerState(
-                seat = 2,
-                name = "Poisoner",
-                actualRole = RoleId("Poisoner"),
-                actualAlignment = Alignment.EVIL,
-                actualType = CharacterType.MINION,
-            ),
-            PlayerState(
-                seat = 3,
-                name = "Monk",
-                actualRole = RoleId("Monk"),
-                actualAlignment = Alignment.GOOD,
-                actualType = CharacterType.TOWNSFOLK,
-            ),
-        ),
-    )
-
-    private fun checkpoint(
-        pendingNewDemonName: String? = null,
-        demonSuccessorDraftTarget: String? = null,
-        confirmedDemonSuccessorTarget: String? = null,
-    ): ClocktowerNightCheckpoint = ClocktowerNightCheckpoint(
-        phaseName = "Night",
-        round = 3,
-        gameStateRevision = 12L,
-        playerInputRevision = 7L,
-        nightStarted = true,
-        nightStepIndex = 4,
-        confirmedAttackTarget = "Imp",
-        attackDraftTarget = "Imp",
-        confirmedPoisonTarget = null,
-        poisonDraftTarget = null,
-        confirmedMonkTarget = null,
-        monkDraftTarget = null,
-        confirmedMayorRedirectTarget = null,
-        mayorRedirectDraftTarget = null,
-        pendingNewDemonName = pendingNewDemonName,
-        pendingNightNewDemonIdentityName = null,
-        demonSuccessorDraftTarget = demonSuccessorDraftTarget,
-        confirmedDemonSuccessorTarget = confirmedDemonSuccessorTarget,
-        nextTimelineGlobalSequence = 17L,
-    )
 }
