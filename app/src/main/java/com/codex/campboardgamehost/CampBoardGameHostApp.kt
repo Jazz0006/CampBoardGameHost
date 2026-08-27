@@ -2686,13 +2686,11 @@ internal fun CampBoardGameHostApp() {
                             clocktowerDemonAttackDraftTarget = reducedCheckpoint.attackDraftTarget
                         },
                         onConfirmDemonAttack = {
-                            val checkpoint = currentClocktowerNightCheckpoint()
-                            val reducedCheckpoint = NightCheckpointReducer.reduce(
-                                checkpoint = checkpoint,
-                                event = NightResolutionEvent.ConfirmDemonAttack,
+                            val transaction = NightCheckpointHostTransaction.confirmDemonAttack(
+                                checkpoint = currentClocktowerNightCheckpoint(),
                             )
-                            if (reducedCheckpoint.confirmedAttackTarget != checkpoint.confirmedAttackTarget) {
-                                val targetName = reducedCheckpoint.confirmedAttackTarget
+                            if (transaction.revisionIntent == NightCheckpointRevisionIntent.GAME_STATE) {
+                                val targetName = transaction.checkpoint.confirmedAttackTarget
                                 if (targetName != null) {
                                     val targetSeat = clocktowerSeatFor(targetName)
                                     val localSequence = clocktowerEventCounter + 1
@@ -2708,8 +2706,9 @@ internal fun CampBoardGameHostApp() {
                                         targetSeat = targetSeat,
                                     ))
                                 }
-                                clocktowerPendingNightDeath = reducedCheckpoint.confirmedAttackTarget
-                                clocktowerConfirmedDemonSuccessorTarget = reducedCheckpoint.confirmedDemonSuccessorTarget
+                                clocktowerPendingNightDeath = transaction.checkpoint.confirmedAttackTarget
+                                clocktowerConfirmedMayorRedirectTarget = transaction.checkpoint.confirmedMayorRedirectTarget
+                                clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
                                 advanceClocktowerGameStateRevision()
                             }
                         },
@@ -2726,13 +2725,11 @@ internal fun CampBoardGameHostApp() {
                             clocktowerPoisonTarget = reducedCheckpoint.poisonDraftTarget
                         },
                         onConfirmPoisonTarget = {
-                            val checkpoint = currentClocktowerNightCheckpoint()
-                            val reducedCheckpoint = NightCheckpointReducer.reduce(
-                                checkpoint = checkpoint,
-                                event = NightResolutionEvent.ConfirmPoison,
+                            val transaction = NightCheckpointHostTransaction.confirmPoison(
+                                checkpoint = currentClocktowerNightCheckpoint(),
                             )
-                            if (reducedCheckpoint.confirmedPoisonTarget != checkpoint.confirmedPoisonTarget) {
-                                val targetSeat = reducedCheckpoint.confirmedPoisonTarget?.let(::clocktowerSeatFor)
+                            if (transaction.revisionIntent == NightCheckpointRevisionIntent.GAME_STATE) {
+                                val targetSeat = transaction.checkpoint.confirmedPoisonTarget?.let(::clocktowerSeatFor)
                                 val localSequence = clocktowerEventCounter + 1
                                 recordClocktowerAction(ActionFactDraft.Poison(
                                     actionId = clocktowerActionId(
@@ -2745,8 +2742,9 @@ internal fun CampBoardGameHostApp() {
                                     sequence = localSequence,
                                     targetSeat = targetSeat,
                                 ))
-                                clocktowerConfirmedPoisonTarget = reducedCheckpoint.confirmedPoisonTarget
-                                clocktowerConfirmedDemonSuccessorTarget = reducedCheckpoint.confirmedDemonSuccessorTarget
+                                clocktowerConfirmedPoisonTarget = transaction.checkpoint.confirmedPoisonTarget
+                                clocktowerConfirmedMayorRedirectTarget = transaction.checkpoint.confirmedMayorRedirectTarget
+                                clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
                                 advanceClocktowerGameStateRevision()
                                 // A Drunk's shown role is committed, but any concrete
                                 // first-night clue remains provisional until displayed.
@@ -2837,13 +2835,11 @@ internal fun CampBoardGameHostApp() {
                             clocktowerMonkProtectedTarget = reducedCheckpoint.monkDraftTarget
                         },
                         onConfirmMonkProtectedTarget = {
-                            val checkpoint = currentClocktowerNightCheckpoint()
-                            val reducedCheckpoint = NightCheckpointReducer.reduce(
-                                checkpoint = checkpoint,
-                                event = NightResolutionEvent.ConfirmMonkProtection,
+                            val transaction = NightCheckpointHostTransaction.confirmMonkProtection(
+                                checkpoint = currentClocktowerNightCheckpoint(),
                             )
-                            if (reducedCheckpoint.confirmedMonkTarget != checkpoint.confirmedMonkTarget) {
-                                val targetName = reducedCheckpoint.confirmedMonkTarget
+                            if (transaction.revisionIntent == NightCheckpointRevisionIntent.GAME_STATE) {
+                                val targetName = transaction.checkpoint.confirmedMonkTarget
                                 if (targetName != null) {
                                     val targetSeat = clocktowerSeatFor(targetName)
                                     val localSequence = clocktowerEventCounter + 1
@@ -2859,8 +2855,9 @@ internal fun CampBoardGameHostApp() {
                                         targetSeat = targetSeat,
                                     ))
                                 }
-                                clocktowerConfirmedMonkProtectedTarget = reducedCheckpoint.confirmedMonkTarget
-                                clocktowerConfirmedDemonSuccessorTarget = reducedCheckpoint.confirmedDemonSuccessorTarget
+                                clocktowerConfirmedMonkProtectedTarget = transaction.checkpoint.confirmedMonkTarget
+                                clocktowerConfirmedMayorRedirectTarget = transaction.checkpoint.confirmedMayorRedirectTarget
+                                clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
                                 advanceClocktowerGameStateRevision()
                             }
                         },
