@@ -114,6 +114,25 @@ class NightTransactionReconstructionContractTest {
     }
 
     @Test
+    fun `stale confirmed successor without confirmed Demon self attack fails closed`() {
+        val reconstruction = NightTransactionReconstructor.reconstruct(
+            baseGameState = gameState(),
+            checkpoint = checkpoint(
+                nightStepIndex = 2,
+                confirmedAttackTarget = "Empath",
+                demonSuccessorDraftTarget = "Poisoner",
+                confirmedDemonSuccessorTarget = "Poisoner",
+            ),
+            canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
+            demonSuccessorInteractionId = successorInteraction,
+            demonRoleId = RoleId("Imp"),
+        )
+
+        assertEquals(empathInteraction, reconstruction.currentInteractionId)
+        assertEquals(RoleId("Poisoner"), reconstruction.effectiveState.currentRoleId(2))
+    }
+
+    @Test
     fun `valid confirmed successor reconstructs effective Demon from same durable inputs`() {
         val input = checkpoint(
             nightStepIndex = 2,
@@ -179,6 +198,7 @@ class NightTransactionReconstructionContractTest {
 
     private fun checkpoint(
         nightStepIndex: Int,
+        confirmedAttackTarget: String? = "Imp",
         demonSuccessorDraftTarget: String?,
         confirmedDemonSuccessorTarget: String?,
     ) = ClocktowerNightCheckpoint(
@@ -188,8 +208,8 @@ class NightTransactionReconstructionContractTest {
         playerInputRevision = 7L,
         nightStarted = true,
         nightStepIndex = nightStepIndex,
-        confirmedAttackTarget = "Imp",
-        attackDraftTarget = "Imp",
+        confirmedAttackTarget = confirmedAttackTarget,
+        attackDraftTarget = confirmedAttackTarget,
         confirmedPoisonTarget = null,
         poisonDraftTarget = null,
         confirmedMonkTarget = null,
