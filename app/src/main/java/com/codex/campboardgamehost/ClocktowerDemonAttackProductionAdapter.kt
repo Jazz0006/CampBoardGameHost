@@ -44,3 +44,53 @@ internal fun resolveTroubleBrewingDemonNightAttackOutcome(
         ),
     )
 }
+
+internal data class TroubleBrewingDawnDeathFacts(
+    val attackOutcome: DemonNightAttackOutcome,
+    val originalDeathSeat: Int?,
+    val mayorSeat: Int?,
+    val demonSafeSeats: Set<Int>,
+)
+
+/**
+ * Canonical direct-attack facts consumed by Dawn death planning. All Demon-safety seats are derived
+ * through the same production adapter instead of reimplementing Soldier/Monk/poison checks.
+ */
+internal fun resolveTroubleBrewingDawnDeathFacts(
+    cards: List<PlayerCard>,
+    targetName: String?,
+    poisonedPlayerName: String?,
+    monkProtectedTargetName: String?,
+): TroubleBrewingDawnDeathFacts {
+    val attackOutcome = resolveTroubleBrewingDemonNightAttackOutcome(
+        cards = cards,
+        targetName = targetName,
+        poisonedPlayerName = poisonedPlayerName,
+        monkProtectedTargetName = monkProtectedTargetName,
+    )
+    val originalDeathSeat = targetName
+        ?.let { name -> cards.indexOfFirst { card -> card.name == name } }
+        ?.takeIf { index -> index >= 0 }
+        ?.plus(1)
+    val mayorSeat = originalDeathSeat.takeIf {
+        attackOutcome == DemonNightAttackOutcome.MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED
+    }
+    val demonSafeSeats = cards.mapIndexedNotNull { index, card ->
+        (index + 1).takeIf {
+            card.eliminatedRound == null &&
+                resolveTroubleBrewingDemonNightAttackOutcome(
+                    cards = cards,
+                    targetName = card.name,
+                    poisonedPlayerName = poisonedPlayerName,
+                    monkProtectedTargetName = monkProtectedTargetName,
+                ) == DemonNightAttackOutcome.NO_DEATH
+        }
+    }.toSet()
+
+    return TroubleBrewingDawnDeathFacts(
+        attackOutcome = attackOutcome,
+        originalDeathSeat = originalDeathSeat,
+        mayorSeat = mayorSeat,
+        demonSafeSeats = demonSafeSeats,
+    )
+}
