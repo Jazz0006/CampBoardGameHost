@@ -153,6 +153,41 @@ class NightTransactionReconstructionContractTest {
     }
 
     @Test
+    fun `restored stale Mayor redirect to reconstructed new Demon fails closed`() {
+        val baseGameState = gameState(includeMayor = true)
+        val restored = ClocktowerNightCheckpoint.fromPersistedValues(
+            checkpoint(
+                nightStepIndex = 2,
+                confirmedMayorRedirectTarget = "Poisoner",
+                demonSuccessorDraftTarget = "Poisoner",
+                confirmedDemonSuccessorTarget = "Poisoner",
+            ).persistedValues(),
+        )
+        val reconstruction = NightTransactionReconstructor.reconstruct(
+            baseGameState = baseGameState,
+            checkpoint = restored,
+            canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
+            demonSuccessorInteractionId = successorInteraction,
+            demonRoleId = RoleId("Imp"),
+        )
+        val transition = NightDawnResolutionPlanner.planValidatedNightDeath(
+            baseGameState = baseGameState,
+            checkpoint = restored,
+            input = NightDawnDeathResolutionInput(
+                originalDeathSeat = 4,
+                mayorSeat = 4,
+                mayorRedirectMayApply = true,
+                effectiveNightState = reconstruction.effectiveState,
+                demonRoleIds = setOf(RoleId("Imp")),
+            ),
+        )
+
+        assertEquals(RoleId("Imp"), reconstruction.effectiveState.currentRoleId(2))
+        assertEquals(4, transition.dawnCommitIntent?.death?.targetSeat)
+        assertEquals(RoleId("Poisoner"), baseGameState.playerAt(2)?.actualRole)
+    }
+
+    @Test
     fun `valid confirmed successor reconstructs effective Demon from same durable inputs`() {
         val input = checkpoint(
             nightStepIndex = 2,
@@ -185,40 +220,62 @@ class NightTransactionReconstructionContractTest {
         assertEquals(RoleId("Poisoner"), gameState().playerAt(2)?.actualRole)
     }
 
-    private fun gameState(demonAlive: Boolean = false) = GameState(
+    private fun gameState(
+        demonAlive: Boolean = false,
+        includeMayor: Boolean = false,
+    ) = GameState(
         script = ScriptId("Trouble Brewing"),
-        players = listOf(
-            PlayerState(
-                seat = 1,
-                name = "Imp",
-                actualRole = RoleId("Imp"),
-                actualAlignment = Alignment.EVIL,
-                actualType = CharacterType.DEMON,
-                alive = demonAlive,
-            ),
-            PlayerState(
-                seat = 2,
-                name = "Poisoner",
-                actualRole = RoleId("Poisoner"),
-                actualAlignment = Alignment.EVIL,
-                actualType = CharacterType.MINION,
-                alive = true,
-            ),
-            PlayerState(
-                seat = 3,
-                name = "Empath",
-                actualRole = RoleId("Empath"),
-                actualAlignment = Alignment.GOOD,
-                actualType = CharacterType.TOWNSFOLK,
-                alive = true,
-            ),
-        ),
+        players = buildList {
+            add(
+                PlayerState(
+                    seat = 1,
+                    name = "Imp",
+                    actualRole = RoleId("Imp"),
+                    actualAlignment = Alignment.EVIL,
+                    actualType = CharacterType.DEMON,
+                    alive = demonAlive,
+                ),
+            )
+            add(
+                PlayerState(
+                    seat = 2,
+                    name = "Poisoner",
+                    actualRole = RoleId("Poisoner"),
+                    actualAlignment = Alignment.EVIL,
+                    actualType = CharacterType.MINION,
+                    alive = true,
+                ),
+            )
+            add(
+                PlayerState(
+                    seat = 3,
+                    name = "Empath",
+                    actualRole = RoleId("Empath"),
+                    actualAlignment = Alignment.GOOD,
+                    actualType = CharacterType.TOWNSFOLK,
+                    alive = true,
+                ),
+            )
+            if (includeMayor) {
+                add(
+                    PlayerState(
+                        seat = 4,
+                        name = "Mayor",
+                        actualRole = RoleId("Mayor"),
+                        actualAlignment = Alignment.GOOD,
+                        actualType = CharacterType.TOWNSFOLK,
+                        alive = true,
+                    ),
+                )
+            }
+        },
         seed = 11L,
     )
 
     private fun checkpoint(
         nightStepIndex: Int,
         confirmedAttackTarget: String? = "Imp",
+        confirmedMayorRedirectTarget: String? = null,
         demonSuccessorDraftTarget: String?,
         confirmedDemonSuccessorTarget: String?,
     ) = ClocktowerNightCheckpoint(
@@ -234,8 +291,8 @@ class NightTransactionReconstructionContractTest {
         poisonDraftTarget = null,
         confirmedMonkTarget = null,
         monkDraftTarget = null,
-        confirmedMayorRedirectTarget = null,
-        mayorRedirectDraftTarget = null,
+        confirmedMayorRedirectTarget = confirmedMayorRedirectTarget,
+        mayorRedirectDraftTarget = confirmedMayorRedirectTarget,
         pendingNewDemonName = null,
         pendingNightNewDemonIdentityName = null,
         demonSuccessorDraftTarget = demonSuccessorDraftTarget,
