@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
+import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
 
 /**
  * SNE-7 typed planner seam.
@@ -117,7 +118,6 @@ internal object NightDawnResolutionPlanner {
         )
     }
 
-    @Suppress("UNUSED_PARAMETER")
     fun planValidatedNightDeath(
         baseGameState: GameState,
         checkpoint: ClocktowerNightCheckpoint,
@@ -125,13 +125,18 @@ internal object NightDawnResolutionPlanner {
     ): NightDawnResolutionTransition {
         val confirmedRedirectSeat = checkpoint.confirmedMayorRedirectTarget
             ?.let { name -> baseGameState.players.firstOrNull { it.name == name }?.seat }
+        val confirmedRedirectIsLegal = confirmedRedirectSeat?.let { targetSeat ->
+            MayorRedirectLegality.canReceiveRedirect(
+                targetIsDemon = input.effectiveNightState.currentRoleId(targetSeat) in input.demonRoleIds,
+            )
+        } == true
         val redirectApplies =
             input.mayorRedirectMayApply &&
                 input.originalDeathSeat != null &&
                 input.originalDeathSeat == input.mayorSeat &&
-                confirmedRedirectSeat != null
+                confirmedRedirectIsLegal
         val resolvedDeathSeat = if (redirectApplies) {
-            confirmedRedirectSeat.takeIf(input.effectiveNightState::isMechanicallyAlive)
+            confirmedRedirectSeat?.takeIf(input.effectiveNightState::isMechanicallyAlive)
         } else {
             input.originalDeathSeat
         }
