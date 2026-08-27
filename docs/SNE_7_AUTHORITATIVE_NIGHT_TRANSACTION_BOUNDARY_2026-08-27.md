@@ -2,7 +2,7 @@
 
 > Date: 2026-08-27  
 > Scope: same-night correctness closeout  
-> Status: **IMPLEMENTATION IN PROGRESS — 7.1–7.3 ESTABLISHED / 7.4A COMPLETE / 7.4B NEXT**  
+> Status: **IMPLEMENTATION IN PROGRESS — 7.1–7.3 ESTABLISHED / 7.4A–C COMPLETE / 7.4D NEXT**  
 > Branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54
 
@@ -28,16 +28,16 @@ SNE-7.4  production Compose/App wiring consumes typed seams
          PARTIAL / CURRENT FUNCTIONAL FRONTIER
 
   SNE-7.4A  Poison production reducer wiring
-             COMPLETE / FOCUSED GREEN / REMOTE AUDITED
+             COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
 
   SNE-7.4B  Monk production reducer wiring
-             NEXT
+             COMPLETE / FOCUSED + BROAD GREEN / REMOTE AUDITED
 
-  SNE-7.4C  Demon attack
-             NOT STARTED
+  SNE-7.4C  Demon attack production reducer wiring
+             COMPLETE / FOCUSED GREEN / REMOTE AUDITED
 
   SNE-7.4D  Mayor redirect
-             NOT STARTED
+             NEXT
 
   SNE-7.4E  Demon successor
              NOT STARTED
@@ -58,26 +58,46 @@ SNE-7.8  minimal architecture guards only
          NOT COMPLETE
 ```
 
-### Accepted 7.4A evidence
+### Accepted 7.4 evidence
 
 ```text
-09bea7ffc028833d3c893d740a5e9b6f90919bf6
-  RED: ClocktowerPoisonReducerProductionWiringTest
+SNE-7.4A Poison
+  RED      09bea7ffc028833d3c893d740a5e9b6f90919bf6
+  GREEN    db2a3746cedc2b667b0e5abd20e722ba8866263b
+  format   e34598d60c012b6cb7c60e0e19da22b4483c600b
+  broad    CI #814 + R2 #741 SUCCESS
 
-CI #809 at RED head
-  882 tests
-  exactly 2 expected SNE-7.4A failures
-  previous CI #803 four stale source failures absent
-  R2 #736 SUCCESS
+SNE-7.4B Monk
+  RED      6deb9d42f1b8ce5dfa1ca999778c22a49f714a91
+  GREEN    b1679f1b648e0de1d1aabaadb59715e53f9843f9
+  broad    CI #817 + R2 #744 SUCCESS
 
-db2a3746cedc2b667b0e5abd20e722ba8866263b
-  production Poison reducer cut-over
-
-e34598d60c012b6cb7c60e0e19da22b4483c600b
-  formatting-only follow-up
+SNE-7.4C Demon attack
+  RED      0ea9d0b4c46dd69a0672a0c3fdc600d6e52dbe3d
+  GREEN    062e000afad1c407ba17ad7cef915dae0c487b30
 ```
 
-The production and formatting commits each passed exact-head guard, single-file scope audit, `git diff --check`, focused `--rerun-tasks` validation, and remote-head recheck before push.
+RED evidence for 7.4C:
+
+```text
+CI #818 at 0ea9d0b4
+  888 tests
+  exactly 2 failures
+  both are the intended ClocktowerDemonAttackReducerProductionWiringTest REDs
+  4 skipped
+  Real Clingo SUCCESS
+  R2 #745 SUCCESS
+```
+
+7.4C focused GREEN passed with `--rerun-tasks` for the Demon attack, Monk and Poison production wiring guards plus `NightCheckpointReducerTest` and `SNE7NightTransactionBehaviorMatrixTest`. The patch also passed exact-head guard, exact patch preconditions, `git diff --check`, single-production-file scope audit, and remote-head recheck before push.
+
+Remote RED→GREEN compare for 7.4C is exactly one commit and one production file:
+
+```text
+0ea9d0b4 → 062e000a
+app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+14 additions / 12 deletions
+```
 
 ## 3. Authority model
 
@@ -192,67 +212,85 @@ SNE-7.4 is complete only when production Compose/App wiring consumes the typed s
 
 ### 6.1 SNE-7.4A Poison — accepted
 
-Production now follows:
-
 ```text
 onSelectPoisonTarget
-  → NightResolutionEvent.EditPoisonDraft
+  → EditPoisonDraft
   → NightCheckpointReducer.reduce(...)
-  → project reduced poisonDraftTarget
+  → project poisonDraftTarget
 
 onConfirmPoisonTarget
-  → NightResolutionEvent.ConfirmPoison
+  → ConfirmPoison
   → NightCheckpointReducer.reduce(...)
-  → project reduced confirmedPoisonTarget
-  → project reduced confirmedDemonSuccessorTarget
+  → project confirmedPoisonTarget
+  → project confirmedDemonSuccessorTarget
 ```
 
-The reducer owns checkpoint-local Poison transition semantics.
-
-The App/session boundary still owns:
+### 6.2 SNE-7.4B Monk — accepted
 
 ```text
-local/global sequence coordination
-ActionFactDraft.Poison durable recording
-game-state revision
-other timeline/history side effects
+onSelectMonkProtectedTarget
+  → EditMonkProtectionDraft
+  → NightCheckpointReducer.reduce(...)
+  → project monkDraftTarget
+
+onConfirmMonkProtectedTarget
+  → ConfirmMonkProtection
+  → NightCheckpointReducer.reduce(...)
+  → project confirmedMonkTarget
+  → project confirmedDemonSuccessorTarget
 ```
 
-The old production callback that manually set `confirmedDemonSuccessorTarget = null` and also erased the editable successor draft has been replaced by reducer output. Changed Poison reconfirmation invalidates only the dependent confirmed successor fact according to reducer semantics.
+### 6.3 SNE-7.4C Demon attack — accepted
 
-`currentClocktowerNightCheckpoint()` now provides a single reusable App snapshot projection for this and later 7.4 slices. It does not persist or independently own state.
+```text
+onSelectNightDeath
+  → EditDemonAttackDraft
+  → NightCheckpointReducer.reduce(...)
+  → project attackDraftTarget
 
-### 6.2 SNE-7.4B Monk — next
+onConfirmDemonAttack
+  → ConfirmDemonAttack
+  → NightCheckpointReducer.reduce(...)
+  → project confirmedAttackTarget
+  → project confirmedDemonSuccessorTarget
+```
+
+The old production attack callbacks manually cleared `clocktowerDemonSuccessorTarget` both while editing away from the living Demon and while confirming a changed attack. That handwritten cross-mechanic ownership is removed. Draft editing no longer invalidates successor state, and changed attack reconfirmation invalidates only the dependent confirmed successor while preserving the editable successor draft, matching the existing behavior matrix.
+
+For 7.4A–C, the App/session boundary still owns sequence allocation, durable `ActionFactDraft` recording, game-state revision, and other timeline/history side effects exactly once.
+
+`currentClocktowerNightCheckpoint()` is the shared App snapshot projection for all these slices. It does not persist or independently own state.
+
+### 6.4 SNE-7.4D Mayor redirect — next
 
 Required target flow:
 
 ```text
-onSelectMonkProtectedTarget
-  → NightResolutionEvent.EditMonkProtectionDraft
+onSelectMayorRedirectTarget
+  → NightResolutionEvent.EditMayorRedirectDraft
   → NightCheckpointReducer.reduce(...)
+  → project mayorRedirectDraftTarget
 
-onConfirmMonkProtectedTarget
-  → NightResolutionEvent.ConfirmMonkProtection
+onConfirmMayorRedirectTarget
+  → NightResolutionEvent.ConfirmMayorRedirect
   → NightCheckpointReducer.reduce(...)
+  → project confirmedMayorRedirectTarget
 ```
 
 Acceptance criteria:
 
 1. RED first at the smallest practical application ownership boundary.
-2. Monk draft edit does not alter confirmed Monk protection.
-3. Monk draft edit does not invalidate confirmed successor mechanics.
-4. Confirming unchanged Monk protection preserves dependent successor confirmation.
-5. Confirming changed Monk protection commits the draft and invalidates the dependent confirmed successor.
-6. Do not erase the editable successor draft merely because the upstream confirmed Monk fact changed.
-7. Existing durable Monk event/timeline side effects remain exactly once outside `NightCheckpointReducer`.
-8. Reuse `currentClocktowerNightCheckpoint()`; do not introduce another durable/snapshot owner.
-9. Focused T0 GREEN and `git diff --check` before proceeding to Demon attack.
+2. Mayor redirect draft edit does not alter confirmed redirect.
+3. Confirm commits the reducer's current redirect draft.
+4. Preserve the existing Trouble Brewing product restriction that Mayor redirect cannot target the current Demon.
+5. Do not move target-legality authority into recommendations or duplicate it inside checkpoint transition code.
+6. Preserve existing durable App/session side effects exactly once.
+7. Reuse `currentClocktowerNightCheckpoint()`.
+8. Focused T0 GREEN and `git diff --check` before proceeding to Demon successor.
 
 Expected follow-on slices:
 
 ```text
-SNE-7.4B Monk
-SNE-7.4C Demon attack
 SNE-7.4D Mayor redirect
 SNE-7.4E Demon successor
 SNE-7.4F Dawn planner authority closeout
@@ -305,7 +343,7 @@ The four CI #803 implementation-shape failures have been cleaned up. They are no
 
 For every source-string assertion removed or narrowed, identify the behavioral or typed contract that replaces it. Retain coarse source guards only for genuine ownership boundaries, not local expression shape.
 
-The SNE-7.4A App source ownership test is explicitly temporary until a directly callable production integration seam can supersede it.
+The SNE-7.4 App source ownership tests are explicitly temporary until a directly callable production integration seam can supersede them.
 
 ## 9. Validation cadence
 
@@ -333,13 +371,13 @@ Do not wait for old-head CI after every micro-slice. Do not treat a failing obso
 COMPLETED
   source-string cleanup exposed by CI #803
   SNE-7.4A Poison production reducer wiring
+  SNE-7.4B Monk production reducer wiring
+  SNE-7.4C Demon attack production reducer wiring
 
 CURRENT NEXT
-  SNE-7.4B Monk production reducer wiring
+  SNE-7.4D Mayor redirect production reducer wiring
 
 THEN
-  SNE-7.4C Demon attack production reducer wiring
-  SNE-7.4D Mayor redirect production reducer wiring
   SNE-7.4E Demon successor production reducer wiring
   SNE-7.4F Dawn planner production authority closeout
 
