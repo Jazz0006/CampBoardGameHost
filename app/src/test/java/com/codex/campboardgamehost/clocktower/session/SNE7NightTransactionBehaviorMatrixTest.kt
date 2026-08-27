@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightCursor
+import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightStateProjector
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
 import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackContext
@@ -15,7 +16,9 @@ import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionSemantics
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
 import com.codex.campboardgamehost.clocktower.rules.ResolvedNightMechanicalEvent
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -28,11 +31,13 @@ class SNE7NightTransactionBehaviorMatrixTest {
     private val poisonerInteraction = ClocktowerInteractionId("other_night:role:Poisoner")
     private val impInteraction = ClocktowerInteractionId("other_night:role:Imp")
     private val successorInteraction = ClocktowerInteractionId("other_night:event:imp:demon_successor")
+    private val fortuneTellerInteraction = ClocktowerInteractionId("other_night:role:Fortune Teller")
     private val empathInteraction = ClocktowerInteractionId("other_night:role:Empath")
     private val canonicalPlan = listOf(
         poisonerInteraction,
         impInteraction,
         successorInteraction,
+        fortuneTellerInteraction,
         empathInteraction,
     )
 
@@ -120,6 +125,24 @@ class SNE7NightTransactionBehaviorMatrixTest {
         assertEquals("Player 3", restored.confirmedPoisonTarget)
         assertEquals(RoleId("Imp"), effective.currentRoleId(2))
         assertNull(effectivePoisonTarget)
+    }
+
+    @Test
+    fun `Fortune Teller targeting new living Demon is Yes after successor role change`() {
+        val state = fortuneTellerStateAfterSuccession()
+
+        assertTrue(state.isMechanicallyAlive(2))
+        assertEquals(RoleId("Imp"), state.currentRoleId(2))
+        assertTrue(fortuneTellerDemonMatch(state, targetSeat = 2))
+    }
+
+    @Test
+    fun `Fortune Teller targeting old dead Demon is still Yes for that night`() {
+        val state = fortuneTellerStateAfterSuccession()
+
+        assertFalse(state.isMechanicallyAlive(1))
+        assertEquals(RoleId("Imp"), state.currentRoleId(1))
+        assertTrue(fortuneTellerDemonMatch(state, targetSeat = 1))
     }
 
     @Test
@@ -234,6 +257,39 @@ class SNE7NightTransactionBehaviorMatrixTest {
             ),
             baseRoleIdsBySeat = baseRoles(),
         )
+
+    private fun fortuneTellerStateAfterSuccession(): ClocktowerEffectiveNightState =
+        ClocktowerEffectiveNightStateProjector.projectAt(
+            baseAliveSeats = setOf(1, 2, 3),
+            canonicalInteractionIds = canonicalPlan,
+            confirmedEvents = listOf(
+                ResolvedNightMechanicalEvent.MechanicalDeath(
+                    targetSeat = 1,
+                    effectiveAt = ClocktowerEffectiveNightCursor(
+                        impInteraction,
+                        ClocktowerInteractionBoundary.AFTER,
+                    ),
+                ),
+                ResolvedNightMechanicalEvent.RoleChanged(
+                    targetSeat = 2,
+                    roleId = RoleId("Imp"),
+                    effectiveAt = ClocktowerEffectiveNightCursor(
+                        successorInteraction,
+                        ClocktowerInteractionBoundary.AFTER,
+                    ),
+                ),
+            ),
+            cursor = ClocktowerEffectiveNightCursor(
+                fortuneTellerInteraction,
+                ClocktowerInteractionBoundary.BEFORE,
+            ),
+            baseRoleIdsBySeat = baseRoles(),
+        )
+
+    private fun fortuneTellerDemonMatch(
+        state: ClocktowerEffectiveNightState,
+        targetSeat: Int,
+    ): Boolean = state.currentRoleId(targetSeat) == RoleId("Imp")
 
     private fun restore(checkpoint: ClocktowerNightCheckpoint): ClocktowerNightCheckpoint =
         ClocktowerNightCheckpoint.fromPersistedValues(checkpoint.persistedValues())
