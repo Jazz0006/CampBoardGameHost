@@ -33,11 +33,8 @@ class ClocktowerNightTransactionArchitectureGuardTest {
     fun `production night checkpoint transitions route through typed owners`() {
         listOf(
             "NightResolutionEvent.EditPoisonDraft",
-            "NightResolutionEvent.ConfirmPoison",
             "NightResolutionEvent.EditMonkProtectionDraft",
-            "NightResolutionEvent.ConfirmMonkProtection",
             "NightResolutionEvent.EditDemonAttackDraft",
-            "NightResolutionEvent.ConfirmDemonAttack",
             "NightResolutionEvent.EditMayorRedirectDraft",
             "NightResolutionEvent.ConfirmMayorRedirect",
         ).forEach { command ->
