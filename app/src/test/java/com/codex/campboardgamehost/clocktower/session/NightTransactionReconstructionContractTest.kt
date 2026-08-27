@@ -96,6 +96,24 @@ class NightTransactionReconstructionContractTest {
     }
 
     @Test
+    fun `confirmed successor remains effective after Previous navigation back to successor interaction`() {
+        val reconstruction = NightTransactionReconstructor.reconstruct(
+            baseGameState = gameState(),
+            checkpoint = checkpoint(
+                nightStepIndex = 1,
+                demonSuccessorDraftTarget = "Poisoner",
+                confirmedDemonSuccessorTarget = "Poisoner",
+            ),
+            canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
+            demonSuccessorInteractionId = successorInteraction,
+            demonRoleId = RoleId("Imp"),
+        )
+
+        assertEquals(successorInteraction, reconstruction.currentInteractionId)
+        assertEquals(RoleId("Imp"), reconstruction.effectiveState.currentRoleId(2))
+    }
+
+    @Test
     fun `valid confirmed successor reconstructs effective Demon from same durable inputs`() {
         val input = checkpoint(
             nightStepIndex = 2,
