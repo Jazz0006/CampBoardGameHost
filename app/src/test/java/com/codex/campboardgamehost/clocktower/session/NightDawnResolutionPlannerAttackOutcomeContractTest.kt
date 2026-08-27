@@ -8,11 +8,10 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackOutcome
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/** SNE-7.9C1: Dawn death planning must consume the canonical Demon attack outcome. */
+/** SNE-7.9C1: Dawn death planning must consume canonical Demon attack/safety facts. */
 class NightDawnResolutionPlannerAttackOutcomeContractTest {
     @Test
     fun `canonical no death outcome blocks a caller supplied original death seat`() {
@@ -33,7 +32,7 @@ class NightDawnResolutionPlannerAttackOutcomeContractTest {
     }
 
     @Test
-    fun `canonical Mayor outcome owns redirect branching and redirected Soldier still dies`() {
+    fun `canonical Mayor redirect to Demon safe Soldier produces no Dawn death`() {
         val transition = NightDawnResolutionPlanner.planValidatedNightDeath(
             baseGameState = gameState(),
             checkpoint = checkpoint(confirmedMayorRedirectTarget = "Soldier"),
@@ -42,12 +41,13 @@ class NightDawnResolutionPlannerAttackOutcomeContractTest {
                 mayorSeat = 2,
                 mayorRedirectMayApply = false,
                 attackOutcome = DemonNightAttackOutcome.MAYOR_TARGET_OR_REDIRECT_CHOICE_REQUIRED,
+                demonSafeSeats = setOf(3),
                 effectiveNightState = effectiveState(),
                 demonRoleIds = setOf(RoleId("Imp")),
             ),
         )
 
-        assertEquals(3, transition.dawnCommitIntent?.death?.targetSeat)
+        assertNull(transition.dawnCommitIntent?.death)
     }
 
     private fun effectiveState() = ClocktowerEffectiveNightState(
