@@ -10,7 +10,7 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** SNE-7.9D RED: restore must consume the current canonical Demon succession resolution. */
+/** SNE-7.9D: restore must consume the current canonical Demon succession resolution. */
 class NightTransactionReconstructorSuccessionLegalityTest {
     private val impInteraction = ClocktowerInteractionId("other_night:role:Imp")
     private val successorInteraction = ClocktowerInteractionId("other_night:event:imp:demon_successor")
@@ -47,6 +47,22 @@ class NightTransactionReconstructorSuccessionLegalityTest {
         assertEquals(empathInteraction, reconstruction.currentInteractionId)
         assertEquals(false, reconstruction.effectiveState.isMechanicallyAlive(1))
         assertEquals(RoleId("Poisoner"), reconstruction.effectiveState.currentRoleId(2))
+    }
+
+    @Test
+    fun `restored Monk protected Imp self attack does not project death or succession`() {
+        val reconstruction = NightTransactionReconstructor.reconstruct(
+            baseGameState = gameState(),
+            checkpoint = checkpoint(confirmedMonkTarget = "Imp"),
+            canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
+            demonSuccessorInteractionId = successorInteraction,
+            demonRoleId = RoleId("Imp"),
+        )
+
+        assertEquals(empathInteraction, reconstruction.currentInteractionId)
+        assertEquals(true, reconstruction.effectiveState.isMechanicallyAlive(1))
+        assertEquals(RoleId("Scarlet Woman"), reconstruction.effectiveState.currentRoleId(2))
+        assertEquals(RoleId("Poisoner"), reconstruction.effectiveState.currentRoleId(3))
     }
 
     private fun gameState() = GameState(
@@ -128,6 +144,7 @@ class NightTransactionReconstructorSuccessionLegalityTest {
     )
 
     private fun checkpoint(
+        confirmedMonkTarget: String? = null,
         demonSuccessorDraftTarget: String? = "Poisoner",
         confirmedDemonSuccessorTarget: String? = "Poisoner",
     ) = ClocktowerNightCheckpoint(
@@ -141,8 +158,8 @@ class NightTransactionReconstructorSuccessionLegalityTest {
         attackDraftTarget = "Imp",
         confirmedPoisonTarget = null,
         poisonDraftTarget = null,
-        confirmedMonkTarget = null,
-        monkDraftTarget = null,
+        confirmedMonkTarget = confirmedMonkTarget,
+        monkDraftTarget = confirmedMonkTarget,
         confirmedMayorRedirectTarget = null,
         mayorRedirectDraftTarget = null,
         pendingNewDemonName = null,
