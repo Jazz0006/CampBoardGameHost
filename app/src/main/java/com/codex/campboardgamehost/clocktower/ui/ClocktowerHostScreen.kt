@@ -702,12 +702,14 @@ internal fun ClocktowerJudgeScreen(
                 AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Ravenkeeper")
         }
 
-    val demonCard = cards.firstOrNull { it.clocktowerRole?.team == ClocktowerTeam.Demon }
-    val demonPoisonedForActionExplanation = demonCard?.let { card ->
-        card.eliminatedRound == null && nightCheckpoint.confirmedPoisonTarget == card.name
-    } == true
+    val currentDemonHostContext = resolveCurrentDemonHostContext(
+        cards = cards,
+        poisonedPlayerName = nightCheckpoint.confirmedPoisonTarget,
+    )
+    val demonCard = currentDemonHostContext?.actor
+    val demonPoisonedForActionExplanation = currentDemonHostContext?.isPoisoned == true
     val livingImp = demonCard?.takeIf {
-        it.eliminatedRound == null && it.clocktowerRole?.enName == "Imp"
+        it.clocktowerRole?.enName == "Imp"
     }
     val impSelfKillActuallyKilledImp =
         livingImp != null &&
@@ -3093,13 +3095,13 @@ internal fun ClocktowerJudgeScreen(
             build = {
             ClocktowerNightStepUi(
                 title = text("恶魔行动", "Demon action"),
-                actor = publicAliveCards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon },
-                isRealAction = publicAliveCards.any { it.clocktowerTeam == ClocktowerTeam.Demon },
-                reason = if (publicAliveCards.none { it.clocktowerTeam == ClocktowerTeam.Demon }) text("当前没有存活恶魔。", "There is no living Demon.") else "",
-                storytellerAction = publicAliveCards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon }?.let {
+                actor = demonCard,
+                isRealAction = demonCard != null,
+                reason = if (demonCard == null) text("当前没有存活恶魔。", "There is no living Demon.") else "",
+                storytellerAction = demonCard?.let {
                     text("轻拍 ${it.seatLabel(cards)}，示意睁眼。让他指今晚要杀死的玩家，在下面记录；记录后示意闭眼。", "Tap ${it.seatLabel(cards)} to wake them. Have them point to tonight's kill target, record it, then signal them to close their eyes.")
                 } ?: text("不要唤醒任何玩家，停顿 2-3 秒后继续。", "Do not wake anyone. Pause for 2–3 seconds, then continue."),
-                tellPlayer = if (publicAliveCards.any { it.clocktowerTeam == ClocktowerTeam.Demon }) {
+                tellPlayer = if (demonCard != null) {
                     if (demonPoisonedForActionExplanation) {
                         text("恶魔已中毒，今晚杀人会失效。", "The Demon is poisoned, so tonight's kill will fail.")
                     } else {
