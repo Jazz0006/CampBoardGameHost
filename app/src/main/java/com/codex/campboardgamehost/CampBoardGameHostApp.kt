@@ -2612,6 +2612,7 @@ internal fun CampBoardGameHostApp() {
                         onInitialRecommendationDemand = recordA4InitialRecommendationDemand,
                         phase = clocktowerPhase,
                         round = round,
+                        nightCheckpoint = currentClocktowerNightCheckpoint(),
                         pendingNightDeath = clocktowerPendingNightDeath,
                         demonAttackDraftTarget = clocktowerDemonAttackDraftTarget,
                         selectedExecution = clocktowerSelectedExecution,

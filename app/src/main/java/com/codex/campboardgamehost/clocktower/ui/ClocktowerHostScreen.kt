@@ -251,6 +251,7 @@ internal fun ClocktowerJudgeScreen(
     onInitialRecommendationDemand: () -> Unit,
     phase: ClocktowerPhase,
     round: Int,
+    nightCheckpoint: ClocktowerNightCheckpoint,
     pendingNightDeath: String?,
     demonAttackDraftTarget: String?,
     selectedExecution: String?,
@@ -676,50 +677,34 @@ internal fun ClocktowerJudgeScreen(
     val fortuneTellerPlayers = actualClocktowerRoleCards(cards, "Fortune Teller").filter { it.eliminatedRound == null }
     val poisonerPlayers = actualClocktowerRoleCards(cards, "Poisoner").filter { it.eliminatedRound == null }
     val butlerPlayers = actualClocktowerRoleCards(cards, "Butler").filter { it.eliminatedRound == null }
-    val demonPoisonedTonight = poisonTarget?.let { name ->
-        cards.firstOrNull { it.name == name && it.eliminatedRound == null }?.clocktowerTeam == ClocktowerTeam.Demon
-    } == true
-    val functioningMonkProtection = cards.firstOrNull {
-        AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Monk")
-    }?.let {
-        AbilityFunctioningSemantics.functionsAs(it.abilitySubject(poisonTarget), "Monk")
-    } == true
-    val mayorTarget = pendingNightDeath
-        ?.let { name -> cards.firstOrNull {
-            it.name == name && AbilityFunctioningSemantics.functionsAs(it.abilitySubject(poisonTarget), "Mayor")
-        } }
-    val mayorCanRedirect =
-        mayorTarget != null &&
-            !demonPoisonedTonight &&
-            poisonTarget != mayorTarget.name &&
-            !(functioningMonkProtection && monkProtectedTarget == mayorTarget.name)
+    val canonicalNightDeathResolution = resolveTroubleBrewingDawnDeathResolution(
+        cards = cards,
+        script = script,
+        gameSeed = gameSeed,
+        checkpoint = nightCheckpoint,
+    )
+    val mayorCanRedirect = canonicalNightDeathResolution.mayorRedirectEligible
+    val mayorTarget = canonicalNightDeathResolution.facts.mayorSeat
+        ?.let { targetSeat -> cards.getOrNull(targetSeat - 1) }
     val mayorRedirectTargetCards = cards.filter { card ->
         card.name != mayorTarget?.name &&
             MayorRedirectLegality.canReceiveRedirect(
                 targetIsDemon = card.clocktowerTeam == ClocktowerTeam.Demon,
             )
     }
-    val effectiveMayorRedirectTarget = mayorRedirectTarget
-        ?.takeIf { confirmedName ->
-            mayorRedirectTargetCards.any { it.name == confirmedName }
-        }
-    val resolvedNightDeathName =
-        if (mayorCanRedirect && effectiveMayorRedirectTarget != null) {
-            effectiveMayorRedirectTarget
-        } else {
-            pendingNightDeath
-        }
+    val resolvedNightDeathName = canonicalNightDeathResolution.resolvedDeathName
     val resolvedNightDeathCard = resolvedNightDeathName?.let { name -> cards.firstOrNull { it.name == name } }
-    val nightDeathWillOccur =
-        resolvedNightDeathCard != null &&
-            !demonPoisonedTonight &&
-            resolvedNightDeathCard.eliminatedRound == null &&
-            !(functioningMonkProtection && resolvedNightDeathCard.name == monkProtectedTarget) &&
-            !(resolvedNightDeathCard.clocktowerRole?.enName == "Soldier" && poisonTarget != resolvedNightDeathName)
+    val nightDeathWillOccur = canonicalNightDeathResolution.resolvedDeathSeat != null
     val ravenkeeperTrigger = resolvedNightDeathCard
-        ?.takeIf { nightDeathWillOccur && AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Ravenkeeper") }
+        ?.takeIf {
+            nightDeathWillOccur &&
+                AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Ravenkeeper")
+        }
 
     val demonCard = cards.firstOrNull { it.clocktowerRole?.team == ClocktowerTeam.Demon }
+    val demonPoisonedForActionExplanation = demonCard?.let { card ->
+        card.eliminatedRound == null && nightCheckpoint.confirmedPoisonTarget == card.name
+    } == true
     val livingImp = demonCard?.takeIf {
         it.eliminatedRound == null && it.clocktowerRole?.enName == "Imp"
     }
@@ -3110,7 +3095,7 @@ internal fun ClocktowerJudgeScreen(
                     text("轻拍 ${it.seatLabel(cards)}，示意睁眼。让他指今晚要杀死的玩家，在下面记录；记录后示意闭眼。", "Tap ${it.seatLabel(cards)} to wake them. Have them point to tonight's kill target, record it, then signal them to close their eyes.")
                 } ?: text("不要唤醒任何玩家，停顿 2-3 秒后继续。", "Do not wake anyone. Pause for 2–3 seconds, then continue."),
                 tellPlayer = if (publicAliveCards.any { it.clocktowerTeam == ClocktowerTeam.Demon }) {
-                    if (demonPoisonedTonight) {
+                    if (demonPoisonedForActionExplanation) {
                         text("恶魔已中毒，今晚杀人会失效。", "The Demon is poisoned, so tonight's kill will fail.")
                     } else {
                         pendingNightDeath?.let { text("已记录：今晚恶魔选择杀死 ${playerSeatLabel(cards, it)}。现在不要宣布死亡，等天亮统一宣布。", "Recorded: the Demon chose ${playerSeatLabel(cards, it)}. Do not announce the death until dawn.") }
@@ -3118,7 +3103,7 @@ internal fun ClocktowerJudgeScreen(
                 } else {
                     null
                 },
-                explanation = if (demonPoisonedTonight) text("可以记录恶魔选择，但天亮不会因此死亡。", "Record the Demon's choice, but it will not cause a death at dawn.") else text("恶魔选择的死亡目标会在天亮时统一公布。", "The Demon's chosen target is announced at dawn."),
+                explanation = if (demonPoisonedForActionExplanation) text("可以记录恶魔选择，但天亮不会因此死亡。", "Record the Demon's choice, but it will not cause a death at dawn.") else text("恶魔选择的死亡目标会在天亮时统一公布。", "The Demon's chosen target is announced at dawn."),
                 action = ClocktowerNightAction.DemonKill,
             )
             },
