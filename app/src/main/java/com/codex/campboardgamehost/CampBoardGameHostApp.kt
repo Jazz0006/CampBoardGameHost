@@ -1255,43 +1255,56 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun nextNightPublicAliveObservationPreflightOrNull(): Pair<String, Int>? {
-        val demonPoisonedTonight = clocktowerConfirmedPoisonTarget?.let { name ->
-            cards.firstOrNull { it.name == name && it.eliminatedRound == null }?.clocktowerTeam == ClocktowerTeam.Demon
-        } == true
-        if (demonPoisonedTonight) return null
-
-        val originalDeathName = clocktowerPendingNightDeath ?: return null
-        val originalDeathCard = cards.firstOrNull { it.name == originalDeathName }
-        val mayorCanRedirect = originalDeathCard?.let {
-            AbilityFunctioningSemantics.functionsAs(
-                it.abilitySubject(clocktowerConfirmedPoisonTarget),
-                "Mayor",
-            )
-        } == true
-        val resolvedDeathName = if (mayorCanRedirect) {
-            clocktowerConfirmedMayorRedirectTarget ?: originalDeathName
-        } else {
-            originalDeathName
-        }
-        val deathIndex = cards.indexOfFirst { it.name == resolvedDeathName }
-        val nightDeathCard = cards.getOrNull(deathIndex)
-        if (deathIndex < 0 || nightDeathCard == null || nightDeathCard.eliminatedRound != null) return null
-
-        val apparentMonk = cards.firstOrNull {
-            AbilityFunctioningSemantics.interactsAs(it.abilitySubject(clocktowerConfirmedPoisonTarget), "Monk")
-        }
-        val protectedByMonk = AbilityFunctioningSemantics.selectedMechanicalEffectApplies(
-            subject = apparentMonk?.abilitySubject(clocktowerConfirmedPoisonTarget),
-            role = "Monk",
-            selectionMatches = clocktowerConfirmedMonkProtectedTarget == resolvedDeathName,
+        val originalDeathName = clocktowerPendingNightDeath
+        val dawnDeathFacts = resolveTroubleBrewingDawnDeathFacts(
+            cards = cards,
+            targetName = originalDeathName,
+            poisonedPlayerName = clocktowerConfirmedPoisonTarget,
+            monkProtectedTargetName = clocktowerConfirmedMonkProtectedTarget,
         )
-        val protectedBySoldier = AbilityFunctioningSemantics.functionsAs(
-            nightDeathCard.abilitySubject(clocktowerConfirmedPoisonTarget),
-            "Soldier",
+        val baseGameState = cards.toClocktowerGameState(
+            currentClocktowerScript,
+            clocktowerGameSeed,
+            poisonedPlayerName = clocktowerConfirmedPoisonTarget,
         )
-        if (protectedByMonk || protectedBySoldier) return null
-
-        val eventOffset = if (mayorCanRedirect && resolvedDeathName != originalDeathName) 2 else 1
+        val effectiveNightState = ClocktowerEffectiveNightState(
+            effectiveAliveSeats = cards.mapIndexedNotNull { index, card ->
+                (index + 1).takeIf { card.eliminatedRound == null }
+            }.toSet(),
+            effectiveRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
+                card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
+            }.toMap(),
+        )
+        val demonRoleIds = cards.mapNotNull { card ->
+            card.clocktowerRole
+                ?.takeIf { card.clocktowerTeam == ClocktowerTeam.Demon }
+                ?.let { role -> RoleId(role.enName) }
+        }.toSet()
+        val deathTransition = NightDawnResolutionPlanner.planValidatedNightDeath(
+            baseGameState = baseGameState,
+            checkpoint = currentClocktowerNightCheckpoint(),
+            input = NightDawnDeathResolutionInput(
+                originalDeathSeat = dawnDeathFacts.originalDeathSeat,
+                mayorSeat = dawnDeathFacts.mayorSeat,
+                mayorRedirectMayApply = dawnDeathFacts.mayorSeat != null,
+                attackOutcome = dawnDeathFacts.attackOutcome,
+                demonSafeSeats = dawnDeathFacts.demonSafeSeats,
+                effectiveNightState = effectiveNightState,
+                demonRoleIds = demonRoleIds,
+            ),
+        )
+        val resolvedDeathSeat = deathTransition.dawnCommitIntent?.death?.targetSeat ?: return null
+        val resolvedDeathName = cards.getOrNull(resolvedDeathSeat - 1)?.name ?: return null
+        val eventOffset =
+            if (
+                dawnDeathFacts.mayorSeat != null &&
+                dawnDeathFacts.originalDeathSeat != null &&
+                resolvedDeathSeat != dawnDeathFacts.originalDeathSeat
+            ) {
+                2
+            } else {
+                1
+            }
         return resolvedDeathName to (clocktowerEventCounter + eventOffset)
     }
 
