@@ -5,29 +5,22 @@
 > Branch: `codex/clocktower-same-night-effective-state-correctness`  
 > PR: #54  
 > Parent status authority: `docs/CURRENT_DEVELOPMENT_ROADMAP.md`  
-> Status: **TWO POST-ACCEPTANCE P1 RUNTIME BLOCKERS — PR MUST REMAIN UNMERGED**
+> Status: **PR54-P1-1 ACCEPTED; PR54-P1-2 ACTIVE P1 RUNTIME BLOCKER — PR MUST REMAIN UNMERGED**
 
-## 1. Why this handoff exists
+## 1. Current blocker status
 
-The earlier GCR acceptance checkpoints remain valid evidence for the behavior they actually exercised, but a later review found two normal runtime paths that were not covered by those tests. Both are P1 merge blockers for PR #54.
-
-Last audited pre-fix PR head:
+Later review of the accepted GCR checkpoints found two normal runtime paths outside prior coverage. PR54-P1-1 has now been fixed and independently validated. PR54-P1-2 remains the sole active post-acceptance P1 blocker.
 
 ```text
-e9a30ffc353d870df388329986be433268558661
+PR54-P1-1  First-night Fortune Teller projection crash   FIXED / ACCEPTED
+PR54-P1-2  Imp self-kill pending successor reconstruction crash   ACTIVE / BLOCKING
 ```
 
-The blocker documentation commit begins after that head.
+Do not merge, rebase, force-push, or broaden into GCR-4/5, A3, App-root S9.2, Host/A4/ZDD promotion, generic misinformation, or unrelated recommendation work.
 
-## 2. PR54-P1-1 — First-night Fortune Teller projection crash
+## 2. PR54-P1-1 — First-night Fortune Teller projection crash — ACCEPTED
 
-### Confirmed failure path
-
-In `ClocktowerHostScreen.kt`, once Fortune Teller has selected two players, the Host unconditionally constructs the Fortune Teller `OTHER_NIGHT` interaction id and calls `effectiveNightStateAt(...)`.
-
-On First Night, `otherNightCanonicalInteractionIds` is intentionally empty. The effective-state projector rejects the requested interaction as unknown, so the normal First Night Fortune Teller path crashes after the second target is selected.
-
-### Required contract
+Accepted contract:
 
 ```text
 First Night
@@ -38,22 +31,32 @@ Other Night
 -> continue using canonical same-night effective-state projection
 ```
 
-The projector must stay fail-closed for unknown interactions. Do not weaken `ClocktowerEffectiveNightState` to hide the caller bug.
+Evidence:
 
-### Tests-first slice
+```text
+Historical behavioral RED:
+779a58ea83ef2fc1a07aae67e63b929454c0c8ab
+CI #987 / run 33220660973
+- compilation succeeded
+- :app:testFast executed
+- 907 tests completed, 1 failed
+- expected Fortune Teller First Night behavioral failure
 
-Required RED:
+Minimal production GREEN:
+11cc2c78b336f11e7bb9722b1913c2cfabe8d109
+- only ClocktowerHostCoreSemantics.kt and ClocktowerHostScreen.kt changed
+- First Night selects base authority
+- Other Night projection is lazy and remains canonical
 
-- callable typed seam;
-- First Night returns the base role authority;
-- an Other Night projection provider that would fail/throw must **not be evaluated** on First Night;
-- Other Night must evaluate and return the projected role authority.
+Strengthened typed regression checkpoint:
+f97276139ab0123329c1e73c0380048c5ac98e3d
+CI #989 / run 33221389915 SUCCESS
+R2 #916 / run 33221389931 SUCCESS
+```
 
-Then wire Fortune Teller matching through that seam with the smallest Host edit possible.
+The projector remains fail-closed. Do not reopen this slice unless new evidence appears.
 
-Focused GREEN should cover the new seam plus existing Fortune Teller/effective-state/First Night/Other Night regressions. Keep this slice independent of Demon succession.
-
-## 3. PR54-P1-2 — Imp self-kill pending successor Host reconstruction crash
+## 3. PR54-P1-2 — Imp self-kill pending successor Host reconstruction crash — ACTIVE
 
 ### Confirmed failure path
 
@@ -77,21 +80,56 @@ Host reconstruction currently requires a non-null role from the current living D
 - do not durably mutate the successor early;
 - do not replace the invariant with an unprincipled nullable fallback.
 
-This is the **second** micro-slice. Do not mix it into PR54-P1-1.
+### Tests-first target
+
+Audit these ownership boundaries before creating RED:
+
+```text
+ClocktowerCurrentDemonAuthority.kt
+clocktower/rules/CurrentDemonAuthority.kt
+clocktower/session/NightTransactionReconstructor.kt
+clocktower/session/TroubleBrewingDemonSuccessionResolver.kt
+ClocktowerHostScreen.kt reconstruction inputs
+App mutation path that marks the old Imp dead and sets pendingNewDemonName
+```
+
+The preferred RED is typed and lifecycle-oriented. It must represent:
+
+```text
+phase == Night
+old Imp already mechanically dead
+pending successor exists
+no living Demon card exists yet
+confirmed current-night Demon attacker authority still exists
+```
+
+and prove reconstruction/Host input derivation can obtain the canonical Demon role without throwing or prematurely materializing the successor.
+
+Focused regression candidates include:
+
+```text
+ClocktowerNewDemonIdentityContractTest
+ClocktowerNewDemonProductionWiringTest
+ClocktowerCurrentDemonAuthorityTest
+TroubleBrewingCurrentDemonRegressionTest
+NightTransactionReconstructorSuccessionLegalityTest
+ClocktowerDemonSuccessionProductionWiringTest
+```
 
 ## 4. Execution order
 
 ```text
-A. PR54-P1-1 typed RED
-B. prove expected RED
-C. minimal GREEN
-D. focused affected regressions + diff audit
-E. PR54-P1-2 typed RED/GREEN as a separate slice
-F. logical checkpoint validation
-G. refresh PR merge-readiness evidence
+A. audit pending-succession authority ownership
+B. establish typed PR54-P1-2 RED
+C. prove expected assertion/JUnit behavioral RED
+D. minimal production GREEN
+E. focused succession + reconstruction regressions
+F. T1 :app:testFast logical checkpoint
+G. remote exact diff audit
+H. refresh merge-readiness evidence
 ```
 
-Do not merge, rebase, force-push, or broaden into GCR-4/5, A3, App-root S9.2, Host/A4/ZDD promotion, generic misinformation, or unrelated recommendation work.
+Do not merge PR #54 without explicit user authorization.
 
 ## 5. Historical acceptance context
 
@@ -108,4 +146,4 @@ GCR-3 final test-quality acceptance:
 383ad0e695656124f9dc608fd5ce06b72de6b499
 ```
 
-They do not cover the two newly identified runtime paths, so they are no longer sufficient current merge evidence by themselves.
+They do not cover the pending-confirmation no-living-Demon state, so they are not sufficient current merge evidence by themselves.
