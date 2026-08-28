@@ -17,7 +17,7 @@ class ClocktowerMayorDemonExclusionWiringTest {
     ).readText(Charsets.UTF_8)
 
     @Test
-    fun `Mayor redirect excludes Demon at legality recommendation UI and restored fact boundaries`() {
+    fun `Mayor redirect excludes Demon at legality recommendation and manual UI boundaries`() {
         assertTrue(
             "Mayor recommendation candidates must use the shared Demon-exclusion legality rule.",
             recommenderSource.contains("MayorRedirectLegality.canReceiveRedirect") &&
@@ -33,11 +33,16 @@ class ClocktowerMayorDemonExclusionWiringTest {
                 mayorStateBlock.contains("ClocktowerTeam.Demon") &&
                 mayorStateBlock.contains("MayorRedirectLegality.canReceiveRedirect"),
         )
+
+        // Restored/confirmed Mayor redirect mechanical validation is intentionally not asserted by
+        // Host source shape here. SNE-7.9C routes that responsibility through the checkpoint-backed
+        // canonical Dawn resolver and NightDawnResolutionPlanner; the typed Mayor planner contract
+        // proves that an effective Demon redirect fails closed before Dawn materialization.
         assertTrue(
-            "A restored/confirmed Demon redirect target must fail closed before mechanical death resolution.",
-            mayorStateBlock.contains("effectiveMayorRedirectTarget") &&
-                mayorStateBlock.contains("resolvedNightDeathName") &&
-                mayorStateBlock.contains("effectiveMayorRedirectTarget"),
+            "Host mechanical death state must consume the checkpoint-backed canonical Dawn resolver.",
+            mayorStateBlock.contains("resolveTroubleBrewingDawnDeathResolution(") &&
+                mayorStateBlock.contains("checkpoint = nightCheckpoint") &&
+                mayorStateBlock.contains("resolvedNightDeathName = canonicalNightDeathResolution.resolvedDeathName"),
         )
 
         assertTrue(
