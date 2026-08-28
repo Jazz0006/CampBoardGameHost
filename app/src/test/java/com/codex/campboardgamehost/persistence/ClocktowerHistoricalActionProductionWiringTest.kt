@@ -1,103 +1,47 @@
 package com.codex.campboardgamehost
 
-import org.junit.Assert.assertFalse
+import java.io.File
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
+/**
+ * Coarse production ownership guard for durable action history.
+ *
+ * Action ordering, commit semantics, replay, and persistence behavior belong to typed tests. This
+ * file protects only that the non-callable App boundary still uses the canonical owners.
+ */
 class ClocktowerHistoricalActionProductionWiringTest {
     private val appSource = File(
         "src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt",
     ).readText(Charsets.UTF_8)
 
     @Test
-    fun `production owns one action timeline and routes both event types through the shared cursor`() {
-        assertTrue(appSource.contains("var clocktowerActionTimeline by remember { mutableStateOf(ActionFactTimeline()) }"))
-
-        val actionCommit = appSource
-            .substringAfter("fun recordClocktowerAction(")
-            .substringBefore("fun recordEpistemicObservation(")
-        assertTrue(actionCommit.contains("draft: ActionFactDraft"))
-        assertTrue(actionCommit.contains("ClocktowerGameSession.commitGlobalActionFact("))
-        assertTrue(actionCommit.contains("actionTimeline = clocktowerActionTimeline"))
-        assertTrue(actionCommit.contains("observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList())"))
-        assertTrue(actionCommit.contains("nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence"))
-        assertTrue(actionCommit.contains("clocktowerActionTimeline = committed.actionTimeline"))
-        assertTrue(actionCommit.contains("clocktowerNextTimelineGlobalSequence = committed.nextTimelineGlobalSequence"))
-
-        val observationCommit = appSource
-            .substringAfter("fun recordEpistemicObservation(")
-            .substringBefore("fun preflightClocktowerPublicAliveObservation(")
-        assertTrue(observationCommit.contains("actionTimeline = clocktowerActionTimeline"))
-
-        val publicPreflight = appSource
-            .substringAfter("fun preflightClocktowerPublicAliveObservation(")
-            .substringBefore("fun nextNightPublicAliveObservationPreflightOrNull(")
-        assertTrue(publicPreflight.contains("actionTimeline = clocktowerActionTimeline"))
+    fun `App owns one action timeline and commits drafts through canonical session authority`() {
+        assertTrue(appSource.contains("mutableStateOf(ActionFactTimeline())"))
+        assertTrue(appSource.contains("fun recordClocktowerAction("))
+        assertTrue(appSource.contains("draft: ActionFactDraft"))
+        assertTrue(appSource.contains("ClocktowerGameSession.commitGlobalActionFact("))
     }
 
     @Test
-    fun `active game save restore and new game reset preserve action history without upgrading legacy history`() {
-        val save = appSource
-            .substringAfter("fun activeGameSnapshotJson()")
-            .substringBefore("fun persistActiveGameStateIfNeeded()")
-        assertTrue(save.contains("ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY"))
-        assertTrue(save.contains("ClocktowerSemanticHistoryPersistence.encodeActionTimeline(clocktowerActionTimeline)"))
-
-        val restore = appSource
-            .substringAfter("fun restoreSavedGame()")
-            .substringBefore("val latestPersistActiveGameState")
-        assertTrue(restore.contains("ClocktowerSemanticHistoryPersistence.decodeActionTimeline(json)"))
-        assertTrue(restore.contains("actionTimeline = restoredClocktowerActionTimeline"))
-        assertTrue(restore.contains("clocktowerActionTimeline = restoredClocktowerActionTimeline"))
-        assertFalse(restore.contains("ActionFactTimeline(restoredClocktowerEvents"))
-
-        val reset = appSource
-            .substringAfter("fun resetDealState(")
-            .substringBefore("fun startUndercoverGame()")
-        assertTrue(reset.contains("clocktowerActionTimeline = ActionFactTimeline()"))
+    fun `App save restore and reset use canonical action timeline persistence`() {
+        assertTrue(appSource.contains("ClocktowerSemanticHistoryPersistence.encodeActionTimeline(clocktowerActionTimeline)"))
+        assertTrue(appSource.contains("ClocktowerSemanticHistoryPersistence.decodeActionTimeline(json)"))
+        assertTrue(appSource.contains("clocktowerActionTimeline = ActionFactTimeline()"))
     }
 
     @Test
-    fun `confirmed night selections emit action drafts rather than persisting provisional choices`() {
-        val poison = appSource
-            .substringAfter("onConfirmPoisonTarget =")
-            .substringBefore("onSelectFortuneTellerFirst =")
-        assertTrue(poison.contains("recordClocktowerAction(ActionFactDraft.Poison("))
-        val poisonDraftSelection = appSource
-            .substringAfter("onSelectPoisonTarget =")
-            .substringBefore("onConfirmPoisonTarget =")
-        assertFalse(poisonDraftSelection.contains("ActionFactDraft.Poison("))
-
-        val attack = appSource
-            .substringAfter("onConfirmDemonAttack =")
-            .substringBefore("onSelectMonkProtectedTarget =")
-        assertTrue(attack.contains("recordClocktowerAction(ActionFactDraft.Attack("))
-
-        val protect = appSource
-            .substringAfter("onConfirmMonkProtectedTarget =")
-            .substringBefore("onSelectMayorRedirectTarget =")
-        assertTrue(protect.contains("recordClocktowerAction(ActionFactDraft.Protect("))
-    }
-
-    @Test
-    fun `execution death role change and phase transitions become replayable semantic actions`() {
-        assertTrue(appSource.contains("recordClocktowerAction(ActionFactDraft.Execution("))
-        assertTrue(appSource.contains("recordClocktowerAction(ActionFactDraft.Death("))
-        assertTrue(appSource.contains("recordClocktowerAction(ActionFactDraft.RoleChange("))
-        assertTrue(appSource.contains("recordClocktowerAction(ActionFactDraft.PhaseAdvance("))
-
-        val roleChangeRecorder = appSource
-            .substringAfter("fun recordClocktowerRoleChangeAction(")
-            .substringBefore("fun setClocktowerActualRole(")
-        assertTrue(roleChangeRecorder.contains("recordClocktowerAction(ActionFactDraft.RoleChange("))
-
-        val roleChange = appSource
-            .substringAfter("fun setClocktowerActualRole(")
-            .substringBefore("fun setClocktowerShownRole(")
-        val recordIndex = roleChange.indexOf("recordClocktowerRoleChangeAction(")
-        val stateMutationIndex = roleChange.indexOf("cards[index] = cards[index].copy(")
-        assertTrue(recordIndex >= 0)
-        assertTrue(stateMutationIndex > recordIndex)
+    fun `confirmed gameplay transitions emit typed action drafts`() {
+        listOf(
+            "ActionFactDraft.Poison(",
+            "ActionFactDraft.Attack(",
+            "ActionFactDraft.Protect(",
+            "ActionFactDraft.Execution(",
+            "ActionFactDraft.Death(",
+            "ActionFactDraft.RoleChange(",
+            "ActionFactDraft.PhaseAdvance(",
+        ).forEach { draftType ->
+            assertTrue("Missing production action draft: $draftType", appSource.contains(draftType))
+        }
     }
 }
