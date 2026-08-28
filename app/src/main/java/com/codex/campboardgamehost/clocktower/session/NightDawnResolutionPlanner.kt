@@ -69,29 +69,63 @@ internal object NightDawnResolutionPlanner {
         checkpoint: ClocktowerNightCheckpoint,
         successionResolution: DemonSuccessionResolution,
         demonRoleId: RoleId,
-    ): NightDawnResolutionTransition {
-        val confirmedName = checkpoint.confirmedDemonSuccessorTarget
-        val confirmedSeat = confirmedName
-            ?.let { name -> baseGameState.players.firstOrNull { it.name == name }?.seat }
-        val confirmedChoiceIsLegal =
-            successionResolution is DemonSuccessionResolution.Choice &&
-                confirmedSeat != null &&
-                confirmedSeat in successionResolution.targetSeats
+    ): NightDawnResolutionTransition = when (successionResolution) {
+        DemonSuccessionResolution.None -> NightDawnResolutionTransition(
+            checkpoint = checkpoint.copy(
+                pendingNewDemonName = null,
+                demonSuccessorDraftTarget = null,
+                confirmedDemonSuccessorTarget = null,
+            ),
+            continuation = NightResolutionContinuation.DAWN,
+            dawnCommitIntent = null,
+            outcomeEvaluationAllowed = true,
+        )
 
-        return if (confirmedChoiceIsLegal) {
-            NightDawnResolutionTransition(
-                checkpoint = checkpoint.copy(pendingNewDemonName = confirmedName),
-                continuation = NightResolutionContinuation.AWAIT_NEW_DEMON_IDENTITY,
-                dawnCommitIntent = null,
-                outcomeEvaluationAllowed = false,
-            )
-        } else {
-            NightDawnResolutionTransition(
-                checkpoint = checkpoint,
-                continuation = NightResolutionContinuation.AWAIT_DEMON_SUCCESSOR,
-                dawnCommitIntent = null,
-                outcomeEvaluationAllowed = false,
-            )
+        is DemonSuccessionResolution.Forced -> {
+            val forcedName = baseGameState.playerAt(successionResolution.targetSeat)?.name
+            if (forcedName == null) {
+                NightDawnResolutionTransition(
+                    checkpoint = checkpoint,
+                    continuation = NightResolutionContinuation.AWAIT_DEMON_SUCCESSOR,
+                    dawnCommitIntent = null,
+                    outcomeEvaluationAllowed = false,
+                )
+            } else {
+                NightDawnResolutionTransition(
+                    checkpoint = checkpoint.copy(
+                        pendingNewDemonName = forcedName,
+                        demonSuccessorDraftTarget = null,
+                        confirmedDemonSuccessorTarget = null,
+                    ),
+                    continuation = NightResolutionContinuation.AWAIT_NEW_DEMON_IDENTITY,
+                    dawnCommitIntent = null,
+                    outcomeEvaluationAllowed = false,
+                )
+            }
+        }
+
+        is DemonSuccessionResolution.Choice -> {
+            val confirmedName = checkpoint.confirmedDemonSuccessorTarget
+            val confirmedSeat = confirmedName
+                ?.let { name -> baseGameState.players.firstOrNull { it.name == name }?.seat }
+            val confirmedChoiceIsLegal =
+                confirmedSeat != null && confirmedSeat in successionResolution.targetSeats
+
+            if (confirmedChoiceIsLegal) {
+                NightDawnResolutionTransition(
+                    checkpoint = checkpoint.copy(pendingNewDemonName = confirmedName),
+                    continuation = NightResolutionContinuation.AWAIT_NEW_DEMON_IDENTITY,
+                    dawnCommitIntent = null,
+                    outcomeEvaluationAllowed = false,
+                )
+            } else {
+                NightDawnResolutionTransition(
+                    checkpoint = checkpoint,
+                    continuation = NightResolutionContinuation.AWAIT_DEMON_SUCCESSOR,
+                    dawnCommitIntent = null,
+                    outcomeEvaluationAllowed = false,
+                )
+            }
         }
     }
 
