@@ -52,11 +52,12 @@ internal object NightTransactionReconstructor {
                     player.name == targetName && player.actualRole == demonRoleId
                 }?.seat
             }
-        val successionResolution = resolveTroubleBrewingImpSelfKillSuccession(
+        val impSelfKillResolution = resolveTroubleBrewingImpSelfKill(
             baseGameState = baseGameState,
             checkpoint = checkpoint,
             demonRoleId = demonRoleId,
         )
+        val successionResolution = impSelfKillResolution.successionResolution
         val canonicalSuccessorSeat = when (successionResolution) {
             DemonSuccessionResolution.None -> null
             is DemonSuccessionResolution.Forced -> successionResolution.targetSeat
@@ -69,26 +70,32 @@ internal object NightTransactionReconstructor {
         val confirmedEvents: List<ResolvedNightMechanicalEvent> =
             if (
                 confirmedAttackDemonSeat != null &&
-                canonicalSuccessorSeat != null &&
+                impSelfKillResolution.demonActuallyDied &&
                 demonSuccessorInteractionId in canonicalInteractionIds
             ) {
-                listOf(
-                    ResolvedNightMechanicalEvent.MechanicalDeath(
-                        targetSeat = confirmedAttackDemonSeat,
-                        effectiveAt = ClocktowerEffectiveNightCursor(
-                            interactionId = demonSuccessorInteractionId,
-                            boundary = ClocktowerInteractionBoundary.BEFORE,
+                buildList {
+                    add(
+                        ResolvedNightMechanicalEvent.MechanicalDeath(
+                            targetSeat = confirmedAttackDemonSeat,
+                            effectiveAt = ClocktowerEffectiveNightCursor(
+                                interactionId = demonSuccessorInteractionId,
+                                boundary = ClocktowerInteractionBoundary.BEFORE,
+                            ),
                         ),
-                    ),
-                    ResolvedNightMechanicalEvent.RoleChanged(
-                        targetSeat = canonicalSuccessorSeat,
-                        roleId = demonRoleId,
-                        effectiveAt = ClocktowerEffectiveNightCursor(
-                            interactionId = demonSuccessorInteractionId,
-                            boundary = ClocktowerInteractionBoundary.AFTER,
-                        ),
-                    ),
-                )
+                    )
+                    canonicalSuccessorSeat?.let { targetSeat ->
+                        add(
+                            ResolvedNightMechanicalEvent.RoleChanged(
+                                targetSeat = targetSeat,
+                                roleId = demonRoleId,
+                                effectiveAt = ClocktowerEffectiveNightCursor(
+                                    interactionId = demonSuccessorInteractionId,
+                                    boundary = ClocktowerInteractionBoundary.AFTER,
+                                ),
+                            ),
+                        )
+                    }
+                }
             } else {
                 emptyList()
             }
