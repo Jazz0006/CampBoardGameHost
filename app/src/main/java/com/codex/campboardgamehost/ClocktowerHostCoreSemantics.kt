@@ -69,6 +69,12 @@ internal fun empathEvilNeighborCount(
     }
 }
 
+internal fun <T> clocktowerFortuneTellerRoleAuthority(
+    phase: ClocktowerPhase,
+    baseRole: T?,
+    otherNightRole: () -> T?,
+): T? = otherNightRole()
+
 internal fun storytellerPairHint(
     target: PlayerCard,
     cards: List<PlayerCard>,
