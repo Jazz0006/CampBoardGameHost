@@ -3714,6 +3714,23 @@ internal fun CampBoardGameHostApp() {
                                             projectSemanticHistory = false,
                                         )
                                     }
+                                    if (dawnDeathMaterialization.publicAliveObservationIdToCommit != null) {
+                                        recordEpistemicObservation(EpistemicObservationDraft(
+                                            recordId = dawnDeathMaterialization.publicAliveObservationIdToCommit,
+                                            phase = storytellerPhaseFor(),
+                                            round = round,
+                                            sequence = deathLocalSequence,
+                                            sourceSeat = null,
+                                            sourceAbility = null,
+                                            visibility = ObservationVisibility.PUBLIC,
+                                            recipientSeats = emptySet(),
+                                            reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+                                            proposition = InformationProposition.AliveAt(
+                                                dawnDeathMaterialization.intent.targetSeat,
+                                                false,
+                                            ),
+                                        ))
+                                    }
                                     if (demonDied) {
                                         if (impSelfChosen) {
                                             val demonRoleId = RoleId(requireNotNull(nightDeathCard.clocktowerRole).enName)
