@@ -12,7 +12,8 @@ main baseline: c8985cb4991f6c7e5ea02adedb932d2d86452da1
 active branch: codex/clocktower-same-night-effective-state-correctness
 PR: #54
 PR policy: open / unmerged until explicit authorization
-last audited head before blocker fixes: e9a30ffc353d870df388329986be433268558661
+last audited pre-blocker head: e9a30ffc353d870df388329986be433268558661
+PR54-P1-1 accepted checkpoint: f97276139ab0123329c1e73c0380048c5ac98e3d
 ```
 
 Current accepted GCR checkpoints:
@@ -28,20 +29,20 @@ GCR-3 final test-quality acceptance:
 383ad0e695656124f9dc608fd5ce06b72de6b499
 ```
 
-These checkpoints remain valid evidence for the behavior they exercised. They are no longer sufficient merge evidence for the current PR because post-acceptance review found two additional runtime P1 regressions not covered by those tests.
+These checkpoints remain valid evidence for the behavior they exercised. They are no longer sufficient merge evidence for the current PR because post-acceptance review found additional runtime P1 regressions outside that prior coverage. PR54-P1-1 is now fixed and accepted; PR54-P1-2 remains the active merge blocker.
 
 ## 2. Current priority — PR #54 post-acceptance runtime blockers
 
 Status:
 
 ```text
-PR54-P1-1  First-night Fortune Teller incorrectly enters Other Night projection   CONFIRMED / BLOCKING / FIX FIRST
-PR54-P1-2  Imp self-kill pending successor cannot reconstruct Host safely         CONFIRMED / BLOCKING / FIX SECOND
+PR54-P1-1  First-night Fortune Teller incorrectly enters Other Night projection   FIXED / ACCEPTED
+PR54-P1-2  Imp self-kill pending successor cannot reconstruct Host safely         CONFIRMED / BLOCKING / ACTIVE
 ```
 
-### PR54-P1-1 — First-night Fortune Teller projection crash
+### PR54-P1-1 — First-night Fortune Teller projection crash — FIXED / ACCEPTED
 
-Observed production path:
+Original production path:
 
 ```text
 First Night
@@ -53,7 +54,7 @@ First Night
 -> crash
 ```
 
-Required contract:
+Accepted contract:
 
 ```text
 First Night
@@ -64,18 +65,38 @@ Other Night
 -> Fortune Teller continues to use canonical same-night effective-state projection
 ```
 
-Do **not** weaken the effective-state projector to accept unknown interactions. The caller must select the correct authority for the current phase.
+The effective-state projector remains fail-closed for unknown interactions. The caller now selects the correct authority for the current phase.
 
-Implementation order:
+Acceptance evidence:
 
 ```text
-1. typed focused RED proving First Night does not evaluate the Other Night projection provider;
-2. minimal production GREEN;
-3. focused Fortune Teller + effective-state + First/Other Night regressions;
-4. exact diff audit before moving to PR54-P1-2.
+Historical behavioral RED checkpoint:
+779a58ea83ef2fc1a07aae67e63b929454c0c8ab
+CI #987 / run 33220660973 FAILURE as expected
+- production and tests compiled successfully
+- :app:testFast executed
+- 907 tests completed, 1 failed
+- failing test: ClocktowerFortuneTellerPhaseAuthorityTest
+- failure: First Night evaluated the Other Night provider
+
+Minimal production GREEN:
+11cc2c78b336f11e7bb9722b1913c2cfabe8d109
+- exactly one commit after the RED checkpoint
+- production diff limited to ClocktowerHostCoreSemantics.kt and ClocktowerHostScreen.kt
+- First Night uses base role authority
+- Other Night uses lazy canonical effective-state projection
+
+Strengthened typed regression checkpoint:
+f97276139ab0123329c1e73c0380048c5ac98e3d
+CI #989 / run 33221389915 SUCCESS
+- Android :app:testFast actually executed and passed
+- CI gate SUCCESS
+R2 #916 / run 33221389931 SUCCESS
 ```
 
-### PR54-P1-2 — Imp self-kill pending successor reconstruction crash
+The strengthened typed regression covers Fortune Teller Demon-match semantics in both directions: First Night base Demon/non-Demon without evaluating Other Night projection, and Other Night projected role overriding the base role.
+
+### PR54-P1-2 — Imp self-kill pending successor reconstruction crash — ACTIVE
 
 Observed production lifecycle:
 
@@ -98,9 +119,9 @@ Required contract:
 - do not prematurely durably mutate the successor into Demon before confirmation/materialization;
 - do not turn the invariant into an unprincipled nullable fallback.
 
-PR54-P1-2 must remain a separate micro-slice after PR54-P1-1 is GREEN.
+PR54-P1-2 is now the active separate tests-first micro-slice.
 
-## 3. GCR-1 — Current Demon authority — ACCEPTED WITH NEW PENDING-SUCCESSION REGRESSION OUTSIDE PRIOR COVERAGE
+## 3. GCR-1 — Current Demon authority — ACCEPTED WITH PENDING-SUCCESSION REGRESSION OUTSIDE PRIOR COVERAGE
 
 Accepted correctness remains:
 
@@ -112,7 +133,7 @@ Later:     Imp1 can self-kill -> Imp2 becomes current Demon
 
 Historical dead Demon role identity remains represented correctly. Current authority derives from the single live Demon after succession has been completed.
 
-The newly discovered PR54-P1-2 concerns the **transient pending-confirmation window before the successor becomes the completed current living Demon**. It does not invalidate the accepted cross-night repeated-succession behavior, but it blocks the PR until the missing lifecycle case is covered and fixed.
+PR54-P1-2 concerns the **transient pending-confirmation window before the successor becomes the completed current living Demon**. It does not invalidate the accepted cross-night repeated-succession behavior, but it blocks the PR until the missing lifecycle case is covered and fixed.
 
 Accepted executable checkpoint:
 
@@ -171,7 +192,7 @@ CI #963 / run 33175600756 SUCCESS
 R2 run 33175600749 SUCCESS
 ```
 
-This remains the authoritative T4 evidence for the GCR-1/GCR-2 behavior actually covered at that checkpoint. It is not current merge authorization because PR54-P1-1 and PR54-P1-2 are newly identified runtime paths outside that coverage.
+This remains the authoritative T4 evidence for the GCR-1/GCR-2 behavior actually covered at that checkpoint. It is not current merge authorization because PR54-P1-2 is a runtime path outside that coverage and remains unresolved.
 
 ## 6. GCR-3 — source-string retirement — ACCEPTED
 
@@ -224,7 +245,7 @@ Detailed audit:
 docs/GCR3_SOURCE_STRING_RETIREMENT_AUDIT_2026-08-28.md
 ```
 
-## 7. SNE-7 — CLOSED / BROAD GREEN, WITH NEW CALLER REGRESSION TO FIX
+## 7. SNE-7 — CLOSED / BROAD GREEN
 
 Earlier accepted executable SNE-7 full checkpoint:
 
@@ -241,7 +262,7 @@ Durable contracts to preserve:
 - current role/effective state must be read at the correct same-night interaction point;
 - Dawn replay/retry must be idempotent and exactly-once at history level.
 
-PR54-P1-1 is a caller phase-selection regression: First Night must not be forced through an Other Night chronology. The projector invariant itself remains protected and should not be relaxed.
+The later First Night Fortune Teller caller phase-selection regression has now been fixed without relaxing the projector invariant.
 
 Historical SNE execution handoffs are consolidated under:
 
@@ -251,7 +272,7 @@ docs/archive/SNE7_AND_PRE_GCR_HANDOFF_CLOSEOUT_2026-08-28.md
 
 ## 8. Deferred work registry
 
-These remain deferred and are **not** the two current PR blockers:
+These remain deferred and are **not** the current PR blocker:
 
 | Deferred area | Status |
 |---|---|
@@ -274,7 +295,7 @@ Gameplay/rules correctness must be typed.
 
 Long-term source inspection is allowed only for coarse architecture/ownership assertions where there is no callable seam. Source-string tests must not freeze incidental implementation details or substitute for rules behavior.
 
-For PR54-P1-1, prefer a small callable typed phase-authority seam that can prove First Night does not invoke the Other Night projection provider. Do not add a source-string gameplay assertion as the primary RED.
+For PR54-P1-2, prefer a typed lifecycle/reconstruction seam proving that a valid pending-succession state with no living Demon can still derive the required current-night Demon role authority. Do not use source inspection as the primary RED.
 
 ## 10. Validation policy
 
@@ -301,30 +322,29 @@ Until explicit authorization:
 - keep PR #54 open/unmerged;
 - do not merge;
 - do not rebase/force-push;
-- fix PR54-P1-1 first, then PR54-P1-2 as a separate micro-slice;
-- do not mix deferred GCR-4/5, A3, S9.2, A4/ZDD or recommendation work into these fixes;
+- PR54-P1-1 is closed; work only on PR54-P1-2 as the active blocker;
+- do not mix deferred GCR-4/5, A3, S9.2, A4/ZDD or recommendation work into this fix;
 - preserve complete-worktree safety for `CampBoardGameHostApp.kt` / `ClocktowerHostScreen.kt`;
-- do not weaken the shared effective-state projector merely to make First Night tolerate an invalid Other Night interaction id.
+- do not keep a dead Imp alive, prematurely mutate a successor role, or weaken a reconstruction invariant merely to bypass the pending-succession lifecycle.
 
 ## 12. Current next action
 
-**PR #54 is blocked by two newly confirmed runtime P1 regressions.**
+**PR #54 is now blocked by one remaining runtime P1 regression: PR54-P1-2.**
 
 Current execution order:
 
 ```text
-1. PR54-P1-1 Fortune Teller First Night projection crash
-   -> typed RED
+1. PR54-P1-2 Imp self-kill pending-successor Host reconstruction crash
+   -> audit current Demon / historical attacker authority boundaries
+   -> typed lifecycle RED
+   -> prove expected behavioral RED
    -> minimal GREEN
-   -> focused regression validation
+   -> focused succession/reconstruction regressions
    -> remote diff audit
 
-2. PR54-P1-2 Imp self-kill pending-successor Host reconstruction crash
-   -> separate typed RED/GREEN slice
-
-3. after both blockers are GREEN
+2. after PR54-P1-2 is GREEN
    -> logical checkpoint validation
    -> refresh merge-readiness evidence
 ```
 
-Do not merge PR #54 until both blockers are fixed and the required validation is green.
+Do not merge PR #54 until PR54-P1-2 is fixed and the required validation is green.
