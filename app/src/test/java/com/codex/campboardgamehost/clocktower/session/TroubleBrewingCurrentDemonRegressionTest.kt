@@ -63,6 +63,64 @@ class TroubleBrewingCurrentDemonRegressionTest {
         )
     }
 
+    @Test
+    fun `repeated succession resolves second successor after two historical Imps`() {
+        val state = GameState(
+            script = ScriptId("Trouble Brewing"),
+            players = listOf(
+                player(
+                    seat = 1,
+                    name = "Imp0",
+                    role = "Imp",
+                    type = CharacterType.DEMON,
+                    alive = false,
+                ),
+                player(
+                    seat = 2,
+                    name = "Imp1",
+                    role = "Imp",
+                    type = CharacterType.DEMON,
+                    alive = false,
+                ),
+                player(
+                    seat = 3,
+                    name = "Imp2",
+                    role = "Imp",
+                    type = CharacterType.DEMON,
+                    alive = true,
+                ),
+                player(
+                    seat = 4,
+                    name = "Baron",
+                    role = "Baron",
+                    type = CharacterType.MINION,
+                    alive = true,
+                ),
+                player(
+                    seat = 5,
+                    name = "Washerwoman",
+                    role = "Washerwoman",
+                    type = CharacterType.TOWNSFOLK,
+                    alive = true,
+                    alignment = Alignment.GOOD,
+                ),
+            ),
+            seed = 102L,
+        )
+        val checkpoint = checkpoint(confirmedAttackTarget = "Imp2")
+
+        val resolution = resolveTroubleBrewingImpSelfKillSuccession(
+            baseGameState = state,
+            checkpoint = checkpoint,
+            demonRoleId = RoleId("Imp"),
+        )
+
+        assertEquals(
+            DemonSuccessionResolution.Choice(targetSeats = setOf(4)),
+            resolution,
+        )
+    }
+
     private fun player(
         seat: Int,
         name: String,
