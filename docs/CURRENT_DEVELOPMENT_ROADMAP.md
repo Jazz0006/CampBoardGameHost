@@ -6,8 +6,9 @@
 > Stable `main`: `c8985cb4991f6c7e5ea02adedb932d2d86452da1`  
 > Active branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54  
-> Latest accepted SNE-7.9D checkpoint: `06f06fb5c0689983c9baaf0bfe1765a8c69a8d16`  
-> Current priority: **SNE-7.9E real restore + durable Dawn integration — START TESTS-FIRST**
+> Latest accepted broad code checkpoint before 7.9E: `06f06fb5c0689983c9baaf0bfe1765a8c69a8d16`  
+> Current 7.9E intentional RED code checkpoint: `94adcd0febbfcedc7b523249be5cf784a8bc38f2`  
+> Current priority: **SNE-7.9E exactly-once durable Dawn App wiring correction**
 
 ## 1. Current campaign state
 
@@ -24,68 +25,61 @@ A3 setup-snapshot ownership / persistence          DEFERRED
 Production recommendation authority promotion      NOT AUTHORIZED
 ```
 
-PR #54 remains **draft and unmerged**. Do not resume unrelated App-root decomposition, A3 setup snapshot, A4/B4 authority promotion, recommendation tuning, generic custom-script Demon succession, or other Host/UI cleanup until SNE-7.9 is closed or explicitly paused.
+PR #54 remains **draft, open, and unmerged**. Do not resume unrelated App-root decomposition, A3 setup snapshot, A4/B4 authority promotion, recommendation tuning, generic custom-script Demon succession, or unrelated Host/UI cleanup until SNE-7.9 is closed or explicitly paused.
 
-## 2. Why SNE-7 remains open
-
-The earlier SNE-7.1–7.8 closeout was reopened after final acceptance audit found real production integration defects beyond the typed seams then covered.
-
-Corrective route:
+## 2. SNE-7 corrective route
 
 ```text
 SNE-7.9A  Mayor redirect dependency invalidation          COMPLETE / GREEN
 SNE-7.9B  Chambermaid stale-target revalidation           COMPLETE / GREEN
 SNE-7.9C  canonical night-death resolution                COMPLETE / BROAD GREEN
 SNE-7.9D  Demon succession legality / Dawn                COMPLETE / BROAD GREEN
-SNE-7.9E  real restore + durable Dawn integration          ACTIVE / NEXT
+SNE-7.9E  real restore + durable Dawn integration          ACTIVE / CORRECTION RED
 ```
 
-The remaining original acceptance findings are now specifically:
-
-1. real App restore restores raw `ClocktowerNightCheckpoint` fields but does not yet activate `NightTransactionReconstructor` as the derived same-night state boundary;
-2. the existing lifecycle smoke deliberately stops before App-owned durable Dawn effects, so restore → reconstructed mechanics → canonical Dawn → durable ActionFact/observation/phase transition still lacks an end-to-end typed production seam.
-
-## 3. Completed SNE-7.9 corrective slices
-
-### 7.9A — Mayor redirect dependency invalidation
-
-**COMPLETE / GREEN**
-
-Accepted checkpoint:
+The remaining work is no longer primarily “which role rule wins”. The active defect is the production materialization boundary:
 
 ```text
-12d84cc9ed8076df9833d2fa268bc523283211b2
-fix: invalidate stale Mayor redirect on upstream reconfirm
+canonical restored night result
+→ Dawn durable materialization
+→ mechanical state mutation exactly once
+→ ActionFact exactly once
+→ public AliveAt(false) observation exactly once
+→ RoleChange exactly once
+→ Night → Dawn phase transition exactly once
+→ crash / restore / retry produces the same final history and state
 ```
 
-Changed reconfirmation of Poison / Monk / Demon attack invalidates dependent confirmed Mayor redirect and Demon successor while preserving editable drafts. Idempotent reconfirm preserves valid confirmations.
-
-### 7.9B — Chambermaid stale-target revalidation
-
-**COMPLETE / GREEN**
-
-Accepted checkpoint:
-
-```text
-f9300f72b4ef63a521a87e9d2a087c7ae9db2f03
-fix: revalidate Chambermaid selection authority
-```
-
-Canonical path:
-
-```text
-stored Chambermaid selection
-+ current eligible set at Chambermaid cursor
-→ revalidateTwoPlayerSelection
-→ resolveChambermaidSelection
-→ revalidated targets + wokeCount
-```
+## 3. Accepted 7.9C / 7.9D baseline
 
 ### 7.9C — canonical night-death resolution
 
 **COMPLETE / BROAD GREEN**
 
-Accepted production death authority converges all three previously duplicated consumers:
+Accepted production checkpoint:
+
+```text
+b6185ccf6b23583c112b040f831e65f2724f1035
+```
+
+Accepted branch/test head:
+
+```text
+bfdf42a083653475ed94607b9c0ad69a5685bcb8
+```
+
+Broad evidence:
+
+```text
+CI #897 SUCCESS
+- Android full tests
+- assembleDebug
+- Real Clingo
+- CI gate
+R2 #824 SUCCESS
+```
+
+Canonical authority:
 
 ```text
 confirmed attack / poison / Monk facts
@@ -95,244 +89,266 @@ confirmed attack / poison / Monk facts
 → DawnCommitIntent.death
 ```
 
-Consumers now sharing that authority:
+Do not recreate independent Soldier / Monk / Demon-poison / Mayor death gates in App or Host.
+
+### 7.9D — succession legality / Dawn
+
+**COMPLETE / BROAD GREEN — DO NOT REOPEN**
+
+Key tests-first checkpoints:
 
 ```text
-Dawn durable materialization
-public-alive observation preflight
-Host death presentation / resolved mechanical event trigger
+8bf44fc7  D1 RED
+ba777221  D1 GREEN
+
+d396a80d  D2A RED
+f982e50c  D2A GREEN
+
+b1c1af78  D2B RED
+...later GREEN/checkpoint commits close 7.9D...
+06f06fb5c0689983c9baaf0bfe1765a8c69a8d16  broad protective checkpoint
 ```
 
-Key completion checkpoints:
-
-```text
-7139c8f9be8613ac082eafacf484f2c9c84a54f0  Dawn materialization authority
- e6c3d9ef7ab50e9e07d0ce570120bd63c68571af  public-alive preflight authority
- b6185ccf6b23583c112b040f831e65f2724f1035  Host death consumer authority
-```
-
-Earlier C2B/C2C broad checkpoints were GREEN, including Android full unit tests/build and Real Clingo. Detailed C1–C4 tests-first provenance remains in `docs/SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md`, Git history, and the continuation handoff.
-
-### 7.9D — Demon succession legality / Dawn
-
-**COMPLETE / BROAD GREEN**
-
-7.9D closed the two acceptance findings that production Dawn and reconstruction were not consuming one validated Imp succession authority.
-
-Tests-first chain:
-
-```text
-8bf44fc78b56b9e6e18971720dbf32304d56724f  RED — reject illegal restored Demon successor
-b3eaa92a39eefd0859e908d91b2214bec5811614  canonical Trouble Brewing Imp succession resolver
-9f24652e8a1010092c86e1ab85e4271dee7034d9  evaluate succession at pre-self-kill state
-ba7772218126a6116c9eef96a62338c5e82948d8  GREEN — reconstructor validates canonical Choice legality
-
-d396a80d6b863486fdb3068ac8decf549bb26841  RED — planner Forced / None coverage
-f982e50ca702fe95f623581e0e62347849bf888a  GREEN — planner consumes None / Forced / Choice
-
-50fed86a4b0f33d2bb31eaff62a64af9ab4abdd1  production App self-kill path uses resolver + planner
-
-943b65b7938930736aae3f307f4894b1859e3a58  RED — successful self-kill with no successor must still reconstruct Imp death
-6c28d418702024cc614bc6cb04091238aa663c3a  expose canonical attack outcome + succession result
-fe7c8761e7c9a7404b2b73964a2c1f1ae38f503e  GREEN — reconstruct death independently from successor existence
-
-06f06fb5c0689983c9baaf0bfe1765a8c69a8d16  [full-ci] protective checkpoint
-```
-
-Accepted semantics:
+Accepted semantics remain:
 
 ```text
 confirmed Imp self attack
-→ canonical DemonNightAttackOutcome
-→ if attack really self-kills: old Imp MechanicalDeath is reconstructed
+→ canonical attack outcome
+→ successful self-kill reconstructs old Imp MechanicalDeath independently of successor existence
 → canonical DemonSuccessionResolution
-   None   → no RoleChanged, but successful old-Imp death remains
+   None   → no RoleChanged, death still exists
    Forced → forced legal successor
-   Choice → only confirmed target in canonical legal target set
-→ NightDawnResolutionPlanner controls continuation / pending new Demon / Dawn gating
+   Choice → confirmed target must be canonically legal
+→ NightDawnResolutionPlanner owns continuation / pending-new-Demon / Dawn gating
 ```
 
-Important negative contract:
+A functioning Monk that prevents the self-kill yields no death and no succession; stale successor fields cannot invent succession.
+
+## 4. SNE-7.9E progress already accepted
+
+### 4.1 Restore/reconstruction composition
+
+Existing 7.9E chain before durable materialization:
 
 ```text
-functioning Monk protects Imp self attack
-→ attack outcome = no death
-→ no reconstructed MechanicalDeath
-→ no reconstructed RoleChanged
-→ stale successor fields cannot invent succession
+58ae...  RED — restored night transaction composition
+82cb...  GREEN — compose restored transaction state
+0f516... test — forced successor restore composition
+1a1e... test — expose restored mechanical events
+9f5a9aba117a98d1bf18c0cfdb3b0bdffc3a8bb0
+          refactor — expose reconstructed night events
+40bac754b4e7c6e80e25b1e87b0bc9bf8d04346c
+          RED — Host restored succession authority
+b97e9486182f8d59820d7c61eaad3eaac5ae68e2
+          GREEN — project canonical restored succession events
 ```
 
-Validation evidence:
+`b97e9486` changed only `ClocktowerHostScreen.kt`; focused runner #17 (`33146544493`) succeeded. Bot-origin normal CI #923 / R2 #850 were `action_required` with no jobs, a trigger/provenance restriction rather than a test failure.
+
+### 4.2 Pure exactly-once Dawn planner
+
+RED:
 
 ```text
-CI #911  expected RED
-  Android FAST selected
-  913 tests / exactly 1 intended failure
-  FULL step skipped
-  R2 #838 SUCCESS
-
-CI #913  GREEN
-  Android FAST SUCCESS
-  FULL step skipped
-  CI gate SUCCESS
-  R2 #840 SUCCESS
-
-CI #914  [full-ci] ACCEPTANCE SUCCESS
-  Android full unit tests + assembleDebug SUCCESS
-  ASP contract tests SUCCESS
-  Real Clingo cross-validation SUCCESS
-  CI gate SUCCESS
-  R2 #841 SUCCESS
+674f8da229988a47031c33c3af7453bb6f31980a
+test: require idempotent Dawn durable materialization
 ```
 
-The CI hardening is therefore also verified in production use:
+GREEN:
 
 ```text
-ordinary app micro-commit → Android FAST
-[full-ci] logical checkpoint → Android FULL + assemble + ASP + Clingo
+c2fdb820902d9c3bab6f33ebecd04ad90c62153f
+feat: plan idempotent Dawn durable materialization
 ```
 
-7.9D remains intentionally limited to Trouble Brewing Imp self-kill succession. Generic non-self Demon-death/custom-script succession stays deferred.
+`NightDawnDurableMaterializationPlanner` is an accepted pure/transient seam. Stable durable IDs depend only on `gameId + round + logical effect`; they do **not** depend on mutable `gameStateRevision`, event counter, callback count, or timeline cursor.
 
-## 4. Active slice — SNE-7.9E real restore + durable Dawn integration
+It separately plans:
 
-**ACTIVE / TESTS-FIRST**
+- whether mechanical state mutation is still required;
+- whether a Death `ActionFact` still needs committing;
+- whether public `AliveAt(false)` still needs committing;
+- whether a `RoleChange` action/mutation still needs committing/applying;
+- whether the phase action/mutation still needs committing/applying.
 
-Target integration path:
+This explicitly supports partial persistence repair: durable history can be filled in later without repeating an already-applied mechanical mutation.
+
+Validation:
 
 ```text
-persist / restore
-→ ClocktowerNightCheckpoint
-→ NightTransactionReconstructor
-→ reconstructed same-night effective state
-→ canonical death / succession resolution
-→ DawnCommitIntent
-→ App-owned durable materialization
-→ ActionFact / public observation exactly once
-→ phase transition
+CI #925 GREEN — Android FAST + CI gate
+R2 #852 SUCCESS
+focused runner #18 GREEN
 ```
 
-Current audited gap:
+The planner seam is **accepted and must not be redesigned during the App wiring correction unless a typed counterexample proves it wrong**.
 
-- `activeGameSnapshotJson()` already persists the unfinished-night checkpoint;
-- `restoreSavedGame()` already restores checkpoint fields and validates semantic-history compatibility;
-- real App restore currently copies those raw checkpoint fields back into App state;
-- real App restore does **not yet call `NightTransactionReconstructor`**;
-- do not fix this by mutating `cards.eliminatedRound` or public/base roles during restore;
-- reconstructed mechanical death / current role must remain derived same-night state until canonical Dawn materialization.
+## 5. Current active RED — App durable Dawn wiring
 
-### 7.9E first implementation objective
-
-Start with the smallest directly callable typed production seam that can prove:
+Initial App wiring RED:
 
 ```text
-restored unfinished Trouble Brewing night
-+ durable checkpoint
-+ stable canonical interaction plan
-→ deterministic NightTransactionReconstruction
-→ old Imp mechanically dead / legal successor currently Imp when appropriate
-→ public/base GameState remains unchanged
+c0075ca6e1a8b4734d2ba7bdc8ea28ffab4a23c4
+test: require idempotent Dawn planner wiring
 ```
 
-Then extend the same seam to canonical Dawn planning and durable-commit intent. Do not jump directly to a large Compose callback rewrite before the typed boundary exists.
+CI #926 compiled production and ran 922 tests with exactly the two new wiring failures. This was a clean intended RED.
 
-The existing lifecycle smoke is useful input coverage but is not sufficient acceptance evidence because it stops before App-owned durable Dawn consequences.
-
-## 5. Protected architecture contracts
+First GREEN candidate:
 
 ```text
-public/persisted base state
-+ confirmed same-night mechanical facts
-+ stable canonical interaction plan
-+ checkpoint.nightStepIndex
-→ current effective cursor/state
-→ actor eligibility / ability functioning / target legality / truth / triggers / current role
+af14b913b3b46c97c12b8e40cb8b304bc82f44b6
+fix: materialize Dawn durable effects idempotently
 ```
+
+Focused runner #20 (`33148959735`) passed, but **this commit is rejected as an accepted checkpoint**. Later semantic audit found a real omission:
+
+- `preflightClocktowerPublicAliveObservation(...)` only proves that a global observation commit would succeed before public mutation;
+- it deliberately does **not** write returned `observationLog`, global cursor, or player-input revision back to App state;
+- `af14b913` disabled generic Dawn death semantic projection with `projectSemanticHistory=false` to avoid a duplicate dynamic Death `ActionFact`;
+- therefore the planner-owned stable public `AliveAt(false)` was only preflighted and was never durably appended.
+
+Supplemental/current RED:
+
+```text
+94adcd0febbfcedc7b523249be5cf784a8bc38f2
+test: require durable Dawn alive observation commit
+```
+
+Normal CI #928 (`33149213389`) ran 922 tests with exactly three failures:
+
+```text
+ClocktowerDawnDurableMaterializationProductionWiringTest
+ClocktowerGlobalObservationProductionWiringTest
+ClocktowerHistoricalActionProductionWiringTest
+```
+
+This is the current intentional code RED. Do not treat `af14b913` as GREEN and do not weaken the two legacy guards merely to make FAST green.
+
+## 6. Legacy guard inspection — completed
+
+Read-only temp runner #21 (`33149908226`) completed **SUCCESS** against exact code head `94adcd0f`.
+
+The two legacy guards protect real architecture contracts:
+
+### `ClocktowerGlobalObservationProductionWiringTest`
+
+- `recordEpistemicObservation(...)` remains the real shared durable observation commit authority;
+- exact duplicate GLOBAL_V1 commits must return before list mutation/durability publication;
+- public `AliveAt` observations must flow through the same draft/commit authority;
+- public elimination preflight must occur before caller state publication;
+- preflight itself must remain non-mutating.
+
+### `ClocktowerHistoricalActionProductionWiringTest`
+
+- App owns one `ActionFactTimeline` and shares the global timeline cursor between actions and observations;
+- Death, RoleChange and PhaseAdvance remain replayable semantic actions;
+- RoleChange semantic history is recorded before the base-card state mutation;
+- save/restore preserves the action timeline without upgrading legacy history.
+
+Therefore the next GREEN must **preserve these contracts**, not delete or dilute them.
+
+## 7. Exact next implementation direction
+
+For Dawn death, the intended production order is now constrained to:
+
+```text
+planner computes stable IDs + mutation requirements
+→ preflight planner-owned AliveAt(false) before public state mutation
+→ commit planner-owned stable Death ActionFact if missing
+→ mutate mechanical/public death state only if stateMutationRequired
+→ add presentation event without generic duplicate semantic-history projection
+→ perform a real recordEpistemicObservation(...) append using the same planner-owned stable record ID
+```
+
+Key rule: **preflight and durable append are two separate responsibilities**.
+
+Do **not** simply re-enable generic `addClocktowerEvent` semantic projection for Dawn death: that would recreate revision/event-counter-based Death action identity and can duplicate historical action authority.
+
+RoleChange and phase wiring must similarly preserve stable planner-owned IDs and separate “history missing” from “state mutation missing”.
+
+Partial retry must work when, for example, the death is already mechanically applied but its durable Death action or public AliveAt observation is absent: the missing history is repaired without remutating the card.
+
+## 8. Next focused verification set
+
+The corrected GREEN runner must include at minimum:
+
+```text
+ClocktowerDawnDurableMaterializationProductionWiringTest
+ClocktowerGlobalObservationProductionWiringTest
+ClocktowerHistoricalActionProductionWiringTest
+NightDawnDurableMaterializationPlannerTest
+ClocktowerGameSessionTest / global observation commit coverage
+ClocktowerHistoricalActionObservationCaptureTest
+Demon succession production wiring / restore ownership guards
+Night transaction architecture / reconstructor focused tests
+Dawn resolution planner tests
+```
+
+Runner #20 is not sufficient evidence because it omitted the two legacy production guards now known to be relevant.
+
+After focused GREEN:
+
+```text
+remote parent/diff/scope audit
+→ normal broader CI checkpoint
+→ restore / partial-commit equivalence validation
+→ final SNE-7.9E broad acceptance gate
+```
+
+Only after that broad gate may the night-action/information consistency bug campaign be declared fully repaired.
+
+## 9. Protected architecture / scope
 
 Hard contracts:
 
+- `ClocktowerNightCheckpoint` remains the sole durable unfinished-night state owner;
+- `GameState` / action-observation timelines remain durable game-history authority;
+- restore reconstructs from durable inputs, never transient event-command replay;
 - mechanical death and public announcement remain distinct;
-- never write `eliminatedRound` early to make later-night logic work;
-- stable seat/interaction identity never comes from re-indexing filtered views;
+- same-night `RoleChanged` is derived before Dawn materialization;
+- stable seat identity never comes from filtered-list reindexing;
 - draft UI state is never mechanical authority;
-- navigation alone does not invalidate confirmed facts;
-- changed reconfirmation invalidates dependent confirmations while preserving editable drafts;
-- same-night `RoleChanged` is projected before Dawn materialization;
-- persistent effects follow source ability lifetime;
-- rules determine legality, recommendation ranks legal choices, UI displays legal choices;
-- pure semantics may support future cases, production wiring activates only validated slices;
-- `ClocktowerNightCheckpoint` remains the sole durable unfinished-night state;
-- do not create event sourcing by replaying transient `NightResolutionEvent` commands;
-- source ownership guards protect structural responsibility, not formatting.
+- stable durable IDs cannot depend on mutable revision/event counters;
+- rules determine legality; recommendation/UI never become mechanical authority;
+- no second persisted coordinator and no event-sourcing rewrite.
 
-## 6. Testing / writer / CI policy
-
-Preferred proof order:
+Scope exclusions remain:
 
 ```text
-typed pure/domain behavior
-→ typed reducer/planner/session behavior
-→ typed adapter/integration behavior
-→ minimal coarse source ownership guard only where App/Compose is not directly JVM-callable
+generic non-self Demon-death succession
+custom-script Demon succession
+A4/B4 authority promotion
+recommendation tuning
+App-root decomposition
+unrelated Host/UI cleanup
+PR merge/readiness work
 ```
 
-Micro-cycle:
+Large `CampBoardGameHostApp.kt` changes still require complete-worktree-safe / exact-head editing and exact remote scope audit. Never construct a whole-file replacement from truncated source content.
 
-```text
-RED
-→ prove exact intended failure
-→ minimal GREEN
-→ focused --rerun-tasks when local runner is used
-→ git diff --check / remote exact scope audit
-→ push
-→ continue without waiting obsolete old-head CI
-```
-
-CI cadence:
-
-```text
-ordinary PR app micro-commit
-  → :app:testFast
-
-semantic paths
-  → selected semantic gates as classified
-
-logical acceptance checkpoint
-  → commit message contains [full-ci]
-  → :app:testFull + :app:assembleDebug
-  → ASP + Real Clingo
-
-main / workflow dispatch / workflow or build config
-  → full validation
-```
-
-`CampBoardGameHostApp.kt` remains a large file. GitHub connector has now successfully handled a ~228 KiB App edit, but large-file writes must use an exact-head, detached-candidate, exact-diff-audit path before branch fast-forward. Never replace it from truncated source content.
-
-## 7. Current exact next-start instruction
-
-```text
-1. accepted 7.9D checkpoint = 06f06fb5c0689983c9baaf0bfe1765a8c69a8d16;
-2. CI #914 + R2 #841 are the broad GREEN acceptance evidence;
-3. begin SNE-7.9E tests-first from real restore composition;
-4. first prove restored checkpoint → NightTransactionReconstructor derived state without early public mutation;
-5. then extend through canonical Dawn intent and exactly-once durable ActionFact / observation / phase transition;
-6. do not expand to generic Demon succession, A4/B4, recommendation, or unrelated Host/UI work;
-7. keep PR #54 draft/unmerged.
-```
-
-## 8. Startup order
+## 10. Startup order for next conversation
 
 Read:
 
 1. root `AGENTS.md`;
 2. this roadmap;
 3. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-27_SAME_NIGHT_CONTINUATION.md`;
-4. `docs/SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md`;
-5. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md`;
-6. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md`;
-7. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md`;
-8. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`;
-9. `docs/TESTING_STRATEGY.md`;
-10. re-query live `main`, PR #54 head/state and checks before editing.
+4. `docs/SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md` as needed;
+5. re-query live `main`, PR #54 head/state/checks before editing.
+
+Exact continuation instruction:
+
+```text
+1. latest code RED checkpoint = 94adcd0febbfcedc7b523249be5cf784a8bc38f2;
+2. any commits after it may be docs-only handoff synchronization — distinguish docs head from code head;
+3. runner #21 inspection is already complete and confirmed the two legacy guards are genuine contracts;
+4. continue 7.9E by producing the minimal corrective CampBoardGameHostApp.kt GREEN;
+5. keep preflight fail-before-mutation AND add the actual planner-owned durable AliveAt append;
+6. preserve stable Death / RoleChange / PhaseAdvance action ownership and history-before-mutation ordering;
+7. run the expanded focused set including both legacy guards;
+8. then perform remote diff/scope audit and broader acceptance validation;
+9. keep PR #54 draft/open/unmerged.
+```
 
 Never merge, mark ready, rebase, force-push, or broaden PR #54 without explicit user authorization.
