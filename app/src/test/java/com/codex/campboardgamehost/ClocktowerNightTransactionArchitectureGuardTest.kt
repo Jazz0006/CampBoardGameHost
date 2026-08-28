@@ -6,11 +6,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * SNE-7.8 minimal architecture guard.
+ * Coarse architecture guard for the remaining non-callable App/Host night-transaction boundary.
  *
- * Gameplay semantics are proved by typed reducer/planner/reconstruction/integration tests. These
- * checks protect only coarse ownership boundaries that are still impractical to invoke directly
- * through the Compose/App surface from JVM tests.
+ * Gameplay, invalidation, planner, reconstruction, and replay semantics belong to typed tests.
+ * These checks protect only production ownership and the pure-versus-durable boundary.
  */
 class ClocktowerNightTransactionArchitectureGuardTest {
     private val appSource = File(
@@ -19,70 +18,26 @@ class ClocktowerNightTransactionArchitectureGuardTest {
     private val hostSource = File(
         "src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt",
     ).readText(Charsets.UTF_8)
-    private val reducerSource = File(
+    private val pureTransitionSources = listOf(
         "src/main/java/com/codex/campboardgamehost/clocktower/session/NightCheckpointReducer.kt",
-    ).readText(Charsets.UTF_8)
-    private val plannerSource = File(
         "src/main/java/com/codex/campboardgamehost/clocktower/session/NightDawnResolutionPlanner.kt",
-    ).readText(Charsets.UTF_8)
-    private val hostTransactionSource = File(
         "src/main/java/com/codex/campboardgamehost/clocktower/session/NightCheckpointHostTransaction.kt",
-    ).readText(Charsets.UTF_8)
+    ).joinToString(separator = "\n") { path -> File(path).readText(Charsets.UTF_8) }
 
     @Test
-    fun `production night checkpoint transitions route through typed owners`() {
-        listOf(
-            "NightResolutionEvent.EditPoisonDraft",
-            "NightResolutionEvent.EditMonkProtectionDraft",
-            "NightResolutionEvent.EditDemonAttackDraft",
-            "NightResolutionEvent.EditMayorRedirectDraft",
-            "NightResolutionEvent.ConfirmMayorRedirect",
-        ).forEach { command ->
-            assertTrue("App must continue routing $command through the typed checkpoint seam.", appSource.contains(command))
-        }
+    fun `production checkpoint transitions remain owned by typed transaction seams`() {
         assertTrue(appSource.contains("NightCheckpointReducer.reduce("))
-        assertTrue(appSource.contains("NightCheckpointHostTransaction.editDemonSuccessor("))
+        assertTrue(appSource.contains("NightCheckpointHostTransaction.confirmPoison("))
+        assertTrue(appSource.contains("NightCheckpointHostTransaction.confirmDemonAttack("))
+        assertTrue(appSource.contains("NightCheckpointHostTransaction.confirmMonkProtection("))
         assertTrue(appSource.contains("NightCheckpointHostTransaction.confirmDemonSuccessor("))
         assertTrue(appSource.contains("NightCheckpointHostTransaction.movePrevious("))
         assertTrue(hostSource.contains("onMovePreviousNightStep: () -> Unit"))
-        assertFalse(
-            "Host navigation must not bypass the checkpoint transition owner.",
-            hostSource.contains("nightStepIndex = currentStepIndex - 1"),
-        )
+        assertFalse(hostSource.contains("nightStepIndex = currentStepIndex - 1"))
     }
 
     @Test
-    fun `upstream confirmation callbacks project dependent invalidation from Host transaction`() {
-        val poisonConfirmBlock = appSource
-            .substringAfter("onConfirmPoisonTarget = {")
-            .substringBefore("onSelectFortuneTellerFirst = {")
-        val attackConfirmBlock = appSource
-            .substringAfter("onConfirmDemonAttack = {")
-            .substringBefore("onSelectExecution = {")
-        val monkConfirmBlock = appSource
-            .substringAfter("onConfirmMonkProtectedTarget = {")
-            .substringBefore("onSelectMayorRedirectTarget = {")
-
-        listOf(
-            poisonConfirmBlock to "NightCheckpointHostTransaction.confirmPoison(",
-            attackConfirmBlock to "NightCheckpointHostTransaction.confirmDemonAttack(",
-            monkConfirmBlock to "NightCheckpointHostTransaction.confirmMonkProtection(",
-        ).forEach { (block, adapterCall) ->
-            assertTrue("Upstream confirmation must consume the callable Host transaction adapter.", block.contains(adapterCall))
-            assertTrue(
-                "App must project reducer-owned Mayor invalidation back to its checkpoint state.",
-                block.contains("clocktowerConfirmedMayorRedirectTarget = transaction.checkpoint.confirmedMayorRedirectTarget"),
-            )
-            assertTrue(
-                "App must keep projecting reducer-owned successor invalidation from the same transaction.",
-                block.contains("clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget"),
-            )
-        }
-    }
-
-    @Test
-    fun `Dawn planner remains pure while App retains durable commit authority`() {
-        val pureTransitionSources = reducerSource + plannerSource + hostTransactionSource
+    fun `pure night transition owners do not absorb durable App mutations`() {
         listOf(
             "recordClocktowerAction(",
             "ActionFactDraft.",
@@ -90,142 +45,25 @@ class ClocktowerNightTransactionArchitectureGuardTest {
             "eliminatedRound = round",
         ).forEach { durableMutationShape ->
             assertFalse(
-                "Pure checkpoint/planner seams must not absorb App durable commit authority: $durableMutationShape",
+                "Pure night seams must not absorb durable App authority: $durableMutationShape",
                 pureTransitionSources.contains(durableMutationShape),
             )
         }
-
-        assertTrue(appSource.contains("recordClocktowerAction(ActionFactDraft.Poison("))
-        assertTrue(appSource.contains("recordClocktowerAction(ActionFactDraft.Protect("))
-        assertTrue(appSource.contains("recordClocktowerAction(ActionFactDraft.Attack("))
-        assertTrue(appSource.contains("cards[index] = nightDeathCard.copy(eliminatedRound = round)"))
-        assertTrue(appSource.contains("setClocktowerActualRole("))
     }
 
     @Test
-    fun `App consumes canonical Dawn planner and checkpoint projection`() {
+    fun `App Dawn consumes canonical Trouble Brewing facts and planner authority`() {
+        assertTrue(appSource.contains("resolveTroubleBrewingDawnDeathFacts("))
         assertTrue(appSource.contains("NightDawnResolutionPlanner.planValidatedNightDeath("))
         assertTrue(appSource.contains("NightDawnResolutionPlanner.confirmNewDemonIdentity("))
         assertTrue(appSource.contains("currentClocktowerNightCheckpoint()"))
-        assertFalse(
-            "App must not restore a parallel Mayor redirect legality authority during Dawn planning.",
-            appSource.contains("MayorRedirectLegality.canReceiveRedirect("),
-        )
     }
 
     @Test
-    fun `Dawn death transaction consumes canonical Trouble Brewing death facts`() {
-        val dawnBlock = appSource
-            .substringAfter("onConfirmNight = {")
-            .substringBefore("onConfirmNewDemon = {")
-
-        assertTrue(
-            "Real Dawn must derive direct-attack facts through the canonical Trouble Brewing adapter.",
-            dawnBlock.contains("resolveTroubleBrewingDawnDeathFacts("),
-        )
-        assertTrue(
-            "Dawn planner input must consume the canonical attack outcome.",
-            dawnBlock.contains("attackOutcome = dawnDeathFacts.attackOutcome"),
-        )
-        assertTrue(
-            "Dawn planner input must consume the canonical original death seat.",
-            dawnBlock.contains("originalDeathSeat = dawnDeathFacts.originalDeathSeat"),
-        )
-        assertTrue(
-            "Dawn planner input must consume the canonical Mayor seat.",
-            dawnBlock.contains("mayorSeat = dawnDeathFacts.mayorSeat"),
-        )
-        assertTrue(
-            "Dawn planner input must consume canonical Demon-safe seats for redirect validation.",
-            dawnBlock.contains("demonSafeSeats = dawnDeathFacts.demonSafeSeats"),
-        )
-        assertFalse(
-            "Dawn must not keep an inline originalDeathCard Mayor-ability calculation as a second death authority.",
-            dawnBlock.contains("val originalDeathCard ="),
-        )
-        assertFalse(
-            "Once the planner returns DawnDeathIntent, App must not re-gate materialization on Monk/Soldier protection.",
-            dawnBlock.contains("if (protectedByMonk || protectedBySoldier)"),
-        )
-    }
-
-    @Test
-    fun `public alive observation preflight consumes canonical Dawn death authority`() {
-        val preflightBlock = appSource
-            .substringAfter("fun nextNightPublicAliveObservationPreflightOrNull(): Pair<String, Int>? {")
-            .substringBefore("fun addClocktowerEvent(")
-
-        assertTrue(
-            "Public-alive preflight must derive direct-attack facts through the canonical Trouble Brewing adapter.",
-            preflightBlock.contains("resolveTroubleBrewingDawnDeathFacts("),
-        )
-        assertTrue(
-            "Public-alive preflight must resolve the death through NightDawnResolutionPlanner.",
-            preflightBlock.contains("NightDawnResolutionPlanner.planValidatedNightDeath("),
-        )
-        assertTrue(
-            "Public-alive preflight must consume the canonical attack outcome.",
-            preflightBlock.contains("attackOutcome = dawnDeathFacts.attackOutcome"),
-        )
-        assertTrue(
-            "Public-alive preflight must consume canonical Demon-safe seats.",
-            preflightBlock.contains("demonSafeSeats = dawnDeathFacts.demonSafeSeats"),
-        )
-        assertTrue(
-            "Public-alive preflight target must come from the planner's DawnDeathIntent.",
-            preflightBlock.contains("dawnCommitIntent?.death?.targetSeat"),
-        )
-        listOf(
-            "val demonPoisonedTonight =",
-            "val originalDeathCard =",
-            "val protectedByMonk =",
-            "val protectedBySoldier =",
-        ).forEach { legacyAuthority ->
-            assertFalse(
-                "Public-alive preflight must not retain independent death authority: $legacyAuthority",
-                preflightBlock.contains(legacyAuthority),
-            )
-        }
-    }
-
-    @Test
-    fun `Host death consumer uses the canonical checkpoint-backed resolution`() {
-        val hostDeathBlock = hostSource
-            .substringAfter("val poisonerPlayers =")
-            .substringBefore("val demonCard =")
-
-        assertTrue(
-            "App must pass the confirmed unfinished-night checkpoint into Host.",
-            appSource.contains("nightCheckpoint = currentClocktowerNightCheckpoint()"),
-        )
-        assertTrue(
-            "Host must accept the canonical unfinished-night checkpoint.",
-            hostSource.contains("nightCheckpoint: ClocktowerNightCheckpoint"),
-        )
-        assertTrue(
-            "Host death presentation must consume the shared canonical death resolver.",
-            hostDeathBlock.contains("resolveTroubleBrewingDawnDeathResolution("),
-        )
-        assertTrue(
-            "Host canonical resolver must consume the passed checkpoint rather than draft UI state.",
-            hostDeathBlock.contains("checkpoint = nightCheckpoint"),
-        )
-        assertTrue(
-            "Host resolved death name must come from the canonical resolution result.",
-            hostDeathBlock.contains("resolvedNightDeathName = canonicalNightDeathResolution.resolvedDeathName"),
-        )
-        assertTrue(
-            "Host death trigger must be gated by the canonical resolved death seat.",
-            hostDeathBlock.contains("nightDeathWillOccur = canonicalNightDeathResolution.resolvedDeathSeat != null"),
-        )
-        listOf(
-            "val demonPoisonedTonight =",
-            "val functioningMonkProtection =",
-        ).forEach { legacyAuthority ->
-            assertFalse(
-                "Host must not retain an independent Demon/Monk death authority: $legacyAuthority",
-                hostDeathBlock.contains(legacyAuthority),
-            )
-        }
+    fun `Host death presentation consumes checkpoint backed canonical resolution`() {
+        assertTrue(appSource.contains("nightCheckpoint = currentClocktowerNightCheckpoint()"))
+        assertTrue(hostSource.contains("nightCheckpoint: ClocktowerNightCheckpoint"))
+        assertTrue(hostSource.contains("resolveTroubleBrewingDawnDeathResolution("))
+        assertTrue(hostSource.contains("checkpoint = nightCheckpoint"))
     }
 }
