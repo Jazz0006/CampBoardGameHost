@@ -78,6 +78,38 @@ merge                       → required full PR/merge gates
 
 Do **not** automatically run `testFast`, `testDebugUnitTest`, `assembleDebug`, or wait for full GitHub CI after every tiny behavior patch.
 
+### GitHub CI execution policy
+
+GitHub CI now separates ordinary PR iteration from full acceptance checkpoints:
+
+```text
+ordinary PR synchronize commit
+  → classify only previous PR head .. current PR head
+  → Android-relevant change: :app:testFast
+  → exact/oracle semantic change: additionally run the selected semantic gate
+
+logical checkpoint
+  → put [full-ci] in the checkpoint commit message
+  → :app:testFull + :app:assembleDebug
+  → ASP contracts + Real Clingo
+  → CI gate
+
+workflow_dispatch
+  → full gate
+
+push to main
+  → full gate
+
+.github/workflows/** or Gradle/build configuration change
+  → full Android validation immediately; workflow routing changes also select every gate
+```
+
+The `[full-ci]` marker is an explicit acceptance escalation, not a replacement for focused RED/GREEN proof. Once a `[full-ci]` checkpoint is pushed, do not immediately push another micro-commit while its acceptance run is still needed: PR concurrency intentionally cancels older runs.
+
+For `pull_request` `synchronize` events, CI must not classify the accumulated `main → PR head` diff, because that makes every later micro-commit inherit all earlier expensive validation triggers. Initial/opened/reopened PR validation may use the PR base because no prior PR head exists.
+
+Documentation-only commits remain lightweight and do not invalidate a previously accepted code checkpoint merely by creating a newer docs head.
+
 Escalate a single slice earlier when it changes persistence/schema, transaction boundaries, shared projector/chronology, build/Gradle/CI configuration, or when focused tests cannot establish sufficient confidence.
 
 ## 5. Luna instruction contract
