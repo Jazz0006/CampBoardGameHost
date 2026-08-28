@@ -167,7 +167,7 @@ class ClocktowerGlobalObservationProductionWiringTest {
             .substringAfter("onConfirmNight =")
             .substringBefore("onShowResults =")
         val nightPreflightIndex = night.indexOf("preflightClocktowerPublicAliveObservation(")
-        val nightMutationIndex = night.indexOf("advanceClocktowerGameStateRevision()")
+        val nightMutationIndex = night.indexOf("cards[index] = nightDeathCard.copy(eliminatedRound = round)")
         assertTrue(nightPreflightIndex >= 0)
         assertTrue(nightMutationIndex > nightPreflightIndex)
     }

@@ -87,10 +87,15 @@ class ClocktowerHistoricalActionProductionWiringTest {
         assertTrue(appSource.contains("recordClocktowerAction(ActionFactDraft.RoleChange("))
         assertTrue(appSource.contains("recordClocktowerAction(ActionFactDraft.PhaseAdvance("))
 
+        val roleChangeRecorder = appSource
+            .substringAfter("fun recordClocktowerRoleChangeAction(")
+            .substringBefore("fun setClocktowerActualRole(")
+        assertTrue(roleChangeRecorder.contains("recordClocktowerAction(ActionFactDraft.RoleChange("))
+
         val roleChange = appSource
             .substringAfter("fun setClocktowerActualRole(")
             .substringBefore("fun setClocktowerShownRole(")
-        val recordIndex = roleChange.indexOf("ActionFactDraft.RoleChange(")
+        val recordIndex = roleChange.indexOf("recordClocktowerRoleChangeAction(")
         val stateMutationIndex = roleChange.indexOf("cards[index] = cards[index].copy(")
         assertTrue(recordIndex >= 0)
         assertTrue(stateMutationIndex > recordIndex)
