@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
@@ -8,6 +7,7 @@ import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightCurs
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightStateProjector
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.rules.ResolvedNightMechanicalEvent
 
 /**
@@ -52,13 +52,18 @@ internal object NightTransactionReconstructor {
                     player.name == targetName && player.actualRole == demonRoleId
                 }?.seat
             }
+        val successionResolution = resolveTroubleBrewingImpSelfKillSuccession(
+            baseGameState = baseGameState,
+            checkpoint = checkpoint,
+            demonRoleId = demonRoleId,
+        )
         val confirmedSuccessorSeat = checkpoint.confirmedDemonSuccessorTarget
             ?.let { targetName ->
-                baseGameState.players.singleOrNull { player ->
-                    player.name == targetName &&
-                        player.alive &&
-                        player.actualType == CharacterType.MINION
-                }?.seat
+                baseGameState.players.singleOrNull { player -> player.name == targetName }?.seat
+            }
+            ?.takeIf { targetSeat ->
+                successionResolution is DemonSuccessionResolution.Choice &&
+                    targetSeat in successionResolution.targetSeats
             }
         val confirmedEvents: List<ResolvedNightMechanicalEvent> =
             if (
