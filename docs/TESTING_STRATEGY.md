@@ -2,13 +2,13 @@
 
 > Role: **LONG-LIVED TEST EXECUTION / VALIDATION STRATEGY**
 > Baseline: S1.1/S1.2 measured at `d52f53b4a1821cc000368c393721d1d5a073aafc`
-> Date: 2026-08-25
+> Date: 2026-08-28
 
 ## 1. Purpose
 
 The purpose of this strategy is not to reduce the number of tests. It is to maximize confidence per unit of feedback time while preserving complete regression coverage.
 
-Frequent developer feedback and complete regression validation are separate concerns. Tests must not be deleted merely because they are expensive, broad, or old. Expensive tests remain mandatory coverage; their execution frequency is governed by the affected semantic area.
+Frequent developer feedback and complete regression validation are separate concerns. Tests must not be deleted merely because they are expensive, broad, or old. Expensive tests remain mandatory coverage; their execution frequency is governed by the affected semantic area and acceptance checkpoint cadence.
 
 ## 2. Measured baseline
 
@@ -73,9 +73,9 @@ T3 contains high-volume regression corpora, simulations, large or repeated enume
 
 ### T4 — FULL
 
-T4 is the complete applicable repository regression gate. For each validation component selected by the S3 change classifier, T4 preserves full-strength coverage: all Android JVM tests plus debug assemble/compile checks when Android is selected, ASP validation and ASP Python tests when the ASP contract surface is selected, and real Clingo cross-validation when exact/oracle semantics are selected.
+T4 is the complete applicable repository regression gate. For each validation component selected at a T4 checkpoint, T4 preserves full-strength coverage: all Android JVM tests plus debug assemble/compile checks when Android is selected, ASP validation and ASP Python tests when the ASP contract surface is selected, and real Clingo cross-validation when exact/oracle semantics are selected.
 
-S3 may skip an entire validation component only when the changed-path classification explicitly establishes that the component is irrelevant. A selected component must not be downgraded from FULL merely to save CI time.
+T4 is an **acceptance tier**, not the default tier for every PR synchronize event. Ordinary PR micro-commits may run T1/T2 feedback. Once a logical checkpoint is explicitly escalated to T4, a selected component must not be downgraded merely to save CI time.
 
 The executable Android JVM full-suite entry point is:
 
@@ -90,9 +90,9 @@ The executable Android JVM full-suite entry point is:
 Tier answers: “What kind or cost of test is this?”
 Trigger answers: “When must this test run?”
 
-For example, `SetupMigrationTest` is a T3 expensive test because its high-volume recommendation loops consume most of Android testcase time. A change to `SetupRecommendationService`, history/cooldown, setup scoring, or family selection triggers it at the T2 checkpoint. An unrelated UI-only change does not need to run it during every local edit loop.
+For example, `SetupMigrationTest` is a T3 expensive test because its high-volume recommendation loops consume most of Android testcase time. A change to `SetupRecommendationService`, history/cooldown, setup scoring, or family selection triggers it at the T2/T4 checkpoint. An unrelated UI-only change does not need to run it during every local edit loop.
 
-Similarly, `ZddPlayerWorldSetTest` has T3-like execution characteristics but is an affected T2 requirement for ZDD and epistemic representation changes. Real Clingo is T3 external validation, but it is mandatory whenever the S3 classifier selects exact/oracle semantics and remains part of applicable T4 validation.
+Similarly, `ZddPlayerWorldSetTest` has T3-like execution characteristics but is an affected T2 requirement for ZDD and epistemic representation changes. Real Clingo is T3 external validation and remains mandatory whenever the change classifier selects exact/oracle semantics or when a T4 checkpoint selects every gate.
 
 Expensive does not mean PR-only, and FAST exclusion does not mean coverage exclusion.
 
@@ -131,7 +131,7 @@ T3 tests are invoked through the existing full test machinery with exact `--test
 
 | Change family | T0 | T1 | T2 affected validation | T3 trigger | T4 |
 |---|---|---|---|---|---|
-| Documentation-only | none | none | none | none | CI classifier/gate only unless another executable surface changes |
+| Documentation-only | none | none | none | none | CI classifier/gate only unless explicitly escalated |
 | Utility/helper or hashing | exact utility test | cheap domain tests | direct consumers if shared | normally none | applicable full |
 | Rule semantics | exact rule test | rule/domain tests | related flow and recommendation tests | simulation if distribution changes | Android full + exact/oracle gates when selected |
 | Night/day flow | exact flow test | flow/session tests | transaction, integration, and wiring tests | simulation if behavior changes | applicable full |
@@ -155,13 +155,15 @@ For a behavior change:
 ```text
 RED                    -> T0 confirms the failure
 GREEN                  -> T0 focused tests pass
-local iteration        -> owning/local focused tests
+ordinary PR iteration  -> T1 FAST + any selected semantic/external gate
 logical checkpoint     -> T1 + T2 affected validation
-larger slice/pre-commit-> T1 + triggered T3 tests
-PR                     -> T4 applicable gates selected by S3 routing
+T4 acceptance checkpoint -> [full-ci] -> full selected gates
+merge/main             -> full gate
 ```
 
-When the S3 classifier selects Android validation for a PR, the Android gate runs `:app:testFull` plus debug assemble; `testFast` is not a substitute for that selected PR gate.
+Ordinary PR synchronization is intentionally optimized for feedback latency. An Android-relevant micro-commit runs `:app:testFast`; it does **not** automatically run `:app:testFull` plus `assembleDebug` merely because earlier commits in the same PR touched production code.
+
+A logical checkpoint that requires full acceptance uses `[full-ci]` in the checkpoint commit message. That escalation runs the complete Android JVM suite plus debug assemble and all other full-checkpoint gates. `testFast` is never accepted as a substitute for that explicit T4 gate.
 
 For a structural-only refactor:
 
@@ -169,7 +171,7 @@ For a structural-only refactor:
 focused ownership/characterization tests
 -> T1
 -> affected integration when a boundary changes
--> applicable T4 at PR
+-> T4 at the logical acceptance checkpoint
 ```
 
 Documentation-only changes do not require local Android regression unless executable configuration or contracts change. In CI, explicitly classified documentation-only changes retain the lightweight change-classification and aggregate gate while unrelated heavy validation jobs are skipped.
@@ -192,7 +194,7 @@ If impact is uncertain, escalate upward. Do not optimize for minimal test execut
 
 ASP corpus validation and ASP Python tests are cheap and should be T1 for ASP-related work and remain CI checkpoint validation.
 
-Real Clingo is external and expensive. It is T3 validation triggered by changes to the ASP oracle, scenario corpus, exact epistemic semantics, solver integration, or the external solver contract. S3 routes it for the corresponding exact semantic surfaces and for any workflow change or unknown repository surface that requires fail-safe validation.
+Real Clingo is external and expensive. It is T3 validation triggered by changes to the ASP oracle, scenario corpus, exact epistemic semantics, solver integration, or the external solver contract. CI routes it for the corresponding exact semantic surfaces and for any workflow change or unknown repository surface that requires fail-safe validation. A `[full-ci]`, `workflow_dispatch`, or main acceptance gate also selects it.
 
 ## 11. Engineering time targets
 
@@ -210,7 +212,7 @@ Coverage must not be removed merely to satisfy a time target.
 
 `UP-TO-DATE` and `FROM-CACHE` do not mean that tests executed in that invocation. Validation reports must distinguish executed test tasks from skipped or cached tasks.
 
-Use `--rerun-tasks` only when intentionally measuring forced execution. It is not the default normal-development invocation.
+Use `--rerun-tasks` only when intentionally measuring forced execution or when the focused RED/GREEN proof explicitly requires actual execution. It is not the default normal-development invocation.
 
 S2.1 verified that `testFast` and `testFull` have separate execution identities, that `testFast` does not invoke `testDebugUnitTest`, and that `testFull` does.
 
@@ -227,14 +229,14 @@ Current Android JVM commands:
 
 `testFull` is a verification/lifecycle task that depends on `:app:testDebugUnitTest` without filtering.
 
-The validated coverage invariant is:
+The validated coverage invariant at the S2 baseline is:
 
 ```text
 testFull Android JVM coverage = :app:testDebugUnitTest coverage = 770 tests
 FULL - FAST = exactly 19 testcases from the five approved excluded classes
 ```
 
-No test may disappear from full validation.
+The absolute test count will grow as new tests are added; the invariant is that no test may disappear from full validation.
 
 ## 14. Maintenance
 
@@ -252,32 +254,54 @@ Review value, duplication, flakiness, semantic layer, cost, and routing coverage
 
 ## 15. CI routing contract
 
-S3 establishes path-aware GitHub CI routing without weakening selected PR validation. The classifier is implemented directly in `.github/workflows/ci.yml` using repository-native `git diff`; it does not depend on a third-party path-filter action.
+CI path routing and acceptance cadence are implemented directly in `.github/workflows/ci.yml` using repository-native `git diff`; no third-party path-filter action is required.
 
-Routing principles:
+### 15.1 Incremental PR feedback
 
-- `docs/**`, `AGENTS.md`, `README.md`, and `player/**` are explicitly classified as non-executable surfaces and skip Android, ASP, and Clingo heavy jobs.
-- Android application/test/assets and Gradle/build-system changes select Android FULL validation plus debug assemble.
+For a normal `pull_request` `synchronize` event, changed-path discovery compares:
+
+```text
+previous PR head (`github.event.before`)
+..
+current PR head (`github.event.pull_request.head.sha`)
+```
+
+It deliberately does **not** compare the accumulated `main → PR head` range. This prevents an old production change in a long-running PR from forcing every later test-only or documentation commit through the same expensive full gate.
+
+Routing principles for ordinary PR iteration:
+
+- `docs/**`, `AGENTS.md`, `README.md`, and `player/**` are explicitly non-executable surfaces and skip Android, ASP, and Clingo heavy jobs.
+- Ordinary `app/**` application/test/assets changes select Android FAST validation (`:app:testFast`).
 - `tools/asp_oracle/**` selects ASP contract tests and Real Clingo.
 - Clocktower `domain/**`, `epistemic/**`, `history/**`, `rules/**`, matching test packages, core `Clocktower*Semantics.kt`, and built-in rules/script assets additionally select Real Clingo because they can affect exact semantic contracts.
-- `.github/workflows/**` changes select every gate so routing changes validate themselves.
-- `workflow_dispatch` selects every gate.
-- Any repository path that is not deliberately classified fails safe to every gate rather than silently skipping validation.
+- Any repository path that is not deliberately classified fails safe to every gate at full strength rather than silently skipping validation.
 - Changed-path discovery uses `git diff --name-only --no-renames`, so a rename/move cannot hide the old executable path behind a newly safe destination.
+
+For an opened/reopened PR event, there is no prior PR head to compare, so classification may use the PR base.
+
+### 15.2 Full acceptance escalation
+
+The following always select full-strength acceptance validation:
+
+- a PR checkpoint commit whose message contains `[full-ci]`;
+- `workflow_dispatch`;
+- every push to `main`;
+- `.github/workflows/**` changes;
+- Gradle/build/dependency configuration changes for Android full validation;
+- unknown/unclassified repository surfaces through fail-safe routing.
+
+At a full checkpoint, Android runs:
+
+```text
+:app:testFull :app:assembleDebug
+```
+
+and the selected ASP/Real-Clingo gates run at full strength. This is the T4 boundary; FAST is not a substitute here.
+
+PR concurrency intentionally cancels an older run when a newer head is pushed. Therefore, once a `[full-ci]` checkpoint is being used as acceptance evidence, do not immediately push another micro-commit until that required run concludes.
+
+### 15.3 Stable aggregate gate
 
 A stable `CI gate` job always runs after classification. Selected validation jobs must succeed; deliberately irrelevant jobs may be `skipped`. This gives one aggregate check whose meaning remains stable even when the heavy job set varies by change.
 
-S3 was validated on draft PR #50 at head `2135ea19d09ee19a3cb5e9357414efb6acf33f72`:
-
-```text
-CI #684
-Classify changes             SUCCESS
-Android tests (FULL+assemble) SUCCESS
-ASP contract tests           SUCCESS
-Real Clingo cross-validation SUCCESS
-CI gate                      SUCCESS
-
-R2 #615                      SUCCESS
-```
-
-The PR deliberately includes `.github/workflows/ci.yml`, so the classifier correctly selected all gates during this validation. PR #50 remains draft and is not merge-authorized by this document.
+The CI-routing change itself is fail-safe: editing `.github/workflows/ci.yml` selects every validation component so routing changes exercise the full branch. A later docs-only validation on PR #54 demonstrated incremental classification by completing the classifier and aggregate CI gate while Android, ASP, and Real Clingo were all skipped.
