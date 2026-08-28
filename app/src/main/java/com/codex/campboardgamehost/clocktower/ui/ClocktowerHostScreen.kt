@@ -175,6 +175,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableN
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
+import com.codex.campboardgamehost.clocktower.session.NightTransactionReconstructor
 import com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest
 import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
 import com.codex.campboardgamehost.clocktower.session.UnifiedSetupSelectorDeviceBenchmark
@@ -786,12 +787,22 @@ internal fun ClocktowerJudgeScreen(
     val baseRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
         card.clocktowerRole?.enName?.let { roleName -> index + 1 to RoleId(roleName) }
     }.toMap()
-    val confirmedDemonSuccessorSeat = confirmedDemonSuccessorTarget
-        ?.let { confirmedName -> cards.indexOfFirst { it.name == confirmedName }.takeIf { it >= 0 }?.plus(1) }
-        ?.takeIf { it in demonSuccessorTargetSeats }
     val demonSuccessorRoleId = demonCard?.clocktowerRole?.enName?.let(::RoleId)
     val demonSuccessorInteractionId = ClocktowerProductionNightStepIdentity.demonSuccessor()
         .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+    val canonicalNightReconstruction = if (phase == ClocktowerPhase.Night) {
+        NightTransactionReconstructor.reconstruct(
+            baseGameState = cards.toClocktowerGameState(script, gameSeed, poisonTarget),
+            checkpoint = nightCheckpoint,
+            canonicalInteractionIds = otherNightCanonicalInteractionIds,
+            demonSuccessorInteractionId = demonSuccessorInteractionId,
+            demonRoleId = requireNotNull(demonSuccessorRoleId) {
+                "Night transaction reconstruction requires a canonical Demon role."
+            },
+        )
+    } else {
+        null
+    }
     val resolvedMechanicalEvents = buildList<ResolvedNightMechanicalEvent> {
         if (phase == ClocktowerPhase.Night && nightDeathWillOccur) {
             val targetSeat = cards.indexOf(resolvedNightDeathCard).plus(1)
@@ -808,17 +819,11 @@ internal fun ClocktowerJudgeScreen(
                 effectiveAt = ClocktowerEffectiveNightCursor(effectiveInteractionId, ClocktowerInteractionBoundary.AFTER),
             ))
         }
-        if (phase == ClocktowerPhase.Night && confirmedDemonSuccessorSeat != null) {
-            add(ResolvedNightMechanicalEvent.RoleChanged(
-                targetSeat = confirmedDemonSuccessorSeat,
-                roleId = requireNotNull(demonSuccessorRoleId) {
-                    "Confirmed Demon successor requires a canonical Demon role."
-                },
-                effectiveAt = ClocktowerEffectiveNightCursor(
-                    demonSuccessorInteractionId,
-                    ClocktowerInteractionBoundary.AFTER,
-                ),
-            ))
+        if (phase == ClocktowerPhase.Night && canonicalNightReconstruction != null) {
+            addAll(
+                canonicalNightReconstruction.confirmedEvents
+                    .filterIsInstance<ResolvedNightMechanicalEvent.RoleChanged>(),
+            )
         }
     }
     fun effectiveNightStateAt(
