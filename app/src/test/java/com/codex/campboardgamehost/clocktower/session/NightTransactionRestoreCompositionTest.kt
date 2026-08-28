@@ -20,16 +20,13 @@ class NightTransactionRestoreCompositionTest {
 
     @Test
     fun `restored confirmed Imp self kill reconstructs derived successor state without mutating base game`() {
-        val baseGameState = gameState()
-        val persistedValues = checkpoint().persistedValues()
+        val baseGameState = choiceGameState()
+        val persistedValues = checkpoint(
+            demonSuccessorDraftTarget = "Poisoner",
+            confirmedDemonSuccessorTarget = "Poisoner",
+        ).persistedValues()
 
-        val restored = NightTransactionRestoreComposition.restore(
-            persistedCheckpointValues = persistedValues,
-            baseGameState = baseGameState,
-            canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
-            demonSuccessorInteractionId = successorInteraction,
-            demonRoleId = RoleId("Imp"),
-        )
+        val restored = restore(persistedValues, baseGameState)
 
         assertEquals(ClocktowerNightCheckpoint.fromPersistedValues(persistedValues), restored.checkpoint)
         assertEquals(empathInteraction, restored.reconstruction.currentInteractionId)
@@ -41,38 +38,80 @@ class NightTransactionRestoreCompositionTest {
         assertEquals(RoleId("Poisoner"), baseGameState.playerAt(2)?.actualRole)
     }
 
-    private fun gameState() = GameState(
+    @Test
+    fun `restored forced Scarlet Woman succession is derived without confirmed choice or base mutation`() {
+        val baseGameState = forcedGameState()
+        val persistedValues = checkpoint(
+            pendingNewDemonName = "Scarlet Woman",
+            demonSuccessorDraftTarget = null,
+            confirmedDemonSuccessorTarget = null,
+        ).persistedValues()
+
+        val restored = restore(persistedValues, baseGameState)
+
+        assertEquals(empathInteraction, restored.reconstruction.currentInteractionId)
+        assertFalse(restored.reconstruction.effectiveState.isMechanicallyAlive(1))
+        assertEquals(RoleId("Imp"), restored.reconstruction.effectiveState.currentRoleId(2))
+        assertEquals(RoleId("Poisoner"), restored.reconstruction.effectiveState.currentRoleId(3))
+
+        assertTrue(baseGameState.playerAt(1)?.alive == true)
+        assertEquals(RoleId("Scarlet Woman"), baseGameState.playerAt(2)?.actualRole)
+        assertEquals(RoleId("Poisoner"), baseGameState.playerAt(3)?.actualRole)
+    }
+
+    private fun restore(
+        persistedValues: Map<String, Any?>,
+        baseGameState: GameState,
+    ) = NightTransactionRestoreComposition.restore(
+        persistedCheckpointValues = persistedValues,
+        baseGameState = baseGameState,
+        canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
+        demonSuccessorInteractionId = successorInteraction,
+        demonRoleId = RoleId("Imp"),
+    )
+
+    private fun choiceGameState() = GameState(
         script = ScriptId("Trouble Brewing"),
         players = listOf(
-            PlayerState(
-                seat = 1,
-                name = "Imp",
-                actualRole = RoleId("Imp"),
-                actualAlignment = Alignment.EVIL,
-                actualType = CharacterType.DEMON,
-                alive = true,
-            ),
-            PlayerState(
-                seat = 2,
-                name = "Poisoner",
-                actualRole = RoleId("Poisoner"),
-                actualAlignment = Alignment.EVIL,
-                actualType = CharacterType.MINION,
-                alive = true,
-            ),
-            PlayerState(
-                seat = 3,
-                name = "Empath",
-                actualRole = RoleId("Empath"),
-                actualAlignment = Alignment.GOOD,
-                actualType = CharacterType.TOWNSFOLK,
-                alive = true,
-            ),
+            player(1, "Imp", "Imp", CharacterType.DEMON, Alignment.EVIL),
+            player(2, "Poisoner", "Poisoner", CharacterType.MINION, Alignment.EVIL),
+            player(3, "Empath", "Empath", CharacterType.TOWNSFOLK, Alignment.GOOD),
         ),
         seed = 17L,
     )
 
-    private fun checkpoint() = ClocktowerNightCheckpoint(
+    private fun forcedGameState() = GameState(
+        script = ScriptId("Trouble Brewing"),
+        players = listOf(
+            player(1, "Imp", "Imp", CharacterType.DEMON, Alignment.EVIL),
+            player(2, "Scarlet Woman", "Scarlet Woman", CharacterType.MINION, Alignment.EVIL),
+            player(3, "Poisoner", "Poisoner", CharacterType.MINION, Alignment.EVIL),
+            player(4, "Empath", "Empath", CharacterType.TOWNSFOLK, Alignment.GOOD),
+            player(5, "Monk", "Monk", CharacterType.TOWNSFOLK, Alignment.GOOD),
+        ),
+        seed = 19L,
+    )
+
+    private fun player(
+        seat: Int,
+        name: String,
+        role: String,
+        type: CharacterType,
+        alignment: Alignment,
+    ) = PlayerState(
+        seat = seat,
+        name = name,
+        actualRole = RoleId(role),
+        actualAlignment = alignment,
+        actualType = type,
+        alive = true,
+    )
+
+    private fun checkpoint(
+        pendingNewDemonName: String? = null,
+        demonSuccessorDraftTarget: String?,
+        confirmedDemonSuccessorTarget: String?,
+    ) = ClocktowerNightCheckpoint(
         phaseName = "Night",
         round = 3,
         gameStateRevision = 12L,
@@ -87,10 +126,10 @@ class NightTransactionRestoreCompositionTest {
         monkDraftTarget = null,
         confirmedMayorRedirectTarget = null,
         mayorRedirectDraftTarget = null,
-        pendingNewDemonName = null,
+        pendingNewDemonName = pendingNewDemonName,
         pendingNightNewDemonIdentityName = null,
-        demonSuccessorDraftTarget = "Poisoner",
-        confirmedDemonSuccessorTarget = "Poisoner",
+        demonSuccessorDraftTarget = demonSuccessorDraftTarget,
+        confirmedDemonSuccessorTarget = confirmedDemonSuccessorTarget,
         nextTimelineGlobalSequence = 17L,
     )
 }
