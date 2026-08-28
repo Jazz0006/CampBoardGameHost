@@ -57,18 +57,19 @@ internal object NightTransactionReconstructor {
             checkpoint = checkpoint,
             demonRoleId = demonRoleId,
         )
-        val confirmedSuccessorSeat = checkpoint.confirmedDemonSuccessorTarget
-            ?.let { targetName ->
-                baseGameState.players.singleOrNull { player -> player.name == targetName }?.seat
-            }
-            ?.takeIf { targetSeat ->
-                successionResolution is DemonSuccessionResolution.Choice &&
-                    targetSeat in successionResolution.targetSeats
-            }
+        val canonicalSuccessorSeat = when (successionResolution) {
+            DemonSuccessionResolution.None -> null
+            is DemonSuccessionResolution.Forced -> successionResolution.targetSeat
+            is DemonSuccessionResolution.Choice -> checkpoint.confirmedDemonSuccessorTarget
+                ?.let { targetName ->
+                    baseGameState.players.singleOrNull { player -> player.name == targetName }?.seat
+                }
+                ?.takeIf { targetSeat -> targetSeat in successionResolution.targetSeats }
+        }
         val confirmedEvents: List<ResolvedNightMechanicalEvent> =
             if (
                 confirmedAttackDemonSeat != null &&
-                confirmedSuccessorSeat != null &&
+                canonicalSuccessorSeat != null &&
                 demonSuccessorInteractionId in canonicalInteractionIds
             ) {
                 listOf(
@@ -80,7 +81,7 @@ internal object NightTransactionReconstructor {
                         ),
                     ),
                     ResolvedNightMechanicalEvent.RoleChanged(
-                        targetSeat = confirmedSuccessorSeat,
+                        targetSeat = canonicalSuccessorSeat,
                         roleId = demonRoleId,
                         effectiveAt = ClocktowerEffectiveNightCursor(
                             interactionId = demonSuccessorInteractionId,
