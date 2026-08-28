@@ -14,35 +14,18 @@ PR: #54
 PR policy: draft / open / unmerged until explicit authorization
 ```
 
-Latest accepted GCR-1 executable checkpoint:
+Current accepted GCR checkpoints:
 
 ```text
+GCR-1 executable acceptance:
 974f617adffd08cc7de0924f6fea4f96f3d73f0c
+
+GCR-1 + GCR-2 full production acceptance:
+474103ed13caaf34a329ca5e80e2f0ba64963b86
+
+GCR-3 final test-quality acceptance:
+383ad0e695656124f9dc608fd5ce06b72de6b499
 ```
-
-Evidence at that checkpoint:
-
-```text
-CI #959 / run 33174380352 SUCCESS
-- Android FAST unit tests
-- CI gate
-
-R2 run 33174380336 SUCCESS
-```
-
-Earlier accepted executable SNE-7 full checkpoint:
-
-```text
-70935644daf5c06985420f19833dbda3a160bbfa
-```
-
-with later SNE-7 docs-only closeout checkpoint:
-
-```text
-83bafdeef2e8445ee6ef92a3e247d63fdf4b58ce
-```
-
-Re-query PR #54 before relying on a head SHA.
 
 ## 2. Current priority — GCR Global Correctness Review Follow-up
 
@@ -51,8 +34,8 @@ Status:
 ```text
 GCR     STATUS
 GCR-1   Current Demon authority / cross-night succession         GREEN / ACCEPTED
-GCR-2   Poisoned Spy fail-safe information policy                ACTIVE / POLICY HARDENING
-GCR-3   Typed production acceptance + source-string retirement   MEDIUM
+GCR-2   Poisoned Spy fail-safe information policy                GREEN / ACCEPTED
+GCR-3   Typed production acceptance + source-string retirement   GREEN / ACCEPTED
 GCR-4   Chambermaid actual wake-history authority                DEFERRED FOLLOW-UP
 GCR-5   Durable identity + reconstruction API hardening          DEFERRED FOLLOW-UP
 ```
@@ -63,17 +46,11 @@ Current handoff:
 docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-28_GLOBAL_CORRECTNESS_FOLLOWUP.md
 ```
 
-Do **not** reopen SNE-7 simply because the global review found new work. SNE-7 proved its scoped same-night/Dawn contracts; GCR addresses gaps outside or above those accepted contracts.
+SNE-7 remains closed. GCR was a separate follow-up campaign and must not be used to reopen accepted same-night/Dawn work without a new typed regression.
 
-## 3. Why GCR exists
+## 3. GCR-1 — Current Demon authority — ACCEPTED
 
-A whole-PR / whole-night correctness review after SNE-7 closure found two areas that needed explicit follow-up.
-
-### GCR-1 — current Demon continuity — GREEN
-
-After valid Imp succession, historical state may contain both a dead old Imp and a living new Imp. The accepted GCR-1 implementation now centralizes current-Demon authority and routes attack resolution, succession and Host-facing Demon behavior through it.
-
-Accepted required correctness:
+Accepted correctness:
 
 ```text
 Night N:   Imp0 self-kills -> Imp1 becomes current Demon
@@ -81,21 +58,28 @@ Night N+1: Imp1 acts normally
 Later:     Imp1 can self-kill -> Imp2 becomes current Demon
 ```
 
-Historical dead Demon role identity remains intact; current authority is derived from the single live Demon.
+Historical dead Demon role identity remains represented correctly. Current authority derives from the single live Demon and fails closed if the live-Demon invariant is violated.
 
-Accepted checkpoint:
+Accepted executable checkpoint:
 
 ```text
 974f617adffd08cc7de0924f6fea4f96f3d73f0c
 ```
 
-### GCR-2 — poisoned Spy fail-safe information policy
+Evidence:
+
+```text
+CI #959 / run 33174380352 SUCCESS
+R2 run 33174380336 SUCCESS
+```
+
+## 4. GCR-2 — Poisoned Spy fail-safe information policy — ACCEPTED
 
 Product decision, 2026-08-28:
 
-The app intentionally does **not** implement fabricated/misleading Grimoire generation for a poisoned Spy. In ordinary play the Poisoner is not expected to intentionally poison an allied Spy; this state is treated primarily as a rare or accidental target-selection case. The product therefore prefers a simple fail-safe policy over a new misinformation subsystem.
+The app intentionally does **not** implement fabricated/misleading Grimoire generation for a poisoned Spy. This is an intentional product simplification / house-rule deviation from official poisoned-information semantics.
 
-Intentional policy:
+Accepted policy:
 
 ```text
 healthy Spy
@@ -104,94 +88,96 @@ healthy Spy
 
 poisoned Spy
 -> wake normally
--> do not show any Grimoire information
--> Host may explicitly tell the Storyteller that the Spy is poisoned
--> do not create or persist a Spy Grimoire information observation
+-> show no Grimoire information
+-> Host may explicitly identify the poisoned state to the Storyteller
+-> do not create/persist a Spy Grimoire information observation
 ```
 
-This is an intentional product simplification / house-rule deviation from official poisoned-information semantics. The resulting interaction-shape difference is accepted and must **not** be reopened as a correctness defect unless the product policy is deliberately changed later.
+The interaction-shape difference is intentional and must not be reopened as a correctness defect unless the product policy is deliberately changed later.
 
-The current production Host path already substantially implements this fail-safe: the poisoned branch suppresses `tellPlayer` and `displayProposition`, instructs the Host not to show the true Grimoire, and leaves healthy Spy behavior unchanged. GCR-2 work should therefore focus on locking this policy with regression coverage and confirming no true-Grimoire or durable-observation leak, not on creating fake Grimoire content.
+No fake-Grimoire or generic misinformation subsystem was introduced.
 
-## 4. GCR execution order
+## 5. GCR blocker full acceptance — COMPLETE
 
-### Phase GCR-1 — centralized current Demon authority — COMPLETE
-
-Completed and accepted at:
+Full production-tree acceptance checkpoint:
 
 ```text
-974f617adffd08cc7de0924f6fea4f96f3d73f0c
+474103ed13caaf34a329ca5e80e2f0ba64963b86
 ```
 
-Preserve the centralized current-Demon authority and dead historical Demon identity.
-
-### Phase GCR-2 — poisoned Spy fail-safe policy
-
-No fabricated/unreliable Grimoire subsystem is authorized.
-
-Minimum regression contract:
+Evidence:
 
 ```text
-1. healthy Spy receives the true Grimoire;
-2. poisoned Spy receives no Grimoire payload;
-3. poisoned Spy never receives the real Grimoire through another display field;
-4. poisoned Spy does not create/persist a Spy Grimoire information observation;
-5. Host-only explanation may explicitly identify the poisoned state.
+CI #963 / run 33175600756 SUCCESS
+- Android :app:testFull + :app:assembleDebug SUCCESS
+- ASP contract tests SUCCESS
+- Real Clingo cross-validation SUCCESS
+- CI gate SUCCESS
+
+R2 run 33175600749 SUCCESS
 ```
 
-Because the current production behavior already matches the newly chosen product policy, do not manufacture an artificial semantic RED. Treat this as policy clarification + characterization/regression hardening. If a focused regression exposes a real leak, then establish RED provenance for that defect before production GREEN.
+This is the authoritative full T4 checkpoint for GCR-1/GCR-2 production behavior.
 
-### Phase GCR-3 — test quality cleanup
+## 6. GCR-3 — source-string retirement — ACCEPTED
 
-Audit remaining source-string/source-order tests. Retire or reduce them when typed production seams exist. Gameplay correctness must not be proved solely by `.kt` text inspection.
-
-High-priority review queue is maintained in:
+GCR-3 audited correctness-adjacent source-string tests under this classification:
 
 ```text
-docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md
+A. typed replacement already proves behavior -> retire
+B. behavior matters but no callable production seam exists -> narrow seam only if worthwhile
+C. architecture/ownership-only invariant -> keep coarse source guard
+D. obsolete implementation-shape assertion -> delete
 ```
 
-and the active GCR handoff.
+Result:
 
-### Phase GCR-4/5 — only after blocker/policy hardening
+- gameplay semantics remain owned by typed tests;
+- remaining source inspection is coarse App/Host ownership only;
+- callback-local variable names, statement order, role lists, exact UI text and gameplay-result source assertions were removed where redundant;
+- no production file was changed during GCR-3;
+- Dawn materializer seam extraction was deliberately deferred because it would add production risk solely to remove already-coarse ownership guards.
 
-Follow-up work:
-
-- Chambermaid “woke because own ability” should derive from actual canonical interaction history, not an expanding role-name allowlist;
-- verify/freeze player-name uniqueness/immutability if names remain durable night-checkpoint target identity;
-- clarify `NightTransactionReconstructor.effectiveState` naming if it represents final reconstructed night state rather than checkpoint-time state;
-- consider systematic Dawn crash cut-point fault injection.
-
-These do not automatically block GCR-2 unless a typed regression proves otherwise.
-
-## 5. SNE-7 — CLOSED / BROAD GREEN
-
-SNE-7 Same-Night Effective Mechanical State is closed. Do not resume its old handoffs.
-
-Protected result, summarized:
+Final GCR-3 test checkpoint:
 
 ```text
-canonical night interactions
-+ confirmed hidden choices
-+ cursor-relative mechanical events
--> ClocktowerEffectiveNightState
--> later actor eligibility / information / death resolution
--> canonical DawnCommitIntent
--> idempotent durable Dawn materialization
--> restore/retry convergence
+383ad0e695656124f9dc608fd5ce06b72de6b499
 ```
 
-Key accepted checkpoints:
+Evidence:
 
 ```text
-730c494f9972ec6425563d04a05c7b2984dda16e
-  production Dawn AliveAt durable observation GREEN
+CI #980 / run 33177405639 SUCCESS
+- Android FAST unit tests SUCCESS
+- CI gate SUCCESS
 
-61387b473ff18e174b211a80962eed6cf0228ed6
-  restore/retry convergence acceptance
+R2 run 33177405675 SUCCESS
+```
 
+Exact post-T4 audit:
+
+```text
+474103ed -> 383ad0e6
+17 commits
+13 modified test files
+1 added audit doc
+0 production files
+```
+
+Therefore a second T4 is not required for GCR-3: the production tree is identical to the production tree already validated at `474103ed`, while the final slimmed test tree has its own successful FAST/R2 acceptance.
+
+Detailed audit:
+
+```text
+docs/GCR3_SOURCE_STRING_RETIREMENT_AUDIT_2026-08-28.md
+```
+
+## 7. SNE-7 — CLOSED / BROAD GREEN
+
+Earlier accepted executable SNE-7 full checkpoint:
+
+```text
 70935644daf5c06985420f19833dbda3a160bbfa
-  full T4 acceptance
 ```
 
 Durable contracts to preserve:
@@ -203,74 +189,44 @@ Durable contracts to preserve:
 - current role/effective state must be read at the correct same-night interaction point;
 - Dawn replay/retry must be idempotent and exactly-once at history level.
 
-Historical SNE execution handoffs/micro-checkpoints were removed from the active docs root and consolidated under:
+Historical SNE execution handoffs are consolidated under:
 
 ```text
 docs/archive/SNE7_AND_PRE_GCR_HANDOFF_CLOSEOUT_2026-08-28.md
 ```
 
-## 6. Other completed architecture foundations
+## 8. Deferred work registry
 
-### A3 Historical Exact hardening
+These are intentionally **not blockers for PR #54**:
 
-H1–H7 are complete/green. Preserve:
+| Deferred area | Status |
+|---|---|
+| GCR-4 Chambermaid actual wake-history authority | DEFERRED FOLLOW-UP |
+| GCR-5 night checkpoint stable identity hardening | DEFERRED FOLLOW-UP |
+| GCR-5 reconstructor naming clarity | DEFERRED FOLLOW-UP |
+| Dawn systematic crash cut-point matrix | DEFERRED FOLLOW-UP |
+| A3 immutable setup snapshot ownership/persistence | NOT STARTED |
+| App Root S9.2 Active Game Persistence Boundary | AUDITED / NOT STARTED |
+| generic custom-script Demon succession | NOT AUTHORIZED |
+| Mayor redirect to Demon with generic succession | DELIBERATELY CONSTRAINED |
+| Host/A4/ZDD recommendation promotion | NOT AUTHORIZED |
+| history UI / generic misinformation tuning | NOT CURRENT |
 
-- setup roles vs dynamic current roles;
-- state-aware historical replay;
-- hidden-mechanics knowledge safety;
-- Trouble Brewing-only fail-closed exact support;
-- mechanically identical-world convergence.
+Each deferred item must be re-audited against live `main` before implementation.
 
-The only remaining A3 item is immutable setup-snapshot ownership/persistence, which is deferred.
+## 9. Source-string test policy
 
-### B4 historical-exact shadow bridge
+Gameplay/rules correctness must be typed.
 
-Production-isolated shadow bridge is green. It does not own Host recommendation authority and must not be promoted incidentally during GCR.
+Long-term source inspection is allowed only for coarse architecture/ownership assertions where there is no callable seam. Source-string tests must not freeze incidental implementation details or substitute for rules behavior.
 
-### App-root decomposition
+Do not create production seams solely to reduce source-string test count when the remaining guard is already coarse and the extraction has no independent architecture benefit.
 
-Through S9.1 is complete/merged. S9.2 Active Game Persistence Boundary remains a deferred architecture option, not current work.
-
-## 7. Deferred work registry
-
-These are intentionally **not current tasks**:
-
-| Deferred area | Status | Resume source |
-|---|---|---|
-| A3 immutable setup snapshot ownership/persistence | NOT STARTED | `docs/archive/deferred/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_A3_SETUP_SNAPSHOT.md` |
-| App Root S9.2 Active Game Persistence Boundary | AUDITED / NOT STARTED | `docs/archive/deferred/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_APP_ROOT_S9.md` |
-| Chambermaid actual wake-history authority | GCR follow-up | active GCR handoff |
-| Night checkpoint stable identity hardening | GCR follow-up | active GCR handoff |
-| Dawn systematic crash cut-point matrix | GCR follow-up | active GCR handoff |
-| generic custom-script Demon succession | NOT AUTHORIZED | future dedicated design |
-| Mayor redirect to Demon with generic succession | deliberately constrained | future dedicated design |
-| Host/A4/ZDD recommendation promotion | NOT AUTHORIZED | existing architecture docs |
-| history UI / misinformation tuning | NOT CURRENT | future roadmap decision |
-
-A deferred task must be re-audited against live `main` before implementation. Its old handoff is context, not authority.
-
-## 8. Source-string test policy
-
-Gameplay/rules correctness should be typed.
-
-Allowed long-term source inspection is limited to coarse architecture/ownership assertions where there is no callable seam. Source-string tests must not freeze incidental implementation details or stand in for rules behavior.
-
-During GCR-3 classify each candidate:
-
-```text
-A typed replacement exists -> retire
-behavior matters but no seam -> introduce narrow callable seam, then replace
-pure architecture guard -> keep coarse only
-obsolete implementation-shape assertion -> delete
-```
-
-Do not recreate previously retired source-string tests merely to restore coverage counts.
-
-## 9. Test gates
+## 10. Validation policy
 
 Follow `docs/TESTING_STRATEGY.md`.
 
-Tests-first minimum for behavior-changing correctness work:
+Behavior-changing correctness work:
 
 ```text
 T0 focused typed RED
@@ -278,22 +234,13 @@ T0 focused typed RED
 -> minimal GREEN
 -> focused affected regressions
 -> T1 :app:testFast
--> T2/T3 when the changed semantic family requires them
+-> T2/T3 when required
+-> T4 before merge-blocking production closure
 ```
 
-For an explicit policy clarification where existing production already matches the accepted product behavior, characterization/regression tests may be added without an artificial failing production change. If those tests expose an actual defect, return to the normal RED/GREEN cycle for that defect.
+A skipped, cached-only or `UP-TO-DATE` route is not evidence that a required gate executed.
 
-Before overall GCR merge-blocking closure, require a real T4 execution:
-
-```text
-./gradlew :app:testFull :app:assembleDebug --no-daemon --rerun-tasks
-```
-
-plus applicable full CI semantic routes (including ASP / Real Clingo when selected) and R2 main-thread-boundary success.
-
-A skipped, zero-job, cached-only or `UP-TO-DATE` route is not proof that a required gate executed.
-
-## 10. Scope / branch discipline
+## 11. Scope / branch discipline
 
 Until explicit authorization:
 
@@ -301,12 +248,11 @@ Until explicit authorization:
 - do not mark ready;
 - do not merge;
 - do not rebase/force-push;
-- do not mix GCR blockers with A3, S9.2, A4/ZDD, recommendation tuning or generic custom-script work;
-- keep exact diff audits for large App/Host edits;
+- do not mix deferred GCR-4/5, A3, S9.2, A4/ZDD or recommendation work into this accepted campaign;
 - preserve complete-worktree safety for `CampBoardGameHostApp.kt` / `ClocktowerHostScreen.kt`.
 
-## 11. Current next action
+## 12. Current next action
 
-**Next implementation action is GCR-2 fail-safe policy regression hardening.**
+**The GCR-1/GCR-2/GCR-3 campaign is accepted. No further correctness implementation is required on PR #54 before a user decision.**
 
-Confirm through focused tests that healthy Spy still receives the true Grimoire, poisoned Spy receives no Grimoire payload or durable Spy information observation, and no alternative display path leaks the true Grimoire. Do not implement fabricated Grimoire generation or a generic misinformation subsystem.
+PR #54 should remain draft/open/unmerged until explicit authorization. The next action is a release/PR decision: either keep the accepted checkpoint as-is for review, explicitly mark ready, or explicitly merge. Do not begin GCR-4/5 inside this PR unless a new regression proves one of them blocks the accepted behavior.
