@@ -9,7 +9,8 @@
 > Latest accepted broad code checkpoint before 7.9E: `06f06fb5c0689983c9baaf0bfe1765a8c69a8d16`  
 > Latest 7.9E production GREEN: `730c494f9972ec6425563d04a05c7b2984dda16e`  
 > Latest 7.9E restore/retry acceptance test checkpoint: `61387b473ff18e174b211a80962eed6cf0228ed6`  
-> Current priority: **SNE-7.9E final T4 broad acceptance**
+> T4 broad acceptance checkpoint: `70935644daf5c06985420f19833dbda3a160bbfa`  
+> Current priority: **SNE-7 corrective campaign closed / next production scope not yet authorized**
 
 ## 1. Current campaign state
 
@@ -21,12 +22,12 @@ A3 Architecture Hardening H1–H7                    COMPLETE / GREEN
 B4 historical-exact shadow bridge                  GREEN / production-isolated
 App-root decomposition through S9.1                CLOSED / MERGED
 App-root S9.2 Active Game Persistence Boundary     AUDIT COMPLETE / DEFERRED
-Same-night effective mechanical state / SNE-7      REOPENED / 7.9E ACTIVE
+Same-night effective mechanical state / SNE-7      CLOSED / BROAD GREEN
 A3 setup-snapshot ownership / persistence          DEFERRED
 Production recommendation authority promotion      NOT AUTHORIZED
 ```
 
-PR #54 remains **draft, open, and unmerged**. Do not resume unrelated App-root decomposition, A3 setup snapshot, A4/B4 authority promotion, recommendation tuning, generic custom-script Demon succession, or unrelated Host/UI cleanup until SNE-7.9 is closed or explicitly paused.
+PR #54 remains **draft, open, and unmerged**. SNE-7 completion does not authorize merge/readiness work or automatic resumption of unrelated App-root decomposition, A3 setup snapshot, A4/B4 authority promotion, recommendation tuning, generic custom-script Demon succession, or unrelated Host/UI cleanup.
 
 ## 2. SNE-7 corrective route
 
@@ -35,10 +36,10 @@ SNE-7.9A  Mayor redirect dependency invalidation          COMPLETE / GREEN
 SNE-7.9B  Chambermaid stale-target revalidation           COMPLETE / GREEN
 SNE-7.9C  canonical night-death resolution                COMPLETE / BROAD GREEN
 SNE-7.9D  Demon succession legality / Dawn                COMPLETE / BROAD GREEN
-SNE-7.9E  real restore + durable Dawn integration          ACCEPTANCE GREEN / T4 PENDING
+SNE-7.9E  real restore + durable Dawn integration          COMPLETE / BROAD GREEN
 ```
 
-The 7.9E contract is:
+The final 7.9E contract is satisfied:
 
 ```text
 canonical restored night result
@@ -51,7 +52,7 @@ canonical restored night result
 → crash / restore / retry produces the same final history and state
 ```
 
-The focused production correction and typed restore/retry convergence proof are now GREEN. The remaining close condition is the explicit full-strength T4 gate selected by this `[full-ci]` checkpoint.
+The production correction, typed restore/retry convergence acceptance proof, and full-strength T4 checkpoint are all GREEN.
 
 ## 3. Accepted 7.9C / 7.9D baseline
 
@@ -184,7 +185,7 @@ R2 #852 SUCCESS
 focused runner #18 GREEN
 ```
 
-The planner seam is **accepted and must not be redesigned during final acceptance unless a typed counterexample proves it wrong**.
+The planner seam is accepted and should not be redesigned unless a typed counterexample proves it wrong.
 
 ## 5. App durable Dawn wiring — corrected GREEN
 
@@ -311,7 +312,7 @@ persisted ClocktowerNightCheckpoint
 → real ClocktowerGameSession GLOBAL_V1 action/observation commit APIs
 ```
 
-It compares an uninterrupted Imp-self-kill/successor Dawn with a partial state where the old Imp is already mechanically dead but its durable Dawn history still needs repair. The two routes must converge to identical:
+It compares an uninterrupted Imp-self-kill/successor Dawn with a partial state where the old Imp is already mechanically dead but its durable Dawn history still needs repair. The two routes converge to identical:
 
 ```text
 alive seats
@@ -332,7 +333,7 @@ Exactly-once assertions require:
 1 × public AliveAt(false) observation
 ```
 
-A further replay of the fully materialized final state must be a no-op and remain exactly equal.
+A further replay of the fully materialized final state is a no-op and remains exactly equal.
 
 Normal validation on this checkpoint:
 
@@ -349,30 +350,49 @@ R2 / 33153438147
 - verify-boundary: SUCCESS
 ```
 
-This establishes the restore/retry convergence acceptance proof but is **not** a substitute for T4 because ordinary incremental routing intentionally skipped the full-strength gates.
+## 7. Final T4 broad acceptance — COMPLETE / GREEN
 
-## 7. Current close condition — T4 requested
-
-This document checkpoint is intentionally committed with `[full-ci]` to select the repository’s explicit T4 acceptance policy.
-
-Required final evidence before declaring 7.9E complete:
+The docs checkpoint below intentionally carried `[full-ci]` and selected the repository’s full-strength T4 policy:
 
 ```text
-Android full JVM suite: :app:testFull
-Android debug build:     :app:assembleDebug
-ASP contract gates selected by full checkpoint
-Real Clingo cross-validation selected by full checkpoint
-CI aggregate gate
-R2 boundary gate
+70935644daf5c06985420f19833dbda3a160bbfa
+[full-ci] docs: checkpoint SNE-7.9E acceptance
 ```
 
-Do not declare SNE-7.9E or the wider same-night consistency bug campaign fully repaired until the selected T4 jobs have actually executed and succeeded.
+T4 evidence:
 
-If T4 is GREEN, `730c494f...` remains the latest production code checkpoint and `61387b47...` the restore/retry acceptance test checkpoint; any later roadmap synchronization is docs-only and does not alter executable semantics.
+```text
+CI #933 / 33153679896 — SUCCESS
+
+Classify changes
+- SUCCESS
+
+Android tests
+- FAST path: SKIPPED as expected under [full-ci]
+- Run full Android unit tests and build debug APK: SUCCESS
+  (actual full-strength execution; 08:01:45 → 08:04:47 UTC)
+
+ASP contract tests
+- golden corpus validation: SUCCESS
+- Oracle harness unit tests: SUCCESS
+
+Real Clingo cross-validation
+- Clingo 5.8.0 install/verification: SUCCESS
+- frozen botc-asp Oracle fetch: SUCCESS
+- Oracle cross-validation: SUCCESS
+
+CI gate
+- SUCCESS
+
+R2 main-thread boundary #860 / 33153679938
+- SUCCESS
+```
+
+This satisfies the explicit 7.9E close condition. `730c494f...` remains the latest production code checkpoint, `61387b47...` remains the typed restore/retry acceptance checkpoint, and `70935644...` is the accepted full T4 checkpoint. This later roadmap synchronization is docs-only and does not change executable semantics.
 
 ## 8. Protected architecture / scope
 
-Hard contracts:
+Hard contracts retained after SNE-7 closure:
 
 - `ClocktowerNightCheckpoint` remains the sole durable unfinished-night state owner;
 - `GameState` / action-observation timelines remain durable game-history authority;
@@ -385,7 +405,7 @@ Hard contracts:
 - rules determine legality; recommendation/UI never become mechanical authority;
 - no second persisted coordinator and no event-sourcing rewrite.
 
-Scope exclusions remain:
+Scope exclusions remain unless a future roadmap decision explicitly promotes them:
 
 ```text
 generic non-self Demon-death succession
@@ -399,26 +419,26 @@ PR merge/readiness work
 
 Large `CampBoardGameHostApp.kt` changes still require complete-worktree-safe / exact-head editing and exact remote scope audit. Never construct a whole-file replacement from truncated source content.
 
-## 9. Startup order / continuation
+## 9. Startup order / next continuation
 
 Read:
 
 1. root `AGENTS.md`;
 2. this roadmap;
-3. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-27_SAME_NIGHT_CONTINUATION.md` for historical 7.9E context;
-4. `docs/SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md` as needed;
-5. re-query live `main`, PR #54 head/state/checks before editing.
+3. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-27_SAME_NIGHT_CONTINUATION.md` only as historical SNE-7.9E context;
+4. re-query live `main`, PR #54 head/state/checks before any new edit.
 
 Current continuation instruction:
 
 ```text
-1. production 7.9E GREEN = 730c494f9972ec6425563d04a05c7b2984dda16e;
-2. restore/retry convergence acceptance test = 61387b473ff18e174b211a80962eed6cf0228ed6;
-3. normal acceptance checkpoint CI #932 Android FAST + CI gate and R2 are GREEN;
-4. the current docs checkpoint carries [full-ci] and must be treated as T4 PENDING until all selected full jobs finish;
-5. if T4 succeeds, synchronize docs to COMPLETE / BROAD GREEN without changing production semantics;
-6. if T4 fails, diagnose the failing selected gate and do not close 7.9E;
-7. keep PR #54 draft/open/unmerged.
+1. SNE-7.9A/B/C/D/E are complete; 7.9E T4 broad acceptance is GREEN.
+2. production 7.9E GREEN = 730c494f9972ec6425563d04a05c7b2984dda16e.
+3. restore/retry convergence acceptance = 61387b473ff18e174b211a80962eed6cf0228ed6.
+4. full T4 acceptance = 70935644daf5c06985420f19833dbda3a160bbfa, CI #933 + R2 #860 GREEN.
+5. any commit after 70935644 that only synchronizes docs is not a new executable checkpoint.
+6. do not reopen SNE-7 without a typed counterexample.
+7. do not automatically merge PR #54 or begin another deferred production scope; obtain/derive an explicit next roadmap decision first.
+8. keep PR #54 draft/open/unmerged unless the user explicitly authorizes a state change.
 ```
 
 Never merge, mark ready, rebase, force-push, or broaden PR #54 without explicit user authorization.
