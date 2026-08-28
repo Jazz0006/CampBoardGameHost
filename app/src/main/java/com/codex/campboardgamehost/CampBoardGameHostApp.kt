@@ -159,6 +159,8 @@ import com.codex.campboardgamehost.clocktower.session.NightCheckpointHostTransac
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointRevisionIntent
 import com.codex.campboardgamehost.clocktower.session.NightResolutionEvent
 import com.codex.campboardgamehost.clocktower.session.DawnCommitIntent
+import com.codex.campboardgamehost.clocktower.session.DawnDurableMaterializationState
+import com.codex.campboardgamehost.clocktower.session.NightDawnDurableMaterializationPlanner
 import com.codex.campboardgamehost.clocktower.session.NightDawnPoisonResolutionInput
 import com.codex.campboardgamehost.clocktower.session.NightDawnDeathResolutionInput
 import com.codex.campboardgamehost.clocktower.session.NightDawnResolutionPlanner
@@ -1219,6 +1221,7 @@ internal fun CampBoardGameHostApp() {
         eventSequence: Int,
         eventPhase: ClocktowerPhase = clocktowerPhase,
         eventRound: Int = round,
+        recordId: String? = null,
     ) {
         if (clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) return
         val seat = cards.indexOfFirst { it.name == playerName }
@@ -1237,7 +1240,7 @@ internal fun CampBoardGameHostApp() {
             nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
             playerInputRevision = clocktowerPlayerInputRevision,
             draft = EpistemicObservationDraft(
-                recordId = "public-alive-${clocktowerGameId}-${eventSequence}-$seat",
+                recordId = recordId ?: "public-alive-${clocktowerGameId}-${eventSequence}-$seat",
                 phase = epistemicPhase,
                 round = eventRound,
                 sequence = eventSequence,
@@ -1316,6 +1319,7 @@ internal fun CampBoardGameHostApp() {
         playerNames: List<String> = emptyList(),
         eventPhase: ClocktowerPhase = clocktowerPhase,
         eventRound: Int = round,
+        projectSemanticHistory: Boolean = true,
     ) {
         advanceClocktowerGameStateRevision()
         clocktowerEventCounter += 1
@@ -1330,6 +1334,7 @@ internal fun CampBoardGameHostApp() {
                 round = eventRound,
             ),
         )
+        if (!projectSemanticHistory) return
         if (type !in setOf(ClocktowerEventType.Death, ClocktowerEventType.Execution)) return
         val eliminatedSeats = playerNames.mapNotNull { playerName ->
             cards.indexOfFirst { it.name == playerName }
@@ -2255,33 +2260,51 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    fun setClocktowerActualRole(playerName: String, nextRole: ClocktowerRole) {
+    fun recordClocktowerRoleChangeAction(
+        targetSeat: Int,
+        nextRole: ClocktowerRole,
+        actionId: String,
+    ) {
+        val localSequence = clocktowerEventCounter + 1
+        recordClocktowerAction(ActionFactDraft.RoleChange(
+            actionId = actionId,
+            phase = storytellerPhaseFor(),
+            round = round,
+            sequence = localSequence,
+            targetSeat = targetSeat,
+            role = RoleId(nextRole.enName),
+            alignment = when (nextRole.team) {
+                ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider -> ClocktowerAlignment.GOOD
+                ClocktowerTeam.Minion, ClocktowerTeam.Demon -> ClocktowerAlignment.EVIL
+            },
+            type = when (nextRole.team) {
+                ClocktowerTeam.Townsfolk -> CharacterType.TOWNSFOLK
+                ClocktowerTeam.Outsider -> CharacterType.OUTSIDER
+                ClocktowerTeam.Minion -> CharacterType.MINION
+                ClocktowerTeam.Demon -> CharacterType.DEMON
+            },
+        ))
+    }
+
+    fun setClocktowerActualRole(
+        playerName: String,
+        nextRole: ClocktowerRole,
+        recordSemanticHistory: Boolean = true,
+    ) {
         val index = cards.indexOfFirst { it.name == playerName }
         if (index >= 0) {
             val targetSeat = index + 1
-            val localSequence = clocktowerEventCounter + 1
-            recordClocktowerAction(ActionFactDraft.RoleChange(
-                actionId = clocktowerActionId(
-                    kind = "role-change-${nextRole.enName.lowercase().replace(' ', '-')}",
-                    localSequence = localSequence,
+            if (recordSemanticHistory) {
+                recordClocktowerRoleChangeAction(
                     targetSeat = targetSeat,
-                ),
-                phase = storytellerPhaseFor(),
-                round = round,
-                sequence = localSequence,
-                targetSeat = targetSeat,
-                role = RoleId(nextRole.enName),
-                alignment = when (nextRole.team) {
-                    ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider -> ClocktowerAlignment.GOOD
-                    ClocktowerTeam.Minion, ClocktowerTeam.Demon -> ClocktowerAlignment.EVIL
-                },
-                type = when (nextRole.team) {
-                    ClocktowerTeam.Townsfolk -> CharacterType.TOWNSFOLK
-                    ClocktowerTeam.Outsider -> CharacterType.OUTSIDER
-                    ClocktowerTeam.Minion -> CharacterType.MINION
-                    ClocktowerTeam.Demon -> CharacterType.DEMON
-                },
-            ))
+                    nextRole = nextRole,
+                    actionId = clocktowerActionId(
+                        kind = "role-change-${nextRole.enName.lowercase().replace(' ', '-')}",
+                        localSequence = clocktowerEventCounter + 1,
+                        targetSeat = targetSeat,
+                    ),
+                )
+            }
             advanceClocktowerGameStateRevision()
             cards[index] = cards[index].copy(
                 actualRoleLabel = nextRole.nameFor(language),
@@ -2925,6 +2948,8 @@ internal fun CampBoardGameHostApp() {
                         },
                         onConfirmNewDemon = {
                             val pendingName = clocktowerPendingNewDemonName
+                            var dawnPhaseActionIdToCommit: String? = null
+                            var dawnPhaseStateMutationRequired = false
                             val canEnterDawn =
                                 if (pendingName != null) {
                                     val baseGameState = cards.toClocktowerGameState(
@@ -2963,28 +2988,64 @@ internal fun CampBoardGameHostApp() {
                                     )
                                     val dawnCommitIntent = transition.dawnCommitIntent
                                     if (transition.continuation == NightResolutionContinuation.DAWN && dawnCommitIntent != null) {
-                                        dawnCommitIntent.roleChanges.forEach { roleChange ->
+                                        val durableMaterializationPlan = NightDawnDurableMaterializationPlanner.plan(
+                                            gameId = clocktowerGameId,
+                                            round = round,
+                                            intent = dawnCommitIntent,
+                                            state = DawnDurableMaterializationState(
+                                                aliveSeats = cards.mapIndexedNotNull { index, card ->
+                                                    (index + 1).takeIf { card.eliminatedRound == null }
+                                                }.toSet(),
+                                                roleIdsBySeat = cards.mapIndexedNotNull { index, card ->
+                                                    card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
+                                                }.toMap(),
+                                                currentPhase = storytellerPhaseFor(),
+                                                committedActionIds = clocktowerActionTimeline.entries
+                                                    .map { it.fact.actionId }
+                                                    .toSet(),
+                                                committedObservationRecordIds = clocktowerEpistemicObservations
+                                                    .map { it.recordId }
+                                                    .toSet(),
+                                            ),
+                                            advanceToDawn = true,
+                                        )
+                                        val phaseAdvance = durableMaterializationPlan.phaseAdvance
+                                        durableMaterializationPlan.roleChanges.forEach { roleChangeMaterialization ->
+                                            val roleChange = roleChangeMaterialization.intent
                                             val targetName = cards.getOrNull(roleChange.targetSeat - 1)?.name
                                             val nextRole = clocktowerRolesForScript(currentClocktowerScript)
                                                 .firstOrNull { role -> RoleId(role.enName) == roleChange.roleId }
                                             if (targetName != null && nextRole != null) {
-                                                setClocktowerActualRole(targetName, nextRole)
-                                                records.add(
-                                                    EliminationRecord(
-                                                        round,
+                                                roleChangeMaterialization.actionIdToCommit?.let { actionId ->
+                                                    recordClocktowerRoleChangeAction(
+                                                        targetSeat = roleChange.targetSeat,
+                                                        nextRole = nextRole,
+                                                        actionId = actionId,
+                                                    )
+                                                }
+                                                if (roleChangeMaterialization.stateMutationRequired) {
+                                                    setClocktowerActualRole(
                                                         targetName,
-                                                        context.getString(R.string.clocktower_record_imp_passed),
-                                                    ),
-                                                )
-                                                addClocktowerEvent(
-                                                    ClocktowerEventType.RoleChange,
-                                                    localizedText("角色变化", "Role changed"),
-                                                    localizedText(
-                                                        "${playerSeatLabel(cards, targetName)} 成为新的小恶魔。",
-                                                        "${playerSeatLabel(cards, targetName)} became the new Imp.",
-                                                    ),
-                                                    listOf(targetName),
-                                                )
+                                                        nextRole,
+                                                        recordSemanticHistory = false,
+                                                    )
+                                                    records.add(
+                                                        EliminationRecord(
+                                                            round,
+                                                            targetName,
+                                                            context.getString(R.string.clocktower_record_imp_passed),
+                                                        ),
+                                                    )
+                                                    addClocktowerEvent(
+                                                        ClocktowerEventType.RoleChange,
+                                                        localizedText("角色变化", "Role changed"),
+                                                        localizedText(
+                                                            "${playerSeatLabel(cards, targetName)} 成为新的小恶魔。",
+                                                            "${playerSeatLabel(cards, targetName)} became the new Imp.",
+                                                        ),
+                                                        listOf(targetName),
+                                                    )
+                                                }
                                             }
                                         }
                                         val poisonTargetName = dawnCommitIntent.poisonCarry?.targetSeat
@@ -3015,6 +3076,8 @@ internal fun CampBoardGameHostApp() {
                                         clocktowerPendingNightNewDemonIdentityName = transition.checkpoint.pendingNightNewDemonIdentityName
                                         clocktowerDemonSuccessorTarget = transition.checkpoint.demonSuccessorDraftTarget
                                         clocktowerConfirmedDemonSuccessorTarget = transition.checkpoint.confirmedDemonSuccessorTarget
+                                        dawnPhaseActionIdToCommit = phaseAdvance?.actionIdToCommit
+                                        dawnPhaseStateMutationRequired = phaseAdvance?.stateMutationRequired == true
                                         true
                                     } else {
                                         false
@@ -3026,9 +3089,21 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerPendingNewDemonName = null
                                 clocktowerDemonSuccessorTarget = null
                                 clearConfirmedDemonSuccessorTarget()
-                                recordClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
-                                clocktowerPhase = ClocktowerPhase.Dawn
-                                advanceClocktowerGameStateRevision()
+                                dawnPhaseActionIdToCommit?.let { actionId ->
+                                    val localSequence = clocktowerEventCounter + 1
+                                    recordClocktowerAction(ActionFactDraft.PhaseAdvance(
+                                        actionId = actionId,
+                                        phase = storytellerPhaseFor(),
+                                        round = round,
+                                        sequence = localSequence,
+                                        nextPhase = StorytellerPhase.DAWN,
+                                        nextRound = round,
+                                    ))
+                                }
+                                if (dawnPhaseStateMutationRequired) {
+                                    clocktowerPhase = ClocktowerPhase.Dawn
+                                    advanceClocktowerGameStateRevision()
+                                }
                                 resetClocktowerNightFlow()
                             }
                         },
@@ -3436,12 +3511,6 @@ internal fun CampBoardGameHostApp() {
                             clocktowerSelectedExecution = null
                         },
                         onConfirmNight = {
-                            nextNightPublicAliveObservationPreflightOrNull()?.let { (playerName, eventSequence) ->
-                                preflightClocktowerPublicAliveObservation(
-                                    playerName = playerName,
-                                    eventSequence = eventSequence,
-                                )
-                            }
                             // Dawn resolution commits deaths, role changes and the next phase as
                             // one timeline boundary. Earlier action confirmations have already
                             // revisioned their own facts; this closes the night as a whole.
@@ -3509,6 +3578,37 @@ internal fun CampBoardGameHostApp() {
                                 mayorCanRedirect && resolvedDeathName != null && resolvedDeathName != originalDeathName -> resolvedDeathName
                                 safeMayorRedirectName != null -> safeMayorRedirectName
                                 else -> null
+                            }
+                            val dawnDeathMaterialization = NightDawnDurableMaterializationPlanner.plan(
+                                gameId = clocktowerGameId,
+                                round = round,
+                                intent = DawnCommitIntent(death = deathTransition.dawnCommitIntent?.death),
+                                state = DawnDurableMaterializationState(
+                                    aliveSeats = cards.mapIndexedNotNull { index, card ->
+                                        (index + 1).takeIf { card.eliminatedRound == null }
+                                    }.toSet(),
+                                    roleIdsBySeat = cards.mapIndexedNotNull { index, card ->
+                                        card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
+                                    }.toMap(),
+                                    currentPhase = storytellerPhaseFor(),
+                                    committedActionIds = clocktowerActionTimeline.entries
+                                        .map { it.fact.actionId }
+                                        .toSet(),
+                                    committedObservationRecordIds = clocktowerEpistemicObservations
+                                        .map { it.recordId }
+                                        .toSet(),
+                                ),
+                                advanceToDawn = false,
+                            ).death
+                            if (
+                                deathName != null &&
+                                dawnDeathMaterialization?.publicAliveObservationIdToCommit != null
+                            ) {
+                                preflightClocktowerPublicAliveObservation(
+                                    playerName = deathName,
+                                    eventSequence = clocktowerEventCounter + if (redirectEventTargetName != null) 2 else 1,
+                                    recordId = dawnDeathMaterialization.publicAliveObservationIdToCommit,
+                                )
                             }
                             if (redirectEventTargetName != null) {
                                 addClocktowerEvent(
@@ -3587,20 +3687,33 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerPendingNightDeath = deathName
                                 val index = cards.indexOfFirst { it.name == deathName }
                                 val nightDeathCard = cards.getOrNull(index)
-                                if (index >= 0 && nightDeathCard != null && nightDeathCard.eliminatedRound == null) {
+                                if (index >= 0 && nightDeathCard != null && dawnDeathMaterialization != null) {
                                     val demonDied = nightDeathCard.clocktowerTeam == ClocktowerTeam.Demon
                                     val impSelfChosen = demonDied && originalDeathName == deathName
-                                    cards[index] = nightDeathCard.copy(eliminatedRound = round)
-                                    records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
-                                    addClocktowerEvent(
-                                        ClocktowerEventType.Death,
-                                        localizedText("恶魔击杀", "Demon kill"),
-                                        localizedText(
-                                            "${playerSeatLabel(cards, deathName)} · 死亡",
-                                            "${playerSeatLabel(cards, deathName)} · killed",
-                                        ),
-                                        listOf(deathName),
-                                    )
+                                    val deathLocalSequence = clocktowerEventCounter + 1
+                                    dawnDeathMaterialization.actionIdToCommit?.let { actionId ->
+                                        recordClocktowerAction(ActionFactDraft.Death(
+                                            actionId = actionId,
+                                            phase = storytellerPhaseFor(),
+                                            round = round,
+                                            sequence = deathLocalSequence,
+                                            targetSeat = dawnDeathMaterialization.intent.targetSeat,
+                                        ))
+                                    }
+                                    if (dawnDeathMaterialization.stateMutationRequired) {
+                                        cards[index] = nightDeathCard.copy(eliminatedRound = round)
+                                        records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
+                                        addClocktowerEvent(
+                                            ClocktowerEventType.Death,
+                                            localizedText("恶魔击杀", "Demon kill"),
+                                            localizedText(
+                                                "${playerSeatLabel(cards, deathName)} · 死亡",
+                                                "${playerSeatLabel(cards, deathName)} · killed",
+                                            ),
+                                            listOf(deathName),
+                                            projectSemanticHistory = false,
+                                        )
+                                    }
                                     if (demonDied) {
                                         if (impSelfChosen) {
                                             val demonRoleId = RoleId(requireNotNull(nightDeathCard.clocktowerRole).enName)
@@ -3691,8 +3804,42 @@ internal fun CampBoardGameHostApp() {
                             } else if (nightKlutzName == null && newDemonName != null) {
                                 clocktowerPendingNewDemonName = newDemonName
                             } else if (nightKlutzName == null && !unresolvedDemonSuccessor) {
-                                recordClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
-                                clocktowerPhase = ClocktowerPhase.Dawn
+                                val dawnPhasePlan = NightDawnDurableMaterializationPlanner.plan(
+                                    gameId = clocktowerGameId,
+                                    round = round,
+                                    intent = DawnCommitIntent(),
+                                    state = DawnDurableMaterializationState(
+                                        aliveSeats = cards.mapIndexedNotNull { index, card ->
+                                            (index + 1).takeIf { card.eliminatedRound == null }
+                                        }.toSet(),
+                                        roleIdsBySeat = cards.mapIndexedNotNull { index, card ->
+                                            card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
+                                        }.toMap(),
+                                        currentPhase = storytellerPhaseFor(),
+                                        committedActionIds = clocktowerActionTimeline.entries
+                                            .map { it.fact.actionId }
+                                            .toSet(),
+                                        committedObservationRecordIds = clocktowerEpistemicObservations
+                                            .map { it.recordId }
+                                            .toSet(),
+                                    ),
+                                    advanceToDawn = true,
+                                )
+                                val phaseAdvance = requireNotNull(dawnPhasePlan.phaseAdvance)
+                                phaseAdvance.actionIdToCommit?.let { actionId ->
+                                    val localSequence = clocktowerEventCounter + 1
+                                    recordClocktowerAction(ActionFactDraft.PhaseAdvance(
+                                        actionId = actionId,
+                                        phase = storytellerPhaseFor(),
+                                        round = round,
+                                        sequence = localSequence,
+                                        nextPhase = phaseAdvance.targetPhase,
+                                        nextRound = round,
+                                    ))
+                                }
+                                if (phaseAdvance.stateMutationRequired) {
+                                    clocktowerPhase = ClocktowerPhase.Dawn
+                                }
                                 resetClocktowerNightFlow()
                             }
                             val poisonCarriedIntoTomorrow = PoisonEffectLifecycle.afterNight(
