@@ -29,8 +29,16 @@ internal fun resolveNightReconstructionDemonRoleId(
     cards: List<PlayerCard>,
     currentDemonHostContext: CurrentDemonHostContext?,
     confirmedDemonAttackerName: String?,
-): RoleId? = currentDemonHostContext
-    ?.actor
-    ?.clocktowerRole
-    ?.enName
-    ?.let(::RoleId)
+): RoleId? {
+    val authorityCard = currentDemonHostContext?.actor
+        ?: confirmedDemonAttackerName
+            ?.let { attackerName -> cards.singleOrNull { it.name == attackerName } }
+            ?.takeIf { attacker ->
+                attacker.eliminatedRound != null &&
+                    attacker.clocktowerTeam == ClocktowerTeam.Demon
+            }
+    return authorityCard
+        ?.clocktowerRole
+        ?.enName
+        ?.let(::RoleId)
+}
