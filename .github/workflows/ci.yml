@@ -201,7 +201,7 @@ jobs:
 
       - name: Run full Android unit tests and build debug APK
         if: needs.changes.outputs.android_full == 'true'
-        run: ./gradlew :app:testFull :app:assembleDebug --no-daemon --build-cache
+        run: ./gradlew :app:testFull :app:assembleDebug --no-daemon --rerun-tasks
 
   asp-contract-tests:
     name: ASP contract tests
