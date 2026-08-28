@@ -7,6 +7,9 @@ import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
+import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightCursor
+import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
+import com.codex.campboardgamehost.clocktower.rules.ResolvedNightMechanicalEvent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -39,7 +42,7 @@ class NightTransactionRestoreCompositionTest {
     }
 
     @Test
-    fun `restored forced Scarlet Woman succession is derived without confirmed choice or base mutation`() {
+    fun `restored forced Scarlet Woman succession exposes canonical events without base mutation`() {
         val baseGameState = forcedGameState()
         val persistedValues = checkpoint(
             pendingNewDemonName = "Scarlet Woman",
@@ -49,6 +52,26 @@ class NightTransactionRestoreCompositionTest {
 
         val restored = restore(persistedValues, baseGameState)
 
+        assertEquals(
+            listOf(
+                ResolvedNightMechanicalEvent.MechanicalDeath(
+                    targetSeat = 1,
+                    effectiveAt = ClocktowerEffectiveNightCursor(
+                        interactionId = successorInteraction,
+                        boundary = ClocktowerInteractionBoundary.BEFORE,
+                    ),
+                ),
+                ResolvedNightMechanicalEvent.RoleChanged(
+                    targetSeat = 2,
+                    roleId = RoleId("Imp"),
+                    effectiveAt = ClocktowerEffectiveNightCursor(
+                        interactionId = successorInteraction,
+                        boundary = ClocktowerInteractionBoundary.AFTER,
+                    ),
+                ),
+            ),
+            restored.reconstruction.confirmedEvents,
+        )
         assertEquals(empathInteraction, restored.reconstruction.currentInteractionId)
         assertFalse(restored.reconstruction.effectiveState.isMechanicallyAlive(1))
         assertEquals(RoleId("Imp"), restored.reconstruction.effectiveState.currentRoleId(2))
