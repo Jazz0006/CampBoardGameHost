@@ -7,8 +7,9 @@
 > Active branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54  
 > Latest accepted broad code checkpoint before 7.9E: `06f06fb5c0689983c9baaf0bfe1765a8c69a8d16`  
-> Current 7.9E intentional RED code checkpoint: `94adcd0febbfcedc7b523249be5cf784a8bc38f2`  
-> Current priority: **SNE-7.9E exactly-once durable Dawn App wiring correction**
+> Latest 7.9E production GREEN: `730c494f9972ec6425563d04a05c7b2984dda16e`  
+> Latest 7.9E restore/retry acceptance test checkpoint: `61387b473ff18e174b211a80962eed6cf0228ed6`  
+> Current priority: **SNE-7.9E final T4 broad acceptance**
 
 ## 1. Current campaign state
 
@@ -34,21 +35,23 @@ SNE-7.9A  Mayor redirect dependency invalidation          COMPLETE / GREEN
 SNE-7.9B  Chambermaid stale-target revalidation           COMPLETE / GREEN
 SNE-7.9C  canonical night-death resolution                COMPLETE / BROAD GREEN
 SNE-7.9D  Demon succession legality / Dawn                COMPLETE / BROAD GREEN
-SNE-7.9E  real restore + durable Dawn integration          ACTIVE / CORRECTION RED
+SNE-7.9E  real restore + durable Dawn integration          ACCEPTANCE GREEN / T4 PENDING
 ```
 
-The remaining work is no longer primarily “which role rule wins”. The active defect is the production materialization boundary:
+The 7.9E contract is:
 
 ```text
 canonical restored night result
 → Dawn durable materialization
 → mechanical state mutation exactly once
-→ ActionFact exactly once
+→ Death ActionFact exactly once
 → public AliveAt(false) observation exactly once
-→ RoleChange exactly once
-→ Night → Dawn phase transition exactly once
+→ RoleChange ActionFact exactly once
+→ Night → Dawn PhaseAdvance ActionFact exactly once
 → crash / restore / retry produces the same final history and state
 ```
+
+The focused production correction and typed restore/retry convergence proof are now GREEN. The remaining close condition is the explicit full-strength T4 gate selected by this `[full-ci]` checkpoint.
 
 ## 3. Accepted 7.9C / 7.9D baseline
 
@@ -124,7 +127,7 @@ confirmed Imp self attack
 
 A functioning Monk that prevents the self-kill yields no death and no succession; stale successor fields cannot invent succession.
 
-## 4. SNE-7.9E progress already accepted
+## 4. SNE-7.9E accepted foundations
 
 ### 4.1 Restore/reconstruction composition
 
@@ -143,7 +146,7 @@ b97e9486182f8d59820d7c61eaad3eaac5ae68e2
           GREEN — project canonical restored succession events
 ```
 
-`b97e9486` changed only `ClocktowerHostScreen.kt`; focused runner #17 (`33146544493`) succeeded. Bot-origin normal CI #923 / R2 #850 were `action_required` with no jobs, a trigger/provenance restriction rather than a test failure.
+`b97e9486` changed only `ClocktowerHostScreen.kt`; focused runner #17 (`33146544493`) succeeded. Bot-origin normal CI #923 / R2 #850 did not execute jobs; that absence is not treated as test evidence either way.
 
 ### 4.2 Pure exactly-once Dawn planner
 
@@ -181,9 +184,11 @@ R2 #852 SUCCESS
 focused runner #18 GREEN
 ```
 
-The planner seam is **accepted and must not be redesigned during the App wiring correction unless a typed counterexample proves it wrong**.
+The planner seam is **accepted and must not be redesigned during final acceptance unless a typed counterexample proves it wrong**.
 
-## 5. Current active RED — App durable Dawn wiring
+## 5. App durable Dawn wiring — corrected GREEN
+
+### 5.1 Intentional RED
 
 Initial App wiring RED:
 
@@ -192,23 +197,7 @@ c0075ca6e1a8b4734d2ba7bdc8ea28ffab4a23c4
 test: require idempotent Dawn planner wiring
 ```
 
-CI #926 compiled production and ran 922 tests with exactly the two new wiring failures. This was a clean intended RED.
-
-First GREEN candidate:
-
-```text
-af14b913b3b46c97c12b8e40cb8b304bc82f44b6
-fix: materialize Dawn durable effects idempotently
-```
-
-Focused runner #20 (`33148959735`) passed, but **this commit is rejected as an accepted checkpoint**. Later semantic audit found a real omission:
-
-- `preflightClocktowerPublicAliveObservation(...)` only proves that a global observation commit would succeed before public mutation;
-- it deliberately does **not** write returned `observationLog`, global cursor, or player-input revision back to App state;
-- `af14b913` disabled generic Dawn death semantic projection with `projectSemanticHistory=false` to avoid a duplicate dynamic Death `ActionFact`;
-- therefore the planner-owned stable public `AliveAt(false)` was only preflighted and was never durably appended.
-
-Supplemental/current RED:
+Supplemental durable-observation RED:
 
 ```text
 94adcd0febbfcedc7b523249be5cf784a8bc38f2
@@ -223,82 +212,165 @@ ClocktowerGlobalObservationProductionWiringTest
 ClocktowerHistoricalActionProductionWiringTest
 ```
 
-This is the current intentional code RED. Do not treat `af14b913` as GREEN and do not weaken the two legacy guards merely to make FAST green.
+The latter two failures exposed stale source-level syntax proxies around real architecture contracts; they were not deleted or weakened.
 
-## 6. Legacy guard inspection — completed
+### 5.2 Legacy guard semantic correction
 
-Read-only temp runner #21 (`33149908226`) completed **SUCCESS** against exact code head `94adcd0f`.
+Checkpoint:
 
-The two legacy guards protect real architecture contracts:
+```text
+6f656387b8f4d44a5fd6f7aaae819779c4166d08
+test: preserve semantic Dawn history guards
+```
 
-### `ClocktowerGlobalObservationProductionWiringTest`
+The corrected guards preserve the actual contracts:
 
-- `recordEpistemicObservation(...)` remains the real shared durable observation commit authority;
-- exact duplicate GLOBAL_V1 commits must return before list mutation/durability publication;
-- public `AliveAt` observations must flow through the same draft/commit authority;
-- public elimination preflight must occur before caller state publication;
-- preflight itself must remain non-mutating.
+- public elimination preflight must occur before the real card death mutation;
+- `recordEpistemicObservation(...)` remains the durable shared observation authority;
+- RoleChange history must still be produced by the App-owned role-change action helper;
+- RoleChange history must occur before base-card role mutation;
+- Death / RoleChange / PhaseAdvance remain replayable semantic actions on the shared global timeline.
 
-### `ClocktowerHistoricalActionProductionWiringTest`
+The tests-first runner proved these corrected guards pass while the new durable AliveAt wiring test remained the sole intended RED.
 
-- App owns one `ActionFactTimeline` and shares the global timeline cursor between actions and observations;
-- Death, RoleChange and PhaseAdvance remain replayable semantic actions;
-- RoleChange semantic history is recorded before the base-card state mutation;
-- save/restore preserves the action timeline without upgrading legacy history.
+### 5.3 Minimal App GREEN
 
-Therefore the next GREEN must **preserve these contracts**, not delete or dilute them.
+Production checkpoint:
 
-## 7. Exact next implementation direction
+```text
+730c494f9972ec6425563d04a05c7b2984dda16e
+fix: durably commit Dawn alive observation
+```
 
-For Dawn death, the intended production order is now constrained to:
+Parent:
+
+```text
+6f656387b8f4d44a5fd6f7aaae819779c4166d08
+```
+
+Exact production diff:
+
+```text
+app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
++17 / -0
+```
+
+Accepted Dawn death order is now:
 
 ```text
 planner computes stable IDs + mutation requirements
 → preflight planner-owned AliveAt(false) before public state mutation
 → commit planner-owned stable Death ActionFact if missing
-→ mutate mechanical/public death state only if stateMutationRequired
-→ add presentation event without generic duplicate semantic-history projection
-→ perform a real recordEpistemicObservation(...) append using the same planner-owned stable record ID
+→ mutate death state only if stateMutationRequired
+→ create presentation event with generic semantic projection disabled
+→ if planner-owned public AliveAt record is missing:
+     recordEpistemicObservation(... stable planner record ID ...)
+→ continue Demon succession flow
 ```
 
-Key rule: **preflight and durable append are two separate responsibilities**.
+The durable AliveAt append is outside `stateMutationRequired`, so a retry can repair missing durable history without remutating an already-dead card.
 
-Do **not** simply re-enable generic `addClocktowerEvent` semantic projection for Dawn death: that would recreate revision/event-counter-based Death action identity and can duplicate historical action authority.
-
-RoleChange and phase wiring must similarly preserve stable planner-owned IDs and separate “history missing” from “state mutation missing”.
-
-Partial retry must work when, for example, the death is already mechanically applied but its durable Death action or public AliveAt observation is absent: the missing history is repaired without remutating the card.
-
-## 8. Next focused verification set
-
-The corrected GREEN runner must include at minimum:
+Expanded focused GREEN runner:
 
 ```text
-ClocktowerDawnDurableMaterializationProductionWiringTest
-ClocktowerGlobalObservationProductionWiringTest
-ClocktowerHistoricalActionProductionWiringTest
-NightDawnDurableMaterializationPlannerTest
-ClocktowerGameSessionTest / global observation commit coverage
-ClocktowerHistoricalActionObservationCaptureTest
-Demon succession production wiring / restore ownership guards
-Night transaction architecture / reconstructor focused tests
-Dawn resolution planner tests
+33152530426 — SUCCESS
 ```
 
-Runner #20 is not sufficient evidence because it omitted the two legacy production guards now known to be relevant.
+It included both corrected legacy production guards plus the Dawn materialization planner, session/global observation coverage, historical action capture, Demon succession, restore/night-transaction and Dawn resolution focused families.
 
-After focused GREEN:
+Remote audit confirmed the production commit changed only the intended App file and passed `git diff --check` equivalent protection.
+
+## 6. Restore / partial-commit equivalence — acceptance GREEN
+
+Typed acceptance checkpoint:
 
 ```text
-remote parent/diff/scope audit
-→ normal broader CI checkpoint
-→ restore / partial-commit equivalence validation
-→ final SNE-7.9E broad acceptance gate
+61387b473ff18e174b211a80962eed6cf0228ed6
+test: prove Dawn restore retry convergence
 ```
 
-Only after that broad gate may the night-action/information consistency bug campaign be declared fully repaired.
+Only added:
 
-## 9. Protected architecture / scope
+```text
+app/src/test/java/com/codex/campboardgamehost/clocktower/session/
+  NightDawnRestoreRetryConvergenceAcceptanceTest.kt
+```
+
+No production file changed in this checkpoint.
+
+The acceptance test composes the real typed seams:
+
+```text
+persisted ClocktowerNightCheckpoint
++ partially materialized GameState
+→ NightTransactionRestoreComposition.restore
+→ reconstructed effective same-night state
+→ NightDawnResolutionPlanner death + succession + identity confirmation
+→ DawnCommitIntent
+→ NightDawnDurableMaterializationPlanner
+→ real ClocktowerGameSession GLOBAL_V1 action/observation commit APIs
+```
+
+It compares an uninterrupted Imp-self-kill/successor Dawn with a partial state where the old Imp is already mechanically dead but its durable Dawn history still needs repair. The two routes must converge to identical:
+
+```text
+alive seats
+current role / successor
+final phase
+ActionFactTimeline
+EpistemicObservationLog
+shared global timeline cursor
+player-input revision
+```
+
+Exactly-once assertions require:
+
+```text
+1 × Death ActionFact
+1 × RoleChange ActionFact
+1 × PhaseAdvance ActionFact
+1 × public AliveAt(false) observation
+```
+
+A further replay of the fully materialized final state must be a no-op and remain exactly equal.
+
+Normal validation on this checkpoint:
+
+```text
+CI #932 / 33153438146
+- Classify changes: SUCCESS
+- Android FAST: SUCCESS (actual execution)
+- full Android/build: SKIPPED by ordinary test-only routing
+- ASP: SKIPPED by ordinary test-only routing
+- Real Clingo: SKIPPED by ordinary test-only routing
+- CI gate: SUCCESS
+
+R2 / 33153438147
+- verify-boundary: SUCCESS
+```
+
+This establishes the restore/retry convergence acceptance proof but is **not** a substitute for T4 because ordinary incremental routing intentionally skipped the full-strength gates.
+
+## 7. Current close condition — T4 requested
+
+This document checkpoint is intentionally committed with `[full-ci]` to select the repository’s explicit T4 acceptance policy.
+
+Required final evidence before declaring 7.9E complete:
+
+```text
+Android full JVM suite: :app:testFull
+Android debug build:     :app:assembleDebug
+ASP contract gates selected by full checkpoint
+Real Clingo cross-validation selected by full checkpoint
+CI aggregate gate
+R2 boundary gate
+```
+
+Do not declare SNE-7.9E or the wider same-night consistency bug campaign fully repaired until the selected T4 jobs have actually executed and succeeded.
+
+If T4 is GREEN, `730c494f...` remains the latest production code checkpoint and `61387b47...` the restore/retry acceptance test checkpoint; any later roadmap synchronization is docs-only and does not alter executable semantics.
+
+## 8. Protected architecture / scope
 
 Hard contracts:
 
@@ -327,28 +399,26 @@ PR merge/readiness work
 
 Large `CampBoardGameHostApp.kt` changes still require complete-worktree-safe / exact-head editing and exact remote scope audit. Never construct a whole-file replacement from truncated source content.
 
-## 10. Startup order for next conversation
+## 9. Startup order / continuation
 
 Read:
 
 1. root `AGENTS.md`;
 2. this roadmap;
-3. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-27_SAME_NIGHT_CONTINUATION.md`;
+3. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-27_SAME_NIGHT_CONTINUATION.md` for historical 7.9E context;
 4. `docs/SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md` as needed;
 5. re-query live `main`, PR #54 head/state/checks before editing.
 
-Exact continuation instruction:
+Current continuation instruction:
 
 ```text
-1. latest code RED checkpoint = 94adcd0febbfcedc7b523249be5cf784a8bc38f2;
-2. any commits after it may be docs-only handoff synchronization — distinguish docs head from code head;
-3. runner #21 inspection is already complete and confirmed the two legacy guards are genuine contracts;
-4. continue 7.9E by producing the minimal corrective CampBoardGameHostApp.kt GREEN;
-5. keep preflight fail-before-mutation AND add the actual planner-owned durable AliveAt append;
-6. preserve stable Death / RoleChange / PhaseAdvance action ownership and history-before-mutation ordering;
-7. run the expanded focused set including both legacy guards;
-8. then perform remote diff/scope audit and broader acceptance validation;
-9. keep PR #54 draft/open/unmerged.
+1. production 7.9E GREEN = 730c494f9972ec6425563d04a05c7b2984dda16e;
+2. restore/retry convergence acceptance test = 61387b473ff18e174b211a80962eed6cf0228ed6;
+3. normal acceptance checkpoint CI #932 Android FAST + CI gate and R2 are GREEN;
+4. the current docs checkpoint carries [full-ci] and must be treated as T4 PENDING until all selected full jobs finish;
+5. if T4 succeeds, synchronize docs to COMPLETE / BROAD GREEN without changing production semantics;
+6. if T4 fails, diagnose the failing selected gate and do not close 7.9E;
+7. keep PR #54 draft/open/unmerged.
 ```
 
 Never merge, mark ready, rebase, force-push, or broaden PR #54 without explicit user authorization.
