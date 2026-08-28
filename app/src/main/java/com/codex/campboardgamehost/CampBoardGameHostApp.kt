@@ -163,6 +163,7 @@ import com.codex.campboardgamehost.clocktower.session.NightDawnPoisonResolutionI
 import com.codex.campboardgamehost.clocktower.session.NightDawnDeathResolutionInput
 import com.codex.campboardgamehost.clocktower.session.NightDawnResolutionPlanner
 import com.codex.campboardgamehost.clocktower.session.NightResolutionContinuation
+import com.codex.campboardgamehost.clocktower.session.resolveTroubleBrewingImpSelfKillSuccession
 import com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest
 import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
 import com.codex.campboardgamehost.clocktower.session.UnifiedSetupSelectorDeviceBenchmark
@@ -678,7 +679,7 @@ internal val completeTroubleBrewingRoles = (troubleBrewingRoles + listOf(
     ClocktowerRole(ClocktowerTeam.Townsfolk, "送葬者", "Undertaker", "每个夜晚，得知今天被处决玩家的角色。", "Each night, learn which character died by execution today."),
     ClocktowerRole(ClocktowerTeam.Townsfolk, "僧侣", "Monk", "每个夜晚，选择除自己以外的一名玩家，使其免受恶魔伤害。", "Each night, choose a player other than yourself: they are safe from the Demon tonight."),
     ClocktowerRole(ClocktowerTeam.Townsfolk, "圣女", "Virgin", "首次被镇民提名时，提名者立即被处决。", "The first time you are nominated by a Townsfolk, the nominator is executed immediately."),
-    ClocktowerRole(ClocktowerTeam.Townsfolk, "杀手", "Slayer", "每局一次，白天选择一名玩家；若其是恶魔，该玩家死亡。", "Once per game during the day, choose a player: if they are the Demon, they die."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "杀手", "Slayer", "每局一次，白天选择一名玩家；若其是恶魔，该玩家死亡。", "Once per game during the day, choose a player: if they are the Demon, that player dies."),
 )).distinctBy { it.enName }
 
 private val noGreaterJoyExtraRoles = listOf(
@@ -2925,7 +2926,7 @@ internal fun CampBoardGameHostApp() {
                         onConfirmNewDemon = {
                             val pendingName = clocktowerPendingNewDemonName
                             val canEnterDawn =
-                                if (clocktowerConfirmedDemonSuccessorTarget != null) {
+                                if (pendingName != null) {
                                     val baseGameState = cards.toClocktowerGameState(
                                         currentClocktowerScript,
                                         clocktowerGameSeed,
@@ -3019,38 +3020,7 @@ internal fun CampBoardGameHostApp() {
                                         false
                                     }
                                 } else {
-                                    val canEnterDawnWithoutPlanner =
-                                        pendingName != null &&
-                                            cards.firstOrNull {
-                                                it.name == pendingName
-                                            }?.clocktowerTeam == ClocktowerTeam.Demon
-                                    if (canEnterDawnWithoutPlanner) {
-                                        val poisonCarriedAfterSuccession = PoisonEffectLifecycle.afterNight(
-                                            target = clocktowerConfirmedPoisonTarget,
-                                            poisonerAlive = cards.any {
-                                                it.eliminatedRound == null &&
-                                                    it.clocktowerRole?.enName == "Poisoner"
-                                            },
-                                        )
-                                        if (poisonCarriedAfterSuccession != clocktowerConfirmedPoisonTarget) {
-                                            val targetSeat = poisonCarriedAfterSuccession?.let(::clocktowerSeatFor)
-                                            val localSequence = clocktowerEventCounter + 1
-                                            recordClocktowerAction(ActionFactDraft.Poison(
-                                                actionId = clocktowerActionId(
-                                                    kind = "poison-after-night",
-                                                    localSequence = localSequence,
-                                                    targetSeat = targetSeat,
-                                                ),
-                                                phase = storytellerPhaseFor(),
-                                                round = round,
-                                                sequence = localSequence,
-                                                targetSeat = targetSeat,
-                                            ))
-                                        }
-                                        clocktowerConfirmedPoisonTarget = poisonCarriedAfterSuccession
-                                        clocktowerPoisonTarget = poisonCarriedAfterSuccession
-                                    }
-                                    canEnterDawnWithoutPlanner
+                                    false
                                 }
                             if (canEnterDawn) {
                                 clocktowerPendingNewDemonName = null
@@ -3633,13 +3603,24 @@ internal fun CampBoardGameHostApp() {
                                     )
                                     if (demonDied) {
                                         if (impSelfChosen) {
-                                            newDemonName = clocktowerConfirmedDemonSuccessorTarget
+                                            val demonRoleId = RoleId(requireNotNull(nightDeathCard.clocktowerRole).enName)
+                                            val successionResolution = resolveTroubleBrewingImpSelfKillSuccession(
+                                                baseGameState = baseGameState,
+                                                checkpoint = currentClocktowerNightCheckpoint(),
+                                                demonRoleId = demonRoleId,
+                                            )
+                                            val successionTransition = NightDawnResolutionPlanner.planDemonSuccession(
+                                                baseGameState = baseGameState,
+                                                checkpoint = currentClocktowerNightCheckpoint(),
+                                                successionResolution = successionResolution,
+                                                demonRoleId = demonRoleId,
+                                            )
+                                            clocktowerPendingNewDemonName = successionTransition.checkpoint.pendingNewDemonName
+                                            clocktowerDemonSuccessorTarget = successionTransition.checkpoint.demonSuccessorDraftTarget
+                                            clocktowerConfirmedDemonSuccessorTarget = successionTransition.checkpoint.confirmedDemonSuccessorTarget
+                                            newDemonName = successionTransition.checkpoint.pendingNewDemonName
                                             unresolvedDemonSuccessor =
-                                                newDemonName == null &&
-                                                    cards.any {
-                                                        it.eliminatedRound == null &&
-                                                            it.clocktowerTeam == ClocktowerTeam.Minion
-                                                    }
+                                                successionTransition.continuation == NightResolutionContinuation.AWAIT_DEMON_SUCCESSOR
                                         } else {
                                             newDemonName = promoteDemonSuccessorIfNeeded(
                                                 impDeathWasSelfChosen = false,
