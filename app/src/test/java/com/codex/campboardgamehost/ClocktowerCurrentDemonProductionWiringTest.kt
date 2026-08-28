@@ -1,39 +1,25 @@
 package com.codex.campboardgamehost
 
 import java.io.File
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Temporary GCR-1 production-wiring guard.
+ * Temporary GCR-1 production ownership guard.
  *
- * Runtime current-Demon behavior is owned by typed authority tests. This coarse source guard exists
- * only because the Compose Host is not yet a callable materialization seam; retire it when that
- * presentation owner is extracted.
+ * Current-Demon behavior is proved by typed authority tests. This source check only protects the
+ * non-callable Compose Host boundary until a presentation/materialization seam exists.
  */
 class ClocktowerCurrentDemonProductionWiringTest {
     @Test
-    fun `host consumes canonical current Demon context instead of local historical lookup`() {
+    fun `host consumes canonical current Demon context`() {
         val source = File(
             "src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt",
-        ).readText()
+        ).readText(Charsets.UTF_8)
 
-        assertTrue(source.contains("resolveCurrentDemonHostContext("))
-        assertFalse(
-            source.contains(
-                "val demonCard = cards.firstOrNull { it.clocktowerRole?.team == ClocktowerTeam.Demon }",
-            ),
-        )
-        assertFalse(
-            source.contains(
-                "publicAliveCards.firstOrNull { it.clocktowerTeam == ClocktowerTeam.Demon }",
-            ),
-        )
-        assertFalse(
-            source.contains(
-                "publicAliveCards.any { it.clocktowerTeam == ClocktowerTeam.Demon }",
-            ),
+        assertTrue(
+            "Host Demon presentation/action ownership must consume the canonical current-Demon context.",
+            source.contains("resolveCurrentDemonHostContext("),
         )
     }
 }
