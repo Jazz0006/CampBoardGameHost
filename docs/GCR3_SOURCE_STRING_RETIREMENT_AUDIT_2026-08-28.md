@@ -21,34 +21,34 @@ CI #963 / run 33175600756 SUCCESS
 R2 run 33175600749 SUCCESS
 ```
 
-GCR-3 is test-quality cleanup. It must not change accepted gameplay semantics merely to retire source inspection.
+GCR-3 is test-quality cleanup. It does not change accepted gameplay semantics merely to retire source inspection.
 
 ## 2. Classification rule
 
 ```text
 A. typed replacement already proves behavior -> retire source-string test
-B. behavior matters but production boundary is not callable -> introduce narrow typed seam, then replace
+B. behavior matters but production boundary is not callable -> introduce a seam only when independently justified
 C. architecture/ownership-only invariant -> keep coarse source guard, remove gameplay/detail/order assertions
 D. obsolete implementation-shape assertion -> delete
 ```
 
-## 3. Current classification and status
+## 3. Final classification and status
 
-| Test / source portion | Class | Status / action |
+| Test / source portion | Class | Final status |
 |---|---|---|
-| `ClocktowerDawnDurableMaterializationProductionWiringTest` | B | Pending. Highest-priority callable seam candidate: `DawnCommitIntent + durable state -> ProductionDawnMaterializer`. Retire after typed production materialization coverage exists. |
-| `ClocktowerGlobalObservationProductionWiringTest` | B/C | **Slimmed.** Retains only new-vs-restored history-mode ownership, App -> canonical session commit authority, and Host draft-vs-durable boundary. Statement ordering/revision/durability implementation details removed. |
-| `InformationDecisionProductionAuthorityWiringTest` | B/C | **Slimmed.** Typed information-decision tests own confirmation/revision semantics; source guard now protects only Host publication through the canonical confirmation authority. |
-| `ClocktowerDemonSuccessionProductionWiringTest` | C | **Slimmed.** Keeps App -> canonical succession resolver/planner ownership only. Callback-local projection details removed. |
-| `ClocktowerHistoricalActionProductionWiringTest` | B/C | **Slimmed.** Retains one action timeline, canonical session commit authority, canonical save/restore/reset ownership, and presence of typed confirmed action drafts. Callback/order assertions removed. |
-| `ClocktowerNightRestoreProductionOwnershipTest` | C | Pending. Keep one coarse Host -> `NightTransactionReconstructor` + restored checkpoint ownership assertion. |
-| `ClocktowerSameNightEffectiveStateProductionWiringTest` | C | Pending. Retain only as a coarse non-callable Host production-consumer boundary; typed effective-state tests remain primary proof. |
-| `ClocktowerMayorDemonExclusionWiringTest` | C | **Slimmed.** Typed Mayor legality/planner tests own behavior; source layer now protects only rules-owned legal target consumption. |
-| `ClocktowerProductionOtherNightWiringTest` | C | **Slimmed.** Keeps planner/materializer ownership and absence of the legacy parallel ordering path; role/fact/order implementation mirrors removed. |
-| source-wiring portion of `ClocktowerChambermaidSelectionAuthorityTest` | C | **Slimmed.** Typed resolver tests remain; production inspection is one coarse assertion that Host consumes `resolveChambermaidSelection`. |
-| `ClocktowerNightTransactionArchitectureGuardTest` | C with A/D detail | **Consolidated.** Reduced to four coarse contracts: typed checkpoint owner, pure-vs-durable boundary, canonical Dawn planner owner, and Host checkpoint-backed death consumer. Callback-local projection and parameter-detail mirrors removed. |
-| `ClocktowerCurrentDemonProductionWiringTest` | C temporary | Pending. Typed current-Demon tests own semantics. Consolidate or retire once the Host current-Demon presentation boundary becomes callable or the consolidated architecture guard covers the ownership invariant. |
-| `ClocktowerPoisonedSpyFailSafePolicyWiringTest` | C temporary | Pending. Product-policy characterization only. Track explicitly for retirement; do not build a fake-Grimoire subsystem merely to eliminate this guard. |
+| `ClocktowerDawnDurableMaterializationProductionWiringTest` | C | **Slimmed.** Retains only App callback -> `NightDawnDurableMaterializationPlanner` + durable-state ownership. GCR-3C seam extraction deferred because typed planner/session tests already prove semantics. |
+| `ClocktowerGlobalObservationProductionWiringTest` | B/C | **Slimmed.** Retains history-mode ownership, App -> canonical session commit authority, and Host draft-vs-durable boundary. |
+| `InformationDecisionProductionAuthorityWiringTest` | B/C | **Slimmed.** Retains only Host publication through canonical confirmation authority. |
+| `ClocktowerDemonSuccessionProductionWiringTest` | C | **Slimmed.** Retains App -> canonical succession resolver/planner ownership. |
+| `ClocktowerHistoricalActionProductionWiringTest` | B/C | **Slimmed.** Retains one durable action timeline, canonical session authority, persistence ownership, and typed confirmed action drafts. |
+| `ClocktowerNightRestoreProductionOwnershipTest` | C | **Slimmed.** Retains Host -> `NightTransactionReconstructor` using restored `nightCheckpoint`. |
+| `ClocktowerSameNightEffectiveStateProductionWiringTest` | C | **Slimmed.** Retains only Host effective-ability-subject and poison-lifecycle ownership. |
+| `ClocktowerMayorDemonExclusionWiringTest` | C | **Slimmed.** Retains rules-owned legal-target consumption. |
+| `ClocktowerProductionOtherNightWiringTest` | C | **Slimmed.** Retains planner/materializer ownership and absence of the legacy parallel ordering path. |
+| source-wiring portion of `ClocktowerChambermaidSelectionAuthorityTest` | C | **Slimmed.** Production inspection is one Host -> `resolveChambermaidSelection` ownership assertion. |
+| `ClocktowerNightTransactionArchitectureGuardTest` | C | **Consolidated.** Four coarse contracts remain: typed checkpoint owner, pure-vs-durable boundary, canonical Dawn planner owner, and Host checkpoint-backed death consumer. |
+| `ClocktowerCurrentDemonProductionWiringTest` | C temporary | **Slimmed.** One Host -> `resolveCurrentDemonHostContext` ownership assertion remains until a callable Host presentation seam exists for an independent reason. |
+| `ClocktowerPoisonedSpyFailSafePolicyWiringTest` | C temporary | **Slimmed.** Two policy-boundary assertions remain: First Night and Other Night poisoned Spy branches publish no `GrimoireState`. No fake-Grimoire subsystem introduced. |
 
 ## 4. Completed test-only cleanup checkpoints
 
@@ -62,44 +62,34 @@ a04f9e9a  Demon succession source guard slimming
 326ee38f  Global observation source guard slimming
 eda18877  Historical action source guard slimming
 84e808de  Night transaction architecture guard consolidation
+46ed471d  Same-night effective-state guard slimming
+910f2c32  Current-Demon guard slimming
+e866b8ae  Night-restore ownership guard slimming
+b54d3014  Poisoned-Spy fail-safe guard slimming
+732f6548  Dawn durable materialization guard slimming
 ```
 
-No production file changed in these slices.
+No production file changed in GCR-3.
 
-Validation checkpoint before the final three commits:
+Intermediate validation:
 
 ```text
-25e0d6db
-- R2 run 33176464188 SUCCESS
-- CI Android FAST unit tests SUCCESS
+fe8816bd
+- CI #973 SUCCESS
+- R2 #900 SUCCESS
 ```
 
-The newest test-only head must still receive its own FAST acceptance before the next semantic or production slice.
+The final test-only head must receive its own FAST/R2 acceptance before GCR-3 is marked accepted.
 
-## 5. Remaining GCR-3B queue
+## 5. GCR-3C decision
 
-1. `ClocktowerNightRestoreProductionOwnershipTest` — already close to desired coarse form; retire details only if redundant.
-2. `ClocktowerSameNightEffectiveStateProductionWiringTest` — inspect for typed replacement coverage and reduce to one consumer-boundary assertion if possible.
-3. `ClocktowerCurrentDemonProductionWiringTest` — determine whether consolidated architecture coverage is now sufficient; otherwise retain one coarse Host authority call assertion.
-4. `ClocktowerPoisonedSpyFailSafePolicyWiringTest` — retain only the explicitly accepted fail-safe policy boundary unless a real typed production presentation seam exists.
-5. `ClocktowerDawnDurableMaterializationProductionWiringTest` — decide whether GCR-3C typed production seam extraction is worth doing.
+Do **not** extract a Dawn production seam solely to remove the remaining coarse source guard.
 
-## 6. GCR-3C — optional Dawn production seam
+Typed planner/session tests already own exactly-once, stable-ID and retry semantics. The remaining source test protects only the non-callable App callback ownership boundary. A callable `ProductionDawnMaterializer` may be introduced later only if production architecture independently benefits from it.
 
-Only if the remaining Dawn source guard is still materially valuable after consolidation:
-
-```text
-DawnCommitIntent
-+ current durable state
--> ProductionDawnMaterializer
--> thin App/Compose callback
-```
-
-This is a narrow seam extraction, not App-root decomposition.
-
-## 7. Stop conditions
+## 6. Stop conditions
 
 - No gameplay semantics change during source-test cleanup.
 - No broad App/Host refactor solely to reduce source-string count.
 - Do not merge or mark PR #54 ready.
-- After each test-only slice, run focused affected tests and `:app:testFast` at the logical checkpoint.
+- Accept GCR-3 only after the final test-only head passes FAST and R2.
