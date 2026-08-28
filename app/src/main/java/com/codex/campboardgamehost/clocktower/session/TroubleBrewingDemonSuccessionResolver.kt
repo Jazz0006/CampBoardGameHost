@@ -27,12 +27,16 @@ internal fun resolveTroubleBrewingImpSelfKillSuccession(
     demonRoleId: RoleId,
 ): DemonSuccessionResolution {
     val attacker = baseGameState.players.singleOrNull { player ->
-        player.alive && player.actualRole == demonRoleId
+        player.actualRole == demonRoleId
     } ?: return DemonSuccessionResolution.None
     val target = checkpoint.confirmedAttackTarget
         ?.let { targetName -> baseGameState.players.singleOrNull { it.name == targetName } }
         ?: return DemonSuccessionResolution.None
+    if (attacker.seat != target.seat) return DemonSuccessionResolution.None
 
+    // Reconstruction may receive a base snapshot in which the old Imp is already publicly dead.
+    // Succession legality must be evaluated at the instant before that confirmed self-kill occurs.
+    val preSelfKillAttacker = attacker.toAbilitySubject(checkpoint).copy(isAlive = true)
     val targetProtectedByFunctioningMonk =
         checkpoint.confirmedMonkTarget == target.name &&
             baseGameState.players.any { player ->
@@ -43,15 +47,15 @@ internal fun resolveTroubleBrewingImpSelfKillSuccession(
             }
     val attackOutcome = DemonNightAttackSemantics.resolve(
         DemonNightAttackContext(
-            attacker = attacker.toAbilitySubject(checkpoint),
-            target = target.toAbilitySubject(checkpoint),
-            targetIsAttacker = attacker.seat == target.seat,
+            attacker = preSelfKillAttacker,
+            target = preSelfKillAttacker,
+            targetIsAttacker = true,
             targetProtectedByFunctioningMonk = targetProtectedByFunctioningMonk,
         ),
     )
-    val selfKillRequiresSuccession =
-        attackOutcome == DemonNightAttackOutcome.IMP_SELF_KILL_SUCCESSOR_REQUIRED
-    if (!selfKillRequiresSuccession) return DemonSuccessionResolution.None
+    if (attackOutcome != DemonNightAttackOutcome.IMP_SELF_KILL_SUCCESSOR_REQUIRED) {
+        return DemonSuccessionResolution.None
+    }
 
     val functioningScarletWomanSeat = baseGameState.players
         .singleOrNull { player ->
@@ -65,12 +69,14 @@ internal fun resolveTroubleBrewingImpSelfKillSuccession(
         .filter { player -> player.alive && player.actualType == CharacterType.MINION }
         .map(PlayerState::seat)
         .toSet()
+    val aliveCountBeforeDemonDeath =
+        baseGameState.players.count(PlayerState::alive) + if (attacker.alive) 0 else 1
 
     return DemonSuccessionSemantics.resolve(
         DemonSuccessionContext(
             demonActuallyDied = true,
             demonDeathWasImpSelfKill = true,
-            aliveCountBeforeDemonDeath = baseGameState.players.count(PlayerState::alive),
+            aliveCountBeforeDemonDeath = aliveCountBeforeDemonDeath,
             functioningScarletWomanSeat = functioningScarletWomanSeat,
             livingMinionSeats = livingMinionSeats,
         ),
