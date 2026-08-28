@@ -187,4 +187,45 @@ class ClocktowerNightTransactionArchitectureGuardTest {
             )
         }
     }
+
+    @Test
+    fun `Host death consumer uses the canonical checkpoint-backed resolution`() {
+        val hostDeathBlock = hostSource
+            .substringAfter("val poisonerPlayers =")
+            .substringBefore("val demonCard =")
+
+        assertTrue(
+            "App must pass the confirmed unfinished-night checkpoint into Host.",
+            appSource.contains("nightCheckpoint = currentClocktowerNightCheckpoint()"),
+        )
+        assertTrue(
+            "Host must accept the canonical unfinished-night checkpoint.",
+            hostSource.contains("nightCheckpoint: ClocktowerNightCheckpoint"),
+        )
+        assertTrue(
+            "Host death presentation must consume the shared canonical death resolver.",
+            hostDeathBlock.contains("resolveTroubleBrewingDawnDeathResolution("),
+        )
+        assertTrue(
+            "Host canonical resolver must consume the passed checkpoint rather than draft UI state.",
+            hostDeathBlock.contains("checkpoint = nightCheckpoint"),
+        )
+        assertTrue(
+            "Host resolved death name must come from the canonical resolution result.",
+            hostDeathBlock.contains("resolvedNightDeathName = canonicalNightDeathResolution.resolvedDeathName"),
+        )
+        assertTrue(
+            "Host death trigger must be gated by the canonical resolved death seat.",
+            hostDeathBlock.contains("nightDeathWillOccur = canonicalNightDeathResolution.resolvedDeathSeat != null"),
+        )
+        listOf(
+            "val demonPoisonedTonight =",
+            "val functioningMonkProtection =",
+        ).forEach { legacyAuthority ->
+            assertFalse(
+                "Host must not retain an independent Demon/Monk death authority: $legacyAuthority",
+                hostDeathBlock.contains(legacyAuthority),
+            )
+        }
+    }
 }
