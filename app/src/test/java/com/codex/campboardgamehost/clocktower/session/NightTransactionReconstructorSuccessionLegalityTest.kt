@@ -10,14 +10,14 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** SNE-7.9D RED: restore must validate the current canonical Demon succession legality. */
+/** SNE-7.9D RED: restore must consume the current canonical Demon succession resolution. */
 class NightTransactionReconstructorSuccessionLegalityTest {
     private val impInteraction = ClocktowerInteractionId("other_night:role:Imp")
     private val successorInteraction = ClocktowerInteractionId("other_night:event:imp:demon_successor")
     private val empathInteraction = ClocktowerInteractionId("other_night:role:Empath")
 
     @Test
-    fun `restored ordinary Minion cannot override forced Scarlet Woman succession`() {
+    fun `restored forced Scarlet Woman succession overrides stale ordinary Minion confirmation`() {
         val reconstruction = NightTransactionReconstructor.reconstruct(
             baseGameState = gameState(),
             checkpoint = checkpoint(),
@@ -27,7 +27,7 @@ class NightTransactionReconstructorSuccessionLegalityTest {
         )
 
         assertEquals(empathInteraction, reconstruction.currentInteractionId)
-        assertEquals(RoleId("Scarlet Woman"), reconstruction.effectiveState.currentRoleId(2))
+        assertEquals(RoleId("Imp"), reconstruction.effectiveState.currentRoleId(2))
         assertEquals(RoleId("Poisoner"), reconstruction.effectiveState.currentRoleId(3))
     }
 
