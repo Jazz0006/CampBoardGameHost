@@ -19,6 +19,7 @@ import com.codex.campboardgamehost.clocktower.rules.ResolvedNightMechanicalEvent
 internal data class NightTransactionReconstruction(
     val currentInteractionId: ClocktowerInteractionId?,
     val effectiveState: ClocktowerEffectiveNightState,
+    val confirmedEvents: List<ResolvedNightMechanicalEvent> = emptyList(),
 )
 
 internal object NightTransactionReconstructor {
@@ -112,6 +113,7 @@ internal object NightTransactionReconstructor {
                 ),
                 baseRoleIdsBySeat = baseRoleIdsBySeat,
             ),
+            confirmedEvents = confirmedEvents,
         )
     }
 }
