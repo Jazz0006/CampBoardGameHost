@@ -9,6 +9,7 @@ import org.junit.Test
  *
  * Exactly-once, stable-ID and retry semantics are proved by typed planner/session tests. These
  * checks only ensure the two non-callable App callbacks continue consuming the canonical planner.
+ * This file also serves as the final GCR-3 FAST acceptance checkpoint for the slimmed guard set.
  */
 class ClocktowerDawnDurableMaterializationProductionWiringTest {
     private val appSource = File(
