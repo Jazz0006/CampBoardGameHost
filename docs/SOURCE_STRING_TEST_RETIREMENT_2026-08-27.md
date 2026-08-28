@@ -1,7 +1,8 @@
 # Source-String Test Retirement Policy and SNE Audit
 
 > Role: **ACTIVE TEST-DEBT / RETIREMENT MAP**  
-> Date: 2026-08-27
+> Date: 2026-08-27  
+> Review queue refreshed: 2026-08-28
 
 ## Decision
 
@@ -68,3 +69,58 @@ After typed Host transaction, reconstruction and Dawn lifecycle integration beca
 Their behavioral replacements are the typed reducer/planner/reconstruction contracts plus `NightCheckpointHostTransactionTest` and `NightTransactionHostIntegrationSmokeTest`. `ClocktowerNightTransactionArchitectureGuardTest` is the consolidated coarse ownership guard for the remaining non-callable Compose/App boundary.
 
 `ClocktowerSameNightEffectiveStateProductionWiringTest` and the Mayor rules/UI ownership guard remain intentionally because they still protect coarse production-consumer boundaries that are not directly callable from JVM tests. Their retention does not make source-string testing the primary correctness layer.
+
+## 2026-08-28 Global Correctness Review queue
+
+The post-SNE whole-PR review identified the following tests or source-wiring portions for explicit reclassification during **GCR-3**:
+
+```text
+ClocktowerDawnDurableMaterializationProductionWiringTest
+ClocktowerGlobalObservationProductionWiringTest
+InformationDecisionProductionAuthorityWiringTest
+ClocktowerDemonSuccessionProductionWiringTest
+ClocktowerHistoricalActionProductionWiringTest
+ClocktowerNightRestoreProductionOwnershipTest
+ClocktowerSameNightEffectiveStateProductionWiringTest
+ClocktowerMayorDemonExclusionWiringTest
+ClocktowerProductionOtherNightWiringTest
+ClocktowerNightTransactionArchitectureGuardTest
+source-wiring portion of ClocktowerChambermaidSelectionAuthorityTest
+```
+
+This is **not** a bulk-delete instruction. Classify every item before changing it:
+
+```text
+A. typed replacement already proves behavior
+   -> retire source-string test
+
+B. behavior matters, but production boundary is not callable
+   -> introduce the narrowest typed seam, then replace
+
+C. genuinely architecture/ownership-only invariant
+   -> keep a coarse source guard, remove gameplay-detail/order assertions
+
+D. obsolete implementation-shape assertion
+   -> delete
+```
+
+### High-priority production seam candidate
+
+The Dawn restore/retry acceptance now proves typed planning, real durable ActionFact/Observation commits and convergence, but the final base-card/phase mutation is still represented by a test-local materializer while App production orchestration remains partly protected by source inspection.
+
+Preferred future seam, if it can remain narrow:
+
+```text
+DawnCommitIntent
++ current durable state
+-> callable ProductionDawnMaterializer
+-> thin App/Compose callback
+```
+
+Do not use GCR-3 as justification for broad App-root decomposition.
+
+### New rule for GCR
+
+The source-string test count should not grow during GCR correctness fixes unless the active handoff documents why no typed/callable boundary can yet express the invariant.
+
+In particular, GCR-1 current-Demon continuity and GCR-2 poisoned-Spy information integrity must be proved by typed behavior tests; adding new string searches for `firstOrNull`, `singleOrNull`, `Spy`, or call ordering is not acceptable correctness evidence.
