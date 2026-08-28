@@ -6,6 +6,7 @@ import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
+import com.codex.campboardgamehost.clocktower.rules.CurrentDemonAuthority
 import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackContext
 import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackOutcome
 import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackSemantics
@@ -34,14 +35,23 @@ internal fun resolveTroubleBrewingImpSelfKill(
     checkpoint: ClocktowerNightCheckpoint,
     demonRoleId: RoleId,
 ): TroubleBrewingImpSelfKillResolution {
-    val attacker = baseGameState.players.singleOrNull { player ->
-        player.actualRole == demonRoleId
-    } ?: return TroubleBrewingImpSelfKillResolution(
-        attackOutcome = DemonNightAttackOutcome.NO_DEATH,
-        successionResolution = DemonSuccessionResolution.None,
-    )
     val target = checkpoint.confirmedAttackTarget
         ?.let { targetName -> baseGameState.players.singleOrNull { it.name == targetName } }
+        ?: return TroubleBrewingImpSelfKillResolution(
+            attackOutcome = DemonNightAttackOutcome.NO_DEATH,
+            successionResolution = DemonSuccessionResolution.None,
+        )
+    val currentLiveAttacker = CurrentDemonAuthority.resolveLive(
+        candidates = baseGameState.players,
+        isAlive = PlayerState::alive,
+        isDemon = { player -> player.actualRole == demonRoleId },
+    )
+    val attacker = currentLiveAttacker
+        ?: target.takeIf { player ->
+            // Same-night reconstruction can observe the confirmed self-kill after the attacking
+            // Imp has already been materialized dead, before a live successor exists.
+            !player.alive && player.actualRole == demonRoleId
+        }
         ?: return TroubleBrewingImpSelfKillResolution(
             attackOutcome = DemonNightAttackOutcome.NO_DEATH,
             successionResolution = DemonSuccessionResolution.None,
@@ -53,8 +63,8 @@ internal fun resolveTroubleBrewingImpSelfKill(
         )
     }
 
-    // Reconstruction may receive a base snapshot in which the old Imp is already publicly dead.
-    // Succession legality must be evaluated at the instant before that confirmed self-kill occurs.
+    // Reconstruction may receive a base snapshot in which the attacking Imp is already publicly
+    // dead. Succession legality is evaluated at the instant before that confirmed self-kill.
     val preSelfKillAttacker = attacker.toAbilitySubject(checkpoint).copy(isAlive = true)
     val targetProtectedByFunctioningMonk =
         checkpoint.confirmedMonkTarget == target.name &&
