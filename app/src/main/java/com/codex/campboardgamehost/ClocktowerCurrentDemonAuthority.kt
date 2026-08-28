@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.rules.CurrentDemonAuthority
 
 internal data class CurrentDemonHostContext(
@@ -23,3 +24,13 @@ internal fun resolveCurrentDemonHostContext(
         isPoisoned = actor.name == poisonedPlayerName,
     )
 }
+
+internal fun resolveNightReconstructionDemonRoleId(
+    cards: List<PlayerCard>,
+    currentDemonHostContext: CurrentDemonHostContext?,
+    confirmedDemonAttackerName: String?,
+): RoleId? = currentDemonHostContext
+    ?.actor
+    ?.clocktowerRole
+    ?.enName
+    ?.let(::RoleId)
