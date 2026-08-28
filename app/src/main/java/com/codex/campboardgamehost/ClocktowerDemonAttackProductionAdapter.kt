@@ -22,11 +22,9 @@ internal fun resolveTroubleBrewingDemonNightAttackOutcome(
     poisonedPlayerName: String?,
     monkProtectedTargetName: String?,
 ): DemonNightAttackOutcome {
-    val attacker = cards.firstOrNull { card ->
-        card.eliminatedRound == null &&
-            card.clocktowerTeam == ClocktowerTeam.Demon &&
-            card.clocktowerRole?.enName == "Imp"
-    } ?: return DemonNightAttackOutcome.NO_DEATH
+    val attacker = resolveCurrentDemonCard(cards)
+        ?.takeIf { card -> card.clocktowerRole?.enName == "Imp" }
+        ?: return DemonNightAttackOutcome.NO_DEATH
     val target = targetName
         ?.let { name -> cards.firstOrNull { card -> card.name == name } }
         ?: return DemonNightAttackOutcome.NO_DEATH
