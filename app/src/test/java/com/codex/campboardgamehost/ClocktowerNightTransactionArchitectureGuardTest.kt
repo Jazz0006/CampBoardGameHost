@@ -148,4 +148,43 @@ class ClocktowerNightTransactionArchitectureGuardTest {
             dawnBlock.contains("if (protectedByMonk || protectedBySoldier)"),
         )
     }
+
+    @Test
+    fun `public alive observation preflight consumes canonical Dawn death authority`() {
+        val preflightBlock = appSource
+            .substringAfter("fun nextNightPublicAliveObservationPreflightOrNull(): Pair<String, Int>? {")
+            .substringBefore("fun addClocktowerEvent(")
+
+        assertTrue(
+            "Public-alive preflight must derive direct-attack facts through the canonical Trouble Brewing adapter.",
+            preflightBlock.contains("resolveTroubleBrewingDawnDeathFacts("),
+        )
+        assertTrue(
+            "Public-alive preflight must resolve the death through NightDawnResolutionPlanner.",
+            preflightBlock.contains("NightDawnResolutionPlanner.planValidatedNightDeath("),
+        )
+        assertTrue(
+            "Public-alive preflight must consume the canonical attack outcome.",
+            preflightBlock.contains("attackOutcome = dawnDeathFacts.attackOutcome"),
+        )
+        assertTrue(
+            "Public-alive preflight must consume canonical Demon-safe seats.",
+            preflightBlock.contains("demonSafeSeats = dawnDeathFacts.demonSafeSeats"),
+        )
+        assertTrue(
+            "Public-alive preflight target must come from the planner's DawnDeathIntent.",
+            preflightBlock.contains("dawnCommitIntent?.death?.targetSeat"),
+        )
+        listOf(
+            "val demonPoisonedTonight =",
+            "val originalDeathCard =",
+            "val protectedByMonk =",
+            "val protectedBySoldier =",
+        ).forEach { legacyAuthority ->
+            assertFalse(
+                "Public-alive preflight must not retain independent death authority: $legacyAuthority",
+                preflightBlock.contains(legacyAuthority),
+            )
+        }
+    }
 }
