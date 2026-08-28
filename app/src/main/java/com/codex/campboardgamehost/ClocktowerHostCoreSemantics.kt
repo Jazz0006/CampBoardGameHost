@@ -73,7 +73,7 @@ internal fun <T> clocktowerFortuneTellerRoleAuthority(
     phase: ClocktowerPhase,
     baseRole: T?,
     otherNightRole: () -> T?,
-): T? = otherNightRole()
+): T? = if (phase == ClocktowerPhase.Night) otherNightRole() else baseRole
 
 internal fun storytellerPairHint(
     target: PlayerCard,

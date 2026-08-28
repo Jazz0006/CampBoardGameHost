@@ -967,17 +967,25 @@ internal fun ClocktowerJudgeScreen(
         val fortuneTellerInteractionId = ClocktowerProductionNightStepIdentity
             .role(RoleId("Fortune Teller"))
             .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
-        val fortuneTellerEffectiveState = effectiveNightStateAt(
-            fortuneTellerInteractionId,
-            ClocktowerInteractionBoundary.BEFORE,
-        )
+        val fortuneTellerEffectiveState = lazy {
+            effectiveNightStateAt(
+                fortuneTellerInteractionId,
+                ClocktowerInteractionBoundary.BEFORE,
+            )
+        }
         val roleDefinitionsById = clocktowerRoleDefinitionsForScript(script)
             .associateBy { it.id }
         cards.any { card ->
             val seat = cards.indexOf(card).plus(1)
             val currentRoleIsDemon =
                 seat > 0 &&
-                    fortuneTellerEffectiveState.currentRoleId(seat)
+                    clocktowerFortuneTellerRoleAuthority(
+                        phase = phase,
+                        baseRole = baseRoleIdsBySeat[seat],
+                        otherNightRole = {
+                            fortuneTellerEffectiveState.value.currentRoleId(seat)
+                        },
+                    )
                         ?.let(roleDefinitionsById::get)
                         ?.type == CharacterType.DEMON
 
