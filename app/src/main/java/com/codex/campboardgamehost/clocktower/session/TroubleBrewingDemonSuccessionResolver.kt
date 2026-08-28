@@ -13,6 +13,14 @@ import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionContext
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionSemantics
 
+internal data class TroubleBrewingImpSelfKillResolution(
+    val attackOutcome: DemonNightAttackOutcome,
+    val successionResolution: DemonSuccessionResolution,
+) {
+    val demonActuallyDied: Boolean
+        get() = attackOutcome == DemonNightAttackOutcome.IMP_SELF_KILL_SUCCESSOR_REQUIRED
+}
+
 /**
  * Trouble Brewing production composition for the Imp self-kill succession boundary.
  *
@@ -21,18 +29,29 @@ import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionSemantics
  * then delegates successor legality to [DemonSuccessionSemantics]. Generic non-self Demon death
  * succession remains outside this SNE-7.9D slice.
  */
-internal fun resolveTroubleBrewingImpSelfKillSuccession(
+internal fun resolveTroubleBrewingImpSelfKill(
     baseGameState: GameState,
     checkpoint: ClocktowerNightCheckpoint,
     demonRoleId: RoleId,
-): DemonSuccessionResolution {
+): TroubleBrewingImpSelfKillResolution {
     val attacker = baseGameState.players.singleOrNull { player ->
         player.actualRole == demonRoleId
-    } ?: return DemonSuccessionResolution.None
+    } ?: return TroubleBrewingImpSelfKillResolution(
+        attackOutcome = DemonNightAttackOutcome.NO_DEATH,
+        successionResolution = DemonSuccessionResolution.None,
+    )
     val target = checkpoint.confirmedAttackTarget
         ?.let { targetName -> baseGameState.players.singleOrNull { it.name == targetName } }
-        ?: return DemonSuccessionResolution.None
-    if (attacker.seat != target.seat) return DemonSuccessionResolution.None
+        ?: return TroubleBrewingImpSelfKillResolution(
+            attackOutcome = DemonNightAttackOutcome.NO_DEATH,
+            successionResolution = DemonSuccessionResolution.None,
+        )
+    if (attacker.seat != target.seat) {
+        return TroubleBrewingImpSelfKillResolution(
+            attackOutcome = DemonNightAttackOutcome.NO_DEATH,
+            successionResolution = DemonSuccessionResolution.None,
+        )
+    }
 
     // Reconstruction may receive a base snapshot in which the old Imp is already publicly dead.
     // Succession legality must be evaluated at the instant before that confirmed self-kill occurs.
@@ -54,7 +73,10 @@ internal fun resolveTroubleBrewingImpSelfKillSuccession(
         ),
     )
     if (attackOutcome != DemonNightAttackOutcome.IMP_SELF_KILL_SUCCESSOR_REQUIRED) {
-        return DemonSuccessionResolution.None
+        return TroubleBrewingImpSelfKillResolution(
+            attackOutcome = attackOutcome,
+            successionResolution = DemonSuccessionResolution.None,
+        )
     }
 
     val functioningScarletWomanSeat = baseGameState.players
@@ -71,8 +93,7 @@ internal fun resolveTroubleBrewingImpSelfKillSuccession(
         .toSet()
     val aliveCountBeforeDemonDeath =
         baseGameState.players.count(PlayerState::alive) + if (attacker.alive) 0 else 1
-
-    return DemonSuccessionSemantics.resolve(
+    val successionResolution = DemonSuccessionSemantics.resolve(
         DemonSuccessionContext(
             demonActuallyDied = true,
             demonDeathWasImpSelfKill = true,
@@ -81,7 +102,22 @@ internal fun resolveTroubleBrewingImpSelfKillSuccession(
             livingMinionSeats = livingMinionSeats,
         ),
     )
+
+    return TroubleBrewingImpSelfKillResolution(
+        attackOutcome = attackOutcome,
+        successionResolution = successionResolution,
+    )
 }
+
+internal fun resolveTroubleBrewingImpSelfKillSuccession(
+    baseGameState: GameState,
+    checkpoint: ClocktowerNightCheckpoint,
+    demonRoleId: RoleId,
+): DemonSuccessionResolution = resolveTroubleBrewingImpSelfKill(
+    baseGameState = baseGameState,
+    checkpoint = checkpoint,
+    demonRoleId = demonRoleId,
+).successionResolution
 
 private fun PlayerState.toAbilitySubject(
     checkpoint: ClocktowerNightCheckpoint,
