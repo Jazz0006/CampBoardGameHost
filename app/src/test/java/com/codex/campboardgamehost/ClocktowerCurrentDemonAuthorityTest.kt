@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackOutcome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -42,6 +43,42 @@ class ClocktowerCurrentDemonAuthorityTest {
                 targetName = "Mayor",
                 poisonedPlayerName = "Imp1",
                 monkProtectedTargetName = null,
+            ),
+        )
+    }
+
+    @Test
+    fun `pending Imp succession reconstructs Demon role from confirmed dead attacker`() {
+        val cards = listOf(
+            card(
+                name = "Imp0",
+                roleName = "Imp",
+                team = ClocktowerTeam.Demon,
+                eliminatedRound = 3,
+            ),
+            card(
+                name = "Poisoner",
+                roleName = "Poisoner",
+                team = ClocktowerTeam.Minion,
+            ),
+            card(
+                name = "Empath",
+                roleName = "Empath",
+                team = ClocktowerTeam.Townsfolk,
+            ),
+        )
+        val hostContext = resolveCurrentDemonHostContext(
+            cards = cards,
+            poisonedPlayerName = null,
+        )
+
+        assertEquals(null, hostContext)
+        assertEquals(
+            RoleId("Imp"),
+            resolveNightReconstructionDemonRoleId(
+                cards = cards,
+                currentDemonHostContext = hostContext,
+                confirmedDemonAttackerName = "Imp0",
             ),
         )
     }
