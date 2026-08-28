@@ -34,16 +34,11 @@ class ClocktowerMayorDemonExclusionWiringTest {
                 mayorStateBlock.contains("MayorRedirectLegality.canReceiveRedirect"),
         )
 
-        // Restored/confirmed Mayor redirect mechanical validation is intentionally not asserted by
-        // Host source shape here. SNE-7.9C routes that responsibility through the checkpoint-backed
-        // canonical Dawn resolver and NightDawnResolutionPlanner; the typed Mayor planner contract
-        // proves that an effective Demon redirect fails closed before Dawn materialization.
-        assertTrue(
-            "Host mechanical death state must consume the checkpoint-backed canonical Dawn resolver.",
-            mayorStateBlock.contains("resolveTroubleBrewingDawnDeathResolution(") &&
-                mayorStateBlock.contains("checkpoint = nightCheckpoint") &&
-                mayorStateBlock.contains("resolvedNightDeathName = canonicalNightDeathResolution.resolvedDeathName"),
-        )
+        // Restored/confirmed Mayor redirect mechanical validation intentionally does not depend on
+        // Host source shape here. SNE-7.9C moved that responsibility to the checkpoint-backed
+        // canonical Dawn resolver and NightDawnResolutionPlanner. The typed Mayor planner contract
+        // proves that an effective Demon redirect fails closed before Dawn materialization, while
+        // ClocktowerNightTransactionArchitectureGuardTest protects the Host ownership wiring.
 
         assertTrue(
             "Mayor UI must expose a dedicated rules-owned legal target parameter.",
