@@ -36,6 +36,11 @@ class ClocktowerDawnDurableMaterializationProductionWiringTest {
             "Dawn public AliveAt(false) history must consume the planner-owned stable observation ID.",
             block.contains("publicAliveObservationIdToCommit"),
         )
+        assertTrue(
+            "Preflight alone is not durable: Dawn must append the planner-owned AliveAt(false) observation after validation.",
+            block.contains("recordEpistemicObservation(") &&
+                block.contains("recordId = dawnDeathMaterialization.publicAliveObservationIdToCommit"),
+        )
     }
 
     @Test
