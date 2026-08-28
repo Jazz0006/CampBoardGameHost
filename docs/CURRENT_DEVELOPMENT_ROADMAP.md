@@ -14,41 +14,44 @@ PR: #54
 PR policy: draft / open / unmerged until explicit authorization
 ```
 
-Latest accepted executable SNE-7 full checkpoint:
+Latest accepted GCR-1 executable checkpoint:
 
 ```text
-70935644daf5c06985420f19833dbda3a160bbfa
+974f617adffd08cc7de0924f6fea4f96f3d73f0c
 ```
 
 Evidence at that checkpoint:
 
 ```text
-CI #933 / run 33153679896 SUCCESS
-- full Android unit tests
-- assembleDebug
-- ASP contract tests
-- Real Clingo cross-validation
+CI #959 / run 33174380352 SUCCESS
+- Android FAST unit tests
 - CI gate
 
-R2 run 33153679938 SUCCESS
+R2 run 33174380336 SUCCESS
 ```
 
-Later SNE-7 docs-only closeout checkpoint:
+Earlier accepted executable SNE-7 full checkpoint:
+
+```text
+70935644daf5c06985420f19833dbda3a160bbfa
+```
+
+with later SNE-7 docs-only closeout checkpoint:
 
 ```text
 83bafdeef2e8445ee6ef92a3e247d63fdf4b58ce
 ```
 
-The active docs-cleanup/GCR planning commits after that are documentation only. Re-query PR #54 before relying on a head SHA.
+Re-query PR #54 before relying on a head SHA.
 
 ## 2. Current priority — GCR Global Correctness Review Follow-up
 
 Status:
 
 ```text
-GCR     ACTIVE PLAN / RED TO WRITE
-GCR-1   Current Demon authority / cross-night succession         HIGH / MERGE BLOCKER
-GCR-2   Poisoned Spy information integrity                       HIGH / MERGE BLOCKER
+GCR     STATUS
+GCR-1   Current Demon authority / cross-night succession         GREEN / ACCEPTED
+GCR-2   Poisoned Spy fail-safe information policy                ACTIVE / POLICY HARDENING
 GCR-3   Typed production acceptance + source-string retirement   MEDIUM
 GCR-4   Chambermaid actual wake-history authority                DEFERRED FOLLOW-UP
 GCR-5   Durable identity + reconstruction API hardening          DEFERRED FOLLOW-UP
@@ -62,15 +65,15 @@ docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-28_GLOBAL_CORRECTNESS_FOLLOWUP.md
 
 Do **not** reopen SNE-7 simply because the global review found new work. SNE-7 proved its scoped same-night/Dawn contracts; GCR addresses gaps outside or above those accepted contracts.
 
-## 3. Why GCR is now merge-blocking
+## 3. Why GCR exists
 
-A whole-PR / whole-night correctness review after SNE-7 closure found two issues that existing green tests did not adequately cover.
+A whole-PR / whole-night correctness review after SNE-7 closure found two areas that needed explicit follow-up.
 
-### GCR-1 — current Demon continuity
+### GCR-1 — current Demon continuity — GREEN
 
-After valid Imp succession, historical state may contain both a dead old Imp and a living new Imp. Production still has callsites whose Demon lookup assumes either “first Demon-team card” or “single Imp-role card”. Those assumptions can select the old dead Imp or fail uniqueness after succession.
+After valid Imp succession, historical state may contain both a dead old Imp and a living new Imp. The accepted GCR-1 implementation now centralizes current-Demon authority and routes attack resolution, succession and Host-facing Demon behavior through it.
 
-Required correctness:
+Accepted required correctness:
 
 ```text
 Night N:   Imp0 self-kills -> Imp1 becomes current Demon
@@ -78,37 +81,65 @@ Night N+1: Imp1 acts normally
 Later:     Imp1 can self-kill -> Imp2 becomes current Demon
 ```
 
-Attack resolution, poison/functioning semantics, succession and Host explanation must consult one typed current-Demon authority.
+Historical dead Demon role identity remains intact; current authority is derived from the single live Demon.
 
-### GCR-2 — poisoned Spy information side channel
+Accepted checkpoint:
 
-An impaired Spy must not infer poison/drunk state from the app changing the outward interaction into “wake, but no Grimoire/information”. The impaired path must preserve a normal-looking Spy information interaction while preventing any unauthorized true-Grimoire leak and using typed unreliable-information authority.
+```text
+974f617adffd08cc7de0924f6fea4f96f3d73f0c
+```
 
-These two items are merge blockers for PR #54 until tests-first RED/GREEN and broad acceptance are complete.
+### GCR-2 — poisoned Spy fail-safe information policy
+
+Product decision, 2026-08-28:
+
+The app intentionally does **not** implement fabricated/misleading Grimoire generation for a poisoned Spy. In ordinary play the Poisoner is not expected to intentionally poison an allied Spy; this state is treated primarily as a rare or accidental target-selection case. The product therefore prefers a simple fail-safe policy over a new misinformation subsystem.
+
+Intentional policy:
+
+```text
+healthy Spy
+-> wake normally
+-> show the true Grimoire
+
+poisoned Spy
+-> wake normally
+-> do not show any Grimoire information
+-> Host may explicitly tell the Storyteller that the Spy is poisoned
+-> do not create or persist a Spy Grimoire information observation
+```
+
+This is an intentional product simplification / house-rule deviation from official poisoned-information semantics. The resulting interaction-shape difference is accepted and must **not** be reopened as a correctness defect unless the product policy is deliberately changed later.
+
+The current production Host path already substantially implements this fail-safe: the poisoned branch suppresses `tellPlayer` and `displayProposition`, instructs the Host not to show the true Grimoire, and leaves healthy Spy behavior unchanged. GCR-2 work should therefore focus on locking this policy with regression coverage and confirming no true-Grimoire or durable-observation leak, not on creating fake Grimoire content.
 
 ## 4. GCR execution order
 
-### Phase GCR-0 — RED only
+### Phase GCR-1 — centralized current Demon authority — COMPLETE
 
-Create typed failing tests for:
+Completed and accepted at:
 
 ```text
-1. first Imp successor acts on the next eligible night;
-2. repeated succession Imp0 -> Imp1 -> Imp2;
-3. mechanical attack + poison/functioning + Host explanation agree on current Demon;
-4. poisoned Spy does not expose impairment through missing-information UI shape;
-5. poisoned Spy never receives unauthorized true Grimoire content.
+974f617adffd08cc7de0924f6fea4f96f3d73f0c
 ```
 
-No production change before the relevant RED is proven to fail for the intended assertion.
+Preserve the centralized current-Demon authority and dead historical Demon identity.
 
-### Phase GCR-1 — centralized current Demon authority GREEN
+### Phase GCR-2 — poisoned Spy fail-safe policy
 
-Prefer one typed authority over per-callsite patches. Preserve dead historical Demon role identity; do not “fix” uniqueness by rewriting history.
+No fabricated/unreliable Grimoire subsystem is authorized.
 
-### Phase GCR-2 — impaired Spy information-integrity GREEN
+Minimum regression contract:
 
-Keep healthy Spy behavior unchanged. Route unreliable presentation through typed information legality/confirmation authority rather than a UI-only exception.
+```text
+1. healthy Spy receives the true Grimoire;
+2. poisoned Spy receives no Grimoire payload;
+3. poisoned Spy never receives the real Grimoire through another display field;
+4. poisoned Spy does not create/persist a Spy Grimoire information observation;
+5. Host-only explanation may explicitly identify the poisoned state.
+```
+
+Because the current production behavior already matches the newly chosen product policy, do not manufacture an artificial semantic RED. Treat this as policy clarification + characterization/regression hardening. If a focused regression exposes a real leak, then establish RED provenance for that defect before production GREEN.
 
 ### Phase GCR-3 — test quality cleanup
 
@@ -122,7 +153,7 @@ docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md
 
 and the active GCR handoff.
 
-### Phase GCR-4/5 — only after blockers
+### Phase GCR-4/5 — only after blocker/policy hardening
 
 Follow-up work:
 
@@ -131,7 +162,7 @@ Follow-up work:
 - clarify `NightTransactionReconstructor.effectiveState` naming if it represents final reconstructed night state rather than checkpoint-time state;
 - consider systematic Dawn crash cut-point fault injection.
 
-These do not automatically block GCR-1/2 unless a typed RED proves otherwise.
+These do not automatically block GCR-2 unless a typed regression proves otherwise.
 
 ## 5. SNE-7 — CLOSED / BROAD GREEN
 
@@ -239,7 +270,7 @@ Do not recreate previously retired source-string tests merely to restore coverag
 
 Follow `docs/TESTING_STRATEGY.md`.
 
-Tests-first minimum for each correctness change:
+Tests-first minimum for behavior-changing correctness work:
 
 ```text
 T0 focused typed RED
@@ -249,6 +280,8 @@ T0 focused typed RED
 -> T1 :app:testFast
 -> T2/T3 when the changed semantic family requires them
 ```
+
+For an explicit policy clarification where existing production already matches the accepted product behavior, characterization/regression tests may be added without an artificial failing production change. If those tests expose an actual defect, return to the normal RED/GREEN cycle for that defect.
 
 Before overall GCR merge-blocking closure, require a real T4 execution:
 
@@ -274,8 +307,6 @@ Until explicit authorization:
 
 ## 11. Current next action
 
-**Next implementation action is GCR-1 RED, not production GREEN.**
+**Next implementation action is GCR-2 fail-safe policy regression hardening.**
 
-Start by proving the cross-night successor failure through a typed scenario that contains a dead historical Imp and a living successor Imp and exercises the real current-Demon consumer. Then add the repeated-succession and authority-convergence REDs before selecting the minimal production seam.
-
-Do not begin GCR-2 production changes until its own information-integrity RED is established.
+Confirm through focused tests that healthy Spy still receives the true Grimoire, poisoned Spy receives no Grimoire payload or durable Spy information observation, and no alternative display path leaks the true Grimoire. Do not implement fabricated Grimoire generation or a generic misinformation subsystem.
