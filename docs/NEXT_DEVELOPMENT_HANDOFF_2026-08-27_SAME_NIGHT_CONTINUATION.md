@@ -1,12 +1,12 @@
-# Next Development Handoff — SNE-7.9 Corrective Continuation
+# Next Development Handoff — SNE-7.9E Restore + Durable Dawn Integration
 
 > Date: 2026-08-28  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Branch: `codex/clocktower-same-night-effective-state-correctness`  
 > Draft PR: #54  
 > Stable `main`: `c8985cb4991f6c7e5ea02adedb932d2d86452da1`  
-> Latest 7.9C code checkpoint: `b6185ccf6b23583c112b040f831e65f2724f1035`  
-> Handoff status: **SNE-7 REOPENED — 7.9A/B complete; 7.9C implementation complete / focused GREEN; normal latest-head broad CI/R2 checkpoint pending; 7.9D starts only after that gate is GREEN; PR #54 stays draft/unmerged**
+> Accepted 7.9D checkpoint: `06f06fb5c0689983c9baaf0bfe1765a8c69a8d16`  
+> Handoff status: **7.9A/B/C/D COMPLETE / BROAD GREEN; 7.9E ACTIVE TESTS-FIRST; PR #54 stays draft/unmerged**
 
 ## 1. Startup contract
 
@@ -22,378 +22,260 @@ Read before changing code:
 8. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`;
 9. `docs/TESTING_STRATEGY.md`.
 
-Then re-query live `main`, active branch, PR #54 state/head and latest checks. Never assume a SHA below remains live after later work.
+Then re-query live `main`, PR #54 head/state and latest checks. Never assume a SHA in this handoff remains live after later work.
 
-## 2. Corrected campaign state
-
-The earlier `SNE-7.1–7.8 IMPLEMENTATION COMPLETE / FINAL VALIDATION` wording is superseded. Final acceptance audit exposed blocking correctness and integration defects beyond the typed seams then covered.
-
-Authoritative state:
-
-> **SNE-7 REOPENED — blocking correctness findings discovered during final acceptance audit.**
-
-Corrective route:
+## 2. Corrective campaign state
 
 ```text
-SNE-7.9A  Mayor redirect dependency invalidation
-SNE-7.9B  Chambermaid stale-target revalidation
-SNE-7.9C  canonical night-death resolution
-SNE-7.9D  succession legality / Dawn
-SNE-7.9E  real restore + durable Dawn integration
+SNE-7.9A  Mayor redirect dependency invalidation          COMPLETE / GREEN
+SNE-7.9B  Chambermaid stale-target revalidation           COMPLETE / GREEN
+SNE-7.9C  canonical night-death resolution                COMPLETE / BROAD GREEN
+SNE-7.9D  succession legality / Dawn                      COMPLETE / BROAD GREEN
+SNE-7.9E  real restore + durable Dawn integration          ACTIVE / NEXT
 ```
 
-Do not mark PR #54 ready or merge it while this campaign remains active.
+Do not mark PR #54 ready or merge it while 7.9E remains active.
 
-## 3. Completed corrective slices
+## 3. Accepted 7.9C authority
 
-### 7.9A — Mayor redirect dependency invalidation
-
-**COMPLETE / GREEN**
-
-```text
-12d84cc9ed8076df9833d2fa268bc523283211b2
-fix: invalidate stale Mayor redirect on upstream reconfirm
-```
-
-`NightCheckpointReducer` invalidates confirmed Mayor redirect and Demon successor when confirmed Poison / Monk / Demon attack values truly change, while preserving editable drafts. Idempotent reconfirm preserves dependent confirmation.
-
-### 7.9B — Chambermaid stale-target revalidation
-
-**COMPLETE / GREEN**
-
-```text
-f9300f72b4ef63a521a87e9d2a087c7ae9db2f03
-fix: revalidate Chambermaid selection authority
-```
-
-Canonical path:
-
-```text
-stored Chambermaid selection
-+ current eligible set
-→ revalidateTwoPlayerSelection
-→ resolveChambermaidSelection
-→ revalidated targets / wokeCount
-```
-
-Production result, target display, recording, and active selection consume the revalidated result.
-
-## 4. SNE-7.9C — canonical night-death resolution
-
-**IMPLEMENTATION COMPLETE / FOCUSED GREEN / NORMAL BROAD CHECKPOINT PENDING**
-
-### C1 — planner attack-outcome authority
-
-```text
-58fe6cd4e927128c3cb208dab9d12c8423ca5188
-refactor: route Dawn death through attack outcome authority
-```
-
-### C2A — direct Trouble Brewing Demon attack adapter
-
-```text
-dee41713e25b2387b77419a74ea256082fe2a44a  RED
-e0b25a8d822bd348e33b6e7a9378be89bd564da9  GREEN
-```
-
-Established `resolveTroubleBrewingDemonNightAttackOutcome(...)`. This seam owns direct Imp attack outcome only; Mayor redirect and succession remain separate rule-owned boundaries.
-
-### C2B — canonical Dawn death facts
-
-```text
-b2830c5846c14320e37371d706f678db7b10e996  RED
-7fa38d47d682cfb324052d8b56c46563ffc0b815  GREEN
-```
-
-Established:
-
-```text
-TroubleBrewingDawnDeathFacts
-  attackOutcome
-  originalDeathSeat
-  mayorSeat
-  demonSafeSeats
-```
-
-Broad C2B checkpoint validation:
-
-```text
-CI #882 SUCCESS
-R2 #809 SUCCESS
-Android full unit tests/build SUCCESS
-Real Clingo cross-validation SUCCESS
-```
-
-### C2C — real Dawn production consumer cut-over
-
-**COMPLETE / BROAD GREEN**
-
-Tests-first chain:
-
-```text
-b3c52db2ee5e89b390de366c00034f367e9ec033  RED 1
-e8af84b34f6df26a4ae442edd942af3b031aa4cd  GREEN 1
-c5a9a8da8a6c76a223fd4765745c8797792ef84f  RED 2
-7139c8f9be8613ac082eafacf484f2c9c84a54f0  GREEN 2
-```
-
-RED evidence:
-
-```text
-PR CI #884: 924 tests / exactly 1 expected initial C2C ownership failure
-PR CI #886: 924 tests / exactly 1 expected duplicate-protection-authority failure
-R2 #813 SUCCESS
-Clingo SUCCESS
-```
-
-Focused GREEN set with `--rerun-tasks`:
-
-```text
-ClocktowerNightTransactionArchitectureGuardTest
-ClocktowerDemonAttackDawnFactsTest
-NightDawnResolutionPlannerAttackOutcomeContractTest
-NightDawnResolutionPlannerMayorContractTest
-```
-
-Normal broad checkpoint after C2C:
-
-```text
-CI #888 SUCCESS
-R2 #815 SUCCESS
-Android full unit tests/build SUCCESS
-Real Clingo cross-validation SUCCESS
-```
-
-Current Dawn authority:
-
-```text
-confirmed attack / poison / Monk facts
-+ stable original cards ordering
-→ resolveTroubleBrewingDawnDeathFacts
-→ NightDawnDeathResolutionInput
-→ NightDawnResolutionPlanner
-→ DawnCommitIntent.death
-→ App durable death materialization
-```
-
-App no longer re-derives Mayor death authority or re-gates a planner death with Monk/Soldier protection.
-
-### C3 — public-alive observation preflight cut-over
-
-**COMPLETE / FOCUSED GREEN**
-
-```text
-6be1e7e7c923582039697c260ef21dfc757bc833  RED
-e6c3d9ef7ab50e9e07d0ce570120bd63c68571af  GREEN
-```
-
-The RED proved the observation preflight still owned an independent Demon poison / Mayor / Monk / Soldier death reconstruction. The RED PR CI completed 925 tests with exactly one expected ownership failure; Clingo stayed GREEN.
-
-The GREEN path is now:
+The real Trouble Brewing night-death consumers now converge on:
 
 ```text
 confirmed checkpoint facts
 → resolveTroubleBrewingDawnDeathFacts
-→ NightDawnResolutionPlanner
-→ DawnCommitIntent.death.targetSeat
-→ resolved public death name
-→ preflight AliveAt(false) sequence
+→ NightDawnResolutionPlanner.planValidatedNightDeath
+→ DawnCommitIntent.death
 ```
 
-The preflight keeps timeline sequence responsibility only; it no longer owns mechanical death semantics.
-
-Complete-worktree-safe focused runner proved exact RED head, intended RED, single-App-file GREEN scope, `git diff --check`, focused GREEN, remote-head guard and push.
-
-### C4 — Host death consumer cut-over
-
-**COMPLETE / FOCUSED GREEN**
+The three previously duplicated production consumers are now:
 
 ```text
-28b8dcbf367852cf8f22d83d2e7f563a89bd50b5  RED
-0a73673bb5ef15a5099f1da8f0b2df16e0fb9ab1  shared resolver seam
-b6185ccf6b23583c112b040f831e65f2724f1035  GREEN
+Dawn durable materialization
+public-alive observation preflight
+Host death presentation / resolved mechanical event trigger
 ```
 
-C4 RED proof:
+Key production checkpoints:
 
 ```text
-PR CI #891
-926 tests / exactly 1 expected Host canonical-death ownership failure
+7139c8f9be8613ac082eafacf484f2c9c84a54f0  Dawn materialization authority
+e6c3d9ef7ab50e9e07d0ce570120bd63c68571af  public-alive preflight authority
+b6185ccf6b23583c112b040f831e65f2724f1035  Host death consumer authority
+```
+
+Do not recreate independent Soldier / Monk / Demon-poison / Mayor death gates in App or Host.
+
+## 4. Accepted 7.9D succession authority
+
+7.9D closed both production Dawn succession and reconstruction legality findings.
+
+Tests-first chain:
+
+```text
+8bf44fc78b56b9e6e18971720dbf32304d56724f  RED — reject illegal restored successor
+b3eaa92a39eefd0859e908d91b2214bec5811614  canonical Imp succession resolver
+9f24652e8a1010092c86e1ab85e4271dee7034d9  pre-self-kill state correction
+ba7772218126a6116c9eef96a62338c5e82948d8  GREEN — reconstructor legality
+
+d396a80d6b863486fdb3068ac8decf549bb26841  RED — Forced / None planner coverage
+f982e50ca702fe95f623581e0e62347849bf888a  GREEN — planner consumes None / Forced / Choice
+
+50fed86a4b0f33d2bb31eaff62a64af9ab4abdd1  App self-kill Dawn path consumes resolver + planner
+
+943b65b7938930736aae3f307f4894b1859e3a58  RED — successful self-kill with no successor lost mechanical death
+6c28d418702024cc614bc6cb04091238aa663c3a  expose canonical self-kill attack outcome + succession
+fe7c8761e7c9a7404b2b73964a2c1f1ae38f503e  GREEN — death projected independently from successor existence
+
+06f06fb5c0689983c9baaf0bfe1765a8c69a8d16  [full-ci] protective checkpoint
+```
+
+Canonical contract:
+
+```text
+confirmed Imp self attack
+→ DemonNightAttackSemantics
+→ attack actually self-kills?
+   no  → no mechanical death, no succession
+   yes → reconstruct old Imp MechanicalDeath
+       → DemonSuccessionSemantics
+          None   → no successor role change
+          Forced → forced successor
+          Choice → confirmed target must be inside canonical targetSeats
+→ NightDawnResolutionPlanner owns continuation / pending new Demon / Dawn gating
+```
+
+The functioning-Monk-protects-Imp case is explicitly covered so `DemonSuccessionResolution.None` cannot be misread as proof that the old Imp died.
+
+## 5. 7.9D validation evidence
+
+### Expected RED
+
+```text
+CI #911
+Android FAST selected
+913 tests / exactly 1 intended failure
+NightTransactionReconstructorSuccessionLegalityTest
+FULL Android step skipped
+R2 #838 SUCCESS
+```
+
+### GREEN
+
+```text
+CI #913 SUCCESS
+Android FAST SUCCESS
+FULL Android step skipped
+CI gate SUCCESS
+R2 #840 SUCCESS
+```
+
+### Full acceptance
+
+```text
+CI #914 SUCCESS
+Android full unit tests + assembleDebug SUCCESS
+ASP contract tests SUCCESS
 Real Clingo cross-validation SUCCESS
+CI gate SUCCESS
+R2 #841 SUCCESS
 ```
 
-Established:
+This also validates the hardened CI routing:
 
 ```text
-resolveTroubleBrewingDawnDeathResolution(
-    cards,
-    script,
-    gameSeed,
-    checkpoint,
-)
+ordinary app micro-commit → FAST
+[full-ci] checkpoint      → FULL + assemble + ASP + Clingo
 ```
 
-This helper is a composition seam, not a second rule engine. It feeds confirmed `ClocktowerNightCheckpoint` facts into the existing canonical Trouble Brewing Dawn facts + `NightDawnResolutionPlanner`.
+## 6. Active 7.9E problem
 
-App now passes the live checkpoint into Host:
-
-```text
-nightCheckpoint = currentClocktowerNightCheckpoint()
-```
-
-Host now consumes:
-
-```text
-canonicalNightDeathResolution
-→ mayorRedirectEligible
-→ resolvedDeathName
-→ resolvedDeathSeat
-→ nightDeathWillOccur
-```
-
-Host no longer re-gates death with independent Demon poison / functioning Monk / Soldier logic. Remaining Mayor redirect target legality in Host is UI selection/presentation logic, not death authority.
-
-The first GREEN runner attempt caught two stale `demonPoisonedTonight` references used only by Imp action explanatory copy. No large-file GREEN was pushed from that failed attempt. The corrected runner derives checkpoint-backed display-only `demonPoisonedForActionExplanation`; it is not used by resolved death or `nightDeathWillOccur`.
-
-Final complete-worktree-safe C4 runner proved:
-
-```text
-exact helper-head guard PASS
-App + Host patch scope exact
-git diff --check PASS
-focused C4 GREEN PASS
-remote-head guard PASS
-push PASS
-```
-
-Remote audit of `b6185ccf...`:
-
-```text
-parent = 0a73673bb5ef15a5099f1da8f0b2df16e0fb9ab1
-CampBoardGameHostApp.kt              +1 / -0
-ClocktowerHostScreen.kt             +21 / -36
-```
-
-### 7.9C closure result
-
-The original acceptance audit identified three duplicate production death consumers:
-
-```text
-Dawn
-observation preflight
-Host UI / resolved mechanical event trigger
-```
-
-All three now converge on canonical Trouble Brewing death facts + `NightDawnResolutionPlanner`. Architecture ownership guards explicitly protect each boundary. Therefore **7.9C implementation is complete**.
-
-The bot-authored C4 GREEN push created CI #893 and R2 #820 with conclusion `action_required` and zero jobs because the workflow actor/triggering actor was `github-actions[bot]`. This is not a test failure and is not broad acceptance evidence. The normal user-authored docs checkpoint following C4 must provide the real latest-head broad CI/R2 gate.
-
-## 5. Next slice — SNE-7.9D succession legality / Dawn
-
-**NOT STARTED — START ONLY AFTER 7.9C NORMAL BROAD GREEN**
-
-Original acceptance findings to address:
-
-1. production Imp self-kill successor path can still reach Dawn without one validated succession authority;
-2. `NightTransactionReconstructor` successor legality is too weak if it only checks player existence/alive/Minion type.
-
-Tests-first 7.9D scope:
-
-```text
-confirmed Imp self-kill
-+ current effective alive/current-role state
-+ confirmed successor target
-→ canonical legal successor set
-→ DemonSuccessionResolution / planDemonSuccession()
-→ validated Dawn succession intent
-```
-
-Reconstructor must validate the same legal successor semantics used by production, not a parallel approximation.
-
-Do not expand this slice into:
-
-```text
-generic non-self Demon-death succession
-custom-script Demon succession
-real restore wiring
-A4/B4 authority promotion
-recommendation tuning
-unrelated Host/UI refactor
-```
-
-## 6. Deferred SNE-7.9E — real restore + durable Dawn integration
-
-**NOT STARTED**
-
-After 7.9D:
+The required real flow is:
 
 ```text
 persist / restore
 → NightTransactionReconstructor
-→ canonical same-night state
-→ death / succession resolution
-→ Dawn materialization
+→ reconstructed same-night state
+→ canonical death / succession resolution
+→ Dawn durable materialization
 → ActionFact / observation
 → phase transition
 ```
 
-Existing smoke coverage is insufficient because it stops before App-owned durable side effects.
+Current App audit shows:
 
-## 7. Architecture invariants
+- `activeGameSnapshotJson()` persists a `ClocktowerNightCheckpoint` through `persistedValues()`;
+- `restoreSavedGame()` builds `restoredNightCheckpoint` through `ClocktowerNightCheckpoint.fromPersistedValues(...)`;
+- restore validates semantic history with `requireCompatible(...)`;
+- restore copies all raw checkpoint fields back into App state;
+- **real App restore does not call `NightTransactionReconstructor`**;
+- existing lifecycle integration smoke stops before App-owned durable Dawn side effects.
 
-- rules determine legality; recommendation ranks legal choices; UI displays legal choices;
-- stable seat identity never comes from a filtered list;
-- draft state cannot impersonate confirmed mechanical fact;
-- changed reconfirmation invalidates dependent confirmed facts while preserving editable drafts;
-- same-night mechanics use projected effective state instead of early persisted/public mutation;
-- persistent effects follow source ability lifetime;
-- pure semantics may support future cases, but production activates only validated slices;
-- `ClocktowerNightCheckpoint` remains the sole durable unfinished-night owner;
-- transient `NightResolutionEvent` commands are not event sourcing;
-- source ownership guards protect coarse structural responsibility, never formatting.
+Therefore the next work is not a generic persistence rewrite. It is to connect the already-valid durable checkpoint to the already-valid reconstructor and then prove the resulting canonical Dawn consequences are materialized exactly once.
 
-## 8. Writer / validation contract
+## 7. 7.9E first RED target
 
-Follow `AGENTS.md`.
+Start with a directly callable typed production seam, not a large Compose rewrite.
+
+Minimum scenario:
 
 ```text
-small tests/docs/source
-  → Chat + GitHub connector
-
-large CampBoardGameHostApp.kt edits
-  → complete-worktree-safe exact patch path
+restored unfinished Trouble Brewing night
+confirmed Imp self-kill
+confirmed legal successor
+canonical interaction plan includes successor interaction
 ```
 
-Tests-first micro-cycle:
+Required behavior:
+
+```text
+restore composition
+→ NightTransactionReconstructor
+→ old Imp mechanically dead
+→ successor current role = Imp
+→ public/base GameState remains unchanged
+```
+
+This must prove that real restore activates derived same-night mechanics without early durable/public mutation.
+
+After that GREEN, extend the same production composition through:
+
+```text
+canonical Dawn death / succession intent
+→ durable death / role change exactly once
+→ ActionFact exactly once
+→ public AliveAt(false) observation exactly once
+→ phase transition exactly once
+```
+
+Do not jump straight to source-string assertions or mutate `cards.eliminatedRound` during restore to make the test pass.
+
+## 8. Architecture invariants
+
+- `ClocktowerNightCheckpoint` remains the sole durable unfinished-night state owner;
+- `GameState` / existing session timeline remain durable game-history authority;
+- restore reconstructs from durable inputs, not replayed `NightResolutionEvent` commands;
+- mechanical death and public announcement remain distinct;
+- same-night `RoleChanged` is derived before Dawn materialization, not written early to base cards;
+- stable seat identity never comes from filtered-list reindexing;
+- draft fields cannot impersonate confirmed facts;
+- rules determine legality; UI only presents/selects legal choices;
+- pure semantics may support future cases, but production activates only validated slices;
+- no second persisted coordinator and no event-sourcing architecture is introduced.
+
+## 9. Scope exclusions
+
+Do not expand 7.9E into:
+
+```text
+generic non-self Demon-death succession
+custom-script Demon succession
+A4/B4 authority promotion
+recommendation tuning
+App-root decomposition
+unrelated Host/UI cleanup
+PR merge/readiness work
+```
+
+## 10. Writer / CI contract
+
+Small tests/docs/source:
+
+```text
+Chat + GitHub connector
+```
+
+Large App edits:
+
+```text
+exact live-head lock
+→ complete source candidate
+→ detached blob/tree/commit
+→ exact parent/diff/scope audit
+→ fast-forward only after audit passes
+```
+
+The GitHub connector has successfully handled the ~228 KiB App file; size alone is no longer a reason to switch tools. Never construct a whole-file replacement from truncated content.
+
+Tests-first cadence:
 
 ```text
 RED
-→ prove intended failure
+→ prove exact intended failure
 → minimal GREEN
-→ focused --rerun-tasks
-→ git diff --check
-→ push
+→ focused validation where applicable
 → remote parent/diff/scope audit
+→ ordinary app micro-commits use FAST CI
+→ [full-ci] only at logical acceptance checkpoints
 ```
 
-Checkpoint validation:
+## 11. Exact next-start instruction
 
 ```text
-:app:testFast / triggered broader validation
-→ latest-head GitHub CI/R2
+1. re-query live PR #54 head after the docs-only synchronization commits;
+2. audit existing lifecycle integration test and any current restore/session adapters;
+3. design the smallest typed 7.9E RED for restored checkpoint → real reconstruction composition;
+4. prove no public/base mutation while reconstructed old-Imp death/new-Imp role is effective;
+5. minimal GREEN through a reusable production seam;
+6. only then extend to App-owned durable Dawn materialization and exactly-once timeline/observation effects;
+7. keep PR #54 draft/unmerged.
 ```
-
-Do not repeat identical focused tests merely to duplicate evidence.
-
-## 9. Exact next-start instruction
-
-```text
-1. re-query PR #54 head after this docs checkpoint;
-2. require normal latest-head CI + R2 success for the user-authored checkpoint;
-3. if broad gate is GREEN, formally accept SNE-7.9C as broad GREEN;
-4. then begin SNE-7.9D tests-first with succession legality audit/RED;
-5. do not begin 7.9E and do not broaden 7.9D scope;
-6. keep PR #54 draft/unmerged.
-```
-
-Never merge, mark ready, rebase, force-push, or broaden PR #54 without explicit user authorization.
