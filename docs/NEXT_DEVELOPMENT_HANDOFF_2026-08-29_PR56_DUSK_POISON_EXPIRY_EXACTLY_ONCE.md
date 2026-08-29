@@ -43,7 +43,7 @@ Two independent exactly-once failures existed:
 
 ### History-first
 
-If `Poison(null)` history persisted but poison state remained stale, retry generated another dynamic action ID and duplicated poison-clear history.
+If `Poison(null)` history persisted but poison state remained stale, retry generated another dynamic action ID and could duplicate poison-clear history.
 
 ### Phase-first / state-first
 
@@ -68,7 +68,7 @@ Remote CI #1032:
 DuskPoisonExpiryOwnershipTest > app root no longer owns dynamic poison-expire history identity
 ```
 
-This is the required assertion-level RED provenance.
+This is the assertion-level RED provenance for PR #56.
 
 ## 4. Typed GREEN seams
 
@@ -102,13 +102,7 @@ stateMutationRequired
 actionIdToCommit
 ```
 
-Typed tests cover:
-
-- initial materialization;
-- state-first retry;
-- history-first retry;
-- fully durable retry;
-- no previous poison.
+Typed tests cover initial materialization, state-first retry, history-first retry, fully durable retry, and no previous poison.
 
 ### DuskPoisonExpiryRecoveryAuthority
 
@@ -119,11 +113,9 @@ a36b6bf50a7b7d57118ec8605323d52fcbc25881
 feat: recover dusk poison expiry across first night
 ```
 
-Important distinction:
-
 `NightDawnPoisonRecoveryAuthority` is not sufficient here because it filters to ordinary `NIGHT`, while Poisoner acts on `FIRST_NIGHT`.
 
-Dusk recovery therefore selects the latest `ActionFact.Poison` for the same outgoing round regardless of whether it originated at First Night, ordinary Night, or the Day/Dusk clear itself.
+Dusk recovery selects the latest `ActionFact.Poison` for the same outgoing round across First Night / ordinary Night / Day chronology.
 
 This supports:
 
@@ -138,14 +130,14 @@ First Night Poison(target)
 
 ## 5. Production wiring
 
-Current production GREEN:
+Production GREEN:
 
 ```text
 6b022935618b3d00d5ef2b62a34bc88d8358e645
 fix: materialize dusk poison expiry exactly once
 ```
 
-Parent is exactly:
+Parent:
 
 ```text
 e8b9b449a2564b8eca6696acf974c33a9af956dc
@@ -155,14 +147,6 @@ The commit changes exactly one tracked file:
 
 ```text
 app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-```
-
-Added imports:
-
-```text
-DuskPoisonExpiryMaterializationPlanner
-DuskPoisonExpiryMaterializationState
-DuskPoisonExpiryRecoveryAuthority
 ```
 
 Added one shared App orchestration helper:
@@ -193,9 +177,7 @@ The three legacy dynamic `kind = "poison-expire"` blocks were removed.
 
 ## 6. Source-wiring characterization
 
-`ClocktowerHistoricalActionLifecycleProductionWiringTest` was migrated away from requiring callback-local direct `ActionFactDraft.Poison` calls.
-
-It now protects the architectural contract:
+`ClocktowerHistoricalActionLifecycleProductionWiringTest` now protects the architectural contract rather than callback-local implementation details:
 
 - Klutz, Virgin, and normal Day paths call the shared Dusk helper;
 - each helper call appears before the next-Night phase advance;
@@ -203,46 +185,76 @@ It now protects the architectural contract:
 
 Typed tests remain the correctness authority for convergence semantics.
 
-## 7. Current validation
+## 7. Validation
 
-Production head `6b022935...` remote validation:
+### T1 production checkpoint
 
 ```text
 CI #1036 / run 33245684173: SUCCESS
-- Android FAST unit tests: SUCCESS
+- Android :app:testFast: SUCCESS
 - CI gate: SUCCESS
-- full Android unit tests/build: skipped by FAST routing
-- ASP contract tests: skipped by FAST routing
-- Real Clingo: skipped by FAST routing
 
 R2 #961: SUCCESS
 ```
 
-The next checkpoint must deliberately trigger T4 with `[full-ci]`.
-
-## 8. Full acceptance required before merge review
-
-Required T4 evidence:
+### T4 acceptance checkpoint
 
 ```text
-Android :app:testFull
-:app:assembleDebug
-ASP contract tests
-Real Clingo 5.8 cross-validation
-CI gate
-R2
+840ba4eac8d1a0649e787737a8f21d89574e0ea7
+[full-ci] docs: record PR56 dusk poison closure
 ```
 
-After T4:
+Actual T4 evidence:
 
-1. verify PR #56 live head/state/checks;
-2. audit complete PR changed-file set;
-3. audit no residual dynamic `poison-expire` owner;
-4. audit no regression to Dawn poison ownership;
-5. identify any remaining P1/P2 repository-global blocker;
-6. update docs with actual T4 evidence if needed.
+```text
+CI #1037 / run 33245894921: SUCCESS
+- Android :app:testFull + :app:assembleDebug: SUCCESS
+- ASP contract tests: SUCCESS
+- Real Clingo 5.8 cross-validation: SUCCESS
+- CI gate: SUCCESS
+
+R2 #962 / run 33245894916: SUCCESS
+```
+
+The acceptance checkpoint is therefore fully GREEN.
+
+## 8. Final PR audit
+
+Live `main` remained:
+
+```text
+160f730594d76c294542cd22a5220baeb73d1bc9
+```
+
+At T4 acceptance the branch is:
+
+```text
+ahead 6
+behind 0
+merge base = current main
+```
+
+Complete authorized changed-file set before this final docs-only closeout:
+
+```text
+app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/DuskPoisonExpiryMaterializationPlanner.kt
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/DuskPoisonExpiryRecoveryAuthority.kt
+app/src/test/java/com/codex/campboardgamehost/clocktower/session/DuskPoisonExpiryMaterializationPlannerTest.kt
+app/src/test/java/com/codex/campboardgamehost/clocktower/session/DuskPoisonExpiryOwnershipTest.kt
+app/src/test/java/com/codex/campboardgamehost/clocktower/session/DuskPoisonExpiryRecoveryAuthorityTest.kt
+app/src/test/java/com/codex/campboardgamehost/persistence/ClocktowerHistoricalActionLifecycleProductionWiringTest.kt
+docs/CURRENT_DEVELOPMENT_ROADMAP.md
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-29_PR56_DUSK_POISON_EXPIRY_EXACTLY_ONCE.md
+```
+
+No Host/A3/workflow/unrelated production files are included.
+
+No known P1/P2 blocker remains inside authorized PR #56 scope.
 
 ## 9. Merge discipline
+
+PR #56 is technically merge-ready in scope, but remains open/draft/unmerged.
 
 Do not:
 
@@ -253,3 +265,5 @@ Do not:
 - widen scope;
 
 without explicit user authorization.
+
+Immediately before any future merge, re-query live `main`, PR head/state/mergeability and checks.

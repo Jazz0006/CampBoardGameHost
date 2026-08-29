@@ -15,8 +15,9 @@ post-merge main T4: CI #1031 SUCCESS
 active branch: codex/hotfix-poison-expire-exactly-once
 active PR: #56 — Hotfix next-night poison expiry exactly-once
 PR state at this roadmap checkpoint: open / draft / unmerged / mergeable
-current production GREEN head before this docs checkpoint: 6b022935618b3d00d5ef2b62a34bc88d8358e645
+production GREEN checkpoint: 6b022935618b3d00d5ef2b62a34bc88d8358e645
 original RED checkpoint: 4b75bac46a9ef161e7b03e13308339daf56114a4
+full T4 checkpoint: 840ba4eac8d1a0649e787737a8f21d89574e0ea7
 ```
 
 Detailed PR #56 handoff:
@@ -65,11 +66,11 @@ CI #1031 / run 33244894925: SUCCESS
 
 PR #55 is no longer active work.
 
-## 3. PR #56 — next-night poison expiry exactly-once — CURRENT P1
+## 3. PR #56 — next-night poison expiry exactly-once — ACCEPTED IN SCOPE
 
-### Defect
+### Defect closed
 
-Three Day -> Night paths previously owned separate retry-unsafe dynamic poison clear writers:
+The three Day -> Night paths previously owned separate retry-unsafe dynamic poison clear writers:
 
 ```text
 1. Klutz continuation -> next Night
@@ -77,47 +78,39 @@ Three Day -> Night paths previously owned separate retry-unsafe dynamic poison c
 3. normal Day confirmation -> next Night
 ```
 
-Each generated:
+Each generated `clocktowerActionId(kind = "poison-expire", ...)` and separately cleared mechanical poison after entering Night.
 
-```text
-clocktowerActionId(kind = "poison-expire", ...)
-```
+The hotfix closes both failure modes:
 
-and separately cleared mechanical poison state after entering Night.
+1. duplicate history identity after partial persistence;
+2. loss of the outgoing Day callback as retry owner when phase advanced before poison expiry converged.
 
-This had two durability problems:
-
-1. dynamic action identity could duplicate history after history-first partial persistence;
-2. phase could become durable before poison expiry completed, losing the outgoing Day callback as retry owner.
-
-### RED provenance
+### Preserved RED
 
 ```text
 4b75bac46a9ef161e7b03e13308339daf56114a4
 test: expose next-night poison expiry ownership RED
 ```
 
-Remote CI #1032 compiled production/tests and ran `:app:testFast`:
+Remote CI #1032:
 
 ```text
+:app:testFast executed
 924 tests completed, exactly 1 failed
 DuskPoisonExpiryOwnershipTest > app root no longer owns dynamic poison-expire history identity
 ```
 
-This is the preserved assertion-level RED for PR #56.
-
-### Typed materialization owner
-
-PR #56 now introduces:
+### Typed ownership chain
 
 ```text
 DuskPoisonExpiryRecoveryAuthority
 -> DuskPoisonExpiryMaterializationPlanner
 -> DuskPoisonExpiryMaterializationPlan
 -> stable dusk-{game}-{outgoingRound}-poison-seat-{seat}-to-none action ID
+-> shared App helper materializeClocktowerPoisonExpiryAtDusk()
 ```
 
-The typed contract covers:
+Typed convergence contract:
 
 ```text
 initial expiry -> stable history + mechanical clear
@@ -129,9 +122,9 @@ no previous poison -> no materialization responsibility
 
 ### First Night recovery
 
-Dusk recovery is intentionally separate from Dawn recovery.
+Dusk recovery is intentionally separate from Dawn recovery because Poisoner acts on First Night.
 
-Poisoner acts on First Night, so `DuskPoisonExpiryRecoveryAuthority` accepts the latest Poison fact for the same outgoing round across First Night / ordinary Night / Day chronology. This preserves state-first recovery at the first Day -> Night boundary.
+`DuskPoisonExpiryRecoveryAuthority` uses the latest Poison fact for the same outgoing round across First Night / ordinary Night / Day chronology. This preserves state-first recovery at the first Day -> Night boundary.
 
 ### Production GREEN
 
@@ -140,19 +133,13 @@ Poisoner acts on First Night, so `DuskPoisonExpiryRecoveryAuthority` accepts the
 fix: materialize dusk poison expiry exactly once
 ```
 
-This commit changed only:
+This commit changed exactly one tracked file:
 
 ```text
 app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
 ```
 
-App root now has one shared helper:
-
-```text
-materializeClocktowerPoisonExpiryAtDusk()
-```
-
-All three Day -> Night entry points execute:
+All three Day -> Night entry points now execute:
 
 ```text
 materializeClocktowerPoisonExpiryAtDusk()
@@ -161,43 +148,65 @@ materializeClocktowerPoisonExpiryAtDusk()
 -> clocktowerPhase = ClocktowerPhase.Night
 ```
 
-Therefore poison expiry is materialized while phase/round still belong to the outgoing Day.
+Poison expiry therefore converges while phase/round still belong to the outgoing Day.
 
-Legacy dynamic `kind = "poison-expire"` writers were removed from all three paths.
+The three dynamic `kind = "poison-expire"` App writers are removed.
 
-### Current validation
-
-Remote production checkpoint:
+### T1 production validation
 
 ```text
 CI #1036 / run 33245684173: SUCCESS
 - Android :app:testFast: SUCCESS
 - CI gate: SUCCESS
-- full Android route: correctly skipped at FAST checkpoint
-- ASP / Real Clingo: correctly skipped at FAST checkpoint
 
 R2 #961: SUCCESS
 ```
 
-PR #56 is not yet merge-accepted. A dedicated `[full-ci]` docs checkpoint must run T4 before merge review.
+### Full T4 acceptance
 
-## 4. PR #56 acceptance gates still required
-
-Before PR #56 can be considered merge-ready:
+Docs-only full checkpoint:
 
 ```text
-1. docs/handoff checkpoint with [full-ci]
-2. Android :app:testFull
-3. :app:assembleDebug
-4. ASP contract tests
-5. Real Clingo 5.8 cross-validation
-6. CI gate
-7. R2
-8. final PR/global diff audit
-9. verify no remaining P1/P2 blocker in authorized scope
+840ba4eac8d1a0649e787737a8f21d89574e0ea7
+[full-ci] docs: record PR56 dusk poison closure
 ```
 
-Do not merge or mark ready without explicit user authorization.
+T4 evidence:
+
+```text
+CI #1037 / run 33245894921: SUCCESS
+- Android :app:testFull + :app:assembleDebug: SUCCESS
+- ASP contract tests: SUCCESS
+- Real Clingo 5.8 cross-validation: SUCCESS
+- CI gate: SUCCESS
+
+R2 #962 / run 33245894916: SUCCESS
+```
+
+No known P1/P2 blocker remains inside the authorized PR #56 scope after this audit.
+
+PR #56 is technically merge-ready in scope, but it remains draft/unmerged until explicit user authorization.
+
+## 4. Final PR #56 audit summary
+
+Relative to `main@160f7305...`, the acceptance checkpoint is:
+
+```text
+ahead: 6
+behind: 0
+merge base: 160f730594d76c294542cd22a5220baeb73d1bc9
+```
+
+Authorized changed-file classes only:
+
+```text
+1 App root production file
+2 Dusk typed production seam files
+4 focused/characterization test files
+2 docs files
+```
+
+No Host/A3/workflow/unrelated production files are part of the PR.
 
 ## 5. Deferred work registry
 
@@ -207,7 +216,7 @@ Do not merge or mark ready without explicit user authorization.
 | GCR-5 night checkpoint stable identity hardening | DEFERRED FOLLOW-UP |
 | GCR-5 reconstructor naming clarity | DEFERRED FOLLOW-UP |
 | Dawn systematic crash cut-point matrix | DEFERRED FOLLOW-UP |
-| A3 immutable setup snapshot ownership/persistence | PAUSED / RESUME AFTER PR56 |
+| A3 immutable setup snapshot ownership/persistence | PAUSED / NEXT MAINLINE CANDIDATE AFTER PR56 |
 | App Root S9.2 Active Game Persistence Boundary | AUDITED / NOT STARTED |
 | generic custom-script Demon succession | NOT AUTHORIZED |
 | Mayor redirect to Demon with generic succession | DELIBERATELY CONSTRAINED |
@@ -236,13 +245,13 @@ A skipped, cached-only or `UP-TO-DATE` route is not evidence that a required gat
 
 Gameplay/rules correctness belongs to typed tests.
 
-Source inspection is allowed only as a coarse architecture/ownership guard. For PR #56 it may assert:
+Source inspection is allowed only as a coarse architecture/ownership guard. For PR #56 it protects:
 
 - no dynamic `kind = "poison-expire"` remains in App root;
 - all three entry points share the same Dusk materialization helper;
 - the helper call precedes the next-Night phase advance.
 
-It must not substitute for typed convergence tests.
+It does not substitute for typed convergence tests.
 
 ## 8. Branch / scope discipline
 
@@ -250,19 +259,16 @@ At this checkpoint:
 
 - PR #56 remains draft and unmerged;
 - do not rebase or force-push;
-- do not fold unrelated Dawn/A3/Host/A4/ZDD work into PR #56;
+- do not widen scope;
+- do not mark ready or merge without explicit user authorization;
 - use GitHub connector for safe small/medium files;
-- use Luna/Codex for huge protected App-root edits;
-- keep exact changed-file audits at each production checkpoint.
+- use Luna/Codex for huge protected App-root edits.
 
 ## 9. Current next action
 
 ```text
-1. Commit this roadmap + PR56 handoff as a docs-only [full-ci] checkpoint.
-2. Verify T4 actually executes and passes.
-3. Update acceptance evidence if necessary.
-4. Perform final PR/global audit.
-5. STOP before merge/ready unless explicitly authorized.
+1. Confirm final docs-only closeout CI/R2.
+2. STOP before merge/ready.
+3. If user explicitly authorizes merge, re-query live main + PR head/checks immediately before merge.
+4. After merge, re-query new main and then decide whether to resume A3 Architecture Hardening or another explicitly chosen deferred item.
 ```
-
-Do not resume A3 architecture hardening until PR #56 is integrated or explicitly paused.
