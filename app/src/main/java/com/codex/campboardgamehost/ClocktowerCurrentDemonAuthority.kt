@@ -1,7 +1,11 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.rules.CurrentDemonAuthority
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
+import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
+import com.codex.campboardgamehost.clocktower.session.resolveTroubleBrewingImpSelfKillSuccession
 
 internal data class CurrentDemonHostContext(
     val actor: PlayerCard,
@@ -41,4 +45,20 @@ internal fun resolveNightReconstructionDemonRoleId(
         ?.clocktowerRole
         ?.enName
         ?.let(::RoleId)
+}
+
+internal fun resolveNightDemonSuccessionForHost(
+    baseGameState: GameState,
+    checkpoint: ClocktowerNightCheckpoint,
+    currentDemonHostContext: CurrentDemonHostContext?,
+    demonRoleId: RoleId?,
+): DemonSuccessionResolution {
+    if (currentDemonHostContext == null || demonRoleId == null) {
+        return DemonSuccessionResolution.None
+    }
+    return resolveTroubleBrewingImpSelfKillSuccession(
+        baseGameState = baseGameState,
+        checkpoint = checkpoint,
+        demonRoleId = demonRoleId,
+    )
 }
