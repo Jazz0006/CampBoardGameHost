@@ -118,6 +118,18 @@ Validation for `b2da33e2...`:
 - local `:app:testFast`: SUCCESS with `--rerun-tasks`;
 - GitHub Android FAST, CI gate and R2: SUCCESS (runs `33239658233` and `33239658238`).
 
-The next `[full-ci]` checkpoint must validate this latest production tree before PR #55 acceptance.
+Full acceptance checkpoint:
+- `9a6c2367fcb93cf91a84f3f8fde9ad332437a480`
+- docs-only `[full-ci]` commit over production tree `b2da33e2...`
+
+T4 results:
+- GitHub Actions run `33239767543`: SUCCESS;
+- Android `:app:testFull` + `:app:assembleDebug`: SUCCESS;
+- ASP contract tests: SUCCESS;
+- Real Clingo cross-validation: SUCCESS;
+- CI gate: SUCCESS;
+- R2 run `33239767557`: SUCCESS.
+
+The post-audit state-first recovery blocker is closed. No known blocker remains in the authorized PR #55 scope.
 
 Do not mark PR ready or merge without explicit user authorization.
