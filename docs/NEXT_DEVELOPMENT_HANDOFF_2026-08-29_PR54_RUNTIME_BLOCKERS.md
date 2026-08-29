@@ -5,18 +5,20 @@
 > Branch: `codex/clocktower-same-night-effective-state-correctness`  
 > PR: #54  
 > Parent status authority: `docs/CURRENT_DEVELOPMENT_ROADMAP.md`  
-> Status: **PR54-P1-1 ACCEPTED; PR54-P1-2 IMPLEMENTATION GREEN / T1 ACCEPTED; FINAL T4 MERGE-READINESS GATE PENDING — PR MUST REMAIN UNMERGED**
+> Status: **PR54-P1-1 ACCEPTED; PR54-P1-2 ACCEPTED; FRESH T4 FULL ACCEPTANCE GREEN — PR REMAINS UNMERGED PENDING EXPLICIT USER AUTHORIZATION**
 
-## 1. Current blocker status
+## 1. Runtime blocker closeout
 
-Later review of the accepted GCR checkpoints found two normal runtime paths outside prior coverage. Both runtime defects now have typed behavioral RED/GREEN evidence. PR54-P1-2 production wiring is GREEN at the FAST/T1 checkpoint and has passed remote exact-diff audit. A fresh T4 full-tree acceptance run is still required before current PR merge-readiness can be refreshed.
+Post-acceptance review found two normal runtime paths outside the earlier GCR coverage. Both have now been fixed with typed behavioral RED/GREEN evidence and a fresh full-tree T4 acceptance run.
 
 ```text
 PR54-P1-1  First-night Fortune Teller projection crash                 FIXED / ACCEPTED
-PR54-P1-2  Imp self-kill pending successor reconstruction crash        FIXED / T1 ACCEPTED / T4 PENDING
+PR54-P1-2  Imp self-kill pending successor reconstruction crash        FIXED / ACCEPTED
 ```
 
-Do not merge, rebase, force-push, or broaden into GCR-4/5, A3, App-root S9.2, Host/A4/ZDD promotion, generic misinformation, or unrelated recommendation work.
+There is no remaining known PR54 runtime P1 blocker from this closeout campaign.
+
+Do not merge, rebase, force-push, or broaden into GCR-4/5, A3, App-root S9.2, Host/A4/ZDD promotion, generic misinformation, or unrelated recommendation work without explicit authorization.
 
 ## 2. PR54-P1-1 — First-night Fortune Teller projection crash — ACCEPTED
 
@@ -56,7 +58,7 @@ R2 #916 / run 33221389931 SUCCESS
 
 The projector remains fail-closed. Do not reopen this slice unless new evidence appears.
 
-## 3. PR54-P1-2 — Imp self-kill pending successor Host reconstruction crash — IMPLEMENTATION GREEN
+## 3. PR54-P1-2 — Imp self-kill pending successor Host reconstruction crash — ACCEPTED
 
 ### Confirmed failure lifecycle
 
@@ -124,7 +126,7 @@ CI #1000 / run 33222642480
 - only failure: pending succession retains historical Imp ordering anchor after old Imp is dead
 ```
 
-The ambiguity guard was also tested: multiple live Demons must remain fail-closed and must not fall back to a dead historical Imp.
+The ambiguity guard was also tested: multiple live Demons remain fail-closed and cannot fall back to a dead historical Imp.
 
 Typed seam GREEN checkpoint:
 
@@ -178,24 +180,54 @@ R2 #929 / run 33223959279 SUCCESS
 
 No unrelated UI, successor mutation, rules, reconstructor, or misinformation behavior was changed.
 
-## 4. Current execution order
+## 4. Fresh T4 full acceptance — GREEN
+
+Full acceptance checkpoint:
 
 ```text
-A. PR54-P1-1 behavioral RED/GREEN                         DONE
+8e0f62c059c814ad744514f7213040ad8bc74119
+```
+
+This is a docs-only `[full-ci]` checkpoint directly after production head `8a6f8cea...`; it intentionally forces full validation against the same production tree.
+
+Routing evidence from CI #1003:
+
+```text
+Full checkpoint selected.
+Routing: android=true android_full=true asp=true oracle=true
+```
+
+Final results:
+
+```text
+CI #1003 / run 33224102399 SUCCESS
+- Android full unit tests + debug APK: SUCCESS
+- FAST route: SKIPPED as expected for full checkpoint
+- ASP contract tests: SUCCESS
+- Real Clingo cross-validation: SUCCESS
+- CI gate: SUCCESS
+
+R2 #930 / run 33224102366 SUCCESS
+```
+
+This is the current merge-readiness validation checkpoint for PR #54.
+
+## 5. Current execution status
+
+```text
+A. PR54-P1-1 behavioral RED/GREEN                         DONE / ACCEPTED
 B. PR54-P1-2 typed lifecycle REDs                        DONE
 C. PR54-P1-2 typed seam GREEN                            DONE
 D. Host final wiring + exact diff audit                  DONE
-E. T1 :app:testFast logical checkpoint                   DONE
-F. fresh T4 :app:testFull + :app:assembleDebug           NEXT / REQUIRED
-G. ASP contract + Real Clingo full gate                  NEXT / REQUIRED
-H. if all T4 gates pass, refresh roadmap / merge evidence
+E. T1 :app:testFast logical checkpoint                   DONE / GREEN
+F. T4 :app:testFull + :app:assembleDebug                 DONE / GREEN
+G. ASP contract + Real Clingo full gate                  DONE / GREEN
+H. runtime blocker closeout                              DONE
 ```
 
-This commit intentionally carries `[full-ci]` to request the repository's full acceptance route against the current production tree.
+PR #54 must still remain unmerged until the user explicitly authorizes merge/readiness action.
 
-Do not merge PR #54 without explicit user authorization even if T4 becomes green.
-
-## 5. Historical acceptance context
+## 6. Historical acceptance context
 
 Previously accepted checkpoints remain valid evidence for their covered behavior:
 
@@ -210,4 +242,4 @@ GCR-3 final test-quality acceptance:
 383ad0e695656124f9dc608fd5ce06b72de6b499
 ```
 
-The new T4 requested here supersedes those older checkpoints only as current PR merge-readiness evidence; it does not invalidate their historical coverage.
+The fresh T4 at `8e0f62c0...` supersedes those older checkpoints only as current PR merge-readiness evidence; it does not invalidate their historical coverage.
