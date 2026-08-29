@@ -170,8 +170,18 @@ Validation for `9962010...`:
 - GitHub R2 #953: SUCCESS;
 - full Android / ASP / Real Clingo were correctly skipped under T1 routing.
 
-Because `9962010...` changes central Dawn materialization/history identity wiring after the previous full acceptance checkpoint, a new T4 run is required before PR #55 can be considered fully accepted.
+Final full acceptance checkpoint:
+- `aa0d9cb8526cef2f96894505dee9fd173e8f8bbd`
+- docs-only `[full-ci]` commit over unchanged production tree `996201046e53de4395aaf555f50ae0f04a70b5ba`
 
-This docs-only `[full-ci]` checkpoint is intended to validate the unchanged production tree at `996201046e53de4395aaf555f50ae0f04a70b5ba` with Android full tests/build, ASP contract tests, Real Clingo cross-validation, CI gate, and R2.
+Final T4 results:
+- GitHub CI #1028 / run `33244041684`: SUCCESS;
+- Android `:app:testFull` + `:app:assembleDebug`: SUCCESS;
+- ASP contract tests: SUCCESS;
+- Real Clingo cross-validation: SUCCESS;
+- CI gate: SUCCESS;
+- GitHub R2 #954 / run `33244041658`: SUCCESS.
+
+The ordinary Dawn poison ownership follow-up is fully accepted. The authorized PR #55 hotfix scope has no known blocker remaining.
 
 Do not mark PR ready or merge without explicit user authorization.
