@@ -5,11 +5,22 @@ internal data class TroubleBrewingSetupPresetDataset(
     val datasetId: String,
     val status: String,
     val declaredPoolSizes: Map<Int, Int>,
+    val runtimeSelectionPolicy: TroubleBrewingRuntimeSelectionPolicy,
     val pools: Map<Int, List<TroubleBrewingSetupPreset>>,
 ) {
     val totalPresetCount: Int
         get() = pools.values.sumOf { it.size }
 }
+
+internal data class TroubleBrewingRuntimeSelectionPolicy(
+    val exactRepeat: String,
+    val similarityScope: String,
+    val roleOverlapFormula: String,
+    val lastGameMaxOverlap: Map<Int, Double>,
+    val historyWeights: List<Double>,
+    val extraSoftPenalties: List<String>,
+    val fallback: String,
+)
 
 internal data class TroubleBrewingSetupPreset(
     val id: String,
