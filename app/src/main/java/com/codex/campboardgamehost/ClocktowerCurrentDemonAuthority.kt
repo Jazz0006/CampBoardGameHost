@@ -34,13 +34,19 @@ internal fun resolveNightReconstructionDemonRoleId(
     currentDemonHostContext: CurrentDemonHostContext?,
     confirmedDemonAttackerName: String?,
 ): RoleId? {
-    val authorityCard = currentDemonHostContext?.actor
-        ?: confirmedDemonAttackerName
+    val liveDemonCards = cards.filter { card ->
+        card.eliminatedRound == null && card.clocktowerTeam == ClocktowerTeam.Demon
+    }
+    val authorityCard = when (liveDemonCards.size) {
+        0 -> confirmedDemonAttackerName
             ?.let { attackerName -> cards.singleOrNull { it.name == attackerName } }
             ?.takeIf { attacker ->
                 attacker.eliminatedRound != null &&
                     attacker.clocktowerTeam == ClocktowerTeam.Demon
             }
+        1 -> currentDemonHostContext?.actor
+        else -> null
+    }
     return authorityCard
         ?.clocktowerRole
         ?.enName
@@ -53,7 +59,11 @@ internal fun resolveNightDemonSuccessionForHost(
     currentDemonHostContext: CurrentDemonHostContext?,
     demonRoleId: RoleId?,
 ): DemonSuccessionResolution {
-    if (currentDemonHostContext == null || demonRoleId == null) {
+    demonRoleId ?: return DemonSuccessionResolution.None
+    val liveDemonCount = baseGameState.players.count { player ->
+        player.alive && player.actualRole == demonRoleId
+    }
+    if (liveDemonCount > 1 || (liveDemonCount == 1 && currentDemonHostContext == null)) {
         return DemonSuccessionResolution.None
     }
     return resolveTroubleBrewingImpSelfKillSuccession(
