@@ -130,6 +130,48 @@ T4 results:
 - CI gate: SUCCESS;
 - R2 run `33239767557`: SUCCESS.
 
-The post-audit state-first recovery blocker is closed. No known blocker remains in the authorized PR #55 scope.
+## Ordinary Dawn poison ownership follow-up
+
+A later tests-first audit found that ordinary Night -> Day poison handling still bypassed the typed Dawn durable-materialization ownership path. The obsolete App block used `PoisonEffectLifecycle.afterNight(...)`, compared the desired carry target with mutable mechanical state, and generated a dynamic `poison-after-night` action ID.
+
+Behavioral RED provenance was preserved before production wiring changed. The production repair then moved ordinary Dawn poison through the same typed ownership chain:
+
+`NightDawnPoisonRecoveryAuthority`
+-> `NightDawnResolutionPlanner.planPoisonCarry`
+-> `NightDawnDurableMaterializationPlanner`
+-> `poisonMaterialization.actionIdToCommit`
+-> `ActionFactDraft.Poison`
+
+Latest production checkpoint:
+- `996201046e53de4395aaf555f50ae0f04a70b5ba`
+- commit: `fix: materialize ordinary Dawn poison exactly once`
+- parent: `d2cc25845f6790f6e41d8a7ebb91fb7801cae9c1`
+- exactly two changed files from the parent:
+  - `app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt`
+  - `app/src/test/java/com/codex/campboardgamehost/persistence/ClocktowerHistoricalActionLifecycleProductionWiringTest.kt`
+
+The production repair:
+- recovers the durable previous poison target from current-round ActionFact history;
+- plans ordinary Dawn poison carry using `NightDawnResolutionPlanner.planPoisonCarry`;
+- routes history/state convergence through `NightDawnDurableMaterializationPlanner`;
+- uses only planner-provided `actionIdToCommit` for the Poison action identity;
+- mutates confirmed/draft poison state only when `stateMutationRequired`;
+- removes the ordinary Dawn `poisonCarriedIntoTomorrow` and `poison-after-night` writer path;
+- leaves deferred `poison-expire` paths outside this follow-up unchanged.
+
+The source-wiring characterization test was migrated from the deleted implementation detail to the typed ownership contract. It now requires the recovery/planner/materializer chain and asserts that `poisonCarriedIntoTomorrow` and `poison-after-night` are absent from the Night confirmation block.
+
+Validation for `9962010...`:
+- focused ordinary Dawn poison + convergence suite: SUCCESS locally;
+- local `:app:testFast`: SUCCESS;
+- `git diff --check`: SUCCESS;
+- GitHub CI #1027 Android FAST: SUCCESS;
+- GitHub CI #1027 gate: SUCCESS;
+- GitHub R2 #953: SUCCESS;
+- full Android / ASP / Real Clingo were correctly skipped under T1 routing.
+
+Because `9962010...` changes central Dawn materialization/history identity wiring after the previous full acceptance checkpoint, a new T4 run is required before PR #55 can be considered fully accepted.
+
+This docs-only `[full-ci]` checkpoint is intended to validate the unchanged production tree at `996201046e53de4395aaf555f50ae0f04a70b5ba` with Android full tests/build, ASP contract tests, Real Clingo cross-validation, CI gate, and R2.
 
 Do not mark PR ready or merge without explicit user authorization.
