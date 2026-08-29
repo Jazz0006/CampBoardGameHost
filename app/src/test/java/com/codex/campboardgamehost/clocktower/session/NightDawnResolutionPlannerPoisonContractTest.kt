@@ -31,11 +31,12 @@ class NightDawnResolutionPlannerPoisonContractTest {
             ),
         )
 
+        assertEquals(2, intent?.previousTargetSeat)
         assertEquals(2, intent?.targetSeat)
     }
 
     @Test
-    fun `Poisoner promoted to Imp does not carry old poison into Dawn`() {
+    fun `Poisoner promoted to Imp explicitly clears old poison into Dawn`() {
         val intent = NightDawnResolutionPlanner.planPoisonCarry(
             baseGameState = gameState(),
             checkpoint = checkpoint(),
@@ -52,7 +53,8 @@ class NightDawnResolutionPlannerPoisonContractTest {
             ),
         )
 
-        assertNull(intent)
+        assertEquals(2, intent?.previousTargetSeat)
+        assertNull(intent?.targetSeat)
     }
 
     private fun gameState() = GameState(
