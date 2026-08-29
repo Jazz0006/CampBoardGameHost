@@ -18,6 +18,12 @@ PR #56 merged — next-night / Dusk poison expiry exactly-once materialization
 current branch:
 codex/trouble-brewing-setup-presets-v2
 
+current Draft PR / CI carrier:
+PR #57 — TBSP: integrate Trouble Brewing setup presets
+
+accepted TBSP-1 head:
+9ee6df0787af457266912e24d91576e68be4787f
+
 current campaign:
 TBSP — Trouble Brewing Setup Preset Integration
 
@@ -31,11 +37,12 @@ Current TBSP implementation status at this roadmap checkpoint:
 
 ```text
 TBSP-0 documentation / handoff: COMPLETE
-TBSP-1A parser RED: IMPLEMENTED
-TBSP-1A minimum parser GREEN: IMPLEMENTED
-final dataset Android asset: NOT YET ACCEPTED ON BRANCH
-typed semantic validator: NOT STARTED
-runtime selector / history / App wiring: NOT STARTED
+TBSP-1A final dataset asset + typed parser: COMPLETE
+TBSP-1B semantic validator: COMPLETE
+PR #57 FAST CI at accepted 1B head: GREEN
+TBSP-2 pure history-aware selector: NEXT
+seat assignment / deal materialization: NOT STARTED
+App wiring / persistence / A3 setup snapshot: NOT STARTED
 ```
 
 ## 2. Accepted predecessor correctness baseline
@@ -108,19 +115,25 @@ Drunk presets: 208
 Drunk options per Drunk preset: exactly 3
 ```
 
-The exact final dataset must be packaged as:
+The exact final dataset is packaged as:
 
 ```text
 app/src/main/assets/setup/trouble_brewing_setup_presets_v2_final.json
 ```
 
+Its verified Git blob identity is:
+
+```text
+a935474bec07577eb9e753bad2135a604add63f5
+```
+
 Do not reformat or regenerate the source dataset during integration; preserve its verified byte identity.
 
-## 4. TBSP-1 current checkpoint
+## 4. TBSP-1 accepted checkpoint
 
-### TBSP-1A — parser contract
+### TBSP-1A — final asset and parser — COMPLETE
 
-The parser slice owns only:
+The accepted parser slice owns only:
 
 ```text
 final dataset asset
@@ -129,7 +142,7 @@ TroubleBrewingSetupPresetJson
 focused parser contract test
 ```
 
-Required executable contract:
+Executable contract:
 
 ```text
 schema_version == 2
@@ -140,13 +153,11 @@ pool sizes match the declared final pool sizes
 total presets == 480
 ```
 
-The typed parser intentionally keeps dataset character IDs in their external lowercase representation. It must not silently manufacture canonical runtime `RoleId` values from strings such as `fortuneteller` or `scarletwoman`.
+The typed parser intentionally keeps dataset character IDs in their external lowercase representation. It does not silently manufacture canonical runtime `RoleId` values from strings such as `fortuneteller` or `scarletwoman`.
 
-Runtime role resolution and Trouble Brewing legality belong to TBSP-1B semantic validation.
+### TBSP-1B — semantic validator — COMPLETE
 
-### TBSP-1B — semantic validator — NEXT AFTER 1A ACCEPTANCE
-
-Validate all 480 presets for:
+The validator checks all 480 presets for:
 
 ```text
 unique preset IDs
@@ -155,7 +166,8 @@ total actual roles == player count
 exactly one Demon
 Demon == Imp
 no duplicate actual role
-all IDs resolve to Trouble Brewing characters
+all IDs resolve through the canonical Trouble Brewing character registry
+role category matches canonical registry ownership
 standard composition unless Baron
 Baron applies outsider +2 / townsfolk -2 exactly once
 5–6 curated defaults contain no Baron
@@ -163,7 +175,7 @@ Drunk absent -> empty drunk_as_options
 Drunk present -> exactly three unique absent Townsfolk options
 ```
 
-Optional dataset-level assertions may also preserve the audited aggregate:
+Dataset-level regression assertions preserve:
 
 ```text
 208 Drunk presets
@@ -171,9 +183,20 @@ Optional dataset-level assertions may also preserve the audited aggregate:
 208 unique Drunk-option triples
 ```
 
-### TBSP-1 STOP
+PR #57 CI acceptance at `9ee6df0787af457266912e24d91576e68be4787f`:
 
-Do not implement in TBSP-1:
+```text
+Classify changes: GREEN
+Android :app:testFast: GREEN
+CI gate: GREEN
+ASP contract tests: correctly skipped
+Real Clingo cross-validation: correctly skipped
+R2 main-thread boundary: GREEN
+```
+
+### TBSP-1 STOP — preserved
+
+TBSP-1 did not implement:
 
 ```text
 rotation history
@@ -185,7 +208,45 @@ persistence
 A3 immutable setup snapshot ownership
 ```
 
-## 5. Current production setup authority audit
+## 5. TBSP-2 next checkpoint — pure history-aware selector
+
+TBSP-2 remains pure and must not wire production App setup yet.
+
+The final dataset already carries the hard runtime rotation inputs:
+
+```text
+exact_repeat = reject
+last-game overlap thresholds by player count
+five recent-history weights = 1.00, 0.65, 0.40, 0.20, 0.10
+fallback overlap-threshold relaxation = +0.05 repeatedly
+```
+
+These values should be parsed from `runtime_selection_policy`; do not duplicate them as a second hard-coded policy table in selector code.
+
+Recommended tests-first sequence:
+
+```text
+TBSP-2A typed runtime-selection-policy parsing + player-count isolation/provenance
+TBSP-2B deterministic preset + Drunk option replay independent of input iteration order
+TBSP-2C exact previous real non-Demon composition rejection
+TBSP-2D last-game overlap threshold eligibility/rejection
+TBSP-2G fallback threshold relaxation to first non-empty level
+```
+
+The following weighting behavior remains blocked by the handoff's explicit OPEN product contract and must not be invented silently:
+
+```text
+how five-game history weights become candidate selection weights
+same-minion-set soft penalty strength
+repeated-primary-style trigger and strength
+same-consecutive-Drunk-disguise penalty strength
+additive vs multiplicative combination
+minimum candidate weight / tie-probability details
+```
+
+Therefore TBSP-2 may establish deterministic hard filtering and fallback before that contract is frozen, but must stop before production weighting behavior that depends on unresolved numeric policy.
+
+## 6. Current production setup authority audit
 
 The current production setup path remains centered in `CampBoardGameHostApp.kt`.
 
@@ -197,7 +258,15 @@ generateClocktowerAssignments(playerCount, script)
 
 Current responsibilities include broad random composition generation, runtime Baron modification, role shuffle, and random Drunk shown-role selection.
 
-TBSP must eventually reverse the current ordering so a single game seed exists before every random setup decision:
+Current production ordering is still:
+
+```text
+generateClocktowerAssignments(...)
+-> newClocktowerSeed()
+-> construct PlayerCards
+```
+
+TBSP must eventually reverse that ordering so a single game seed exists before every random setup decision:
 
 ```text
 newClocktowerSeed()
@@ -212,7 +281,7 @@ The final presets already encode Baron setup modification. Production must never
 
 The existing setup recommendation architecture remains separate. `SetupCoordinationRequest.lockedDecisions` is the intended seam for carrying the chosen `StorytellerDecision.DrunkShownRole` later in the campaign.
 
-## 6. Sequence after TBSP
+## 7. Sequence after TBSP
 
 The remaining A3 blocker is immutable setup-snapshot ownership/persistence:
 
@@ -234,7 +303,7 @@ A3 setup snapshot ownership        DEFERRED UNTIL TBSP COMPLETE
 
 A3 should harden the final production setup-origin contract rather than the broad-random generator that TBSP is replacing.
 
-## 7. Deferred work registry
+## 8. Deferred work registry
 
 | Deferred area | Status |
 |---|---|
