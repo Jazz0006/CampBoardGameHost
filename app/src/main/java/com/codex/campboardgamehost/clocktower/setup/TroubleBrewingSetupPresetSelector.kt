@@ -9,6 +9,7 @@ internal data class TroubleBrewingSetupPresetSelection(
     val playerCount: Int,
     val gameSeed: Long,
     val preset: TroubleBrewingSetupPreset,
+    val selectedDrunkShownRole: String?,
 )
 
 internal object TroubleBrewingSetupPresetSelector {
@@ -31,6 +32,12 @@ internal object TroubleBrewingSetupPresetSelector {
         val selected = canonicalPool[
             java.lang.Long.remainderUnsigned(selectionSeed, canonicalPool.size.toLong()).toInt()
         ]
+        val selectedDrunkShownRole = selectDrunkShownRole(
+            datasetId = dataset.datasetId,
+            playerCount = playerCount,
+            gameSeed = gameSeed,
+            preset = selected,
+        )
         return TroubleBrewingSetupPresetSelection(
             datasetId = dataset.datasetId,
             schemaVersion = dataset.schemaVersion,
@@ -38,6 +45,29 @@ internal object TroubleBrewingSetupPresetSelector {
             playerCount = playerCount,
             gameSeed = gameSeed,
             preset = selected,
+            selectedDrunkShownRole = selectedDrunkShownRole,
         )
     }
+
+    private fun selectDrunkShownRole(
+        datasetId: String,
+        playerCount: Int,
+        gameSeed: Long,
+        preset: TroubleBrewingSetupPreset,
+    ): String? {
+        if (DRUNK_EXTERNAL_ID !in preset.outsiders) return null
+
+        val canonicalOptions = preset.drunkAsOptions.sorted()
+        require(canonicalOptions.isNotEmpty()) {
+            "Trouble Brewing Drunk preset '${preset.id}' has no shown-role options."
+        }
+        val drunkSeed = MurmurHash3.low64Utf8(
+            "tb-drunk-v1|$datasetId|$playerCount|${preset.id}|$gameSeed",
+        )
+        return canonicalOptions[
+            java.lang.Long.remainderUnsigned(drunkSeed, canonicalOptions.size.toLong()).toInt()
+        ]
+    }
+
+    private const val DRUNK_EXTERNAL_ID = "drunk"
 }
