@@ -162,6 +162,7 @@ import com.codex.campboardgamehost.clocktower.session.DawnCommitIntent
 import com.codex.campboardgamehost.clocktower.session.DawnDurableMaterializationState
 import com.codex.campboardgamehost.clocktower.session.NightDawnDurableMaterializationPlanner
 import com.codex.campboardgamehost.clocktower.session.NightDawnPoisonResolutionInput
+import com.codex.campboardgamehost.clocktower.session.NightDawnPoisonRecoveryAuthority
 import com.codex.campboardgamehost.clocktower.session.NightDawnDeathResolutionInput
 import com.codex.campboardgamehost.clocktower.session.NightDawnResolutionPlanner
 import com.codex.campboardgamehost.clocktower.session.NightResolutionContinuation
@@ -2985,6 +2986,11 @@ internal fun CampBoardGameHostApp() {
                                                 effectiveNightState = effectiveNightState,
                                             )
                                         },
+                                        durablePreviousPoisonTargetSeat = NightDawnPoisonRecoveryAuthority
+                                            .latestTargetSeatForRound(
+                                                actionTimeline = clocktowerActionTimeline,
+                                                round = round,
+                                            ),
                                     )
                                     val dawnCommitIntent = transition.dawnCommitIntent
                                     if (transition.continuation == NightResolutionContinuation.DAWN && dawnCommitIntent != null) {

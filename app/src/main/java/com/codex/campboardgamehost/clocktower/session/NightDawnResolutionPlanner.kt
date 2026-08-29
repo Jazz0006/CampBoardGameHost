@@ -149,7 +149,11 @@ internal object NightDawnResolutionPlanner {
         checkpoint: ClocktowerNightCheckpoint,
         demonRoleId: RoleId,
         poisonResolutionInput: NightDawnPoisonResolutionInput? = null,
+        durablePreviousPoisonTargetSeat: Int? = null,
     ): NightDawnResolutionTransition {
+        require(durablePreviousPoisonTargetSeat == null || durablePreviousPoisonTargetSeat > 0) {
+            "Durable previous poison target seat must be positive."
+        }
         val pendingName = checkpoint.pendingNewDemonName
         val pendingSeat = pendingName
             ?.let { name -> baseGameState.players.firstOrNull { it.name == name }?.seat }
@@ -170,7 +174,7 @@ internal object NightDawnResolutionPlanner {
         val previousPoisonTargetSeat = confirmedPoisonTargetSeat(
             baseGameState = baseGameState,
             checkpoint = checkpoint,
-        )
+        ) ?: durablePreviousPoisonTargetSeat
         val poisonCarry = if (poisonResolutionInput == null) {
             previousPoisonTargetSeat?.let { previousTargetSeat ->
                 DawnPoisonCarryIntent(
