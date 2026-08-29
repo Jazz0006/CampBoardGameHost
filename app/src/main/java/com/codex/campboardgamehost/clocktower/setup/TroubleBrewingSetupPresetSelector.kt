@@ -17,6 +17,7 @@ internal object TroubleBrewingSetupPresetSelector {
         dataset: TroubleBrewingSetupPresetDataset,
         playerCount: Int,
         gameSeed: Long,
+        recentSetupRotationHistory: TroubleBrewingSetupRotationHistory = TroubleBrewingSetupRotationHistory.EMPTY,
     ): TroubleBrewingSetupPresetSelection {
         val pool = dataset.pools[playerCount]
             ?: throw IllegalArgumentException("No Trouble Brewing setup preset pool for $playerCount players.")
@@ -25,7 +26,19 @@ internal object TroubleBrewingSetupPresetSelector {
             "Trouble Brewing setup preset pool $playerCount contains a mismatched preset player count."
         }
 
-        val canonicalPool = pool.sortedBy { it.id }
+        val previousComposition = recentSetupRotationHistory.recentGames
+            .firstOrNull()
+            ?.realNonDemonRoleIds
+        val eligiblePool = if (dataset.runtimeSelectionPolicy.exactRepeat == EXACT_REPEAT_REJECT && previousComposition != null) {
+            pool.filterNot { candidate -> candidate.nonDemonRoleIds() == previousComposition }
+        } else {
+            pool
+        }
+        require(eligiblePool.isNotEmpty()) {
+            "No Trouble Brewing setup preset remains after exact-repeat filtering for $playerCount players."
+        }
+
+        val canonicalPool = eligiblePool.sortedBy { it.id }
         val selectionSeed = MurmurHash3.low64Utf8(
             "tb-preset-v1|${dataset.datasetId}|$playerCount|$gameSeed",
         )
@@ -49,6 +62,9 @@ internal object TroubleBrewingSetupPresetSelector {
         )
     }
 
+    private fun TroubleBrewingSetupPreset.nonDemonRoleIds(): Set<String> =
+        (townsfolk + outsiders + minions).toSet()
+
     private fun selectDrunkShownRole(
         datasetId: String,
         playerCount: Int,
@@ -69,5 +85,6 @@ internal object TroubleBrewingSetupPresetSelector {
         ]
     }
 
+    private const val EXACT_REPEAT_REJECT = "reject"
     private const val DRUNK_EXTERNAL_ID = "drunk"
 }
