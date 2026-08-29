@@ -3000,6 +3000,8 @@ internal fun CampBoardGameHostApp() {
                                                     card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
                                                 }.toMap(),
                                                 currentPhase = storytellerPhaseFor(),
+                                                currentPoisonTargetSeat =
+                                                    clocktowerConfirmedPoisonTarget?.let(::clocktowerSeatFor),
                                                 committedActionIds = clocktowerActionTimeline.entries
                                                     .map { it.fact.actionId }
                                                     .toSet(),
@@ -3010,6 +3012,7 @@ internal fun CampBoardGameHostApp() {
                                             advanceToDawn = true,
                                         )
                                         val phaseAdvance = durableMaterializationPlan.phaseAdvance
+                                        val poisonMaterialization = durableMaterializationPlan.poison
                                         durableMaterializationPlan.roleChanges.forEach { roleChangeMaterialization ->
                                             val roleChange = roleChangeMaterialization.intent
                                             val targetName = cards.getOrNull(roleChange.targetSeat - 1)?.name
@@ -3048,29 +3051,25 @@ internal fun CampBoardGameHostApp() {
                                                 }
                                             }
                                         }
-                                        val poisonTargetName = dawnCommitIntent.poisonCarry?.targetSeat
-                                            ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
-                                        if (poisonTargetName != clocktowerConfirmedPoisonTarget) {
-                                            val targetSeat = dawnCommitIntent.poisonCarry?.targetSeat
-                                            val localSequence = clocktowerEventCounter + 1
-                                            recordClocktowerAction(ActionFactDraft.Poison(
-                                                actionId = clocktowerActionId(
-                                                    kind = "poison-after-night",
-                                                    localSequence = localSequence,
-                                                    targetSeat = targetSeat,
-                                                ),
-                                                phase = storytellerPhaseFor(),
-                                                round = round,
-                                                sequence = localSequence,
-                                                targetSeat = targetSeat,
-                                            ))
-                                        }
-                                        if (dawnCommitIntent.poisonCarry == null) {
-                                            clocktowerConfirmedPoisonTarget = null
-                                            clocktowerPoisonTarget = null
-                                        } else if (poisonTargetName != null) {
-                                            clocktowerConfirmedPoisonTarget = poisonTargetName
-                                            clocktowerPoisonTarget = poisonTargetName
+                                        poisonMaterialization?.let { materialization ->
+                                            materialization.actionIdToCommit?.let { actionId ->
+                                                val localSequence = clocktowerEventCounter + 1
+                                                recordClocktowerAction(
+                                                    ActionFactDraft.Poison(
+                                                        actionId = actionId,
+                                                        phase = storytellerPhaseFor(),
+                                                        round = round,
+                                                        sequence = localSequence,
+                                                        targetSeat = materialization.intent.targetSeat,
+                                                    ),
+                                                )
+                                            }
+                                            if (materialization.stateMutationRequired) {
+                                                val poisonTargetName = materialization.intent.targetSeat
+                                                    ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
+                                                clocktowerConfirmedPoisonTarget = poisonTargetName
+                                                clocktowerPoisonTarget = poisonTargetName
+                                            }
                                         }
                                         clocktowerPendingNewDemonName = transition.checkpoint.pendingNewDemonName
                                         clocktowerPendingNightNewDemonIdentityName = transition.checkpoint.pendingNightNewDemonIdentityName
