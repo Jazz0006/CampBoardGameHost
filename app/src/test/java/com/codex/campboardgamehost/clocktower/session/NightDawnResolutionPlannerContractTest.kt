@@ -132,7 +132,8 @@ class NightDawnResolutionPlannerContractTest {
         assertEquals(1, intent?.roleChanges?.size)
         assertEquals(2, intent?.roleChanges?.single()?.targetSeat)
         assertEquals(RoleId("Imp"), intent?.roleChanges?.single()?.roleId)
-        assertNull(intent?.poisonCarry)
+        assertEquals(3, intent?.poisonCarry?.previousTargetSeat)
+        assertNull(intent?.poisonCarry?.targetSeat)
         assertTrue(transition.outcomeEvaluationAllowed)
     }
 
