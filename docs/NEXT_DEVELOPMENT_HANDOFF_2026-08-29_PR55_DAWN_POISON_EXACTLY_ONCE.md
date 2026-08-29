@@ -82,7 +82,7 @@ Validation for `d80e7742...`:
 - CI gate SUCCESS
 - R2 #944 SUCCESS
 
-## Full acceptance checkpoint — ACCEPTED
+## Earlier full acceptance checkpoint
 
 Full-ci checkpoint:
 - `b7acdeef9ad399417003b26a2e49357818bcee24`
@@ -96,6 +96,28 @@ T4 results:
 - CI gate: SUCCESS
 - R2 #945: SUCCESS
 
-The Dawn poison exactly-once P1 hotfix is fully validated at T4. No known blocker remains in the authorized PR #55 scope.
+That checkpoint fully validated production tree `d80e7742...`. The post-audit recovery follow-up below supersedes it as the latest production tree.
+
+## Post-audit state-first recovery follow-up
+
+A subsequent audit found that the pure poison materializer retained the correct stable transition identity, but production restore still rebuilt `previousTargetSeat` only from the mutable checkpoint poison target. In a state-first restore, that checkpoint field was already `null`, so the missing `Poison(null)` history fact could not be repaired.
+
+Production checkpoint:
+- `b2da33e2255b58d568296343673b80e153c00376`
+- commit: `fix: recover Dawn poison transition from history`
+
+The repair:
+- derives the current-round previous poison target from the ordered durable action timeline;
+- uses that value only as a fallback when the mutable checkpoint target is already absent;
+- preserves checkpoint authority when history-first restore leaves the mechanical target stale;
+- changes the convergence acceptance test to restore the real production shape: successor role already materialized, checkpoint poison already `null`, and clear history still missing.
+
+Validation for `b2da33e2...`:
+- focused restore/retry acceptance: SUCCESS with `--rerun-tasks`;
+- focused Dawn planner + Host integration group: SUCCESS with `--rerun-tasks`;
+- local `:app:testFast`: SUCCESS with `--rerun-tasks`;
+- GitHub Android FAST, CI gate and R2: SUCCESS (runs `33239658233` and `33239658238`).
+
+The next `[full-ci]` checkpoint must validate this latest production tree before PR #55 acceptance.
 
 Do not mark PR ready or merge without explicit user authorization.
