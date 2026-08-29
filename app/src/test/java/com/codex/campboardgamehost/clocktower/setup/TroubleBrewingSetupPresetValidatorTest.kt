@@ -214,7 +214,18 @@ class TroubleBrewingSetupPresetValidatorTest {
         datasetId = "test-dataset",
         status = "test",
         declaredPoolSizes = mapOf(playerCount to presets.size),
+        runtimeSelectionPolicy = testPolicy(playerCount),
         pools = mapOf(playerCount to presets.toList()),
+    )
+
+    private fun testPolicy(playerCount: Int) = TroubleBrewingRuntimeSelectionPolicy(
+        exactRepeat = "reject",
+        similarityScope = "test",
+        roleOverlapFormula = "test",
+        lastGameMaxOverlap = mapOf(playerCount to 1.0),
+        historyWeights = listOf(1.0),
+        extraSoftPenalties = emptyList(),
+        fallback = "test",
     )
 
     private fun standardSevenPlayerPreset(id: String = "standard-seven"): TroubleBrewingSetupPreset =
