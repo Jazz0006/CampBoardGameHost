@@ -3,9 +3,7 @@ package com.codex.campboardgamehost
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
 import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
-import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionContext
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
-import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionSemantics
 import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
 
 import android.content.Context
@@ -708,43 +706,22 @@ internal fun ClocktowerJudgeScreen(
     )
     val demonCard = currentDemonHostContext?.actor
     val demonPoisonedForActionExplanation = currentDemonHostContext?.isPoisoned == true
-    val livingImp = demonCard?.takeIf {
-        it.clocktowerRole?.enName == "Imp"
-    }
-    val impSelfKillActuallyKilledImp =
-        livingImp != null &&
-            pendingNightDeath == livingImp.name &&
-            nightDeathWillOccur &&
-            resolvedNightDeathCard?.name == livingImp.name
-    val functioningScarletWoman = actualClocktowerRoleCards(cards, "Scarlet Woman")
-        .firstOrNull {
-            AbilityFunctioningSemantics.functionsAs(
-                it.abilitySubject(poisonTarget),
-                "Scarlet Woman",
-            )
-        }
-    val livingMinionSeats = publicAliveCards
-        .mapNotNull { card ->
-            card.takeIf {
-                it.clocktowerTeam == ClocktowerTeam.Minion
-            }?.let {
-                cards.indexOf(card).plus(1)
-                    .takeIf { seat -> seat > 0 }
-            }
-        }
-        .toSet()
-
-    val demonSuccessionResolution = DemonSuccessionSemantics.resolve(
-        DemonSuccessionContext(
-            demonActuallyDied = impSelfKillActuallyKilledImp,
-            demonDeathWasImpSelfKill = impSelfKillActuallyKilledImp,
-            aliveCountBeforeDemonDeath = publicAliveCards.size,
-            functioningScarletWomanSeat = functioningScarletWoman
-                ?.let { cards.indexOf(it).plus(1) }
-                ?.takeIf { it > 0 },
-            livingMinionSeats = livingMinionSeats,
-        ),
+    val nightBaseGameState = cards.toClocktowerGameState(script, gameSeed, poisonTarget)
+    val demonSuccessorRoleId = resolveNightReconstructionDemonRoleId(
+        cards = cards,
+        currentDemonHostContext = currentDemonHostContext,
+        confirmedDemonAttackerName = nightCheckpoint.confirmedAttackTarget,
     )
+    val demonSuccessionResolution = if (phase == ClocktowerPhase.Night) {
+        resolveNightDemonSuccessionForHost(
+            baseGameState = nightBaseGameState,
+            checkpoint = nightCheckpoint,
+            currentDemonHostContext = currentDemonHostContext,
+            demonRoleId = demonSuccessorRoleId,
+        )
+    } else {
+        DemonSuccessionResolution.None
+    }
     val demonSuccessorTargetSeats = when (val resolution = demonSuccessionResolution) {
         DemonSuccessionResolution.None -> emptySet()
         is DemonSuccessionResolution.Forced -> setOf(resolution.targetSeat)
@@ -757,14 +734,10 @@ internal fun ClocktowerJudgeScreen(
         demonSuccessorTargetSeats.isNotEmpty()
     val sageNightDeath = resolvedNightDeathCard
         ?.takeIf { nightDeathWillOccur && AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Sage") }
-    val otherNightWakingRoleIds = buildSet {
-        publicAliveCards.forEach { card ->
-            card.clocktowerRole?.enName?.let { add(RoleId(it)) }
-            if (card.clocktowerRole?.enName == "Drunk") {
-                card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
-            }
-        }
-    }
+    val otherNightWakingRoleIds = clocktowerOtherNightWakingRoleIds(
+        cards = cards,
+        pendingSuccessionDemonRoleId = demonSuccessorRoleId.takeIf { impSelfKillNeedsSuccessor },
+    )
     val otherNightResolvedFacts = ClocktowerResolvedFlowFacts(
         buildSet {
             if (pendingNightNewDemonIdentityName != null) add(ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON)
@@ -789,12 +762,11 @@ internal fun ClocktowerJudgeScreen(
     val baseRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
         card.clocktowerRole?.enName?.let { roleName -> index + 1 to RoleId(roleName) }
     }.toMap()
-    val demonSuccessorRoleId = demonCard?.clocktowerRole?.enName?.let(::RoleId)
     val demonSuccessorInteractionId = ClocktowerProductionNightStepIdentity.demonSuccessor()
         .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
     val canonicalNightReconstruction = if (phase == ClocktowerPhase.Night) {
         NightTransactionReconstructor.reconstruct(
-            baseGameState = cards.toClocktowerGameState(script, gameSeed, poisonTarget),
+            baseGameState = nightBaseGameState,
             checkpoint = nightCheckpoint,
             canonicalInteractionIds = otherNightCanonicalInteractionIds,
             demonSuccessorInteractionId = demonSuccessorInteractionId,
@@ -812,8 +784,9 @@ internal fun ClocktowerJudgeScreen(
             val effectiveInteractionId = if (mayorCanRedirect) {
                 ClocktowerProductionNightStepIdentity.mayorRedirect().interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
             } else {
-                val demonRoleId = demonCard?.clocktowerRole?.enName?.let(::RoleId)
-                requireNotNull(demonRoleId) { "Resolved night death requires a canonical Demon interaction." }
+                val demonRoleId = requireNotNull(demonSuccessorRoleId) {
+                    "Resolved night death requires a canonical Demon interaction."
+                }
                 ClocktowerProductionNightStepIdentity.role(demonRoleId).interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
             }
             add(ResolvedNightMechanicalEvent.MechanicalDeath(
