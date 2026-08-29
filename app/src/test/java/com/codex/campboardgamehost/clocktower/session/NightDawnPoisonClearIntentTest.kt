@@ -12,7 +12,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/** P1 hotfix RED: Dawn must retain an explicit poison-clear materialization intent. */
+/** P1 hotfix: Dawn must retain an explicit poison-clear materialization intent. */
 class NightDawnPoisonClearIntentTest {
     @Test
     fun `Poisoner becoming Imp keeps an explicit Dawn poison clear intent`() {
@@ -35,8 +35,9 @@ class NightDawnPoisonClearIntentTest {
 
         val intent = requireNotNull(transition.dawnCommitIntent)
         assertEquals(2, intent.roleChanges.single().targetSeat)
-        assertNotNull(intent.poisonCarry)
-        assertNull(intent.poisonCarry?.targetSeat)
+        val poison = assertNotNull(intent.poisonCarry).let { requireNotNull(intent.poisonCarry) }
+        assertEquals(3, poison.previousTargetSeat)
+        assertNull(poison.targetSeat)
     }
 
     private fun gameState() = GameState(
