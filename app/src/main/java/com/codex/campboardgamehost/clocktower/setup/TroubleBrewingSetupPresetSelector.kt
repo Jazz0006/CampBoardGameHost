@@ -41,18 +41,20 @@ internal object TroubleBrewingSetupPresetSelector {
         }
 
         val overlapEligible = if (previousComposition != null) {
-            val maxOverlap = dataset.runtimeSelectionPolicy.lastGameMaxOverlap[playerCount]
+            val initialMaxOverlap = dataset.runtimeSelectionPolicy.lastGameMaxOverlap[playerCount]
                 ?: throw IllegalArgumentException(
                     "No Trouble Brewing last-game overlap threshold for $playerCount players.",
                 )
-            exactRepeatEligible.filter { candidate ->
-                candidate.overlapWith(previousComposition) <= maxOverlap
-            }
+            firstNonEmptyOverlapLevel(
+                candidates = exactRepeatEligible,
+                previousComposition = previousComposition,
+                initialMaxOverlap = initialMaxOverlap,
+            )
         } else {
             exactRepeatEligible
         }
         require(overlapEligible.isNotEmpty()) {
-            "No Trouble Brewing setup preset remains after last-game overlap filtering for $playerCount players."
+            "No Trouble Brewing setup preset remains after last-game overlap fallback for $playerCount players."
         }
 
         val canonicalPool = overlapEligible.sortedBy { it.id }
@@ -88,6 +90,26 @@ internal object TroubleBrewingSetupPresetSelector {
             preset = selected.preset,
             selectedDrunkShownRole = selected.selectedDrunkShownRole,
         )
+    }
+
+    private fun firstNonEmptyOverlapLevel(
+        candidates: List<TroubleBrewingSetupPreset>,
+        previousComposition: Set<String>,
+        initialMaxOverlap: Double,
+    ): List<TroubleBrewingSetupPreset> {
+        require(initialMaxOverlap in 0.0..1.0) {
+            "Trouble Brewing last-game overlap threshold must be between 0.0 and 1.0."
+        }
+
+        var maxOverlap = initialMaxOverlap
+        while (true) {
+            val eligible = candidates.filter { candidate ->
+                candidate.overlapWith(previousComposition) <= maxOverlap
+            }
+            if (eligible.isNotEmpty()) return eligible
+            if (maxOverlap >= MAX_OVERLAP) return emptyList()
+            maxOverlap = minOf(MAX_OVERLAP, maxOverlap + OVERLAP_FALLBACK_STEP)
+        }
     }
 
     private fun selectWeighted(
@@ -148,4 +170,6 @@ internal object TroubleBrewingSetupPresetSelector {
     private const val EXACT_REPEAT_REJECT = "reject"
     private const val DRUNK_EXTERNAL_ID = "drunk"
     private const val WEIGHT_SCALE = 1_000_000.0
+    private const val OVERLAP_FALLBACK_STEP = 0.05
+    private const val MAX_OVERLAP = 1.0
 }
