@@ -21,7 +21,6 @@ import com.codex.campboardgamehost.clocktower.rules.DemonNightAttackOutcome
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** SNE-7.9E acceptance: restore/retry must converge to the uninterrupted Dawn durable state. */
@@ -35,60 +34,23 @@ class NightDawnRestoreRetryConvergenceAcceptanceTest {
 
     @Test
     fun `partial mechanical Dawn restored without durable facts converges exactly to uninterrupted materialization`() {
-        val canonicalIntent = DawnCommitIntent(
-            roleChanges = listOf(DawnRoleChangeIntent(targetSeat = 2, roleId = imp)),
-            death = DawnDeathIntent(targetSeat = 1),
-        )
+        val canonicalIntent = canonicalIntent()
         val uninterrupted = materialize(
             start = emptyMaterialization(choiceGameState(impAlive = true)),
             intent = canonicalIntent,
         )
 
         val partiallyMaterializedGame = choiceGameState(impAlive = false)
-        val persistedCheckpoint = checkpoint().persistedValues()
-        val restored = NightTransactionRestoreComposition.restore(
-            persistedCheckpointValues = persistedCheckpoint,
-            baseGameState = partiallyMaterializedGame,
-            canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
-            demonSuccessorInteractionId = successorInteraction,
-            demonRoleId = imp,
-        )
-
-        assertFalse(restored.reconstruction.effectiveState.isMechanicallyAlive(1))
-        assertEquals(imp, restored.reconstruction.effectiveState.currentRoleId(2))
-        assertEquals(poisoner, partiallyMaterializedGame.playerAt(2)?.actualRole)
-
-        val deathTransition = NightDawnResolutionPlanner.planValidatedNightDeath(
-            baseGameState = partiallyMaterializedGame,
-            checkpoint = restored.checkpoint,
-            input = NightDawnDeathResolutionInput(
-                originalDeathSeat = 1,
-                mayorSeat = null,
-                mayorRedirectMayApply = false,
-                attackOutcome = DemonNightAttackOutcome.IMP_SELF_KILL_SUCCESSOR_REQUIRED,
-                effectiveNightState = restored.reconstruction.effectiveState,
-                demonRoleIds = setOf(imp),
-            ),
-        )
-        val successionTransition = NightDawnResolutionPlanner.planDemonSuccession(
-            baseGameState = partiallyMaterializedGame,
-            checkpoint = restored.checkpoint,
-            successionResolution = DemonSuccessionResolution.Choice(targetSeats = setOf(2)),
-            demonRoleId = imp,
-        )
-        val identityTransition = NightDawnResolutionPlanner.confirmNewDemonIdentity(
-            baseGameState = partiallyMaterializedGame,
-            checkpoint = successionTransition.checkpoint,
-            demonRoleId = imp,
-        )
-        val restoredIntent = DawnCommitIntent(
-            roleChanges = requireNotNull(identityTransition.dawnCommitIntent).roleChanges,
-            death = requireNotNull(deathTransition.dawnCommitIntent).death,
-        )
+        val restoredIntent = restoredIntent(partiallyMaterializedGame)
         assertEquals(canonicalIntent, restoredIntent)
 
+        val stateFirstStart = emptyMaterialization(partiallyMaterializedGame).let { start ->
+            start.copy(
+                state = start.state.copy(currentPoisonTargetSeat = null),
+            )
+        }
         val retried = materialize(
-            start = emptyMaterialization(partiallyMaterializedGame),
+            start = stateFirstStart,
             intent = restoredIntent,
         )
 
@@ -99,12 +61,88 @@ class NightDawnRestoreRetryConvergenceAcceptanceTest {
         assertEquals(retried, replay)
     }
 
+    @Test
+    fun `durable poison clear history with stale mechanical poison converges to uninterrupted materialization`() {
+        val intent = canonicalIntent()
+        val uninterrupted = materialize(
+            start = emptyMaterialization(choiceGameState(impAlive = true)),
+            intent = intent,
+        )
+        val historyFirstStart = uninterrupted.copy(
+            state = uninterrupted.state.copy(currentPoisonTargetSeat = EMPATH_SEAT),
+        )
+
+        val retried = materialize(historyFirstStart, intent)
+
+        assertEquals(uninterrupted, retried)
+        assertExactlyOnce(retried)
+    }
+
+    private fun canonicalIntent() = DawnCommitIntent(
+        roleChanges = listOf(DawnRoleChangeIntent(targetSeat = POISONER_SEAT, roleId = imp)),
+        death = DawnDeathIntent(targetSeat = IMP_SEAT),
+        poisonCarry = DawnPoisonCarryIntent(
+            targetSeat = null,
+            previousTargetSeat = EMPATH_SEAT,
+        ),
+    )
+
+    private fun restoredIntent(partiallyMaterializedGame: GameState): DawnCommitIntent {
+        val restored = NightTransactionRestoreComposition.restore(
+            persistedCheckpointValues = checkpoint().persistedValues(),
+            baseGameState = partiallyMaterializedGame,
+            canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
+            demonSuccessorInteractionId = successorInteraction,
+            demonRoleId = imp,
+        )
+
+        assertFalse(restored.reconstruction.effectiveState.isMechanicallyAlive(IMP_SEAT))
+        assertEquals(imp, restored.reconstruction.effectiveState.currentRoleId(POISONER_SEAT))
+        assertEquals(poisoner, partiallyMaterializedGame.playerAt(POISONER_SEAT)?.actualRole)
+
+        val deathTransition = NightDawnResolutionPlanner.planValidatedNightDeath(
+            baseGameState = partiallyMaterializedGame,
+            checkpoint = restored.checkpoint,
+            input = NightDawnDeathResolutionInput(
+                originalDeathSeat = IMP_SEAT,
+                mayorSeat = null,
+                mayorRedirectMayApply = false,
+                attackOutcome = DemonNightAttackOutcome.IMP_SELF_KILL_SUCCESSOR_REQUIRED,
+                effectiveNightState = restored.reconstruction.effectiveState,
+                demonRoleIds = setOf(imp),
+            ),
+        )
+        val successionTransition = NightDawnResolutionPlanner.planDemonSuccession(
+            baseGameState = partiallyMaterializedGame,
+            checkpoint = restored.checkpoint,
+            successionResolution = DemonSuccessionResolution.Choice(targetSeats = setOf(POISONER_SEAT)),
+            demonRoleId = imp,
+        )
+        val identityTransition = NightDawnResolutionPlanner.confirmNewDemonIdentity(
+            baseGameState = partiallyMaterializedGame,
+            checkpoint = successionTransition.checkpoint,
+            demonRoleId = imp,
+            poisonResolutionInput = NightDawnPoisonResolutionInput(
+                poisonerSeat = POISONER_SEAT,
+                poisonerRoleId = poisoner,
+                effectiveNightState = restored.reconstruction.effectiveState,
+            ),
+        )
+        val identityIntent = requireNotNull(identityTransition.dawnCommitIntent)
+        return DawnCommitIntent(
+            roleChanges = identityIntent.roleChanges,
+            death = requireNotNull(deathTransition.dawnCommitIntent).death,
+            poisonCarry = identityIntent.poisonCarry,
+        )
+    }
+
     private fun materialize(
         start: MaterializedDawn,
         intent: DawnCommitIntent,
     ): MaterializedDawn {
         var aliveSeats = start.state.aliveSeats
         val roleIdsBySeat = start.state.roleIdsBySeat.toMutableMap()
+        var currentPoisonTargetSeat = start.state.currentPoisonTargetSeat
         var currentPhase = start.state.currentPhase
         var actionTimeline = start.actionTimeline
         var observationLog = start.observationLog
@@ -197,6 +235,21 @@ class NightDawnRestoreRetryConvergenceAcceptanceTest {
             }
         }
 
+        plan.poison?.let { poison ->
+            poison.actionIdToCommit?.let { actionId ->
+                commitAction(ActionFactDraft.Poison(
+                    actionId = actionId,
+                    phase = StorytellerPhase.NIGHT,
+                    round = ROUND,
+                    sequence = POISON_SEQUENCE,
+                    targetSeat = poison.intent.targetSeat,
+                ))
+            }
+            if (poison.stateMutationRequired) {
+                currentPoisonTargetSeat = poison.intent.targetSeat
+            }
+        }
+
         plan.phaseAdvance?.let { phaseAdvance ->
             phaseAdvance.actionIdToCommit?.let { actionId ->
                 commitAction(ActionFactDraft.PhaseAdvance(
@@ -220,6 +273,7 @@ class NightDawnRestoreRetryConvergenceAcceptanceTest {
                 currentPhase = currentPhase,
                 committedActionIds = actionTimeline.entries.mapTo(linkedSetOf()) { it.fact.actionId },
                 committedObservationRecordIds = observationLog.records.mapTo(linkedSetOf()) { it.recordId },
+                currentPoisonTargetSeat = currentPoisonTargetSeat,
             ),
             actionTimeline = actionTimeline,
             observationLog = observationLog,
@@ -230,44 +284,64 @@ class NightDawnRestoreRetryConvergenceAcceptanceTest {
 
     private fun assertExactlyOnce(materialized: MaterializedDawn) {
         val facts = materialized.actionTimeline.reducerFacts()
-        assertEquals(3, facts.size)
-        assertEquals(3, facts.map { it.actionId }.distinct().size)
+        assertEquals(5, facts.size)
+        assertEquals(5, facts.map { it.actionId }.distinct().size)
         assertEquals(1, facts.count { it is ActionFact.Death })
         assertEquals(1, facts.count { it is ActionFact.RoleChange })
+        assertEquals(2, facts.count { it is ActionFact.Poison })
+        assertEquals(1, facts.count { it.actionId == DAWN_POISON_CLEAR_ACTION_ID })
         assertEquals(1, facts.count { it is ActionFact.PhaseAdvance })
 
         assertEquals(1, materialized.observationLog.records.size)
         assertEquals(
-            InformationProposition.AliveAt(seat = 1, alive = false),
+            InformationProposition.AliveAt(seat = IMP_SEAT, alive = false),
             materialized.observationLog.records.single().proposition,
         )
-        assertEquals(4L, materialized.nextTimelineGlobalSequence)
+        assertEquals(6L, materialized.nextTimelineGlobalSequence)
         assertEquals(1L, materialized.playerInputRevision)
-        assertEquals(setOf(2, 3), materialized.state.aliveSeats)
-        assertEquals(imp, materialized.state.roleIdsBySeat[2])
+        assertEquals(setOf(POISONER_SEAT, EMPATH_SEAT), materialized.state.aliveSeats)
+        assertEquals(imp, materialized.state.roleIdsBySeat[POISONER_SEAT])
+        assertEquals(null, materialized.state.currentPoisonTargetSeat)
         assertEquals(StorytellerPhase.DAWN, materialized.state.currentPhase)
     }
 
-    private fun emptyMaterialization(gameState: GameState) = MaterializedDawn(
-        state = DawnDurableMaterializationState(
-            aliveSeats = gameState.players.filter { it.alive }.mapTo(linkedSetOf()) { it.seat },
-            roleIdsBySeat = gameState.players.associate { it.seat to it.actualRole },
-            currentPhase = StorytellerPhase.NIGHT,
-            committedActionIds = emptySet(),
-            committedObservationRecordIds = emptySet(),
-        ),
-        actionTimeline = ActionFactTimeline(),
-        observationLog = EpistemicObservationLog(),
-        nextTimelineGlobalSequence = 0L,
-        playerInputRevision = 0L,
-    )
+    private fun emptyMaterialization(gameState: GameState): MaterializedDawn {
+        val initialAction = ClocktowerGameSession.commitGlobalActionFact(
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+            actionTimeline = ActionFactTimeline(),
+            observationLog = EpistemicObservationLog(),
+            nextTimelineGlobalSequence = 0L,
+            draft = ActionFactDraft.Poison(
+                actionId = INITIAL_POISON_ACTION_ID,
+                phase = StorytellerPhase.NIGHT,
+                round = ROUND,
+                sequence = INITIAL_POISON_SEQUENCE,
+                targetSeat = EMPATH_SEAT,
+            ),
+        )
+        return MaterializedDawn(
+            state = DawnDurableMaterializationState(
+                aliveSeats = gameState.players.filter { it.alive }.mapTo(linkedSetOf()) { it.seat },
+                roleIdsBySeat = gameState.players.associate { it.seat to it.actualRole },
+                currentPhase = StorytellerPhase.NIGHT,
+                committedActionIds = initialAction.actionTimeline.entries
+                    .mapTo(linkedSetOf()) { it.fact.actionId },
+                committedObservationRecordIds = emptySet(),
+                currentPoisonTargetSeat = EMPATH_SEAT,
+            ),
+            actionTimeline = initialAction.actionTimeline,
+            observationLog = EpistemicObservationLog(),
+            nextTimelineGlobalSequence = initialAction.nextTimelineGlobalSequence,
+            playerInputRevision = 0L,
+        )
+    }
 
     private fun choiceGameState(impAlive: Boolean) = GameState(
         script = ScriptId("Trouble Brewing"),
         players = listOf(
-            player(1, "Imp", imp, CharacterType.DEMON, Alignment.EVIL, alive = impAlive),
-            player(2, "Poisoner", poisoner, CharacterType.MINION, Alignment.EVIL),
-            player(3, "Empath", empath, CharacterType.TOWNSFOLK, Alignment.GOOD),
+            player(IMP_SEAT, "Imp", imp, CharacterType.DEMON, Alignment.EVIL, alive = impAlive),
+            player(POISONER_SEAT, "Poisoner", poisoner, CharacterType.MINION, Alignment.EVIL),
+            player(EMPATH_SEAT, "Empath", empath, CharacterType.TOWNSFOLK, Alignment.GOOD),
         ),
         seed = 17L,
     )
@@ -297,8 +371,8 @@ class NightDawnRestoreRetryConvergenceAcceptanceTest {
         nightStepIndex = 2,
         confirmedAttackTarget = "Imp",
         attackDraftTarget = "Imp",
-        confirmedPoisonTarget = null,
-        poisonDraftTarget = null,
+        confirmedPoisonTarget = "Empath",
+        poisonDraftTarget = "Empath",
         confirmedMonkTarget = null,
         monkDraftTarget = null,
         confirmedMayorRedirectTarget = null,
@@ -321,8 +395,15 @@ class NightDawnRestoreRetryConvergenceAcceptanceTest {
     private companion object {
         const val GAME_ID = "game-17"
         const val ROUND = 3
+        const val IMP_SEAT = 1
+        const val POISONER_SEAT = 2
+        const val EMPATH_SEAT = 3
+        const val INITIAL_POISON_SEQUENCE = 9
         const val DEATH_SEQUENCE = 10
         const val ROLE_SEQUENCE = 11
-        const val PHASE_SEQUENCE = 12
+        const val POISON_SEQUENCE = 12
+        const val PHASE_SEQUENCE = 13
+        const val INITIAL_POISON_ACTION_ID = "night-poison-seat-3"
+        const val DAWN_POISON_CLEAR_ACTION_ID = "dawn-game-17-3-poison-seat-3-to-none"
     }
 }
