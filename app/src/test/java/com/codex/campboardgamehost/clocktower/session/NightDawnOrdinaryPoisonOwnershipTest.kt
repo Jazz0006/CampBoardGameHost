@@ -27,17 +27,7 @@ class NightDawnOrdinaryPoisonOwnershipTest {
             NightDawnResolutionPlanner.planPoisonCarry(
                 baseGameState = gameState(),
                 checkpoint = checkpoint(),
-                input = NightDawnPoisonResolutionInput(
-                    poisonerSeat = POISONER_SEAT,
-                    poisonerRoleId = RoleId("Poisoner"),
-                    effectiveNightState = ClocktowerEffectiveNightState(
-                        effectiveAliveSeats = setOf(EMPATH_SEAT),
-                        effectiveRoleIdsBySeat = mapOf(
-                            POISONER_SEAT to RoleId("Poisoner"),
-                            EMPATH_SEAT to RoleId("Empath"),
-                        ),
-                    ),
-                ),
+                input = deadPoisonerInput(),
             ),
         )
         assertEquals(EMPATH_SEAT, poisonIntent.previousTargetSeat)
@@ -82,6 +72,37 @@ class NightDawnOrdinaryPoisonOwnershipTest {
     }
 
     @Test
+    fun `state-first restore rebuilds ordinary clear from durable previous poison target`() {
+        val restoredCheckpoint = checkpoint().copy(
+            confirmedPoisonTarget = null,
+            poisonDraftTarget = null,
+        )
+
+        val poisonIntent = requireNotNull(
+            NightDawnResolutionPlanner.planPoisonCarry(
+                baseGameState = gameState(),
+                checkpoint = restoredCheckpoint,
+                input = deadPoisonerInput(),
+                durablePreviousPoisonTargetSeat = EMPATH_SEAT,
+            ),
+        )
+
+        assertEquals(EMPATH_SEAT, poisonIntent.previousTargetSeat)
+        assertNull(poisonIntent.targetSeat)
+
+        val retry = NightDawnDurableMaterializationPlanner.plan(
+            gameId = GAME_ID,
+            round = ROUND,
+            intent = DawnCommitIntent(poisonCarry = poisonIntent),
+            state = materializationState(currentPoisonTargetSeat = null),
+            advanceToDawn = false,
+        )
+        val retryPoison = requireNotNull(retry.poison)
+        assertFalse(retryPoison.stateMutationRequired)
+        assertEquals(CLEAR_ACTION_ID, retryPoison.actionIdToCommit)
+    }
+
+    @Test
     fun `app root no longer owns legacy poison-after-night history identity`() {
         val appSource = File(
             "src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt",
@@ -93,6 +114,18 @@ class NightDawnOrdinaryPoisonOwnershipTest {
             appSource.contains("poison-after-night"),
         )
     }
+
+    private fun deadPoisonerInput() = NightDawnPoisonResolutionInput(
+        poisonerSeat = POISONER_SEAT,
+        poisonerRoleId = RoleId("Poisoner"),
+        effectiveNightState = ClocktowerEffectiveNightState(
+            effectiveAliveSeats = setOf(EMPATH_SEAT),
+            effectiveRoleIdsBySeat = mapOf(
+                POISONER_SEAT to RoleId("Poisoner"),
+                EMPATH_SEAT to RoleId("Empath"),
+            ),
+        ),
+    )
 
     private fun materializationState(
         currentPoisonTargetSeat: Int?,
