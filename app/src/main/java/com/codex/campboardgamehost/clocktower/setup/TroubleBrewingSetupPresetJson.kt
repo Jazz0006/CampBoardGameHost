@@ -11,6 +11,7 @@ internal object TroubleBrewingSetupPresetJson {
             datasetId = root.requiredString("dataset_id"),
             status = root.requiredString("status"),
             declaredPoolSizes = parsePoolSizes(root.requiredObject("pool_sizes")),
+            runtimeSelectionPolicy = parseRuntimeSelectionPolicy(root.requiredObject("runtime_selection_policy")),
             pools = parsePools(root.requiredObject("pools")),
         )
     } catch (error: IllegalArgumentException) {
@@ -22,6 +23,22 @@ internal object TroubleBrewingSetupPresetJson {
     private fun parsePoolSizes(json: JSONObject): Map<Int, Int> =
         json.keys().asSequence().associate { rawPlayerCount ->
             rawPlayerCount.requiredPlayerCountKey() to json.requiredInt(rawPlayerCount)
+        }
+
+    private fun parseRuntimeSelectionPolicy(json: JSONObject): TroubleBrewingRuntimeSelectionPolicy =
+        TroubleBrewingRuntimeSelectionPolicy(
+            exactRepeat = json.requiredString("exact_repeat"),
+            similarityScope = json.requiredString("similarity_scope"),
+            roleOverlapFormula = json.requiredString("role_overlap_formula"),
+            lastGameMaxOverlap = parsePlayerCountDoubles(json.requiredObject("last_game_max_overlap")),
+            historyWeights = json.requiredDoubleList("history_weights"),
+            extraSoftPenalties = json.requiredStringList("extra_soft_penalties"),
+            fallback = json.requiredString("fallback"),
+        )
+
+    private fun parsePlayerCountDoubles(json: JSONObject): Map<Int, Double> =
+        json.keys().asSequence().associate { rawPlayerCount ->
+            rawPlayerCount.requiredPlayerCountKey() to json.requiredDouble(rawPlayerCount)
         }
 
     private fun parsePools(json: JSONObject): Map<Int, List<TroubleBrewingSetupPreset>> =
@@ -60,6 +77,12 @@ internal object TroubleBrewingSetupPresetJson {
             ?: throw IllegalArgumentException("Field '$key' must be an integer.")
     }
 
+    private fun JSONObject.requiredDouble(key: String): Double {
+        val value = get(key)
+        require(value is Number) { "Field '$key' must be a number." }
+        return value.toDouble()
+    }
+
     private fun JSONObject.requiredObject(key: String): JSONObject {
         val value = get(key)
         require(value is JSONObject) { "Field '$key' must be an object." }
@@ -76,6 +99,12 @@ internal object TroubleBrewingSetupPresetJson {
         requiredArray(key).mapValues { index, value ->
             require(value is String) { "Field '$key' item $index must be a string." }
             value
+        }
+
+    private fun JSONObject.requiredDoubleList(key: String): List<Double> =
+        requiredArray(key).mapValues { index, value ->
+            require(value is Number) { "Field '$key' item $index must be a number." }
+            value.toDouble()
         }
 
     private fun <T> JSONArray.mapObjects(transform: (JSONObject) -> T): List<T> =
