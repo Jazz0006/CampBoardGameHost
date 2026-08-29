@@ -82,16 +82,20 @@ Validation for `d80e7742...`:
 - CI gate SUCCESS
 - R2 #944 SUCCESS
 
-## Full acceptance checkpoint
+## Full acceptance checkpoint — ACCEPTED
 
-This docs-only commit is intentionally prefixed with `[full-ci]` to force the complete T4 acceptance suite over the unchanged production tree whose last production commit is `d80e7742edfcfea78a1b3e05d1cbe732c799c4f5`.
+Full-ci checkpoint:
+- `b7acdeef9ad399417003b26a2e49357818bcee24`
+- docs-only `[full-ci]` commit over unchanged production tree `d80e7742edfcfea78a1b3e05d1cbe732c799c4f5`
 
-Required before merge authorization:
-- Android `:app:testFull`
-- Android `:app:assembleDebug`
-- ASP contract tests
-- Real Clingo cross-validation
-- CI gate
-- R2 main-thread boundary
+T4 results:
+- CI #1019 SUCCESS
+- Android `:app:testFull` + `:app:assembleDebug`: SUCCESS
+- ASP contract tests: SUCCESS
+- Real Clingo cross-validation: SUCCESS
+- CI gate: SUCCESS
+- R2 #945: SUCCESS
+
+The Dawn poison exactly-once P1 hotfix is fully validated at T4. No known blocker remains in the authorized PR #55 scope.
 
 Do not mark PR ready or merge without explicit user authorization.
