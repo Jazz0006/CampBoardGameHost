@@ -84,6 +84,29 @@ class ClocktowerCurrentDemonAuthorityTest {
     }
 
     @Test
+    fun `historical fallback does not mask ambiguous live Demon authority`() {
+        val cards = listOf(
+            card("Imp0", "Imp", ClocktowerTeam.Demon, eliminatedRound = 2),
+            card("Imp1", "Imp", ClocktowerTeam.Demon),
+            card("Imp2", "Imp", ClocktowerTeam.Demon),
+        )
+        val hostContext = resolveCurrentDemonHostContext(
+            cards = cards,
+            poisonedPlayerName = null,
+        )
+
+        assertEquals(null, hostContext)
+        assertEquals(
+            null,
+            resolveNightReconstructionDemonRoleId(
+                cards = cards,
+                currentDemonHostContext = hostContext,
+                confirmedDemonAttackerName = "Imp0",
+            ),
+        )
+    }
+
+    @Test
     fun `current Demon authority fails closed when two live Demons exist`() {
         val cards = listOf(
             card("Imp1", "Imp", ClocktowerTeam.Demon),
