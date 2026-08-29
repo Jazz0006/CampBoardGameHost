@@ -3,14 +3,16 @@
 > Created: 2026-08-30 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Campaign: **TBSP — Trouble Brewing Setup Preset Integration**  
-> Status: **TBSP-2 COMPLETE / TBSP-3 NEXT**  
+> Status: **TBSP-2 COMPLETE / TBSP-3A RED ESTABLISHED / 3A GREEN NEXT**  
 > Branch: `codex/trouble-brewing-setup-presets-v2`  
 > Draft PR / CI carrier: **#57 — TBSP: integrate Trouble Brewing setup presets**  
 > Live `main` checkpoint: `ba7cfa12853a8829ecf228c05cf2a22067f1e6e4`  
 > Last fully validated code checkpoint: `80a5b9306009a4d078623b997b5b42a88de21080`  
+> TBSP-3A RED test commit: `cb84e04db546c41494a87a1298d1ec48f4211c38`  
 > Parent status authority: `docs/CURRENT_DEVELOPMENT_ROADMAP.md`  
 > Campaign design baseline: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-29_TB_SETUP_PRESETS.md`  
-> Normative rotation policy: `docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md`
+> Normative rotation policy: `docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md`  
+> Normative production cutover contract: `docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md`
 
 ## 1. Live checkpoint that must be preserved
 
@@ -23,8 +25,11 @@ ba7cfa12853a8829ecf228c05cf2a22067f1e6e4
 branch:
 codex/trouble-brewing-setup-presets-v2
 
-validated code head:
+last fully validated code head:
 80a5b9306009a4d078623b997b5b42a88de21080
+
+TBSP-3A RED test head:
+cb84e04db546c41494a87a1298d1ec48f4211c38
 
 PR #57:
 OPEN
@@ -48,7 +53,16 @@ ASP contract tests: correctly skipped
 Real Clingo cross-validation: correctly skipped
 ```
 
-Any later documentation-only commits must be distinguished from this last fully validated production checkpoint.
+The later TBSP-3A RED test intentionally moved the branch beyond that validated checkpoint. CI `:app:testFast` then failed at test compilation for the expected missing contract:
+
+```text
+TroubleBrewingSetupDealPlannerTest.kt:32:20
+Unresolved reference 'TroubleBrewingSetupDealPlanner'
+```
+
+This is the expected RED. An exact developer-selected T0 has not yet been observed in this Chat environment, so do not falsely claim one has run.
+
+Any later documentation-only commits must be distinguished from both the last fully validated code checkpoint and the RED-test commit.
 
 Do not merge PR #57 or mark it Ready without explicit user authorization.
 
@@ -213,9 +227,27 @@ The current production broad-random setup path remains intact until later TBSP s
 
 Do not wire TBSP-3 directly into App while implementing the pure deal planner.
 
-## 5. Next slice — TBSP-3 pure deal materialization
+The later Trouble Brewing production-cutover contract is now explicitly frozen in:
 
-TBSP-3 should introduce a pure setup/deal materializer, conceptually:
+```text
+docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
+```
+
+That contract records four important ownership/lifecycle requirements without broadening TBSP-3:
+
+```text
+A. Trouble Brewing stops using the legacy broad-random setup authority.
+B. Baron is never applied again after preset selection.
+C. selector-selected Drunk shown role is the only shown-role authority.
+D. identity dealing must not synchronously wait for expensive first-night/setup calculation;
+   the identity-reveal window is the intended background-computation window.
+```
+
+No Greater Joy remains outside that production-cutover contract.
+
+## 5. Current slice — TBSP-3 pure deal materialization
+
+TBSP-3 introduces a pure setup/deal materializer, conceptually:
 
 ```text
 TroubleBrewingSetupDealPlanner
@@ -235,18 +267,17 @@ Do not put the algorithm into `CampBoardGameHostApp.kt` merely because App curre
 
 ### Inputs
 
-The pure planner should consume typed selector output/provenance rather than re-selecting a preset.
+The pure planner consumes typed selector output/provenance rather than re-selecting a preset.
 
-Conceptually:
+Current audit established the smallest existing identity seam:
 
 ```text
-selected TroubleBrewing preset selection
-+ ordered player/seat identities or seat count
-+ game seed / derived seat seed
--> deterministic deal plan
+TroubleBrewingSetupPresetSelection
++ ordered player names/identities
+-> pure deal plan
 ```
 
-The exact API must be chosen only after auditing current `PlayerCard` / seat identity types and existing setup construction seams.
+`PlayerCard` has no explicit seat field. Existing gameplay seat identity is derived from stable original card/player order as `index + 1`. `PlayerState` is already post-materialization and therefore is not an appropriate input type for setup planning.
 
 ### Output
 
@@ -264,17 +295,34 @@ Do not add persistence in TBSP-3.
 
 ## 6. TBSP-3 tests-first sequence
 
-### TBSP-3A RED — no Baron double application
+### TBSP-3A — no Baron double application
 
-Construct a selected preset containing Baron and prove:
+**RED is established. Minimum GREEN is next.**
+
+Current focused test:
+
+```text
+TroubleBrewingSetupDealPlannerTest
+```
+
+It constructs this already adjusted 7-player Baron composition:
+
+```text
+3 Townsfolk
+2 Outsiders
+Baron
+Imp
+```
+
+and requires:
 
 ```text
 materialized actual-role multiset == selected preset actual-role multiset
 ```
 
-The planner must not apply any additional Baron modifier.
+The planner must not call or reproduce the legacy Baron transform.
 
-This is a merge-blocking invariant because the final presets already encode Baron setup effects.
+Minimum 3A GREEN should implement only enough pure typed planner surface to satisfy this contract. Do not preemptively freeze `tb-seat-v1` shuffle behavior or Drunk shown-role materialization in the same micro-slice.
 
 ### TBSP-3B RED — exact multiset identity
 
@@ -322,9 +370,9 @@ shown role absent from actual in-play roles
 
 The deal planner must consume the selector's chosen disguise. It must never choose another disguise.
 
-## 7. Required audit before writing TBSP-3 RED
+## 7. Completed audit before TBSP-3 implementation
 
-In the new conversation, first inspect the live definitions/usage of:
+The required live audit covered:
 
 ```text
 PlayerCard / player identity / seat identity types
@@ -336,32 +384,46 @@ StorytellerDecision.DrunkShownRole
 SetupCoordinationRequest.lockedDecisions
 ```
 
-The purpose of this audit is only to choose the smallest typed deal-plan API. Do not perform App wiring during the audit.
+Key conclusions:
 
-If existing seat/player types provide a stable identity boundary, reuse it. Do not invent a parallel seat identity model unless required by the live code.
+```text
+PlayerCard has no seat field.
+Stable seat authority is original card/player order, not a filtered view.
+Current App start path still calls generateClocktowerAssignments(...).
+Legacy helper still performs broad random role generation, Baron post-processing and random Drunk shown-role selection.
+Current start path additionally runs SetupCoordination synchronously before committing cards when Drunk is present.
+```
+
+These findings justify the pure planner boundary and the later production-cutover contract, but they do not authorize App wiring during TBSP-3.
 
 ## 8. Production setup authority that must not be changed yet
 
-The campaign design baseline records the current legacy ordering as:
+Current legacy Trouble Brewing ordering is effectively:
 
 ```text
 generateClocktowerAssignments(...)
 -> newClocktowerSeed()
--> construct PlayerCards
+-> construct provisional PlayerCards
+-> if Drunk, synchronously run SetupCoordination
+-> possibly replace Drunk shown role
+-> commit cards
 ```
 
-The eventual TBSP production order remains:
+The eventual TBSP production lifecycle is now:
 
 ```text
 newClocktowerSeed()
--> select preset
--> select Drunk shown role
--> deterministic seat shuffle
--> construct PlayerCards
--> run remaining setup recommendation
+-> select preset + selector-owned Drunk shown role
+-> deterministic seat shuffle/materialization
+-> construct/commit deal-ready PlayerCards
+-> enter PassPhone / RevealCard immediately
+-> run remaining first-night/setup calculation in the identity-reveal window off the main thread
+-> consume results when first-night information is actually needed
 ```
 
-TBSP-3 implements only the pure materialization part. The App cutover comes later.
+TBSP-3 implements only the pure materialization part. The App cutover and background lifecycle come later.
+
+The existing `A4IdentityRevealPrewarmCoordinator` demonstrates an identity-reveal/background-computation seam, but its current DEBUG and narrow player-count scope is not the production implementation.
 
 ## 9. Later TBSP sequence after TBSP-3
 
@@ -393,6 +455,8 @@ StorytellerDecision.DrunkShownRole
 -> existing recommendation coordinator
 ```
 
+The selected Drunk shown role is already committed identity at this point. Recommendation may calculate compatible downstream information but must not replace that identity.
+
 If Investigator is the locked shown role, compatible `DrunkInvestigatorInfo` must remain available.
 
 Do not retune recommendation scoring in that slice.
@@ -408,6 +472,8 @@ Do not infer initial setup from mutable end-game roles.
 Production cutover is Trouble Brewing only. `ClocktowerScript.NoGreaterJoy` remains on its current behavior.
 
 Missing/corrupt/invalid TB preset data must never silently fall back to legacy broad random Trouble Brewing generation.
+
+TBSP-6 must also ensure that the expensive first-night/setup calculation no longer blocks identity dealing. It should consume the committed deal during the identity-reveal window and must never reroll or mutate actual/shown identities.
 
 ## 10. Production merge-blocking invariants still outstanding
 
@@ -426,9 +492,11 @@ P9  Navigation before Start does not commit a preset selection.
 P10 No Greater Joy behavior remains unchanged.
 P11 Restoring an already-started game does not select a new preset.
 P12 Invalid TB preset data never silently falls back to broad random TB setup.
+P13 Identity dealing does not synchronously wait for complex first-night/setup calculation.
+P14 Background first-night/setup calculation consumes committed identities and cannot reroll them.
 ```
 
-TBSP-3 directly advances P1–P4 and the seat-shuffle portion of P6; it does not claim the App/start/restore invariants yet.
+TBSP-3 directly advances P1–P4 and the seat-shuffle portion of P6; it does not claim the App/start/restore/lifecycle invariants yet.
 
 ## 11. Testing cadence
 
@@ -450,6 +518,10 @@ repeat for 3B / 3C / 3D
 logical TBSP-3 checkpoint
 -> :app:testFast
 ```
+
+The branch currently has an expected RED already observed through CI `:app:testFast`, but exact T0 has not yet been observed in this Chat environment.
+
+When an actual local checkout is available to this assistant, direct Gradle T0 execution is preferred and does not require Luna. If no checkout is mounted, record only CI execution actually observed rather than claiming a local test.
 
 Do not run expensive `SetupMigrationTest` after every pure planner micro-slice. It becomes relevant when production/recommendation wiring is actually affected.
 
@@ -479,27 +551,31 @@ Start the next conversation with this exact sequence:
 3. read this handoff;
 4. read `docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md` only as the frozen TBSP-2 policy reference;
 5. read `docs/TESTING_STRATEGY.md`;
-6. re-query live `main`, PR #57 head/state/checks and branch comparison;
-7. distinguish later docs-only commits from last fully validated code checkpoint `80a5b9306009a4d078623b997b5b42a88de21080`;
-8. audit the live player/seat/card types and setup construction seam listed in section 7;
-9. start **TBSP-3A RED — no Baron double application**;
-10. do not merge, mark Ready, or wire App production without explicit authorization.
+6. read `docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md` when later App/recommendation/cutover lifecycle is relevant;
+7. re-query live `main`, PR #57 head/state/checks and branch comparison;
+8. distinguish the last fully validated code checkpoint `80a5b9306009a4d078623b997b5b42a88de21080`, the TBSP-3A RED test commit `cb84e04db546c41494a87a1298d1ec48f4211c38`, and later docs-only commits;
+9. continue **TBSP-3A minimum GREEN — no Baron double application**;
+10. run direct focused Gradle T0 when this environment has an actual repository checkout; otherwise use only observed CI as evidence;
+11. do not merge, mark Ready, or wire App production without explicit authorization.
 
 ## 14. Exact next executable action
 
-After the live audit, the first code change should be a focused RED test for the pure deal planner:
+Implement the minimum pure planner surface required by the already-established TBSP-3A RED:
 
 ```text
-TBSP-3A RED
+TroubleBrewingSetupDealPlanner.plan(
+    selection,
+    orderedPlayerNames,
+)
 ```
 
-Required proof:
+Minimum required 3A behavior:
 
 ```text
-given a selected Baron preset,
-when the pure deal planner materializes seats,
-then the actual-role multiset is exactly the preset's actual-role multiset,
-with no second Baron outsider/townsfolk adjustment.
+validate ordered player count matches selection.playerCount
+materialize exactly the roles already present in the selected preset
+associate them with stable ordered player identities/seats
+never inspect Baron as a command to change composition
 ```
 
-Do not implement the planner GREEN before that RED has been executed and fails for the expected missing/not-yet-implemented contract.
+Do not yet freeze independent `tb-seat-v1` shuffle semantics or selector-owned Drunk shown-role mapping; those remain tests-first 3C and 3D slices.
