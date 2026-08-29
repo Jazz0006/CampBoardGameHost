@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.setup
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
@@ -125,5 +126,49 @@ class TroubleBrewingSetupDealPlannerTest {
         assertEquals(seedAFirst, seedAReplay)
         assertEquals(seedAFirst, seedAReorderedInput)
         assertNotEquals(seedAFirst, seedB)
+    }
+
+    @Test
+    fun `Drunk keeps actual identity and consumes the selector-owned shown role exactly once`() {
+        val preset = TroubleBrewingSetupPreset(
+            id = "tbsp-3d-drunk-eight",
+            playerCount = 8,
+            townsfolk = listOf("washerwoman", "librarian", "investigator", "chef", "empath"),
+            outsiders = listOf("drunk"),
+            minions = listOf("poisoner"),
+            demons = listOf("imp"),
+            source = "test",
+            complexity = "test",
+            styleTags = emptyList(),
+            drunkAsOptions = listOf("slayer", "virgin", "mayor"),
+        )
+        val selection = TroubleBrewingSetupPresetSelection(
+            datasetId = "test-dataset",
+            schemaVersion = 2,
+            presetId = preset.id,
+            playerCount = preset.playerCount,
+            gameSeed = 3_201L,
+            preset = preset,
+            selectedDrunkShownRole = "slayer",
+        )
+        val orderedPlayerNames = List(preset.playerCount) { index -> "Player ${index + 1}" }
+
+        val plan = TroubleBrewingSetupDealPlanner.plan(
+            selection = selection,
+            orderedPlayerNames = orderedPlayerNames,
+        )
+
+        val drunkAssignment = plan.assignments.single { it.actualRoleId == "drunk" }
+        val actualRoleIds = plan.assignments.map { it.actualRoleId }
+
+        assertEquals("drunk", drunkAssignment.actualRoleId)
+        assertEquals("slayer", drunkAssignment.shownRoleId)
+        assertEquals("slayer", plan.selectedDrunkShownRole)
+        assertEquals(
+            plan.assignments.filterNot { it.actualRoleId == "drunk" }.map { it.actualRoleId },
+            plan.assignments.filterNot { it.actualRoleId == "drunk" }.map { it.shownRoleId },
+        )
+        assertEquals(true, drunkAssignment.shownRoleId in preset.drunkAsOptions)
+        assertFalse(drunkAssignment.shownRoleId in actualRoleIds)
     }
 }
