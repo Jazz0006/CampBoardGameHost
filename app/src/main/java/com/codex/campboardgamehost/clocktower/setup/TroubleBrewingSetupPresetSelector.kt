@@ -26,19 +26,35 @@ internal object TroubleBrewingSetupPresetSelector {
             "Trouble Brewing setup preset pool $playerCount contains a mismatched preset player count."
         }
 
-        val previousComposition = recentSetupRotationHistory.recentGames
-            .firstOrNull()
-            ?.realNonDemonRoleIds
-        val eligiblePool = if (dataset.runtimeSelectionPolicy.exactRepeat == EXACT_REPEAT_REJECT && previousComposition != null) {
+        val previousGame = recentSetupRotationHistory.recentGames.firstOrNull()
+        val previousComposition = previousGame?.realNonDemonRoleIds
+        val exactRepeatEligible = if (
+            dataset.runtimeSelectionPolicy.exactRepeat == EXACT_REPEAT_REJECT && previousComposition != null
+        ) {
             pool.filterNot { candidate -> candidate.nonDemonRoleIds() == previousComposition }
         } else {
             pool
         }
-        require(eligiblePool.isNotEmpty()) {
+        require(exactRepeatEligible.isNotEmpty()) {
             "No Trouble Brewing setup preset remains after exact-repeat filtering for $playerCount players."
         }
 
-        val canonicalPool = eligiblePool.sortedBy { it.id }
+        val overlapEligible = if (previousComposition != null) {
+            val maxOverlap = dataset.runtimeSelectionPolicy.lastGameMaxOverlap[playerCount]
+                ?: throw IllegalArgumentException(
+                    "No Trouble Brewing last-game overlap threshold for $playerCount players.",
+                )
+            exactRepeatEligible.filter { candidate ->
+                candidate.overlapWith(previousComposition) <= maxOverlap
+            }
+        } else {
+            exactRepeatEligible
+        }
+        require(overlapEligible.isNotEmpty()) {
+            "No Trouble Brewing setup preset remains after last-game overlap filtering for $playerCount players."
+        }
+
+        val canonicalPool = overlapEligible.sortedBy { it.id }
         val selectionSeed = MurmurHash3.low64Utf8(
             "tb-preset-v1|${dataset.datasetId}|$playerCount|$gameSeed",
         )
@@ -64,6 +80,9 @@ internal object TroubleBrewingSetupPresetSelector {
 
     private fun TroubleBrewingSetupPreset.nonDemonRoleIds(): Set<String> =
         (townsfolk + outsiders + minions).toSet()
+
+    private fun TroubleBrewingSetupPreset.overlapWith(previousRoleIds: Set<String>): Double =
+        nonDemonRoleIds().intersect(previousRoleIds).size.toDouble() / (playerCount - 1).toDouble()
 
     private fun selectDrunkShownRole(
         datasetId: String,
