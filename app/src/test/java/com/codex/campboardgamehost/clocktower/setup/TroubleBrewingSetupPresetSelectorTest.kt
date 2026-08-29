@@ -208,6 +208,90 @@ class TroubleBrewingSetupPresetSelectorTest {
         }
     }
 
+    @Test
+    fun `fallback relaxes overlap by five points and selects from the first non empty level`() {
+        val playerCount = 8
+        val previousRoleIds = List(playerCount - 1) { index -> "fallback-previous-$index" }
+        val previousSet = previousRoleIds.toSet()
+        val exactRepeat = overlapPreset(
+            id = "exact-repeat-must-stay-rejected",
+            playerCount = playerCount,
+            previousRoleIds = previousRoleIds,
+            overlapCount = 7,
+        )
+        val firstEligibleAtPlusTen = overlapPreset(
+            id = "first-eligible-at-plus-ten",
+            playerCount = playerCount,
+            previousRoleIds = previousRoleIds,
+            overlapCount = 4,
+        )
+        val laterEligible = overlapPreset(
+            id = "later-eligible",
+            playerCount = playerCount,
+            previousRoleIds = previousRoleIds,
+            overlapCount = 5,
+        )
+        assertTrue(firstEligibleAtPlusTen.overlapWith(previousSet) > 0.55)
+        assertTrue(firstEligibleAtPlusTen.overlapWith(previousSet) <= 0.60)
+        assertTrue(laterEligible.overlapWith(previousSet) > 0.60)
+        assertTrue(laterEligible.overlapWith(previousSet) <= 0.75)
+
+        val dataset = datasetOf(
+            playerCount = playerCount,
+            presets = listOf(laterEligible, exactRepeat, firstEligibleAtPlusTen),
+            policy = testPolicy().copy(
+                lastGameMaxOverlap = mapOf(playerCount to 0.50),
+                historyWeights = emptyList(),
+            ),
+        )
+        val history = historyOf(
+            playerCount = playerCount,
+            realNonDemonRoleIds = previousSet,
+            presetId = "previous-different-id",
+        )
+
+        val selectedIds = (0L until 128L).map { gameSeed ->
+            TroubleBrewingSetupPresetSelector.select(
+                dataset = dataset,
+                playerCount = playerCount,
+                gameSeed = gameSeed,
+                recentSetupRotationHistory = history,
+            ).presetId
+        }.toSet()
+
+        assertEquals(setOf(firstEligibleAtPlusTen.id), selectedIds)
+    }
+
+    @Test
+    fun `fallback never re-enables an exact repeat when it is the only preset`() {
+        val playerCount = 8
+        val previousRoleIds = List(playerCount - 1) { index -> "exact-only-$index" }
+        val exactRepeat = overlapPreset(
+            id = "exact-only-candidate",
+            playerCount = playerCount,
+            previousRoleIds = previousRoleIds,
+            overlapCount = playerCount - 1,
+        )
+        val dataset = datasetOf(
+            playerCount = playerCount,
+            presets = listOf(exactRepeat),
+            policy = testPolicy().copy(lastGameMaxOverlap = mapOf(playerCount to 0.50)),
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            TroubleBrewingSetupPresetSelector.select(
+                dataset = dataset,
+                playerCount = playerCount,
+                gameSeed = 1L,
+                recentSetupRotationHistory = historyOf(
+                    playerCount = playerCount,
+                    realNonDemonRoleIds = previousRoleIds.toSet(),
+                    presetId = "previous-different-id",
+                ),
+            )
+        }
+    }
+
     private fun datasetOf(
         playerCount: Int,
         presets: List<TroubleBrewingSetupPreset>,
