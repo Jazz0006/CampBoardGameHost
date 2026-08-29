@@ -1,7 +1,9 @@
 package com.codex.campboardgamehost.clocktower.setup
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TroubleBrewingSetupPresetSelectorTest {
@@ -32,6 +34,7 @@ class TroubleBrewingSetupPresetSelectorTest {
         assertEquals(1234L, selected.gameSeed)
         assertEquals("eight", selected.preset.id)
         assertEquals(8, selected.preset.playerCount)
+        assertNull(selected.selectedDrunkShownRole)
     }
 
     @Test
@@ -84,6 +87,37 @@ class TroubleBrewingSetupPresetSelectorTest {
         assertEquals(first, repeated)
         assertEquals(first.presetId, reordered.presetId)
         assertEquals(first.gameSeed, reordered.gameSeed)
+    }
+
+    @Test
+    fun `same seed selects the same Drunk shown role independent of option order`() {
+        val options = listOf("washerwoman", "librarian", "investigator")
+        val drunkPreset = preset(id = "drunk-eight", playerCount = 8).copy(
+            townsfolk = List(5) { index -> "town-drunk-$index" },
+            outsiders = listOf("drunk"),
+            drunkAsOptions = options,
+        )
+        val reorderedPreset = drunkPreset.copy(drunkAsOptions = options.reversed())
+
+        val first = TroubleBrewingSetupPresetSelector.select(
+            dataset = datasetOf(8, listOf(drunkPreset)),
+            playerCount = 8,
+            gameSeed = 24680L,
+        )
+        val repeated = TroubleBrewingSetupPresetSelector.select(
+            dataset = datasetOf(8, listOf(drunkPreset)),
+            playerCount = 8,
+            gameSeed = 24680L,
+        )
+        val reordered = TroubleBrewingSetupPresetSelector.select(
+            dataset = datasetOf(8, listOf(reorderedPreset)),
+            playerCount = 8,
+            gameSeed = 24680L,
+        )
+
+        assertTrue(first.selectedDrunkShownRole in options)
+        assertEquals(first.selectedDrunkShownRole, repeated.selectedDrunkShownRole)
+        assertEquals(first.selectedDrunkShownRole, reordered.selectedDrunkShownRole)
     }
 
     private fun datasetOf(
