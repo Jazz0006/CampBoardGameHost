@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost.clocktower.setup
 
+import com.codex.campboardgamehost.clocktower.domain.MurmurHash3
+
 internal data class TroubleBrewingSetupDealAssignment(
     val seat: Int,
     val playerName: String,
@@ -36,6 +38,14 @@ internal object TroubleBrewingSetupDealPlanner {
         require(actualRoleIds.size == selection.playerCount) {
             "Selected Trouble Brewing preset role count does not match player count."
         }
+        val seatOrderedRoleIds = actualRoleIds.sortedWith(
+            Comparator { leftRoleId, rightRoleId ->
+                val leftKey = seatOrderKey(selection, leftRoleId)
+                val rightKey = seatOrderKey(selection, rightRoleId)
+                val keyComparison = java.lang.Long.compareUnsigned(leftKey, rightKey)
+                if (keyComparison != 0) keyComparison else leftRoleId.compareTo(rightRoleId)
+            },
+        )
 
         return TroubleBrewingSetupDealPlan(
             datasetId = selection.datasetId,
@@ -47,9 +57,17 @@ internal object TroubleBrewingSetupDealPlanner {
                 TroubleBrewingSetupDealAssignment(
                     seat = index + 1,
                     playerName = playerName,
-                    actualRoleId = actualRoleIds[index],
+                    actualRoleId = seatOrderedRoleIds[index],
                 )
             },
         )
     }
+
+    private fun seatOrderKey(
+        selection: TroubleBrewingSetupPresetSelection,
+        roleId: String,
+    ): Long = MurmurHash3.low64Utf8(
+        "tb-seat-v1|${selection.datasetId}|${selection.playerCount}|${selection.presetId}|" +
+            "${selection.gameSeed}|$roleId",
+    )
 }
