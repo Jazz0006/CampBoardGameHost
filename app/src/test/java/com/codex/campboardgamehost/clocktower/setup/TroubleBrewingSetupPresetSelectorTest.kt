@@ -120,15 +120,53 @@ class TroubleBrewingSetupPresetSelectorTest {
         assertEquals(first.selectedDrunkShownRole, reordered.selectedDrunkShownRole)
     }
 
+    @Test
+    fun `exact previous real non Demon composition is rejected even when preset ids differ`() {
+        val repeatedComposition = eightPlayerPreset(id = "candidate-new-id")
+        val alternative = repeatedComposition.copy(
+            id = "candidate-alternative",
+            townsfolk = repeatedComposition.townsfolk.dropLast(1) + "monk",
+        )
+        val dataset = datasetOf(
+            playerCount = 8,
+            presets = listOf(repeatedComposition, alternative),
+            policy = testPolicy().copy(lastGameMaxOverlap = mapOf(8 to 1.0)),
+        )
+        val history = TroubleBrewingSetupRotationHistory(
+            recentGames = listOf(
+                TroubleBrewingSetupRotationRecord(
+                    datasetId = "previous-dataset",
+                    schemaVersion = 2,
+                    presetId = "previous-different-id",
+                    playerCount = 8,
+                    realNonDemonRoleIds = repeatedComposition.nonDemonRoleIds(),
+                    minionRoleIds = repeatedComposition.minions.toSet(),
+                    primaryStyleTag = repeatedComposition.styleTags.firstOrNull(),
+                    selectedDrunkShownRole = null,
+                ),
+            ),
+        )
+
+        val selected = TroubleBrewingSetupPresetSelector.select(
+            dataset = dataset,
+            playerCount = 8,
+            gameSeed = 13579L,
+            recentSetupRotationHistory = history,
+        )
+
+        assertEquals("candidate-alternative", selected.presetId)
+    }
+
     private fun datasetOf(
         playerCount: Int,
         presets: List<TroubleBrewingSetupPreset>,
+        policy: TroubleBrewingRuntimeSelectionPolicy = testPolicy(),
     ) = TroubleBrewingSetupPresetDataset(
         schemaVersion = 2,
         datasetId = "test-dataset",
         status = "test",
         declaredPoolSizes = mapOf(playerCount to presets.size),
-        runtimeSelectionPolicy = testPolicy(),
+        runtimeSelectionPolicy = policy,
         pools = mapOf(playerCount to presets),
     )
 
@@ -141,6 +179,22 @@ class TroubleBrewingSetupPresetSelectorTest {
         extraSoftPenalties = emptyList(),
         fallback = "test",
     )
+
+    private fun eightPlayerPreset(id: String) = TroubleBrewingSetupPreset(
+        id = id,
+        playerCount = 8,
+        townsfolk = listOf("washerwoman", "librarian", "investigator", "chef", "empath"),
+        outsiders = listOf("recluse"),
+        minions = listOf("poisoner"),
+        demons = listOf("imp"),
+        source = "test",
+        complexity = "test",
+        styleTags = listOf("balanced"),
+        drunkAsOptions = emptyList(),
+    )
+
+    private fun TroubleBrewingSetupPreset.nonDemonRoleIds(): Set<String> =
+        (townsfolk + outsiders + minions).toSet()
 
     private fun preset(
         id: String,
