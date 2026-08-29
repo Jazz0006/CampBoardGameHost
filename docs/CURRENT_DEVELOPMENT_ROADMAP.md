@@ -14,6 +14,8 @@ PR: #54
 PR policy: open / unmerged until explicit authorization
 last audited pre-blocker head: e9a30ffc353d870df388329986be433268558661
 PR54-P1-1 accepted checkpoint: f97276139ab0123329c1e73c0380048c5ac98e3d
+PR54-P1-2 production wiring checkpoint: 8a6f8cea481edbaef8a5946abb19ef0d0f483005
+current full T4 acceptance checkpoint: 8e0f62c059c814ad744514f7213040ad8bc74119
 ```
 
 Current accepted GCR checkpoints:
@@ -22,23 +24,25 @@ Current accepted GCR checkpoints:
 GCR-1 executable acceptance:
 974f617adffd08cc7de0924f6fea4f96f3d73f0c
 
-GCR-1 + GCR-2 full production acceptance:
+GCR-1 + GCR-2 historical full production acceptance:
 474103ed13caaf34a329ca5e80e2f0ba64963b86
 
 GCR-3 final test-quality acceptance:
 383ad0e695656124f9dc608fd5ce06b72de6b499
 ```
 
-These checkpoints remain valid evidence for the behavior they exercised. They are no longer sufficient merge evidence for the current PR because post-acceptance review found additional runtime P1 regressions outside that prior coverage. PR54-P1-1 is now fixed and accepted; PR54-P1-2 remains the active merge blocker.
+Those historical checkpoints remain valid evidence for the behavior they exercised. Post-acceptance review later found two additional runtime P1 regressions outside their coverage; both have now been fixed and accepted. A fresh full-tree T4 run at `8e0f62c0...` is the current PR merge-readiness evidence.
 
-## 2. Current priority — PR #54 post-acceptance runtime blockers
+## 2. PR #54 post-acceptance runtime blockers — CLOSED / ACCEPTED
 
 Status:
 
 ```text
 PR54-P1-1  First-night Fortune Teller incorrectly enters Other Night projection   FIXED / ACCEPTED
-PR54-P1-2  Imp self-kill pending successor cannot reconstruct Host safely         CONFIRMED / BLOCKING / ACTIVE
+PR54-P1-2  Imp self-kill pending successor cannot reconstruct Host safely         FIXED / ACCEPTED
 ```
+
+There is no remaining known PR54 runtime P1 blocker from this closeout campaign.
 
 ### PR54-P1-1 — First-night Fortune Teller projection crash — FIXED / ACCEPTED
 
@@ -96,34 +100,111 @@ R2 #916 / run 33221389931 SUCCESS
 
 The strengthened typed regression covers Fortune Teller Demon-match semantics in both directions: First Night base Demon/non-Demon without evaluating Other Night projection, and Other Night projected role overriding the base role.
 
-### PR54-P1-2 — Imp self-kill pending successor reconstruction crash — ACTIVE
+### PR54-P1-2 — Imp self-kill pending successor reconstruction crash — FIXED / ACCEPTED
 
-Observed production lifecycle:
+Observed failure lifecycle:
 
 ```text
 Imp self-kill confirmed
 -> old Imp becomes mechanically dead
--> pendingNewDemonName is set
+-> pending successor exists
 -> phase remains Night
 -> Host recomposes before successor identity confirmation completes
 -> there is temporarily no living Demon card
--> Host requires non-null current living Demon role for reconstruction
+-> old Host required living-Demon authority for reconstruction
 -> crash before new-Demon identity confirmation UI
 ```
 
-Required contract:
+Accepted authority split:
 
-- the pending succession window may legally contain no currently living Demon card;
-- succession reconstruction must obtain the role authority from the confirmed attacker / current-night historical Demon authority, or otherwise route the pending-confirmation state before requiring a living Demon;
-- do not keep the old Imp alive merely to avoid the crash;
-- do not prematurely durably mutate the successor into Demon before confirmation/materialization;
-- do not turn the invariant into an unprincipled nullable fallback.
+```text
+living-Demon UI authority
+-> resolveCurrentDemonHostContext()
+-> remains living-only
 
-PR54-P1-2 is now the active separate tests-first micro-slice.
+current-night transaction/reconstruction authority
+-> resolveNightReconstructionDemonRoleId(...)
+-> exactly one live Demon when available
+-> zero-live pending succession may recover the explicit confirmed dead Demon attacker
+-> multiple-live-Demon ambiguity remains fail-closed
 
-## 3. GCR-1 — Current Demon authority — ACCEPTED WITH PENDING-SUCCESSION REGRESSION OUTSIDE PRIOR COVERAGE
+canonical succession requirement
+-> resolveNightDemonSuccessionForHost(...)
+-> delegates to existing Trouble Brewing Imp self-kill semantics
 
-Accepted correctness remains:
+canonical Other Night ordering
+-> clocktowerOtherNightWakingRoleIds(...)
+-> normal nights use living current roles + Drunk shown role
+-> pending succession retains the historical Imp only as a canonical ordering anchor
+```
+
+The old Imp remains mechanically dead, the successor is not role-mutated before confirmation, and `NightTransactionReconstructor` remains fail-closed and unchanged.
+
+Tests-first evidence:
+
+```text
+reconstruction-role RED:
+5dcf91e0...
+- dead old Imp / zero living Demon
+- expected historical Imp role authority
+
+pending-succession RED:
+b9cb90d3...
+- old Imp dead
+- pending successor present
+- expected canonical successor Choice
+
+ordering-anchor behavioral RED:
+5ba1c162b8c3c7eb40b5d4ecd01a9dbd935c51b5
+CI #1000 / run 33222642480
+- production/test compilation succeeded
+- :app:testFast executed
+- 914 tests completed, 1 failed
+- only failure: pending succession retains historical Imp ordering anchor after old Imp is dead
+```
+
+Typed seam GREEN checkpoint:
+
+```text
+13a5fb03a9e5d49200f0516cbe9db16d3b6f0a11
+CI #1001 / run 33223172126 SUCCESS
+- Android FAST unit tests SUCCESS
+- Real Clingo cross-validation SUCCESS
+- CI gate SUCCESS
+R2 #928 / run 33223172160 SUCCESS
+```
+
+Final Host wiring checkpoint:
+
+```text
+8a6f8cea481edbaef8a5946abb19ef0d0f483005
+commit: fix: wire pending Imp succession into night host
+```
+
+Remote exact-diff audit from `13a5fb03...`:
+
+```text
+ahead_by: 1
+behind_by: 0
+changed files: exactly 1
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+23 additions / 50 deletions
+```
+
+Host wiring now uses one canonical transaction role for succession resolution, canonical interaction planning, `NightTransactionReconstructor`, and resolved Demon mechanical-death interaction identity. `demonCard` remains the living-Demon UI wake/display authority.
+
+T1 evidence:
+
+```text
+CI #1002 / run 33223959281 SUCCESS
+- Android :app:testFast SUCCESS
+- CI gate SUCCESS
+R2 #929 / run 33223959279 SUCCESS
+```
+
+## 3. GCR-1 — Current Demon authority — ACCEPTED
+
+Accepted correctness:
 
 ```text
 Night N:   Imp0 self-kills -> Imp1 becomes current Demon
@@ -131,9 +212,9 @@ Night N+1: Imp1 acts normally
 Later:     Imp1 can self-kill -> Imp2 becomes current Demon
 ```
 
-Historical dead Demon role identity remains represented correctly. Current authority derives from the single live Demon after succession has been completed.
+Historical dead Demon role identity remains represented correctly. Current living-Demon authority derives from the single live Demon after succession has completed.
 
-PR54-P1-2 concerns the **transient pending-confirmation window before the successor becomes the completed current living Demon**. It does not invalidate the accepted cross-night repeated-succession behavior, but it blocks the PR until the missing lifecycle case is covered and fixed.
+The previously missing transient pending-confirmation window is now covered by PR54-P1-2: while the old Imp is already dead and before the successor is materialized as Demon, current-night transaction/reconstruction authority can still preserve the canonical Imp role without pretending a living Demon exists.
 
 Accepted executable checkpoint:
 
@@ -172,27 +253,45 @@ The interaction-shape difference is intentional and must not be reopened as a co
 
 No fake-Grimoire or generic misinformation subsystem was introduced.
 
-## 5. GCR blocker full acceptance — HISTORICAL CHECKPOINT, NOT CURRENT MERGE GATE
+## 5. PR #54 current full acceptance — GREEN
 
-Full production-tree acceptance checkpoint:
+Current full-tree acceptance checkpoint:
 
 ```text
-474103ed13caaf34a329ca5e80e2f0ba64963b86
+8e0f62c059c814ad744514f7213040ad8bc74119
+```
+
+This is a docs-only `[full-ci]` checkpoint directly after production head `8a6f8cea...`, so it validates the same production tree while forcing all full gates.
+
+Routing evidence:
+
+```text
+Full checkpoint selected.
+Routing: android=true android_full=true asp=true oracle=true
 ```
 
 Evidence:
 
 ```text
-CI #963 / run 33175600756 SUCCESS
+CI #1003 / run 33224102399 SUCCESS
 - Android :app:testFull + :app:assembleDebug SUCCESS
+- FAST route skipped as expected for the full checkpoint
 - ASP contract tests SUCCESS
 - Real Clingo cross-validation SUCCESS
 - CI gate SUCCESS
 
-R2 run 33175600749 SUCCESS
+R2 #930 / run 33224102366 SUCCESS
 ```
 
-This remains the authoritative T4 evidence for the GCR-1/GCR-2 behavior actually covered at that checkpoint. It is not current merge authorization because PR54-P1-2 is a runtime path outside that coverage and remains unresolved.
+This supersedes the older `474103ed...` checkpoint as **current PR merge-readiness evidence**. It does not itself authorize merge; PR #54 remains open/unmerged until explicit user authorization.
+
+Historical GCR-1/GCR-2 full checkpoint:
+
+```text
+474103ed13caaf34a329ca5e80e2f0ba64963b86
+CI #963 / run 33175600756 SUCCESS
+R2 run 33175600749 SUCCESS
+```
 
 ## 6. GCR-3 — source-string retirement — ACCEPTED
 
@@ -262,7 +361,7 @@ Durable contracts to preserve:
 - current role/effective state must be read at the correct same-night interaction point;
 - Dawn replay/retry must be idempotent and exactly-once at history level.
 
-The later First Night Fortune Teller caller phase-selection regression has now been fixed without relaxing the projector invariant.
+The later First Night Fortune Teller caller phase-selection regression has been fixed without relaxing the projector invariant, and pending Imp succession reconstruction has been fixed without weakening Demon authority invariants.
 
 Historical SNE execution handoffs are consolidated under:
 
@@ -272,7 +371,7 @@ docs/archive/SNE7_AND_PRE_GCR_HANDOFF_CLOSEOUT_2026-08-28.md
 
 ## 8. Deferred work registry
 
-These remain deferred and are **not** the current PR blocker:
+These remain deferred and are **not** current PR blockers:
 
 | Deferred area | Status |
 |---|---|
@@ -295,7 +394,7 @@ Gameplay/rules correctness must be typed.
 
 Long-term source inspection is allowed only for coarse architecture/ownership assertions where there is no callable seam. Source-string tests must not freeze incidental implementation details or substitute for rules behavior.
 
-For PR54-P1-2, prefer a typed lifecycle/reconstruction seam proving that a valid pending-succession state with no living Demon can still derive the required current-night Demon role authority. Do not use source inspection as the primary RED.
+The PR54 runtime blocker closeout reinforced this policy: both First Night Fortune Teller phase authority and pending Imp succession authority were established with typed behavioral seams; Host source diff inspection was used only as an independent wiring audit, not as the primary correctness proof.
 
 ## 10. Validation policy
 
@@ -315,6 +414,8 @@ T0 focused typed RED
 
 A skipped, cached-only or `UP-TO-DATE` route is not evidence that a required gate executed.
 
+PR54 runtime closeout has now completed both T1 and fresh T4 validation.
+
 ## 11. Scope / branch discipline
 
 Until explicit authorization:
@@ -322,29 +423,34 @@ Until explicit authorization:
 - keep PR #54 open/unmerged;
 - do not merge;
 - do not rebase/force-push;
-- PR54-P1-1 is closed; work only on PR54-P1-2 as the active blocker;
-- do not mix deferred GCR-4/5, A3, S9.2, A4/ZDD or recommendation work into this fix;
+- PR54-P1-1 and PR54-P1-2 are both closed/accepted;
+- do not start deferred GCR-4/5, A3, S9.2, A4/ZDD or recommendation work on this branch merely because the blockers are closed;
 - preserve complete-worktree safety for `CampBoardGameHostApp.kt` / `ClocktowerHostScreen.kt`;
-- do not keep a dead Imp alive, prematurely mutate a successor role, or weaken a reconstruction invariant merely to bypass the pending-succession lifecycle.
+- preserve the accepted authority split between living-Demon UI state and current-night transaction/reconstruction state.
 
 ## 12. Current next action
 
-**PR #54 is now blocked by one remaining runtime P1 regression: PR54-P1-2.**
+**PR #54 has no remaining known runtime P1 blocker from the post-acceptance closeout, and the fresh T4 merge-readiness gate is green.**
 
-Current execution order:
+Current state:
 
 ```text
-1. PR54-P1-2 Imp self-kill pending-successor Host reconstruction crash
-   -> audit current Demon / historical attacker authority boundaries
-   -> typed lifecycle RED
-   -> prove expected behavioral RED
-   -> minimal GREEN
-   -> focused succession/reconstruction regressions
-   -> remote diff audit
-
-2. after PR54-P1-2 is GREEN
-   -> logical checkpoint validation
-   -> refresh merge-readiness evidence
+P1-1 Fortune Teller runtime blocker       CLOSED / ACCEPTED
+P1-2 pending Imp succession blocker        CLOSED / ACCEPTED
+T1 FAST checkpoint                         GREEN
+T4 full Android + APK                       GREEN
+ASP contract                                GREEN
+Real Clingo                                 GREEN
+R2                                           GREEN
+PR #54                                      OPEN / UNMERGED
 ```
 
-Do not merge PR #54 until PR54-P1-2 is fixed and the required validation is green.
+Next action requires explicit user direction. Reasonable options are:
+
+```text
+A. authorize final PR #54 merge/readiness action;
+B. keep PR #54 open and return to the previously paused A3 architecture-hardening line;
+C. keep PR #54 open and resume another explicitly selected deferred workstream on a separate branch.
+```
+
+Do not merge PR #54 without explicit user authorization.
