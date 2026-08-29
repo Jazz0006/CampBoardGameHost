@@ -132,19 +132,10 @@ class TroubleBrewingSetupPresetSelectorTest {
             presets = listOf(repeatedComposition, alternative),
             policy = testPolicy().copy(lastGameMaxOverlap = mapOf(8 to 1.0)),
         )
-        val history = TroubleBrewingSetupRotationHistory(
-            recentGames = listOf(
-                TroubleBrewingSetupRotationRecord(
-                    datasetId = "previous-dataset",
-                    schemaVersion = 2,
-                    presetId = "previous-different-id",
-                    playerCount = 8,
-                    realNonDemonRoleIds = repeatedComposition.nonDemonRoleIds(),
-                    minionRoleIds = repeatedComposition.minions.toSet(),
-                    primaryStyleTag = repeatedComposition.styleTags.firstOrNull(),
-                    selectedDrunkShownRole = null,
-                ),
-            ),
+        val history = historyOf(
+            playerCount = 8,
+            realNonDemonRoleIds = repeatedComposition.nonDemonRoleIds(),
+            presetId = "previous-different-id",
         )
 
         val selected = TroubleBrewingSetupPresetSelector.select(
@@ -155,6 +146,66 @@ class TroubleBrewingSetupPresetSelectorTest {
         )
 
         assertEquals("candidate-alternative", selected.presetId)
+    }
+
+    @Test
+    fun `last game overlap threshold admits the highest discrete value below the limit and rejects the next value for every player count`() {
+        val thresholds = linkedMapOf(
+            5 to 0.60,
+            6 to 0.60,
+            7 to 0.70,
+            8 to 0.72,
+            9 to 0.75,
+            10 to 0.78,
+            11 to 0.80,
+            12 to 0.82,
+            13 to 0.83,
+            14 to 0.85,
+            15 to 0.86,
+        )
+
+        thresholds.forEach { (playerCount, threshold) ->
+            val nonDemonCount = playerCount - 1
+            val previousRoleIds = List(nonDemonCount) { index -> "previous-$playerCount-$index" }
+            val allowedOverlapCount = (threshold * nonDemonCount).toInt()
+            val rejectedOverlapCount = allowedOverlapCount + 1
+            val allowed = overlapPreset(
+                id = "allowed-$playerCount",
+                playerCount = playerCount,
+                previousRoleIds = previousRoleIds,
+                overlapCount = allowedOverlapCount,
+            )
+            val rejected = overlapPreset(
+                id = "rejected-$playerCount",
+                playerCount = playerCount,
+                previousRoleIds = previousRoleIds,
+                overlapCount = rejectedOverlapCount,
+            )
+            val previousSet = previousRoleIds.toSet()
+            assertTrue(allowed.overlapWith(previousSet) <= threshold)
+            assertTrue(rejected.overlapWith(previousSet) > threshold)
+
+            val dataset = datasetOf(
+                playerCount = playerCount,
+                presets = listOf(rejected, allowed),
+                policy = testPolicy().copy(lastGameMaxOverlap = mapOf(playerCount to threshold)),
+            )
+            val history = historyOf(
+                playerCount = playerCount,
+                realNonDemonRoleIds = previousSet,
+            )
+
+            val selectedIds = (0L until 64L).map { gameSeed ->
+                TroubleBrewingSetupPresetSelector.select(
+                    dataset = dataset,
+                    playerCount = playerCount,
+                    gameSeed = gameSeed,
+                    recentSetupRotationHistory = history,
+                ).presetId
+            }.toSet()
+
+            assertEquals("playerCount=$playerCount", setOf(allowed.id), selectedIds)
+        }
     }
 
     private fun datasetOf(
@@ -179,6 +230,53 @@ class TroubleBrewingSetupPresetSelectorTest {
         extraSoftPenalties = emptyList(),
         fallback = "test",
     )
+
+    private fun historyOf(
+        playerCount: Int,
+        realNonDemonRoleIds: Set<String>,
+        presetId: String = "previous-preset",
+    ) = TroubleBrewingSetupRotationHistory(
+        recentGames = listOf(
+            TroubleBrewingSetupRotationRecord(
+                datasetId = "previous-dataset",
+                schemaVersion = 2,
+                presetId = presetId,
+                playerCount = playerCount,
+                realNonDemonRoleIds = realNonDemonRoleIds,
+                minionRoleIds = emptySet(),
+                primaryStyleTag = null,
+                selectedDrunkShownRole = null,
+            ),
+        ),
+    )
+
+    private fun overlapPreset(
+        id: String,
+        playerCount: Int,
+        previousRoleIds: List<String>,
+        overlapCount: Int,
+    ): TroubleBrewingSetupPreset {
+        val nonDemonCount = playerCount - 1
+        require(previousRoleIds.size == nonDemonCount)
+        require(overlapCount in 0..nonDemonCount)
+        val roleIds = previousRoleIds.take(overlapCount) +
+            List(nonDemonCount - overlapCount) { index -> "new-$id-$index" }
+        return TroubleBrewingSetupPreset(
+            id = id,
+            playerCount = playerCount,
+            townsfolk = roleIds.dropLast(1),
+            outsiders = emptyList(),
+            minions = listOf(roleIds.last()),
+            demons = listOf("imp"),
+            source = "test",
+            complexity = "test",
+            styleTags = emptyList(),
+            drunkAsOptions = emptyList(),
+        )
+    }
+
+    private fun TroubleBrewingSetupPreset.overlapWith(previousRoleIds: Set<String>): Double =
+        nonDemonRoleIds().intersect(previousRoleIds).size.toDouble() / (playerCount - 1).toDouble()
 
     private fun eightPlayerPreset(id: String) = TroubleBrewingSetupPreset(
         id = id,
