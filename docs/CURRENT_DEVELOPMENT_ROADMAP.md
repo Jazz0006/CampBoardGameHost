@@ -8,207 +8,233 @@
 ## 1. Current live development context
 
 ```text
-main baseline: 160f730594d76c294542cd22a5220baeb73d1bc9
-main meaning: PR #55 merged — Dawn poison exactly-once materialization
-post-merge main T4: CI #1031 SUCCESS
+main baseline:
+ba7cfa12853a8829ecf228c05cf2a22067f1e6e4
 
-active branch: codex/hotfix-poison-expire-exactly-once
-active PR: #56 — Hotfix next-night poison expiry exactly-once
-PR state at this roadmap checkpoint: open / draft / unmerged / mergeable
-production GREEN checkpoint: 6b022935618b3d00d5ef2b62a34bc88d8358e645
-original RED checkpoint: 4b75bac46a9ef161e7b03e13308339daf56114a4
-full T4 checkpoint: 840ba4eac8d1a0649e787737a8f21d89574e0ea7
+main meaning:
+PR #55 merged — Dawn poison exactly-once materialization
+PR #56 merged — next-night / Dusk poison expiry exactly-once materialization
+
+current branch:
+codex/trouble-brewing-setup-presets-v2
+
+current campaign:
+TBSP — Trouble Brewing Setup Preset Integration
+
+campaign handoff:
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-29_TB_SETUP_PRESETS.md
 ```
 
-Detailed PR #56 handoff:
+The poison exactly-once hotfixes are now part of the required TBSP baseline and must be preserved.
+
+Current TBSP implementation status at this roadmap checkpoint:
 
 ```text
-docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-29_PR56_DUSK_POISON_EXPIRY_EXACTLY_ONCE.md
+TBSP-0 documentation / handoff: COMPLETE
+TBSP-1A parser RED: IMPLEMENTED
+TBSP-1A minimum parser GREEN: IMPLEMENTED
+final dataset Android asset: NOT YET ACCEPTED ON BRANCH
+typed semantic validator: NOT STARTED
+runtime selector / history / App wiring: NOT STARTED
 ```
 
-## 2. PR #55 — MERGED / ACCEPTED
+## 2. Accepted predecessor correctness baseline
 
-PR #55 merged into `main` at:
+### PR #54 — same-night correctness / GCR hardening
+
+PR #54 is merged and closed. Its accepted correctness remains part of the baseline and must not be reopened merely because TBSP touches initial setup.
+
+Important accepted contracts include:
+
+- First Night Fortune Teller uses base/current-role authority rather than entering Other Night chronology projection.
+- Other Night Fortune Teller continues to use canonical same-night effective-state projection.
+- current living-Demon UI authority remains distinct from transient current-night reconstruction authority during pending Imp succession.
+- old Imp mechanical death, pending successor identity and canonical ordering remain separate concerns.
+- poisoned Spy uses the accepted fail-safe product policy: wake normally, but no fabricated Grimoire is produced and no false Grimoire observation is persisted.
+- gameplay semantics remain primarily protected by typed tests rather than brittle source-string assertions.
+
+### PR #55 — Dawn poison exactly-once
+
+Merged into `main` at:
 
 ```text
 160f730594d76c294542cd22a5220baeb73d1bc9
 ```
 
-It established exactly-once Dawn poison materialization for both ordinary Dawn and successor-Dawn paths through:
+It established exactly-once Dawn poison materialization and retry convergence across ordinary and successor-Dawn paths.
+
+### PR #56 — next-night / Dusk poison expiry exactly-once
+
+Merged into `main` at:
 
 ```text
-NightDawnPoisonRecoveryAuthority
--> NightDawnResolutionPlanner
--> DawnPoisonCarryIntent
--> NightDawnDurableMaterializationPlanner
--> stable planner-owned ActionFact.Poison identity
+ba7cfa12853a8829ecf228c05cf2a22067f1e6e4
 ```
 
-Accepted convergence:
+It established typed Dusk poison-expiry ownership, stable history identity, restore/retry convergence, and completion before Night phase/round become durable.
+
+TBSP must preserve both PR #55 and PR #56 behavior.
+
+## 3. Current priority — TBSP Trouble Brewing Setup Preset Integration
+
+Goal:
+
+Replace broad random Trouble Brewing role-composition generation with selection from the final curated Trouble Brewing preset dataset while preserving:
+
+- rules legality as an independent authority;
+- deterministic/reproducible setup materialization;
+- independent seat shuffling;
+- one Drunk shown-role authority;
+- existing setup recommendation behavior for the remaining setup decisions;
+- No Greater Joy current behavior;
+- safe cross-game rotation without conflating it with A3 historical setup provenance.
+
+Final external dataset selected for integration:
 
 ```text
-state-first -> repair missing history only
-history-first -> repair mechanical state only
-fully durable -> no duplicate history/state mutation
-unchanged carry -> no redundant Poison action
+trouble_brewing_setup_presets_v2_final.json
+schema_version: 2
+dataset_id: trouble_brewing_setup_presets_v2_final
+status: final_ready_for_program_integration
 ```
 
-Post-merge main validation:
+Audited aggregate:
 
 ```text
-CI #1031 / run 33244894925: SUCCESS
-- Android :app:testFull: SUCCESS
-- :app:assembleDebug: SUCCESS
-- ASP contract tests: SUCCESS
-- Real Clingo 5.8 cross-validation: SUCCESS
-- CI gate: SUCCESS
+player counts: 5..15
+preset count: 480
+pool sizes: 30,30,50,50,50,50,50,50,40,40,40
+Drunk presets: 208
+Drunk options per Drunk preset: exactly 3
 ```
 
-PR #55 is no longer active work.
-
-## 3. PR #56 — next-night poison expiry exactly-once — ACCEPTED IN SCOPE
-
-### Defect closed
-
-The three Day -> Night paths previously owned separate retry-unsafe dynamic poison clear writers:
+The exact final dataset must be packaged as:
 
 ```text
-1. Klutz continuation -> next Night
-2. Virgin immediate execution -> next Night
-3. normal Day confirmation -> next Night
+app/src/main/assets/setup/trouble_brewing_setup_presets_v2_final.json
 ```
 
-Each generated `clocktowerActionId(kind = "poison-expire", ...)` and separately cleared mechanical poison after entering Night.
+Do not reformat or regenerate the source dataset during integration; preserve its verified byte identity.
 
-The hotfix closes both failure modes:
+## 4. TBSP-1 current checkpoint
 
-1. duplicate history identity after partial persistence;
-2. loss of the outgoing Day callback as retry owner when phase advanced before poison expiry converged.
+### TBSP-1A — parser contract
 
-### Preserved RED
+The parser slice owns only:
 
 ```text
-4b75bac46a9ef161e7b03e13308339daf56114a4
-test: expose next-night poison expiry ownership RED
+final dataset asset
+TroubleBrewingSetupPresetModels
+TroubleBrewingSetupPresetJson
+focused parser contract test
 ```
 
-Remote CI #1032:
+Required executable contract:
 
 ```text
-:app:testFast executed
-924 tests completed, exactly 1 failed
-DuskPoisonExpiryOwnershipTest > app root no longer owns dynamic poison-expire history identity
+schema_version == 2
+dataset_id == trouble_brewing_setup_presets_v2_final
+status == final_ready_for_program_integration
+pools 5..15 all exist
+pool sizes match the declared final pool sizes
+total presets == 480
 ```
 
-### Typed ownership chain
+The typed parser intentionally keeps dataset character IDs in their external lowercase representation. It must not silently manufacture canonical runtime `RoleId` values from strings such as `fortuneteller` or `scarletwoman`.
+
+Runtime role resolution and Trouble Brewing legality belong to TBSP-1B semantic validation.
+
+### TBSP-1B — semantic validator — NEXT AFTER 1A ACCEPTANCE
+
+Validate all 480 presets for:
 
 ```text
-DuskPoisonExpiryRecoveryAuthority
--> DuskPoisonExpiryMaterializationPlanner
--> DuskPoisonExpiryMaterializationPlan
--> stable dusk-{game}-{outgoingRound}-poison-seat-{seat}-to-none action ID
--> shared App helper materializeClocktowerPoisonExpiryAtDusk()
+unique preset IDs
+preset.playerCount matches owning pool
+total actual roles == player count
+exactly one Demon
+Demon == Imp
+no duplicate actual role
+all IDs resolve to Trouble Brewing characters
+standard composition unless Baron
+Baron applies outsider +2 / townsfolk -2 exactly once
+5–6 curated defaults contain no Baron
+Drunk absent -> empty drunk_as_options
+Drunk present -> exactly three unique absent Townsfolk options
 ```
 
-Typed convergence contract:
+Optional dataset-level assertions may also preserve the audited aggregate:
 
 ```text
-initial expiry -> stable history + mechanical clear
-state-first retry -> missing history only
-history-first retry -> mechanical clear only
-fully durable retry -> no-op
-no previous poison -> no materialization responsibility
+208 Drunk presets
+624 Drunk option slots
+208 unique Drunk-option triples
 ```
 
-### First Night recovery
+### TBSP-1 STOP
 
-Dusk recovery is intentionally separate from Dawn recovery because Poisoner acts on First Night.
-
-`DuskPoisonExpiryRecoveryAuthority` uses the latest Poison fact for the same outgoing round across First Night / ordinary Night / Day chronology. This preserves state-first recovery at the first Day -> Night boundary.
-
-### Production GREEN
+Do not implement in TBSP-1:
 
 ```text
-6b022935618b3d00d5ef2b62a34bc88d8358e645
-fix: materialize dusk poison expiry exactly once
+rotation history
+runtime preset selector
+seat assignment
+Drunk runtime choice
+CampBoardGameHostApp setup cutover
+persistence
+A3 immutable setup snapshot ownership
 ```
 
-This commit changed exactly one tracked file:
+## 5. Current production setup authority audit
+
+The current production setup path remains centered in `CampBoardGameHostApp.kt`.
+
+Relevant existing helper:
 
 ```text
-app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+generateClocktowerAssignments(playerCount, script)
 ```
 
-All three Day -> Night entry points now execute:
+Current responsibilities include broad random composition generation, runtime Baron modification, role shuffle, and random Drunk shown-role selection.
+
+TBSP must eventually reverse the current ordering so a single game seed exists before every random setup decision:
 
 ```text
-materializeClocktowerPoisonExpiryAtDusk()
--> recordClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
--> round = nextRound
--> clocktowerPhase = ClocktowerPhase.Night
+newClocktowerSeed()
+-> select preset
+-> select Drunk shown role when applicable
+-> seeded seat shuffle
+-> construct PlayerCards
+-> remaining setup recommendation
 ```
 
-Poison expiry therefore converges while phase/round still belong to the outgoing Day.
+The final presets already encode Baron setup modification. Production must never apply the old Baron transform again after consuming a preset.
 
-The three dynamic `kind = "poison-expire"` App writers are removed.
+The existing setup recommendation architecture remains separate. `SetupCoordinationRequest.lockedDecisions` is the intended seam for carrying the chosen `StorytellerDecision.DrunkShownRole` later in the campaign.
 
-### T1 production validation
+## 6. Sequence after TBSP
+
+The remaining A3 blocker is immutable setup-snapshot ownership/persistence:
 
 ```text
-CI #1036 / run 33245684173: SUCCESS
-- Android :app:testFast: SUCCESS
-- CI gate: SUCCESS
-
-R2 #961: SUCCESS
+docs/archive/deferred/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_A3_SETUP_SNAPSHOT.md
 ```
 
-### Full T4 acceptance
-
-Docs-only full checkpoint:
+Current sequence remains deliberately:
 
 ```text
-840ba4eac8d1a0649e787737a8f21d89574e0ea7
-[full-ci] docs: record PR56 dusk poison closure
+PR #54 correctness baseline        MERGED
+PR #55 Dawn poison hotfix          MERGED
+PR #56 Dusk poison hotfix          MERGED
+        ↓
+TBSP preset integration            CURRENT
+        ↓
+A3 setup snapshot ownership        DEFERRED UNTIL TBSP COMPLETE
 ```
 
-T4 evidence:
+A3 should harden the final production setup-origin contract rather than the broad-random generator that TBSP is replacing.
 
-```text
-CI #1037 / run 33245894921: SUCCESS
-- Android :app:testFull + :app:assembleDebug: SUCCESS
-- ASP contract tests: SUCCESS
-- Real Clingo 5.8 cross-validation: SUCCESS
-- CI gate: SUCCESS
-
-R2 #962 / run 33245894916: SUCCESS
-```
-
-No known P1/P2 blocker remains inside the authorized PR #56 scope after this audit.
-
-PR #56 is technically merge-ready in scope, but it remains draft/unmerged until explicit user authorization.
-
-## 4. Final PR #56 audit summary
-
-Relative to `main@160f7305...`, the acceptance checkpoint is:
-
-```text
-ahead: 6
-behind: 0
-merge base: 160f730594d76c294542cd22a5220baeb73d1bc9
-```
-
-Authorized changed-file classes only:
-
-```text
-1 App root production file
-2 Dusk typed production seam files
-4 focused/characterization test files
-2 docs files
-```
-
-No Host/A3/workflow/unrelated production files are part of the PR.
-
-## 5. Deferred work registry
+## 7. Deferred work registry
 
 | Deferred area | Status |
 |---|---|
@@ -216,59 +242,5 @@ No Host/A3/workflow/unrelated production files are part of the PR.
 | GCR-5 night checkpoint stable identity hardening | DEFERRED FOLLOW-UP |
 | GCR-5 reconstructor naming clarity | DEFERRED FOLLOW-UP |
 | Dawn systematic crash cut-point matrix | DEFERRED FOLLOW-UP |
-| A3 immutable setup snapshot ownership/persistence | PAUSED / NEXT MAINLINE CANDIDATE AFTER PR56 |
+| A3 immutable setup snapshot ownership/persistence | PAUSED UNTIL TBSP COMPLETE |
 | App Root S9.2 Active Game Persistence Boundary | AUDITED / NOT STARTED |
-| generic custom-script Demon succession | NOT AUTHORIZED |
-| Mayor redirect to Demon with generic succession | DELIBERATELY CONSTRAINED |
-| Host/A4/ZDD recommendation promotion | NOT AUTHORIZED |
-| history UI / generic misinformation tuning | NOT CURRENT |
-
-Each deferred item must be re-audited against live `main` before implementation.
-
-## 6. Testing policy
-
-Follow root `AGENTS.md` and `docs/TESTING_STRATEGY.md`.
-
-```text
-T0 focused typed RED
--> preserve assertion-level RED provenance when required
--> minimal GREEN
--> focused affected regressions
--> T1 :app:testFast
--> conservative escalation for persistence/history/transaction work
--> T4 full acceptance before merge-blocking closure
-```
-
-A skipped, cached-only or `UP-TO-DATE` route is not evidence that a required gate executed.
-
-## 7. Source-string test policy
-
-Gameplay/rules correctness belongs to typed tests.
-
-Source inspection is allowed only as a coarse architecture/ownership guard. For PR #56 it protects:
-
-- no dynamic `kind = "poison-expire"` remains in App root;
-- all three entry points share the same Dusk materialization helper;
-- the helper call precedes the next-Night phase advance.
-
-It does not substitute for typed convergence tests.
-
-## 8. Branch / scope discipline
-
-At this checkpoint:
-
-- PR #56 remains draft and unmerged;
-- do not rebase or force-push;
-- do not widen scope;
-- do not mark ready or merge without explicit user authorization;
-- use GitHub connector for safe small/medium files;
-- use Luna/Codex for huge protected App-root edits.
-
-## 9. Current next action
-
-```text
-1. Confirm final docs-only closeout CI/R2.
-2. STOP before merge/ready.
-3. If user explicitly authorizes merge, re-query live main + PR head/checks immediately before merge.
-4. After merge, re-query new main and then decide whether to resume A3 Architecture Hardening or another explicitly chosen deferred item.
-```
