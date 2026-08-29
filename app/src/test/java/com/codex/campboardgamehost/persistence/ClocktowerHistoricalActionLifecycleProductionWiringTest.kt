@@ -11,24 +11,22 @@ class ClocktowerHistoricalActionLifecycleProductionWiringTest {
     ).readText(Charsets.UTF_8)
 
     @Test
-    fun `klutz continuation records phase boundaries and poison expiry`() {
+    fun `klutz continuation records phase boundaries and routes poison expiry before next night`() {
         val klutz = appSource
             .substringAfter("onConfirmKlutzChoice =")
             .substringBefore("onSelectArtistClaimant =")
 
         assertTrue(klutz.contains("recordClocktowerPhaseAdvance(ClocktowerPhase.Dawn)"))
-        assertTrue(klutz.contains("recordClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)"))
-        assertTrue(klutz.contains("recordClocktowerAction(ActionFactDraft.Poison("))
+        assertPoisonExpiryBeforeNextNight(klutz)
     }
 
     @Test
-    fun `virgin immediate execution records the transition into the next night`() {
+    fun `virgin immediate execution routes poison expiry before transition into next night`() {
         val virgin = appSource
             .substringAfter("onVirginNomination =")
             .substringBefore("onAdvanceFromFirstNight =")
 
-        assertTrue(virgin.contains("recordClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)"))
-        assertTrue(virgin.contains("recordClocktowerAction(ActionFactDraft.Poison("))
+        assertPoisonExpiryBeforeNextNight(virgin)
     }
 
     @Test
@@ -69,5 +67,18 @@ class ClocktowerHistoricalActionLifecycleProductionWiringTest {
         assertTrue(slayer.contains("recordClocktowerAction(ActionFactDraft.Death("))
         assertTrue(slayer.contains("recordEpistemicObservation(EpistemicObservationDraft("))
         assertTrue(slayer.contains("InformationProposition.AliveAt(targetSeat, false)"))
+    }
+
+    private fun assertPoisonExpiryBeforeNextNight(block: String) {
+        val expiryIndex = block.indexOf("materializeClocktowerPoisonExpiryAtDusk()")
+        val nextNightIndex = block.indexOf("recordClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)")
+
+        assertTrue("Expected typed dusk poison expiry owner in Day -> Night path.", expiryIndex >= 0)
+        assertTrue("Expected next-Night phase transition in Day -> Night path.", nextNightIndex >= 0)
+        assertTrue(
+            "Poison expiry must materialize before the following Night phase transition.",
+            expiryIndex < nextNightIndex,
+        )
+        assertFalse(block.contains("kind = \"poison-expire\""))
     }
 }

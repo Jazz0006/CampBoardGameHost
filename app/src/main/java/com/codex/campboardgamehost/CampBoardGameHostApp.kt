@@ -163,6 +163,9 @@ import com.codex.campboardgamehost.clocktower.session.DawnDurableMaterialization
 import com.codex.campboardgamehost.clocktower.session.NightDawnDurableMaterializationPlanner
 import com.codex.campboardgamehost.clocktower.session.NightDawnPoisonResolutionInput
 import com.codex.campboardgamehost.clocktower.session.NightDawnPoisonRecoveryAuthority
+import com.codex.campboardgamehost.clocktower.session.DuskPoisonExpiryMaterializationPlanner
+import com.codex.campboardgamehost.clocktower.session.DuskPoisonExpiryMaterializationState
+import com.codex.campboardgamehost.clocktower.session.DuskPoisonExpiryRecoveryAuthority
 import com.codex.campboardgamehost.clocktower.session.NightDawnDeathResolutionInput
 import com.codex.campboardgamehost.clocktower.session.NightDawnResolutionPlanner
 import com.codex.campboardgamehost.clocktower.session.NightResolutionContinuation
@@ -1167,6 +1170,52 @@ internal fun CampBoardGameHostApp() {
         )
         clocktowerActionTimeline = committed.actionTimeline
         clocktowerNextTimelineGlobalSequence = committed.nextTimelineGlobalSequence
+    }
+
+    fun materializeClocktowerPoisonExpiryAtDusk() {
+        check(clocktowerPhase == ClocktowerPhase.Day) {
+            "Clocktower poison expiry must materialize from the outgoing Day."
+        }
+
+        val currentPoisonTargetSeat =
+            clocktowerConfirmedPoisonTarget?.let(::clocktowerSeatFor)
+
+        val durablePreviousPoisonTargetSeat =
+            currentPoisonTargetSeat
+                ?: DuskPoisonExpiryRecoveryAuthority.latestTargetSeatForRound(
+                    actionTimeline = clocktowerActionTimeline,
+                    round = round,
+                )
+
+        val materialization = DuskPoisonExpiryMaterializationPlanner.plan(
+            gameId = clocktowerGameId,
+            round = round,
+            previousTargetSeat = durablePreviousPoisonTargetSeat,
+            state = DuskPoisonExpiryMaterializationState(
+                currentPoisonTargetSeat = currentPoisonTargetSeat,
+                committedActionIds = clocktowerActionTimeline.entries
+                    .map { it.fact.actionId }
+                    .toSet(),
+            ),
+        ) ?: return
+
+        materialization.actionIdToCommit?.let { actionId ->
+            val localSequence = clocktowerEventCounter + 1
+            recordClocktowerAction(
+                ActionFactDraft.Poison(
+                    actionId = actionId,
+                    phase = storytellerPhaseFor(),
+                    round = round,
+                    sequence = localSequence,
+                    targetSeat = null,
+                ),
+            )
+        }
+
+        if (materialization.stateMutationRequired) {
+            clocktowerPoisonTarget = null
+            clocktowerConfirmedPoisonTarget = null
+        }
     }
 
     fun recordClocktowerPhaseAdvance(
@@ -3143,25 +3192,10 @@ internal fun CampBoardGameHostApp() {
                                         clocktowerKlutzReturnToDawn = false
                                     } else {
                                         val nextRound = round + 1
+                                        materializeClocktowerPoisonExpiryAtDusk()
                                         recordClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
                                         round = nextRound
                                         clocktowerPhase = ClocktowerPhase.Night
-                                        if (clocktowerConfirmedPoisonTarget != null) {
-                                            val localSequence = clocktowerEventCounter + 1
-                                            recordClocktowerAction(ActionFactDraft.Poison(
-                                                actionId = clocktowerActionId(
-                                                    kind = "poison-expire",
-                                                    actionRound = round,
-                                                    localSequence = localSequence,
-                                                ),
-                                                phase = storytellerPhaseFor(ClocktowerPhase.Night),
-                                                round = round,
-                                                sequence = localSequence,
-                                                targetSeat = null,
-                                            ))
-                                        }
-                                        clocktowerPoisonTarget = PoisonEffectLifecycle.atStartOfNextNight()
-                                        clocktowerConfirmedPoisonTarget = null
                                     }
                                     resetClocktowerDayFlow()
                                     resetClocktowerNightFlow()
@@ -3358,25 +3392,10 @@ internal fun CampBoardGameHostApp() {
                                     addOutcomeEvent(outcome)
                                 } else {
                                     val nextRound = round + 1
+                                    materializeClocktowerPoisonExpiryAtDusk()
                                     recordClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
                                     round = nextRound
                                     clocktowerPhase = ClocktowerPhase.Night
-                                    if (clocktowerConfirmedPoisonTarget != null) {
-                                        val localSequence = clocktowerEventCounter + 1
-                                        recordClocktowerAction(ActionFactDraft.Poison(
-                                            actionId = clocktowerActionId(
-                                                kind = "poison-expire",
-                                                actionRound = round,
-                                                localSequence = localSequence,
-                                            ),
-                                            phase = storytellerPhaseFor(ClocktowerPhase.Night),
-                                            round = round,
-                                            sequence = localSequence,
-                                            targetSeat = null,
-                                        ))
-                                    }
-                                    clocktowerPoisonTarget = PoisonEffectLifecycle.atStartOfNextNight()
-                                    clocktowerConfirmedPoisonTarget = null
                                     resetClocktowerDayFlow()
                                     resetClocktowerNightFlow()
                                 }
@@ -3491,25 +3510,10 @@ internal fun CampBoardGameHostApp() {
                                 addOutcomeEvent(executionOutcome)
                             } else if (clocktowerPendingKlutzName == null) {
                                 val nextRound = round + 1
+                                materializeClocktowerPoisonExpiryAtDusk()
                                 recordClocktowerPhaseAdvance(ClocktowerPhase.Night, nextRound)
                                 round = nextRound
                                 clocktowerPhase = ClocktowerPhase.Night
-                                if (clocktowerConfirmedPoisonTarget != null) {
-                                    val localSequence = clocktowerEventCounter + 1
-                                    recordClocktowerAction(ActionFactDraft.Poison(
-                                        actionId = clocktowerActionId(
-                                            kind = "poison-expire",
-                                            actionRound = round,
-                                            localSequence = localSequence,
-                                        ),
-                                        phase = storytellerPhaseFor(ClocktowerPhase.Night),
-                                        round = round,
-                                        sequence = localSequence,
-                                        targetSeat = null,
-                                    ))
-                                }
-                                clocktowerPoisonTarget = PoisonEffectLifecycle.atStartOfNextNight()
-                                clocktowerConfirmedPoisonTarget = null
                                 resetClocktowerDayFlow()
                                 resetClocktowerNightFlow()
                             }
