@@ -10,7 +10,6 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -61,7 +60,7 @@ class NightTransactionHostIntegrationSmokeTest {
     }
 
     @Test
-    fun `restored host transaction reaches Dawn planner without carrying obsolete Poisoner effect`() {
+    fun `restored host transaction reaches Dawn planner with explicit obsolete Poisoner clear`() {
         val baseGameState = gameState()
         val initial = checkpoint(
             nightStepIndex = 2,
@@ -101,7 +100,8 @@ class NightTransactionHostIntegrationSmokeTest {
 
         assertEquals(NightResolutionContinuation.DAWN, dawn.continuation)
         assertEquals(listOf(DawnRoleChangeIntent(2, RoleId("Imp"))), dawn.dawnCommitIntent?.roleChanges)
-        assertNull(dawn.dawnCommitIntent?.poisonCarry)
+        assertEquals(3, dawn.dawnCommitIntent?.poisonCarry?.previousTargetSeat)
+        assertEquals(null, dawn.dawnCommitIntent?.poisonCarry?.targetSeat)
         assertTrue(dawn.outcomeEvaluationAllowed)
         assertEquals(RoleId("Poisoner"), baseGameState.playerAt(2)?.actualRole)
         assertTrue(baseGameState.playerAt(3)?.alive == true)

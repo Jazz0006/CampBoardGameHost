@@ -8,53 +8,50 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/** SNE-7.1 executable poison-carry planner contracts. */
-class NightDawnResolutionPlannerPoisonContractTest {
+/** P1 hotfix: Dawn must retain an explicit poison-clear materialization intent. */
+class NightDawnPoisonClearIntentTest {
     @Test
-    fun `living current Poisoner carries confirmed poison into Dawn`() {
-        val intent = NightDawnResolutionPlanner.planPoisonCarry(
+    fun `Poisoner becoming Imp keeps an explicit Dawn poison clear intent`() {
+        val transition = NightDawnResolutionPlanner.confirmNewDemonIdentity(
             baseGameState = gameState(),
             checkpoint = checkpoint(),
-            input = NightDawnPoisonResolutionInput(
-                poisonerSeat = 1,
+            demonRoleId = RoleId("Imp"),
+            poisonResolutionInput = NightDawnPoisonResolutionInput(
+                poisonerSeat = 2,
                 poisonerRoleId = RoleId("Poisoner"),
                 effectiveNightState = ClocktowerEffectiveNightState(
-                    effectiveAliveSeats = setOf(1, 2),
+                    effectiveAliveSeats = setOf(2, 3),
                     effectiveRoleIdsBySeat = mapOf(
-                        1 to RoleId("Poisoner"),
-                        2 to RoleId("Monk"),
+                        2 to RoleId("Poisoner"),
+                        3 to RoleId("Monk"),
                     ),
                 ),
             ),
         )
 
-        assertEquals(2, intent?.previousTargetSeat)
-        assertEquals(2, intent?.targetSeat)
+        val intent = requireNotNull(transition.dawnCommitIntent)
+        assertEquals(2, intent.roleChanges.single().targetSeat)
+        val poison = assertNotNull(intent.poisonCarry).let { requireNotNull(intent.poisonCarry) }
+        assertEquals(3, poison.previousTargetSeat)
+        assertNull(poison.targetSeat)
     }
 
     @Test
-    fun `Poisoner promoted to Imp explicitly clears old poison into Dawn`() {
-        val intent = NightDawnResolutionPlanner.planPoisonCarry(
+    fun `confirmed poison is explicitly cleared when no Poisoner resolution input remains`() {
+        val transition = NightDawnResolutionPlanner.confirmNewDemonIdentity(
             baseGameState = gameState(),
             checkpoint = checkpoint(),
-            input = NightDawnPoisonResolutionInput(
-                poisonerSeat = 1,
-                poisonerRoleId = RoleId("Poisoner"),
-                effectiveNightState = ClocktowerEffectiveNightState(
-                    effectiveAliveSeats = setOf(1, 2),
-                    effectiveRoleIdsBySeat = mapOf(
-                        1 to RoleId("Imp"),
-                        2 to RoleId("Monk"),
-                    ),
-                ),
-            ),
+            demonRoleId = RoleId("Imp"),
+            poisonResolutionInput = null,
         )
 
-        assertEquals(2, intent?.previousTargetSeat)
-        assertNull(intent?.targetSeat)
+        val poison = requireNotNull(requireNotNull(transition.dawnCommitIntent).poisonCarry)
+        assertEquals(3, poison.previousTargetSeat)
+        assertNull(poison.targetSeat)
     }
 
     private fun gameState() = GameState(
@@ -62,6 +59,14 @@ class NightDawnResolutionPlannerPoisonContractTest {
         players = listOf(
             PlayerState(
                 seat = 1,
+                name = "Imp",
+                actualRole = RoleId("Imp"),
+                actualAlignment = Alignment.EVIL,
+                actualType = CharacterType.DEMON,
+                alive = false,
+            ),
+            PlayerState(
+                seat = 2,
                 name = "Poisoner",
                 actualRole = RoleId("Poisoner"),
                 actualAlignment = Alignment.EVIL,
@@ -69,7 +74,7 @@ class NightDawnResolutionPlannerPoisonContractTest {
                 alive = true,
             ),
             PlayerState(
-                seat = 2,
+                seat = 3,
                 name = "Monk",
                 actualRole = RoleId("Monk"),
                 actualAlignment = Alignment.GOOD,
@@ -87,18 +92,18 @@ class NightDawnResolutionPlannerPoisonContractTest {
         playerInputRevision = 7L,
         nightStarted = true,
         nightStepIndex = 4,
-        confirmedAttackTarget = null,
-        attackDraftTarget = null,
+        confirmedAttackTarget = "Imp",
+        attackDraftTarget = "Imp",
         confirmedPoisonTarget = "Monk",
         poisonDraftTarget = "Monk",
         confirmedMonkTarget = null,
         monkDraftTarget = null,
         confirmedMayorRedirectTarget = null,
         mayorRedirectDraftTarget = null,
-        pendingNewDemonName = null,
+        pendingNewDemonName = "Poisoner",
         pendingNightNewDemonIdentityName = null,
-        demonSuccessorDraftTarget = null,
-        confirmedDemonSuccessorTarget = null,
+        demonSuccessorDraftTarget = "Poisoner",
+        confirmedDemonSuccessorTarget = "Poisoner",
         nextTimelineGlobalSequence = 17L,
     )
 }
