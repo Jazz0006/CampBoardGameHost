@@ -8,378 +8,228 @@
 ## 1. Current live development context
 
 ```text
-main baseline: c8985cb4991f6c7e5ea02adedb932d2d86452da1
-active branch: codex/clocktower-same-night-effective-state-correctness
-PR: #54
-PR policy: open / unmerged until explicit authorization
-last audited pre-blocker head: e9a30ffc353d870df388329986be433268558661
-PR54-P1-1 accepted checkpoint: f97276139ab0123329c1e73c0380048c5ac98e3d
-PR54-P1-2 production wiring checkpoint: 8a6f8cea481edbaef8a5946abb19ef0d0f483005
-current full T4 acceptance checkpoint: 8e0f62c059c814ad744514f7213040ad8bc74119
+main baseline: 57b61a6a7d5be375612c2ec3590ff84518c9f277
+main meaning: PR #54 merged — Same-night correctness and GCR hardening
+
+active branch: codex/hotfix-dawn-poison-exactly-once
+active PR: #55 — Hotfix Dawn poison exactly-once materialization
+PR state at this roadmap checkpoint: open / draft / unmerged / mergeable
+current PR head before this docs update: 5953afaac311bcfb404f71e99a539578513236a2
+latest production checkpoint: 996201046e53de4395aaf555f50ae0f04a70b5ba
+full T4 checkpoint: aa0d9cb8526cef2f96894505dee9fd173e8f8bbd
 ```
 
-Current accepted GCR checkpoints:
+The dedicated PR #55 handoff remains the detailed acceptance record:
 
 ```text
-GCR-1 executable acceptance:
-974f617adffd08cc7de0924f6fea4f96f3d73f0c
-
-GCR-1 + GCR-2 historical full production acceptance:
-474103ed13caaf34a329ca5e80e2f0ba64963b86
-
-GCR-3 final test-quality acceptance:
-383ad0e695656124f9dc608fd5ce06b72de6b499
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-29_PR55_DAWN_POISON_EXACTLY_ONCE.md
 ```
 
-Those historical checkpoints remain valid evidence for the behavior they exercised. Post-acceptance review later found two additional runtime P1 regressions outside their coverage; both have now been fixed and accepted. A fresh full-tree T4 run at `8e0f62c0...` is the current PR merge-readiness evidence.
+## 2. PR #54 — MERGED / ACCEPTED
 
-## 2. PR #54 post-acceptance runtime blockers — CLOSED / ACCEPTED
+PR #54 was merged into `main` at:
+
+```text
+57b61a6a7d5be375612c2ec3590ff84518c9f277
+```
+
+Accepted behavior includes the same-night correctness and GCR hardening work, including:
+
+- First-night Fortune Teller uses base/current role authority instead of entering Other Night chronology projection.
+- Pending Imp self-kill succession can reconstruct the current-night transaction safely while preserving the distinction between living-Demon UI authority and current-night reconstruction authority.
+- GCR-1 current Demon authority is accepted.
+- GCR-2 poisoned Spy fail-safe information policy is accepted.
+- GCR-3 source-string retirement is accepted.
+- SNE-7 remains broadly green.
+
+Historical PR54 acceptance details remain in the existing PR54/GCR/SNE handoffs and Git history. They are no longer the active branch state.
+
+## 3. PR #55 — Dawn poison exactly-once hotfix — FULLY ACCEPTED IN SCOPE
+
+### Accepted defect contract
+
+Dawn poison is now represented as an explicit semantic transition:
+
+```text
+DawnPoisonCarryIntent(
+    previousTargetSeat,
+    targetSeat,
+)
+```
+
+Semantics:
+
+- `previousTargetSeat == targetSeat` means unchanged carry;
+- `previousTargetSeat != targetSeat` means a durable transition;
+- `targetSeat == null` can represent an explicit clear;
+- `poisonCarry == null` means no Dawn poison materialization responsibility, not an implicit clear.
+
+### Durable ownership chain
+
+Both successor Dawn and ordinary Night -> Dawn poison handling now use the typed chain:
+
+```text
+NightDawnPoisonRecoveryAuthority
+-> NightDawnResolutionPlanner
+-> DawnPoisonCarryIntent
+-> NightDawnDurableMaterializationPlanner
+-> planner-provided stable actionIdToCommit
+-> ActionFactDraft.Poison
+```
+
+Mechanical state repair and history repair are planned independently.
+
+Therefore the accepted convergence contract is:
+
+```text
+state-first partial persistence
+-> repair missing history only
+
+history-first partial persistence
+-> repair mechanical state only
+
+fully durable replay
+-> no duplicate state mutation and no duplicate history
+
+unchanged carry
+-> no redundant Dawn Poison action
+```
+
+### Production checkpoint
+
+```text
+996201046e53de4395aaf555f50ae0f04a70b5ba
+commit: fix: materialize ordinary Dawn poison exactly once
+```
+
+The obsolete ordinary Dawn writer using:
+
+```text
+poisonCarriedIntoTomorrow
+clocktowerActionId(kind = "poison-after-night", ...)
+```
+
+has been removed from production.
+
+### Full acceptance
+
+Docs-only full checkpoint:
+
+```text
+aa0d9cb8526cef2f96894505dee9fd173e8f8bbd
+```
+
+T4 evidence:
+
+```text
+CI #1028 / run 33244041684: SUCCESS
+- Android :app:testFull: SUCCESS
+- :app:assembleDebug: SUCCESS
+- ASP contract tests: SUCCESS
+- Real Clingo cross-validation: SUCCESS
+- CI gate: SUCCESS
+
+R2 #954 / run 33244041658: SUCCESS
+```
+
+Final docs-only closeout head before this roadmap update:
+
+```text
+5953afaac311bcfb404f71e99a539578513236a2
+CI #1029: SUCCESS
+R2 #955: SUCCESS
+```
+
+No known P1/P2 runtime blocker remains **inside the authorized PR #55 Dawn scope**.
+
+## 4. Newly promoted repository-global P1 — next-night poison expiry exactly-once
+
+The final global PR55 audit found three remaining next-night poison expiry writers in `CampBoardGameHostApp.kt`.
+
+Current owners:
+
+```text
+1. Klutz continuation -> next Night
+2. Virgin immediate execution -> next Night
+3. normal Day confirmation -> next Night
+```
+
+All three still generate poison clear history through the legacy shape:
+
+```text
+clocktowerActionId(
+    kind = "poison-expire",
+    actionRound = round,
+    localSequence = ...,
+)
+```
+
+and then separately clear:
+
+```text
+clocktowerPoisonTarget
+clocktowerConfirmedPoisonTarget
+```
+
+This is now classified as:
+
+```text
+P1 — repository-global poison lifecycle durability gap
+```
+
+Reason: the transition can still be split across phase advancement, history materialization and mechanical poison state. The dynamic identity does not provide the same state-first/history-first convergence guarantee now established for Dawn.
+
+This was pre-existing and deliberately excluded from PR #55. It does not invalidate PR #55 acceptance, but it is the immediate next correctness task after PR #55 integration.
+
+### Required next hotfix scope
+
+Create a separate branch from the post-PR55 `main` and tests-first unify all three next-night expiry entries behind one stable semantic materialization owner.
+
+Minimum required RED/GREEN matrix:
+
+```text
+A. normal Day -> Night poison expiry
+B. Virgin execution -> Night poison expiry
+C. Klutz continuation -> Night poison expiry
+D. state-first partial persistence repairs missing Poison(null) history
+E. history-first partial persistence repairs mechanical poison state only
+F. fully durable retry is a no-op
+G. all three entry points share the same stable identity contract
+H. legacy dynamic "poison-expire" App writers are removed
+```
+
+Do not fold this work back into PR #55 unless a new audit proves PR55 itself cannot safely merge without it.
+
+## 5. P3 / future robustness
+
+### No-current-Poisoner ordinary Dawn recovery
+
+Ordinary Dawn currently discovers a card whose current role is `Poisoner` before invoking `planPoisonCarry`.
+
+For current Trouble Brewing production flows this is not a known blocker:
+
+- a Poisoner killed during the night retains the Poisoner role and is still discoverable;
+- post-death effective state correctly marks the dead Poisoner mechanically inactive;
+- Poisoner -> Imp succession is handled by the dedicated successor-Dawn path.
+
+Re-audit this assumption before generic role-changing custom scripts are promoted.
 
 Status:
 
 ```text
-PR54-P1-1  First-night Fortune Teller incorrectly enters Other Night projection   FIXED / ACCEPTED
-PR54-P1-2  Imp self-kill pending successor cannot reconstruct Host safely         FIXED / ACCEPTED
+P3 / FUTURE CUSTOM-SCRIPT ROBUSTNESS
 ```
 
-There is no remaining known PR54 runtime P1 blocker from this closeout campaign.
-
-### PR54-P1-1 — First-night Fortune Teller projection crash — FIXED / ACCEPTED
-
-Original production path:
-
-```text
-First Night
--> Fortune Teller selects two players
--> Host constructs Fortune Teller OTHER_NIGHT interaction id
--> Host calls effectiveNightStateAt(...)
--> otherNightCanonicalInteractionIds is empty on First Night
--> ClocktowerEffectiveNightState rejects unknown interaction
--> crash
-```
-
-Accepted contract:
-
-```text
-First Night
--> Fortune Teller uses base/current persisted role state
--> must not enter Other Night chronology projection
-
-Other Night
--> Fortune Teller continues to use canonical same-night effective-state projection
-```
-
-The effective-state projector remains fail-closed for unknown interactions. The caller now selects the correct authority for the current phase.
-
-Acceptance evidence:
-
-```text
-Historical behavioral RED checkpoint:
-779a58ea83ef2fc1a07aae67e63b929454c0c8ab
-CI #987 / run 33220660973 FAILURE as expected
-- production and tests compiled successfully
-- :app:testFast executed
-- 907 tests completed, 1 failed
-- failing test: ClocktowerFortuneTellerPhaseAuthorityTest
-- failure: First Night evaluated the Other Night provider
-
-Minimal production GREEN:
-11cc2c78b336f11e7bb9722b1913c2cfabe8d109
-- exactly one commit after the RED checkpoint
-- production diff limited to ClocktowerHostCoreSemantics.kt and ClocktowerHostScreen.kt
-- First Night uses base role authority
-- Other Night uses lazy canonical effective-state projection
-
-Strengthened typed regression checkpoint:
-f97276139ab0123329c1e73c0380048c5ac98e3d
-CI #989 / run 33221389915 SUCCESS
-- Android :app:testFast actually executed and passed
-- CI gate SUCCESS
-R2 #916 / run 33221389931 SUCCESS
-```
-
-The strengthened typed regression covers Fortune Teller Demon-match semantics in both directions: First Night base Demon/non-Demon without evaluating Other Night projection, and Other Night projected role overriding the base role.
-
-### PR54-P1-2 — Imp self-kill pending successor reconstruction crash — FIXED / ACCEPTED
-
-Observed failure lifecycle:
-
-```text
-Imp self-kill confirmed
--> old Imp becomes mechanically dead
--> pending successor exists
--> phase remains Night
--> Host recomposes before successor identity confirmation completes
--> there is temporarily no living Demon card
--> old Host required living-Demon authority for reconstruction
--> crash before new-Demon identity confirmation UI
-```
-
-Accepted authority split:
-
-```text
-living-Demon UI authority
--> resolveCurrentDemonHostContext()
--> remains living-only
-
-current-night transaction/reconstruction authority
--> resolveNightReconstructionDemonRoleId(...)
--> exactly one live Demon when available
--> zero-live pending succession may recover the explicit confirmed dead Demon attacker
--> multiple-live-Demon ambiguity remains fail-closed
-
-canonical succession requirement
--> resolveNightDemonSuccessionForHost(...)
--> delegates to existing Trouble Brewing Imp self-kill semantics
-
-canonical Other Night ordering
--> clocktowerOtherNightWakingRoleIds(...)
--> normal nights use living current roles + Drunk shown role
--> pending succession retains the historical Imp only as a canonical ordering anchor
-```
-
-The old Imp remains mechanically dead, the successor is not role-mutated before confirmation, and `NightTransactionReconstructor` remains fail-closed and unchanged.
-
-Tests-first evidence:
-
-```text
-reconstruction-role RED:
-5dcf91e0...
-- dead old Imp / zero living Demon
-- expected historical Imp role authority
-
-pending-succession RED:
-b9cb90d3...
-- old Imp dead
-- pending successor present
-- expected canonical successor Choice
-
-ordering-anchor behavioral RED:
-5ba1c162b8c3c7eb40b5d4ecd01a9dbd935c51b5
-CI #1000 / run 33222642480
-- production/test compilation succeeded
-- :app:testFast executed
-- 914 tests completed, 1 failed
-- only failure: pending succession retains historical Imp ordering anchor after old Imp is dead
-```
-
-Typed seam GREEN checkpoint:
-
-```text
-13a5fb03a9e5d49200f0516cbe9db16d3b6f0a11
-CI #1001 / run 33223172126 SUCCESS
-- Android FAST unit tests SUCCESS
-- Real Clingo cross-validation SUCCESS
-- CI gate SUCCESS
-R2 #928 / run 33223172160 SUCCESS
-```
-
-Final Host wiring checkpoint:
-
-```text
-8a6f8cea481edbaef8a5946abb19ef0d0f483005
-commit: fix: wire pending Imp succession into night host
-```
-
-Remote exact-diff audit from `13a5fb03...`:
-
-```text
-ahead_by: 1
-behind_by: 0
-changed files: exactly 1
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
-23 additions / 50 deletions
-```
-
-Host wiring now uses one canonical transaction role for succession resolution, canonical interaction planning, `NightTransactionReconstructor`, and resolved Demon mechanical-death interaction identity. `demonCard` remains the living-Demon UI wake/display authority.
-
-T1 evidence:
-
-```text
-CI #1002 / run 33223959281 SUCCESS
-- Android :app:testFast SUCCESS
-- CI gate SUCCESS
-R2 #929 / run 33223959279 SUCCESS
-```
-
-## 3. GCR-1 — Current Demon authority — ACCEPTED
-
-Accepted correctness:
-
-```text
-Night N:   Imp0 self-kills -> Imp1 becomes current Demon
-Night N+1: Imp1 acts normally
-Later:     Imp1 can self-kill -> Imp2 becomes current Demon
-```
-
-Historical dead Demon role identity remains represented correctly. Current living-Demon authority derives from the single live Demon after succession has completed.
-
-The previously missing transient pending-confirmation window is now covered by PR54-P1-2: while the old Imp is already dead and before the successor is materialized as Demon, current-night transaction/reconstruction authority can still preserve the canonical Imp role without pretending a living Demon exists.
-
-Accepted executable checkpoint:
-
-```text
-974f617adffd08cc7de0924f6fea4f96f3d73f0c
-```
-
-Evidence:
-
-```text
-CI #959 / run 33174380352 SUCCESS
-R2 run 33174380336 SUCCESS
-```
-
-## 4. GCR-2 — Poisoned Spy fail-safe information policy — ACCEPTED
-
-Product decision, 2026-08-28:
-
-The app intentionally does **not** implement fabricated/misleading Grimoire generation for a poisoned Spy. This is an intentional product simplification / house-rule deviation from official poisoned-information semantics.
-
-Accepted policy:
-
-```text
-healthy Spy
--> wake normally
--> show the true Grimoire
-
-poisoned Spy
--> wake normally
--> show no Grimoire information
--> Host may explicitly identify the poisoned state to the Storyteller
--> do not create/persist a Spy Grimoire information observation
-```
-
-The interaction-shape difference is intentional and must not be reopened as a correctness defect unless the product policy is deliberately changed later.
-
-No fake-Grimoire or generic misinformation subsystem was introduced.
-
-## 5. PR #54 current full acceptance — GREEN
-
-Current full-tree acceptance checkpoint:
-
-```text
-8e0f62c059c814ad744514f7213040ad8bc74119
-```
-
-This is a docs-only `[full-ci]` checkpoint directly after production head `8a6f8cea...`, so it validates the same production tree while forcing all full gates.
-
-Routing evidence:
-
-```text
-Full checkpoint selected.
-Routing: android=true android_full=true asp=true oracle=true
-```
-
-Evidence:
-
-```text
-CI #1003 / run 33224102399 SUCCESS
-- Android :app:testFull + :app:assembleDebug SUCCESS
-- FAST route skipped as expected for the full checkpoint
-- ASP contract tests SUCCESS
-- Real Clingo cross-validation SUCCESS
-- CI gate SUCCESS
-
-R2 #930 / run 33224102366 SUCCESS
-```
-
-This supersedes the older `474103ed...` checkpoint as **current PR merge-readiness evidence**. It does not itself authorize merge; PR #54 remains open/unmerged until explicit user authorization.
-
-Historical GCR-1/GCR-2 full checkpoint:
-
-```text
-474103ed13caaf34a329ca5e80e2f0ba64963b86
-CI #963 / run 33175600756 SUCCESS
-R2 run 33175600749 SUCCESS
-```
-
-## 6. GCR-3 — source-string retirement — ACCEPTED
-
-GCR-3 audited correctness-adjacent source-string tests under this classification:
-
-```text
-A. typed replacement already proves behavior -> retire
-B. behavior matters but no callable production seam exists -> narrow seam only if worthwhile
-C. architecture/ownership-only invariant -> keep coarse source guard
-D. obsolete implementation-shape assertion -> delete
-```
-
-Result:
-
-- gameplay semantics remain owned by typed tests;
-- remaining source inspection is coarse App/Host ownership only;
-- callback-local variable names, statement order, role lists, exact UI text and gameplay-result source assertions were removed where redundant;
-- no production file was changed during GCR-3;
-- Dawn materializer seam extraction was deliberately deferred because it would add production risk solely to remove already-coarse ownership guards.
-
-Final GCR-3 test checkpoint:
-
-```text
-383ad0e695656124f9dc608fd5ce06b72de6b499
-```
-
-Evidence:
-
-```text
-CI #980 / run 33177405639 SUCCESS
-- Android FAST unit tests SUCCESS
-- CI gate SUCCESS
-
-R2 run 33177405675 SUCCESS
-```
-
-Exact post-T4 audit:
-
-```text
-474103ed -> 383ad0e6
-17 commits
-13 modified test files
-1 added audit doc
-0 production files
-```
-
-Detailed audit:
-
-```text
-docs/GCR3_SOURCE_STRING_RETIREMENT_AUDIT_2026-08-28.md
-```
-
-## 7. SNE-7 — CLOSED / BROAD GREEN
-
-Earlier accepted executable SNE-7 full checkpoint:
-
-```text
-70935644daf5c06985420f19833dbda3a160bbfa
-```
-
-Durable contracts to preserve:
-
-- `ClocktowerNightCheckpoint` owns unfinished-night durable state;
-- GameState + action/observation timelines own durable historical truth;
-- mechanical death and public death announcement are distinct;
-- stable durable IDs do not depend on mutable revisions/event counters;
-- current role/effective state must be read at the correct same-night interaction point;
-- Dawn replay/retry must be idempotent and exactly-once at history level.
-
-The later First Night Fortune Teller caller phase-selection regression has been fixed without relaxing the projector invariant, and pending Imp succession reconstruction has been fixed without weakening Demon authority invariants.
-
-Historical SNE execution handoffs are consolidated under:
-
-```text
-docs/archive/SNE7_AND_PRE_GCR_HANDOFF_CLOSEOUT_2026-08-28.md
-```
-
-## 8. Deferred work registry
-
-These remain deferred and are **not** current PR blockers:
+## 6. Deferred work registry
 
 | Deferred area | Status |
 |---|---|
+| next-night `poison-expire` exactly-once hardening | **P1 — NEXT** |
 | GCR-4 Chambermaid actual wake-history authority | DEFERRED FOLLOW-UP |
 | GCR-5 night checkpoint stable identity hardening | DEFERRED FOLLOW-UP |
 | GCR-5 reconstructor naming clarity | DEFERRED FOLLOW-UP |
 | Dawn systematic crash cut-point matrix | DEFERRED FOLLOW-UP |
-| A3 immutable setup snapshot ownership/persistence | NOT STARTED |
+| A3 immutable setup snapshot ownership/persistence | PAUSED / RESUME AFTER HOTFIX |
 | App Root S9.2 Active Game Persistence Boundary | AUDITED / NOT STARTED |
 | generic custom-script Demon succession | NOT AUTHORIZED |
 | Mayor redirect to Demon with generic succession | DELIBERATELY CONSTRAINED |
@@ -388,69 +238,56 @@ These remain deferred and are **not** current PR blockers:
 
 Each deferred item must be re-audited against live `main` before implementation.
 
-## 9. Source-string test policy
+## 7. Testing policy
 
-Gameplay/rules correctness must be typed.
+Follow `docs/TESTING_STRATEGY.md` and root `AGENTS.md`.
 
-Long-term source inspection is allowed only for coarse architecture/ownership assertions where there is no callable seam. Source-string tests must not freeze incidental implementation details or substitute for rules behavior.
-
-The PR54 runtime blocker closeout reinforced this policy: both First Night Fortune Teller phase authority and pending Imp succession authority were established with typed behavioral seams; Host source diff inspection was used only as an independent wiring audit, not as the primary correctness proof.
-
-## 10. Validation policy
-
-Follow `docs/TESTING_STRATEGY.md`.
-
-Behavior-changing correctness work:
+Correctness work uses:
 
 ```text
 T0 focused typed RED
--> assertion-level RED provenance
+-> preserve assertion-level RED provenance when required
 -> minimal GREEN
 -> focused affected regressions
--> T1 :app:testFast at the logical blocker checkpoint
--> T2/T3 when required
--> T4 before merge-blocking production closure
+-> T1 :app:testFast at logical checkpoint
+-> T2/T3 when dependency/external scope requires it
+-> T4 full acceptance before merge-blocking production closure
 ```
+
+Persistence/schema, transaction boundaries, history identity and central orchestration justify conservative escalation.
 
 A skipped, cached-only or `UP-TO-DATE` route is not evidence that a required gate executed.
 
-PR54 runtime closeout has now completed both T1 and fresh T4 validation.
+## 8. Source-string test policy
 
-## 11. Scope / branch discipline
+Gameplay and rules correctness must be typed.
 
-Until explicit authorization:
+Source inspection is allowed only as a coarse architecture/ownership guard where there is no callable production seam. It must not freeze incidental callback-local variable names or substitute for behavioral tests.
 
-- keep PR #54 open/unmerged;
-- do not merge;
-- do not rebase/force-push;
-- PR54-P1-1 and PR54-P1-2 are both closed/accepted;
-- do not start deferred GCR-4/5, A3, S9.2, A4/ZDD or recommendation work on this branch merely because the blockers are closed;
-- preserve complete-worktree safety for `CampBoardGameHostApp.kt` / `ClocktowerHostScreen.kt`;
-- preserve the accepted authority split between living-Demon UI state and current-night transaction/reconstruction state.
+For poison lifecycle hardening:
 
-## 12. Current next action
+- typed tests own transition identity and convergence semantics;
+- a coarse source guard may assert that legacy dynamic `poison-expire` writers are absent after migration.
 
-**PR #54 has no remaining known runtime P1 blocker from the post-acceptance closeout, and the fresh T4 merge-readiness gate is green.**
+## 9. Branch / scope discipline
 
-Current state:
+At this roadmap checkpoint:
 
-```text
-P1-1 Fortune Teller runtime blocker       CLOSED / ACCEPTED
-P1-2 pending Imp succession blocker        CLOSED / ACCEPTED
-T1 FAST checkpoint                         GREEN
-T4 full Android + APK                       GREEN
-ASP contract                                GREEN
-Real Clingo                                 GREEN
-R2                                           GREEN
-PR #54                                      OPEN / UNMERGED
-```
+- PR #55 remains unmerged until its docs update CI is confirmed green;
+- do not rebase or force-push PR #55;
+- do not add the three `poison-expire` changes to PR #55 merely for convenience;
+- after PR #55 merge, create a separate P1 branch from the new live `main`;
+- preserve complete-worktree safety for `CampBoardGameHostApp.kt` and other huge protected files;
+- use the GitHub connector for safe small/medium files and Luna/Codex for huge protected App-root edits.
 
-Next action requires explicit user direction. Reasonable options are:
+## 10. Current next action
 
 ```text
-A. authorize final PR #54 merge/readiness action;
-B. keep PR #54 open and return to the previously paused A3 architecture-hardening line;
-C. keep PR #54 open and resume another explicitly selected deferred workstream on a separate branch.
+1. Confirm this roadmap-only PR55 checkpoint CI/R2.
+2. Merge PR #55 after the checkpoint is green.
+3. Re-query live main and verify the PR55 merge commit.
+4. Create a separate P1 poison-expire exactly-once hotfix branch from that main.
+5. Start tests-first with a typed RED before changing production behavior.
 ```
 
-Do not merge PR #54 without explicit user authorization.
+Do not resume A3 architecture hardening until the new P1 poison-expire hotfix is either integrated or explicitly paused.
