@@ -54,6 +54,50 @@ class TroubleBrewingSetupPresetSelectorTest {
         }
     }
 
+    @Test
+    fun `same seed is reproducible and independent of input pool order`() {
+        val presets = listOf(
+            preset(id = "alpha", playerCount = 8),
+            preset(id = "bravo", playerCount = 8),
+            preset(id = "charlie", playerCount = 8),
+            preset(id = "delta", playerCount = 8),
+        )
+        val forward = datasetOf(8, presets)
+        val reversed = datasetOf(8, presets.reversed())
+
+        val first = TroubleBrewingSetupPresetSelector.select(
+            dataset = forward,
+            playerCount = 8,
+            gameSeed = 987654321L,
+        )
+        val repeated = TroubleBrewingSetupPresetSelector.select(
+            dataset = forward,
+            playerCount = 8,
+            gameSeed = 987654321L,
+        )
+        val reordered = TroubleBrewingSetupPresetSelector.select(
+            dataset = reversed,
+            playerCount = 8,
+            gameSeed = 987654321L,
+        )
+
+        assertEquals(first, repeated)
+        assertEquals(first.presetId, reordered.presetId)
+        assertEquals(first.gameSeed, reordered.gameSeed)
+    }
+
+    private fun datasetOf(
+        playerCount: Int,
+        presets: List<TroubleBrewingSetupPreset>,
+    ) = TroubleBrewingSetupPresetDataset(
+        schemaVersion = 2,
+        datasetId = "test-dataset",
+        status = "test",
+        declaredPoolSizes = mapOf(playerCount to presets.size),
+        runtimeSelectionPolicy = testPolicy(),
+        pools = mapOf(playerCount to presets),
+    )
+
     private fun testPolicy() = TroubleBrewingRuntimeSelectionPolicy(
         exactRepeat = "reject",
         similarityScope = "test",
