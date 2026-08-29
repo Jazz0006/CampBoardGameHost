@@ -248,10 +248,9 @@ class TroubleBrewingSetupPresetValidatorTest {
         expected: TroubleBrewingSetupPresetValidationCode,
         block: () -> Unit,
     ) {
-        val error = assertThrows(
-            TroubleBrewingSetupPresetValidationException::class.java,
-            block,
-        )
+        val error = assertThrows(TroubleBrewingSetupPresetValidationException::class.java) {
+            block()
+        }
         assertEquals(expected, error.code)
     }
 }
