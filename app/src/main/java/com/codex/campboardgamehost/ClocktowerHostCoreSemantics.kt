@@ -86,6 +86,7 @@ internal fun clocktowerOtherNightWakingRoleIds(
             card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
         }
     }
+    pendingSuccessionDemonRoleId?.let(::add)
 }
 
 internal fun storytellerPairHint(
