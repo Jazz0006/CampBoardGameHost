@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.setup
 
 import com.codex.campboardgamehost.clocktower.domain.MurmurHash3
+import kotlin.math.roundToLong
 
 internal data class TroubleBrewingSetupPresetSelection(
     val datasetId: String,
@@ -58,9 +59,18 @@ internal object TroubleBrewingSetupPresetSelector {
         val selectionSeed = MurmurHash3.low64Utf8(
             "tb-preset-v1|${dataset.datasetId}|$playerCount|$gameSeed",
         )
-        val selected = canonicalPool[
-            java.lang.Long.remainderUnsigned(selectionSeed, canonicalPool.size.toLong()).toInt()
-        ]
+        val weightedPool = canonicalPool.map { candidate ->
+            val score = TroubleBrewingSetupPresetRotationScorer.scoreBaseNovelty(
+                candidate = candidate,
+                recentSetupRotationHistory = recentSetupRotationHistory,
+                historyWeights = dataset.runtimeSelectionPolicy.historyWeights,
+            )
+            WeightedCandidate(
+                preset = candidate,
+                weight = (score.baseNoveltyWeight * WEIGHT_SCALE).roundToLong().coerceAtLeast(1L),
+            )
+        }
+        val selected = selectWeighted(weightedPool, selectionSeed)
         val selectedDrunkShownRole = selectDrunkShownRole(
             datasetId = dataset.datasetId,
             playerCount = playerCount,
@@ -76,6 +86,29 @@ internal object TroubleBrewingSetupPresetSelector {
             preset = selected,
             selectedDrunkShownRole = selectedDrunkShownRole,
         )
+    }
+
+    private fun selectWeighted(
+        candidates: List<WeightedCandidate>,
+        selectionSeed: Long,
+    ): TroubleBrewingSetupPreset {
+        require(candidates.isNotEmpty())
+        val firstWeight = candidates.first().weight
+        if (candidates.all { it.weight == firstWeight }) {
+            return candidates[
+                java.lang.Long.remainderUnsigned(selectionSeed, candidates.size.toLong()).toInt()
+            ].preset
+        }
+
+        val totalWeight = candidates.sumOf { it.weight }
+        require(totalWeight > 0L) { "Trouble Brewing candidate weights must have positive total weight." }
+        val draw = java.lang.Long.remainderUnsigned(selectionSeed, totalWeight)
+        var cumulative = 0L
+        candidates.forEach { candidate ->
+            cumulative += candidate.weight
+            if (draw < cumulative) return candidate.preset
+        }
+        error("Trouble Brewing weighted preset selection did not resolve a candidate.")
     }
 
     private fun TroubleBrewingSetupPreset.nonDemonRoleIds(): Set<String> =
@@ -104,6 +137,12 @@ internal object TroubleBrewingSetupPresetSelector {
         ]
     }
 
+    private data class WeightedCandidate(
+        val preset: TroubleBrewingSetupPreset,
+        val weight: Long,
+    )
+
     private const val EXACT_REPEAT_REJECT = "reject"
     private const val DRUNK_EXTERNAL_ID = "drunk"
+    private const val WEIGHT_SCALE = 1_000_000.0
 }
