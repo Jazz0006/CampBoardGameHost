@@ -11,9 +11,14 @@ import org.junit.Test
 
 /** SNE-7.9E: Dawn durable effects need stable identity independent of callback retries. */
 class NightDawnDurableMaterializationPlannerTest {
+    private val poisonClear = DawnPoisonCarryIntent(
+        targetSeat = null,
+        previousTargetSeat = 3,
+    )
     private val intent = DawnCommitIntent(
         roleChanges = listOf(DawnRoleChangeIntent(targetSeat = 2, roleId = RoleId("Imp"))),
         death = DawnDeathIntent(targetSeat = 1),
+        poisonCarry = poisonClear,
     )
 
     @Test
@@ -36,6 +41,11 @@ class NightDawnDurableMaterializationPlannerTest {
         assertTrue(roleChange.stateMutationRequired)
         assertNotNull(roleChange.actionIdToCommit)
 
+        val poison = requireNotNull(plan.poison)
+        assertEquals(poisonClear, poison.intent)
+        assertTrue(poison.stateMutationRequired)
+        assertEquals("dawn-game-17-3-poison-seat-3-to-none", poison.actionIdToCommit)
+
         val phaseAdvance = requireNotNull(plan.phaseAdvance)
         assertEquals(StorytellerPhase.DAWN, phaseAdvance.targetPhase)
         assertTrue(phaseAdvance.stateMutationRequired)
@@ -53,6 +63,7 @@ class NightDawnDurableMaterializationPlannerTest {
         )
         val firstDeath = requireNotNull(first.death)
         val firstRoleChange = first.roleChanges.single()
+        val firstPoison = requireNotNull(first.poison)
         val firstPhase = requireNotNull(first.phaseAdvance)
 
         val replay = NightDawnDurableMaterializationPlanner.plan(
@@ -67,9 +78,11 @@ class NightDawnDurableMaterializationPlannerTest {
                     3 to RoleId("Empath"),
                 ),
                 currentPhase = StorytellerPhase.DAWN,
+                currentPoisonTargetSeat = null,
                 committedActionIds = setOf(
                     requireNotNull(firstDeath.actionIdToCommit),
                     requireNotNull(firstRoleChange.actionIdToCommit),
+                    requireNotNull(firstPoison.actionIdToCommit),
                     requireNotNull(firstPhase.actionIdToCommit),
                 ),
                 committedObservationRecordIds = setOf(
@@ -87,6 +100,10 @@ class NightDawnDurableMaterializationPlannerTest {
         val replayRoleChange = replay.roleChanges.single()
         assertFalse(replayRoleChange.stateMutationRequired)
         assertNull(replayRoleChange.actionIdToCommit)
+
+        val replayPoison = requireNotNull(replay.poison)
+        assertFalse(replayPoison.stateMutationRequired)
+        assertNull(replayPoison.actionIdToCommit)
 
         val replayPhase = requireNotNull(replay.phaseAdvance)
         assertFalse(replayPhase.stateMutationRequired)
@@ -120,6 +137,77 @@ class NightDawnDurableMaterializationPlannerTest {
         )
     }
 
+    @Test
+    fun `poison state already cleared but history missing still repairs stable clear action`() {
+        val first = NightDawnDurableMaterializationPlanner.plan(
+            gameId = "game-17",
+            round = 3,
+            intent = intent,
+            state = initialState(),
+            advanceToDawn = true,
+        )
+        val firstPoison = requireNotNull(first.poison)
+
+        val retry = NightDawnDurableMaterializationPlanner.plan(
+            gameId = "game-17",
+            round = 3,
+            intent = intent,
+            state = initialState().copy(currentPoisonTargetSeat = null),
+            advanceToDawn = true,
+        )
+        val retryPoison = requireNotNull(retry.poison)
+
+        assertFalse(retryPoison.stateMutationRequired)
+        assertEquals(firstPoison.actionIdToCommit, retryPoison.actionIdToCommit)
+    }
+
+    @Test
+    fun `poison clear history already present but state stale repairs state without duplicate history`() {
+        val first = NightDawnDurableMaterializationPlanner.plan(
+            gameId = "game-17",
+            round = 3,
+            intent = intent,
+            state = initialState(),
+            advanceToDawn = true,
+        )
+        val firstPoison = requireNotNull(first.poison)
+
+        val retry = NightDawnDurableMaterializationPlanner.plan(
+            gameId = "game-17",
+            round = 3,
+            intent = intent,
+            state = initialState().copy(
+                committedActionIds = setOf(requireNotNull(firstPoison.actionIdToCommit)),
+            ),
+            advanceToDawn = true,
+        )
+        val retryPoison = requireNotNull(retry.poison)
+
+        assertTrue(retryPoison.stateMutationRequired)
+        assertNull(retryPoison.actionIdToCommit)
+    }
+
+    @Test
+    fun `unchanged poison carry requires neither new Dawn history nor state mutation`() {
+        val carryIntent = DawnCommitIntent(
+            poisonCarry = DawnPoisonCarryIntent(
+                targetSeat = 3,
+                previousTargetSeat = 3,
+            ),
+        )
+        val plan = NightDawnDurableMaterializationPlanner.plan(
+            gameId = "game-17",
+            round = 3,
+            intent = carryIntent,
+            state = initialState(),
+            advanceToDawn = false,
+        )
+
+        val poison = requireNotNull(plan.poison)
+        assertFalse(poison.stateMutationRequired)
+        assertNull(poison.actionIdToCommit)
+    }
+
     private fun initialState() = DawnDurableMaterializationState(
         aliveSeats = setOf(1, 2, 3),
         roleIdsBySeat = mapOf(
@@ -130,5 +218,6 @@ class NightDawnDurableMaterializationPlannerTest {
         currentPhase = StorytellerPhase.NIGHT,
         committedActionIds = emptySet(),
         committedObservationRecordIds = emptySet(),
+        currentPoisonTargetSeat = 3,
     )
 }
