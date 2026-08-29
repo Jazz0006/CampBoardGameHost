@@ -167,15 +167,24 @@ internal object NightDawnResolutionPlanner {
             targetSeat = pendingSeat,
             roleId = demonRoleId,
         )
-        val poisonCarry = poisonResolutionInput?.let { input ->
+        val previousPoisonTargetSeat = confirmedPoisonTargetSeat(
+            baseGameState = baseGameState,
+            checkpoint = checkpoint,
+        )
+        val poisonCarry = if (poisonResolutionInput == null) {
+            previousPoisonTargetSeat?.let { previousTargetSeat ->
+                DawnPoisonCarryIntent(
+                    targetSeat = null,
+                    previousTargetSeat = previousTargetSeat,
+                )
+            }
+        } else {
+            val input = poisonResolutionInput
             val transactionRemovesPoisonerAbility =
                 roleChange.targetSeat == input.poisonerSeat &&
                     roleChange.roleId != input.poisonerRoleId
             if (transactionRemovesPoisonerAbility) {
-                confirmedPoisonTargetSeat(
-                    baseGameState = baseGameState,
-                    checkpoint = checkpoint,
-                )?.let { previousTargetSeat ->
+                previousPoisonTargetSeat?.let { previousTargetSeat ->
                     DawnPoisonCarryIntent(
                         targetSeat = null,
                         previousTargetSeat = previousTargetSeat,
