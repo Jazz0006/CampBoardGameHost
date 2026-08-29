@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
 import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRecommendation
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRequest
@@ -15,6 +16,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScoreCategory
 import com.codex.campboardgamehost.clocktower.domain.ScoreItem
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionType
+import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
 
 internal object MayorRedirectRecommender {
     private val mayorRole = RoleId("Mayor")
@@ -30,13 +32,20 @@ internal object MayorRedirectRecommender {
         require(mayor.actualRole == mayorRole && mayor.alive)
         if (!abilityReliable) return emptyList()
 
-        val candidates = request.state.game.players.map { target ->
-            val outcome = resolveOutcome(request, mayorSeat, target.seat)
-            DynamicDecisionCandidate(
-                choice = DynamicStorytellerChoice.MayorDeathResolution(target.seat),
-                outcome = outcome,
-            )
-        }
+        val candidates = request.state.game.players
+            .filter { target ->
+                target.seat == mayorSeat ||
+                    MayorRedirectLegality.canReceiveRedirect(
+                        targetIsDemon = target.actualType == CharacterType.DEMON,
+                    )
+            }
+            .map { target ->
+                val outcome = resolveOutcome(request, mayorSeat, target.seat)
+                DynamicDecisionCandidate(
+                    choice = DynamicStorytellerChoice.MayorDeathResolution(target.seat),
+                    outcome = outcome,
+                )
+            }
 
         val selectedKeys = mutableSetOf<Int>()
         return listOf(
@@ -65,6 +74,12 @@ internal object MayorRedirectRecommender {
         targetSeat: Int,
     ): PredictedDecisionOutcome.NightDeath {
         val target = requireNotNull(request.state.game.playerAt(targetSeat))
+        require(
+            targetSeat == mayorSeat ||
+                MayorRedirectLegality.canReceiveRedirect(
+                    targetIsDemon = target.actualType == CharacterType.DEMON,
+                ),
+        ) { "Mayor redirect cannot target a Demon." }
         val actualDeathSeat = when {
             targetSeat == mayorSeat -> mayorSeat
             !target.alive -> null

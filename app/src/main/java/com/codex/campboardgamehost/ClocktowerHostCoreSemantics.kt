@@ -2,6 +2,7 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerPlayerStates
 import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
 import java.security.MessageDigest
@@ -67,6 +68,25 @@ internal fun empathEvilNeighborCount(
     return FixedInformationEvaluator.empathEvilNeighborCount(cards.toClocktowerPlayerStates(), sourceSeat) {
         it.seat in evilSeats
     }
+}
+
+internal fun <T> clocktowerFortuneTellerRoleAuthority(
+    phase: ClocktowerPhase,
+    baseRole: T?,
+    otherNightRole: () -> T?,
+): T? = if (phase == ClocktowerPhase.Night) otherNightRole() else baseRole
+
+internal fun clocktowerOtherNightWakingRoleIds(
+    cards: List<PlayerCard>,
+    pendingSuccessionDemonRoleId: RoleId?,
+): Set<RoleId> = buildSet {
+    cards.filter { it.eliminatedRound == null }.forEach { card ->
+        card.clocktowerRole?.enName?.let { add(RoleId(it)) }
+        if (card.clocktowerRole?.enName == "Drunk") {
+            card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
+        }
+    }
+    pendingSuccessionDemonRoleId?.let(::add)
 }
 
 internal fun storytellerPairHint(

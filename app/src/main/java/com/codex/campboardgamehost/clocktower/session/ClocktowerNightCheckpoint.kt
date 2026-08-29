@@ -25,6 +25,7 @@ internal data class ClocktowerNightCheckpoint(
     val pendingNewDemonName: String?,
     val pendingNightNewDemonIdentityName: String? = null,
     val demonSuccessorDraftTarget: String?,
+    val confirmedDemonSuccessorTarget: String? = null,
     val nextTimelineGlobalSequence: Long = 0L,
 ) {
     init {
@@ -52,6 +53,7 @@ internal data class ClocktowerNightCheckpoint(
         "clocktowerPendingNewDemonName" to pendingNewDemonName,
         "clocktowerPendingNightNewDemonIdentityName" to pendingNightNewDemonIdentityName,
         "clocktowerDemonSuccessorTarget" to demonSuccessorDraftTarget,
+        "clocktowerConfirmedDemonSuccessorTarget" to confirmedDemonSuccessorTarget,
         "clocktowerNextTimelineGlobalSequence" to nextTimelineGlobalSequence,
     )
 
@@ -80,6 +82,7 @@ internal data class ClocktowerNightCheckpoint(
             pendingNewDemonName = values.string("clocktowerPendingNewDemonName"),
             pendingNightNewDemonIdentityName = values.string("clocktowerPendingNightNewDemonIdentityName"),
             demonSuccessorDraftTarget = values.string("clocktowerDemonSuccessorTarget"),
+            confirmedDemonSuccessorTarget = values.string("clocktowerConfirmedDemonSuccessorTarget"),
             nextTimelineGlobalSequence = values.timelineCursor(),
         )
 

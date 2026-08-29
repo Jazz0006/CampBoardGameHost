@@ -26,6 +26,55 @@ internal fun twoPlayerSelectionAction(
     else -> TwoPlayerSelectionAction.RejectLimit
 }
 
+internal data class RevalidatedTwoPlayerSelection(
+    val first: String?,
+    val second: String?,
+) {
+    val isComplete: Boolean
+        get() = first != null && second != null && first != second
+}
+
+internal fun revalidateTwoPlayerSelection(
+    first: String?,
+    second: String?,
+    eligibleNames: Set<String>,
+): RevalidatedTwoPlayerSelection {
+    val revalidatedFirst = first?.takeIf { it in eligibleNames }
+    val revalidatedSecond = second?.takeIf { it in eligibleNames && it != revalidatedFirst }
+    return RevalidatedTwoPlayerSelection(
+        first = revalidatedFirst,
+        second = revalidatedSecond,
+    )
+}
+
+internal data class ChambermaidSelectionResolution(
+    val selection: RevalidatedTwoPlayerSelection,
+    val wokeCount: Int?,
+)
+
+internal fun resolveChambermaidSelection(
+    first: String?,
+    second: String?,
+    eligibleNames: Set<String>,
+    wokeBecauseOwnAbilityNames: Set<String>,
+): ChambermaidSelectionResolution {
+    val selection = revalidateTwoPlayerSelection(
+        first = first,
+        second = second,
+        eligibleNames = eligibleNames,
+    )
+    val wokeCount = if (selection.isComplete) {
+        listOfNotNull(selection.first, selection.second)
+            .count { it in wokeBecauseOwnAbilityNames }
+    } else {
+        null
+    }
+    return ChambermaidSelectionResolution(
+        selection = selection,
+        wokeCount = wokeCount,
+    )
+}
+
 internal fun shouldAutoAdvanceRedHerring(
     automaticStorytellerInfo: Boolean,
     isRedHerringStep: Boolean,

@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.session
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.fail
 import org.junit.Test
 
@@ -23,12 +24,24 @@ class ClocktowerNightCheckpointTest {
             mayorRedirectDraftTarget = "Player 7",
             pendingNewDemonName = "Player 7",
             demonSuccessorDraftTarget = "Player 7",
+            confirmedDemonSuccessorTarget = "Player 6",
             nextTimelineGlobalSequence = 17L,
         )
 
         val restored = ClocktowerNightCheckpoint.fromPersistedValues(interrupted.persistedValues())
 
         assertEquals(interrupted, restored)
+    }
+
+    @Test fun `legacy night save keeps successor draft unconfirmed`() {
+        val restored = ClocktowerNightCheckpoint.fromPersistedValues(mapOf(
+            "clocktowerPhase" to "Night",
+            "round" to 2,
+            "clocktowerDemonSuccessorTarget" to "Player 7",
+        ))
+
+        assertEquals("Player 7", restored.demonSuccessorDraftTarget)
+        assertNull(restored.confirmedDemonSuccessorTarget)
     }
 
     @Test fun `legacy night save promotes old single targets and starts timeline cursor at zero`() {

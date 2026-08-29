@@ -1,0 +1,126 @@
+# Source-String Test Retirement Policy and SNE Audit
+
+> Role: **ACTIVE TEST-DEBT / RETIREMENT MAP**  
+> Date: 2026-08-27  
+> Review queue refreshed: 2026-08-28
+
+## Decision
+
+Gameplay/rules correctness must move toward typed behavior tests. Source-string tests that inspect production `.kt` implementation shape are not trusted as long-lived behavioral proof.
+
+On 2026-08-27 the 2026-08-26 same-night wiring-test additions were deliberately cleaned up so later bug-fix review can rebuild coverage from independently audited semantics instead of preserving implementation-shaped assertions.
+
+## Removed 2026-08-26 wiring tests
+
+Deleted completely:
+
+- `ClocktowerDemonSuccessionProductionWiringRegressionTest.kt`
+- `ClocktowerDemonSuccessorConfirmationWiringTest.kt`
+- `ClocktowerDemonSuccessorEffectiveRoleWiringTest.kt`
+- `ClocktowerDemonSuccessorLegalityWiringTest.kt`
+- `ClocktowerFortuneTellerCurrentDemonWiringTest.kt`
+- `ClocktowerPoisonSourceCurrentRoleWiringTest.kt`
+- `ClocktowerRegistrationCurrentRoleWiringTest.kt`
+- `ClocktowerRoleActorCurrentRoleWiringTest.kt`
+
+The 2026-08-26 source-string additions to these pre-existing tests were also reverted to their pre-day versions:
+
+- `ClocktowerAdvanceNightStepTransactionOwnershipTest.kt`
+- `ClocktowerSameNightEffectiveStateProductionWiringTest.kt`
+- `clocktower/flow/ClocktowerProductionOtherNightWiringTest.kt`
+
+Typed rule/state tests added or expanded on 2026-08-26 were intentionally retained. In particular, direct tests of effective-night state, Demon succession semantics, poison lifecycle, and checkpoint behavior are not part of this cleanup.
+
+## Rule for future bug-fix review
+
+The production bug fixes from the same campaign are not considered trustworthy merely because the removed wiring tests once passed.
+
+For each bug fix that is re-audited:
+
+1. restate the intended rule/product behavior independently of the current implementation;
+2. inspect the production diff and current data flow;
+3. create a typed RED at the smallest real semantic owner;
+4. require assertion-level RED provenance when tests-first is applicable;
+5. make or correct the production patch only after the RED is valid;
+6. run focused GREEN and checkpoint-level regression;
+7. use source inspection only for a minimal architecture/ownership invariant when no callable seam can express the boundary.
+
+Do not recreate the deleted tests merely to recover old coverage counts.
+
+## Remaining source-based tests
+
+Older source-based ownership/decomposition/wiring tests still exist in the repository. Their existence is not an endorsement of the pattern. Review them when their protected boundary is changed, and retire them when typed production coverage becomes available.
+
+## SNE-7 closeout retirement
+
+After typed Host transaction, reconstruction and Dawn lifecycle integration became executable, the following temporary implementation-shaped guards were retired:
+
+- `ClocktowerDemonSuccessorReducerProductionWiringTest.kt` during the 7.6A production adapter cut-over;
+- `ClocktowerPoisonReducerProductionWiringTest.kt`;
+- `ClocktowerMonkReducerProductionWiringTest.kt`;
+- `ClocktowerDemonAttackReducerProductionWiringTest.kt`;
+- `ClocktowerMayorRedirectReducerProductionWiringTest.kt`;
+- `ClocktowerDawnDeathPlannerProductionWiringTest.kt`;
+- `ClocktowerNewDemonCheckpointProductionWiringTest.kt`;
+- `ClocktowerNewDemonPoisonAuthorityProductionWiringTest.kt`;
+- `ClocktowerHostTransactionProductionWiringTest.kt`;
+- `ClocktowerDawnExactDemonSuccessorWiringTest.kt`.
+
+Their behavioral replacements are the typed reducer/planner/reconstruction contracts plus `NightCheckpointHostTransactionTest` and `NightTransactionHostIntegrationSmokeTest`. `ClocktowerNightTransactionArchitectureGuardTest` is the consolidated coarse ownership guard for the remaining non-callable Compose/App boundary.
+
+`ClocktowerSameNightEffectiveStateProductionWiringTest` and the Mayor rules/UI ownership guard remain intentionally because they still protect coarse production-consumer boundaries that are not directly callable from JVM tests. Their retention does not make source-string testing the primary correctness layer.
+
+## 2026-08-28 Global Correctness Review queue
+
+The post-SNE whole-PR review identified the following tests or source-wiring portions for explicit reclassification during **GCR-3**:
+
+```text
+ClocktowerDawnDurableMaterializationProductionWiringTest
+ClocktowerGlobalObservationProductionWiringTest
+InformationDecisionProductionAuthorityWiringTest
+ClocktowerDemonSuccessionProductionWiringTest
+ClocktowerHistoricalActionProductionWiringTest
+ClocktowerNightRestoreProductionOwnershipTest
+ClocktowerSameNightEffectiveStateProductionWiringTest
+ClocktowerMayorDemonExclusionWiringTest
+ClocktowerProductionOtherNightWiringTest
+ClocktowerNightTransactionArchitectureGuardTest
+source-wiring portion of ClocktowerChambermaidSelectionAuthorityTest
+```
+
+This is **not** a bulk-delete instruction. Classify every item before changing it:
+
+```text
+A. typed replacement already proves behavior
+   -> retire source-string test
+
+B. behavior matters, but production boundary is not callable
+   -> introduce the narrowest typed seam, then replace
+
+C. genuinely architecture/ownership-only invariant
+   -> keep a coarse source guard, remove gameplay-detail/order assertions
+
+D. obsolete implementation-shape assertion
+   -> delete
+```
+
+### High-priority production seam candidate
+
+The Dawn restore/retry acceptance now proves typed planning, real durable ActionFact/Observation commits and convergence, but the final base-card/phase mutation is still represented by a test-local materializer while App production orchestration remains partly protected by source inspection.
+
+Preferred future seam, if it can remain narrow:
+
+```text
+DawnCommitIntent
++ current durable state
+-> callable ProductionDawnMaterializer
+-> thin App/Compose callback
+```
+
+Do not use GCR-3 as justification for broad App-root decomposition.
+
+### New rule for GCR
+
+The source-string test count should not grow during GCR correctness fixes unless the active handoff documents why no typed/callable boundary can yet express the invariant.
+
+In particular, GCR-1 current-Demon continuity and GCR-2 poisoned-Spy information integrity must be proved by typed behavior tests; adding new string searches for `firstOrNull`, `singleOrNull`, `Spy`, or call ordering is not acceptable correctness evidence.

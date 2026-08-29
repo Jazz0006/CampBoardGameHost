@@ -40,6 +40,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelec
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import kotlinx.coroutines.Dispatchers
@@ -62,6 +63,9 @@ internal fun ClocktowerNightStepCardLocalized(
     informationDecisionKey: String,
     cards: List<PlayerCard>,
     aliveCards: List<PlayerCard>,
+    chambermaidTargetCards: List<PlayerCard>,
+    mayorRedirectTargetCards: List<PlayerCard>,
+    demonSuccessorTargetCards: List<PlayerCard>,
     step: ClocktowerNightStepUi,
     spyCard: PlayerCard?,
     spyRegistrationGood: Boolean,
@@ -174,6 +178,10 @@ internal fun ClocktowerNightStepCardLocalized(
         automaticStorytellerStyle,
         ClocktowerDecisionOption::recommendationStyle,
     )
+    val automaticDecisionTargetName = automaticDecision?.targetName
+        ?: demonSuccessorTargetCards.singleOrNull()?.takeIf {
+            step.action == ClocktowerNightAction.DemonSuccessor
+        }?.name
     val selectionAudit = if (automaticStorytellerInfo) {
         SelectionAuditContext(
             selectionId = informationDecisionKey,
@@ -205,9 +213,16 @@ internal fun ClocktowerNightStepCardLocalized(
             ?: option?.displayPrimary?.toIntOrNull()
     val structuredEmpathActorSeat = step.actor
         ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
-    val structuredEmpathSubjectSeats = step.actor
-        ?.let { actor -> livingNeighbors(cards, actor.name).map { cards.indexOf(it) + 1 }.filter { it > 0 } }
-        .orEmpty()
+    val structuredEmpathSubjectSeats = step
+        .legacyInformationCandidates
+        .asSequence()
+        .mapNotNull { it.proposition as? InformationProposition.NumericResult }
+        .firstOrNull { it.metric == NumericMetric.LIVING_EVIL_NEIGHBOURS }
+        ?.subjectSeats
+        ?: (step.displayProposition as? InformationProposition.NumericResult)
+            ?.takeIf { it.metric == NumericMetric.LIVING_EVIL_NEIGHBOURS }
+            ?.subjectSeats
+        ?: emptyList()
     val structuredEmpathTruthValue = step
         .takeIf { it.roleEnName == "Empath" }
         ?.legacyInformationCandidates
@@ -280,9 +295,9 @@ internal fun ClocktowerNightStepCardLocalized(
             ),
         )
     }
-    LaunchedEffect(automaticStorytellerInfo, step.title, automaticDecision?.targetName) {
-        if (automaticStorytellerInfo && automaticDecision != null && selectedName != automaticDecision.targetName) {
-            onSelectName(automaticDecision.targetName)
+    LaunchedEffect(automaticStorytellerInfo, step.title, automaticDecisionTargetName) {
+        if (automaticStorytellerInfo && automaticDecisionTargetName != null && selectedName != automaticDecisionTargetName) {
+            onSelectName(automaticDecisionTargetName)
         }
     }
     var fortuneTellerLimitExceeded by remember(step.actor?.name, step.title) { mutableStateOf(false) }
@@ -458,7 +473,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     title = if (LocalContext.current.resources.configuration.locales[0].language == "en") "Choose the Butler's master" else "选择管家的主人",
                 ) {
                     SelectablePlayerChips(
-                        cards = aliveCards.filter { it.name != step.actor?.name },
+                        cards = cards.filter { it.name != step.actor?.name },
                         selectedName = selectedName,
                         enabled = step.isRealAction,
                         allCards = cards,
@@ -546,7 +561,7 @@ internal fun ClocktowerNightStepCardLocalized(
 
             ClocktowerNightAction.Chambermaid -> {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    val candidates = aliveCards.filter { it.name != step.actor?.name }
+                    val candidates = chambermaidTargetCards.filter { it.name != step.actor?.name }
                     SelectableSeatNumbers(
                         cards = candidates,
                         selectedName = chambermaidFirst,
@@ -618,7 +633,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         }
                         Text(if (language == "en") "Or redirect the death to:" else "或将死亡转移给：", fontWeight = FontWeight.SemiBold)
                         SelectablePlayerChips(
-                            cards = cards.filter { it.name != mayor.name && it.name in assistedDecisionOptions.map(ClocktowerDecisionOption::targetName) },
+                        cards = mayorRedirectTargetCards,
                             selectedName = selectedName,
                             enabled = step.isRealAction,
                             allCards = cards,
@@ -630,14 +645,13 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             ClocktowerNightAction.DemonSuccessor -> {
-                val legalNames = assistedDecisionOptions.map { it.targetName }.toSet()
                 if (!automaticStorytellerInfo) {
                 HostActionSection(
                     title = if (language == "en") "Choose the new Imp" else "选择新小恶魔",
                     helper = step.explanation,
                 ) {
                     SelectablePlayerChips(
-                        cards = aliveCards.filter { it.name in legalNames },
+                        cards = demonSuccessorTargetCards,
                         selectedName = selectedName,
                         enabled = step.isRealAction,
                         allCards = cards,

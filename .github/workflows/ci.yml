@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       android: ${{ steps.classify.outputs.android }}
+      android_full: ${{ steps.classify.outputs.android_full }}
       asp: ${{ steps.classify.outputs.asp }}
       oracle: ${{ steps.classify.outputs.oracle }}
 
@@ -38,17 +39,39 @@ jobs:
           set -euo pipefail
 
           android=false
+          android_full=false
           asp=false
           oracle=false
+          full_checkpoint=false
 
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event_name }}" == "push" ]]; then
+            # Manual runs and every main push are full acceptance gates.
+            full_checkpoint=true
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            head="${{ github.event.pull_request.head.sha }}"
+            commit_message="$(git log -1 --format=%B "$head")"
+            if grep -Fqi '[full-ci]' <<< "$commit_message"; then
+              full_checkpoint=true
+            fi
+          fi
+
+          if [[ "$full_checkpoint" == true ]]; then
             android=true
+            android_full=true
             asp=true
             oracle=true
+            echo "Full checkpoint selected."
           else
             if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-              base="${{ github.event.pull_request.base.sha }}"
               head="${{ github.event.pull_request.head.sha }}"
+              if [[ "${{ github.event.action }}" == "synchronize" ]]; then
+                # For normal PR iteration classify only the newly pushed commit range,
+                # not the entire accumulated PR diff against main.
+                base="${{ github.event.before }}"
+              else
+                # First/opened/reopened PR validation has no prior PR head to compare.
+                base="${{ github.event.pull_request.base.sha }}"
+              fi
             else
               base="${{ github.event.before }}"
               head="${{ github.sha }}"
@@ -58,6 +81,7 @@ jobs:
               base="$(git rev-parse "${head}^")"
             fi
 
+            echo "Classification range: $base..$head"
             git diff --name-only --no-renames "$base" "$head" > "$RUNNER_TEMP/changed-files.txt"
             echo "Changed files:"
             cat "$RUNNER_TEMP/changed-files.txt"
@@ -72,10 +96,11 @@ jobs:
                   ;;
               esac
 
-              # Changes to CI routing validate every gate.
+              # CI routing changes validate every gate at full strength.
               case "$path" in
                 .github/workflows/*)
                   android=true
+                  android_full=true
                   asp=true
                   oracle=true
                   continue
@@ -93,9 +118,19 @@ jobs:
                   ;;
               esac
 
-              # Android application, tests, assets, and build-system changes require FULL Android validation.
+              # Gradle/build/dependency changes require full Android validation immediately.
               case "$path" in
-                app/*|build.gradle.kts|settings.gradle.kts|gradle.properties|gradle/*|gradlew|gradlew.bat)
+                build.gradle.kts|settings.gradle.kts|gradle.properties|gradle/*|gradlew|gradlew.bat|app/build.gradle.kts)
+                  android=true
+                  android_full=true
+                  classified=true
+                  ;;
+              esac
+
+              # Ordinary Android application/test/assets changes get FAST PR feedback.
+              # Logical checkpoints opt into FULL with [full-ci].
+              case "$path" in
+                app/*)
                   android=true
                   classified=true
                   ;;
@@ -123,6 +158,7 @@ jobs:
               # until it is deliberately classified above.
               if [[ "$classified" == false ]]; then
                 android=true
+                android_full=true
                 asp=true
                 oracle=true
               fi
@@ -130,9 +166,10 @@ jobs:
           fi
 
           echo "android=$android" >> "$GITHUB_OUTPUT"
+          echo "android_full=$android_full" >> "$GITHUB_OUTPUT"
           echo "asp=$asp" >> "$GITHUB_OUTPUT"
           echo "oracle=$oracle" >> "$GITHUB_OUTPUT"
-          echo "Routing: android=$android asp=$asp oracle=$oracle"
+          echo "Routing: android=$android android_full=$android_full asp=$asp oracle=$oracle"
 
   android-tests:
     name: Android tests
@@ -158,8 +195,13 @@ jobs:
       - name: Ensure Gradle wrapper is executable
         run: chmod +x ./gradlew
 
+      - name: Run Android FAST unit tests
+        if: needs.changes.outputs.android_full != 'true'
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
       - name: Run full Android unit tests and build debug APK
-        run: ./gradlew :app:testFull :app:assembleDebug --no-daemon --build-cache
+        if: needs.changes.outputs.android_full == 'true'
+        run: ./gradlew :app:testFull :app:assembleDebug --no-daemon --rerun-tasks
 
   asp-contract-tests:
     name: ASP contract tests
