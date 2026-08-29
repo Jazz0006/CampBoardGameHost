@@ -60,44 +60,46 @@ internal object TroubleBrewingSetupPresetSelector {
             "tb-preset-v1|${dataset.datasetId}|$playerCount|$gameSeed",
         )
         val weightedPool = canonicalPool.map { candidate ->
-            val score = TroubleBrewingSetupPresetRotationScorer.scoreBaseNovelty(
+            val candidateDrunkShownRole = selectDrunkShownRole(
+                datasetId = dataset.datasetId,
+                playerCount = playerCount,
+                gameSeed = gameSeed,
+                preset = candidate,
+            )
+            val score = TroubleBrewingSetupPresetRotationScorer.scoreFinalWeight(
                 candidate = candidate,
+                selectedDrunkShownRole = candidateDrunkShownRole,
                 recentSetupRotationHistory = recentSetupRotationHistory,
                 historyWeights = dataset.runtimeSelectionPolicy.historyWeights,
             )
             WeightedCandidate(
                 preset = candidate,
-                weight = (score.baseNoveltyWeight * WEIGHT_SCALE).roundToLong().coerceAtLeast(1L),
+                selectedDrunkShownRole = candidateDrunkShownRole,
+                weight = (score.finalWeight * WEIGHT_SCALE).roundToLong().coerceAtLeast(1L),
             )
         }
         val selected = selectWeighted(weightedPool, selectionSeed)
-        val selectedDrunkShownRole = selectDrunkShownRole(
-            datasetId = dataset.datasetId,
-            playerCount = playerCount,
-            gameSeed = gameSeed,
-            preset = selected,
-        )
         return TroubleBrewingSetupPresetSelection(
             datasetId = dataset.datasetId,
             schemaVersion = dataset.schemaVersion,
-            presetId = selected.id,
+            presetId = selected.preset.id,
             playerCount = playerCount,
             gameSeed = gameSeed,
-            preset = selected,
-            selectedDrunkShownRole = selectedDrunkShownRole,
+            preset = selected.preset,
+            selectedDrunkShownRole = selected.selectedDrunkShownRole,
         )
     }
 
     private fun selectWeighted(
         candidates: List<WeightedCandidate>,
         selectionSeed: Long,
-    ): TroubleBrewingSetupPreset {
+    ): WeightedCandidate {
         require(candidates.isNotEmpty())
         val firstWeight = candidates.first().weight
         if (candidates.all { it.weight == firstWeight }) {
             return candidates[
                 java.lang.Long.remainderUnsigned(selectionSeed, candidates.size.toLong()).toInt()
-            ].preset
+            ]
         }
 
         val totalWeight = candidates.sumOf { it.weight }
@@ -106,7 +108,7 @@ internal object TroubleBrewingSetupPresetSelector {
         var cumulative = 0L
         candidates.forEach { candidate ->
             cumulative += candidate.weight
-            if (draw < cumulative) return candidate.preset
+            if (draw < cumulative) return candidate
         }
         error("Trouble Brewing weighted preset selection did not resolve a candidate.")
     }
@@ -139,6 +141,7 @@ internal object TroubleBrewingSetupPresetSelector {
 
     private data class WeightedCandidate(
         val preset: TroubleBrewingSetupPreset,
+        val selectedDrunkShownRole: String?,
         val weight: Long,
     )
 
