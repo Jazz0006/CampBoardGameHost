@@ -5,15 +5,15 @@
 > Branch: `codex/clocktower-same-night-effective-state-correctness`  
 > PR: #54  
 > Parent status authority: `docs/CURRENT_DEVELOPMENT_ROADMAP.md`  
-> Status: **PR54-P1-1 ACCEPTED; PR54-P1-2 ACTIVE P1 RUNTIME BLOCKER — PR MUST REMAIN UNMERGED**
+> Status: **PR54-P1-1 ACCEPTED; PR54-P1-2 IMPLEMENTATION GREEN / T1 ACCEPTED; FINAL T4 MERGE-READINESS GATE PENDING — PR MUST REMAIN UNMERGED**
 
 ## 1. Current blocker status
 
-Later review of the accepted GCR checkpoints found two normal runtime paths outside prior coverage. PR54-P1-1 has now been fixed and independently validated. PR54-P1-2 remains the sole active post-acceptance P1 blocker.
+Later review of the accepted GCR checkpoints found two normal runtime paths outside prior coverage. Both runtime defects now have typed behavioral RED/GREEN evidence. PR54-P1-2 production wiring is GREEN at the FAST/T1 checkpoint and has passed remote exact-diff audit. A fresh T4 full-tree acceptance run is still required before current PR merge-readiness can be refreshed.
 
 ```text
-PR54-P1-1  First-night Fortune Teller projection crash   FIXED / ACCEPTED
-PR54-P1-2  Imp self-kill pending successor reconstruction crash   ACTIVE / BLOCKING
+PR54-P1-1  First-night Fortune Teller projection crash                 FIXED / ACCEPTED
+PR54-P1-2  Imp self-kill pending successor reconstruction crash        FIXED / T1 ACCEPTED / T4 PENDING
 ```
 
 Do not merge, rebase, force-push, or broaden into GCR-4/5, A3, App-root S9.2, Host/A4/ZDD promotion, generic misinformation, or unrelated recommendation work.
@@ -56,94 +56,158 @@ R2 #916 / run 33221389931 SUCCESS
 
 The projector remains fail-closed. Do not reopen this slice unless new evidence appears.
 
-## 3. PR54-P1-2 — Imp self-kill pending successor Host reconstruction crash — ACTIVE
+## 3. PR54-P1-2 — Imp self-kill pending successor Host reconstruction crash — IMPLEMENTATION GREEN
 
-### Confirmed failure path
+### Confirmed failure lifecycle
 
-Normal succession lifecycle can temporarily be:
+A valid pending succession window can be:
 
 ```text
 old Imp mechanically dead
-pendingNewDemonName != null
+pending successor exists
 phase == Night
 successor identity not yet confirmed/materialized
 no currently living Demon card
 ```
 
-Host reconstruction currently requires a non-null role from the current living Demon before the pending new-Demon confirmation UI is reached. Recomposition in this valid transient state therefore crashes.
+The original Host mixed current living-Demon UI authority with current-night transaction/reconstruction authority. Recomposition therefore lost the old Imp role, lost canonical succession requirement/ordering, and could throw before new-Demon identity confirmation.
 
-### Required contract
-
-- the pending succession window may legally have no currently living Demon;
-- reconstruction must derive the succession role authority from the confirmed attacker/current-night historical Demon authority, or route pending confirmation before a living-Demon requirement;
-- do not keep the old Imp alive as a workaround;
-- do not durably mutate the successor early;
-- do not replace the invariant with an unprincipled nullable fallback.
-
-### Tests-first target
-
-Audit these ownership boundaries before creating RED:
+### Accepted authority split
 
 ```text
-ClocktowerCurrentDemonAuthority.kt
-clocktower/rules/CurrentDemonAuthority.kt
-clocktower/session/NightTransactionReconstructor.kt
-clocktower/session/TroubleBrewingDemonSuccessionResolver.kt
-ClocktowerHostScreen.kt reconstruction inputs
-App mutation path that marks the old Imp dead and sets pendingNewDemonName
+current living Demon UI authority
+-> resolveCurrentDemonHostContext()
+-> remains living-only and fail-closed for ambiguity
+
+current-night transaction/reconstruction Demon authority
+-> resolveNightReconstructionDemonRoleId(...)
+-> living Demon when exactly one exists
+-> otherwise, only in the zero-live pending window, explicit confirmed dead Demon attacker
+-> never masks multiple-live-Demon ambiguity
+
+canonical succession requirement
+-> resolveNightDemonSuccessionForHost(...)
+-> delegates to the existing Trouble Brewing self-kill resolver
+-> does not require the old Imp to remain mechanically alive
+
+canonical Other Night ordering anchor
+-> clocktowerOtherNightWakingRoleIds(...)
+-> normal nights contain living current roles + Drunk shown role
+-> pending succession temporarily retains the historical Imp role only as an ordering anchor
 ```
 
-The preferred RED is typed and lifecycle-oriented. It must represent:
+The successor is not role-mutated early. The old Imp remains mechanically dead. `NightTransactionReconstructor` remains fail-closed and unchanged.
+
+### Typed RED/GREEN evidence
+
+Three independent typed seams exposed the lifecycle defect.
 
 ```text
-phase == Night
-old Imp already mechanically dead
-pending successor exists
-no living Demon card exists yet
-confirmed current-night Demon attacker authority still exists
+1. reconstruction role authority RED
+5dcf91e0...
+- old Imp dead
+- zero live Demon
+- expected historical Imp role authority
+
+2. pending succession requirement RED
+b9cb90d3...
+- pendingNewDemonName / confirmed successor present
+- old Imp already dead
+- expected canonical Choice(seat 2)
+
+3. Other Night Imp ordering-anchor RED
+5ba1c162b8c3c7eb40b5d4ecd01a9dbd935c51b5
+CI #1000 / run 33222642480
+- production/test compilation succeeded
+- :app:testFast executed
+- 914 tests completed, 1 failed
+- only failure: pending succession retains historical Imp ordering anchor after old Imp is dead
 ```
 
-and prove reconstruction/Host input derivation can obtain the canonical Demon role without throwing or prematurely materializing the successor.
+The ambiguity guard was also tested: multiple live Demons must remain fail-closed and must not fall back to a dead historical Imp.
 
-Focused regression candidates include:
+Typed seam GREEN checkpoint:
 
 ```text
-ClocktowerNewDemonIdentityContractTest
-ClocktowerNewDemonProductionWiringTest
-ClocktowerCurrentDemonAuthorityTest
-TroubleBrewingCurrentDemonRegressionTest
-NightTransactionReconstructorSuccessionLegalityTest
-ClocktowerDemonSuccessionProductionWiringTest
+13a5fb03a9e5d49200f0516cbe9db16d3b6f0a11
+CI #1001 / run 33223172126 SUCCESS
+- Android FAST unit tests SUCCESS
+- Real Clingo cross-validation SUCCESS
+- CI gate SUCCESS
+R2 #928 / run 33223172160 SUCCESS
 ```
 
-## 4. Execution order
+### Final Host wiring GREEN
+
+Production Host wiring checkpoint:
 
 ```text
-A. audit pending-succession authority ownership
-B. establish typed PR54-P1-2 RED
-C. prove expected assertion/JUnit behavioral RED
-D. minimal production GREEN
-E. focused succession + reconstruction regressions
-F. T1 :app:testFast logical checkpoint
-G. remote exact diff audit
-H. refresh merge-readiness evidence
+8a6f8cea481edbaef8a5946abb19ef0d0f483005
+commit: fix: wire pending Imp succession into night host
 ```
 
-Do not merge PR #54 without explicit user authorization.
+Exact diff audit from `13a5fb03...`:
+
+```text
+ahead_by: 1
+behind_by: 0
+changed files: exactly 1
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+23 additions / 50 deletions
+```
+
+The Host wiring:
+
+- removes duplicate `DemonSuccessionSemantics` / `DemonSuccessionContext` calculation;
+- creates one `nightBaseGameState`;
+- derives canonical transaction role with `resolveNightReconstructionDemonRoleId(...)`;
+- derives succession with `resolveNightDemonSuccessionForHost(...)`;
+- builds Other Night waking roles through `clocktowerOtherNightWakingRoleIds(...)`;
+- reuses the same canonical Demon role for `NightTransactionReconstructor`;
+- reuses that same authority for `ResolvedNightMechanicalEvent.MechanicalDeath`, removing the second living-Demon-only crash point;
+- leaves `demonCard` as living-Demon UI authority for wake/display behavior.
+
+T1 evidence:
+
+```text
+CI #1002 / run 33223959281 SUCCESS
+- Android :app:testFast SUCCESS
+- CI gate SUCCESS
+R2 #929 / run 33223959279 SUCCESS
+```
+
+No unrelated UI, successor mutation, rules, reconstructor, or misinformation behavior was changed.
+
+## 4. Current execution order
+
+```text
+A. PR54-P1-1 behavioral RED/GREEN                         DONE
+B. PR54-P1-2 typed lifecycle REDs                        DONE
+C. PR54-P1-2 typed seam GREEN                            DONE
+D. Host final wiring + exact diff audit                  DONE
+E. T1 :app:testFast logical checkpoint                   DONE
+F. fresh T4 :app:testFull + :app:assembleDebug           NEXT / REQUIRED
+G. ASP contract + Real Clingo full gate                  NEXT / REQUIRED
+H. if all T4 gates pass, refresh roadmap / merge evidence
+```
+
+This commit intentionally carries `[full-ci]` to request the repository's full acceptance route against the current production tree.
+
+Do not merge PR #54 without explicit user authorization even if T4 becomes green.
 
 ## 5. Historical acceptance context
 
-Previously accepted checkpoints remain useful historical evidence:
+Previously accepted checkpoints remain valid evidence for their covered behavior:
 
 ```text
 GCR-1 executable acceptance:
 974f617adffd08cc7de0924f6fea4f96f3d73f0c
 
-GCR-1 + GCR-2 full production T4:
+GCR-1 + GCR-2 historical full production T4:
 474103ed13caaf34a329ca5e80e2f0ba64963b86
 
 GCR-3 final test-quality acceptance:
 383ad0e695656124f9dc608fd5ce06b72de6b499
 ```
 
-They do not cover the pending-confirmation no-living-Demon state, so they are not sufficient current merge evidence by themselves.
+The new T4 requested here supersedes those older checkpoints only as current PR merge-readiness evidence; it does not invalidate their historical coverage.
