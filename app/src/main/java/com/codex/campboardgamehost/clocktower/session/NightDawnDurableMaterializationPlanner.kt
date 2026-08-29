@@ -16,10 +16,14 @@ internal data class DawnDurableMaterializationState(
     val currentPhase: StorytellerPhase,
     val committedActionIds: Set<String>,
     val committedObservationRecordIds: Set<String>,
+    val currentPoisonTargetSeat: Int? = null,
 ) {
     init {
         require(aliveSeats.all { it > 0 }) { "Alive seats must be positive." }
         require(roleIdsBySeat.keys.all { it > 0 }) { "Role seats must be positive." }
+        require(currentPoisonTargetSeat == null || currentPoisonTargetSeat > 0) {
+            "Current poison target seat must be positive."
+        }
         require(committedActionIds.none { it.isBlank() }) { "Committed action IDs cannot be blank." }
         require(committedObservationRecordIds.none { it.isBlank() }) {
             "Committed observation record IDs cannot be blank."
@@ -40,6 +44,12 @@ internal data class DawnRoleChangeMaterializationPlan(
     val actionIdToCommit: String?,
 )
 
+internal data class DawnPoisonMaterializationPlan(
+    val intent: DawnPoisonCarryIntent,
+    val stateMutationRequired: Boolean,
+    val actionIdToCommit: String?,
+)
+
 internal data class DawnPhaseAdvanceMaterializationPlan(
     val targetPhase: StorytellerPhase,
     val stateMutationRequired: Boolean,
@@ -49,6 +59,7 @@ internal data class DawnPhaseAdvanceMaterializationPlan(
 internal data class DawnDurableMaterializationPlan(
     val death: DawnDeathMaterializationPlan?,
     val roleChanges: List<DawnRoleChangeMaterializationPlan>,
+    val poison: DawnPoisonMaterializationPlan?,
     val phaseAdvance: DawnPhaseAdvanceMaterializationPlan?,
 )
 
@@ -103,6 +114,24 @@ internal object NightDawnDurableMaterializationPlanner {
             )
         }
 
+        val poison = intent.poisonCarry?.let { poisonIntent ->
+            val transitionActionId = if (poisonIntent.previousTargetSeat != poisonIntent.targetSeat) {
+                stableId(
+                    gameId = gameId,
+                    round = round,
+                    effect = "poison-${poisonSeatToken(poisonIntent.previousTargetSeat)}-to-${poisonSeatToken(poisonIntent.targetSeat)}",
+                )
+            } else {
+                null
+            }
+            DawnPoisonMaterializationPlan(
+                intent = poisonIntent,
+                stateMutationRequired = state.currentPoisonTargetSeat != poisonIntent.targetSeat,
+                actionIdToCommit = transitionActionId
+                    ?.takeUnless(state.committedActionIds::contains),
+            )
+        }
+
         val phaseAdvance = if (advanceToDawn) {
             val actionId = stableId(
                 gameId = gameId,
@@ -121,6 +150,7 @@ internal object NightDawnDurableMaterializationPlanner {
         return DawnDurableMaterializationPlan(
             death = death,
             roleChanges = roleChanges,
+            poison = poison,
             phaseAdvance = phaseAdvance,
         )
     }
@@ -136,6 +166,8 @@ internal object NightDawnDurableMaterializationPlanner {
         round: Int,
         targetSeat: Int,
     ): String = "public-alive-dawn-${stableToken(gameId)}-$round-$targetSeat"
+
+    private fun poisonSeatToken(seat: Int?): String = seat?.let { "seat-$it" } ?: "none"
 
     private fun stableToken(value: String): String = buildString(value.length) {
         value.lowercase().forEach { character ->
