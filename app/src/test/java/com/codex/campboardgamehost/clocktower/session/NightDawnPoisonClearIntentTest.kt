@@ -40,6 +40,20 @@ class NightDawnPoisonClearIntentTest {
         assertNull(poison.targetSeat)
     }
 
+    @Test
+    fun `confirmed poison is explicitly cleared when no Poisoner resolution input remains`() {
+        val transition = NightDawnResolutionPlanner.confirmNewDemonIdentity(
+            baseGameState = gameState(),
+            checkpoint = checkpoint(),
+            demonRoleId = RoleId("Imp"),
+            poisonResolutionInput = null,
+        )
+
+        val poison = requireNotNull(requireNotNull(transition.dawnCommitIntent).poisonCarry)
+        assertEquals(3, poison.previousTargetSeat)
+        assertNull(poison.targetSeat)
+    }
+
     private fun gameState() = GameState(
         script = ScriptId("Trouble Brewing"),
         players = listOf(
