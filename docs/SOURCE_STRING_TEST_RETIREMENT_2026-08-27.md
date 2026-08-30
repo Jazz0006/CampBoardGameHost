@@ -92,94 +92,174 @@ Their behavioral replacements are the typed reducer/planner/reconstruction contr
 
 `ClocktowerSameNightEffectiveStateProductionWiringTest` and the Mayor rules/UI ownership guard remain intentionally because they still protect coarse production-consumer boundaries that are not directly callable from JVM tests. Their retention does not make source-string testing the primary correctness layer.
 
-## 2026-08-28 Global Correctness Review queue
+## 2026-08-28 Global Correctness Review
 
-The post-SNE whole-PR review identified the following tests or source-wiring portions for explicit reclassification during **GCR-3**:
+The post-SNE whole-PR review classified the then-current source guards under the A/B/C/D model. The final GCR-3 status is recorded in:
+
+```text
+docs/GCR3_SOURCE_STRING_RETIREMENT_AUDIT_2026-08-28.md
+```
+
+That audit intentionally slimmed and retained several Class B/C/C guards rather than deleting them. In particular, do not re-open those decisions merely because a test reads `.kt` source. Re-audit only when the protected production boundary changes or becomes callable.
+
+Current examples intentionally retained from that audit include:
 
 ```text
 ClocktowerDawnDurableMaterializationProductionWiringTest
-ClocktowerGlobalObservationProductionWiringTest
+persistence/ClocktowerGlobalObservationProductionWiringTest
 InformationDecisionProductionAuthorityWiringTest
 ClocktowerDemonSuccessionProductionWiringTest
-ClocktowerHistoricalActionProductionWiringTest
+persistence/ClocktowerHistoricalActionProductionWiringTest
 ClocktowerNightRestoreProductionOwnershipTest
 ClocktowerSameNightEffectiveStateProductionWiringTest
 ClocktowerMayorDemonExclusionWiringTest
-ClocktowerProductionOtherNightWiringTest
+clocktower/flow/ClocktowerProductionOtherNightWiringTest
 ClocktowerNightTransactionArchitectureGuardTest
 source-wiring portion of ClocktowerChambermaidSelectionAuthorityTest
+ClocktowerCurrentDemonProductionWiringTest
+ClocktowerPoisonedSpyFailSafePolicyWiringTest
 ```
 
-This is **not** a bulk-delete instruction. Apply the A/B/C/D classification above before changing each item.
-
-### High-priority production seam candidate
-
-The Dawn restore/retry acceptance now proves typed planning, real durable ActionFact/Observation commits and convergence, but the final base-card/phase mutation is still represented by a test-local materializer while App production orchestration remains partly protected by source inspection.
-
-Preferred future seam, if it can remain narrow and is justified by production architecture rather than test ceremony:
-
-```text
-DawnCommitIntent
-+ current durable state
--> callable ProductionDawnMaterializer
--> thin App/Compose callback
-```
-
-Do not use test retirement as justification for broad App-root decomposition.
+Do not extract a production seam solely to remove one of these remaining guards. A seam should exist only when production architecture independently benefits from it.
 
 ## 2026-08-30 risk-based audit
 
-The new evidence policy triggered a fresh audit of source-level tests. The purpose is to remove accidental implementation contracts while preserving real production-consumer and architecture evidence.
+The risk-based evidence policy triggered a fresh audit of historical source-level tests, especially tests created during the App-root / Host decomposition campaign. The key distinction is between a **completed extraction checkpoint** and a **durable architecture boundary**.
 
-### Retired immediately
+### Retired: completed extraction/location checkpoints
 
-- `clocktower/flow/ClocktowerActualRoleFlowWiringTest.kt`
-  - reason: it asserted exact local variable names, block boundaries, and expressions already duplicated inside `ClocktowerProductionFirstNightWiringTest`;
-  - no distinct behavior or architecture invariant was lost by removing the duplicate file;
-  - the remaining First Night production guard must itself be narrowed when stable production integration coverage makes its implementation-shaped assertions unnecessary.
-
-### Retained temporarily: unique non-callable production boundary
-
-- `ClocktowerPoisonedSpyFailSafePolicyWiringTest.kt`
-  - poisoned-Spy no-Grimoire behavior is a real product policy;
-  - existing typed poison, information and Grimoire tests cover their semantic owners but do not yet prove the Host materializer selects the no-Grimoire branch;
-  - retirement trigger: a callable typed/integration production publication seam proves both first-night and other-night poisoned-Spy behavior.
-
-- `ClocktowerCurrentDemonProductionWiringTest.kt`
-  - current-Demon authority is strongly covered by typed authority/regression tests;
-  - the remaining source assertion uniquely checks that Host consumes the canonical authority seam;
-  - retirement trigger: callable Host/presentation integration covers canonical current-Demon consumption.
-
-- `ClocktowerSameNightEffectiveStateProductionWiringTest.kt`
-  - retained per the earlier SNE closeout because Host effective-subject/poison-lifecycle consumption remains non-callable.
-
-- `ClocktowerMayorDemonExclusionWiringTest.kt`
-  - retained per the earlier SNE closeout because typed legality does not yet prove the remaining Host/UI consumer boundary.
-
-### Retained as consolidated/coarse architecture evidence
-
-- `ClocktowerNightTransactionArchitectureGuardTest.kt`
-  - remains the consolidated ownership guard for pure-vs-durable transaction boundaries after the SNE-7 wiring-test retirement;
-  - future edits should prefer narrowing/consolidation rather than adding neighboring source-wiring tests.
-
-### Next consolidation candidates
-
-The following are not approved for blind deletion. They should be checked for overlap with typed integration coverage and the consolidated architecture guards, then narrowed or retired when no unique production-boundary evidence remains:
+The following tests primarily asserted that a declaration had moved into a named `.kt` file, no longer appeared in a former owner, or retained a stage-specific source layout. The extraction work is already accepted history; keeping these tests would freeze temporary file placement without adding behavioral confidence.
 
 ```text
+AppGameModelsOwnershipTest.kt
+ClocktowerAppModelsOwnershipTest.kt
+ClocktowerHostSelectionSemanticsOwnershipTest.kt
+HostInteractionUiOwnershipTest.kt
+GameSettingsUiOwnershipTest.kt
+WerewolfPresentationOwnershipTest.kt
+ClocktowerNewDemonPresentationOwnershipTest.kt
+AppDealPresentationOwnershipTest.kt
+AppGameReviewPresentationOwnershipTest.kt
+AppClocktowerPresentationThemeOwnershipTest.kt
+AppClocktowerLandingPresentationOwnershipTest.kt
+AppGameScreenPresentationOwnershipTest.kt
+AppPlayerSetupPresentationOwnershipTest.kt
+AppSettingsPresentationOwnershipTest.kt
+ClocktowerNightStepUiOwnershipTest.kt
+ClocktowerPlayerDisplayUiOwnershipTest.kt
+ClocktowerRegistrationUiOwnershipTest.kt
+ClocktowerStorytellerRecommendationCardOwnershipTest.kt
+ClocktowerStorytellerRecommendationUiOwnershipTest.kt
+```
+
+These tests were useful as temporary RED/GREEN extraction scaffolding. They are not durable product contracts.
+
+### Retired: obsolete or duplicated source-shape checks
+
+```text
+clocktower/flow/ClocktowerActualRoleFlowWiringTest.kt
+ClocktowerLegacyFallbackOwnershipTest.kt
+ClocktowerAdvanceNightStepTransactionOwnershipTest.kt
+clocktower/flow/ClocktowerProductionDebugUiCleanupTest.kt
+```
+
+Reasons:
+
+- duplicate source assertions already covered by a remaining production boundary plus typed behavior;
+- exact callback/token ordering that is better owned by typed checkpoint/transaction tests and the consolidated night-transaction architecture guard;
+- checking that historical fallback/debug strings remain absent after an accepted cleanup;
+- no unique behavior or architecture evidence remained.
+
+### Mixed tests narrowed instead of deleted
+
+`clocktower/flow/ClocktowerProductionFirstNightWiringTest.kt`
+
+- removed import, materializer-identity, legacy-order-table and other exact implementation-shape assertions;
+- retained only the non-callable Host adapter invariant separating actual role identities from Drunk waking identities.
+
+`ClocktowerInformationStepBuilderOwnershipTest.kt`
+
+- removed detailed scans of builder internals and forbidden dependency strings;
+- retained only Host -> `ClocktowerInformationStepBuilder` / `build` ownership to prevent a parallel inline information path from returning.
+
+`clocktower/flow/ClocktowerNewDemonProductionWiringTest.kt`
+
+- reduced five detailed source tests to two coarse lifecycle boundaries;
+- retained restore -> canonical Other Night new-Demon identity flow and clear-at-night-completion ownership;
+- typed interaction identity/order/checkpoint semantics remain in `ClocktowerNewDemonIdentityContractTest`.
+
+`persistence/AppJsonPrimitivesTest.kt`
+
+- removed extraction-owner and forbidden-source-content tests;
+- retained enum lookup, nullable JSON primitive and string-array behavior tests.
+
+`persistence/ActiveGameProductionPersistenceWiringTest.kt`
+
+- reduced detailed field/local-variable assertions to canonical save ownership and restore validation-before-mutation boundaries;
+- typed `ActiveGamePersistenceCoordinator` and ruleset persistence tests own schema/content semantics.
+
+`persistence/ActiveGameSemanticHistoryProductionWiringTest.kt`
+
+- reduced detailed source-state assertions to canonical semantic-history save/restore validation and new-Clocktower global-mode ownership;
+- typed persistence/session tests own compatibility and history semantics.
+
+### Intentionally retained behavior tests despite historical names
+
+Do not classify by filename alone. These tests directly call typed helpers/models and therefore remain normal behavioral evidence:
+
+```text
+ClocktowerHostDecompositionCharacterizationTest
+ClocktowerHostPresentationModelsCharacterizationTest
+ClocktowerHostSelectionSemanticsCharacterizationTest
+ClocktowerFortuneTellerPhaseAuthorityTest
+ClocktowerOtherNightWakingRoleAuthorityTest
+ClocktowerPendingSuccessionFlowAuthorityTest
+ClocktowerDemonAttackProductionAdapterTest
+ClocktowerNightStepMaterializerRegistryTest
+```
+
+### Temporary mixed source/behavior test retained pending a natural seam
+
+`StructuredEmpathInformationAdapterTest.kt` contains strong typed behavior tests plus several source assertions around the non-callable Host/UI adapter. Those source assertions remain for now because they uniquely cover production delivery of:
+
+- telemetry commit only after a real automatic preview;
+- impaired recommendation derivation from the unreliable display-option path;
+- previous shown number propagation into later-night Empath decisions.
+
+Retirement trigger: those production adapter inputs/side effects become callable through an independently justified typed UI/Host seam. Do not create a seam solely to remove these assertions.
+
+### Durable coarse guards retained
+
+The following are examples of source-reading tests that remain justified because their purpose is architecture or a non-callable final production boundary, not intermediate file placement:
+
+```text
+AppRootDynamicFlowDecompositionGuardTest
+ClocktowerNightTransactionArchitectureGuardTest
+ClocktowerCurrentDemonProductionWiringTest
+ClocktowerPoisonedSpyFailSafePolicyWiringTest
+ClocktowerSameNightEffectiveStateProductionWiringTest
+ClocktowerMayorDemonExclusionWiringTest
 ClocktowerDawnDurableMaterializationProductionWiringTest
 InformationDecisionProductionAuthorityWiringTest
 ClocktowerDemonSuccessionProductionWiringTest
-clocktower/flow/ClocktowerProductionFirstNightWiringTest
+ClocktowerNightRestoreProductionOwnershipTest
 clocktower/flow/ClocktowerProductionOtherNightWiringTest
-AppRootDynamicFlowDecompositionGuardTest
-clocktower/flow/ClocktowerNewDemonProductionWiringTest
+persistence/ClocktowerGlobalObservationProductionWiringTest
+persistence/ClocktowerHistoricalActionProductionWiringTest
+persistence/ClocktowerHistoricalActionLifecycleProductionWiringTest
 ```
 
-In particular, `ClocktowerProductionFirstNightWiringTest` contains several exact local-variable and source-shape assertions. Preserve only the minimum production ownership/cut-over evidence that cannot yet be expressed by typed integration tests.
+These should shrink or disappear when the final App/Host boundary becomes callable naturally, but they should not be removed merely to reduce source-test count.
 
-### New rule for future correctness work
+## New rule for future correctness work
 
 The source-string test count should not grow merely to enforce RED/GREEN ceremony.
 
-GCR-1 current-Demon continuity and GCR-2 poisoned-Spy information integrity must continue to be owned semantically by typed behavior tests. Temporary source guards may only cover the remaining production-consumer gap and must be retired once that gap becomes callable.
+For future work:
+
+1. prefer direct typed behavior at the semantic owner;
+2. use existing behavioral evidence for mechanical refactors when it already proves the contract;
+3. treat extraction/location tests as temporary scaffolding and retire them after the checkpoint is accepted;
+4. keep source inspection only for a coarse architecture invariant or the last non-callable production-consumer gap;
+5. record a retirement trigger for every temporary source guard when practical;
+6. do not introduce production abstractions solely to make tests more aesthetically pure.
