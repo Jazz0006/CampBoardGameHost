@@ -2102,7 +2102,6 @@ internal fun CampBoardGameHostApp() {
         nextGameKind: GameKind,
         clocktowerScript: ClocktowerScript = ClocktowerScript.TroubleBrewing,
         preparedClocktowerSeed: Long? = null,
-        preparedSetupPlan: RecommendationPlan? = null,
     ) {
         invalidateA4SessionBoundary()
         clearSavedGameState()
@@ -2442,7 +2441,7 @@ internal fun CampBoardGameHostApp() {
         }
         cards.clear()
         cards.addAll(committedCards)
-        resetDealState(GameKind.Clocktower, script, preparedSeed, preparedSetupPlan)
+        resetDealState(GameKind.Clocktower, script, preparedSeed)
     }
 
     fun persistCompletedTroubleBrewingSetupIfNeeded(): Boolean {
