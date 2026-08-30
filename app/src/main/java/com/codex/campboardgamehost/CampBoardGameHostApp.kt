@@ -2379,8 +2379,21 @@ internal fun CampBoardGameHostApp() {
         resetDealState(GameKind.Clocktower, script, preparedSeed, preparedSetupPlan)
     }
 
+    fun persistCompletedTroubleBrewingSetupIfNeeded(): Boolean {
+        if (currentGameKind != GameKind.Clocktower) return true
+        if (currentClocktowerScript != ClocktowerScript.TroubleBrewing) return true
+        if (gameOutcome == null) return true
+        val selection = committedTroubleBrewingSetupSelection ?: return true
+        return TroubleBrewingSetupRotationHistoryStore.fromContext(baseContext)
+            .recordCompletedGame(
+                gameId = clocktowerGameId,
+                selection = selection,
+            )
+    }
+
     fun archiveCurrentGameForRestart(): Boolean {
         if (cards.isEmpty()) return false
+        if (!persistCompletedTroubleBrewingSetupIfNeeded()) return false
         invalidateA4SessionBoundary()
         gameHistory = baseContext.archiveGame(activeGameSnapshotJson())
         clearSavedGameState()
