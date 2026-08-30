@@ -122,6 +122,7 @@ import com.codex.campboardgamehost.clocktower.domain.kind
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerPlayerStates
 import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
+import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
@@ -179,6 +180,9 @@ import com.codex.campboardgamehost.clocktower.session.FirstNightInformationFamil
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationRequest
 import com.codex.campboardgamehost.clocktower.session.FirstNightShadowResult
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDealRoleResolver
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingProductionSetupPreparer
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetJson
 import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkCase
 import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkHarness
 import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkReport
@@ -2196,6 +2200,73 @@ internal fun CampBoardGameHostApp() {
         resetDealState(GameKind.Werewolf)
     }
 
+    fun startTroubleBrewingGame() {
+        val preparedSeed = newClocktowerSeed()
+
+        val datasetJson = baseContext.assets
+            .open("setup/trouble_brewing_setup_presets_v2_final.json")
+            .bufferedReader(Charsets.UTF_8)
+            .use { it.readText() }
+
+        val dataset = TroubleBrewingSetupPresetJson.parse(datasetJson)
+
+        val rotationHistory = TroubleBrewingSetupRotationHistoryStore.fromContext(baseContext)
+            .historyFor(
+                datasetId = dataset.datasetId,
+                schemaVersion = dataset.schemaVersion,
+                playerCount = playerNames.size,
+            )
+
+        val characterRegistry = BuiltInClocktowerRulesetCatalog
+            .fromContext(baseContext)
+            .ruleset(ClocktowerScript.TroubleBrewing)
+            .characterRegistry
+
+        val preparedSetup = TroubleBrewingProductionSetupPreparer.prepare(
+            dataset = dataset,
+            characterRegistry = characterRegistry,
+            orderedPlayerNames = playerNames.toList(),
+            gameSeed = preparedSeed,
+            recentSetupRotationHistory = rotationHistory,
+        )
+
+        val resolvedAssignments = TroubleBrewingDealRoleResolver.resolve(
+            dealPlan = preparedSetup.dealPlan,
+            availableRoles = completeTroubleBrewingRoles,
+        )
+
+        val committedCards = resolvedAssignments.map { assignment ->
+            val role = assignment.actualRole
+            val shownRole = assignment.shownRole
+
+            PlayerCard(
+                name = assignment.playerName.ifBlank {
+                    context.playerName(assignment.seat)
+                },
+                role = Role.Civilian,
+                roleLabel = shownRole.nameFor(language),
+                actualRoleLabel = role.nameFor(language),
+                clocktowerTeam = role.team,
+                clocktowerRole = role,
+                clocktowerShownRole = shownRole,
+                word = context.getString(
+                    R.string.clocktower_card_desc_format,
+                    shownRole.team.label(context),
+                    shownRole.descriptionFor(language),
+                ),
+            )
+        }
+
+        cards.clear()
+        cards.addAll(committedCards)
+
+        resetDealState(
+            nextGameKind = GameKind.Clocktower,
+            clocktowerScript = ClocktowerScript.TroubleBrewing,
+            preparedClocktowerSeed = preparedSeed,
+        )
+    }
+
     fun startClocktowerGame() {
         if (playerNames.size < MIN_CLOCKTOWER_PLAYERS) return
         val script = if (playerNames.size in 5..6) {
@@ -2204,6 +2275,12 @@ internal fun CampBoardGameHostApp() {
             ClocktowerScript.TroubleBrewing
         }
         if (!canStartClocktowerScript(script)) return
+
+        if (script == ClocktowerScript.TroubleBrewing) {
+            startTroubleBrewingGame()
+            return
+        }
+
         val assignments = generateClocktowerAssignments(playerNames.size, script)
         if (assignments.size != playerNames.size) return
         val preparedSeed = newClocktowerSeed()
