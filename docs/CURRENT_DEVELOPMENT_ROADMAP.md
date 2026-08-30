@@ -19,19 +19,19 @@ PR #57 — TBSP: integrate Trouble Brewing setup presets
 OPEN / DRAFT / NOT MERGED
 
 last fully validated logical code/test checkpoint:
-f7e877f6881cc74b9d8e7f4f8db2b2fb406b84d4
+68d29c53a0a37f2c30b9d88ed8967d5d9548b4bc
 
 checkpoint meaning:
-TBSP-6I cutover acceptance matrix accepted
-NGJ typed regression added
-CI #1148 / run 33341819960 SUCCESS
-R2 #1071 / run 33341819962 SUCCESS
+TBSP-6J behavior-preserving cleanup accepted
+one-shot run 33342673392 SUCCESS
+final normal PR CI #1155 / run 33342927330 SUCCESS
+final R2 #1078 / run 33342927359 SUCCESS
 
 current work:
-TBSP-6J behavior-preserving cleanup
+TBSP-6K final full acceptance — NEXT / NOT STARTED
 
 active handoff:
-docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6J_CLEANUP.md
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6K_FINAL_ACCEPTANCE.md
 
 normative TBSP rotation policy:
 docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md
@@ -40,7 +40,7 @@ normative Trouble Brewing production cutover contract:
 docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
 ```
 
-Any commits after `f7e877...` that modify documentation only are documentation carriers and are not a new code/test checkpoint.
+Commits after `68d29c5...` that only clean temporary CI files or update documentation are carriers on top of the accepted 6J production tree, not new production checkpoints.
 
 ## 2. Current campaign status
 
@@ -61,13 +61,13 @@ TBSP-6G-A setup recommendation prewarm core                  COMPLETE
 TBSP-6G-B reveal-window production wiring                    COMPLETE
 TBSP-6H First Night background precompute                    COMPLETE
 TBSP-6I cutover acceptance matrix                            COMPLETE
-TBSP-6J cleanup                                              CURRENT
-TBSP-6K final full acceptance                                NOT STARTED
+TBSP-6J cleanup                                              COMPLETE
+TBSP-6K final full acceptance                                NEXT / NOT STARTED
 MS-SETUP generic multi-script setup architecture              PLANNED AFTER TBSP-6K
 A3 immutable setup snapshot                                  DEFERRED UNTIL TBSP ACCEPTANCE
 ```
 
-PR #57 remains Draft throughout 6J/6K. Do not mark Ready or merge without explicit authorization.
+PR #57 remains Draft through 6K. Do not mark Ready or merge without explicit authorization.
 
 ## 3. Protected predecessor correctness baseline
 
@@ -244,45 +244,61 @@ P16 ACCEPTED typed: same gameId/selection retry writes once; conflicting gameId 
 
 There is no existing `app/src/androidTest` Compose instrumentation harness. Do not introduce one solely to duplicate the static event-wiring facts behind P8/P9, and do not create new source-string tests merely to restate those facts.
 
-## 7. Current work — TBSP-6J cleanup
+## 7. TBSP-6J cleanup — COMPLETE
+
+Production cleanup checkpoint:
+
+```text
+68d29c53a0a37f2c30b9d88ed8967d5d9548b4bc
+```
+
+One-shot cleanup commit:
+
+```text
+ab1a57393a9abfd774dcdf4776f81134ed19a81a
+```
+
+Docs/final-gate checkpoint:
+
+```text
+d3b3993327a86c7dbd091346b11e7e6a95541637
+```
+
+Exact production change:
+
+```text
+resetDealState(..., preparedSetupPlan: RecommendationPlan? = null)
+-> remove unused preparedSetupPlan parameter
+
+resetDealState(GameKind.Clocktower, script, preparedSeed, preparedSetupPlan)
+-> resetDealState(GameKind.Clocktower, script, preparedSeed)
+```
+
+The local legacy/NGJ `preparedSetupPlan` calculation remains present and still derives `recommendedDrunkShownRole`; no setup or NGJ behavior changed.
+
+Validation:
+
+```text
+one-shot run 33342673392                     SUCCESS
+:app:compileDebugKotlin                       SUCCESS
+NoGreaterJoySetupRegressionTest --rerun-tasks SUCCESS
+:app:testFast --rerun-tasks                  SUCCESS
+git diff --check / exact one-file audit      SUCCESS
+normal PR CI #1155 / run 33342927330         SUCCESS
+R2 #1078 / run 33342927359                   SUCCESS
+```
+
+6J is accepted. Do not reopen this dead-parameter cleanup during 6K unless final acceptance exposes a concrete regression.
+
+## 8. TBSP-6K — final full acceptance — NEXT
 
 Active handoff:
 
 ```text
-docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6J_CLEANUP.md
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6K_FINAL_ACCEPTANCE.md
 ```
 
-A concrete dormant pass-through is confirmed in `CampBoardGameHostApp.kt`:
-
-```kotlin
-fun resetDealState(
-    nextGameKind: GameKind,
-    clocktowerScript: ClocktowerScript = ClocktowerScript.TroubleBrewing,
-    preparedClocktowerSeed: Long? = null,
-    preparedSetupPlan: RecommendationPlan? = null,
-)
-```
-
-`resetDealState` does not consume `preparedSetupPlan`. The legacy/NGJ Clocktower start path computes a local `preparedSetupPlan` and uses it to derive `recommendedDrunkShownRole`; that local computation is behaviorally meaningful, but passing it into `resetDealState` is not.
-
-### 6J intended slice
-
-```text
-remove unused resetDealState preparedSetupPlan parameter
--> change the four-argument call to three arguments
--> remove resulting unused import only if genuinely unused
--> compile / focused existing tests / :app:testFast
--> exact diff + R2/CI
--> stop
-```
-
-This is behavior-preserving dead-parameter cleanup. Do not manufacture a RED test for the implementation detail.
-
-Do not broaden 6J into selector changes, dataset changes, NGJ behavior changes, background-lifecycle redesign, persistence redesign, A3/A4/ZDD, Mayor/Imp work or App/Host decomposition.
-
-## 8. TBSP-6K — final full acceptance
-
-6K begins only after 6J is accepted.
+6K is an integrated acceptance slice, not a new feature implementation.
 
 Required final gate:
 
@@ -296,11 +312,13 @@ all focused TBSP acceptance GREEN
 -> exact diff / scope audit
 ```
 
-Then report acceptance state. PR #57 still remains Draft until the user explicitly authorizes Ready/merge.
+If a real regression is found, create the smallest explicit repair slice instead of hiding behavioral changes inside the acceptance run.
+
+PR #57 remains Draft until the user explicitly authorizes Ready/merge.
 
 ### 8.1 Planned post-TBSP follow-up — MS-SETUP generic multi-script setup architecture
 
-This work begins only after TBSP-6K acceptance. It must not be pulled into 6J/6K.
+This work begins only after TBSP-6K acceptance. It must not be pulled into 6K.
 
 Goal: make setup selection script-neutral so every Clocktower script automatically supports both template-backed and generated setup modes without adding new App-root `if (script == ...)` branches.
 
@@ -369,7 +387,7 @@ P15 Only true completed TB games enter rotation history.
 P16 Completion persistence is retry-safe and records the original initial selection.
 ```
 
-All P1–P16 are accepted as of TBSP-6I. 6J must preserve them; 6K revalidates the integrated branch.
+All P1–P16 are accepted as of TBSP-6I; 6J preserved them. 6K revalidates the integrated branch.
 
 ## 10. Testing cadence
 
@@ -384,7 +402,7 @@ Use risk-based evidence:
 - run T4 `:app:testFull` at TBSP-6K final acceptance;
 - remote CI/R2 and local/focused evidence serve different purposes.
 
-For 6J specifically, compile + existing focused tests + T1 + exact diff is the appropriate behavior-preserving cleanup evidence unless a real regression appears.
+6K should primarily run and audit existing accepted evidence. Do not add duplicate acceptance wrappers unless a real uncovered regression appears.
 
 ## 11. Active documentation
 
@@ -393,7 +411,7 @@ Use these as current instructions:
 ```text
 AGENTS.md
 docs/CURRENT_DEVELOPMENT_ROADMAP.md
-docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6J_CLEANUP.md
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6K_FINAL_ACCEPTANCE.md
 docs/TESTING_STRATEGY.md
 docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
 docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md when rotation semantics are relevant
@@ -401,21 +419,23 @@ docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md when rotation semantics are relevant
 
 Earlier TBSP execution handoffs/checkpoints remain historical evidence. Git history preserves their exact content.
 
+The MS-SETUP generic multi-script setup architecture is planned after TBSP-6K and must not be pulled into final TBSP acceptance.
+
 A3 remains deferred until this roadmap explicitly reactivates it after TBSP production acceptance.
 
 ## 12. New-conversation resume protocol
 
 1. read root `AGENTS.md`;
 2. read this roadmap;
-3. read `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6J_CLEANUP.md`;
+3. read `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6K_FINAL_ACCEPTANCE.md`;
 4. read `docs/TESTING_STRATEGY.md`;
 5. re-query live `main`, PR #57 head/state/checks and branch comparison;
-6. distinguish docs-only carriers from last validated code/test checkpoint `f7e877f6881cc74b9d8e7f4f8db2b2fb406b84d4`;
-7. continue with the narrow TBSP-6J dead-parameter cleanup;
-8. do not create an implementation-detail RED merely to remove the dead parameter;
+6. distinguish docs-only carriers from accepted 6J production checkpoint `68d29c53a0a37f2c30b9d88ed8967d5d9548b4bc`;
+7. execute TBSP-6K as final integrated acceptance, not feature development;
+8. use existing owning tests and the test tiers required by current testing strategy;
 9. preserve P1–P16, Dawn/Dusk exactly-once behavior and No Greater Joy behavior;
-10. stop after 6J acceptance; do not begin 6K in the same micro-slice;
-11. do not resume A3/A4/ZDD/Mayor/Imp-succession work;
+10. do not implement MS-SETUP, A3/A4/ZDD/Mayor/Imp-succession work inside 6K;
+11. if a regression appears, stop and isolate a repair slice;
 12. keep PR #57 Draft and do not merge or mark Ready without explicit authorization.
 
 ## 13. Deferred work registry
