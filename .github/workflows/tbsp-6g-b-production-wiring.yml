@@ -1,0 +1,372 @@
+name: TBSP 6G-B production wiring patch
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/tbsp-6g-b-production-wiring.yml
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  patch:
+    if: github.head_ref == 'codex/trouble-brewing-setup-presets-v2'
+    runs-on: ubuntu-latest
+    env:
+      TARGET_BRANCH: codex/trouble-brewing-setup-presets-v2
+      EXPECTED_PARENT: 3b63c2fae4fced3b5a0d3eda40639ba07f19f0f4
+      WORKFLOW_PATH: .github/workflows/tbsp-6g-b-production-wiring.yml
+      APP_PATH: app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+      HOST_PATH: app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+
+    steps:
+      - name: Checkout exact feature branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/trouble-brewing-setup-presets-v2
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Verify one-shot bootstrap scope and locked parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_PARENT"
+          actual="$(git diff --name-only "$EXPECTED_PARENT"..HEAD)"
+          test "$actual" = "$WORKFLOW_PATH"
+          remote_line="$(git ls-remote origin "refs/heads/$TARGET_BRANCH")"
+          remote_sha="${remote_line%%$'\t'*}"
+          test "$remote_sha" = "$(git rev-parse HEAD)"
+
+      - name: Apply exact TBSP 6G-B App and Host wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def block(*lines: str) -> str:
+              return "\n".join(lines)
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one anchor, found {count}")
+              return text.replace(old, new, 1)
+
+          app_path = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
+          app = app_path.read_text(encoding="utf-8")
+
+          app = replace_once(
+              app,
+              block(
+                  'import androidx.compose.runtime.remember',
+                  'import androidx.compose.runtime.rememberUpdatedState',
+              ),
+              block(
+                  'import androidx.compose.runtime.remember',
+                  'import androidx.compose.runtime.rememberCoroutineScope',
+                  'import androidx.compose.runtime.rememberUpdatedState',
+              ),
+              'App rememberCoroutineScope import',
+          )
+
+          app = replace_once(
+              app,
+              block(
+                  'import com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest',
+                  'import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest',
+                  'import com.codex.campboardgamehost.clocktower.session.UnifiedSetupSelectorDeviceBenchmark',
+              ),
+              block(
+                  'import com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest',
+                  'import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest',
+                  'import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationLock',
+                  'import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationPrewarmCoordinator',
+                  'import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationRevealCoordinator',
+                  'import com.codex.campboardgamehost.clocktower.session.UnifiedSetupSelectorDeviceBenchmark',
+              ),
+              'App TBSP recommendation imports',
+          )
+
+          app = replace_once(
+              app,
+              '    val a4ShadowWorldSetCache = remember { A4ShadowWorldSetCache() }',
+              block(
+                  '    val troubleBrewingSetupRecommendationScope = rememberCoroutineScope()',
+                  '    val troubleBrewingSetupRecommendationPrewarmer = remember {',
+                  '        val recommendationCoordinator = ClocktowerRecommendationCoordinator()',
+                  '        TroubleBrewingSetupRecommendationPrewarmCoordinator { request ->',
+                  '            recommendationCoordinator.recommendSetup(request)',
+                  '        }',
+                  '    }',
+                  '    val troubleBrewingSetupRecommendationRevealCoordinator =',
+                  '        remember(troubleBrewingSetupRecommendationPrewarmer) {',
+                  '            TroubleBrewingSetupRecommendationRevealCoordinator(',
+                  '                prewarmer = troubleBrewingSetupRecommendationPrewarmer,',
+                  '            )',
+                  '        }',
+                  '    val a4ShadowWorldSetCache = remember { A4ShadowWorldSetCache() }',
+              ),
+              'App TBSP recommendation lifecycle owners',
+          )
+
+          app = replace_once(
+              app,
+              block(
+                  '        cards.clear()',
+                  '        cards.addAll(committedCards)',
+                  '',
+                  '        resetDealState(',
+                  '            nextGameKind = GameKind.Clocktower,',
+                  '            clocktowerScript = ClocktowerScript.TroubleBrewing,',
+                  '            preparedClocktowerSeed = preparedSeed,',
+                  '        )',
+                  '        committedTroubleBrewingSetupSelection = preparedSetup.selection',
+              ),
+              block(
+                  '        val setupRecommendationRoleDefinitions =',
+                  '            clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing)',
+                  '        val initialSetupRecommendationRequest = SetupCoordinationRequest(',
+                  '            game = committedCards.toClocktowerGameState(',
+                  '                script = ClocktowerScript.TroubleBrewing,',
+                  '                seed = preparedSeed,',
+                  '                poisonedPlayerName = null,',
+                  '            ),',
+                  '            roles = setupRecommendationRoleDefinitions,',
+                  '            lockedDecisions = TroubleBrewingSetupRecommendationLock.lockedDecisions(',
+                  '                dealPlan = preparedSetup.dealPlan,',
+                  '                roleDefinitions = setupRecommendationRoleDefinitions,',
+                  '            ),',
+                  '            history = gameHistory.toClocktowerSetupHistory(),',
+                  '        )',
+                  '',
+                  '        cards.clear()',
+                  '        cards.addAll(committedCards)',
+                  '',
+                  '        troubleBrewingSetupRecommendationRevealCoordinator.onCommittedDeal(',
+                  '            request = initialSetupRecommendationRequest,',
+                  '            enterReveal = {',
+                  '                resetDealState(',
+                  '                    nextGameKind = GameKind.Clocktower,',
+                  '                    clocktowerScript = ClocktowerScript.TroubleBrewing,',
+                  '                    preparedClocktowerSeed = preparedSeed,',
+                  '                )',
+                  '                committedTroubleBrewingSetupSelection = preparedSetup.selection',
+                  '            },',
+                  '            launchBackground = { work ->',
+                  '                troubleBrewingSetupRecommendationScope.launch(Dispatchers.Default) {',
+                  '                    work()',
+                  '                }',
+                  '            },',
+                  '        )',
+              ),
+              'App committed TB deal reveal/prewarm wiring',
+          )
+
+          app = replace_once(
+              app,
+              block(
+                  '                        rulesetRef = clocktowerRulesetRef,',
+                  '                        setupHistory = gameHistory.toClocktowerSetupHistory(),',
+                  '                        onInitialRecommendationDemand = recordA4InitialRecommendationDemand,',
+              ),
+              block(
+                  '                        rulesetRef = clocktowerRulesetRef,',
+                  '                        setupHistory = gameHistory.toClocktowerSetupHistory(),',
+                  '                        setupRecommendationResultProvider =',
+                  '                            if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {',
+                  '                                troubleBrewingSetupRecommendationRevealCoordinator::resultFor',
+                  '                            } else {',
+                  '                                null',
+                  '                            },',
+                  '                        onInitialRecommendationDemand = recordA4InitialRecommendationDemand,',
+              ),
+              'App TB-only Judge provider wiring',
+          )
+
+          app_path.write_text(app, encoding="utf-8", newline="\n")
+
+          host_path = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt")
+          host = host_path.read_text(encoding="utf-8")
+
+          host = replace_once(
+              host,
+              block(
+                  'import com.codex.campboardgamehost.clocktower.recommendation.GameBalanceEvaluator',
+                  'import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit',
+              ),
+              block(
+                  'import com.codex.campboardgamehost.clocktower.recommendation.GameBalanceEvaluator',
+                  'import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService',
+                  'import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit',
+              ),
+              'Host SetupRecommendationService import',
+          )
+
+          host = replace_once(
+              host,
+              block(
+                  '    rulesetRef: RulesetRef?,',
+                  '    setupHistory: CrossGameHistory,',
+                  '    onInitialRecommendationDemand: () -> Unit,',
+              ),
+              block(
+                  '    rulesetRef: RulesetRef?,',
+                  '    setupHistory: CrossGameHistory,',
+                  '    setupRecommendationResultProvider: ((SetupCoordinationRequest) -> SetupRecommendationService.ConstrainedResult)? = null,',
+                  '    onInitialRecommendationDemand: () -> Unit,',
+              ),
+              'Host setup recommendation provider parameter',
+          )
+
+          host = replace_once(
+              host,
+              block(
+                  '    var lockedRecommendationDecisions by remember(recommendationKey) {',
+                  '        mutableStateOf(committedIdentityDecisions)',
+                  '    }',
+                  '    LaunchedEffect(recommendationKey, lockedRecommendationDecisions) {',
+              ),
+              block(
+                  '    var lockedRecommendationDecisions by remember(recommendationKey) {',
+                  '        mutableStateOf(committedIdentityDecisions)',
+                  '    }',
+                  '    val recommendationRequest = SetupCoordinationRequest(',
+                  '        game = recommendationCards.toClocktowerGameState(',
+                  '            script = script,',
+                  '            seed = gameSeed,',
+                  '            poisonedPlayerName = poisonTarget,',
+                  '        ),',
+                  '        roles = clocktowerRoleDefinitionsForScript(script),',
+                  '        lockedDecisions = lockedRecommendationDecisions,',
+                  '        history = setupHistory,',
+                  '    )',
+                  '    LaunchedEffect(recommendationKey, lockedRecommendationDecisions) {',
+              ),
+              'Host construct exact recommendation request once',
+          )
+
+          host = replace_once(
+              host,
+              block(
+                  '                recommendationCoordinator.recommendSetup(',
+                  '                    SetupCoordinationRequest(',
+                  '                        game = recommendationCards.toClocktowerGameState(',
+                  '                            script = script,',
+                  '                            seed = gameSeed,',
+                  '                            poisonedPlayerName = poisonTarget,',
+                  '                        ),',
+                  '                        roles = clocktowerRoleDefinitionsForScript(script),',
+                  '                        lockedDecisions = lockedRecommendationDecisions,',
+                  '                        history = setupHistory,',
+                  '                    ),',
+                  '                )',
+              ),
+              block(
+                  '                setupRecommendationResultProvider?.invoke(recommendationRequest)',
+                  '                    ?: recommendationCoordinator.recommendSetup(recommendationRequest)',
+              ),
+              'Host ready reuse and miss fallback',
+          )
+
+          host_path.write_text(host, encoding="utf-8", newline="\n")
+          PY
+
+      - name: Audit exact production scope and semantic boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t changed < <(git diff --name-only | sort)
+          expected=(
+            "$APP_PATH"
+            "$HOST_PATH"
+          )
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = "${expected_sorted[0]}"
+          test "${changed[1]}" = "${expected_sorted[1]}"
+          test -z "$(git ls-files '*TroubleBrewingSetupRecommendationProductionWiringTest.kt')"
+          grep -Fq 'TroubleBrewingSetupRecommendationRevealCoordinator' "$APP_PATH"
+          grep -Fq 'troubleBrewingSetupRecommendationScope.launch(Dispatchers.Default)' "$APP_PATH"
+          grep -Fq 'poisonedPlayerName = null' "$APP_PATH"
+          grep -Fq 'TroubleBrewingSetupRecommendationLock.lockedDecisions' "$APP_PATH"
+          grep -Fq 'setupRecommendationResultProvider?.invoke(recommendationRequest)' "$HOST_PATH"
+          grep -Fq '?: recommendationCoordinator.recommendSetup(recommendationRequest)' "$HOST_PATH"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Compile production Kotlin
+        shell: bash
+        run: bash ./gradlew :app:compileDebugKotlin --no-daemon --build-cache
+
+      - name: Run focused typed TBSP recommendation tests
+        shell: bash
+        run: >-
+          bash ./gradlew :app:testFast
+          --tests '*TroubleBrewingSetupRecommendationPrewarmCoordinatorTest'
+          --tests '*TroubleBrewingSetupRecommendationRevealCoordinatorTest'
+          --tests '*TroubleBrewingSetupRecommendationLockTest'
+          --rerun-tasks --no-daemon --build-cache
+
+      - name: Run T1 testFast
+        shell: bash
+        run: bash ./gradlew :app:testFast --rerun-tasks --no-daemon --build-cache
+
+      - name: Commit and push production wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          bootstrap_head="$(git rev-parse HEAD)"
+          remote_line="$(git ls-remote origin "refs/heads/$TARGET_BRANCH")"
+          remote_sha="${remote_line%%$'\t'*}"
+          test "$remote_sha" = "$bootstrap_head"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- "$APP_PATH" "$HOST_PATH"
+          git diff --cached --check
+          mapfile -t staged < <(git diff --cached --name-only | sort)
+          test "${#staged[@]}" -eq 2
+          git commit -m 'feat: wire TBSP 6G-B recommendation prewarm'
+          product_sha="$(git rev-parse HEAD)"
+          git push origin "HEAD:refs/heads/$TARGET_BRANCH"
+          echo "PRODUCT_SHA=$product_sha" >> "$GITHUB_ENV"
+          echo "Production commit: $product_sha" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove one-shot workflow and push cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$PRODUCT_SHA"
+          git rm -- "$WORKFLOW_PATH"
+          git diff --cached --check
+          actual="$(git diff --cached --name-only)"
+          test "$actual" = "$WORKFLOW_PATH"
+          git commit -m 'chore(ci): remove TBSP 6G-B one-shot workflow'
+          cleanup_sha="$(git rev-parse HEAD)"
+          git push origin "HEAD:refs/heads/$TARGET_BRANCH"
+          echo "CLEANUP_SHA=$cleanup_sha" >> "$GITHUB_ENV"
+          echo "Cleanup commit: $cleanup_sha" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Dispatch independent CI and R2 on final head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_line="$(git ls-remote origin "refs/heads/$TARGET_BRANCH")"
+          remote_sha="${remote_line%%$'\t'*}"
+          test "$remote_sha" = "$CLEANUP_SHA"
+          gh workflow run ci.yml --ref "$TARGET_BRANCH"
+          gh workflow run r2-write-probe.yml --ref "$TARGET_BRANCH"
