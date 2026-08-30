@@ -6,6 +6,7 @@ internal data class TroubleBrewingSetupDealAssignment(
     val seat: Int,
     val playerName: String,
     val actualRoleId: String,
+    val shownRoleId: String,
 )
 
 internal data class TroubleBrewingSetupDealPlan(
@@ -14,6 +15,7 @@ internal data class TroubleBrewingSetupDealPlan(
     val presetId: String,
     val playerCount: Int,
     val gameSeed: Long,
+    val selectedDrunkShownRole: String?,
     val assignments: List<TroubleBrewingSetupDealAssignment>,
 )
 
@@ -38,6 +40,10 @@ internal object TroubleBrewingSetupDealPlanner {
         require(actualRoleIds.size == selection.playerCount) {
             "Selected Trouble Brewing preset role count does not match player count."
         }
+        val selectedDrunkShownRole = validatedDrunkShownRole(
+            selection = selection,
+            actualRoleIds = actualRoleIds,
+        )
         val seatOrderedRoleIds = actualRoleIds.sortedWith(
             Comparator { leftRoleId, rightRoleId ->
                 val leftKey = seatOrderKey(selection, leftRoleId)
@@ -53,14 +59,44 @@ internal object TroubleBrewingSetupDealPlanner {
             presetId = selection.presetId,
             playerCount = selection.playerCount,
             gameSeed = selection.gameSeed,
+            selectedDrunkShownRole = selectedDrunkShownRole,
             assignments = orderedPlayerNames.mapIndexed { index, playerName ->
+                val actualRoleId = seatOrderedRoleIds[index]
                 TroubleBrewingSetupDealAssignment(
                     seat = index + 1,
                     playerName = playerName,
-                    actualRoleId = seatOrderedRoleIds[index],
+                    actualRoleId = actualRoleId,
+                    shownRoleId = if (actualRoleId == DRUNK_ROLE_ID) {
+                        requireNotNull(selectedDrunkShownRole)
+                    } else {
+                        actualRoleId
+                    },
                 )
             },
         )
+    }
+
+    private fun validatedDrunkShownRole(
+        selection: TroubleBrewingSetupPresetSelection,
+        actualRoleIds: List<String>,
+    ): String? {
+        if (DRUNK_ROLE_ID !in actualRoleIds) {
+            require(selection.selectedDrunkShownRole == null) {
+                "Non-Drunk Trouble Brewing preset must not carry a Drunk shown role."
+            }
+            return null
+        }
+
+        val shownRoleId = requireNotNull(selection.selectedDrunkShownRole) {
+            "Drunk Trouble Brewing preset requires the selector-owned shown role."
+        }
+        require(shownRoleId in selection.preset.drunkAsOptions) {
+            "Selected Drunk shown role must come from the selected preset options."
+        }
+        require(shownRoleId !in actualRoleIds) {
+            "Selected Drunk shown role must not already be an actual in-play role."
+        }
+        return shownRoleId
     }
 
     private fun seatOrderKey(
@@ -70,4 +106,6 @@ internal object TroubleBrewingSetupDealPlanner {
         "tb-seat-v1|${selection.datasetId}|${selection.playerCount}|${selection.presetId}|" +
             "${selection.gameSeed}|$roleId",
     )
+
+    private const val DRUNK_ROLE_ID = "drunk"
 }
