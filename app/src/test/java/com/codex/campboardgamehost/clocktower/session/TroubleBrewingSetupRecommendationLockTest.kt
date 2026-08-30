@@ -57,6 +57,43 @@ class TroubleBrewingSetupRecommendationLockTest {
         }
     }
 
+    @Test
+    fun `non Drunk deal plan contributes no setup recommendation lock`() {
+        val actualRoleIds = listOf(
+            "chef",
+            "empath",
+            "fortuneteller",
+            "undertaker",
+            "virgin",
+            "butler",
+            "scarletwoman",
+            "imp",
+        )
+        val dealPlan = TroubleBrewingSetupDealPlan(
+            datasetId = "test-dataset",
+            schemaVersion = 2,
+            presetId = "test-non-drunk-preset",
+            playerCount = actualRoleIds.size,
+            gameSeed = 4_002L,
+            selectedDrunkShownRole = null,
+            assignments = actualRoleIds.mapIndexed { index, roleId ->
+                TroubleBrewingSetupDealAssignment(
+                    seat = index + 1,
+                    playerName = "Player ${index + 1}",
+                    actualRoleId = roleId,
+                    shownRoleId = roleId,
+                )
+            },
+        )
+
+        assertTrue(
+            TroubleBrewingSetupRecommendationLock.lockedDecisions(
+                dealPlan = dealPlan,
+                roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
+            ).isEmpty(),
+        )
+    }
+
     private fun investigatorDrunkDealPlan() = TroubleBrewingSetupDealPlan(
         datasetId = "test-dataset",
         schemaVersion = 2,
