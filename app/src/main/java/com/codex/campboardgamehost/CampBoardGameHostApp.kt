@@ -182,6 +182,7 @@ import com.codex.campboardgamehost.clocktower.session.FirstNightInformationReque
 import com.codex.campboardgamehost.clocktower.session.FirstNightShadowResult
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDealRoleResolver
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingProductionSetupPreparer
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetSelection
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetJson
 import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkCase
 import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkHarness
@@ -897,6 +898,9 @@ internal fun CampBoardGameHostApp() {
     var currentClocktowerScript by remember { mutableStateOf(ClocktowerScript.TroubleBrewing) }
     var clocktowerGameId by remember { mutableStateOf("") }
     var clocktowerGameSeed by remember { mutableStateOf(0L) }
+    var committedTroubleBrewingSetupSelection by remember {
+        mutableStateOf<TroubleBrewingSetupPresetSelection?>(null)
+    }
     var clocktowerGameStateRevision by remember { mutableStateOf(0L) }
     var clocktowerPlayerInputRevision by remember { mutableStateOf(0L) }
     var clocktowerSemanticHistoryMode by remember { mutableStateOf(ClocktowerSemanticHistoryMode.LEGACY_LOCAL) }
@@ -1530,6 +1534,12 @@ internal fun CampBoardGameHostApp() {
             PersistedActiveGameIdentityJsonCodec.ROOT_KEY,
             PersistedActiveGameIdentityJsonCodec.encode(gameContentIdentity),
         )
+        committedTroubleBrewingSetupSelection?.let { selection ->
+            put(
+                TroubleBrewingSetupProvenancePersistence.ROOT_KEY,
+                TroubleBrewingSetupProvenancePersistence.encode(selection),
+            )
+        }
         put("undercoverCount", undercoverCount)
         put("includeBlank", includeBlank)
         put("werewolfCount", werewolfCount)
@@ -1712,6 +1722,19 @@ internal fun CampBoardGameHostApp() {
                     emptyList()
                 },
             )
+            val restoredTroubleBrewingSetupSelection = if (
+                restoredGameKind == GameKind.Clocktower &&
+                restoredPersistence.clocktowerScript == ClocktowerScript.TroubleBrewing
+            ) {
+                val datasetJson = baseContext.assets
+                    .open("setup/trouble_brewing_setup_presets_v2_final.json")
+                    .bufferedReader(Charsets.UTF_8)
+                    .use { it.readText() }
+                val dataset = TroubleBrewingSetupPresetJson.parse(datasetJson)
+                TroubleBrewingSetupProvenancePersistence.decodeOrNull(json, dataset)
+            } else {
+                null
+            }
             val restoredClocktowerRulesetRef = json.opt("clocktowerRulesetRef")
                 .takeUnless { raw -> raw == null || raw == JSONObject.NULL }
                 ?.let { raw ->
@@ -1868,6 +1891,7 @@ internal fun CampBoardGameHostApp() {
             if (restoredGameKind == GameKind.Clocktower) {
                 currentClocktowerScript = requireNotNull(restoredPersistence.clocktowerScript)
             }
+            committedTroubleBrewingSetupSelection = restoredTroubleBrewingSetupSelection
             clocktowerGameId = json.optString("clocktowerGameId")
                 .takeIf { it.isNotBlank() }
                 ?: UUID.randomUUID().toString()
@@ -2055,6 +2079,7 @@ internal fun CampBoardGameHostApp() {
     ) {
         invalidateA4SessionBoundary()
         clearSavedGameState()
+        committedTroubleBrewingSetupSelection = null
         currentGameKind = nextGameKind
         records.clear()
         clocktowerEvents.clear()
@@ -2265,6 +2290,7 @@ internal fun CampBoardGameHostApp() {
             clocktowerScript = ClocktowerScript.TroubleBrewing,
             preparedClocktowerSeed = preparedSeed,
         )
+        committedTroubleBrewingSetupSelection = preparedSetup.selection
     }
 
     fun startClocktowerGame() {
