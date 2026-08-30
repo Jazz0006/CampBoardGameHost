@@ -3,12 +3,13 @@
 > Updated: 2026-08-30 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Campaign: **TBSP — Trouble Brewing Setup Preset Integration**  
-> Status: **TBSP-5 IMPLEMENTED / FULL ACCEPTANCE CHECKPOINT REQUESTED**  
+> Status: **TBSP-5 COMPLETE / TBSP-6 NOT STARTED**  
 > Branch: `codex/trouble-brewing-setup-presets-v2`  
 > Draft PR / CI carrier: **#57 — TBSP: integrate Trouble Brewing setup presets**  
-> Live `main` baseline at implementation: `ba7cfa12853a8829ecf228c05cf2a22067f1e6e4`  
+> Live `main` baseline at completion: `ba7cfa12853a8829ecf228c05cf2a22067f1e6e4`  
 > TBSP-4 validated checkpoint: `f68d8326de6bf57ecfd632fef73689c4900f87a9`  
-> TBSP-5 latest code/test checkpoint before this docs-only commit: `3c9603312c0f3694d91d9707d9ece89e4edc24f9`
+> TBSP-5 code/test checkpoint: `3c9603312c0f3694d91d9707d9ece89e4edc24f9`  
+> TBSP-5 full-acceptance carrier: `97e39027849a1d4925e94dc61329aa6c560db97b`
 
 ## 1. Scope completed
 
@@ -152,8 +153,8 @@ This supports completion-persistence retry convergence without adding duplicate 
 Rotation history is a diversity/selection input, not mechanical game-state truth. The store therefore uses a fail-soft read policy:
 
 ```text
-missing raw history     -> EMPTY
-malformed JSON          -> EMPTY
+missing raw history        -> EMPTY
+malformed JSON             -> EMPTY
 unsupported store version -> EMPTY
 ```
 
@@ -200,7 +201,7 @@ Android :app:testFast: GREEN
 
 ### TBSP-5B / 5C / 5D lock-in
 
-Commit:
+Commit / final code-test checkpoint:
 
 ```text
 3c9603312c0f3694d91d9707d9ece89e4edc24f9
@@ -247,15 +248,34 @@ No `CampBoardGameHostApp.kt` production lifecycle wiring was changed.
 
 No No Greater Joy, A3, setup scoring, selector weighting, deal materialization, night semantics, or active-game schema was changed.
 
-## 10. Full acceptance checkpoint
+## 10. Full acceptance checkpoint — GREEN
 
-This documentation commit intentionally carries `[full-ci]` because TBSP-5 introduces a new durable persistence schema and is a logical campaign checkpoint.
+The docs-only carrier:
 
-Before calling TBSP-5 fully accepted, re-query the workflow attached to this commit and confirm the full Android acceptance route and all selected CI gates are GREEN. Do not rewrite ordinary T1 evidence as full acceptance if the `[full-ci]` workflow does not actually run the wider tasks.
+```text
+97e39027849a1d4925e94dc61329aa6c560db97b
+```
+
+intentionally used `[full-ci]` because TBSP-5 introduces a new durable persistence schema and is a logical campaign checkpoint.
+
+The workflow actually selected the wider route rather than FAST-only validation:
+
+```text
+R2 main-thread boundary: GREEN
+Android FAST step: skipped by full-ci routing
+full Android unit tests + debug APK: GREEN
+ASP contract tests / golden corpus: GREEN
+Real Clingo 5.8.0 cross-validation: GREEN
+CI gate: GREEN
+```
+
+Therefore TBSP-5 is accepted as COMPLETE.
+
+The full-acceptance carrier is documentation-only; the latest TBSP-5 code/test checkpoint remains `3c960331...`.
 
 ## 11. Next slice — TBSP-6, NOT STARTED
 
-After TBSP-5 acceptance, the next campaign slice is:
+The next campaign slice is:
 
 ```text
 TBSP-6 — production cutover / restore ownership
@@ -287,4 +307,4 @@ invalid preset data never silently falls back to broad random TB setup
 No Greater Joy remains unchanged
 ```
 
-Do not begin TBSP-6, A3, or No Greater Joy changes without preserving the current scope boundary. Keep PR #57 Draft and do not merge or mark Ready without explicit authorization.
+Do not begin A3 or No Greater Joy changes as part of this checkpoint. Keep PR #57 Draft and do not merge or mark Ready without explicit authorization.
