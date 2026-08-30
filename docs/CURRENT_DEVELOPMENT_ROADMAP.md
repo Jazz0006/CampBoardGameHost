@@ -22,131 +22,75 @@ current Draft PR / CI carrier:
 PR #57 — TBSP: integrate Trouble Brewing setup presets
 OPEN / DRAFT / NOT MERGED
 
-last fully validated TBSP-2 checkpoint:
-80a5b9306009a4d078623b997b5b42a88de21080
+last fully validated TBSP code checkpoint:
+5c10cd29111449e1f8af2b8944609a2002048679
 
-last fully validated TBSP-3 checkpoint:
-8e918f69f6184a6389a23881af42127a3d761ef2
+current RED code checkpoint:
+a26c221670fdea2612626f762d162b66091896af
 
-last fully validated TBSP-4 checkpoint:
-f68d8326de6bf57ecfd632fef73689c4900f87a9
+current code state:
+TBSP-6G-A setup recommendation prewarm coordinator RED
 
-latest fully validated TBSP-5 code/test checkpoint:
-3c9603312c0f3694d91d9707d9ece89e4edc24f9
+active handoff:
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_6_PRODUCTION_CUTOVER.md
 
-TBSP-5 full-acceptance docs carrier:
-97e39027849a1d4925e94dc61329aa6c560db97b
-
-current campaign:
-TBSP — Trouble Brewing Setup Preset Integration
-
-current completed-slice handoff:
-docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_5_ROTATION_HISTORY_PERSISTENCE.md
-
-campaign design baseline:
-docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-29_TB_SETUP_PRESETS.md
-
-normative TBSP-2 rotation policy:
+normative TBSP rotation policy:
 docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md
 
 normative Trouble Brewing production cutover contract:
 docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
 ```
 
-Current TBSP implementation status:
+Any later documentation-only commits on top of `a26c221...` are **docs-only carriers on top of a RED code state**. Do not treat a docs-only CI result as code GREEN evidence.
+
+## 2. Current campaign status
 
 ```text
-TBSP-0 documentation / campaign plan: COMPLETE
-TBSP-1A final dataset asset + typed parser: COMPLETE
-TBSP-1B semantic validator: COMPLETE
-TBSP-2 pure history-aware selector: COMPLETE
-TBSP-3 pure deal materialization: COMPLETE
-TBSP-4 setup recommendation lock integration: COMPLETE
-TBSP-5 durable cross-game rotation-history storage: COMPLETE
-TBSP-6 production cutover / restore ownership: NOT STARTED
-A3 immutable setup snapshot: DEFERRED UNTIL TBSP PRODUCTION ACCEPTANCE
+TBSP-0 documentation / campaign plan                         COMPLETE
+TBSP-1 final dataset asset + parser + semantic validator     COMPLETE
+TBSP-2 deterministic history-aware preset selector           COMPLETE
+TBSP-3 deterministic exact deal materialization              COMPLETE
+TBSP-4 recommendation lock / selector-owned Drunk identity   COMPLETE
+TBSP-5 durable cross-game rotation-history store             COMPLETE
+TBSP-6A active setup provenance codec                        COMPLETE
+TBSP-6B production setup preparer                            COMPLETE
+TBSP-6C production deal-role resolver                        COMPLETE
+TBSP-6D Trouble Brewing production start cutover             COMPLETE
+TBSP-6E active-game provenance persist/restore               COMPLETE
+TBSP-6F true-completion rotation-history wiring              COMPLETE
+TBSP-6G-A setup recommendation prewarm core                  CURRENT RED
+TBSP-6G-B reveal-window production wiring                    NOT STARTED
+TBSP-6H First Night background precompute                    NOT STARTED
+TBSP-6I cutover acceptance matrix                            NOT STARTED
+TBSP-6J cleanup                                              NOT STARTED
+TBSP-6K final full acceptance                                NOT STARTED
+A3 immutable setup snapshot                                  DEFERRED UNTIL TBSP ACCEPTANCE
 ```
 
-TBSP-5 ordinary code/test validation at `3c9603312c0f3694d91d9707d9ece89e4edc24f9`:
+The project is no longer in “TBSP-6 NOT STARTED” state.
 
-```text
-R2 main-thread boundary: GREEN
-Android :app:testFast: GREEN
-CI gate: GREEN
-```
+## 3. Accepted predecessor correctness baseline
 
-TBSP-5 full acceptance was deliberately re-run from docs-only carrier `97e39027849a1d4925e94dc61329aa6c560db97b` using `[full-ci]`:
+PR #54 same-night/GCR correctness, PR #55 Dawn poison exactly-once and PR #56 Dusk poison-expiry exactly-once are accepted predecessor behavior. TBSP must preserve them.
 
-```text
-R2 main-thread boundary: GREEN
-Android FAST step: skipped by full-ci routing
-full Android unit tests + debug APK: GREEN
-ASP contract tests / golden corpus: GREEN
-Real Clingo 5.8.0 cross-validation: GREEN
-CI gate: GREEN
-```
+Protected examples include:
 
-The full-acceptance carrier is documentation-only. The TBSP-5 code/test checkpoint remains `3c960331...`.
+- First Night Fortune Teller uses base/current-role authority rather than Other Night chronology projection.
+- Other Night Fortune Teller uses canonical same-night effective-state projection.
+- current living-Demon UI authority remains distinct from pending-succession night reconstruction.
+- poisoned Spy follows the accepted fail-safe policy: wake normally, no fabricated Grimoire and no false Grimoire observation persistence.
+- Dawn poison materialization is exactly-once and retry-convergent.
+- next-night/Dusk poison expiry is exactly-once, restore/retry convergent and durably ordered before Night phase/round advancement.
 
-No local developer-selected T0 was executed from this Chat runtime. A direct temporary Git checkout was attempted after direct Gradle execution was authorized, but the execution container could not resolve `github.com`; actual Gradle evidence therefore comes from GitHub Actions. Do not rewrite that evidence as a local T0.
+Do not reopen these semantics merely because TBSP touches initial setup or First Night lifecycle timing.
 
-The accepted Dawn/Dusk poison exactly-once hotfixes remain part of the required TBSP baseline and must be preserved.
-
-## 2. Accepted predecessor correctness baseline
-
-### PR #54 — same-night correctness / GCR hardening
-
-PR #54 is merged and closed. Its accepted correctness remains part of the baseline and must not be reopened merely because TBSP touches initial setup.
-
-Important accepted contracts include:
-
-- First Night Fortune Teller uses base/current-role authority rather than entering Other Night chronology projection.
-- Other Night Fortune Teller continues to use canonical same-night effective-state projection.
-- current living-Demon UI authority remains distinct from transient current-night reconstruction authority during pending Imp succession.
-- old Imp mechanical death, pending successor identity and canonical ordering remain separate concerns.
-- poisoned Spy uses the accepted fail-safe product policy: wake normally, but no fabricated Grimoire is produced and no false Grimoire observation is persisted.
-- gameplay semantics remain primarily protected by typed tests rather than brittle source-string assertions.
-
-### PR #55 — Dawn poison exactly-once
-
-Merged into `main` at:
-
-```text
-160f730594d76c294542cd22a5220baeb73d1bc9
-```
-
-It established exactly-once Dawn poison materialization and retry convergence across ordinary and successor-Dawn paths.
-
-### PR #56 — next-night / Dusk poison expiry exactly-once
-
-Merged into `main` at:
-
-```text
-ba7cfa12853a8829ecf228c05cf2a22067f1e6e4
-```
-
-It established typed Dusk poison-expiry ownership, stable history identity, restore/retry convergence, and completion before Night phase/round become durable.
-
-TBSP must preserve PR #55 and PR #56 behavior.
-
-## 3. Current priority — TBSP Trouble Brewing Setup Preset Integration
+## 4. TBSP production architecture
 
 Goal:
 
-Replace broad random Trouble Brewing role-composition generation with selection from the final curated Trouble Brewing preset dataset while preserving:
+Replace broad random Trouble Brewing setup authority with the final curated preset pipeline while preserving legality, determinism, immediate dealing, restore/no-reroll semantics and existing No Greater Joy behavior.
 
-- rules legality as an independent authority;
-- deterministic/reproducible setup materialization;
-- independent seat shuffling;
-- one Drunk shown-role authority;
-- existing setup recommendation behavior for remaining downstream information decisions;
-- durable five-game setup rotation history based on initial selection provenance;
-- immediate identity dealing without synchronously waiting for expensive first-night/setup calculation;
-- No Greater Joy current behavior;
-- safe restore without rerolls;
-- separation between cross-game rotation history and A3 active-game setup provenance.
-
-Final external dataset:
+Frozen dataset:
 
 ```text
 app/src/main/assets/setup/trouble_brewing_setup_presets_v2_final.json
@@ -155,470 +99,262 @@ dataset_id: trouble_brewing_setup_presets_v2_final
 status: final_ready_for_program_integration
 player counts: 5..15
 preset count: 480
-pool sizes: 30,30,50,50,50,50,50,50,40,40,40
 Drunk presets: 208
 Drunk options per Drunk preset: exactly 3
-Git blob: a935474bec07577eb9e753bad2135a604add63f5
 ```
 
-Do not reformat or regenerate this dataset during later integration.
+Do not regenerate or reformat this dataset.
 
-## 4. TBSP-1 asset/parser/validator — COMPLETE
-
-Accepted parser contract includes:
+Required authority chain:
 
 ```text
-schema_version == 2
-dataset_id == trouble_brewing_setup_presets_v2_final
-status == final_ready_for_program_integration
-pools 5..15 all exist
-pool sizes match final dataset
-total presets == 480
+frozen curated preset dataset
+-> history-aware selector
+-> selected preset + selector-owned Drunk shown role
+-> deterministic tb-seat-v1 deal materialization
+-> commit actual/shown identities
+-> immediate PassPhone / RevealCard
+-> identity-reveal window performs background setup/first-night computation
+-> relevant First Night consumer uses ready result or safely waits/falls back at point of use
 ```
 
-Dataset character IDs remain in external lowercase representation until canonical resolution is explicitly required.
+The background calculation must run off the UI/main thread and must never reroll or mutate already committed actual/shown identities.
 
-Accepted semantic validator coverage includes:
+No Greater Joy remains on its existing setup-generation path during TBSP.
+
+## 5. Accepted lower-layer ownership — TBSP-1 through TBSP-5
+
+### TBSP-1
+
+Accepted typed parser/validator proves dataset/schema/pool identity, role legality, exact team composition including Baron already represented once, and Drunk-option validity.
+
+### TBSP-2
+
+Accepted pure selector proves:
 
 ```text
-unique preset IDs
-preset.playerCount matches owning pool
-total actual roles == player count
-exactly one Demon == Imp
-no duplicate actual role
-all IDs resolve through canonical Trouble Brewing registry
-role category matches registry ownership
-standard composition unless Baron
-Baron outsider +2 / townsfolk -2 represented exactly once
-5–6 curated defaults contain no Baron
-Drunk absent -> empty drunk_as_options
-Drunk present -> exactly three unique absent Townsfolk options
-208 Drunk presets / 624 option slots / 208 unique option triples
+player-count isolation
+deterministic preset + Drunk-option replay
+exact-repeat role-composition rejection
+player-count overlap thresholds
+five-game decay weights
+soft rotation penalties
++0.05 first-nonempty fallback while exact repeat remains hard
 ```
 
-TBSP-1 did not wire production setup.
+Normative values live in `docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md`.
 
-## 5. TBSP-2 pure history-aware selector — COMPLETE
+The selector is the only authority that chooses `selectedDrunkShownRole`.
 
-Accepted ownership includes:
+### TBSP-3
+
+Accepted deal planner proves:
 
 ```text
-TroubleBrewingSetupPresetSelector.kt
-TroubleBrewingSetupPresetRotationScorer.kt
-TroubleBrewingSetupRotationHistory.kt
-TroubleBrewingSetupPresetSelectorTest.kt
-TroubleBrewingSetupPresetRotationScorerTest.kt
+selected preset role multiset materializes exactly
+Baron is never applied a second time
+seat assignment uses independent deterministic namespace tb-seat-v1
+same selection/seed/players replay identically
+actual Drunk remains Drunk
+shown Drunk role equals selector-owned choice
+non-Drunk shown roles equal actual roles
 ```
 
-Accepted slices:
+### TBSP-4
 
-```text
-TBSP-2A player-count isolation + provenance
-TBSP-2B deterministic preset and Drunk-option replay
-TBSP-2C exact previous real non-Demon composition rejection
-TBSP-2D player-count-specific last-game overlap threshold
-TBSP-2E five-game history decay
-TBSP-2F soft rotation weighting + minimum weight floor
-TBSP-2G +0.05 fallback to first non-empty level while exact repeat remains hard
-```
+Accepted recommendation lock bridge converts the selector/deal Drunk choice into exactly one locked downstream `DrunkShownRole` fact. Recommendation may generate compatible information, including Investigator-compatible information, but cannot replace the shown identity.
 
-Normative rotation values from `docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md`:
+### TBSP-5
 
-```text
-history weights:
-1.00, 0.65, 0.40, 0.20, 0.10
-
-baseNoveltyWeight:
-max(0.20, 1.0 - weightedOverlap)
-
-soft multipliers:
-same immediately-previous Minion set  × 0.70
-primary style seen >=2 of previous 5   × 0.88
-same consecutive Drunk shown role     × 0.40
-
-final weight floor:
-0.05
-
-fallback:
-+0.05 last-game overlap threshold repeatedly
-stop at first non-empty eligible pool
-exact-repeat composition never becomes eligible
-maximum threshold 1.0
-```
-
-Deterministic namespaces include:
-
-```text
-tb-preset-v1
-tb-drunk-v1
-```
-
-The candidate Drunk shown role used for soft weighting is the same selector-owned disguise carried forward; there is no second Drunk draw.
-
-Validated checkpoint:
-
-```text
-80a5b9306009a4d078623b997b5b42a88de21080
-```
-
-## 6. TBSP-3 pure deal materialization — COMPLETE
-
-Source ownership:
-
-```text
-app/src/main/java/com/codex/campboardgamehost/clocktower/setup/
-    TroubleBrewingSetupDealPlanner.kt
-
-app/src/test/java/com/codex/campboardgamehost/clocktower/setup/
-    TroubleBrewingSetupDealPlannerTest.kt
-```
-
-Planner authority:
-
-```text
-TroubleBrewingSetupPresetSelection
-+ orderedPlayerNames
--> TroubleBrewingSetupDealPlan
-   datasetId
-   schemaVersion
-   presetId
-   playerCount
-   gameSeed
-   selectedDrunkShownRole
-   assignments[]
-       seat
-       playerName
-       actualRoleId
-       shownRoleId
-```
-
-Accepted behavior:
-
-```text
-selected preset actual-role multiset is materialized exactly
-Baron is never interpreted as another composition command
-stable gameplay seat identity remains ordered player/card index + 1
-role-list input order is canonicalized before seat materialization
-seat assignment uses independent namespace tb-seat-v1
-same selection + seed + players replays identically
-role-list reordering does not change seat assignment
-different suitable seeds can change seat assignment
-Drunk remains actual role drunk
-Drunk shownRoleId equals selector-owned selectedDrunkShownRole
-selected Drunk shown role belongs to preset.drunkAsOptions
-selected Drunk shown role is absent from actual in-play roles
-all non-Drunk shownRoleId values equal actualRoleId
-non-Drunk selections cannot carry a Drunk shown role
-```
-
-Seat key:
-
-```text
-tb-seat-v1|datasetId|playerCount|presetId|gameSeed|roleId
-```
-
-Tests-first history:
-
-```text
-3A RED   cb84e04db546c41494a87a1298d1ec48f4211c38
-3A GREEN 39fcedfe57fd214479a1afad802a9f5cb4648f34
-
-3B lock-in a45ad77f6beadda2275a82d98de1d44a48284069
-GREEN immediately; do not invent RED
-
-3C RED   20e383f1c30e62569ec4523c35ce2340082c6009
-3C GREEN 3f8d7312075e872e25d6413bb7bf06f2a1b8ff10
-
-3D RED   6fc96b642695ff70c5fec30ce77de63e08ff6fbf
-3D GREEN 8e918f69f6184a6389a23881af42127a3d761ef2
-```
-
-Validated checkpoint:
-
-```text
-8e918f69f6184a6389a23881af42127a3d761ef2
-```
-
-TBSP-3 changed no App production setup path, persistence, SetupCoordination wiring, No Greater Joy behavior or A3 setup snapshot ownership.
-
-## 7. TBSP-4 setup recommendation lock integration — COMPLETE
-
-Ownership:
-
-```text
-app/src/main/java/com/codex/campboardgamehost/clocktower/session/
-    TroubleBrewingSetupRecommendationLock.kt
-
-app/src/test/java/com/codex/campboardgamehost/clocktower/session/
-    TroubleBrewingSetupRecommendationLockTest.kt
-```
-
-Accepted authority chain:
-
-```text
-TroubleBrewingSetupPresetSelector
--> selectedDrunkShownRole
--> TroubleBrewingSetupDealPlanner
--> committed actual/shown identity
--> TroubleBrewingSetupRecommendationLock
--> locked StorytellerDecision.DrunkShownRole
--> SetupCoordinationRequest.lockedDecisions
--> existing constrained setup recommendation
-```
-
-Accepted behavior:
-
-```text
-selector/deal-plan Drunk shown role becomes exactly one downstream DrunkShownRole lock
-external dataset ID such as investigator resolves to canonical RoleId("Investigator")
-recommendation cannot replace/reroll the locked shown identity
-locked Investigator still permits compatible DrunkInvestigatorInfo generation
-all returned constrained plans preserve the same locked Investigator identity
-non-Drunk deal contributes no Drunk recommendation lock
-bridge performs no random draw and no recommendation call
-recommendation scoring was not retuned
-```
-
-Existing `SetupRecommendationService` and `SetupCandidateGenerator` already supported `lockedDecisions`; TBSP-4 reused that capability rather than introducing another recommendation algorithm.
-
-Tests-first history:
-
-```text
-4A RED:
-ddb6e391c8fbd09e5e19cdee0817a28a78e81713
-
-4A GREEN:
-dad24f91cea855e7a009ac5f173ef64a06e10668
-
-4B lock-in:
-ae4140ec2643edfbe160ca77aeb3604ebee66c73
-GREEN immediately; do not invent RED
-
-4C non-Drunk boundary / final TBSP-4 checkpoint:
-f68d8326de6bf57ecfd632fef73689c4900f87a9
-```
-
-TBSP-4 changed no App production start/deal path, persistence, scoring weights, No Greater Joy behavior, A3 ownership or reveal-window lifecycle.
-
-## 8. TBSP-5 durable rotation-history persistence — COMPLETE
-
-New source ownership:
-
-```text
-app/src/main/java/com/codex/campboardgamehost/persistence/
-    TroubleBrewingSetupRotationHistoryStore.kt
-
-app/src/test/java/com/codex/campboardgamehost/persistence/
-    TroubleBrewingSetupRotationHistoryStoreTest.kt
-```
-
-### 8.1 Persistence authority
-
-TBSP rotation history is deliberately independent from:
-
-```text
-ACTIVE_GAME_STATE_KEY
-GAME_HISTORY_KEY
-```
-
-`GAME_HISTORY_KEY` is a user-facing review/archive history. `archiveCurrentGameForRestart()` can archive merely because the user restarts or returns to player management, so archive membership is not proof of true game completion. Archived cards are also later/current game state and may no longer equal the immutable initial setup after role changes.
-
-Therefore TBSP-5 persists initial selector provenance directly rather than reconstructing it from archived/final `PlayerCard` values.
-
-Dedicated SharedPreferences key:
-
-```text
-tb_setup_rotation_history_v1
-```
-
-Store API:
+Dedicated rotation-history persistence owns:
 
 ```text
 recordCompletedGame(gameId, selection)
 historyFor(datasetId, schemaVersion, playerCount)
 ```
 
-`recordCompletedGame` defines the semantic write boundary. TBSP-5 supplies the durable owner, while TBSP-6 must wire it only to a true completed-game lifecycle event.
+Accepted behavior includes stable-game retry idempotence, conflict rejection, newest-first order, max-five retention, player-count/dataset/schema isolation and fail-soft corrupt-history recovery.
 
-### 8.2 Persisted rotation record
+Rotation history is cross-game diversity memory. It is **not** A3 immutable setup snapshot authority.
 
-Each retained entry stores stable `gameId` plus:
+## 6. TBSP-6 production cutover — completed slices
 
-```text
-datasetId
-schemaVersion
-presetId
-playerCount
-realNonDemonRoleIds
-minionRoleIds
-primaryStyleTag
-selectedDrunkShownRole
-```
+### 6A — provenance codec — COMPLETE
 
-Derived directly from `TroubleBrewingSetupPresetSelection`:
+`TroubleBrewingSetupProvenancePersistence` encodes/decodes exact preset selection provenance and never selects/shuffles/rerolls.
 
-```text
-realNonDemonRoleIds = townsfolk + outsiders + minions
-minionRoleIds       = preset.minions
-primaryStyleTag     = preset.styleTags.firstOrNull()
-selectedDrunkShownRole = selection.selectedDrunkShownRole
-```
+### 6B — production setup preparer — COMPLETE
 
-JSON role sets are encoded in sorted order.
+Production preparation combines frozen dataset, rotation history, selector and exact deal planning through typed owners outside App root.
 
-### 8.3 Retention / isolation / retry behavior
+### 6C — deal role resolver — COMPLETE
 
-Accepted behavior:
+Production `PlayerCard` actual/shown roles come from the committed deal plan.
 
-```text
-selector projection is exact datasetId + schemaVersion + playerCount
-history is newest-first
-at most five records are retained per player count
-8-player records cannot enter 9-player history
-same retained gameId + same setup -> idempotent success / no duplicate write
-same retained gameId + different setup -> reject conflict
-missing history -> EMPTY
-malformed JSON -> EMPTY
-unsupported store version -> EMPTY
-next valid completion write can recover from corrupt/unsupported raw history
-```
+### 6D — production start cutover — COMPLETE
 
-The fail-soft corruption policy is specific to cross-game diversity history. Active-game restore compatibility remains strict and separate.
-
-### 8.4 Tests-first history
-
-```text
-5A RED:
-8325a58cd20526befaa013d5964ded91f0e76220
-expected compile RED: missing TroubleBrewingSetupRotationHistoryStore
-
-5A GREEN:
-f92452ed5241813716605ddecc790895b1bf7ba4
-store + Context SharedPreferences adapter
-
-5B/5C/5D lock-in + final code/test checkpoint:
-3c9603312c0f3694d91d9707d9ece89e4edc24f9
-GREEN immediately; do not invent RED
-```
-
-5B–5D lock-in covers:
-
-```text
-completion retry idempotence
-gameId conflict rejection
-newest-first ordering
-five-record bound
-player-count isolation
-dataset/schema isolation
-malformed/unsupported fail-soft
-recovery on later valid completion
-```
-
-### 8.5 Validation
-
-T1 at `3c960331...`:
-
-```text
-R2: GREEN
-:app:testFast: GREEN
-CI gate: GREEN
-```
-
-T4 full acceptance from docs-only `[full-ci]` carrier `97e39027849a1d4925e94dc61329aa6c560db97b`:
-
-```text
-R2 main-thread boundary: GREEN
-full Android unit tests + debug APK: GREEN
-ASP contract tests / golden corpus: GREEN
-Real Clingo 5.8.0 cross-validation: GREEN
-CI gate: GREEN
-```
-
-Exact TBSP-5 code/test diff relative to the TBSP-4 docs head changes only the new store and its new typed test file. `CampBoardGameHostApp.kt` was not changed.
-
-## 9. Current production setup authority audit
-
-The current production setup path remains centered in `CampBoardGameHostApp.kt` and has **not yet been cut over**.
-
-Relevant legacy helper:
-
-```text
-generateClocktowerAssignments(playerCount, script)
-```
-
-Current Trouble Brewing production ordering remains:
-
-```text
-generateClocktowerAssignments(...)
--> newClocktowerSeed()
--> construct provisional PlayerCards
--> if Drunk, synchronously run SetupCoordination
--> possibly replace Drunk shown role
--> commit cards / enter deal flow
-```
-
-The legacy production path still owns three responsibilities that must leave Trouble Brewing at cutover:
-
-```text
-broad random role-composition generation
-Baron +2 Outsider / -2 Townsfolk post-generation mutation
-random/later replacement of Drunk fake/shown identity
-```
-
-The TBSP owners now exist outside App:
-
-```text
-TroubleBrewingSetupRotationHistoryStore
-TroubleBrewingSetupPresetSelector
-TroubleBrewingSetupDealPlanner
-TroubleBrewingSetupRecommendationLock
-```
-
-The intended production chain for TBSP-6 is:
+Trouble Brewing start now follows:
 
 ```text
 newClocktowerSeed()
+-> load/parse final dataset
 -> load matching rotation history
--> TroubleBrewingSetupPresetSelector
-   -> selected preset + selectedDrunkShownRole
--> TroubleBrewingSetupDealPlanner
-   -> deterministic tb-seat-v1 actual/shown assignments
--> persist committed initial setup provenance for restore
--> construct/commit deal-ready PlayerCards
--> enter PassPhone / RevealCard without waiting for expensive first-night/setup calculation
--> TroubleBrewingSetupRecommendationLock
--> run remaining setup / first-night calculation in identity-reveal window off main thread
--> consume completed results when first-night information is needed
--> at true game completion only, record initial selection into TB rotation history
+-> prepare preset + Drunk shown role + deal
+-> resolve exact PlayerCards
+-> commit cards / reset deal state with prepared seed
 ```
 
-The existing `A4IdentityRevealPrewarmCoordinator` is an architectural precedent only; its DEBUG/5-player scope is not the production implementation.
+`startClocktowerGame()` branches Trouble Brewing before the legacy broad-random generator. Trouble Brewing no longer uses broad random role composition, Baron post-processing or a second Drunk shown-role draw.
 
-The normative cutover contract remains:
+### 6E — active-game provenance persist/restore — COMPLETE
+
+Committed `TroubleBrewingSetupPresetSelection` is persisted in active game state and restored by exact decode. Restore does not invoke selector/preparer.
+
+Older supported snapshots with no TBSP provenance restore with selection `null`; they must not fabricate an initial preset from later/current cards.
+
+### 6F — true-completion rotation-history wiring — COMPLETE
+
+Latest fully validated code checkpoint:
 
 ```text
-docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
+5c10cd29111449e1f8af2b8944609a2002048679
 ```
 
-## 10. Remaining TBSP sequence
+Production gate semantics:
 
 ```text
-TBSP-5 durable cross-game rotation history    COMPLETE
-        ↓
-TBSP-6 production cutover / restore ownership NOT STARTED
-        ↓
-full TBSP production acceptance
-        ↓
-A3 immutable setup snapshot ownership
+not Clocktower -> no TB history write
+not Trouble Brewing -> no TB history write
+gameOutcome == null -> Restart/abandon/archive does not record
+missing committed provenance -> do not fabricate history
+true completed TB + committed provenance
+    -> recordCompletedGame(clocktowerGameId, selection)
 ```
 
-TBSP-6 is now the next logical slice. It owns App lifecycle integration, restore/non-reroll ownership, true completion wiring for rotation history, and the reveal-window background-computation lifecycle.
+A failed durable completion-history write blocks archive/save clearing so retry can converge. Store `gameId` semantics own exactly-once behavior; do not add a second App dedupe mechanism.
 
-A3 should harden the final production setup-origin contract, not the legacy broad-random generator.
+## 7. Current work — TBSP-6G-A RED
 
-## 11. Production merge-blocking invariants
+Current RED code checkpoint:
 
-Before TBSP campaign acceptance, typed tests must ultimately prove:
+```text
+a26c221670fdea2612626f762d162b66091896af
+```
+
+Focused test:
+
+```text
+TroubleBrewingSetupRecommendationPrewarmCoordinatorTest
+```
+
+Current contract is intentionally narrow:
+
+```text
+same committed SetupCoordinationRequest
+-> build once
+-> prewarm reuses result
+-> readyFor(same request) returns same result
+
+changed committed request
+-> readyFor misses
+-> prewarm rebuilds
+-> old request no longer counts as ready
+```
+
+Expected owner:
+
+```text
+TroubleBrewingSetupRecommendationPrewarmCoordinator
+```
+
+Do not broaden 6G-A into Compose lifecycle, First Night epistemic replay, A4/ZDD or persistence work.
+
+## 8. Revised remaining TBSP-6 sequence
+
+The original broad “background first-night/setup computation” task is now deliberately separated into two lifecycle layers.
+
+### 6G-A — setup recommendation prewarm core — CURRENT
+
+Implement the minimum coordinator required by the existing RED.
+
+```text
+SetupCoordinationRequest
+-> SetupRecommendationService.ConstrainedResult
+-> exact-request cache/reuse
+```
+
+### 6G-B — identity-reveal production wiring
+
+Tests-first prove:
+
+```text
+committed TB deal
+-> immediately enter PassPhone / RevealCard
+-> prewarm setup recommendation off main thread during reveal
+-> exact current request can reuse READY result
+-> stale/mismatched request cannot be consumed as current
+```
+
+A cache miss must retain a safe existing computation path.
+
+### 6H — First Night background precompute
+
+Treat this separately from `SetupRecommendationService` caching.
+
+Tests-first prove:
+
+```text
+RevealCard window begins
+-> exact committed-game First Night input
+-> background computation
+-> First Night consumer
+   READY -> consume
+   BUSY  -> safely await at point of use
+   MISS/stale -> safe fallback/recompute
+```
+
+Background work must never select another preset, reshuffle seats, reroll Drunk or mutate actual/shown identity.
+
+### 6I — cutover acceptance matrix
+
+Typed acceptance must close the remaining production gaps:
+
+```text
+restore preserves exact preset/seed/cards/shown identities/seat mapping
+restore never selects/materializes a second setup
+legacy supported save without TB provenance never fabricates rotation history
+invalid/rejected TB preset data never falls back to broad-random TB setup
+navigation before Start does not commit a preset selection
+recomposition/navigation cannot reroll an already-started setup
+incomplete Restart/abandon/archive never enters rotation history
+completed TB records original initial selection exactly once
+No Greater Joy setup behavior remains unchanged
+identity reveal begins without synchronously waiting for expensive setup/first-night computation
+```
+
+Prefer typed seams and retire superseded brittle source-string assertions where possible.
+
+### 6J — cleanup
+
+After lifecycle ownership is stable, remove or give real ownership to dormant cutover parameters/APIs such as an unused `preparedSetupPlan`-style pass-through. Do not perform speculative cleanup before 6G/6H clarifies the true owner.
+
+### 6K — final acceptance
+
+```text
+all focused acceptance GREEN
+-> :app:testFast
+-> affected T2/T3 when required by TESTING_STRATEGY
+-> :app:testFull
+-> R2
+-> final GitHub CI
+-> exact diff / scope audit
+```
+
+PR #57 remains Draft. Do not mark Ready or merge without explicit authorization.
+
+## 9. Production merge-blocking invariants
+
+Before TBSP acceptance, typed tests must prove:
 
 ```text
 P1  Trouble Brewing actual roles originate from selected preset.
@@ -639,37 +375,92 @@ P15 Only true completed Trouble Brewing games enter preset rotation history; Res
 P16 Completion-history persistence is retry-safe and records the original initial selection rather than later role state.
 ```
 
-Current lower-layer support:
+Current assessment:
 
 ```text
-TBSP-3 supports P1–P4 and seat-materialization portion of P6.
-TBSP-4 supports recommendation-layer portion of P5.
-TBSP-5 supports durable player-count/dataset/schema-isolated rotation storage and the persistence mechanism for P6/P16.
+P1  IMPLEMENTED
+P2  IMPLEMENTED
+P3  IMPLEMENTED
+P4  IMPLEMENTED
+P5  IMPLEMENTED
+P6  IMPLEMENTED; final production acceptance still required
+P7  IMPLEMENTED; final production acceptance still required
+P8  NEEDS explicit acceptance
+P9  NEEDS explicit acceptance
+P10 NEEDS final NGJ regression acceptance
+P11 IMPLEMENTED; strengthen end-to-end restore acceptance
+P12 NEEDS explicit typed no-fallback acceptance
+P13 IMPLEMENTED structurally; lock with 6G-B lifecycle test
+P14 OPEN — primary 6G/6H remaining risk
+P15 IMPLEMENTED
+P16 IMPLEMENTED
 ```
 
-These are not yet production-path claims until TBSP-6 App integration is tested.
+Priority of remaining risk:
 
-P7–P16 remain production/cutover acceptance work where applicable.
+```text
+P14 async/reveal/First Night lifecycle
+> P12 invalid-data no-fallback acceptance
+> restore/recomposition/navigation acceptance
+> NGJ regression acceptance
+```
 
-## 12. Resume protocol for next conversation
+Do not reopen TBSP-1 through 6F without concrete regression evidence.
+
+## 10. Testing cadence
+
+Follow root `AGENTS.md` and `docs/TESTING_STRATEGY.md`.
+
+Default tests-first micro-cycle:
+
+```text
+RED
+-> exact T0 RED
+-> GREEN
+-> exact T0 GREEN with --rerun-tasks
+-> git diff --check / exact remote diff audit
+```
+
+`:app:testFast` is T1 and belongs at logical checkpoints rather than every micro-commit.
+
+Run T4 `:app:testFull` at final TBSP production acceptance unless a specific earlier risk justifies escalation.
+
+Local/focused evidence and GitHub CI serve different purposes; local validation does not replace final remote R2/CI.
+
+## 11. Documentation authority and lifecycle
+
+Active docs root should use:
+
+```text
+AGENTS.md
+CURRENT_DEVELOPMENT_ROADMAP.md
+NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_6_PRODUCTION_CUTOVER.md
+TESTING_STRATEGY.md
+TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
+TBSP_ROTATION_WEIGHT_CONTRACT_V1.md when rotation semantics are relevant
+```
+
+Completed GCR/PR55/PR56/TBSP-1..5 execution handoffs are historical and should not be used as current instructions. Their closeout index lives under `docs/archive/` and Git history preserves exact old content.
+
+A3 remains under `docs/archive/deferred/` until this roadmap explicitly reactivates it.
+
+## 12. New-conversation resume protocol
 
 1. read root `AGENTS.md`;
 2. read this roadmap;
-3. read `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_5_ROTATION_HISTORY_PERSISTENCE.md`;
+3. read `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_6_PRODUCTION_CUTOVER.md`;
 4. read `docs/TESTING_STRATEGY.md`;
-5. read `docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md`;
-6. read `docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md` before TBSP-6 implementation;
-7. re-query live `main`, PR #57 head/state/checks and branch comparison;
-8. distinguish code/test checkpoints from later docs-only commits:
-   - TBSP-2 `80a5b9306009a4d078623b997b5b42a88de21080`
-   - TBSP-3 `8e918f69f6184a6389a23881af42127a3d761ef2`
-   - TBSP-4 `f68d8326de6bf57ecfd632fef73689c4900f87a9`
-   - TBSP-5 `3c9603312c0f3694d91d9707d9ece89e4edc24f9`
-   - TBSP-5 full-ci docs carrier `97e39027849a1d4925e94dc61329aa6c560db97b`;
-9. treat **TBSP-6 production cutover / restore ownership as NOT STARTED**;
-10. keep PR #57 Draft;
-11. do not merge or mark Ready without explicit authorization;
-12. do not change No Greater Joy or resume A3 as part of TBSP-6 unless separately authorized.
+5. read `docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md`;
+6. re-query live `main`, PR #57 head/state/checks and branch comparison;
+7. distinguish later docs-only head from:
+   - last fully GREEN code checkpoint `5c10cd29111449e1f8af2b8944609a2002048679`;
+   - current 6G RED code checkpoint `a26c221670fdea2612626f762d162b66091896af`;
+8. continue tests-first from **TBSP-6G-A coordinator GREEN**;
+9. do not expand to 6G-B/6H in the same micro-slice;
+10. preserve Dawn/Dusk exactly-once behavior;
+11. do not change No Greater Joy behavior;
+12. do not resume A3/A4/ZDD/Mayor/Imp-succession work;
+13. keep PR #57 Draft and do not merge or mark Ready without explicit authorization.
 
 ## 13. Deferred work registry
 
