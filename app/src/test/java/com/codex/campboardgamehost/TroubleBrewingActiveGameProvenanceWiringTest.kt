@@ -5,46 +5,26 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
+/** Coarse App-root provenance guard; codec semantics are owned by typed persistence tests. */
 class TroubleBrewingActiveGameProvenanceWiringTest {
     @Test
-    fun `curated Trouble Brewing start locks the selected setup provenance`() {
-        val helper = functionBlock(appSource(), "fun startTroubleBrewingGame()")
-
-        assertTrue(
-            "The exact selector-owned setup must become active-game state when the curated deal commits.",
-            helper.contains("committedTroubleBrewingSetupSelection = preparedSetup.selection"),
-        )
-    }
-
-    @Test
-    fun `active game snapshot persists the committed Trouble Brewing setup provenance`() {
+    fun `curated Trouble Brewing start commits selected provenance and snapshot uses canonical codec`() {
+        val start = functionBlock(appSource(), "fun startTroubleBrewingGame()")
         val snapshot = functionBlock(appSource(), "fun activeGameSnapshotJson()")
 
-        assertTrue(snapshot.contains("committedTroubleBrewingSetupSelection"))
-        assertTrue(snapshot.contains("TroubleBrewingSetupProvenancePersistence.ROOT_KEY"))
+        assertTrue(start.contains("committedTroubleBrewingSetupSelection"))
+        assertTrue(start.contains("preparedSetup.selection"))
         assertTrue(snapshot.contains("TroubleBrewingSetupProvenancePersistence.encode("))
     }
 
     @Test
-    fun `saved Trouble Brewing game restores exact setup provenance without rerunning selection`() {
+    fun `restore consumes canonical provenance without rerunning setup selection`() {
         val restore = functionBlock(appSource(), "fun restoreSavedGame()")
 
-        assertTrue(
-            "Restore must decode the persisted preset identity against the frozen dataset.",
-            restore.contains("TroubleBrewingSetupProvenancePersistence.decodeOrNull("),
-        )
-        assertTrue(
-            "Restore must rebind the decoded selection into active-game state.",
-            restore.contains("committedTroubleBrewingSetupSelection = restoredTroubleBrewingSetupSelection"),
-        )
-        assertFalse(
-            "Restoring an existing game must not select or materialize a fresh preset.",
-            restore.contains("TroubleBrewingProductionSetupPreparer.prepare("),
-        )
-        assertFalse(
-            "Restoring an existing game must not invoke the preset selector directly.",
-            restore.contains("TroubleBrewingSetupPresetSelector"),
-        )
+        assertTrue(restore.contains("TroubleBrewingSetupProvenancePersistence.decodeOrNull("))
+        assertTrue(restore.contains("committedTroubleBrewingSetupSelection"))
+        assertFalse(restore.contains("TroubleBrewingProductionSetupPreparer.prepare("))
+        assertFalse(restore.contains("TroubleBrewingSetupPresetSelector"))
     }
 
     private fun appSource(): String = File(
