@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-08-30 Australia/Sydney  
+> Updated: 2026-08-31 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **This file is the single current project-status authority.**  
 > Always re-query live GitHub state before implementation; commit/PR values below are checkpoints, not substitutes for live state.
@@ -9,11 +9,7 @@
 
 ```text
 main baseline:
-ba7cfa12853a8829ecf228c05cf2a22067f1e6e4
-
-main meaning:
-PR #55 merged — Dawn poison exactly-once materialization
-PR #56 merged — next-night / Dusk poison expiry exactly-once materialization
+0eafa9770ca9391928419dadf835f17a1ab00d29
 
 current branch:
 codex/trouble-brewing-setup-presets-v2
@@ -22,17 +18,20 @@ current Draft PR / CI carrier:
 PR #57 — TBSP: integrate Trouble Brewing setup presets
 OPEN / DRAFT / NOT MERGED
 
-last fully validated TBSP code checkpoint:
-5c10cd29111449e1f8af2b8944609a2002048679
+last fully validated logical code/test checkpoint:
+f7e877f6881cc74b9d8e7f4f8db2b2fb406b84d4
 
-current RED code checkpoint:
-a26c221670fdea2612626f762d162b66091896af
+checkpoint meaning:
+TBSP-6I cutover acceptance matrix accepted
+NGJ typed regression added
+CI #1148 / run 33341819960 SUCCESS
+R2 #1071 / run 33341819962 SUCCESS
 
-current code state:
-TBSP-6G-A setup recommendation prewarm coordinator RED
+current work:
+TBSP-6J behavior-preserving cleanup
 
 active handoff:
-docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_6_PRODUCTION_CUTOVER.md
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6J_CLEANUP.md
 
 normative TBSP rotation policy:
 docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md
@@ -41,7 +40,7 @@ normative Trouble Brewing production cutover contract:
 docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
 ```
 
-Any later documentation-only commits on top of `a26c221...` are **docs-only carriers on top of a RED code state**. Do not treat a docs-only CI result as code GREEN evidence.
+Any commits after `f7e877...` that modify documentation only are documentation carriers and are not a new code/test checkpoint.
 
 ## 2. Current campaign status
 
@@ -58,37 +57,31 @@ TBSP-6C production deal-role resolver                        COMPLETE
 TBSP-6D Trouble Brewing production start cutover             COMPLETE
 TBSP-6E active-game provenance persist/restore               COMPLETE
 TBSP-6F true-completion rotation-history wiring              COMPLETE
-TBSP-6G-A setup recommendation prewarm core                  CURRENT RED
-TBSP-6G-B reveal-window production wiring                    NOT STARTED
-TBSP-6H First Night background precompute                    NOT STARTED
-TBSP-6I cutover acceptance matrix                            NOT STARTED
-TBSP-6J cleanup                                              NOT STARTED
+TBSP-6G-A setup recommendation prewarm core                  COMPLETE
+TBSP-6G-B reveal-window production wiring                    COMPLETE
+TBSP-6H First Night background precompute                    COMPLETE
+TBSP-6I cutover acceptance matrix                            COMPLETE
+TBSP-6J cleanup                                              CURRENT
 TBSP-6K final full acceptance                                NOT STARTED
 A3 immutable setup snapshot                                  DEFERRED UNTIL TBSP ACCEPTANCE
 ```
 
-The project is no longer in “TBSP-6 NOT STARTED” state.
+PR #57 remains Draft throughout 6J/6K. Do not mark Ready or merge without explicit authorization.
 
-## 3. Accepted predecessor correctness baseline
+## 3. Protected predecessor correctness baseline
 
-PR #54 same-night/GCR correctness, PR #55 Dawn poison exactly-once and PR #56 Dusk poison-expiry exactly-once are accepted predecessor behavior. TBSP must preserve them.
+TBSP must preserve the accepted correctness work already on the branch/base, including:
 
-Protected examples include:
+- First Night Fortune Teller base/current-role authority;
+- Other Night Fortune Teller canonical same-night effective-state projection;
+- current living-Demon UI authority distinct from pending-succession reconstruction;
+- poisoned Spy fail-safe behavior: normal wake, no fabricated Grimoire, no false Grimoire observation persistence;
+- Dawn poison exactly-once and retry-convergent materialization;
+- next-night/Dusk poison expiry exactly-once, restore/retry convergence and durable ordering before Night phase/round advancement.
 
-- First Night Fortune Teller uses base/current-role authority rather than Other Night chronology projection.
-- Other Night Fortune Teller uses canonical same-night effective-state projection.
-- current living-Demon UI authority remains distinct from pending-succession night reconstruction.
-- poisoned Spy follows the accepted fail-safe policy: wake normally, no fabricated Grimoire and no false Grimoire observation persistence.
-- Dawn poison materialization is exactly-once and retry-convergent.
-- next-night/Dusk poison expiry is exactly-once, restore/retry convergent and durably ordered before Night phase/round advancement.
+Do not reopen these semantics because TBSP touches initial setup or First Night lifecycle timing.
 
-Do not reopen these semantics merely because TBSP touches initial setup or First Night lifecycle timing.
-
-## 4. TBSP production architecture
-
-Goal:
-
-Replace broad random Trouble Brewing setup authority with the final curated preset pipeline while preserving legality, determinism, immediate dealing, restore/no-reroll semantics and existing No Greater Joy behavior.
+## 4. Frozen TBSP authority and architecture
 
 Frozen dataset:
 
@@ -103,9 +96,9 @@ Drunk presets: 208
 Drunk options per Drunk preset: exactly 3
 ```
 
-Do not regenerate or reformat this dataset.
+Do not regenerate or reformat it.
 
-Required authority chain:
+Accepted authority chain:
 
 ```text
 frozen curated preset dataset
@@ -114,250 +107,202 @@ frozen curated preset dataset
 -> deterministic tb-seat-v1 deal materialization
 -> commit actual/shown identities
 -> immediate PassPhone / RevealCard
--> identity-reveal window performs background setup/first-night computation
--> relevant First Night consumer uses ready result or safely waits/falls back at point of use
+-> reveal window prewarms setup recommendation and First Night work off main thread
+-> exact consumer reuses READY result, safely awaits BUSY at point of use, or recomputes on MISS/stale input
 ```
 
-The background calculation must run off the UI/main thread and must never reroll or mutate already committed actual/shown identities.
+Background work must never reroll or mutate committed actual/shown identities.
 
-No Greater Joy remains on its existing setup-generation path during TBSP.
+No Greater Joy remains on its existing setup-generation path.
 
-## 5. Accepted lower-layer ownership — TBSP-1 through TBSP-5
+## 5. Accepted TBSP ownership through 6H
 
-### TBSP-1
+### TBSP-1 through 5
 
-Accepted typed parser/validator proves dataset/schema/pool identity, role legality, exact team composition including Baron already represented once, and Drunk-option validity.
+Accepted typed owners prove:
 
-### TBSP-2
+- dataset/schema/pool identity and role legality;
+- exact team composition including Baron represented once;
+- deterministic history-aware preset + Drunk-option selection;
+- exact-repeat rejection, player-count overlap thresholds, decay weights and soft rotation penalties;
+- deterministic `tb-seat-v1` deal materialization;
+- actual Drunk remains Drunk and shown Drunk role equals selector-owned choice;
+- recommendation lock cannot replace the selected Drunk shown identity;
+- durable cross-game rotation history is gameId-idempotent, conflict-safe, bounded and isolated by player-count/dataset/schema.
 
-Accepted pure selector proves:
+Rotation history is diversity memory, not A3 immutable setup snapshot authority.
 
-```text
-player-count isolation
-deterministic preset + Drunk-option replay
-exact-repeat role-composition rejection
-player-count overlap thresholds
-five-game decay weights
-soft rotation penalties
-+0.05 first-nonempty fallback while exact repeat remains hard
-```
+### TBSP-6A through 6F
 
-Normative values live in `docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md`.
-
-The selector is the only authority that chooses `selectedDrunkShownRole`.
-
-### TBSP-3
-
-Accepted deal planner proves:
+Accepted production cutover proves:
 
 ```text
-selected preset role multiset materializes exactly
-Baron is never applied a second time
-seat assignment uses independent deterministic namespace tb-seat-v1
-same selection/seed/players replay identically
-actual Drunk remains Drunk
-shown Drunk role equals selector-owned choice
-non-Drunk shown roles equal actual roles
-```
-
-### TBSP-4
-
-Accepted recommendation lock bridge converts the selector/deal Drunk choice into exactly one locked downstream `DrunkShownRole` fact. Recommendation may generate compatible information, including Investigator-compatible information, but cannot replace the shown identity.
-
-### TBSP-5
-
-Dedicated rotation-history persistence owns:
-
-```text
-recordCompletedGame(gameId, selection)
-historyFor(datasetId, schemaVersion, playerCount)
-```
-
-Accepted behavior includes stable-game retry idempotence, conflict rejection, newest-first order, max-five retention, player-count/dataset/schema isolation and fail-soft corrupt-history recovery.
-
-Rotation history is cross-game diversity memory. It is **not** A3 immutable setup snapshot authority.
-
-## 6. TBSP-6 production cutover — completed slices
-
-### 6A — provenance codec — COMPLETE
-
-`TroubleBrewingSetupProvenancePersistence` encodes/decodes exact preset selection provenance and never selects/shuffles/rerolls.
-
-### 6B — production setup preparer — COMPLETE
-
-Production preparation combines frozen dataset, rotation history, selector and exact deal planning through typed owners outside App root.
-
-### 6C — deal role resolver — COMPLETE
-
-Production `PlayerCard` actual/shown roles come from the committed deal plan.
-
-### 6D — production start cutover — COMPLETE
-
-Trouble Brewing start now follows:
-
-```text
-newClocktowerSeed()
--> load/parse final dataset
+Trouble Brewing start
+-> newClocktowerSeed()
+-> load/validate final dataset
 -> load matching rotation history
--> prepare preset + Drunk shown role + deal
--> resolve exact PlayerCards
--> commit cards / reset deal state with prepared seed
+-> prepare preset + Drunk shown role + exact deal
+-> resolve committed PlayerCards
+-> reset with prepared seed
+-> persist exact setup provenance
 ```
 
-`startClocktowerGame()` branches Trouble Brewing before the legacy broad-random generator. Trouble Brewing no longer uses broad random role composition, Baron post-processing or a second Drunk shown-role draw.
+Restore decodes exact provenance and does not invoke selector/preparer. Older supported saves without TB provenance restore with provenance `null` and do not fabricate an initial selection.
 
-### 6E — active-game provenance persist/restore — COMPLETE
-
-Committed `TroubleBrewingSetupPresetSelection` is persisted in active game state and restored by exact decode. Restore does not invoke selector/preparer.
-
-Older supported snapshots with no TBSP provenance restore with selection `null`; they must not fabricate an initial preset from later/current cards.
-
-### 6F — true-completion rotation-history wiring — COMPLETE
-
-Latest fully validated code checkpoint:
+True-completion rotation-history gate is:
 
 ```text
-5c10cd29111449e1f8af2b8944609a2002048679
+Clocktower
++ Trouble Brewing
++ gameOutcome != null
++ committed TB setup provenance
+-> recordCompletedGame(clocktowerGameId, original selection)
 ```
 
-Production gate semantics:
+Restart/abandon/archive without an outcome does not enter rotation history. Failed durable history persistence blocks clearing so retry can converge.
+
+### TBSP-6G-B — reveal-window setup recommendation prewarm
+
+Product commit:
 
 ```text
-not Clocktower -> no TB history write
-not Trouble Brewing -> no TB history write
-gameOutcome == null -> Restart/abandon/archive does not record
-missing committed provenance -> do not fabricate history
-true completed TB + committed provenance
-    -> recordCompletedGame(clocktowerGameId, selection)
+52378a6887553fb37692def96c1657110151f114
 ```
 
-A failed durable completion-history write blocks archive/save clearing so retry can converge. Store `gameId` semantics own exactly-once behavior; do not add a second App dedupe mechanism.
+Accepted behavior:
 
-## 7. Current work — TBSP-6G-A RED
+- committed TB deal enters reveal before recommendation prewarm is dispatched;
+- prewarm runs off main thread;
+- exact request reuses READY result;
+- stale/mismatched request cannot be consumed as current;
+- cache miss retains a safe existing computation path;
+- non-TB behavior remains unchanged.
 
-Current RED code checkpoint:
+### TBSP-6H — First Night background precompute
+
+Production code commit:
 
 ```text
-a26c221670fdea2612626f762d162b66091896af
+ff1c99fe97552dc65f3d1bf8326bdb451c8e25a0
 ```
 
-Focused test:
+Docs checkpoint:
 
 ```text
-TroubleBrewingSetupRecommendationPrewarmCoordinatorTest
+aeed30411aefa0b27b107c966341c3a7b9cddaf5
 ```
 
-Current contract is intentionally narrow:
+Accepted behavior:
+
+- First Night input is built from the committed TB deal and prepared seed;
+- reveal remains immediate and precompute launches on `Dispatchers.Default`;
+- exact READY is reused;
+- exact BUSY safely waits at the consumer boundary rather than blocking reveal/main thread;
+- MISS/stale input recomputes the exact requested input;
+- stale background work cannot overwrite newer exact state;
+- non-TB/provider-null behavior retains the existing fallback.
+
+## 6. TBSP-6I acceptance matrix — COMPLETE
+
+Accepted logical checkpoint:
 
 ```text
-same committed SetupCoordinationRequest
--> build once
--> prewarm reuses result
--> readyFor(same request) returns same result
-
-changed committed request
--> readyFor misses
--> prewarm rebuilds
--> old request no longer counts as ready
+f7e877f6881cc74b9d8e7f4f8db2b2fb406b84d4
 ```
 
-Expected owner:
+New durable test evidence:
 
 ```text
-TroubleBrewingSetupRecommendationPrewarmCoordinator
+app/src/test/java/com/codex/campboardgamehost/NoGreaterJoySetupRegressionTest.kt
 ```
 
-Do not broaden 6G-A into Compose lifecycle, First Night epistemic replay, A4/ZDD or persistence work.
+It locks the existing No Greater Joy role pool, 5/6-player distributions and start eligibility. The commit changes no production code.
 
-## 8. Revised remaining TBSP-6 sequence
-
-The original broad “background first-night/setup computation” task is now deliberately separated into two lifecycle layers.
-
-### 6G-A — setup recommendation prewarm core — CURRENT
-
-Implement the minimum coordinator required by the existing RED.
+Same-head validation:
 
 ```text
-SetupCoordinationRequest
--> SetupRecommendationService.ConstrainedResult
--> exact-request cache/reuse
+CI #1148 / run 33341819960                  SUCCESS
+Android FAST unit tests (:app:testFast)     SUCCESS
+CI gate                                      SUCCESS
+R2 #1071 / run 33341819962                  SUCCESS
 ```
 
-### 6G-B — identity-reveal production wiring
-
-Tests-first prove:
+P8–P16 closeout:
 
 ```text
-committed TB deal
--> immediately enter PassPhone / RevealCard
--> prewarm setup recommendation off main thread during reveal
--> exact current request can reuse READY result
--> stale/mismatched request cannot be consumed as current
+P8  ACCEPTED structurally: setup preparation is inside the explicit Start callback; recomposition does not invoke it.
+P9  ACCEPTED structurally: script-selection onBack only navigates; onStart is the setup/start callback.
+P10 ACCEPTED typed: NoGreaterJoySetupRegressionTest.
+P11 ACCEPTED: exact provenance round-trip + restore does not invoke selector/preparer.
+P12 ACCEPTED typed: invalid preset raises validation failure; no broad-random fallback deal is produced.
+P13 ACCEPTED typed: reveal precedes background dispatch and no expensive build occurs synchronously.
+P14 ACCEPTED typed + wiring: exact-input READY/BUSY/MISS/stale semantics; requests derive from committed deal and do not mutate identities.
+P15 ACCEPTED: true-completion gate excludes incomplete Restart/abandon/archive.
+P16 ACCEPTED typed: same gameId/selection retry writes once; conflicting gameId reuse is rejected; original committed selection is recorded.
 ```
 
-A cache miss must retain a safe existing computation path.
+There is no existing `app/src/androidTest` Compose instrumentation harness. Do not introduce one solely to duplicate the static event-wiring facts behind P8/P9, and do not create new source-string tests merely to restate those facts.
 
-### 6H — First Night background precompute
+## 7. Current work — TBSP-6J cleanup
 
-Treat this separately from `SetupRecommendationService` caching.
-
-Tests-first prove:
+Active handoff:
 
 ```text
-RevealCard window begins
--> exact committed-game First Night input
--> background computation
--> First Night consumer
-   READY -> consume
-   BUSY  -> safely await at point of use
-   MISS/stale -> safe fallback/recompute
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6J_CLEANUP.md
 ```
 
-Background work must never select another preset, reshuffle seats, reroll Drunk or mutate actual/shown identity.
+A concrete dormant pass-through is confirmed in `CampBoardGameHostApp.kt`:
 
-### 6I — cutover acceptance matrix
-
-Typed acceptance must close the remaining production gaps:
-
-```text
-restore preserves exact preset/seed/cards/shown identities/seat mapping
-restore never selects/materializes a second setup
-legacy supported save without TB provenance never fabricates rotation history
-invalid/rejected TB preset data never falls back to broad-random TB setup
-navigation before Start does not commit a preset selection
-recomposition/navigation cannot reroll an already-started setup
-incomplete Restart/abandon/archive never enters rotation history
-completed TB records original initial selection exactly once
-No Greater Joy setup behavior remains unchanged
-identity reveal begins without synchronously waiting for expensive setup/first-night computation
+```kotlin
+fun resetDealState(
+    nextGameKind: GameKind,
+    clocktowerScript: ClocktowerScript = ClocktowerScript.TroubleBrewing,
+    preparedClocktowerSeed: Long? = null,
+    preparedSetupPlan: RecommendationPlan? = null,
+)
 ```
 
-Prefer typed seams and retire superseded brittle source-string assertions where possible.
+`resetDealState` does not consume `preparedSetupPlan`. The legacy/NGJ Clocktower start path computes a local `preparedSetupPlan` and uses it to derive `recommendedDrunkShownRole`; that local computation is behaviorally meaningful, but passing it into `resetDealState` is not.
 
-### 6J — cleanup
-
-After lifecycle ownership is stable, remove or give real ownership to dormant cutover parameters/APIs such as an unused `preparedSetupPlan`-style pass-through. Do not perform speculative cleanup before 6G/6H clarifies the true owner.
-
-### 6K — final acceptance
+### 6J intended slice
 
 ```text
-all focused acceptance GREEN
+remove unused resetDealState preparedSetupPlan parameter
+-> change the four-argument call to three arguments
+-> remove resulting unused import only if genuinely unused
+-> compile / focused existing tests / :app:testFast
+-> exact diff + R2/CI
+-> stop
+```
+
+This is behavior-preserving dead-parameter cleanup. Do not manufacture a RED test for the implementation detail.
+
+Do not broaden 6J into selector changes, dataset changes, NGJ behavior changes, background-lifecycle redesign, persistence redesign, A3/A4/ZDD, Mayor/Imp work or App/Host decomposition.
+
+## 8. TBSP-6K — final full acceptance
+
+6K begins only after 6J is accepted.
+
+Required final gate:
+
+```text
+all focused TBSP acceptance GREEN
 -> :app:testFast
--> affected T2/T3 when required by TESTING_STRATEGY
+-> affected T2/T3 when required by docs/TESTING_STRATEGY.md
 -> :app:testFull
 -> R2
 -> final GitHub CI
 -> exact diff / scope audit
 ```
 
-PR #57 remains Draft. Do not mark Ready or merge without explicit authorization.
+Then report acceptance state. PR #57 still remains Draft until the user explicitly authorizes Ready/merge.
 
-## 9. Production merge-blocking invariants
+## 9. Merge-blocking invariants
 
-Before TBSP acceptance, typed tests must prove:
+The TBSP branch must continue to satisfy:
 
 ```text
-P1  Trouble Brewing actual roles originate from selected preset.
+P1  TB actual roles originate from selected preset.
 P2  Baron is never applied a second time.
 P3  Drunk actual identity remains Drunk.
 P4  Drunk shown role comes only from selected preset options.
@@ -367,100 +312,62 @@ P7  Start selects/materializes setup only once.
 P8  Compose recomposition cannot reroll a started setup.
 P9  Navigation before Start does not commit a preset selection.
 P10 No Greater Joy behavior remains unchanged.
-P11 Restoring an already-started game does not select a new preset.
+P11 Restore does not select a new preset.
 P12 Invalid TB preset data never silently falls back to broad random TB setup.
-P13 Trouble Brewing identity dealing does not synchronously wait for complex first-night/setup calculation.
-P14 Background first-night/setup computation consumes the committed deal and cannot mutate/reroll actual or shown identities.
-P15 Only true completed Trouble Brewing games enter preset rotation history; Restart/abandon/archive alone does not.
-P16 Completion-history persistence is retry-safe and records the original initial selection rather than later role state.
+P13 Identity dealing/reveal does not synchronously wait for complex setup/First Night calculation.
+P14 Background setup/First Night work consumes committed exact input and cannot mutate/reroll identities.
+P15 Only true completed TB games enter rotation history.
+P16 Completion persistence is retry-safe and records the original initial selection.
 ```
 
-Current assessment:
-
-```text
-P1  IMPLEMENTED
-P2  IMPLEMENTED
-P3  IMPLEMENTED
-P4  IMPLEMENTED
-P5  IMPLEMENTED
-P6  IMPLEMENTED; final production acceptance still required
-P7  IMPLEMENTED; final production acceptance still required
-P8  NEEDS explicit acceptance
-P9  NEEDS explicit acceptance
-P10 NEEDS final NGJ regression acceptance
-P11 IMPLEMENTED; strengthen end-to-end restore acceptance
-P12 NEEDS explicit typed no-fallback acceptance
-P13 IMPLEMENTED structurally; lock with 6G-B lifecycle test
-P14 OPEN — primary 6G/6H remaining risk
-P15 IMPLEMENTED
-P16 IMPLEMENTED
-```
-
-Priority of remaining risk:
-
-```text
-P14 async/reveal/First Night lifecycle
-> P12 invalid-data no-fallback acceptance
-> restore/recomposition/navigation acceptance
-> NGJ regression acceptance
-```
-
-Do not reopen TBSP-1 through 6F without concrete regression evidence.
+All P1–P16 are accepted as of TBSP-6I. 6J must preserve them; 6K revalidates the integrated branch.
 
 ## 10. Testing cadence
 
 Follow root `AGENTS.md` and `docs/TESTING_STRATEGY.md`.
 
-Default tests-first micro-cycle:
+Use risk-based evidence:
 
-```text
-RED
--> exact T0 RED
--> GREEN
--> exact T0 GREEN with --rerun-tasks
--> git diff --check / exact remote diff audit
-```
+- add RED tests for behavior contracts/bugs where they create durable value;
+- do not add source-string RED tests merely to force an implementation detail;
+- use focused T0 evidence for the owning behavior;
+- use T1 `:app:testFast` at logical checkpoints;
+- run T4 `:app:testFull` at TBSP-6K final acceptance;
+- remote CI/R2 and local/focused evidence serve different purposes.
 
-`:app:testFast` is T1 and belongs at logical checkpoints rather than every micro-commit.
+For 6J specifically, compile + existing focused tests + T1 + exact diff is the appropriate behavior-preserving cleanup evidence unless a real regression appears.
 
-Run T4 `:app:testFull` at final TBSP production acceptance unless a specific earlier risk justifies escalation.
+## 11. Active documentation
 
-Local/focused evidence and GitHub CI serve different purposes; local validation does not replace final remote R2/CI.
-
-## 11. Documentation authority and lifecycle
-
-Active docs root should use:
+Use these as current instructions:
 
 ```text
 AGENTS.md
-CURRENT_DEVELOPMENT_ROADMAP.md
-NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_6_PRODUCTION_CUTOVER.md
-TESTING_STRATEGY.md
-TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
-TBSP_ROTATION_WEIGHT_CONTRACT_V1.md when rotation semantics are relevant
+docs/CURRENT_DEVELOPMENT_ROADMAP.md
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6J_CLEANUP.md
+docs/TESTING_STRATEGY.md
+docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
+docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md when rotation semantics are relevant
 ```
 
-Completed GCR/PR55/PR56/TBSP-1..5 execution handoffs are historical and should not be used as current instructions. Their closeout index lives under `docs/archive/` and Git history preserves exact old content.
+Earlier TBSP execution handoffs/checkpoints remain historical evidence. Git history preserves their exact content.
 
-A3 remains under `docs/archive/deferred/` until this roadmap explicitly reactivates it.
+A3 remains deferred until this roadmap explicitly reactivates it after TBSP production acceptance.
 
 ## 12. New-conversation resume protocol
 
 1. read root `AGENTS.md`;
 2. read this roadmap;
-3. read `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_6_PRODUCTION_CUTOVER.md`;
+3. read `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6J_CLEANUP.md`;
 4. read `docs/TESTING_STRATEGY.md`;
-5. read `docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md`;
-6. re-query live `main`, PR #57 head/state/checks and branch comparison;
-7. distinguish later docs-only head from:
-   - last fully GREEN code checkpoint `5c10cd29111449e1f8af2b8944609a2002048679`;
-   - current 6G RED code checkpoint `a26c221670fdea2612626f762d162b66091896af`;
-8. continue tests-first from **TBSP-6G-A coordinator GREEN**;
-9. do not expand to 6G-B/6H in the same micro-slice;
-10. preserve Dawn/Dusk exactly-once behavior;
-11. do not change No Greater Joy behavior;
-12. do not resume A3/A4/ZDD/Mayor/Imp-succession work;
-13. keep PR #57 Draft and do not merge or mark Ready without explicit authorization.
+5. re-query live `main`, PR #57 head/state/checks and branch comparison;
+6. distinguish docs-only carriers from last validated code/test checkpoint `f7e877f6881cc74b9d8e7f4f8db2b2fb406b84d4`;
+7. continue with the narrow TBSP-6J dead-parameter cleanup;
+8. do not create an implementation-detail RED merely to remove the dead parameter;
+9. preserve P1–P16, Dawn/Dusk exactly-once behavior and No Greater Joy behavior;
+10. stop after 6J acceptance; do not begin 6K in the same micro-slice;
+11. do not resume A3/A4/ZDD/Mayor/Imp-succession work;
+12. keep PR #57 Draft and do not merge or mark Ready without explicit authorization.
 
 ## 13. Deferred work registry
 
