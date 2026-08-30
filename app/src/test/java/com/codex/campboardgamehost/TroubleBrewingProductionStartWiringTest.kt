@@ -5,36 +5,29 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
+/** Coarse App-root cutover guard; setup/deal semantics are owned by typed TBSP tests. */
 class TroubleBrewingProductionStartWiringTest {
     @Test
-    fun `Trouble Brewing start exits into curated setup before legacy random generator`() {
-        val source = appSource()
-        val start = functionBlock(source, "fun startClocktowerGame()")
+    fun `Trouble Brewing production routes through curated start before legacy generator`() {
+        val start = functionBlock(appSource(), "fun startClocktowerGame()")
 
-        val troubleBrewingBranch = start.indexOf("if (script == ClocktowerScript.TroubleBrewing)")
         val curatedStart = start.indexOf("startTroubleBrewingGame()")
         val legacyGenerator = start.indexOf("generateClocktowerAssignments(playerNames.size, script)")
 
-        assertTrue("Trouble Brewing must have an explicit production cutover branch.", troubleBrewingBranch >= 0)
-        assertTrue("Trouble Brewing must delegate to its curated production start owner.", curatedStart >= 0)
-        assertTrue("The TB cutover must occur before the legacy generator can run.", curatedStart < legacyGenerator)
+        assertTrue("Trouble Brewing must route through its curated production start owner.", curatedStart >= 0)
+        assertTrue("The curated cutover must occur before the legacy generator can run.", legacyGenerator >= 0 && curatedStart < legacyGenerator)
     }
 
     @Test
-    fun `curated Trouble Brewing start uses validated selector deal owners and does not synchronously recommend`() {
+    fun `curated Trouble Brewing start delegates to typed setup owners without synchronous recommendation`() {
         val helper = functionBlock(appSource(), "fun startTroubleBrewingGame()")
 
-        assertTrue(helper.contains("TroubleBrewingSetupPresetJson.parse("))
-        assertTrue(helper.contains("TroubleBrewingSetupRotationHistoryStore.fromContext("))
         assertTrue(helper.contains("TroubleBrewingProductionSetupPreparer.prepare("))
         assertTrue(helper.contains("TroubleBrewingDealRoleResolver.resolve("))
+        assertFalse(helper.contains("generateClocktowerAssignments"))
         assertFalse(
             "Identity dealing must not synchronously wait for setup recommendation.",
             helper.contains("ClocktowerRecommendationCoordinator"),
-        )
-        assertFalse(
-            "Curated TB start must not call the broad random assignment generator.",
-            helper.contains("generateClocktowerAssignments"),
         )
     }
 
