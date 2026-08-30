@@ -61,6 +61,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -173,6 +174,9 @@ import com.codex.campboardgamehost.clocktower.session.NightResolutionContinuatio
 import com.codex.campboardgamehost.clocktower.session.resolveTroubleBrewingImpSelfKillSuccession
 import com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest
 import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
+import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationLock
+import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationPrewarmCoordinator
+import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationRevealCoordinator
 import com.codex.campboardgamehost.clocktower.session.UnifiedSetupSelectorDeviceBenchmark
 import com.codex.campboardgamehost.clocktower.session.UnifiedSetupSelectorDeviceBenchmarkReport
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationCandidate
@@ -928,6 +932,19 @@ internal fun CampBoardGameHostApp() {
     val clocktowerHighestVoteCountState = remember { mutableStateOf(0) }
     val clocktowerSlayerClaimantNameState = remember { mutableStateOf<String?>(null) }
     val clocktowerSlayerTargetNameState = remember { mutableStateOf<String?>(null) }
+    val troubleBrewingSetupRecommendationScope = rememberCoroutineScope()
+    val troubleBrewingSetupRecommendationPrewarmer = remember {
+        val recommendationCoordinator = ClocktowerRecommendationCoordinator()
+        TroubleBrewingSetupRecommendationPrewarmCoordinator { request ->
+            recommendationCoordinator.recommendSetup(request)
+        }
+    }
+    val troubleBrewingSetupRecommendationRevealCoordinator =
+        remember(troubleBrewingSetupRecommendationPrewarmer) {
+            TroubleBrewingSetupRecommendationRevealCoordinator(
+                prewarmer = troubleBrewingSetupRecommendationPrewarmer,
+            )
+        }
     val a4ShadowWorldSetCache = remember { A4ShadowWorldSetCache() }
     val a4IdentityRevealPrewarmer = remember(a4ShadowWorldSetCache) {
         A4IdentityRevealPrewarmCoordinator(cache = a4ShadowWorldSetCache)
@@ -2282,15 +2299,41 @@ internal fun CampBoardGameHostApp() {
             )
         }
 
+        val setupRecommendationRoleDefinitions =
+            clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing)
+        val initialSetupRecommendationRequest = SetupCoordinationRequest(
+            game = committedCards.toClocktowerGameState(
+                script = ClocktowerScript.TroubleBrewing,
+                seed = preparedSeed,
+                poisonedPlayerName = null,
+            ),
+            roles = setupRecommendationRoleDefinitions,
+            lockedDecisions = TroubleBrewingSetupRecommendationLock.lockedDecisions(
+                dealPlan = preparedSetup.dealPlan,
+                roleDefinitions = setupRecommendationRoleDefinitions,
+            ),
+            history = gameHistory.toClocktowerSetupHistory(),
+        )
+
         cards.clear()
         cards.addAll(committedCards)
 
-        resetDealState(
-            nextGameKind = GameKind.Clocktower,
-            clocktowerScript = ClocktowerScript.TroubleBrewing,
-            preparedClocktowerSeed = preparedSeed,
+        troubleBrewingSetupRecommendationRevealCoordinator.onCommittedDeal(
+            request = initialSetupRecommendationRequest,
+            enterReveal = {
+                resetDealState(
+                    nextGameKind = GameKind.Clocktower,
+                    clocktowerScript = ClocktowerScript.TroubleBrewing,
+                    preparedClocktowerSeed = preparedSeed,
+                )
+                committedTroubleBrewingSetupSelection = preparedSetup.selection
+            },
+            launchBackground = { work ->
+                troubleBrewingSetupRecommendationScope.launch(Dispatchers.Default) {
+                    work()
+                }
+            },
         )
-        committedTroubleBrewingSetupSelection = preparedSetup.selection
     }
 
     fun startClocktowerGame() {
@@ -2799,6 +2842,12 @@ internal fun CampBoardGameHostApp() {
                         playerInputRevision = clocktowerPlayerInputRevision,
                         rulesetRef = clocktowerRulesetRef,
                         setupHistory = gameHistory.toClocktowerSetupHistory(),
+                        setupRecommendationResultProvider =
+                            if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
+                                troubleBrewingSetupRecommendationRevealCoordinator::resultFor
+                            } else {
+                                null
+                            },
                         onInitialRecommendationDemand = recordA4InitialRecommendationDemand,
                         phase = clocktowerPhase,
                         round = round,

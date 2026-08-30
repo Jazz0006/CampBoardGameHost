@@ -151,6 +151,7 @@ import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import com.codex.campboardgamehost.clocktower.recommendation.RecommendationUiState
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.recommendation.GameBalanceEvaluator
+import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
@@ -247,6 +248,7 @@ internal fun ClocktowerJudgeScreen(
     playerInputRevision: Long,
     rulesetRef: RulesetRef?,
     setupHistory: CrossGameHistory,
+    setupRecommendationResultProvider: ((SetupCoordinationRequest) -> SetupRecommendationService.ConstrainedResult)? = null,
     onInitialRecommendationDemand: () -> Unit,
     phase: ClocktowerPhase,
     round: Int,
@@ -1177,23 +1179,23 @@ internal fun ClocktowerJudgeScreen(
     var lockedRecommendationDecisions by remember(recommendationKey) {
         mutableStateOf(committedIdentityDecisions)
     }
+    val recommendationRequest = SetupCoordinationRequest(
+        game = recommendationCards.toClocktowerGameState(
+            script = script,
+            seed = gameSeed,
+            poisonedPlayerName = poisonTarget,
+        ),
+        roles = clocktowerRoleDefinitionsForScript(script),
+        lockedDecisions = lockedRecommendationDecisions,
+        history = setupHistory,
+    )
     LaunchedEffect(recommendationKey, lockedRecommendationDecisions) {
         onInitialRecommendationDemand()
         recommendationUiState = RecommendationUiState.Loading
         val result = withContext(Dispatchers.Default) {
             runCatching {
-                recommendationCoordinator.recommendSetup(
-                    SetupCoordinationRequest(
-                        game = recommendationCards.toClocktowerGameState(
-                            script = script,
-                            seed = gameSeed,
-                            poisonedPlayerName = poisonTarget,
-                        ),
-                        roles = clocktowerRoleDefinitionsForScript(script),
-                        lockedDecisions = lockedRecommendationDecisions,
-                        history = setupHistory,
-                    ),
-                )
+                setupRecommendationResultProvider?.invoke(recommendationRequest)
+                    ?: recommendationCoordinator.recommendSetup(recommendationRequest)
             }
         }
         // A changed revision/key cancels this effect. Never publish a completed
