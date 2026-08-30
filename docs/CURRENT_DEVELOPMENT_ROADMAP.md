@@ -63,6 +63,7 @@ TBSP-6H First Night background precompute                    COMPLETE
 TBSP-6I cutover acceptance matrix                            COMPLETE
 TBSP-6J cleanup                                              CURRENT
 TBSP-6K final full acceptance                                NOT STARTED
+MS-SETUP generic multi-script setup architecture              PLANNED AFTER TBSP-6K
 A3 immutable setup snapshot                                  DEFERRED UNTIL TBSP ACCEPTANCE
 ```
 
@@ -297,6 +298,54 @@ all focused TBSP acceptance GREEN
 
 Then report acceptance state. PR #57 still remains Draft until the user explicitly authorizes Ready/merge.
 
+### 8.1 Planned post-TBSP follow-up — MS-SETUP generic multi-script setup architecture
+
+This work begins only after TBSP-6K acceptance. It must not be pulled into 6J/6K.
+
+Goal: make setup selection script-neutral so every Clocktower script automatically supports both template-backed and generated setup modes without adding new App-root `if (script == ...)` branches.
+
+Default contract:
+
+```text
+script + playerCount + seed + diversity history
+-> query optional template repository
+-> templates available: build candidates from templates
+-> no templates: build legal generated candidates from the script/ruleset
+-> common diversity selector
+-> deterministic committed setup
+-> persist exact setup provenance
+```
+
+Required semantics:
+
+- **default is no template**: a newly supported script remains playable through legal seeded random generation;
+- **optional templates**: when a script/player-count has curated templates, choose from that template pool instead of broad random role composition;
+- both sources feed one common diversity/rotation policy rather than separate ad-hoc retry loops;
+- generated candidates must avoid duplicate roles inside one setup and template candidates must be semantically validated;
+- cross-game diversity should consider exact-repeat and role-overlap history for both template-backed and generated modes;
+- Drunk-like shown identity selection belongs to committed setup generation: template-backed mode uses allowed template options, generated mode chooses a legal shown identity from the script/ruleset;
+- shown-identity repetition should participate in diversity scoring without treating mere seat reshuffles as a distinct setup;
+- setup generation must be seeded/deterministic so the committed setup can be replayed/restored exactly;
+- script-specific setup modifiers belong to ruleset/setup metadata or typed policy, not growing App-root conditionals;
+- adding a future script with no templates should require no setup-architecture code change beyond providing its ruleset/roles;
+- later adding templates for that script should switch the candidate source without changing App start wiring.
+
+Proposed implementation slices:
+
+```text
+MS-S1  generic CommittedClocktowerSetup / provenance model
+MS-S2  generic SetupCandidate + candidate-source contract
+MS-S3  optional TemplateRepository keyed by script + player count
+MS-S4  deterministic seeded GeneratedSetupCandidateSource
+MS-S5  common cross-game SetupDiversityHistory / scorer / selector
+MS-S6  generic shown-identity policy, including Drunk-style roles
+MS-S7  adapt existing TB 480-preset pipeline to the generic contract without behavior drift
+MS-S8  adapt NGJ/no-template path to generated candidates and prove parity
+MS-S9  acceptance: a new no-template script works without App-root branching; adding templates requires data/provider registration only
+```
+
+The current TB-specific preset classes may be adapted or wrapped first; do not rename/rewrite them speculatively during TBSP. Preserve the already-accepted TB rotation semantics until parity tests prove a generic owner can replace them.
+
 ## 9. Merge-blocking invariants
 
 The TBSP branch must continue to satisfy:
@@ -377,5 +426,6 @@ A3 remains deferred until this roadmap explicitly reactivates it after TBSP prod
 | GCR-5 night checkpoint stable identity hardening | DEFERRED FOLLOW-UP |
 | GCR-5 reconstructor naming clarity | DEFERRED FOLLOW-UP |
 | Dawn systematic crash cut-point matrix | DEFERRED FOLLOW-UP |
+| MS-SETUP generic multi-script setup architecture | PLANNED AFTER TBSP-6K |
 | A3 immutable setup snapshot ownership/persistence | PAUSED UNTIL TBSP PRODUCTION ACCEPTANCE |
 | App Root S9.2 Active Game Persistence Boundary | AUDITED / NOT STARTED |
