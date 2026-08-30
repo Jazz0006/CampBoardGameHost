@@ -1,3 +1,4 @@
+# Synchronize bootstrap: workflow already exists before this PR update.
 name: TBSP 6H-B First Night production wiring
 
 on:
