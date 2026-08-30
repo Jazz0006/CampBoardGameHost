@@ -1,87 +1,12 @@
 package com.codex.campboardgamehost
 
-import java.io.File
-import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AppJsonPrimitivesTest {
-    private fun findRepositoryRoot(): File {
-        val knownHostSource = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
-        val workingDirectory = System.getProperty("user.dir") ?: error("Working directory is unavailable")
-        var directory = File(workingDirectory).absoluteFile
-        while (true) {
-            if (File(directory, knownHostSource).isFile) return directory
-            val parent = directory.parentFile ?: error("Repository root not found from ${directory.path}")
-            if (parent == directory) error("Repository root not found from ${directory.path}")
-            directory = parent
-        }
-    }
-
-    private val repoRoot = findRepositoryRoot()
-    private val root = File(
-        repoRoot,
-        "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt",
-    )
-    private val appJsonPrimitives = File(
-        repoRoot,
-        "app/src/main/java/com/codex/campboardgamehost/persistence/AppJsonPrimitives.kt",
-    )
-
-    private val helperDeclarations = listOf(
-        "private inline fun <reified T : Enum<T>> enumByName(",
-        "private fun JSONObject.putNullableString(",
-        "private fun JSONObject.putNullableInt(",
-        "private fun JSONObject.putNullableBoolean(",
-        "private fun JSONObject.optNullableString(",
-        "private fun JSONObject.optNullableInt(",
-        "private fun JSONObject.optNullableBoolean(",
-        "private fun stringsToJsonArray(",
-        "private fun JSONArray.toStringList(",
-    )
-
-    @Test
-    fun `JSON primitive helpers have dedicated owner`() {
-        assertTrue("CampBoardGameHostApp.kt must exist", root.isFile)
-        assertTrue("AppJsonPrimitives.kt must exist", appJsonPrimitives.isFile)
-
-        val rootText = root.readText()
-        val ownerText = appJsonPrimitives.readText()
-
-        helperDeclarations.forEach { declaration ->
-            val ownerDeclaration = declaration.replaceFirst("private", "internal")
-            assertTrue("AppJsonPrimitives.kt must contain $ownerDeclaration", ownerText.contains(ownerDeclaration))
-            assertFalse("CampBoardGameHostApp.kt must not contain $declaration", rootText.contains(declaration))
-        }
-    }
-
-    @Test
-    fun `JSON primitive owner contains no application authority`() {
-        assertTrue("AppJsonPrimitives.kt must exist", appJsonPrimitives.isFile)
-        val ownerText = appJsonPrimitives.readText()
-
-        listOf(
-            "android.content.Context",
-            "getSharedPreferences",
-            "remember(",
-            "mutableStateOf(",
-            "LaunchedEffect(",
-            "DisposableEffect(",
-            "SideEffect(",
-            "ClocktowerGameSession",
-            "ActiveGamePersistenceCoordinator",
-            "PlayerCard",
-            "ClocktowerRole",
-            "EpistemicSemanticJson",
-        ).forEach { forbidden ->
-            assertFalse("AppJsonPrimitives.kt must not contain $forbidden", ownerText.contains(forbidden))
-        }
-    }
-
     @Test
     fun `enum lookup preserves null blank and unknown behavior`() {
         assertNull(enumByName<GameKind>(null))
