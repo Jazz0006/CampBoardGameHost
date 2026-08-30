@@ -22,22 +22,16 @@ current Draft PR / CI carrier:
 PR #57 — TBSP: integrate Trouble Brewing setup presets
 OPEN / DRAFT / NOT MERGED
 
-last fully validated TBSP code checkpoint:
+last fully validated TBSP-2 checkpoint:
 80a5b9306009a4d078623b997b5b42a88de21080
 
-current post-checkpoint TBSP code state:
-TBSP-3A RED test added at cb84e04db546c41494a87a1298d1ec48f4211c38
-expected missing planner contract observed through :app:testFast CI
-later commits may be docs-only until TBSP-3A GREEN begins
-
-validated checkpoint vs main:
-ahead 32 / behind 0
-merge base == main
+latest fully validated TBSP-3 code checkpoint:
+8e918f69f6184a6389a23881af42127a3d761ef2
 
 current campaign:
 TBSP — Trouble Brewing Setup Preset Integration
 
-current successor handoff:
+current completed-slice handoff:
 docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_3_DEAL_MATERIALIZATION.md
 
 campaign design baseline:
@@ -59,14 +53,14 @@ TBSP-0 documentation / campaign plan: COMPLETE
 TBSP-1A final dataset asset + typed parser: COMPLETE
 TBSP-1B semantic validator: COMPLETE
 TBSP-2 pure history-aware selector: COMPLETE
-TBSP-3 pure deal materialization: IN PROGRESS — 3A RED ESTABLISHED / GREEN NEXT
+TBSP-3 pure deal materialization: COMPLETE
 TBSP-4 setup recommendation integration: NOT STARTED
 TBSP-5 durable cross-game rotation-history storage: NOT STARTED
 TBSP-6 production cutover / restore ownership: NOT STARTED
 A3 immutable setup snapshot: DEFERRED UNTIL TBSP PRODUCTION ACCEPTANCE
 ```
 
-At code checkpoint `80a5b9306009a4d078623b997b5b42a88de21080`:
+At latest TBSP-3 code checkpoint `8e918f69f6184a6389a23881af42127a3d761ef2`:
 
 ```text
 R2 main-thread boundary: GREEN
@@ -77,7 +71,7 @@ ASP contract tests: correctly skipped
 Real Clingo cross-validation: correctly skipped
 ```
 
-Later documentation-only or RED-test commits must be distinguished from that last fully validated production checkpoint.
+An exact developer-selected local T0 was not executed in this Chat environment because no repository checkout / Gradle wrapper is mounted here. The code commits themselves were validated by the branch's GitHub Actions `:app:testFast` route. Do not rewrite that evidence as a local T0 run.
 
 ## 2. Accepted predecessor correctness baseline
 
@@ -244,7 +238,7 @@ TBSP-2F soft rotation weighting + minimum weight floor
 TBSP-2G +0.05 fallback to first non-empty level while exact repeat remains hard
 ```
 
-The previously open soft-weight policy is now frozen by:
+The previously open soft-weight policy is frozen by:
 
 ```text
 docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md
@@ -274,7 +268,7 @@ exact-repeat composition never becomes eligible
 maximum threshold 1.0
 ```
 
-Selector deterministic namespaces already include:
+Selector deterministic namespaces include:
 
 ```text
 tb-preset-v1
@@ -289,17 +283,11 @@ Accepted final TBSP-2 code checkpoint:
 80a5b9306009a4d078623b997b5b42a88de21080
 ```
 
-## 6. TBSP-3 current checkpoint — pure deal materialization
+## 6. TBSP-3 pure deal materialization — COMPLETE
 
-TBSP-3 is now in progress and remains **pure**, not production App wiring.
+TBSP-3 introduced pure setup/deal materialization without App wiring or persistence.
 
-Successor handoff:
-
-```text
-docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_3_DEAL_MATERIALIZATION.md
-```
-
-Preferred ownership:
+Source ownership:
 
 ```text
 app/src/main/java/com/codex/campboardgamehost/clocktower/setup/
@@ -309,57 +297,124 @@ app/src/test/java/com/codex/campboardgamehost/clocktower/setup/
     TroubleBrewingSetupDealPlannerTest.kt
 ```
 
-Required tests-first sequence:
-
-```text
-TBSP-3A RED — Baron preset materializes exact preset multiset; no second Baron modifier
-TBSP-3B RED — exact selected preset role multiset identity
-TBSP-3C RED — independent deterministic seat shuffle using tb-seat-v1
-TBSP-3D RED — Drunk actual identity + selector-owned shown role preserved
-```
-
-### TBSP-3A current state
-
-The live player/seat/card audit confirmed:
+### 6.1 Audit conclusions preserved
 
 ```text
 PlayerCard has no explicit seat field.
 Stable gameplay seat identity is existing card/player order: seat = index + 1.
 PlayerState is a post-materialization gameplay type and is not appropriate planner input.
-The smallest pure planner input can therefore consume ordered player identities/names and derive seat in output.
+The pure planner therefore consumes ordered player identities/names and derives seat in output.
 ```
 
-The focused TBSP-3A RED test was added at:
+### 6.2 Accepted planner contract
+
+The planner now consumes:
 
 ```text
+TroubleBrewingSetupPresetSelection
++ orderedPlayerNames
+```
+
+and produces typed assignments containing:
+
+```text
+seat
+playerName
+actualRoleId
+shownRoleId
+```
+
+plus plan provenance:
+
+```text
+datasetId
+schemaVersion
+presetId
+playerCount
+gameSeed
+selectedDrunkShownRole
+```
+
+Accepted behavior:
+
+```text
+selected preset actual-role multiset is materialized exactly
+Baron is never interpreted as a command to modify composition
+role-list input order is canonicalized before seat materialization
+seat assignment uses independent deterministic namespace tb-seat-v1
+same selected preset + seed + ordered players replays identically
+reordering role lists inside an equivalent preset does not change seat assignment
+different suitable seeds can produce different seat assignments
+Drunk remains actual role drunk
+Drunk shownRoleId equals selection.selectedDrunkShownRole
+selected Drunk shown role must belong to preset.drunkAsOptions
+selected Drunk shown role must be absent from actual in-play roles
+all non-Drunk shownRoleId values equal actualRoleId
+non-Drunk selections must not carry a Drunk shown role
+no second Drunk draw exists in the planner
+```
+
+Seat namespace:
+
+```text
+tb-seat-v1
+```
+
+Current materialization key includes:
+
+```text
+tb-seat-v1|datasetId|playerCount|presetId|gameSeed|roleId
+```
+
+### 6.3 Tests-first history
+
+```text
+TBSP-3A RED:
 cb84e04db546c41494a87a1298d1ec48f4211c38
+missing TroubleBrewingSetupDealPlanner contract
+
+TBSP-3A GREEN:
+39fcedfe57fd214479a1afad802a9f5cb4648f34
+exact already-Baron-adjusted multiset preserved
+
+TBSP-3B lock-in test:
+a45ad77f6beadda2275a82d98de1d44a48284069
+ordinary exact-role multiset test was GREEN immediately because the generalized 3A implementation already satisfied it
+NO fake RED should be recorded for 3B
+
+TBSP-3C RED:
+20e383f1c30e62569ec4523c35ce2340082c6009
+current planner ignored gameSeed, so deterministic independent seat-shuffle contract failed
+
+TBSP-3C GREEN:
+3f8d7312075e872e25d6413bb7bf06f2a1b8ff10
+introduced canonical deterministic tb-seat-v1 seat materialization
+
+TBSP-3D RED:
+6fc96b642695ff70c5fec30ce77de63e08ff6fbf
+shownRoleId / selectedDrunkShownRole output contract not yet implemented
+
+TBSP-3D GREEN / TBSP-3 checkpoint:
+8e918f69f6184a6389a23881af42127a3d761ef2
+selector-owned Drunk shown role preserved without reroll
 ```
 
-It constructs an already Baron-adjusted 7-player selected preset and requires the materialized actual-role multiset to equal the selected preset multiset exactly.
-
-CI `:app:testFast` failed for the expected missing contract:
+Final checkpoint validation:
 
 ```text
-Unresolved reference 'TroubleBrewingSetupDealPlanner'
+R2 main-thread boundary: GREEN
+Android :app:testFast: GREEN
+CI gate: GREEN
+full Android unit/build step: skipped by normal FAST routing
+ASP contract tests: skipped
+Real Clingo cross-validation: skipped
 ```
 
-This is the intended RED, not a pre-existing production regression. An exact developer-selected T0 has not yet been observed in this environment; do not falsely record it as executed.
-
-Next implementation action is the **minimum TBSP-3A GREEN** only. Do not pre-implement 3C seat-shuffle policy or 3D Drunk mapping while satisfying 3A.
-
-TBSP-3 must remain pure:
-
-```text
-NO App production cutover
-NO persistence
-NO setup recommendation rewiring
-NO No Greater Joy changes
-NO A3 setup snapshot work
-```
+TBSP-3 changed no App production setup path, persistence, SetupCoordination wiring, No Greater Joy behavior or A3 setup snapshot ownership.
 
 ## 7. Current production setup authority audit
 
-The current production setup path remains centered in `CampBoardGameHostApp.kt`.
+The current production setup path remains centered in `CampBoardGameHostApp.kt` and has **not yet been cut over**.
 
 Relevant legacy helper:
 
@@ -388,9 +443,9 @@ random Drunk fake/shown-role selection
 
 Final presets already encode Baron setup modification. Production must never apply the old Baron transform after consuming a preset.
 
-The selector already owns the single deterministic Drunk shown-role choice. Later recommendation may consume that identity as a locked fact, but it must not select or replace it.
+The selector already owns the single deterministic Drunk shown-role choice, and TBSP-3 now carries it through pure deal materialization. Later recommendation may consume that identity as a locked fact, but it must not select or replace it.
 
-The eventual Trouble Brewing production lifecycle is now explicitly:
+The eventual Trouble Brewing production lifecycle is explicitly:
 
 ```text
 newClocktowerSeed()
@@ -413,13 +468,13 @@ docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
 ## 8. Remaining TBSP sequence
 
 ```text
-TBSP-3 pure deal materialization              IN PROGRESS
+TBSP-3 pure deal materialization              COMPLETE
         ↓
-TBSP-4 existing recommendation integration
+TBSP-4 existing recommendation integration    NOT STARTED
         ↓
-TBSP-5 durable cross-game rotation history
+TBSP-5 durable cross-game rotation history    NOT STARTED
         ↓
-TBSP-6 production cutover / restore ownership
+TBSP-6 production cutover / restore ownership NOT STARTED
         ↓
 full acceptance checkpoint
         ↓
@@ -431,6 +486,8 @@ TBSP-4 must turn the committed selector-owned Drunk shown role into a locked dow
 TBSP-6 owns the production lifecycle change that allows identity reveal to begin before expensive first-night/setup computation completes.
 
 A3 should harden the final production setup-origin contract, not the legacy broad-random generator.
+
+The user previously scoped the current work away from setup recommendation wiring. Therefore, completion of TBSP-3 does **not** authorize starting TBSP-4 implementation in the same slice. Reconfirm scope before writing recommendation integration.
 
 ## 9. Production merge-blocking invariants still outstanding
 
@@ -453,21 +510,23 @@ P13 Trouble Brewing identity dealing does not synchronously wait for complex fir
 P14 Background first-night/setup computation consumes the committed deal and cannot mutate/reroll actual or shown identities.
 ```
 
-TBSP-3 directly advances P1–P4 and the seat-materialization portion of P6. P13–P14 belong to the later production cutover, not the pure planner.
+TBSP-3 now provides pure typed coverage supporting P1–P4 and the seat-materialization portion of P6. Those invariants are not yet production-path claims until later App integration is tested.
+
+P13–P14 remain later production-cutover requirements.
 
 ## 10. Resume protocol for next conversation
 
 1. read root `AGENTS.md`;
 2. read this roadmap;
-3. read `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_3_DEAL_MATERIALIZATION.md`;
+3. read `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_3_DEAL_MATERIALIZATION.md` as the completed TBSP-3 checkpoint;
 4. read `docs/TESTING_STRATEGY.md`;
-5. read `docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md` when production-cutover ownership or lifecycle is relevant;
+5. read `docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md` before any recommendation/App/cutover planning;
 6. re-query live `main`, PR #57 head/state/checks and branch comparison;
-7. distinguish validated code checkpoint `80a5b9306009a4d078623b997b5b42a88de21080`, later docs-only commits and the TBSP-3A RED test commit `cb84e04db546c41494a87a1298d1ec48f4211c38`;
-8. continue **TBSP-3A minimum GREEN — no Baron double application**;
-9. run the smallest available Gradle T0 directly when a local checkout is available; otherwise record only tests actually observed through CI;
+7. distinguish TBSP-2 checkpoint `80a5b9306009a4d078623b997b5b42a88de21080` from completed TBSP-3 checkpoint `8e918f69f6184a6389a23881af42127a3d761ef2` and later docs-only commits;
+8. treat **TBSP-4 recommendation integration as NOT STARTED**;
+9. do not begin TBSP-4 wiring until the current scope explicitly permits setup recommendation integration;
 10. keep PR #57 Draft;
-11. do not merge, mark Ready, or broaden into App wiring without explicit authorization.
+11. do not merge, mark Ready, change No Greater Joy, add persistence, or resume A3 without explicit authorization.
 
 ## 11. Deferred work registry
 
