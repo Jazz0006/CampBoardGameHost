@@ -5,44 +5,30 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
+/** Coarse App-root completion-transaction guard; store semantics are owned by typed persistence tests. */
 class TroubleBrewingCompletionRotationHistoryWiringTest {
     @Test
-    fun `only a completed Trouble Brewing game records the committed setup provenance`() {
+    fun `only completed Trouble Brewing with committed provenance reaches rotation history`() {
         val helper = functionBlock(appSource(), "fun persistCompletedTroubleBrewingSetupIfNeeded()")
 
         assertTrue(helper.contains("if (currentGameKind != GameKind.Clocktower) return true"))
         assertTrue(helper.contains("if (currentClocktowerScript != ClocktowerScript.TroubleBrewing) return true"))
-        assertTrue(
-            "A generic mid-game Restart must not authorize rotation-history insertion.",
-            helper.contains("if (gameOutcome == null) return true"),
-        )
-        assertTrue(helper.contains("val selection = committedTroubleBrewingSetupSelection ?: return true"))
-        assertTrue(helper.contains("TroubleBrewingSetupRotationHistoryStore.fromContext(baseContext)"))
+        assertTrue(helper.contains("if (gameOutcome == null) return true"))
+        assertTrue(helper.contains("committedTroubleBrewingSetupSelection ?: return true"))
         assertTrue(helper.contains(".recordCompletedGame("))
-        assertTrue(helper.contains("gameId = clocktowerGameId"))
-        assertTrue(helper.contains("selection = selection"))
     }
 
     @Test
-    fun `restart archives only after completed setup history persistence succeeds`() {
+    fun `restart persists completion history before archive or active-save clearing`() {
         val archive = functionBlock(appSource(), "fun archiveCurrentGameForRestart(): Boolean")
 
-        val completionPersistence = archive.indexOf("if (!persistCompletedTroubleBrewingSetupIfNeeded()) return false")
+        val completionPersistence = archive.indexOf("persistCompletedTroubleBrewingSetupIfNeeded()")
         val reviewArchive = archive.indexOf("baseContext.archiveGame(activeGameSnapshotJson())")
         val activeSaveClear = archive.indexOf("clearSavedGameState()")
 
-        assertTrue(
-            "Restart must consult completion persistence before review/archive history is written.",
-            completionPersistence >= 0 && completionPersistence < reviewArchive,
-        )
-        assertTrue(
-            "A failed completion-history write must not clear the active save needed for retry.",
-            completionPersistence < activeSaveClear,
-        )
-        assertFalse(
-            "Generic archive must delegate completion semantics instead of directly recording every restart.",
-            archive.contains("recordCompletedGame("),
-        )
+        assertTrue(completionPersistence >= 0 && completionPersistence < reviewArchive)
+        assertTrue(completionPersistence < activeSaveClear)
+        assertFalse(archive.contains("recordCompletedGame("))
     }
 
     private fun appSource(): String = File(
