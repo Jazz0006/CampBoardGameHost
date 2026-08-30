@@ -2,13 +2,27 @@
 
 > Role: **LONG-LIVED TEST EXECUTION / VALIDATION STRATEGY**
 > Baseline: S1.1/S1.2 measured at `d52f53b4a1821cc000368c393721d1d5a073aafc`
-> Date: 2026-08-28
+> Date: 2026-08-30
 
 ## 1. Purpose
 
-The purpose of this strategy is not to reduce the number of tests. It is to maximize confidence per unit of feedback time while preserving complete regression coverage.
+The purpose of this strategy is to maximize confidence per unit of engineering and feedback time while preserving meaningful regression coverage. The goal is **not** to maximize the number of tests, nor to require a newly failing test for every production edit.
 
-Frequent developer feedback and complete regression validation are separate concerns. Tests must not be deleted merely because they are expensive, broad, or old. Expensive tests remain mandatory coverage; their execution frequency is governed by the affected semantic area and acceptance checkpoint cadence.
+Frequent developer feedback and complete regression validation are separate concerns. Tests must not be deleted merely because they are expensive, broad, or old. Expensive tests remain mandatory coverage when they protect a real contract; their execution frequency is governed by the affected semantic area and acceptance checkpoint cadence.
+
+The suite is also not append-only. A low-value test may be deliberately retired when it protects only obsolete implementation shape, duplicates stronger evidence, or has been superseded by a more stable typed/integration contract. Test retirement must be reviewed as a coverage decision, not treated as ordinary cleanup.
+
+### 1.1 Evidence-driven test design
+
+The repository uses **risk-based test-first development**:
+
+- new or changed stable behavior, bug fixes, and uncovered invariants normally require a meaningful RED before production implementation;
+- existing tests count as test-first evidence when they already protect the intended behavior;
+- behavior-preserving refactors, file/function movement, mechanical edits, visibility adjustments, and intermediate wiring steps do not require a newly invented RED solely because source code changes;
+- tests should protect behavior, regression risk, or stable architecture boundaries rather than temporary local implementation shape;
+- source-string tests are exceptional evidence and follow the stricter policy in `AGENTS.md`.
+
+Before adding a test, prefer the highest-value stable seam that remains fast enough for the intended feedback loop. A test should ideally survive substantial internal refactoring while the protected behavior remains correct.
 
 ## 2. Measured baseline
 
@@ -49,7 +63,9 @@ S2.1 established executable Android JVM suites at commit `99b340635e04abd64341e5
 
 ### T0 — FOCUSED
 
-The exact test method, class, or small directly related class set for the behavior under development. T0 is developer-selected and is intended for repeated RED/GREEN feedback. T0 is not one permanent global Gradle suite.
+The smallest directly relevant validation for the change under development. T0 may be an exact test method/class/small class set, or for a behavior-preserving mechanical/refactor change an existing characterization/contract test plus the necessary compile/static check.
+
+For a genuine uncovered behavior change, T0 is the normal RED/GREEN feedback loop. **T0 does not imply that every production edit requires a newly created test or a manufactured RED.**
 
 ### T1 — FAST
 
@@ -69,11 +85,11 @@ T2 is dependency-aware escalation, not necessarily a permanent Gradle task. It c
 
 ### T3 — EXPENSIVE
 
-T3 contains high-volume regression corpora, simulations, large or repeated enumeration, benchmarks, heap/GC measurements, broad review corpora, and external solver validation. T3 remains mandatory coverage. T3 does not mean PR-only.
+T3 contains high-volume regression corpora, simulations, large or repeated enumeration, benchmarks, heap/GC measurements, broad review corpora, and external solver validation. T3 remains mandatory coverage when selected by the change. T3 does not mean PR-only.
 
 ### T4 — FULL
 
-T4 is the complete applicable repository regression gate. For each validation component selected at a T4 checkpoint, T4 preserves full-strength coverage: all Android JVM tests plus debug assemble/compile checks when Android is selected, ASP validation and ASP Python tests when the ASP contract surface is selected, and real Clingo cross-validation when exact/oracle semantics are selected.
+T4 is the complete applicable repository regression gate. For each validation component selected at a T4 checkpoint, T4 preserves full-strength coverage: all currently intentional Android JVM tests plus debug assemble/compile checks when Android is selected, ASP validation and ASP Python tests when the ASP contract surface is selected, and real Clingo cross-validation when exact/oracle semantics are selected.
 
 T4 is an **acceptance tier**, not the default tier for every PR synchronize event. Ordinary PR micro-commits may run T1/T2 feedback. Once a logical checkpoint is explicitly escalated to T4, a selected component must not be downgraded merely to save CI time.
 
@@ -132,7 +148,7 @@ T3 tests are invoked through the existing full test machinery with exact `--test
 | Change family | T0 | T1 | T2 affected validation | T3 trigger | T4 |
 |---|---|---|---|---|---|
 | Documentation-only | none | none | none | none | CI classifier/gate only unless explicitly escalated |
-| Utility/helper or hashing | exact utility test | cheap domain tests | direct consumers if shared | normally none | applicable full |
+| Utility/helper or hashing | exact utility test when behavior changes; existing consumer evidence for pure refactor | cheap domain tests | direct consumers if shared | normally none | applicable full |
 | Rule semantics | exact rule test | rule/domain tests | related flow and recommendation tests | simulation if distribution changes | Android full + exact/oracle gates when selected |
 | Night/day flow | exact flow test | flow/session tests | transaction, integration, and wiring tests | simulation if behavior changes | applicable full |
 | Setup recommendation | exact setup test | recommendation tests | `SetupMigrationTest`, expert review | simulation if selection distribution changes | applicable full |
@@ -141,38 +157,48 @@ T3 tests are invoked through the existing full test machinery with exact `--test
 | ZDD | exact ZDD method | cheap epistemic tests | `ZddPlayerWorldSetTest` and golden tests | `A4ZddBenchmarkTest`, A3 benchmark | applicable full |
 | Persistence/schema | exact persistence test | persistence tests | restore, migration, and production-wiring tests | broad migration if applicable | applicable full |
 | Historical timeline/identity | exact history test | history/session tests | historical action/observation wiring | migration corpus if applicable | Android full + Real Clingo |
-| Production wiring/orchestration | exact ownership/wiring test | ownership and wiring tests | relevant integration/session tests | simulation if central behavior changes | applicable full |
+| Production wiring/orchestration | typed integration/ownership test when a real coverage gap exists; existing coverage + compile/diff audit for behavior-preserving wiring | ownership and wiring tests | relevant integration/session tests | simulation if central behavior changes | applicable full |
 | ASP/oracle/scenarios | exact harness command | ASP validation and Python tests | affected scenario tests | real Clingo | ASP contracts + Real Clingo |
 | Gradle/build/dependency | exact build check | affected JVM tests | dependent Android tests | all external validation when contract changes | Android full and any additionally selected gates |
-| Shared interfaces/game-state authority | exact contract test | all cheap consumers | broad dependent integration tests | all affected expensive tests | applicable full |
+| Shared interfaces/game-state authority | exact contract test when semantics change; existing consumer evidence for pure refactor | all cheap consumers | broad dependent integration tests | all affected expensive tests | applicable full |
 
 The mapping is semantic rather than a giant fragile file-path list.
 
 ## 8. Developer workflow
 
-For a behavior change:
+### 8.1 New/changed stable behavior or bug fix
 
 ```text
-RED                    -> T0 confirms the failure
-GREEN                  -> T0 focused tests pass
-ordinary PR iteration  -> T1 FAST + any selected semantic/external gate
-logical checkpoint     -> T1 + T2 affected validation
-T4 acceptance checkpoint -> [full-ci] -> full selected gates
-merge/main             -> full gate
+define observable behavior / invariant
+-> confirm a real coverage gap
+-> RED: T0 confirms the missing behavior or reproduces the defect
+-> GREEN: production change + T0 focused tests pass
+-> ordinary PR iteration: T1 FAST + any selected semantic/external gate
+-> logical checkpoint: T1 + T2 affected validation
+-> T4 acceptance checkpoint: [full-ci] -> full selected gates
+-> merge/main: full gate
 ```
+
+A separate RED checkpoint is valuable when it proves a real missing behavior. It is not a goal by itself.
+
+### 8.2 Behavior-preserving refactor / mechanical / intermediate implementation step
+
+```text
+identify existing owning behavior/characterization evidence
+-> confirm baseline when useful
+-> make the structural/mechanical change
+-> focused affected tests and/or compile/static checks
+-> exact diff / invariant audit
+-> T1 at the logical checkpoint
+-> affected integration/T2 when a boundary meaningfully changes
+-> T4 at the logical acceptance checkpoint
+```
+
+Do **not** add a new test solely to force an implementation step into RED. Do not create or expose a production seam only because the process would otherwise lack a newly failing test.
 
 Ordinary PR synchronization is intentionally optimized for feedback latency. An Android-relevant micro-commit runs `:app:testFast`; it does **not** automatically run `:app:testFull` plus `assembleDebug` merely because earlier commits in the same PR touched production code.
 
 A logical checkpoint that requires full acceptance uses `[full-ci]` in the checkpoint commit message. That escalation runs the complete Android JVM suite plus debug assemble and all other full-checkpoint gates. `testFast` is never accepted as a substitute for that explicit T4 gate.
-
-For a structural-only refactor:
-
-```text
-focused ownership/characterization tests
--> T1
--> affected integration when a boundary changes
--> T4 at the logical acceptance checkpoint
-```
 
 Documentation-only changes do not require local Android regression unless executable configuration or contracts change. In CI, explicitly classified documentation-only changes retain the lightweight change-classification and aggregate gate while unrelated heavy validation jobs are skipped.
 
@@ -206,13 +232,13 @@ These are goals, not hard correctness guarantees:
 - T3: no strict edit-loop budget
 - T4: several minutes is acceptable
 
-Coverage must not be removed merely to satisfy a time target.
+Coverage must not be removed merely to satisfy a time target. Conversely, a low-value implementation-coupled test should not be retained merely to preserve a test count.
 
 ## 12. Gradle and cache semantics
 
 `UP-TO-DATE` and `FROM-CACHE` do not mean that tests executed in that invocation. Validation reports must distinguish executed test tasks from skipped or cached tasks.
 
-Use `--rerun-tasks` only when intentionally measuring forced execution or when the focused RED/GREEN proof explicitly requires actual execution. It is not the default normal-development invocation.
+Use `--rerun-tasks` only when intentionally measuring forced execution or when a focused RED/GREEN proof explicitly requires actual execution. It is not the default normal-development invocation and is not required for every structural edit.
 
 S2.1 verified that `testFast` and `testFull` have separate execution identities, that `testFast` does not invoke `testDebugUnitTest`, and that `testFull` does.
 
@@ -229,16 +255,22 @@ Current Android JVM commands:
 
 `testFull` is a verification/lifecycle task that depends on `:app:testDebugUnitTest` without filtering.
 
-The validated coverage invariant at the S2 baseline is:
+The validated S2 baseline was:
 
 ```text
 testFull Android JVM coverage = :app:testDebugUnitTest coverage = 770 tests
 FULL - FAST = exactly 19 testcases from the five approved excluded classes
 ```
 
-The absolute test count will grow as new tests are added; the invariant is that no test may disappear from full validation.
+The historical count is a measurement, not an append-only requirement. The current invariant is:
 
-## 14. Maintenance
+```text
+testFull Android JVM coverage = all currently intentional Android JVM tests
+```
+
+No test may disappear from full validation **accidentally**. Deliberate retirement is allowed when its protected contract is identified and is obsolete, duplicated, or covered by stronger evidence; the retirement must be visible in the diff and validated like any other coverage change.
+
+## 14. Maintenance and test retirement
 
 Re-audit when:
 
@@ -248,9 +280,20 @@ Re-audit when:
 - a large integration suite appears;
 - Gradle or build behavior changes;
 - a new top-level repository surface or new semantic owner is added;
-- CI routing or branch-protection expectations change.
+- CI routing or branch-protection expectations change;
+- source-level/ownership tests accumulate during refactoring campaigns.
 
-Review value, duplication, flakiness, semantic layer, cost, and routing coverage. Do not delete tests merely because they have aged or become expensive.
+Review value, duplication, flakiness, semantic layer, implementation coupling, cost, and routing coverage.
+
+Do not delete tests merely because they have aged or become expensive. **Do** retire tests when audit shows that they:
+
+- assert only an obsolete intermediate source path, local variable, formatting, or helper shape;
+- duplicate an owning typed behavior/integration test without adding a distinct invariant;
+- protect a temporary migration state whose retirement trigger has been reached;
+- force production code to retain otherwise unnecessary scaffolding or visibility;
+- have been superseded by a stronger stable contract.
+
+For each deletion or narrowing, identify the protected behavior and the remaining evidence. If no remaining evidence protects a real required behavior, improve the stable test layer before deleting the old test.
 
 ## 15. CI routing contract
 

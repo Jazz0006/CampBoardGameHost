@@ -7,11 +7,9 @@ import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.rules.RulesetJsonLoader
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
 import java.io.File
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
 class ClocktowerLegacyPlannerDifferentialTest {
     private val legacyKnowledge by lazy {
@@ -37,46 +35,8 @@ class ClocktowerLegacyPlannerDifferentialTest {
         )
     }
 
-    private val legacyHostSource by lazy {
-        File("src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt")
-            .readText(Charsets.UTF_8)
-    }
-
-    private val otherNightFlowSource by lazy {
-        File("src/main/java/com/codex/campboardgamehost/clocktower/flow/ClocktowerProductionOtherNightFlow.kt")
-            .readText(Charsets.UTF_8)
-    }
-
     private val planner = ClocktowerFlowPlanner()
     private val projector = ClocktowerHostInteractionProjector()
-
-    @Test
-    fun `production night ordering is owned by canonical planner seams after cutover`() {
-        assertFalse(
-            "Combined legacy night-order table must remain removed.",
-            legacyHostSource.contains("fun officialNightOrder(step: ClocktowerNightStepUi): Int"),
-        )
-        assertFalse(
-            "Other-night legacy numeric order table must be removed after cutover.",
-            legacyHostSource.contains("fun legacyOtherNightOrder(step: ClocktowerNightStepUi): Int"),
-        )
-        assertFalse(
-            "Production must not sort night steps through the legacy numeric table.",
-            legacyHostSource.contains("filteredNightSteps.sortedBy(::legacyOtherNightOrder)"),
-        )
-        assertTrue(
-            "Production first night must project canonical planner interactions before materialization.",
-            legacyHostSource.contains("ClocktowerProductionFirstNightFlow.interactions("),
-        )
-        assertFalse(
-            "Production first night must no longer route eager UI steps through the legacy-compatible orderer.",
-            legacyHostSource.contains("ClocktowerProductionFirstNightFlow.order("),
-        )
-        assertTrue(
-            "Other-night production flow must expose the event-aware canonical interaction seam used by lazy materialization.",
-            otherNightFlowSource.contains("fun interactions("),
-        )
-    }
 
     @Test
     fun `first-night shadow projection matches the canonical production order`() {

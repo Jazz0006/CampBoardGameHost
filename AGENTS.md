@@ -1,7 +1,7 @@
 # CampBoardGameHost AI Development Instructions
 
 > Role: **NORMATIVE / PROJECT-LEVEL AI WORKING AGREEMENT**  
-> Effective: 2026-08-27  
+> Effective: 2026-08-30  
 > Applies to: ChatGPT, Codex/Luna, and other AI development agents working on this repository.
 
 ## 1. Decision authority and division of work
@@ -14,7 +14,7 @@ ChatGPT / Chat
   = architecture and design decisions
   = scope and slice boundaries
   = invariant / regression-risk analysis
-  = tests-first or characterization strategy
+  = behavior-first / characterization strategy
   = implementation specification
   = small/medium-file implementation through GitHub connector
   = remote diff / CI / merge-gate review
@@ -56,13 +56,14 @@ Workflow:
 
 ```text
 Chat audit / decision
--> connector RED/test or production edit
+-> identify required evidence
+-> connector test and/or production edit
 -> exact remote diff audit
 -> local validation only if execution is required and unavailable in Chat
 -> checkpoint CI only when the current test cadence says it is a gate
 ```
 
-For tests-first work, preserve real RED provenance when required. Do not silently combine a behavior-changing test and its GREEN implementation if the current development plan requires a distinct RED.
+When a genuine behavior gap requires test-first development, preserve real RED provenance when the current development plan requires a distinct RED. Do not manufacture a RED for a refactor or intermediate implementation step merely to satisfy process ceremony.
 
 ### Path B — Codex/Luna local implementation
 
@@ -80,7 +81,7 @@ In this path Chat must provide a deterministic implementation task containing, n
 - target branch and exact expected live HEAD;
 - file allowlist;
 - exact replacements/insertions/deletions;
-- required focused RED/GREEN command(s);
+- the evidence required for the change: focused RED/GREEN when applicable, or baseline/characterization/compile/diff validation for non-behavioral changes;
 - checkpoint-level broader test only when the slice is the logical checkpoint;
 - `git diff --check`;
 - exact commit message and push target;
@@ -92,38 +93,98 @@ If the specified patch cannot apply because the live API/signature differs mater
 
 Detailed current operations are in `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`. The older `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` is historical guidance only where it does not conflict with V2.
 
-## 3. Tests-first micro-cycle and validation cadence
+## 3. Behavior-first, risk-based development and validation cadence
 
-### Micro-slice default
+### 3.1 Core rule: evidence first, not RED ceremony
+
+The repository uses **risk-based test-first development**, not “a new RED test for every production edit.”
+
+The objective is to protect stable behavior, regressions, invariants, and architectural boundaries with the cheapest reliable evidence. A production change does **not** automatically require a newly created failing test.
+
+A new test should normally be added before production implementation when the change introduces or modifies a stable contract, including:
+
+- a bug fix that can be reproduced deterministically;
+- new or changed gameplay/rules behavior;
+- a new externally observable feature behavior;
+- an algorithm, persistence, transaction, history, identity, concurrency, or recommendation invariant that is not already covered;
+- a regression gap where existing tests would have allowed the defect.
+
+For these cases the normal cycle remains:
 
 ```text
-ChatGPT creates RED
--> exact T0 RED is run when required
--> expected JUnit/assertion failure = RED PASS, continue
--> exact production patch
--> exact T0 GREEN with --rerun-tasks
+define stable behavior / invariant
+-> create or modify the smallest durable typed test
+-> exact T0 RED when the RED is meaningful and executable
+-> production implementation
+-> exact T0 GREEN
 -> git diff --check
 -> commit + push
 -> ChatGPT remote parent/diff/scope audit
--> continue next micro-slice
 ```
 
-Requirements:
+A **new RED is not required** merely because production source will change. In particular, do not create a new test solely for:
 
-- Luna instructions must explicitly say when an expected JUnit/assertion failure counts as RED PASS and execution should continue.
-- If Luna already ran the exact requested focused test with `--rerun-tasks` and reported `BUILD SUCCESSFUL`, ChatGPT **MUST NOT** rerun the identical command merely to duplicate evidence.
-- Do not treat `UP-TO-DATE` or `FROM-CACHE` as proof that a required test executed.
+- internal refactoring with intentionally unchanged behavior;
+- function/file extraction, movement, renaming, visibility adjustment, or decomposition;
+- mechanical rewrites or dependency-neutral cleanup;
+- an intermediate wiring step whose final behavior is already protected by a stable typed/integration test;
+- temporary construction order or local implementation shape;
+- making one implementation micro-step independently “test-first.”
 
-### Broad-test and CI cadence
+For such changes, establish the relevant existing GREEN baseline when useful, make the change, then re-run the smallest affected evidence plus compile/static/diff checks as appropriate.
 
-- T0 exact focused tests are the normal RED/GREEN feedback loop.
+### 3.2 Test-value rule
+
+Before adding a test, ask:
+
+> If the implementation is substantially refactored later but the intended behavior remains correct, should this test still pass and still be valuable?
+
+If the answer is no, the proposed test is probably protecting implementation shape rather than a durable contract. Prefer a higher-value typed behavior/integration test, an explicit architecture guard, compile/static validation, or exact diff audit instead.
+
+**Do not introduce a production seam, helper, adapter, visibility expansion, or abstraction solely to satisfy a process requirement for a new RED.** Introduce seams because they improve ownership/testability of a durable contract, not because every intermediate edit needs an independently failing test.
+
+### 3.3 Existing coverage can be test-first evidence
+
+“Test first” does not mean “new test first.” If an existing test already protects the intended behavior, that test predates the production change and is valid test-first evidence.
+
+For a behavior-preserving refactor the preferred cycle is:
+
+```text
+identify existing owning tests / characterization
+-> confirm baseline when needed
+-> refactor
+-> run affected tests / compile checks
+-> exact diff and invariant audit
+```
+
+Do not deliberately break or rewrite a correct test just to manufacture RED provenance.
+
+### 3.4 Test retirement is allowed and expected
+
+The suite is a maintained engineering asset, not an append-only archive. Tests **MAY and SHOULD** be deleted or narrowed when they are demonstrably low-value, superseded, duplicated, or coupled only to an obsolete implementation path.
+
+A test retirement must satisfy all applicable conditions:
+
+- identify what behavior/invariant the test originally protected;
+- confirm that the behavior is no longer required **or** is protected by a more stable test/evidence layer;
+- ensure the removed assertion is not the only regression proof for a real product contract;
+- delete obsolete production scaffolding that existed only to satisfy that test when safe and in scope;
+- run the affected suite after retirement.
+
+Do not retain a test merely because it already exists, because historical test counts are expected to monotonically increase, or because deleting it would lower a numeric coverage count.
+
+### 3.5 Broad-test and CI cadence
+
+- T0 is the smallest directly relevant evidence. For genuine behavior gaps it is normally the RED/GREEN loop; for refactors it may be an existing characterization/contract test or compile/static check.
 - `:app:testFast` is T1 and belongs at a logical checkpoint, not automatically after every small commit.
 - At logical checkpoints, run T1 plus triggered T2/T3 validation as defined by `docs/TESTING_STRATEGY.md`.
-- Related micro-slices may continue after focused GREEN + remote diff audit; **do not wait for old-head GitHub CI after every small push**.
+- Related micro-slices may continue after focused GREEN/evidence + remote diff audit; **do not wait for old-head GitHub CI after every small push**.
 - The latest logical checkpoint head gets the GitHub CI/R2 gate.
-- Persistence/schema, transaction boundaries, shared projector/chronology, build/Gradle/CI configuration, or insufficient T0 coverage may justify earlier escalation.
-- PR/full validation uses T4; `:app:testFull` is the complete Android JVM entry point and must preserve `:app:testDebugUnitTest` coverage.
+- Persistence/schema, transaction boundaries, shared projector/chronology, build/Gradle/CI configuration, or insufficient focused coverage may justify earlier escalation.
+- PR/full validation uses T4; `:app:testFull` is the complete Android JVM entry point and must preserve all **currently intentional** Android JVM tests.
 - Local validation never replaces GitHub CI/R2 before merge.
+
+Luna instructions must explicitly say when an expected JUnit/assertion failure counts as RED PASS and execution should continue **only when a RED is actually required**. If Luna already ran the exact requested focused test with `--rerun-tasks` and reported `BUILD SUCCESSFUL`, ChatGPT **MUST NOT** rerun the identical command merely to duplicate evidence. Do not treat `UP-TO-DATE` or `FROM-CACHE` as proof that a required test executed.
 
 The detailed tier and subsystem mapping is authoritative in `docs/TESTING_STRATEGY.md`.
 
@@ -131,11 +192,11 @@ In Codex/Luna sandboxed local worktrees, use task-local Gradle state when needed
 
 ## 4. Source-wiring test policy
 
-Source-level wiring tests are temporary migration tools when a production boundary cannot yet be exercised through a callable typed seam. They are **not** the preferred long-lived proof of gameplay/rules behavior.
+Source-level tests are **not an ordinary test-first mechanism**. They are allowed only as explicit architecture/ownership guards or temporary migration tools when a production boundary cannot reasonably be exercised through a callable typed seam.
 
 ### Mandatory preference
 
-When a callable typed seam exists or can reasonably be introduced, business/rules behavior **MUST** be tested through that seam instead of by reading production `.kt` source text.
+When a callable typed seam exists or can reasonably be introduced for a durable contract, business/rules behavior **MUST** be tested through that seam instead of by reading production `.kt` source text.
 
 Preferred proof order:
 
@@ -150,7 +211,9 @@ typed pure/domain behavior
 
 A source-string behavior/wiring test may remain only while it protects a unique production wiring gap that typed lower-layer tests cannot prove. It must have a clear retirement trigger.
 
-When the corresponding production path is cut over to the typed seam, the superseded source-string assertion **MUST** be deleted or narrowed in the same campaign. Do not preserve a legacy helper, local variable name, inline expression, formatting, or call spelling merely to keep an obsolete source-string test GREEN.
+A source-string test **MUST NOT** be created solely to force an intermediate production-wiring step through RED before GREEN.
+
+When the corresponding production path is cut over to a typed/integration seam, the superseded source-string assertion **MUST** be deleted or narrowed in the same campaign. Do not preserve a legacy helper, local variable name, inline expression, formatting, or call spelling merely to keep an obsolete source-string test GREEN.
 
 If a deliberate typed-seam refactor makes a source-string test fail while the owning typed behavior tests remain GREEN, first assess whether the string assertion has been superseded. Do not automatically change correct production code to restore the old source shape.
 
@@ -176,7 +239,7 @@ Avoid:
 
 If several assertions in one source-wiring test share the same brittle assumption, repair or retire the whole affected test section rather than discovering the same defect one assertion at a time.
 
-Current retirement inventory and SNE-specific triggers are tracked in `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md`.
+Current retirement inventory and SNE-specific triggers are tracked in `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md`. The inventory should be periodically re-audited for tests that protect only obsolete intermediate source paths.
 
 ## 5. Source-decomposition principle
 
@@ -255,7 +318,7 @@ Read these when relevant:
 1. `docs/CURRENT_DEVELOPMENT_ROADMAP.md` — current execution authority;
 2. newest `docs/NEXT_DEVELOPMENT_HANDOFF_*.md` for the active campaign;
 3. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` — current Chat/connector/Luna execution contract;
-4. `docs/TESTING_STRATEGY.md` — authoritative test tiers and subsystem mapping;
+4. `docs/TESTING_STRATEGY.md` — authoritative test tiers, evidence model, and subsystem mapping;
 5. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md` — known failure patterns and proven improvements;
 6. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md` — current same-night product/architecture decisions;
 7. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md` — source-string debt and retirement triggers;
@@ -267,7 +330,7 @@ If documents disagree, apply this precedence:
 1. newest explicit user instruction;
 2. this root `AGENTS.md`;
 3. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`;
-4. `docs/TESTING_STRATEGY.md` for test-tier definitions;
+4. `docs/TESTING_STRATEGY.md` for test-tier and evidence definitions;
 5. current roadmap/handoff for active-state specifics;
 6. older documents only where non-conflicting.
 
