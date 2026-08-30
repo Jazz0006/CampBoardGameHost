@@ -117,6 +117,8 @@ import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRequest
 import com.codex.campboardgamehost.clocktower.domain.DynamicGameState
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
+import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
+import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.DynamicStorytellerChoice
 import com.codex.campboardgamehost.clocktower.domain.PlayerInformationPressure
 import com.codex.campboardgamehost.clocktower.domain.PredictedDecisionOutcome
@@ -249,6 +251,8 @@ internal fun ClocktowerJudgeScreen(
     rulesetRef: RulesetRef?,
     setupHistory: CrossGameHistory,
     setupRecommendationResultProvider: ((SetupCoordinationRequest) -> SetupRecommendationService.ConstrainedResult)? = null,
+    firstNightNaturalPairReadyProvider: ((GameState) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
+    firstNightNaturalPairResultProvider: (suspend (GameState) -> List<DecisionCandidate<SetupClueOutcome>>)? = null,
     onInitialRecommendationDemand: () -> Unit,
     phase: ClocktowerPhase,
     round: Int,
@@ -1133,6 +1137,63 @@ internal fun ClocktowerJudgeScreen(
     var slayerTargetName by slayerTargetNameState
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
     var slayerRecluseRegistersDemon by remember { mutableStateOf(false) }
+    val firstNightNaturalPairPrecomputeRequest = if (
+        script == ClocktowerScript.TroubleBrewing &&
+        phase == ClocktowerPhase.FirstNight &&
+        firstNightNaturalPairResultProvider != null
+    ) {
+        cards.toClocktowerGameState(
+            script = script,
+            seed = gameSeed,
+            poisonedPlayerName = null,
+        )
+    } else {
+        null
+    }
+    var firstNightNaturalPairCandidates by remember(gameId, gameSeed) {
+        mutableStateOf<List<DecisionCandidate<SetupClueOutcome>>?>(null)
+    }
+    var firstNightNaturalPairStartRequested by remember(gameId, gameSeed) { mutableStateOf(false) }
+    var firstNightNaturalPairLoadFailed by remember(gameId, gameSeed) { mutableStateOf(false) }
+    var firstNightNaturalPairRetryGeneration by remember(gameId, gameSeed) { mutableStateOf(0) }
+    LaunchedEffect(firstNightNaturalPairPrecomputeRequest, firstNightNaturalPairRetryGeneration) {
+        val request = firstNightNaturalPairPrecomputeRequest
+        val resultProvider = firstNightNaturalPairResultProvider
+        if (request == null || resultProvider == null) {
+            firstNightNaturalPairCandidates = null
+            firstNightNaturalPairLoadFailed = false
+            return@LaunchedEffect
+        }
+        firstNightNaturalPairCandidates = firstNightNaturalPairReadyProvider?.invoke(request)
+        if (firstNightNaturalPairCandidates != null) {
+            firstNightNaturalPairLoadFailed = false
+            return@LaunchedEffect
+        }
+        val result = runCatching {
+            withContext(Dispatchers.Default) {
+                resultProvider(request)
+            }
+        }
+        if (!isActive) return@LaunchedEffect
+        result.fold(
+            onSuccess = { candidates ->
+                firstNightNaturalPairCandidates = candidates
+                firstNightNaturalPairLoadFailed = false
+            },
+            onFailure = {
+                firstNightNaturalPairCandidates = null
+                firstNightNaturalPairLoadFailed = true
+            },
+        )
+    }
+    val firstNightNaturalPairPrecomputeReady =
+        firstNightNaturalPairPrecomputeRequest == null || firstNightNaturalPairCandidates != null
+    LaunchedEffect(firstNightNaturalPairStartRequested, firstNightNaturalPairPrecomputeReady) {
+        if (firstNightNaturalPairStartRequested && firstNightNaturalPairPrecomputeReady) {
+            firstNightNaturalPairStartRequested = false
+            nightStarted = true
+        }
+    }
     val recommendationKey = buildString {
         append(script.name)
         append("|seed:")
@@ -1874,13 +1935,21 @@ internal fun ClocktowerJudgeScreen(
             fun addNaturalCandidates(abilityRole: RoleId) {
                 val sourceSeat = cards.indexOfFirst { it.name == actor.name } + 1
                 if (sourceSeat <= 0) return
-                val gameState = cards.toClocktowerGameState(
-                    script = script,
-                    seed = gameSeed,
-                    poisonedPlayerName = poisonTarget,
-                )
-                recommendationCoordinator
-                    .naturalPairCandidates(gameState)
+                val naturalCandidates = if (
+                    script == ClocktowerScript.TroubleBrewing &&
+                    phase == ClocktowerPhase.FirstNight &&
+                    firstNightNaturalPairResultProvider != null
+                ) {
+                    firstNightNaturalPairCandidates.orEmpty()
+                } else {
+                    val gameState = cards.toClocktowerGameState(
+                        script = script,
+                        seed = gameSeed,
+                        poisonedPlayerName = poisonTarget,
+                    )
+                    recommendationCoordinator.naturalPairCandidates(gameState)
+                }
+                naturalCandidates
                     .filter { candidate ->
                         val outcome = candidate.outcome as SetupClueOutcome.PairInformation
                         outcome.abilityRole == abilityRole && candidate.effects.any { effect ->
@@ -3883,7 +3952,16 @@ internal fun ClocktowerJudgeScreen(
                 "This is a private Storyteller screen. Review the plan, then begin the first night.",
             ),
             buttonLabel = text("确认裁定，开始首夜", "Confirm plan and begin first night"),
-            onStartNight = { nightStarted = true },
+            onStartNight = {
+                if (firstNightNaturalPairPrecomputeReady) {
+                    nightStarted = true
+                } else {
+                    firstNightNaturalPairStartRequested = true
+                    if (firstNightNaturalPairLoadFailed) {
+                        firstNightNaturalPairRetryGeneration += 1
+                    }
+                }
+            },
         ) {
             StorytellerRecommendationCard(
                 automaticStorytellerInfo = automaticStorytellerInfo,

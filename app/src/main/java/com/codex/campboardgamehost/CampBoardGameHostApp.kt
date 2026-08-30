@@ -103,6 +103,8 @@ import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRequest
 import com.codex.campboardgamehost.clocktower.domain.DynamicGameState
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
+import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
+import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.Alignment as ClocktowerAlignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
@@ -177,6 +179,7 @@ import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationLock
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationPrewarmCoordinator
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationRevealCoordinator
+import com.codex.campboardgamehost.clocktower.session.TroubleBrewingFirstNightPrecomputeCoordinator
 import com.codex.campboardgamehost.clocktower.session.UnifiedSetupSelectorDeviceBenchmark
 import com.codex.campboardgamehost.clocktower.session.UnifiedSetupSelectorDeviceBenchmarkReport
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationCandidate
@@ -945,6 +948,13 @@ internal fun CampBoardGameHostApp() {
                 prewarmer = troubleBrewingSetupRecommendationPrewarmer,
             )
         }
+    val troubleBrewingFirstNightPrecomputeScope = rememberCoroutineScope()
+    val troubleBrewingFirstNightPrecomputeCoordinator = remember {
+        val recommendationCoordinator = ClocktowerRecommendationCoordinator()
+        TroubleBrewingFirstNightPrecomputeCoordinator<GameState, List<DecisionCandidate<SetupClueOutcome>>> { request ->
+            recommendationCoordinator.naturalPairCandidates(request)
+        }
+    }
     val a4ShadowWorldSetCache = remember { A4ShadowWorldSetCache() }
     val a4IdentityRevealPrewarmer = remember(a4ShadowWorldSetCache) {
         A4IdentityRevealPrewarmCoordinator(cache = a4ShadowWorldSetCache)
@@ -2314,6 +2324,11 @@ internal fun CampBoardGameHostApp() {
             ),
             history = gameHistory.toClocktowerSetupHistory(),
         )
+        val initialFirstNightPrecomputeRequest = committedCards.toClocktowerGameState(
+            script = ClocktowerScript.TroubleBrewing,
+            seed = preparedSeed,
+            poisonedPlayerName = null,
+        )
 
         cards.clear()
         cards.addAll(committedCards)
@@ -2327,6 +2342,14 @@ internal fun CampBoardGameHostApp() {
                     preparedClocktowerSeed = preparedSeed,
                 )
                 committedTroubleBrewingSetupSelection = preparedSetup.selection
+                troubleBrewingFirstNightPrecomputeCoordinator.prewarm(
+                    request = initialFirstNightPrecomputeRequest,
+                    launchBackground = { work ->
+                        troubleBrewingFirstNightPrecomputeScope.launch(Dispatchers.Default) {
+                            work()
+                        }
+                    },
+                )
             },
             launchBackground = { work ->
                 troubleBrewingSetupRecommendationScope.launch(Dispatchers.Default) {
@@ -2845,6 +2868,18 @@ internal fun CampBoardGameHostApp() {
                         setupRecommendationResultProvider =
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
                                 troubleBrewingSetupRecommendationRevealCoordinator::resultFor
+                            } else {
+                                null
+                            },
+                        firstNightNaturalPairReadyProvider =
+                            if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
+                                troubleBrewingFirstNightPrecomputeCoordinator::readyFor
+                            } else {
+                                null
+                            },
+                        firstNightNaturalPairResultProvider =
+                            if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
+                                troubleBrewingFirstNightPrecomputeCoordinator::resultFor
                             } else {
                                 null
                             },
