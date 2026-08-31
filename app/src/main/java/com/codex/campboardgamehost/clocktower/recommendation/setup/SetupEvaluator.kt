@@ -3,7 +3,6 @@ package com.codex.campboardgamehost.clocktower.recommendation.setup
 import com.codex.campboardgamehost.clocktower.config.RecommendationProfile
 import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
 import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
-import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CandidatePlan
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.DecisionEvaluation
@@ -21,6 +20,7 @@ import com.codex.campboardgamehost.clocktower.domain.ScoreItem
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
+import com.codex.campboardgamehost.clocktower.recommendation.PairInformationAbilityRecommender
 import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
 import com.codex.campboardgamehost.clocktower.rules.PlanLegalityValidator
 
@@ -79,7 +79,7 @@ internal object SetupEvaluator {
         candidate: CandidatePlan,
         profile: RecommendationProfile,
     ): RecommendationPlan = evaluateInternal(
-        context = createContext(game),
+        context = createContext(game, roleDefinitions),
         candidate = candidate,
         profile = profile,
         legalityFailureCodes = PlanLegalityValidator
@@ -87,10 +87,14 @@ internal object SetupEvaluator {
             .map { it.code },
     )
 
-    fun createContext(game: GameState): PlanEvaluationContext = PlanEvaluationContext(
+    fun createContext(
+        game: GameState,
+        roleDefinitions: List<RoleDefinition> = emptyList(),
+    ): PlanEvaluationContext = PlanEvaluationContext(
         game = game,
         drunkPlayer = game.players.firstOrNull { it.actualRole == drunk },
         zeroEmpathProtectedSeats = zeroEmpathProtectedSeats(game),
+        roleDefinitions = roleDefinitions,
     )
 
     fun evaluateGenerated(
@@ -168,44 +172,9 @@ internal object SetupEvaluator {
         drunkInfo?.let { info ->
             val candidatePlayers = info.candidateSeats.mapNotNull(game::playerAt)
             val candidateSeatSet = info.candidateSeats.toSet()
-            val evilCandidates = candidatePlayers.count { it.actualAlignment == Alignment.EVIL }
-            val displayMetadata = TroubleBrewingRecommendationMetadata.forRole(info.shownMinion)
             val redHerringOverlap = redHerring?.seat?.let { it in candidateSeatSet } == true
             val protectedSeats = context.zeroEmpathProtectedSeats
             val protectedCandidateCount = candidateSeatSet.count { it in protectedSeats }
-
-            addScore(
-                scoreItems,
-                ruleId = "investigator-display-suitability",
-                category = ScoreCategory.ROLE_SUITABILITY,
-                delta = displayMetadata.investigatorDisplaySuitability * 2,
-                seats = info.candidateSeats,
-            )
-            if (evilCandidates == 0) {
-                addScore(
-                    scoreItems,
-                    ruleId = "drunk-info-avoids-real-evil",
-                    category = ScoreCategory.BEGINNER_SAFETY,
-                    delta = 5,
-                    seats = info.candidateSeats,
-                )
-            } else {
-                addScore(
-                    scoreItems,
-                    ruleId = "drunk-info-hits-real-evil",
-                    category = ScoreCategory.EVIL_PRESSURE,
-                    delta = -evilCandidates * profile.evilCandidatePenalty,
-                    seats = candidatePlayers.filter { it.actualAlignment == Alignment.EVIL }.map { it.seat },
-                )
-                qualityTier = qualityTier.worsenTo(
-                    if (evilCandidates >= 2) QualityTier.EXPERT_ONLY else QualityTier.ACCEPTABLE_WITH_WARNING,
-                )
-                warnings += PlanWarning(
-                    ruleId = "drunk-info-hits-real-evil",
-                    messageKey = "warning.drunk-info-hits-real-evil",
-                    affectedSeats = candidatePlayers.filter { it.actualAlignment == Alignment.EVIL }.map { it.seat },
-                )
-            }
 
             if (redHerringOverlap) {
                 addScore(
@@ -295,9 +264,12 @@ internal object SetupEvaluator {
             )
         }
 
+        val genericImpairedObservations = buildImpairedPairObservations(context, profile.style)
         return RecommendationPlan(
             decisions = candidate.decisions,
-            observations = buildObservations(game, drunkInfo, drunkPlayer?.seat),
+            observations = genericImpairedObservations.ifEmpty {
+                buildLegacyObservations(game, drunkInfo, drunkPlayer?.seat)
+            },
             qualityTier = qualityTier,
             style = profile.style,
             totalScore = scoreItems.sumOf(ScoreItem::delta),
@@ -375,7 +347,36 @@ internal object SetupEvaluator {
         return minOf(direct, playerCount - direct)
     }
 
-    private fun buildObservations(
+    private fun buildImpairedPairObservations(
+        context: PlanEvaluationContext,
+        style: com.codex.campboardgamehost.clocktower.domain.RecommendationStyle,
+    ): List<AbilityObservation> {
+        if (context.roleDefinitions.isEmpty()) return emptyList()
+        val game = context.game
+        val sources = buildList {
+            context.drunkPlayer?.shownRole?.let { shownRole ->
+                add(ImpairedPairSource(context.drunkPlayer.seat, shownRole, ReliabilityState.DRUNK))
+            }
+            game.players
+                .asSequence()
+                .filter { it.poisoned && it.seat != context.drunkPlayer?.seat }
+                .forEach { player ->
+                    add(ImpairedPairSource(player.seat, player.actualRole, ReliabilityState.POISONED))
+                }
+        }
+        return sources.mapNotNull { source ->
+            PairInformationAbilityRecommender.recommend(
+                game = game,
+                roleDefinitions = context.roleDefinitions,
+                sourceSeat = source.seat,
+                abilityRole = source.abilityRole,
+                reliability = source.reliability,
+                style = style,
+            )
+        }
+    }
+
+    private fun buildLegacyObservations(
         game: GameState,
         info: StorytellerDecision.DrunkInvestigatorInfo?,
         sourceSeat: Int?,
@@ -436,10 +437,17 @@ internal object SetupEvaluator {
         QualityTier.EXPERT_ONLY -> 1
         QualityTier.REJECTED -> 0
     }
+
+    private data class ImpairedPairSource(
+        val seat: Int,
+        val abilityRole: RoleId,
+        val reliability: ReliabilityState,
+    )
 }
 
 internal data class PlanEvaluationContext(
     val game: GameState,
     val drunkPlayer: PlayerState?,
     val zeroEmpathProtectedSeats: Set<Int>,
+    val roleDefinitions: List<RoleDefinition> = emptyList(),
 )
