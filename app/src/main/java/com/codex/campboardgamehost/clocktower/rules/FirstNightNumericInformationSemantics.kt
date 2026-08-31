@@ -36,10 +36,12 @@ internal object FirstNightNumericInformationSemantics {
         return registrations.mapTo(sortedSetOf()) { registersAsEvilBySeat ->
             when (perceivedRole) {
                 chef -> FixedInformationEvaluator.chefEvilPairs(game.players) { player ->
-                    registersAsEvilBySeat[player.seat] ?: player.actualAlignment == Alignment.EVIL
+                    registersAsEvilBySeat[player.seat]
+                        ?: (player.actualAlignment == Alignment.EVIL)
                 }
                 empath -> FixedInformationEvaluator.empathEvilNeighborCount(game.players, sourceSeat) { player ->
-                    registersAsEvilBySeat[player.seat] ?: player.actualAlignment == Alignment.EVIL
+                    registersAsEvilBySeat[player.seat]
+                        ?: (player.actualAlignment == Alignment.EVIL)
                 }
                 else -> error("Unsupported first-night numeric information role: ${perceivedRole.value}")
             }
