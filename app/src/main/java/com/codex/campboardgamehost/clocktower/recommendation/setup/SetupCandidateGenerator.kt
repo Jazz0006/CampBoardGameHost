@@ -28,12 +28,15 @@ internal object SetupCandidateGenerator {
         game: GameState,
         roleDefinitions: List<RoleDefinition>,
     ): List<DecisionCandidate<SetupClueOutcome>> = buildList {
-        addAll(generateDrunkCandidates(game, roleDefinitions))
         addAll(generatePairInformationCandidates(game))
         addAll(generateRedHerringCandidates(game))
         addAll(generateDemonBluffCandidates(game, roleDefinitions))
     }.sortedBy { it.candidateId }
 
+    /**
+     * Legacy compatibility surface for historical Drunk-Investigator setup data.
+     * New aggregate setup recommendation no longer calls this generator.
+     */
     fun generateDrunkCandidates(
         game: GameState,
         roleDefinitions: List<RoleDefinition>,
@@ -143,8 +146,13 @@ internal object SetupCandidateGenerator {
         val lockedDrunkDecisions = lockedDecisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>()
         val lockedDemonBluffs = lockedDecisions.filterIsInstance<StorytellerDecision.DemonBluffs>().singleOrNull()
         val redHerringOptions = redHerringOptions(game).filter { lockedRedHerring == null || it == lockedRedHerring }
-        val drunkOptions = drunkInformationOptions(game, scriptRoles)
-            .filter { option -> lockedDrunkDecisions.all { it in option } }
+        val drunkOptions = if (lockedDrunkDecisions.isEmpty()) {
+            sequenceOf(emptyList())
+        } else {
+            val drunkPlayer = game.players.firstOrNull { it.actualRole == drunk }
+            if (drunkPlayer?.shownRole != investigator) return emptySequence()
+            sequenceOf(lockedDrunkDecisions)
+        }
         val demonBluffOptions = demonBluffOptions(game, scriptRoles, inPlayRoles)
             .filter { lockedDemonBluffs == null || it == lockedDemonBluffs }
 
