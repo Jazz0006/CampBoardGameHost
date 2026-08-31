@@ -22,10 +22,6 @@ Draft PR:
 
 Accepted S6C code/test checkpoint:
 
-`38a04c1353c883c3b96b5b320171fbc821853e`
-
-**Correction:** the authoritative accepted S6C SHA is:
-
 `38a04c1353c883c3bda4b4a506085c3c1d2766bd`
 
 This is an empty `[full-ci]` checkpoint over the exact focused-GREEN code tree:
