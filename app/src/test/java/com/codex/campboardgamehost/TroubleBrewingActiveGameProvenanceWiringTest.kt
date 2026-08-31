@@ -18,6 +18,21 @@ class TroubleBrewingActiveGameProvenanceWiringTest {
     }
 
     @Test
+    fun `curated Trouble Brewing start durably saves provenance after committing selection`() {
+        val start = functionBlock(appSource(), "fun startTroubleBrewingGame()")
+        val commitIndex = start.indexOf(
+            "committedTroubleBrewingSetupSelection = preparedSetup.selection",
+        )
+        val persistIndex = start.indexOf(
+            "persistActiveGameStateIfNeeded()",
+            startIndex = commitIndex.coerceAtLeast(0),
+        )
+
+        assertTrue(commitIndex >= 0)
+        assertTrue(persistIndex > commitIndex)
+    }
+
+    @Test
     fun `restore consumes canonical provenance without rerunning setup selection`() {
         val restore = functionBlock(appSource(), "fun restoreSavedGame()")
 
