@@ -118,15 +118,12 @@ internal object PlanLegalityValidator {
             }
         }
 
-        val hasDrunk = drunk in inPlayRoles
-        validateDecisionCount("drunk-shown-role", drunkShownRoles.size, required = hasDrunk)
-        val drunkShownRole = drunkShownRoles.singleOrNull()?.role
-        drunkShownRole?.let { role ->
-            validateRoleType(role, CharacterType.TOWNSFOLK, scriptRoles)
-            if (role in inPlayRoles) add(LegalityFailure.DrunkShownRoleIsInPlay(role))
-        }
+        // Shown identity is already a committed setup fact. Recommendation may consume
+        // PlayerState.shownRole but must never select, replace, or lock it as a decision.
+        validateDecisionCount("drunk-shown-role", drunkShownRoles.size, required = false)
 
-        val needsDrunkInvestigatorInfo = hasDrunk && drunkShownRole == investigator
+        val drunkPlayer = game.players.singleOrNull { it.actualRole == drunk }
+        val needsDrunkInvestigatorInfo = drunkPlayer?.shownRole == investigator
         validateDecisionCount(
             decisionType = "drunk-investigator-info",
             count = drunkInvestigatorInfos.size,
