@@ -7,11 +7,15 @@ import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
+import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
 import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
+import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
+import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -83,6 +87,45 @@ class NaturalPairInformationCandidateGeneratorTest {
                     registration.registeredType == CharacterType.MINION &&
                     registration.registeredAlignment == Alignment.EVIL &&
                     registration.registrationQuestion == RegistrationQuestion.SPECIFIC_MINION &&
+                    registration.reason == RegistrationReason.RECLUSE_ABILITY
+            }
+        })
+    }
+
+    @Test
+    fun `healthy investigator can truthfully use out of play minion through recluse registration`() {
+        val baseGame = game(
+            player(1, "Investigator", CharacterType.TOWNSFOLK),
+            player(2, "Chef", CharacterType.TOWNSFOLK),
+            player(3, "Recluse", CharacterType.OUTSIDER),
+            player(4, "Poisoner", CharacterType.MINION),
+            player(5, "Imp", CharacterType.DEMON),
+        )
+        val investigator = RoleId("Investigator")
+        val actualMinion = RoleId("Poisoner")
+        val observations = (0 until 512).mapNotNull { index ->
+            PairInformationAbilityRecommender.recommend(
+                game = baseGame.copy(seed = baseGame.seed + index.toLong()),
+                roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
+                sourceSeat = 1,
+                abilityRole = investigator,
+                reliability = ReliabilityState.RELIABLE,
+                style = RecommendationStyle.BALANCED,
+            )
+        }
+        val registeredTruths = observations.filter { observation ->
+            observation.shownRole != actualMinion && 3 in observation.candidateSeats
+        }
+
+        assertTrue(registeredTruths.isNotEmpty())
+        assertTrue(registeredTruths.all { it.semanticTruth == SemanticTruth.TRUE })
+        assertTrue(registeredTruths.all { observation ->
+            observation.registrations.any { registration ->
+                registration.playerSeat == 3 &&
+                    registration.affectedAbility == investigator &&
+                    registration.registeredRole == observation.shownRole &&
+                    registration.registeredType == CharacterType.MINION &&
+                    registration.registeredAlignment == Alignment.EVIL &&
                     registration.reason == RegistrationReason.RECLUSE_ABILITY
             }
         })
