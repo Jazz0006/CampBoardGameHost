@@ -19,18 +19,18 @@ PR #57 — TBSP: integrate Trouble Brewing setup presets
 OPEN / DRAFT / NOT MERGED
 
 last fully validated logical acceptance checkpoint:
-6b80b7ade7235d890bd2a492ed8b33a19c43ffaa
+45a60a3c32c7471c68d89b7fb886c4dbb00f1781
 
 accepted production checkpoint under that gate:
-68d29c53a0a37f2c30b9d88ed8967d5d9548b4bc
+4c8108c91be188d33435233efb9aba26397f6b87
 
 checkpoint meaning:
-TBSP-6K final full acceptance accepted
-CI #1158 / run 33343377258 SUCCESS
+TBSP-6L provenance durability repair accepted
+CI #1167 / run 33344886176 SUCCESS
 Android :app:testFull + :app:assembleDebug SUCCESS
 ASP contract tests SUCCESS
 Real Clingo cross-validation SUCCESS
-R2 #1081 / run 33343377271 SUCCESS
+R2 #1090 / run 33344886170 SUCCESS
 
 current work:
 TBSP campaign COMPLETE
@@ -46,10 +46,10 @@ normative Trouble Brewing production cutover contract:
 docs/TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md
 
 final TBSP acceptance checkpoint:
-docs/TBSP_6K_FINAL_ACCEPTANCE_CHECKPOINT_2026-08-31.md
+docs/TBSP_6L_PROVENANCE_DURABILITY_REPAIR_2026-08-31.md
 ```
 
-Commits after `68d29c5...` that only update documentation are carriers on top of the accepted production tree, not new production checkpoints.
+Commits after `4c8108c...` that only remove temporary one-shot CI files or update documentation are carriers on top of the accepted production tree, not new production checkpoints.
 
 ## 2. Current campaign status
 
@@ -72,6 +72,7 @@ TBSP-6H First Night background precompute                    COMPLETE
 TBSP-6I cutover acceptance matrix                            COMPLETE
 TBSP-6J cleanup                                              COMPLETE
 TBSP-6K final full acceptance                                COMPLETE
+TBSP-6L provenance durability repair                         COMPLETE
 MS-SETUP generic multi-script setup architecture             NEXT / NOT STARTED
 A3 immutable setup snapshot                                  DEFERRED / NOT CURRENT
 ```
@@ -334,17 +335,37 @@ The Android full job explicitly ran:
 ./gradlew :app:testFull :app:assembleDebug --no-daemon --rerun-tasks
 ```
 
-This executed the complete intentional Android JVM suite through `:app:testDebugUnitTest` and the debug APK build. No repair slice was required.
+This executed the complete intentional Android JVM suite through `:app:testDebugUnitTest` and the debug APK build. No repair slice was identified during 6K itself; the later post-acceptance global audit identified the narrow 6L provenance durability cut-point.
 
 Final PR scope audit found no 6K production/test change. The accumulated PR remains confined to accepted TBSP setup/session/persistence/App/Host changes, matching tests, and campaign documentation.
 
-**TBSP-1 through TBSP-6K are accepted. P1–P16 are revalidated on the integrated branch.**
+**TBSP-1 through TBSP-6K were accepted by the 6K gate. P1–P16 were revalidated on the integrated branch.**
+
+### 8.1 TBSP-6L — post-acceptance provenance durability repair — COMPLETE
+
+The post-6K global audit found a narrow process-death cut-point: `resetDealState()` persisted an active-game snapshot before `committedTroubleBrewingSetupSelection` was written back, leaving a small window in which cards/seed could survive restore while exact original preset provenance was absent.
+
+Accepted repair evidence:
+
+```text
+test checkpoint:        8406bdf39a1203d8c69f5a51f7c94474516477ff
+production checkpoint: 4c8108c91be188d33435233efb9aba26397f6b87
+cleanup carrier:       d0bcbb6f6eaf9bfe31a81bc0f9c7efd73dc591fd
+T4 trigger:            45a60a3c32c7471c68d89b7fb886c4dbb00f1781
+one-shot run:          33344478383 SUCCESS
+CI #1167:              33344886176 SUCCESS
+R2 #1090:              33344886170 SUCCESS
+```
+
+The production diff is exactly one added call to `persistActiveGameStateIfNeeded()` immediately after the committed TB setup selection assignment. Focused RED/GREEN, `:app:testFast`, exact diff audit, full Android JVM tests/APK, ASP contracts, Real Clingo, CI gate and R2 all passed.
+
+**TBSP-1 through TBSP-6L are now complete and accepted.**
 
 PR #57 remains Draft until the user explicitly authorizes Ready/merge.
 
-### 8.1 Next campaign — MS-SETUP generic multi-script setup architecture
+### 8.2 Next campaign — MS-SETUP generic multi-script setup architecture
 
-TBSP-6K is accepted. MS-SETUP is now the next planned campaign, but implementation has not started.
+TBSP-6L is accepted. MS-SETUP is now the next planned campaign, but implementation has not started.
 
 Goal: make setup selection script-neutral so every Clocktower script automatically supports both template-backed and generated setup modes without adding new App-root `if (script == ...)` branches.
 
