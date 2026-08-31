@@ -10,6 +10,7 @@ import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.MurmurHash3
+import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
@@ -17,12 +18,16 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.domain.kind
 import com.codex.campboardgamehost.clocktower.recommendation.NaturalPairInformationCandidateGenerator
+import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
+import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 
 internal object SetupCandidateGenerator {
     private const val candidateSchemaVersion = "setup-v1"
     private val fortuneTeller = RoleId("Fortune Teller")
     private val drunk = RoleId("Drunk")
+    private val librarian = RoleId("Librarian")
     private val investigator = RoleId("Investigator")
+    private val pairInformationRoles = setOf(librarian, investigator)
 
     fun generateClueCandidates(
         game: GameState,
@@ -66,9 +71,13 @@ internal object SetupCandidateGenerator {
 
     fun generatePairInformationCandidates(game: GameState): List<DecisionCandidate<SetupClueOutcome>> = game.players
         .asSequence()
-        .filter { it.actualRole == RoleId("Librarian") || it.actualRole == investigator }
-        .flatMap { source ->
-            NaturalPairInformationCandidateGenerator.generate(game, source.seat, source.actualRole).asSequence()
+        .mapNotNull { source ->
+            source.perceivedPairInformationRole()?.let { abilityRole -> source to abilityRole }
+        }
+        .flatMap { (source, abilityRole) ->
+            NaturalPairInformationCandidateGenerator
+                .generateHealthyInformationSpace(game, source.seat, abilityRole)
+                .asSequence()
         }
         .map { candidate ->
             DecisionCandidate<SetupClueOutcome>(
@@ -228,6 +237,18 @@ internal object SetupCandidateGenerator {
 
     private fun DecisionCandidate<*>.sourceAbility(): RoleId =
         (effects.single() as EffectDraft.PlayerInformation).sourceAbility
+
+    private fun PlayerState.perceivedPairInformationRole(): RoleId? {
+        val perceivedRole = AbilityFunctioningSemantics.perceivedRole(
+            AbilitySubject(
+                actualRole = actualRole.value,
+                shownRole = shownRole?.value,
+                isPoisoned = poisoned,
+                isAlive = alive,
+            ),
+        )?.let(::RoleId)
+        return perceivedRole?.takeIf { it in pairInformationRoles }
+    }
 
     private fun redHerringOptions(game: GameState): List<StorytellerDecision.RedHerring?> {
         val hasFortuneTeller = game.players.any { it.actualRole == fortuneTeller }
