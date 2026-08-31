@@ -125,3 +125,14 @@ R2 #1090 / run 33344886170                    SUCCESS
 TBSP-1 through TBSP-6L are now complete and accepted. PR #57 remains Draft solely because Ready/merge requires explicit user authorization.
 
 MS-SETUP generic multi-script setup architecture remains a separate post-merge campaign and has not started.
+
+## 6. Roadmap synchronization
+
+The current roadmap was advanced through the accepted 6L checkpoint and keeps MS-SETUP as NEXT / NOT STARTED:
+
+```text
+3712c3543ffa520f6f0aa91c0b24b4a6a9e97abd
+`docs: advance roadmap through TBSP 6L acceptance`
+```
+
+This final documentation carrier intentionally changes no production or test code. Its ordinary CI/R2 checks are the final same-head merge-readiness confirmation; the full T4 evidence remains owned by `45a60a3c...` above.
