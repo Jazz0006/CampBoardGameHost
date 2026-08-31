@@ -5,10 +5,13 @@ import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.domain.RegistrationDecision
+import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
+import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 
@@ -32,16 +35,16 @@ internal object PairInformationAbilityRecommender {
         reliability: ReliabilityState,
         style: RecommendationStyle,
     ): AbilityObservation? {
-        val healthyOutcomes = NaturalPairInformationCandidateGenerator
-            .generateHealthyInformationSpace(game, sourceSeat, abilityRole)
-            .map { it.outcome }
-        val healthyKeys = healthyOutcomes.map(::keyOf).toSet()
+        val healthyCandidates = NaturalPairInformationCandidateGenerator
+            .generateHealthyInformationSpace(game, sourceSeat, abilityRole, roleDefinitions)
+        val healthyOutcomes = healthyCandidates.map { it.outcome }
+        val healthyByKey = healthyCandidates.groupBy { keyOf(it.outcome) }
         val options = legalDisplayOutcomes(game, roleDefinitions, sourceSeat, abilityRole)
             .map { outcome ->
                 PairInformationOption(
                     id = canonicalId(abilityRole, outcome),
                     outcome = outcome,
-                    truthful = keyOf(outcome) in healthyKeys,
+                    truthful = keyOf(outcome) in healthyByKey,
                     misinformationPressure = misinformationPressure(outcome, healthyOutcomes),
                 )
             }
@@ -65,6 +68,23 @@ internal object PairInformationAbilityRecommender {
             styleOf = { style },
         ) ?: return null
 
+        val selectedHealthyCandidates = if (selected.truthful) {
+            healthyByKey[keyOf(selected.outcome)].orEmpty()
+        } else {
+            emptyList()
+        }
+        // If the same displayed clue is already true to actual state, no special registration
+        // is needed. Otherwise preserve the deterministic registered-state fact that makes the
+        // clue truthful so replay/history can distinguish it from ordinary actual-state truth.
+        val semanticCandidate = selectedHealthyCandidates
+            .filter { it.truthRelation == TruthRelation.TRUE_TO_ACTUAL_STATE }
+            .minByOrNull { it.candidateId }
+            ?: selectedHealthyCandidates.minByOrNull { it.candidateId }
+        val registrations = semanticCandidate
+            ?.registrations
+            .orEmpty()
+            .map { it.toObservationRegistration(abilityRole) }
+
         return AbilityObservation(
             sourceSeat = sourceSeat,
             perceivedRole = abilityRole,
@@ -72,6 +92,7 @@ internal object PairInformationAbilityRecommender {
             candidateSeats = selected.outcome.candidateSeats,
             reliability = reliability,
             semanticTruth = if (selected.truthful) SemanticTruth.TRUE else SemanticTruth.FALSE,
+            registrations = registrations,
         )
     }
 
@@ -132,6 +153,16 @@ internal object PairInformationAbilityRecommender {
             }
         }
     }
+
+    private fun RegistrationFact.toObservationRegistration(affectedAbility: RoleId): RegistrationDecision =
+        RegistrationDecision(
+            playerSeat = subjectSeat,
+            affectedAbility = affectedAbility,
+            registeredAlignment = registeredAlignment,
+            registeredType = registeredType,
+            registeredRole = registeredRole,
+            reason = reason,
+        )
 
     private fun unorderedPairs(seats: List<Int>): List<List<Int>> = buildList {
         for (firstIndex in 0 until seats.lastIndex) {

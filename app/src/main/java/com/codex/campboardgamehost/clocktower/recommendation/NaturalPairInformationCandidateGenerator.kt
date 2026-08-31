@@ -12,6 +12,7 @@ import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
 import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
+import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StableCandidateIdFactory
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
@@ -39,11 +40,14 @@ internal object NaturalPairInformationCandidateGenerator {
      * Recipient functioning state and identity ownership are intentionally outside this seam:
      * a healthy actual-role caller validates those before delegating here, while an impaired
      * caller may reuse the same ability semantics and apply reliability policy afterwards.
+     * Role definitions are optional for compatibility callers; the production recommender
+     * supplies them so registration truth can cover legal script roles that are not in play.
      */
     fun generateHealthyInformationSpace(
         game: GameState,
         sourceSeat: Int,
         abilityRole: RoleId,
+        roleDefinitions: List<RoleDefinition> = emptyList(),
     ): List<DecisionCandidate<PairInformationOutcome>> {
         if (game.playerAt(sourceSeat) == null) return emptyList()
         val targetType = when (abilityRole) {
@@ -54,8 +58,8 @@ internal object NaturalPairInformationCandidateGenerator {
         val targets = game.players
             .filter { it.seat != sourceSeat && it.actualType == targetType }
             .sortedBy { it.seat }
-        if (targets.isEmpty()) {
-            return if (abilityRole == librarian) listOf(noOutsiderCandidate(sourceSeat)) else emptyList()
+        if (abilityRole == librarian && targets.isEmpty()) {
+            return listOf(noOutsiderCandidate(sourceSeat))
         }
 
         val naturalCandidates = targets.flatMap { target ->
@@ -66,10 +70,18 @@ internal object NaturalPairInformationCandidateGenerator {
         }
         if (abilityRole != investigator) return naturalCandidates.distinctBy { it.candidateId }
 
-        // Recluse may register as a Minion for the Investigator interaction. Keep the actual
-        // Minion candidates above as TRUE_TO_ACTUAL_STATE; add explicit registered-state
-        // candidates rather than pretending Recluse's underlying character type changed.
-        val shownMinionRoles = targets.map { it.actualRole }.distinct().sortedBy { it.value }
+        // Recluse may register as any Minion on the current script for the Investigator
+        // interaction, including a Minion that is not actually in play. Keep actual Minion
+        // candidates as TRUE_TO_ACTUAL_STATE and represent the Recluse path explicitly as
+        // TRUE_TO_REGISTERED_STATE rather than changing the underlying player identity.
+        val shownMinionRoles = roleDefinitions
+            .asSequence()
+            .filter { game.script in it.scriptIds && it.type == CharacterType.MINION }
+            .map { it.id }
+            .distinct()
+            .sortedBy { it.value }
+            .toList()
+            .ifEmpty { targets.map { it.actualRole }.distinct().sortedBy { it.value } }
         val recluseCandidates = game.players
             .filter { it.seat != sourceSeat && it.actualRole == recluse }
             .sortedBy { it.seat }
