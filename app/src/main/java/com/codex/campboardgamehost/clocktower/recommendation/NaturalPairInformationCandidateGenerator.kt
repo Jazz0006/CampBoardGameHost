@@ -25,6 +25,22 @@ internal object NaturalPairInformationCandidateGenerator {
     ): List<DecisionCandidate<PairInformationOutcome>> {
         val source = game.playerAt(sourceSeat) ?: return emptyList()
         if (source.poisoned || source.actualRole != abilityRole) return emptyList()
+        return generateHealthyInformationSpace(game, sourceSeat, abilityRole)
+    }
+
+    /**
+     * Enumerates the truthful information space defined by the perceived ability itself.
+     *
+     * Recipient functioning state and identity ownership are intentionally outside this seam:
+     * a healthy actual-role caller validates those before delegating here, while an impaired
+     * caller may reuse the same ability semantics and apply reliability policy afterwards.
+     */
+    fun generateHealthyInformationSpace(
+        game: GameState,
+        sourceSeat: Int,
+        abilityRole: RoleId,
+    ): List<DecisionCandidate<PairInformationOutcome>> {
+        if (game.playerAt(sourceSeat) == null) return emptyList()
         val targetType = when (abilityRole) {
             librarian -> CharacterType.OUTSIDER
             investigator -> CharacterType.MINION
