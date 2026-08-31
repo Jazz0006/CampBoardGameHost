@@ -4,31 +4,49 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Branch: `codex/ms-setup-generic-architecture`  
 > Draft PR: `#61`  
-> Status: **MS-S6B COMPLETE / ACCEPTED — MS-S6C REPLANNED / NEXT**
+> Status: **MS-S6C COMPLETE / ACCEPTED — MS-S7 NEXT**
 
 ## 1. Live / accepted checkpoints
 
-Campaign baseline `main` at the last audit:
+Live `main` at the S6C acceptance audit:
 
 `eed51bade5163790316a31e8295e2e841df90357`
 
-Current campaign branch:
+Campaign branch:
 
 `codex/ms-setup-generic-architecture`
 
 Draft PR:
 
-`#61 — MS-SETUP: generic multi-script setup architecture — DRAFT / OPEN`
+`#61 — MS-SETUP: generic multi-script setup architecture — DRAFT / OPEN / UNMERGED`
 
-At the last pre-doc audit the PR head was:
+Accepted S6C code/test checkpoint:
 
-`11b18d1ea06fed20490fe1db07f6c189b7ffbe64`
+`38a04c1353c883c3bda4b4a506085c3c1d2766bd`
 
-That head contains incomplete S6C work and is **not an accepted S6C checkpoint**. Its CI #1267 / run `33367729757` failed in Android full validation; R2 #1184 succeeded.
+This is an empty `[full-ci]` checkpoint over the exact focused-GREEN tree `70e7f41d1e30e5e701c02ceb95660572a99d27d4`; compare contains zero files.
 
-A later docs-only replan commit may now be the branch head. Always re-query live `main`, PR head and checks before any production write.
+Acceptance evidence:
 
-Accepted code/test slice checkpoints:
+```text
+Focused GREEN:
+70e7f41d1e30e5e701c02ceb95660572a99d27d4
+CI #1289 / run 33393595657: Android FAST SUCCESS / CI gate SUCCESS
+R2 #1206 / run 33393595784: SUCCESS
+
+Full checkpoint:
+38a04c1353c883c3bda4b4a506085c3c1d2766bd
+CI #1290 / run 33393872108:
+  Android :app:testFull + :app:assembleDebug SUCCESS
+  ASP contract SUCCESS
+  Real Clingo SUCCESS
+  CI gate SUCCESS
+R2 #1207 / run 33393872097: SUCCESS
+```
+
+Any later docs-only carrier commit is **not** a replacement for accepted code checkpoint `38a04c1...`.
+
+Accepted slice checkpoints:
 
 ```text
 MS-S1   f3d6b7f305ad09ab8e44f64cf476271ffc5c7a0b
@@ -39,24 +57,14 @@ MS-S4   6de0e8c99c89a091615c513255adbdb773b3cc69
 MS-S5   86c3ce651025de9ccbe1094b161becc171514e69
 MS-S6A  5823d66d0eb756a0005df86f1aea7db5902cae60
 MS-S6B  d4cf3969aabcea7433b96b5b320171fbc821853e
+MS-S6C  38a04c1353c883c3bda4b4a506085c3c1d2766bd
 ```
 
-**Last accepted code/test checkpoint remains MS-S6B `d4cf396...`.**
+Latest accepted checkpoint document:
 
-Authoritative S6C design/replan:
+`docs/MS_S6C_GENERIC_INFORMATION_SEMANTICS_CHECKPOINT_2026-08-31.md`
 
-`docs/MS_S6C_GENERIC_IMPAIRED_INFORMATION_REPLAN_2026-08-31.md`
-
-Other predecessor authority:
-
-```text
-docs/MS_S4_5_SHOWN_IDENTITY_OWNERSHIP_CORRECTION_2026-08-31.md
-docs/MS_S5_SETUP_DIVERSITY_SELECTOR_CHECKPOINT_2026-08-31.md
-docs/MS_S6A_SHOWN_IDENTITY_POLICY_CHECKPOINT_2026-08-31.md
-docs/MS_S6B_SHOWN_IDENTITY_COMMITMENT_CHECKPOINT_2026-08-31.md
-```
-
-## 2. Frozen architecture
+## 2. Frozen architecture through S6C
 
 The causal order remains:
 
@@ -66,30 +74,36 @@ Composition
 -> Information
 ```
 
-Current target flow:
+Accepted flow:
 
 ```text
 script + playerCount + setupSeed
--> candidate legality/source                       [S2/S3/S4 COMPLETE]
--> actual-composition diversity selection          [S5 COMPLETE]
--> shown-identity policy/options                    [S6A COMPLETE]
--> deterministic shown-identity commitment          [S6B COMPLETE]
+-> candidate legality/source                       [S2/S3/S4 ACCEPTED]
+-> actual-composition diversity selection          [S5 ACCEPTED]
+-> shown-identity policy/options                    [S6A ACCEPTED]
+-> deterministic shown-identity commitment          [S6B ACCEPTED]
 -> seat/deal materialization
 -> CommittedClocktowerSetup(actualRole + shownRole)
--> perceived ability semantics                     [S6C]
--> RELIABLE / DRUNK / POISONED information policy [S6C]
--> recommendation produces information only        [S6C]
+-> perceived ability + healthy truth semantics     [S6C ACCEPTED]
+-> RELIABLE / DRUNK / POISONED generic policy      [S6C ACCEPTED]
+-> recommendation produces information only        [S6C ACCEPTED]
 ```
 
-Governing ownership rule:
+Governing ownership rules:
 
-> Shown identity is a committed setup fact. Recommendation may consume it but may never choose, replace, reroll or optimize it.
+- shown identity is a committed setup fact; recommendation may consume but may never choose/reroll it;
+- S5 sees actual composition only;
+- S6A owns shown-identity legality/options only;
+- S6B owns deterministic identity commitment only;
+- S6C owns information semantics only;
+- role-specific ability code owns legal information shape/truth semantics;
+- generic impairment policy owns reliability-family behavior and generic ranking.
 
-## 3. S6C redesign decision
+## 3. S6C accepted result
 
-S6C is no longer a narrow “Drunk shown as Investigator” patch.
+S6C completed the redesign from a narrow Drunk-Investigator strategy into generic information semantics.
 
-It is a controlled migration to:
+Accepted pipeline:
 
 ```text
 committed shown identity
@@ -98,276 +112,108 @@ committed shown identity
 -> healthy information candidate space
 -> InformationReliability.RELIABLE / DRUNK / POISONED
 -> generic ImpairedInformationPolicy
--> generic consequence/history ranking inside the selected family
--> deterministic recommendation
+-> generic consequence/history ranking
+-> deterministic AbilityObservation
 ```
 
-### Core rule
+Key accepted behavior:
 
-A role may have specialized **ability semantics**, but not specialized impairment strategy.
+- active recommendation no longer owns/rerolls Drunk shown identity;
+- legacy Drunk-Investigator payloads remain compatibility-only where required rather than required active decisions;
+- Drunk and Poisoned share the same impairment-family semantics for supported common information domains;
+- first-version generic impaired-family policy is approximately 90% false / 10% truthful, explicitly tunable and not an official rule;
+- recommendation style primarily ranks severity inside a family rather than creating role-specific truth odds;
+- directly affected history/provisional information paths use generic information semantics;
+- old setup simulation reads committed identity/generic observations rather than retired recommendation-owned identity.
 
-For Investigator, preserve the official information shape:
+## 4. Investigator / Recluse / Spy correctness
+
+S6C-8 found and repaired the healthy Investigator registration gap without rewriting the registration subsystem.
+
+Accepted rules:
 
 ```text
-one Minion character
-+ exactly two candidate players
-+ healthy truth/registration semantics
+actual Minion / Spy truth
+-> TRUE_TO_ACTUAL_STATE
+-> no synthetic registration required
+
+Recluse used as Investigator Minion truth
+-> TRUE_TO_REGISTERED_STATE
+-> explicit RECLUSE_ABILITY registration
+-> registeredType MINION
+-> registeredAlignment EVIL
+-> SPECIFIC_MINION interaction
 ```
 
-Do **not** preserve a special “Drunk Investigator storyteller strategy”.
+The production role catalog allows Recluse to register as an out-of-play Minion from the current script, not only the Minion actually in play.
 
-## 4. Investigator-specific legacy discovered in audit
+If a displayed pair is already true because it contains the actual Minion, actual-state truth wins and no unnecessary registration is persisted. If truth genuinely depends on Recluse, the resulting `AbilityObservation` carries registration metadata.
 
-The current code contains or recently contained several Drunk-Investigator-specific concepts:
+See the S6C checkpoint doc for the two durable REDs and exact CI evidence.
+
+## 5. Next slice — MS-S7
+
+**MS-S7 is next. Do not start it as part of the S6C checkpoint carrier commit.**
+
+S7 is the Trouble Brewing controlled semantic cutover.
+
+Target production flow:
 
 ```text
-StorytellerDecision.DrunkInvestigatorInfo
-StorytellerDecisionKind.DRUNK_INVESTIGATOR_INFO
-candidate family "drunk-investigator-info"
-drunkInvestigatorShownMinion
-clocktowerRecommendedDrunkInvestigatorRoleName
-clocktowerRecommendedDrunkInvestigatorSeats
-investigatorDisplaySuitability
-special real-Evil hit / avoid scoring for Drunk Investigator information
+480 validated templates
+-> template SetupCandidate values
+-> S5 actual-composition selection
+-> S6A template identity policy
+-> S6B identity commitment
+-> deal/materialize
+-> CommittedClocktowerSetup
+-> S6C accepted information semantics
 ```
 
-Treat these as migration targets, not as the desired long-term architecture.
+S7 specifically owns:
 
-### Preserve
+- tracing and replacing the remaining legacy TB setup-selection wiring;
+- wiring the 480 validated templates into the accepted generic candidate/provider path;
+- TB-specific Minion/style diversity adaptation at the adapter boundary rather than inside generic S5;
+- retirement of `selectedDrunkShownRole -> preset finalWeight` coupling;
+- ensuring only one authority owns composition, identity and information at each stage;
+- preserving deterministic TB behavior and current legality during cutover.
 
-Keep Investigator-specific code where it expresses:
+### S7-0 first action
+
+At the next development turn, do a read-only audit before writing tests or production:
 
 ```text
-ability information shape
-legal healthy information semantics
-night/display presentation
-registration semantics
+validated TB template asset / repository
+-> current production setup selection
+-> candidate/provider registry
+-> S5 selector
+-> S6A policy
+-> S6B committer
+-> seat/deal materialization
+-> CommittedClocktowerSetup
+-> S6C recommendation consumption
 ```
 
-### Retire / genericize
+Identify exactly which legacy TB path is still authoritative and where the smallest controlled cutover boundary belongs.
 
-Stop active new production ownership where it expresses:
+Then design a small set of durable S7 behavior REDs. Do not create source-string or helper-call-shape tests merely to force the architecture.
 
-```text
-Drunk-Investigator-only generation
-Drunk-Investigator-only scoring
-Drunk-Investigator-only history similarity
-Drunk-Investigator-only provisional recommendation cache
-```
+## 6. S7 non-goals
 
-Legacy domain/save/history types may temporarily remain for decode/compatibility. Do not perform destructive schema removal inside S6C.
+Do not during initial S7 work:
 
-## 5. Shared Drunk / Poisoned impairment policy
-
-Drunk and Poisoned should reuse the same impairment layer wherever they expose the same perceived ability semantics.
-
-For Drunk:
-
-```text
-abilityRole = committed shownRole
-```
-
-For Poisoned:
-
-```text
-abilityRole = current/actual role ability
-```
-
-Both should pass through the same reliability-oriented machinery rather than separate role-specific misinformation engines.
-
-Prefer reuse of existing infrastructure:
-
-```text
-AbilityFunctioningSemantics
-InformationReliability
-ImpairedInformationPolicy
-DynamicCandidateGenerator
-MalfunctionPolicy
-ConsequenceEvaluator
-DecisionCandidate
-EffectDraft.PlayerInformation
-TruthRelation
-WeightedStableSelector
-```
-
-Do not build a new parallel “setup Drunk misinformation engine”.
-
-## 6. Retire 97% false / 3% truthful default
-
-Current `ImpairedInformationPolicy` uses an extreme default family split equivalent to:
-
-```text
-false      97%
-truthful    3%
-```
-
-S6C must replace this as the long-term default.
-
-Approved first-version target:
-
-```text
-false-family weight      90%
-truthful-family weight   10%
-```
-
-Requirements:
-
-- represent the bias as an explicit generic product policy rather than hidden numeric literals;
-- keep it easy to calibrate later through deterministic simulation/gameplay evidence;
-- do not treat 90/10 as an official rule or immutable constant;
-- do not create role-specific truth probabilities to compensate for a global policy.
-
-`GENTLE / BALANCED / AGGRESSIVE` should mainly rank **severity inside the chosen false family**, not radically alter the truthful-vs-false family probability.
-
-Example:
-
-```text
-healthy Empath result = 1
-truthful family = 1
-false family = 0, 2
-
-ImpairedInformationPolicy chooses family bias.
-Recommendation style ranks 0 vs 2 by pressure/consequence/history.
-```
-
-## 7. Investigator-specific scoring to remove
-
-S6C should retire special recommendation behavior equivalent to:
-
-```text
-actual Evil appears in Drunk-Investigator pair -> special penalty / quality downgrade
-no actual Evil appears -> special beginner-safety reward
-shown Minion investigatorDisplaySuitability bonus
-Drunk-Investigator-only family weighting
-```
-
-A legal Investigator outcome may still score differently because of **generic** consequence/history effects, but not merely because it is Investigator information pointing at actual Evil.
-
-Experienced Storytellers remain free to make manual clue choices.
-
-## 8. Risk-based RED strategy
-
-Do not create a RED for every refactor step.
-
-Before adding a test, apply the project rule:
-
-> If internals are substantially refactored later but intended behavior remains correct, should this test still pass and remain valuable?
-
-If not, do not add it as process ceremony.
-
-### High-value S6C behavior REDs
-
-Keep the new RED set to roughly 4–5 durable scenarios:
-
-1. **Committed identity ownership**  
-   `actual Drunk + shownRole X -> recommendation cannot change/reroll X`.
-
-2. **Shared impairment semantics**  
-   Drunk and Poisoned using the same perceived ability semantics can consume the same legal information domain under their respective reliability state; do not assert an internal class/function call.
-
-3. **No Investigator-specific Evil downgrade**  
-   otherwise-equivalent legal impaired Investigator outcomes are not forced into a lower quality tier solely because one pair contains actual Evil; do not assert exact scores/rule IDs.
-
-4. **Non-Investigator Drunk path**  
-   choose an already-supported information role such as Empath if appropriate; prove Drunk shown as that role receives role-compatible information without Investigator fallback or shown-role reroll.
-
-5. **Stale recommendation protection**  
-   after an ability-state dependency changes (for example Poisoner target changes), stale previously generated information must not remain current/visible.
-
-### Do not RED implementation shape
-
-Do not add tests merely asserting:
-
-```text
-DrunkInvestigatorInfo class is absent
-a specific generator/helper must be called
-a DTO field has a particular name
-a source file no longer contains a string
-a cache uses a particular implementation type
-internal falseWeight literal == 900000
-internal truthWeight literal == 100000
-```
-
-Use policy/distribution evidence and deterministic simulation for the 90/10 calibration rather than brittle source/constant-shape tests.
-
-## 9. Implementation sequence
-
-In the next conversation, proceed in this order:
-
-```text
-S6C-0  re-query live main / PR head / checks
-        distinguish docs-only carrier from accepted S6B checkpoint
-        capture exact CI #1267 Android failure
-        complete current legacy Investigator/Drunk-Investigator audit
-
-S6C-1  establish only the high-value behavior REDs that expose real product gaps
-
-S6C-2  establish/reuse generic role ability-semantics seam
-
-S6C-3  unify Drunk/Poisoned impairment path
-        retire 97/3
-        introduce explicit 90/10 first-version generic family policy
-
-S6C-4  remove Investigator-specific recommendation heuristics
-
-S6C-5  stop active production generation/ownership of DrunkInvestigatorInfo
-        preserve legacy compatibility only where still required
-
-S6C-6  genericize directly affected effect/history representation
-
-S6C-7  genericize directly affected provisional recommendation invalidation
-        protect observable stale-information behavior, not variable names
-
-S6C-8  audit healthy Investigator registration correctness
-        especially Recluse/Spy interactions
-        fix only the smallest correctness seam if required
-
-S6C-9  focused GREEN + triggered T1/T2/T3
-        :app:testFull / :app:assembleDebug for acceptance
-        CI/R2 + exact diff audit
-        checkpoint docs
-STOP
-```
-
-Do not start S7 until S6C is accepted.
-
-## 10. Investigator registration correctness audit
-
-`NaturalPairInformationCandidateGenerator` currently warrants explicit review because Investigator truth semantics must account for legal registration interactions, not only raw `actualType == MINION`, where relevant.
-
-Audit:
-
-```text
-Healthy Investigator
-+ Recluse / Spy registration interactions
--> is the truthful candidate space correct?
-```
-
-Reuse existing `RegistrationInteractionRules` if it already owns the needed semantics.
-
-If a gap exists and blocks correct generic Investigator semantics, repair the minimum boundary.
-
-Do not turn S6C into a complete registration-system rewrite.
-
-## 11. Strict S6C non-goals
-
-Do not in S6C:
-
-- change `SetupCandidate`;
-- rescore/regenerate S5 actual-role composition;
-- let shown identity/history feed back into S5;
+- start NGJ/no-template production cutover — S8;
+- change S5 generic diversity ownership;
 - change S6A shown-identity legality;
-- change S6B identity commitment or namespace;
-- allow recommendation to mutate committed identity;
-- cut TB production flow — S7;
-- cut NGJ/no-template production flow — S8;
-- perform broad persistence/recovery redesign;
-- aggressively delete legacy persisted schema;
-- invent misinformation algorithms for unsupported future roles merely to complete coverage;
+- change S6B commitment namespace/algorithm;
+- redesign accepted S6C impairment policy;
+- perform broad persistence/recovery redesign — REC-R1;
 - perform broad App/Host decomposition;
-- perform broad registration rewrite.
+- aggressively delete compatibility schema unless directly required by the controlled TB cutover;
+- merge or mark PR #61 Ready.
 
-## 12. Protected predecessor invariants
+## 7. Protected predecessor invariants
 
 Preserve:
 
@@ -379,6 +225,7 @@ Drunk shown identity is committed once and cannot be replaced by recommendation.
 S5 actual-composition selection cannot consume shown identity.
 S6A legality cannot be rewritten by S6B or recommendation.
 S6B commitment cannot feed back into S5.
+S6C recommendation cannot mutate committed identity.
 Start commits setup only once; recomposition/navigation cannot reroll it.
 Restore never reselects/rerolls an already committed setup.
 Invalid template data never silently falls back to broad-random setup.
@@ -389,7 +236,7 @@ Completion persistence is retry-safe.
 
 Also preserve Dawn/Dusk retry convergence, Fortune Teller current/effective-state authority, poisoned Spy fail-safe semantics, living-Demon UI authority and current NGJ legality until explicit migration.
 
-## 13. Validation / workflow
+## 8. Validation workflow
 
 Follow:
 
@@ -399,74 +246,35 @@ docs/TESTING_STRATEGY.md
 docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 ```
 
-S6C is a recommendation-semantics checkpoint. Use risk-based evidence, not test-count ceremony.
-
-At acceptance, expect at least:
-
-```text
-focused owning behavior tests
-:app:testFast
-triggered T2/T3 recommendation/rules evidence
-:app:testFull
-:app:assembleDebug
-ASP contract / Real Clingo if triggered by current test strategy/risk router
-R2
-GitHub CI aggregate gate
-exact changed-file / semantic diff audit
-```
+Use risk-based T0/T1/T2/T3 evidence. Logical checkpoints require GitHub CI/R2 and exact remote diff audit; use full Android build/test and ASP/Real Clingo when the changed surface/risk router requires them.
 
 Keep PR #61 Draft. Do not merge, mark Ready, rebase or force-push without explicit user authorization.
 
-## 14. Campaign sequence
-
-```text
-MS-S0    ownership audit                                         COMPLETE
-MS-S0.5  recovery scope reduction audit                          COMPLETE
-MS-S1    CommittedClocktowerSetup + provenance                   COMPLETE / ACCEPTED
-MS-S1R   exact setup persistence authority migration             COMPLETE / ACCEPTED
-MS-S2    candidate/source/provider contracts                     COMPLETE / ACCEPTED
-MS-S3    optional TemplateRepository                             COMPLETE / ACCEPTED
-MS-S4    deterministic generated actual-role source              COMPLETE / ACCEPTED
-MS-S4.5  shown-identity ownership correction                    COMPLETE / ACCEPTED
-MS-S5    actual-composition diversity history/scorer/selector   COMPLETE / ACCEPTED
-MS-S6A   shown-identity policy/options boundary                 COMPLETE / ACCEPTED
-MS-S6B   deterministic shown-identity commitment               COMPLETE / ACCEPTED
-MS-S6C   generic information semantics + impairment ownership   REPLANNED / NEXT
-MS-S7    TB 480-template controlled semantic cutover
-MS-S8    NGJ/no-template production cutover
-MS-S9    future-script generic acceptance
-
-REC-R1   separate future unfinished-game stable-checkpoint work
-```
-
-## 15. Documentation authority
+## 9. Documentation authority
 
 ```text
 AGENTS.md
 docs/CURRENT_DEVELOPMENT_ROADMAP.md
 docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_MS_SETUP_ARCHITECTURE.md
+docs/MS_S6C_GENERIC_INFORMATION_SEMANTICS_CHECKPOINT_2026-08-31.md
 docs/MS_S6C_GENERIC_IMPAIRED_INFORMATION_REPLAN_2026-08-31.md
-docs/MS_S4_5_SHOWN_IDENTITY_OWNERSHIP_CORRECTION_2026-08-31.md
-docs/MS_S5_SETUP_DIVERSITY_SELECTOR_CHECKPOINT_2026-08-31.md
-docs/MS_S6A_SHOWN_IDENTITY_POLICY_CHECKPOINT_2026-08-31.md
 docs/MS_S6B_SHOWN_IDENTITY_COMMITMENT_CHECKPOINT_2026-08-31.md
+docs/MS_S6A_SHOWN_IDENTITY_POLICY_CHECKPOINT_2026-08-31.md
+docs/MS_S5_SETUP_DIVERSITY_SELECTOR_CHECKPOINT_2026-08-31.md
+docs/MS_S4_5_SHOWN_IDENTITY_OWNERSHIP_CORRECTION_2026-08-31.md
 docs/TESTING_STRATEGY.md
 docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 ```
 
-## 16. New-conversation resume guard
-
-At the next development turn:
+## 10. New-conversation resume guard
 
 1. read root `AGENTS.md`;
 2. read `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 3. read this handoff;
-4. read `docs/MS_S6C_GENERIC_IMPAIRED_INFORMATION_REPLAN_2026-08-31.md`;
-5. read S4.5, S5, S6A and S6B checkpoint docs;
-6. re-query live `main`, Draft PR #61 head/state/checks;
-7. distinguish docs-only carrier commits and incomplete S6C commits from accepted S6B checkpoint `d4cf3969aabcea7433b96b5b320171fbc821853e`;
-8. inspect the exact current Android full-CI failure before changing production code;
-9. follow S6C-0 -> S6C-9 above with only meaningful behavior REDs;
-10. preserve the approved first-version 90/10 generic impairment bias direction unless new evidence is explicitly discussed with the user;
-11. do not start S7/S8, persistence/recovery redesign or broad App/Host work;
-12. keep PR #61 Draft and unmerged.
+4. read `docs/MS_S6C_GENERIC_INFORMATION_SEMANTICS_CHECKPOINT_2026-08-31.md`;
+5. re-query live `main`, branch and Draft PR #61 head/state/checks;
+6. distinguish any docs-only carrier head from accepted S6C code checkpoint `38a04c1353c883c3bda4b4a506085c3c1d2766bd`;
+7. begin S7-0 with the read-only TB production-path audit above;
+8. preserve S5/S6A/S6B/S6C ownership boundaries;
+9. do not start S8/REC-R1/broad App/Host work;
+10. keep PR #61 Draft and unmerged.
