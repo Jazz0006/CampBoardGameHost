@@ -41,29 +41,32 @@ MS-S5 accepted code/test checkpoint:
 
 MS-S6A accepted code/test checkpoint:
 5823d66d0eb756a0005df86f1aea7db5902cae60
+
+MS-S6B accepted code/test checkpoint:
+d4cf3969aabcea7433b96b5b320171fbc821853e
 ```
 
-MS-S6A validation:
+MS-S6B validation:
 
 ```text
 RED contract commit:
-50a04d41a1bda6cc1c0a0b87b88a5135d521979d
-CI #1249 / run 33364240383   EXPECTED RED
-:app:testFast reached compileDebugUnitTestKotlin and failed on missing S6A production types
-R2 #1166 / run 33364240491   SUCCESS
+afc970cc9006ced2de24a99bcaa8d789a1d7a11a
+CI #1256 / run 33365203015   EXPECTED RED
+:app:testFast reached compileDebugUnitTestKotlin and failed on missing S6B commitment types
+R2 #1173 / run 33365203021   SUCCESS
 
 GREEN checkpoint:
-5823d66d0eb756a0005df86f1aea7db5902cae60
-CI #1252 / run 33364442563   SUCCESS
+d4cf3969aabcea7433b96b5b320171fbc821853e
+CI #1257 / run 33365333667   SUCCESS
 Android FAST unit tests      SUCCESS
 CI aggregate gate            SUCCESS
-R2 #1169 / run 33364442584   SUCCESS
+R2 #1174 / run 33365333672   SUCCESS
 Full Android                 SKIPPED by risk router
 ASP contract tests           SKIPPED by risk router
 Real Clingo                  SKIPPED by risk router
 ```
 
-Later documentation commits are carriers and do not replace the accepted MS-S6A production checkpoint.
+Later documentation commits are carriers and do not replace the accepted MS-S6B production checkpoint.
 
 Current campaign status:
 
@@ -78,7 +81,8 @@ MS-S4    deterministic generated actual-role source           COMPLETE / ACCEPTE
 MS-S4.5  shown-identity ownership architecture correction    COMPLETE / ACCEPTED
 MS-S5    actual-composition diversity/scorer/selector         COMPLETE / ACCEPTED
 MS-S6A   shown-identity policy/options boundary               COMPLETE / ACCEPTED
-MS-S6B   deterministic shown-identity commitment              NEXT
+MS-S6B   deterministic shown-identity commitment              COMPLETE / ACCEPTED
+MS-S6C   recommendation ownership inversion                   NEXT
 ```
 
 Active handoff:
@@ -87,7 +91,7 @@ Active handoff:
 
 Latest accepted checkpoint:
 
-`docs/MS_S6A_SHOWN_IDENTITY_POLICY_CHECKPOINT_2026-08-31.md`
+`docs/MS_S6B_SHOWN_IDENTITY_COMMITMENT_CHECKPOINT_2026-08-31.md`
 
 Architecture correction authority:
 
@@ -111,14 +115,14 @@ script + playerCount + setupSeed
 -> query optional template candidates or legal generated candidates
 -> MS-S5 select one candidate using ACTUAL-COMPOSITION diversity only
 -> MS-S6A resolve legal shown-identity options/policy          [COMPLETE]
--> MS-S6B deterministically commit shown identity              [NEXT]
+-> MS-S6B deterministically commit shown identity              [COMPLETE]
 -> seat/deal materialization
 -> CommittedClocktowerSetup(actualRole + shownRole)
--> setup/first-night recommendation reads committed shownRole
+-> setup/first-night recommendation reads committed shownRole  [MS-S6C NEXT]
 -> recommendation generates information only
 ```
 
-`CommittedClocktowerSetup` is the immutable exact initial setup fact. Persistence/recovery is an outer consumer and must not be a dependency of candidate generation, composition selection, shown-identity policy/selection or setup commitment.
+`CommittedClocktowerSetup` is the immutable exact initial setup fact. Persistence/recovery is an outer consumer and must not be a dependency of candidate generation, composition selection, shown-identity legality, identity commitment or later materialization.
 
 The App root must not gain new script-specific setup branches when future scripts are added.
 
@@ -168,6 +172,8 @@ ClocktowerSetupProvider
 ClocktowerSetupProviderRegistry
 ```
 
+`SetupCandidateRequest` already carries `setupSeed`; S6B did not add seed or identity state to `SetupCandidate`.
+
 ### MS-S3 — optional TemplateRepository
 
 `TemplateRepository` remains actual-role candidate storage/lookup only:
@@ -177,7 +183,7 @@ TemplateBucketKey(script, playerCount)
 TemplateRepository.find(script, playerCount)
 ```
 
-It remains seed/diversity/shown-identity independent. Template-specific shown-identity metadata is now reached through the separate S6A provenance-keyed policy source rather than by expanding `SetupCandidate`.
+It remains seed/diversity/shown-identity independent. Template-specific shown-identity metadata is reached through the separate S6A provenance-keyed policy source rather than by expanding `SetupCandidate`.
 
 ### MS-S4 — GeneratedSetupCandidateSource
 
@@ -332,25 +338,103 @@ There is still no production TB `TroubleBrewingSetupPreset -> SetupCandidate` cu
 
 S6A therefore added only the shown-identity metadata edge adapter. Actual TB candidate adaptation and controlled production cutover remain S7 responsibilities.
 
-### S6A exact scope
+## 6. MS-S6B — COMPLETE / ACCEPTED
 
-Compared with the pre-S6A docs carrier `7c2b71f169584ebad3f0873d39d32f48f4fade79`, accepted S6A checkpoint `5823d66d0eb756a0005df86f1aea7db5902cae60` adds exactly two production files and one typed test file.
+Authoritative checkpoint:
+
+`docs/MS_S6B_SHOWN_IDENTITY_COMMITMENT_CHECKPOINT_2026-08-31.md`
+
+Accepted production file:
+
+`app/src/main/java/com/codex/campboardgamehost/clocktower/setup/SetupShownIdentityCommitment.kt`
+
+Accepted typed contract:
+
+`app/src/test/java/com/codex/campboardgamehost/clocktower/setup/SetupShownIdentityCommitterTest.kt`
+
+Accepted generic boundary:
+
+```text
+selected SetupCandidate
++ resolved SetupShownIdentityPolicy
++ setupSeed
+-> SetupShownIdentityCommitment
+```
+
+### S6B commitment representation
+
+```text
+ShownIdentityCommitment
+├─ actualRole
+└─ shownRole
+
+SetupShownIdentityCommitment
+├─ canonical override facts: 0..N
+└─ shownRoleFor(actualRole)
+```
+
+Only actual roles whose shown identity differs are stored. If no override is committed:
+
+```text
+shownRoleFor(actualRole) == actualRole
+```
+
+This is deliberately pre-seat and does not create `CommittedSetupSeat` or `CommittedClocktowerSetup`.
+
+### S6B deterministic selection
+
+The generic hash namespace is:
+
+```text
+setup-shown-identity-v1
+```
+
+Stable hash material includes script, source kind, provider/candidate provenance, canonical actual-role composition, override actual role, canonical legal option pool and `setupSeed`.
+
+Fields are length-prefixed before hashing. Selection uses `MurmurHash3.low64Utf8` and unsigned remainder into the canonical S6A option list.
+
+Therefore:
+
+- same candidate + policy + setupSeed -> same commitment;
+- input order does not affect selection;
+- different setup seeds can explore different legal options;
+- single-option policy commits directly;
+- no unseeded random/shuffle participates;
+- no shown-role history/cooldown participates.
+
+### S6B fail-closed contract
+
+S6B consumes legality rather than redefining it, but rejects inconsistent candidate/policy combinations:
+
+- override actual role must exist in the selected candidate;
+- override cannot show itself as itself;
+- a shown option cannot already be an actual in-play role.
+
+There is no silent fallback.
+
+### S6B exact scope
+
+Compared with pre-S6B docs carrier `7b68df45c44bfec8afdc545e637e5465c1dc08e0`, accepted S6B checkpoint `d4cf3969aabcea7433b96b5b320171fbc821853e` adds exactly one production file and one typed test file.
 
 No existing production source was modified.
 
-In particular S6A did not modify:
+S6B did not modify:
 
-- `SetupCandidate` / `ClocktowerSetupProvider`;
-- S5 diversity history/scorer/selector;
+- `SetupCandidate` / `SetupCandidateRequest`;
+- S5 composition diversity;
+- S6A legality resolution;
 - legacy TB selector/scorer/deal flow;
-- NGJ production setup;
+- NGJ production flow;
+- seat/deal materialization;
+- `CommittedClocktowerSetup`;
 - `PlayerState.shownRole`;
-- recommendation or legacy Drunk recommendation decisions;
+- recommendation / `StorytellerDecision.DrunkShownRole`;
 - persistence/recovery;
-- App/Host;
-- seating/deal shuffle.
+- App/Host.
 
-## 6. Corrected Trouble Brewing parity definition
+Legacy TB's `tb-drunk-v1` namespace is not generic S6B authority; generic commitment is now downstream of S6A under `setup-shown-identity-v1`.
+
+## 7. Corrected Trouble Brewing parity definition
 
 Trouble Brewing Setup Presets remains a protected predecessor, but parity is explicitly scoped.
 
@@ -372,11 +456,12 @@ Deliberately allowed to change:
 
 - repeated Drunk shown role no longer alters actual-role preset weight;
 - exact legacy seed/history -> preset identity is not required where the old result depended on shown-role weighting;
-- shown identity is selected only after the actual-role candidate is selected.
+- shown identity is selected only after the actual-role candidate is selected;
+- generic shown-identity commitment uses the S6B namespace rather than treating legacy `tb-drunk-v1` as generic authority.
 
 This is intentional semantic correction, not a parity regression.
 
-## 7. Remaining implementation campaign
+## 8. Remaining implementation campaign
 
 ```text
 MS-S0    ownership audit                                         COMPLETE
@@ -389,8 +474,8 @@ MS-S4    deterministic generated actual-role source              COMPLETE / ACCE
 MS-S4.5  shown-identity ownership correction                    COMPLETE / ACCEPTED
 MS-S5    actual-composition diversity history/scorer/selector   COMPLETE / ACCEPTED
 MS-S6A   generic shown-identity policy/options boundary         COMPLETE / ACCEPTED
-MS-S6B   deterministic shown-identity commitment               NEXT
-MS-S6C   recommendation ownership inversion
+MS-S6B   deterministic shown-identity commitment               COMPLETE / ACCEPTED
+MS-S6C   recommendation ownership inversion                    NEXT
 MS-S7    TB 480-template adapter + controlled semantic cutover
 MS-S8    NGJ/no-template production cutover
 MS-S9    future-script generic acceptance
@@ -400,58 +485,47 @@ REC-R1   separate future unfinished-game stable-checkpoint work
 
 Do not collapse several slices merely because they share the end-to-end setup flow.
 
-## 8. MS-S6B immediate objective — NEXT, NOT STARTED
+## 9. MS-S6C immediate objective — NEXT, NOT STARTED
 
-S6B will consume the already-resolved S6A legal policy and deterministically choose/commit exactly one shown identity for each required override.
-
-Conceptual boundary to audit before implementation:
-
-```text
-selected SetupCandidate
-+ SetupShownIdentityPolicy
-+ stable setup seed / identity-selection namespace
--> deterministic committed shown-identity choices
-```
-
-Before writing S6B production code, audit:
-
-1. where the stable setup seed is available at the post-S5/pre-seat boundary;
-2. the smallest generic output needed by later seat/deal materialization;
-3. canonical ordering/namespace requirements so input order cannot change the chosen role;
-4. fail-closed behavior if a required policy is empty/inconsistent;
-5. whether the first implementation needs only seed-stability with no shown-role history, as currently planned.
-
-S6B should not rerun S6A legality or reach back into template models after receiving the accepted policy.
-
-### S6B strict non-goals
-
-Do not in S6B:
-
-- alter actual-role candidate generation or S5 composition selection;
-- make shown-role history affect composition;
-- change recommendation ownership — S6C;
-- modify `PlayerState.shownRole` production wiring merely to expose the pure commitment seam;
-- cut TB production over — S7;
-- cut NGJ production over — S8;
-- change persistence/recovery;
-- expand App/Host responsibility;
-- perform seat assignment/deal shuffle unless explicitly required by the later materialization slice.
-
-## 9. MS-S6C future boundary
-
-Recommendation must treat `PlayerState.shownRole` as the perceived-identity input fact.
+S6C changes recommendation ownership only after S6B has committed identity.
 
 Target:
 
 ```text
-actual Drunk + shownRole = X
--> generate only X-compatible information behavior
--> never output/replace X
+actual Drunk + already committed shownRole X
+-> recommendation consumes X as perceived identity
+-> generate only X-compatible information
+-> never choose, replace or reroll X
 ```
 
-Audit/reuse existing first-night role-information families before introducing new fake-information algorithms.
+### S6C audit first
 
-Legacy recommendation-owned Drunk identity concepts should retire/narrow only after typed replacement evidence and consumer audits.
+Before production changes, audit:
+
+1. `StorytellerDecision.DrunkShownRole` producers and all consumers;
+2. recommendation/setup paths that currently choose a Drunk shown role;
+3. `PlayerState.shownRole` availability at recommendation boundaries;
+4. existing first-night information families that can operate from an already-committed perceived role;
+5. tests whose current contract still assumes recommendation owns shown identity;
+6. the smallest typed replacement evidence required before narrowing/removing legacy recommendation-owned identity concepts.
+
+S6C should reuse existing information generation where practical. Do not invent a second setup selector or a new fake-information subsystem merely to complete ownership inversion.
+
+### S6C strict non-goals
+
+Do not in S6C:
+
+- change `SetupCandidate` or S5 composition selection;
+- change S6A legal option resolution;
+- change S6B commitment selection;
+- let recommendation feed back into setup identity;
+- perform TB production cutover — S7;
+- perform NGJ production cutover — S8;
+- perform seat/deal integration unless explicitly separated into a later setup materialization slice;
+- change persistence/recovery;
+- expand App/Host beyond what an explicit integration slice owns.
+
+Do not delete `StorytellerDecision.DrunkShownRole` merely because S6B exists; retire or narrow it only after S6C consumer audit and stable replacement evidence.
 
 ## 10. MS-S7 / MS-S8 target cutovers
 
@@ -483,7 +557,7 @@ GeneratedSetupCandidateSource
 -> recommendation reads shownRole
 ```
 
-Retire legacy unseeded composition/shown-role selection and recommendation-time shown-role replacement only at this explicit cutover.
+Retire legacy unseeded composition/shown-role selection and recommendation-time shown-role replacement only at the explicit controlled cutovers.
 
 ## 11. Protected predecessor correctness
 
@@ -495,6 +569,8 @@ Baron/setup modifiers are not applied twice.
 Drunk actual identity remains Drunk.
 Drunk shown identity is committed once and cannot be replaced by recommendation.
 S5 actual-composition selection cannot consume shown identity.
+S6A legality cannot be rewritten by S6B or recommendation.
+S6B commitment cannot feed back into S5.
 Start commits setup only once; recomposition/navigation cannot reroll it.
 Restore never reselects/rerolls an already committed setup.
 Invalid template data never silently falls back to broad-random setup.
@@ -519,13 +595,15 @@ Use risk-based evidence:
 - `:app:testFast` is the logical-checkpoint T1 gate;
 - T4 remains explicit full-acceptance/merge-level validation rather than a micro-slice default.
 
-S6A is accepted at `5823d66d0eb756a0005df86f1aea7db5902cae60` with CI #1252 / run `33364442563` and R2 #1169 / run `33364442584`.
+S6B is accepted at `d4cf3969aabcea7433b96b5b320171fbc821853e` with CI #1257 / run `33365333667` and R2 #1174 / run `33365333672`.
+
+S6C changes recommendation semantics/ownership and should use the affected recommendation evidence selected by `docs/TESTING_STRATEGY.md`; escalate beyond FAST when the concrete consumer audit shows a triggered T2/T3 family.
 
 ## 13. Writer / scope rules
 
 Safe small/medium docs/tests/source should continue through the GitHub connector.
 
-Keep S6B as a pure Kotlin seam where practical. Do not edit App/Host production flow merely to wire incomplete shown-identity commitment early.
+Keep pure setup-domain work out of App/Host. Do not edit App/Host merely to expose a new seam before an explicit integration slice owns that wiring.
 
 Keep PR #61 Draft. Do not merge, mark Ready, rebase or force-push without explicit authorization.
 
@@ -544,6 +622,7 @@ docs/MS_S4_GENERATED_SETUP_CANDIDATE_SOURCE_CHECKPOINT_2026-08-31.md
 docs/MS_S4_5_SHOWN_IDENTITY_OWNERSHIP_CORRECTION_2026-08-31.md
 docs/MS_S5_SETUP_DIVERSITY_SELECTOR_CHECKPOINT_2026-08-31.md
 docs/MS_S6A_SHOWN_IDENTITY_POLICY_CHECKPOINT_2026-08-31.md
+docs/MS_S6B_SHOWN_IDENTITY_COMMITMENT_CHECKPOINT_2026-08-31.md
 docs/TESTING_STRATEGY.md
 docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 ```
@@ -551,12 +630,12 @@ docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 ## 15. New-conversation resume protocol
 
 1. read root `AGENTS.md`;
-2. read this roadmap, active handoff, S4.5 correction, S5 checkpoint and S6A checkpoint;
+2. read this roadmap, active handoff, S4.5 correction, S5, S6A and S6B checkpoints;
 3. re-query live `main`, branch, Draft PR #61 and current checks;
-4. distinguish later docs-only carrier head from accepted S6A code/test checkpoint `5823d66d0eb756a0005df86f1aea7db5902cae60`;
-5. next production slice is S6B deterministic shown-identity commitment only;
-6. consume S6A legal options; do not put shown identity into `SetupCandidate`;
-7. do not change recommendation before S6C;
+4. distinguish later docs-only carrier head from accepted S6B code/test checkpoint `d4cf3969aabcea7433b96b5b320171fbc821853e`;
+5. next production slice is S6C recommendation ownership inversion only;
+6. treat S6B shown identity as already committed setup input; recommendation must not choose/replace it;
+7. audit legacy `StorytellerDecision.DrunkShownRole` before deletion/narrowing;
 8. do not perform TB/NGJ production cutovers before S7/S8;
 9. do not perform broad unfinished-night cleanup inside MS-SETUP; REC-R1 owns that later work;
 10. keep PR #61 Draft and unmerged unless explicitly authorized otherwise.
@@ -565,7 +644,7 @@ docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 
 | Area | Status |
 |---|---|
-| MS-SETUP generic multi-script setup architecture | CURRENT — MS-S6A ACCEPTED / MS-S6B NEXT |
+| MS-SETUP generic multi-script setup architecture | CURRENT — MS-S6B ACCEPTED / MS-S6C NEXT |
 | MS-S1R setup persistence authority migration | COMPLETE / ACCEPTED |
 | MS-S2 generic candidate/provider contracts | COMPLETE / ACCEPTED |
 | MS-S3 optional template repository | COMPLETE / ACCEPTED |
@@ -573,6 +652,7 @@ docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 | MS-S4.5 shown-identity ownership correction | COMPLETE / ACCEPTED |
 | MS-S5 actual-composition diversity selector | COMPLETE / ACCEPTED |
 | MS-S6A shown-identity policy/options boundary | COMPLETE / ACCEPTED |
+| MS-S6B deterministic shown-identity commitment | COMPLETE / ACCEPTED |
 | REC-R1 unfinished-game recovery simplification | QUEUED SEPARATE CAMPAIGN |
 | GCR-4 Chambermaid actual wake-history authority | DEFERRED FOLLOW-UP |
 | GCR-5 night checkpoint stable identity hardening | DEFERRED; re-evaluate under REC-R1 |
