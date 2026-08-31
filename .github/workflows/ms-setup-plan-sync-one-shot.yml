@@ -34,7 +34,7 @@ jobs:
           test "$(git hash-object docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6G_B_PRODUCTION_WIRING.md)" = "e3802380b5e06dd39992438d3bea3a6514c35312"
           test "$(git hash-object docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6J_CLEANUP.md)" = "d49629412cf65bec1affb0bd5f24bb5cb1b4643c"
           test "$(git hash-object docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_TBSP_6K_FINAL_ACCEPTANCE.md)" = "451845e095eb20a63043c4b6f92284b3720a50f9"
-          test "$(git hash-object .github/scripts/ms_setup_plan_sync.py)" = "9d93aa18c635a481aff56945fcdcb8ee25c5decc"
+          test "$(git hash-object .github/scripts/ms_setup_plan_sync.py)" = "148f304e63fcbf3ad905b124ca80d5305110fae7"
 
       - name: Apply exact plan sync
         run: python3 .github/scripts/ms_setup_plan_sync.py
