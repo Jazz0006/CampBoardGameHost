@@ -23,6 +23,38 @@ class FirstNightNumericInformationSemanticsTest {
         assertEquals(expectedTruthSpace, FirstNightNumericInformationSemantics.healthyTruthValues(drunk, 2))
     }
 
+    @Test
+    fun `first night recommendation keeps healthy ruling but preserves all legal truths when impaired`() {
+        val healthy = game(source = player(2, "Empath", CharacterType.TOWNSFOLK))
+        val poisoned = game(source = player(2, "Empath", CharacterType.TOWNSFOLK, poisoned = true))
+        val drunk = game(source = player(2, "Drunk", CharacterType.OUTSIDER, shownRole = "Empath"))
+
+        assertEquals(
+            setOf(0),
+            FirstNightNumericInformationSemantics.recommendationTruthValues(
+                game = healthy,
+                sourceSeat = 2,
+                currentRegisteredValue = 0,
+            ),
+        )
+        assertEquals(
+            setOf(0, 1),
+            FirstNightNumericInformationSemantics.recommendationTruthValues(
+                game = poisoned,
+                sourceSeat = 2,
+                currentRegisteredValue = 0,
+            ),
+        )
+        assertEquals(
+            setOf(0, 1),
+            FirstNightNumericInformationSemantics.recommendationTruthValues(
+                game = drunk,
+                sourceSeat = 2,
+                currentRegisteredValue = 0,
+            ),
+        )
+    }
+
     private fun game(source: PlayerState) = GameState(
         script = ScriptId("trouble_brewing"),
         players = listOf(
