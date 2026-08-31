@@ -4,7 +4,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Branch: `codex/ms-setup-generic-architecture`  
 > Draft PR: `#61`  
-> Status: **MS-S2 COMPLETE / ACCEPTED — MS-S3 NEXT**
+> Status: **MS-S3 COMPLETE / ACCEPTED — MS-S4 NEXT**
 
 ## 1. Accepted live checkpoints
 
@@ -35,22 +35,25 @@ MS-S1R:
 
 MS-S2:
 d4001863f134ebbe7d26819f40ac34c7d1de200c
+
+MS-S3:
+6b15822e75680fb8e718f5db24358e1a935b5523
 ```
 
-MS-S2 validation:
+MS-S3 validation:
 
 ```text
-CI #1225 / run 33357219556   SUCCESS
+CI #1230 / run 33357908514   SUCCESS
 Android FAST unit tests      SUCCESS
 CI aggregate gate            SUCCESS
-R2 #1142 / run 33357219544   SUCCESS
+R2 #1147 / run 33357908443   SUCCESS
 Full Android                 SKIPPED by risk router
 ASP / Real Clingo            SKIPPED by risk router
 ```
 
-Later docs-only commits are carriers and do not replace the validated MS-S2 code/test head.
+Later docs-only commits are carriers and do not replace the validated MS-S3 code/test head.
 
-Always re-query live GitHub state before production writes.
+Always re-query live GitHub state before a production write.
 
 ## 2. Product goal
 
@@ -77,8 +80,8 @@ MS-S0.5 recovery scope reduction audit + product boundary                       
 MS-S1   generic persistence-independent CommittedClocktowerSetup + provenance      COMPLETE / ACCEPTED
 MS-S1R  exact setup persistence authority migration + TB restore retirement         COMPLETE / ACCEPTED
 MS-S2   generic SetupCandidate + source/provider registry contracts                 COMPLETE / ACCEPTED
-MS-S3   optional TemplateRepository keyed by script + player count                  NEXT
-MS-S4   deterministic seeded legal GeneratedSetupCandidateSource
+MS-S3   optional TemplateRepository keyed by script + player count                  COMPLETE / ACCEPTED
+MS-S4   deterministic seeded legal GeneratedSetupCandidateSource                    NEXT
 MS-S5   common deterministic SetupDiversityHistory / scorer / selector facade
 MS-S6   generic shown-identity commitment policy
 MS-S7   adapt TB 480-preset pipeline; preserve TB behavior/parity
@@ -90,13 +93,9 @@ REC-R1  separate future unfinished-game stable-checkpoint simplification
 
 Do not implement several slices together merely because they share a campaign.
 
-## 4. MS-S1 accepted result
+## 4. Accepted setup-domain boundary through MS-S3
 
-Authoritative checkpoint:
-
-`docs/MS_S1_COMMITTED_SETUP_CHECKPOINT_2026-08-31.md`
-
-Accepted exact committed fact:
+### Exact committed fact — MS-S1
 
 ```text
 CommittedClocktowerSetup
@@ -108,13 +107,7 @@ CommittedClocktowerSetup
 
 Exact committed identities, not provenance, are restore authority.
 
-## 5. MS-S1R accepted result
-
-Authoritative checkpoint:
-
-`docs/MS_S1R_SETUP_PERSISTENCE_CHECKPOINT_2026-08-31.md`
-
-Current setup recovery is direct:
+### Direct setup persistence — MS-S1R
 
 ```text
 persisted exact CommittedClocktowerSetup
@@ -122,105 +115,158 @@ persisted exact CommittedClocktowerSetup
 -> restore exact setup
 ```
 
-TB completion/diversity history uses a compact committed rotation record. Restore no longer reloads the 480-preset asset or reconstructs `TroubleBrewingSetupPresetSelection`. The old provenance-reconstruction codec was retired after call-site proof.
+TB completion/diversity history uses a compact committed rotation record. Restore no longer reloads the 480-preset asset or reconstructs `TroubleBrewingSetupPresetSelection`.
 
-Broad unfinished-night recovery remains outside MS-SETUP and belongs to future REC-R1.
-
-## 6. MS-S2 accepted result
-
-Authoritative checkpoint:
-
-`docs/MS_S2_SETUP_PROVIDER_CONTRACT_CHECKPOINT_2026-08-31.md`
-
-Accepted production owner:
-
-`app/src/main/java/com/codex/campboardgamehost/clocktower/setup/ClocktowerSetupProvider.kt`
-
-Accepted typed test:
-
-`app/src/test/java/com/codex/campboardgamehost/clocktower/setup/ClocktowerSetupProviderRegistryTest.kt`
-
-Accepted concepts:
+### Candidate/provider boundary — MS-S2
 
 ```text
 SetupCandidate
-SetupCandidateRequest
+├─ script
+├─ canonical pre-seat actual-role multiset
+├─ derived playerCount
+└─ provenance
+
+SetupCandidateRequest(script, playerCount, setupSeed)
 SetupCandidateSource
 ClocktowerSetupProvider
 ClocktowerSetupProviderRegistry
 ```
 
-### Candidate boundary
+Candidates deliberately exclude seating, shown identity, persistence and diversity history.
 
-A `SetupCandidate` is a **pre-seat actual-role multiset**:
+### Optional template lookup — MS-S3
 
 ```text
-SetupCandidate
-├─ script: ScriptId
-├─ actualRoles: canonical/snapshotted List<RoleId>
-├─ playerCount: derived
-└─ provenance: SetupProvenance
+TemplateBucketKey(script, playerCount)
+TemplateRepository
+├─ find(script, playerCount)
+└─ SetupCandidateSource.candidates(request)
 ```
 
-It deliberately excludes seats, shown identities, persistence schema and diversity history/scoring.
+Accepted behavior:
 
-The actual-role list is canonically sorted by `RoleId.value`; order therefore carries no seating semantics while duplicates remain representable.
+- exact script/player-count lookup;
+- absent bucket returns empty list as a normal result;
+- caller collection mutation cannot alter repository contents;
+- bucket/candidate script or player-count mismatch is rejected;
+- only `TEMPLATE` candidates with durable `candidateId` are accepted;
+- duplicate provider/candidate identity in a bucket is rejected;
+- result order is deterministic;
+- template lookup ignores setup seed;
+- no Android/assets/JSON/persistence/diversity/shown-role dependency.
 
-### Request/source boundary
+Authoritative checkpoint:
+
+`docs/MS_S3_TEMPLATE_REPOSITORY_CHECKPOINT_2026-08-31.md`
+
+## 5. Existing source ownership that MS-S4 must respect
+
+The current legacy NGJ path in `CampBoardGameHostApp.kt` mixes three concerns:
+
+```text
+actual-role composition generation
++ seat shuffle
++ Drunk shown-role selection
+```
+
+MS-S4 must extract only the **generated pre-seat actual-role composition** concern. Do not copy the mixed legacy function wholesale.
+
+The legacy composition currently uses:
+
+- `clocktowerDistribution(playerCount)`;
+- role pools grouped by team;
+- one Demon;
+- configured Minion count;
+- Baron setup adjustment;
+- configured Outsider/Townsfolk counts.
+
+For NGJ small games, current Baron handling deliberately limits outsider increase so the result remains legal for the available composition. Preserve legality intent, but MS-S4 should derive generic setup legality from validated ruleset/catalog metadata rather than hard-coding App UI behavior where practical.
+
+## 6. MS-S4 immediate objective
+
+Introduce the smallest pure Kotlin deterministic seeded legal generated-candidate source.
+
+Target:
 
 ```text
 SetupCandidateRequest
-├─ script
-├─ positive playerCount
-└─ setupSeed
-
-SetupCandidateSource
-request -> List<SetupCandidate>
++ validated script/ruleset role metadata
+-> deterministic generated SetupCandidate values
 ```
 
-The seed exists for later MS-S4 deterministic generation. Diversity history remains MS-S5 ownership.
+The generated source must produce **pre-seat actual-role compositions only**.
 
-### Provider/registry boundary
+It must not assign seats or shown identities.
 
-A `ClocktowerSetupProvider` owns one script, one provider ID and one candidate source. It rejects cross-script requests, cross-script candidates, mismatched player count and cross-provider candidate attribution.
+## 7. MS-S4 audit targets before code
 
-`ClocktowerSetupProviderRegistry` maps a script to one provider; duplicate script registrations fail and unregistered scripts resolve explicitly to `null`.
+Audit only surfaces required to generate a legal candidate:
 
-No App/Host/TB/NGJ production wiring changed in MS-S2.
+1. current NGJ `generateClocktowerAssignments` actual-role composition portion;
+2. `clocktowerDistribution(playerCount)` ownership and all supported player-count distributions;
+3. `ValidatedClocktowerRuleset`, `ClocktowerCharacterDefinition.team`, `setup`, special metadata and any existing setup-modifier representation;
+4. current Baron handling in TB and NGJ;
+5. existing deterministic hash/selection utilities such as `MurmurHash3` / stable selector patterns;
+6. MS-S2 `SetupCandidateRequest`, candidate provenance and provider attribution expectations.
 
-## 7. Why the candidate is pre-seat actual roles only
+Do not audit unrelated Host/night/recovery mechanics in this slice.
 
-TB preset audit showed the generic subset is only:
+## 8. MS-S4 required contract direction
+
+Prefer a source approximately equivalent to:
 
 ```text
-preset identity
-player count / role count
-actual role composition
-source provenance
+GeneratedSetupCandidateSource
+├─ script/ruleset metadata
+├─ providerId
+└─ candidates(request) -> deterministic legal generated candidates
 ```
 
-These TB fields remain outside generic candidate core:
+Required behavior:
 
-```text
-source text
-complexity
-styleTags
-runtime selection policy
-similarity / exact-repeat thresholds
-history weights
-rotation-scoring metadata
-drunkAsOptions
-selectedDrunkShownRole
-```
+- request script must match the source/ruleset script;
+- same script + playerCount + setupSeed yields identical generated candidate output;
+- generation must not use global `Random`, `.random()` or unseeded `.shuffled()`;
+- generated candidates use `SetupSourceKind.GENERATED`;
+- provider attribution is stable and compatible with `ClocktowerSetupProvider`;
+- actual role count exactly equals requested player count;
+- team/type distribution is legal after setup modifiers;
+- actual-role composition contains no seat semantics;
+- shown identity / Drunk disguise remains MS-S6 ownership;
+- invalid ruleset/input fails explicitly rather than broad-random fallback.
 
-The current NGJ legacy path combines actual-role composition, seat randomization and Drunk shown-role selection in one function. MS-S2 deliberately did not copy that mixed boundary. Later slices separate:
+A different seed should be capable of producing variation when more than one legal composition exists, but exact legacy random-sequence parity is not required.
 
-- generated actual-role composition — MS-S4;
-- diversity selection — MS-S5;
-- shown identity — MS-S6;
-- NGJ production adaptation — MS-S8.
+## 9. MS-S4 evidence strategy
 
-## 8. Recovery product boundary
+Use typed tests. Minimum useful evidence:
+
+1. deterministic repeatability for same request/seed;
+2. legal player-count/team composition;
+3. deterministic variation evidence across selected seeds where the role pool permits it;
+4. stable generated provenance/provider identity;
+5. cross-script request rejection;
+6. setup-modifier correctness, especially Baron-style outsider/townsfolk shifts;
+7. no shown-role or seating information enters `SetupCandidate`;
+8. no production App/Host wiring changes.
+
+Existing tests around NGJ distribution/legal start behavior remain useful parity evidence but do not by themselves prove deterministic generation.
+
+## 10. Explicit MS-S4 non-goals
+
+Do not broaden into:
+
+- common diversity history/scoring/selection — MS-S5;
+- Drunk/shown-identity commitment — MS-S6;
+- TB 480-preset adaptation — MS-S7;
+- NGJ production cutover — MS-S8;
+- setup persistence changes;
+- App/Host decomposition;
+- general unfinished-game recovery cleanup;
+- arbitrary exact resume work;
+- PR Ready/merge changes.
+
+## 11. Recovery product boundary
 
 Supported recovery goal remains:
 
@@ -231,78 +277,9 @@ best-effort crash / process-death recovery
 -> resume/restart at a safe domain/action boundary
 ```
 
-Do not reintroduce arbitrary exact mid-UI resume as an MS-SETUP requirement.
+Broad unfinished-night simplification remains future REC-R1 work and is outside MS-S4.
 
-## 9. MS-S3 immediate objective
-
-MS-S3 introduces the smallest **optional template repository** keyed by script + player count and adapted to the MS-S2 candidate boundary.
-
-Target concept:
-
-```text
-TemplateRepository
-(script, playerCount)
--> zero or more template-backed SetupCandidate values
-```
-
-“Zero candidates” is a normal result because later policy must be able to fall back to generated candidates. It is not equivalent to malformed template data.
-
-## 10. MS-S3 audit targets before code
-
-Audit only the relevant existing surfaces:
-
-1. `TroubleBrewingSetupPresetDataset.pools` and its key/player-count invariants;
-2. `TroubleBrewingSetupPresetValidator` ownership — distinguish data validation from generic repository lookup;
-3. `TroubleBrewingSetupPresetJson` only to understand current data ownership, not to make JSON/asset loading generic core;
-4. MS-S2 `SetupCandidate` / `SetupCandidateSource` contract;
-5. any existing repository/catalog pattern whose map/snapshot/duplicate behavior is worth reusing.
-
-Classify fields as:
-
-```text
-GENERIC TEMPLATE LOOKUP KEY
-GENERIC CANDIDATE FACT
-TB DATASET VALIDATION METADATA
-TB SCORING/POLICY METADATA
-SHOWN-IDENTITY CONCERN
-ANDROID/ASSET CONCERN — must stay outside generic repository
-```
-
-## 11. MS-S3 contract direction
-
-Prefer a pure Kotlin repository roughly equivalent to:
-
-```text
-TemplateRepository
-├─ immutable template candidate collection
-└─ find(script: ScriptId, playerCount: Int): List<SetupCandidate>
-```
-
-Required behavior should include:
-
-- exact script + player-count bucket lookup;
-- deterministic/stable result order or explicit canonicalization;
-- immutable snapshot semantics;
-- zero-result lookup for absent script/player count;
-- validation that stored candidate script/player count agrees with its bucket;
-- no Android `Context`, assets, JSON, persistence, diversity history or shown-role dependencies.
-
-Do not freeze TB dataset schema/version into the generic repository. TB dataset adaptation belongs later in MS-S7.
-
-## 12. MS-S3 evidence strategy
-
-Use typed tests. Minimum useful evidence:
-
-1. matching script/player count returns only matching template candidates;
-2. absent script/player count returns empty list;
-3. caller collection mutation cannot mutate repository contents;
-4. cross-script or cross-count bucket mismatch is rejected;
-5. lookup order is deterministic;
-6. generic repository remains independent of TB-only metadata and Android/persistence classes.
-
-Existing evidence counts where applicable. Do not create source-string tests when typed behavior proof is stronger.
-
-## 13. Protected predecessor invariants
+## 12. Protected predecessor invariants
 
 Preserve throughout MS-SETUP:
 
@@ -313,7 +290,7 @@ Drunk actual identity remains Drunk.
 Drunk shown identity is committed once and cannot be replaced by recommendation.
 Start commits setup only once; recomposition/navigation cannot reroll it.
 Restore never reselects/rerolls an already committed setup.
-Invalid TB template data never silently falls back to broad-random TB setup.
+Invalid template data never silently falls back to broad-random setup.
 Background work cannot mutate committed identities.
 Only true completed games enter diversity/rotation history.
 Completion persistence is retry-safe.
@@ -321,7 +298,7 @@ Completion persistence is retry-safe.
 
 Also preserve Dawn/Dusk retry convergence, Fortune Teller current/effective-state authority, poisoned Spy fail-safe semantics, current living-Demon UI authority and NGJ setup legality until explicit migration.
 
-## 14. Workflow
+## 13. Workflow
 
 Follow:
 
@@ -330,31 +307,39 @@ Follow:
 - `docs/TESTING_STRATEGY.md`;
 - `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`.
 
-MS-S3 should be small pure Kotlin work, suitable for direct GitHub connector edits. It should not require App/Host modification.
+Use risk-based typed evidence, not RED ceremony.
 
-## 15. Immediate next action — MS-S3 audit first
+MS-S4 should remain small pure Kotlin work, suitable for direct GitHub connector edits. Do not touch the large App root in MS-S4.
+
+## 14. Immediate next action — MS-S4 audit first
 
 1. re-confirm live `main`, branch, Draft PR #61 and checks;
-2. inspect TB dataset pools + validator and MS-S2 contracts;
-3. freeze the smallest generic template repository contract;
-4. establish typed test-first evidence for immutable/correct bucket lookup;
-5. implement only MS-S3 pure repository code;
-6. run focused/FAST evidence according to risk router;
-7. stop before MS-S4 deterministic generator work.
+2. inspect the legacy NGJ composition logic and supported distributions;
+3. inspect validated ruleset/catalog role metadata and setup-modifier support;
+4. decide the smallest generic legality input needed by the generator;
+5. freeze deterministic seed derivation and source API;
+6. establish typed test-first evidence;
+7. implement only generated pre-seat candidate production;
+8. run focused/FAST evidence according to risk router;
+9. stop before MS-S5.
 
-## 16. Explicit non-goals for MS-S3
+## 15. Documentation authority
 
-Do not broaden into:
+```text
+AGENTS.md
+docs/CURRENT_DEVELOPMENT_ROADMAP.md
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_MS_SETUP_ARCHITECTURE.md
+docs/MS_SETUP_RECOVERY_SCOPE_REDUCTION_AUDIT_2026-08-31.md
+docs/MS_S1_COMMITTED_SETUP_CHECKPOINT_2026-08-31.md
+docs/MS_S1R_SETUP_PERSISTENCE_CHECKPOINT_2026-08-31.md
+docs/MS_S2_SETUP_PROVIDER_CONTRACT_CHECKPOINT_2026-08-31.md
+docs/MS_S3_TEMPLATE_REPOSITORY_CHECKPOINT_2026-08-31.md
+docs/TESTING_STRATEGY.md
+docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
+```
 
-- deterministic generated setup implementation;
-- diversity scoring/rotation migration;
-- shown-identity/Drunk commitment policy;
-- TB production cutover;
-- NGJ production cutover;
-- Android asset-loading abstraction for setup templates;
-- setup persistence changes;
-- general unfinished-game recovery cleanup;
-- Host/App decomposition;
-- PR Ready/merge changes.
+## 16. Resume guard
 
-Keep PR #61 Draft. Do not merge, mark Ready, force-push or rebase without explicit user authorization.
+Treat `6b15822e75680fb8e718f5db24358e1a935b5523` as the accepted MS-S3 code/test checkpoint unless a later production commit deliberately supersedes it.
+
+Next production slice is MS-S4. Keep PR #61 Draft. Do not merge, mark Ready, force-push or rebase without explicit user authorization.
