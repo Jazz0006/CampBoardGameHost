@@ -32,15 +32,18 @@ d4001863f134ebbe7d26819f40ac34c7d1de200c
 
 MS-S3 accepted code/test checkpoint:
 6b15822e75680fb8e718f5db24358e1a935b5523
+
+MS-S4 accepted code/test checkpoint:
+6de0e8c99c89a091615c513255adbdb773b3cc69
 ```
 
-MS-S3 validation:
+MS-S4 validation:
 
 ```text
-CI #1230 / run 33357908514   SUCCESS
+CI #1236 / run 33359464789   SUCCESS
 Android FAST unit tests      SUCCESS
 CI aggregate gate            SUCCESS
-R2 #1147 / run 33357908443   SUCCESS
+R2 #1153 / run 33359464788   SUCCESS
 Full Android                 SKIPPED by risk router
 ASP contract tests           SKIPPED by risk router
 Real Clingo                  SKIPPED by risk router
@@ -57,7 +60,8 @@ MS-S1    CommittedClocktowerSetup + provenance   COMPLETE / ACCEPTED
 MS-S1R   setup persistence authority migration   COMPLETE / ACCEPTED
 MS-S2    candidate/source/provider contracts     COMPLETE / ACCEPTED
 MS-S3    optional template repository            COMPLETE / ACCEPTED
-MS-S4    deterministic generated source          NEXT
+MS-S4    deterministic generated source          COMPLETE / ACCEPTED
+MS-S5    diversity history/scorer/selector       NEXT
 ```
 
 Active handoff:
@@ -70,6 +74,7 @@ Accepted checkpoints:
 - `docs/MS_S1R_SETUP_PERSISTENCE_CHECKPOINT_2026-08-31.md`
 - `docs/MS_S2_SETUP_PROVIDER_CONTRACT_CHECKPOINT_2026-08-31.md`
 - `docs/MS_S3_TEMPLATE_REPOSITORY_CHECKPOINT_2026-08-31.md`
+- `docs/MS_S4_GENERATED_SETUP_CANDIDATE_SOURCE_CHECKPOINT_2026-08-31.md`
 
 Recovery decision/audit:
 
@@ -252,8 +257,8 @@ MS-S1   generic persistence-independent CommittedClocktowerSetup + provenance   
 MS-S1R  exact setup persistence authority migration + TB restore retirement         COMPLETE / ACCEPTED
 MS-S2   generic SetupCandidate + source/provider registry contracts                 COMPLETE / ACCEPTED
 MS-S3   optional TemplateRepository keyed by script + player count                  COMPLETE / ACCEPTED
-MS-S4   deterministic seeded legal GeneratedSetupCandidateSource                    NEXT
-MS-S5   common deterministic SetupDiversityHistory / scorer / selector facade
+MS-S4   deterministic seeded legal GeneratedSetupCandidateSource                    COMPLETE / ACCEPTED
+MS-S5   common deterministic SetupDiversityHistory / scorer / selector facade       NEXT
 MS-S6   generic shown-identity commitment policy
 MS-S7   adapt TB 480-preset pipeline; preserve TB behavior/parity
 MS-S8   adapt NGJ/no-template path; legality parity + deterministic seeded evidence
@@ -264,31 +269,46 @@ REC-R1  separate future unfinished-game stable-checkpoint simplification
 
 Do not implement several slices at once merely because they share the campaign.
 
-## 10. MS-S4 — NEXT
+## 10. MS-S4 — COMPLETE / ACCEPTED
 
-MS-S4 introduces a deterministic seeded legal `GeneratedSetupCandidateSource` for scripts that do not have usable template candidates.
+Accepted production source:
 
-Required boundary:
+`app/src/main/java/com/codex/campboardgamehost/clocktower/setup/GeneratedSetupCandidateSource.kt`
+
+Accepted typed contract:
+
+`app/src/test/java/com/codex/campboardgamehost/clocktower/setup/GeneratedSetupCandidateSourceTest.kt`
+
+Accepted boundary:
 
 ```text
 SetupCandidateRequest(script, playerCount, setupSeed)
-+ validated script/ruleset character metadata
--> deterministic legal generated SetupCandidate values
++ injected ValidatedClocktowerRuleset
++ providerId
+-> deterministic legal pre-seat generated SetupCandidate
 ```
 
-Before production writes:
+Accepted behavior:
 
-1. re-query live `main`, branch, Draft PR #61 and checks;
-2. audit the legacy NGJ actual-role composition rules separately from its seat shuffle and Drunk shown-role handling;
-3. audit generic ruleset/catalog metadata available for role team/type and setup modifiers;
-4. freeze deterministic seed derivation and legal candidate generation ownership;
-5. prove same request/seed gives identical generated candidates;
-6. prove different seeds can produce valid variation without relying on global `Random`;
-7. prove generated candidates have `SetupSourceKind.GENERATED` and correct provider attribution;
-8. preserve player-count legality, including setup modifiers such as Baron, without applying them twice;
-9. stop before diversity scoring/selection (MS-S5), shown identity (MS-S6), or NGJ production cutover (MS-S8).
+- source/ruleset script mismatch fails explicitly;
+- same request and seed yields the same candidate;
+- different seeds can vary composition when the role pool has choice space;
+- deterministic rank derives from seed + script + player count + team + role ID;
+- no unseeded `.random()` or `.shuffled()` is used;
+- generated provenance is `SetupSourceKind.GENERATED` with stable provider attribution;
+- role IDs are selected only from the injected validated ruleset;
+- current 5–15 Clocktower base distributions are reproduced;
+- selected Baron applies one `+2 Outsider` shift, capped to available script Outsiders, with Townsfolk reduced by the actual delta;
+- unsupported selected setup modifiers fail explicitly rather than being silently ignored;
+- no seating, shown identity, diversity/history, persistence, Android `Context`, UI state or production-flow wiring enters the generator.
 
-MS-S4 must not silently fall back from malformed template data; template availability/failure policy remains separate from generated candidate legality.
+Legacy NGJ `generateClocktowerAssignments(...)` remains unchanged; its seat shuffle and Drunk shown-role behavior remain outside this slice. Existing NGJ regression evidence remains intact.
+
+No template-vs-generated fallback orchestration was introduced. MS-S3's missing-template `emptyList()` remains normal repository behavior; future policy owns source selection.
+
+Authoritative checkpoint:
+
+`docs/MS_S4_GENERATED_SETUP_CANDIDATE_SOURCE_CHECKPOINT_2026-08-31.md`
 
 ## 11. Protected predecessor correctness
 
@@ -323,7 +343,7 @@ Use risk-based evidence:
 - T4 is an explicit full-acceptance/merge-level checkpoint rather than a micro-slice default;
 - local/focused evidence does not replace required GitHub CI/R2 at an applicable checkpoint.
 
-MS-S3 is accepted at `6b15822e75680fb8e718f5db24358e1a935b5523` with CI #1230 and R2 #1147.
+MS-S4 is accepted at `6de0e8c99c89a091615c513255adbdb773b3cc69` with CI #1236 / run `33359464789` and R2 #1153 / run `33359464788`.
 
 ## 13. Writer / large-file workflow
 
@@ -333,7 +353,7 @@ Large/truncated source with stable unique anchors: GitHub Actions one-shot + sep
 
 Use Codex/Luna only if that path cannot safely perform the required write.
 
-MS-S4 should remain pure Kotlin setup-domain work and should not require App/Host edits.
+MS-S5 should continue to prefer pure Kotlin setup-domain work and should not expand App/Host wiring prematurely.
 
 ## 14. Current documentation authority
 
@@ -346,6 +366,7 @@ docs/MS_S1_COMMITTED_SETUP_CHECKPOINT_2026-08-31.md
 docs/MS_S1R_SETUP_PERSISTENCE_CHECKPOINT_2026-08-31.md
 docs/MS_S2_SETUP_PROVIDER_CONTRACT_CHECKPOINT_2026-08-31.md
 docs/MS_S3_TEMPLATE_REPOSITORY_CHECKPOINT_2026-08-31.md
+docs/MS_S4_GENERATED_SETUP_CANDIDATE_SOURCE_CHECKPOINT_2026-08-31.md
 docs/TESTING_STRATEGY.md
 docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 ```
@@ -354,12 +375,12 @@ docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 
 1. read root `AGENTS.md`;
 2. read this roadmap and the active handoff;
-3. read MS-S1/MS-S1R/MS-S2/MS-S3 checkpoints as relevant;
+3. read MS-S1/MS-S1R/MS-S2/MS-S3/MS-S4 checkpoints as relevant;
 4. re-query live `main`, `codex/ms-setup-generic-architecture`, Draft PR #61 and checks;
 5. treat `98ee982ef3590822cd06ac72a047b49afac3cfd6` as the fully validated merged TBSP checkpoint unless live audit changes that fact;
-6. treat `6b15822e75680fb8e718f5db24358e1a935b5523` as the accepted MS-S3 code/test checkpoint unless later production commits deliberately supersede it;
-7. next production slice is MS-S4;
-8. stop MS-S4 before diversity scoring/selection (MS-S5) and shown-identity commitment (MS-S6);
+6. treat `6de0e8c99c89a091615c513255adbdb773b3cc69` as the accepted MS-S4 code/test checkpoint unless later production commits deliberately supersede it;
+7. next production slice is MS-S5;
+8. do not pull shown-identity commitment forward from MS-S6 or TB/NGJ production cutovers from MS-S7/MS-S8;
 9. do not perform broad unfinished-night cleanup inside MS-SETUP; REC-R1 owns that later work;
 10. keep PR #61 Draft and do not merge, mark Ready, force-push or rebase without explicit user authorization.
 
@@ -367,10 +388,11 @@ docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 
 | Area | Status |
 |---|---|
-| MS-SETUP generic multi-script setup architecture | CURRENT — MS-S4 NEXT |
+| MS-SETUP generic multi-script setup architecture | CURRENT — MS-S4 ACCEPTED / MS-S5 NEXT |
 | MS-S1R setup persistence authority migration | COMPLETE / ACCEPTED |
 | MS-S2 generic candidate/provider contracts | COMPLETE / ACCEPTED |
 | MS-S3 optional template repository | COMPLETE / ACCEPTED |
+| MS-S4 deterministic generated source | COMPLETE / ACCEPTED |
 | REC-R1 unfinished-game recovery simplification | QUEUED SEPARATE CAMPAIGN |
 | GCR-4 Chambermaid actual wake-history authority | DEFERRED FOLLOW-UP |
 | GCR-5 night checkpoint stable identity hardening | DEFERRED; re-evaluate under REC-R1 |
