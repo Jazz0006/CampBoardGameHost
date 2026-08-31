@@ -7,6 +7,7 @@ import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
@@ -39,24 +40,33 @@ class SetupMigrationTest {
     }
 
     @Test
-    fun `non Investigator committed identity does not invent Drunk setup information`() {
+    fun `committed Librarian identity keeps Drunk information in setup recommendation`() {
         val template = TroubleBrewingFixtures.eightPlayerExample()
+        val drunkSeat = template.players.single { it.actualRole == RoleId("Drunk") }.seat
         val game = template.copy(
             players = template.players.map { player ->
-                if (player.actualRole == RoleId("Drunk")) {
-                    player.copy(shownRole = RoleId("Chef"))
+                if (player.seat == drunkSeat) {
+                    player.copy(shownRole = RoleId("Librarian"))
                 } else {
                     player
                 }
             },
         )
 
-        assertTrue(
-            SetupCandidateGenerator.generateDrunkCandidates(
-                game,
-                TroubleBrewingFixtures.roleDefinitions(),
-            ).isEmpty(),
+        val plans = SetupRecommendationService.recommend(
+            game,
+            TroubleBrewingFixtures.fullRoleDefinitions(),
         )
+
+        assertTrue(plans.isNotEmpty())
+        assertTrue(plans.all { plan ->
+            plan.decisions.none { it is StorytellerDecision.DrunkShownRole } &&
+                plan.observations.any { observation ->
+                    observation.sourceSeat == drunkSeat &&
+                        observation.perceivedRole == RoleId("Librarian") &&
+                        observation.reliability == ReliabilityState.DRUNK
+                }
+        })
     }
 
     @Test
