@@ -19,9 +19,12 @@ ChatGPT / Chat
 GitHub connector
   = default writer whenever the complete target file can be read and safely replaced
 
+GitHub Actions one-shot + separate Python patch script
+  = first fallback for large/truncated files when an exact localized remote patch is possible
+  = complete checkout + exact HEAD/blob/anchor locking + tests/diff audit + self-cleanup
+
 Codex / Luna
-  = file-level implementation executor only when connector editing is unsafe or inefficient
-  = primarily large/truncated files and local Gradle execution
+  = next fallback only when the one-shot remote patch cannot be made safe or the task genuinely requires a local worktree/tooling
 
 GitHub
   = source of truth and independent remote validation surface
@@ -33,13 +36,18 @@ Luna must not be assigned architecture design, scope expansion, remote PR audit,
 
 Use the connector for tests, docs, and small/medium source files whenever it can read/write them safely.
 
+For a large/truncated file where whole-file connector replacement is unsafe, first ask whether the edit can be expressed as stable unique semantic anchors against an exact file blob. If yes, **use the GitHub Actions one-shot + separate Python patch script path before Luna**.
+
 Use Luna only when at least one of these is true:
 
-- the file is large/truncated and whole-file replacement is unsafe;
-- the change requires a complete local worktree or mechanical multi-region edit;
-- local-only build/test tooling is needed to implement the specified patch safely.
+- the one-shot patch cannot be made fail-closed with stable unique anchors;
+- the change requires a complete local worktree or broad mechanical multi-region edit;
+- local-only build/test inputs or tooling are required;
+- repeated failures demonstrate that the GitHub runner environment cannot perform the required operation safely.
 
-Do not send small-file work to Luna merely because Luna is already involved in the slice.
+Do not send work to Luna merely because Luna is already involved in the slice or because the target file is large.
+
+The normative large-file procedure, including YAML/Python quoting, LF/newline preservation, exact anchor counts, workflow startup failures, GitHub Actions bot-push behavior and self-cleanup, is `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`.
 
 ## 3. Tests-first micro-cycle
 
@@ -113,6 +121,8 @@ Documentation-only commits remain lightweight and do not invalidate a previously
 Escalate a single slice earlier when it changes persistence/schema, transaction boundaries, shared projector/chronology, build/Gradle/CI configuration, or when focused tests cannot establish sufficient confidence.
 
 ## 5. Luna instruction contract
+
+Luna is the fallback after the large-file one-shot path, not the default large-file writer. Before assigning a large/truncated-file edit to Luna, record why `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` cannot safely perform the edit.
 
 Every Luna instruction must be one continuous fenced code block and should normally contain only:
 
