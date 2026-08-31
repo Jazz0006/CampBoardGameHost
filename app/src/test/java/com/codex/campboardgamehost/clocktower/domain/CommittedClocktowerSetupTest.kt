@@ -29,6 +29,19 @@ class CommittedClocktowerSetupTest {
     }
 
     @Test
+    fun `equivalent committed facts compare structurally`() {
+        val assignments = listOf(
+            seat(1, actual = "Chef", shown = "Chef"),
+            seat(2, actual = "Imp", shown = "Imp"),
+        )
+        val first = setup(assignments)
+        val second = setup(assignments.toList())
+
+        assertEquals(first, second)
+        assertEquals(first.hashCode(), second.hashCode())
+    }
+
+    @Test
     fun `committed setup snapshots caller assignment list`() {
         val mutableAssignments = mutableListOf(
             seat(1, actual = "Chef", shown = "Chef"),
