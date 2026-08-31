@@ -37,7 +37,7 @@ MS-S4 accepted code/test checkpoint:
 6de0e8c99c89a091615c513255adbdb773b3cc69
 ```
 
-MS-S4 validation:
+MS-S4 validation remains:
 
 ```text
 CI #1236 / run 33359464789   SUCCESS
@@ -49,148 +49,96 @@ ASP contract tests           SKIPPED by risk router
 Real Clingo                  SKIPPED by risk router
 ```
 
-Later docs-only commits are carriers and do not replace the accepted code/test checkpoint.
+Later documentation commits are carriers and do not replace the accepted production checkpoint.
 
 Current campaign status:
 
 ```text
-MS-S0    ownership audit                         COMPLETE
-MS-S0.5  recovery scope reduction audit          COMPLETE
-MS-S1    CommittedClocktowerSetup + provenance   COMPLETE / ACCEPTED
-MS-S1R   setup persistence authority migration   COMPLETE / ACCEPTED
-MS-S2    candidate/source/provider contracts     COMPLETE / ACCEPTED
-MS-S3    optional template repository            COMPLETE / ACCEPTED
-MS-S4    deterministic generated source          COMPLETE / ACCEPTED
-MS-S5    diversity history/scorer/selector       NEXT
+MS-S0    ownership audit                                      COMPLETE
+MS-S0.5  recovery scope reduction audit                       COMPLETE
+MS-S1    CommittedClocktowerSetup + provenance                COMPLETE / ACCEPTED
+MS-S1R   setup persistence authority migration                COMPLETE / ACCEPTED
+MS-S2    candidate/source/provider contracts                  COMPLETE / ACCEPTED
+MS-S3    optional TemplateRepository                          COMPLETE / ACCEPTED
+MS-S4    deterministic generated actual-role source           COMPLETE / ACCEPTED
+MS-S4.5  shown-identity ownership architecture correction    COMPLETE / ACCEPTED
+MS-S5    actual-composition diversity/scorer/selector         NEXT
 ```
 
 Active handoff:
 
 `docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_MS_SETUP_ARCHITECTURE.md`
 
-Accepted checkpoints:
+New S4.5 authority:
 
-- `docs/MS_S1_COMMITTED_SETUP_CHECKPOINT_2026-08-31.md`
-- `docs/MS_S1R_SETUP_PERSISTENCE_CHECKPOINT_2026-08-31.md`
-- `docs/MS_S2_SETUP_PROVIDER_CONTRACT_CHECKPOINT_2026-08-31.md`
-- `docs/MS_S3_TEMPLATE_REPOSITORY_CHECKPOINT_2026-08-31.md`
-- `docs/MS_S4_GENERATED_SETUP_CANDIDATE_SOURCE_CHECKPOINT_2026-08-31.md`
-
-Recovery decision/audit:
-
-`docs/MS_SETUP_RECOVERY_SCOPE_REDUCTION_AUDIT_2026-08-31.md`
+`docs/MS_S4_5_SHOWN_IDENTITY_OWNERSHIP_CORRECTION_2026-08-31.md`
 
 ## 2. MS-SETUP target architecture
 
-Build one script-neutral setup pipeline:
+The setup pipeline is now frozen around the causal order:
 
 ```text
-script + playerCount + seed + diversity history
--> resolve script/ruleset setup provider
--> query optional template candidates
--> templates exist: validated template candidates
--> no templates: legal generated candidates
--> common deterministic diversity selector
--> commit shown-identity decisions
--> CommittedClocktowerSetup
+Composition
+-> Identity
+-> Information
 ```
 
-`CommittedClocktowerSetup` is the immutable exact initial setup fact. Persistence/recovery is an outer consumer and must not be a dependency of candidate generation, selection, shown-identity choice, or setup commitment.
+Full target flow:
+
+```text
+script + playerCount + setupSeed
+-> resolve script/ruleset setup provider
+-> query optional template candidates or legal generated candidates
+-> MS-S5 select one candidate using ACTUAL-COMPOSITION diversity only
+-> MS-S6A resolve legal shown-identity options/policy
+-> MS-S6B deterministically commit shown identity
+-> seat/deal materialization
+-> CommittedClocktowerSetup(actualRole + shownRole)
+-> setup/first-night recommendation reads committed shownRole
+-> recommendation generates information only
+```
+
+`CommittedClocktowerSetup` is the immutable exact initial setup fact. Persistence/recovery is an outer consumer and must not be a dependency of candidate generation, selection, shown-identity choice or setup commitment.
 
 The App root must not gain new script-specific setup branches when future scripts are added.
 
-## 3. Completed predecessor — TBSP
+### Frozen ownership rule
 
-Trouble Brewing Setup Presets is complete and merged.
+Shown identity is a setup fact, not a recommendation output.
 
-Preserve until deliberately migrated with parity evidence:
+Recommendation may consume `PlayerState.shownRole`, but may not select, replace, reroll or optimize the shown identity itself.
 
-- frozen 480-preset dataset;
-- deterministic preset/deal semantics;
-- selector-owned Drunk shown identity;
-- true-completion rotation history;
-- non-blocking reveal/First Night precompute;
-- accepted durability behavior.
+## 3. Accepted foundation through MS-S4
 
-Historical/normative TBSP docs remain authoritative where their behavior is still being adapted.
-
-## 4. MS-S0 / MS-S0.5 — COMPLETE
-
-Ownership audit established:
-
-- TB setup is currently implemented by TB-specific preset/data/selector/rotation/materialization components plus App start wiring;
-- NGJ uses a legacy no-template path that mixes actual-role generation, random seating and Drunk shown-role choice;
-- NGJ generation currently uses unseeded random/shuffle behavior before the game seed is established;
-- Host consumes prepared setup and does not own initial setup generation;
-- TB-specific style/minion-set/rotation metadata must not become mandatory generic-core state.
-
-Recovery scope decision:
-
-```text
-supported:
-best-effort crash / Android process-death recovery
--> latest supported stable committed domain checkpoint
--> restore committed setup + committed game facts exactly
--> resume/restart from next safe domain/action boundary
-
-not promised:
-exact arbitrary mid-UI continuation
-play-half-today/resume-tomorrow contract
-indefinite compatibility for every historical unfinished save
-```
-
-Broad unfinished-night simplification remains future REC-R1 work.
-
-## 5. MS-S1 — COMPLETE / ACCEPTED
-
-Accepted pure domain model:
+### MS-S1 — CommittedClocktowerSetup
 
 ```text
 CommittedClocktowerSetup
-├─ script: ScriptId
-├─ setupSeed: Long
-├─ assignments: ordered List<CommittedSetupSeat>
-│  ├─ seat: Int
-│  ├─ actualRole: RoleId
-│  └─ shownRole: RoleId
-└─ provenance: SetupProvenance
-   ├─ sourceKind: TEMPLATE | GENERATED
-   ├─ providerId: String
-   └─ candidateId: String?
+├─ script
+├─ setupSeed
+├─ ordered seats
+│  ├─ actualRole
+│  └─ shownRole
+└─ provenance
 ```
 
-Key invariants: canonical seats `1..N`, exact actual/shown identities, immutable assignment snapshot, structural equality, generic provenance only, no Android/session/persistence dependency.
+Exact committed identities are authority; provenance is audit/source metadata only.
 
-## 6. MS-S1R — COMPLETE / ACCEPTED
-
-Setup recovery authority changed from TB provenance + current dataset reconstruction to direct exact setup persistence:
+### MS-S1R — exact persistence authority
 
 ```text
-exact CommittedClocktowerSetup
--> persist exact setup
--> direct decode/validate on restore
-
-TB compact completion/diversity record
--> persist original committed rotation-relevant summary
--> direct restore
+persist exact CommittedClocktowerSetup
+-> direct decode/validate
+-> restore exact actual/shown identities
 ```
 
-Accepted outcomes:
+Restore never reruns setup selection or recommendation.
 
-- restore no longer reloads the 480-preset asset to infer setup identities;
-- restore no longer reconstructs `TroubleBrewingSetupPresetSelection`;
-- old `TroubleBrewingSetupProvenancePersistence` authority and typed legacy contract were retired after call-site proof;
-- exact setup and compact TB completion record are cross-validated;
-- only true completed TB games enter rotation history;
-- broad night/draft recovery remains untouched.
+### MS-S2 — candidate/provider contracts
 
-## 7. MS-S2 — COMPLETE / ACCEPTED
+`SetupCandidate` is deliberately a canonical **pre-seat actual-role multiset** with no seating, shown identity, persistence schema or diversity history.
 
-Accepted production contract:
-
-`app/src/main/java/com/codex/campboardgamehost/clocktower/setup/ClocktowerSetupProvider.kt`
-
-Accepted concepts:
+Accepted contracts remain:
 
 ```text
 SetupCandidate
@@ -200,55 +148,73 @@ ClocktowerSetupProvider
 ClocktowerSetupProviderRegistry
 ```
 
-`SetupCandidate` is deliberately a **pre-seat actual-role multiset**, not a committed setup. Its role list is canonical/snapshotted and contains no seating, shown identities, persistence schema or diversity history.
+### MS-S3 — optional TemplateRepository
 
-`SetupCandidateRequest` contains only `script`, positive `playerCount`, and `setupSeed`. The seed is available for MS-S4 deterministic generation; diversity history remains MS-S5 ownership.
-
-`ClocktowerSetupProvider` rejects cross-script requests, mismatched candidate player counts, cross-script candidates and cross-provider attribution. Empty candidate lists remain valid.
-
-`ClocktowerSetupProviderRegistry` maps one provider per script, returns `null` for an unregistered script and rejects duplicate script registration.
-
-No App/Host/TB/NGJ production wiring changed in MS-S2.
-
-## 8. MS-S3 — COMPLETE / ACCEPTED
-
-Accepted production contract:
-
-`app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TemplateRepository.kt`
-
-Accepted typed test:
-
-`app/src/test/java/com/codex/campboardgamehost/clocktower/setup/TemplateRepositoryTest.kt`
-
-Accepted concepts:
+`TemplateRepository` remains actual-role candidate storage/lookup only:
 
 ```text
 TemplateBucketKey(script, playerCount)
-TemplateRepository
-  find(script, playerCount) -> List<SetupCandidate>
-  SetupCandidateSource.candidates(request)
+TemplateRepository.find(script, playerCount)
 ```
 
-Accepted repository behavior:
+It remains seed/diversity/shown-identity independent. Template-specific shown-identity metadata will be reached later through a companion policy/metadata boundary rather than by expanding `SetupCandidate`.
 
-- exact script + player-count bucket lookup;
-- missing bucket returns an empty list as a normal no-template result;
-- immutable snapshot of caller collections;
-- bucket script/player-count mismatches fail fast;
-- only `SetupSourceKind.TEMPLATE` candidates are accepted;
-- template candidates require durable `candidateId`;
-- duplicate `(providerId, candidateId)` identity within a bucket is rejected;
-- result order is canonical/deterministic;
-- setup seed is deliberately ignored by template lookup;
-- no Android, asset, JSON, persistence, diversity or shown-identity dependency.
+### MS-S4 — GeneratedSetupCandidateSource
 
-TB dataset parsing and TB-specific validation remain outside generic repository ownership.
+Accepted production source:
+
+`app/src/main/java/com/codex/campboardgamehost/clocktower/setup/GeneratedSetupCandidateSource.kt`
+
+It owns only deterministic legal actual-role generation. It preserves the 5–15 base distribution, one capped Baron `+2 Outsider` adjustment, stable provider provenance, and no unseeded random/shuffle behavior.
+
+It does not own seating, shown identity, diversity/history, persistence, UI or App/Host production wiring.
+
+## 4. MS-S4.5 architecture correction — COMPLETE / ACCEPTED
 
 Authoritative checkpoint:
 
-`docs/MS_S3_TEMPLATE_REPOSITORY_CHECKPOINT_2026-08-31.md`
+`docs/MS_S4_5_SHOWN_IDENTITY_OWNERSHIP_CORRECTION_2026-08-31.md`
 
-## 9. Implementation campaign
+Global audit findings frozen by S4.5:
+
+- TB preset metadata already carries `drunkAsOptions` with strict validator coverage;
+- legacy TB setup scoring currently lets selected Drunk shown role affect preset weight;
+- generic recommendation history also treats Drunk shown identity as a selectable recommendation dimension;
+- `PlayerState.shownRole` already exists and `PlayerCard -> GameState` already carries committed shown identity into recommendation input;
+- `TroubleBrewingSetupRecommendationLock` is therefore a migration bridge that turns an existing input fact back into a locked recommendation output;
+- first-night information already has role-family infrastructure that should be reused rather than duplicated.
+
+The corrected rule is:
+
+> actual-role composition selection must be independent of shown-identity metadata/history.
+
+## 5. Corrected TB parity definition
+
+Trouble Brewing Setup Presets remains a protected predecessor, but `preserve TB behavior/parity` is now explicitly scoped.
+
+Must preserve:
+
+- frozen 480-preset dataset;
+- template legality and player-count pools;
+- actual-role composition semantics;
+- exact-repeat policy where still applicable;
+- actual-role overlap/novelty scoring;
+- Minion-set diversity;
+- style diversity;
+- Baron/TB composition legality;
+- `drunkAsOptions` legal metadata;
+- deterministic deal/commit behavior after the corrected pipeline;
+- true-completion history gating and accepted durability behavior.
+
+Deliberately allowed to change:
+
+- repeated Drunk shown role no longer alters actual-role preset weight;
+- exact legacy seed/history -> preset identity is not required where the old result depended on that shown-role weighting;
+- shown identity is selected only after the actual-role candidate is selected.
+
+This is an intentional semantic correction, not a parity regression.
+
+## 6. Remaining implementation campaign
 
 ```text
 MS-S0   fresh live-state + TB/NGJ/setup ownership audit                            COMPLETE
@@ -258,59 +224,133 @@ MS-S1R  exact setup persistence authority migration + TB restore retirement     
 MS-S2   generic SetupCandidate + source/provider registry contracts                 COMPLETE / ACCEPTED
 MS-S3   optional TemplateRepository keyed by script + player count                  COMPLETE / ACCEPTED
 MS-S4   deterministic seeded legal GeneratedSetupCandidateSource                    COMPLETE / ACCEPTED
-MS-S5   common deterministic SetupDiversityHistory / scorer / selector facade       NEXT
-MS-S6   generic shown-identity commitment policy
-MS-S7   adapt TB 480-preset pipeline; preserve TB behavior/parity
-MS-S8   adapt NGJ/no-template path; legality parity + deterministic seeded evidence
-MS-S9   acceptance: future no-template script needs no App-root branch
+MS-S4.5 shown-identity ownership architecture correction                           COMPLETE / ACCEPTED
+MS-S5   actual-composition SetupDiversityHistory / scorer / selector                NEXT
+MS-S6A  generic shown-identity policy/options boundary
+MS-S6B  deterministic shown-identity commitment
+MS-S6C  recommendation ownership inversion
+MS-S7   adapt TB 480-template pipeline under corrected parity semantics
+MS-S8   adapt NGJ/no-template production path
+MS-S9   acceptance: future no-template script needs no App-root setup branch
 
 REC-R1  separate future unfinished-game stable-checkpoint simplification
 ```
 
 Do not implement several slices at once merely because they share the campaign.
 
-## 10. MS-S4 — COMPLETE / ACCEPTED
+## 7. MS-S5 immediate objective
 
-Accepted production source:
-
-`app/src/main/java/com/codex/campboardgamehost/clocktower/setup/GeneratedSetupCandidateSource.kt`
-
-Accepted typed contract:
-
-`app/src/test/java/com/codex/campboardgamehost/clocktower/setup/GeneratedSetupCandidateSourceTest.kt`
-
-Accepted boundary:
+The next production slice is **actual-composition diversity only**:
 
 ```text
-SetupCandidateRequest(script, playerCount, setupSeed)
-+ injected ValidatedClocktowerRuleset
-+ providerId
--> deterministic legal pre-seat generated SetupCandidate
+legal SetupCandidate values
++ actual-composition diversity history
++ deterministic selection seed/context
+-> one selected SetupCandidate
 ```
 
-Accepted behavior:
+MS-S5 may rank/choose legal candidates but must not become a second legality engine.
 
-- source/ruleset script mismatch fails explicitly;
-- same request and seed yields the same candidate;
-- different seeds can vary composition when the role pool has choice space;
-- deterministic rank derives from seed + script + player count + team + role ID;
-- no unseeded `.random()` or `.shuffled()` is used;
-- generated provenance is `SetupSourceKind.GENERATED` with stable provider attribution;
-- role IDs are selected only from the injected validated ruleset;
-- current 5–15 Clocktower base distributions are reproduced;
-- selected Baron applies one `+2 Outsider` shift, capped to available script Outsiders, with Townsfolk reduced by the actual delta;
-- unsupported selected setup modifiers fail explicitly rather than being silently ignored;
-- no seating, shown identity, diversity/history, persistence, Android `Context`, UI state or production-flow wiring enters the generator.
+### MS-S5 forbidden inputs/responsibilities
 
-Legacy NGJ `generateClocktowerAssignments(...)` remains unchanged; its seat shuffle and Drunk shown-role behavior remain outside this slice. Existing NGJ regression evidence remains intact.
+Do not consume or score:
 
-No template-vs-generated fallback orchestration was introduced. MS-S3's missing-template `emptyList()` remains normal repository behavior; future policy owns source selection.
+- `drunkAsOptions`;
+- selected Drunk shown role;
+- shown-role history;
+- `PlayerState.shownRole`;
+- first-night clue candidates;
+- setup recommendation decisions.
 
-Authoritative checkpoint:
+Do not perform:
 
-`docs/MS_S4_GENERATED_SETUP_CANDIDATE_SOURCE_CHECKPOINT_2026-08-31.md`
+- seat assignment/shuffle;
+- shown-identity commitment;
+- Baron/setup-modifier reapplication;
+- TB/NGJ production cutover;
+- persistence changes;
+- App/Host feature expansion.
 
-## 11. Protected predecessor correctness
+Key durable invariant:
+
+> Changing shown-identity metadata/history must not change MS-S5 actual-role candidate selection.
+
+## 8. MS-S6 corrected decomposition
+
+### MS-S6A — shown-identity policy/options
+
+Conceptual ownership:
+
+```text
+selected SetupCandidate
++ validated ruleset
++ provenance
+-> legal shown-identity options/policy
+```
+
+Template candidates resolve template-specific metadata through durable `(providerId, candidateId)` identity. Generated candidates derive legal current Drunk options from script/ruleset Townsfolk minus actual in-play roles.
+
+Do not expand `SetupCandidate` with shown-role fields.
+
+If a required shown identity has no legal options, fail closed.
+
+### MS-S6B — deterministic commitment
+
+Select one legal shown identity using stable seeded deterministic logic after composition selection. No unseeded random/shuffle and no recommendation participation.
+
+History-based shown-identity rotation is not required for the first generic implementation. If later justified, it may only rank legal shown options after composition selection and must never feed back into MS-S5.
+
+### MS-S6C — recommendation ownership inversion
+
+Recommendation must treat `PlayerState.shownRole` as the perceived-identity input fact.
+
+Target:
+
+```text
+actual Drunk + shownRole = X
+-> generate only X-compatible information behavior
+-> never output/replace X
+```
+
+Audit and reuse existing first-night role-information families before introducing new fake-information algorithms.
+
+Legacy recommendation-owned Drunk identity concepts should be retired/narrowed only after typed replacement evidence and consumer audits.
+
+## 9. MS-S7 / MS-S8 target cutovers
+
+### MS-S7 — Trouble Brewing
+
+```text
+480 validated templates
+-> template SetupCandidate values
+-> MS-S5 composition selector
+-> selected candidate
+-> template shown-identity metadata
+-> MS-S6 identity commitment
+-> deal/materialize
+-> CommittedClocktowerSetup
+-> recommendation reads shownRole
+```
+
+Retire `selectedDrunkShownRole -> preset finalWeight` coupling.
+
+### MS-S8 — NGJ/no-template
+
+```text
+GeneratedSetupCandidateSource
+-> MS-S5
+-> MS-S6 generated shown options
+-> deterministic identity commitment
+-> seat/deal materialization
+-> CommittedClocktowerSetup
+-> recommendation reads shownRole
+```
+
+Retire legacy unseeded composition/shown-role selection and recommendation-time shown-role replacement only at this explicit cutover.
+
+Generated Drunk shown identity must be a legal script Townsfolk not already actually in play; do not use a broad in-play fallback.
+
+## 10. Protected predecessor correctness
 
 Preserve throughout migration:
 
@@ -321,41 +361,39 @@ Drunk actual identity remains Drunk.
 Drunk shown identity is committed once and cannot be replaced by recommendation.
 Start commits setup only once; recomposition/navigation cannot reroll it.
 Restore never reselects/rerolls an already committed setup.
-Invalid TB template data never silently falls back to broad random TB setup.
+Invalid template data never silently falls back to broad-random setup.
 Background work cannot mutate committed identities.
 Only true completed games enter setup diversity/rotation history.
 Completion persistence is retry-safe and records the original committed setup summary.
 ```
 
-Also preserve Dawn/Dusk retry convergence, Fortune Teller current/effective-state authority, poisoned Spy fail-safe semantics, current living-Demon UI authority, and NGJ setup legality/current behavior until its explicit migration.
+Also preserve Dawn/Dusk retry convergence, Fortune Teller current/effective-state authority, poisoned Spy fail-safe semantics, current living-Demon UI authority and NGJ setup legality until explicit migration.
 
-## 12. Testing cadence
+## 11. Testing cadence
 
 Follow root `AGENTS.md`, `docs/TESTING_STRATEGY.md`, and `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`.
 
 Use risk-based evidence:
 
-- durable new contracts get the smallest valuable typed test;
+- durable behavior/architecture contracts get the smallest valuable typed test;
 - existing tests count as evidence;
+- obsolete tests may be retired when their behavior is deliberately superseded and stable replacement evidence exists;
 - do not manufacture source-string RED when typed behavior proof is practical;
 - T0 is the smallest directly relevant evidence;
-- `:app:testFast` is a logical-checkpoint T1 gate;
-- T4 is an explicit full-acceptance/merge-level checkpoint rather than a micro-slice default;
-- local/focused evidence does not replace required GitHub CI/R2 at an applicable checkpoint.
+- `:app:testFast` is the logical-checkpoint T1 gate;
+- T4 remains explicit full-acceptance/merge-level validation rather than a micro-slice default.
 
-MS-S4 is accepted at `6de0e8c99c89a091615c513255adbdb773b3cc69` with CI #1236 / run `33359464789` and R2 #1153 / run `33359464788`.
+MS-S4.5 itself is docs-only and requires no manufactured Android test run. Normal docs-only GitHub routing is sufficient validation for its carrier commits.
 
-## 13. Writer / large-file workflow
+## 12. Writer / scope rules
 
-Safe small/medium tests/docs/source: GitHub connector directly.
+Safe small/medium docs/tests/source should continue through the GitHub connector.
 
-Large/truncated source with stable unique anchors: GitHub Actions one-shot + separate Python patch per `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`.
+Do not expand MS-S5 into App/Host production wiring. Do not edit `ClocktowerHostScreen.kt` for this campaign slice merely because setup state is visible there.
 
-Use Codex/Luna only if that path cannot safely perform the required write.
+Keep PR #61 Draft. Do not merge, mark Ready, rebase or force-push without explicit authorization.
 
-MS-S5 should continue to prefer pure Kotlin setup-domain work and should not expand App/Host wiring prematurely.
-
-## 14. Current documentation authority
+## 13. Current documentation authority
 
 ```text
 AGENTS.md
@@ -367,32 +405,33 @@ docs/MS_S1R_SETUP_PERSISTENCE_CHECKPOINT_2026-08-31.md
 docs/MS_S2_SETUP_PROVIDER_CONTRACT_CHECKPOINT_2026-08-31.md
 docs/MS_S3_TEMPLATE_REPOSITORY_CHECKPOINT_2026-08-31.md
 docs/MS_S4_GENERATED_SETUP_CANDIDATE_SOURCE_CHECKPOINT_2026-08-31.md
+docs/MS_S4_5_SHOWN_IDENTITY_OWNERSHIP_CORRECTION_2026-08-31.md
 docs/TESTING_STRATEGY.md
 docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 ```
 
-## 15. New-conversation resume protocol
+## 14. New-conversation resume protocol
 
 1. read root `AGENTS.md`;
-2. read this roadmap and the active handoff;
-3. read MS-S1/MS-S1R/MS-S2/MS-S3/MS-S4 checkpoints as relevant;
-4. re-query live `main`, `codex/ms-setup-generic-architecture`, Draft PR #61 and checks;
-5. treat `98ee982ef3590822cd06ac72a047b49afac3cfd6` as the fully validated merged TBSP checkpoint unless live audit changes that fact;
-6. treat `6de0e8c99c89a091615c513255adbdb773b3cc69` as the accepted MS-S4 code/test checkpoint unless later production commits deliberately supersede it;
-7. next production slice is MS-S5;
-8. do not pull shown-identity commitment forward from MS-S6 or TB/NGJ production cutovers from MS-S7/MS-S8;
-9. do not perform broad unfinished-night cleanup inside MS-SETUP; REC-R1 owns that later work;
-10. keep PR #61 Draft and do not merge, mark Ready, force-push or rebase without explicit user authorization.
+2. read this roadmap, active handoff and S4.5 checkpoint;
+3. re-query live `main`, `codex/ms-setup-generic-architecture`, Draft PR #61 and checks;
+4. distinguish docs-only carrier head from accepted MS-S4 production checkpoint `6de0e8c99c89a091615c513255adbdb773b3cc69`;
+5. next production slice is MS-S5 actual-composition diversity only;
+6. do not pull shown-identity work forward from S6A/S6B/S6C;
+7. do not perform TB/NGJ production cutovers before S7/S8;
+8. do not perform broad unfinished-night cleanup inside MS-SETUP; REC-R1 owns that later work;
+9. keep PR #61 Draft and unmerged unless explicitly authorized otherwise.
 
-## 16. Deferred / queued work registry
+## 15. Deferred / queued work registry
 
 | Area | Status |
 |---|---|
-| MS-SETUP generic multi-script setup architecture | CURRENT — MS-S4 ACCEPTED / MS-S5 NEXT |
+| MS-SETUP generic multi-script setup architecture | CURRENT — MS-S4.5 ACCEPTED / MS-S5 NEXT |
 | MS-S1R setup persistence authority migration | COMPLETE / ACCEPTED |
 | MS-S2 generic candidate/provider contracts | COMPLETE / ACCEPTED |
 | MS-S3 optional template repository | COMPLETE / ACCEPTED |
 | MS-S4 deterministic generated source | COMPLETE / ACCEPTED |
+| MS-S4.5 shown-identity ownership correction | COMPLETE / ACCEPTED |
 | REC-R1 unfinished-game recovery simplification | QUEUED SEPARATE CAMPAIGN |
 | GCR-4 Chambermaid actual wake-history authority | DEFERRED FOLLOW-UP |
 | GCR-5 night checkpoint stable identity hardening | DEFERRED; re-evaluate under REC-R1 |
