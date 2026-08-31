@@ -25,6 +25,16 @@ internal data class ImpairedInformationFamilyBudget(
     }
 }
 
+internal data class ImpairedInformationPolicyConfig(
+    val falseFamilyMassFixedPoint: Long = 900_000L,
+) {
+    init {
+        require(falseFamilyMassFixedPoint in 0L..1_000_000L) {
+            "falseFamilyMassFixedPoint must be a valid fixed-point probability mass."
+        }
+    }
+}
+
 /**
  * Owns the reliability-family boundary for information shown by a malfunctioning ability.
  *
@@ -35,19 +45,23 @@ internal data class ImpairedInformationFamilyBudget(
  */
 internal object ImpairedInformationPolicy {
     private const val TOTAL_MASS_FIXED_POINT = 1_000_000L
-    private const val IMPAIRED_FALSE_FAMILY_MASS_FIXED_POINT = 970_000L
+    val defaultConfig = ImpairedInformationPolicyConfig()
 
     /** Compatibility view for callers that know both truthful and false candidates exist. */
-    fun falseFamilyMassFixedPoint(reliability: InformationReliability): Long = familyBudget(
+    fun falseFamilyMassFixedPoint(
+        reliability: InformationReliability,
+        config: ImpairedInformationPolicyConfig = defaultConfig,
+    ): Long = familyBudget(
         reliability = reliability,
         hasTruthfulCandidate = true,
         hasFalseCandidate = true,
+        config = config,
     ).falseMassFixedPoint
 
     /**
      * Returns the semantic family budget before any within-family candidate ranking occurs.
      *
-     * The default impaired path leaves a small truthful allowance so impairment is not
+     * The default impaired path leaves a meaningful truthful allowance so impairment is not
      * mechanically solvable. Explicit truthful exceptions are deterministic and explainable.
      */
     fun familyBudget(
@@ -55,6 +69,7 @@ internal object ImpairedInformationPolicy {
         hasTruthfulCandidate: Boolean,
         hasFalseCandidate: Boolean,
         truthfulException: ImpairedTruthfulException? = null,
+        config: ImpairedInformationPolicyConfig = defaultConfig,
     ): ImpairedInformationFamilyBudget {
         if (!hasTruthfulCandidate && !hasFalseCandidate) {
             return ImpairedInformationFamilyBudget(
@@ -105,8 +120,8 @@ internal object ImpairedInformationPolicy {
         }
 
         return ImpairedInformationFamilyBudget(
-            truthfulMassFixedPoint = TOTAL_MASS_FIXED_POINT - IMPAIRED_FALSE_FAMILY_MASS_FIXED_POINT,
-            falseMassFixedPoint = IMPAIRED_FALSE_FAMILY_MASS_FIXED_POINT,
+            truthfulMassFixedPoint = TOTAL_MASS_FIXED_POINT - config.falseFamilyMassFixedPoint,
+            falseMassFixedPoint = config.falseFamilyMassFixedPoint,
             reason = ImpairedInformationPolicyReason.IMPAIRED_FALSE_PREFERRED,
         )
     }
