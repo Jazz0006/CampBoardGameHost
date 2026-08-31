@@ -1,12 +1,19 @@
 package com.codex.campboardgamehost.clocktower.history
 
+import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.CandidateMetadata
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.DecisionEvaluation
+import com.codex.campboardgamehost.clocktower.domain.PlanEffectSignature
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
+import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
+import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
+import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.CandidatePoolBuilder
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import org.junit.Assert.assertEquals
@@ -67,6 +74,29 @@ class HistoryCooldownTest {
     }
 
     @Test
+    fun `generic impaired pair observation participates in setup cooldown`() {
+        val game = TroubleBrewingFixtures.eightPlayerExample()
+        val previous = HistoricalClueSignature.fromSetupPlan(
+            game,
+            planWithObservation(candidateSeats = listOf(2, 4)),
+        )
+        val repeated = HistoricalClueSignature.fromSetupPlan(
+            game,
+            planWithObservation(candidateSeats = listOf(2, 4)),
+        )
+        val materiallyDifferent = HistoricalClueSignature.fromSetupPlan(
+            game,
+            planWithObservation(candidateSeats = listOf(7, 8)),
+        )
+        val history = CrossGameHistory(listOf(previous))
+
+        assertTrue(
+            HistoryCooldown.multiplierFixedPoint(repeated, history) <
+                HistoryCooldown.multiplierFixedPoint(materiallyDifferent, history),
+        )
+    }
+
+    @Test
     fun `cooldown changes only weights inside the already selected quality pool`() {
         val evaluations = listOf(
             evaluation("best", score = 20),
@@ -92,6 +122,26 @@ class HistoryCooldownTest {
 
         assertEquals(first.canonical(), second.canonical())
     }
+
+    private fun planWithObservation(candidateSeats: List<Int>) = RecommendationPlan(
+        decisions = emptyList(),
+        observations = listOf(
+            AbilityObservation(
+                sourceSeat = 6,
+                perceivedRole = RoleId("Librarian"),
+                shownRole = RoleId("Drunk"),
+                candidateSeats = candidateSeats,
+                reliability = ReliabilityState.DRUNK,
+                semanticTruth = SemanticTruth.FALSE,
+            ),
+        ),
+        qualityTier = QualityTier.RECOMMENDED,
+        style = RecommendationStyle.BALANCED,
+        totalScore = 0,
+        scoreItems = emptyList(),
+        warnings = emptyList(),
+        effectSignature = PlanEffectSignature(),
+    )
 
     private fun signature(drunkRole: String) = HistoricalClueSignature(
         decisionType = "setup-plan",
