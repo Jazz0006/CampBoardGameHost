@@ -1,0 +1,118 @@
+name: MS-S1R App committed setup cutover one-shot
+
+on:
+  push:
+    branches:
+      - codex/ms-setup-generic-architecture
+    paths:
+      - .github/workflows/ms-s1r-app-committed-setup-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/ms-setup-generic-architecture
+          fetch-depth: 0
+
+      - name: Verify bootstrap head and blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/codex/ms-setup-generic-architecture | cut -f1)" = "$GITHUB_SHA"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = "a8d6248f493434779a43ede882d3bd45e0eda9b8"
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/persistence/ActiveGameProductionPersistenceWiringTest.kt)" = "648def27df8cba7e25081fb5f24756478db4bcd8"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/persistence/CommittedClocktowerSetupPersistence.kt)" = "7edfe181cd25f6c428d1f447c9753ce3251b8fb0"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingCommittedSetupAdapter.kt)" = "eed8979d4b40d5e84ebd1c14149984c8ef62f20e"
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingCommittedSetupAdapterTest.kt)" = "5c03e940104b2d6115a81f30d783345b236bb12b"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Prove focused App wiring RED
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ActiveGameProductionPersistenceWiringTest' \
+            --rerun-tasks --no-daemon 2>&1 | tee /tmp/ms-s1r-red.log
+          status=${PIPESTATUS[0]}
+          set -e
+          test "$status" -ne 0
+          test -f app/build/test-results/testDebugUnitTest/TEST-com.codex.campboardgamehost.ActiveGameProductionPersistenceWiringTest.xml
+          grep -F '<failure' app/build/test-results/testDebugUnitTest/TEST-com.codex.campboardgamehost.ActiveGameProductionPersistenceWiringTest.xml
+
+      - name: Apply exact App production patch
+        run: python3 .github/scripts/ms_s1r_app_committed_setup_patch.py
+
+      - name: Run focused GREEN
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ActiveGameProductionPersistenceWiringTest' \
+            --tests 'com.codex.campboardgamehost.clocktower.setup.TroubleBrewingCommittedSetupAdapterTest' \
+            --tests 'com.codex.campboardgamehost.CommittedClocktowerSetupPersistenceTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Run FAST checkpoint suite
+        run: ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Exact diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          test "$(git diff --name-only | paste -sd ' ' -)" = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
+          grep -F 'CommittedClocktowerSetupPersistence.encode(setup)' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          grep -F 'CommittedClocktowerSetupPersistence.decodeOrNull(json)' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          grep -F 'committedClocktowerSetup = TroubleBrewingCommittedSetupAdapter.fromDealPlan(' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          grep -F 'TroubleBrewingSetupProvenancePersistence.decodeOrNull(json, dataset)' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          git diff -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+
+      - name: Reconfirm remote bootstrap head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/ms-setup-generic-architecture | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Commit and push product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          test "$(git diff --cached --name-only | paste -sd ' ' -)" = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
+          git commit -m 'feat(ms-s1r): persist exact committed Clocktower setup'
+          git push origin HEAD:codex/ms-setup-generic-architecture
+          echo "PRODUCT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/ms-setup-generic-architecture | cut -f1)" = "$PRODUCT_SHA"
+          git rm .github/workflows/ms-s1r-app-committed-setup-one-shot.yml .github/scripts/ms_s1r_app_committed_setup_patch.py
+          git commit -m 'chore(ci): remove MS-S1R App cutover one-shot'
+          git push origin HEAD:codex/ms-setup-generic-architecture
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report checkpoints
+        run: |
+          echo "Product checkpoint: $PRODUCT_SHA"
+          echo "Cleanup checkpoint: $CLEANUP_SHA"
