@@ -88,7 +88,7 @@ internal object SetupRecommendationService {
             .thenByDescending { stableTieBreak(it, game.seed) }
         val retained = PriorityQueue(maxResults, bestFirst.reversed())
         val retainedByFamily = mutableMapOf<String, PriorityQueue<RecommendationPlan>>()
-        val evaluationContext = SetupEvaluator.createContext(game)
+        val evaluationContext = SetupEvaluator.createContext(game, roleDefinitions)
         var cachedBaseDecisions: List<StorytellerDecision>? = null
         var cachedBaseEvaluation: RecommendationPlan? = null
         val bluffScoreCache = mutableMapOf<List<com.codex.campboardgamehost.clocktower.domain.RoleId>, ScoreItem>()
