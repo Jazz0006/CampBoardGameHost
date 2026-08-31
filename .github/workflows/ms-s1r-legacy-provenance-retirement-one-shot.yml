@@ -1,0 +1,112 @@
+name: MS-S1R legacy TB provenance retirement one-shot
+
+on:
+  push:
+    branches:
+      - codex/ms-setup-generic-architecture
+    paths:
+      - .github/workflows/ms-s1r-legacy-provenance-retirement-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  retire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/ms-setup-generic-architecture
+          fetch-depth: 0
+
+      - name: Prove legacy provenance has no surviving call sites
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/codex/ms-setup-generic-architecture | cut -f1)" = "$GITHUB_SHA"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistence.kt)" = "968eb70341ea115cf573b7541c706994aef433ea"
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistenceTest.kt)" = "7ecffa2dfde6b086b23499c9c08337eac2f46326"
+
+          expected=$'app/src/main/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistence.kt\napp/src/test/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistenceTest.kt'
+          actual="$(git grep -l 'TroubleBrewingSetupProvenancePersistence' -- app/src/main app/src/test | sort)"
+          printf 'Legacy provenance references:\n%s\n' "$actual"
+          test "$actual" = "$expected"
+
+          selection_refs="$(git grep -l 'committedTroubleBrewingSetupSelection' -- app/src/main app/src/test || true)"
+          test -z "$selection_refs"
+
+      - name: Retire superseded codec and typed legacy contract
+        run: |
+          git rm \
+            app/src/main/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistence.kt \
+            app/src/test/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistenceTest.kt
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Validate surviving replacement contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ActiveGameProductionPersistenceWiringTest' \
+            --tests 'com.codex.campboardgamehost.CommittedClocktowerSetupPersistenceTest' \
+            --tests 'com.codex.campboardgamehost.TroubleBrewingSetupCompletionPersistenceTest' \
+            --tests 'com.codex.campboardgamehost.TroubleBrewingSetupRotationRecordStoreTest' \
+            --tests 'com.codex.campboardgamehost.TroubleBrewingSetupRotationHistoryStoreTest' \
+            --tests 'com.codex.campboardgamehost.TroubleBrewingCompletionRotationHistoryWiringTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Run FAST checkpoint suite
+        run: ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Exact retirement diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          expected=$'app/src/main/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistence.kt\napp/src/test/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistenceTest.kt'
+          actual="$(git diff --name-only | sort)"
+          test "$actual" = "$expected"
+          ! git grep -q 'TroubleBrewingSetupProvenancePersistence' -- app/src/main app/src/test
+          ! git grep -q 'committedTroubleBrewingSetupSelection' -- app/src/main app/src/test
+
+      - name: Reconfirm remote bootstrap head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/ms-setup-generic-architecture | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Commit and push retirement
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'refactor(ms-s1r): retire legacy TB provenance restore codec'
+          git push origin HEAD:codex/ms-setup-generic-architecture
+          echo "PRODUCT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/ms-setup-generic-architecture | cut -f1)" = "$PRODUCT_SHA"
+          git rm .github/workflows/ms-s1r-legacy-provenance-retirement-one-shot.yml
+          git commit -m 'chore(ci): remove MS-S1R provenance retirement one-shot'
+          git push origin HEAD:codex/ms-setup-generic-architecture
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report checkpoints
+        run: |
+          echo "Retirement checkpoint: $PRODUCT_SHA"
+          echo "Cleanup checkpoint: $CLEANUP_SHA"
