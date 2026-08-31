@@ -113,7 +113,7 @@ roadmap = replace_once(
 roadmap_path.write_text(roadmap, encoding='utf-8', newline='\n')
 
 readme = read_lf(readme_path)
-readme = replace_once(readme, '> 最后整理：2026-08-30 Australia/Sydney', '> 最后整理：2026-08-31 Australia/Sydney', 'README date')
+readme = replace_once(readme, '> 最后整理：2026-08-30 Australia/Sydney  ', '> 最后整理：2026-08-31 Australia/Sydney', 'README date')
 start = readme.index('## 2. 当前 active task')
 end = readme.index('## 5. Active long-lived architecture / semantic references')
 replacement = '''## 2. 当前 active task
