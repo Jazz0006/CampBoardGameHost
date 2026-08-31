@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.recommendation.setup
 
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
@@ -9,7 +10,7 @@ import org.junit.Test
 
 class SetupRecommendationShownIdentityOwnershipTest {
     @Test
-    fun `recommendation consumes committed Investigator identity without recommending a shown role`() {
+    fun `recommendation consumes committed Investigator identity without recommending identity or legacy info`() {
         val game = TroubleBrewingFixtures.eightPlayerExample()
 
         val plans = SetupRecommendationService.recommend(
@@ -19,13 +20,15 @@ class SetupRecommendationShownIdentityOwnershipTest {
 
         assertTrue(plans.isNotEmpty())
         assertTrue(plans.all { plan ->
-            plan.decisions.none { it is StorytellerDecision.DrunkShownRole }
+            plan.decisions.none {
+                it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
+            }
         })
-        assertTrue(plans.all { plan ->
-            plan.decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().size == 1
-        })
-        assertTrue(plans.flatMap { it.observations }.all { observation ->
-            observation.perceivedRole == RoleId("Investigator")
+        val observations = plans.flatMap { it.observations }
+        assertTrue(observations.isNotEmpty())
+        assertTrue(observations.all { observation ->
+            observation.perceivedRole == RoleId("Investigator") &&
+                observation.reliability == ReliabilityState.DRUNK
         })
     }
 

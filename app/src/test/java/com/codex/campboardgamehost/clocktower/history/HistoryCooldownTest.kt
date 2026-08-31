@@ -76,24 +76,22 @@ class HistoryCooldownTest {
     @Test
     fun `generic impaired pair observation participates in setup cooldown`() {
         val game = TroubleBrewingFixtures.eightPlayerExample()
-        val previous = HistoricalClueSignature.fromSetupPlan(
-            game,
-            planWithObservation(candidateSeats = listOf(2, 4)),
-        )
         val repeated = HistoricalClueSignature.fromSetupPlan(
             game,
             planWithObservation(candidateSeats = listOf(2, 4)),
         )
-        val materiallyDifferent = HistoricalClueSignature.fromSetupPlan(
-            game,
-            planWithObservation(candidateSeats = listOf(7, 8)),
+        val withMatchingHistory = HistoryCooldown.multiplierFixedPoint(
+            repeated,
+            CrossGameHistory(listOf(repeated)),
         )
-        val history = CrossGameHistory(listOf(previous))
+        val withoutHistory = HistoryCooldown.multiplierFixedPoint(
+            repeated,
+            CrossGameHistory(),
+        )
 
-        assertTrue(
-            HistoryCooldown.multiplierFixedPoint(repeated, history) <
-                HistoryCooldown.multiplierFixedPoint(materiallyDifferent, history),
-        )
+        assertEquals(RoleId("Librarian"), repeated.drunkShownRole)
+        assertEquals(RoleId("Drunk"), repeated.shownCharacter)
+        assertTrue(withMatchingHistory < withoutHistory)
     }
 
     @Test

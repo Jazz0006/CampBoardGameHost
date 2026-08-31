@@ -3,6 +3,7 @@ package com.codex.campboardgamehost.clocktower.recommendation
 import com.codex.campboardgamehost.clocktower.config.RecommendationProfiles
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
@@ -51,28 +52,19 @@ class SetupRecommendationServiceTest {
     }
 
     @Test
-    fun `balanced ranking selects the documented plan A structure`() {
-        val top = SetupRecommendationService
-            .rankedPlans(game, roles, RecommendationProfiles.balanced)
-            .first()
-        val redHerring = top.decisions.filterIsInstance<StorytellerDecision.RedHerring>().single()
-        val shownRole = top.decisions.filterIsInstance<StorytellerDecision.DrunkShownRole>().single()
-        val info = top.decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().single()
+    fun `ranked plans consume committed Investigator without legacy recommendation decisions`() {
+        listOf(RecommendationProfiles.balanced, RecommendationProfiles.aggressive).forEach { profile ->
+            val top = SetupRecommendationService.rankedPlans(game, roles, profile).first()
 
-        assertEquals(5, redHerring.seat)
-        assertEquals(RoleId("Investigator"), shownRole.role)
-        assertEquals(RoleId("Poisoner"), info.shownMinion)
-        assertEquals(listOf(1, 4), info.candidateSeats)
-    }
-
-    @Test
-    fun `aggressive ranking selects the documented high conflict pair`() {
-        val top = SetupRecommendationService
-            .rankedPlans(game, roles, RecommendationProfiles.aggressive)
-            .first()
-        val info = top.decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().single()
-
-        assertEquals(listOf(2, 3), info.candidateSeats)
+            assertTrue(top.decisions.none {
+                it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
+            })
+            assertTrue(top.observations.any { observation ->
+                observation.sourceSeat == 6 &&
+                    observation.perceivedRole == RoleId("Investigator") &&
+                    observation.reliability == ReliabilityState.DRUNK
+            })
+        }
     }
 
     @Test
@@ -100,10 +92,9 @@ class SetupRecommendationServiceTest {
     }
 
     @Test
-    fun `constrained search preserves every locked decision`() {
+    fun `constrained search preserves explicit legacy information lock for compatibility`() {
         val locked = listOf(
             StorytellerDecision.RedHerring(3),
-            StorytellerDecision.DrunkShownRole(RoleId("Investigator")),
             StorytellerDecision.DrunkInvestigatorInfo(RoleId("Poisoner"), listOf(1, 4)),
         )
 
@@ -127,14 +118,16 @@ class SetupRecommendationServiceTest {
     }
 
     @Test
-    fun `incompatible drunk locks are rejected`() {
+    fun `legacy Drunk information lock is incompatible with a different committed identity`() {
+        val committedMonk = game.copy(
+            players = game.players.map { player ->
+                if (player.actualRole == RoleId("Drunk")) player.copy(shownRole = RoleId("Monk")) else player
+            },
+        )
         val result = SetupRecommendationService.recommendConstrained(
-            game,
+            committedMonk,
             roles,
-            listOf(
-                StorytellerDecision.DrunkShownRole(RoleId("Monk")),
-                StorytellerDecision.DrunkInvestigatorInfo(RoleId("Poisoner"), listOf(1, 4)),
-            ),
+            listOf(StorytellerDecision.DrunkInvestigatorInfo(RoleId("Poisoner"), listOf(1, 4))),
         )
 
         assertTrue(result.plans.isEmpty())

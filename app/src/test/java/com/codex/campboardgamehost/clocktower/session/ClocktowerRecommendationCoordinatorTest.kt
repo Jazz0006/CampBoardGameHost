@@ -12,6 +12,7 @@ import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.PlanEffectSignature
 import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
@@ -60,20 +61,25 @@ class ClocktowerRecommendationCoordinatorTest {
     }
 
     @Test
-    fun `pre-deal setup selection supplies the committed Drunk identity`() {
+    fun `setup selection consumes committed Drunk identity without recommending it`() {
         val coordinator = ClocktowerRecommendationCoordinator()
 
-        val selected = coordinator.selectSetupPlan(
-            SetupCoordinationRequest(game, TroubleBrewingFixtures.roleDefinitions()),
-            RecommendationStyle.BALANCED,
+        val selected = requireNotNull(
+            coordinator.selectSetupPlan(
+                SetupCoordinationRequest(game, TroubleBrewingFixtures.roleDefinitions()),
+                RecommendationStyle.BALANCED,
+            ),
         )
 
-        val shownRole = requireNotNull(selected)
-            .decisions
-            .filterIsInstance<StorytellerDecision.DrunkShownRole>()
-            .single()
-        assertTrue(shownRole.role != RoleId("Drunk"))
-        assertTrue(game.players.none { it.actualRole == shownRole.role })
+        assertTrue(selected.decisions.none {
+            it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
+        })
+        assertTrue(selected.observations.any { observation ->
+            observation.sourceSeat == 6 &&
+                observation.perceivedRole == RoleId("Investigator") &&
+                observation.reliability == ReliabilityState.DRUNK
+        })
+        assertEquals(RoleId("Investigator"), game.players.single { it.actualRole == RoleId("Drunk") }.shownRole)
     }
 
     @Test

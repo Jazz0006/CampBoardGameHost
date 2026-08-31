@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
@@ -11,22 +12,17 @@ import org.junit.Test
 
 class TroubleBrewingSetupRecommendationLockTest {
     @Test
-    fun `selector owned Drunk shown role becomes the only setup lock`() {
-        val dealPlan = investigatorDrunkDealPlan()
-
+    fun `selector owned Drunk shown role is committed state not a recommendation lock`() {
         val lockedDecisions = TroubleBrewingSetupRecommendationLock.lockedDecisions(
-            dealPlan = dealPlan,
+            dealPlan = investigatorDrunkDealPlan(),
             roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
         )
 
-        assertEquals(
-            listOf(StorytellerDecision.DrunkShownRole(RoleId("Investigator"))),
-            lockedDecisions,
-        )
+        assertTrue(lockedDecisions.isEmpty())
     }
 
     @Test
-    fun `locked Investigator identity survives setup recommendation and keeps compatible Drunk information`() {
+    fun `committed Investigator identity survives recommendation without recommendation ownership`() {
         val roles = TroubleBrewingFixtures.fullRoleDefinitions()
         val lockedDecisions = TroubleBrewingSetupRecommendationLock.lockedDecisions(
             dealPlan = investigatorDrunkDealPlan(),
@@ -44,16 +40,14 @@ class TroubleBrewingSetupRecommendationLockTest {
         assertTrue(result.failureCodes.isEmpty())
         assertTrue(result.plans.isNotEmpty())
         result.plans.forEach { plan ->
-            assertEquals(
-                listOf(RoleId("Investigator")),
-                plan.decisions
-                    .filterIsInstance<StorytellerDecision.DrunkShownRole>()
-                    .map { it.role },
-            )
-            assertEquals(
-                1,
-                plan.decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().size,
-            )
+            assertTrue(plan.decisions.none {
+                it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
+            })
+            assertTrue(plan.observations.any { observation ->
+                observation.sourceSeat == 6 &&
+                    observation.perceivedRole == RoleId("Investigator") &&
+                    observation.reliability == ReliabilityState.DRUNK
+            })
         }
     }
 

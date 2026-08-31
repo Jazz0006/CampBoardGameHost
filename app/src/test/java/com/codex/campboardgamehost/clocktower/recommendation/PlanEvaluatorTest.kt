@@ -3,8 +3,8 @@ package com.codex.campboardgamehost.clocktower.recommendation
 import com.codex.campboardgamehost.clocktower.config.RecommendationProfiles
 import com.codex.campboardgamehost.clocktower.domain.CandidatePlan
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupEvaluator
@@ -17,83 +17,74 @@ class SetupEvaluatorTest {
     private val roles = TroubleBrewingFixtures.roleDefinitions()
 
     @Test
-    fun `balanced profile prefers documented plan A over high conflict plan B`() {
-        val planA = SetupEvaluator.evaluate(game, roles, plan(listOf(1, 4)), RecommendationProfiles.balanced)
-        val planB = SetupEvaluator.evaluate(game, roles, plan(listOf(2, 3)), RecommendationProfiles.balanced)
-
-        assertTrue(planA.totalScore > planB.totalScore)
-        assertEquals(QualityTier.RECOMMENDED, planA.qualityTier)
-    }
-
-    @Test
-    fun `aggressive profile prefers documented high conflict plan B over plan A`() {
-        val planA = SetupEvaluator.evaluate(game, roles, plan(listOf(1, 4)), RecommendationProfiles.aggressive)
-        val planB = SetupEvaluator.evaluate(game, roles, plan(listOf(2, 3)), RecommendationProfiles.aggressive)
-
-        assertTrue(planB.totalScore > planA.totalScore)
-    }
-
-    @Test
-    fun `drunk information that hits real evil is downgraded with warning`() {
+    fun `legacy Investigator info that hits actual evil has no dedicated downgrade`() {
         val evaluated = SetupEvaluator.evaluate(
             game,
             roles,
-            plan(listOf(1, 7)),
+            legacyPlan(listOf(1, 7)),
             RecommendationProfiles.balanced,
         )
 
-        assertEquals(QualityTier.ACCEPTABLE_WITH_WARNING, evaluated.qualityTier)
-        assertTrue(evaluated.warnings.any { it.ruleId == "drunk-info-hits-real-evil" })
+        assertEquals(QualityTier.RECOMMENDED, evaluated.qualityTier)
+        assertTrue(evaluated.warnings.none { it.ruleId == "drunk-info-hits-real-evil" })
+        assertTrue(evaluated.scoreItems.none { it.ruleId == "drunk-info-hits-real-evil" })
     }
 
     @Test
-    fun `drunk observation records unreliable false information separately`() {
+    fun `committed Investigator identity produces generic Drunk observation without recommendation identity decision`() {
+        val candidate = activePlan()
         val evaluated = SetupEvaluator.evaluate(
             game,
             roles,
-            plan(listOf(1, 4)),
+            candidate,
             RecommendationProfiles.balanced,
         )
 
-        assertEquals(SemanticTruth.FALSE, evaluated.observations.single().semanticTruth)
-        assertTrue(evaluated.scoreItems.isNotEmpty())
+        assertTrue(candidate.decisions.none {
+            it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
+        })
+        val observation = evaluated.observations.single()
+        assertEquals(6, observation.sourceSeat)
+        assertEquals(RoleId("Investigator"), observation.perceivedRole)
+        assertEquals(ReliabilityState.DRUNK, observation.reliability)
         assertEquals(evaluated.scoreItems.sumOf { it.delta }, evaluated.totalScore)
     }
 
     @Test
-    fun `non investigator drunk roles remain in the recommended tier`() {
-        val fullRoles = TroubleBrewingFixtures.fullRoleDefinitions()
-        val shownRoles = listOf("Washerwoman", "Librarian", "Monk").map(::RoleId)
+    fun `committed non pair Drunk identity does not synthesize Investigator information`() {
+        val committedMonk = game.copy(
+            players = game.players.map { player ->
+                if (player.actualRole == RoleId("Drunk")) player.copy(shownRole = RoleId("Monk")) else player
+            },
+        )
+        val evaluated = SetupEvaluator.evaluate(
+            committedMonk,
+            TroubleBrewingFixtures.fullRoleDefinitions(),
+            activePlan(),
+            RecommendationProfiles.balanced,
+        )
 
-        shownRoles.forEach { shownRole ->
-            val evaluated = SetupEvaluator.evaluate(
-                game = game,
-                roleDefinitions = fullRoles,
-                candidate = CandidatePlan(
-                    decisions = listOf(
-                        StorytellerDecision.RedHerring(5),
-                        StorytellerDecision.DrunkShownRole(shownRole),
-                        StorytellerDecision.DemonBluffs(
-                            listOf(RoleId("Investigator"), RoleId("Soldier"), RoleId("Slayer")),
-                        ),
-                    ),
-                ),
-                profile = RecommendationProfiles.balanced,
-            )
-
-            assertEquals("shownRole=$shownRole", QualityTier.RECOMMENDED, evaluated.qualityTier)
-            assertTrue(evaluated.warnings.none { it.ruleId == "drunk-non-information-role" })
-        }
+        assertEquals(QualityTier.RECOMMENDED, evaluated.qualityTier)
+        assertTrue(evaluated.observations.isEmpty())
+        assertTrue(evaluated.warnings.none { it.ruleId == "drunk-non-information-role" })
     }
 
-    private fun plan(candidateSeats: List<Int>): CandidatePlan = CandidatePlan(
+    private fun legacyPlan(candidateSeats: List<Int>): CandidatePlan = CandidatePlan(
         decisions = listOf(
             StorytellerDecision.RedHerring(5),
-            StorytellerDecision.DrunkShownRole(RoleId("Investigator")),
             StorytellerDecision.DrunkInvestigatorInfo(
                 shownMinion = RoleId("Poisoner"),
                 candidateSeats = candidateSeats,
             ),
+            StorytellerDecision.DemonBluffs(
+                listOf(RoleId("Investigator"), RoleId("Monk"), RoleId("Soldier")),
+            ),
+        ),
+    )
+
+    private fun activePlan(): CandidatePlan = CandidatePlan(
+        decisions = listOf(
+            StorytellerDecision.RedHerring(5),
             StorytellerDecision.DemonBluffs(
                 listOf(RoleId("Investigator"), RoleId("Monk"), RoleId("Soldier")),
             ),
