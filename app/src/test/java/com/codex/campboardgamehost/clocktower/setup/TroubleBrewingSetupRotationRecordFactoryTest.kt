@@ -20,6 +20,8 @@ class TroubleBrewingSetupRotationRecordFactoryTest {
                 outsiders = listOf("drunk"),
                 minions = listOf("poisoner"),
                 demons = listOf("imp"),
+                source = "test",
+                complexity = "test",
                 drunkAsOptions = listOf("investigator"),
                 styleTags = listOf("balanced", "information"),
             ),
