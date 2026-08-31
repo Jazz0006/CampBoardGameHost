@@ -21,7 +21,7 @@ jobs:
           ref: codex/ms-setup-generic-architecture
           fetch-depth: 0
 
-      - name: Prove legacy provenance has no surviving call sites
+      - name: Prove legacy provenance has no surviving production call sites
         shell: bash
         run: |
           set -euo pipefail
@@ -30,13 +30,21 @@ jobs:
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistence.kt)" = "968eb70341ea115cf573b7541c706994aef433ea"
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistenceTest.kt)" = "7ecffa2dfde6b086b23499c9c08337eac2f46326"
 
-          expected=$'app/src/main/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistence.kt\napp/src/test/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistenceTest.kt'
-          actual="$(git grep -l 'TroubleBrewingSetupProvenancePersistence' -- app/src/main app/src/test | sort)"
-          printf 'Legacy provenance references:\n%s\n' "$actual"
-          test "$actual" = "$expected"
+          expected_main='app/src/main/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistence.kt'
+          actual_main="$(git grep -l 'TroubleBrewingSetupProvenancePersistence' -- app/src/main | sort)"
+          printf 'Production legacy provenance references:\n%s\n' "$actual_main"
+          test "$actual_main" = "$expected_main"
 
-          selection_refs="$(git grep -l 'committedTroubleBrewingSetupSelection' -- app/src/main app/src/test || true)"
-          test -z "$selection_refs"
+          expected_tests=$'app/src/test/java/com/codex/campboardgamehost/persistence/ActiveGameProductionPersistenceWiringTest.kt\napp/src/test/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistenceTest.kt'
+          actual_tests="$(git grep -l 'TroubleBrewingSetupProvenancePersistence' -- app/src/test | sort)"
+          printf 'Test legacy provenance references:\n%s\n' "$actual_tests"
+          test "$actual_tests" = "$expected_tests"
+
+          selection_main="$(git grep -l 'committedTroubleBrewingSetupSelection' -- app/src/main || true)"
+          test -z "$selection_main"
+          expected_selection_test='app/src/test/java/com/codex/campboardgamehost/persistence/ActiveGameProductionPersistenceWiringTest.kt'
+          selection_tests="$(git grep -l 'committedTroubleBrewingSetupSelection' -- app/src/test | sort || true)"
+          test "$selection_tests" = "$expected_selection_test"
 
       - name: Retire superseded codec and typed legacy contract
         run: |
@@ -77,8 +85,11 @@ jobs:
           expected=$'app/src/main/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistence.kt\napp/src/test/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupProvenancePersistenceTest.kt'
           actual="$(git diff --name-only | sort)"
           test "$actual" = "$expected"
-          ! git grep -q 'TroubleBrewingSetupProvenancePersistence' -- app/src/main app/src/test
-          ! git grep -q 'committedTroubleBrewingSetupSelection' -- app/src/main app/src/test
+          ! git grep -q 'TroubleBrewingSetupProvenancePersistence' -- app/src/main
+          expected_test='app/src/test/java/com/codex/campboardgamehost/persistence/ActiveGameProductionPersistenceWiringTest.kt'
+          remaining_tests="$(git grep -l 'TroubleBrewingSetupProvenancePersistence' -- app/src/test | sort || true)"
+          test "$remaining_tests" = "$expected_test"
+          ! git grep -q 'committedTroubleBrewingSetupSelection' -- app/src/main
 
       - name: Reconfirm remote bootstrap head
         shell: bash
