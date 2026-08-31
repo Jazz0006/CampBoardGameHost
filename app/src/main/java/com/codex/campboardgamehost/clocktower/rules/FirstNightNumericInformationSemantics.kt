@@ -48,6 +48,28 @@ internal object FirstNightNumericInformationSemantics {
         }
     }
 
+    /**
+     * Truth values used by first-night recommendation.
+     *
+     * A functioning holder has already had any legal Spy/Recluse registration ruling resolved
+     * by the storyteller UI, so preserve that single current value. An impaired holder must not
+     * require a hidden registration ruling first: every value that is healthy-role truthful under
+     * some legal registration remains in the truthful family before generic impairment selection.
+     */
+    fun recommendationTruthValues(
+        game: GameState,
+        sourceSeat: Int,
+        currentRegisteredValue: Int,
+    ): Set<Int> {
+        val source = game.playerAt(sourceSeat) ?: return setOf(currentRegisteredValue)
+        val subject = source.abilitySubject()
+        val perceivedRole = AbilityFunctioningSemantics.perceivedRole(subject)
+            ?: return setOf(currentRegisteredValue)
+        val state = AbilityFunctioningSemantics.stateFor(subject, perceivedRole)
+        if (state == AbilityFunctioningState.FUNCTIONING) return setOf(currentRegisteredValue)
+        return healthyTruthValues(game, sourceSeat).ifEmpty { setOf(currentRegisteredValue) }
+    }
+
     private fun PlayerState.abilitySubject() = AbilitySubject(
         actualRole = actualRole.value,
         shownRole = shownRole?.value,
