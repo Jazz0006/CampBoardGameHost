@@ -1,6 +1,6 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-08-30 Australia/Sydney  
+> 最后整理：2026-08-31 Australia/Sydney
 > 目标：让新的开发会话只读少量真正有权威性的文档，不再被历史 handoff / checkpoint 淹没。
 
 ## 1. 新任务默认阅读顺序
@@ -19,62 +19,61 @@
 当前最高优先级：
 
 ```text
-TBSP — Trouble Brewing Setup Preset Integration
-TBSP-6G-A — setup recommendation prewarm coordinator
+MS-SETUP — Generic Multi-Script Setup Architecture
+MS-S0 — fresh live-state + ownership audit
 ```
 
 Active handoff：
 
-- [`NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_6_PRODUCTION_CUTOVER.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-30_TBSP_6_PRODUCTION_CUTOVER.md) — **CURRENT HANDOFF**
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-08-31_MS_SETUP_ARCHITECTURE.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-31_MS_SETUP_ARCHITECTURE.md) — **CURRENT HANDOFF**
 
-Current code checkpoints：
+Merged baseline：
 
 ```text
-last fully GREEN code checkpoint:
-5c10cd29111449e1f8af2b8944609a2002048679
+PR #57 — TBSP: integrate Trouble Brewing setup presets
+MERGED
 
-current TBSP-6G RED code checkpoint:
-a26c221670fdea2612626f762d162b66091896af
+main merge checkpoint:
+98ee982ef3590822cd06ac72a047b49afac3cfd6
+
+post-merge full CI:
+CI #1179 / run 33346311357 — SUCCESS
 ```
 
-Later docs-only commits may sit on top of the RED checkpoint. Do not treat docs-only CI as proof that 6G code is GREEN.
+Always re-query live `main` before implementation. The current task is planning/audit first; do not begin MS-S1 production work before MS-S0 completes.
 
-PR #57 remains Draft/Open/Unmerged unless explicitly authorized otherwise.
+## 3. Current setup-architecture references
 
-## 3. TBSP active normative references
-
-- [`TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md`](TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md) — Trouble Brewing production cutover / non-blocking reveal / restore / no-reroll acceptance contract；
-- [`TBSP_ROTATION_WEIGHT_CONTRACT_V1.md`](TBSP_ROTATION_WEIGHT_CONTRACT_V1.md) — frozen selector rotation weighting policy；
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-08-31_MS_SETUP_ARCHITECTURE.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-31_MS_SETUP_ARCHITECTURE.md) — current generic setup architecture handoff；
+- [`TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md`](TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md) — accepted Trouble Brewing behavior to preserve during genericization；
+- [`TBSP_ROTATION_WEIGHT_CONTRACT_V1.md`](TBSP_ROTATION_WEIGHT_CONTRACT_V1.md) — accepted TB diversity/rotation semantics；
 - [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md) — T0/T1/T2/T3/T4 validation strategy.
 
-The final preset dataset itself is frozen under:
+Frozen Trouble Brewing preset dataset:
 
 ```text
 app/src/main/assets/setup/trouble_brewing_setup_presets_v2_final.json
 ```
 
-Do not regenerate or reformat it during TBSP-6.
+Do not regenerate or reformat it during MS-SETUP genericization.
 
-## 4. Current TBSP sequence
+## 4. Current MS-SETUP sequence
 
 ```text
-TBSP-1..5                         COMPLETE
-TBSP-6A provenance codec          COMPLETE
-TBSP-6B setup preparer            COMPLETE
-TBSP-6C deal-role resolver        COMPLETE
-TBSP-6D production start cutover  COMPLETE
-TBSP-6E active restore provenance COMPLETE
-TBSP-6F completion history wiring COMPLETE
-TBSP-6G-A prewarm core            CURRENT RED
-TBSP-6G-B reveal wiring           NEXT
-TBSP-6H First Night precompute    LATER
-TBSP-6I acceptance matrix         LATER
-TBSP-6J cleanup                   LATER
-TBSP-6K full acceptance           FINAL TBSP GATE
-A3 immutable setup snapshot       DEFERRED UNTIL TBSP ACCEPTED
+MS-S0  live-state + ownership audit                          NEXT
+MS-S1  generic CommittedClocktowerSetup / provenance model  PLANNED
+MS-S2  generic SetupCandidate + candidate-source contract   PLANNED
+MS-S3  optional TemplateRepository                          PLANNED
+MS-S4  deterministic GeneratedSetupCandidateSource          PLANNED
+MS-S5  common SetupDiversityHistory / scorer / selector     PLANNED
+MS-S6  generic shown-identity policy                        PLANNED
+MS-S7  adapt accepted TB pipeline with parity               PLANNED
+MS-S8  adapt NGJ/no-template path with parity               PLANNED
+MS-S9  generic acceptance / future-script proof             PLANNED
+A3 immutable setup snapshot                                 DEFERRED / NOT CURRENT
 ```
 
-Do not reopen completed selector/deal/history work without concrete regression evidence.
+TBSP-1 through TBSP-6L are complete, accepted, and merged. Do not reopen them without concrete regression evidence.
 
 ## 5. Active long-lived architecture / semantic references
 
@@ -132,6 +131,7 @@ Git history and the corresponding PRs preserve the exact old files when detailed
 
 - [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md) — T0/T1/T2/T3/T4 test strategy；
 - [`AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`](AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md) — current AI development workflow；
+- [`LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`](LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md) — normative large/truncated-file one-shot workflow + Python patch SOP；
 - [`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`](SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md) — GitHub connector workflow；
 - [`CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`](CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md) — historical/large-file local workflow where not superseded by V2；
 - [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md) — connector large-file constraints/playbook.

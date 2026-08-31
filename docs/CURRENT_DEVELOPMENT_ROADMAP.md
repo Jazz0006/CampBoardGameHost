@@ -8,36 +8,33 @@
 ## 1. Current live development context
 
 ```text
-main baseline:
-0eafa9770ca9391928419dadf835f17a1ab00d29
+merged main code checkpoint:
+98ee982ef3590822cd06ac72a047b49afac3cfd6
 
-current branch:
-codex/trouble-brewing-setup-presets-v2
-
-current Draft PR / CI carrier:
+merged PR:
 PR #57 — TBSP: integrate Trouble Brewing setup presets
-OPEN / DRAFT / NOT MERGED
+MERGED / CLOSED
 
-last fully validated logical acceptance checkpoint:
-45a60a3c32c7471c68d89b7fb886c4dbb00f1781
-
-accepted production checkpoint under that gate:
-4c8108c91be188d33435233efb9aba26397f6b87
-
-checkpoint meaning:
-TBSP-6L provenance durability repair accepted
-CI #1167 / run 33344886176 SUCCESS
+post-merge full validation:
+CI #1179 / run 33346311357 SUCCESS
 Android :app:testFull + :app:assembleDebug SUCCESS
 ASP contract tests SUCCESS
 Real Clingo cross-validation SUCCESS
-R2 #1090 / run 33344886170 SUCCESS
+CI aggregate gate SUCCESS
+
+accepted TBSP production checkpoint:
+4c8108c91be188d33435233efb9aba26397f6b87
+
+final pre-merge T4 checkpoint:
+45a60a3c32c7471c68d89b7fb886c4dbb00f1781
 
 current work:
-TBSP campaign COMPLETE
-MS-SETUP generic multi-script setup architecture — NEXT / NOT STARTED
+TBSP campaign COMPLETE / MERGED
+MS-SETUP generic multi-script setup architecture — CURRENT PLANNING CAMPAIGN
+MS-S0 fresh live-state + ownership audit — NEXT
 
 active implementation handoff:
-none yet — begin MS-SETUP with a fresh live-state audit and explicit architecture slice before production changes
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_MS_SETUP_ARCHITECTURE.md
 
 normative TBSP rotation policy:
 docs/TBSP_ROTATION_WEIGHT_CONTRACT_V1.md
@@ -73,11 +70,12 @@ TBSP-6I cutover acceptance matrix                            COMPLETE
 TBSP-6J cleanup                                              COMPLETE
 TBSP-6K final full acceptance                                COMPLETE
 TBSP-6L provenance durability repair                         COMPLETE
-MS-SETUP generic multi-script setup architecture             NEXT / NOT STARTED
+MS-SETUP generic multi-script setup architecture             CURRENT PLANNING CAMPAIGN
+MS-S0 fresh live-state + ownership audit                       NEXT
 A3 immutable setup snapshot                                  DEFERRED / NOT CURRENT
 ```
 
-PR #57 remains Draft and unmerged. Do not mark Ready or merge without explicit authorization.
+PR #57 is merged into `main` at `98ee982ef3590822cd06ac72a047b49afac3cfd6`. MS-SETUP must continue from fresh live `main` on a new branch after MS-S0 ownership audit.
 
 ## 3. Protected predecessor correctness baseline
 
