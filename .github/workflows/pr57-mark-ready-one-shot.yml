@@ -1,0 +1,47 @@
+name: PR57 mark ready one-shot
+
+on:
+  push:
+    branches:
+      - codex/trouble-brewing-setup-presets-v2
+    paths:
+      - .github/workflows/pr57-mark-ready-one-shot.yml
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  ready:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/trouble-brewing-setup-presets-v2
+          fetch-depth: 0
+
+      - name: Verify bootstrap parent and scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "be9a82ace7fef4ec52d10248de522b6bd8305725"
+          test "$(git ls-remote origin refs/heads/codex/trouble-brewing-setup-presets-v2 | cut -f1)" = "$GITHUB_SHA"
+          test "$(git diff-tree --no-commit-id --name-only -r HEAD)" = ".github/workflows/pr57-mark-ready-one-shot.yml"
+
+      - name: Mark PR ready
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr ready 57 --repo Jazz0006/CampBoardGameHost
+
+      - name: Remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/trouble-brewing-setup-presets-v2 | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/pr57-mark-ready-one-shot.yml
+          git commit -m 'chore(ci): remove PR57 ready one-shot workflow'
+          git push origin HEAD:codex/trouble-brewing-setup-presets-v2
