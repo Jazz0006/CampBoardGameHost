@@ -55,6 +55,9 @@ internal object SetupRecommendationService {
         if (duplicateKinds.isNotEmpty()) {
             return ConstrainedResult(emptyList(), listOf("duplicate-locked-decision"))
         }
+        if (lockedDecisions.any { it is StorytellerDecision.DrunkShownRole }) {
+            return ConstrainedResult(emptyList(), listOf("shown-identity-is-committed-setup-fact"))
+        }
         if (lockedDecisions.isNotEmpty() && SetupCandidateGenerator.generatePlans(game, roleDefinitions, lockedDecisions).firstOrNull() == null) {
             return ConstrainedResult(emptyList(), listOf("locked-decisions-illegal-or-incompatible"))
         }
@@ -208,25 +211,9 @@ internal object SetupRecommendationService {
             )
         }
         val activeFamilies = cooledPool.map { it.candidate.candidateFamilyId }.distinct().sorted()
-        val budget = FamilyProbabilityBudget(activeFamilies.associateWith { family ->
-            val representative = cooledPool.first { it.candidate.candidateFamilyId == family }
-            val shownRole = planByCandidateId.getValue(representative.candidate.candidateId)
-                .effectSignature
-                .drunkShownRole
-            if (shownRole == null) {
-                WeightedStableSelector.FIXED_POINT_SCALE
-            } else {
-                // The selector normalizes weights inside each family. Put the shown-role
-                // cooldown on the family itself so it cannot disappear during normalization.
-                HistoryCooldown.multiplierFixedPoint(
-                    HistoricalClueSignature(
-                        decisionType = "setup-plan",
-                        drunkShownRole = shownRole,
-                    ),
-                    history,
-                )
-            }
-        })
+        val budget = FamilyProbabilityBudget(
+            activeFamilies.associateWith { WeightedStableSelector.FIXED_POINT_SCALE },
+        )
         val seed = MurmurHash3.low64Utf8(
             "$SELECTOR_VERSION|${game.seed}|${profile.style.name}|${history.digest()}|${cooledPool.map { it.candidate.candidateId }.sorted().joinToString(",")}",
         )
@@ -250,7 +237,7 @@ internal object SetupRecommendationService {
     }
 
     private fun setupFamily(plan: RecommendationPlan): String =
-        SetupCandidateGenerator.drunkShownRoleFamily(plan.decisions) ?: "setup-plan"
+        SetupCandidateGenerator.drunkInformationFamily(plan.decisions) ?: "setup-plan"
 
     private fun retainBest(
         queue: PriorityQueue<RecommendationPlan>,
