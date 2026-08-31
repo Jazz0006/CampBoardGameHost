@@ -4,7 +4,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Branch: `codex/ms-setup-generic-architecture`  
 > Draft PR: `#61`  
-> Status: **MS-S1 COMPLETE / ACCEPTED — MS-S1R NEXT**
+> Status: **MS-S1R COMPLETE / ACCEPTED — MS-S2 NEXT**
 
 ## 1. Live baseline and accepted checkpoints
 
@@ -33,17 +33,22 @@ Accepted MS-S1 code/test checkpoint:
 
 `f3d6b7f305ad09ab8e44f64cf476271ffc5c7a0b`
 
-Accepted validation:
+Accepted MS-S1R code/test checkpoint:
+
+`2a6d447398c9ab857ab48dd6ff3e5995fb73dd7e`
+
+Accepted MS-S1R validation:
 
 ```text
-CI #1187 / run 33351536770                SUCCESS
-Android FAST unit tests                   SUCCESS
-Real Clingo cross-validation              SUCCESS
-CI aggregate gate                         SUCCESS
-R2 #1104 / run 33351536807                SUCCESS
+CI #1220 / run 33356512627                 SUCCESS
+Android full unit tests + debug APK         SUCCESS
+Real Clingo cross-validation                SUCCESS
+ASP contract tests                          SUCCESS
+CI aggregate gate                           SUCCESS
+R2 #1137 / run 33356512640                  SUCCESS
 ```
 
-Later docs-only commits are carriers and do not replace the validated MS-S1 code/test head.
+Later docs-only commits are carriers and do not replace the validated code/test head.
 
 Always re-query live GitHub state before a production write.
 
@@ -68,110 +73,14 @@ Persistence/recovery is an outer consumer. Setup generation must not depend on A
 
 The App root must not gain a new `if (script == ...)` setup branch when a future script is added.
 
-## 3. Ownership audit — MS-S0 COMPLETE
-
-Current production ownership remains approximately:
-
-```text
-App start wiring
-├─ Trouble Brewing
-│  ├─ frozen 480-preset dataset + validator
-│  ├─ TB preset selector
-│  ├─ TB rotation history/scorer
-│  ├─ selector-owned Drunk shown-role choice
-│  ├─ TB deterministic deal materializer
-│  └─ committed PlayerCards + TB-specific provenance
-└─ No Greater Joy / no-template
-   ├─ script role definitions + player-count distribution
-   ├─ legacy broad/random composition path
-   ├─ legacy Drunk shown-role handling
-   └─ committed PlayerCards
-
-prepared cards + seed
--> ClocktowerJudgeScreen / Host orchestration
--> session/domain transactions
-```
-
-`ClocktowerJudgeScreen` consumes prepared `cards`, `script`, `gameSeed`, `ClocktowerNightCheckpoint` and callbacks. It does not own initial setup generation/materialization. New setup policy/randomization must not move into Host.
-
-NGJ's current generation uses unseeded shuffle/random behavior before the game seed is established. MS-S4/MS-S8 will introduce deterministic seeded generation while preserving legality and user-visible semantics; exact legacy random-sequence parity is not required.
-
-## 4. Recovery scope decision — MS-S0.5 COMPLETE
-
-Detailed audit:
-
-`docs/MS_SETUP_RECOVERY_SCOPE_REDUCTION_AUDIT_2026-08-31.md`
-
-The product no longer promises arbitrary exact continuation of an unfinished game after exit/restart.
-
-Supported recovery goal:
-
-```text
-best-effort crash / Android process-death recovery
--> latest supported stable committed domain checkpoint
--> restore committed setup + committed game facts exactly
--> resume/restart at the next safe domain/action boundary
-```
-
-Explicit non-goals:
-
-- “play half today and continue tomorrow” as a product contract;
-- exact restoration to arbitrary in-progress UI state;
-- durable draft persistence solely to recreate a partially completed interaction;
-- indefinite cross-version support for every unfinished-save shape.
-
-Committed-domain retry/idempotency/convergence remains protected. Completed-game setup/diversity history remains separately durable.
-
-## 5. Recovery work split
-
-Use replacement-first migration:
-
-```text
-introduce replacement authority
--> cut consumers over
--> prove parity / call-site ownership
--> retire superseded legacy path
-```
-
-### MS-S1R — setup persistence authority migration
-
-MS-S1R is directly coupled to setup ownership and is the next slice.
-
-Target:
-
-```text
-OLD
-TB provenance / source metadata
--> reload current TB template data
--> reconstruct setup selection
-
-NEW
-exact CommittedClocktowerSetup
--> persist as authoritative setup fact
--> restore exact CommittedClocktowerSetup
-
-provenance
--> source/audit metadata only
-```
-
-MS-S1R may retire TB setup-reconstruction plumbing only after exact generic setup persistence and direct restore are proven.
-
-MS-S1R must not broaden into general unfinished-night recovery cleanup.
-
-### REC-R1 — separate future campaign
-
-REC-R1, outside MS-SETUP, will later re-evaluate exact-resume behavior in `ClocktowerNightCheckpoint`, `nightStepIndex`, attack/poison/Monk/Mayor/succession draft persistence, `NightTransactionRestoreComposition`, and tests that exist only for exact mid-interaction continuation.
-
-REC-R1 must retain anything required for runtime confirmed-vs-draft separation or committed transaction correctness.
-
-## 6. Campaign sequence
+## 3. Completed slices
 
 ```text
 MS-S0   fresh live-state + TB/NGJ/setup ownership audit                         COMPLETE
 MS-S0.5 recovery scope reduction audit + product boundary                       COMPLETE
 MS-S1   generic persistence-independent CommittedClocktowerSetup + provenance   COMPLETE / ACCEPTED
-MS-S1R  exact setup persistence authority migration + TB setup-restore retirement NEXT
-MS-S2   generic SetupCandidate + source contract + setup policy/provider registry
+MS-S1R  exact setup persistence authority migration + TB setup-restore retirement COMPLETE / ACCEPTED
+MS-S2   generic SetupCandidate + source contract + setup policy/provider registry NEXT
 MS-S3   optional TemplateRepository keyed by script + player count
 MS-S4   deterministic seeded legal GeneratedSetupCandidateSource
 MS-S5   common deterministic SetupDiversityHistory / scorer / selector facade
@@ -185,7 +94,7 @@ REC-R1  separate future unfinished-game stable-checkpoint simplification
 
 Do not implement multiple slices at once merely because they share the campaign.
 
-## 7. MS-S1 accepted result
+## 4. MS-S1 accepted result
 
 Authoritative checkpoint:
 
@@ -194,10 +103,6 @@ Authoritative checkpoint:
 Accepted production owner:
 
 `app/src/main/java/com/codex/campboardgamehost/clocktower/domain/CommittedClocktowerSetup.kt`
-
-Accepted typed test:
-
-`app/src/test/java/com/codex/campboardgamehost/clocktower/domain/CommittedClocktowerSetupTest.kt`
 
 Accepted contract:
 
@@ -215,90 +120,147 @@ CommittedClocktowerSetup
    └─ candidateId: String?
 ```
 
-Accepted invariants include canonical ordered seats `1..N`, explicit actual/shown roles, nonblank provenance identity, assignment-list snapshotting, structural equality/hash identity, and no Android/session/persistence dependency.
+Persistence schema/version remains outside the domain model.
 
-Persistence schema/version is deliberately outside this domain model and belongs to MS-S1R. `playerCount` is derived from assignments.
+## 5. MS-S1R accepted result
 
-## 8. MS-S1R immediate objective
+Authoritative checkpoint:
 
-Migrate only **setup persistence authority**.
+`docs/MS_S1R_SETUP_PERSISTENCE_CHECKPOINT_2026-08-31.md`
 
-Before implementation, audit these exact current responsibilities and call sites:
-
-1. TB active-game provenance codec/model;
-2. active-game save serialization fields for committed TB setup;
-3. restore decode path and any 480-preset dataset lookup;
-4. `committedTroubleBrewingSetupSelection` lifecycle in App;
-5. completion-history use of original committed selection;
-6. existing typed persistence/restore tests proving selector/preparer is not called on restore;
-7. older-save compatibility behavior.
-
-Then design the smallest generic persistence boundary around the already accepted `CommittedClocktowerSetup`.
-
-## 9. MS-S1R required contract
-
-Target durable payload must be sufficient to restore exact setup facts without consulting candidate sources:
+Recovery authority is now:
 
 ```text
-schema/version at persistence boundary
-script identity
-setup seed
-ordered exact seats
-  actualRole
-  shownRole
-provenance
-  sourceKind
-  providerId
-  candidateId?
+active save
+├─ exact CommittedClocktowerSetup
+└─ Trouble Brewing compact completion/diversity record
 ```
 
-Restore authority:
+Direct restore:
 
 ```text
 persisted exact committed setup
--> decode/validate
+-> decode + validate
 -> CommittedClocktowerSetup
 ```
 
-Forbidden restore behavior:
+Accepted outcomes:
 
-- load template repository to infer roles;
-- invoke preset selector/preparer;
-- choose Drunk/shown identity again;
-- invoke recommendation;
-- invoke random generation;
-- silently repair an invalid persisted exact setup by selecting another one.
+- exact script, seed, ordered seats, actual identities, shown identities and provenance are persisted;
+- current Trouble Brewing restore requires exact committed setup;
+- restore no longer loads the frozen 480-preset asset to infer setup identities;
+- restore no longer reconstructs `TroubleBrewingSetupPresetSelection`;
+- a compact committed TB rotation record preserves completion/diversity-history inputs without keeping the whole selection as recovery authority;
+- exact setup and compact record provider/candidate/player-count identities are cross-validated;
+- `TroubleBrewingSetupProvenancePersistence` and its legacy typed contract were retired after production call-site proof;
+- a surviving production wiring test explicitly forbids reintroducing the legacy provenance reconstruction path.
 
-## 10. MS-S1R evidence strategy
+MS-S1R did not broaden into `ClocktowerNightCheckpoint`, draft recovery, `NightTransactionRestoreComposition`, Dawn/Dusk transaction semantics, or REC-R1 work.
 
-Because this slice changes persistence/restore authority, use typed behavior evidence rather than source-string ceremony.
+## 6. Recovery product boundary
 
-Minimum durable evidence should prove:
+The product no longer promises arbitrary exact continuation of an unfinished game after exit/restart.
 
-1. exact codec/checkpoint round-trip preserves script, seed, seat order, actual roles, shown roles and provenance;
-2. direct restore returns the same `CommittedClocktowerSetup` facts;
-3. selector/preparer/template source is not required to restore the exact setup;
-4. invalid/corrupt payload fails explicitly rather than rerolling/reselecting;
-5. deliberately supported legacy TB save compatibility remains correct until its retirement trigger;
-6. completion-history logic still records the original committed setup/selection, not a reconstruction.
+Supported recovery goal:
 
-If production cutover touches the large App root, follow the required large-file one-shot workflow rather than unsafe whole-file replacement.
+```text
+best-effort crash / Android process-death recovery
+-> latest supported stable committed domain checkpoint
+-> restore committed setup + committed game facts exactly
+-> resume/restart at the next safe domain/action boundary
+```
 
-Persistence/schema changes may justify earlier T1/T2/T3 escalation under `docs/TESTING_STRATEGY.md`.
+Explicit non-goals include exact arbitrary mid-UI continuation, durable draft persistence solely for UI reconstruction, and indefinite compatibility for every historical unfinished-save shape.
 
-## 11. MS-S1R retirement boundary
+Committed-domain retry/idempotency/convergence remains protected. Completed-game setup/diversity history remains separately durable.
 
-Delete/simplify old TB setup restore code only when all of the following are true:
+## 7. MS-S2 immediate objective
 
-- exact generic committed setup persistence exists;
-- restore uses it as authority;
-- call-site audit proves the old reconstruction path is no longer required for supported saves;
-- affected typed tests are replaced/narrowed according to the repository test-retirement policy;
-- completion/diversity history still has the original committed setup identity it needs.
+MS-S2 establishes the **generic setup candidate/source/provider ownership contracts only**.
 
-Do not delete general `ClocktowerNightCheckpoint`, `NightTransactionRestoreComposition`, Dawn/Dusk recovery authorities, or unrelated draft fields in MS-S1R.
+Target concepts:
 
-## 12. Protected predecessor invariants
+```text
+SetupCandidate
+SetupCandidateSource
+ClocktowerSetupPolicy / ClocktowerSetupProvider
+ClocktowerSetupProviderRegistry
+```
+
+This slice must remain persistence-independent.
+
+Do not yet implement:
+
+- optional template repositories — MS-S3;
+- generated setup algorithms — MS-S4;
+- common diversity history/scoring/selection — MS-S5;
+- generic shown-identity commitment — MS-S6;
+- TB production adaptation — MS-S7;
+- NGJ production adaptation — MS-S8.
+
+## 8. MS-S2 audit targets before code
+
+Audit the smallest relevant current surfaces:
+
+1. `TroubleBrewingSetupPreset` / dataset / selection models;
+2. `TroubleBrewingSetupPresetSelector` inputs and responsibilities;
+3. `TroubleBrewingProductionSetupPreparer` provider/orchestration responsibilities;
+4. `TroubleBrewingCommittedSetupAdapter` and deal-plan boundary, only to understand where candidate ends and materialization begins;
+5. No Greater Joy / generic script role definitions and `clocktowerDistribution(playerCount)` entry points;
+6. existing `ScriptId`, `RoleId`, `ClocktowerScript`, and ruleset/provider registry patterns elsewhere in the codebase that can be reused instead of duplicated.
+
+Classify every candidate field as one of:
+
+```text
+GENERIC CANDIDATE FACT
+TB-ONLY TEMPLATE METADATA
+TB-ONLY DIVERSITY/SCORING METADATA
+MATERIALIZATION/SHOWN-IDENTITY CONCERN
+PERSISTENCE CONCERN — must not enter MS-S2
+```
+
+## 9. MS-S2 proposed contract direction
+
+Prefer a small pure Kotlin boundary approximately like:
+
+```text
+SetupCandidate
+├─ script: ScriptId
+├─ candidateId: String?
+├─ playerCount: Int / derived from roles
+├─ actualRoles: role multiset or ordered pre-seat role list
+└─ source/provider identity needed by later commitment provenance
+
+SetupCandidateSource
+└─ candidatesFor(request/context): List<SetupCandidate>
+
+ClocktowerSetupProvider
+├─ script identity
+└─ candidate source/policy ownership
+
+ClocktowerSetupProviderRegistry
+└─ resolve(script): ClocktowerSetupProvider
+```
+
+Do not freeze this exact field shape until the TB/NGJ audit proves which facts are truly generic. In particular, avoid prematurely moving TB `styleTags`, minion-set features, similarity metadata, `drunkAsOptions`, dataset schema/version, or rotation weights into generic candidate core.
+
+Shown identity is not automatically a candidate fact: MS-S6 owns the generic shown-identity commitment policy. Preserve TB's current selector-owned Drunk behavior until the later adaptation slice deliberately maps it.
+
+## 10. MS-S2 required evidence
+
+Use typed tests for durable contracts. Minimum useful evidence should prove:
+
+1. generic candidate construction rejects structurally invalid/empty identities as appropriate;
+2. source/provider identity is script-neutral and does not require Android/persistence classes;
+3. registry resolves the provider for a registered `ScriptId`;
+4. unregistered script behavior is explicit and deterministic;
+5. duplicate provider registration/identity behavior is explicit;
+6. generic contracts contain no TB-only mandatory metadata;
+7. introducing a future provider does not require changing App-root branching in MS-S2 itself.
+
+Existing tests count as evidence where they already prove a requirement. Do not add source-string RED solely because a pure Kotlin typed test is easier and stronger.
+
+## 11. Protected predecessor invariants
 
 Preserve throughout MS-SETUP:
 
@@ -313,19 +275,12 @@ Invalid template data never silently falls back to broad-random TB setup.
 Identity reveal does not synchronously block on recommendation/First Night computation.
 Background work cannot mutate committed identities.
 Only true completed games enter diversity/rotation history.
-Completion persistence is retry-safe and records the original committed setup.
+Completion persistence is retry-safe and records the original committed setup summary.
 ```
 
-Also preserve committed-domain correctness unrelated to arbitrary resume:
+Also preserve Dawn/Dusk retry convergence, Fortune Teller current/effective-state authority, poisoned Spy fail-safe semantics, current living-Demon UI authority, and NGJ setup legality/current behavior until its explicit migration.
 
-- Dawn poison exactly-once / retry convergence;
-- Dusk/next-night poison expiry exactly-once / retry convergence;
-- Fortune Teller current/effective-state authority;
-- poisoned Spy fail-safe semantics;
-- current living-Demon UI authority;
-- NGJ setup legality/current behavior until explicit migration parity proof.
-
-## 13. Workflow
+## 12. Workflow
 
 Follow:
 
@@ -333,40 +288,31 @@ Follow:
 - `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 - `docs/TESTING_STRATEGY.md`;
 - `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`;
-- `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` for large/truncated production files.
+- `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` only when a large/truncated file must be changed.
 
-Use risk-based evidence, not RED ceremony.
+For MS-S2, prefer new/small pure Kotlin files and direct GitHub connector writes. App/Host production wiring should not be necessary in this slice.
 
-For large files:
-
-```text
-safe small/medium file
--> GitHub connector direct edit
-
-large/truncated file + stable unique anchors
--> GitHub Actions one-shot workflow + separate Python patch script
-
-one-shot cannot be made safe / complete local worktree genuinely required
--> Codex/Luna
-```
-
-## 14. Immediate next action — MS-S1R audit first
-
-Before writing MS-S1R production code:
+## 13. Immediate next action — MS-S2 audit first
 
 1. re-confirm live `main`, branch head, Draft PR #61 and checks;
-2. inspect existing TB provenance codec/models/tests;
-3. inspect App active-save serialization and restore decode anchors without editing the large file yet;
-4. map supported legacy-save compatibility requirements;
-5. freeze the smallest exact generic codec/checkpoint and typed RED/evidence plan;
-6. only then implement the small codec/test seam;
-7. cut over App persistence using the safe large-file path if needed;
-8. retire superseded TB reconstruction only after replacement proof.
+2. inspect TB preset/selection/selector/preparer model boundaries;
+3. inspect NGJ role/distribution setup entry points;
+4. search for reusable registry/provider patterns already in the repo;
+5. freeze the smallest generic candidate/source/provider contract;
+6. establish typed test-first evidence where a durable new contract is being introduced;
+7. implement only MS-S2 pure contracts;
+8. run focused tests, then T1/CI as justified;
+9. stop before MS-S3.
 
-## 15. Explicit non-goals for MS-S1R
+## 14. Explicit non-goals for MS-S2
 
 Do not broaden into:
 
+- template repository implementation;
+- generated setup algorithm implementation;
+- diversity scoring/rotation migration;
+- generic Drunk/shown-identity policy;
+- TB/NGJ production cutover;
 - general unfinished-game recovery cleanup;
 - Mayor redirect redesign;
 - Imp succession redesign;
@@ -374,7 +320,6 @@ Do not broaden into:
 - A3/A4/ZDD;
 - Host/App decomposition for its own sake;
 - regeneration/reformatting of the frozen TB preset dataset;
-- MS-S2 candidate-source design before MS-S1R is accepted;
 - PR Ready/merge changes.
 
 Keep PR #61 Draft. Do not merge, mark Ready, force-push or rebase without explicit user authorization.
