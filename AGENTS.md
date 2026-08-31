@@ -36,8 +36,10 @@ Codex/Luna must not independently redesign a requested slice, broaden scope, sub
 ### Mandatory writer rule
 
 - Tests, docs, and small/medium source files **MUST** be edited by ChatGPT through the GitHub connector when complete safe read/write is available.
-- Codex/Luna **MUST NOT** be used merely because it is already involved in the task.
-- Codex/Luna is the fallback for large/truncated files, complete-worktree mechanical edits, or required local-only validation.
+- For a large/truncated source file where whole-file connector replacement is unsafe but the change can be expressed as stable unique anchors, the **first fallback MUST be a GitHub Actions one-shot workflow + separate Python patch script** following `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`.
+- The one-shot path must fail closed on exact branch HEAD, target-file blob SHA, anchor occurrence count, changed-file allowlist, and required test/diff evidence; temporary workflow/script files must self-remove after the product commit.
+- Codex/Luna **MUST NOT** be used merely because it is already involved in the task or because a file is large.
+- Codex/Luna is the next fallback only when the one-shot remote patch cannot be made safe, repeatedly fails because of the execution environment, or the work genuinely requires a complete local worktree / broad mechanical edit / local-only tooling.
 
 ## 2. Execution-path priority
 
@@ -65,16 +67,45 @@ Chat audit / decision
 
 When a genuine behavior gap requires test-first development, preserve real RED provenance when the current development plan requires a distinct RED. Do not manufacture a RED for a refactor or intermediate implementation step merely to satisfy process ceremony.
 
-### Path B — Codex/Luna local implementation
+### Path B — GitHub Actions one-shot large-file patch
 
-Use this when:
+Use this as the **first fallback for large/truncated files** when:
 
-- connector output is truncated or incomplete;
-- a large source file makes whole-file replacement risky;
-- declaration extraction or large mechanical movement needs a complete worktree;
+- connector output is truncated or whole-file replacement is risky;
+- the intended edit is localized and can be expressed with stable unique semantic anchors;
+- a complete GitHub runner checkout can safely compile/test/audit the result;
+- the patch can be locked to exact branch HEAD and target-file blob SHA.
+
+Required pattern:
+
+```text
+connector writes/updates small test if needed
+-> connector writes temporary .github/scripts/<slice>_patch.py
+-> connector writes temporary .github/workflows/<slice>-one-shot.yml
+-> workflow checks exact HEAD + remote HEAD + target/test blob SHA
+-> focused RED/baseline when applicable
+-> separate Python script applies exact count==1 anchor replacement
+-> focused GREEN / checkpoint tests
+-> git diff --check + exact changed-file allowlist + semantic assertions
+-> remote-head recheck
+-> product commit/push
+-> workflow removes its own temporary workflow/script in cleanup commit
+-> connector/user-authored checkpoint commit supplies normal PR CI/R2, and [full-ci] when T4 is required
+```
+
+Do not patch by absolute line number. Do not silently relax a zero/multiple-match anchor to fuzzy matching. Non-trivial Python patch bodies must live in the separate `.py` file rather than being embedded inside YAML.
+
+Detailed quoting, LF/newline, anchor-count, failure-triage, bot-push and cleanup rules are normative in `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`.
+
+### Path C — Codex/Luna local implementation
+
+Use this only when Path B cannot be made safe or genuinely cannot perform the work, including when:
+
+- the large-file change cannot be expressed as stable unique anchors;
+- declaration extraction or broad mechanical movement needs a complete worktree;
 - several strongly coupled large files must be edited together;
-- Android/Gradle/Clingo/Python local execution is required;
-- the task needs a real local diff before commit.
+- local-only tooling/input is required;
+- a complete local diff is necessary before the patch can be specified deterministically.
 
 In this path Chat must provide a deterministic implementation task containing, normally:
 
@@ -318,12 +349,13 @@ Read these when relevant:
 1. `docs/CURRENT_DEVELOPMENT_ROADMAP.md` — current execution authority;
 2. newest `docs/NEXT_DEVELOPMENT_HANDOFF_*.md` for the active campaign;
 3. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` — current Chat/connector/Luna execution contract;
-4. `docs/TESTING_STRATEGY.md` — authoritative test tiers, evidence model, and subsystem mapping;
-5. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md` — known failure patterns and proven improvements;
-6. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md` — current same-night product/architecture decisions;
-7. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md` — source-string debt and retirement triggers;
-8. `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` — connector workflow;
-9. `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` — older local-worktree guidance, subordinate where it conflicts with V2.
+4. `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` — normative large/truncated-file one-shot patch SOP;
+5. `docs/TESTING_STRATEGY.md` — authoritative test tiers, evidence model, and subsystem mapping;
+6. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md` — known failure patterns and proven improvements;
+7. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md` — current same-night product/architecture decisions;
+8. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md` — source-string debt and retirement triggers;
+9. `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` — connector workflow;
+10. `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` — older local-worktree guidance, subordinate where it conflicts with V2.
 
 If documents disagree, apply this precedence:
 
