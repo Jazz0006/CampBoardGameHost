@@ -1,7 +1,9 @@
 package com.codex.campboardgamehost.clocktower.recommendation.setup
 
+import com.codex.campboardgamehost.clocktower.config.RecommendationProfiles
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.CandidatePlan
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameState
@@ -67,6 +69,30 @@ class SetupMigrationTest {
                         observation.reliability == ReliabilityState.DRUNK
                 }
         })
+    }
+
+    @Test
+    fun `impaired Investigator pair is not downgraded solely for containing actual Evil`() {
+        val game = TroubleBrewingFixtures.eightPlayerExample()
+        val context = SetupEvaluator.createContext(game)
+
+        fun evaluate(candidateSeats: List<Int>) = SetupEvaluator.evaluateGenerated(
+            context = context,
+            candidate = CandidatePlan(
+                decisions = listOf(
+                    StorytellerDecision.DrunkInvestigatorInfo(
+                        shownMinion = RoleId("Poisoner"),
+                        candidateSeats = candidateSeats,
+                    ),
+                ),
+            ),
+            profile = RecommendationProfiles.balanced,
+        )
+
+        val goodOnlyPair = evaluate(listOf(4, 5))
+        val actualEvilPair = evaluate(listOf(7, 8))
+
+        assertEquals(goodOnlyPair.qualityTier, actualEvilPair.qualityTier)
     }
 
     @Test
