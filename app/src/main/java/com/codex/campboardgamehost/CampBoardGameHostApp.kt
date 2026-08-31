@@ -192,8 +192,9 @@ import com.codex.campboardgamehost.clocktower.session.FirstNightShadowResult
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingCommittedSetupAdapter
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDealRoleResolver
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingProductionSetupPreparer
-import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetSelection
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetJson
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecordFactory
 import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkCase
 import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkHarness
 import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkReport
@@ -624,6 +625,12 @@ private fun savedGamePreviewFromJson(context: Context, json: JSONObject): SavedG
     val screen = enumByName<Screen>(json.optNullableString("screen")) ?: return null
     val playerCount = json.optJSONArray("cards")?.length() ?: 0
     if (playerCount == 0) return null
+    if (
+        gameKind == GameKind.Clocktower &&
+        enumByName<ClocktowerScript>(json.optNullableString("currentClocktowerScript")) == ClocktowerScript.TroubleBrewing &&
+        (!json.has(CommittedClocktowerSetupPersistence.ROOT_KEY) ||
+            !json.has(TroubleBrewingSetupCompletionPersistence.ROOT_KEY))
+    ) return null
     val round = json.optInt("round", 1)
     val gameName = when (gameKind) {
         GameKind.Undercover -> context.getString(R.string.game_who_is_undercover)
@@ -909,8 +916,8 @@ internal fun CampBoardGameHostApp() {
     var clocktowerGameId by remember { mutableStateOf("") }
     var clocktowerGameSeed by remember { mutableStateOf(0L) }
     var committedClocktowerSetup by remember { mutableStateOf<CommittedClocktowerSetup?>(null) }
-    var committedTroubleBrewingSetupSelection by remember {
-        mutableStateOf<TroubleBrewingSetupPresetSelection?>(null)
+    var committedTroubleBrewingSetupRotationRecord by remember {
+        mutableStateOf<TroubleBrewingSetupRotationRecord?>(null)
     }
     var clocktowerGameStateRevision by remember { mutableStateOf(0L) }
     var clocktowerPlayerInputRevision by remember { mutableStateOf(0L) }
@@ -1571,10 +1578,10 @@ internal fun CampBoardGameHostApp() {
                 CommittedClocktowerSetupPersistence.encode(setup),
             )
         }
-        committedTroubleBrewingSetupSelection?.let { selection ->
+        committedTroubleBrewingSetupRotationRecord?.let { record ->
             put(
-                TroubleBrewingSetupProvenancePersistence.ROOT_KEY,
-                TroubleBrewingSetupProvenancePersistence.encode(selection),
+                TroubleBrewingSetupCompletionPersistence.ROOT_KEY,
+                TroubleBrewingSetupCompletionPersistence.encode(record),
             )
         }
         put("undercoverCount", undercoverCount)
@@ -1760,15 +1767,21 @@ internal fun CampBoardGameHostApp() {
                 },
             )
             val restoredCommittedClocktowerSetup = if (restoredGameKind == GameKind.Clocktower) {
-                CommittedClocktowerSetupPersistence.decodeOrNull(json)?.also { setup ->
+                val setup = CommittedClocktowerSetupPersistence.decodeOrNull(json)
+                if (restoredPersistence.clocktowerScript == ClocktowerScript.TroubleBrewing) {
+                    requireNotNull(setup) {
+                        "Current Trouble Brewing save is missing its exact committed setup."
+                    }
+                }
+                setup?.also { committedSetup ->
                     val restoredScript = requireNotNull(restoredPersistence.clocktowerScript) {
                         "Clocktower committed setup restore requires a resolved script."
                     }
-                    require(setup.script == restoredScript.toRecommendationScriptId()) {
+                    require(committedSetup.script == restoredScript.toRecommendationScriptId()) {
                         "Persisted committed Clocktower setup script does not match active-game identity."
                     }
                     if (json.has("clocktowerGameSeed")) {
-                        require(setup.setupSeed == json.optLong("clocktowerGameSeed")) {
+                        require(committedSetup.setupSeed == json.optLong("clocktowerGameSeed")) {
                             "Persisted committed Clocktower setup seed does not match active-game seed."
                         }
                     }
@@ -1776,16 +1789,24 @@ internal fun CampBoardGameHostApp() {
             } else {
                 null
             }
-            val restoredTroubleBrewingSetupSelection = if (
+            val restoredTroubleBrewingSetupRotationRecord = if (
                 restoredGameKind == GameKind.Clocktower &&
                 restoredPersistence.clocktowerScript == ClocktowerScript.TroubleBrewing
             ) {
-                val datasetJson = baseContext.assets
-                    .open("setup/trouble_brewing_setup_presets_v2_final.json")
-                    .bufferedReader(Charsets.UTF_8)
-                    .use { it.readText() }
-                val dataset = TroubleBrewingSetupPresetJson.parse(datasetJson)
-                TroubleBrewingSetupProvenancePersistence.decodeOrNull(json, dataset)
+                val committedSetup = requireNotNull(restoredCommittedClocktowerSetup)
+                val record = requireNotNull(TroubleBrewingSetupCompletionPersistence.decodeOrNull(json)) {
+                    "Current Trouble Brewing save is missing its completion/diversity summary."
+                }
+                require(committedSetup.playerCount == record.playerCount) {
+                    "Trouble Brewing committed setup and completion summary player counts disagree."
+                }
+                require(committedSetup.provenance.providerId == record.datasetId) {
+                    "Trouble Brewing committed setup and completion summary providers disagree."
+                }
+                require(committedSetup.provenance.candidateId == record.presetId) {
+                    "Trouble Brewing committed setup and completion summary candidates disagree."
+                }
+                record
             } else {
                 null
             }
@@ -1946,7 +1967,7 @@ internal fun CampBoardGameHostApp() {
                 currentClocktowerScript = requireNotNull(restoredPersistence.clocktowerScript)
             }
             committedClocktowerSetup = restoredCommittedClocktowerSetup
-            committedTroubleBrewingSetupSelection = restoredTroubleBrewingSetupSelection
+            committedTroubleBrewingSetupRotationRecord = restoredTroubleBrewingSetupRotationRecord
             clocktowerGameId = json.optString("clocktowerGameId")
                 .takeIf { it.isNotBlank() }
                 ?: UUID.randomUUID().toString()
@@ -2134,7 +2155,7 @@ internal fun CampBoardGameHostApp() {
         invalidateA4SessionBoundary()
         clearSavedGameState()
         committedClocktowerSetup = null
-        committedTroubleBrewingSetupSelection = null
+        committedTroubleBrewingSetupRotationRecord = null
         currentGameKind = nextGameKind
         records.clear()
         clocktowerEvents.clear()
@@ -2369,7 +2390,9 @@ internal fun CampBoardGameHostApp() {
                     clocktowerScript = ClocktowerScript.TroubleBrewing,
                     preparedClocktowerSeed = preparedSeed,
                 )
-                committedTroubleBrewingSetupSelection = preparedSetup.selection
+                committedTroubleBrewingSetupRotationRecord = TroubleBrewingSetupRotationRecordFactory.fromSelection(
+                    preparedSetup.selection,
+                )
                 committedClocktowerSetup = TroubleBrewingCommittedSetupAdapter.fromDealPlan(
                     dealPlan = preparedSetup.dealPlan,
                     resolvedAssignments = resolvedAssignments,
@@ -2482,11 +2505,11 @@ internal fun CampBoardGameHostApp() {
         if (currentGameKind != GameKind.Clocktower) return true
         if (currentClocktowerScript != ClocktowerScript.TroubleBrewing) return true
         if (gameOutcome == null) return true
-        val selection = committedTroubleBrewingSetupSelection ?: return true
+        val record = committedTroubleBrewingSetupRotationRecord ?: return true
         return TroubleBrewingSetupRotationHistoryStore.fromContext(baseContext)
             .recordCompletedGame(
                 gameId = clocktowerGameId,
-                selection = selection,
+                record = record,
             )
     }
 
