@@ -4,7 +4,7 @@
 > Branch: `codex/trouble-brewing-setup-presets-v2`  
 > PR: #57  
 > Scope: post-6K narrow persistence-ordering repair only  
-> Final T4 gate: triggered by this checkpoint commit; acceptance evidence to be recorded after completion
+> Status: **COMPLETE / ACCEPTED**
 
 ## 1. Why 6L exists
 
@@ -102,20 +102,26 @@ d0bcbb6f6eaf9bfe31a81bc0f9c7efd73dc591fd
 
 ## 5. Final acceptance gate
 
-This checkpoint intentionally triggers a fresh `[full-ci]` after the production repair and cleanup.
-
-Required acceptance evidence:
+Full-checkpoint trigger:
 
 ```text
-CI full checkpoint classification               SUCCESS
-Android :app:testFull                            SUCCESS
-Android :app:assembleDebug                       SUCCESS
-ASP contract tests                               SUCCESS
-Real Clingo cross-validation                    SUCCESS
-CI aggregate gate                               SUCCESS
-R2 main-thread boundary                         SUCCESS
+45a60a3c32c7471c68d89b7fb886c4dbb00f1781
+`[full-ci] test: run TBSP 6L durability acceptance`
 ```
 
-Until those checks complete successfully, PR #57 remains Draft and must not be merged.
+Same-head acceptance evidence:
 
-After the final gate is accepted, TBSP-1 through TBSP-6L can be treated as complete and PR #57 is eligible for explicit user-authorized Ready/merge. MS-SETUP remains a separate post-merge campaign.
+```text
+CI #1167 / run 33344886176                    SUCCESS
+full checkpoint classification                SUCCESS
+Android :app:testFull                         SUCCESS
+Android :app:assembleDebug                    SUCCESS
+ASP contract tests                            SUCCESS
+Real Clingo cross-validation                  SUCCESS
+CI aggregate gate                             SUCCESS
+R2 #1090 / run 33344886170                    SUCCESS
+```
+
+TBSP-1 through TBSP-6L are now complete and accepted. PR #57 remains Draft solely because Ready/merge requires explicit user authorization.
+
+MS-SETUP generic multi-script setup architecture remains a separate post-merge campaign and has not started.
