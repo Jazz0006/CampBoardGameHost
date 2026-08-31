@@ -1,0 +1,101 @@
+name: TBSP 6L provenance durability repair
+
+on:
+  push:
+    branches:
+      - codex/trouble-brewing-setup-presets-v2
+    paths:
+      - .github/workflows/tbsp-6l-provenance-durability.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          ref: codex/trouble-brewing-setup-presets-v2
+
+      - name: Verify one-shot preconditions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "8406bdf39a1203d8c69f5a51f7c94474516477ff"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = "945c11453f4c1ee244fcdb7af86813752c4184c5"
+          changed="$(git diff-tree --no-commit-id --name-only -r HEAD)"
+          test "$changed" = ".github/workflows/tbsp-6l-provenance-durability.yml"
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prove focused RED
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.TroubleBrewingActiveGameProvenanceWiringTest' \
+            --no-daemon --rerun-tasks 2>&1 | tee /tmp/tbsp-6l-red.log
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo 'Expected focused provenance guard to be RED before production repair.' >&2
+            exit 1
+          fi
+          grep -F 'curated Trouble Brewing start durably saves provenance after committing selection' /tmp/tbsp-6l-red.log
+
+      - name: Apply exact production repair
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt')
+          text = path.read_text(encoding='utf-8')
+          old = '''                committedTroubleBrewingSetupSelection = preparedSetup.selection
+                troubleBrewingFirstNightPrecomputeCoordinator.prewarm(
+'''
+          new = '''                committedTroubleBrewingSetupSelection = preparedSetup.selection
+                persistActiveGameStateIfNeeded()
+                troubleBrewingFirstNightPrecomputeCoordinator.prewarm(
+'''
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one TB provenance commit anchor, found {count}.')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+      - name: Focused GREEN and T1
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.TroubleBrewingActiveGameProvenanceWiringTest' \
+            --no-daemon --rerun-tasks
+          ./gradlew :app:testFast --no-daemon --rerun-tasks
+
+      - name: Exact diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t files < <(git diff --name-only)
+          test "${#files[@]}" -eq 1
+          test "${files[0]}" = 'app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt'
+          git diff -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+
+      - name: Commit and push production repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          git commit -m 'fix: durably persist TB setup provenance'
+          git push origin HEAD:codex/trouble-brewing-setup-presets-v2
