@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
+import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CandidateMetadata
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
@@ -8,6 +9,9 @@ import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
+import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
+import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
+import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StableCandidateIdFactory
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
@@ -17,6 +21,7 @@ internal object NaturalPairInformationCandidateGenerator {
     private const val naturalTruthFamily = "natural-truth"
     private val librarian = RoleId("Librarian")
     private val investigator = RoleId("Investigator")
+    private val recluse = RoleId("Recluse")
 
     fun generate(
         game: GameState,
@@ -53,12 +58,38 @@ internal object NaturalPairInformationCandidateGenerator {
             return if (abilityRole == librarian) listOf(noOutsiderCandidate(sourceSeat)) else emptyList()
         }
 
-        return targets.flatMap { target ->
+        val naturalCandidates = targets.flatMap { target ->
             game.players
                 .filter { it.seat != sourceSeat && it.seat != target.seat }
                 .sortedBy { it.seat }
                 .map { decoy -> naturalCandidate(sourceSeat, abilityRole, target.actualRole, target.seat, decoy.seat) }
-        }.distinctBy { it.candidateId }
+        }
+        if (abilityRole != investigator) return naturalCandidates.distinctBy { it.candidateId }
+
+        // Recluse may register as a Minion for the Investigator interaction. Keep the actual
+        // Minion candidates above as TRUE_TO_ACTUAL_STATE; add explicit registered-state
+        // candidates rather than pretending Recluse's underlying character type changed.
+        val shownMinionRoles = targets.map { it.actualRole }.distinct().sortedBy { it.value }
+        val recluseCandidates = game.players
+            .filter { it.seat != sourceSeat && it.actualRole == recluse }
+            .sortedBy { it.seat }
+            .flatMap { target ->
+                shownMinionRoles.flatMap { shownRole ->
+                    game.players
+                        .filter { it.seat != sourceSeat && it.seat != target.seat }
+                        .sortedBy { it.seat }
+                        .map { decoy ->
+                            recluseRegistrationCandidate(
+                                sourceSeat = sourceSeat,
+                                shownRole = shownRole,
+                                targetSeat = target.seat,
+                                decoySeat = decoy.seat,
+                            )
+                        }
+                }
+            }
+
+        return (naturalCandidates + recluseCandidates).distinctBy { it.candidateId }
     }
 
     private fun naturalCandidate(
@@ -97,6 +128,58 @@ internal object NaturalPairInformationCandidateGenerator {
         )
     }
 
+    private fun recluseRegistrationCandidate(
+        sourceSeat: Int,
+        shownRole: RoleId,
+        targetSeat: Int,
+        decoySeat: Int,
+    ): DecisionCandidate<PairInformationOutcome> {
+        val registration = RegistrationFact(
+            interactionId = listOf(
+                "pair-information-registration-v1",
+                sourceSeat,
+                targetSeat,
+                shownRole.value,
+                RegistrationQuestion.SPECIFIC_MINION.name,
+            ).joinToString(":"),
+            subjectSeat = targetSeat,
+            registeredRole = shownRole,
+            registeredType = CharacterType.MINION,
+            registeredAlignment = Alignment.EVIL,
+            registrationQuestion = RegistrationQuestion.SPECIFIC_MINION,
+            reason = RegistrationReason.RECLUSE_ABILITY,
+        )
+        val outcome = PairInformationOutcome(
+            shownRole = shownRole,
+            targetSeat = targetSeat,
+            decoySeat = decoySeat,
+        )
+        return DecisionCandidate(
+            candidateId = StableCandidateIdFactory.create(
+                candidateSchemaVersion = candidateSchemaVersion,
+                abilityState = AbilityState.FUNCTIONING,
+                truthRelation = TruthRelation.TRUE_TO_REGISTERED_STATE,
+                abilityRole = investigator,
+                shownRole = shownRole,
+                candidateSeats = outcome.candidateSeats,
+                registrations = listOf(registration),
+            ),
+            candidateFamilyId = naturalTruthFamily,
+            outcome = outcome,
+            abilityState = AbilityState.FUNCTIONING,
+            truthRelation = TruthRelation.TRUE_TO_REGISTERED_STATE,
+            registrations = listOf(registration),
+            effects = listOf(
+                EffectDraft.PlayerInformation(
+                    recipientSeat = sourceSeat,
+                    sourceAbility = investigator,
+                    value = InformationValue.PlayerPair(shownRole, outcome.candidateSeats),
+                ),
+            ),
+            metadata = metadata(investigator, extraTags = setOf("registered-truth", "recluse-registration")),
+        )
+    }
+
     private fun noOutsiderCandidate(sourceSeat: Int): DecisionCandidate<PairInformationOutcome> = DecisionCandidate(
         candidateId = StableCandidateIdFactory.create(
             candidateSchemaVersion = candidateSchemaVersion,
@@ -118,9 +201,12 @@ internal object NaturalPairInformationCandidateGenerator {
         metadata = metadata(librarian),
     )
 
-    private fun metadata(abilityRole: RoleId) = CandidateMetadata(
+    private fun metadata(
+        abilityRole: RoleId,
+        extraTags: Set<String> = emptySet(),
+    ) = CandidateMetadata(
         candidateSchemaVersion = candidateSchemaVersion,
         decisionType = "${abilityRole.value.lowercase().replace(' ', '-')}-pair-information",
-        tags = setOf("natural-truth"),
+        tags = setOf("natural-truth") + extraTags,
     )
 }
