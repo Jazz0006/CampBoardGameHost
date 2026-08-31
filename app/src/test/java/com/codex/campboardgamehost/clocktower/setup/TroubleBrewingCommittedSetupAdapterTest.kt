@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost.clocktower.setup
 
+import com.codex.campboardgamehost.ClocktowerRole
+import com.codex.campboardgamehost.ClocktowerTeam
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
@@ -8,7 +10,7 @@ import org.junit.Test
 
 class TroubleBrewingCommittedSetupAdapterTest {
     @Test
-    fun `deal plan becomes exact generic committed setup without reselection`() {
+    fun `resolved deal becomes exact generic committed setup using domain role ids`() {
         val plan = TroubleBrewingSetupDealPlan(
             datasetId = "trouble_brewing_setup_presets_v2_final",
             schemaVersion = 2,
@@ -31,14 +33,25 @@ class TroubleBrewingCommittedSetupAdapterTest {
                 ),
             ),
         )
+        val drunk = role(ClocktowerTeam.Outsider, "Drunk")
+        val chef = role(ClocktowerTeam.Townsfolk, "Chef")
+        val imp = role(ClocktowerTeam.Demon, "Imp")
+        val resolvedAssignments = listOf(
+            TroubleBrewingResolvedDealAssignment(1, "A", drunk, chef),
+            TroubleBrewingResolvedDealAssignment(2, "B", imp, imp),
+        )
 
-        val committed = TroubleBrewingCommittedSetupAdapter.fromDealPlan(plan)
+        val committed = TroubleBrewingCommittedSetupAdapter.fromDealPlan(
+            dealPlan = plan,
+            resolvedAssignments = resolvedAssignments,
+        )
 
         assertEquals(ScriptId("trouble_brewing"), committed.script)
         assertEquals(91L, committed.setupSeed)
         assertEquals(listOf(1, 2), committed.assignments.map { it.seat })
-        assertEquals(RoleId("drunk"), committed.assignments[0].actualRole)
-        assertEquals(RoleId("chef"), committed.assignments[0].shownRole)
+        assertEquals(RoleId("Drunk"), committed.assignments[0].actualRole)
+        assertEquals(RoleId("Chef"), committed.assignments[0].shownRole)
+        assertEquals(RoleId("Imp"), committed.assignments[1].actualRole)
         assertEquals(SetupSourceKind.TEMPLATE, committed.provenance.sourceKind)
         assertEquals("trouble_brewing_setup_presets_v2_final", committed.provenance.providerId)
         assertEquals("tb-5-001", committed.provenance.candidateId)
@@ -47,7 +60,7 @@ class TroubleBrewingCommittedSetupAdapterTest {
     @Test(expected = IllegalArgumentException::class)
     fun `deal plan player count mismatch is rejected before commitment`() {
         TroubleBrewingCommittedSetupAdapter.fromDealPlan(
-            TroubleBrewingSetupDealPlan(
+            dealPlan = TroubleBrewingSetupDealPlan(
                 datasetId = "dataset",
                 schemaVersion = 2,
                 presetId = "preset",
@@ -59,6 +72,15 @@ class TroubleBrewingCommittedSetupAdapterTest {
                     TroubleBrewingSetupDealAssignment(2, "B", "imp", "imp"),
                 ),
             ),
+            resolvedAssignments = emptyList(),
         )
     }
+
+    private fun role(team: ClocktowerTeam, enName: String): ClocktowerRole = ClocktowerRole(
+        team = team,
+        zhName = enName,
+        enName = enName,
+        zhDescription = "",
+        enDescription = "",
+    )
 }
