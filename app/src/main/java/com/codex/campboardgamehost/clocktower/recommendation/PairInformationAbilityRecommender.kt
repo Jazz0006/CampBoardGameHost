@@ -1,0 +1,173 @@
+package com.codex.campboardgamehost.clocktower.recommendation
+
+import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
+import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
+import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
+
+/**
+ * Recommends information for supported pair-information abilities after identity is fixed.
+ *
+ * Ability-specific code owns only the legal display shape and healthy truthful space. The
+ * shared dynamic information selector owns RELIABLE / DRUNK / POISONED family selection and
+ * misinformation severity within the false family.
+ */
+internal object PairInformationAbilityRecommender {
+    private const val stableVersion = "pair-information-ability-v1"
+    private val librarian = RoleId("Librarian")
+    private val investigator = RoleId("Investigator")
+
+    fun recommend(
+        game: GameState,
+        roleDefinitions: List<RoleDefinition>,
+        sourceSeat: Int,
+        abilityRole: RoleId,
+        reliability: ReliabilityState,
+        style: RecommendationStyle,
+    ): AbilityObservation? {
+        val healthyOutcomes = NaturalPairInformationCandidateGenerator
+            .generateHealthyInformationSpace(game, sourceSeat, abilityRole)
+            .map { it.outcome }
+        val healthyKeys = healthyOutcomes.map(::keyOf).toSet()
+        val options = legalDisplayOutcomes(game, roleDefinitions, sourceSeat, abilityRole)
+            .map { outcome ->
+                PairInformationOption(
+                    id = canonicalId(abilityRole, outcome),
+                    outcome = outcome,
+                    truthful = keyOf(outcome) in healthyKeys,
+                    misinformationPressure = misinformationPressure(outcome, healthyOutcomes),
+                )
+            }
+        val selected = DynamicCandidateGenerator.select(
+            options = options,
+            reliability = reliability.toDynamicReliability(),
+            style = style,
+            evilAdvantage = 0,
+            stableKey = listOf(
+                stableVersion,
+                game.seed.toString(),
+                sourceSeat.toString(),
+                abilityRole.value,
+                reliability.name,
+                style.name,
+            ).joinToString("|"),
+            recentMisinformationStreak = 0,
+            stableIdOf = PairInformationOption::id,
+            isTruthful = PairInformationOption::truthful,
+            misinformationPressure = PairInformationOption::misinformationPressure,
+            styleOf = { style },
+        ) ?: return null
+
+        return AbilityObservation(
+            sourceSeat = sourceSeat,
+            perceivedRole = abilityRole,
+            shownRole = selected.outcome.shownRole,
+            candidateSeats = selected.outcome.candidateSeats,
+            reliability = reliability,
+            semanticTruth = if (selected.truthful) SemanticTruth.TRUE else SemanticTruth.FALSE,
+        )
+    }
+
+    private fun legalDisplayOutcomes(
+        game: GameState,
+        roleDefinitions: List<RoleDefinition>,
+        sourceSeat: Int,
+        abilityRole: RoleId,
+    ): List<PairInformationOutcome> {
+        val targetType = when (abilityRole) {
+            librarian -> CharacterType.OUTSIDER
+            investigator -> CharacterType.MINION
+            else -> return emptyList()
+        }
+        val displayRoles = roleDefinitions
+            .asSequence()
+            .filter { game.script in it.scriptIds && it.type == targetType }
+            .map { it.id }
+            .distinct()
+            .sortedBy { it.value }
+            .toList()
+        val seats = game.players
+            .asSequence()
+            .map { it.seat }
+            .filter { it != sourceSeat }
+            .sorted()
+            .toList()
+        val pairs = unorderedPairs(seats)
+        val rolePairOutcomes = displayRoles.flatMap { shownRole ->
+            pairs.map { pair ->
+                PairInformationOutcome(
+                    shownRole = shownRole,
+                    targetSeat = pair[0],
+                    decoySeat = pair[1],
+                )
+            }
+        }
+        return if (abilityRole == librarian) {
+            rolePairOutcomes + PairInformationOutcome(shownRole = null, targetSeat = null, decoySeat = null)
+        } else {
+            rolePairOutcomes
+        }
+    }
+
+    private fun misinformationPressure(
+        outcome: PairInformationOutcome,
+        healthyOutcomes: List<PairInformationOutcome>,
+    ): Int {
+        if (healthyOutcomes.any { keyOf(it) == keyOf(outcome) }) return 0
+        if (healthyOutcomes.isEmpty()) return 2
+        return healthyOutcomes.minOf { healthy ->
+            if (outcome.shownRole == null || healthy.shownRole == null) {
+                4
+            } else {
+                val rolePenalty = if (outcome.shownRole == healthy.shownRole) 0 else 2
+                val seatOverlap = outcome.candidateSeats.intersect(healthy.candidateSeats.toSet()).size
+                (rolePenalty + (2 - seatOverlap)).coerceIn(1, 4)
+            }
+        }
+    }
+
+    private fun unorderedPairs(seats: List<Int>): List<List<Int>> = buildList {
+        for (firstIndex in 0 until seats.lastIndex) {
+            for (secondIndex in firstIndex + 1 until seats.size) {
+                add(listOf(seats[firstIndex], seats[secondIndex]))
+            }
+        }
+    }
+
+    private fun canonicalId(abilityRole: RoleId, outcome: PairInformationOutcome): String = listOf(
+        stableVersion,
+        abilityRole.value,
+        outcome.shownRole?.value ?: "none",
+        outcome.candidateSeats.joinToString(","),
+    ).joinToString("|")
+
+    private fun keyOf(outcome: PairInformationOutcome): PairInformationKey = PairInformationKey(
+        shownRole = outcome.shownRole,
+        candidateSeats = outcome.candidateSeats,
+    )
+
+    private fun ReliabilityState.toDynamicReliability(): InformationReliability = when (this) {
+        ReliabilityState.RELIABLE -> InformationReliability.RELIABLE
+        ReliabilityState.DRUNK -> InformationReliability.DRUNK
+        ReliabilityState.POISONED -> InformationReliability.POISONED
+    }
+
+    private data class PairInformationOption(
+        val id: String,
+        val outcome: PairInformationOutcome,
+        val truthful: Boolean,
+        val misinformationPressure: Int,
+    )
+
+    private data class PairInformationKey(
+        val shownRole: RoleId?,
+        val candidateSeats: List<Int>,
+    )
+}
