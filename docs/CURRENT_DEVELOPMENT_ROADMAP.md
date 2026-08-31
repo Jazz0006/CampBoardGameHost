@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-08-31 Australia/Sydney  
+> Updated: 2026-09-01 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **This file is the single current project-status authority.**  
 > Always re-query live GitHub state before implementation; documented checkpoints do not replace live-state verification.
@@ -8,11 +8,8 @@
 ## 1. Current development context
 
 ```text
-live main at latest acceptance audit:
+live main at latest replan audit:
 eed51bade5163790316a31e8295e2e841df90357
-
-merged / fully validated TBSP checkpoint:
-98ee982ef3590822cd06ac72a047b49afac3cfd6
 
 current branch:
 codex/ms-setup-generic-architecture
@@ -25,14 +22,17 @@ latest accepted code/test checkpoint:
 MS-S6C
 38a04c1353c883c3bda4b4a506085c3c1d2766bd
 
+focused S6C GREEN tree:
+70e7f41d1e30e5e701c02ceb95660572a99d27d4
+
 full acceptance:
 CI #1290 / run 33393872108   SUCCESS
 R2 #1207 / run 33393872097   SUCCESS
 ```
 
-`38a04c1...` is an empty `[full-ci]` acceptance commit over the exact code tree from `70e7f41d1e30e5e701c02ceb95660572a99d27d4`; compare contains zero changed files.
+`38a04c1...` is an empty `[full-ci]` acceptance commit over the exact code tree from `70e7f41...`; compare contains zero changed files.
 
-Any later documentation-only carrier commit does **not** replace the accepted code/test checkpoint.
+The pre-replan branch head `e5a49800fb716e6f8254aa1e9126608a06a713df` was one documentation-only carrier commit ahead of `38a04c1...`. Any later documentation-only replan commit likewise does **not** replace the accepted S6C code/test checkpoint.
 
 Accepted slice checkpoints:
 
@@ -63,9 +63,12 @@ MS-S5    actual-composition diversity/scorer/selector            COMPLETE / ACCE
 MS-S6A   shown-identity policy/options boundary                  COMPLETE / ACCEPTED
 MS-S6B   deterministic shown-identity commitment                 COMPLETE / ACCEPTED
 MS-S6C   generic information semantics + impairment ownership    COMPLETE / ACCEPTED
-MS-S7    TB 480-template controlled semantic cutover             NEXT
-MS-S8    NGJ/no-template production cutover
-MS-S9    future-script generic acceptance
+MS-S6D   first-night perceived-ability semantic completion       NEXT
+MS-S7    TB 480-template controlled semantic cutover             AFTER S6D
+
+ALG-B2R  first-night Epistemic Gate resumption                   AFTER S7 / SEPARATE CAMPAIGN
+MS-S8    NGJ/no-template production cutover                      QUEUED AFTER B2R UNLESS REPRIORITIZED
+MS-S9    future-script generic acceptance                        QUEUED
 
 REC-R1   separate future unfinished-game stable-checkpoint work
 ```
@@ -82,9 +85,45 @@ Historical S6C design/replan:
 
 `docs/MS_S6C_GENERIC_IMPAIRED_INFORMATION_REPLAN_2026-08-31.md`
 
-## 2. Frozen target architecture
+## 2. Why the roadmap is re-planned after accepted S6C
 
-The causal order remains:
+S6C is accepted and is **not reopened**. The replan corrects the next-stage interpretation of its coverage.
+
+The global algorithm architecture has always separated:
+
+```text
+mechanical / identity correctness
+-> role ability semantics
+-> legal information space
+-> impairment policy
+-> storyteller selection
+-> player observation/history
+-> Possible Worlds epistemic quality evaluation
+```
+
+The relevant historical design authorities remain aligned:
+
+- `CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md` defines A3/A4 exact player-world correctness, then B2 first-night `before -> observation -> after` evaluation, with production selector rollout deferred to C9;
+- `phase_a_exit_review_2026-08-20.md` explicitly accepted A3 as the exact correctness baseline while keeping A4/ZDD and its caches shadow-only and leaving production recommendation on the existing path;
+- `R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md` already established that Drunk and Poisoned information should share a generic impairment layer above role ability semantics;
+- `design_plan_audit_2026-08-21.md` separated semantic-history ownership from later revision-driven recommendation unification.
+
+The new audit found that current production is neither fully legacy nor fully A3/A4-driven:
+
+```text
+legacy / role-local candidate construction
+-> first-night unified candidate pool
+-> generic RELIABLE / DRUNK / POISONED selection
+-> structured display / observation
+```
+
+`legacyInformationCandidates` therefore remains an important production migration seam. A3/A4 player-world results still do **not** generally own recommendation quality/ranking.
+
+S6C successfully established generic semantics for its supported information domains, but that acceptance must not be read as proof that every Trouble Brewing first-night perceived information role has been migrated to a shared typed semantic source. That remaining coverage gap is MS-S6D.
+
+## 3. Frozen target architecture through S6C
+
+The causal setup order remains:
 
 ```text
 Composition
@@ -98,14 +137,14 @@ Accepted flow through S6C:
 script + playerCount + setupSeed
 -> resolve script/ruleset setup provider
 -> query optional template candidates or legal generated candidates
--> MS-S5 select one candidate using ACTUAL-COMPOSITION diversity only      [ACCEPTED]
--> MS-S6A resolve legal shown-identity options/policy                      [ACCEPTED]
--> MS-S6B deterministically commit shown identity                          [ACCEPTED]
+-> S5 select one candidate using ACTUAL-COMPOSITION diversity only          [ACCEPTED]
+-> S6A resolve legal shown-identity options/policy                          [ACCEPTED]
+-> S6B deterministically commit shown identity                              [ACCEPTED]
 -> seat/deal materialization
 -> CommittedClocktowerSetup(actualRole + shownRole)
--> MS-S6C resolve perceived ability / healthy information semantics        [ACCEPTED]
--> MS-S6C apply RELIABLE / DRUNK / POISONED generic information policy     [ACCEPTED]
--> recommendation generates information only                               [ACCEPTED]
+-> S6C resolve perceived ability / healthy information semantics where supported [ACCEPTED]
+-> S6C apply RELIABLE / DRUNK / POISONED generic information policy         [ACCEPTED]
+-> recommendation generates information only                                [ACCEPTED]
 ```
 
 Frozen ownership rules:
@@ -114,11 +153,13 @@ Frozen ownership rules:
 - S5 actual-composition selection cannot consume shown identity or shown-identity history;
 - S6A exposes legal shown-identity options only;
 - S6B chooses/commits shown identity only;
-- S6C consumes committed shown identity but cannot change it;
+- S6C/S6D may consume committed shown identity but may never change it;
 - role-specific ability semantics define legal information shape/truth semantics;
-- generic impairment/recommendation policy owns unreliable information family selection and within-family ranking.
+- Healthy, Poisoned and Drunk must not own three different implementations of the same role ability;
+- generic impairment policy owns unreliable truth/false-family behavior after the role semantic space exists;
+- A3/A4 Possible Worlds quality evaluation is a later layer and must not be silently folded into setup migration.
 
-## 3. Accepted foundation through S6C
+## 4. Accepted foundation through S6C
 
 ### MS-S1 / S1R
 
@@ -150,9 +191,7 @@ Frozen ownership rules:
 
 ### MS-S6C
 
-S6C accepts the committed identity and owns information semantics only.
-
-Accepted pipeline:
+Accepted S6C pipeline:
 
 ```text
 committed shown identity
@@ -165,22 +204,105 @@ committed shown identity
 -> deterministic AbilityObservation
 ```
 
-S6C retires active Drunk-Investigator-specific recommendation ownership while keeping compatibility schema where required. Drunk and Poisoned share generic impairment semantics for the same supported information domain. The first-version family bias is explicit at approximately 90% false / 10% truthful rather than the old 97/3 default.
+S6C retires active Drunk-Investigator-specific recommendation ownership while keeping compatibility schema where required. Drunk and Poisoned share generic impairment semantics for supported common information domains. The first-version family bias is explicit at approximately 90% false / 10% truthful rather than the old 97/3 default.
 
-Investigator remains specialized only where its ability semantics require it: one Minion character, exactly two candidate seats, healthy truth/registration semantics and pair display shape.
+S6C also repaired the narrow healthy Investigator Recluse/Spy registration seam without a broad registration rewrite.
 
-Healthy Investigator registration correctness is now explicit:
+**Coverage clarification:** S6C proves the architecture and accepted behavior for its migrated domains. It does not by itself prove full first-night semantic coverage for every TB information role that a Drunk may perceive.
 
-- actual Spy/Minion truth remains `TRUE_TO_ACTUAL_STATE` with no unnecessary registration;
-- Recluse may provide `TRUE_TO_REGISTERED_STATE` Minion truth;
-- Recluse may register as an out-of-play Minion from the current script role catalog;
-- selected truth that genuinely depends on Recluse registration carries registration metadata into `AbilityObservation`.
+## 5. MS-S6D — NEXT — First-night Perceived-Ability Semantic Completion
 
-See `docs/MS_S6C_GENERIC_INFORMATION_SEMANTICS_CHECKPOINT_2026-08-31.md` for RED/GREEN and acceptance evidence.
+S6D is a narrow semantic-completeness slice required before S7. It does not reopen accepted S6C behavior.
 
-## 4. MS-S7 — NEXT
+### 5.1 Goal
 
-S7 is the **Trouble Brewing controlled semantic cutover**. Do not start S8 until S7 has its own accepted checkpoint.
+For every Trouble Brewing first-night information ability in the original B2 first-night set:
+
+```text
+Washerwoman
+Librarian
+Investigator
+Chef
+Empath
+Fortune Teller
+```
+
+establish one shared role semantic source such that:
+
+```text
+committed perceived role
+-> healthy legal information space / truthful result
+-> RELIABLE / DRUNK / POISONED
+-> generic impairment policy
+-> deterministic information recommendation
+```
+
+The important invariant is:
+
+```text
+Empath semantics
+  -> RELIABLE
+  -> POISONED
+  -> DRUNK
+```
+
+not three separate Healthy/Poisoned/Drunk Empath algorithms.
+
+### 5.2 Required S6D audit
+
+Before production edits, build a coverage matrix for all six first-night families and record for each:
+
+- current actor/perceived-role resolution;
+- current healthy truth source;
+- current legal false candidate source;
+- proposition/display shape;
+- Spy/Recluse registration dependency if any;
+- whether current production still depends on role-local/legacy `displayOptions`;
+- whether a typed semantic candidate source already exists;
+- whether an actual Drunk with committed `shownRole` reaches the same ability semantics as an actual healthy/poisoned holder.
+
+### 5.3 S6D implementation boundary
+
+S6D may:
+
+- generalize the existing pair-information semantic seam to missing pair-family coverage such as Washerwoman;
+- add the minimum typed numeric/boolean semantic seams required for Chef/Empath/Fortune Teller;
+- ensure `shownRole`, not `actualRole`, determines the perceived ability for an actual Drunk;
+- reuse the accepted generic impairment policy for both DRUNK and POISONED;
+- project semantic output into the existing first-night migration/UI adapter as needed for parity evidence.
+
+S6D must not:
+
+- reselect/reroll Drunk shown identity;
+- add role-specific Drunk or Poisoned storyteller strategies;
+- change the accepted approximate 90/10 policy unless a separate explicit product decision reopens it;
+- introduce A3/A4 `before -> observation -> after` scoring;
+- perform broad Host/App decomposition;
+- start NGJ cutover;
+- rewrite registration beyond a concrete behavior-proven correctness seam.
+
+### 5.4 Tests
+
+Use risk-based behavior tests, not source-shape guards.
+
+At minimum prove representative abstraction coverage across two different information shapes:
+
+1. one missing pair-information perceived role, preferably Washerwoman;
+2. one numeric/boolean perceived role, preferably Chef or Empath;
+3. actual Drunk + committed shown role receives that role's legal information shape and remains DRUNK;
+4. poisoned actual holder uses the same role semantic domain with POISONED reliability;
+5. healthy holder still resolves the correct truthful result;
+6. recommendation does not mutate committed shown identity.
+
+Do not assert internal class/field existence, exact helper calls or exact internal probability constants.
+
+### 5.5 S6D exit condition
+
+S6D is complete only when all six TB first-night B2 information families have an explicit semantic-coverage disposition and there is no known case where a committed Drunk shown information role is skipped because production looks only for an actual holder of that role.
+
+## 6. MS-S7 — AFTER S6D
+
+S7 remains the **Trouble Brewing controlled semantic cutover**. Do not start S7 until S6D has its own accepted checkpoint.
 
 Target flow:
 
@@ -192,54 +314,76 @@ Target flow:
 -> S6B identity commitment
 -> deal/materialize
 -> CommittedClocktowerSetup
--> S6C accepted information semantics consume committed shownRole
+-> S6D-complete perceived ability semantics consume committed shownRole
 ```
 
 S7 owns:
 
-- production wiring from validated TB templates into the accepted S2–S6C architecture;
+- production wiring from validated TB templates into the accepted S2–S6D architecture;
 - TB-specific Minion/style diversity adaptation at the correct adapter boundary;
 - retirement of legacy `selectedDrunkShownRole -> preset finalWeight` coupling;
+- controlled migration from remaining legacy first-night candidate ownership where necessary to make committed perceived identity authoritative;
+- parity/shadow evidence before removing a legacy authority;
 - preservation of current TB legality and deterministic setup behavior during cutover;
-- exact migration evidence that old and new ownership are not both active for the same decision.
+- exact evidence that old and new ownership are not both active for the same decision.
 
-S7 does **not** own:
+S7 does **not** own A3/A4 epistemic quality scoring. `legacyInformationCandidates` may remain as a UI/compatibility projection while authority is migrated; do not delete it merely for architectural tidiness.
 
-- NGJ/no-template production cutover — S8;
-- broad persistence/recovery redesign — REC-R1;
-- new information algorithms beyond accepted S6C;
-- broad App/Host decomposition;
-- destructive legacy schema removal unless directly required for safe TB cutover.
+Before implementation, perform S7-0 live audit of the current TB production path from validated templates through deal/materialization and first-night recommendation consumption.
 
-Before implementation, perform an S7-0 live audit and map the current TB production path from the 480 validated templates through deal/materialization and recommendation. Design focused behavior evidence before changing production ownership.
+## 7. ALG-B2R — AFTER S7 — Separate algorithm-consistency campaign
 
-## 5. S6C acceptance evidence
+After S7 is accepted, pause MS-SETUP production expansion before S8 unless the user explicitly reprioritizes.
 
-Focused final GREEN:
+ALG-B2R is **not part of PR #61**. Start it only after S7 acceptance and an explicit branch/PR disposition decision; preferred default is a fresh follow-up branch from the then-current accepted main rather than silently stacking a new algorithm campaign onto #61.
+
+ALG-B2R restores the normative v2.2 first-night Epistemic Gate:
 
 ```text
-70e7f41d1e30e5e701c02ceb95660572a99d27d4
-CI #1289 / run 33393595657: Android FAST SUCCESS / CI gate SUCCESS
-R2 #1206 / run 33393595784: SUCCESS
+semantic candidate
+-> recipient PlayerWorldSet BEFORE
+-> apply candidate observation
+-> recipient PlayerWorldSet AFTER
+-> exact epistemic metrics / quality gates
+-> recommendation ranking
 ```
 
-Full acceptance:
+Initial TB scope remains the original B2 first-night families and local registration semantics:
 
 ```text
-38a04c1353c883c3bda4b4a506085c3c1d2766bd
-CI #1290 / run 33393872108:
-  Android :app:testFull + :app:assembleDebug SUCCESS
-  ASP contract SUCCESS
-  Real Clingo SUCCESS
-  CI gate SUCCESS
-R2 #1207 / run 33393872097 SUCCESS
+Washerwoman / Librarian / Investigator
+Chef / Empath / Fortune Teller
+Spy / Recluse local registration
 ```
 
-S6C-8 durable REDs were separately observed as single-failure tests before their GREEN implementations; details are in the S6C checkpoint doc.
+ALG-B2R must preserve the Phase A boundary:
 
-## 6. Protected predecessor correctness
+- A3 EnumeratedWorldSet remains the exact correctness baseline;
+- A4/ZDD remains shadow/prototype until independently device-validated;
+- failures/resource limits never become false UNSAT;
+- actual-world narrative metrics remain separate from player-world epistemic metrics;
+- candidate legality/semantic correctness stays below the epistemic quality layer.
 
-Preserve throughout S7 and later migration:
+This campaign should progressively replace heuristic-only information quality with the intended `before -> observation -> after` player-knowledge evaluation. It is not the same as C9 full production rollout.
+
+## 8. Longer-term algorithm route
+
+The normative route remains:
+
+```text
+ALG-B2R first-night Epistemic Gate
+-> later Phase B historical/dynamic world integration as required
+-> Phase C productive-uncertainty / fairness / quality / distribution gates
+-> C9 Unified Selector Production Rollout
+```
+
+C9 remains the point where the Possible Worlds-based selector can become the general production authority after correctness, quality, distribution, replay and device gates pass.
+
+Phase D forward search and Phase E soft belief remain outside the first production-complete requirement.
+
+## 9. Protected predecessor correctness
+
+Preserve throughout S6D/S7 and later migration:
 
 ```text
 TB actual roles originate from selected/committed setup.
@@ -249,7 +393,8 @@ Drunk shown identity is committed once and cannot be replaced by recommendation.
 S5 actual-composition selection cannot consume shown identity.
 S6A legality cannot be rewritten by S6B or recommendation.
 S6B commitment cannot feed back into S5.
-S6C recommendation cannot mutate setup identity.
+S6C/S6D recommendation cannot mutate setup identity.
+Healthy/Poisoned/Drunk of the same perceived ability share role semantics before reliability policy.
 Start commits setup only once; recomposition/navigation cannot reroll it.
 Restore never reselects/rerolls an already committed setup.
 Invalid template data never silently falls back to broad-random setup.
@@ -260,7 +405,7 @@ Completion persistence is retry-safe.
 
 Also preserve Dawn/Dusk retry convergence, Fortune Teller current/effective-state authority, poisoned Spy fail-safe semantics, living-Demon UI authority and current NGJ legality until explicit migration.
 
-## 7. Validation cadence
+## 10. Validation cadence
 
 Follow:
 
@@ -281,7 +426,7 @@ Use risk-based evidence:
 
 Do not create source-string REDs or source-level implementation guards when a stable typed behavior seam can prove the contract.
 
-## 8. Writer / governance rules
+## 11. Writer / governance rules
 
 Use GitHub connector for safe docs/tests/small-medium source changes according to root `AGENTS.md`.
 
@@ -289,7 +434,7 @@ Keep PR #61 Draft.
 
 Do **not** merge, mark Ready, rebase or force-push without explicit user authorization.
 
-## 9. Current documentation authority
+## 12. Current documentation authority
 
 ```text
 AGENTS.md
@@ -297,6 +442,10 @@ docs/CURRENT_DEVELOPMENT_ROADMAP.md
 docs/NEXT_DEVELOPMENT_HANDOFF_2026-08-31_MS_SETUP_ARCHITECTURE.md
 docs/MS_S6C_GENERIC_INFORMATION_SEMANTICS_CHECKPOINT_2026-08-31.md
 docs/MS_S6C_GENERIC_IMPAIRED_INFORMATION_REPLAN_2026-08-31.md
+docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md
+docs/phase_a_exit_review_2026-08-20.md
+docs/R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md
+docs/design_plan_audit_2026-08-21.md
 docs/MS_SETUP_RECOVERY_SCOPE_REDUCTION_AUDIT_2026-08-31.md
 docs/MS_S1_COMMITTED_SETUP_CHECKPOINT_2026-08-31.md
 docs/MS_S1R_SETUP_PERSISTENCE_CHECKPOINT_2026-08-31.md
@@ -311,24 +460,26 @@ docs/TESTING_STRATEGY.md
 docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 ```
 
-## 10. New-conversation resume protocol
+## 13. New-conversation resume protocol
 
 1. read root `AGENTS.md`;
 2. read this roadmap;
 3. read active handoff;
 4. read `docs/MS_S6C_GENERIC_INFORMATION_SEMANTICS_CHECKPOINT_2026-08-31.md`;
-5. re-query live `main`, branch, Draft PR #61 and current checks;
-6. distinguish any docs-only carrier head from accepted S6C code checkpoint `38a04c1353c883c3bda4b4a506085c3c1d2766bd`;
-7. begin **S7-0** with a read-only audit of current TB 480-template production wiring before adding REDs or modifying production;
-8. preserve S5/S6A/S6B/S6C ownership boundaries;
-9. do not start S8, REC-R1 or broad App/Host work;
-10. keep PR #61 Draft and unmerged.
+5. read the v2.2 algorithm plan / Phase A exit / R6 impaired-information design only as needed for S6D semantic boundaries;
+6. re-query live `main`, branch, Draft PR #61 and current checks;
+7. distinguish any docs-only carrier head from accepted S6C code checkpoint `38a04c1353c883c3bda4b4a506085c3c1d2766bd`;
+8. begin **S6D-0**, not S7-0, with the first-night perceived-ability semantic coverage audit;
+9. use behavior-first REDs only for concrete missing semantic behavior;
+10. do not introduce A3/A4 epistemic ranking during S6D/S7;
+11. do not start S8, REC-R1 or broad App/Host work;
+12. keep PR #61 Draft and unmerged.
 
-## 11. Deferred / queued work registry
+## 14. Deferred / queued work registry
 
 | Area | Status |
 |---|---|
-| MS-SETUP generic multi-script setup architecture | CURRENT — S7 NEXT |
+| MS-SETUP generic multi-script setup architecture | CURRENT — S6D NEXT |
 | MS-S1R setup persistence authority migration | COMPLETE / ACCEPTED |
 | MS-S2 generic candidate/provider contracts | COMPLETE / ACCEPTED |
 | MS-S3 optional template repository | COMPLETE / ACCEPTED |
@@ -338,7 +489,12 @@ docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 | MS-S6A shown-identity policy/options boundary | COMPLETE / ACCEPTED |
 | MS-S6B deterministic shown-identity commitment | COMPLETE / ACCEPTED |
 | MS-S6C generic information semantics + impairment ownership | COMPLETE / ACCEPTED |
-| MS-S7 TB controlled semantic cutover | NEXT |
+| MS-S6D first-night perceived-ability semantic completion | NEXT |
+| MS-S7 TB controlled semantic cutover | AFTER S6D |
+| ALG-B2R first-night Epistemic Gate resumption | AFTER S7 / NEW CAMPAIGN |
+| MS-S8 NGJ/no-template production cutover | QUEUED AFTER B2R UNLESS REPRIORITIZED |
+| MS-S9 future-script generic acceptance | QUEUED |
+| C9 Unified Selector Production Rollout | FUTURE; AFTER B/C GATES |
 | REC-R1 unfinished-game recovery simplification | QUEUED SEPARATE CAMPAIGN |
 | GCR-4 Chambermaid actual wake-history authority | DEFERRED FOLLOW-UP |
 | GCR-5 night checkpoint stable identity hardening | DEFERRED; re-evaluate under REC-R1 |
