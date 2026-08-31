@@ -17,6 +17,7 @@ import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -129,6 +130,65 @@ class NaturalPairInformationCandidateGeneratorTest {
                     registration.reason == RegistrationReason.RECLUSE_ABILITY
             }
         })
+    }
+
+    @Test
+    fun `washerwoman healthy semantic space names an actual townsfolk with one decoy`() {
+        val game = game(
+            player(1, "Drunk", CharacterType.OUTSIDER, shownRole = "Washerwoman"),
+            player(2, "Chef", CharacterType.TOWNSFOLK),
+            player(3, "Empath", CharacterType.TOWNSFOLK),
+            player(4, "Poisoner", CharacterType.MINION),
+            player(5, "Imp", CharacterType.DEMON),
+        )
+
+        val candidates = NaturalPairInformationCandidateGenerator.generateHealthyInformationSpace(
+            game = game,
+            sourceSeat = 1,
+            abilityRole = RoleId("Washerwoman"),
+            roleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions(),
+        )
+
+        assertTrue(candidates.isNotEmpty())
+        assertTrue(candidates.all { candidate ->
+            candidate.outcome.shownRole in setOf(RoleId("Chef"), RoleId("Empath")) &&
+                candidate.outcome.candidateSeats.size == 2 &&
+                1 !in candidate.outcome.candidateSeats &&
+                candidate.truthRelation == TruthRelation.TRUE_TO_ACTUAL_STATE
+        })
+    }
+
+    @Test
+    fun `drunk shown washerwoman receives legal washerwoman pair information`() {
+        val game = game(
+            player(1, "Drunk", CharacterType.OUTSIDER, shownRole = "Washerwoman"),
+            player(2, "Chef", CharacterType.TOWNSFOLK),
+            player(3, "Empath", CharacterType.TOWNSFOLK),
+            player(4, "Poisoner", CharacterType.MINION),
+            player(5, "Imp", CharacterType.DEMON),
+        )
+        val roles = TroubleBrewingFixtures.fullRoleDefinitions()
+
+        val observation = PairInformationAbilityRecommender.recommend(
+            game = game,
+            roleDefinitions = roles,
+            sourceSeat = 1,
+            abilityRole = RoleId("Washerwoman"),
+            reliability = ReliabilityState.DRUNK,
+            style = RecommendationStyle.BALANCED,
+        )
+
+        assertNotNull(observation)
+        requireNotNull(observation)
+        assertEquals(RoleId("Washerwoman"), observation.perceivedRole)
+        assertEquals(ReliabilityState.DRUNK, observation.reliability)
+        assertEquals(2, observation.candidateSeats.size)
+        assertTrue(1 !in observation.candidateSeats)
+        assertEquals(
+            CharacterType.TOWNSFOLK,
+            roles.single { it.id == observation.shownRole }.type,
+        )
+        assertEquals(RoleId("Drunk"), game.playerAt(1)?.actualRole)
     }
 
     @Test
