@@ -111,9 +111,9 @@ internal class SetupShownIdentityPolicyResolver(
         }
 
         val drunk = ruleset.characterRegistry.findByExternalId(DRUNK_EXTERNAL_ID)
-        val hasDrunk = drunk?.id in candidate.actualRoles
+        val hasDrunk = drunk != null && drunk.id in candidate.actualRoles
         if (hasDrunk) {
-            require(drunk?.team == ClocktowerCatalogTeam.OUTSIDER) {
+            require(drunk.team == ClocktowerCatalogTeam.OUTSIDER) {
                 "Canonical Drunk shown-identity semantics require Drunk to be an Outsider."
             }
         }
