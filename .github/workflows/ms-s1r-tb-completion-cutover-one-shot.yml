@@ -1,3 +1,4 @@
+# Retry after fixing the compact completion test fixture metadata.
 name: MS-S1R TB completion cutover one-shot
 
 on:
