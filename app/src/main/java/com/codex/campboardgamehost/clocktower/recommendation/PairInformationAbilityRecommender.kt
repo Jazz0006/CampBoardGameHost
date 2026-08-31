@@ -24,6 +24,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.Information
  */
 internal object PairInformationAbilityRecommender {
     private const val stableVersion = "pair-information-ability-v1"
+    private val washerwoman = RoleId("Washerwoman")
     private val librarian = RoleId("Librarian")
     private val investigator = RoleId("Investigator")
 
@@ -103,6 +104,7 @@ internal object PairInformationAbilityRecommender {
         abilityRole: RoleId,
     ): List<PairInformationOutcome> {
         val targetType = when (abilityRole) {
+            washerwoman -> CharacterType.TOWNSFOLK
             librarian -> CharacterType.OUTSIDER
             investigator -> CharacterType.MINION
             else -> return emptyList()

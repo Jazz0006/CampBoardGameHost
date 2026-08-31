@@ -20,6 +20,7 @@ import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 internal object NaturalPairInformationCandidateGenerator {
     private const val candidateSchemaVersion = "1"
     private const val naturalTruthFamily = "natural-truth"
+    private val washerwoman = RoleId("Washerwoman")
     private val librarian = RoleId("Librarian")
     private val investigator = RoleId("Investigator")
     private val recluse = RoleId("Recluse")
@@ -51,6 +52,7 @@ internal object NaturalPairInformationCandidateGenerator {
     ): List<DecisionCandidate<PairInformationOutcome>> {
         if (game.playerAt(sourceSeat) == null) return emptyList()
         val targetType = when (abilityRole) {
+            washerwoman -> CharacterType.TOWNSFOLK
             librarian -> CharacterType.OUTSIDER
             investigator -> CharacterType.MINION
             else -> return emptyList()
