@@ -122,13 +122,16 @@ internal object PlanLegalityValidator {
         // PlayerState.shownRole but must never select, replace, or lock it as a decision.
         validateDecisionCount("drunk-shown-role", drunkShownRoles.size, required = false)
 
+        // DrunkInvestigatorInfo is a legacy compatibility payload, not a required active
+        // recommendation decision. A single historical/locked value remains legal only when
+        // the committed shown identity is Investigator; new active plans omit it entirely.
         val drunkPlayer = game.players.singleOrNull { it.actualRole == drunk }
-        val needsDrunkInvestigatorInfo = drunkPlayer?.shownRole == investigator
-        validateDecisionCount(
-            decisionType = "drunk-investigator-info",
-            count = drunkInvestigatorInfos.size,
-            required = needsDrunkInvestigatorInfo,
-        )
+        when {
+            drunkInvestigatorInfos.size > 1 ->
+                add(LegalityFailure.MultipleDecisions("drunk-investigator-info"))
+            drunkInvestigatorInfos.size == 1 && drunkPlayer?.shownRole != investigator ->
+                add(LegalityFailure.UnexpectedDecision("drunk-investigator-info"))
+        }
         drunkInvestigatorInfos.singleOrNull()?.let { decision ->
             validateRoleType(decision.shownMinion, CharacterType.MINION, scriptRoles)
             if (decision.candidateSeats.size != 2) {
