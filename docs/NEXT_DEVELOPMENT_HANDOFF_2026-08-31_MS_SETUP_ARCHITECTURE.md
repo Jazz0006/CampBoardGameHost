@@ -4,7 +4,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Branch: `codex/ms-setup-generic-architecture`  
 > Draft PR: `#61`  
-> Status: **MS-S3 COMPLETE / ACCEPTED — MS-S4 NEXT**
+> Status: **MS-S4 COMPLETE / ACCEPTED — MS-S5 NEXT**
 
 ## 1. Accepted live checkpoints
 
@@ -38,22 +38,26 @@ d4001863f134ebbe7d26819f40ac34c7d1de200c
 
 MS-S3:
 6b15822e75680fb8e718f5db24358e1a935b5523
+
+MS-S4:
+6de0e8c99c89a091615c513255adbdb773b3cc69
 ```
 
-MS-S3 validation:
+MS-S4 validation:
 
 ```text
-CI #1230 / run 33357908514   SUCCESS
+CI #1236 / run 33359464789   SUCCESS
 Android FAST unit tests      SUCCESS
 CI aggregate gate            SUCCESS
-R2 #1147 / run 33357908443   SUCCESS
+R2 #1153 / run 33359464788   SUCCESS
 Full Android                 SKIPPED by risk router
-ASP / Real Clingo            SKIPPED by risk router
+ASP contract tests           SKIPPED by risk router
+Real Clingo                  SKIPPED by risk router
 ```
 
-Later docs-only commits are carriers and do not replace the validated MS-S3 code/test head.
+Later documentation commits are carriers and do not replace the validated MS-S4 code/test checkpoint.
 
-Always re-query live GitHub state before a production write.
+Always re-query live GitHub state before the next production write.
 
 ## 2. Product goal
 
@@ -81,8 +85,8 @@ MS-S1   generic persistence-independent CommittedClocktowerSetup + provenance   
 MS-S1R  exact setup persistence authority migration + TB restore retirement         COMPLETE / ACCEPTED
 MS-S2   generic SetupCandidate + source/provider registry contracts                 COMPLETE / ACCEPTED
 MS-S3   optional TemplateRepository keyed by script + player count                  COMPLETE / ACCEPTED
-MS-S4   deterministic seeded legal GeneratedSetupCandidateSource                    NEXT
-MS-S5   common deterministic SetupDiversityHistory / scorer / selector facade
+MS-S4   deterministic seeded legal GeneratedSetupCandidateSource                    COMPLETE / ACCEPTED
+MS-S5   common deterministic SetupDiversityHistory / scorer / selector facade       NEXT
 MS-S6   generic shown-identity commitment policy
 MS-S7   adapt TB 480-preset pipeline; preserve TB behavior/parity
 MS-S8   adapt NGJ/no-template path; legality parity + deterministic seeded evidence
@@ -91,9 +95,9 @@ MS-S9   future no-template script needs no App-root branch
 REC-R1  separate future unfinished-game stable-checkpoint simplification
 ```
 
-Do not implement several slices together merely because they share a campaign.
+Do not implement several slices together merely because they share the campaign.
 
-## 4. Accepted setup-domain boundary through MS-S3
+## 4. Accepted setup-domain boundary through MS-S4
 
 ### Exact committed fact — MS-S1
 
@@ -143,130 +147,135 @@ TemplateRepository
 └─ SetupCandidateSource.candidates(request)
 ```
 
+Accepted behavior includes exact script/player-count lookup, normal empty result for an absent bucket, immutable/canonical results, TEMPLATE-only provenance with durable candidate IDs, and no seed/diversity/shown-role dependency.
+
+### Deterministic generated source — MS-S4
+
+Accepted production source:
+
+`app/src/main/java/com/codex/campboardgamehost/clocktower/setup/GeneratedSetupCandidateSource.kt`
+
+Accepted typed test:
+
+`app/src/test/java/com/codex/campboardgamehost/clocktower/setup/GeneratedSetupCandidateSourceTest.kt`
+
+Accepted boundary:
+
+```text
+SetupCandidateRequest(script, playerCount, setupSeed)
++ injected ValidatedClocktowerRuleset
++ providerId
+-> deterministic legal pre-seat generated SetupCandidate
+```
+
 Accepted behavior:
 
-- exact script/player-count lookup;
-- absent bucket returns empty list as a normal result;
-- caller collection mutation cannot alter repository contents;
-- bucket/candidate script or player-count mismatch is rejected;
-- only `TEMPLATE` candidates with durable `candidateId` are accepted;
-- duplicate provider/candidate identity in a bucket is rejected;
-- result order is deterministic;
-- template lookup ignores setup seed;
-- no Android/assets/JSON/persistence/diversity/shown-role dependency.
+- same request/ruleset produces the same candidate;
+- different seeds can vary legal composition where choices exist;
+- seeded ranking uses script + player count + seed + team + role ID;
+- no unseeded `.random()` / `.shuffled()` path;
+- generated provenance/provider attribution is stable;
+- generated roles all belong to the injected ruleset;
+- current 5–15 Clocktower base distribution is preserved;
+- selected Baron applies one `+2 Outsider` adjustment, capped to available Outsiders, with Townsfolk reduced by the actual delta;
+- unsupported selected setup modifiers fail explicitly rather than being silently ignored;
+- no seat, shown identity, diversity/history, persistence, Android `Context`, UI state or production App/Host wiring enters the source.
+
+No template-vs-generated fallback orchestration exists yet. MS-S3 missing-template `emptyList()` remains a normal repository result.
 
 Authoritative checkpoint:
 
-`docs/MS_S3_TEMPLATE_REPOSITORY_CHECKPOINT_2026-08-31.md`
+`docs/MS_S4_GENERATED_SETUP_CANDIDATE_SOURCE_CHECKPOINT_2026-08-31.md`
 
-## 5. Existing source ownership that MS-S4 must respect
+## 5. MS-S4 legacy parity notes to preserve
 
-The current legacy NGJ path in `CampBoardGameHostApp.kt` mixes three concerns:
+The legacy NGJ `generateClocktowerAssignments(...)` remains untouched and still mixes:
 
 ```text
 actual-role composition generation
-+ seat shuffle
++ shuffled assignment order
 + Drunk shown-role selection
 ```
 
-MS-S4 must extract only the **generated pre-seat actual-role composition** concern. Do not copy the mixed legacy function wholesale.
+MS-S4 introduced a new pure source but did **not** cut NGJ production over to it.
 
-The legacy composition currently uses:
+Existing `NoGreaterJoySetupRegressionTest` remains unchanged parity evidence for the legacy NGJ role pool and 5/6-player base distribution/startability.
 
-- `clocktowerDistribution(playerCount)`;
-- role pools grouped by team;
-- one Demon;
-- configured Minion count;
-- Baron setup adjustment;
-- configured Outsider/Townsfolk counts.
-
-For NGJ small games, current Baron handling deliberately limits outsider increase so the result remains legal for the available composition. Preserve legality intent, but MS-S4 should derive generic setup legality from validated ruleset/catalog metadata rather than hard-coding App UI behavior where practical.
-
-## 6. MS-S4 immediate objective
-
-Introduce the smallest pure Kotlin deterministic seeded legal generated-candidate source.
-
-Target:
+The current legacy Baron adjustment semantics preserved by MS-S4 are:
 
 ```text
-SetupCandidateRequest
-+ validated script/ruleset role metadata
--> deterministic generated SetupCandidate values
+select Minion(s)
+-> if Baron selected, request +2 Outsiders
+-> cap to Outsiders available in the script
+-> reduce Townsfolk by the actual Outsider increase
 ```
 
-The generated source must produce **pre-seat actual-role compositions only**.
+Do not re-apply this modifier in a later stage.
 
-It must not assign seats or shown identities.
+## 6. MS-S5 immediate objective
 
-## 7. MS-S4 audit targets before code
+The next production slice is the common deterministic diversity layer.
 
-Audit only surfaces required to generate a legal candidate:
-
-1. current NGJ `generateClocktowerAssignments` actual-role composition portion;
-2. `clocktowerDistribution(playerCount)` ownership and all supported player-count distributions;
-3. `ValidatedClocktowerRuleset`, `ClocktowerCharacterDefinition.team`, `setup`, special metadata and any existing setup-modifier representation;
-4. current Baron handling in TB and NGJ;
-5. existing deterministic hash/selection utilities such as `MurmurHash3` / stable selector patterns;
-6. MS-S2 `SetupCandidateRequest`, candidate provenance and provider attribution expectations.
-
-Do not audit unrelated Host/night/recovery mechanics in this slice.
-
-## 8. MS-S4 required contract direction
-
-Prefer a source approximately equivalent to:
+Target direction already established by the campaign:
 
 ```text
-GeneratedSetupCandidateSource
-├─ script/ruleset metadata
-├─ providerId
-└─ candidates(request) -> deterministic legal generated candidates
+legal SetupCandidate values
++ generic setup diversity history
++ deterministic selection seed/context
+-> one selected SetupCandidate
 ```
 
-Required behavior:
+MS-S5 owns diversity/history scoring and deterministic candidate selection policy. It must not absorb candidate legality generation or shown-identity commitment.
 
-- request script must match the source/ruleset script;
-- same script + playerCount + setupSeed yields identical generated candidate output;
-- generation must not use global `Random`, `.random()` or unseeded `.shuffled()`;
-- generated candidates use `SetupSourceKind.GENERATED`;
-- provider attribution is stable and compatible with `ClocktowerSetupProvider`;
-- actual role count exactly equals requested player count;
-- team/type distribution is legal after setup modifiers;
-- actual-role composition contains no seat semantics;
-- shown identity / Drunk disguise remains MS-S6 ownership;
-- invalid ruleset/input fails explicitly rather than broad-random fallback.
+Do **not** begin MS-S5 automatically from this handoff; start only after a fresh live-state audit in the next development turn.
 
-A different seed should be capable of producing variation when more than one legal composition exists, but exact legacy random-sequence parity is not required.
+## 7. MS-S5 boundaries to preserve
 
-## 9. MS-S4 evidence strategy
+When MS-S5 begins, keep these responsibilities separate:
 
-Use typed tests. Minimum useful evidence:
+```text
+MS-S3  template candidate storage/lookup
+MS-S4  generated actual-role composition legality
+MS-S5  diversity history + scoring + candidate selection
+MS-S6  shown-identity commitment
+MS-S7  TB production adaptation
+MS-S8  NGJ production cutover
+```
 
-1. deterministic repeatability for same request/seed;
-2. legal player-count/team composition;
-3. deterministic variation evidence across selected seeds where the role pool permits it;
-4. stable generated provenance/provider identity;
-5. cross-script request rejection;
-6. setup-modifier correctness, especially Baron-style outsider/townsfolk shifts;
-7. no shown-role or seating information enters `SetupCandidate`;
-8. no production App/Host wiring changes.
+A selector may rank or choose among legal candidates; it must not become a second rules engine that changes role legality or applies Baron/setup modifiers again.
 
-Existing tests around NGJ distribution/legal start behavior remain useful parity evidence but do not by themselves prove deterministic generation.
+The selector must consume `SetupCandidate` as the existing canonical pre-seat actual-role multiset. Seat assignment and Drunk shown identity remain later concerns.
 
-## 10. Explicit MS-S4 non-goals
+## 8. Evidence strategy for the next slice
 
-Do not broaden into:
+Follow root `AGENTS.md`, `docs/TESTING_STRATEGY.md`, and `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`.
 
-- common diversity history/scoring/selection — MS-S5;
+Use risk-based typed evidence:
+
+- existing MS-S2/S3/S4 tests count as predecessor evidence;
+- add the smallest typed contracts that freeze generic diversity-history identity, deterministic scoring/tie-breaking and selector behavior;
+- do not manufacture source-string RED when typed behavior proof is practical;
+- run focused evidence first, then the risk-routed `:app:testFast` checkpoint when the logical slice is ready;
+- observe GitHub CI/R2 before acceptance.
+
+Do not require a full merge-level T4 gate for every micro-slice unless risk or workflow routing requires it.
+
+## 9. Explicit MS-S5 non-goals
+
+Do not broaden the next slice into:
+
 - Drunk/shown-identity commitment — MS-S6;
-- TB 480-preset adaptation — MS-S7;
+- TB 480-preset production adaptation — MS-S7;
 - NGJ production cutover — MS-S8;
+- seat assignment/shuffle;
+- generic template-vs-generated fallback orchestration unless explicitly made part of a later policy slice;
 - setup persistence changes;
 - App/Host decomposition;
-- general unfinished-game recovery cleanup;
-- arbitrary exact resume work;
-- PR Ready/merge changes.
+- broad unfinished-game recovery cleanup;
+- Mayor / Imp / Monk / Attack-Protect / A3 / A4 / ZDD work;
+- PR Ready/merge/rebase/force-push changes.
 
-## 11. Recovery product boundary
+## 10. Recovery product boundary
 
 Supported recovery goal remains:
 
@@ -277,9 +286,9 @@ best-effort crash / process-death recovery
 -> resume/restart at a safe domain/action boundary
 ```
 
-Broad unfinished-night simplification remains future REC-R1 work and is outside MS-S4.
+Broad unfinished-night simplification remains future REC-R1 work and is outside MS-SETUP setup-selection slices.
 
-## 12. Protected predecessor invariants
+## 11. Protected predecessor invariants
 
 Preserve throughout MS-SETUP:
 
@@ -298,32 +307,18 @@ Completion persistence is retry-safe.
 
 Also preserve Dawn/Dusk retry convergence, Fortune Teller current/effective-state authority, poisoned Spy fail-safe semantics, current living-Demon UI authority and NGJ setup legality until explicit migration.
 
-## 13. Workflow
+## 12. Exact MS-S4 scope audit
 
-Follow:
+Compared with pre-MS-S4 docs carrier `e33aa8fcad84fd0d5f99e7ee3843527a1296c520`, accepted code/test checkpoint `6de0e8c99c89a091615c513255adbdb773b3cc69` changed exactly two files:
 
-- root `AGENTS.md`;
-- `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
-- `docs/TESTING_STRATEGY.md`;
-- `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`.
+```text
+ADDED  app/src/main/java/com/codex/campboardgamehost/clocktower/setup/GeneratedSetupCandidateSource.kt
+ADDED  app/src/test/java/com/codex/campboardgamehost/clocktower/setup/GeneratedSetupCandidateSourceTest.kt
+```
 
-Use risk-based typed evidence, not RED ceremony.
+No legacy App, TB preset, NGJ production, Host, persistence, recovery, template repository or unrelated rules-engine file changed.
 
-MS-S4 should remain small pure Kotlin work, suitable for direct GitHub connector edits. Do not touch the large App root in MS-S4.
-
-## 14. Immediate next action — MS-S4 audit first
-
-1. re-confirm live `main`, branch, Draft PR #61 and checks;
-2. inspect the legacy NGJ composition logic and supported distributions;
-3. inspect validated ruleset/catalog role metadata and setup-modifier support;
-4. decide the smallest generic legality input needed by the generator;
-5. freeze deterministic seed derivation and source API;
-6. establish typed test-first evidence;
-7. implement only generated pre-seat candidate production;
-8. run focused/FAST evidence according to risk router;
-9. stop before MS-S5.
-
-## 15. Documentation authority
+## 13. Documentation authority
 
 ```text
 AGENTS.md
@@ -334,12 +329,20 @@ docs/MS_S1_COMMITTED_SETUP_CHECKPOINT_2026-08-31.md
 docs/MS_S1R_SETUP_PERSISTENCE_CHECKPOINT_2026-08-31.md
 docs/MS_S2_SETUP_PROVIDER_CONTRACT_CHECKPOINT_2026-08-31.md
 docs/MS_S3_TEMPLATE_REPOSITORY_CHECKPOINT_2026-08-31.md
+docs/MS_S4_GENERATED_SETUP_CANDIDATE_SOURCE_CHECKPOINT_2026-08-31.md
 docs/TESTING_STRATEGY.md
 docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 ```
 
-## 16. Resume guard
+## 14. Resume guard
 
-Treat `6b15822e75680fb8e718f5db24358e1a935b5523` as the accepted MS-S3 code/test checkpoint unless a later production commit deliberately supersedes it.
+Treat `6de0e8c99c89a091615c513255adbdb773b3cc69` as the accepted MS-S4 code/test checkpoint unless a later production commit deliberately supersedes it.
 
-Next production slice is MS-S4. Keep PR #61 Draft. Do not merge, mark Ready, force-push or rebase without explicit user authorization.
+At the next development turn:
+
+1. read root `AGENTS.md`, roadmap, this handoff and the MS-S4 checkpoint;
+2. re-query live `main`, branch, Draft PR #61 and current checks;
+3. distinguish docs-only carrier head from the accepted code/test checkpoint;
+4. start with an MS-S5 audit/design and typed contract boundary;
+5. do not edit App/Host production flow merely to wire the new selector early;
+6. keep PR #61 Draft and do not merge, mark Ready, force-push or rebase without explicit authorization.
