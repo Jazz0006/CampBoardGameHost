@@ -7,6 +7,8 @@ import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
+import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
+import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
@@ -52,6 +54,38 @@ class NaturalPairInformationCandidateGeneratorTest {
         assertEquals(setOf(RoleId("Spy")), candidates.mapNotNull { it.outcome.shownRole }.toSet())
         assertTrue(candidates.all { 3 in it.outcome.candidateSeats })
         assertTrue(candidates.all { it.truthRelation == TruthRelation.TRUE_TO_ACTUAL_STATE })
+        assertTrue(candidates.all { it.registrations.isEmpty() })
+    }
+
+    @Test
+    fun `healthy investigator may use recluse special registration as minion truth`() {
+        val game = game(
+            player(1, "Investigator", CharacterType.TOWNSFOLK),
+            player(2, "Chef", CharacterType.TOWNSFOLK),
+            player(3, "Recluse", CharacterType.OUTSIDER),
+            player(4, "Poisoner", CharacterType.MINION),
+            player(5, "Imp", CharacterType.DEMON),
+        )
+
+        val candidates = NaturalPairInformationCandidateGenerator.generate(game, 1, RoleId("Investigator"))
+        val recluseCandidates = candidates.filter { candidate ->
+            candidate.registrations.any { it.subjectSeat == 3 }
+        }
+
+        assertTrue(recluseCandidates.isNotEmpty())
+        assertTrue(recluseCandidates.all { it.outcome.shownRole == RoleId("Poisoner") })
+        assertTrue(recluseCandidates.all { 3 in it.outcome.candidateSeats })
+        assertTrue(recluseCandidates.all { it.truthRelation == TruthRelation.TRUE_TO_REGISTERED_STATE })
+        assertTrue(recluseCandidates.all { candidate ->
+            candidate.registrations.single().let { registration ->
+                registration.subjectSeat == 3 &&
+                    registration.registeredRole == RoleId("Poisoner") &&
+                    registration.registeredType == CharacterType.MINION &&
+                    registration.registeredAlignment == Alignment.EVIL &&
+                    registration.registrationQuestion == RegistrationQuestion.SPECIFIC_MINION &&
+                    registration.reason == RegistrationReason.RECLUSE_ABILITY
+            }
+        })
     }
 
     @Test
