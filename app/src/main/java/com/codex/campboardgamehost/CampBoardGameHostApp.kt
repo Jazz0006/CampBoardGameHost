@@ -2341,6 +2341,7 @@ internal fun CampBoardGameHostApp() {
                     preparedClocktowerSeed = preparedSeed,
                 )
                 committedTroubleBrewingSetupSelection = preparedSetup.selection
+                persistActiveGameStateIfNeeded()
                 troubleBrewingFirstNightPrecomputeCoordinator.prewarm(
                     request = initialFirstNightPrecomputeRequest,
                     launchBackground = { work ->
