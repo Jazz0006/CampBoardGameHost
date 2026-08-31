@@ -4,63 +4,43 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > Branch: `codex/trouble-brewing-setup-presets-v2`  
 > Draft PR: #57  
-> Status: TBSP-6J ACCEPTED; TBSP-6K is next. Do not merge or mark Ready without explicit authorization.
+> Status: **TBSP-6K COMPLETE / ACCEPTED.** This handoff is historical execution guidance. Do not merge or mark Ready without explicit authorization.
 
-## 1. Resume anchors
-
-Re-query live `main`, PR #57 head/state/checks and branch comparison before execution.
-
-Accepted logical checkpoints:
+## 1. Accepted checkpoints
 
 - TBSP-6H-B production code: `ff1c99fe97552dc65f3d1bf8326bdb451c8e25a0`
 - TBSP-6I acceptance test checkpoint: `f7e877f6881cc74b9d8e7f4f8db2b2fb406b84d4`
 - TBSP-6J production cleanup: `68d29c53a0a37f2c30b9d88ed8967d5d9548b4bc`
 - TBSP-6J one-shot cleanup: `ab1a57393a9abfd774dcdf4776f81134ed19a81a`
 - TBSP-6J docs checkpoint: `d3b3993327a86c7dbd091346b11e7e6a95541637`
+- TBSP-6K T4 trigger: `6b80b7ade7235d890bd2a492ed8b33a19c43ffaa`
 
-6J validation:
+## 2. Final acceptance result
 
-- one-shot run `33342673392`: SUCCESS
-- `:app:compileDebugKotlin`: SUCCESS
-- focused `NoGreaterJoySetupRegressionTest --rerun-tasks`: SUCCESS
-- `:app:testFast --rerun-tasks`: SUCCESS
-- exact diff audit: SUCCESS
-- final normal PR CI #1155 / run `33342927330`: SUCCESS
-- final R2 #1078 / run `33342927359`: SUCCESS
+TBSP-1 through TBSP-6K are accepted. P1–P16 remain the accepted invariant set.
 
-## 2. Accepted TBSP state before 6K
+The 6K T4 checkpoint selected every full gate through `[full-ci]` and completed successfully:
 
-TBSP-1 through TBSP-6J are accepted. P1–P16 remain the merge-blocking invariant set.
+- CI #1158 / run `33343377258`: SUCCESS
+- Android full JVM + debug build: SUCCESS
+  - `./gradlew :app:testFull :app:assembleDebug --no-daemon --rerun-tasks`
+  - `:app:testDebugUnitTest`: executed
+  - `:app:testFull`: SUCCESS
+  - `:app:assembleDebug`: SUCCESS
+- ASP contract tests: SUCCESS
+- Real Clingo cross-validation: SUCCESS
+- CI aggregate gate: SUCCESS
+- R2 #1081 / run `33343377271`: SUCCESS
 
-6J changed no behavior. The exact production diff only:
+No repair slice was required. 6K changed no production or test code.
 
-- removed unused `preparedSetupPlan` from `resetDealState`;
-- removed the corresponding dead call-site argument;
-- preserved the local legacy/NGJ `preparedSetupPlan` calculation and `recommendedDrunkShownRole` consumer.
+The detailed checkpoint is:
 
-The post-TBSP **MS-SETUP generic multi-script setup architecture** is planned in `docs/CURRENT_DEVELOPMENT_ROADMAP.md` and begins only after 6K. Do not pull that refactor into final TBSP acceptance.
+`docs/TBSP_6K_FINAL_ACCEPTANCE_CHECKPOINT_2026-08-31.md`
 
-## 3. TBSP-6K scope
+## 3. Accepted integrated behavior
 
-6K is final integrated acceptance, not a new feature slice.
-
-Required gate from the roadmap:
-
-```text
-all focused TBSP acceptance GREEN
--> :app:testFast
--> affected T2/T3 when required by docs/TESTING_STRATEGY.md
--> :app:testFull
--> R2
--> final GitHub CI
--> exact diff / scope audit
-```
-
-Before choosing commands, read root `AGENTS.md` and `docs/TESTING_STRATEGY.md` and use the current tier definitions. Do not invent extra tests merely for ceremony.
-
-## 4. Final acceptance evidence to preserve
-
-At minimum revalidate the integrated branch evidence for:
+Final acceptance preserves evidence for:
 
 - curated TB preset parsing/semantic validation;
 - deterministic history-aware preset/Drunk selection;
@@ -71,23 +51,25 @@ At minimum revalidate the integrated branch evidence for:
 - non-blocking reveal setup prewarm;
 - First Night READY/BUSY/MISS/stale lifecycle;
 - No Greater Joy regression;
-- accepted Dawn/Dusk exactly-once predecessor behavior through the appropriate broader suites.
+- accepted Dawn/Dusk exactly-once predecessor behavior through the full Android suite.
 
-Use existing owning tests rather than adding duplicate acceptance wrappers unless a real uncovered regression appears.
+## 4. Next planned campaign
 
-## 5. Scope exclusions
+The current roadmap now queues **MS-SETUP generic multi-script setup architecture** as the next planned work. It has **not started** in this handoff.
 
-Do not in 6K:
+Before MS-S1 production implementation, perform a fresh live-state and ownership audit. The target architecture is script-neutral setup selection with:
 
-- change TB dataset, selector weights, Drunk ownership or rotation semantics;
-- implement MS-SETUP multi-script generic architecture;
-- change No Greater Joy setup semantics;
-- redesign 6G/6H lifecycle ownership;
-- reopen A3/A4/ZDD, Mayor, Imp succession, Dawn/Dusk semantics or App/Host decomposition;
-- merge PR #57 or mark it Ready without explicit user authorization.
+- optional per-script/player-count templates;
+- deterministic legal generated setup as the default when no templates exist;
+- one common diversity/history selector for template and generated candidates;
+- generic committed shown-identity handling, including Drunk-style identities;
+- script/ruleset setup modifiers outside App-root conditionals;
+- parity protection for accepted TB and NGJ behavior.
 
-If final acceptance exposes a real regression, stop and create the smallest explicit repair slice rather than hiding it inside the acceptance run.
+Do not treat this historical 6K handoff as permission to begin the genericization without the fresh MS-SETUP audit/handoff.
 
-## 6. Stop condition
+## 5. Governance
 
-When final acceptance evidence is GREEN, report exact checkpoints and PR state, update current documentation, and stop. Ready/merge remains a separate explicit user decision.
+PR #57 remains Draft / open / not merged. Ready/merge is a separate explicit user decision.
+
+Do not reopen TBSP P1–P16, Dawn/Dusk exactly-once behavior, or No Greater Joy behavior without a concrete regression or explicit product change.
