@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.domain.toClocktowerPlayerStates
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
@@ -38,6 +39,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPoo
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPoolDeviceBenchmarkReport
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
+import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
@@ -103,7 +105,24 @@ internal fun ClocktowerNightStepCardLocalized(
     // B7.3's first production slice: a single complete first-night pool is
     // projected differently by execution policy. Later-night families retain
     // their legacy lists until individually migrated.
-    val firstNightPool = step.legacyInformationCandidates
+    val firstNightNumericSourceSeat = step.legacyInformationCandidates
+        .asSequence()
+        .mapNotNull { (it.proposition as? InformationProposition.NumericResult)?.sourceSeat }
+        .firstOrNull()
+    val projectedFirstNightInformationCandidates = firstNightNumericSourceSeat?.let { sourceSeat ->
+        val poisonedPlayerName = cards
+            .getOrNull(sourceSeat - 1)
+            ?.name
+            ?.takeIf { step.informationReliability == InformationReliability.POISONED }
+        projectFirstNightNumericInformationOptions(
+            phase = phase,
+            roleEnName = step.roleEnName.orEmpty(),
+            sourceSeat = sourceSeat,
+            players = cards.toClocktowerPlayerStates(poisonedPlayerName = poisonedPlayerName),
+            options = step.legacyInformationCandidates,
+        )
+    } ?: step.legacyInformationCandidates
+    val firstNightPool = projectedFirstNightInformationCandidates
         .takeIf { phase == ClocktowerPhase.FirstNight && it.isNotEmpty() }
         ?.let { options -> unifiedFirstNightInformationPool(
             options = options,
@@ -113,7 +132,7 @@ internal fun ClocktowerNightStepCardLocalized(
     var firstNightPoolBenchmarkRuns by remember(
         phase,
         step.roleEnName,
-        step.legacyInformationCandidates,
+        projectedFirstNightInformationCandidates,
         automaticStorytellerStyle,
     ) { mutableStateOf(0) }
     var firstNightPoolBenchmarkReport by remember { mutableStateOf<UnifiedSelectionPoolDeviceBenchmarkReport?>(null) }
@@ -123,7 +142,7 @@ internal fun ClocktowerNightStepCardLocalized(
         firstNightPoolBenchmarkReport = null
         firstNightPoolBenchmarkError = null
         runCatching {
-            val options = requireNotNull(step.legacyInformationCandidates.takeIf {
+            val options = requireNotNull(projectedFirstNightInformationCandidates.takeIf {
                 phase == ClocktowerPhase.FirstNight && it.isNotEmpty()
             })
             val family = step.roleEnName ?: "first-night-information"
@@ -230,6 +249,11 @@ internal fun ClocktowerNightStepCardLocalized(
         ?.let(::numericOptionValue)
         ?: (step.displayProposition as? InformationProposition.NumericResult)?.value
         ?: step.tellPlayer?.toIntOrNull()
+    fun structuredEmpathSelectionIsTruthful(value: Int): Boolean =
+        projectedFirstNightInformationCandidates
+            .firstOrNull { numericOptionValue(it) == value }
+            ?.isTruthful
+            ?: (value == structuredEmpathTruthValue)
     val structuredEmpathRecommendedOption = if (automaticStorytellerInfo) {
         automaticDisplayOption
     } else {
@@ -703,7 +727,7 @@ internal fun ClocktowerNightStepCardLocalized(
                                         dimensions = audit.dimensions,
                                         selectedFamilyId = DynamicCandidateGenerator.selectionAuditFamilyId(
                                             reliability = step.informationReliability,
-                                            truthful = value == structuredEmpathTruthValue,
+                                            truthful = structuredEmpathSelectionIsTruthful(value),
                                         ),
                                     ),
                                 )
@@ -718,7 +742,7 @@ internal fun ClocktowerNightStepCardLocalized(
                                 displaySecondary = template?.displaySecondary ?: step.displaySecondary,
                                 displayFooter = template?.displayFooter ?: step.displayFooter ?: step.explanation,
                                 displayProposition = confirmed.draft.proposition,
-                                selectedInformationTruthful = value == structuredEmpathTruthValue,
+                                selectedInformationTruthful = structuredEmpathSelectionIsTruthful(value),
                                 informationDecisionConfirmation = confirmed,
                                 informationDecisionExpectedSnapshot = structuredEmpathUiModel.contextSnapshot,
                                 displayOptions = emptyList(),
