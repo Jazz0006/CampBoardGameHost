@@ -73,15 +73,15 @@ old_meta = '''> 版本：2.2
 > 当前实施基线：A0、A1、A2、A1.1、A2.1、A3 已完成；A4 已启动
 > 动态决策实施合同：`storyteller_revision_driven_dynamic_decision_engine_plan.md`
 '''
-new_meta = '''> 版本：2.2  
-> 日期：2026-08-11  
-> 动态决策架构修订：2026-08-15  
-> Authority clarification：2026-09-01  
-> 状态：**Possible Worlds / 玩家认知一致性基础设计 authority；不再是当前实施顺序或产品 UX 的唯一 authority**  
-> 适用范围：优先覆盖《暗流涌动》（Trouble Brewing），架构支持后续剧本扩展  
-> 取代文档：v2.0、v2.1；旧文档仅保留为设计演进记录  
-> 当前执行顺序：以 `CURRENT_DEVELOPMENT_ROADMAP.md` 为准  
-> 当前 clue/manual/recommendation 产品边界：以 `CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md` 为准  
+new_meta = '''> 版本：2.2
+> 日期：2026-08-11
+> 动态决策架构修订：2026-08-15
+> Authority clarification：2026-09-01
+> 状态：**Possible Worlds / 玩家认知一致性基础设计 authority；不再是当前实施顺序或产品 UX 的唯一 authority**
+> 适用范围：优先覆盖《暗流涌动》（Trouble Brewing），架构支持后续剧本扩展
+> 取代文档：v2.0、v2.1；旧文档仅保留为设计演进记录
+> 当前执行顺序：以 `CURRENT_DEVELOPMENT_ROADMAP.md` 为准
+> 当前 clue/manual/recommendation 产品边界：以 `CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md` 为准
 > 当前 Productive Uncertainty 实施计划：以 `EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md` 为准
 '''
 v22 = replace_once(v22, old_meta, new_meta, "v2.2 metadata")
