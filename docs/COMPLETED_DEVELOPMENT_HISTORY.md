@@ -27,6 +27,7 @@ Use this file for completed work:
 | Clue UX-R2A — shared pair-information legal-domain authority | COMPLETE / MERGED |
 | Clue UX-R2B — pair Manual flow -> shared legal-domain authority + typed registration-preserving commit path | COMPLETE / VERIFIED / MERGED (#64) |
 | Clue UX-R3 — remove normal global storyteller mode selector | COMPLETE / VERIFIED / MERGED (#65) |
+| Clue UX-R4 — stable Top-1 + 0–2 alternatives + persistent Manual presentation | COMPLETE / VERIFIED / MERGED (#67) |
 
 Older MS-SETUP handoff/checkpoint documents remain historical evidence and are not repeated here in full.
 
@@ -177,6 +178,80 @@ app/src/test/java/com/codex/campboardgamehost/clocktower/domain/StorytellerRecom
 - merge commit: `f5a0e2cf8776866441bcd32729fcdc43d4f70f9b`
 
 Post-merge roadmap synchronization produced docs-only successor `cf604f490eb0a4683f641088216e2077426387e9` on `main`.
+
+
+---
+
+## UX-R4 — unified recommendation presentation
+
+### Accepted presentation contract
+
+UX-R4 established a stable presentation layer downstream of the existing ordered Recommendation Provider rather than creating another ranking engine.
+
+For already-ranked recommendation candidates:
+
+1. preserve provider order and typed candidate identity;
+2. primary recommendation = first candidate;
+3. alternatives = next 0–2 candidates only;
+4. empty / one / two-candidate inputs stay naturally sparse;
+5. never create synthetic filler alternatives;
+6. selecting Top-1 or an alternative passes the exact `ClocktowerDisplayOption` into the existing structured commit callback;
+7. Manual remains a separate persistent authority path backed by the complete `manualInformationCandidates` legal domain;
+8. recommendation count or recommendation absence cannot narrow or disable Manual legality;
+9. UX-R4 does not add ranking, diversity, Productive Uncertainty, or PlayerWorldSet heuristics.
+
+The first production target was first-night Washerwoman / Librarian / Investigator. Chef / Empath / Fortune Teller / Yes-No and other small-domain interactions were deliberately left for UX-R5.
+
+### RED / GREEN evidence
+
+- RED checkpoint: `93fdaf80861c3630904ecea2bbbc6c83082c50c5` — real Android unit-test compilation failed because the typed `clocktowerRecommendationPresentation` seam did not yet exist.
+- GREEN seam checkpoint: `7386cdfd07388d4125eacebbb466e8adbca5a9cd` — pure typed presentation contract and focused tests; `:app:testFast` green.
+- presentation UI component commit: `480a9cf409b1d920d85898f62dbcd1907f7edec5`.
+- large-file production wiring commit: `d6f9846a78770e893ef67d3a7a3791a9ee461805`.
+
+The `ClocktowerNightStepUi.kt` cutover used the repository-approved fail-closed one-shot route. Successful run `33505774988` verified locked head/blob identities, focused baseline, exact production patch, focused GREEN, `:app:testFast`, exact diff/semantic audit, remote-head recheck, guarded production push, and self-removal of temporary workflow/script.
+
+Cleanup tree checkpoint: `cb4ec48fad2288a9aaa4e4b78791a154afde226e`.
+
+### Final verified checkpoint
+
+Final no-tree-change full-CI checkpoint:
+
+`6f10e8792e9535c1d125fae9b07e32e81fdfa2a3`
+
+Validation:
+
+- R2 run `33506399747`: SUCCESS;
+- CI run `33506399624`: SUCCESS;
+- full Android unit tests + debug APK: SUCCESS;
+- ASP contract tests: SUCCESS;
+- Real Clingo 5.8.0 cross-validation: SUCCESS;
+- CI gate: SUCCESS.
+
+Final permanent PR diff contained exactly four files:
+
+```text
+app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+app/src/main/java/com/codex/campboardgamehost/ClocktowerPairRecommendationPresentationUi.kt
+app/src/main/java/com/codex/campboardgamehost/ClocktowerRecommendationPresentation.kt
+app/src/test/java/com/codex/campboardgamehost/ClocktowerRecommendationPresentationTest.kt
+```
+
+### PR #67 merge closeout
+
+The direct Ready connector again hit the known GitHub GraphQL `fullDatabaseId` compatibility error. A parent-locked one-shot Ready transition was used instead:
+
+- Ready run `33508684303`: SUCCESS;
+- required verified parent `6f10e8792e9535c1d125fae9b07e32e81fdfa2a3`;
+- marked PR #67 Ready and self-removed;
+- cleanup head `60d6abf8e2e8a3ae76054d2023659f706fadb8b7`;
+- compare from verified checkpoint to cleanup head had zero file differences.
+
+PR #67 merged with expected-head protection.
+
+Merge commit:
+
+`d626093f5f527edfba181641cd2b07a50a559929`
 
 ---
 

@@ -8,25 +8,25 @@
 ## 1. Current development context
 
 ```text
-live main at roadmap-split branch creation:
-cf604f490eb0a4683f641088216e2077426387e9
-
 last merged product slice:
-#65 — UX-R3: remove global storyteller mode selector
+#67 — UX-R4: unify recommendation presentation
 COMPLETE / VERIFIED / MERGED
 
-final fully validated UX-R3 executable checkpoint:
-6cb9cb542b9e25d718a2a035e37475f99388ed2e
+final fully validated UX-R4 executable checkpoint:
+6f10e8792e9535c1d125fae9b07e32e81fdfa2a3
+
+UX-R4 merge commit:
+d626093f5f527edfba181641cd2b07a50a559929
 
 active next slice:
-UX-R4 — unified recommendation presentation
+UX-R5 — small-domain specialization
 ```
 
-Completed slice contracts, RED/GREEN evidence, CI checkpoints, and merge details now live in:
+Completed slice contracts, RED/GREEN evidence, CI checkpoints, and merge details live in:
 
 `docs/COMPLETED_DEVELOPMENT_HISTORY.md`
 
-Do not grow this active roadmap with repeated historical closeout detail. When an active slice is complete and merged, move its detailed evidence to the history archive in one batch and advance this file to the next slice.
+Do not grow this active roadmap with repeated historical closeout detail. When an active slice is complete and merged, archive its detailed evidence in one batch and advance this file.
 
 ## 2. Campaign status
 
@@ -35,11 +35,9 @@ UX-R1   dependency / legal-authority audit                     COMPLETE
 UX-R2A  shared pair legal-domain authority                    COMPLETE / MERGED
 UX-R2B  pair Manual -> legal-domain authority                 COMPLETE / VERIFIED / MERGED
 UX-R3   remove global storyteller mode selector               COMPLETE / VERIFIED / MERGED
+UX-R4   Top-1 + 0–2 alternatives + persistent Manual         COMPLETE / VERIFIED / MERGED
 
-UX-R4   unified recommendation presentation                   NEXT
-        Top-1 + 0–2 differentiated alternatives + Manual
-
-UX-R5   small-domain specialization                           QUEUED
+UX-R5   small-domain specialization                           NEXT
 
 EPI-MQ / ALG
         Productive Uncertainty / PlayerWorldSet mainline      NEXT PRIMARY ALGORITHM CAMPAIGN
@@ -47,11 +45,9 @@ EPI-MQ / ALG
 UX-R6   replace legacy ranking behind stable UX contract      QUEUED AFTER EPI-MQ
 ```
 
-Create a fresh UX-R4 branch from live `main`. Do not reuse the merged UX-R3 branch or the roadmap-maintenance branch.
+Create a fresh UX-R5 branch from live `main`. Do not reuse the merged UX-R4 branch or a docs-maintenance branch.
 
 ## 3. Frozen permanent architecture
-
-The permanent causal order remains:
 
 ```text
 Composition
@@ -81,122 +77,138 @@ Permanent invariants:
 - A4/ZDD remains shadow/prototype until equivalence and resource behavior are separately validated;
 - approximation/resource failure must never become false UNSAT.
 
-## 4. Recommendation / Manual authority
+## 4. Stable recommendation / Manual UX contract
 
-Long-term authority:
+Authority:
+
+`docs/CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md`
+
+Long-term ownership:
 
 ```text
 Complete legal semantic candidate domain
         |
-        +--> Manual clue selection                  # permanent user authority
+        +--> Manual clue selection
         |
         +--> Recommendation Provider
-                 |
-                 +--> legacy compatibility provider # temporary fallback
-                 +--> cognitive-consistency provider
-                         -> PlayerWorldSet
-                         -> epistemic metrics
-                         -> Productive Uncertainty
+                 -> stable presentation adapter
+                        -> Top-1
+                        -> 0–2 alternatives
 ```
 
-The Recommendation Provider ranks legal candidates. It must never define the complete set of clues the Storyteller is allowed to choose.
-
-Permanent acceptance condition established by UX-R2B:
+Accepted permanent conditions:
 
 ```text
 recommendation unavailable != manual unavailable
 ```
 
-UX-R3 established the normal front-door policy:
+and:
 
 ```text
 automaticExecution = false
 recommendationStyle = BALANCED   # temporary compatibility ranking input
 ```
 
-The old global Manual/Balanced/Aggressive/Gentle selector is no longer normal product UX. Recommendation content may be available without global preselection, but Storyteller decisions remain confirmed rather than automatically executed.
+UX-R4 additionally established:
 
-Detailed UX-R2B and UX-R3 contracts are archived in `docs/COMPLETED_DEVELOPMENT_HISTORY.md`.
+- provider ordering and typed identity are preserved by presentation;
+- normal combinatorial presentation exposes one primary plus at most two alternatives;
+- sparse recommendation sets stay sparse;
+- no synthetic filler alternatives;
+- Manual continues to operate on the complete legal domain, not the recommendation shortlist;
+- selecting a recommendation commits that exact typed candidate and registration semantics.
 
-## 5. UX-R4 target
+## 5. UX-R5 target — small-domain specialization
 
-Authority:
+UX-R5 extends the stable presentation contract to interactions whose legal display domain is naturally small and should not use pair-style multi-step Manual UX.
 
-`docs/CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md`
+Initial audit targets:
 
-UX-R4 establishes one stable recommendation presentation for combinatorial clue interactions:
+- Chef / other numeric information;
+- Empath numeric information;
+- Fortune Teller Yes/No information;
+- other existing Yes/No or small finite-domain information flows only where already supported by current production semantics.
+
+Target presentation rules:
+
+### Number / small finite domain
+
+When the legal display domain is genuinely small:
 
 ```text
-prominent Top-1 recommendation
-        +
-0–2 visually separated meaningful alternatives
-        +
-persistent Manual control
+primary recommendation
++
+all remaining legal values when the complete domain comfortably fits the interaction
++
+Manual authority remains explicit in semantics even if the UI can show the whole domain directly
 ```
 
-Initial target is the existing pair-information flow, especially first-night:
+Do not artificially cap a two- or three-value legal domain to the UX-R4 combinatorial shortlist if showing every legal value is clearer.
 
-- Washerwoman;
-- Librarian;
-- Investigator.
-
-The UX-R2B structured Manual/legal-domain seam must be reused rather than replaced.
-
-### UX-R4 product rules
-
-1. Recommendations are computed whenever supported; no global style selection is required.
-2. The strongest current recommendation is visually dominant.
-3. Normal presentation exposes at most two alternatives after the Top-1 recommendation.
-4. Alternatives should be meaningfully differentiated when the provider has such information; UX-R4 must not invent a new ranking engine merely to force diversity.
-5. Manual remains visibly available for the interaction.
-6. Manual operates on the complete legal semantic domain, never on the recommendation shortlist.
-7. Selecting Top-1 or an alternative must commit exactly that structured clue and its registration semantics.
-8. Recommendation absence or low confidence must degrade to correct Manual play rather than disabling the interaction.
-9. UX-R4 is a presentation/ownership slice, not the Productive Uncertainty algorithm implementation.
-
-## 6. UX-R4 planning / implementation route
-
-Before production edits, audit the current pair-information presentation path from recommendation candidates to UI and commit callback.
-
-Expected questions to resolve:
+### Yes / No domain
 
 ```text
-Where is recommendation ordering currently materialized?
-Which model currently represents candidate rank/order?
-Does UI receive enough typed candidate identity to render Top-1 vs alternatives safely?
-Are recommendation candidates already limited/ordered, or does UI flatten a legacy pool?
-Which callback commits a selected recommendation candidate?
-Can Manual remain one persistent action without changing legal-domain authority?
-What happens when recommendation candidates are empty or only one/two are available?
+primary recommendation
++
+the other legal result
 ```
 
-Preferred implementation boundary:
+There is no value in hiding one of only two legal outcomes behind a separate Manual drill-down.
+
+### UX-R5 product rules
+
+1. legal-domain authority remains upstream of recommendation;
+2. presentation may expose the entire legal domain when the domain is small enough;
+3. provider ranking determines which legal outcome is primary, not which outcomes exist;
+4. recommendation absence must still leave the legal interaction playable;
+5. exact typed outcome identity must flow into the existing structured commit path;
+6. do not parse localized labels to reconstruct semantic values;
+7. do not add new recommendation scoring/diversity heuristics;
+8. do not expand UX-R5 into Productive Uncertainty or PlayerWorldSet production ranking;
+9. avoid new role-specific UI branches when a typed small-domain adapter can express the same contract.
+
+## 6. UX-R5 planning / implementation route
+
+Before production edits, audit the existing small-domain paths:
 
 ```text
-legal semantic domain
+legal outcome generation
+-> recommendation ordering / legacy compatibility projection
+-> presentation model
+-> NightStep UI
+-> exact selected-outcome callback
+-> AbilityObservation publication
+```
+
+Questions to answer first:
+
+- Which roles already expose a complete typed legal outcome set?
+- Which paths still conflate recommended choices with legal choices?
+- Are numeric values represented structurally or only as display labels?
+- Are Yes/No outcomes represented structurally?
+- Can one generic small-domain presentation adapter cover number and boolean domains?
+- Which current callbacks already commit exact structured outcomes?
+- Where does Manual still need a separate control versus simply displaying every legal value?
+
+Preferred boundary:
+
+```text
+complete legal small domain
       |
-      +--> Manual
+      +--> ordered recommendation view
       |
-      +--> existing Recommendation Provider / compatibility ranking
-                 |
-                 +--> presentation adapter
-                         -> primary candidate
-                         -> 0–2 alternatives
-                 |
-                 +--> existing structured selection commit path
+      +--> small-domain presentation adapter
+              -> primary
+              -> remaining legal outcomes
+      |
+      +--> existing structured commit path
 ```
 
-Do not create UX-R4 ranking heuristics merely to choose “better” alternatives. If the existing provider only supplies ordered candidates, preserve that ordering and make the presentation contract stable; richer differentiation belongs to the later cognitive-consistency/Productive Uncertainty provider.
+Keep UX-R5 deliberately thin. Its job is stable presentation/ownership, not better recommendation intelligence.
 
-## 7. UX-R5 and algorithm route
-
-After UX-R4:
+## 7. Algorithm route after UX-R5
 
 ```text
-UX-R5  small-domain specialization
-       -> Number: primary + all remaining legal values when domain fits
-       -> Yes/No: primary + the other legal result
-
 EPI-MQ / ALG mainline
        -> PlayerKnowledgeSnapshot
        -> PlayerWorldSet BEFORE
@@ -207,11 +219,9 @@ EPI-MQ / ALG mainline
        -> Productive Uncertainty
        -> cognitive-consistency Recommendation Provider
 
-UX-R6  replace legacy ranking behind the stable
-       Top-1 / alternatives / Manual presentation contract
+UX-R6  replace legacy ranking behind the stable presentation contract
+       without redesigning the user-facing selection surface
 ```
-
-UX-R4 and UX-R5 must remain deliberately thin. Do not build another temporary recommendation engine before Productive Uncertainty.
 
 Primary algorithm authorities:
 
@@ -222,41 +232,38 @@ Primary algorithm authorities:
 
 Authority: `docs/TESTING_STRATEGY.md`.
 
-Use risk-based tests-first, not mechanical test-first for every edit.
+Use risk-based tests-first.
 
-High-value UX-R4 contracts:
+High-value UX-R5 contracts:
 
-- recommendation and Manual paths continue to share one legal semantic authority;
-- combinatorial domains expose at most Top-1 + two normal recommendation alternatives before Manual navigation;
-- Top-1 remains the provider's strongest ordered candidate;
-- selecting any displayed recommendation commits exactly that candidate and its registration facts;
-- Manual remains available independently of recommendation count;
-- empty recommendation state still permits correct Manual play;
-- one or two available recommendation candidates render without synthetic filler choices;
-- UX-R4 presentation changes do not restore global automation/style behavior removed by UX-R3.
+- small-domain legality is independent of recommendation coverage;
+- provider ordering changes which legal outcome is primary, not which outcomes are selectable;
+- Yes/No exposes both legal results without synthetic states;
+- small numeric domains expose all legal values when the full domain fits the UX contract;
+- selecting any displayed value commits the exact typed semantic outcome;
+- recommendation absence still permits correct play;
+- UX-R5 does not regress UX-R2B Manual/legal authority, UX-R3 Storyteller-confirmed execution, or UX-R4 pair presentation.
 
 Avoid source-shape tests that only assert button/class/helper placement.
 
-Use focused tests first; run `:app:testFast` at the logical UX-R4 checkpoint and broader CI only according to repository risk classification and merge policy.
+Use focused tests first, `:app:testFast` at the logical checkpoint, and broader CI according to repository risk classification and merge policy.
 
-## 9. UX-R4 scope guards
+## 9. UX-R5 scope guards
 
-Do not expand UX-R4 into:
+Do not expand UX-R5 into:
 
-- small-domain UX-R5 specialization;
 - new recommendation ranking/scoring behavior;
 - Productive Uncertainty;
 - PlayerWorldSet production recommendation integration;
 - A3/A4/ZDD production rollout;
-- deletion of legacy preference/enums merely for cleanup;
-- new role-specific legacy recommendation heuristics;
+- deletion of legacy preferences/enums merely for cleanup;
 - broad future-script support;
 - Host/App decomposition;
 - unrelated persistence/recovery work.
 
-Do not reopen UX-R2 legality ownership. Recommendation and Manual must remain downstream of the same legal semantic authority.
+Do not reopen UX-R2 legality ownership or UX-R4 pair presentation unless a real regression is found.
 
-## 10. Documentation authority
+## 10. Documentation authority / resume protocol
 
 Active set:
 
@@ -271,32 +278,28 @@ docs/TESTING_STRATEGY.md
 docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 ```
 
-Historical handoffs/checkpoints remain evidence only; do not load them by default unless a current question requires them.
-
-## 11. Resume protocol
-
 For a new development conversation:
 
 1. read root `AGENTS.md`;
-2. read `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
-3. read `docs/COMPLETED_DEVELOPMENT_HISTORY.md` only when completed-slice detail is needed;
-4. re-query live `main` rather than trusting a stored SHA;
-5. create a fresh UX-R4 branch from live `main`;
-6. audit the existing recommendation presentation/order/selection path before editing production code;
-7. preserve UX-R2B Manual/legal-domain authority and UX-R3 Storyteller-confirmed front-door policy;
-8. implement only the thin Top-1 + 0–2 alternatives + persistent Manual presentation contract;
-9. proceed to UX-R5, then return to PlayerWorldSet / Productive Uncertainty;
+2. read this active roadmap;
+3. read completed history only when older slice detail is needed;
+4. re-query live `main` rather than trusting stored SHA;
+5. create a fresh UX-R5 branch;
+6. audit typed legal-domain / recommendation / presentation / commit ownership for small-domain roles before editing;
+7. preserve UX-R2B, UX-R3 and UX-R4 permanent contracts;
+8. implement only the thin small-domain specialization;
+9. then return to EPI-MQ / Productive Uncertainty;
 10. keep A3 exact as correctness baseline and A4/ZDD shadow until separately validated.
 
-## 12. Deferred / queued registry
+## 11. Deferred / queued registry
 
 | Area | Status |
 |---|---|
-| Clue UX-R4 recommendation presentation | NEXT IMMEDIATE SLICE |
-| Clue UX-R5 small-domain specialization | QUEUED |
+| Clue UX-R5 small-domain specialization | NEXT IMMEDIATE SLICE |
 | Legacy recommendation enhancement | MAINTENANCE-ONLY / NO NEW BROAD INVESTMENT |
 | EPI-MQ Productive Uncertainty | NEXT PRIMARY ALGORITHM CAMPAIGN |
 | ALG cognitive-consistency / PlayerWorldSet | NEXT PRIMARY ALGORITHM CAMPAIGN |
+| UX-R6 legacy ranking replacement | QUEUED AFTER EPI-MQ |
 | A4/ZDD production rollout | SHADOW / FUTURE AFTER EXACT BASELINE GATES |
 | REC-R1 | QUEUED SEPARATE CAMPAIGN |
 | GCR-4 Chambermaid wake-history authority | DEFERRED FOLLOW-UP |
