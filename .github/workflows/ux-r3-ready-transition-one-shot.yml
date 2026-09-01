@@ -1,0 +1,51 @@
+name: UX-R3 ready transition one-shot
+
+on:
+  push:
+    branches:
+      - codex/ux-r3-global-selector-removal
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  ready:
+    if: "github.event.head_commit.message == 'chore: run UX-R3 ready transition one-shot'"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/ux-r3-global-selector-removal
+          fetch-depth: 0
+
+      - name: Fail closed on branch identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          remote_head="$(git ls-remote origin refs/heads/codex/ux-r3-global-selector-removal | awk '{print $1}')"
+          test "$remote_head" = "$GITHUB_SHA"
+
+      - name: Mark PR 65 ready for review
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api graphql \
+            -f query='mutation($id:ID!){markPullRequestReadyForReview(input:{pullRequestId:$id}){pullRequest{number isDraft}}}' \
+            -F id='PR_kwDOTN0Fp88AAAABBu3Qyw' \
+            --jq '.data.markPullRequestReadyForReview.pullRequest | select(.number == 65 and .isDraft == false)'
+          test "$(gh api repos/Jazz0006/CampBoardGameHost/pulls/65 --jq '.draft')" = 'false'
+
+      - name: Self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm .github/workflows/ux-r3-ready-transition-one-shot.yml
+          git add .github/workflows/ux-r3-ready-transition-one-shot.yml
+          git commit -m 'chore: remove completed UX-R3 ready transition one-shot'
+          git push origin HEAD:codex/ux-r3-global-selector-removal
