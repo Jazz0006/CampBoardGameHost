@@ -195,6 +195,15 @@ internal fun ClocktowerNightStepCardLocalized(
         ?.map { it.payload }
         ?: step.recommendedDisplayOptions
     val displayedInformationOptions = if (automaticStorytellerInfo) automaticInformationOptions else assistedInformationOptions
+    val pairRecommendationPresentation = if (
+        !automaticStorytellerInfo &&
+        phase == ClocktowerPhase.FirstNight &&
+        step.roleEnName in setOf("Washerwoman", "Librarian", "Investigator")
+    ) {
+        clocktowerRecommendationPresentation(displayedInformationOptions)
+    } else {
+        null
+    }
     fun pairManualKey(option: ClocktowerDisplayOption): Pair<String?, List<Int>>? = when (val structured = option.proposition) {
         is InformationProposition.AnyOf -> {
             val roleAt = structured.alternatives.mapNotNull { it as? InformationProposition.RoleAt }
@@ -805,7 +814,16 @@ internal fun ClocktowerNightStepCardLocalized(
                 )
             }
 
+            pairRecommendationPresentation?.let { presentation ->
+                ClocktowerPairRecommendationPresentationSection(
+                    presentation = presentation,
+                    language = language,
+                    onSelect = ::showRecommendedDisplayOption,
+                )
+            }
+
             if (
+                pairRecommendationPresentation == null &&
                 structuredEmpathUiModel == null &&
                 displayedInformationOptions.isNotEmpty() &&
                 (step.action != ClocktowerNightAction.FortuneTeller || showFortuneTellerDisplayOptions)
