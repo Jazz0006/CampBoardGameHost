@@ -2114,6 +2114,7 @@ internal fun ClocktowerJudgeScreen(
     fun recommendedUnreliablePairInformationOptions(
         ability: ClocktowerPairInformationAbility,
         actor: PlayerCard,
+        completeSelectionDomain: Boolean = false,
     ): List<ClocktowerDisplayOption> {
         val roleTeam = when (ability) {
             ClocktowerPairInformationAbility.Washerwoman -> ClocktowerTeam.Townsfolk
@@ -2226,9 +2227,18 @@ internal fun ClocktowerJudgeScreen(
             )
         }
         val effectsById = projectedEffects.associateBy(PairInformationEffect::id)
-        return recommendationCoordinator.recommendPair(candidates).mapNotNull { recommendation ->
-            val candidate = candidates.first { it.id == recommendation.candidateId }
-            val effect = effectsById[recommendation.candidateId] ?: return@mapNotNull null
+        val recommendations = recommendationCoordinator.recommendPair(candidates)
+        val recommendationsByCandidateId = recommendations.associateBy { it.candidateId }
+        val candidatesById = candidates.associateBy(PairInformationCandidate::id)
+        val candidateIds = if (completeSelectionDomain) {
+            candidates.map(PairInformationCandidate::id)
+        } else {
+            recommendations.map { it.candidateId }
+        }
+        return candidateIds.mapNotNull { candidateId ->
+            val candidate = candidatesById[candidateId] ?: return@mapNotNull null
+            val effect = effectsById[candidateId] ?: return@mapNotNull null
+            val recommendation = recommendationsByCandidateId[candidateId]
             val noRoleText = when (ability) {
                 ClocktowerPairInformationAbility.Librarian -> text("没有外来者", "No Outsiders")
                 ClocktowerPairInformationAbility.Investigator -> text("没有爪牙", "No Minions")
@@ -2240,9 +2250,14 @@ internal fun ClocktowerJudgeScreen(
             } else {
                 null
             }
-            val warning = if (recommendation.warningIds.isNotEmpty()) text(" ⚠ 高压", " ⚠ high pressure") else ""
-            displayOption(
-                label = "${recommendationStyleLabel(recommendation.style)}：$roleText${seats?.let { " · $it" }.orEmpty()}$warning",
+            val warningIds = recommendation?.warningIds.orEmpty()
+            val warning = if (warningIds.isNotEmpty()) text(" ⚠ 高压", " ⚠ high pressure") else ""
+            val style = recommendation?.style ?: automaticStorytellerStyle
+            val recommendationPrefix = recommendation
+                ?.let { "${recommendationStyleLabel(it.style)}：" }
+                .orEmpty()
+            val option = displayOption(
+                label = "$recommendationPrefix$roleText${seats?.let { " · $it" }.orEmpty()}$warning",
                 kind = ClocktowerDisplayKind.EitherOne,
                 title = when (ability) {
                     ClocktowerPairInformationAbility.Washerwoman -> text("洗衣妇信息", "Washerwoman information")
@@ -2260,13 +2275,22 @@ internal fun ClocktowerJudgeScreen(
                 } else {
                     InformationProposition.AllOf(roles.map { InformationProposition.RoleInPlay(RoleId(it.enName), false) })
                 },
-                recommendationStyle = recommendation.style,
+                recommendationStyle = style,
                 isTruthful = candidate.isTruthful,
                 misinformationPressure = candidate.misinformationPressure,
-                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
-                reasonCodes = listOf("dynamic.pair-score"),
-                warningCodes = recommendation.warningIds,
+                isDefaultRecommendation = recommendation?.style == RecommendationStyle.BALANCED,
+                reasonCodes = if (recommendation == null) emptyList() else listOf("dynamic.pair-score"),
+                warningCodes = warningIds,
             )
+            if (ability == ClocktowerPairInformationAbility.Investigator) {
+                option.copy(
+                    recluseRegistersEvil = effect.registration == PairInformationRegistration.RECLUSE_AS_EVIL_ROLE,
+                    recluseRegisteredRoleEnName = effect.shownRole?.enName
+                        ?.takeIf { effect.registration == PairInformationRegistration.RECLUSE_AS_EVIL_ROLE },
+                )
+            } else {
+                option
+            }
         }
     }
 
@@ -2744,6 +2768,13 @@ internal fun ClocktowerJudgeScreen(
                                 displayOptions = { actor ->
                                     recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
                                 },
+                                automaticSelectionOptions = { actor ->
+                                    recommendedUnreliablePairInformationOptions(
+                                        ClocktowerPairInformationAbility.Washerwoman,
+                                        actor,
+                                        completeSelectionDomain = true,
+                                    )
+                                },
                                 reliableDisplayOptions = { actor ->
                                     recommendedPairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
                                 },
@@ -2766,6 +2797,13 @@ internal fun ClocktowerJudgeScreen(
                                 hostInstruction = text("轻拍图书管理员，示意睁眼。把结果只给他看；如果显示“没有外来者”，也只告诉他本人。", "Tap the Librarian to wake them. Show the result only to that player, including a No Outsiders result."),
                                 displayOptions = { actor ->
                                     recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
+                                },
+                                automaticSelectionOptions = { actor ->
+                                    recommendedUnreliablePairInformationOptions(
+                                        ClocktowerPairInformationAbility.Librarian,
+                                        actor,
+                                        completeSelectionDomain = true,
+                                    )
                                 },
                                 reliableDisplayOptions = { actor ->
                                     recommendedPairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
@@ -2790,6 +2828,13 @@ internal fun ClocktowerJudgeScreen(
                                 displayOptions = { actor ->
                                     listOfNotNull(recommendedDrunkInvestigatorOption(actor)) +
                                         recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
+                                },
+                                automaticSelectionOptions = { actor ->
+                                    recommendedUnreliablePairInformationOptions(
+                                        ClocktowerPairInformationAbility.Investigator,
+                                        actor,
+                                        completeSelectionDomain = true,
+                                    )
                                 },
                                 reliableDisplayOptions = { actor ->
                                     recommendedPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)

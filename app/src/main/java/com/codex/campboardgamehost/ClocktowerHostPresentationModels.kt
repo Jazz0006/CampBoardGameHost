@@ -64,6 +64,12 @@ internal data class ClocktowerNightStepUi(
      * the display boundary before allowing the migrated lifecycle to commit.
      */
     val legacyInformationCandidates: List<ClocktowerDisplayOption> = emptyList(),
+    /**
+     * Candidate domain used by automatic first-night information selection. Pair-information
+     * abilities may populate this with the complete legal semantic domain while keeping
+     * [legacyInformationCandidates] curated for assisted/manual presentation.
+     */
+    val automaticInformationCandidates: List<ClocktowerDisplayOption> = emptyList(),
     val decisionOptions: List<ClocktowerDecisionOption> = emptyList(),
     val wakeText: String? = null,
     val roleEnName: String? = null,

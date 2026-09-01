@@ -105,23 +105,40 @@ internal fun ClocktowerNightStepCardLocalized(
     // B7.3's first production slice: a single complete first-night pool is
     // projected differently by execution policy. Later-night families retain
     // their legacy lists until individually migrated.
-    val firstNightNumericSourceSeat = step.legacyInformationCandidates
-        .asSequence()
-        .mapNotNull { (it.proposition as? InformationProposition.NumericResult)?.sourceSeat }
-        .firstOrNull()
-    val projectedFirstNightInformationCandidates = firstNightNumericSourceSeat?.let { sourceSeat ->
-        val poisonedPlayerName = cards
-            .getOrNull(sourceSeat - 1)
-            ?.name
-            ?.takeIf { step.informationReliability == InformationReliability.POISONED }
-        projectFirstNightNumericInformationOptions(
-            phase = phase,
-            roleEnName = step.roleEnName.orEmpty(),
-            sourceSeat = sourceSeat,
-            players = cards.toClocktowerPlayerStates(poisonedPlayerName = poisonedPlayerName),
-            options = step.legacyInformationCandidates,
-        )
-    } ?: step.legacyInformationCandidates
+    fun projectFirstNightCandidateSource(
+        source: List<ClocktowerDisplayOption>,
+    ): List<ClocktowerDisplayOption> {
+        val numericSourceSeat = source
+            .asSequence()
+            .mapNotNull { (it.proposition as? InformationProposition.NumericResult)?.sourceSeat }
+            .firstOrNull()
+        return numericSourceSeat?.let { sourceSeat ->
+            val poisonedPlayerName = cards
+                .getOrNull(sourceSeat - 1)
+                ?.name
+                ?.takeIf { step.informationReliability == InformationReliability.POISONED }
+            projectFirstNightNumericInformationOptions(
+                phase = phase,
+                roleEnName = step.roleEnName.orEmpty(),
+                sourceSeat = sourceSeat,
+                players = cards.toClocktowerPlayerStates(poisonedPlayerName = poisonedPlayerName),
+                options = source,
+            )
+        } ?: source
+    }
+    val projectedFirstNightInformationCandidates =
+        projectFirstNightCandidateSource(step.legacyInformationCandidates)
+    val projectedAutomaticFirstNightInformationCandidates = projectFirstNightCandidateSource(
+        step.automaticInformationCandidates.ifEmpty { step.legacyInformationCandidates },
+    )
+    val firstNightAutomaticPool = projectedAutomaticFirstNightInformationCandidates
+        .takeIf { phase == ClocktowerPhase.FirstNight && it.isNotEmpty() }
+        ?.let { options -> unifiedFirstNightInformationPool(
+            options = options,
+            familyId = step.roleEnName ?: "first-night-information",
+            automaticStyle = automaticStorytellerStyle,
+        ) }
+    // Presentation/manual mode deliberately keeps the curated compatibility surface.
     val firstNightPool = projectedFirstNightInformationCandidates
         .takeIf { phase == ClocktowerPhase.FirstNight && it.isNotEmpty() }
         ?.let { options -> unifiedFirstNightInformationPool(
@@ -132,7 +149,7 @@ internal fun ClocktowerNightStepCardLocalized(
     var firstNightPoolBenchmarkRuns by remember(
         phase,
         step.roleEnName,
-        projectedFirstNightInformationCandidates,
+        projectedAutomaticFirstNightInformationCandidates,
         automaticStorytellerStyle,
     ) { mutableStateOf(0) }
     var firstNightPoolBenchmarkReport by remember { mutableStateOf<UnifiedSelectionPoolDeviceBenchmarkReport?>(null) }
@@ -142,7 +159,7 @@ internal fun ClocktowerNightStepCardLocalized(
         firstNightPoolBenchmarkReport = null
         firstNightPoolBenchmarkError = null
         runCatching {
-            val options = requireNotNull(projectedFirstNightInformationCandidates.takeIf {
+            val options = requireNotNull(projectedAutomaticFirstNightInformationCandidates.takeIf {
                 phase == ClocktowerPhase.FirstNight && it.isNotEmpty()
             })
             val family = step.roleEnName ?: "first-night-information"
@@ -168,7 +185,7 @@ internal fun ClocktowerNightStepCardLocalized(
             Log.e(UNIFIED_FIRST_NIGHT_POOL_BENCHMARK_LOG_TAG, "Unified first-night pool diagnostic failed", error)
         }
     }
-    val automaticInformationOptions = firstNightPool
+    val automaticInformationOptions = firstNightAutomaticPool
         ?.candidatesFor(SelectionExecutionPolicy.AUTO)
         ?.map { it.payload }
         ?: step.recommendedDisplayOptions

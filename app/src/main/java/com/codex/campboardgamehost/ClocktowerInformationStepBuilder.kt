@@ -31,6 +31,7 @@ internal class ClocktowerInformationStepBuilder(
         displayProposition: InformationProposition? = null,
         hostInstruction: String? = null,
         displayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
+        automaticSelectionOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         reliableDisplayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         previousShownNumber: Int? = null,
         spyRegistrationKey: String? = null,
@@ -67,6 +68,10 @@ internal class ClocktowerInformationStepBuilder(
         }
         val actorAbilityUnreliable = actor != null && actorIsUnreliable(enName, actor)
         val unreliableOptions = actor?.takeIf { actorAbilityUnreliable }?.let(displayOptions).orEmpty()
+        val automaticSelectionDomain = actor
+            ?.takeIf { actorAbilityUnreliable && automaticStorytellerInfo }
+            ?.let(automaticSelectionOptions)
+            .orEmpty()
         val reliableRecommendations = actor?.takeUnless { actorAbilityUnreliable }?.let(reliableDisplayOptions).orEmpty()
         val automaticRecommendations = when {
             !automaticStorytellerInfo -> reliableRecommendations
@@ -108,6 +113,10 @@ internal class ClocktowerInformationStepBuilder(
                     option.isTruthful.toString(),
                 ).joinToString("|")
             }
+        val automaticInformationCandidates = automaticSelectionDomain
+            .takeIf { it.isNotEmpty() }
+            ?.distinctBy(::clocktowerInformationCandidateId)
+            ?: completeLegacyCandidates
         return ClocktowerNightStepUi(
             title = localizedRoleName,
             actor = actor,
@@ -139,6 +148,7 @@ internal class ClocktowerInformationStepBuilder(
             displayOptions = if (automaticStorytellerInfo) emptyList() else unreliableOptions,
             recommendedDisplayOptions = automaticRecommendations,
             legacyInformationCandidates = completeLegacyCandidates,
+            automaticInformationCandidates = automaticInformationCandidates,
             roleEnName = enName,
             informationReliability = informationReliability,
             recentMisinformationStreak = recentMisinformationStreak(actor),
