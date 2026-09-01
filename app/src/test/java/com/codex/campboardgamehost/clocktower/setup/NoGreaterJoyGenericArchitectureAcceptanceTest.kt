@@ -9,7 +9,6 @@ import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
 import com.codex.campboardgamehost.clocktower.domain.CommittedSetupSeat
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
-import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
 import com.codex.campboardgamehost.clocktower.recommendation.NaturalPairInformationCandidateGenerator
@@ -131,6 +130,10 @@ class NoGreaterJoyGenericArchitectureAcceptanceTest {
     private fun ClocktowerCatalogTeam.alignment(): Alignment = when (this) {
         ClocktowerCatalogTeam.TOWNSFOLK, ClocktowerCatalogTeam.OUTSIDER -> Alignment.GOOD
         ClocktowerCatalogTeam.MINION, ClocktowerCatalogTeam.DEMON -> Alignment.EVIL
+        ClocktowerCatalogTeam.TRAVELLER,
+        ClocktowerCatalogTeam.FABLED,
+        ClocktowerCatalogTeam.LORIC,
+        -> error("Non-playable catalog team $this cannot appear in a generated setup.")
     }
 
     private fun ClocktowerCatalogTeam.characterType(): CharacterType = when (this) {
@@ -138,6 +141,10 @@ class NoGreaterJoyGenericArchitectureAcceptanceTest {
         ClocktowerCatalogTeam.OUTSIDER -> CharacterType.OUTSIDER
         ClocktowerCatalogTeam.MINION -> CharacterType.MINION
         ClocktowerCatalogTeam.DEMON -> CharacterType.DEMON
+        ClocktowerCatalogTeam.TRAVELLER,
+        ClocktowerCatalogTeam.FABLED,
+        ClocktowerCatalogTeam.LORIC,
+        -> error("Non-playable catalog team $this cannot appear in a generated setup.")
     }
 
     private companion object {
