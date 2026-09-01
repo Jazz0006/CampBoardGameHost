@@ -1,0 +1,37 @@
+name: UX-R3 focused RED one-shot
+
+on:
+  push:
+    branches:
+      - codex/ux-r3-global-selector-removal
+
+permissions:
+  contents: read
+
+jobs:
+  red:
+    if: github.event.head_commit.message == 'chore: run UX-R3 focused RED one-shot'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Confirm expected RED
+        shell: bash
+        run: |
+          set +e
+          ./gradlew :app:testDebugUnitTest --tests 'com.codex.campboardgamehost.clocktower.domain.StorytellerRecommendationUxPolicyTest' > ux-r3-red.log 2>&1
+          status=$?
+          set -e
+          cat ux-r3-red.log
+          if [ "$status" -eq 0 ]; then
+            echo 'Expected UX-R3 RED, but focused test passed.' >&2
+            exit 1
+          fi
+          grep -q 'StorytellerRecommendationUxPolicy' ux-r3-red.log || {
+            echo 'Focused failure did not mention the missing UX-R3 policy contract.' >&2
+            exit 1
+          }
+          echo 'UX-R3 RED confirmed: normal-product policy contract is not implemented yet.'
