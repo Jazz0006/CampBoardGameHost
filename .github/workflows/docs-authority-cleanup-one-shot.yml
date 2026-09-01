@@ -1,3 +1,4 @@
+# one-shot retry after whitespace audit fix
 name: Docs authority cleanup one-shot
 
 on:
