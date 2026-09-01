@@ -1,0 +1,77 @@
+name: UX-R3 global selector production cutover one-shot
+
+on:
+  push:
+    branches:
+      - codex/ux-r3-global-selector-removal
+
+permissions:
+  contents: write
+
+jobs:
+  cutover:
+    if: github.event.head_commit.message == 'chore: run UX-R3 production cutover one-shot'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/ux-r3-global-selector-removal
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Fail closed on branch and target identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          remote_head="$(git ls-remote origin refs/heads/codex/ux-r3-global-selector-removal | awk '{print $1}')"
+          test "$remote_head" = "$GITHUB_SHA"
+          target='app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt'
+          test "$(git hash-object "$target")" = 'd53437fa7a9760dd460cc5600470163cf35fa4fd'
+
+      - name: Apply exact-anchor App root patch
+        run: python3 .github/scripts/ux_r3_global_selector_patch.py
+
+      - name: Audit exact production diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          actual="$(git diff --name-only)"
+          expected='app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt'
+          test "$actual" = "$expected"
+
+      - name: Focused UX-R3 and Manual-authority tests
+        shell: bash
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:testDebugUnitTest --no-daemon --build-cache \
+            --tests 'com.codex.campboardgamehost.clocktower.domain.StorytellerRecommendationUxPolicyTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerPairManualAuthorityTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerInformationStepBuilderManualAuthorityTest'
+
+      - name: Android FAST checkpoint
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Commit production cutover and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          git commit -m 'UX-R3: cut normal product flow off legacy global mode'
+
+          rm .github/scripts/ux_r3_global_selector_patch.py
+          rm .github/workflows/ux-r3-global-selector-one-shot.yml
+          git add -A .github/scripts/ux_r3_global_selector_patch.py .github/workflows/ux-r3-global-selector-one-shot.yml
+          git commit -m 'chore: remove completed UX-R3 one-shot patch'
+
+          git push origin HEAD:codex/ux-r3-global-selector-removal
