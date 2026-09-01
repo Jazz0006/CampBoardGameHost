@@ -1,16 +1,13 @@
 # Clue Recommendation & Manual Selection UX Decision
 
 > Date: 2026-09-01 Australia/Sydney  
-> Status: **APPROVED PRODUCT / ARCHITECTURE DIRECTION — IMPLEMENT AFTER PR #61**  
-> Applies to: Clocktower information/clue presentation and future Recommendation Provider integration  
-> Related plans:
-> - `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
-> - `docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`
-> - `docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`
+> Status: **APPROVED / ACTIVE PRODUCT AND ARCHITECTURE AUTHORITY**  
+> Applies to: Clocktower information/clue presentation, manual selection, recommendation-provider integration  
+> Current execution authority: `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 
 ## 1. Product decision
 
-Remove the current user-facing global recommendation mode choice:
+The current global front-door choice:
 
 ```text
 Automatic — Balanced
@@ -19,53 +16,100 @@ Automatic — Conservative
 Manual
 ```
 
-These modes should no longer be the primary user interaction model for clue selection.
+is not the target product model.
 
-The product should instead **always compute recommendations for the current interaction**, present the strongest recommendation most prominently, expose up to two useful alternative recommendations when appropriate, and always preserve direct Storyteller manual control.
-
-The new interaction model is:
+The permanent interaction model is per clue interaction:
 
 ```text
 complete legal semantic candidate domain
         |
-        +--> Recommendation Provider
-        |       |
-        |       +--> primary recommendation (Top-1)
-        |       +--> up to 2 differentiated alternatives
-        |
-        +--> Manual selection path
+        +--> shared information-decision authority
+                |
+                +--> Recommendation Provider
+                |       -> primary recommendation
+                |       -> 0–2 useful alternatives
+                |
+                +--> Manual selection
 
 UI
         |
-        +--> prominent primary recommendation
-        +--> visually separated alternatives
-        +--> persistent manual-selection affordance
+        +--> prominent primary recommendation when available
+        +--> 0–2 visually separated alternatives
+        +--> persistent direct manual control
 ```
 
-## 2. Why the global mode setting should be removed
+The Storyteller should not need to select a persistent global recommendation style before receiving useful guidance, and should never lose manual control because a recommendation provider is absent or uncertain.
 
-`BALANCED`, `AGGRESSIVE`, and `CONSERVATIVE` describe recommendation policy/style. `MANUAL` describes an interaction method. They are not the same product dimension and should not be combined into one user-facing mode selector.
+## 2. Authority separation
 
-A Storyteller should not need to decide before or during a game that all future information must use one global style. The correct strategic pressure depends on the current game state, information history, recipient knowledge, impairment state, interaction risk, and future breakability.
+The permanent architecture is:
 
-Long term, the recommendation system itself should decide when a more conservative or more disruptive clue is appropriate. Productive Uncertainty is intended to make that contextual decision from the current epistemic state rather than asking the user to select a global style.
+```text
+rules / semantic legality
+        ↓
+CompleteLegalInformationDomain
+        ↓
+shared information-decision authority
+        ├── manual selection
+        └── Recommendation Provider
+```
 
-Therefore:
+The Recommendation Provider ranks legal candidates. It does **not** define what clues the Storyteller is allowed to choose.
 
-- remove the global mode choice from normal product UI;
-- do not require the user to understand Balanced/Aggressive/Conservative before receiving recommendations;
-- preserve useful style/pressure dimensions internally as scoring features or diagnostics where they remain valuable;
-- do not make those old styles the permanent Recommendation Provider API.
+Manual candidate availability must therefore be independent of:
 
-## 3. Default clue-selection UX contract
+- recommendation shortlist coverage;
+- Balanced/Aggressive/Conservative compatibility style;
+- recommendation confidence;
+- Productive Uncertainty rollout state;
+- whether the current provider supports the interaction at all.
 
-For every information interaction, the UI should follow this priority:
+Unsupported recommendation situations degrade to correct manual play, not loss of functionality.
 
-### 3.1 Primary recommendation
+## 3. Shared confirmation lifecycle
 
-The best currently supported recommendation is the dominant visual action.
+Manual and recommendation acceptance are different provenance paths into the same decision authority, not different legality systems.
 
-It should be easy for a new Storyteller to understand and accept without scanning the full legal candidate domain.
+Target lifecycle:
+
+```text
+legal semantic candidates
+        ↓
+InformationDecisionContext-style authority
+        ├── recommendedCandidateIds
+        └── complete legalCandidateIds
+        ↓
+structured presentation model
+        ↓
+select candidateId
+        ↓
+confirm(
+  MANUAL
+  or RECOMMENDATION_ACCEPTED
+)
+        ↓
+ConfirmedInformationDecision
+        ↓
+AbilityObservation / durable visible history
+```
+
+The shared authority must preserve:
+
+- exact stable candidate identity;
+- interaction-scoped Spy/Recluse registration facts;
+- game/player-input revision freshness;
+- stale-context rejection;
+- illegal candidate rejection;
+- recommendation-subset validation;
+- manual-vs-recommendation provenance.
+
+Do not build a second pair-only confirmation lifecycle when the existing information-decision Foundation can be reused or narrowly generalized.
+
+## 4. Default clue-selection UX
+
+### 4.1 Primary recommendation
+
+The strongest supported contextual recommendation is the dominant visual action.
 
 Conceptually:
 
@@ -73,38 +117,36 @@ Conceptually:
 Recommended clue
 
 +----------------------------------+
-| strongest recommended clue       |
+| strongest supported clue         |
 | short reason / warning if useful |
 |                                  |
 |        [ Show to player ]        |
 +----------------------------------+
 ```
 
-The primary recommendation means **best recommendation for the current situation**, not permanently “Balanced”.
+This means “best recommendation for the current interaction”, not permanently “Balanced”.
 
-### 3.2 Alternative recommendations
+### 4.2 Alternatives
 
-When useful, show at most two additional recommendations below or separately from the primary recommendation.
+Normal UI may show **0–2** alternatives.
 
-The alternatives should preferably represent meaningfully different strategic explanations or clue structures rather than simply the next two nearly-identical score values.
+Alternatives should preferably represent meaningfully different useful choices or world explanations rather than adjacent score values.
 
-Examples of useful diversity include:
+Useful diversity may include:
 
+- different role/pair structures;
 - different mistaken-world families;
-- different player-pair structures;
-- different role/configuration implications;
-- different interaction/confirmation patterns;
+- different registration explanations;
+- different configuration implications;
 - different pressure vs breakability trade-offs.
 
-The product contract is **0–2 alternatives**, not a requirement to always fill two slots.
+Do not invent a temporary legacy Top-3/diversification algorithm merely to fill two alternative slots. Fewer alternatives is correct when the provider cannot justify more.
 
-If no high-quality alternatives exist, show fewer.
+### 4.3 Manual selection
 
-### 3.3 Manual selection
+Manual control is an affordance, not a global mode.
 
-Manual control is not a separate global mode. It is an affordance available at every relevant interaction.
-
-For large candidate domains, place a clear manual-selection action in a stable location near the bottom of the interaction screen, visually separated from recommendations:
+For large/combinatorial domains:
 
 ```text
 ----------------------------------
@@ -112,17 +154,102 @@ For large candidate domains, place a clear manual-selection action in a stable l
 ----------------------------------
 ```
 
-Selecting it opens a dedicated clue-construction/selection surface based on the **complete legal semantic candidate domain**, not on the legacy recommendation shortlist.
+opens a dedicated structured selection surface based on the complete legal semantic domain.
 
-Manual selection must remain available even when the recommendation engine is active or highly confident.
+Manual selection remains available even when recommendation confidence is high.
 
-## 4. UI behavior by clue family
+## 5. Pair-information roles
 
-### 4.1 Small numeric domains
+Washerwoman, Librarian and Investigator establish the first complete combinatorial clue family.
 
-For numeric roles such as Chef, Empath, Clockmaker, and suitable Chambermaid results, avoid unnecessary navigation.
+### 5.1 Rules authority
 
-Show:
+Current semantic ownership:
+
+```text
+PairInformationDisplaySemantics
+        ↓
+PairInformationLegalDomain
+        ├── RELIABLE -> truthful legal outcomes only
+        └── DRUNK/POISONED -> complete legal display space
+```
+
+Presentation code must not duplicate these rules.
+
+### 5.2 Washerwoman
+
+Functioning Washerwoman:
+
+- normally exposes only truthful Townsfolk clues;
+- a legal Spy-as-Townsfolk registration may make a clue truthful even when the displayed Townsfolk is not actually in play;
+- every role choice shown by the manual UI must have at least one legal pair candidate.
+
+Drunk/Poisoned Washerwoman:
+
+- current-script Townsfolk roles × every legal unordered player pair excluding the source;
+- false-but-well-formed clues are allowed;
+- no zero-character result.
+
+### 5.3 Librarian
+
+Functioning Librarian:
+
+- with truthful Outsider candidates, expose only truthful clues;
+- with zero actual Outsiders and no Spy registration truth, expose exactly `No Outsiders`;
+- with zero actual Outsiders plus a legal Spy-as-Outsider registration, `No Outsiders` and registered truthful pair clues may coexist.
+
+Drunk/Poisoned Librarian:
+
+- current-script Outsider roles × every legal unordered player pair;
+- plus `No Outsiders`.
+
+The zero-result is semantic data supplied by the legal domain. UI must not contain `if (role == Librarian)` legality logic.
+
+### 5.4 Investigator
+
+Functioning Investigator:
+
+- actual Minion truth;
+- plus legal Recluse-as-Minion registration truth.
+
+Drunk/Poisoned Investigator:
+
+- current-script Minion roles × every legal unordered player pair.
+
+Investigator never has a `No Minions` outcome.
+
+### 5.5 Structured manual picker
+
+The pair manual page should construct a legal clue rather than flattening the full Cartesian domain into hundreds of buttons.
+
+Conceptually:
+
+```text
+Manually choose clue
+
+1. Choose role
+   [ Chef ]
+   [ Empath ]
+   [ Monk ]
+   ...only roles with legal candidates...
+
+2. Choose player pair
+   [ #2 + #3 ]
+   [ #2 + #4 ]
+   [ #3 + #5 ]
+
+[ Confirm ]
+```
+
+For Librarian, `No Outsiders` appears only when present as a legal zero-result candidate.
+
+A structured choice resolves to an existing exact `candidateId`; the UI never manufactures a free-form clue outside the legal domain.
+
+## 6. Small-domain specialization
+
+### 6.1 Numeric domains
+
+For Chef, Empath and other suitably small numeric domains:
 
 ```text
 Recommended
@@ -132,122 +259,86 @@ Other legal values
 [ 0 ] [ 2 ]
 ```
 
-If the complete legal numeric domain is already small enough to display directly, these buttons themselves provide full manual control and a separate manual page is unnecessary.
+When all legal values already fit naturally on screen, those values provide complete manual control. A separate manual page is unnecessary.
 
-The recommendation remains visually strongest; the remaining legal values are secondary actions.
+The existing `StructuredNumberInformationUiModel` pattern is the preferred lifecycle model: all choices come from the validated decision context, recommendation acceptance and manual choice both confirm by candidate ID.
 
-### 4.2 Yes / No domains
+### 6.2 Yes/No domains
 
-For a two-value domain, show the recommended result prominently and the other legal result as the secondary choice.
+For a true two-value domain, show the recommended value prominently and the other legal value as a secondary action.
 
-No separate manual page is required when the full legal domain is already visible.
+No dedicated manual screen is needed when the complete legal domain is already visible.
 
-### 4.3 Role + player / pair-combination clues
+## 7. Critical migration sequencing
 
-For Washerwoman, Librarian, Investigator and similar combinatorial clues:
+The original linear UX-R2 → UX-R3 → UX-R4 → UX-R5 sequence is refined to avoid transitional architecture.
 
-```text
-Primary recommendation
-[ role / player pair ]
+### UX-R2A — pair semantic scenario contracts
 
-Other recommendations
-[ alternative 1 ]
-[ alternative 2 ]
+Lock durable behavior for:
 
-----------------------------------
-[ Manually choose clue ]
-----------------------------------
-```
+- reliable vs impaired Washerwoman;
+- reliable zero-Outsider Librarian;
+- Spy registration exceptions;
+- reliable vs impaired Investigator;
+- Recluse registration;
+- zero-result role rules.
 
-The manual page should allow the Storyteller to construct any legal clue through structured role/player selection rather than forcing them to scroll through a combinatorial list of pre-expanded buttons.
+### UX-R2B — pair adoption of shared decision Foundation
 
-### 4.4 Registration-sensitive interactions
+Pair manual selection must confirm through the same information-decision lifecycle as other structured information choices.
 
-Spy/Recluse registration belongs to semantic truth construction for the specific interaction.
+If generic constraints must be widened, do so narrowly and preserve existing Number behavior.
 
-The manual selection UI must expose or resolve the relevant registration choice where required, but must not turn registration into a hidden recommendation-only heuristic.
+### UX-R2C — pair production vertical slice
 
-The same committed clue must carry the registration semantics used to evaluate its truth/falsehood.
-
-## 5. Candidate-domain authority
-
-The permanent architecture must be:
+On a separate production-wiring PR:
 
 ```text
-CompleteLegalInformationDomain
-        |
-        +--> Manual clue selection
-        |
-        +--> Recommendation Provider
-                 |
-                 +--> legacy compatibility provider (temporary)
-                 +--> cognitive-consistency / Productive Uncertainty provider
+GameState + role definitions + source seat + reliability
+-> PairInformationLegalDomain
+-> shared decision context
+-> PairInformationManualSelectionModel
+-> structured UI
+-> exact confirmation
+-> durable observation
 ```
 
-The Recommendation Provider ranks legal candidates. It does **not** define what the Storyteller is allowed to choose.
+Do not compute pair legality in Compose or `ClocktowerInformationStepBuilder`.
 
-Therefore the complete legal/manual domain must remain available independently of:
+### UX-R2D — manual-authority coverage audit
 
-- legacy shortlist curation;
-- recommendation style;
-- Recommendation Provider coverage;
-- recommendation confidence;
-- Productive Uncertainty rollout state.
+Before deleting the old global Manual entry point, confirm every currently supported major clue family has a correct manual path independent of recommendation coverage.
 
-Unsupported recommendation cases must degrade to legal manual selection rather than losing functionality.
+Audit at least:
 
-## 6. Recommendation output contract
+- Number;
+- Yes/No;
+- pair role/player domains;
+- supported role/category/reveal information families.
 
-The future provider should conceptually return a ranked recommendation result rather than a global style-specific selection:
+Fill only real authority/functionality gaps; do not redesign recommendation quality in this stage.
 
-```text
-RecommendationResult
-- primary: Candidate?
-- alternatives: List<Candidate>   // max 2 for normal UI
-- confidence / quality tier
-- explanation / reason codes
-- warning codes
-```
+### UX-R3/R4 — remove global mode and establish final recommendation shell
 
-The exact Kotlin API is not frozen by this document.
+Only after UX-R2D:
 
-Important behavioral requirements:
+- remove normal user-facing Balanced/Aggressive/Conservative/Manual selector;
+- recommendation becomes always-on where provider support exists;
+- render primary + 0–2 alternatives + manual affordance;
+- preserve low-confidence/no-recommendation states.
 
-1. primary must come from the current legal semantic domain;
-2. alternatives must also be legal;
-3. normal UI renders at most two alternatives;
-4. alternatives should be diversified when possible;
-5. low-confidence recommendation must be representable;
-6. absence of a recommendation must not remove manual operation.
+Balanced/Aggressive/Conservative may remain internal compatibility/scoring/diagnostic dimensions temporarily. Manual is not a style.
 
-## 7. Low-confidence behavior
+### UX-R5 — thin presentation polish
 
-Do not invent a strong-looking recommendation merely because the UI expects one.
-
-The Recommendation Provider must be able to report that no candidate is meaningfully superior or that evaluation is degraded/unknown.
-
-Suggested presentation:
-
-```text
-No clearly superior recommendation
-
-Possible choices
-[ A ]
-[ B ]
-[ C ]
-
-----------------------------------
-[ Manually choose clue ]
-----------------------------------
-```
-
-This is preferable to presenting a weak or unavailable evaluation as authoritative.
+Specialize small-domain rendering and pair structured navigation without changing legal/recommendation authority.
 
 ## 8. Relationship to Productive Uncertainty
 
-The future cognitive-consistency recommender should determine contextual strategy from the actual interaction rather than asking the Storyteller to choose a persistent Balanced/Aggressive/Conservative mode.
+The stable UI/decision contract is intentionally provider-neutral.
 
-Conceptually:
+Legacy ranking is temporary. Once the boundary above is stable, the primary algorithm campaign becomes:
 
 ```text
 legal candidate
@@ -255,91 +346,71 @@ legal candidate
 -> hypothetical visible observation
 -> PlayerWorldSet AFTER
 -> credibility
--> ambiguity / Productive Uncertainty
 -> persistence
 -> breakability
 -> cross-role interaction
 -> confirmation-lock risk
--> faction/fairness gates
--> ranked recommendation
+-> fairness / player agency
+-> Productive Uncertainty ranking
 ```
 
-Former “aggressive”, “balanced”, or “conservative” notions may survive as internal feature dimensions, diagnostics, test scenarios, or optional advanced policy parameters, but they should not remain the normal front-door UX.
+The recommendation provider can then be replaced without another interaction-mode redesign.
 
-## 9. Implementation route after PR #61
+This is why UX work must remain thin: establish the durable boundary, then return to cognitive-consistency quality rather than building another temporary recommendation engine.
 
-Do **not** implement this UX inside PR #61. PR #61 should remain a generic setup-architecture closeout PR.
+## 9. Low-confidence behavior
 
-After PR #61 is merged, use a fresh branch and proceed in this order:
+Do not present a weak or unavailable evaluation as authoritative merely because a card layout expects a recommendation.
+
+The provider must be able to express:
 
 ```text
-UX-R1  Audit current recommendation/manual UI and mode dependencies
-       -> identify every user-facing Automatic/Manual/RecommendationStyle dependency
+No clearly superior recommendation
 
-UX-R2  Establish legal-domain -> manual-selection UI contract
-       -> manual authority independent from recommendation shortlist
-       -> no recommendation-quality redesign yet
+Possible choices
+[ A ]
+[ B ]
 
-UX-R3  Replace global mode UX
-       -> remove normal user-facing Balanced/Aggressive/Conservative/Manual selector
-       -> recommendations are always computed when supported
-
-UX-R4  Unified recommendation presentation
-       -> prominent Top-1
-       -> up to 2 differentiated alternatives
-       -> persistent manual action for combinatorial domains
-
-UX-R5  Small-domain specialization
-       -> Number: primary + remaining legal numeric buttons
-       -> Yes/No: primary + other legal result
-       -> avoid unnecessary navigation
-
-EPI-MQ / ALG
-       -> PlayerKnowledgeSnapshot / PlayerWorldSet
-       -> hypothetical observation BEFORE/AFTER
-       -> epistemic metrics
-       -> Productive Uncertainty
-       -> cognitive-consistency Recommendation Provider
-
-UX-R6  Replace legacy ranking behind the same UI contract
-       -> no new interaction-mode redesign required during recommender rollout
+----------------------------------
+[ Manually choose clue ]
+----------------------------------
 ```
 
-UX-R1 through UX-R5 should be kept deliberately thin: their purpose is to establish the permanent product/authority boundary, not to build a second recommendation algorithm before Productive Uncertainty.
-
-Where practical, UX-R1/R2 may be combined with the first post-PR epistemic branch if doing so avoids temporary architecture, but UI behavior and world-model correctness must remain separately testable.
+Absence of a recommendation must never remove manual play.
 
 ## 10. Testing guidance
 
-Use risk-based tests-first.
+Use risk-based tests-first according to root `AGENTS.md` and `docs/TESTING_STRATEGY.md`.
 
-High-value behavior contracts include:
+High-value contracts include:
 
-- manual selection remains available when recommendations are enabled;
-- recommendation candidates and manual candidates share one legal semantic authority;
-- selecting an alternative commits the exact selected clue/registration semantics;
-- a small numeric domain exposes every legal value directly;
-- combinatorial domains expose no more than three normal recommendations before manual navigation;
-- removing the global mode does not silently change clue legality/truth;
-- recommendation absence/low-confidence still permits correct manual play.
+- manual and recommendation consume one legal semantic authority;
+- pair reliable/impaired domain behavior matches section 5;
+- Spy/Recluse registration survives selection and confirmation exactly;
+- structured manual choice cannot manufacture an illegal candidate;
+- stale decision contexts cannot be confirmed;
+- recommendation acceptance is limited to current recommended candidate IDs;
+- recommendation absence still allows correct manual play;
+- all supported clue families remain manually playable before global mode removal;
+- small-domain UI exposes every legal value directly;
+- normal combinatorial recommendation surface never requires more than primary + two alternatives.
 
-Avoid source-shape tests that only assert button/class/helper placement.
+Avoid tests that only assert class/helper/button source placement.
 
-## 11. Non-goals of the first UX slice
+## 11. Current implementation state
 
-Do not initially:
+As of the current Draft PR #63 foundation checkpoint:
 
-- tune Productive Uncertainty weights;
-- add new legacy role/script-specific ranking heuristics;
-- require exact parity with old Balanced/Aggressive/Conservative results;
-- freeze a permanent Top-3 scoring formula;
-- expand every legal combinatorial candidate as a button on the night-step card;
-- make manual selection dependent on the recommendation engine.
+- `PairInformationLegalDomain` is already the pair legality authority;
+- `PairInformationManualSelection` already provides a typed structured projection and exact candidate preservation;
+- `ClocktowerNightStepUi` / `ClocktowerInformationStepBuilder` can transport a precomputed typed model;
+- pair production Host/UI wiring is intentionally not yet complete;
+- the next foundation work is shared InformationDecision lifecycle adoption, not large Host editing.
+
+Current live status and exact checkpoint SHAs belong in `docs/CURRENT_DEVELOPMENT_ROADMAP.md`, not in this long-lived product decision document.
 
 ## 12. Acceptance summary
 
-The new clue-selection design is accepted when a Storyteller can treat every information interaction as:
+The design is complete when a Storyteller can treat every supported information interaction as:
 
-> **Use the strongest contextual recommendation, choose one of a small number of meaningful alternatives, or take full manual control — without selecting a global recommendation mode first.**
-
-This UI contract should remain stable while the recommendation implementation evolves from the legacy compatibility provider to the cognitive-consistency / Productive Uncertainty provider.
+> **Use the strongest supported contextual recommendation, choose one of a small number of meaningful alternatives, or take full legal manual control — all through one semantic candidate/decision authority and without choosing a persistent global recommendation mode.**
