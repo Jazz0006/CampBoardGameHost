@@ -8,27 +8,27 @@
 ## 1. Current development context
 
 ```text
-live main at UX-R3 branch creation:
-5b0c2038158eb3bb1842eedcfe460a08f27a2796
+live main after UX-R3 merge:
+f5a0e2cf8776866441bcd32729fcdc43d4f70f9b
 
-current branch:
-codex/ux-r3-global-selector-removal
-
-current Draft PR:
+last merged PR:
 #65 — UX-R3: remove global storyteller mode selector
-DRAFT / OPEN / UNMERGED / MERGEABLE at last verification
+MERGED 2026-09-01
 
 final fully validated UX-R3 executable/code checkpoint:
 6cb9cb542b9e25d718a2a035e37475f99388ed2e
 
-UX-R3 status:
-COMPLETE / VERIFIED / PR #65 CLOSEOUT
+validated docs-closeout checkpoint before merge:
+e84997f48e70e565eddad9b6f14d06b3db1a6efa
 
-next implementation slice after PR #65 merge:
+UX-R3 status:
+COMPLETE / VERIFIED / MERGED
+
+next implementation slice:
 UX-R4 — unified recommendation presentation
 ```
 
-PR #65 must remain Draft/Open/Unmerged until the user explicitly authorizes merge.
+PR #65 merged as `f5a0e2cf8776866441bcd32729fcdc43d4f70f9b`. The final Ready-transition cleanup head had an identical file tree to the validated docs-closeout checkpoint before merge.
 
 The executable checkpoint `6cb9cb5...` passed the accepted UX-R3 validation route:
 
@@ -59,10 +59,10 @@ UX-R2A  shared pair-information legal-domain authority        COMPLETE / MERGED
 UX-R2B  pair Manual flow -> shared legal-domain authority
         + typed registration-preserving commit path           COMPLETE / VERIFIED / MERGED (#64)
 
-UX-R3   remove normal global storyteller mode selector        COMPLETE / VERIFIED / PR #65
+UX-R3   remove normal global storyteller mode selector        COMPLETE / VERIFIED / MERGED (#65)
 
 UX-R4   unified recommendation presentation
-        Top-1 + 0–2 differentiated alternatives + Manual      NEXT AFTER #65 MERGE
+        Top-1 + 0–2 differentiated alternatives + Manual      NEXT
 
 UX-R5   small-domain specialization                           QUEUED
 
@@ -71,7 +71,7 @@ EPI-MQ / ALG Productive Uncertainty mainline                  NEXT PRIMARY ALGOR
 UX-R6   replace legacy ranking behind stable UX contract      QUEUED AFTER EPI-MQ
 ```
 
-Do not begin UX-R4 on PR #65. After #65 is merged, create a fresh branch from the resulting live `main`.
+Create a fresh UX-R4 branch from current live `main`. Do not reuse the merged UX-R3 branch.
 
 ## 3. Frozen permanent setup / information architecture
 
@@ -288,9 +288,9 @@ UX-R2B already provides the permanent legal-domain Manual seam. UX-R4 should ref
 - Number domains: show the primary recommendation plus all remaining legal values directly when the domain fits naturally.
 - Yes/No domains: show the recommended value prominently and the other legal value as the secondary choice.
 
-## 8. Immediate implementation route after PR #65
+## 8. Immediate implementation route
 
-After user-authorized merge of PR #65, create a fresh branch and proceed:
+Create a fresh branch from current live `main`, then proceed:
 
 ```text
 UX-R4  unified recommendation presentation
@@ -382,27 +382,28 @@ Avoid source-shape tests that only assert button/class/helper placement.
 
 Full CI is reserved for logical acceptance checkpoints or risk-triggered cases according to `TESTING_STRATEGY.md`.
 
-## 11. PR #65 closeout / merge-readiness rules
+## 11. PR #65 merge checkpoint
 
-Before any user-authorized merge:
+PR #65 merge closeout is complete.
 
-1. re-query live `main` and PR #65 head/state/mergeability;
-2. distinguish the validated executable checkpoint `6cb9cb5...` from later docs-only commits;
-3. verify any later head is docs-only relative to `6cb9cb5...`, or rerun the required executable validation if code changed;
-4. confirm the permanent PR diff contains only expected UX-R3 files plus closeout documentation;
-5. verify no temporary one-shot workflow/script remains;
-6. inspect review threads/reviews/comments;
-7. confirm required checks on the current head are green/skipped as expected;
-8. keep the PR Draft until the user explicitly authorizes merge;
-9. merge only with expected-head protection.
+Evidence:
 
-Do not begin UX-R4 on PR #65.
+1. final fully validated executable checkpoint: `6cb9cb542b9e25d718a2a035e37475f99388ed2e`;
+2. docs-closeout checkpoint: `e84997f48e70e565eddad9b6f14d06b3db1a6efa`;
+3. the docs-closeout checkpoint was exactly one docs-only commit after the executable checkpoint and changed only this roadmap;
+4. CI run `33499530332` and R2 run `33499530280` were green on the docs-closeout checkpoint;
+5. no review threads or submitted review blockers existed;
+6. the direct Ready connector hit the known `fullDatabaseId` GraphQL compatibility error, so a one-shot Ready-transition workflow was used and self-removed;
+7. cleanup head `c67a02ec80889a534254fb5eb40e83da3a8fbf3b` had zero file differences from `e84997f...`;
+8. PR #65 was merged with expected-head protection;
+9. merge commit: `f5a0e2cf8776866441bcd32729fcdc43d4f70f9b`.
 
-## 12. Scope guards
+UX-R4 must start from a fresh branch based on the resulting live `main`.
 
-Do not add to PR #65 during closeout:
+## 12. Scope guards for UX-R4
 
-- UX-R4 Top-1/alternative presentation work;
+Keep UX-R4 deliberately thin. Do not expand it into:
+
 - small-domain UX-R5 specialization;
 - new recommendation ranking behavior;
 - Productive Uncertainty;
@@ -431,29 +432,21 @@ docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 Historical evidence:
 
 - PR #64 and its closeout commits establish UX-R2B;
-- PR #65 and the checkpoint evidence above establish UX-R3 once merged;
+- PR #65 and the checkpoint evidence above establish merged UX-R3;
 - older MS-SETUP handoffs remain historical context only.
 
 ## 14. New-conversation resume protocol
 
-While PR #65 remains unmerged:
-
 1. read root `AGENTS.md`;
 2. read this roadmap;
-3. re-query live `main`, PR #65 head/state/mergeability/checks;
-4. treat `6cb9cb542b9e25d718a2a035e37475f99388ed2e` as the final fully validated UX-R3 executable checkpoint unless later executable code is validated;
-5. perform only UX-R3 closeout/merge-readiness work on this branch;
-6. do not begin UX-R4 and do not merge without explicit user authorization.
-
-After PR #65 merge:
-
-1. re-query resulting live `main`;
-2. create a fresh UX-R4 branch;
-3. implement Top-1 + 0–2 differentiated alternatives + persistent Manual using the existing legal-domain authority;
-4. proceed to UX-R5 small-domain specialization;
-5. return immediately to PlayerWorldSet / Productive Uncertainty;
-6. replace legacy ranking behind the stable UI contract in UX-R6;
-7. keep A3 exact as correctness baseline and A4/ZDD shadow until separately validated.
+3. re-query live `main` and confirm it includes PR #65 merge commit `f5a0e2cf8776866441bcd32729fcdc43d4f70f9b` (or a later docs-only successor);
+4. treat `6cb9cb542b9e25d718a2a035e37475f99388ed2e` as the final fully validated UX-R3 executable checkpoint and `f5a0e2cf8776866441bcd32729fcdc43d4f70f9b` as the UX-R3 merge commit;
+5. create a fresh UX-R4 branch from live `main`;
+6. implement Top-1 + 0–2 differentiated alternatives + persistent Manual using the existing legal-domain authority;
+7. proceed to UX-R5 small-domain specialization;
+8. return immediately to PlayerWorldSet / Productive Uncertainty;
+9. replace legacy ranking behind the stable UI contract in UX-R6;
+10. keep A3 exact as correctness baseline and A4/ZDD shadow until separately validated.
 
 ## 15. Deferred / queued registry
 
@@ -463,8 +456,8 @@ After PR #65 merge:
 | Clue UX-R1 | COMPLETE |
 | Clue UX-R2A legal-domain foundation | COMPLETE / MERGED |
 | Clue UX-R2B pair Manual authority | COMPLETE / VERIFIED / MERGED (#64) |
-| Clue UX-R3 global selector removal | COMPLETE / VERIFIED / PR #65 CLOSEOUT |
-| Clue UX-R4 recommendation presentation | NEXT AFTER #65 MERGE |
+| Clue UX-R3 global selector removal | COMPLETE / VERIFIED / MERGED (#65) |
+| Clue UX-R4 recommendation presentation | NEXT IMMEDIATE SLICE |
 | Clue UX-R5 small-domain specialization | QUEUED |
 | Legacy recommendation enhancement | MAINTENANCE-ONLY / NO NEW BROAD INVESTMENT |
 | EPI-MQ Productive Uncertainty | NEXT PRIMARY ALGORITHM CAMPAIGN |
