@@ -4,6 +4,8 @@ import subprocess
 BASE_HEAD = "458a71d34538389252fd6efac8d1820a54654285"
 TARGET = Path("app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt")
 TARGET_BLOB = "7e7b382211bd9fd38f7703efd059623e184c77db"
+TEST = Path("app/src/test/java/com/codex/campboardgamehost/StructuredEmpathInformationAdapterTest.kt")
+TEST_BLOB = "258aa012b1b74838b0126532a31fe6406b657a00"
 SCRIPT = "tools/oneshot_patch_458a71d.py"
 WORKFLOW = ".github/workflows/oneshot_patch_458a71d.yml"
 FOCUSED = [
@@ -11,6 +13,13 @@ FOCUSED = [
     ":app:testDebugUnitTest",
     "--tests",
     "com.codex.campboardgamehost.ClocktowerHostSelectionSemanticsCharacterizationTest",
+    "--no-daemon",
+]
+STRUCTURED = [
+    "./gradlew",
+    ":app:testDebugUnitTest",
+    "--tests",
+    "com.codex.campboardgamehost.StructuredEmpathInformationAdapterTest",
     "--no-daemon",
 ]
 
@@ -32,17 +41,19 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
     return text.replace(old, new, 1)
 
 
-# The trigger commit is exactly two temporary commits above the product base:
-# one script commit and one workflow commit. Refuse to patch any other base.
-actual_base = run("git", "rev-parse", "HEAD~2")
+# The retrigger commit is exactly four temporary commits above the accepted
+# product base: initial script/workflow plus this script/workflow refinement.
+actual_base = run("git", "rev-parse", "HEAD~4")
 if actual_base != BASE_HEAD:
     raise SystemExit(f"base drift: expected {BASE_HEAD}, got {actual_base}")
-actual_blob = run("git", "hash-object", str(TARGET))
-if actual_blob != TARGET_BLOB:
-    raise SystemExit(f"target drift: expected blob {TARGET_BLOB}, got {actual_blob}")
+for path, expected_blob in ((TARGET, TARGET_BLOB), (TEST, TEST_BLOB)):
+    actual_blob = run("git", "hash-object", str(path))
+    if actual_blob != expected_blob:
+        raise SystemExit(f"target drift for {path}: expected blob {expected_blob}, got {actual_blob}")
 
 # T0 on the unmodified product tree.
 check(*FOCUSED)
+check(*STRUCTURED)
 
 text = TARGET.read_text(encoding="utf-8")
 text = replace_once(
@@ -161,20 +172,31 @@ text = replace_once(
 )
 TARGET.write_text(text, encoding="utf-8")
 
-check("git", "diff", "--check")
-print(run("git", "diff", "--", str(TARGET)), flush=True)
+test_text = TEST.read_text(encoding="utf-8")
+test_text = replace_once(
+    test_text,
+    "        assertTrue(panelBlock.contains(\"truthful = value == structuredEmpathTruthValue\"))\n",
+    "",
+    "remove obsolete structured Empath source-string truth assertion",
+)
+TEST.write_text(test_text, encoding="utf-8")
 
-# T0 again on the patched product tree, then broader T1.
+check("git", "diff", "--check")
+print(run("git", "diff", "--", str(TARGET), str(TEST)), flush=True)
+
+# Re-run the semantic projection and affected structured adapter suites, then T1.
 check(*FOCUSED)
+check(*STRUCTURED)
 check("./gradlew", ":app:testDebugUnitTest", "--no-daemon")
 
 check("git", "config", "user.name", "github-actions[bot]")
 check("git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com")
-check("git", "add", str(TARGET))
+check("git", "add", str(TARGET), str(TEST))
 check("git", "commit", "-m", "fix(ms-s6d): wire first-night numeric projection")
 check("git", "push", "origin", "HEAD:codex/ms-setup-generic-architecture")
 
-# Self-clean so the net product diff from BASE_HEAD contains only the target file.
+# Self-clean temporary writer artifacts; net product diff retains only product +
+# removal of the obsolete source-coupled assertion uncovered by T1.
 check("git", "rm", SCRIPT, WORKFLOW)
 check("git", "commit", "-m", "chore: remove one-shot S6D UI wiring patch")
 check("git", "push", "origin", "HEAD:codex/ms-setup-generic-architecture")
