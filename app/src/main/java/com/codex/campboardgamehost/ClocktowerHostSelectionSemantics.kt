@@ -15,6 +15,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicSta
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
 import com.codex.campboardgamehost.clocktower.rules.FirstNightNumericInformationSemantics
+import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemantics
 import kotlin.math.abs
 
 internal enum class TwoPlayerSelectionAction {
@@ -231,11 +232,20 @@ internal fun projectFirstNightPairInformationOptions(
         return options
     }
 
+    val abilityRole = RoleId(roleEnName)
+    val legalDisplayKeys = PairInformationDisplaySemantics
+        .legalOutcomes(
+            game = game,
+            roleDefinitions = roleDefinitions,
+            sourceSeat = sourceSeat,
+            abilityRole = abilityRole,
+        )
+        .mapTo(hashSetOf()) { it.firstNightPairInformationKey() }
     val healthyTruths = NaturalPairInformationCandidateGenerator
         .generateHealthyInformationSpace(
             game = game,
             sourceSeat = sourceSeat,
-            abilityRole = RoleId(roleEnName),
+            abilityRole = abilityRole,
             roleDefinitions = roleDefinitions,
         )
         .groupBy { it.outcome.firstNightPairInformationKey() }
@@ -254,8 +264,9 @@ internal fun projectFirstNightPairInformationOptions(
             )
         }
 
-    return options.map { option ->
-        val key = option.proposition?.firstNightPairInformationKey() ?: return@map option
+    return options.mapNotNull { option ->
+        val key = option.proposition?.firstNightPairInformationKey() ?: return@mapNotNull option
+        if (key !in legalDisplayKeys) return@mapNotNull null
         val truth = healthyTruths[key]
         val spyRegistrationRole = truth?.spyRegisteredRoleEnName
         val recluseRegistrationRole = truth?.recluseRegisteredRoleEnName
