@@ -1,4 +1,4 @@
-# one-shot retry after whitespace audit fix
+# one-shot retry after unicode path audit fix
 name: Docs authority cleanup one-shot
 
 on:
@@ -39,7 +39,7 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check
-          actual="$(git diff --name-only | sort)"
+          actual="$(git -c core.quotePath=false diff --name-only | sort)"
           expected="$(printf '%s\n' \
             'AGENTS.md' \
             'docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md' | sort)"
