@@ -27,5 +27,5 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Run locked one-shot patch
+      - name: Run locked one-shot patch after stale-test audit
         run: python3 tools/oneshot_patch_458a71d.py
