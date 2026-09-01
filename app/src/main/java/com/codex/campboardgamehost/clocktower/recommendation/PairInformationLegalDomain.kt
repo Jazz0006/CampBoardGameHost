@@ -21,7 +21,8 @@ import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemant
  * Recommendation score/style is deliberately absent from this type.
  */
 internal object PairInformationLegalDomain {
-    private const val candidateSchemaVersion = "pair-information-legal-v1"
+    // Preserve the pre-UX-R2 stable candidate IDs so changing authority does not reshuffle legacy selection.
+    private const val candidateSchemaVersion = "pair-information-ability-v1"
 
     fun generate(
         game: GameState,
