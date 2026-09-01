@@ -186,6 +186,7 @@ import com.codex.campboardgamehost.clocktower.session.FirstNightInformationFamil
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationRequest
 import com.codex.campboardgamehost.clocktower.session.FirstNightShadowResult
+import com.codex.campboardgamehost.clocktower.session.usesAuthoritativePairDomain
 import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkCase
 import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkHarness
 import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkReport
@@ -386,7 +387,7 @@ internal fun ClocktowerJudgeScreen(
             InformationReliability.DRUNK -> ReliabilityState.DRUNK
             InformationReliability.POISONED -> ReliabilityState.POISONED
         }
-        fun candidate(option: ClocktowerDisplayOption): FirstNightInformationCandidate {
+        fun legacyCandidate(option: ClocktowerDisplayOption): FirstNightInformationCandidate {
             val primary = option.displayPrimary
             return FirstNightInformationCandidate(clocktowerInformationCandidateId(option), AbilityObservation(
                 sourceSeat = sourceSeat,
@@ -433,16 +434,43 @@ internal fun ClocktowerJudgeScreen(
             isTruthful = displayStep.selectedInformationTruthful != false,
             recommendationStyle = automaticStorytellerStyle,
         )
-        // The selected statement is included as a defensive fallback for a
-        // direct/manual legacy path that has no option list.
+        // Keep the old presentation set solely for parity telemetry and non-pair fallback.
         val legacyOptions = (displayStep.legacyInformationCandidates + selectedOption)
             .distinctBy(::clocktowerInformationCandidateId)
-        val legacyCandidates = legacyOptions.map(::candidate)
-        // The migration adapter intentionally rebuilds typed candidates from
-        // the complete legacy pool rather than treating the chosen UI row as
-        // the candidate set.  A later generator can replace this side without
-        // changing the display/commit boundary.
-        val migratedCandidates = legacyOptions.map(::candidate)
+        val legacyCandidates = legacyOptions.map(::legacyCandidate)
+        val migratedCandidates = if (family.usesAuthoritativePairDomain()) {
+            val game = cards.toClocktowerGameState(script, gameSeed, poisonTarget)
+            val roleDefinitions = clocktowerRoleDefinitionsForScript(script)
+            (displayStep.manualInformationCandidates + selectedOption)
+                .distinctBy(::clocktowerInformationCandidateId)
+                .map { option ->
+                    FirstNightInformationCandidate(
+                        id = clocktowerInformationCandidateId(option),
+                        observation = ClocktowerPairManualAuthority.selectedObservation(
+                            game = game,
+                            roleDefinitions = roleDefinitions,
+                            sourceSeat = sourceSeat,
+                            abilityRole = family.role,
+                            reliability = reliability,
+                            selectedOption = option,
+                        ),
+                        qualityTier = if (option.isDefaultRecommendation) {
+                            QualityTier.RECOMMENDED
+                        } else {
+                            QualityTier.ACCEPTABLE_WITH_WARNING
+                        },
+                        rankFixedPoint = when {
+                            option.isDefaultRecommendation -> 1_000_000L
+                            option.recommendationStyle == automaticStorytellerStyle -> 900_000L
+                            else -> 800_000L
+                        },
+                        reasonCodes = option.reasonCodes,
+                        warningCodes = option.warningCodes,
+                    )
+                }
+        } else {
+            legacyOptions.map(::legacyCandidate)
+        }
         return FirstNightInformationRequest(
             decisionId = "first-night:${phase.name}:$round:${family.name}:$sourceSeat",
             family = family,
@@ -452,6 +480,30 @@ internal fun ClocktowerJudgeScreen(
             legacyCandidates = legacyCandidates,
             migratedCandidates = migratedCandidates,
         )
+    }
+
+    fun publishFirstNightInformation(displayStep: ClocktowerNightStepUi): Boolean {
+        val request = firstNightMigrationRequest(displayStep) ?: return true
+        val shadow = firstNightInformationMigration.shadow(request)
+        firstNightPoolParity.recordResult(
+            familyId = request.family.name.lowercase(),
+            matches = shadow is FirstNightShadowResult.Ready,
+        )
+        val authoritativePairDomain = request.family.usesAuthoritativePairDomain()
+        val prepared = if (authoritativePairDomain) {
+            firstNightInformationMigration.publishAuthoritativePairDomain(request)
+        } else {
+            firstNightInformationMigration.publishIfShadowMatches(request)
+        }
+        // Re-entering a completed night step must not create a second information
+        // event or replace the statement that the player already received.
+        if (prepared.isDisplayed(request.decisionId)) return false
+        // Pair families have completed the authority cutover, so their complete legal domain is
+        // published even when it intentionally differs from the historical curated shortlist.
+        if (authoritativePairDomain || shadow is FirstNightShadowResult.Ready) {
+            firstNightInformationMigration = prepared.display(request.decisionId, request.selectedCandidateId)
+        }
+        return true
     }
     val a4DiagnosticAvailable = BuildConfig.DEBUG && script == ClocktowerScript.TroubleBrewing &&
         cards.size == 5 && rulesetRef != null && cards.all { it.clocktowerRole != null }
@@ -2292,6 +2344,34 @@ internal fun ClocktowerJudgeScreen(
         }
     }
 
+    fun legalPairInformationOptions(
+        ability: ClocktowerPairInformationAbility,
+        actor: PlayerCard,
+    ): List<ClocktowerDisplayOption> {
+        val sourceSeat = cards.indexOf(actor).plus(1).takeIf { it > 0 } ?: return emptyList()
+        val reliability = when (
+            effectiveAbilitySubjectForRole(ability.name, actor)?.let { subject ->
+                AbilityFunctioningSemantics.stateFor(subject, ability.name)
+            }
+        ) {
+            AbilityFunctioningState.DRUNK -> ReliabilityState.DRUNK
+            AbilityFunctioningState.POISONED -> ReliabilityState.POISONED
+            else -> ReliabilityState.RELIABLE
+        }
+        return ClocktowerPairManualAuthority.projectLegalOptions(
+            game = cards.toClocktowerGameState(script, gameSeed, poisonTarget),
+            roleDefinitions = clocktowerRoleDefinitionsForScript(script),
+            sourceSeat = sourceSeat,
+            abilityRole = RoleId(ability.name),
+            reliability = reliability,
+            presentationOptions = recommendedUnreliablePairInformationOptions(
+                ability = ability,
+                actor = actor,
+                completeSelectionDomain = true,
+            ),
+        )
+    }
+
     val informationStepBuilder = ClocktowerInformationStepBuilder(
         cards = cards,
         language = language,
@@ -2766,6 +2846,9 @@ internal fun ClocktowerJudgeScreen(
                                 displayOptions = { actor ->
                                     recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
                                 },
+                                legalSelectionOptions = { actor ->
+                                    legalPairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
+                                },
                                 automaticSelectionOptions = { actor ->
                                     recommendedUnreliablePairInformationOptions(
                                         ClocktowerPairInformationAbility.Washerwoman,
@@ -2795,6 +2878,9 @@ internal fun ClocktowerJudgeScreen(
                                 hostInstruction = text("轻拍图书管理员，示意睁眼。把结果只给他看；如果显示“没有外来者”，也只告诉他本人。", "Tap the Librarian to wake them. Show the result only to that player, including a No Outsiders result."),
                                 displayOptions = { actor ->
                                     recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
+                                },
+                                legalSelectionOptions = { actor ->
+                                    legalPairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
                                 },
                                 automaticSelectionOptions = { actor ->
                                     recommendedUnreliablePairInformationOptions(
@@ -2826,6 +2912,9 @@ internal fun ClocktowerJudgeScreen(
                                 displayOptions = { actor ->
                                     listOfNotNull(recommendedDrunkInvestigatorOption(actor)) +
                                         recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
+                                },
+                                legalSelectionOptions = { actor ->
+                                    legalPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
                                 },
                                 automaticSelectionOptions = { actor ->
                                     recommendedUnreliablePairInformationOptions(
@@ -4366,22 +4455,7 @@ internal fun ClocktowerJudgeScreen(
                 },
                 onShowPlayerDisplay = showPlayerDisplay@{ displayStep ->
                     if (!informationDecisionPublicationAllowed(displayStep)) return@showPlayerDisplay
-                    firstNightMigrationRequest(displayStep)?.let { request ->
-                        val shadow = firstNightInformationMigration.shadow(request)
-                        firstNightPoolParity.recordResult(
-                            familyId = request.family.name.lowercase(),
-                            matches = shadow is FirstNightShadowResult.Ready,
-                        )
-                        val prepared = firstNightInformationMigration.publishIfShadowMatches(request)
-                        // Re-entering a completed night step must not create a second information
-                        // event or replace the statement that the player already received.
-                        if (prepared.isDisplayed(request.decisionId)) return@showPlayerDisplay
-                        // A parity failure must retain the legacy UI/event path. It is never
-                        // allowed to call display() on an unpublished migrated draft.
-                        if (shadow is FirstNightShadowResult.Ready) {
-                            firstNightInformationMigration = prepared.display(request.decisionId, request.selectedCandidateId)
-                        }
-                    }
+                    if (!publishFirstNightInformation(displayStep)) return@showPlayerDisplay
                     recordReliablePrivateInformation(displayStep)
                     val actor = displayStep.actor
                     val unreliable = actor?.clocktowerRole?.enName == "Drunk" || actorIsUnreliable(displayStep.roleEnName.orEmpty(), actor)
@@ -4597,6 +4671,7 @@ internal fun ClocktowerJudgeScreen(
                         },
                         onShowPlayerDisplay = showPlayerDisplay@{ displayStep ->
                             if (!informationDecisionPublicationAllowed(displayStep)) return@showPlayerDisplay
+                            if (!publishFirstNightInformation(displayStep)) return@showPlayerDisplay
                             recordReliablePrivateInformation(displayStep)
                             val actor = displayStep.actor
                             val unreliable = actor?.clocktowerRole?.enName == "Drunk" || actorIsUnreliable(displayStep.roleEnName.orEmpty(), actor)

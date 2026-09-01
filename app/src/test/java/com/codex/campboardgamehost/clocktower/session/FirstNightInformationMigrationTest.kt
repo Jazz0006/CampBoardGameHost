@@ -7,6 +7,7 @@ import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -26,6 +27,43 @@ class FirstNightInformationMigrationTest {
         assertEquals(setOf("legacy"), result.legacyOnly)
         assertEquals(setOf("migrated"), result.migratedOnly)
         assertFalse(migration.isReady(request.decisionId))
+    }
+
+    @Test fun `authoritative pair domain publishes despite intentional legacy mismatch and commits migrated selection`() {
+        val request = request(
+            family = FirstNightInformationFamily.INVESTIGATOR,
+            seat = 2,
+            reliability = ReliabilityState.DRUNK,
+            legacyId = "legacy-shortlist",
+            migratedId = "legal-manual-choice",
+        )
+        val coordinator = FirstNightInformationMigration()
+        assertTrue(coordinator.shadow(request) is FirstNightShadowResult.Mismatch)
+
+        val published = coordinator.publishAuthoritativePairDomain(request)
+        assertTrue(published.isReady(request.decisionId))
+
+        val displayed = published.display(request.decisionId, request.selectedCandidateId)
+        assertTrue(displayed.isDisplayed(request.decisionId))
+        assertFalse(displayed.isReady(request.decisionId))
+        assertEquals(
+            request.migratedCandidates.single().observation,
+            displayed.displayedObservation(request.decisionId),
+        )
+    }
+
+    @Test fun `authoritative pair domain cannot bypass parity for non-pair families`() {
+        val request = request(
+            family = FirstNightInformationFamily.CHEF,
+            seat = 2,
+            reliability = ReliabilityState.POISONED,
+            legacyId = "legacy",
+            migratedId = "migrated",
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            FirstNightInformationMigration().publishAuthoritativePairDomain(request)
+        }
     }
 
     @Test fun `poison invalidation preserves displayed observation but removes every unshown family`() {

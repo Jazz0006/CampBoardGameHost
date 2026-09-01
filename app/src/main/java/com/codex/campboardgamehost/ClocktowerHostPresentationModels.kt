@@ -58,16 +58,20 @@ internal data class ClocktowerNightStepUi(
     val displayOptions: List<ClocktowerDisplayOption> = emptyList(),
     val recommendedDisplayOptions: List<ClocktowerDisplayOption> = emptyList(),
     /**
-     * The complete candidate pool emitted by the legacy helper.  This is kept
-     * separate from the UI lists because automatic mode deliberately renders
-     * only its selected recommendation.  Batch 4 compares this full pool at
-     * the display boundary before allowing the migrated lifecycle to commit.
+     * The complete candidate pool emitted by the legacy helper. This remains a migration/parity
+     * surface only; it must not define what a Storyteller is legally allowed to choose manually.
      */
     val legacyInformationCandidates: List<ClocktowerDisplayOption> = emptyList(),
     /**
+     * Complete legal candidate domain available to the Storyteller in manual presentation.
+     * Recommendation ranking may choose a subset for the default surface, but may not narrow this
+     * list. Pair-information abilities source this through [ClocktowerPairManualAuthority].
+     */
+    val manualInformationCandidates: List<ClocktowerDisplayOption> = emptyList(),
+    /**
      * Candidate domain used by automatic first-night information selection. Pair-information
-     * abilities may populate this with the complete legal semantic domain while keeping
-     * [legacyInformationCandidates] curated for assisted/manual presentation.
+     * abilities share the same legal domain as manual presentation so execution policy changes
+     * ranking/selection only, never legality.
      */
     val automaticInformationCandidates: List<ClocktowerDisplayOption> = emptyList(),
     val decisionOptions: List<ClocktowerDecisionOption> = emptyList(),

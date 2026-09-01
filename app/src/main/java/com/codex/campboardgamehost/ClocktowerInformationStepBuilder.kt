@@ -32,6 +32,7 @@ internal class ClocktowerInformationStepBuilder(
         hostInstruction: String? = null,
         displayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         automaticSelectionOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
+        legalSelectionOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         reliableDisplayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         previousShownNumber: Int? = null,
         spyRegistrationKey: String? = null,
@@ -72,6 +73,10 @@ internal class ClocktowerInformationStepBuilder(
             ?.takeIf { actorAbilityUnreliable && automaticStorytellerInfo }
             ?.let(automaticSelectionOptions)
             .orEmpty()
+        val legalSelectionDomain = actor
+            ?.let(legalSelectionOptions)
+            .orEmpty()
+            .distinctBy(::clocktowerInformationCandidateId)
         val reliableRecommendations = actor?.takeUnless { actorAbilityUnreliable }?.let(reliableDisplayOptions).orEmpty()
         val automaticRecommendations = when {
             !automaticStorytellerInfo -> reliableRecommendations
@@ -113,9 +118,11 @@ internal class ClocktowerInformationStepBuilder(
                     option.isTruthful.toString(),
                 ).joinToString("|")
             }
-        val automaticInformationCandidates = automaticSelectionDomain
+        val automaticInformationCandidates = legalSelectionDomain
             .takeIf { it.isNotEmpty() }
-            ?.distinctBy(::clocktowerInformationCandidateId)
+            ?: automaticSelectionDomain
+                .takeIf { it.isNotEmpty() }
+                ?.distinctBy(::clocktowerInformationCandidateId)
             ?: completeLegacyCandidates
         return ClocktowerNightStepUi(
             title = localizedRoleName,
@@ -148,6 +155,7 @@ internal class ClocktowerInformationStepBuilder(
             displayOptions = if (automaticStorytellerInfo) emptyList() else unreliableOptions,
             recommendedDisplayOptions = automaticRecommendations,
             legacyInformationCandidates = completeLegacyCandidates,
+            manualInformationCandidates = legalSelectionDomain,
             automaticInformationCandidates = automaticInformationCandidates,
             roleEnName = enName,
             informationReliability = informationReliability,

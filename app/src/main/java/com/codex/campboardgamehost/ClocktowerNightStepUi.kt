@@ -138,7 +138,8 @@ internal fun ClocktowerNightStepCardLocalized(
             familyId = step.roleEnName ?: "first-night-information",
             automaticStyle = automaticStorytellerStyle,
         ) }
-    // Presentation/manual mode deliberately keeps the curated compatibility surface.
+    // The legacy assisted recommendation surface keeps the curated compatibility pool.
+    // Pair Manual selection below consumes step.manualInformationCandidates directly.
     val firstNightPool = projectedFirstNightInformationCandidates
         .takeIf { phase == ClocktowerPhase.FirstNight && it.isNotEmpty() }
         ?.let { options -> unifiedFirstNightInformationPool(
@@ -194,6 +195,40 @@ internal fun ClocktowerNightStepCardLocalized(
         ?.map { it.payload }
         ?: step.recommendedDisplayOptions
     val displayedInformationOptions = if (automaticStorytellerInfo) automaticInformationOptions else assistedInformationOptions
+    fun pairManualKey(option: ClocktowerDisplayOption): Pair<String?, List<Int>>? = when (val structured = option.proposition) {
+        is InformationProposition.AnyOf -> {
+            val roleAt = structured.alternatives.mapNotNull { it as? InformationProposition.RoleAt }
+            if (roleAt.size != structured.alternatives.size) {
+                null
+            } else {
+                val role = roleAt.map { it.role.value }.distinct().singleOrNull()
+                val seats = roleAt.map { it.seat }.distinct().sorted()
+                if (role == null || seats.size != 2) null else role to seats
+            }
+        }
+        is InformationProposition.AllOf -> {
+            val roleInPlay = structured.propositions.mapNotNull { it as? InformationProposition.RoleInPlay }
+            if (roleInPlay.size == structured.propositions.size && roleInPlay.isNotEmpty() && roleInPlay.all { !it.inPlay }) {
+                null to emptyList()
+            } else {
+                null
+            }
+        }
+        else -> null
+    }
+    val manualPairEntries = if (
+        phase == ClocktowerPhase.FirstNight &&
+        step.roleEnName in setOf("Washerwoman", "Librarian", "Investigator")
+    ) {
+        step.manualInformationCandidates.mapNotNull { option ->
+            pairManualKey(option)?.let { key -> key to option }
+        }
+    } else {
+        emptyList()
+    }
+    var showManualPairSelection by remember(step.actor?.name, step.title) { mutableStateOf(false) }
+    var selectedManualPairRole by remember(step.actor?.name, step.title) { mutableStateOf<String?>(null) }
+    var selectedManualPairFirstSeat by remember(step.actor?.name, step.title) { mutableStateOf<Int?>(null) }
     val dynamicDecisionFamily = when (step.action) {
         ClocktowerNightAction.MayorRedirect -> "mayor-redirect"
         ClocktowerNightAction.DemonSuccessor -> "demon-succession"
@@ -818,6 +853,140 @@ internal fun ClocktowerNightStepCardLocalized(
                         shape = RoundedCornerShape(8.dp),
                     ) {
                         Text(if (language == "en") "Use the manual ruling above" else "使用上方手动裁定")
+                    }
+                }
+            }
+
+
+            if (!automaticStorytellerInfo && manualPairEntries.isNotEmpty()) {
+                Text(
+                    if (language == "en") "Manual clue" else "手动选择线索",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    if (language == "en") {
+                        "Manual choices come from the complete legal domain, even when recommendation coverage is empty or narrower."
+                    } else {
+                        "手动选项直接来自完整合法域，即使推荐为空或只覆盖其中一部分也仍然可用。"
+                    },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                OutlinedButton(
+                    onClick = {
+                        showManualPairSelection = !showManualPairSelection
+                        if (!showManualPairSelection) {
+                            selectedManualPairRole = null
+                            selectedManualPairFirstSeat = null
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    Text(
+                        if (showManualPairSelection) {
+                            if (language == "en") "Close manual selection" else "收起手动选择"
+                        } else {
+                            if (language == "en") "Manually choose clue" else "手动选择线索"
+                        },
+                    )
+                }
+                if (showManualPairSelection) {
+                    val zeroOutcome = manualPairEntries.firstOrNull { (key, _) -> key.first == null }
+                    zeroOutcome?.let { (_, option) ->
+                        OutlinedButton(
+                            onClick = { showRecommendedDisplayOption(option) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                        ) {
+                            Text(option.displayPrimary ?: option.label)
+                        }
+                    }
+                    val roleEntries = manualPairEntries.filter { (key, _) -> key.first != null }
+                    val roles = roleEntries.mapNotNull { (key, _) -> key.first }.distinct()
+                    if (selectedManualPairRole == null) {
+                        Text(
+                            if (language == "en") "1. Choose the character to show" else "1. 选择要展示的角色",
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        roles.forEach { role ->
+                            val option = roleEntries.first { (key, _) -> key.first == role }.second
+                            OutlinedButton(
+                                onClick = {
+                                    selectedManualPairRole = role
+                                    selectedManualPairFirstSeat = null
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text(option.displayPrimary ?: role)
+                            }
+                        }
+                    } else {
+                        val selectedRole = requireNotNull(selectedManualPairRole)
+                        val selectedRoleEntries = roleEntries.filter { (key, _) -> key.first == selectedRole }
+                        if (selectedManualPairFirstSeat == null) {
+                            Text(
+                                if (language == "en") "2. Choose the first player" else "2. 选择第一名玩家",
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            selectedRoleEntries
+                                .flatMap { (key, _) -> key.second }
+                                .distinct()
+                                .sorted()
+                                .forEach { seat ->
+                                    OutlinedButton(
+                                        onClick = { selectedManualPairFirstSeat = seat },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(8.dp),
+                                    ) {
+                                        Text(cards.getOrNull(seat - 1)?.seatLabel(cards) ?: if (language == "en") "Seat $seat" else "$seat 号")
+                                    }
+                                }
+                        } else {
+                            val firstSeat = requireNotNull(selectedManualPairFirstSeat)
+                            Text(
+                                if (language == "en") "3. Choose the second player" else "3. 选择第二名玩家",
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            selectedRoleEntries
+                                .filter { (key, _) -> firstSeat in key.second }
+                                .flatMap { (key, _) -> key.second.filter { it != firstSeat } }
+                                .distinct()
+                                .sorted()
+                                .forEach { secondSeat ->
+                                    val option = selectedRoleEntries.firstOrNull { (key, _) ->
+                                        key.second.contains(firstSeat) && key.second.contains(secondSeat)
+                                    }?.second
+                                    if (option != null) {
+                                        OutlinedButton(
+                                            onClick = { showRecommendedDisplayOption(option) },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(8.dp),
+                                        ) {
+                                            Text(cards.getOrNull(secondSeat - 1)?.seatLabel(cards) ?: if (language == "en") "Seat $secondSeat" else "$secondSeat 号")
+                                        }
+                                    }
+                                }
+                            OutlinedButton(
+                                onClick = { selectedManualPairFirstSeat = null },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                            ) {
+                                Text(if (language == "en") "Choose a different first player" else "重新选择第一名玩家")
+                            }
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                selectedManualPairRole = null
+                                selectedManualPairFirstSeat = null
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                        ) {
+                            Text(if (language == "en") "Choose a different character" else "重新选择角色")
+                        }
                     }
                 }
             }
