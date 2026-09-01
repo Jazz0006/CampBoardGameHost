@@ -128,6 +128,7 @@ private fun PairInformationOutcome.pairInformationKey(): PairInformationPresenta
         candidateSeats = candidateSeats,
     )
 
+// Block body is intentional because malformed structured propositions fail closed with early returns.
 private fun ClocktowerDisplayOption.pairInformationKeyOrNull(): PairInformationPresentationKey? {
     return when (val structured = proposition) {
         is InformationProposition.AnyOf -> {
