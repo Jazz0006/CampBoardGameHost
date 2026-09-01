@@ -40,11 +40,12 @@ class FirstNightInformationMigrationTest {
         val coordinator = FirstNightInformationMigration()
         assertTrue(coordinator.shadow(request) is FirstNightShadowResult.Mismatch)
 
-        val displayed = coordinator
-            .publishAuthoritativePairDomain(request)
-            .display(request.decisionId, request.selectedCandidateId)
+        val published = coordinator.publishAuthoritativePairDomain(request)
+        assertTrue(published.isReady(request.decisionId))
 
-        assertTrue(displayed.isReady(request.decisionId))
+        val displayed = published.display(request.decisionId, request.selectedCandidateId)
+        assertTrue(displayed.isDisplayed(request.decisionId))
+        assertFalse(displayed.isReady(request.decisionId))
         assertEquals(
             request.migratedCandidates.single().observation,
             displayed.displayedObservation(request.decisionId),
