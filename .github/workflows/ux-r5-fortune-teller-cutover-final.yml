@@ -28,7 +28,7 @@ jobs:
 
       - name: Lock exact trigger state and target blobs
         env:
-          EXPECTED_PARENT: bbad80c9c2875f4203d9830f2066d324975f77b0
+          EXPECTED_PARENT: 03ac49b1b2b4bac408bad512429612cfcf159246
           EXPECTED_HOST_BLOB: a87b00ffae3cb11b0605f53f3f9fd36cff30ad1c
           EXPECTED_NIGHT_BLOB: 98171a02838ee5d17541b06da4888d59ece2f88b
           EXPECTED_SCRIPT_BLOB: 850207ce76b1f1c76959e0ec3893c0109237d32b
