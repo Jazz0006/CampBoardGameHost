@@ -1,0 +1,92 @@
+name: UX-R2B pair manual authority one-shot
+
+on:
+  push:
+    branches:
+      - codex/ux-r2b-pair-manual-authority
+    paths:
+      - .github/scripts/ux_r2b_pair_manual_authority_patch.py
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ux-r2b-pair-manual-authority-one-shot
+  cancel-in-progress: false
+
+jobs:
+  patch-test-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout triggering head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Verify exact branch head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "codex/ux-r2b-pair-manual-authority"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Apply fail-closed UX-R2B patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/scripts/ux_r2b_pair_manual_authority_patch.py --expected-head "$GITHUB_SHA"
+
+      - name: Exact diff allowlist
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt | sort)"
+          test "$actual" = "$expected" || {
+            echo "Unexpected patch paths:" >&2
+            git diff --name-only >&2
+            exit 1
+          }
+
+      - name: Focused UX-R2B tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew :app:testFast --no-daemon --build-cache \
+            --tests com.codex.campboardgamehost.ClocktowerPairManualAuthorityTest \
+            --tests com.codex.campboardgamehost.ClocktowerInformationStepBuilderManualAuthorityTest \
+            --tests com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigrationTest
+
+      - name: Android FAST checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Commit validated production cutover
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          git diff --cached --check
+          git commit -m "UX-R2B: cut over pair manual production authority"
+          git push origin HEAD:codex/ux-r2b-pair-manual-authority
