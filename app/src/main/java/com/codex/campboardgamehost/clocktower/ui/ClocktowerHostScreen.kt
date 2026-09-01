@@ -3026,6 +3026,18 @@ internal fun ClocktowerJudgeScreen(
                                 tellPlayer = fortuneTellerResult,
                                 explanation = text("如果两名玩家中包含恶魔或红鲱鱼，向占卜师展示“有”；否则展示“没有”。", "Show Yes if either selected player is the Demon or red herring; otherwise show No."),
                                 action = ClocktowerNightAction.FortuneTeller,
+                                displayProposition = fortuneTellerMatched?.let { matched ->
+                                    roleActor("Fortune Teller")?.let { actor ->
+                                        InformationProposition.BooleanResult(
+                                            BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+                                            cards.indexOf(actor) + 1,
+                                            listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).mapNotNull { name ->
+                                                cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
+                                            },
+                                            matched,
+                                        )
+                                    }
+                                },
                                 displaySecondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
                                     .mapNotNull { name -> cards.firstOrNull { it.name == name } }
                                     .joinToString("   ") { seatNumberText(it) }
@@ -3193,6 +3205,18 @@ internal fun ClocktowerJudgeScreen(
                 tellPlayer = fortuneTellerResult,
                 explanation = text("如果两名玩家中包含恶魔或红鲱鱼，向占卜师展示“有”；否则展示“没有”。", "Show Yes if either selected player is the Demon or red herring; otherwise show No."),
                 action = ClocktowerNightAction.FortuneTeller,
+                displayProposition = fortuneTellerMatched?.let { matched ->
+                    roleActor("Fortune Teller")?.let { actor ->
+                        InformationProposition.BooleanResult(
+                            BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+                            cards.indexOf(actor) + 1,
+                            listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).mapNotNull { name ->
+                                cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
+                            },
+                            matched,
+                        )
+                    }
+                },
                 displaySecondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
                     .mapNotNull { name -> cards.firstOrNull { it.name == name } }
                     .joinToString("   ") { seatNumberText(it) }

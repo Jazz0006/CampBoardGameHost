@@ -41,6 +41,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelec
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
+import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
@@ -383,6 +384,63 @@ internal fun ClocktowerNightStepCardLocalized(
             recommendedValue = structuredEmpathRecommendedValue,
             previousShownValue = step.previousShownNumber,
             pressureCostPerPoint = 1,
+        )
+    } else {
+        null
+    }
+    val structuredFortuneTellerActorSeat = step.actor
+        ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
+    val structuredFortuneTellerSelectedSeats = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+        .mapNotNull { selectedName ->
+            cards.indexOfFirst { it.name == selectedName }
+                .takeIf { it >= 0 }
+                ?.plus(1)
+        }
+        .takeIf { seats -> seats.size == 2 && seats.distinct().size == 2 }
+    val structuredFortuneTellerProposition = (step.displayProposition as? InformationProposition.BooleanResult)
+        ?.takeIf { proposition ->
+            proposition.metric == BooleanMetric.DEMON_OR_RED_HERRING_PRESENT &&
+                proposition.sourceSeat == structuredFortuneTellerActorSeat &&
+                proposition.subjectSeats == structuredFortuneTellerSelectedSeats
+        }
+    val structuredFortuneTellerRecommendedOption = if (automaticStorytellerInfo) {
+        automaticDisplayOption
+    } else {
+        displayedInformationOptions.firstOrNull { it.isDefaultRecommendation }
+            ?: step.displayOptions.firstOrNull { it.isDefaultRecommendation }
+            ?: automaticDisplayOption
+    }
+    val structuredFortuneTellerRecommendedValue =
+        (structuredFortuneTellerRecommendedOption?.proposition as? InformationProposition.BooleanResult)
+            ?.takeIf { proposition ->
+                proposition.metric == BooleanMetric.DEMON_OR_RED_HERRING_PRESENT &&
+                    proposition.sourceSeat == structuredFortuneTellerActorSeat &&
+                    proposition.subjectSeats == structuredFortuneTellerSelectedSeats
+            }
+            ?.value
+    val structuredFortuneTellerUiModel = if (
+        step.action == ClocktowerNightAction.FortuneTeller &&
+        step.roleEnName == "Fortune Teller" &&
+        step.informationReliability != InformationReliability.RELIABLE &&
+        structuredFortuneTellerActorSeat != null &&
+        structuredFortuneTellerSelectedSeats != null &&
+        structuredFortuneTellerProposition != null
+    ) {
+        prepareBooleanInformationUiModel(
+            coordinator = recommendationCoordinator,
+            gameId = gameId,
+            phase = phase,
+            round = round,
+            sequence = sequence,
+            actorSeat = structuredFortuneTellerActorSeat,
+            abilityRole = com.codex.campboardgamehost.clocktower.domain.RoleId("Fortune Teller"),
+            metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+            subjectSeats = structuredFortuneTellerSelectedSeats,
+            trueValue = structuredFortuneTellerProposition.value,
+            reliability = step.informationReliability,
+            recommendationStyle = if (automaticStorytellerInfo) automaticStorytellerStyle else RecommendationStyle.BALANCED,
+            revision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
+            recommendedValue = structuredFortuneTellerRecommendedValue,
         )
     } else {
         null
@@ -853,6 +911,51 @@ internal fun ClocktowerNightStepCardLocalized(
                 )
             }
 
+            if (showFortuneTellerDisplayOptions) {
+                structuredFortuneTellerUiModel?.let { model ->
+                    val actorSeat = requireNotNull(structuredFortuneTellerActorSeat)
+                    val subjectSeats = requireNotNull(structuredFortuneTellerSelectedSeats)
+                    StructuredBooleanInformationDecisionPanel(
+                        model = model,
+                        currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
+                        automaticStorytellerInfo = automaticStorytellerInfo,
+                        language = language,
+                        roleLabel = step.title,
+                        onConfirmed = { confirmed, value ->
+                            val selectedOption = findBooleanDisplayOption(
+                                options = (
+                                    displayedInformationOptions +
+                                        step.displayOptions +
+                                        step.legacyInformationCandidates
+                                    ).distinctBy(::optionId),
+                                metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+                                sourceSeat = actorSeat,
+                                subjectSeats = subjectSeats,
+                                value = value,
+                            )
+                            if (selectedOption != null) {
+                                onShowPlayerDisplay(
+                                    step.copy(
+                                        tellPlayer = selectedOption.displayPrimary,
+                                        displayKind = selectedOption.displayKind,
+                                        displayTitle = selectedOption.displayTitle,
+                                        displayPrimary = selectedOption.displayPrimary,
+                                        displaySecondary = selectedOption.displaySecondary,
+                                        displayFooter = selectedOption.displayFooter,
+                                        displayProposition = confirmed.draft.proposition,
+                                        selectedInformationTruthful = selectedOption.isTruthful,
+                                        informationDecisionConfirmation = confirmed,
+                                        informationDecisionExpectedSnapshot = model.contextSnapshot,
+                                        displayOptions = emptyList(),
+                                        recommendedDisplayOptions = emptyList(),
+                                    ),
+                                )
+                            }
+                        },
+                    )
+                }
+            }
+
             pairRecommendationPresentation?.let { presentation ->
                 ClocktowerPairRecommendationPresentationSection(
                     presentation = presentation,
@@ -864,6 +967,7 @@ internal fun ClocktowerNightStepCardLocalized(
             if (
                 pairRecommendationPresentation == null &&
                 structuredNumberUiModel == null &&
+                structuredFortuneTellerUiModel == null &&
                 displayedInformationOptions.isNotEmpty() &&
                 (step.action != ClocktowerNightAction.FortuneTeller || showFortuneTellerDisplayOptions)
             ) {
@@ -1050,6 +1154,7 @@ internal fun ClocktowerNightStepCardLocalized(
 
             if (
                 structuredNumberUiModel == null &&
+                structuredFortuneTellerUiModel == null &&
                 firstNightPool == null && step.displayOptions.isNotEmpty() &&
                 (step.action != ClocktowerNightAction.FortuneTeller || showFortuneTellerDisplayOptions)
             ) {
