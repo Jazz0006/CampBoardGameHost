@@ -9,56 +9,65 @@
 
 ```text
 live main at last verification:
-eed51bade5163790316a31e8295e2e841df90357
+6111ffe3863713895d2b21ab086cf31abcca4a4e
 
 current branch:
-codex/ms-setup-generic-architecture
+codex/ux-r2b-pair-manual-authority
 
 current Draft PR:
-#61 — MS-SETUP: generic multi-script setup architecture
-DRAFT / OPEN / UNMERGED
+#64 — UX-R2B: cut pair manual flow to legal-domain authority
+DRAFT / OPEN / UNMERGED / MERGEABLE
 
-S6D accepted checkpoint:
-a861c515a73834a4071c4a54bce953eba5c075a6
+final fully validated executable/code checkpoint before docs closeout:
+ad2ec9b4de117ac74c02deb6a5a77e65c2a0e4b4
 
-final fully validated executable/code checkpoint:
-678785db60750325950754ec4c3a867ed1338673
-
-first post-acceptance docs-only decision commit:
-6e52d8156b5a56f1bb218e812f830aa73275c649
+UX-R2B status:
+COMPLETE / VERIFIED / MERGE-READY AFTER DOCS-ONLY CLOSEOUT
 ```
 
-PR #61 must remain Draft/Open/Unmerged until the user explicitly authorizes merge.
+The executable checkpoint `ad2ec9b4...` passed the accepted validation route:
 
-The final fully validated code checkpoint `678785db...` passed the logical full acceptance route: Android FULL + debug assemble, ASP contract, Real Clingo cross-validation, CI gate and R2. Later commits are documentation-only unless a new executable diff is explicitly introduced.
+- focused UX-R2B contract tests;
+- full `:app:testFast` in the exact one-shot production-cutover checkpoint;
+- R2 main-thread boundary;
+- ASP contract tests;
+- Real Clingo cross-validation;
+- Android full unit tests + debug APK;
+- final CI gate.
 
-## 2. MS-SETUP campaign status
+Temporary one-shot patch workflow/script were removed before the final functional diff audit. The remaining PR diff before this roadmap update contained only the expected production/test files.
+
+PR #64 must not be merged until live head/checks are re-queried after this docs-only closeout commit. The user has explicitly authorized merge once that final closeout verification is green.
+
+## 2. Campaign status
+
+The generic multi-script setup campaign is complete and merged. The active campaign is now the clue recommendation/manual-selection product boundary.
 
 ```text
-MS-S0    ownership audit                                         COMPLETE
-MS-S0.5  recovery scope reduction audit                          COMPLETE
-MS-S1    CommittedClocktowerSetup + provenance                   COMPLETE / ACCEPTED
-MS-S1R   setup persistence authority migration                   COMPLETE / ACCEPTED
-MS-S2    candidate/source/provider contracts                     COMPLETE / ACCEPTED
-MS-S3    optional TemplateRepository                             COMPLETE / ACCEPTED
-MS-S4    deterministic generated actual-role source              COMPLETE / ACCEPTED
-MS-S4.5  shown-identity ownership architecture correction       COMPLETE / ACCEPTED
-MS-S5    actual-composition diversity/scorer/selector            COMPLETE / ACCEPTED
-MS-S6A   shown-identity policy/options boundary                  COMPLETE / ACCEPTED
-MS-S6B   deterministic shown-identity commitment                 COMPLETE / ACCEPTED
-MS-S6C   generic information semantics + impairment ownership    COMPLETE / ACCEPTED
-MS-S6D   first-night perceived-ability semantic completion       COMPLETE / ACCEPTED
-MS-S7    TB controlled production cutover                        COMPLETE / ACCEPTED
-MS-S8    NGJ / no-template second-script proof                   COMPLETE / ACCEPTED — MINIMAL ARCHITECTURE PROOF
-MS-S9    broad future-script acceptance                          DEFERRED / NOT PR #61 BLOCKER
+MS-SETUP generic multi-script architecture                    COMPLETE / MERGED
+
+UX-R1   audit current Automatic/Manual/RecommendationStyle
+        dependencies and legal-domain authority              COMPLETE
+
+UX-R2A  shared pair-information legal-domain authority        COMPLETE / MERGED
+
+UX-R2B  pair Manual flow -> shared legal-domain authority
+        + typed registration-preserving commit path           COMPLETE / VERIFIED / PR #64
+
+UX-R3   remove normal global Balanced/Aggressive/
+        Conservative/Manual selector                          NEXT
+
+UX-R4   unified recommendation presentation
+        Top-1 + 0–2 differentiated alternatives + Manual      QUEUED
+
+UX-R5   small-domain specialization                           QUEUED
+
+EPI-MQ / ALG Productive Uncertainty mainline                  NEXT PRIMARY ALGORITHM CAMPAIGN
+
+UX-R6   replace legacy ranking behind stable UX contract      QUEUED AFTER EPI-MQ
 ```
 
-PR #61 is now in **closeout / merge-readiness audit only**. Do not add new setup architecture, recommendation-quality work, Productive Uncertainty, or UI redesign to this PR.
-
-Closeout evidence:
-
-- `docs/MS_S7_S8_PR61_CLOSEOUT_CHECKPOINT_2026-09-01.md`
-- `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S7_PR_CLOSEOUT.md` remains historical execution context for the closeout sequence.
+Do not begin UX-R3 on PR #64. After #64 is merged, create a fresh branch from live `main`.
 
 ## 3. Frozen permanent setup / information architecture
 
@@ -87,7 +96,7 @@ Permanent invariants:
 - semantic legality/truth must not be owned by Host/UI compatibility projection;
 - every supported information role must remain playable through a correct manual/generated clue path even if no recommendation provider supports that situation.
 
-## 4. Recommendation architecture decision
+## 4. Recommendation / Manual authority
 
 Legacy recommendation is maintenance-only and temporary.
 
@@ -113,7 +122,27 @@ Unsupported recommendation situations degrade to correct manual selection rather
 
 Do not invest further in exact legacy shortlist/ranking/distribution parity unless needed to prevent an illegal clue or major regression.
 
-## 5. New approved clue-selection UX direction
+### UX-R2B accepted pair-information contract
+
+For first-night Washerwoman/Librarian/Investigator:
+
+1. `PairInformationLegalDomain` is the sole selectable semantic authority.
+2. Manual availability is independent of recommendation coverage or RecommendationStyle.
+3. Manual and automatic selection share the same complete legal semantic domain.
+4. Legacy/recommended option sets may provide presentation templates or parity telemetry only; they do not define legality.
+5. Selection commit resolves the structured proposition back through the legal domain; localized labels are not parsed to recover legality or registration.
+6. Exact Spy/Recluse registration facts from the legal candidate are preserved in `AbilityObservation`.
+7. Pair families may publish the authoritative domain even when it intentionally differs from the historical curated legacy shortlist.
+8. Non-pair first-night families retain the existing migration/parity gate.
+9. Investigator zero-minion remains illegal; Librarian zero-outsider remains legal according to shared display semantics.
+
+This is the required acceptance condition proving:
+
+```text
+recommendation unavailable != manual unavailable
+```
+
+## 5. Approved clue-selection UX direction
 
 Authority:
 
@@ -128,7 +157,7 @@ Automatic — Conservative
 Manual
 ```
 
-is planned for removal from normal product UX after PR #61.
+is the next removal target in UX-R3.
 
 The replacement interaction model is per clue interaction:
 
@@ -168,7 +197,7 @@ Alternative 2
 Manually choose clue
 ```
 
-The manual action opens a structured selection surface rather than expanding the entire combinatorial domain as buttons on the night-step card.
+UX-R2B has already established the permanent Manual authority and a structured role/player selection seam. UX-R4 may refine presentation around that seam; it must not move legality back into the recommendation shortlist.
 
 ## 6. RecommendationStyle / old mode policy
 
@@ -178,20 +207,18 @@ The manual action opens a structured selection surface rather than expanding the
 
 Long term, Productive Uncertainty should determine context-sensitive pressure from the current game/knowledge state. Former style concepts may survive as internal features, diagnostics, test scenarios or optional advanced policy inputs, but the user should not need to select one globally before the system can recommend a clue.
 
-## 7. Immediate post-PR #61 implementation route
+UX-R3 should remove the normal global selector without changing legal-domain truth semantics or deleting internal compatibility dimensions prematurely.
 
-After PR #61 is merged, create a fresh branch. Do not continue on the MS-SETUP branch.
+## 7. Immediate implementation route after PR #64
+
+After PR #64 is merged, create a fresh branch from the new live `main`.
 
 Proceed in this order:
 
 ```text
-UX-R1  audit all current Automatic/Manual/RecommendationStyle UI dependencies
-
-UX-R2  establish permanent legal-domain -> manual-selection UI authority
-       manual availability must be independent of recommendation coverage
-
 UX-R3  remove the normal global Balanced/Aggressive/Conservative/Manual selector
        recommendation becomes always-on when supported
+       Manual remains a per-interaction authority path
 
 UX-R4  unified recommendation presentation
        -> prominent Top-1
@@ -215,9 +242,9 @@ EPI-MQ / ALG mainline
 UX-R6  replace legacy ranking behind the stable Top-1/alternatives/manual UI contract
 ```
 
-UX-R1 through UX-R5 must remain deliberately thin. They establish the permanent product/authority boundary; they are not a reason to build another temporary recommendation engine before Productive Uncertainty.
+UX-R3 through UX-R5 must remain deliberately thin. They establish the permanent product/authority boundary; they are not a reason to build another temporary recommendation engine before Productive Uncertainty.
 
-Where it avoids temporary architecture, UX-R1/R2 may share the first post-PR branch with the epistemic seam, but UI behavior and world-model correctness must remain independently testable.
+Do not re-open UX-R2 legality ownership during UX-R3/4. Recommendation and Manual must stay downstream of the same legal semantic authority.
 
 ## 8. Cognitive-consistency / Productive Uncertainty route
 
@@ -261,42 +288,54 @@ Authority: `docs/TESTING_STRATEGY.md`.
 
 Use risk-based tests-first rather than mechanical test-first for every edit.
 
-For the post-PR UX boundary, high-value behavior contracts include:
+Accepted UX-R2B behavior contracts now include:
 
-- manual selection remains available when recommendations are enabled;
-- recommendation and manual paths share one legal semantic authority;
-- selecting an alternative commits exactly that clue and its interaction-scoped registration semantics;
+- manual legal selection exists when automatic mode is off and recommendation coverage is empty;
+- pair Manual projection is exactly the shared legal domain;
+- illegal presentation templates cannot expand the legal domain;
+- selected structured clues commit exact semantic truth and Spy/Recluse registration facts;
+- authoritative pair-domain publication may intentionally bypass historical shortlist parity;
+- non-pair families cannot use that bypass;
+- re-entering a displayed first-night decision does not create a second committed observation.
+
+High-value upcoming UX-R3/R4/R5 contracts include:
+
+- removing the global mode does not change clue legality/truth;
+- recommendations remain available when supported without a global mode preselection;
+- Manual remains available per interaction;
+- combinatorial domains show no more than three normal recommendation choices before Manual navigation;
 - small numeric domains expose every legal value directly;
-- combinatorial domains show no more than three normal recommendations before manual navigation;
-- removal of the global mode does not change clue legality/truth;
+- Yes/No domains expose both legal values;
 - absent/low-confidence recommendation still permits correct manual play.
 
 Avoid source-shape tests that only assert button/class/helper placement.
 
 Full CI is reserved for logical acceptance checkpoints or risk-triggered cases according to `TESTING_STRATEGY.md`.
 
-## 10. PR #61 merge-readiness rules
+## 10. PR #64 merge-readiness rules
 
-Before merge authorization is acted on:
+Before the authorized merge is executed:
 
-1. re-query live `main`, PR #61 head/state/mergeability and checks;
-2. confirm all executable changes after the last full-acceptance checkpoint are absent, or rerun the required acceptance route if executable code changed;
-3. distinguish later docs-only head from the validated code checkpoint;
-4. perform exact PR diff / unexpected-file audit;
+1. re-query live `main` and PR #64 head/state/mergeability;
+2. verify this roadmap commit is docs-only relative to validated executable checkpoint `ad2ec9b4...`;
+3. confirm required checks on the new docs-only head are green/skipped as expected;
+4. confirm exact PR diff contains no temporary one-shot workflow/script or unrelated file;
 5. inspect unresolved review threads/comments if any;
-6. verify no current roadmap/handoff claims conflict with actual accepted scope;
-7. keep PR Draft and do not merge until explicit user authorization.
+6. mark the Draft PR ready for review if GitHub requires that before merge;
+7. merge only if the expected PR head SHA still matches the audited head.
+
+The user explicitly authorized this merge on 2026-09-01 after the above closeout information is updated and verified.
 
 ## 11. Scope guards
 
-Do not add to PR #61 during closeout:
+Do not add to PR #64 during closeout:
 
-- clue-selection UX implementation;
-- removal of RecommendationStyle/global mode code;
+- UX-R3 selector removal;
+- new recommendation ranking behavior;
 - Productive Uncertainty;
 - PlayerWorldSet production recommendation integration;
 - A3/A4/ZDD production rollout;
-- new NGJ-specific legacy recommendation heuristics;
+- new role-specific legacy recommendation heuristics;
 - broad future-script support;
 - Host/App decomposition;
 - unrelated persistence/recovery work.
@@ -315,38 +354,44 @@ docs/TESTING_STRATEGY.md
 docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 ```
 
-PR #61 closeout evidence:
+Historical setup closeout evidence remains useful but is no longer the active campaign authority:
 
 ```text
 docs/MS_S7_S8_PR61_CLOSEOUT_CHECKPOINT_2026-09-01.md
 docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S7_PR_CLOSEOUT.md
 ```
 
-Earlier S6D and older handoffs are historical evidence unless explicitly referenced for a checkpoint.
-
 ## 13. New-conversation resume protocol
+
+Before PR #64 merge:
 
 1. read root `AGENTS.md`;
 2. read this roadmap;
-3. re-query live `main`, PR #61, branch head and checks;
-4. if PR #61 is still unmerged, perform only closeout/merge-readiness work unless a concrete regression is found;
-5. treat `678785db60750325950754ec4c3a867ed1338673` as the last fully validated executable/code checkpoint unless later executable commits are verified;
-6. do not implement the new clue UX on PR #61;
-7. after user-authorized merge, create a fresh branch;
-8. execute UX-R1 -> UX-R5 to establish the stable recommendation/manual boundary;
-9. return immediately to PlayerWorldSet / Productive Uncertainty and replace legacy ranking behind that stable UI contract;
-10. keep A3 exact as correctness baseline and A4/ZDD shadow until separately validated.
+3. re-query live `main`, PR #64 head/state/mergeability/checks;
+4. treat `ad2ec9b4de117ac74c02deb6a5a77e65c2a0e4b4` as the final fully validated executable/code checkpoint before the docs-only closeout commit;
+5. perform merge-readiness only; do not begin UX-R3 on this branch.
+
+After PR #64 merge:
+
+1. re-query the resulting live `main` merge SHA;
+2. create a fresh branch;
+3. begin UX-R3 with an audit of every remaining global Automatic/Manual/RecommendationStyle UI dependency;
+4. remove only the normal front-door selector while preserving internal compatibility dimensions where still required;
+5. proceed UX-R4 -> UX-R5;
+6. return immediately to PlayerWorldSet / Productive Uncertainty and replace legacy ranking behind the stable UI contract;
+7. keep A3 exact as correctness baseline and A4/ZDD shadow until separately validated.
 
 ## 14. Deferred / queued registry
 
 | Area | Status |
 |---|---|
-| MS-SETUP / PR #61 | CLOSEOUT / MERGE-READINESS AUDIT |
-| MS-S6D semantic completion | COMPLETE / ACCEPTED |
-| MS-S7 TB controlled cutover | COMPLETE / ACCEPTED |
-| MS-S8 NGJ/no-template proof | COMPLETE / ACCEPTED — MINIMAL ARCHITECTURE PROOF |
-| MS-S9 broad future-script acceptance | DEFERRED / NOT PR #61 BLOCKER |
-| Clue UX-R1..R5 | NEXT IMMEDIATE POST-PR BOUNDARY SLICE |
+| MS-SETUP generic multi-script architecture | COMPLETE / MERGED |
+| Clue UX-R1 | COMPLETE |
+| Clue UX-R2A legal-domain foundation | COMPLETE / MERGED |
+| Clue UX-R2B pair Manual authority | COMPLETE / VERIFIED / PR #64 MERGE CLOSEOUT |
+| Clue UX-R3 global selector removal | NEXT IMMEDIATE SLICE |
+| Clue UX-R4 recommendation presentation | QUEUED |
+| Clue UX-R5 small-domain specialization | QUEUED |
 | Legacy recommendation enhancement | MAINTENANCE-ONLY / NO NEW BROAD INVESTMENT |
 | EPI-MQ Productive Uncertainty | NEXT PRIMARY ALGORITHM CAMPAIGN |
 | ALG cognitive-consistency / PlayerWorldSet | NEXT PRIMARY ALGORITHM CAMPAIGN |
