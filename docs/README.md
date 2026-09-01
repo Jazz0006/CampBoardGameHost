@@ -77,3 +77,5 @@ Archive when a document is primarily:
 Do not delete useful history merely because it is old. Archive preserves evidence while preventing it from competing with current authorities.
 
 A file under `archive/` is never current execution authority unless `CURRENT_DEVELOPMENT_ROADMAP.md` explicitly reactivates it.
+
+The 2026-09-01 convergence batch archived 35 completed/superseded/deferred documents and left 19 active/foundational Markdown files in the root `docs/` directory. This count is a historical cleanup checkpoint, not a permanent requirement; future active authorities may legitimately add or retire root documents.
