@@ -18,6 +18,8 @@ internal object PairInformationDisplaySemantics {
     private val librarian = RoleId("Librarian")
     private val investigator = RoleId("Investigator")
 
+    fun allowsZeroCharacterOutcome(abilityRole: RoleId): Boolean = abilityRole == librarian
+
     fun legalOutcomes(
         game: GameState,
         roleDefinitions: List<RoleDefinition>,
@@ -53,7 +55,7 @@ internal object PairInformationDisplaySemantics {
                 )
             }
         }
-        return if (abilityRole == librarian) {
+        return if (allowsZeroCharacterOutcome(abilityRole)) {
             rolePairOutcomes + PairInformationOutcome(
                 shownRole = null,
                 targetSeat = null,
