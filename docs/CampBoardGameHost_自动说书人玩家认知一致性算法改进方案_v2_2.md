@@ -1,13 +1,15 @@
 # CampBoardGameHost 自动说书人玩家认知一致性算法改进方案 v2.2
 
-> 版本：2.2  
-> 日期：2026-08-11  
+> 版本：2.2
+> 日期：2026-08-11
 > 动态决策架构修订：2026-08-15
-> 状态：当前唯一实施规范  
-> 适用范围：优先覆盖《暗流涌动》（Trouble Brewing），架构支持后续剧本扩展  
-> 取代文档：v2.0、v2.1；旧文档仅保留为设计演进记录  
-> 当前实施基线：A0、A1、A2、A1.1、A2.1、A3 已完成；A4 已启动
-> 动态决策实施合同：`storyteller_revision_driven_dynamic_decision_engine_plan.md`
+> Authority clarification：2026-09-01
+> 状态：**Possible Worlds / 玩家认知一致性基础设计 authority；不再是当前实施顺序或产品 UX 的唯一 authority**
+> 适用范围：优先覆盖《暗流涌动》（Trouble Brewing），架构支持后续剧本扩展
+> 取代文档：v2.0、v2.1；旧文档仅保留为设计演进记录
+> 当前执行顺序：以 `CURRENT_DEVELOPMENT_ROADMAP.md` 为准
+> 当前 clue/manual/recommendation 产品边界：以 `CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md` 为准
+> 当前 Productive Uncertainty 实施计划：以 `EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md` 为准
 
 ---
 
@@ -22,7 +24,11 @@ Official Rules / Almanac / Published Rulings
                     ↓
 Formal Game State + Interaction-scoped Registration Semantics
                     ↓
-Legal Choice Layer
+Complete Legal Semantic Candidate Domain
+                    ↓
+Shared Information-Decision Authority
+          ├── Manual selection
+          └── Recommendation Provider
                     ↓
 PlayerKnowledgeSnapshot + EpistemicHypothesis
                     ↓
@@ -32,14 +38,12 @@ Candidate Simulation: beforeWorlds → observation → afterWorlds
                     ↓
 Epistemic Metrics + Structural Metrics + Narrative Metrics
                     ↓
-Shared Quality Gates
+Shared Quality Gates / Productive Uncertainty
                     ↓
-Runtime Storyteller Policy
-                    ↓
-AUTO / ASSISTED Unified Selector
+RecommendationResult (primary + 0–2 alternatives)
 ```
 
-本版新增的关键决定：
+本版新增的关键决定（以下阶段编号/rollout 顺序记录 v2.2 当时的设计历史；当前执行顺序以 roadmap 为准）：
 
 1. 权威顺序固定为：官方规则 > 项目 golden expectation > 外部 Oracle。
 2. 登记语义必须绑定具体互动，禁止把 Spy/Recluse 永久改写成另一个身份或阵营。
@@ -58,14 +62,18 @@ AUTO / ASSISTED Unified Selector
 
 ## 2. 规范与验证权威
 
-### 2.1 单一实施规范
+### 2.1 文档角色与当前权威
 
-从本版开始：
+v2.2 继续作为玩家认知一致性、Possible Worlds、知识边界、registration 和 exact-world correctness 的详细基础设计文档，但 2026-09-01 之后不再承担全部当前实施顺序与产品 UX 的唯一 authority。
 
-- v2.2 是后续实现、审查和验收的唯一主规范；
+当前规则为：
+
 - v2.0、v2.1 仅说明设计演进，不再作为并列要求来源；
-- 专题文档可补充实现细节，但不得改变 v2.2 的规则权威、数据边界或退出条件；
-- 如果专题文档与 v2.2 冲突，必须先修订 v2.2 或显式记录新的决策。
+- `CURRENT_DEVELOPMENT_ROADMAP.md` 决定当前 campaign 顺序、active PR/slice 和恢复入口；
+- clue manual/recommendation 产品边界由 `CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md` 决定；
+- misinformation-quality / Productive Uncertainty 当前 campaign 由对应 2026-09-01 专题计划决定；
+- 本文后续出现的旧阶段顺序、AUTO/ASSISTED front-door 或历史 rollout 名称，在与上述 current authorities 冲突时视为历史设计背景，而不是当前执行要求；
+- 本文关于官方规则权威、玩家知识隔离、interaction-scoped registration、A3 exact correctness baseline、unknown ≠ UNSAT 等基础不变量继续有效，除非新的显式架构决策另行修订。
 
 ### 2.2 权威顺序
 

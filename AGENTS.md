@@ -344,26 +344,41 @@ A pushed commit is not merge authorization.
 
 ## 8. Current project documents and precedence
 
-Read these when relevant:
+### 8.1 Current authorities
 
-1. `docs/CURRENT_DEVELOPMENT_ROADMAP.md` — current execution authority;
-2. newest `docs/NEXT_DEVELOPMENT_HANDOFF_*.md` for the active campaign;
-3. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` — current Chat/connector/Luna execution contract;
-4. `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` — normative large/truncated-file one-shot patch SOP;
-5. `docs/TESTING_STRATEGY.md` — authoritative test tiers, evidence model, and subsystem mapping;
-6. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md` — known failure patterns and proven improvements;
-7. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md` — current same-night product/architecture decisions;
-8. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md` — source-string debt and retirement triggers;
-9. `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` — connector workflow;
-10. `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` — older local-worktree guidance, subordinate where it conflicts with V2.
+Read these according to task scope:
+
+1. `docs/CURRENT_DEVELOPMENT_ROADMAP.md` — **single current project-status, active-scope and execution-sequence authority**;
+2. the one `docs/NEXT_DEVELOPMENT_HANDOFF_*.md` explicitly named as ACTIVE by the current roadmap — current slice execution detail;
+3. `docs/CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md` — current clue-selection product/manual/recommendation architecture;
+4. `docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md` — current Productive Uncertainty / misinformation-quality campaign design;
+5. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` — current Chat/connector/Luna execution contract;
+6. `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` — normative large/truncated-file one-shot patch SOP;
+7. `docs/TESTING_STRATEGY.md` — authoritative test tiers, evidence model, and subsystem mapping.
+
+### 8.2 Foundational / supporting documents
+
+- `docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md` remains the detailed Possible Worlds / epistemic foundation, but its historical phase sequence and AUTO/ASSISTED front-door assumptions are **not** current product/execution authority where superseded by the roadmap, clue UX decision, or Productive Uncertainty plan.
+- `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md`, `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md`, and `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md` remain supporting evidence for their domains.
+- `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` remains connector guidance where non-conflicting.
+- `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` is older local-worktree guidance and is subordinate where it conflicts with V2 or this file.
+
+### 8.3 Historical handoff rule
+
+Dated handoffs/checkpoints are **historical evidence by default**. A handoff is current only when the current roadmap explicitly names it as ACTIVE.
+
+Do not choose a handoff merely because it has the newest filename/date. Do not execute an older MS-SETUP, architecture-hardening, decomposition, or same-night handoff as current work unless the roadmap explicitly reactivates it.
+
+### 8.4 Precedence
 
 If documents disagree, apply this precedence:
 
 1. newest explicit user instruction;
-2. this root `AGENTS.md`;
-3. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`;
-4. `docs/TESTING_STRATEGY.md` for test-tier and evidence definitions;
-5. current roadmap/handoff for active-state specifics;
-6. older documents only where non-conflicting.
+2. this root `AGENTS.md` for repository-wide working/governance rules;
+3. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` for execution mechanics and `docs/TESTING_STRATEGY.md` for test/evidence definitions;
+4. `docs/CURRENT_DEVELOPMENT_ROADMAP.md` for current live scope, campaign ordering and active document set;
+5. current domain-specific approved authority documents named by the roadmap (for example clue UX or Productive Uncertainty);
+6. the active handoff for the current implementation slice;
+7. foundational/historical documents only where non-conflicting.
 
-Re-query GitHub for live state, then correct stale/conflicting documentation instead of silently carrying the conflict forward.
+Live GitHub state overrides stale embedded branch/PR/SHA status in any document. Re-query GitHub, distinguish executable checkpoints from later docs-only heads, then correct stale/conflicting current documentation instead of silently carrying the conflict forward.
