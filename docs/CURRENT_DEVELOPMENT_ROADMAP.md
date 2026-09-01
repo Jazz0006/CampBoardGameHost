@@ -2,354 +2,414 @@
 
 > Updated: 2026-09-01 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
-> **This file is the single current project-status authority.**  
+> Role: **SINGLE CURRENT PROJECT-STATUS / EXECUTION-SEQUENCE AUTHORITY**  
 > Always re-query live GitHub state before implementation or merge.
 
-## 1. Current development context
+## 1. Live development context
 
 ```text
 live main at last verification:
-eed51bade5163790316a31e8295e2e841df90357
+6111ffe3863713895d2b21ab086cf31abcca4a4e
 
 current branch:
-codex/ms-setup-generic-architecture
+codex/clue-ux-r2-manual-pair-selector
 
 current Draft PR:
-#61 — MS-SETUP: generic multi-script setup architecture
+#63 — UX-R2: establish structured manual pair selection
 DRAFT / OPEN / UNMERGED
 
-S6D accepted checkpoint:
-a861c515a73834a4071c4a54bce953eba5c075a6
+last fully validated executable/code checkpoint on #63:
+b014345afe2b003bad2a2ee23cb2cf809a2a4eb2
 
-final fully validated executable/code checkpoint:
-678785db60750325950754ec4c3a867ed1338673
-
-first post-acceptance docs-only decision commit:
-6e52d8156b5a56f1bb218e812f830aa73275c649
+validation at that checkpoint:
+CI #1373 — SUCCESS
+R2 main-thread boundary #1288 — SUCCESS
 ```
 
-PR #61 must remain Draft/Open/Unmerged until the user explicitly authorizes merge.
+Documentation-only commits may advance the PR head beyond the executable checkpoint above. Do not infer a new executable checkpoint from a docs-only head.
 
-The final fully validated code checkpoint `678785db...` passed the logical full acceptance route: Android FULL + debug assemble, ASP contract, Real Clingo cross-validation, CI gate and R2. Later commits are documentation-only unless a new executable diff is explicitly introduced.
+PR #63 remains Draft and must not be merged, marked ready, rebased, force-pushed, or otherwise broadened without explicit user authorization.
 
-## 2. MS-SETUP campaign status
+## 2. Completed foundation
 
-```text
-MS-S0    ownership audit                                         COMPLETE
-MS-S0.5  recovery scope reduction audit                          COMPLETE
-MS-S1    CommittedClocktowerSetup + provenance                   COMPLETE / ACCEPTED
-MS-S1R   setup persistence authority migration                   COMPLETE / ACCEPTED
-MS-S2    candidate/source/provider contracts                     COMPLETE / ACCEPTED
-MS-S3    optional TemplateRepository                             COMPLETE / ACCEPTED
-MS-S4    deterministic generated actual-role source              COMPLETE / ACCEPTED
-MS-S4.5  shown-identity ownership architecture correction       COMPLETE / ACCEPTED
-MS-S5    actual-composition diversity/scorer/selector            COMPLETE / ACCEPTED
-MS-S6A   shown-identity policy/options boundary                  COMPLETE / ACCEPTED
-MS-S6B   deterministic shown-identity commitment                 COMPLETE / ACCEPTED
-MS-S6C   generic information semantics + impairment ownership    COMPLETE / ACCEPTED
-MS-S6D   first-night perceived-ability semantic completion       COMPLETE / ACCEPTED
-MS-S7    TB controlled production cutover                        COMPLETE / ACCEPTED
-MS-S8    NGJ / no-template second-script proof                   COMPLETE / ACCEPTED — MINIMAL ARCHITECTURE PROOF
-MS-S9    broad future-script acceptance                          DEFERRED / NOT PR #61 BLOCKER
-```
+The following campaigns are complete and no longer current execution work:
 
-PR #61 is now in **closeout / merge-readiness audit only**. Do not add new setup architecture, recommendation-quality work, Productive Uncertainty, or UI redesign to this PR.
+- MS-SETUP generic multi-script setup architecture, including TB production cutover and minimal NGJ/no-template architecture proof;
+- PR #61 closeout and integration into `main`;
+- pair-information display semantics authority for Washerwoman / Librarian / Investigator;
+- `PairInformationLegalDomain` as the shared complete legal semantic domain for pair clues;
+- final production zero-result legality gate: Librarian may show zero Outsiders, Investigator may not show zero Minions;
+- pair recommender migration to consume `PairInformationLegalDomain` rather than owning clue legality;
+- PR #62 integration into `main` through the validated tree represented by `6111ffe...`.
 
-Closeout evidence:
+Historical MS-SETUP handoffs/checkpoints remain evidence only. They are not active execution instructions unless this roadmap explicitly reactivates them.
 
-- `docs/MS_S7_S8_PR61_CLOSEOUT_CHECKPOINT_2026-09-01.md`
-- `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S7_PR_CLOSEOUT.md` remains historical execution context for the closeout sequence.
+## 3. Frozen permanent information architecture
 
-## 3. Frozen permanent setup / information architecture
-
-The permanent causal order remains:
+The permanent causal order is:
 
 ```text
-Composition
--> committed actual identity
--> committed shown identity
--> perceived ability
--> complete healthy legal/truth semantic domain
--> interaction-scoped registration
--> RELIABLE / POISONED / DRUNK reliability state
--> recommendation/manual selection
--> AbilityObservation
--> durable player-visible history
--> UI
+actual game state
++ committed shown identity
++ perceived ability
++ interaction-scoped registration semantics
+        ↓
+complete legal semantic candidate domain
+        ↓
+reliability state: RELIABLE / DRUNK / POISONED
+        ↓
+shared information-decision authority
+        ├── manual selection
+        └── recommendation provider
+        ↓
+confirmed candidate identity + immutable decision snapshot
+        ↓
+AbilityObservation / durable player-visible history
+        ↓
+UI / review / epistemic replay
 ```
 
 Permanent invariants:
 
-- Drunk actual identity remains Drunk;
-- shown identity is committed once and is not recommendation state;
-- Healthy, Poisoned and Drunk of the same perceived role share role semantics before reliability;
-- Spy/Recluse registration belongs to semantic truth construction, not role-specific recommendation heuristics;
-- semantic legality/truth must not be owned by Host/UI compatibility projection;
-- every supported information role must remain playable through a correct manual/generated clue path even if no recommendation provider supports that situation.
+- recommendation ranks legal candidates; it never defines the legal candidate set;
+- manual selection remains available independently of recommendation coverage, confidence, style, or rollout state;
+- manual and recommendation acceptance must converge on the same stable candidate identity and confirmation authority;
+- registration is interaction-scoped semantic evidence, not a permanent mutation of Spy/Recluse identity;
+- RELIABLE pair clues expose only currently truthful legal outcomes, including legal registration truth;
+- DRUNK/POISONED pair clues expose the complete legal display space of the perceived ability;
+- UI/presentation code must not recreate role legality rules already owned by semantic/domain layers;
+- stale decision contexts must not be confirmable after relevant game/player-input revision changes.
 
-## 4. Recommendation architecture decision
+## 4. Pair-information semantic contract
 
-Legacy recommendation is maintenance-only and temporary.
-
-Long-term authority:
+Current pair-role authority is:
 
 ```text
-Complete legal semantic candidate domain
-        |
-        +--> Manual clue selection                  # permanent user authority
-        |
-        +--> Recommendation Provider
-                 |
-                 +--> legacy compatibility provider # temporary fallback
-                 +--> cognitive-consistency provider
-                         -> PlayerWorldSet
-                         -> epistemic metrics
-                         -> Productive Uncertainty
+PairInformationDisplaySemantics
+        ↓
+PairInformationLegalDomain
+        ├── RELIABLE     -> truthful legal outcomes only
+        └── DRUNK/POISONED -> complete legal display space
 ```
 
-The Recommendation Provider ranks legal candidates. It must never define the complete set of clues the Storyteller is allowed to choose.
+High-value product scenarios that must remain explicitly protected:
 
-Unsupported recommendation situations degrade to correct manual selection rather than losing functionality.
+### Washerwoman
 
-Do not invest further in exact legacy shortlist/ranking/distribution parity unless needed to prevent an illegal clue or major regression.
+- functioning, no Spy registration path: only truthful Townsfolk clues;
+- functioning with Spy: legal Spy-as-Townsfolk registration truths may also be selected;
+- Drunk/Poisoned: every Townsfolk on the current script × every legal unordered player pair excluding the source;
+- never a zero-character result.
 
-## 5. New approved clue-selection UX direction
+### Librarian
 
-Authority:
+- functioning with actual Outsider(s): truthful Outsider clues, including legal Spy registration truth where applicable;
+- functioning with zero Outsiders and no Spy registration path: exactly `No Outsiders`;
+- functioning with zero actual Outsiders plus Spy: `No Outsiders` and any legal Spy-as-Outsider registered truths may coexist;
+- Drunk/Poisoned: every Outsider on the current script × every legal unordered pair, plus `No Outsiders`.
 
-`docs/CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md`
+### Investigator
 
-The current user-facing global choice:
+- functioning: actual Minion truth plus legal Recluse-as-Minion registration truth;
+- Drunk/Poisoned: every Minion on the current script × every legal unordered pair;
+- never a `No Minions` result.
+
+These rules belong to semantic/domain tests, not UI string logic.
+
+## 5. Current #63 scope — UX-R2 foundation
+
+PR #63 is a **foundation PR**, not the full product UI cutover.
+
+Already implemented at validated checkpoint `b014345...`:
+
+- `PairInformationManualSelection` provides a structured role/pair view over supplied `PairInformationLegalCandidate` values;
+- every supplied legal candidate is preserved exactly once;
+- seat order is normalized for manual resolution;
+- exact candidate identity and interaction-scoped registration facts are preserved;
+- zero-result is exposed only when supplied by the upstream legal domain;
+- `ClocktowerNightStepUi` and `ClocktowerInformationStepBuilder` can transport a precomputed typed pair manual model without taking legality ownership.
+
+Before #63 closeout, perform only the following architecture convergence:
+
+### UX-R2A — pair scenario contract corpus
+
+Add durable typed regression tests for the Washerwoman/Librarian/Investigator scenarios in section 4, including Spy/Recluse exceptions and zero-result behavior.
+
+### UX-R2B — adopt the shared InformationDecision Foundation
+
+Pair selection must converge with the existing information-decision lifecycle already used by structured numeric information:
 
 ```text
-Automatic — Balanced
-Automatic — Aggressive
-Automatic — Conservative
-Manual
+legal pair candidates
+-> shared InformationDecisionContext-style authority
+-> structured pair manual projection
+-> candidateId selection
+-> confirm(MANUAL or RECOMMENDATION_ACCEPTED)
+-> ConfirmedInformationDecision
 ```
 
-is planned for removal from normal product UX after PR #61.
+Do not build a parallel pair-only confirmation lifecycle.
 
-The replacement interaction model is per clue interaction:
+The current `InformationDecisionContext<T>` may be generalized narrowly if required so `PairInformationOutcome` can participate without duplicating it as an artificial `DynamicInformationOutcome.Pair` merely for transport.
 
-```text
-prominent primary contextual recommendation
-        +
-0–2 visually separated meaningful alternatives
-        +
-persistent manual control
-```
+Existing numeric behavior must remain unchanged by this generalization.
 
-Key product rules:
+### UX-R2 documentation closeout
 
-1. Recommendations are computed whenever supported; the user does not first choose a global recommendation style.
-2. The strongest current recommendation is visually dominant.
-3. Show at most two alternative recommendations in the normal interaction surface.
-4. Alternatives should preferably represent distinct useful strategies/world explanations, not merely adjacent score values.
-5. Manual control remains available on every relevant interaction even when recommendations are active.
-6. Manual selection operates on the complete legal semantic domain, not the legacy recommendation shortlist.
-7. Low-confidence/no-clear-winner states must be representable without pretending one weak option is authoritative.
+- keep this roadmap, the clue UX decision, Productive Uncertainty plan, root `AGENTS.md`, and the active handoff mutually consistent;
+- #63 must remain a small typed/domain/session foundation;
+- do not add the full 322 KiB Host/UI production wiring to #63.
 
-### Small-domain specialization
+## 6. Refined implementation route after #63
 
-For small numeric domains, show the primary recommended number plus all remaining legal numbers directly. A separate manual page is unnecessary when the full domain already fits naturally on-screen.
-
-For Yes/No domains, show the recommended result prominently and the other legal result as the secondary choice.
-
-### Combinatorial clue specialization
-
-For Washerwoman/Librarian/Investigator and similar role+player/pair domains:
+The earlier linear `UX-R2 -> UX-R3 -> UX-R4 -> UX-R5` route is refined to avoid temporary compatibility architecture.
 
 ```text
-Top-1 recommendation
-Alternative 1
-Alternative 2
---------------------
-Manually choose clue
-```
+UX-R2A  pair semantic scenario contracts
+UX-R2B  pair adoption of shared InformationDecision Foundation
+        -> close / merge #63 after explicit authorization
 
-The manual action opens a structured selection surface rather than expanding the entire combinatorial domain as buttons on the night-step card.
+UX-R2C  separate production vertical slice
+        GameState + role definitions + source seat + reliability
+        -> PairInformationLegalDomain
+        -> shared decision context
+        -> structured manual pair picker
+        -> exact confirm / durable observation
 
-## 6. RecommendationStyle / old mode policy
+UX-R2D  manual-authority coverage audit across major clue families
+        -> Number
+        -> Yes/No
+        -> role/category/reveal families as currently supported
+        -> fill only real authority/functionality gaps
 
-`Balanced`, `Aggressive`, and `Conservative` may remain temporarily as internal compatibility/scoring dimensions while migration is underway, but they are not the target permanent front-door UX.
+UX-R3/R4  remove normal global mode + establish provider-neutral recommendation shell
+        -> recommendations always available when provider supports the interaction
+        -> prominent primary recommendation
+        -> 0–2 useful alternatives
+        -> persistent manual control
 
-`Manual` is not a recommendation style and should not share the same user-facing mode enum conceptually.
-
-Long term, Productive Uncertainty should determine context-sensitive pressure from the current game/knowledge state. Former style concepts may survive as internal features, diagnostics, test scenarios or optional advanced policy inputs, but the user should not need to select one globally before the system can recommend a clue.
-
-## 7. Immediate post-PR #61 implementation route
-
-After PR #61 is merged, create a fresh branch. Do not continue on the MS-SETUP branch.
-
-Proceed in this order:
-
-```text
-UX-R1  audit all current Automatic/Manual/RecommendationStyle UI dependencies
-
-UX-R2  establish permanent legal-domain -> manual-selection UI authority
-       manual availability must be independent of recommendation coverage
-
-UX-R3  remove the normal global Balanced/Aggressive/Conservative/Manual selector
-       recommendation becomes always-on when supported
-
-UX-R4  unified recommendation presentation
-       -> prominent Top-1
-       -> 0–2 differentiated alternatives
-       -> persistent manual action for large/combinatorial domains
-
-UX-R5  small-domain specialization
-       -> Number: primary + all remaining legal values
-       -> Yes/No: primary + the other legal result
+UX-R5  thin family-specific presentation polish
+        -> small numeric domain: primary + every remaining legal value
+        -> Yes/No: recommended value + other legal value
+        -> combinatorial pair domain: structured manual navigation, never giant flat button lists
 
 EPI-MQ / ALG mainline
-       -> PlayerKnowledgeSnapshot
-       -> PlayerWorldSet BEFORE
-       -> hypothetical player-visible observation
-       -> PlayerWorldSet AFTER
-       -> epistemic metrics
-       -> misinformation-world quality
-       -> Productive Uncertainty
-       -> cognitive-consistency Recommendation Provider
+        -> scenario corpus
+        -> PlayerWorldSet BEFORE/AFTER hypothetical observation seam
+        -> hard credibility / contradiction / fairness gates
+        -> persistence / breakability / interaction metrics
+        -> Productive Uncertainty ranking
+        -> shadow provider comparison
+        -> controlled rollout
 
-UX-R6  replace legacy ranking behind the stable Top-1/alternatives/manual UI contract
+UX-R6  replace legacy ranking behind the stable UI/decision contract
 ```
 
-UX-R1 through UX-R5 must remain deliberately thin. They establish the permanent product/authority boundary; they are not a reason to build another temporary recommendation engine before Productive Uncertainty.
+### Critical sequencing rule
 
-Where it avoids temporary architecture, UX-R1/R2 may share the first post-PR branch with the epistemic seam, but UI behavior and world-model correctness must remain independently testable.
+Do **not** remove the global Automatic/Manual front-door control until every currently supported major information family has a correct manual authority path independent of recommendation coverage.
 
-## 8. Cognitive-consistency / Productive Uncertainty route
+This prevents a temporary compatibility layer whose only purpose would be to keep un-migrated roles playable after the old Manual mode disappears.
 
-Primary design authorities after the UI boundary is established:
+## 7. Recommendation UX contract
 
-- `docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`
-- `docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`
-
-Correctness foundation:
+The permanent product interaction is per clue, not a persistent global style mode:
 
 ```text
-semantic candidate
+Recommended clue
+[ primary ]
+
+Other useful choices
+[ alternative 1 ]
+[ alternative 2 ]
+
+-----------------------------
+[ Manually choose clue ]
+```
+
+Rules:
+
+- primary and alternatives must belong to the same current legal semantic domain as manual selection;
+- normal UI shows at most two alternatives;
+- zero alternatives is valid;
+- do not invent a temporary legacy Top-3/diversification algorithm merely to fill UI slots;
+- low-confidence/no-clear-winner must be representable without pretending certainty;
+- Balanced/Aggressive/Conservative may remain temporary internal compatibility features, diagnostics, or tests, but are not permanent front-door product concepts;
+- Manual is an interaction path, not a recommendation style.
+
+## 8. Shared decision authority
+
+`InformationDecisionContext` / `ConfirmedInformationDecision` already provide the correct lifecycle pattern for structured information choices:
+
+- immutable semantic identity;
+- game/player-input revision freshness;
+- validated legal candidate IDs;
+- recommendation candidate subset;
+- manual vs recommendation provenance;
+- stale-context rejection;
+- illegal candidate rejection;
+- exact decision snapshot carried into confirmation.
+
+New pair work should reuse or narrowly generalize this Foundation rather than reproduce equivalent validation in Host/UI code.
+
+The architectural target is:
+
+```text
+CompleteLegalInformationDomain<T>
+        ↓
+InformationDecisionContext<T>
+        ├── recommendation projection
+        └── structured manual projection
+                 ↓
+             candidateId
+                 ↓
+             confirm(...)
+```
+
+## 9. Productive Uncertainty / cognitive-consistency mainline
+
+After the stable manual/decision/recommendation UI boundary exists, algorithm work becomes the primary campaign.
+
+Correctness seam:
+
+```text
+legal semantic candidate
 -> recipient PlayerWorldSet BEFORE
 -> hypothetical player-visible observation
 -> recipient PlayerWorldSet AFTER
 -> epistemic metrics
 ```
 
-Quality extension:
+Quality seam:
 
 ```text
-legal misinformation candidate
--> project into player-visible history
--> surviving perceived worlds
--> credibility / ambiguity / persistence
+candidate
+-> credibility
+-> immediate contradiction / self-exposure gates
+-> mistaken-world persistence
+-> breakability / discovery paths
 -> cross-role interaction
 -> confirmation-lock risk
--> breakability / discovery paths
--> faction impact / player agency gates
--> Productive Uncertainty ranking
--> Recommendation Provider
+-> faction impact / player agency
+-> Productive Uncertainty tier / ranking
 ```
 
-The objective is to create credible, sustainable, interactive, eventually breakable and fair mistaken worlds rather than random or maximally false information.
+Start with a concrete Trouble Brewing scenario corpus rather than fixed numeric weights. Prefer explainable gates, feature vectors, comparative expectations, and Pareto/tier ranking before freezing a weighted sum.
 
-A3 exact enumeration remains the correctness baseline. A4/ZDD remains shadow/prototype until equivalence and resource behavior are separately validated. Approximation/resource failure must never become false UNSAT.
+For pair misinformation, early corpus examples should include:
 
-## 9. Testing strategy
+- real shown role + shifted pair;
+- absent but bluff/configuration-relevant role;
+- Spy/Recluse registration explanation;
+- Outsider-count tension;
+- plausible but breakable trust/suspicion chains;
+- obviously disconnected misinformation;
+- excessive confirmation locks.
 
-Authority: `docs/TESTING_STRATEGY.md`.
+Drunk and Poisoned share semantic role rules; strategic ranking may later use different persistence/breakability weighting.
 
-Use risk-based tests-first rather than mechanical test-first for every edit.
+## 10. Exact-world baseline and scalability
 
-For the post-PR UX boundary, high-value behavior contracts include:
+A3 exact enumeration remains the correctness oracle for early/small states.
 
-- manual selection remains available when recommendations are enabled;
-- recommendation and manual paths share one legal semantic authority;
-- selecting an alternative commits exactly that clue and its interaction-scoped registration semantics;
-- small numeric domains expose every legal value directly;
-- combinatorial domains show no more than three normal recommendations before manual navigation;
-- removal of the global mode does not change clue legality/truth;
-- absent/low-confidence recommendation still permits correct manual play.
+A4/ZDD remains shadow/prototype until equivalence and resource behavior are separately proven.
 
-Avoid source-shape tests that only assert button/class/helper placement.
+Never interpret:
 
-Full CI is reserved for logical acceptance checkpoints or risk-triggered cases according to `TESTING_STRATEGY.md`.
+```text
+timeout
+resource exhaustion
+unknown/degraded evaluation
+```
 
-## 10. PR #61 merge-readiness rules
+as false `UNSAT`.
 
-Before merge authorization is acted on:
+The world backend may be replaced later without changing semantic candidate legality, decision confirmation, or the public UX contract.
 
-1. re-query live `main`, PR #61 head/state/mergeability and checks;
-2. confirm all executable changes after the last full-acceptance checkpoint are absent, or rerun the required acceptance route if executable code changed;
-3. distinguish later docs-only head from the validated code checkpoint;
-4. perform exact PR diff / unexpected-file audit;
-5. inspect unresolved review threads/comments if any;
-6. verify no current roadmap/handoff claims conflict with actual accepted scope;
-7. keep PR Draft and do not merge until explicit user authorization.
+## 11. Testing strategy
 
-## 11. Scope guards
+Authority: `docs/TESTING_STRATEGY.md` and root `AGENTS.md`.
 
-Do not add to PR #61 during closeout:
+Use risk-based tests-first, not mechanical RED creation for every wiring edit.
 
-- clue-selection UX implementation;
-- removal of RecommendationStyle/global mode code;
-- Productive Uncertainty;
-- PlayerWorldSet production recommendation integration;
-- A3/A4/ZDD production rollout;
-- new NGJ-specific legacy recommendation heuristics;
-- broad future-script support;
-- Host/App decomposition;
-- unrelated persistence/recovery work.
+High-value current contracts:
 
-## 12. Current documentation authority
+- pair reliable/impaired candidate-domain scenarios from section 4;
+- exact Spy/Recluse registration identity survives manual selection and confirmation;
+- manual cannot confirm a candidate outside the legal domain;
+- recommendation acceptance cannot confirm a non-recommended candidate;
+- stale revisions block confirmation;
+- Number behavior remains unchanged if the generic decision Foundation is widened for pairs;
+- production pair UI receives a precomputed legal/decision model rather than recreating legality;
+- every supported clue family remains manually playable with recommendation absent;
+- removing global mode later does not change clue legality/truth.
 
-Current active set:
+Avoid source-shape tests that merely assert helper/class/button placement.
+
+Full CI is for logical acceptance checkpoints or risk-triggered cases according to the testing strategy.
+
+## 12. PR / campaign boundaries
+
+Recommended PR granularity:
+
+| PR / slice | Scope | Stop condition |
+|---|---|---|
+| #63 | Pair scenario contracts + shared decision Foundation adoption + structured pair model | no full Host UI |
+| next pair vertical PR | production pair wiring + structured picker + exact confirm | complete Washerwoman/Librarian/Investigator vertical path |
+| manual-authority audit PR | Number / Yes-No / other supported families | no supported clue family depends on global Manual for correctness |
+| mode/shell PR | remove user global mode + provider-neutral primary/alternatives/manual shell | no new recommendation-quality algorithm |
+| EPI-MQ series | cognitive-consistency / Productive Uncertainty | shadow before production cutover |
+| UX-R6 | provider replacement | stable UI unchanged |
+
+Do not combine Productive Uncertainty, A4/ZDD rollout, broad future-script work, Host decomposition, or unrelated persistence work into #63.
+
+## 13. Documentation authority and cleanup policy
+
+### Active authorities
 
 ```text
 AGENTS.md
 docs/CURRENT_DEVELOPMENT_ROADMAP.md
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-01_UX_R2_DECISION_FOUNDATION.md
 docs/CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md
 docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md
-docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md
 docs/TESTING_STRATEGY.md
 docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 ```
 
-PR #61 closeout evidence:
+### Foundational but not current sequence authority
 
-```text
-docs/MS_S7_S8_PR61_CLOSEOUT_CHECKPOINT_2026-09-01.md
-docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S7_PR_CLOSEOUT.md
-```
+`docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md` remains the detailed Possible Worlds / epistemic foundation. Its old phase ordering and AUTO/ASSISTED front-door model are historical where they conflict with this roadmap or the approved clue UX decision.
 
-Earlier S6D and older handoffs are historical evidence unless explicitly referenced for a checkpoint.
+### Historical evidence
 
-## 13. New-conversation resume protocol
+Dated MS-SETUP closeout files, older `NEXT_DEVELOPMENT_HANDOFF_*` files, earlier architecture-hardening handoffs, and completed decomposition handoffs remain historical evidence. Do not execute them as current instructions unless this roadmap explicitly reactivates them.
+
+The older `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` remains subordinate to `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` and root `AGENTS.md`.
+
+Do not delete useful historical evidence merely to reduce document count. Remove or rewrite a historical file only when it makes a false current-authority claim that cannot be safely neutralized by the authority hierarchy above.
+
+## 14. Immediate next action
+
+On Draft PR #63:
+
+1. add the focused pair semantic scenario contracts from section 4;
+2. audit the exact generic constraints in `InformationDecisionContext` and `DynamicInformationOutcome`;
+3. narrowly generalize the shared decision Foundation so pair outcomes can use the same confirmation/stale-snapshot lifecycle without duplicating pair semantics;
+4. adapt `PairInformationManualSelection` to resolve a structured choice to `candidateId` and confirm through the shared context;
+5. preserve existing structured Number behavior;
+6. run focused evidence, then T1 / CI/R2 at the logical checkpoint;
+7. exact diff / PR scope audit;
+8. stop with #63 Draft and request explicit merge authorization.
+
+Do not modify the large production Host/UI in this PR merely to prove transport wiring.
+
+## 15. New-conversation resume protocol
 
 1. read root `AGENTS.md`;
 2. read this roadmap;
-3. re-query live `main`, PR #61, branch head and checks;
-4. if PR #61 is still unmerged, perform only closeout/merge-readiness work unless a concrete regression is found;
-5. treat `678785db60750325950754ec4c3a867ed1338673` as the last fully validated executable/code checkpoint unless later executable commits are verified;
-6. do not implement the new clue UX on PR #61;
-7. after user-authorized merge, create a fresh branch;
-8. execute UX-R1 -> UX-R5 to establish the stable recommendation/manual boundary;
-9. return immediately to PlayerWorldSet / Productive Uncertainty and replace legacy ranking behind that stable UI contract;
-10. keep A3 exact as correctness baseline and A4/ZDD shadow until separately validated.
-
-## 14. Deferred / queued registry
-
-| Area | Status |
-|---|---|
-| MS-SETUP / PR #61 | CLOSEOUT / MERGE-READINESS AUDIT |
-| MS-S6D semantic completion | COMPLETE / ACCEPTED |
-| MS-S7 TB controlled cutover | COMPLETE / ACCEPTED |
-| MS-S8 NGJ/no-template proof | COMPLETE / ACCEPTED — MINIMAL ARCHITECTURE PROOF |
-| MS-S9 broad future-script acceptance | DEFERRED / NOT PR #61 BLOCKER |
-| Clue UX-R1..R5 | NEXT IMMEDIATE POST-PR BOUNDARY SLICE |
-| Legacy recommendation enhancement | MAINTENANCE-ONLY / NO NEW BROAD INVESTMENT |
-| EPI-MQ Productive Uncertainty | NEXT PRIMARY ALGORITHM CAMPAIGN |
-| ALG cognitive-consistency / PlayerWorldSet | NEXT PRIMARY ALGORITHM CAMPAIGN |
-| A4/ZDD production rollout | SHADOW / FUTURE AFTER EXACT BASELINE GATES |
-| REC-R1 | QUEUED SEPARATE CAMPAIGN |
-| GCR-4 Chambermaid wake-history authority | DEFERRED FOLLOW-UP |
+3. read the active UX-R2 handoff named in section 13;
+4. re-query live `main`, current PR head/state/checks and distinguish executable vs docs-only head;
+5. continue only the current slice in section 14;
+6. do not follow older handoffs as active instructions;
+7. do not merge without explicit user authorization.
