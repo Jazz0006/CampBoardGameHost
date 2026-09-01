@@ -1,0 +1,57 @@
+name: UX-R5 Ready one-shot
+
+on:
+  push:
+    branches:
+      - codex/ux-r5-small-domain-specialization
+    paths:
+      - .github/workflows/ux-r5-ready-one-shot.yml
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  ready:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          ref: codex/ux-r5-small-domain-specialization
+          fetch-depth: 0
+
+      - name: Lock exact trigger state
+        env:
+          EXPECTED_PARENT: 2f56649e71d38c21f66df598e1e8df0c990090dd
+          WORKFLOW: .github/workflows/ux-r5-ready-one-shot.yml
+          BRANCH: codex/ux-r5-small-domain-specialization
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_PARENT"
+          changed="$(git diff-tree --no-commit-id --name-only -r HEAD)"
+          test "$changed" = "$WORKFLOW"
+          remote_head="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
+          test "$remote_head" = "$GITHUB_SHA"
+
+      - name: Mark PR ready
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr ready 68
+
+      - name: Self-remove workflow
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/ux-r5-ready-one-shot.yml
+          git commit -m 'chore: remove UX-R5 ready one-shot'
+
+      - name: Push exact cleanup successor
+        env:
+          BRANCH: codex/ux-r5-small-domain-specialization
+        run: |
+          set -euo pipefail
+          remote_head="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
+          test "$remote_head" = "$GITHUB_SHA"
+          git push origin "HEAD:refs/heads/$BRANCH"
