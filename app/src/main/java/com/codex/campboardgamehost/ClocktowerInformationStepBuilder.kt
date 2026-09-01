@@ -2,7 +2,6 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
-import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
 import com.codex.campboardgamehost.clocktower.rules.RegistrationInteractionRules
 
@@ -35,6 +34,8 @@ internal class ClocktowerInformationStepBuilder(
         legalSelectionOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         reliableDisplayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         previousShownNumber: Int? = null,
+        numericMinimumValue: Int? = null,
+        numericMaximumValue: Int? = null,
         spyRegistrationKey: String? = null,
         spyRegistrationTeams: List<ClocktowerTeam> = emptyList(),
         spyRegistrationDetail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,
@@ -161,6 +162,8 @@ internal class ClocktowerInformationStepBuilder(
             informationReliability = informationReliability,
             recentMisinformationStreak = recentMisinformationStreak(actor),
             previousShownNumber = previousShownNumber,
+            numericMinimumValue = numericMinimumValue,
+            numericMaximumValue = numericMaximumValue,
             spyRegistrationKey = RegistrationInteractionRules.effectiveRegistrationKey(
                 spyRegistrationKey,
                 informationAbilityReliable = !actorAbilityUnreliable,
