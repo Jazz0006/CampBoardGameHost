@@ -19,27 +19,30 @@ internal object FirstNightNumericInformationSemantics {
     private val spy = RoleId("Spy")
     private val recluse = RoleId("Recluse")
 
-    fun healthyTruthValues(game: GameState, sourceSeat: Int): Set<Int> {
-        val source = game.playerAt(sourceSeat) ?: return emptySet()
+    fun healthyTruthValues(game: GameState, sourceSeat: Int): Set<Int> =
+        healthyTruthValues(game.players, sourceSeat)
+
+    fun healthyTruthValues(players: List<PlayerState>, sourceSeat: Int): Set<Int> {
+        val source = players.firstOrNull { it.seat == sourceSeat } ?: return emptySet()
         if (!source.alive) return emptySet()
         val perceivedRole = AbilityFunctioningSemantics.perceivedRole(source.abilitySubject())
             ?.let(::RoleId)
             ?: return emptySet()
 
         val registrationSubjects = when (perceivedRole) {
-            chef -> game.players
-            empath -> FixedInformationEvaluator.livingNeighbors(game.players, sourceSeat)
+            chef -> players
+            empath -> FixedInformationEvaluator.livingNeighbors(players, sourceSeat)
             else -> return emptySet()
         }
         val registrations = evilRegistrationAssignments(registrationSubjects)
 
         return registrations.mapTo(sortedSetOf()) { registersAsEvilBySeat ->
             when (perceivedRole) {
-                chef -> FixedInformationEvaluator.chefEvilPairs(game.players) { player ->
+                chef -> FixedInformationEvaluator.chefEvilPairs(players) { player ->
                     registersAsEvilBySeat[player.seat]
                         ?: (player.actualAlignment == Alignment.EVIL)
                 }
-                empath -> FixedInformationEvaluator.empathEvilNeighborCount(game.players, sourceSeat) { player ->
+                empath -> FixedInformationEvaluator.empathEvilNeighborCount(players, sourceSeat) { player ->
                     registersAsEvilBySeat[player.seat]
                         ?: (player.actualAlignment == Alignment.EVIL)
                 }
@@ -60,14 +63,24 @@ internal object FirstNightNumericInformationSemantics {
         game: GameState,
         sourceSeat: Int,
         currentRegisteredValue: Int,
+    ): Set<Int> = recommendationTruthValues(
+        players = game.players,
+        sourceSeat = sourceSeat,
+        currentRegisteredValue = currentRegisteredValue,
+    )
+
+    fun recommendationTruthValues(
+        players: List<PlayerState>,
+        sourceSeat: Int,
+        currentRegisteredValue: Int,
     ): Set<Int> {
-        val source = game.playerAt(sourceSeat) ?: return setOf(currentRegisteredValue)
+        val source = players.firstOrNull { it.seat == sourceSeat } ?: return setOf(currentRegisteredValue)
         val subject = source.abilitySubject()
         val perceivedRole = AbilityFunctioningSemantics.perceivedRole(subject)
             ?: return setOf(currentRegisteredValue)
         val state = AbilityFunctioningSemantics.stateFor(subject, perceivedRole)
         if (state == AbilityFunctioningState.FUNCTIONING) return setOf(currentRegisteredValue)
-        return healthyTruthValues(game, sourceSeat).ifEmpty { setOf(currentRegisteredValue) }
+        return healthyTruthValues(players, sourceSeat).ifEmpty { setOf(currentRegisteredValue) }
     }
 
     private fun PlayerState.abilitySubject() = AbilitySubject(

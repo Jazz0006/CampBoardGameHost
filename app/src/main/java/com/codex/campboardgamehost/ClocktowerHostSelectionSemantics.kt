@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
@@ -7,6 +8,8 @@ import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLeg
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicStatus
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
+import com.codex.campboardgamehost.clocktower.rules.FirstNightNumericInformationSemantics
+import kotlin.math.abs
 
 internal enum class TwoPlayerSelectionAction {
     ToggleFirst,
@@ -118,6 +121,53 @@ internal fun clocktowerInformationCandidateId(option: ClocktowerDisplayOption): 
     option.recluseRegisteredRoleEnName.orEmpty(),
     option.isTruthful.toString(),
 ).joinToString("|")
+
+internal fun projectFirstNightNumericInformationOptions(
+    phase: ClocktowerPhase,
+    roleEnName: String,
+    sourceSeat: Int,
+    players: List<PlayerState>,
+    options: List<ClocktowerDisplayOption>,
+): List<ClocktowerDisplayOption> {
+    if (phase != ClocktowerPhase.FirstNight || roleEnName !in setOf("Chef", "Empath")) return options
+
+    val currentRegisteredValue = options.asSequence()
+        .filter { it.isTruthful }
+        .mapNotNull { option ->
+            (option.proposition as? InformationProposition.NumericResult)
+                ?.takeIf { it.sourceSeat == sourceSeat }
+                ?.value
+        }
+        .firstOrNull()
+        ?: options.asSequence()
+            .mapNotNull { option ->
+                (option.proposition as? InformationProposition.NumericResult)
+                    ?.takeIf { it.sourceSeat == sourceSeat }
+                    ?.value
+            }
+            .firstOrNull()
+        ?: return options
+
+    val truthfulValues = FirstNightNumericInformationSemantics.recommendationTruthValues(
+        players = players,
+        sourceSeat = sourceSeat,
+        currentRegisteredValue = currentRegisteredValue,
+    )
+
+    return options.map { option ->
+        val proposition = option.proposition as? InformationProposition.NumericResult
+            ?: return@map option
+        if (proposition.sourceSeat != sourceSeat) return@map option
+
+        val pressure = truthfulValues.minOfOrNull { truthfulValue ->
+            abs(proposition.value - truthfulValue)
+        } ?: option.misinformationPressure
+        option.copy(
+            isTruthful = proposition.value in truthfulValues,
+            misinformationPressure = pressure,
+        )
+    }
+}
 
 internal data class ClocktowerDecisionOption(
     val label: String,
