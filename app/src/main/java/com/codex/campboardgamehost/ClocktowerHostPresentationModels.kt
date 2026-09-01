@@ -80,6 +80,9 @@ internal data class ClocktowerNightStepUi(
     val informationReliability: InformationReliability = InformationReliability.RELIABLE,
     val recentMisinformationStreak: Int = 0,
     val previousShownNumber: Int? = null,
+    /** Complete semantic bounds for a numeric information interaction, when applicable. */
+    val numericMinimumValue: Int? = null,
+    val numericMaximumValue: Int? = null,
     val selectedInformationTruthful: Boolean? = null,
     /** Confirmed Foundation authority; the draft is only publishable through this envelope. */
     val informationDecisionConfirmation: ConfirmedInformationDecision? = null,
