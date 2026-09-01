@@ -117,6 +117,7 @@ import com.codex.campboardgamehost.clocktower.domain.RegistrationLedger
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionType
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerAutomationMode
+import com.codex.campboardgamehost.clocktower.domain.StorytellerRecommendationUxPolicy
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionKind
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
@@ -838,7 +839,9 @@ internal fun CampBoardGameHostApp() {
     val lifecycleOwner = LocalLifecycleOwner.current
     var languageMode by remember { mutableStateOf(baseContext.loadLanguageMode()) }
     var storytellerAutomationMode by remember { mutableStateOf(baseContext.loadStorytellerAutomationMode()) }
-    val automaticStorytellerInfo = storytellerAutomationMode.isAutomatic
+    val storytellerRecommendationUxPolicy =
+        StorytellerRecommendationUxPolicy.fromLegacyMode(storytellerAutomationMode)
+    val automaticStorytellerInfo = storytellerRecommendationUxPolicy.automaticExecution
     val context = remember(languageMode) { baseContext.localized(languageMode) }
     val language = context.resources.configuration.locales[0].language
     var screen by remember { mutableStateOf(Screen.Landing) }
@@ -2910,7 +2913,7 @@ internal fun CampBoardGameHostApp() {
 
                     Screen.ClocktowerJudge -> ClocktowerJudgeScreen(
                         automaticStorytellerInfo = automaticStorytellerInfo,
-                        automaticStorytellerStyle = storytellerAutomationMode.style ?: RecommendationStyle.BALANCED,
+                        automaticStorytellerStyle = storytellerRecommendationUxPolicy.recommendationStyle,
                         cards = cards,
                         records = records,
                         events = clocktowerEvents,
