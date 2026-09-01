@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -15,7 +14,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,7 +41,7 @@ internal fun SettingsScreen(
     onRemoveCommonPlayer: (String) -> Unit,
     onBack: () -> Unit,
 ) {
-    val language = LocalContext.current.resources.configuration.locales[0].language
+    LocalContext.current.resources.configuration.locales[0].language
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -62,81 +60,6 @@ internal fun SettingsScreen(
                 }
                 TextButton(onClick = onBack) {
                     Text(stringResource(R.string.back))
-                }
-            }
-        }
-
-        item {
-            Card(
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Text(
-                            if (language == "en") "Storyteller decisions" else "说书人判定方式",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Text(
-                            if (language == "en") {
-                                "Choose manual control or an automatic style. Automatic rulings also consider the global game balance."
-                            } else {
-                                "选择手动控制或全自动风格；自动裁定还会结合全局局势。"
-                            },
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                    val automationModes = listOf(
-                        StorytellerAutomationMode.MANUAL to (
-                            if (language == "en") "Manual" to "Show legal recommendations and let the Storyteller decide."
-                            else "手动" to "显示合法建议，由说书人自行决定。"
-                        ),
-                        StorytellerAutomationMode.AUTO_BALANCED to (
-                            if (language == "en") "Automatic · Balanced" to "Moderate information, risk, and assistance to the trailing team."
-                            else "全自动－均衡" to "适度控制信息、风险，并帮助当前落后的一方。"
-                        ),
-                        StorytellerAutomationMode.AUTO_AGGRESSIVE to (
-                            if (language == "en") "Automatic · Aggressive" to "Allows more deception and high-impact rulings while preserving balance."
-                            else "全自动－激进" to "允许更多误导和高影响裁定，同时保持局势平衡。"
-                        ),
-                        StorytellerAutomationMode.AUTO_GENTLE to (
-                            if (language == "en") "Automatic · Gentle" to "Prefers clear, low-risk, and less disruptive rulings."
-                            else "全自动－稳健" to "优先清晰、低风险、较少改变局势的裁定。"
-                        ),
-                    )
-                    automationModes.forEach { (mode, copy) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onStorytellerAutomationModeChange(mode) }
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(
-                                selected = storytellerAutomationMode == mode,
-                                onClick = { onStorytellerAutomationModeChange(mode) },
-                            )
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(copy.first, fontWeight = FontWeight.SemiBold)
-                                Text(
-                                    copy.second,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                            }
-                        }
-                    }
                 }
             }
         }
