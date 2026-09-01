@@ -6,6 +6,7 @@ on:
       - codex/ux-r2b-pair-manual-authority
     paths:
       - .github/scripts/ux_r2b_pair_manual_authority_patch.py
+      - app/src/main/java/com/codex/campboardgamehost/ClocktowerPairManualAuthority.kt
 
 permissions:
   contents: write
