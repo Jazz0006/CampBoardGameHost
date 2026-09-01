@@ -1,12 +1,21 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
+import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
+import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.recommendation.NaturalPairInformationCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLegality
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicStatus
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
+import com.codex.campboardgamehost.clocktower.rules.FirstNightNumericInformationSemantics
+import kotlin.math.abs
 
 internal enum class TwoPlayerSelectionAction {
     ToggleFirst,
@@ -118,6 +127,148 @@ internal fun clocktowerInformationCandidateId(option: ClocktowerDisplayOption): 
     option.recluseRegisteredRoleEnName.orEmpty(),
     option.isTruthful.toString(),
 ).joinToString("|")
+
+internal fun projectFirstNightNumericInformationOptions(
+    phase: ClocktowerPhase,
+    roleEnName: String,
+    sourceSeat: Int,
+    players: List<PlayerState>,
+    options: List<ClocktowerDisplayOption>,
+): List<ClocktowerDisplayOption> {
+    if (phase != ClocktowerPhase.FirstNight || roleEnName !in setOf("Chef", "Empath")) return options
+
+    val currentRegisteredValue = options.asSequence()
+        .filter { it.isTruthful }
+        .mapNotNull { option ->
+            (option.proposition as? InformationProposition.NumericResult)
+                ?.takeIf { it.sourceSeat == sourceSeat }
+                ?.value
+        }
+        .firstOrNull()
+        ?: options.asSequence()
+            .mapNotNull { option ->
+                (option.proposition as? InformationProposition.NumericResult)
+                    ?.takeIf { it.sourceSeat == sourceSeat }
+                    ?.value
+            }
+            .firstOrNull()
+        ?: return options
+
+    val truthfulValues = FirstNightNumericInformationSemantics.recommendationTruthValues(
+        players = players,
+        sourceSeat = sourceSeat,
+        currentRegisteredValue = currentRegisteredValue,
+    )
+
+    return options.map { option ->
+        val proposition = option.proposition as? InformationProposition.NumericResult
+            ?: return@map option
+        if (proposition.sourceSeat != sourceSeat) return@map option
+
+        val pressure = truthfulValues.minOfOrNull { truthfulValue ->
+            abs(proposition.value - truthfulValue)
+        } ?: option.misinformationPressure
+        option.copy(
+            isTruthful = proposition.value in truthfulValues,
+            misinformationPressure = pressure,
+        )
+    }
+}
+
+private data class FirstNightPairInformationKey(
+    val shownRole: RoleId?,
+    val candidateSeats: List<Int>,
+)
+
+private data class FirstNightPairInformationTruth(
+    val spyRegisteredRoleEnName: String?,
+    val recluseRegisteredRoleEnName: String?,
+)
+
+private fun PairInformationOutcome.firstNightPairInformationKey(): FirstNightPairInformationKey =
+    FirstNightPairInformationKey(
+        shownRole = shownRole,
+        candidateSeats = candidateSeats,
+    )
+
+private fun InformationProposition.firstNightPairInformationKey(): FirstNightPairInformationKey? = when (this) {
+    is InformationProposition.AnyOf -> {
+        val roleAt = alternatives.map { it as? InformationProposition.RoleAt ?: return null }
+        val shownRole = roleAt.map { it.role }.distinct().singleOrNull() ?: return null
+        FirstNightPairInformationKey(
+            shownRole = shownRole,
+            candidateSeats = roleAt.map { it.seat }.distinct().sorted(),
+        )
+    }
+
+    is InformationProposition.AllOf -> {
+        if (propositions.isEmpty() || propositions.any {
+                val roleInPlay = it as? InformationProposition.RoleInPlay
+                roleInPlay == null || roleInPlay.inPlay
+            }
+        ) {
+            null
+        } else {
+            FirstNightPairInformationKey(shownRole = null, candidateSeats = emptyList())
+        }
+    }
+
+    else -> null
+}
+
+internal fun projectFirstNightPairInformationOptions(
+    phase: ClocktowerPhase,
+    roleEnName: String,
+    sourceSeat: Int,
+    game: GameState,
+    roleDefinitions: List<RoleDefinition>,
+    options: List<ClocktowerDisplayOption>,
+): List<ClocktowerDisplayOption> {
+    if (
+        phase != ClocktowerPhase.FirstNight ||
+        roleEnName !in setOf("Washerwoman", "Librarian", "Investigator")
+    ) {
+        return options
+    }
+
+    val healthyTruths = NaturalPairInformationCandidateGenerator
+        .generateHealthyInformationSpace(
+            game = game,
+            sourceSeat = sourceSeat,
+            abilityRole = RoleId(roleEnName),
+            roleDefinitions = roleDefinitions,
+        )
+        .groupBy { it.outcome.firstNightPairInformationKey() }
+        .mapValues { (_, candidates) ->
+            val semanticCandidate = candidates.firstOrNull { it.registrations.isEmpty() }
+                ?: candidates.minBy { it.candidateId }
+            FirstNightPairInformationTruth(
+                spyRegisteredRoleEnName = semanticCandidate.registrations
+                    .firstOrNull { it.reason == RegistrationReason.SPY_ABILITY }
+                    ?.registeredRole
+                    ?.value,
+                recluseRegisteredRoleEnName = semanticCandidate.registrations
+                    .firstOrNull { it.reason == RegistrationReason.RECLUSE_ABILITY }
+                    ?.registeredRole
+                    ?.value,
+            )
+        }
+
+    return options.map { option ->
+        val key = option.proposition?.firstNightPairInformationKey() ?: return@map option
+        val truth = healthyTruths[key]
+        val spyRegistrationRole = truth?.spyRegisteredRoleEnName
+        val recluseRegistrationRole = truth?.recluseRegisteredRoleEnName
+        option.copy(
+            isTruthful = truth != null,
+            misinformationPressure = if (truth != null) 0 else option.misinformationPressure.coerceAtLeast(1),
+            spyRegistersGood = spyRegistrationRole?.let { true },
+            spyRegisteredRoleEnName = spyRegistrationRole,
+            recluseRegistersEvil = recluseRegistrationRole?.let { true },
+            recluseRegisteredRoleEnName = recluseRegistrationRole,
+        )
+    }
+}
 
 internal data class ClocktowerDecisionOption(
     val label: String,

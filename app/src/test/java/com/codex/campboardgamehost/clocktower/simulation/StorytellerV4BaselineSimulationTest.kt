@@ -5,7 +5,6 @@ import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
@@ -43,7 +42,7 @@ private data class StorytellerV4BaselineReport(
         appendLine("STORYTELLER_V4_BASELINE_START")
         appendLine("Sample size: $sampleSize")
         appendLine()
-        appendLine("Drunk shown-role distribution:")
+        appendLine("Committed Drunk shown-role distribution:")
         setup.shownRoleCounts.toSortedMap().forEach { (role, count) ->
             appendLine("- $role: $count (${percentage(count, sampleSize)})")
         }
@@ -68,6 +67,7 @@ private data class StorytellerV4BaselineReport(
 
 private object StorytellerV4BaselineSimulator {
     private val allRoleDefinitions = TroubleBrewingFixtures.fullRoleDefinitions()
+    private val drunk = RoleId("Drunk")
     private val setupRoleIds = setOf(
         "Chef",
         "Empath",
@@ -110,14 +110,34 @@ private object StorytellerV4BaselineSimulator {
                 illegalPlans += 1
             }
 
-            val shownRole = selected.decisions
-                .filterIsInstance<StorytellerDecision.DrunkShownRole>()
-                .single()
-                .role
-                .value
+            val shownRole = requireNotNull(game.players.single { it.actualRole == drunk }.shownRole).value
             shownRoles[shownRole] = shownRoles.getOrDefault(shownRole, 0) + 1
 
-            val template = selected.decisions.joinToString("|") { it.toString() }
+            val template = buildList {
+                addAll(selected.decisions.map { decision -> "decision:$decision" })
+                addAll(
+                    selected.observations
+                        .sortedWith(
+                            compareBy(
+                                { it.sourceSeat },
+                                { it.perceivedRole.value },
+                                { it.shownRole?.value.orEmpty() },
+                                { it.candidateSeats.sorted().joinToString(",") },
+                            ),
+                        )
+                        .map { observation ->
+                            listOf(
+                                "observation",
+                                observation.sourceSeat.toString(),
+                                observation.perceivedRole.value,
+                                observation.shownRole?.value.orEmpty(),
+                                observation.candidateSeats.sorted().joinToString(","),
+                                observation.reliability.name,
+                                observation.semanticTruth.name,
+                            ).joinToString(":")
+                        },
+                )
+            }.joinToString("|")
             templates[template] = templates.getOrDefault(template, 0) + 1
             if (template == previousTemplate) {
                 repeatedTransitions += 1

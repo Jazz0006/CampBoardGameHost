@@ -10,6 +10,7 @@ import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.MurmurHash3
+import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
@@ -17,58 +18,66 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.domain.kind
 import com.codex.campboardgamehost.clocktower.recommendation.NaturalPairInformationCandidateGenerator
+import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
+import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 
 internal object SetupCandidateGenerator {
     private const val candidateSchemaVersion = "setup-v1"
     private val fortuneTeller = RoleId("Fortune Teller")
     private val drunk = RoleId("Drunk")
+    private val librarian = RoleId("Librarian")
     private val investigator = RoleId("Investigator")
+    private val pairInformationRoles = setOf(librarian, investigator)
 
     fun generateClueCandidates(
         game: GameState,
         roleDefinitions: List<RoleDefinition>,
     ): List<DecisionCandidate<SetupClueOutcome>> = buildList {
-        addAll(generateDrunkCandidates(game, roleDefinitions))
         addAll(generatePairInformationCandidates(game))
         addAll(generateRedHerringCandidates(game))
         addAll(generateDemonBluffCandidates(game, roleDefinitions))
     }.sortedBy { it.candidateId }
 
+    /**
+     * Legacy compatibility surface for historical Drunk-Investigator setup data.
+     * New aggregate setup recommendation no longer calls this generator.
+     */
     fun generateDrunkCandidates(
         game: GameState,
         roleDefinitions: List<RoleDefinition>,
     ): List<DecisionCandidate<SetupClueOutcome>> {
         val drunkPlayer = game.players.firstOrNull { it.actualRole == drunk } ?: return emptyList()
+        if (drunkPlayer.shownRole != investigator) return emptyList()
         val scriptRoles = scriptRoles(game, roleDefinitions)
-        val inPlayRoles = game.players.map { it.actualRole }.toSet()
-        return drunkDecisionOptions(game, scriptRoles, inPlayRoles).map { decisions ->
-            val shown = decisions.filterIsInstance<StorytellerDecision.DrunkShownRole>().single()
-            val investigatorInfo = decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().singleOrNull()
-            val familyId = drunkShownRoleFamily(decisions) ?: "drunk-shown-role"
-            val canonical = buildList {
-                add(shown.role.value)
-                add(investigatorInfo?.shownMinion?.value.orEmpty())
-                add(investigatorInfo?.candidateSeats?.sorted()?.joinToString(",").orEmpty())
-            }.joinToString("|")
+        return drunkInformationOptions(game, scriptRoles).map { decisions ->
+            val investigatorInfo = decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().single()
+            val canonical = listOf(
+                investigatorInfo.shownMinion.value,
+                investigatorInfo.candidateSeats.sorted().joinToString(","),
+            ).joinToString("|")
             DecisionCandidate<SetupClueOutcome>(
-                candidateId = stableId("drunk", canonical),
-                candidateFamilyId = familyId,
-                outcome = SetupClueOutcome.DrunkShownRole(shown.role, investigatorInfo),
+                candidateId = stableId("drunk-investigator-info", canonical),
+                candidateFamilyId = "drunk-investigator-info",
+                outcome = SetupClueOutcome.DrunkShownRole(drunkPlayer.shownRole, investigatorInfo),
                 abilityState = AbilityState.MALFUNCTIONING_DRUNK,
                 truthRelation = TruthRelation.NOT_APPLICABLE,
                 effects = listOf(
-                    EffectDraft.Reminder(drunkPlayer.seat, "drunk-shown-role:${shown.role.value}"),
+                    EffectDraft.Reminder(drunkPlayer.seat, "drunk-investigator-info"),
                 ),
-                metadata = metadata("drunk-shown-role", setOf("setup", "drunk")),
+                metadata = metadata("drunk-investigator-info", setOf("setup", "drunk", "information")),
             )
         }.toList()
     }
 
     fun generatePairInformationCandidates(game: GameState): List<DecisionCandidate<SetupClueOutcome>> = game.players
         .asSequence()
-        .filter { it.actualRole == RoleId("Librarian") || it.actualRole == investigator }
-        .flatMap { source ->
-            NaturalPairInformationCandidateGenerator.generate(game, source.seat, source.actualRole).asSequence()
+        .mapNotNull { source ->
+            source.perceivedPairInformationRole()?.let { abilityRole -> source to abilityRole }
+        }
+        .flatMap { (source, abilityRole) ->
+            NaturalPairInformationCandidateGenerator
+                .generateHealthyInformationSpace(game, source.seat, abilityRole)
+                .asSequence()
         }
         .map { candidate ->
             DecisionCandidate<SetupClueOutcome>(
@@ -141,14 +150,18 @@ internal object SetupCandidateGenerator {
         val scriptRoles = scriptRoles(game, roleDefinitions)
         val inPlayRoles = game.players.map { it.actualRole }.toSet()
         if (lockedDecisions.groupingBy { it.kind() }.eachCount().any { it.value > 1 }) return emptySequence()
+        if (lockedDecisions.any { it is StorytellerDecision.DrunkShownRole }) return emptySequence()
         val lockedRedHerring = lockedDecisions.filterIsInstance<StorytellerDecision.RedHerring>().singleOrNull()
-        val lockedDrunkDecisions = lockedDecisions.filter {
-            it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
-        }
+        val lockedDrunkDecisions = lockedDecisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>()
         val lockedDemonBluffs = lockedDecisions.filterIsInstance<StorytellerDecision.DemonBluffs>().singleOrNull()
         val redHerringOptions = redHerringOptions(game).filter { lockedRedHerring == null || it == lockedRedHerring }
-        val drunkOptions = drunkDecisionOptions(game, scriptRoles, inPlayRoles)
-            .filter { option -> lockedDrunkDecisions.all { it in option } }
+        val drunkOptions = if (lockedDrunkDecisions.isEmpty()) {
+            sequenceOf(emptyList())
+        } else {
+            val drunkPlayer = game.players.firstOrNull { it.actualRole == drunk }
+            if (drunkPlayer?.shownRole != investigator) return emptySequence()
+            sequenceOf(lockedDrunkDecisions)
+        }
         val demonBluffOptions = demonBluffOptions(game, scriptRoles, inPlayRoles)
             .filter { lockedDemonBluffs == null || it == lockedDemonBluffs }
 
@@ -179,7 +192,7 @@ internal object SetupCandidateGenerator {
         generatePlans(game, roleDefinitions, lockedDecisions).map(::planCandidate)
 
     fun planCandidate(plan: CandidatePlan): DecisionCandidate<SetupClueOutcome.FullPlan> {
-        val familyId = drunkShownRoleFamily(plan.decisions) ?: "setup-plan"
+        val familyId = drunkInformationFamily(plan.decisions) ?: "setup-plan"
         return DecisionCandidate(
             candidateId = stableId("setup-plan", canonicalPlan(plan.decisions)),
             candidateFamilyId = familyId,
@@ -190,12 +203,10 @@ internal object SetupCandidateGenerator {
         )
     }
 
-    internal fun drunkShownRoleFamily(decisions: List<StorytellerDecision>): String? = decisions
-        .filterIsInstance<StorytellerDecision.DrunkShownRole>()
-        .singleOrNull()
-        ?.role
-        ?.value
-        ?.let { role -> "drunk-shown-role:$role" }
+    internal fun drunkInformationFamily(decisions: List<StorytellerDecision>): String? =
+        decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>()
+            .singleOrNull()
+            ?.let { "drunk-investigator-info" }
 
     private fun scriptRoles(game: GameState, roleDefinitions: List<RoleDefinition>): List<RoleDefinition> =
         roleDefinitions.filter { game.script in it.scriptIds }.distinctBy(RoleDefinition::id)
@@ -227,6 +238,18 @@ internal object SetupCandidateGenerator {
     private fun DecisionCandidate<*>.sourceAbility(): RoleId =
         (effects.single() as EffectDraft.PlayerInformation).sourceAbility
 
+    private fun PlayerState.perceivedPairInformationRole(): RoleId? {
+        val perceivedRole = AbilityFunctioningSemantics.perceivedRole(
+            AbilitySubject(
+                actualRole = actualRole.value,
+                shownRole = shownRole?.value,
+                isPoisoned = poisoned,
+                isAlive = alive,
+            ),
+        )?.let(::RoleId)
+        return perceivedRole?.takeIf { it in pairInformationRoles }
+    }
+
     private fun redHerringOptions(game: GameState): List<StorytellerDecision.RedHerring?> {
         val hasFortuneTeller = game.players.any { it.actualRole == fortuneTeller }
         if (!hasFortuneTeller) return listOf(null)
@@ -236,39 +259,28 @@ internal object SetupCandidateGenerator {
             .map { StorytellerDecision.RedHerring(it.seat) }
     }
 
-    private fun drunkDecisionOptions(
+    private fun drunkInformationOptions(
         game: GameState,
         scriptRoles: List<RoleDefinition>,
-        inPlayRoles: Set<RoleId>,
     ): Sequence<List<StorytellerDecision>> {
-        val hasDrunk = game.players.any { it.actualRole == drunk }
-        if (!hasDrunk) return sequenceOf(emptyList())
+        val drunkPlayer = game.players.firstOrNull { it.actualRole == drunk }
+            ?: return sequenceOf(emptyList())
+        if (drunkPlayer.shownRole != investigator) return sequenceOf(emptyList())
 
-        val shownRoleOptions = scriptRoles
-            .filter { it.type == CharacterType.TOWNSFOLK }
-            .filterNot { it.id in inPlayRoles }
         val minionRoles = scriptRoles.filter { it.type == CharacterType.MINION }.map { it.id }
         val candidatePairs = unorderedSeatPairs(game.players.map { it.seat }.sorted())
 
         return sequence {
-            for (shownRole in shownRoleOptions) {
-                val shownRoleDecision = StorytellerDecision.DrunkShownRole(shownRole.id)
-                if (shownRole.id != investigator) {
-                    yield(listOf(shownRoleDecision))
-                    continue
-                }
-                for (minionRole in minionRoles) {
-                    for (pair in candidatePairs) {
-                        yield(
-                            listOf(
-                                shownRoleDecision,
-                                StorytellerDecision.DrunkInvestigatorInfo(
-                                    shownMinion = minionRole,
-                                    candidateSeats = pair,
-                                ),
+            for (minionRole in minionRoles) {
+                for (pair in candidatePairs) {
+                    yield(
+                        listOf(
+                            StorytellerDecision.DrunkInvestigatorInfo(
+                                shownMinion = minionRole,
+                                candidateSeats = pair,
                             ),
-                        )
-                    }
+                        ),
+                    )
                 }
             }
         }

@@ -38,6 +38,28 @@ class DynamicCandidateGeneratorTest {
     }
 
     @Test
+    fun `numeric generation treats every registration-valid value as truthful`() {
+        val evaluations = DynamicCandidateGenerator.generateNumeric(
+            UnreliableNumberContext(
+                trueValue = 0,
+                truthfulValues = setOf(0, 1),
+                minimumValue = 0,
+                maximumValue = 2,
+            ),
+            poisonedContext,
+        )
+
+        assertTrue(evaluations.filter { it.candidate.outcome.value in setOf(0, 1) }.all {
+            it.candidate.candidateFamilyId == "malfunction-truth" &&
+                it.candidate.truthRelation == TruthRelation.TRUE_TO_ACTUAL_STATE
+        })
+        assertTrue(evaluations.filter { it.candidate.outcome.value == 2 }.all {
+            it.candidate.candidateFamilyId == "malfunction-falsehood-numeric" &&
+                it.candidate.truthRelation == TruthRelation.FALSE_TO_ACTUAL_STATE
+        })
+    }
+
+    @Test
     fun `categorical and pair information produce typed stable candidates`() {
         val categorical = DynamicCandidateGenerator.generateCategorical(
             listOf(

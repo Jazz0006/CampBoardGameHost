@@ -8,14 +8,15 @@ import java.io.File
 /** Coarse App-root completion-transaction guard; store semantics are owned by typed persistence tests. */
 class TroubleBrewingCompletionRotationHistoryWiringTest {
     @Test
-    fun `only completed Trouble Brewing with committed provenance reaches rotation history`() {
+    fun `only completed Trouble Brewing with committed completion record reaches rotation history`() {
         val helper = functionBlock(appSource(), "fun persistCompletedTroubleBrewingSetupIfNeeded()")
 
         assertTrue(helper.contains("if (currentGameKind != GameKind.Clocktower) return true"))
         assertTrue(helper.contains("if (currentClocktowerScript != ClocktowerScript.TroubleBrewing) return true"))
         assertTrue(helper.contains("if (gameOutcome == null) return true"))
-        assertTrue(helper.contains("committedTroubleBrewingSetupSelection ?: return true"))
+        assertTrue(helper.contains("committedTroubleBrewingSetupRotationRecord ?: return true"))
         assertTrue(helper.contains(".recordCompletedGame("))
+        assertTrue(helper.contains("record = record"))
     }
 
     @Test

@@ -2114,6 +2114,7 @@ internal fun ClocktowerJudgeScreen(
     fun recommendedUnreliablePairInformationOptions(
         ability: ClocktowerPairInformationAbility,
         actor: PlayerCard,
+        completeSelectionDomain: Boolean = false,
     ): List<ClocktowerDisplayOption> {
         val roleTeam = when (ability) {
             ClocktowerPairInformationAbility.Washerwoman -> ClocktowerTeam.Townsfolk
@@ -2152,13 +2153,49 @@ internal fun ClocktowerJudgeScreen(
                 )
             }
         }
-        val candidates = effects.map { effect ->
-            val namedPlayers = listOfNotNull(effect.target, effect.decoy)
-            val truthful = if (effect.shownRole == null) {
-                cards.none { it.clocktowerTeam == roleTeam }
+        fun propositionFor(effect: PairInformationEffect): InformationProposition =
+            if (effect.shownRole != null && effect.target != null && effect.decoy != null) {
+                InformationProposition.AnyOf(listOf(
+                    InformationProposition.RoleAt(cards.indexOf(effect.target) + 1, RoleId(effect.shownRole.enName)),
+                    InformationProposition.RoleAt(cards.indexOf(effect.decoy) + 1, RoleId(effect.shownRole.enName)),
+                ))
             } else {
-                namedPlayers.any { it.clocktowerRole?.enName == effect.shownRole.enName }
+                InformationProposition.AllOf(roles.map { InformationProposition.RoleInPlay(RoleId(it.enName), false) })
             }
+        val sourceSeat = cards.indexOf(actor) + 1
+        val projectedSemanticsById = projectFirstNightPairInformationOptions(
+            phase = phase,
+            roleEnName = ability.name,
+            sourceSeat = sourceSeat,
+            game = cards.toClocktowerGameState(script, gameSeed, poisonTarget),
+            roleDefinitions = clocktowerRoleDefinitionsForScript(script),
+            options = effects.map { effect ->
+                ClocktowerDisplayOption(
+                    label = effect.id,
+                    displayKind = ClocktowerDisplayKind.EitherOne,
+                    displayTitle = ability.name,
+                    displayPrimary = null,
+                    displaySecondary = null,
+                    displayFooter = null,
+                    proposition = propositionFor(effect),
+                    isTruthful = false,
+                    misinformationPressure = 1,
+                )
+            },
+        ).associateBy(ClocktowerDisplayOption::label)
+        val projectedEffects = effects.map { effect ->
+            val semantics = projectedSemanticsById.getValue(effect.id)
+            effect.copy(
+                registration = if (semantics.recluseRegistersEvil == true) {
+                    PairInformationRegistration.RECLUSE_AS_EVIL_ROLE
+                } else {
+                    PairInformationRegistration.NONE
+                },
+            )
+        }
+        val candidates = projectedEffects.map { effect ->
+            val namedPlayers = listOfNotNull(effect.target, effect.decoy)
+            val truthful = projectedSemanticsById.getValue(effect.id).isTruthful
             val targetMetadata = effect.target?.clocktowerRole?.enName
                 ?.let(::RoleId)
                 ?.let(TroubleBrewingRecommendationMetadata::forRole)
@@ -2171,7 +2208,7 @@ internal fun ClocktowerJudgeScreen(
                 ?.let(TroubleBrewingRecommendationMetadata::forRole)
             PairInformationCandidate(
                 id = effect.id,
-                registration = PairInformationRegistration.NONE,
+                registration = effect.registration,
                 isTruthful = truthful,
                 targetExposure = targetMetadata?.exposureSensitivity ?: 0,
                 decoyExposure = decoyMetadata?.exposureSensitivity ?: 0,
@@ -2189,10 +2226,19 @@ internal fun ClocktowerJudgeScreen(
                 historyPressure = informationHistoryPressure(effect.target) + informationHistoryPressure(effect.decoy),
             )
         }
-        val effectsById = effects.associateBy(PairInformationEffect::id)
-        return recommendationCoordinator.recommendPair(candidates).mapNotNull { recommendation ->
-            val candidate = candidates.first { it.id == recommendation.candidateId }
-            val effect = effectsById[recommendation.candidateId] ?: return@mapNotNull null
+        val effectsById = projectedEffects.associateBy(PairInformationEffect::id)
+        val recommendations = recommendationCoordinator.recommendPair(candidates)
+        val recommendationsByCandidateId = recommendations.associateBy { it.candidateId }
+        val candidatesById = candidates.associateBy(PairInformationCandidate::id)
+        val candidateIds = if (completeSelectionDomain) {
+            candidates.map(PairInformationCandidate::id)
+        } else {
+            recommendations.map { it.candidateId }
+        }
+        return candidateIds.mapNotNull { candidateId ->
+            val candidate = candidatesById[candidateId] ?: return@mapNotNull null
+            val effect = effectsById[candidateId] ?: return@mapNotNull null
+            val recommendation = recommendationsByCandidateId[candidateId]
             val noRoleText = when (ability) {
                 ClocktowerPairInformationAbility.Librarian -> text("没有外来者", "No Outsiders")
                 ClocktowerPairInformationAbility.Investigator -> text("没有爪牙", "No Minions")
@@ -2204,9 +2250,14 @@ internal fun ClocktowerJudgeScreen(
             } else {
                 null
             }
-            val warning = if (recommendation.warningIds.isNotEmpty()) text(" ⚠ 高压", " ⚠ high pressure") else ""
-            displayOption(
-                label = "${recommendationStyleLabel(recommendation.style)}：$roleText${seats?.let { " · $it" }.orEmpty()}$warning",
+            val warningIds = recommendation?.warningIds.orEmpty()
+            val warning = if (warningIds.isNotEmpty()) text(" ⚠ 高压", " ⚠ high pressure") else ""
+            val style = recommendation?.style ?: automaticStorytellerStyle
+            val recommendationPrefix = recommendation
+                ?.let { "${recommendationStyleLabel(it.style)}：" }
+                .orEmpty()
+            val option = displayOption(
+                label = "$recommendationPrefix$roleText${seats?.let { " · $it" }.orEmpty()}$warning",
                 kind = ClocktowerDisplayKind.EitherOne,
                 title = when (ability) {
                     ClocktowerPairInformationAbility.Washerwoman -> text("洗衣妇信息", "Washerwoman information")
@@ -2224,12 +2275,19 @@ internal fun ClocktowerJudgeScreen(
                 } else {
                     InformationProposition.AllOf(roles.map { InformationProposition.RoleInPlay(RoleId(it.enName), false) })
                 },
-                recommendationStyle = recommendation.style,
+                recommendationStyle = style,
                 isTruthful = candidate.isTruthful,
                 misinformationPressure = candidate.misinformationPressure,
-                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
-                reasonCodes = listOf("dynamic.pair-score"),
-                warningCodes = recommendation.warningIds,
+                isDefaultRecommendation = recommendation?.style == RecommendationStyle.BALANCED,
+                reasonCodes = if (recommendation == null) emptyList() else listOf("dynamic.pair-score"),
+                warningCodes = warningIds,
+            )
+            val semantics = projectedSemanticsById.getValue(effect.id)
+            option.copy(
+                spyRegistersGood = semantics.spyRegistersGood,
+                spyRegisteredRoleEnName = semantics.spyRegisteredRoleEnName,
+                recluseRegistersEvil = semantics.recluseRegistersEvil,
+                recluseRegisteredRoleEnName = semantics.recluseRegisteredRoleEnName,
             )
         }
     }
@@ -2708,6 +2766,13 @@ internal fun ClocktowerJudgeScreen(
                                 displayOptions = { actor ->
                                     recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
                                 },
+                                automaticSelectionOptions = { actor ->
+                                    recommendedUnreliablePairInformationOptions(
+                                        ClocktowerPairInformationAbility.Washerwoman,
+                                        actor,
+                                        completeSelectionDomain = true,
+                                    )
+                                },
                                 reliableDisplayOptions = { actor ->
                                     recommendedPairInformationOptions(ClocktowerPairInformationAbility.Washerwoman, actor)
                                 },
@@ -2730,6 +2795,13 @@ internal fun ClocktowerJudgeScreen(
                                 hostInstruction = text("轻拍图书管理员，示意睁眼。把结果只给他看；如果显示“没有外来者”，也只告诉他本人。", "Tap the Librarian to wake them. Show the result only to that player, including a No Outsiders result."),
                                 displayOptions = { actor ->
                                     recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
+                                },
+                                automaticSelectionOptions = { actor ->
+                                    recommendedUnreliablePairInformationOptions(
+                                        ClocktowerPairInformationAbility.Librarian,
+                                        actor,
+                                        completeSelectionDomain = true,
+                                    )
                                 },
                                 reliableDisplayOptions = { actor ->
                                     recommendedPairInformationOptions(ClocktowerPairInformationAbility.Librarian, actor)
@@ -2754,6 +2826,13 @@ internal fun ClocktowerJudgeScreen(
                                 displayOptions = { actor ->
                                     listOfNotNull(recommendedDrunkInvestigatorOption(actor)) +
                                         recommendedUnreliablePairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)
+                                },
+                                automaticSelectionOptions = { actor ->
+                                    recommendedUnreliablePairInformationOptions(
+                                        ClocktowerPairInformationAbility.Investigator,
+                                        actor,
+                                        completeSelectionDomain = true,
+                                    )
                                 },
                                 reliableDisplayOptions = { actor ->
                                     recommendedPairInformationOptions(ClocktowerPairInformationAbility.Investigator, actor)

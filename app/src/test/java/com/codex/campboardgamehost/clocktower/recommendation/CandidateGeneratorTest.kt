@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
@@ -11,15 +12,19 @@ import org.junit.Test
 
 class SetupCandidateGeneratorTest {
     @Test
-    fun `eight player fixture generates every legal combination`() {
+    fun `active setup generation excludes recommendation owned Drunk identity and information`() {
         val game = TroubleBrewingFixtures.eightPlayerExample()
         val roles = TroubleBrewingFixtures.roleDefinitions()
 
         val plans = SetupCandidateGenerator.generatePlans(game, roles).toList()
 
-        // 6 red herrings * (112 Investigator information options + Monk + Soldier) * 4 bluff sets.
-        assertEquals(2_736, plans.size)
+        assertTrue(plans.isNotEmpty())
         assertTrue(plans.all { PlanLegalityValidator.validate(game, roles, it).isEmpty() })
+        assertTrue(plans.all { plan ->
+            plan.decisions.none {
+                it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
+            }
+        })
     }
 
     @Test
@@ -40,34 +45,42 @@ class SetupCandidateGeneratorTest {
     }
 
     @Test
-    fun `drunk investigator options cover minion roles and unordered seat pairs`() {
-        val plans = SetupCandidateGenerator.generatePlans(
+    fun `legacy Drunk Investigator generator remains available only for compatibility`() {
+        val candidates = SetupCandidateGenerator.generateDrunkCandidates(
             TroubleBrewingFixtures.eightPlayerExample(),
             TroubleBrewingFixtures.roleDefinitions(),
         )
 
-        assertTrue(
-            plans.any { plan ->
-                plan.decisions
-                    .filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>()
-                    .singleOrNull()
-                    ?.let { it.shownMinion == RoleId("Poisoner") && it.candidateSeats == listOf(1, 4) } == true
-            },
-        )
+        assertTrue(candidates.isNotEmpty())
+        assertTrue(candidates.any { candidate ->
+            val outcome = candidate.outcome as SetupClueOutcome.DrunkShownRole
+            outcome.investigatorInformation?.let { info ->
+                info.shownMinion == RoleId("Poisoner") && info.candidateSeats == listOf(1, 4)
+            } == true
+        })
     }
 
     @Test
-    fun `full Trouble Brewing catalog exposes the expected search space`() {
-        val count = SetupCandidateGenerator.generatePlans(
+    fun `larger role catalog expands active setup space without reactivating legacy Drunk decisions`() {
+        val basicCount = SetupCandidateGenerator.generatePlans(
+            TroubleBrewingFixtures.eightPlayerExample(),
+            TroubleBrewingFixtures.roleDefinitions(),
+        ).count()
+        val fullPlans = SetupCandidateGenerator.generatePlans(
             TroubleBrewingFixtures.eightPlayerExample(),
             TroubleBrewingFixtures.fullRoleDefinitions(),
-        ).count()
+        ).toList()
 
-        assertEquals(117_810, count)
+        assertTrue(fullPlans.size > basicCount)
+        assertTrue(fullPlans.all { plan ->
+            plan.decisions.none {
+                it is StorytellerDecision.DrunkShownRole || it is StorytellerDecision.DrunkInvestigatorInfo
+            }
+        })
     }
 
     @Test
-    fun `locked decisions reduce generation to matching combinations`() {
+    fun `explicit legacy locked information is preserved for compatibility`() {
         val locked = listOf(
             StorytellerDecision.RedHerring(3),
             StorytellerDecision.DrunkInvestigatorInfo(RoleId("Poisoner"), listOf(1, 4)),

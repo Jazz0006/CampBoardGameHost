@@ -92,7 +92,7 @@ internal object DynamicCandidateGenerator {
     ): List<DecisionEvaluation<DynamicInformationOutcome.Number>> =
         (numberContext.minimumValue..numberContext.maximumValue).map { value ->
             val recommendation = MalfunctionPolicy.evaluate(numberContext, value, context.style)
-            val truthful = value == numberContext.trueValue
+            val truthful = value in numberContext.truthfulValues
             val candidate = candidate(
                 stableOptionId = value.toString(),
                 outcome = DynamicInformationOutcome.Number(value),
@@ -105,7 +105,7 @@ internal object DynamicCandidateGenerator {
                 candidate = candidate,
                 context = context,
                 totalScore = recommendation.totalScore,
-                pressure = abs(value - numberContext.trueValue),
+                pressure = numberContext.distanceFromTruth(value),
                 warnings = recommendation.warningIds,
                 explanations = recommendation.scoreItems.map { it.ruleId },
             )

@@ -24,8 +24,8 @@ class ImpairedInformationSemanticsContractTest {
         }
 
         assertTrue(
-            "Poisoned information should keep false information in the intended near-certain policy band.",
-            masses.all { it in 950_000L..990_000L },
+            "Poisoned information should strongly prefer false without making truth vanishingly rare.",
+            masses.all { it in 875_000L..925_000L },
         )
     }
 
@@ -42,8 +42,8 @@ class ImpairedInformationSemanticsContractTest {
         }
 
         assertTrue(
-            "Drunk information should keep false information in the intended near-certain policy band.",
-            masses.all { it in 950_000L..990_000L },
+            "Drunk information should strongly prefer false without making truth vanishingly rare.",
+            masses.all { it in 875_000L..925_000L },
         )
     }
 

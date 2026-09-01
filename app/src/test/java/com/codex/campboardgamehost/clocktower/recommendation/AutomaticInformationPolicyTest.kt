@@ -9,13 +9,13 @@ import org.junit.Test
 
 class DynamicInformationSelectionTest {
     @Test
-    fun `drunk and poisoned information share the same strong false preference`() {
+    fun `drunk and poisoned information share the same configurable false preference`() {
         RecommendationStyle.entries.forEach { style ->
             val drunk = probability(InformationReliability.DRUNK, style)
             val poisoned = probability(InformationReliability.POISONED, style)
 
             assertEquals("$style", drunk, poisoned, 0.0)
-            assertTrue("$style: impaired=$drunk", drunk in 0.95..0.99)
+            assertTrue("$style: impaired=$drunk", drunk in 0.88..0.92)
         }
     }
 
@@ -132,8 +132,8 @@ class DynamicInformationSelectionTest {
 
         val drunk = observed(InformationReliability.DRUNK)
         val poisoned = observed(InformationReliability.POISONED)
-        assertTrue("drunk=$drunk", drunk in 0.95..0.99)
-        assertTrue("poisoned=$poisoned", poisoned in 0.95..0.99)
+        assertTrue("drunk=$drunk", drunk in 0.88..0.92)
+        assertTrue("poisoned=$poisoned", poisoned in 0.88..0.92)
     }
 
     private fun probability(

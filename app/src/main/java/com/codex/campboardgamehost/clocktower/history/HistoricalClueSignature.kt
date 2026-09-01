@@ -30,7 +30,10 @@ data class HistoricalClueSignature(
 
     companion object {
         fun fromSetupPlan(game: GameState, plan: RecommendationPlan): HistoricalClueSignature {
-            val seats = plan.effectSignature.suspectedSeats.sorted()
+            val informationObservation = plan.observations.firstOrNull()
+            val seats = informationObservation?.candidateSeats
+                ?.sorted()
+                ?: plan.effectSignature.suspectedSeats.sorted()
             val alignmentPattern = seats
                 .mapNotNull { game.playerAt(it)?.actualAlignment?.name }
                 .sorted()
@@ -44,8 +47,8 @@ data class HistoricalClueSignature(
             }
             return HistoricalClueSignature(
                 decisionType = "setup-plan",
-                drunkShownRole = plan.effectSignature.drunkShownRole,
-                shownCharacter = plan.effectSignature.drunkInvestigatorShownMinion,
+                drunkShownRole = informationObservation?.perceivedRole ?: plan.effectSignature.drunkShownRole,
+                shownCharacter = informationObservation?.shownRole ?: plan.effectSignature.drunkInvestigatorShownMinion,
                 candidateAlignmentPattern = alignmentPattern,
                 candidateSeatDistance = distance,
                 redHerringRole = plan.effectSignature.redHerringSeat?.let(game::playerAt)?.actualRole,

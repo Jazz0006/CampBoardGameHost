@@ -9,12 +9,20 @@ internal data class UnreliableNumberContext(
     val maximumValue: Int,
     val previousShownValue: Int? = null,
     val pressureCostPerPoint: Int = 0,
+    val truthfulValues: Set<Int> = setOf(trueValue),
 ) {
     init {
         require(minimumValue <= maximumValue)
         require(trueValue in minimumValue..maximumValue)
+        require(truthfulValues.isNotEmpty())
+        require(trueValue in truthfulValues)
+        require(truthfulValues.all { it in minimumValue..maximumValue })
         require(previousShownValue == null || previousShownValue in minimumValue..maximumValue)
         require(pressureCostPerPoint >= 0)
+    }
+
+    fun distanceFromTruth(value: Int): Int = truthfulValues.minOf { truthfulValue ->
+        abs(value - truthfulValue)
     }
 }
 
@@ -59,7 +67,7 @@ internal object MalfunctionPolicy {
                 ?: ranked.first()
             selected += diverse
         }
-        if (selected.none { it.value == context.trueValue }) {
+        if (selected.none { it.value in context.truthfulValues }) {
             selected += evaluate(context, context.trueValue, RecommendationStyle.GENTLE)
         }
         return selected
@@ -75,7 +83,7 @@ internal object MalfunctionPolicy {
             if (delta != 0) items += UnreliableNumberScoreItem(ruleId, delta)
         }
 
-        val distanceFromTruth = abs(value - context.trueValue)
+        val distanceFromTruth = context.distanceFromTruth(value)
         when (style) {
             RecommendationStyle.GENTLE -> {
                 score("truth-distance", when (distanceFromTruth) { 0 -> 8; 1 -> 5; else -> -4 })
@@ -109,7 +117,12 @@ internal object MalfunctionPolicy {
         }
 
         val warnings = buildList {
-            if (value == context.maximumValue && context.trueValue == context.minimumValue) add("maximum-false-pressure")
+            if (
+                value == context.maximumValue &&
+                context.truthfulValues.all { it == context.minimumValue }
+            ) {
+                add("maximum-false-pressure")
+            }
             if (context.previousShownValue != null && abs(value - context.previousShownValue) >= 2) add("large-history-jump")
         }
         return UnreliableNumberRecommendation(

@@ -5,21 +5,9 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupDealPlan
 
 internal object TroubleBrewingSetupRecommendationLock {
+    @Suppress("UNUSED_PARAMETER")
     fun lockedDecisions(
         dealPlan: TroubleBrewingSetupDealPlan,
         roleDefinitions: List<RoleDefinition>,
-    ): List<StorytellerDecision> {
-        val shownExternalId = dealPlan.selectedDrunkShownRole ?: return emptyList()
-        val matchingRoles = roleDefinitions.filter { definition ->
-            definition.id.value
-                .filter(Char::isLetterOrDigit)
-                .lowercase() == shownExternalId
-        }
-        require(matchingRoles.size == 1) {
-            "Selected Trouble Brewing Drunk shown role '$shownExternalId' must resolve uniquely."
-        }
-        return listOf(
-            StorytellerDecision.DrunkShownRole(matchingRoles.single().id),
-        )
-    }
+    ): List<StorytellerDecision> = emptyList()
 }

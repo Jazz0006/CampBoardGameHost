@@ -1,7 +1,13 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLegality
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicStatus
 import org.junit.Assert.assertEquals
@@ -90,6 +96,54 @@ class ClocktowerHostSelectionSemanticsCharacterizationTest {
     }
 
     @Test
+    fun `first night drunk shown empath preserves every registration-valid numeric truth`() {
+        val players = listOf(
+            player(1, "Recluse", CharacterType.OUTSIDER),
+            player(2, "Drunk", CharacterType.OUTSIDER, shownRole = "Empath"),
+            player(3, "Chef", CharacterType.TOWNSFOLK),
+            player(4, "Poisoner", CharacterType.MINION),
+            player(5, "Imp", CharacterType.DEMON),
+        )
+        val options = (0..2).map { value ->
+            ClocktowerDisplayOption(
+                label = value.toString(),
+                displayKind = ClocktowerDisplayKind.Number,
+                displayTitle = "Empath information",
+                displayPrimary = value.toString(),
+                displaySecondary = null,
+                displayFooter = null,
+                proposition = InformationProposition.NumericResult(
+                    metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+                    sourceSeat = 2,
+                    value = value,
+                    subjectSeats = listOf(1, 3),
+                ),
+                isTruthful = value == 0,
+                misinformationPressure = value,
+            )
+        }
+
+        val firstNight = projectFirstNightNumericInformationOptions(
+            phase = ClocktowerPhase.FirstNight,
+            roleEnName = "Empath",
+            sourceSeat = 2,
+            players = players,
+            options = options,
+        )
+        val otherNight = projectFirstNightNumericInformationOptions(
+            phase = ClocktowerPhase.Night,
+            roleEnName = "Empath",
+            sourceSeat = 2,
+            players = players,
+            options = options,
+        )
+
+        assertEquals(setOf(0, 1), firstNight.filter { it.isTruthful }.map { it.displayPrimary!!.toInt() }.toSet())
+        assertEquals(mapOf(0 to 0, 1 to 0, 2 to 1), firstNight.associate { it.displayPrimary!!.toInt() to it.misinformationPressure })
+        assertEquals(options, otherNight)
+    }
+
+    @Test
     fun `registration pool keeps actual and special family identity and ranking`() {
         val actual = ClocktowerRegistrationRecommendationOption(
             label = "actual",
@@ -115,4 +169,21 @@ class ClocktowerHostSelectionSemanticsCharacterizationTest {
         assertEquals(listOf(QualityTier.RECOMMENDED, QualityTier.ACCEPTABLE_WITH_WARNING), ranked.map { it.qualityTier })
         assertEquals(listOf("special", "actual"), ranked.map { it.payload.label })
     }
+
+    private fun player(
+        seat: Int,
+        role: String,
+        type: CharacterType,
+        shownRole: String = role,
+    ) = PlayerState(
+        seat = seat,
+        name = "Player $seat",
+        actualRole = RoleId(role),
+        actualAlignment = when (type) {
+            CharacterType.TOWNSFOLK, CharacterType.OUTSIDER -> Alignment.GOOD
+            CharacterType.MINION, CharacterType.DEMON -> Alignment.EVIL
+        },
+        actualType = type,
+        shownRole = RoleId(shownRole),
+    )
 }

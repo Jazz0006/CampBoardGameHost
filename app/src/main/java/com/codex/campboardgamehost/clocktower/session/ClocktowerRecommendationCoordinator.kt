@@ -72,7 +72,7 @@ internal class ClocktowerRecommendationCoordinator(
                         ),
                         16,
                     ).padStart(16, '0'),
-                    familyId = SetupCandidateGenerator.drunkShownRoleFamily(plan.decisions) ?: "setup-plan",
+                    familyId = SetupCandidateGenerator.drunkInformationFamily(plan.decisions) ?: "setup-plan",
                     legality = UnifiedCandidateLegality.LEGAL,
                     epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
                     qualityTier = plan.qualityTier,

@@ -4,6 +4,7 @@ import android.content.Context
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetSelection
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationHistory
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecordFactory
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -14,9 +15,17 @@ internal class TroubleBrewingSetupRotationHistoryStore(
     fun recordCompletedGame(
         gameId: String,
         selection: TroubleBrewingSetupPresetSelection,
+    ): Boolean = recordCompletedGame(
+        gameId = gameId,
+        record = TroubleBrewingSetupRotationRecordFactory.fromSelection(selection),
+    )
+
+    fun recordCompletedGame(
+        gameId: String,
+        record: TroubleBrewingSetupRotationRecord,
     ): Boolean {
         require(gameId.isNotBlank()) { "Trouble Brewing rotation-history game ID cannot be blank." }
-        val record = selection.toRotationRecord()
+        TroubleBrewingSetupRotationRecordFactory.validate(record)
         val existing = decodeOrEmpty(readRaw())
         val existingForGame = existing.firstOrNull { it.gameId == gameId }
         if (existingForGame != null) {
@@ -52,45 +61,6 @@ internal class TroubleBrewingSetupRotationHistoryStore(
             .take(MAX_GAMES_PER_PLAYER_COUNT)
             .toList()
         return TroubleBrewingSetupRotationHistory(recentGames = records)
-    }
-
-    private fun TroubleBrewingSetupPresetSelection.toRotationRecord(): TroubleBrewingSetupRotationRecord {
-        require(datasetId.isNotBlank()) { "Trouble Brewing setup selection dataset ID cannot be blank." }
-        require(schemaVersion > 0) { "Trouble Brewing setup selection schema version must be positive." }
-        require(presetId == preset.id) { "Trouble Brewing setup selection preset provenance is inconsistent." }
-        require(playerCount == preset.playerCount) { "Trouble Brewing setup selection player count is inconsistent." }
-
-        val realNonDemonRoleIds = (preset.townsfolk + preset.outsiders + preset.minions).toSet()
-        require(realNonDemonRoleIds.size == playerCount - 1) {
-            "Trouble Brewing completed setup must contain exactly playerCount - 1 unique non-Demon roles."
-        }
-        val hasDrunk = DRUNK_EXTERNAL_ID in preset.outsiders
-        if (hasDrunk) {
-            require(!selectedDrunkShownRole.isNullOrBlank()) {
-                "Completed Trouble Brewing Drunk setup requires its selector-owned shown role."
-            }
-            require(selectedDrunkShownRole in preset.drunkAsOptions) {
-                "Completed Trouble Brewing Drunk shown role must belong to the selected preset options."
-            }
-            require(selectedDrunkShownRole !in realNonDemonRoleIds && selectedDrunkShownRole !in preset.demons) {
-                "Completed Trouble Brewing Drunk shown role must not be an actual in-play role."
-            }
-        } else {
-            require(selectedDrunkShownRole == null) {
-                "Completed non-Drunk Trouble Brewing setup must not carry a Drunk shown role."
-            }
-        }
-
-        return TroubleBrewingSetupRotationRecord(
-            datasetId = datasetId,
-            schemaVersion = schemaVersion,
-            presetId = presetId,
-            playerCount = playerCount,
-            realNonDemonRoleIds = realNonDemonRoleIds,
-            minionRoleIds = preset.minions.toSet(),
-            primaryStyleTag = preset.styleTags.firstOrNull(),
-            selectedDrunkShownRole = selectedDrunkShownRole,
-        )
     }
 
     private fun trimPerPlayerCount(entries: List<PersistedRotationEntry>): List<PersistedRotationEntry> {
@@ -151,14 +121,7 @@ internal class TroubleBrewingSetupRotationHistoryStore(
                     minionRoleIds = entry.requiredStringSet("minionRoleIds"),
                     primaryStyleTag = entry.nullableString("primaryStyleTag"),
                     selectedDrunkShownRole = entry.nullableString("selectedDrunkShownRole"),
-                )
-                require(record.datasetId.isNotBlank()) { "Persisted Trouble Brewing dataset ID cannot be blank." }
-                require(record.schemaVersion > 0) { "Persisted Trouble Brewing schema version must be positive." }
-                require(record.presetId.isNotBlank()) { "Persisted Trouble Brewing preset ID cannot be blank." }
-                require(record.playerCount > 0) { "Persisted Trouble Brewing player count must be positive." }
-                require(record.realNonDemonRoleIds.size == record.playerCount - 1) {
-                    "Persisted Trouble Brewing non-Demon role count is inconsistent."
-                }
+                ).also(TroubleBrewingSetupRotationRecordFactory::validate)
                 add(
                     PersistedRotationEntry(
                         gameId = entry.requiredString("gameId").also {
@@ -185,7 +148,6 @@ internal class TroubleBrewingSetupRotationHistoryStore(
         const val MAX_GAMES_PER_PLAYER_COUNT = 5
         private const val PREFS_NAME = "camp_board_game_host"
         private const val STORAGE_KEY = "tb_setup_rotation_history_v1"
-        private const val DRUNK_EXTERNAL_ID = "drunk"
 
         fun fromContext(context: Context): TroubleBrewingSetupRotationHistoryStore {
             val preferences = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
