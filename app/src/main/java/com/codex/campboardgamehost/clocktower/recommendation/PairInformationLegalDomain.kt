@@ -22,7 +22,6 @@ import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemant
  * absent from this type. Recommendation and manual presentation are downstream consumers.
  */
 internal object PairInformationLegalDomain {
-    // Same stable schema as the legacy pair recommender.
     private const val candidateSchemaVersion = "pair-information-ability-v1"
 
     fun generate(
