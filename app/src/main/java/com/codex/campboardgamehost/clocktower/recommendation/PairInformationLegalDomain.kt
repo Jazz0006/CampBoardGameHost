@@ -18,7 +18,8 @@ import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemant
  * false-but-well-formed statements are selectable: functioning abilities are truth-only, while
  * Drunk/Poisoned abilities may use the complete legal display space.
  *
- * Recommendation score/style is deliberately absent from this type.
+ * Recommendation score/style and legacy Automatic/Manual presentation state are deliberately
+ * absent from this type. Recommendation and manual presentation are downstream consumers.
  */
 internal object PairInformationLegalDomain {
     // Preserve the pre-UX-R2 stable candidate IDs so changing authority does not reshuffle legacy selection.
