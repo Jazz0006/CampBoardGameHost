@@ -39,8 +39,7 @@ data class UnifiedSelectionCandidate<T>(
 
     val selectableInAssisted: Boolean
         get() = legality == UnifiedCandidateLegality.LEGAL &&
-            epistemicStatus == UnifiedEpistemicStatus.VERIFIED &&
-            qualityTier != QualityTier.REJECTED
+            epistemicStatus == UnifiedEpistemicStatus.VERIFIED
 
     val selectableInAuto: Boolean
         get() = selectableInAssisted &&
