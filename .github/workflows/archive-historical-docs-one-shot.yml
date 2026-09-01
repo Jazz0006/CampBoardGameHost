@@ -1,0 +1,71 @@
+name: Archive historical docs one-shot
+
+on:
+  push:
+    branches:
+      - codex/clue-ux-r2-manual-pair-selector
+    paths:
+      - .github/workflows/archive-historical-docs-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  archive-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact triggering head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Verify exact branch and source trees
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          remote_head="$(git ls-remote origin refs/heads/codex/clue-ux-r2-manual-pair-selector | cut -f1)"
+          test "${remote_head}" = "${GITHUB_SHA}"
+          test "$(git rev-parse HEAD:docs)" = "d7c04feebf6897d2f59fa221622f55b2b090c72b"
+          test "$(git rev-parse HEAD:AGENTS.md)" = "83b398bdaa4370ea9466253aeadaed0102c04635"
+
+      - name: Apply explicit archive move set
+        run: python .github/scripts/archive_historical_docs_20260901.py
+
+      - name: Audit archive diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          unexpected="$(git -c core.quotePath=false diff --name-only | grep -Ev '^(AGENTS\.md|docs/)' || true)"
+          test -z "${unexpected}"
+          test -f docs/README.md
+          test -f docs/archive/README.md
+          test -f docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-01_UX_R2_DECISION_FOUNDATION.md
+          test ! -f docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S6D_CLOSEOUT.md
+          test ! -f docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S7_PR_CLOSEOUT.md
+          test -f docs/archive/handoffs/NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S6D_CLOSEOUT.md
+          test -f docs/archive/deferred/storyteller_a4_zdd_prototype.md
+          count="$(find docs -maxdepth 1 -type f -name '*.md' | wc -l | tr -d ' ')"
+          test "${count}" = "19"
+
+      - name: Recheck remote head before push
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_head="$(git ls-remote origin refs/heads/codex/clue-ux-r2-manual-pair-selector | cut -f1)"
+          test "${remote_head}" = "${GITHUB_SHA}"
+
+      - name: Commit archive and self-clean one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/scripts/archive_historical_docs_20260901.py
+          git rm .github/workflows/archive-historical-docs-one-shot.yml
+          git add AGENTS.md docs
+          git diff --cached --check
+          git commit -m 'docs: archive completed historical development material'
+          git push origin HEAD:codex/clue-ux-r2-manual-pair-selector
