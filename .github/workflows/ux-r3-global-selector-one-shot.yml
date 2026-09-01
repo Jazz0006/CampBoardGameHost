@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   cutover:
-    if: github.event.head_commit.message == 'chore: run UX-R3 production cutover one-shot'
+    if: "${{ github.event.head_commit.message == 'chore: rerun UX-R3 production cutover one-shot' }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
