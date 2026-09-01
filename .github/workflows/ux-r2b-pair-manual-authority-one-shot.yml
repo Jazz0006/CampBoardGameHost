@@ -8,6 +8,7 @@ on:
       - .github/scripts/ux_r2b_pair_manual_authority_patch.py
       - app/src/main/java/com/codex/campboardgamehost/ClocktowerPairManualAuthority.kt
       - app/src/test/java/com/codex/campboardgamehost/ClocktowerInformationStepBuilderManualAuthorityTest.kt
+      - app/src/test/java/com/codex/campboardgamehost/clocktower/session/FirstNightInformationMigrationTest.kt
 
 permissions:
   contents: write
