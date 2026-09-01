@@ -21,6 +21,22 @@ class UnifiedSelectionPoolTest {
         })
     }
 
+    @Test fun `assisted selection keeps legal verified candidates independent of recommendation quality`() {
+        val pool = UnifiedSelectionPool(listOf(
+            candidate("recommended", QualityTier.RECOMMENDED, 100),
+            candidate("rejected-quality", QualityTier.REJECTED, 10),
+        ))
+
+        assertEquals(
+            listOf("recommended"),
+            pool.candidatesFor(SelectionExecutionPolicy.AUTO).map { it.candidateId },
+        )
+        assertEquals(
+            listOf("recommended", "rejected-quality"),
+            pool.candidatesFor(SelectionExecutionPolicy.ASSISTED).map { it.candidateId },
+        )
+    }
+
     @Test fun `ineligible and epistemically deferred candidates are selectable in neither policy`() {
         val pool = UnifiedSelectionPool(listOf(
             candidate("legal", QualityTier.RECOMMENDED, 2),
