@@ -350,6 +350,44 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         null
     }
+    val structuredChefActorSeat = step.actor
+        ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
+    val structuredChefProposition = (step.displayProposition as? InformationProposition.NumericResult)
+        ?.takeIf { it.metric == NumericMetric.ADJACENT_EVIL_PAIRS }
+    val structuredChefUiModel = if (
+        step.roleEnName == "Chef" &&
+        step.informationReliability != InformationReliability.RELIABLE &&
+        step.spyRegistrationKey == null &&
+        step.recluseRegistrationKey == null &&
+        structuredChefActorSeat != null &&
+        structuredChefProposition != null &&
+        step.numericMinimumValue != null &&
+        step.numericMaximumValue != null
+    ) {
+        prepareNumericInformationUiModel(
+            coordinator = recommendationCoordinator,
+            gameId = gameId,
+            phase = phase,
+            round = round,
+            sequence = sequence,
+            actorSeat = structuredChefActorSeat,
+            abilityRole = com.codex.campboardgamehost.clocktower.domain.RoleId("Chef"),
+            metric = NumericMetric.ADJACENT_EVIL_PAIRS,
+            subjectSeats = structuredChefProposition.subjectSeats,
+            trueValue = structuredChefProposition.value,
+            minimumValue = step.numericMinimumValue,
+            maximumValue = step.numericMaximumValue,
+            reliability = step.informationReliability,
+            recommendationStyle = if (automaticStorytellerInfo) automaticStorytellerStyle else RecommendationStyle.BALANCED,
+            revision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
+            recommendedValue = structuredEmpathRecommendedValue,
+            previousShownValue = step.previousShownNumber,
+            pressureCostPerPoint = 1,
+        )
+    } else {
+        null
+    }
+    val structuredNumberUiModel = structuredEmpathUiModel ?: structuredChefUiModel
 
     fun showRecommendedDisplayOption(option: ClocktowerDisplayOption) {
         onApplyRecommendedDisplayOption(option)
@@ -770,7 +808,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     Text(it, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                 }
 
-            structuredEmpathUiModel?.let { model ->
+            structuredNumberUiModel?.let { model ->
                 val template = structuredEmpathRecommendedOption
                     ?: displayedInformationOptions.firstOrNull()
                     ?: step.displayOptions.firstOrNull()
@@ -779,6 +817,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
                     automaticStorytellerInfo = automaticStorytellerInfo,
                     language = language,
+                    roleLabel = step.title,
                     onConfirmed = { confirmed, value ->
                         if (automaticDisplayOption != null) {
                             selectionAudit?.let { audit ->
@@ -805,7 +844,7 @@ internal fun ClocktowerNightStepCardLocalized(
                                 displayProposition = confirmed.draft.proposition,
                                 selectedInformationTruthful = structuredEmpathSelectionIsTruthful(value),
                                 informationDecisionConfirmation = confirmed,
-                                informationDecisionExpectedSnapshot = structuredEmpathUiModel.contextSnapshot,
+                                informationDecisionExpectedSnapshot = structuredNumberUiModel.contextSnapshot,
                                 displayOptions = emptyList(),
                                 recommendedDisplayOptions = emptyList(),
                             ),
@@ -824,7 +863,7 @@ internal fun ClocktowerNightStepCardLocalized(
 
             if (
                 pairRecommendationPresentation == null &&
-                structuredEmpathUiModel == null &&
+                structuredNumberUiModel == null &&
                 displayedInformationOptions.isNotEmpty() &&
                 (step.action != ClocktowerNightAction.FortuneTeller || showFortuneTellerDisplayOptions)
             ) {
@@ -1010,7 +1049,7 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             if (
-                structuredEmpathUiModel == null &&
+                structuredNumberUiModel == null &&
                 firstNightPool == null && step.displayOptions.isNotEmpty() &&
                 (step.action != ClocktowerNightAction.FortuneTeller || showFortuneTellerDisplayOptions)
             ) {
@@ -1039,7 +1078,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     }
                     RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
                 }
-            } else if (structuredEmpathUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
+            } else if (structuredNumberUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
                 OutlinedButton(
                     onClick = { onShowPlayerDisplay(step) },
                     modifier = Modifier.fillMaxWidth(),
