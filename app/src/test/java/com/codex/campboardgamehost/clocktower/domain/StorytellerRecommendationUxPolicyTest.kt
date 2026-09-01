@@ -14,4 +14,17 @@ class StorytellerRecommendationUxPolicyTest {
             assertEquals(RecommendationStyle.BALANCED, policy.recommendationStyle)
         }
     }
+
+    @Test
+    fun `legacy automatic preferences cannot restore automatic execution`() {
+        val legacyAutomaticModes = StorytellerAutomationMode.entries.filter { it.isAutomatic }
+        assertEquals(3, legacyAutomaticModes.size)
+
+        legacyAutomaticModes.forEach { legacyMode ->
+            val policy = StorytellerRecommendationUxPolicy.fromLegacyMode(legacyMode)
+
+            assertFalse(policy.automaticExecution)
+            assertEquals(RecommendationStyle.BALANCED, policy.recommendationStyle)
+        }
+    }
 }
