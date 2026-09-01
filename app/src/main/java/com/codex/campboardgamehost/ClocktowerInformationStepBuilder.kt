@@ -68,8 +68,8 @@ internal class ClocktowerInformationStepBuilder(
         }
         val actorAbilityUnreliable = actor != null && actorIsUnreliable(enName, actor)
         val unreliableOptions = actor?.takeIf { actorAbilityUnreliable }?.let(displayOptions).orEmpty()
-        val automaticSelectionDomain = actor
-            ?.takeIf { actorAbilityUnreliable && automaticStorytellerInfo }
+        val semanticSelectionDomain = actor
+            ?.takeIf { actorAbilityUnreliable }
             ?.let(automaticSelectionOptions)
             .orEmpty()
         val reliableRecommendations = actor?.takeUnless { actorAbilityUnreliable }?.let(reliableDisplayOptions).orEmpty()
@@ -113,7 +113,7 @@ internal class ClocktowerInformationStepBuilder(
                     option.isTruthful.toString(),
                 ).joinToString("|")
             }
-        val automaticInformationCandidates = automaticSelectionDomain
+        val automaticInformationCandidates = semanticSelectionDomain
             .takeIf { it.isNotEmpty() }
             ?.distinctBy(::clocktowerInformationCandidateId)
             ?: completeLegacyCandidates
