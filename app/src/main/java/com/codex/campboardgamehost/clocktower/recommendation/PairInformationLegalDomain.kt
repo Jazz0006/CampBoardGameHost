@@ -22,7 +22,6 @@ import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemant
  * absent from this type. Recommendation and manual presentation are downstream consumers.
  */
 internal object PairInformationLegalDomain {
-    // Preserve the pre-UX-R2 stable candidate IDs so changing authority does not reshuffle legacy selection.
     private const val candidateSchemaVersion = "pair-information-ability-v1"
 
     fun generate(
