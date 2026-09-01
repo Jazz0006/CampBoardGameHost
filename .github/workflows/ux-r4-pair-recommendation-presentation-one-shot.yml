@@ -1,0 +1,123 @@
+name: UX-R4 pair recommendation presentation one-shot
+
+on:
+  push:
+    branches:
+      - codex/ux-r4-unified-recommendation-presentation
+    paths:
+      - .github/workflows/ux-r4-pair-recommendation-presentation-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/ux-r4-unified-recommendation-presentation
+          fetch-depth: 0
+
+      - name: Verify bootstrap head and locked blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='codex/ux-r4-unified-recommendation-presentation'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/$branch | cut -f1)" = "$GITHUB_SHA"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt)" = 'c407765eeece2aafb420cc49a200ab2be98a0986'
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerRecommendationPresentationTest.kt)" = '930683d6cb532e14a80dbb651b14aa8adc7f8b07'
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerRecommendationPresentation.kt)" = 'c9066b283c27aee9a759c7a8165315708576417a'
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerPairRecommendationPresentationUi.kt)" = '24d2aa9a5c4e604bb4e0a718b9d753e168663d02'
+          test "$(git hash-object .github/scripts/ux_r4_pair_recommendation_presentation_patch.py)" = 'f37555d5eb77ba2fc1bc6b2db9431f5de498db35'
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Confirm focused contract baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerRecommendationPresentationTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Apply exact production patch
+        run: python3 .github/scripts/ux_r4_pair_recommendation_presentation_patch.py
+
+      - name: Run focused GREEN
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerRecommendationPresentationTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Run Android FAST checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Exact diff and semantic audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt'
+          git diff --check
+          test "$(git diff --name-only)" = "$target"
+          grep -F 'val pairRecommendationPresentation = if (' "$target"
+          grep -F 'clocktowerRecommendationPresentation(displayedInformationOptions)' "$target"
+          grep -F 'ClocktowerPairRecommendationPresentationSection(' "$target"
+          grep -F 'pairRecommendationPresentation == null &&' "$target"
+          grep -F 'if (!automaticStorytellerInfo && manualPairEntries.isNotEmpty()) {' "$target"
+          grep -F 'onClick = { showRecommendedDisplayOption(option) }' "$target"
+          git diff -- "$target"
+
+      - name: Reconfirm remote head before product push
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='codex/ux-r4-unified-recommendation-presentation'
+          test "$(git ls-remote origin refs/heads/$branch | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Commit and push production wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='codex/ux-r4-unified-recommendation-presentation'
+          target='app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$target"
+          test "$(git diff --cached --name-only)" = "$target"
+          git commit -m 'UX-R4: wire pair recommendation presentation'
+          git push origin HEAD:"$branch"
+          echo "PRODUCT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Remove one-shot scaffolding
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='codex/ux-r4-unified-recommendation-presentation'
+          git rm \
+            .github/workflows/ux-r4-pair-recommendation-presentation-one-shot.yml \
+            .github/scripts/ux_r4_pair_recommendation_presentation_patch.py
+          git commit -m 'chore(ci): remove UX-R4 pair presentation one-shot'
+          git push origin HEAD:"$branch"
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report checkpoints
+        run: |
+          echo "Product checkpoint: $PRODUCT_SHA"
+          echo "Cleanup checkpoint: $CLEANUP_SHA"
