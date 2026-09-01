@@ -12,11 +12,11 @@ class FirstNightPairInformationSelectionDomainTest {
     )
 
     @Test
-    fun `impaired pair semantic domain is independent from automatic preference`() {
+    fun `impaired pair step preserves full automatic domain while assisted candidates stay curated`() {
         val curated = displayOption("curated", truthful = false, pressure = 2)
         val semanticAlternative = displayOption("semantic-alternative", truthful = false, pressure = 2)
 
-        fun buildStep(automaticStorytellerInfo: Boolean) = builder(automaticStorytellerInfo).build(
+        val step = builder().build(
             roleName = "图书管理员",
             enName = "Librarian",
             tellPlayer = null,
@@ -25,21 +25,13 @@ class FirstNightPairInformationSelectionDomainTest {
             automaticSelectionOptions = { listOf(curated, semanticAlternative) },
         )
 
-        val automaticStep = buildStep(automaticStorytellerInfo = true)
-        val manualStep = buildStep(automaticStorytellerInfo = false)
-        val expectedSemanticDomain = listOf("curated", "semantic-alternative")
-
-        assertEquals(
-            expectedSemanticDomain,
-            automaticStep.automaticInformationCandidates.map(ClocktowerDisplayOption::label),
-        )
-        assertEquals(
-            expectedSemanticDomain,
-            manualStep.automaticInformationCandidates.map(ClocktowerDisplayOption::label),
-        )
         assertEquals(
             listOf("curated"),
-            manualStep.legacyInformationCandidates.map(ClocktowerDisplayOption::label),
+            step.legacyInformationCandidates.map(ClocktowerDisplayOption::label),
+        )
+        assertEquals(
+            listOf("curated", "semantic-alternative"),
+            step.automaticInformationCandidates.map(ClocktowerDisplayOption::label),
         )
     }
 
@@ -61,10 +53,10 @@ class FirstNightPairInformationSelectionDomainTest {
         )
     }
 
-    private fun builder(automaticStorytellerInfo: Boolean = true) = ClocktowerInformationStepBuilder(
+    private fun builder() = ClocktowerInformationStepBuilder(
         cards = listOf(actor),
         language = "en",
-        automaticStorytellerInfo = automaticStorytellerInfo,
+        automaticStorytellerInfo = true,
         text = { _, en -> en },
         roleActor = { actor },
         roleMissingReason = { "missing" },
