@@ -1,0 +1,112 @@
+name: UX-R3 post-merge roadmap one-shot
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: "github.event.head_commit.message == 'chore: sync UX-R3 post-merge roadmap one-shot'"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Fail closed on head and roadmap identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          remote_head="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          test "$remote_head" = "$GITHUB_SHA"
+          target='docs/CURRENT_DEVELOPMENT_ROADMAP.md'
+          test "$(git hash-object "$target")" = '028ec740a949f03029a2d14d16b0e67b6cea3a35'
+
+      - name: Apply exact-anchor roadmap closeout
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('docs/CURRENT_DEVELOPMENT_ROADMAP.md')
+          text = path.read_text()
+
+          replacements = [
+              (
+                  '''live main at UX-R3 branch creation:\n5b0c2038158eb3bb1842eedcfe460a08f27a2796\n\ncurrent branch:\ncodex/ux-r3-global-selector-removal\n\ncurrent Draft PR:\n#65 — UX-R3: remove global storyteller mode selector\nDRAFT / OPEN / UNMERGED / MERGEABLE at last verification\n\nfinal fully validated UX-R3 executable/code checkpoint:\n6cb9cb542b9e25d718a2a035e37475f99388ed2e\n\nUX-R3 status:\nCOMPLETE / VERIFIED / PR #65 CLOSEOUT\n\nnext implementation slice after PR #65 merge:\nUX-R4 — unified recommendation presentation''',
+                  '''live main after UX-R3 merge:\nf5a0e2cf8776866441bcd32729fcdc43d4f70f9b\n\nlast merged PR:\n#65 — UX-R3: remove global storyteller mode selector\nMERGED 2026-09-01\n\nfinal fully validated UX-R3 executable/code checkpoint:\n6cb9cb542b9e25d718a2a035e37475f99388ed2e\n\nvalidated docs-closeout checkpoint before merge:\ne84997f48e70e565eddad9b6f14d06b3db1a6efa\n\nUX-R3 status:\nCOMPLETE / VERIFIED / MERGED\n\nnext implementation slice:\nUX-R4 — unified recommendation presentation'''
+              ),
+              (
+                  'PR #65 must remain Draft/Open/Unmerged until the user explicitly authorizes merge.',
+                  'PR #65 merged as `f5a0e2cf8776866441bcd32729fcdc43d4f70f9b`. The final Ready-transition cleanup head had an identical file tree to the validated docs-closeout checkpoint before merge.'
+              ),
+              (
+                  'UX-R3   remove normal global storyteller mode selector        COMPLETE / VERIFIED / PR #65',
+                  'UX-R3   remove normal global storyteller mode selector        COMPLETE / VERIFIED / MERGED (#65)'
+              ),
+              (
+                  '        Top-1 + 0–2 differentiated alternatives + Manual      NEXT AFTER #65 MERGE',
+                  '        Top-1 + 0–2 differentiated alternatives + Manual      NEXT'
+              ),
+              (
+                  'Do not begin UX-R4 on PR #65. After #65 is merged, create a fresh branch from the resulting live `main`.',
+                  'Create a fresh UX-R4 branch from current live `main`. Do not reuse the merged UX-R3 branch.'
+              ),
+              (
+                  '## 8. Immediate implementation route after PR #65\n\nAfter user-authorized merge of PR #65, create a fresh branch and proceed:',
+                  '## 8. Immediate implementation route\n\nCreate a fresh branch from current live `main`, then proceed:'
+              ),
+              (
+                  '''## 11. PR #65 closeout / merge-readiness rules\n\nBefore any user-authorized merge:\n\n1. re-query live `main` and PR #65 head/state/mergeability;\n2. distinguish the validated executable checkpoint `6cb9cb5...` from later docs-only commits;\n3. verify any later head is docs-only relative to `6cb9cb5...`, or rerun the required executable validation if code changed;\n4. confirm the permanent PR diff contains only expected UX-R3 files plus closeout documentation;\n5. verify no temporary one-shot workflow/script remains;\n6. inspect review threads/reviews/comments;\n7. confirm required checks on the current head are green/skipped as expected;\n8. keep the PR Draft until the user explicitly authorizes merge;\n9. merge only with expected-head protection.\n\nDo not begin UX-R4 on PR #65.''',
+                  '''## 11. PR #65 merge checkpoint\n\nPR #65 merge closeout is complete.\n\nEvidence:\n\n1. final fully validated executable checkpoint: `6cb9cb542b9e25d718a2a035e37475f99388ed2e`;\n2. docs-closeout checkpoint: `e84997f48e70e565eddad9b6f14d06b3db1a6efa`;\n3. the docs-closeout checkpoint was exactly one docs-only commit after the executable checkpoint and changed only this roadmap;\n4. CI run `33499530332` and R2 run `33499530280` were green on the docs-closeout checkpoint;\n5. no review threads or submitted review blockers existed;\n6. the direct Ready connector hit the known `fullDatabaseId` GraphQL compatibility error, so a one-shot Ready-transition workflow was used and self-removed;\n7. cleanup head `c67a02ec80889a534254fb5eb40e83da3a8fbf3b` had zero file differences from `e84997f...`;\n8. PR #65 was merged with expected-head protection;\n9. merge commit: `f5a0e2cf8776866441bcd32729fcdc43d4f70f9b`.\n\nUX-R4 must start from a fresh branch based on the resulting live `main`.'''
+              ),
+              (
+                  '''## 12. Scope guards\n\nDo not add to PR #65 during closeout:\n\n- UX-R4 Top-1/alternative presentation work;\n- small-domain UX-R5 specialization;''',
+                  '''## 12. Scope guards for UX-R4\n\nKeep UX-R4 deliberately thin. Do not expand it into:\n\n- small-domain UX-R5 specialization;'''
+              ),
+              (
+                  '- PR #65 and the checkpoint evidence above establish UX-R3 once merged;',
+                  '- PR #65 and the checkpoint evidence above establish merged UX-R3;'
+              ),
+              (
+                  '''## 14. New-conversation resume protocol\n\nWhile PR #65 remains unmerged:\n\n1. read root `AGENTS.md`;\n2. read this roadmap;\n3. re-query live `main`, PR #65 head/state/mergeability/checks;\n4. treat `6cb9cb542b9e25d718a2a035e37475f99388ed2e` as the final fully validated UX-R3 executable checkpoint unless later executable code is validated;\n5. perform only UX-R3 closeout/merge-readiness work on this branch;\n6. do not begin UX-R4 and do not merge without explicit user authorization.\n\nAfter PR #65 merge:\n\n1. re-query resulting live `main`;\n2. create a fresh UX-R4 branch;\n3. implement Top-1 + 0–2 differentiated alternatives + persistent Manual using the existing legal-domain authority;\n4. proceed to UX-R5 small-domain specialization;\n5. return immediately to PlayerWorldSet / Productive Uncertainty;\n6. replace legacy ranking behind the stable UI contract in UX-R6;\n7. keep A3 exact as correctness baseline and A4/ZDD shadow until separately validated.''',
+                  '''## 14. New-conversation resume protocol\n\n1. read root `AGENTS.md`;\n2. read this roadmap;\n3. re-query live `main` and confirm it includes PR #65 merge commit `f5a0e2cf8776866441bcd32729fcdc43d4f70f9b` (or a later docs-only successor);\n4. treat `6cb9cb542b9e25d718a2a035e37475f99388ed2e` as the final fully validated UX-R3 executable checkpoint and `f5a0e2cf8776866441bcd32729fcdc43d4f70f9b` as the UX-R3 merge commit;\n5. create a fresh UX-R4 branch from live `main`;\n6. implement Top-1 + 0–2 differentiated alternatives + persistent Manual using the existing legal-domain authority;\n7. proceed to UX-R5 small-domain specialization;\n8. return immediately to PlayerWorldSet / Productive Uncertainty;\n9. replace legacy ranking behind the stable UI contract in UX-R6;\n10. keep A3 exact as correctness baseline and A4/ZDD shadow until separately validated.'''
+              ),
+              (
+                  '| Clue UX-R3 global selector removal | COMPLETE / VERIFIED / PR #65 CLOSEOUT |',
+                  '| Clue UX-R3 global selector removal | COMPLETE / VERIFIED / MERGED (#65) |'
+              ),
+              (
+                  '| Clue UX-R4 recommendation presentation | NEXT AFTER #65 MERGE |',
+                  '| Clue UX-R4 recommendation presentation | NEXT IMMEDIATE SLICE |'
+              ),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'expected exactly one roadmap anchor, found {count}: {old[:80]!r}')
+              text = text.replace(old, new, 1)
+
+          path.write_text(text)
+          PY
+
+          git diff --check
+          test "$(git diff --name-only)" = 'docs/CURRENT_DEVELOPMENT_ROADMAP.md'
+
+      - name: Commit docs sync and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm .github/workflows/ux-r3-post-merge-roadmap-one-shot.yml
+          git add docs/CURRENT_DEVELOPMENT_ROADMAP.md .github/workflows/ux-r3-post-merge-roadmap-one-shot.yml
+          git commit -m 'docs: record UX-R3 merge and UX-R4 next'
+          git push origin HEAD:main
