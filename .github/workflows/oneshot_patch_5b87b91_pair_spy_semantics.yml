@@ -1,0 +1,32 @@
+name: One-shot S6D pair Spy semantic patch
+
+on:
+  push:
+    branches:
+      - codex/ms-setup-generic-architecture
+    paths:
+      - .github/workflows/oneshot_patch_5b87b91_pair_spy_semantics.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          ref: codex/ms-setup-generic-architecture
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Run guarded pair Spy semantic patch
+        run: python3 tools/oneshot_patch_5b87b91_pair_spy_semantics.py
