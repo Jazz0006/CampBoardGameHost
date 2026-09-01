@@ -9,21 +9,28 @@
 
 ```text
 live main at last verification:
-6111ffe3863713895d2b21ab086cf31abcca4a4e
+2c5e55ac708fc36abb2b58f99714efbfe97547ca
 
-current branch:
-codex/ux-r2b-pair-manual-authority
-
-current Draft PR:
+last merged PR:
 #64 — UX-R2B: cut pair manual flow to legal-domain authority
-DRAFT / OPEN / UNMERGED / MERGEABLE
+MERGED 2026-09-01
 
 final fully validated executable/code checkpoint before docs closeout:
 ad2ec9b4de117ac74c02deb6a5a77e65c2a0e4b4
 
+validated docs-closeout tree:
+4dbc1235b1938495bfac97f88ceab55df5307968
+
 UX-R2B status:
-COMPLETE / VERIFIED / MERGE-READY AFTER DOCS-ONLY CLOSEOUT
+COMPLETE / VERIFIED / MERGED
+
+next implementation slice:
+UX-R3 — remove normal global Balanced/Aggressive/Conservative/Manual selector
 ```
+
+PR #64 merged as:
+
+`2c5e55ac708fc36abb2b58f99714efbfe97547ca`
 
 The executable checkpoint `ad2ec9b4...` passed the accepted validation route:
 
@@ -35,13 +42,13 @@ The executable checkpoint `ad2ec9b4...` passed the accepted validation route:
 - Android full unit tests + debug APK;
 - final CI gate.
 
-Temporary one-shot patch workflow/script were removed before the final functional diff audit. The remaining PR diff before this roadmap update contained only the expected production/test files.
+The docs-closeout head `4dbc123...` was exactly one docs-only commit after that executable checkpoint and passed CI + R2. A temporary workflow was used only to transition PR #64 from Draft to Ready after the connector's direct Ready action hit a GraphQL compatibility error; that workflow self-removed, and the final cleanup head had an identical file tree to `4dbc123...` before merge.
 
-PR #64 must not be merged until live head/checks are re-queried after this docs-only closeout commit. The user has explicitly authorized merge once that final closeout verification is green.
+No UX-R3 production work has started yet. Start it from a fresh branch based on live `main`.
 
 ## 2. Campaign status
 
-The generic multi-script setup campaign is complete and merged. The active campaign is now the clue recommendation/manual-selection product boundary.
+The generic multi-script setup campaign is complete and merged. The active campaign is the clue recommendation/manual-selection product boundary.
 
 ```text
 MS-SETUP generic multi-script architecture                    COMPLETE / MERGED
@@ -52,7 +59,7 @@ UX-R1   audit current Automatic/Manual/RecommendationStyle
 UX-R2A  shared pair-information legal-domain authority        COMPLETE / MERGED
 
 UX-R2B  pair Manual flow -> shared legal-domain authority
-        + typed registration-preserving commit path           COMPLETE / VERIFIED / PR #64
+        + typed registration-preserving commit path           COMPLETE / VERIFIED / MERGED (#64)
 
 UX-R3   remove normal global Balanced/Aggressive/
         Conservative/Manual selector                          NEXT
@@ -67,7 +74,7 @@ EPI-MQ / ALG Productive Uncertainty mainline                  NEXT PRIMARY ALGOR
 UX-R6   replace legacy ranking behind stable UX contract      QUEUED AFTER EPI-MQ
 ```
 
-Do not begin UX-R3 on PR #64. After #64 is merged, create a fresh branch from live `main`.
+Create a fresh branch from current live `main` before implementing UX-R3. Do not continue UX-R3 on the merged UX-R2B branch.
 
 ## 3. Frozen permanent setup / information architecture
 
@@ -136,11 +143,13 @@ For first-night Washerwoman/Librarian/Investigator:
 8. Non-pair first-night families retain the existing migration/parity gate.
 9. Investigator zero-minion remains illegal; Librarian zero-outsider remains legal according to shared display semantics.
 
-This is the required acceptance condition proving:
+UX-R2B therefore establishes the permanent acceptance condition:
 
 ```text
 recommendation unavailable != manual unavailable
 ```
+
+UX-R3/4/5 must preserve this authority split.
 
 ## 5. Approved clue-selection UX direction
 
@@ -197,7 +206,7 @@ Alternative 2
 Manually choose clue
 ```
 
-UX-R2B has already established the permanent Manual authority and a structured role/player selection seam. UX-R4 may refine presentation around that seam; it must not move legality back into the recommendation shortlist.
+UX-R2B already established the permanent Manual authority and a structured role/player selection seam. UX-R4 may refine presentation around that seam; it must not move legality back into the recommendation shortlist.
 
 ## 6. RecommendationStyle / old mode policy
 
@@ -209,11 +218,9 @@ Long term, Productive Uncertainty should determine context-sensitive pressure fr
 
 UX-R3 should remove the normal global selector without changing legal-domain truth semantics or deleting internal compatibility dimensions prematurely.
 
-## 7. Immediate implementation route after PR #64
+## 7. Immediate implementation route
 
-After PR #64 is merged, create a fresh branch from the new live `main`.
-
-Proceed in this order:
+Create a fresh branch from live `main`, then proceed in this order:
 
 ```text
 UX-R3  remove the normal global Balanced/Aggressive/Conservative/Manual selector
@@ -312,25 +319,28 @@ Avoid source-shape tests that only assert button/class/helper placement.
 
 Full CI is reserved for logical acceptance checkpoints or risk-triggered cases according to `TESTING_STRATEGY.md`.
 
-## 10. PR #64 merge-readiness rules
+## 10. UX-R2B merge checkpoint
 
-Before the authorized merge is executed:
+PR #64 merge closeout is complete.
 
-1. re-query live `main` and PR #64 head/state/mergeability;
-2. verify this roadmap commit is docs-only relative to validated executable checkpoint `ad2ec9b4...`;
-3. confirm required checks on the new docs-only head are green/skipped as expected;
-4. confirm exact PR diff contains no temporary one-shot workflow/script or unrelated file;
-5. inspect unresolved review threads/comments if any;
-6. mark the Draft PR ready for review if GitHub requires that before merge;
-7. merge only if the expected PR head SHA still matches the audited head.
+Evidence:
 
-The user explicitly authorized this merge on 2026-09-01 after the above closeout information is updated and verified.
+1. final executable/code checkpoint: `ad2ec9b4de117ac74c02deb6a5a77e65c2a0e4b4`;
+2. docs-closeout head: `4dbc1235b1938495bfac97f88ceab55df5307968`;
+3. docs-closeout was one commit after executable checkpoint and changed only this roadmap;
+4. CI and R2 were green on `4dbc123...`;
+5. final cleanup head after the temporary Ready-transition workflow had the same file tree as `4dbc123...`;
+6. exact permanent PR diff contained only the 9 expected production/test files plus this roadmap;
+7. no review threads or review blockers existed;
+8. PR #64 merged with expected-head protection;
+9. merge commit: `2c5e55ac708fc36abb2b58f99714efbfe97547ca`.
 
-## 11. Scope guards
+Historical `action_required` checks on bot-generated cleanup heads had zero jobs and were platform-trigger behavior, not test failures. The identical tree had already passed the required CI/R2 validation.
 
-Do not add to PR #64 during closeout:
+## 11. Scope guards for UX-R3
 
-- UX-R3 selector removal;
+Keep UX-R3 deliberately narrow. Do not add:
+
 - new recommendation ranking behavior;
 - Productive Uncertainty;
 - PlayerWorldSet production recommendation integration;
@@ -339,6 +349,8 @@ Do not add to PR #64 during closeout:
 - broad future-script support;
 - Host/App decomposition;
 - unrelated persistence/recovery work.
+
+UX-R3 is a product-flow/ownership cleanup: remove the normal front-door global mode choice while keeping permanent Manual authority and supported recommendation behavior intact.
 
 ## 12. Current documentation authority
 
@@ -361,25 +373,21 @@ docs/MS_S7_S8_PR61_CLOSEOUT_CHECKPOINT_2026-09-01.md
 docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S7_PR_CLOSEOUT.md
 ```
 
-## 13. New-conversation resume protocol
+PR #64 itself is historical evidence for the accepted UX-R2B contract.
 
-Before PR #64 merge:
+## 13. New-conversation resume protocol
 
 1. read root `AGENTS.md`;
 2. read this roadmap;
-3. re-query live `main`, PR #64 head/state/mergeability/checks;
-4. treat `ad2ec9b4de117ac74c02deb6a5a77e65c2a0e4b4` as the final fully validated executable/code checkpoint before the docs-only closeout commit;
-5. perform merge-readiness only; do not begin UX-R3 on this branch.
-
-After PR #64 merge:
-
-1. re-query the resulting live `main` merge SHA;
-2. create a fresh branch;
-3. begin UX-R3 with an audit of every remaining global Automatic/Manual/RecommendationStyle UI dependency;
-4. remove only the normal front-door selector while preserving internal compatibility dimensions where still required;
-5. proceed UX-R4 -> UX-R5;
-6. return immediately to PlayerWorldSet / Productive Uncertainty and replace legacy ranking behind the stable UI contract;
-7. keep A3 exact as correctness baseline and A4/ZDD shadow until separately validated.
+3. re-query live `main` and confirm the current head;
+4. treat `ad2ec9b4de117ac74c02deb6a5a77e65c2a0e4b4` as the final fully validated executable/code checkpoint for UX-R2B and `2c5e55ac708fc36abb2b58f99714efbfe97547ca` as its merge commit;
+5. create a fresh UX-R3 branch from live `main`;
+6. audit every remaining global Automatic/Manual/RecommendationStyle UI dependency;
+7. remove only the normal front-door selector while preserving internal compatibility dimensions where still required;
+8. preserve per-interaction Manual access backed by complete legal semantic authority;
+9. proceed UX-R4 -> UX-R5;
+10. return immediately to PlayerWorldSet / Productive Uncertainty and replace legacy ranking behind the stable UI contract;
+11. keep A3 exact as correctness baseline and A4/ZDD shadow until separately validated.
 
 ## 14. Deferred / queued registry
 
@@ -388,7 +396,7 @@ After PR #64 merge:
 | MS-SETUP generic multi-script architecture | COMPLETE / MERGED |
 | Clue UX-R1 | COMPLETE |
 | Clue UX-R2A legal-domain foundation | COMPLETE / MERGED |
-| Clue UX-R2B pair Manual authority | COMPLETE / VERIFIED / PR #64 MERGE CLOSEOUT |
+| Clue UX-R2B pair Manual authority | COMPLETE / VERIFIED / MERGED (#64) |
 | Clue UX-R3 global selector removal | NEXT IMMEDIATE SLICE |
 | Clue UX-R4 recommendation presentation | QUEUED |
 | Clue UX-R5 small-domain specialization | QUEUED |
