@@ -10,17 +10,14 @@ import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
-import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
-import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemantics
 
 /**
  * Recommends information for supported pair-information abilities after identity is fixed.
  *
- * Ability-specific code owns only the healthy truthful space. The shared pair display semantics
- * owns legal player-visible shape, and the dynamic information selector owns RELIABLE / DRUNK /
- * POISONED family selection and misinformation severity within the false family.
+ * Candidate legality/truth/registration comes from [PairInformationLegalDomain]. This object owns
+ * ranking/selection only; it must not narrow the Storyteller's legal manual domain.
  */
 internal object PairInformationAbilityRecommender {
     private const val stableVersion = "pair-information-ability-v1"
@@ -33,22 +30,18 @@ internal object PairInformationAbilityRecommender {
         reliability: ReliabilityState,
         style: RecommendationStyle,
     ): AbilityObservation? {
-        val healthyCandidates = NaturalPairInformationCandidateGenerator
-            .generateHealthyInformationSpace(game, sourceSeat, abilityRole, roleDefinitions)
-        val healthyOutcomes = healthyCandidates.map { it.outcome }
-        val healthyByKey = healthyCandidates.groupBy { keyOf(it.outcome) }
-        val options = PairInformationDisplaySemantics
-            .legalOutcomes(game, roleDefinitions, sourceSeat, abilityRole)
-            .map { outcome ->
-                PairInformationOption(
-                    id = canonicalId(abilityRole, outcome),
-                    outcome = outcome,
-                    truthful = keyOf(outcome) in healthyByKey,
-                    misinformationPressure = misinformationPressure(outcome, healthyOutcomes),
-                )
-            }
+        val legalCandidates = PairInformationLegalDomain.generate(
+            game = game,
+            roleDefinitions = roleDefinitions,
+            sourceSeat = sourceSeat,
+            abilityRole = abilityRole,
+            reliability = reliability,
+        )
+        val truthfulOutcomes = legalCandidates
+            .filter { it.semanticTruth == SemanticTruth.TRUE }
+            .map { it.outcome }
         val selected = DynamicCandidateGenerator.select(
-            options = options,
+            options = legalCandidates,
             reliability = reliability.toDynamicReliability(),
             style = style,
             evilAdvantage = 0,
@@ -61,28 +54,13 @@ internal object PairInformationAbilityRecommender {
                 style.name,
             ).joinToString("|"),
             recentMisinformationStreak = 0,
-            stableIdOf = PairInformationOption::id,
-            isTruthful = PairInformationOption::truthful,
-            misinformationPressure = PairInformationOption::misinformationPressure,
+            stableIdOf = PairInformationLegalCandidate::candidateId,
+            isTruthful = { it.semanticTruth == SemanticTruth.TRUE },
+            misinformationPressure = { candidate ->
+                misinformationPressure(candidate.outcome, truthfulOutcomes)
+            },
             styleOf = { style },
         ) ?: return null
-
-        val selectedHealthyCandidates = if (selected.truthful) {
-            healthyByKey[keyOf(selected.outcome)].orEmpty()
-        } else {
-            emptyList()
-        }
-        // If the same displayed clue is already true to actual state, no special registration
-        // is needed. Otherwise preserve the deterministic registered-state fact that makes the
-        // clue truthful so replay/history can distinguish it from ordinary actual-state truth.
-        val semanticCandidate = selectedHealthyCandidates
-            .filter { it.truthRelation == TruthRelation.TRUE_TO_ACTUAL_STATE }
-            .minByOrNull { it.candidateId }
-            ?: selectedHealthyCandidates.minByOrNull { it.candidateId }
-        val registrations = semanticCandidate
-            ?.registrations
-            .orEmpty()
-            .map { it.toObservationRegistration(abilityRole) }
 
         return AbilityObservation(
             sourceSeat = sourceSeat,
@@ -90,8 +68,8 @@ internal object PairInformationAbilityRecommender {
             shownRole = selected.outcome.shownRole,
             candidateSeats = selected.outcome.candidateSeats,
             reliability = reliability,
-            semanticTruth = if (selected.truthful) SemanticTruth.TRUE else SemanticTruth.FALSE,
-            registrations = registrations,
+            semanticTruth = selected.semanticTruth,
+            registrations = selected.registrations.map { it.toObservationRegistration(abilityRole) },
         )
     }
 
@@ -122,13 +100,6 @@ internal object PairInformationAbilityRecommender {
             reason = reason,
         )
 
-    private fun canonicalId(abilityRole: RoleId, outcome: PairInformationOutcome): String = listOf(
-        stableVersion,
-        abilityRole.value,
-        outcome.shownRole?.value ?: "none",
-        outcome.candidateSeats.joinToString(","),
-    ).joinToString("|")
-
     private fun keyOf(outcome: PairInformationOutcome): PairInformationKey = PairInformationKey(
         shownRole = outcome.shownRole,
         candidateSeats = outcome.candidateSeats,
@@ -139,13 +110,6 @@ internal object PairInformationAbilityRecommender {
         ReliabilityState.DRUNK -> InformationReliability.DRUNK
         ReliabilityState.POISONED -> InformationReliability.POISONED
     }
-
-    private data class PairInformationOption(
-        val id: String,
-        val outcome: PairInformationOutcome,
-        val truthful: Boolean,
-        val misinformationPressure: Int,
-    )
 
     private data class PairInformationKey(
         val shownRole: RoleId?,
