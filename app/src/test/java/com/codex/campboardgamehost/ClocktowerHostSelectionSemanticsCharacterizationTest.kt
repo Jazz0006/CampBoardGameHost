@@ -114,6 +114,7 @@ class ClocktowerHostSelectionSemanticsCharacterizationTest {
                 displayFooter = null,
                 proposition = InformationProposition.NumericResult(
                     metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+                    sourceSeat = 2,
                     value = value,
                     subjectSeats = listOf(1, 3),
                 ),
