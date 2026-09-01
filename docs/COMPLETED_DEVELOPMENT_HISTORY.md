@@ -28,6 +28,7 @@ Use this file for completed work:
 | Clue UX-R2B — pair Manual flow -> shared legal-domain authority + typed registration-preserving commit path | COMPLETE / VERIFIED / MERGED (#64) |
 | Clue UX-R3 — remove normal global storyteller mode selector | COMPLETE / VERIFIED / MERGED (#65) |
 | Clue UX-R4 — stable Top-1 + 0–2 alternatives + persistent Manual presentation | COMPLETE / VERIFIED / MERGED (#67) |
+| Clue UX-R5 — small-domain numeric / Boolean specialization | COMPLETE / VERIFIED / MERGED (#68) |
 
 Older MS-SETUP handoff/checkpoint documents remain historical evidence and are not repeated here in full.
 
@@ -179,7 +180,6 @@ app/src/test/java/com/codex/campboardgamehost/clocktower/domain/StorytellerRecom
 
 Post-merge roadmap synchronization produced docs-only successor `cf604f490eb0a4683f641088216e2077426387e9` on `main`.
 
-
 ---
 
 ## UX-R4 — unified recommendation presentation
@@ -255,6 +255,102 @@ Merge commit:
 
 ---
 
+## UX-R5 — small-domain specialization
+
+### Accepted small-domain contract
+
+UX-R5 extended the stable presentation architecture to numeric and Boolean domains whose complete legal outcome set is small enough to show directly.
+
+Permanent contract:
+
+1. complete legal-domain authority remains upstream of recommendation;
+2. recommendation may mark one legal outcome as primary but cannot create, remove, narrow, or expand legal outcomes;
+3. recommendation absence must still leave every legal outcome selectable;
+4. small domains expose all remaining legal outcomes when the full domain comfortably fits the interaction;
+5. numeric and Boolean semantic identity is typed end-to-end and is never reconstructed from localized display labels;
+6. Foundation confirmation remains the commit authority;
+7. Chef/Empath numeric presentation uses the same legal-domain/confirmation model rather than recommendation-derived legality;
+8. Fortune Teller Yes/No remains bound to the exact actor seat and exact two selected subject seats;
+9. the Fortune Teller player-pair interaction remains separate from the subsequent Boolean result domain;
+10. UX-R5 adds no new recommendation scoring, diversity, Productive Uncertainty, or PlayerWorldSet ranking behavior.
+
+For the stable UX surface this means:
+
+```text
+small complete legal domain
+        |
+        +--> recommendation marks primary
+        |
+        +--> primary + every remaining legal outcome
+        |
+        +--> typed Foundation confirmation
+```
+
+### Tests-first evidence
+
+UX-R5 was implemented through multiple behavior-first RED/GREEN checkpoints rather than source-shape tests.
+
+Key evidence:
+
+- initial R5.1 small-domain contract RED: `f4aa1cbbf7573f79de0a9550537cc75efa95f371`;
+- Fortune Teller Boolean-domain RED: `5d468c59a6b45f67990e2072a21c037b3dfb27a0`;
+- typed Boolean information UI model: `111d213c86c4e28275e5d66180676fe1482581ff`;
+- structured Boolean decision panel checkpoint: `932a9290547a9cfaed62eab309a47fa5dc1e4649`;
+- typed Boolean display-option matcher RED: `dde9a8a13f567ac129f87045fc5cc75fe5f4d0c5`;
+- typed Boolean display-option matcher GREEN: `d3b2167803b63956b2b85d1cad2118c575549fae`.
+
+Chef numeric production wiring used the fail-closed large-file route. Successful one-shot run `33513833581` verified exact head/blob locks, focused GREEN, `:app:testFast`, production diff constraints, guarded push, and temporary workflow/script self-removal.
+
+Fortune Teller production wiring likewise used a locked exact-anchor one-shot. Production commit:
+
+`9ba67d4c906b8a94cee80ee7e1e64b33422f38d6`
+
+Cleanup head after self-removing all Fortune Teller patch scaffolding:
+
+`b1b96d9d6ad680101cbef089bbd74ddb62008e63`
+
+The production cutover preserved the Host's authoritative Demon / red-herring / Recluse truth calculation and only added typed proposition/presentation wiring around it.
+
+### Final verified checkpoint
+
+A no-tree-change checkpoint was first used to recover from GitHub's expected bot-recursion suppression after the one-shot cleanup. Because the ordinary zero-change classifier correctly skipped heavy jobs, a second no-tree-change checkpoint with `[full-ci]` forced the complete final validation on the exact cleanup tree.
+
+Final validated checkpoint:
+
+`2f56649e71d38c21f66df598e1e8df0c990090dd`
+
+Validation:
+
+- R2 run `33563538200`: SUCCESS;
+- full CI run `33563538249`: SUCCESS;
+- full Android unit tests + debug APK: SUCCESS;
+- ASP contract tests: SUCCESS;
+- Real Clingo 5.8.0 cross-validation: SUCCESS;
+- CI gate: SUCCESS.
+
+The final permanent compare from UX-R5 base `d30d0f03cb6be811628938fec921a5c21662e4b8` contained 14 app/test files and no temporary `.github` workflow or patch-script files.
+
+There were no submitted reviews, inline review comments, or review threads blocking merge.
+
+### PR #68 merge closeout
+
+The direct Ready connector again hit the known GitHub GraphQL `fullDatabaseId` compatibility error. A parent-locked Ready one-shot was used:
+
+- required verified parent `2f56649e71d38c21f66df598e1e8df0c990090dd`;
+- Ready one-shot run `33563934530`: SUCCESS;
+- marked PR #68 Ready;
+- self-removed its workflow;
+- cleanup head: `240b9e89c2f958f7074de349c8d5156421d47d51`;
+- compare from the full-CI checkpoint to cleanup head had zero file differences.
+
+PR #68 merged with expected-head protection.
+
+Merge commit:
+
+`563470a2c3b4e3dc10732e00827e33ebee00884a`
+
+---
+
 ## Historical architecture notes retained as permanent constraints elsewhere
 
 The following were established by completed work but remain active invariants, so their authoritative copy stays in `docs/CURRENT_DEVELOPMENT_ROADMAP.md` rather than being archived away:
@@ -272,7 +368,7 @@ The following were established by completed work but remain active invariants, s
 
 ## Archive update convention for future slices
 
-When UX-R4, UX-R5, EPI-MQ, UX-R6, or later campaigns complete:
+When EPI-MQ, UX-R6, or later campaigns complete:
 
 1. append a concise completed-slice section here containing the accepted behavior contract and verification evidence;
 2. include final executable checkpoint and merge commit when available;
