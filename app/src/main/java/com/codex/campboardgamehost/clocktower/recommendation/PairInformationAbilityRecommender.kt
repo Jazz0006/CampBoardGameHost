@@ -1,7 +1,6 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
@@ -14,19 +13,17 @@ import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
+import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemantics
 
 /**
  * Recommends information for supported pair-information abilities after identity is fixed.
  *
- * Ability-specific code owns only the legal display shape and healthy truthful space. The
- * shared dynamic information selector owns RELIABLE / DRUNK / POISONED family selection and
- * misinformation severity within the false family.
+ * Ability-specific code owns only the healthy truthful space. The shared pair display semantics
+ * owns legal player-visible shape, and the dynamic information selector owns RELIABLE / DRUNK /
+ * POISONED family selection and misinformation severity within the false family.
  */
 internal object PairInformationAbilityRecommender {
     private const val stableVersion = "pair-information-ability-v1"
-    private val washerwoman = RoleId("Washerwoman")
-    private val librarian = RoleId("Librarian")
-    private val investigator = RoleId("Investigator")
 
     fun recommend(
         game: GameState,
@@ -40,7 +37,8 @@ internal object PairInformationAbilityRecommender {
             .generateHealthyInformationSpace(game, sourceSeat, abilityRole, roleDefinitions)
         val healthyOutcomes = healthyCandidates.map { it.outcome }
         val healthyByKey = healthyCandidates.groupBy { keyOf(it.outcome) }
-        val options = legalDisplayOutcomes(game, roleDefinitions, sourceSeat, abilityRole)
+        val options = PairInformationDisplaySemantics
+            .legalOutcomes(game, roleDefinitions, sourceSeat, abilityRole)
             .map { outcome ->
                 PairInformationOption(
                     id = canonicalId(abilityRole, outcome),
@@ -97,48 +95,6 @@ internal object PairInformationAbilityRecommender {
         )
     }
 
-    private fun legalDisplayOutcomes(
-        game: GameState,
-        roleDefinitions: List<RoleDefinition>,
-        sourceSeat: Int,
-        abilityRole: RoleId,
-    ): List<PairInformationOutcome> {
-        val targetType = when (abilityRole) {
-            washerwoman -> CharacterType.TOWNSFOLK
-            librarian -> CharacterType.OUTSIDER
-            investigator -> CharacterType.MINION
-            else -> return emptyList()
-        }
-        val displayRoles = roleDefinitions
-            .asSequence()
-            .filter { game.script in it.scriptIds && it.type == targetType }
-            .map { it.id }
-            .distinct()
-            .sortedBy { it.value }
-            .toList()
-        val seats = game.players
-            .asSequence()
-            .map { it.seat }
-            .filter { it != sourceSeat }
-            .sorted()
-            .toList()
-        val pairs = unorderedPairs(seats)
-        val rolePairOutcomes = displayRoles.flatMap { shownRole ->
-            pairs.map { pair ->
-                PairInformationOutcome(
-                    shownRole = shownRole,
-                    targetSeat = pair[0],
-                    decoySeat = pair[1],
-                )
-            }
-        }
-        return if (abilityRole == librarian) {
-            rolePairOutcomes + PairInformationOutcome(shownRole = null, targetSeat = null, decoySeat = null)
-        } else {
-            rolePairOutcomes
-        }
-    }
-
     private fun misinformationPressure(
         outcome: PairInformationOutcome,
         healthyOutcomes: List<PairInformationOutcome>,
@@ -165,14 +121,6 @@ internal object PairInformationAbilityRecommender {
             registeredRole = registeredRole,
             reason = reason,
         )
-
-    private fun unorderedPairs(seats: List<Int>): List<List<Int>> = buildList {
-        for (firstIndex in 0 until seats.lastIndex) {
-            for (secondIndex in firstIndex + 1 until seats.size) {
-                add(listOf(seats[firstIndex], seats[secondIndex]))
-            }
-        }
-    }
 
     private fun canonicalId(abilityRole: RoleId, outcome: PairInformationOutcome): String = listOf(
         stableVersion,
