@@ -128,8 +128,8 @@ private fun PairInformationOutcome.pairInformationKey(): PairInformationPresenta
         candidateSeats = candidateSeats,
     )
 
-private fun ClocktowerDisplayOption.pairInformationKeyOrNull(): PairInformationPresentationKey? =
-    when (val structured = proposition) {
+private fun ClocktowerDisplayOption.pairInformationKeyOrNull(): PairInformationPresentationKey? {
+    return when (val structured = proposition) {
         is InformationProposition.AnyOf -> {
             val roleAt = structured.alternatives.map { alternative ->
                 alternative as? InformationProposition.RoleAt ?: return null
@@ -156,3 +156,4 @@ private fun ClocktowerDisplayOption.pairInformationKeyOrNull(): PairInformationP
 
         else -> null
     }
+}
