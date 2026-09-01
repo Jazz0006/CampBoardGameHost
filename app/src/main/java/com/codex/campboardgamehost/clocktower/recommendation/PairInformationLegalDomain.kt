@@ -22,7 +22,7 @@ import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemant
  * absent from this type. Recommendation and manual presentation are downstream consumers.
  */
 internal object PairInformationLegalDomain {
-    // Keep the existing candidate schema so authority extraction does not reshuffle stable selection.
+    // Existing schema preserved so authority extraction does not reshuffle stable selection.
     private const val candidateSchemaVersion = "pair-information-ability-v1"
 
     fun generate(
