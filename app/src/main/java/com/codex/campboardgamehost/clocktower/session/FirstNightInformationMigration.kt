@@ -26,6 +26,15 @@ internal enum class FirstNightInformationFamily(val role: RoleId) {
     FORTUNE_TELLER(RoleId("Fortune Teller")),
 }
 
+private val authoritativePairInformationFamilies = setOf(
+    FirstNightInformationFamily.WASHERWOMAN,
+    FirstNightInformationFamily.LIBRARIAN,
+    FirstNightInformationFamily.INVESTIGATOR,
+)
+
+internal fun FirstNightInformationFamily.usesAuthoritativePairDomain(): Boolean =
+    this in authoritativePairInformationFamilies
+
 internal data class FirstNightInformationCandidate(
     val id: String,
     val observation: AbilityObservation,
@@ -102,13 +111,30 @@ internal data class FirstNightInformationMigration(
     /** A mismatch deliberately leaves the decision unavailable; callers must retain the legacy path. */
     fun publishIfShadowMatches(request: FirstNightInformationRequest): FirstNightInformationMigration = when (shadow(request)) {
         is FirstNightShadowResult.Mismatch -> this
-        is FirstNightShadowResult.Ready -> copy(
-            lifecycle = lifecycle.publish(request.decisionId),
-            candidatesByDecisionId = candidatesByDecisionId + (
-                request.decisionId to request.migratedCandidates.associateBy(FirstNightInformationCandidate::id)
-            ),
-        )
+        is FirstNightShadowResult.Ready -> publish(request)
     }
+
+    /**
+     * UX-R2B cutover for pair-information families whose shared legal domain is now authoritative.
+     *
+     * Legacy candidates remain available to [shadow] for telemetry, but parity is no longer a
+     * publication gate because the complete legal Manual domain is intentionally broader than the
+     * historical curated presentation pool. Non-pair families must keep using
+     * [publishIfShadowMatches].
+     */
+    fun publishAuthoritativePairDomain(request: FirstNightInformationRequest): FirstNightInformationMigration {
+        require(request.family.usesAuthoritativePairDomain()) {
+            "Authoritative pair-domain publication is limited to Washerwoman/Librarian/Investigator."
+        }
+        return publish(request)
+    }
+
+    private fun publish(request: FirstNightInformationRequest): FirstNightInformationMigration = copy(
+        lifecycle = lifecycle.publish(request.decisionId),
+        candidatesByDecisionId = candidatesByDecisionId + (
+            request.decisionId to request.migratedCandidates.associateBy(FirstNightInformationCandidate::id)
+        ),
+    )
 
     /** Display is the sole commit boundary: it creates exactly one typed observation. */
     fun display(decisionId: String, candidateId: String): FirstNightInformationMigration {
