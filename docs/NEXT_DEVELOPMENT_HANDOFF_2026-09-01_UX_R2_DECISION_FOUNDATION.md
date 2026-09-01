@@ -43,6 +43,8 @@ Later commits in the current sequence are documentation-only unless a new execut
 
 Documentation-authority convergence is complete: root `AGENTS.md`, roadmap, clue-UX decision, Productive Uncertainty plan, algorithm v2.2 authority metadata, and this active handoff now use one current authority hierarchy and one implementation route.
 
+The 2026-09-01 archive convergence batch is also complete: 35 completed/superseded/deferred documents were moved out of the active `docs/` root into typed `archive/` subdirectories; the active/foundational root now contains 19 Markdown files. The archive move changed no executable source. Its one-shot exact-tree/move/diff audit succeeded and the temporary workflow/script self-cleaned.
+
 Always re-query live GitHub state before implementation or merge.
 
 ## 3. What #63 already contains
