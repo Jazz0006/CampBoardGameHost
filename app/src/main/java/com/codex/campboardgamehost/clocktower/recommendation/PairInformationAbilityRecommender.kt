@@ -1,7 +1,6 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
@@ -11,22 +10,17 @@ import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
-import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 
 /**
  * Recommends information for supported pair-information abilities after identity is fixed.
  *
- * Ability-specific code owns only the legal display shape and healthy truthful space. The
- * shared dynamic information selector owns RELIABLE / DRUNK / POISONED family selection and
- * misinformation severity within the false family.
+ * Candidate legality/truth/registration comes from [PairInformationLegalDomain]. This object owns
+ * ranking/selection only; it must not narrow the Storyteller's legal manual domain.
  */
 internal object PairInformationAbilityRecommender {
     private const val stableVersion = "pair-information-ability-v1"
-    private val washerwoman = RoleId("Washerwoman")
-    private val librarian = RoleId("Librarian")
-    private val investigator = RoleId("Investigator")
 
     fun recommend(
         game: GameState,
@@ -36,21 +30,18 @@ internal object PairInformationAbilityRecommender {
         reliability: ReliabilityState,
         style: RecommendationStyle,
     ): AbilityObservation? {
-        val healthyCandidates = NaturalPairInformationCandidateGenerator
-            .generateHealthyInformationSpace(game, sourceSeat, abilityRole, roleDefinitions)
-        val healthyOutcomes = healthyCandidates.map { it.outcome }
-        val healthyByKey = healthyCandidates.groupBy { keyOf(it.outcome) }
-        val options = legalDisplayOutcomes(game, roleDefinitions, sourceSeat, abilityRole)
-            .map { outcome ->
-                PairInformationOption(
-                    id = canonicalId(abilityRole, outcome),
-                    outcome = outcome,
-                    truthful = keyOf(outcome) in healthyByKey,
-                    misinformationPressure = misinformationPressure(outcome, healthyOutcomes),
-                )
-            }
+        val legalCandidates = PairInformationLegalDomain.generate(
+            game = game,
+            roleDefinitions = roleDefinitions,
+            sourceSeat = sourceSeat,
+            abilityRole = abilityRole,
+            reliability = reliability,
+        )
+        val truthfulOutcomes = legalCandidates
+            .filter { it.semanticTruth == SemanticTruth.TRUE }
+            .map { it.outcome }
         val selected = DynamicCandidateGenerator.select(
-            options = options,
+            options = legalCandidates,
             reliability = reliability.toDynamicReliability(),
             style = style,
             evilAdvantage = 0,
@@ -63,28 +54,13 @@ internal object PairInformationAbilityRecommender {
                 style.name,
             ).joinToString("|"),
             recentMisinformationStreak = 0,
-            stableIdOf = PairInformationOption::id,
-            isTruthful = PairInformationOption::truthful,
-            misinformationPressure = PairInformationOption::misinformationPressure,
+            stableIdOf = PairInformationLegalCandidate::candidateId,
+            isTruthful = { it.semanticTruth == SemanticTruth.TRUE },
+            misinformationPressure = { candidate ->
+                misinformationPressure(candidate.outcome, truthfulOutcomes)
+            },
             styleOf = { style },
         ) ?: return null
-
-        val selectedHealthyCandidates = if (selected.truthful) {
-            healthyByKey[keyOf(selected.outcome)].orEmpty()
-        } else {
-            emptyList()
-        }
-        // If the same displayed clue is already true to actual state, no special registration
-        // is needed. Otherwise preserve the deterministic registered-state fact that makes the
-        // clue truthful so replay/history can distinguish it from ordinary actual-state truth.
-        val semanticCandidate = selectedHealthyCandidates
-            .filter { it.truthRelation == TruthRelation.TRUE_TO_ACTUAL_STATE }
-            .minByOrNull { it.candidateId }
-            ?: selectedHealthyCandidates.minByOrNull { it.candidateId }
-        val registrations = semanticCandidate
-            ?.registrations
-            .orEmpty()
-            .map { it.toObservationRegistration(abilityRole) }
 
         return AbilityObservation(
             sourceSeat = sourceSeat,
@@ -92,51 +68,9 @@ internal object PairInformationAbilityRecommender {
             shownRole = selected.outcome.shownRole,
             candidateSeats = selected.outcome.candidateSeats,
             reliability = reliability,
-            semanticTruth = if (selected.truthful) SemanticTruth.TRUE else SemanticTruth.FALSE,
-            registrations = registrations,
+            semanticTruth = selected.semanticTruth,
+            registrations = selected.registrations.map { it.toObservationRegistration(abilityRole) },
         )
-    }
-
-    private fun legalDisplayOutcomes(
-        game: GameState,
-        roleDefinitions: List<RoleDefinition>,
-        sourceSeat: Int,
-        abilityRole: RoleId,
-    ): List<PairInformationOutcome> {
-        val targetType = when (abilityRole) {
-            washerwoman -> CharacterType.TOWNSFOLK
-            librarian -> CharacterType.OUTSIDER
-            investigator -> CharacterType.MINION
-            else -> return emptyList()
-        }
-        val displayRoles = roleDefinitions
-            .asSequence()
-            .filter { game.script in it.scriptIds && it.type == targetType }
-            .map { it.id }
-            .distinct()
-            .sortedBy { it.value }
-            .toList()
-        val seats = game.players
-            .asSequence()
-            .map { it.seat }
-            .filter { it != sourceSeat }
-            .sorted()
-            .toList()
-        val pairs = unorderedPairs(seats)
-        val rolePairOutcomes = displayRoles.flatMap { shownRole ->
-            pairs.map { pair ->
-                PairInformationOutcome(
-                    shownRole = shownRole,
-                    targetSeat = pair[0],
-                    decoySeat = pair[1],
-                )
-            }
-        }
-        return if (abilityRole == librarian) {
-            rolePairOutcomes + PairInformationOutcome(shownRole = null, targetSeat = null, decoySeat = null)
-        } else {
-            rolePairOutcomes
-        }
     }
 
     private fun misinformationPressure(
@@ -166,21 +100,6 @@ internal object PairInformationAbilityRecommender {
             reason = reason,
         )
 
-    private fun unorderedPairs(seats: List<Int>): List<List<Int>> = buildList {
-        for (firstIndex in 0 until seats.lastIndex) {
-            for (secondIndex in firstIndex + 1 until seats.size) {
-                add(listOf(seats[firstIndex], seats[secondIndex]))
-            }
-        }
-    }
-
-    private fun canonicalId(abilityRole: RoleId, outcome: PairInformationOutcome): String = listOf(
-        stableVersion,
-        abilityRole.value,
-        outcome.shownRole?.value ?: "none",
-        outcome.candidateSeats.joinToString(","),
-    ).joinToString("|")
-
     private fun keyOf(outcome: PairInformationOutcome): PairInformationKey = PairInformationKey(
         shownRole = outcome.shownRole,
         candidateSeats = outcome.candidateSeats,
@@ -191,13 +110,6 @@ internal object PairInformationAbilityRecommender {
         ReliabilityState.DRUNK -> InformationReliability.DRUNK
         ReliabilityState.POISONED -> InformationReliability.POISONED
     }
-
-    private data class PairInformationOption(
-        val id: String,
-        val outcome: PairInformationOutcome,
-        val truthful: Boolean,
-        val misinformationPressure: Int,
-    )
 
     private data class PairInformationKey(
         val shownRole: RoleId?,

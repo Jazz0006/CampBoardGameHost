@@ -15,6 +15,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicSta
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
 import com.codex.campboardgamehost.clocktower.rules.FirstNightNumericInformationSemantics
+import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemantics
 import kotlin.math.abs
 
 internal enum class TwoPlayerSelectionAction {
@@ -301,27 +302,39 @@ internal fun unifiedDecisionPool(
         })
     }
 
+private fun ClocktowerDisplayOption.isLegalFirstNightPairDisplay(familyId: String): Boolean {
+    if (familyId !in setOf("Washerwoman", "Librarian", "Investigator")) return true
+    val key = proposition?.firstNightPairInformationKey() ?: return true
+    val isZeroCharacterOutcome = key.shownRole == null && key.candidateSeats.isEmpty()
+    return !isZeroCharacterOutcome ||
+        PairInformationDisplaySemantics.allowsZeroCharacterOutcome(RoleId(familyId))
+}
+
 internal fun unifiedFirstNightInformationPool(
     options: List<ClocktowerDisplayOption>,
     familyId: String,
     automaticStyle: RecommendationStyle,
-): UnifiedSelectionPool<ClocktowerDisplayOption> = UnifiedSelectionPool(options.map { option ->
-    UnifiedSelectionCandidate(
-        candidateId = clocktowerInformationCandidateId(option),
-        familyId = familyId,
-        legality = UnifiedCandidateLegality.LEGAL,
-        epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
-        qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
-        rankFixedPoint = when {
-            option.isDefaultRecommendation -> 1_000_000L
-            option.recommendationStyle == automaticStyle -> 900_000L
-            else -> 800_000L
+): UnifiedSelectionPool<ClocktowerDisplayOption> = UnifiedSelectionPool(
+    options
+        .filter { option -> option.isLegalFirstNightPairDisplay(familyId) }
+        .map { option ->
+            UnifiedSelectionCandidate(
+                candidateId = clocktowerInformationCandidateId(option),
+                familyId = familyId,
+                legality = UnifiedCandidateLegality.LEGAL,
+                epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
+                qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
+                rankFixedPoint = when {
+                    option.isDefaultRecommendation -> 1_000_000L
+                    option.recommendationStyle == automaticStyle -> 900_000L
+                    else -> 800_000L
+                },
+                reasonCodes = option.reasonCodes,
+                warningCodes = option.warningCodes,
+                payload = option,
+            )
         },
-        reasonCodes = option.reasonCodes,
-        warningCodes = option.warningCodes,
-        payload = option,
-    )
-})
+)
 
 internal data class ClocktowerRegistrationRecommendationOption(
     val label: String,
