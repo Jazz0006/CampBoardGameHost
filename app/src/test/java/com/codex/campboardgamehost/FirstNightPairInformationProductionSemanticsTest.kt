@@ -63,6 +63,68 @@ class FirstNightPairInformationProductionSemanticsTest {
     }
 
     @Test
+    fun `drunk shown washerwoman preserves spy registered townsfolk truth`() {
+        val game = game(
+            player(1, "Drunk", CharacterType.OUTSIDER, shownRole = "Washerwoman"),
+            player(2, "Spy", CharacterType.MINION),
+            player(3, "Chef", CharacterType.TOWNSFOLK),
+            player(4, "Poisoner", CharacterType.MINION),
+            player(5, "Imp", CharacterType.DEMON),
+        )
+        val registeredTruth = pairOption(
+            title = "Washerwoman information",
+            shownRole = "Monk",
+            firstSeat = 2,
+            secondSeat = 3,
+        )
+
+        val projected = projectFirstNightPairInformationOptions(
+            phase = ClocktowerPhase.FirstNight,
+            roleEnName = "Washerwoman",
+            sourceSeat = 1,
+            game = game,
+            roleDefinitions = roleDefinitions,
+            options = listOf(registeredTruth),
+        ).single()
+
+        assertTrue(projected.isTruthful)
+        assertEquals(0, projected.misinformationPressure)
+        assertEquals(true, projected.spyRegistersGood)
+        assertEquals("Monk", projected.spyRegisteredRoleEnName)
+    }
+
+    @Test
+    fun `drunk shown librarian preserves spy registered outsider truth when there are no natural outsiders`() {
+        val game = game(
+            player(1, "Drunk", CharacterType.OUTSIDER, shownRole = "Librarian"),
+            player(2, "Spy", CharacterType.MINION),
+            player(3, "Chef", CharacterType.TOWNSFOLK),
+            player(4, "Poisoner", CharacterType.MINION),
+            player(5, "Imp", CharacterType.DEMON),
+        )
+        val registeredTruth = pairOption(
+            title = "Librarian information",
+            shownRole = "Saint",
+            firstSeat = 2,
+            secondSeat = 3,
+        )
+
+        val projected = projectFirstNightPairInformationOptions(
+            phase = ClocktowerPhase.FirstNight,
+            roleEnName = "Librarian",
+            sourceSeat = 1,
+            game = game,
+            roleDefinitions = roleDefinitions,
+            options = listOf(registeredTruth),
+        ).single()
+
+        assertTrue(projected.isTruthful)
+        assertEquals(0, projected.misinformationPressure)
+        assertEquals(true, projected.spyRegistersGood)
+        assertEquals("Saint", projected.spyRegisteredRoleEnName)
+    }
+
+    @Test
     fun `drunk shown investigator preserves recluse registered minion truth`() {
         val game = game(
             player(1, "Drunk", CharacterType.OUTSIDER, shownRole = "Investigator"),
@@ -102,6 +164,28 @@ class FirstNightPairInformationProductionSemanticsTest {
         assertEquals(true, projected.recluseRegistersEvil)
         assertEquals("Scarlet Woman", projected.recluseRegisteredRoleEnName)
     }
+
+    private fun pairOption(
+        title: String,
+        shownRole: String,
+        firstSeat: Int,
+        secondSeat: Int,
+    ) = ClocktowerDisplayOption(
+        label = "$shownRole: $firstSeat / $secondSeat",
+        displayKind = ClocktowerDisplayKind.EitherOne,
+        displayTitle = title,
+        displayPrimary = shownRole,
+        displaySecondary = "$firstSeat / $secondSeat",
+        displayFooter = null,
+        proposition = InformationProposition.AnyOf(
+            listOf(
+                InformationProposition.RoleAt(firstSeat, RoleId(shownRole)),
+                InformationProposition.RoleAt(secondSeat, RoleId(shownRole)),
+            ),
+        ),
+        isTruthful = false,
+        misinformationPressure = 3,
+    )
 
     private fun game(vararg players: PlayerState) = GameState(
         script = ScriptId("trouble_brewing"),
