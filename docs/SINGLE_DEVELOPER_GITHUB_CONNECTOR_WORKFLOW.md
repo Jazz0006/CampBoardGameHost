@@ -48,7 +48,7 @@ live main/head recheck
 
 正式默认流程见：
 
-- `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`
+- `docs/archive/superseded-workflows/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`
 
 摘要：
 
@@ -97,7 +97,7 @@ remote trusted writer
 - 不在 `main` 长期保留 permanent writer；
 - 不为普通大文件小修改临时搭 writer；
 - 不为触发 writer 临时 retarget 产品 PR；
-- `github_connector_large_file_editing_playbook.md` 仅保留历史机制参考。
+- `archive/superseded-workflows/github_connector_large_file_editing_playbook.md` 仅保留历史机制参考。
 
 ## 4. ChatGPT 输出给 Luna 的标准交付
 

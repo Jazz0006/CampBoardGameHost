@@ -94,7 +94,7 @@ Relative to the accepted planning baseline `3948cd7feb6643a636e1583d74be7e6c6826
 ```text
 app/src/main/java/com/codex/campboardgamehost/clocktower/domain/CommittedClocktowerSetup.kt
 app/src/test/java/com/codex/campboardgamehost/clocktower/domain/CommittedClocktowerSetupTest.kt
-docs/MS_S1_COMMITTED_SETUP_CHECKPOINT_2026-08-31.md
+docs/archive/completed-campaigns/ms-setup/MS_S1_COMMITTED_SETUP_CHECKPOINT_2026-08-31.md
 ```
 
 No persistence/App/Host/TB/NGJ production wiring changed.

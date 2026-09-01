@@ -387,7 +387,7 @@ docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 
 Dated MS-SETUP closeout files, older `NEXT_DEVELOPMENT_HANDOFF_*` files, earlier architecture-hardening handoffs, and completed decomposition handoffs remain historical evidence. Do not execute them as current instructions unless this roadmap explicitly reactivates them.
 
-The older `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` remains subordinate to `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` and root `AGENTS.md`.
+The older `docs/archive/superseded-workflows/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` remains subordinate to `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` and root `AGENTS.md`.
 
 Do not delete useful historical evidence merely to reduce document count. Remove or rewrite a historical file only when it makes a false current-authority claim that cannot be safely neutralized by the authority hierarchy above.
 

@@ -429,7 +429,7 @@ Terra 每次只执行一个 batch。完成 focused tests 和该 batch 的验收�
 ```text
 clocktower/session/*Test.kt
 clocktower/domain/*Test.kt
-docs/storyteller_revision_driven_dynamic_decision_engine_plan.md
+docs/archive/superseded-designs/storyteller_revision_driven_dynamic_decision_engine_plan.md
 ```
 
 退出条件：测试明确证明旧 key 的缺失字段；完整 JVM 测试仍通过。

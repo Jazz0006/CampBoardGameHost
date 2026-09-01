@@ -122,7 +122,7 @@ Every Luna instruction **MUST be one continuous fenced code block** suitable for
 
 If the specified patch cannot apply because the live API/signature differs materially, Luna must stop and report the conflict rather than invent an equivalent implementation.
 
-Detailed current operations are in `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`. The older `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` is historical guidance only where it does not conflict with V2.
+Detailed current operations are in `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`. The older `docs/archive/superseded-workflows/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` is historical guidance only where it does not conflict with V2.
 
 ## 3. Behavior-first, risk-based development and validation cadence
 
@@ -361,7 +361,7 @@ Read these according to task scope:
 - `docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md` remains the detailed Possible Worlds / epistemic foundation, but its historical phase sequence and AUTO/ASSISTED front-door assumptions are **not** current product/execution authority where superseded by the roadmap, clue UX decision, or Productive Uncertainty plan.
 - `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md`, `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md`, and `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md` remain supporting evidence for their domains.
 - `docs/SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md` remains connector guidance where non-conflicting.
-- `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` is older local-worktree guidance and is subordinate where it conflicts with V2 or this file.
+- `docs/archive/superseded-workflows/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` is older local-worktree guidance and is subordinate where it conflicts with V2 or this file.
 
 ### 8.3 Historical handoff rule
 

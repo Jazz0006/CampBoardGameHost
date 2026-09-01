@@ -865,7 +865,7 @@ Spy/Recluse 登记、观察过滤、精确计数、explanation cluster、golden 
 
 状态：进行中。首个切片已建立 canonical zero-suppressed decision diagram、
 `ZddPlayerWorldSet` 契约实现、精确计数、不可变 snapshot 和 A3 差分测试基线。
-详见 `docs/storyteller_a4_zdd_prototype.md`。
+详见 `docs/archive/deferred/storyteller_a4_zdd_prototype.md`。
 
 实现或适配：
 
@@ -888,7 +888,7 @@ with ASP as external cross-check
 在 POCO X5/X8 完成正确性、P50/P95、内存和降级策略评估后，才决定是否作为 runtime 实现。
 
 下一实施切片固定为 **A4.5 Observation cache rebuild executor**，详细合同见
-`docs/storyteller_a4_5_observation_cache_rebuild_spec.md`。必须先加固 cache identity，再从完整
+`docs/archive/deferred/storyteller_a4_5_observation_cache_rebuild_spec.md`。必须先加固 cache identity，再从完整
 observation log 重建受影响 recipient；非首夜/round-1 timeline 明确返回 `DEFERRED_B4`，
 不得调用 setup enumerator，也不得报告 UNSAT。
 
@@ -931,7 +931,7 @@ observation log 重建受影响 recipient；非首夜/round-1 timeline 明确返
 
 B4 负责“不同时间点玩家相信哪些世界仍可能”的 exact/shadow 语义，不负责 UI 推荐任务的并发与提交生命周期。
 所有首夜和后续回合的推荐失效、重新生成、stale rejection 与原子提交统一遵循
-`docs/storyteller_revision_driven_dynamic_decision_engine_plan.md`。该动态引擎可以先使用现有规则和启发式评分上线 shadow；
+`docs/archive/superseded-designs/storyteller_revision_driven_dynamic_decision_engine_plan.md`。该动态引擎可以先使用现有规则和启发式评分上线 shadow；
 缺少 B4 覆盖的 epistemic 查询必须显式 `DEFERRED_B4`，不得报告 UNSAT。
 
 ### Phase C：Quality, Policy and Production

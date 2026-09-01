@@ -479,7 +479,7 @@ changes. Do not reset, discard, stage or commit unrelated files. Production sele
 
 The next implementation slice is frozen as **A4.5 Observation cache rebuild executor**. Its exact
 scope, cache-identity prerequisite, state machine, test matrix, Terra-sized batches and stop
-conditions are defined in `docs/storyteller_a4_5_observation_cache_rebuild_spec.md`. That document is
+conditions are defined in `docs/archive/deferred/storyteller_a4_5_observation_cache_rebuild_spec.md`. That document is
 normative for the next slice; this status document records results after implementation.
 
 1. Implement the safe version-bound cache rebuild executor. Its input must contain the new formal

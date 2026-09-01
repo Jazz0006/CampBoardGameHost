@@ -235,7 +235,7 @@ app/src/main/java/.../MainActivity.kt                                 (debug wir
 app/src/test/java/.../epistemic/A4IdentityRevealPrewarmCoordinatorTest.kt
 app/src/test/java/.../epistemic/A4ObservationCacheUpdateCoordinatorTest.kt
 app/src/test/java/.../epistemic/A4ShadowWorldSetCacheTest.kt           (new, if extracted)
-docs/storyteller_a4_zdd_prototype.md
+docs/archive/deferred/storyteller_a4_zdd_prototype.md
 ```
 
 如果必须修改 `PlayerWorldSet`、`ZddPlayerWorldSet`、setup recommendation 或 domain schema，应停止并先记录

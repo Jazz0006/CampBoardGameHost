@@ -3,7 +3,7 @@
 > Role: **NORMATIVE / DEVELOPMENT OPERATIONS**  
 > Effective: 2026-08-27  
 > Applies to: `Jazz0006/CampBoardGameHost`  
-> Precedence: this document supersedes conflicting execution/testing defaults in `docs/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`. `docs/TESTING_STRATEGY.md` remains authoritative for test-tier definitions.
+> Precedence: this document supersedes conflicting execution/testing defaults in `docs/archive/superseded-workflows/CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`. `docs/TESTING_STRATEGY.md` remains authoritative for test-tier definitions.
 
 ## 1. Fixed division of responsibility
 
