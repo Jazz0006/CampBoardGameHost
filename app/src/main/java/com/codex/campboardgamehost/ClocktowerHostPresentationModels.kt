@@ -2,6 +2,7 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.presentation.PairInformationManualSelectionModel
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionSnapshot
 
@@ -70,6 +71,8 @@ internal data class ClocktowerNightStepUi(
      * [legacyInformationCandidates] curated for assisted/manual presentation.
      */
     val automaticInformationCandidates: List<ClocktowerDisplayOption> = emptyList(),
+    /** Structured manual surface derived from the legal semantic domain, never from recommendation output. */
+    val manualPairSelection: PairInformationManualSelectionModel? = null,
     val decisionOptions: List<ClocktowerDecisionOption> = emptyList(),
     val wakeText: String? = null,
     val roleEnName: String? = null,
