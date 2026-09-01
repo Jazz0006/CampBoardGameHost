@@ -28,6 +28,8 @@ R2 main-thread boundary #1288 — SUCCESS
 
 Documentation-only commits may advance the PR head beyond the executable checkpoint above. Do not infer a new executable checkpoint from a docs-only head.
 
+Documentation authority convergence is complete on the current branch: root `AGENTS.md`, this roadmap, the clue-selection UX decision, the Productive Uncertainty plan, algorithm v2.2 authority metadata, and the active UX-R2 handoff now agree on the current route and document precedence.
+
 PR #63 remains Draft and must not be merged, marked ready, rebased, force-pushed, or otherwise broadened without explicit user authorization.
 
 ## 2. Completed foundation
