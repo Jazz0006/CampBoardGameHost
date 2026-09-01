@@ -1,0 +1,31 @@
+name: One-shot S6D UI wiring patch
+
+on:
+  push:
+    branches:
+      - codex/ms-setup-generic-architecture
+    paths:
+      - .github/workflows/oneshot_patch_458a71d.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Run locked one-shot patch
+        run: python3 tools/oneshot_patch_458a71d.py
