@@ -2152,13 +2152,49 @@ internal fun ClocktowerJudgeScreen(
                 )
             }
         }
-        val candidates = effects.map { effect ->
-            val namedPlayers = listOfNotNull(effect.target, effect.decoy)
-            val truthful = if (effect.shownRole == null) {
-                cards.none { it.clocktowerTeam == roleTeam }
+        fun propositionFor(effect: PairInformationEffect): InformationProposition =
+            if (effect.shownRole != null && effect.target != null && effect.decoy != null) {
+                InformationProposition.AnyOf(listOf(
+                    InformationProposition.RoleAt(cards.indexOf(effect.target) + 1, RoleId(effect.shownRole.enName)),
+                    InformationProposition.RoleAt(cards.indexOf(effect.decoy) + 1, RoleId(effect.shownRole.enName)),
+                ))
             } else {
-                namedPlayers.any { it.clocktowerRole?.enName == effect.shownRole.enName }
+                InformationProposition.AllOf(roles.map { InformationProposition.RoleInPlay(RoleId(it.enName), false) })
             }
+        val sourceSeat = cards.indexOf(actor) + 1
+        val projectedSemanticsById = projectFirstNightPairInformationOptions(
+            phase = phase,
+            roleEnName = ability.name,
+            sourceSeat = sourceSeat,
+            game = cards.toClocktowerGameState(script, gameSeed, poisonTarget),
+            roleDefinitions = clocktowerRoleDefinitionsForScript(script),
+            options = effects.map { effect ->
+                ClocktowerDisplayOption(
+                    label = effect.id,
+                    displayKind = ClocktowerDisplayKind.EitherOne,
+                    displayTitle = ability.name,
+                    displayPrimary = null,
+                    displaySecondary = null,
+                    displayFooter = null,
+                    proposition = propositionFor(effect),
+                    isTruthful = false,
+                    misinformationPressure = 1,
+                )
+            },
+        ).associateBy(ClocktowerDisplayOption::label)
+        val projectedEffects = effects.map { effect ->
+            val semantics = projectedSemanticsById.getValue(effect.id)
+            effect.copy(
+                registration = if (semantics.recluseRegistersEvil == true) {
+                    PairInformationRegistration.RECLUSE_AS_EVIL_ROLE
+                } else {
+                    PairInformationRegistration.NONE
+                },
+            )
+        }
+        val candidates = projectedEffects.map { effect ->
+            val namedPlayers = listOfNotNull(effect.target, effect.decoy)
+            val truthful = projectedSemanticsById.getValue(effect.id).isTruthful
             val targetMetadata = effect.target?.clocktowerRole?.enName
                 ?.let(::RoleId)
                 ?.let(TroubleBrewingRecommendationMetadata::forRole)
@@ -2171,7 +2207,7 @@ internal fun ClocktowerJudgeScreen(
                 ?.let(TroubleBrewingRecommendationMetadata::forRole)
             PairInformationCandidate(
                 id = effect.id,
-                registration = PairInformationRegistration.NONE,
+                registration = effect.registration,
                 isTruthful = truthful,
                 targetExposure = targetMetadata?.exposureSensitivity ?: 0,
                 decoyExposure = decoyMetadata?.exposureSensitivity ?: 0,
@@ -2189,7 +2225,7 @@ internal fun ClocktowerJudgeScreen(
                 historyPressure = informationHistoryPressure(effect.target) + informationHistoryPressure(effect.decoy),
             )
         }
-        val effectsById = effects.associateBy(PairInformationEffect::id)
+        val effectsById = projectedEffects.associateBy(PairInformationEffect::id)
         return recommendationCoordinator.recommendPair(candidates).mapNotNull { recommendation ->
             val candidate = candidates.first { it.id == recommendation.candidateId }
             val effect = effectsById[recommendation.candidateId] ?: return@mapNotNull null
