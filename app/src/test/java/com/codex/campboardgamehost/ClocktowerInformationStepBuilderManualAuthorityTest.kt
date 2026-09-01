@@ -37,7 +37,7 @@ class ClocktowerInformationStepBuilderManualAuthorityTest {
             text = { _, en -> en },
             roleActor = { actor },
             roleMissingReason = { "" },
-            abilityStateFor = { _, _ -> AbilityFunctioningState.HEALTHY },
+            abilityStateFor = { _, _ -> AbilityFunctioningState.FUNCTIONING },
             actorIsUnreliable = { _, _ -> false },
             recentMisinformationStreak = { 0 },
         )
