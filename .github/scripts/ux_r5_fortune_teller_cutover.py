@@ -1,18 +1,74 @@
 from pathlib import Path
 
-PATH = Path("app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt")
-text = PATH.read_text()
+HOST = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt")
+NIGHT = Path("app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt")
 
 
-def replace_once(old: str, new: str, label: str) -> None:
-    global text
+def read_lf(path: Path) -> str:
+    raw = path.read_bytes()
+    if b"\r\n" in raw or b"\r" in raw:
+        raise SystemExit(f"Unexpected line ending in {path}; refusing implicit normalization")
+    return raw.decode("utf-8")
+
+
+def replace_once(text: str, old: str, new: str, label: str) -> str:
     count = text.count(old)
     if count != 1:
         raise SystemExit(f"{label}: expected exactly one anchor, found {count}")
-    text = text.replace(old, new, 1)
+    return text.replace(old, new, 1)
 
 
-replace_once(
+host = read_lf(HOST)
+night = read_lf(NIGHT)
+
+host = replace_once(
+    host,
+    '''                                action = ClocktowerNightAction.FortuneTeller,
+                                displaySecondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+''',
+    '''                                action = ClocktowerNightAction.FortuneTeller,
+                                displayProposition = fortuneTellerMatched?.let { matched ->
+                                    roleActor("Fortune Teller")?.let { actor ->
+                                        InformationProposition.BooleanResult(
+                                            BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+                                            cards.indexOf(actor) + 1,
+                                            listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).mapNotNull { name ->
+                                                cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
+                                            },
+                                            matched,
+                                        )
+                                    }
+                                },
+                                displaySecondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+''',
+    "first-night Fortune Teller typed proposition",
+)
+
+host = replace_once(
+    host,
+    '''                action = ClocktowerNightAction.FortuneTeller,
+                displaySecondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+''',
+    '''                action = ClocktowerNightAction.FortuneTeller,
+                displayProposition = fortuneTellerMatched?.let { matched ->
+                    roleActor("Fortune Teller")?.let { actor ->
+                        InformationProposition.BooleanResult(
+                            BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+                            cards.indexOf(actor) + 1,
+                            listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).mapNotNull { name ->
+                                cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
+                            },
+                            matched,
+                        )
+                    }
+                },
+                displaySecondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+''',
+    "other-night Fortune Teller typed proposition",
+)
+
+night = replace_once(
+    night,
     "import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition\n"
     "import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric\n",
     "import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric\n"
@@ -21,9 +77,10 @@ replace_once(
     "BooleanMetric import",
 )
 
-replace_once(
+night = replace_once(
+    night,
     "    val structuredNumberUiModel = structuredEmpathUiModel ?: structuredChefUiModel\n",
-    """    val structuredFortuneTellerActorSeat = step.actor
+    '''    val structuredFortuneTellerActorSeat = step.actor
         ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
     val structuredFortuneTellerSelectedSeats = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
         .mapNotNull { selectedName ->
@@ -81,16 +138,17 @@ replace_once(
         null
     }
     val structuredNumberUiModel = structuredEmpathUiModel ?: structuredChefUiModel
-""",
+''',
     "structured Fortune Teller model",
 )
 
-replace_once(
-    """            }
+night = replace_once(
+    night,
+    '''            }
 
             pairRecommendationPresentation?.let { presentation ->
-""",
-    """            }
+''',
+    '''            }
 
             if (showFortuneTellerDisplayOptions) {
                 structuredFortuneTellerUiModel?.let { model ->
@@ -138,34 +196,44 @@ replace_once(
             }
 
             pairRecommendationPresentation?.let { presentation ->
-""",
+''',
     "structured Fortune Teller panel",
 )
 
-replace_once(
-    """                pairRecommendationPresentation == null &&
+night = replace_once(
+    night,
+    '''                pairRecommendationPresentation == null &&
                 structuredNumberUiModel == null &&
                 displayedInformationOptions.isNotEmpty() &&
-""",
-    """                pairRecommendationPresentation == null &&
+''',
+    '''                pairRecommendationPresentation == null &&
                 structuredNumberUiModel == null &&
                 structuredFortuneTellerUiModel == null &&
                 displayedInformationOptions.isNotEmpty() &&
-""",
-    "recommended information suppression",
+''',
+    "recommended information fallback suppression",
 )
 
-replace_once(
-    """            if (
+night = replace_once(
+    night,
+    '''            if (
                 structuredNumberUiModel == null &&
                 firstNightPool == null && step.displayOptions.isNotEmpty() &&
-""",
-    """            if (
+''',
+    '''            if (
                 structuredNumberUiModel == null &&
                 structuredFortuneTellerUiModel == null &&
                 firstNightPool == null && step.displayOptions.isNotEmpty() &&
-""",
-    "legacy display option suppression",
+''',
+    "legacy display-option fallback suppression",
 )
 
-PATH.write_text(text)
+if host.count('displayProposition = fortuneTellerMatched?.let { matched ->') != 2:
+    raise SystemExit("Fortune Teller typed truth must be wired in exactly two night materializers")
+if night.count('StructuredBooleanInformationDecisionPanel(') != 1:
+    raise SystemExit("Structured Fortune Teller panel must have exactly one production call")
+if night.count('findBooleanDisplayOption(') != 1:
+    raise SystemExit("Fortune Teller confirmation must map through exactly one typed option seam")
+
+HOST.write_text(host, encoding="utf-8", newline="\n")
+NIGHT.write_text(night, encoding="utf-8", newline="\n")
