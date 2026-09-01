@@ -72,6 +72,12 @@ night = replace_once(
 )
 night = replace_once(
     night,
+    "trueValue = structuredFortuneTellerProposition.value,",
+    "trueValue = structuredFortuneTellerTruthValue,",
+    "structured Fortune Teller true value",
+)
+night = replace_once(
+    night,
     "truthful = value == structuredFortuneTellerProposition.value,",
     "truthful = value == structuredFortuneTellerTruthValue,",
     "selection audit truthful comparison",
@@ -85,6 +91,7 @@ night = replace_once(
 
 required = [
     "val structuredFortuneTellerTruthValue = structuredFortuneTellerProposition?.value",
+    "trueValue = structuredFortuneTellerTruthValue",
     "findBooleanDisplayOption(",
     "sourceSeat = proposition.sourceSeat",
     "subjectSeats = proposition.subjectSeats",
