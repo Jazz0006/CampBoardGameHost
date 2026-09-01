@@ -25,6 +25,7 @@ import com.codex.campboardgamehost.clocktower.session.InformationDecisionHardBlo
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionValidationResult
 import com.codex.campboardgamehost.clocktower.session.SmallDomainPresentation
+import com.codex.campboardgamehost.clocktower.session.StructuredBooleanInformationUiModel
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 
 /**
@@ -152,41 +153,164 @@ internal fun StructuredNumberInformationDecisionPanel(
         }
 
         blockedReason?.let { reason ->
-            Text(
-                text = when (reason) {
-                    InformationDecisionHardBlockReason.STALE_CONTEXT ->
-                        if (language == "en") "Game input changed. Re-open this decision before confirming." else "对局输入已经变化，请重新打开本次裁定后再确认。"
-                    InformationDecisionHardBlockReason.ILLEGAL_CANDIDATE ->
-                        if (language == "en") "That result is no longer legal for this interaction." else "该结果已不属于本次交互的合法选项。"
-                    InformationDecisionHardBlockReason.NOT_RECOMMENDED ->
-                        if (language == "en") "That result is not the recommendation being accepted." else "该结果不是当前可接受的推荐结果。"
-                },
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-            )
+            InformationDecisionBlockedReasonText(reason = reason, language = language)
         }
 
         pendingWarning?.let { (result, value) ->
-            val confirmed = requireNotNull(result.confirmed)
-            val warnings = (result.validation as InformationDecisionValidationResult.Allowed).warnings
-            Text(
-                text = if (language == "en") {
-                    "Review before confirming: ${warnings.joinToString { it.code }}"
-                } else {
-                    "确认前请复核：${warnings.joinToString { it.code }}"
-                },
-                color = MaterialTheme.colorScheme.secondary,
-                style = MaterialTheme.typography.bodySmall,
-            )
-            Button(
-                onClick = {
+            InformationDecisionWarningConfirmation(
+                result = result,
+                language = language,
+                onConfirm = {
                     pendingWarning = null
-                    onConfirmed(confirmed, value)
+                    onConfirmed(requireNotNull(result.confirmed), value)
                 },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(if (language == "en") "Confirm despite warning" else "确认并继续")
+            )
+        }
+    }
+}
+
+@Composable
+internal fun StructuredBooleanInformationDecisionPanel(
+    model: StructuredBooleanInformationUiModel,
+    currentRevision: InformationDecisionRevision,
+    automaticStorytellerInfo: Boolean,
+    language: String,
+    roleLabel: String,
+    onConfirmed: (ConfirmedInformationDecision, Boolean) -> Unit,
+) {
+    var blockedReason by remember(model.semanticStateKey, currentRevision) {
+        mutableStateOf<InformationDecisionHardBlockReason?>(null)
+    }
+    var pendingWarning by remember(model.semanticStateKey, currentRevision) {
+        mutableStateOf<Pair<InformationDecisionConfirmation, Boolean>?>(null)
+    }
+
+    fun choose(choice: StructuredBooleanInformationUiModel.Choice) {
+        blockedReason = null
+        pendingWarning = null
+        val result = if (choice.recommended) {
+            model.acceptRecommendation(choice.candidateId, currentRevision)
+        } else {
+            model.chooseManually(choice.candidateId, currentRevision)
+        }
+        when (val validation = result.validation) {
+            is InformationDecisionValidationResult.Blocked -> blockedReason = validation.reason
+            is InformationDecisionValidationResult.Allowed -> {
+                val confirmed = requireNotNull(result.confirmed)
+                if (validation.warnings.isEmpty()) {
+                    onConfirmed(confirmed, choice.value)
+                } else {
+                    pendingWarning = result to choice.value
+                }
             }
         }
+    }
+
+    val presentation = SmallDomainPresentation.from(
+        legalCandidates = model.choices,
+        recommendedCandidateIds = model.choices.filter { it.recommended }.map { it.candidateId },
+        candidateId = StructuredBooleanInformationUiModel.Choice::candidateId,
+    )
+    val visibleChoices = if (automaticStorytellerInfo) {
+        listOfNotNull(presentation.primary)
+    } else {
+        listOfNotNull(presentation.primary) + presentation.remaining
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            if (language == "en") "Choose the $roleLabel result" else "选择展示给${roleLabel}的结果",
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            if (language == "en") {
+                "The recommended result is primary; every other rule-valid Yes/No result remains directly selectable."
+            } else {
+                "推荐结果优先展示；其余所有规则允许的“有/没有”结果仍可直接选择。"
+            },
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodySmall,
+        )
+
+        visibleChoices.forEach { choice ->
+            val valueLabel = if (choice.value) {
+                if (language == "en") "Yes" else "有"
+            } else {
+                if (language == "en") "No" else "没有"
+            }
+            val label = when {
+                choice.recommended && language == "en" -> "Recommended · $valueLabel"
+                choice.recommended -> "推荐 · $valueLabel"
+                language == "en" -> "Manual · $valueLabel"
+                else -> "手动 · $valueLabel"
+            }
+            if (choice.recommended) {
+                Button(onClick = { choose(choice) }, modifier = Modifier.fillMaxWidth()) {
+                    Text(label)
+                }
+            } else {
+                OutlinedButton(onClick = { choose(choice) }, modifier = Modifier.fillMaxWidth()) {
+                    Text(label)
+                }
+            }
+        }
+
+        blockedReason?.let { reason ->
+            InformationDecisionBlockedReasonText(reason = reason, language = language)
+        }
+
+        pendingWarning?.let { (result, value) ->
+            InformationDecisionWarningConfirmation(
+                result = result,
+                language = language,
+                onConfirm = {
+                    pendingWarning = null
+                    onConfirmed(requireNotNull(result.confirmed), value)
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun InformationDecisionBlockedReasonText(
+    reason: InformationDecisionHardBlockReason,
+    language: String,
+) {
+    Text(
+        text = when (reason) {
+            InformationDecisionHardBlockReason.STALE_CONTEXT ->
+                if (language == "en") "Game input changed. Re-open this decision before confirming." else "对局输入已经变化，请重新打开本次裁定后再确认。"
+            InformationDecisionHardBlockReason.ILLEGAL_CANDIDATE ->
+                if (language == "en") "That result is no longer legal for this interaction." else "该结果已不属于本次交互的合法选项。"
+            InformationDecisionHardBlockReason.NOT_RECOMMENDED ->
+                if (language == "en") "That result is not the recommendation being accepted." else "该结果不是当前可接受的推荐结果。"
+        },
+        color = MaterialTheme.colorScheme.error,
+        style = MaterialTheme.typography.bodySmall,
+    )
+}
+
+@Composable
+private fun InformationDecisionWarningConfirmation(
+    result: InformationDecisionConfirmation,
+    language: String,
+    onConfirm: () -> Unit,
+) {
+    val warnings = (result.validation as InformationDecisionValidationResult.Allowed).warnings
+    Text(
+        text = if (language == "en") {
+            "Review before confirming: ${warnings.joinToString { it.code }}"
+        } else {
+            "确认前请复核：${warnings.joinToString { it.code }}"
+        },
+        color = MaterialTheme.colorScheme.secondary,
+        style = MaterialTheme.typography.bodySmall,
+    )
+    Button(
+        onClick = onConfirm,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(if (language == "en") "Confirm despite warning" else "确认并继续")
     }
 }
