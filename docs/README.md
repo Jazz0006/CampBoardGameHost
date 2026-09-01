@@ -1,6 +1,6 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-08-31 Australia/Sydney
+> 最后整理：2026-09-01 Australia/Sydney  
 > 目标：让新的开发会话只读少量真正有权威性的文档，不再被历史 handoff / checkpoint 淹没。
 
 ## 1. 新任务默认阅读顺序
@@ -16,68 +16,84 @@
 
 ## 2. 当前 active task
 
-当前最高优先级：
-
 ```text
 MS-SETUP — Generic Multi-Script Setup Architecture
-MS-S0 — fresh live-state + ownership audit
+MS-S6D — First-night Perceived-Ability Semantic Completion
+当前阶段：S6D-6 production consistency / authority closeout
 ```
 
 Active handoff：
 
-- [`NEXT_DEVELOPMENT_HANDOFF_2026-08-31_MS_SETUP_ARCHITECTURE.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-31_MS_SETUP_ARCHITECTURE.md) — **CURRENT HANDOFF**
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S6D_CLOSEOUT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S6D_CLOSEOUT.md) — **CURRENT HANDOFF**
 
-Merged baseline：
+Current roadmap：
 
-```text
-PR #57 — TBSP: integrate Trouble Brewing setup presets
-MERGED
+- [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — current branch/PR/checkpoint/stage authority.
 
-main merge checkpoint:
-98ee982ef3590822cd06ac72a047b49afac3cfd6
+Current next behavior target：
 
-post-merge full CI:
-CI #1179 / run 33346311357 — SUCCESS
-```
+> 修复 pair-family 在 generic selector 之前被旧 `recommendPair` 预裁剪的问题，同时把完整 semantic domain 与 ASSISTED UI 的可见推荐列表分离，避免 UI 候选爆炸。
 
-Always re-query live `main` before implementation. The current task is planning/audit first; do not begin MS-S1 production work before MS-S0 completes.
+S7 remains blocked until S6D full acceptance.
 
-## 3. Current setup-architecture references
+## 3. Current S6D references
 
-- [`NEXT_DEVELOPMENT_HANDOFF_2026-08-31_MS_SETUP_ARCHITECTURE.md`](NEXT_DEVELOPMENT_HANDOFF_2026-08-31_MS_SETUP_ARCHITECTURE.md) — current generic setup architecture handoff；
-- [`TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md`](TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md) — accepted Trouble Brewing behavior to preserve during genericization；
-- [`TBSP_ROTATION_WEIGHT_CONTRACT_V1.md`](TBSP_ROTATION_WEIGHT_CONTRACT_V1.md) — accepted TB diversity/rotation semantics；
-- [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md) — T0/T1/T2/T3/T4 validation strategy.
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S6D_CLOSEOUT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S6D_CLOSEOUT.md) — current execution boundary and next RED；
+- [`MS_S6D_FIRST_NIGHT_PERCEIVED_ABILITY_AUDIT_2026-09-01.md`](MS_S6D_FIRST_NIGHT_PERCEIVED_ABILITY_AUDIT_2026-09-01.md) — historical S6D-0 audit evidence, **not current next-step authority**；
+- [`MS_S6C_GENERIC_INFORMATION_SEMANTICS_CHECKPOINT_2026-08-31.md`](MS_S6C_GENERIC_INFORMATION_SEMANTICS_CHECKPOINT_2026-08-31.md) — historical accepted S6C checkpoint evidence；
+- [`MS_S6C_GENERIC_IMPAIRED_INFORMATION_REPLAN_2026-08-31.md`](MS_S6C_GENERIC_IMPAIRED_INFORMATION_REPLAN_2026-08-31.md) — historical S6C planning evidence, superseded for current execution by the roadmap/handoff above.
 
-Frozen Trouble Brewing preset dataset:
+Do not resume from the old 2026-08-31 MS-SETUP handoff. It has been retired because its “S6D-1 RED NEXT” instruction is no longer true.
 
-```text
-app/src/main/assets/setup/trouble_brewing_setup_presets_v2_final.json
-```
+## 4. Future epistemic / misinformation-quality design
 
-Do not regenerate or reformat it during MS-SETUP genericization.
+The new long-lived design reference is:
 
-## 4. Current MS-SETUP sequence
+- [`EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`](EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md)
+
+This is **DESIGN / DEFERRED**. It must not be implemented in PR #61.
+
+It extends the player-cognition consistency direction from:
 
 ```text
-MS-S0  live-state + ownership audit                          NEXT
-MS-S1  generic CommittedClocktowerSetup / provenance model  PLANNED
-MS-S2  generic SetupCandidate + candidate-source contract   PLANNED
-MS-S3  optional TemplateRepository                          PLANNED
-MS-S4  deterministic GeneratedSetupCandidateSource          PLANNED
-MS-S5  common SetupDiversityHistory / scorer / selector     PLANNED
-MS-S6  generic shown-identity policy                        PLANNED
-MS-S7  adapt accepted TB pipeline with parity               PLANNED
-MS-S8  adapt NGJ/no-template path with parity               PLANNED
-MS-S9  generic acceptance / future-script proof             PLANNED
-A3 immutable setup snapshot                                 DEFERRED / NOT CURRENT
+Is the displayed answer true/false?
 ```
 
-TBSP-1 through TBSP-6L are complete, accepted, and merged. Do not reopen them without concrete regression evidence.
+to:
 
-## 5. Active long-lived architecture / semantic references
+```text
+What mistaken player world does a legal false answer create?
+Is it credible, sustainable, interactive, eventually breakable, and fair?
+```
 
-These remain in the active docs root because they define long-lived contracts rather than temporary branch state.
+Its core principles include credibility, false-world persistence, breakability, cross-role interaction, social impact, Productive Uncertainty, avoiding direct Drunk exposure, avoiding confirmation locks, narrative value over degree of falsity, and player agency/fairness.
+
+Related long-lived foundations:
+
+- [`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`](CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md)
+- [`R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md`](R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md)
+- [`r6_p1_2_knowledge_timeline_semantics_2026-08-21.md`](r6_p1_2_knowledge_timeline_semantics_2026-08-21.md)
+- [`epistemic_reference_matrix.md`](epistemic_reference_matrix.md)
+- [`unified_semantic_model.md`](unified_semantic_model.md)
+
+## 5. Frozen information architecture
+
+Current semantic authority:
+
+```text
+actual identity
+-> committed shown identity
+-> perceived ability
+-> role semantic legal/truth space
+-> RELIABLE / POISONED / DRUNK
+-> generic selection
+-> AbilityObservation
+-> UI
+```
+
+Future quality ranking may only sit **after** legal semantic candidates exist. It must never mutate committed identity or replace official role/registration semantics.
+
+## 6. Other active long-lived architecture references
 
 ### Same-night / night transaction
 
@@ -86,14 +102,6 @@ These remain in the active docs root because they define long-lived contracts ra
 - [`SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md`](SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md)
 - [`DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md`](DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md)
 - [`SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md`](SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md)
-
-### Information / epistemic architecture
-
-- [`R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md`](R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md)
-- [`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`](CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md)
-- [`r6_p1_2_knowledge_timeline_semantics_2026-08-21.md`](r6_p1_2_knowledge_timeline_semantics_2026-08-21.md)
-- [`epistemic_reference_matrix.md`](epistemic_reference_matrix.md)
-- [`unified_semantic_model.md`](unified_semantic_model.md)
 
 ### Future architecture references
 
@@ -104,28 +112,16 @@ These remain in the active docs root because they define long-lived contracts ra
 - [`asp_oracle_cross_validation.md`](asp_oracle_cross_validation.md)
 - [`external_solver_evaluation.md`](external_solver_evaluation.md)
 
-These documents may describe older milestones, but remain because their primary role is semantic/design authority, not current status.
-
-## 6. Deferred unfinished work
+## 7. Deferred unfinished work
 
 Unfinished future work that is not currently active belongs under `archive/deferred/` and may only be resumed after the roadmap explicitly reactivates it.
 
-Important deferred items include:
+Examples:
 
-- `archive/deferred/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_A3_SETUP_SNAPSHOT.md` — immutable setup-snapshot ownership/persistence；
-- `archive/deferred/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_APP_ROOT_S9.md` — App Root S9.2 persistence boundary.
+- `archive/deferred/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_A3_SETUP_SNAPSHOT.md`；
+- `archive/deferred/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_APP_ROOT_S9.md`.
 
 A deferred handoff is context only. Before resuming it, re-audit live `main` and current architecture.
-
-## 7. Historical handoff cleanup
-
-Completed execution handoffs from GCR, PR55/PR56 and TBSP-1..5 are no longer current instructions and have been removed from the active docs root.
-
-Historical index:
-
-- [`archive/TBSP_AND_PREDECESSOR_HANDOFF_CLOSEOUT_2026-08-30.md`](archive/TBSP_AND_PREDECESSOR_HANDOFF_CLOSEOUT_2026-08-30.md)
-
-Git history and the corresponding PRs preserve the exact old files when detailed provenance is required.
 
 ## 8. Normative development workflow
 
@@ -133,7 +129,6 @@ Git history and the corresponding PRs preserve the exact old files when detailed
 - [`AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`](AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md) — current AI development workflow；
 - [`LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`](LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md) — normative large/truncated-file one-shot workflow + Python patch SOP；
 - [`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`](SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md) — GitHub connector workflow；
-- [`CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md`](CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md) — historical/large-file local workflow where not superseded by V2；
 - [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md) — connector large-file constraints/playbook.
 
 ## 9. Documentation lifecycle policy
@@ -145,15 +140,18 @@ CURRENT_DEVELOPMENT_ROADMAP.md
 one active NEXT_DEVELOPMENT_HANDOFF_*.md
 long-lived architecture / semantic references
 normative test / workflow references
+limited historical checkpoint evidence that has not yet been consolidated
 ```
 
 When a task closes:
 
-- completed execution handoffs and micro-checkpoints should leave the active root;
-- if only historical traceability remains, consolidate them into an archive closeout/index and rely on Git/PR history for exact old content;
-- if the document carries genuinely unfinished future work, move it intact under `archive/deferred/`;
-- do not create a new handoff for every GREEN micro-step;
-- update the existing active handoff and roadmap instead.
+- retire the old active handoff immediately when it gives a stale next step;
+- preserve useful audit/checkpoint history as evidence, but mark it historical;
+- consolidate or archive batches of micro-checkpoints at campaign/PR closeout instead of creating large documentation churn mid-PR;
+- if a document carries genuinely unfinished future work, move it under `archive/deferred/`;
+- update the existing roadmap + active handoff rather than creating a new handoff for every micro-GREEN.
+
+For the current S6D closeout, only the stale 2026-08-31 active handoff is removed. Historical S6C/S6D audit evidence remains until PR #61 closeout, when a broader MS-SETUP archival cleanup can be done safely in one docs-only batch.
 
 ## 10. Status authority rule
 
