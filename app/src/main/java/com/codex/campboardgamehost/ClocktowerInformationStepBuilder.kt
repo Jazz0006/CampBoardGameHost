@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.presentation.PairInformationManualSelectionModel
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
@@ -33,6 +34,7 @@ internal class ClocktowerInformationStepBuilder(
         displayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         automaticSelectionOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         reliableDisplayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
+        manualPairSelection: PairInformationManualSelectionModel? = null,
         previousShownNumber: Int? = null,
         spyRegistrationKey: String? = null,
         spyRegistrationTeams: List<ClocktowerTeam> = emptyList(),
@@ -149,6 +151,7 @@ internal class ClocktowerInformationStepBuilder(
             recommendedDisplayOptions = automaticRecommendations,
             legacyInformationCandidates = completeLegacyCandidates,
             automaticInformationCandidates = automaticInformationCandidates,
+            manualPairSelection = manualPairSelection,
             roleEnName = enName,
             informationReliability = informationReliability,
             recentMisinformationStreak = recentMisinformationStreak(actor),
