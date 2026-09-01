@@ -14,32 +14,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
+import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
-import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
-import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
-import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicGenerationContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionConfirmation
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionHardBlockReason
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionValidationResult
-import com.codex.campboardgamehost.clocktower.session.InformationResolutionRequest
+import com.codex.campboardgamehost.clocktower.session.SmallDomainPresentation
 import com.codex.campboardgamehost.clocktower.session.StructuredNumberInformationUiModel
 
 /**
- * First production structured-manual slice: Empath numeric information.
+ * Empath compatibility wrapper over the role-neutral structured numeric adapter.
  *
- * Legal values come from the existing numeric rules/recommendation candidate generator through the
- * coordinator boundary. This adapter only supplies interaction identity and converts each validated
- * value into the exact player-visible observation draft that the existing session authority commits.
+ * The complete legal domain and exact typed commit path are owned by
+ * [prepareNumericInformationUiModel]; this wrapper supplies Empath semantics only.
  */
 internal fun prepareEmpathNumberInformationUiModel(
     coordinator: ClocktowerRecommendationCoordinator,
@@ -51,87 +43,31 @@ internal fun prepareEmpathNumberInformationUiModel(
     subjectSeats: List<Int>,
     trueValue: Int,
     reliability: InformationReliability,
-    recommendationStyle: com.codex.campboardgamehost.clocktower.domain.RecommendationStyle,
+    recommendationStyle: RecommendationStyle,
     revision: InformationDecisionRevision,
     recommendedValue: Int?,
     previousShownValue: Int? = null,
     pressureCostPerPoint: Int = 1,
-): StructuredNumberInformationUiModel {
-    require(actorSeat > 0) { "Empath actor seat must be positive." }
-    require(subjectSeats.all { it > 0 } && subjectSeats.distinct().size == subjectSeats.size) {
-        "Empath subject seats must be positive and unique."
-    }
-    val evaluations = coordinator.resolveNumberInformation(
-        InformationResolutionRequest.Number(
-            context = UnreliableNumberContext(
-                trueValue = trueValue,
-                minimumValue = 0,
-                maximumValue = 2,
-                previousShownValue = previousShownValue?.takeIf {
-                    reliability != InformationReliability.RELIABLE && it in 0..2
-                },
-                pressureCostPerPoint = pressureCostPerPoint,
-            ),
-            generation = DynamicGenerationContext(
-                abilityRole = RoleId("Empath"),
-                recipientSeat = actorSeat,
-                reliability = reliability,
-                style = recommendationStyle,
-                targetSeats = subjectSeats.toSet(),
-            ),
-        ),
-    )
-    val effectiveRecommendedValue = recommendedValue
-        ?: trueValue.takeIf { reliability == InformationReliability.RELIABLE }
-    val recommendedIds = effectiveRecommendedValue?.let { value ->
-        evaluations
-            .filter { it.candidate.outcome.value == value }
-            .mapTo(linkedSetOf()) { it.candidate.candidateId }
-    }.orEmpty()
-    val storytellerPhase = when (phase) {
-        ClocktowerPhase.FirstNight -> StorytellerPhase.FIRST_NIGHT
-        ClocktowerPhase.Dawn -> StorytellerPhase.DAWN
-        ClocktowerPhase.Day -> StorytellerPhase.DAY
-        ClocktowerPhase.Night -> StorytellerPhase.NIGHT
-    }
-    val context = coordinator.informationDecisionContext(
-        evaluations = evaluations,
-        recommendedCandidateIds = recommendedIds,
-        revision = revision,
-        semanticIdentity = "empath|$gameId|${phase.name}|$round|$sequence|$actorSeat",
-        draftOf = { evaluation ->
-            val value = evaluation.candidate.outcome.value
-            val proposition = InformationProposition.NumericResult(
-                metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
-                sourceSeat = actorSeat,
-                subjectSeats = subjectSeats,
-                value = value,
-            )
-            EpistemicObservationDraft(
-                recordId = clocktowerPrivateObservationRecordId(
-                    gameId = gameId,
-                    phase = phase,
-                    round = round,
-                    roleEnName = "Empath",
-                    actorSeat = actorSeat,
-                    proposition = proposition,
-                ),
-                phase = storytellerPhase,
-                round = round,
-                sequence = sequence,
-                sourceSeat = actorSeat,
-                sourceAbility = RoleId("Empath"),
-                visibility = ObservationVisibility.PRIVATE,
-                recipientSeats = setOf(actorSeat),
-                // Player knowledge records what was received; impairment truth stays in the
-                // candidate/decision evidence and is not leaked into player-facing history.
-                reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
-                proposition = proposition,
-            )
-        },
-    )
-    return StructuredNumberInformationUiModel.from(context)
-}
+): StructuredNumberInformationUiModel = prepareNumericInformationUiModel(
+    coordinator = coordinator,
+    gameId = gameId,
+    phase = phase,
+    round = round,
+    sequence = sequence,
+    actorSeat = actorSeat,
+    abilityRole = RoleId("Empath"),
+    metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+    subjectSeats = subjectSeats,
+    trueValue = trueValue,
+    minimumValue = 0,
+    maximumValue = 2,
+    reliability = reliability,
+    recommendationStyle = recommendationStyle,
+    revision = revision,
+    recommendedValue = recommendedValue,
+    previousShownValue = previousShownValue,
+    pressureCostPerPoint = pressureCostPerPoint,
+)
 
 @Composable
 internal fun StructuredNumberInformationDecisionPanel(
@@ -139,6 +75,7 @@ internal fun StructuredNumberInformationDecisionPanel(
     currentRevision: InformationDecisionRevision,
     automaticStorytellerInfo: Boolean,
     language: String,
+    roleLabel: String? = null,
     onConfirmed: (ConfirmedInformationDecision, Int) -> Unit,
 ) {
     var blockedReason by remember(model.semanticStateKey, currentRevision) {
@@ -169,40 +106,50 @@ internal fun StructuredNumberInformationDecisionPanel(
         }
     }
 
+    val presentation = SmallDomainPresentation.from(
+        legalCandidates = model.choices,
+        recommendedCandidateIds = model.choices.filter { it.recommended }.map { it.candidateId },
+        candidateId = StructuredNumberInformationUiModel.Choice::candidateId,
+    )
+    val visibleChoices = if (automaticStorytellerInfo) {
+        listOfNotNull(presentation.primary)
+    } else {
+        listOfNotNull(presentation.primary) + presentation.remaining
+    }
+    val localizedRoleLabel = roleLabel ?: if (language == "en") "Empath" else "共情者"
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            if (language == "en") "Choose the Empath number" else "选择展示给共情者的数字",
+            if (language == "en") "Choose the $localizedRoleLabel number" else "选择展示给${localizedRoleLabel}的数字",
             color = MaterialTheme.colorScheme.primary,
         )
         Text(
             if (language == "en") {
-                "Only rule-valid values are available. The recommended value uses the same confirmation path as a manual choice."
+                "Only rule-valid values are available. The recommended value is primary; every remaining legal value stays directly selectable."
             } else {
-                "这里只显示规则允许的结果；采用推荐与手动选择会经过同一确认路径。"
+                "这里只显示规则允许的结果；推荐值优先展示，其余所有合法值仍可直接选择。"
             },
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodySmall,
         )
 
-        model.choices
-            .filter { !automaticStorytellerInfo || it.recommended }
-            .forEach { choice ->
-                val label = when {
-                    choice.recommended && language == "en" -> "Recommended · ${choice.value}"
-                    choice.recommended -> "推荐 · ${choice.value}"
-                    language == "en" -> "Manual · ${choice.value}"
-                    else -> "手动 · ${choice.value}"
+        visibleChoices.forEach { choice ->
+            val label = when {
+                choice.recommended && language == "en" -> "Recommended · ${choice.value}"
+                choice.recommended -> "推荐 · ${choice.value}"
+                language == "en" -> "Manual · ${choice.value}"
+                else -> "手动 · ${choice.value}"
+            }
+            if (choice.recommended) {
+                Button(onClick = { choose(choice) }, modifier = Modifier.fillMaxWidth()) {
+                    Text(label)
                 }
-                if (choice.recommended) {
-                    Button(onClick = { choose(choice) }, modifier = Modifier.fillMaxWidth()) {
-                        Text(label)
-                    }
-                } else {
-                    OutlinedButton(onClick = { choose(choice) }, modifier = Modifier.fillMaxWidth()) {
-                        Text(label)
-                    }
+            } else {
+                OutlinedButton(onClick = { choose(choice) }, modifier = Modifier.fillMaxWidth()) {
+                    Text(label)
                 }
             }
+        }
 
         blockedReason?.let { reason ->
             Text(
