@@ -23,6 +23,7 @@ internal object NaturalPairInformationCandidateGenerator {
     private val washerwoman = RoleId("Washerwoman")
     private val librarian = RoleId("Librarian")
     private val investigator = RoleId("Investigator")
+    private val spy = RoleId("Spy")
     private val recluse = RoleId("Recluse")
 
     fun generate(
@@ -60,8 +61,10 @@ internal object NaturalPairInformationCandidateGenerator {
         val targets = game.players
             .filter { it.seat != sourceSeat && it.actualType == targetType }
             .sortedBy { it.seat }
-        if (abilityRole == librarian && targets.isEmpty()) {
-            return listOf(noOutsiderCandidate(sourceSeat))
+        val zeroCandidates = if (abilityRole == librarian && targets.isEmpty()) {
+            listOf(noOutsiderCandidate(sourceSeat))
+        } else {
+            emptyList()
         }
 
         val naturalCandidates = targets.flatMap { target ->
@@ -70,7 +73,44 @@ internal object NaturalPairInformationCandidateGenerator {
                 .sortedBy { it.seat }
                 .map { decoy -> naturalCandidate(sourceSeat, abilityRole, target.actualRole, target.seat, decoy.seat) }
         }
-        if (abilityRole != investigator) return naturalCandidates.distinctBy { it.candidateId }
+        if (abilityRole != investigator) {
+            val shownGoodRoles = roleDefinitions
+                .asSequence()
+                .filter {
+                    game.script in it.scriptIds &&
+                        it.type == targetType &&
+                        it.alignment == Alignment.GOOD
+                }
+                .map { it.id }
+                .distinct()
+                .sortedBy { it.value }
+                .toList()
+                .ifEmpty { targets.map { it.actualRole }.distinct().sortedBy { it.value } }
+            val naturalOutcomes = naturalCandidates.map { it.outcome }.toSet()
+            val spyCandidates = game.players
+                .filter { it.seat != sourceSeat && it.actualRole == spy }
+                .sortedBy { it.seat }
+                .flatMap { target ->
+                    shownGoodRoles.flatMap { shownRole ->
+                        game.players
+                            .filter { it.seat != sourceSeat && it.seat != target.seat }
+                            .sortedBy { it.seat }
+                            .map { decoy ->
+                                spyRegistrationCandidate(
+                                    sourceSeat = sourceSeat,
+                                    abilityRole = abilityRole,
+                                    registeredType = targetType,
+                                    shownRole = shownRole,
+                                    targetSeat = target.seat,
+                                    decoySeat = decoy.seat,
+                                )
+                            }
+                    }
+                }
+                .filterNot { it.outcome in naturalOutcomes }
+
+            return (zeroCandidates + naturalCandidates + spyCandidates).distinctBy { it.candidateId }
+        }
 
         // Recluse may register as any Minion on the current script for the Investigator
         // interaction, including a Minion that is not actually in play. Keep actual Minion
@@ -139,6 +179,60 @@ internal object NaturalPairInformationCandidateGenerator {
                 ),
             ),
             metadata = metadata(abilityRole),
+        )
+    }
+
+    private fun spyRegistrationCandidate(
+        sourceSeat: Int,
+        abilityRole: RoleId,
+        registeredType: CharacterType,
+        shownRole: RoleId,
+        targetSeat: Int,
+        decoySeat: Int,
+    ): DecisionCandidate<PairInformationOutcome> {
+        val registration = RegistrationFact(
+            interactionId = listOf(
+                "pair-information-registration-v1",
+                sourceSeat,
+                targetSeat,
+                shownRole.value,
+                RegistrationQuestion.ROLE.name,
+            ).joinToString(":"),
+            subjectSeat = targetSeat,
+            registeredRole = shownRole,
+            registeredType = registeredType,
+            registeredAlignment = Alignment.GOOD,
+            registrationQuestion = RegistrationQuestion.ROLE,
+            reason = RegistrationReason.SPY_ABILITY,
+        )
+        val outcome = PairInformationOutcome(
+            shownRole = shownRole,
+            targetSeat = targetSeat,
+            decoySeat = decoySeat,
+        )
+        return DecisionCandidate(
+            candidateId = StableCandidateIdFactory.create(
+                candidateSchemaVersion = candidateSchemaVersion,
+                abilityState = AbilityState.FUNCTIONING,
+                truthRelation = TruthRelation.TRUE_TO_REGISTERED_STATE,
+                abilityRole = abilityRole,
+                shownRole = shownRole,
+                candidateSeats = outcome.candidateSeats,
+                registrations = listOf(registration),
+            ),
+            candidateFamilyId = naturalTruthFamily,
+            outcome = outcome,
+            abilityState = AbilityState.FUNCTIONING,
+            truthRelation = TruthRelation.TRUE_TO_REGISTERED_STATE,
+            registrations = listOf(registration),
+            effects = listOf(
+                EffectDraft.PlayerInformation(
+                    recipientSeat = sourceSeat,
+                    sourceAbility = abilityRole,
+                    value = InformationValue.PlayerPair(shownRole, outcome.candidateSeats),
+                ),
+            ),
+            metadata = metadata(abilityRole, extraTags = setOf("registered-truth", "spy-registration")),
         )
     }
 

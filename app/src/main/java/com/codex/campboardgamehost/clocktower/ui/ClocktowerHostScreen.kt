@@ -2282,15 +2282,13 @@ internal fun ClocktowerJudgeScreen(
                 reasonCodes = if (recommendation == null) emptyList() else listOf("dynamic.pair-score"),
                 warningCodes = warningIds,
             )
-            if (ability == ClocktowerPairInformationAbility.Investigator) {
-                option.copy(
-                    recluseRegistersEvil = effect.registration == PairInformationRegistration.RECLUSE_AS_EVIL_ROLE,
-                    recluseRegisteredRoleEnName = effect.shownRole?.enName
-                        ?.takeIf { effect.registration == PairInformationRegistration.RECLUSE_AS_EVIL_ROLE },
-                )
-            } else {
-                option
-            }
+            val semantics = projectedSemanticsById.getValue(effect.id)
+            option.copy(
+                spyRegistersGood = semantics.spyRegistersGood,
+                spyRegisteredRoleEnName = semantics.spyRegisteredRoleEnName,
+                recluseRegistersEvil = semantics.recluseRegistersEvil,
+                recluseRegisteredRoleEnName = semantics.recluseRegisteredRoleEnName,
+            )
         }
     }
 

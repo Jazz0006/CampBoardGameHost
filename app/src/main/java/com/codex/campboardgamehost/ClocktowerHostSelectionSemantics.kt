@@ -181,6 +181,7 @@ private data class FirstNightPairInformationKey(
 )
 
 private data class FirstNightPairInformationTruth(
+    val spyRegisteredRoleEnName: String?,
     val recluseRegisteredRoleEnName: String?,
 )
 
@@ -242,6 +243,10 @@ internal fun projectFirstNightPairInformationOptions(
             val semanticCandidate = candidates.firstOrNull { it.registrations.isEmpty() }
                 ?: candidates.minBy { it.candidateId }
             FirstNightPairInformationTruth(
+                spyRegisteredRoleEnName = semanticCandidate.registrations
+                    .firstOrNull { it.reason == RegistrationReason.SPY_ABILITY }
+                    ?.registeredRole
+                    ?.value,
                 recluseRegisteredRoleEnName = semanticCandidate.registrations
                     .firstOrNull { it.reason == RegistrationReason.RECLUSE_ABILITY }
                     ?.registeredRole
@@ -252,12 +257,15 @@ internal fun projectFirstNightPairInformationOptions(
     return options.map { option ->
         val key = option.proposition?.firstNightPairInformationKey() ?: return@map option
         val truth = healthyTruths[key]
-        val investigator = roleEnName == "Investigator"
+        val spyRegistrationRole = truth?.spyRegisteredRoleEnName
+        val recluseRegistrationRole = truth?.recluseRegisteredRoleEnName
         option.copy(
             isTruthful = truth != null,
             misinformationPressure = if (truth != null) 0 else option.misinformationPressure.coerceAtLeast(1),
-            recluseRegistersEvil = if (investigator) truth?.recluseRegisteredRoleEnName != null else option.recluseRegistersEvil,
-            recluseRegisteredRoleEnName = if (investigator) truth?.recluseRegisteredRoleEnName else option.recluseRegisteredRoleEnName,
+            spyRegistersGood = spyRegistrationRole?.let { true },
+            spyRegisteredRoleEnName = spyRegistrationRole,
+            recluseRegistersEvil = recluseRegistrationRole?.let { true },
+            recluseRegisteredRoleEnName = recluseRegistrationRole,
         )
     }
 }
