@@ -400,7 +400,7 @@ private fun clocktowerPairManualSeatState(
     }
 
     val validSecond = selection.secondSeats(roleId, first)
-    return if (seatNumber in validSecond || seatNumber in validFirst) {
+    return if (seatNumber in validSecond) {
         ClocktowerSquareTableSeatState.Selectable
     } else {
         ClocktowerSquareTableSeatState.Disabled
