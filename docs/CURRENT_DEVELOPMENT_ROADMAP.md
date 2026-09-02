@@ -8,25 +8,33 @@
 ## 1. Current development context
 
 ```text
-last merged product slice:
+last merged architecture/product slice:
 #68 — UX-R5: specialize small-domain presentation
 COMPLETE / VERIFIED / MERGED
-
-final fully validated UX-R5 checkpoint:
-2f56649e71d38c21f66df598e1e8df0c990090dd
 
 UX-R5 merge commit:
 563470a2c3b4e3dc10732e00827e33ebee00884a
 
-active next campaign:
-EPI-MQ / ALG — Productive Uncertainty / PlayerWorldSet mainline
+latest live main hotfix:
+#69 — first-night evil information display crash
+MERGED / REAL-DEVICE VERIFIED
+
+main at roadmap update:
+6f1ee4513cd149120c453c3b2623f989903a2493
+
+active campaign:
+UI Information Presentation Campaign
+field-test target: Friday 2026-09-04
+
+algorithm campaign after UI stabilization:
+EPI-MQ / Productive Uncertainty / PlayerWorldSet
 ```
 
 Completed slice contracts, RED/GREEN evidence, CI checkpoints, and merge details live in:
 
 `docs/COMPLETED_DEVELOPMENT_HISTORY.md`
 
-Do not grow this active roadmap with repeated historical closeout detail. When an active slice is complete and merged, archive its detailed evidence in one batch and advance this file.
+The UI campaign is intentionally inserted before EPI-MQ because a real group play session is scheduled for Friday 2026-09-04. EPI-MQ is paused, not cancelled.
 
 ## 2. Campaign status
 
@@ -38,15 +46,37 @@ UX-R3   remove global storyteller mode selector               COMPLETE / VERIFIE
 UX-R4   Top-1 + 0–2 alternatives + persistent Manual         COMPLETE / VERIFIED / MERGED
 UX-R5   small-domain specialization                           COMPLETE / VERIFIED / MERGED
 
+UI-R1   reusable square-table seat surface                    NEXT
+UI-R2   pair Manual dedicated full-screen selection           QUEUED
+UI-R3   unified full-screen player information display        QUEUED
+UI-R4   Fortune Teller two-target + result flow               QUEUED
+UI-R5   Friday field-test stabilization                       QUEUED
+
 EPI-MQ / ALG
-        Productive Uncertainty / PlayerWorldSet mainline      NEXT PRIMARY CAMPAIGN
+        Productive Uncertainty / PlayerWorldSet mainline      PAUSED UNTIL UI CAMPAIGN STABLE
 
 UX-R6   replace legacy ranking behind stable UX contract      QUEUED AFTER EPI-MQ
 ```
 
-Create a fresh EPI-MQ branch from live `main`. Do not reuse the merged UX-R5 branch or a docs-maintenance branch.
+Create a fresh UI implementation branch from live `main`. Do not reuse merged UX-R5 branches or the docs-maintenance branch.
 
-## 3. Frozen permanent architecture
+## 3. Active UI authorities
+
+Primary product reference:
+
+`docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`
+
+Implementation handoff:
+
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_INFORMATION_CAMPAIGN.md`
+
+Existing semantic/UX authority remains:
+
+`docs/CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md`
+
+The UI campaign must improve interaction and presentation **without changing the existing legal-domain/recommendation authority model**.
+
+## 4. Frozen permanent architecture
 
 ```text
 Composition
@@ -72,25 +102,23 @@ Permanent invariants:
 - every supported information role must remain playable through a correct Manual/generated clue path even when recommendation support is absent;
 - recommendation ranking remains downstream of the complete legal semantic domain;
 - Manual is a permanent user authority path, not a recommendation style;
-- A3 exact enumeration remains the correctness baseline;
-- A4/ZDD remains shadow/prototype until equivalence and resource behavior are separately validated;
-- approximation/resource failure must never become false UNSAT.
+- exact typed outcome identity survives presentation and confirmation;
+- stable seat identity must not depend on filtered-list position;
+- draft selection and confirmed observation/history remain separate;
+- callback / confirmation ordering must not change accidentally;
+- `EvilInfo` and other non-role information must remain safe when `roleEnName == null`;
+- A3 exact enumeration remains the algorithm correctness baseline;
+- A4/ZDD remains shadow/prototype until separately validated.
 
-## 4. Stable recommendation / Manual UX contract
-
-Authority:
-
-`docs/CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md`
-
-Long-term ownership:
+## 5. Stable recommendation / Manual contract
 
 ```text
 Complete legal semantic candidate domain
         |
-        +--> Manual clue selection
+        +--> Manual / direct legal selection
         |
         +--> Recommendation Provider
-                 -> stable presentation adapter
+                 -> presentation
 ```
 
 Permanent conditions:
@@ -99,41 +127,169 @@ Permanent conditions:
 recommendation unavailable != manual unavailable
 ```
 
-and normal product execution remains Storyteller-confirmed / ASSISTED.
+Normal execution remains Storyteller-confirmed / ASSISTED.
 
-For combinatorial clue domains established by UX-R4:
+For pair/combinatorial domains:
 
 ```text
 Top-1 recommendation
 + 0–2 alternatives
-+ persistent Manual over the complete legal domain
++ persistent Manual over complete legal domain
 ```
 
-For naturally small legal domains established by UX-R5:
+For naturally small domains:
 
 ```text
 primary recommendation
-+ all remaining legal outcomes when the whole domain comfortably fits
++ all remaining legal outcomes when the full domain comfortably fits
 ```
 
-Additional permanent UX-R5 conditions:
+The UI campaign may change where/how these controls appear, but not their semantic ownership.
 
-- legality is upstream of recommendation;
-- recommendation may mark the primary outcome but cannot create, remove, or hide legal outcomes;
-- recommendation absence leaves the complete legal interaction playable;
-- numeric/Boolean semantic identity is typed end-to-end;
-- localized display labels are never parsed to reconstruct semantic values;
-- Fortune Teller Yes/No remains bound to the exact actor and selected two seats;
-- small-domain confirmation continues through the Foundation structured commit authority.
+## 6. Active target — UI Information Presentation Campaign
 
-## 5. Active target — EPI-MQ / Productive Uncertainty
+### UI-R1 — square-table foundation
 
-Primary authorities:
+Create a reusable table-first seat presentation that:
+
+- uses the phone perimeter efficiently;
+- supports stable seat identity;
+- supports selectable/read-only modes;
+- supports neutral/selectable/selected-first/selected-second/highlighted/disabled states;
+- leaves a center slot for clue/result/instructions;
+- lives in a dedicated UI owner rather than adding a large visual implementation to `ClocktowerNightStepUi.kt`.
+
+### UI-R2 — pair Manual
+
+For Washerwoman / Librarian / Investigator:
+
+```text
+Manual
+-> dedicated full-screen surface
+-> choose role / special zero-case
+-> select two legal seats on square table
+-> exact typed legal candidate
+-> confirm/display
+```
+
+Also remove/hide current normal recommendation reason/warning prose. Keep diagnostic data available internally; do not change ranking.
+
+### UI-R3 — full-screen player display
+
+Use the square-table language for final information display:
+
+- relevant seats highlighted from typed data;
+- clue/result in center;
+- minimal chrome;
+- no Poisoned/Drunk/truth/recommendation-reason leakage;
+- EvilInfo with no role ability remains safe.
+
+### UI-R4 — Fortune Teller
+
+Keep the table visible while selecting two distinct targets.
+
+After selection:
+
+```text
+one legal result
+-> one button only
+
+both Yes/No legal
+-> recommended primary
+-> other legal result immediately visible
+```
+
+Result identity remains bound to the exact selected pair.
+
+### UI-R5 — Friday stabilization
+
+Freeze features and perform real-device walkthrough covering at least:
+
+- Minion introduction;
+- Demon introduction;
+- pair recommendation and Manual;
+- Chef / Empath;
+- Fortune Teller;
+- impaired/discretionary information;
+- full-screen display return/navigation.
+
+Field-test usability outranks optional animation/theme polish.
+
+## 7. Testing / implementation strategy
+
+Authority: `docs/TESTING_STRATEGY.md` and root `AGENTS.md`.
+
+Use risk-based tests-first.
+
+High-value UI campaign contracts:
+
+- square-table state attaches to stable seat identity;
+- pair Manual still reaches the complete legal domain;
+- impossible pair combinations never become selectable legal candidates;
+- selected typed candidate is unchanged by presentation;
+- changing a target invalidates stale dependent selection/result state;
+- Fortune Teller fixed-vs-discretionary result presentation follows the complete legal Boolean domain;
+- player-facing display never exposes hidden reliability/truth state;
+- first-night EvilInfo regression remains protected.
+
+Avoid brittle source-string or exact-pixel tests.
+
+Prefer:
+
+```text
+pure seat/layout/state behavior
+-> typed selection/presentation behavior
+-> existing structured adapter/integration tests
+-> Compose/runtime validation where it adds durable value
+```
+
+At logical checkpoints run `:app:testFast`; final field-test candidate receives normal CI/R2 and broad Android validation according to risk/classifier behavior.
+
+## 8. Source ownership / growth guards
+
+`ClocktowerNightStepUi.kt` is already large. New reusable UI should prefer dedicated files.
+
+`ClocktowerHostScreen.kt` remains a protected orchestration owner and must not become the home for new visual policy.
+
+For large/truncated wiring changes follow the repository-approved route:
+
+```text
+small tests/new files via GitHub connector
+-> exact-anchor one-shot workflow + separate Python patch script
+-> focused evidence
+-> :app:testFast checkpoint
+-> exact diff allowlist
+-> self-removal
+```
+
+Do not start App/Host decomposition as part of this deadline-driven campaign.
+
+## 9. UI campaign scope guards
+
+Do not expand this campaign into:
+
+- EPI-MQ / Productive Uncertainty implementation;
+- new recommendation ranking/scoring/diversity behavior;
+- new legality ownership in recommendation/UI code;
+- PlayerWorldSet production recommendation integration;
+- A4/ZDD production rollout;
+- broad Host/App decomposition;
+- unrelated persistence/history redesign;
+- broad theme/animation work;
+- unsupported-script expansion merely for UI completeness.
+
+If a correctness bug is discovered, isolate and characterize it rather than hiding it inside a visual refactor.
+
+## 10. EPI-MQ after UI stabilization
+
+After UI-R5 reaches a stable field-test checkpoint, restore EPI-MQ as the active algorithm campaign.
+
+Primary authorities remain:
 
 - `docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`
 - `docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`
 
-Target algorithm route:
+Target route remains:
 
 ```text
 PlayerKnowledgeSnapshot
@@ -146,118 +302,43 @@ PlayerKnowledgeSnapshot
 -> cognitive-consistency Recommendation Provider
 ```
 
-The next campaign should improve recommendation intelligence **behind the stable UX contract**, not redesign the selection surface.
+Do not redesign the new table/Manual/display interaction when EPI-MQ resumes; the algorithm should improve recommendations behind the stable UI.
 
-Core misinformation-quality goals:
-
-- credible rather than random;
-- sustainable across future observations;
-- interactive with other roles and public claims;
-- not trivially self-confirming or impossible to break;
-- eventually breakable through meaningful discovery paths;
-- fair to both factions and compatible with player agency.
-
-## 6. EPI-MQ implementation route
-
-Before production ranking changes, re-audit the current epistemic path:
-
-```text
-PlayerKnowledgeSnapshot
--> PlayerWorldSet / exact historical replay
--> candidate hypothetical observation
--> BEFORE / AFTER world sets
--> measurable epistemic effects
--> Productive Uncertainty score/features
--> Recommendation Provider
--> existing UX-R4 / UX-R5 presentation
-```
-
-Initial questions:
-
-- Which player-visible observations already have durable typed identity suitable for hypothetical replay?
-- Which epistemic metrics are already available without introducing hidden Storyteller facts into player knowledge?
-- How should credibility, ambiguity, persistence, cross-role interaction, confirmation-lock risk, breakability, faction impact, and player agency be represented?
-- Which metrics can be validated against A3 exact enumeration before any ranking behavior changes?
-- What resource/timeout behavior must fail closed without becoming false UNSAT?
-- Which existing legacy ranking inputs can remain compatibility-only until UX-R6?
-
-Preferred sequencing:
-
-1. establish typed epistemic metric contracts with behavior-first tests;
-2. compute BEFORE/AFTER world-set effects on exact A3 baseline;
-3. add Productive Uncertainty features without changing UI contracts;
-4. validate ranking behavior in shadow/characterization form;
-5. only then connect the cognitive-consistency provider to production ranking;
-6. leave UX-R6 to remove legacy ranking compatibility behind the already stable surface.
-
-## 7. Testing strategy
-
-Authority: `docs/TESTING_STRATEGY.md`.
-
-Use risk-based tests-first.
-
-High-value EPI-MQ contracts:
-
-- durable player-visible observations are consumed exactly once by historical replay;
-- hypothetical observations modify player worlds without leaking actual hidden Storyteller target/fact state;
-- exact A3 enumeration remains the correctness oracle for epistemic metrics;
-- resource failure / timeout cannot be interpreted as logical UNSAT;
-- Productive Uncertainty metrics are deterministic for the same semantic state;
-- ranking changes do not alter legal-domain authority;
-- UX-R2B Manual, UX-R3 ASSISTED execution, UX-R4 combinatorial presentation, and UX-R5 small-domain presentation remain unchanged.
-
-Use focused tests first, `:app:testFast` at logical checkpoints, and full CI at major algorithm/risk checkpoints.
-
-## 8. Active scope guards
-
-Do not expand EPI-MQ into:
-
-- UI redesign of the stable UX-R4/UX-R5 surfaces;
-- new legality ownership in recommendation code;
-- broad Host/App decomposition;
-- A4/ZDD production rollout before separate equivalence/resource gates;
-- deletion of legacy preferences/enums merely for cleanup;
-- unrelated persistence/recovery work;
-- future-script expansion not required by the selected epistemic contract.
-
-Do not reopen UX-R2B/UX-R4/UX-R5 presentation ownership unless a real regression is found.
-
-## 9. Documentation authority / resume protocol
+## 11. Documentation authority / new-conversation resume protocol
 
 Active set:
 
 ```text
 AGENTS.md
 docs/CURRENT_DEVELOPMENT_ROADMAP.md
-docs/COMPLETED_DEVELOPMENT_HISTORY.md
+docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_INFORMATION_CAMPAIGN.md
 docs/CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md
-docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md
-docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md
+docs/COMPLETED_DEVELOPMENT_HISTORY.md
 docs/TESTING_STRATEGY.md
 docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 ```
 
-For a new development conversation:
+Start the next implementation conversation by reading the first four files above, then re-query live `main`.
 
-1. read root `AGENTS.md`;
-2. read this active roadmap;
-3. read completed history only when older slice detail is needed;
-4. read the two EPI-MQ / algorithm authorities above;
-5. re-query live `main` rather than trusting stored SHA;
-6. create a fresh EPI-MQ branch from live `main`;
-7. preserve the stable legal-domain / Manual / presentation contracts;
-8. establish behavior-first epistemic metric REDs before ranking changes;
-9. keep A3 exact as correctness baseline and A4/ZDD shadow until separately validated;
-10. after EPI-MQ, proceed to UX-R6 legacy-ranking replacement behind the stable surface.
+Recommended resume instruction:
 
-## 10. Deferred / queued registry
+```text
+请读取根目录 AGENTS.md、docs/CURRENT_DEVELOPMENT_ROADMAP.md、docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md 和 docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_INFORMATION_CAMPAIGN.md。先确认 live main 以及 first-night evil info crash hotfix，然后从 UI-R1 reusable square-table seat surface 开始，优先保证 2026-09-04 周五真机组局可用。不要开始 EPI-MQ，不要改变 recommendation/legal semantics，不要自行 merge。
+```
+
+## 12. Deferred / queued registry
 
 | Area | Status |
 |---|---|
-| EPI-MQ Productive Uncertainty | NEXT PRIMARY CAMPAIGN |
-| ALG cognitive-consistency / PlayerWorldSet | NEXT PRIMARY CAMPAIGN |
+| UI-R1 square-table foundation | NEXT IMMEDIATE SLICE |
+| UI-R2 pair Manual redesign | QUEUED IN ACTIVE UI CAMPAIGN |
+| UI-R3 player information display | QUEUED IN ACTIVE UI CAMPAIGN |
+| UI-R4 Fortune Teller interaction | QUEUED IN ACTIVE UI CAMPAIGN |
+| UI-R5 field-test stabilization | QUEUED IN ACTIVE UI CAMPAIGN |
+| EPI-MQ Productive Uncertainty | PAUSED UNTIL UI-R5 STABLE |
+| ALG cognitive-consistency / PlayerWorldSet | PAUSED UNTIL UI-R5 STABLE |
 | UX-R6 legacy ranking replacement | QUEUED AFTER EPI-MQ |
-| Legacy recommendation enhancement | MAINTENANCE-ONLY / NO NEW BROAD INVESTMENT |
 | A4/ZDD production rollout | SHADOW / FUTURE AFTER EXACT BASELINE GATES |
 | REC-R1 | QUEUED SEPARATE CAMPAIGN |
 | GCR-4 Chambermaid wake-history authority | DEFERRED FOLLOW-UP |
