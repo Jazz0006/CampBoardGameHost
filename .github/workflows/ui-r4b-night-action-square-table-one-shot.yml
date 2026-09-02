@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "6796171194eadbe19490c9656ff6c4005b31d7e6"
+          test "$(git rev-parse HEAD^)" = "a4f8d8ca883d90f7155921f23633fb7aea109fbf"
           test "$(git hash-object .github/scripts/ui_r4b_night_action_square_table_patch.py)" = "6f3549476fe0ffb4af08f8f54bd3fca60d1aac71"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt)" = "2681ad67c99e1bb3875b8c53b98401bd33c28ca1"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayUi.kt)" = "8dce023bfda2b77082bac41b910f228fcbcb0e3a"
@@ -54,8 +54,35 @@ jobs:
             --tests 'com.codex.campboardgamehost.ClocktowerChambermaidPresentationSemanticsTest' \
             --tests 'com.codex.campboardgamehost.ClocktowerNightTargetLegalityTest'
 
+      - name: Normalize exact Fortune signature anchors in one-shot script
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/scripts/ui_r4b_night_action_square_table_patch.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''def replace_exact(text: str, label: str, old: str, new: str, expected: int = 1) -> str:
+              count = text.count(old)
+          '''
+          new = '''def replace_exact(text: str, label: str, old: str, new: str, expected: int = 1) -> str:
+              if label == "Fortune Teller dialog onNext signature":
+                  expected = 2
+              if label == "Fortune Teller center signature onNext":
+                  return text
+              count = text.count(old)
+          '''
+          if text.count(old) != 1:
+              raise SystemExit('replace_exact helper anchor drifted')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8', newline='\n')
+          PY
+
       - name: Apply exact UI-R4B patch
-        run: python3 .github/scripts/ui_r4b_night_action_square_table_patch.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/ui_r4b_night_action_square_table_patch.py
+          git checkout -- .github/scripts/ui_r4b_night_action_square_table_patch.py
 
       - name: Audit localized production patch
         shell: bash
