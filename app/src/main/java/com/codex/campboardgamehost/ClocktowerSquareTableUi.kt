@@ -1,7 +1,9 @@
 package com.codex.campboardgamehost
 
+import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -21,14 +23,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import kotlin.math.abs
 
 internal enum class ClocktowerSquareTableSeatState {
@@ -57,6 +67,7 @@ internal data class ClocktowerSquareTableSeatUiModel(
     val seatNumber: Int,
     val label: String,
     val state: ClocktowerSquareTableSeatState = ClocktowerSquareTableSeatState.Neutral,
+    val motionKey: String = seatId,
 )
 
 internal data class ClocktowerSquareTableSeatPlacement(
@@ -76,6 +87,9 @@ internal fun clocktowerSquareTablePlacements(
 ): List<ClocktowerSquareTableSeatPlacement> {
     require(seats.map { it.seatId }.distinct().size == seats.size) {
         "Square-table seat identity must be unique"
+    }
+    require(seats.map { it.motionKey }.distinct().size == seats.size) {
+        "Square-table motion identity must be unique"
     }
     require(layout.slots.size == seats.size) {
         "Square-table layout slot count must match seat count"
@@ -137,6 +151,8 @@ internal fun ClocktowerSquareTableSeatSurface(
     interactionMode: ClocktowerSquareTableInteractionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
     onSeatClick: (String) -> Unit = {},
     layout: HostTableLayout? = null,
+    dragEnabled: Boolean = false,
+    onSeatDragCommit: (String, Int) -> Unit = { _, _ -> },
     centerContent: @Composable BoxScope.() -> Unit = {},
 ) {
     BoxWithConstraints(
@@ -144,6 +160,7 @@ internal fun ClocktowerSquareTableSeatSurface(
     ) {
         val availableWidth = maxWidth.value
         val availableHeight = maxHeight.value
+        val density = LocalDensity.current
         val resolvedLayout = layout ?: remember(availableWidth, availableHeight, seats.size) {
             hostTableLayout(
                 playerCount = seats.size,
@@ -160,31 +177,127 @@ internal fun ClocktowerSquareTableSeatSurface(
             "Provided square-table layout height must match rendering constraints"
         }
 
-        val placements = remember(seats, resolvedLayout) {
+        var draggedMotionKey by remember { mutableStateOf<String?>(null) }
+        var dragTargetRingIndex by remember { mutableStateOf<Int?>(null) }
+        var dragPointerPosition by remember { mutableStateOf(Offset.Zero) }
+
+        val dragSourceIndex = draggedMotionKey?.let { motionKey ->
+            seats.indexOfFirst { seat -> seat.motionKey == motionKey }.takeIf { it >= 0 }
+        }
+        val previewSeats = if (
+            dragEnabled &&
+            dragSourceIndex != null &&
+            dragTargetRingIndex != null &&
+            dragTargetRingIndex in seats.indices
+        ) {
+            reorderHostTableItems(
+                items = seats,
+                fromIndex = dragSourceIndex,
+                targetIndex = dragTargetRingIndex!!,
+            )
+        } else {
+            seats
+        }
+        val placements = remember(previewSeats, resolvedLayout) {
             clocktowerSquareTablePlacements(
-                seats = seats,
+                seats = previewSeats,
                 layout = resolvedLayout,
             )
         }
-        val seatCardWidth = resolvedLayout.constraints.seatCardWidth.dp
-        val seatCardHeight = resolvedLayout.constraints.seatCardHeight.dp
+        val seatCardWidth = resolvedLayout.constraints.seatCardWidth
+        val seatCardHeight = resolvedLayout.constraints.seatCardHeight
 
         placements.forEach { placement ->
-            val slot = placement.spatialSlot
-            ClocktowerSquareTableSeat(
-                seat = placement.seat,
-                interactionMode = interactionMode,
-                onSeatClick = onSeatClick,
-                modifier = Modifier
-                    .offset(
-                        x = (slot.centerX - resolvedLayout.constraints.seatCardWidth / 2f).dp,
-                        y = (slot.centerY - resolvedLayout.constraints.seatCardHeight / 2f).dp,
+            key(placement.seat.motionKey) {
+                val slot = placement.spatialSlot
+                val targetTopLeft = Offset(
+                    x = slot.centerX - seatCardWidth / 2f,
+                    y = slot.centerY - seatCardHeight / 2f,
+                )
+                val animatedTopLeft by animateOffsetAsState(
+                    targetValue = targetTopLeft,
+                    label = "host-table-${placement.seat.motionKey}",
+                )
+                val isDragged = placement.seat.motionKey == draggedMotionKey
+                val displayedTopLeft = if (isDragged) {
+                    Offset(
+                        x = dragPointerPosition.x - seatCardWidth / 2f,
+                        y = dragPointerPosition.y - seatCardHeight / 2f,
                     )
-                    .size(
-                        width = seatCardWidth,
-                        height = seatCardHeight,
-                    ),
-            )
+                } else {
+                    animatedTopLeft
+                }
+                val dragModifier = if (dragEnabled && seats.size > 1) {
+                    Modifier.pointerInput(
+                        placement.seat.motionKey,
+                        resolvedLayout,
+                        density.density,
+                    ) {
+                        detectDragGesturesAfterLongPress(
+                            onDragStart = {
+                                val sourceSlot = resolvedLayout.slots.first { candidate ->
+                                    candidate.ringIndex == seats.indexOfFirst { seat ->
+                                        seat.motionKey == placement.seat.motionKey
+                                    }
+                                }
+                                draggedMotionKey = placement.seat.motionKey
+                                dragTargetRingIndex = sourceSlot.ringIndex
+                                dragPointerPosition = Offset(sourceSlot.centerX, sourceSlot.centerY)
+                            },
+                            onDrag = { change, dragAmount ->
+                                change.consume()
+                                val nextPointer = dragPointerPosition + Offset(
+                                    x = dragAmount.x / density.density,
+                                    y = dragAmount.y / density.density,
+                                )
+                                dragPointerPosition = nextPointer
+                                dragTargetRingIndex = nearestHostTableRingIndex(
+                                    layout = resolvedLayout,
+                                    pointerX = nextPointer.x,
+                                    pointerY = nextPointer.y,
+                                )
+                            },
+                            onDragEnd = {
+                                val draggedKey = draggedMotionKey
+                                val targetRingIndex = dragTargetRingIndex
+                                val sourceSeat = draggedKey?.let { motionKey ->
+                                    seats.firstOrNull { seat -> seat.motionKey == motionKey }
+                                }
+                                draggedMotionKey = null
+                                dragTargetRingIndex = null
+                                dragPointerPosition = Offset.Zero
+                                if (sourceSeat != null && targetRingIndex != null) {
+                                    onSeatDragCommit(sourceSeat.seatId, targetRingIndex)
+                                }
+                            },
+                            onDragCancel = {
+                                draggedMotionKey = null
+                                dragTargetRingIndex = null
+                                dragPointerPosition = Offset.Zero
+                            },
+                        )
+                    }
+                } else {
+                    Modifier
+                }
+
+                ClocktowerSquareTableSeat(
+                    seat = placement.seat,
+                    interactionMode = interactionMode,
+                    onSeatClick = onSeatClick,
+                    modifier = Modifier
+                        .offset(
+                            x = displayedTopLeft.x.dp,
+                            y = displayedTopLeft.y.dp,
+                        )
+                        .size(
+                            width = seatCardWidth.dp,
+                            height = seatCardHeight.dp,
+                        )
+                        .zIndex(if (isDragged) 1f else 0f)
+                        .then(dragModifier),
+                )
+            }
         }
 
         Surface(
