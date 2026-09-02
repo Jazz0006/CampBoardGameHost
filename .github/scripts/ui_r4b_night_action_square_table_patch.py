@@ -503,7 +503,7 @@ checks = {
     night_path: [
         "ClocktowerSingleTargetSquareTableDialog(",
         "ClocktowerChambermaidSquareTableDialog(",
-        "cards = clocktowerRavenkeeperTargetCards(cards)",
+        "val candidates = clocktowerRavenkeeperTargetCards(cards)",
         "val candidates = clocktowerMonkTargetCards(cards, step.actor?.name)",
         "onNext = onNext",
     ],
