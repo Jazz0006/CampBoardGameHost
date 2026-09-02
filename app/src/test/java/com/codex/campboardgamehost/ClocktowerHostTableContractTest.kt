@@ -41,8 +41,8 @@ class ClocktowerHostTableContractTest {
         )
 
         assertEquals(
-            passiveFrames.associate { it.seat.seatId to it.placement },
-            activeFrames.associate { it.seat.seatId to it.placement },
+            passiveFrames.associate { it.seat.seatId to it.spatialSlot },
+            activeFrames.associate { it.seat.seatId to it.spatialSlot },
         )
         assertEquals(allSeats.size, activeFrames.size)
 
@@ -116,7 +116,7 @@ class ClocktowerHostTableContractTest {
 
     private fun placementsBySeat(
         seats: List<HostSeatPresentation>,
-    ): Map<ClocktowerSeatId, ClocktowerSquareTableSeatPlacement> =
+    ): Map<ClocktowerSeatId, HostTableSpatialSlot> =
         hostTableSeatFrames(seats, HostTableInteractionState())
-            .associate { it.seat.seatId to it.placement }
+            .associate { it.seat.seatId to it.spatialSlot }
 }
