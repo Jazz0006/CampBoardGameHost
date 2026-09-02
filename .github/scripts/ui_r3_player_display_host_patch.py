@@ -6,22 +6,22 @@ if b"\r\n" in raw or b"\r" in raw:
     raise SystemExit("Unexpected line ending; refusing implicit large-file normalization")
 text = raw.decode("utf-8")
 
-old = """        playerDisplayStep?.let { displayStep ->
-            ClocktowerPlayerDisplayCardLocalized(
-                step = displayStep,
-                onDismiss = { playerDisplayStep = null },
-            )
-            return
-        }
+old = """    playerDisplayStep?.let { displayStep ->
+        ClocktowerPlayerDisplayCardLocalized(
+            step = displayStep,
+            onDismiss = { playerDisplayStep = null },
+        )
+        return
+    }
 """
-new = """        playerDisplayStep?.let { displayStep ->
-            ClocktowerPlayerDisplayCardLocalized(
-                step = displayStep,
-                cards = cards,
-                onDismiss = { playerDisplayStep = null },
-            )
-            return
-        }
+new = """    playerDisplayStep?.let { displayStep ->
+        ClocktowerPlayerDisplayCardLocalized(
+            step = displayStep,
+            cards = cards,
+            onDismiss = { playerDisplayStep = null },
+        )
+        return
+    }
 """
 
 count = text.count(old)
