@@ -53,8 +53,8 @@ jobs:
           old = '''empath_anchor = "                                spyRegistrationKey = empathRegistrationKey,"
           require_count(host, empath_anchor, 2, "empath registration")'''
           new = '''empath_anchors = [
-              "                                spyRegistrationKey = empathRegistrationKey,",
-              "                spyRegistrationKey = empathRegistrationKey,",
+              "\\n                                spyRegistrationKey = empathRegistrationKey,\\n                                spyRegistrationTeams =",
+              "\\n                spyRegistrationKey = empathRegistrationKey,\\n                spyRegistrationTeams =",
           ]
           for empath_anchor in empath_anchors:
               require_count(host, empath_anchor, 1, "empath registration")'''
@@ -71,8 +71,8 @@ jobs:
           old = '''ft_registration_anchor = "                                recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,"
           require_count(host, ft_registration_anchor, 2, "fortune teller registration")'''
           new = '''ft_registration_anchors = [
-              "                                recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,",
-              "                recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,",
+              "\\n                                recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,\\n                                recluseRegistrationTeams =",
+              "\\n                recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,\\n                recluseRegistrationTeams =",
           ]
           for ft_registration_anchor in ft_registration_anchors:
               require_count(host, ft_registration_anchor, 1, "fortune teller registration")'''
