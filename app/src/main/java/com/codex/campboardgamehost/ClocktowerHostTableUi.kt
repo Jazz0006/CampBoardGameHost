@@ -19,6 +19,9 @@ internal fun HostTableShell(
     modifier: Modifier = Modifier,
     interaction: HostTableInteractionState = HostTableInteractionState(),
     onSeatClick: (ClocktowerSeatId) -> Unit = {},
+    dragEnabled: Boolean = false,
+    seatMotionKey: (HostSeatPresentation) -> String = { seat -> seat.seatId.renderKey() },
+    onSeatDragCommit: (ClocktowerSeatId, Int) -> Unit = { _, _ -> },
     centerContent: @Composable BoxScope.() -> Unit = {},
 ) {
     BoxWithConstraints(modifier = modifier) {
@@ -43,8 +46,10 @@ internal fun HostTableShell(
         val seatIdsByRenderKey = remember(frames) {
             frames.associate { frame -> frame.seat.seatId.renderKey() to frame.seat.seatId }
         }
-        val renderSeats = remember(frames) {
-            frames.map { frame -> frame.toSquareTableSeatUiModel() }
+        val renderSeats = frames.map { frame ->
+            frame.toSquareTableSeatUiModel(
+                motionKey = seatMotionKey(frame.seat),
+            )
         }
 
         ClocktowerSquareTableSeatSurface(
@@ -59,17 +64,26 @@ internal fun HostTableShell(
                 seatIdsByRenderKey[renderKey]?.let(onSeatClick)
             },
             layout = layout,
+            dragEnabled = dragEnabled,
+            onSeatDragCommit = { renderKey, targetRingIndex ->
+                seatIdsByRenderKey[renderKey]?.let { seatId ->
+                    onSeatDragCommit(seatId, targetRingIndex)
+                }
+            },
             centerContent = centerContent,
         )
     }
 }
 
-private fun HostTableSeatFrame.toSquareTableSeatUiModel(): ClocktowerSquareTableSeatUiModel =
+private fun HostTableSeatFrame.toSquareTableSeatUiModel(
+    motionKey: String,
+): ClocktowerSquareTableSeatUiModel =
     ClocktowerSquareTableSeatUiModel(
         seatId = seat.seatId.renderKey(),
         seatNumber = seat.seatId.number,
         label = hostTablePrimarySeatLabel(seat),
         state = squareTableSeatState(),
+        motionKey = motionKey,
     )
 
 private fun HostTableSeatFrame.squareTableSeatState(): ClocktowerSquareTableSeatState = when {
