@@ -34,7 +34,7 @@ jobs:
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/session/StructuredBooleanInformationUiModel.kt)" = 'bf0138628da1d8efb569414e4e0cc74639cc405b'
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTablePresentationTest.kt)" = '4545f5a4d5a196212f8238d2f65959b5f2a2e939'
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/StructuredFortuneTellerInformationAdapterTest.kt)" = '09a13184168fccfd5cac3c5ccd9dc765d72db24f'
-          test "$(git hash-object .github/scripts/ui_r4_fortune_teller_patch.py)" = 'c850c23288edb1adcd844e1c51ddccf26380ca95'
+          test "$(git hash-object .github/scripts/ui_r4_fortune_teller_patch.py)" = '56dbe0dc06cb66b765d841d16b965277b9d28cac'
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
