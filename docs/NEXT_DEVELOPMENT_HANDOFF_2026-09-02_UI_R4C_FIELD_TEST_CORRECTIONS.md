@@ -32,9 +32,11 @@ UI-R4B branch:
 
 ```text
 codex/ui-r4b-night-action-square-table
-head = 11f63647944e3063a8df3a5f2875ffb04d9f3708
+last validated executable checkpoint = 11f63647944e3063a8df3a5f2875ffb04d9f3708
 PR #76 = draft / open / mergeable / unmerged
 ```
+
+Docs-only commits created while refreshing this handoff may advance the branch head beyond the executable checkpoint above. The next conversation must re-query the live branch and distinguish docs-only head movement from new product code.
 
 UI-R4B acceptance is complete:
 
@@ -245,7 +247,8 @@ Before editing, re-confirm:
 - PR #75 state/head;
 - PR #76 state/head/checks;
 - UI-R4B branch head;
-- that no product commits were added after the validated checkpoint without new validation.
+- whether commits after `11f63647944e3063a8df3a5f2875ffb04d9f3708` are docs-only or executable;
+- that no new product commit exists without fresh validation.
 
 ## 9. Tests-first / validation strategy
 
