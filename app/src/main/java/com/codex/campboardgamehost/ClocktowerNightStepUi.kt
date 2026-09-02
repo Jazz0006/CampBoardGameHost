@@ -709,7 +709,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     helper = stringResource(R.string.clocktower_host_choose_monk_protect_hint),
                 ) {
                     SelectablePlayerChips(
-                        cards = aliveCards.filter { it.name != step.actor?.name },
+                        cards = clocktowerMonkTargetCards(cards, step.actor?.name),
                         selectedName = selectedName,
                         enabled = step.isRealAction,
                         allCards = cards,
@@ -858,7 +858,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     helper = stringResource(R.string.clocktower_host_ravenkeeper_target_hint),
                 ) {
                     SelectablePlayerChips(
-                        cards = aliveCards.filter { it.name != step.actor?.name },
+                        cards = clocktowerRavenkeeperTargetCards(cards),
                         selectedName = selectedName,
                         enabled = step.isRealAction,
                         allCards = cards,
