@@ -21,12 +21,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "c215f835edb9baac3bee4610c6f597c00f26247d"
+          test "$(git rev-parse HEAD^)" = "ae1010ba0e6cec5797dcbd38c1f88f45a3f71e9e"
           test "$(git hash-object .github/scripts/update_r4d2_field_test_roadmap.py)" = "d7d734f905f8fa2549ab5c8b2bef62a215cc1bd1"
           test "$(git hash-object docs/CURRENT_DEVELOPMENT_ROADMAP.md)" = "bccfb8a1fdca0ccece1f7bc49400cb2d9cc02c8c"
 
       - name: Apply exact-anchor roadmap update
-        run: python3 .github/scripts/update_r4d2_field_test_roadmap.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/update_r4d2_field_test_roadmap.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("docs/CURRENT_DEVELOPMENT_ROADMAP.md")
+          text = path.read_text(encoding="utf-8")
+          text = text.replace("> Updated: 2026-09-03 Australia/Sydney  \n", "> Updated: 2026-09-03 Australia/Sydney\n", 1)
+          path.write_text(text, encoding="utf-8")
+          PY
 
       - name: Audit roadmap update
         shell: bash
