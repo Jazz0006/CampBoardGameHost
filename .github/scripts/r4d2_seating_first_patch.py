@@ -32,6 +32,18 @@ replace_exact(
 )
 
 replace_exact(
+    """    Screen.Landing,
+    Screen.Setup,
+    Screen.UndercoverSettings,
+""",
+    """    Screen.Landing,
+    Screen.Setup,
+    Screen.GameSelection,
+    Screen.UndercoverSettings,
+""",
+)
+
+replace_exact(
     """    val commonPlayers = remember { mutableStateListOf<String>().apply { addAll(baseContext.loadCommonPlayers()) } }
     val playerNames = remember { mutableStateListOf<String>() }
     val cards = remember { mutableStateListOf<PlayerCard>() }
