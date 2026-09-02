@@ -1,6 +1,8 @@
 package com.codex.campboardgamehost
 
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -19,32 +21,47 @@ internal fun HostTableShell(
     onSeatClick: (ClocktowerSeatId) -> Unit = {},
     centerContent: @Composable BoxScope.() -> Unit = {},
 ) {
-    val frames = remember(seats, interaction) {
-        hostTableSeatFrames(
-            seats = seats,
-            interaction = interaction,
+    BoxWithConstraints(modifier = modifier) {
+        val availableWidth = maxWidth.value
+        val availableHeight = maxHeight.value
+        val layout = remember(availableWidth, availableHeight, seats.size) {
+            hostTableLayout(
+                playerCount = seats.size,
+                constraints = hostTableSurfaceLayoutConstraints(
+                    availableWidth = availableWidth,
+                    availableHeight = availableHeight,
+                ),
+            )
+        }
+        val frames = remember(seats, interaction, layout) {
+            hostTableSeatFrames(
+                seats = seats,
+                interaction = interaction,
+                layout = layout,
+            )
+        }
+        val seatIdsByRenderKey = remember(frames) {
+            frames.associate { frame -> frame.seat.seatId.renderKey() to frame.seat.seatId }
+        }
+        val renderSeats = remember(frames) {
+            frames.map { frame -> frame.toSquareTableSeatUiModel() }
+        }
+
+        ClocktowerSquareTableSeatSurface(
+            seats = renderSeats,
+            modifier = Modifier.fillMaxSize(),
+            interactionMode = if (interaction.mode == HostTableInteractionMode.ReadOnly) {
+                ClocktowerSquareTableInteractionMode.ReadOnly
+            } else {
+                ClocktowerSquareTableInteractionMode.Selectable
+            },
+            onSeatClick = { renderKey ->
+                seatIdsByRenderKey[renderKey]?.let(onSeatClick)
+            },
+            layout = layout,
+            centerContent = centerContent,
         )
     }
-    val seatIdsByRenderKey = remember(frames) {
-        frames.associate { frame -> frame.seat.seatId.renderKey() to frame.seat.seatId }
-    }
-    val renderSeats = remember(frames) {
-        frames.map { frame -> frame.toSquareTableSeatUiModel() }
-    }
-
-    ClocktowerSquareTableSeatSurface(
-        seats = renderSeats,
-        modifier = modifier,
-        interactionMode = if (interaction.mode == HostTableInteractionMode.ReadOnly) {
-            ClocktowerSquareTableInteractionMode.ReadOnly
-        } else {
-            ClocktowerSquareTableInteractionMode.Selectable
-        },
-        onSeatClick = { renderKey ->
-            seatIdsByRenderKey[renderKey]?.let(onSeatClick)
-        },
-        centerContent = centerContent,
-    )
 }
 
 private fun HostTableSeatFrame.toSquareTableSeatUiModel(): ClocktowerSquareTableSeatUiModel =
