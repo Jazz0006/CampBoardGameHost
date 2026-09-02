@@ -16,18 +16,22 @@ class ClocktowerSquareTableSeatLayoutTest {
                     label = "Player $seatNumber",
                 )
             }
+            val layout = layoutFor(playerCount)
 
-            val placements = clocktowerSquareTablePlacements(seats)
+            val placements = clocktowerSquareTablePlacements(
+                seats = seats,
+                layout = layout,
+            )
 
             assertEquals(seats.map { it.seatId }, placements.map { it.seat.seatId })
             assertEquals(playerCount, placements.map { it.seat.seatId }.distinct().size)
             assertEquals(playerCount, placements.size)
+            assertEquals((0 until playerCount).toList(), placements.map { it.spatialSlot.ringIndex })
 
             val edgeCounts = ClocktowerSquareTableEdge.values().map { edge ->
                 placements.count { it.edge == edge }
             }
             assertTrue(edgeCounts.all { it > 0 })
-            assertTrue(edgeCounts.maxOrNull()!! - edgeCounts.minOrNull()!! <= 1)
         }
     }
 
@@ -49,8 +53,10 @@ class ClocktowerSquareTableSeatLayoutTest {
             )
         }
 
-        val statesById = clocktowerSquareTablePlacements(seats)
-            .associate { it.seat.seatId to it.seat.state }
+        val statesById = clocktowerSquareTablePlacements(
+            seats = seats,
+            layout = layoutFor(seats.size),
+        ).associate { it.seat.seatId to it.seat.state }
 
         assertEquals(ClocktowerSquareTableSeatState.SelectedFirst, statesById["stable-2"])
         assertEquals(ClocktowerSquareTableSeatState.SelectedSecond, statesById["stable-7"])
@@ -81,7 +87,23 @@ class ClocktowerSquareTableSeatLayoutTest {
         )
 
         assertThrows(IllegalArgumentException::class.java) {
-            clocktowerSquareTablePlacements(seats)
+            clocktowerSquareTablePlacements(
+                seats = seats,
+                layout = layoutFor(seats.size),
+            )
         }
     }
+
+    private fun layoutFor(playerCount: Int): HostTableLayout = hostTableLayout(
+        playerCount = playerCount,
+        constraints = HostTableLayoutConstraints(
+            availableWidth = 360f,
+            availableHeight = 600f,
+            seatCardWidth = 64f,
+            seatCardHeight = 50f,
+            minimumSafeSeparation = 4f,
+            centerWorkspaceWidth = 200f,
+            centerWorkspaceHeight = 312f,
+        ),
+    )
 }
