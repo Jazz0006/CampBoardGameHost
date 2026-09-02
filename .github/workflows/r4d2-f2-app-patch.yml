@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   patch:
-    if: github.event.head_commit.message == 'build: add temporary F2 app patch workflow'
+    if: startsWith(github.event.head_commit.message, 'build')
     runs-on: ubuntu-latest
     env:
       BRANCH: codex/ui-r4d2-seating-first-setup
