@@ -79,11 +79,12 @@ helper_anchor_new = '''    }
         val subjectSeats = structuredFortuneTellerSelectedSeats ?: return
         val choice = model.choices.firstOrNull { it.value == value } ?: return
         val currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision)
-        val confirmed = if (choice.recommended) {
+        val confirmation = if (choice.recommended) {
             model.acceptRecommendation(choice.candidateId, currentRevision)
         } else {
             model.chooseManually(choice.candidateId, currentRevision)
         }
+        val confirmed = confirmation.confirmed ?: return
         val selectedOption = findBooleanDisplayOption(
             options = (
                 displayedInformationOptions +
@@ -297,6 +298,7 @@ required = [
     "ClocktowerFortuneTellerSquareTableDialog(",
     "model.acceptRecommendation(choice.candidateId, currentRevision)",
     "model.chooseManually(choice.candidateId, currentRevision)",
+    "val confirmed = confirmation.confirmed ?: return",
     "informationDecisionConfirmation = confirmed",
     "val fortuneTellerLegalResults = structuredFortuneTellerUiModel",
 ]
