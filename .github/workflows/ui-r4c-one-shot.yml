@@ -44,6 +44,50 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Normalize known indentation variants in patch anchors
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/scripts/ui_r4c_patch.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''empath_anchor = "                                spyRegistrationKey = empathRegistrationKey,"
+          require_count(host, empath_anchor, 2, "empath registration")'''
+          new = '''empath_anchors = [
+              "                                spyRegistrationKey = empathRegistrationKey,",
+              "                spyRegistrationKey = empathRegistrationKey,",
+          ]
+          for empath_anchor in empath_anchors:
+              require_count(host, empath_anchor, 1, "empath registration")'''
+          if old not in text:
+              raise SystemExit('empath patch-script anchor declaration changed')
+          text = text.replace(old, new, 1)
+          old = 'host = host.replace(empath_anchor, empath_legal + empath_anchor)'
+          new = '''for empath_anchor in empath_anchors:
+              host = host.replace(empath_anchor, empath_legal + empath_anchor, 1)'''
+          if old not in text:
+              raise SystemExit('empath patch-script replacement changed')
+          text = text.replace(old, new, 1)
+
+          old = '''ft_registration_anchor = "                                recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,"
+          require_count(host, ft_registration_anchor, 2, "fortune teller registration")'''
+          new = '''ft_registration_anchors = [
+              "                                recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,",
+              "                recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,",
+          ]
+          for ft_registration_anchor in ft_registration_anchors:
+              require_count(host, ft_registration_anchor, 1, "fortune teller registration")'''
+          if old not in text:
+              raise SystemExit('fortune teller patch-script anchor declaration changed')
+          text = text.replace(old, new, 1)
+          old = 'host = host.replace(ft_registration_anchor, ft_legal + ft_registration_anchor)'
+          new = '''for ft_registration_anchor in ft_registration_anchors:
+              host = host.replace(ft_registration_anchor, ft_legal + ft_registration_anchor, 1)'''
+          if old not in text:
+              raise SystemExit('fortune teller patch-script replacement changed')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8', newline='\n')
+          PY
+
       - name: Apply exact-anchor patch
         run: python3 .github/scripts/ui_r4c_patch.py
 
@@ -73,6 +117,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git checkout -- .github/scripts/ui_r4c_patch.py
           git rm .github/scripts/ui_r4c_patch.py .github/workflows/ui-r4c-one-shot.yml
           git diff --check
           git add app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt \
