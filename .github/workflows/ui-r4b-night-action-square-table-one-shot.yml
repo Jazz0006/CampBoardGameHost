@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "17bdbc0e98059fb6d6e317ac03c591dfefe1f6d4"
+          test "$(git rev-parse HEAD^)" = "bd8d6508ba4361d8b2c814d468bfad7f7322315c"
           test "$(git hash-object .github/scripts/ui_r4b_night_action_square_table_patch.py)" = "6f3549476fe0ffb4af08f8f54bd3fca60d1aac71"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt)" = "2681ad67c99e1bb3875b8c53b98401bd33c28ca1"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayUi.kt)" = "8dce023bfda2b77082bac41b910f228fcbcb0e3a"
@@ -62,6 +62,25 @@ jobs:
           from pathlib import Path
           path = Path('.github/scripts/ui_r4b_night_action_square_table_patch.py')
           text = path.read_text(encoding='utf-8')
+
+          # The generalized player-display helper needs a block body because its typed
+          # EitherOne branch intentionally uses early returns for malformed propositions.
+          marker = "new_highlight = '''"
+          trailer = "'''\nplayer = replace_exact"
+          if text.count(marker) != 1 or text.count(trailer) != 1:
+              raise SystemExit('new_highlight script boundary drifted')
+          start = text.index(marker)
+          end = text.index(trailer, start)
+          segment = text[start:end]
+          expr_sig = "): Set<Int> = when (step.displayKind) {\n"
+          block_sig = "): Set<Int> {\n    return when (step.displayKind) {\n"
+          tail = "    else -> emptySet()\n}\n"
+          block_tail = "    else -> emptySet()\n    }\n}\n"
+          if segment.count(expr_sig) != 1 or segment.count(tail) != 1:
+              raise SystemExit('new_highlight expression-body anchor drifted')
+          segment = segment.replace(expr_sig, block_sig, 1).replace(tail, block_tail, 1)
+          text = text[:start] + segment + text[end:]
+
           old = '''def replace_exact(text: str, label: str, old: str, new: str, expected: int = 1) -> str:
               count = text.count(old)
           '''
