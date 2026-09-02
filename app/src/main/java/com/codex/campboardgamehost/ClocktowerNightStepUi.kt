@@ -369,13 +369,21 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val structuredFortuneTellerActorSeat = step.actor
         ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
-    val structuredFortuneTellerSelectedSeats = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+    val fortuneTellerSelectedSeats = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
         .mapNotNull { selectedName ->
             cards.indexOfFirst { it.name == selectedName }
                 .takeIf { it >= 0 }
                 ?.plus(1)
         }
+    val structuredFortuneTellerSelectedSeats = fortuneTellerSelectedSeats
         .takeIf { seats -> seats.size == 2 && seats.distinct().size == 2 }
+    val fortuneTellerSelectableSeats = when (fortuneTellerSelectedSeats.size) {
+        0 -> cards.indices.mapTo(linkedSetOf()) { index -> index + 1 }
+        1 -> cards.indices
+            .map { index -> index + 1 }
+            .filterTo(linkedSetOf()) { seat -> seat !in fortuneTellerSelectedSeats }
+        else -> emptySet()
+    }
     val structuredFortuneTellerProposition = (step.displayProposition as? InformationProposition.BooleanResult)
         ?.takeIf { proposition ->
             proposition.metric == BooleanMetric.DEMON_OR_RED_HERRING_PRESENT &&
@@ -400,7 +408,6 @@ internal fun ClocktowerNightStepCardLocalized(
     val structuredFortuneTellerUiModel = if (
         step.action == ClocktowerNightAction.FortuneTeller &&
         step.roleEnName == "Fortune Teller" &&
-        step.informationReliability != InformationReliability.RELIABLE &&
         structuredFortuneTellerActorSeat != null &&
         structuredFortuneTellerSelectedSeats != null &&
         structuredFortuneTellerProposition != null
@@ -424,6 +431,14 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         null
     }
+    val fortuneTellerLegalResults = structuredFortuneTellerUiModel
+        ?.choices
+        ?.mapTo(linkedSetOf()) { choice -> choice.value }
+        .orEmpty()
+    val fortuneTellerRecommendedResult = structuredFortuneTellerUiModel
+        ?.choices
+        ?.firstOrNull { choice -> choice.recommended }
+        ?.value
     val structuredNumberUiModel = structuredEmpathUiModel ?: structuredChefUiModel
 
     fun showRecommendedDisplayOption(option: ClocktowerDisplayOption) {
@@ -455,13 +470,60 @@ internal fun ClocktowerNightStepCardLocalized(
             ),
         )
     }
+
+    fun showStructuredFortuneTellerResult(value: Boolean) {
+        val model = structuredFortuneTellerUiModel ?: return
+        val actorSeat = structuredFortuneTellerActorSeat ?: return
+        val subjectSeats = structuredFortuneTellerSelectedSeats ?: return
+        val choice = model.choices.firstOrNull { it.value == value } ?: return
+        val currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision)
+        val confirmation = if (choice.recommended) {
+            model.acceptRecommendation(choice.candidateId, currentRevision)
+        } else {
+            model.chooseManually(choice.candidateId, currentRevision)
+        }
+        val confirmed = confirmation.confirmed ?: return
+        val selectedOption = findBooleanDisplayOption(
+            options = (
+                displayedInformationOptions +
+                    step.displayOptions +
+                    step.legacyInformationCandidates
+                ).distinctBy(::optionId),
+            metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+            sourceSeat = actorSeat,
+            subjectSeats = subjectSeats,
+            value = value,
+        )
+        val displayStep = selectedOption?.let { option ->
+            step.copy(
+                tellPlayer = option.displayPrimary,
+                displayKind = option.displayKind,
+                displayTitle = option.displayTitle,
+                displayPrimary = option.displayPrimary,
+                displaySecondary = option.displaySecondary,
+                displayFooter = option.displayFooter,
+                displayProposition = confirmed.draft.proposition,
+                selectedInformationTruthful = option.isTruthful,
+                informationDecisionConfirmation = confirmed,
+                informationDecisionExpectedSnapshot = model.contextSnapshot,
+                displayOptions = emptyList(),
+                recommendedDisplayOptions = emptyList(),
+            )
+        } ?: step.copy(
+            displayProposition = confirmed.draft.proposition,
+            informationDecisionConfirmation = confirmed,
+            informationDecisionExpectedSnapshot = model.contextSnapshot,
+            displayOptions = emptyList(),
+            recommendedDisplayOptions = emptyList(),
+        )
+        onShowPlayerDisplay(displayStep)
+    }
+
     LaunchedEffect(automaticStorytellerInfo, step.title, automaticDecisionTargetName) {
         if (automaticStorytellerInfo && automaticDecisionTargetName != null && selectedName != automaticDecisionTargetName) {
             onSelectName(automaticDecisionTargetName)
         }
     }
-    var fortuneTellerLimitExceeded by remember(step.actor?.name, step.title) { mutableStateOf(false) }
-    var showFortuneTellerDisplayOptions by remember(step.actor?.name, step.title) { mutableStateOf(false) }
     val command = when {
         step.action == ClocktowerNightAction.FortuneTeller && step.actor != null -> {
             if (language == "en") {
@@ -657,65 +719,35 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             ClocktowerNightAction.FortuneTeller -> {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SelectableTwoPlayerChips(
-                        cards = cards,
-                        firstSelectedName = fortuneTellerFirst,
-                        secondSelectedName = fortuneTellerSecond,
-                        enabled = step.isRealAction,
-                        onSelect = { name ->
-                            showFortuneTellerDisplayOptions = false
+                ClocktowerFortuneTellerSquareTableDialog(
+                    seats = cards.mapIndexed { index, card ->
+                        ClocktowerFortuneTellerSeatUiModel(
+                            seatId = "seat-${index + 1}",
+                            seatNumber = index + 1,
+                            label = card.name,
+                        )
+                    },
+                    selectedSeats = fortuneTellerSelectedSeats,
+                    selectableSeats = fortuneTellerSelectableSeats,
+                    enabled = step.isRealAction,
+                    legalResults = fortuneTellerLegalResults,
+                    recommendedResult = fortuneTellerRecommendedResult,
+                    automaticStorytellerInfo = automaticStorytellerInfo,
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onSeatSelected = { seatNumber ->
+                        cards.getOrNull(seatNumber - 1)?.name?.let { name ->
                             when (twoPlayerSelectionAction(fortuneTellerFirst, fortuneTellerSecond, name)) {
-                                TwoPlayerSelectionAction.ToggleFirst -> {
-                                    fortuneTellerLimitExceeded = false
-                                    onSelectFortuneTellerFirst(name)
-                                }
-                                TwoPlayerSelectionAction.ToggleSecond -> {
-                                    fortuneTellerLimitExceeded = false
-                                    onSelectFortuneTellerSecond(name)
-                                }
-                                TwoPlayerSelectionAction.RejectLimit -> {
-                                    fortuneTellerLimitExceeded = true
-                                }
+                                TwoPlayerSelectionAction.ToggleFirst -> onSelectFortuneTellerFirst(name)
+                                TwoPlayerSelectionAction.ToggleSecond -> onSelectFortuneTellerSecond(name)
+                                TwoPlayerSelectionAction.RejectLimit -> Unit
                             }
-                        },
-                    )
-                    if (fortuneTellerLimitExceeded) {
-                        Text(
-                            stringResource(R.string.clocktower_fortune_cannot_select_more_than_two),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    } else if (fortuneTellerFirst == null || fortuneTellerSecond == null) {
-                        Text(
-                            stringResource(R.string.clocktower_fortune_must_select_two),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                    Button(
-                        onClick = {
-                            if (automaticStorytellerInfo && automaticDisplayOption != null) {
-                                showRecommendedDisplayOption(automaticDisplayOption)
-                            } else if (step.displayOptions.isNotEmpty() || displayedInformationOptions.isNotEmpty()) {
-                                showFortuneTellerDisplayOptions = true
-                            } else {
-                                onShowPlayerDisplay(step)
-                            }
-                        },
-                        enabled = step.isRealAction && fortuneTellerFirst != null && fortuneTellerSecond != null,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Text(stringResource(R.string.clocktower_fortune_show_result))
-                    }
-                    if (showFortuneTellerDisplayOptions) {
-                        Text(
-                            stringResource(R.string.clocktower_fortune_unreliable_choose_result),
-                            color = Color(0xFF8C4B20),
-                        )
-                    }
-                }
+                        }
+                    },
+                    onResultSelected = ::showStructuredFortuneTellerResult,
+                    onAutomaticResultSelected = ::showStructuredFortuneTellerResult,
+                    onPrevious = onPrevious,
+                )
             }
 
             ClocktowerNightAction.Chambermaid -> {
@@ -889,51 +921,6 @@ internal fun ClocktowerNightStepCardLocalized(
                 )
             }
 
-            if (showFortuneTellerDisplayOptions) {
-                structuredFortuneTellerUiModel?.let { model ->
-                    val actorSeat = requireNotNull(structuredFortuneTellerActorSeat)
-                    val subjectSeats = requireNotNull(structuredFortuneTellerSelectedSeats)
-                    StructuredBooleanInformationDecisionPanel(
-                        model = model,
-                        currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
-                        automaticStorytellerInfo = automaticStorytellerInfo,
-                        language = language,
-                        roleLabel = step.title,
-                        onConfirmed = { confirmed, value ->
-                            val selectedOption = findBooleanDisplayOption(
-                                options = (
-                                    displayedInformationOptions +
-                                        step.displayOptions +
-                                        step.legacyInformationCandidates
-                                    ).distinctBy(::optionId),
-                                metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
-                                sourceSeat = actorSeat,
-                                subjectSeats = subjectSeats,
-                                value = value,
-                            )
-                            if (selectedOption != null) {
-                                onShowPlayerDisplay(
-                                    step.copy(
-                                        tellPlayer = selectedOption.displayPrimary,
-                                        displayKind = selectedOption.displayKind,
-                                        displayTitle = selectedOption.displayTitle,
-                                        displayPrimary = selectedOption.displayPrimary,
-                                        displaySecondary = selectedOption.displaySecondary,
-                                        displayFooter = selectedOption.displayFooter,
-                                        displayProposition = confirmed.draft.proposition,
-                                        selectedInformationTruthful = selectedOption.isTruthful,
-                                        informationDecisionConfirmation = confirmed,
-                                        informationDecisionExpectedSnapshot = model.contextSnapshot,
-                                        displayOptions = emptyList(),
-                                        recommendedDisplayOptions = emptyList(),
-                                    ),
-                                )
-                            }
-                        },
-                    )
-                }
-            }
-
             pairRecommendationPresentation?.let { presentation ->
                 ClocktowerPairRecommendationPresentationSection(
                     presentation = presentation,
@@ -947,7 +934,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 structuredNumberUiModel == null &&
                 structuredFortuneTellerUiModel == null &&
                 displayedInformationOptions.isNotEmpty() &&
-                (step.action != ClocktowerNightAction.FortuneTeller || showFortuneTellerDisplayOptions)
+                step.action != ClocktowerNightAction.FortuneTeller
             ) {
                 Text(if (language == "en") "Recommended information" else "推荐给说书人的完整信息", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 Text(
@@ -1029,7 +1016,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 structuredNumberUiModel == null &&
                 structuredFortuneTellerUiModel == null &&
                 firstNightPool == null && step.displayOptions.isNotEmpty() &&
-                (step.action != ClocktowerNightAction.FortuneTeller || showFortuneTellerDisplayOptions)
+                step.action != ClocktowerNightAction.FortuneTeller
             ) {
                 Text(if (language == "en") "This ability is unreliable. Choose a result to show." else "能力不可靠：请选择一个结果展示。", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                 step.displayOptions.forEach { option ->
