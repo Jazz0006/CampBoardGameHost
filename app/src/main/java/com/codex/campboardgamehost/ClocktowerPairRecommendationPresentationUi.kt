@@ -61,7 +61,6 @@ internal fun ClocktowerPairRecommendationPresentationSection(
             ) {
                 Text(primary.label)
             }
-            RecommendationReasonSummary(primary.reasonCodes, primary.warningCodes, language)
 
             if (presentation.alternatives.isNotEmpty()) {
                 Text(
@@ -77,7 +76,6 @@ internal fun ClocktowerPairRecommendationPresentationSection(
                     ) {
                         Text(option.label)
                     }
-                    RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
                 }
             }
         }
