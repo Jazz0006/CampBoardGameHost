@@ -58,10 +58,12 @@ class HostSeatingRosterTest {
     @Test
     fun `confirmed seat ids feed the permanent spatial contract unchanged`() {
         val roster = confirmHostSeating(listOf("Alice", "Bob", "Casey", "Dana", "Evan"))
+        val presentations = roster.toHostSeatPresentations()
 
         val slots = hostTableSeatFrames(
-            seats = roster.toHostSeatPresentations(),
+            seats = presentations,
             interaction = HostTableInteractionState(),
+            layout = layoutFor(presentations.size),
         ).associate { it.seat.seatId to it.spatialSlot }
 
         assertEquals(roster.seats.map { it.seatId }.toSet(), slots.keys)
@@ -130,4 +132,17 @@ class HostSeatingRosterTest {
             // Expected.
         }
     }
+
+    private fun layoutFor(playerCount: Int): HostTableLayout = hostTableLayout(
+        playerCount = playerCount,
+        constraints = HostTableLayoutConstraints(
+            availableWidth = 360f,
+            availableHeight = 600f,
+            seatCardWidth = 64f,
+            seatCardHeight = 50f,
+            minimumSafeSeparation = 4f,
+            centerWorkspaceWidth = 200f,
+            centerWorkspaceHeight = 312f,
+        ),
+    )
 }
