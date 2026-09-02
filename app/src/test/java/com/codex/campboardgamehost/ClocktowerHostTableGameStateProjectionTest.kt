@@ -92,14 +92,16 @@ class ClocktowerHostTableGameStateProjectionTest {
                 player(seat = 2, name = "Bob", actualRole = "Chef"),
             ),
         )
+        val presentations = state.toHostSeatPresentations()
 
         val frames = hostTableSeatFrames(
-            seats = state.toHostSeatPresentations(),
+            seats = presentations,
             interaction = HostTableInteractionState(
                 mode = HostTableInteractionMode.Selection,
                 selectableSeatIds = setOf(ClocktowerSeatId(2)),
                 selectedSeatIds = listOf(ClocktowerSeatId(2)),
             ),
+            layout = layoutFor(presentations.size),
         )
 
         assertEquals(3, frames.size)
@@ -127,5 +129,18 @@ class ClocktowerHostTableGameStateProjectionTest {
         shownRole = shownRole?.let(::RoleId),
         alive = alive,
         poisoned = false,
+    )
+
+    private fun layoutFor(playerCount: Int): HostTableLayout = hostTableLayout(
+        playerCount = playerCount,
+        constraints = HostTableLayoutConstraints(
+            availableWidth = 360f,
+            availableHeight = 600f,
+            seatCardWidth = 64f,
+            seatCardHeight = 50f,
+            minimumSafeSeparation = 4f,
+            centerWorkspaceWidth = 200f,
+            centerWorkspaceHeight = 312f,
+        ),
     )
 }
