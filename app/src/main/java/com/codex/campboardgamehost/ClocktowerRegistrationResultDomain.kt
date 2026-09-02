@@ -19,6 +19,38 @@ internal fun clocktowerFinalInformationResultId(option: ClocktowerDisplayOption)
     option.displayFooter.orEmpty(),
 ).joinToString("|")
 
+internal data class ClocktowerAlignmentRegistrationWitness(
+    val spyRegistersGood: Boolean?,
+    val recluseRegistersEvil: Boolean?,
+)
+
+/** Current ruling comes first so deduplication preserves it whenever it yields the chosen result. */
+internal fun clocktowerAlignmentRegistrationWitnesses(
+    currentSpyRegistersGood: Boolean,
+    spySelectable: Boolean,
+    currentRecluseRegistersEvil: Boolean,
+    recluseSelectable: Boolean,
+): List<ClocktowerAlignmentRegistrationWitness> {
+    val spyValues: List<Boolean?> = if (spySelectable) {
+        listOf(currentSpyRegistersGood, !currentSpyRegistersGood)
+    } else {
+        listOf(null)
+    }
+    val recluseValues: List<Boolean?> = if (recluseSelectable) {
+        listOf(currentRecluseRegistersEvil, !currentRecluseRegistersEvil)
+    } else {
+        listOf(null)
+    }
+    return spyValues.flatMap { spyGood ->
+        recluseValues.map { recluseEvil ->
+            ClocktowerAlignmentRegistrationWitness(
+                spyRegistersGood = spyGood,
+                recluseRegistersEvil = recluseEvil,
+            )
+        }
+    }
+}
+
 internal fun ClocktowerNightStepUi.usesResultFirstRegistrationDomain(): Boolean =
     manualInformationCandidates.isNotEmpty() &&
         (spyRegistrationKey != null || recluseRegistrationKey != null)
