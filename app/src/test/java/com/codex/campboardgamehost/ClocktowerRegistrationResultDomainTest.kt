@@ -34,6 +34,39 @@ class ClocktowerRegistrationResultDomainTest {
     }
 
     @Test
+    fun `alignment witnesses enumerate complete selectable combinations with current state first`() {
+        val witnesses = clocktowerAlignmentRegistrationWitnesses(
+            currentSpyRegistersGood = false,
+            spySelectable = true,
+            currentRecluseRegistersEvil = true,
+            recluseSelectable = true,
+        )
+
+        assertEquals(
+            listOf(
+                ClocktowerAlignmentRegistrationWitness(false, true),
+                ClocktowerAlignmentRegistrationWitness(false, false),
+                ClocktowerAlignmentRegistrationWitness(true, true),
+                ClocktowerAlignmentRegistrationWitness(true, false),
+            ),
+            witnesses,
+        )
+    }
+
+    @Test
+    fun `non selectable registration subjects do not invent hidden rulings`() {
+        assertEquals(
+            listOf(ClocktowerAlignmentRegistrationWitness(null, null)),
+            clocktowerAlignmentRegistrationWitnesses(
+                currentSpyRegistersGood = true,
+                spySelectable = false,
+                currentRecluseRegistersEvil = true,
+                recluseSelectable = false,
+            ),
+        )
+    }
+
+    @Test
     fun `result first policy requires an exact manual domain and registration interaction`() {
         val option = numberOption(value = 1, spyRegistersGood = false)
         val resultFirst = step(
