@@ -64,9 +64,7 @@ manual_ui_replacement = """            if (manualPairCandidates.isNotEmpty()) {
 
 """
 
-reason_default = """                        RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
-"""
-reason_discretionary = """                    RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
+reason_line = """                        RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
 """
 
 for name, anchor in (
@@ -74,12 +72,14 @@ for name, anchor in (
     ("state_end", state_end),
     ("manual_ui_start", manual_ui_start),
     ("manual_ui_end", manual_ui_end),
-    ("reason_default", reason_default),
-    ("reason_discretionary", reason_discretionary),
 ):
     count = text.count(anchor)
     if count != 1:
         raise SystemExit(f"Expected exactly one {name} anchor, found {count}")
+
+reason_count = text.count(reason_line)
+if reason_count != 2:
+    raise SystemExit(f"Expected exactly two normal-product reason lines, found {reason_count}")
 
 state_begin = text.index(state_start)
 state_finish = text.index(state_end)
@@ -93,8 +93,7 @@ if manual_begin >= manual_finish:
     raise SystemExit("Manual UI anchors out of order")
 text = text[:manual_begin] + manual_ui_replacement + text[manual_finish:]
 
-text = text.replace(reason_default, "", 1)
-text = text.replace(reason_discretionary, "", 1)
+text = text.replace(reason_line, "")
 
 for removed in (
     "fun pairManualKey(",
