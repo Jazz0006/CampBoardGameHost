@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-02 Australia/Sydney  
+> Updated: 2026-09-03 Australia/Sydney
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **This file is the single current project-status authority.**  
 > Always re-query live GitHub state before implementation or merge.
@@ -15,13 +15,23 @@ active campaign:
 UI Information / Storyteller Workspace Campaign
 
 latest validated executable checkpoint:
-UI-R4C — Field-Test UI Corrections
-branch: codex/ui-r4c-field-test-ui-corrections
-validated product checkpoint: cb62c4d48c822db10f2b0b18b4f8e19336c7abb1
-PR #77: draft / open / mergeable / unmerged
+UI-R4D-2 — Seating-First Session Flow structural/authority checkpoint
+branch: codex/ui-r4d2-seating-first-setup
+validated product checkpoint: 4bd8ce9b6c40c4f383f9124b2c805188c1f055a2
+cleanup head before this roadmap refresh: f93a1dce261ce8a601d68ef533f1fd1039073181
+PR #79: draft / open / mergeable / unmerged
 
-next development target:
-UI-R4D — Persistent Host Table / Storyteller Workspace
+validated foundation immediately below it:
+UI-R4D-1 — Persistent Host Table Foundation
+branch: codex/ui-r4d-persistent-table-foundation
+cleanup head: 524f55bac945f1be8ee9d9ec77e4e4ca6935781e
+PR #78: draft / open / mergeable / unmerged
+
+active development target:
+UI-R4D-2F — Real-Device Field-Test Corrections / Seating Workspace Closeout
+
+blocked until R4D-2F is clean:
+UI-R4D-3 — Day Storyteller Workspace
 
 stabilization after UI-R4D:
 UI-R5 — Real-Device Stabilization / Feature Freeze
@@ -30,11 +40,11 @@ algorithm campaign after UI stabilization:
 EPI-MQ / Productive Uncertainty / PlayerWorldSet
 ```
 
-Docs-only commits created while refreshing roadmap/handoff may advance the UI-R4C branch beyond `cb62c4d48c822db10f2b0b18b4f8e19336c7abb1`. Always distinguish docs-only head movement from the latest validated executable checkpoint.
+Docs-only commits created while refreshing this roadmap may advance the UI-R4D-2 branch beyond cleanup head `f93a1dce261ce8a601d68ef533f1fd1039073181`. Always distinguish later docs-only head movement from the latest validated executable product checkpoint `4bd8ce9b6c40c4f383f9124b2c805188c1f055a2`.
 
 The UI campaign remains intentionally ahead of EPI-MQ. EPI-MQ is paused, not cancelled.
 
-UI-R1 through UI-R4C are stacked draft work and are **not yet on main**. Do not create the next UI branch from `main` or the stack will be lost.
+UI-R1 through UI-R4D-2 are stacked draft work and are **not yet on main**. Do not create the next UI branch from `main` or the stack will be lost. Do not start R4D-3 until the R4D-2 field-test correction gate below is closed.
 
 ## 2. Campaign status
 
@@ -53,8 +63,14 @@ UI-R4   Fortune Teller two-target + result flow               COMPLETE / VERIFIE
 HOTFIX  Monk/Ravenkeeper target legality                      COMPLETE / VERIFIED / DRAFT #75
 UI-R4B  night-action square-table unification                 COMPLETE / VERIFIED / DRAFT #76
 UI-R4C  real-device UI corrections                            COMPLETE / VERIFIED / DRAFT #77
-UI-R4D  persistent Host table / Storyteller workspace         ACTIVE NEXT
-UI-R5   real-device stabilization / feature freeze            QUEUED AFTER UI-R4D
+UI-R4D-1 persistent Host table foundation                      COMPLETE / VERIFIED / DRAFT #78
+UI-R4D-2 seating-first session flow / seat authority           STRUCTURALLY VERIFIED / DRAFT #79
+UI-R4D-2F field-test corrections / seating workspace closeout  ACTIVE NOW / BLOCKS R4D-3
+UI-R4D-3 day Storyteller workspace                             QUEUED AFTER R4D-2F
+UI-R4D-4 public claim history                                  QUEUED
+UI-R4D-5 nomination / vote state machine                       QUEUED
+UI-R4D-6 unified Host seat presentation migration              QUEUED
+UI-R5   real-device stabilization / feature freeze             QUEUED AFTER UI-R4D
 
 EPI-MQ / ALG
         Productive Uncertainty / PlayerWorldSet mainline      PAUSED UNTIL UI CAMPAIGN STABLE
@@ -431,6 +447,15 @@ R4D-2  Seating-First Session Flow
        - Confirm seats
        - game selection moves after seating confirmation
 
+R4D-2F Real-Device Field-Test Corrections / Closeout Gate
+       - replace equal-four-edge seat allocation with constraint/capacity-aware layout
+       - restore drag-to-reorder using the same computed spatial slots as rendering
+       - make return-to-edit-seating obvious and support Android system Back
+       - fix Manual pair clue confirmation -> Player Reveal transition
+       - create readable pair Player Reveal with large typed seat numbers
+       - correct low-contrast typography/state colors
+       - revalidate on device before R4D-3
+
 R4D-3  Day Storyteller Workspace
        - migrate day overview to shared table
        - show actual identity / relevant perceived identity
@@ -464,6 +489,93 @@ R4D-6  Unified Host Seat Presentation Migration
 
 The exact commit boundaries may be adjusted after code ownership audit, but preserve this dependency direction.
 
+### R4D-2 current checkpoint and 2026-09-03 real-device correction gate
+
+R4D-2 has a **validated structural/authority checkpoint**, but it is **not field-test complete**. Keep Draft PR #79 open and do not advance to R4D-3 yet.
+
+Validated structural behavior already established:
+
+- `Confirm seats` freezes the current player order into immutable typed `ClocktowerSeatId` assignments;
+- game selection is unavailable before seat confirmation;
+- confirmed seating survives entry to and return from game-specific settings;
+- Undercover, Werewolf, Trouble Brewing and other Clocktower production starts explicitly consume the frozen confirmed roster rather than mutable setup UI order;
+- all unseated common players remain reachable in the scrollable center palette;
+- focused R4D seating/table tests, `:app:testFast` and diff validation were green at product checkpoint `4bd8ce9b6c40c4f383f9124b2c805188c1f055a2`;
+- cleanup head `f93a1dce261ce8a601d68ef533f1fd1039073181` has zero product-file diff from that validated checkpoint.
+
+Real-device testing then exposed the following correction work. Treat these as R4D-2 closeout, not R4D-3 scope:
+
+#### P0 — restore drag seat editing
+
+The previous Setup UI supported long-press drag/reorder. The new seating-first UI regressed to tap + Earlier/Later buttons only. Restore drag as the primary seat-editing interaction while retaining button-based fallback where useful.
+
+Do **not** create a second independent drag geometry. Rendering, hit testing, nearest insertion, cross-corner movement and preview animation must consume the same computed Host-table spatial-slot model.
+
+#### P0 — return from game selection to editable seating
+
+The state contract already supports releasing confirmation through `reopenSeating()`, but real-device navigation is not sufficiently reachable/obvious. Provide a clear top-level `Back / Edit players and seats` action and Android system-Back behavior. Both paths must call the same state transition so screen state and seating confirmation cannot diverge.
+
+Game-specific Settings -> Back should continue to return to Game Selection **without** releasing confirmed seating.
+
+#### P0 — Manual pair clue confirmation must reliably open Player Reveal
+
+The dedicated Manual pair selection dialog itself works: role/seat selection resolves a legal `ClocktowerDisplayOption`. Real-device testing shows that after confirmation, the subsequent `Show to player` / Player Reveal transition can fail to appear.
+
+Treat this as a real behavior bug. Establish a durable RED around the resolved Manual-display transition before GREEN. Do not fix it with a source-shape test or by blindly issuing duplicate callbacks. Prefer one explicit immutable resolved-display handoff:
+
+```text
+Manual / recommendation result
+-> resolved player-display payload
+-> commit selection
+-> sanitized Player Reveal
+```
+
+The Player Reveal privacy boundary remains unchanged.
+
+#### P1 — constraint/capacity-aware square-table layout
+
+Do **not** hard-code fixed gaps or fixed player counts per edge. The current equal-four-edge distribution is not appropriate for portrait phones: left/right edges have substantially more usable length than top/bottom edges and should naturally accept more seats.
+
+Introduce/extend a pure Host-table layout calculation that consumes actual constraints, including conceptually:
+
+```text
+available width / height
+seat-card width / height
+minimum safe separation
+center-workspace clearance
+player count
+```
+
+and returns a deterministic ordered ring of typed spatial slots. Edge capacity/distribution should emerge from available geometry. On portrait screens, left/right will normally receive more players than top/bottom without a per-player-count lookup table.
+
+The same output must be the authority for both rendering and drag insertion. Preserve stable typed seat identity and deterministic clockwise ordering.
+
+#### P1 — typography / state-color readability
+
+Real-device testing found the newly introduced typography/state colors too low-contrast. Keep important seat/player text high-contrast. Prefer border/background/marker changes for interaction state; do not encode critical state primarily by making small text dim or low-alpha.
+
+Do not expand this into unrelated theme polish. This item is a usability correction.
+
+#### P1 — pair Player Reveal hierarchy
+
+Numeric/Yes-No reveal already gives the main number a large visual treatment, while pair/EitherOne information currently renders its primary/secondary content at much smaller generic headline/title sizes. Create a dedicated pair-information reveal hierarchy using the typed proposition rather than parsing localized display strings.
+
+For Washerwoman / Librarian / Investigator-style pair information, the two seat numbers should be the strongest visual anchors, with player names and role/instruction text secondary. Typography should be adaptive to available width rather than one device-specific magic size.
+
+#### Recommended R4D-2F implementation order
+
+```text
+F1  constraint/capacity-aware HostTableLayout + behavior tests
+F2  drag-to-reorder on computed slots, including cross-corner insertion
+F3  explicit GameSelection/Edit-seating + Android Back navigation
+F4  Manual pair resolved-display RED -> GREEN
+F5  dedicated typed pair Player Reveal / readable seat-number hierarchy
+F6  high-contrast seat/state typography corrections
+F7  real-device closeout: 5 / 8 / 12 / 15 players + cross-corner drag + Manual reveal
+```
+
+Only after F7 is clean should R4D-3 become active.
+
 ## 12. UI-R4D testing strategy
 
 Authority: `docs/TESTING_STRATEGY.md` and root `AGENTS.md`.
@@ -472,10 +584,21 @@ Use risk-based tests-first. Do not create ceremonial source-shape tests for ever
 
 High-value permanent contracts:
 
-### Stable spatial identity
+### Stable spatial identity / responsive layout
 
 - same typed `seatId` maps to the same table position across Seating -> Day -> Nomination/Vote -> Night;
-- filtered legal-target sets do not renumber/reposition players.
+- filtered legal-target sets do not renumber/reposition players;
+- table slot allocation is deterministic for the same constraints/player count;
+- portrait constraints may allocate more seats to left/right than top/bottom according to actual edge capacity;
+- layout and drag insertion use the same computed ordered slot ring;
+- drag reorder across an edge corner preserves deterministic seat order.
+
+### Seating navigation / Manual reveal
+
+- confirmed seating can be explicitly reopened from Game Selection without losing the editable roster;
+- Android Back from Game Selection performs the same reopen-seating transition;
+- Back from game-specific Settings returns to Game Selection while preserving confirmation;
+- a resolved Manual pair option commits the intended display and opens sanitized Player Reveal exactly once.
 
 ### Privacy boundary
 
@@ -610,9 +733,11 @@ docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_R4C_FIELD_TEST_CORRECTIONS.md
 docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_INFORMATION_CAMPAIGN.md
 ```
 
-New conversation must first re-query live `main`, PR #75, PR #76, PR #77 and the UI-R4C branch head/checks. It must distinguish docs-only commits after `cb62c4d48c822db10f2b0b18b4f8e19336c7abb1` from new executable product changes.
+New conversation must first re-query live `main`, Draft PR #78 and Draft PR #79, plus the live `codex/ui-r4d2-seating-first-setup` head/checks. Older stacked PRs remain historical dependencies, but the immediate execution boundary is PR #79.
 
-The next implementation branch should be based on the **live UI-R4C stack head**, not on `main`, unless the stack has since been explicitly merged/rebased by the user.
+Distinguish the latest validated executable product checkpoint `4bd8ce9b6c40c4f383f9124b2c805188c1f055a2` / cleanup head `f93a1dce261ce8a601d68ef533f1fd1039073181` from later docs-only roadmap commits.
+
+Resume from **R4D-2F Real-Device Field-Test Corrections** in the live PR #79 branch/stack. Do **not** start R4D-3 until the F1-F7 closeout gate in this roadmap is complete. Do not merge #78 or #79 without explicit user authorization.
 
 ## 18. Deferred / queued registry
 
@@ -626,7 +751,13 @@ The next implementation branch should be based on the **live UI-R4C stack head**
 | UI-R4B night action surface | COMPLETE / VERIFIED / DRAFT |
 | UI-R4C field-test UI corrections | COMPLETE / VERIFIED / DRAFT #77 |
 | old standalone R4C-2 night seat-detail patch | SUPERSEDED BY UI-R4D UNIFIED SEAT PRESENTATION |
-| UI-R4D persistent Host table / Storyteller workspace | ACTIVE NEXT |
+| UI-R4D-1 persistent Host table foundation | COMPLETE / VERIFIED / DRAFT #78 |
+| UI-R4D-2 seating-first session flow / seat authority | STRUCTURALLY VERIFIED / DRAFT #79 |
+| UI-R4D-2F field-test corrections / seating workspace closeout | ACTIVE NOW; BLOCKS R4D-3 |
+| UI-R4D-3 Day Storyteller workspace | QUEUED AFTER R4D-2F |
+| UI-R4D-4 public claim history | QUEUED |
+| UI-R4D-5 nomination/vote state machine | QUEUED |
+| UI-R4D-6 unified Host seat presentation migration | QUEUED |
 | UI-R5 real-device stabilization | QUEUED AFTER UI-R4D |
 | EPI-MQ Productive Uncertainty | PAUSED UNTIL UI-R5 STABLE |
 | ALG cognitive-consistency / PlayerWorldSet | PAUSED UNTIL UI-R5 STABLE |
