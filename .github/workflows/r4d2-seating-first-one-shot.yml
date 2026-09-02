@@ -37,7 +37,7 @@ jobs:
           remote_head="$(git ls-remote origin refs/heads/codex/ui-r4d2-seating-first-setup | cut -f1)"
           test "$remote_head" = "$GITHUB_SHA"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = "708670903fe02543a91657c8a6f47c8fb9eacf1b"
-          test "$(git hash-object .github/scripts/r4d2_seating_first_patch.py)" = "6f98ef58494bf7e92bc415e9e325f460f08a620f"
+          test "$(git hash-object .github/scripts/r4d2_seating_first_patch.py)" = "9d43b85e0119fa75e3c0fa7ad96248dcacd751e2"
 
       - name: Confirm seating roster contract was RED before production foundation
         shell: bash
