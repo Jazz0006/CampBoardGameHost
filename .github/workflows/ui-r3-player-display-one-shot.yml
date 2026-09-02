@@ -31,7 +31,7 @@ jobs:
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayUi.kt)" = "8dce023bfda2b77082bac41b910f228fcbcb0e3a"
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayPresentationTest.kt)" = "412256bbd55945e911cad9c5098b188828d678a8"
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerDisplayedInformationReliabilityTest.kt)" = "266a52c85f3aa8bb6027d5e73430661938778012"
-          test "$(git hash-object .github/scripts/ui_r3_player_display_host_patch.py)" = "72432d9172997f862b0748294cdab562f0f8ef31"
+          test "$(git hash-object .github/scripts/ui_r3_player_display_host_patch.py)" = "3052b4f57cc6a51d6b5020851d3e0c96a82cdc52"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
