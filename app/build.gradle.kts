@@ -6,6 +6,9 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val fieldTestVersionCode = providers.gradleProperty("fieldTestVersionCode").orNull?.toInt()
+val fieldTestVersionName = providers.gradleProperty("fieldTestVersionName").orNull
+
 android {
     namespace = "com.codex.campboardgamehost"
     compileSdk = 35
@@ -14,8 +17,15 @@ android {
         applicationId = "com.codex.campboardgamehost"
         minSdk = 24
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.1.4"
+        versionCode = fieldTestVersionCode ?: 5
+        versionName = fieldTestVersionName ?: "0.1.4"
+    }
+
+    buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".fieldtest"
+            versionNameSuffix = "-fieldtest"
+        }
     }
 
     compileOptions {
