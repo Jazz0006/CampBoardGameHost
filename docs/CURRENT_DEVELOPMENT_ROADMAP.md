@@ -20,11 +20,14 @@ latest live main hotfix:
 MERGED / REAL-DEVICE VERIFIED
 
 main at roadmap update:
-6f1ee4513cd149120c453c3b2623f989903a2493
+967fdadaa3b3999d81e49c123d39ea5f0acd7de8
 
 active campaign:
 UI Information Presentation Campaign
 field-test target: Friday 2026-09-04
+
+current active slice:
+UI-R5 — Friday field-test stabilization
 
 algorithm campaign after UI stabilization:
 EPI-MQ / Productive Uncertainty / PlayerWorldSet
@@ -46,19 +49,30 @@ UX-R3   remove global storyteller mode selector               COMPLETE / VERIFIE
 UX-R4   Top-1 + 0–2 alternatives + persistent Manual         COMPLETE / VERIFIED / MERGED
 UX-R5   small-domain specialization                           COMPLETE / VERIFIED / MERGED
 
-UI-R1   reusable square-table seat surface                    NEXT
-UI-R2   pair Manual dedicated full-screen selection           QUEUED
-UI-R3   unified full-screen player information display        QUEUED
-UI-R4   Fortune Teller two-target + result flow               QUEUED
-UI-R5   Friday field-test stabilization                       QUEUED
+UI-R1   reusable square-table seat surface                    COMPLETE / VERIFIED / DRAFT #70
+UI-R2   pair Manual dedicated full-screen selection           COMPLETE / VERIFIED / DRAFT #71
+UI-R3   unified full-screen player information display        COMPLETE / VERIFIED / DRAFT #72
+UI-R4   Fortune Teller two-target + result flow               COMPLETE / VERIFIED / DRAFT #73
+UI-R5   Friday field-test stabilization                       ACTIVE — REAL-DEVICE WALKTHROUGH PENDING
 
 EPI-MQ / ALG
-        Productive Uncertainty / PlayerWorldSet mainline      PAUSED UNTIL UI CAMPAIGN STABLE
+        Productive Uncertainty / PlayerWorldSet mainline      PAUSED UNTIL UI-R5 STABLE
 
 UX-R6   replace legacy ranking behind stable UX contract      QUEUED AFTER EPI-MQ
 ```
 
-Create a fresh UI implementation branch from live `main`. Do not reuse merged UX-R5 branches or the docs-maintenance branch.
+Current UI stack:
+
+```text
+main
+-> UI-R1 #70
+-> UI-R2 #71
+-> UI-R3 #72
+-> UI-R4 #73
+-> UI-R5 stabilization branch
+```
+
+Do not add new UI features during UI-R5. Stabilization is limited to real-device acceptance, narrow correctness fixes if discovered, final validation, and documentation/checkpoint maintenance.
 
 ## 3. Active UI authorities
 
@@ -148,9 +162,9 @@ The UI campaign may change where/how these controls appear, but not their semant
 
 ## 6. Active target — UI Information Presentation Campaign
 
-### UI-R1 — square-table foundation
+### UI-R1 — square-table foundation — COMPLETE / VERIFIED
 
-Create a reusable table-first seat presentation that:
+Reusable table-first seat presentation now:
 
 - uses the phone perimeter efficiently;
 - supports stable seat identity;
@@ -159,7 +173,7 @@ Create a reusable table-first seat presentation that:
 - leaves a center slot for clue/result/instructions;
 - lives in a dedicated UI owner rather than adding a large visual implementation to `ClocktowerNightStepUi.kt`.
 
-### UI-R2 — pair Manual
+### UI-R2 — pair Manual — COMPLETE / VERIFIED
 
 For Washerwoman / Librarian / Investigator:
 
@@ -172,11 +186,11 @@ Manual
 -> confirm/display
 ```
 
-Also remove/hide current normal recommendation reason/warning prose. Keep diagnostic data available internally; do not change ranking.
+Normal recommendation reason/warning prose is hidden while diagnostic data/ranking/legal authority remains unchanged.
 
-### UI-R3 — full-screen player display
+### UI-R3 — full-screen player display — COMPLETE / VERIFIED
 
-Use the square-table language for final information display:
+Square-table player-facing display now provides:
 
 - relevant seats highlighted from typed data;
 - clue/result in center;
@@ -184,9 +198,9 @@ Use the square-table language for final information display:
 - no Poisoned/Drunk/truth/recommendation-reason leakage;
 - EvilInfo with no role ability remains safe.
 
-### UI-R4 — Fortune Teller
+### UI-R4 — Fortune Teller — COMPLETE / VERIFIED
 
-Keep the table visible while selecting two distinct targets.
+The table remains visible while selecting two distinct targets.
 
 After selection:
 
@@ -199,9 +213,9 @@ both Yes/No legal
 -> other legal result immediately visible
 ```
 
-Result identity remains bound to the exact selected pair.
+Result identity remains bound to the exact selected pair and Foundation confirmation semantics remain intact.
 
-### UI-R5 — Friday stabilization
+### UI-R5 — Friday stabilization — ACTIVE
 
 Freeze features and perform real-device walkthrough covering at least:
 
@@ -214,6 +228,8 @@ Freeze features and perform real-device walkthrough covering at least:
 - full-screen display return/navigation.
 
 Field-test usability outranks optional animation/theme polish.
+
+UI-R5 is not complete until the real-device walkthrough is recorded as acceptable and final full CI/R2 is green.
 
 ## 7. Testing / implementation strategy
 
@@ -243,7 +259,7 @@ pure seat/layout/state behavior
 -> Compose/runtime validation where it adds durable value
 ```
 
-At logical checkpoints run `:app:testFast`; final field-test candidate receives normal CI/R2 and broad Android validation according to risk/classifier behavior.
+At logical checkpoints run `:app:testFast`; final field-test candidate receives normal CI/R2 and broad Android validation according to risk/classifier behavior. UI-R5 final candidate should use `[full-ci]` so full Android, ASP and Real Clingo validation are not silently skipped.
 
 ## 8. Source ownership / growth guards
 
@@ -319,23 +335,23 @@ docs/TESTING_STRATEGY.md
 docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md
 ```
 
-Start the next implementation conversation by reading the first four files above, then re-query live `main`.
+Start the next implementation conversation by reading the first four files above, then re-query live `main` and the live UI-R1..R5 stack.
 
 Recommended resume instruction:
 
 ```text
-请读取根目录 AGENTS.md、docs/CURRENT_DEVELOPMENT_ROADMAP.md、docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md 和 docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_INFORMATION_CAMPAIGN.md。先确认 live main 以及 first-night evil info crash hotfix，然后从 UI-R1 reusable square-table seat surface 开始，优先保证 2026-09-04 周五真机组局可用。不要开始 EPI-MQ，不要改变 recommendation/legal semantics，不要自行 merge。
+请读取根目录 AGENTS.md、docs/CURRENT_DEVELOPMENT_ROADMAP.md、docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md 和 docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_INFORMATION_CAMPAIGN.md。重新确认 live main 和 UI-R1..R5 stack，然后从 UI-R5 Friday field-test stabilization 继续。不要增加新功能；先完成 full CI/R2 和真机 walkthrough，发现 correctness bug 时单独窄修，不要开始 EPI-MQ，不要自行 merge。
 ```
 
 ## 12. Deferred / queued registry
 
 | Area | Status |
 |---|---|
-| UI-R1 square-table foundation | NEXT IMMEDIATE SLICE |
-| UI-R2 pair Manual redesign | QUEUED IN ACTIVE UI CAMPAIGN |
-| UI-R3 player information display | QUEUED IN ACTIVE UI CAMPAIGN |
-| UI-R4 Fortune Teller interaction | QUEUED IN ACTIVE UI CAMPAIGN |
-| UI-R5 field-test stabilization | QUEUED IN ACTIVE UI CAMPAIGN |
+| UI-R1 square-table foundation | COMPLETE / VERIFIED / DRAFT #70 |
+| UI-R2 pair Manual redesign | COMPLETE / VERIFIED / DRAFT #71 |
+| UI-R3 player information display | COMPLETE / VERIFIED / DRAFT #72 |
+| UI-R4 Fortune Teller interaction | COMPLETE / VERIFIED / DRAFT #73 |
+| UI-R5 field-test stabilization | ACTIVE — REAL-DEVICE WALKTHROUGH PENDING |
 | EPI-MQ Productive Uncertainty | PAUSED UNTIL UI-R5 STABLE |
 | ALG cognitive-consistency / PlayerWorldSet | PAUSED UNTIL UI-R5 STABLE |
 | UX-R6 legacy ranking replacement | QUEUED AFTER EPI-MQ |
