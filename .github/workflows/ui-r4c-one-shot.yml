@@ -44,12 +44,13 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Normalize known indentation variants in patch anchors
+      - name: Normalize known patch-script variants
         run: |
           python3 - <<'PY'
           from pathlib import Path
           path = Path('.github/scripts/ui_r4c_patch.py')
           text = path.read_text(encoding='utf-8')
+
           old = '''empath_anchor = "                                spyRegistrationKey = empathRegistrationKey,"
           require_count(host, empath_anchor, 2, "empath registration")'''
           new = '''empath_anchors = [
@@ -85,6 +86,13 @@ jobs:
           if old not in text:
               raise SystemExit('fortune teller patch-script replacement changed')
           text = text.replace(old, new, 1)
+
+          old = "ft_replacement = '''    fun fortuneTellerMatches(recluseRegistersAsDemon: Boolean): Boolean? {"
+          new = "ft_replacement = '''    val roleDefinitionsById = clocktowerRoleDefinitionsForScript(script)\\n        .associateBy { it.id }\\n    fun fortuneTellerMatches(recluseRegistersAsDemon: Boolean): Boolean? {"
+          if old not in text:
+              raise SystemExit('fortune teller replacement authority anchor changed')
+          text = text.replace(old, new, 1)
+
           path.write_text(text, encoding='utf-8', newline='\n')
           PY
 
