@@ -1,0 +1,51 @@
+name: R4D2F F1 RED validation
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d2-seating-first-setup
+
+permissions:
+  contents: read
+
+jobs:
+  focused-red:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Require focused layout contract to be RED
+        shell: bash
+        run: |
+          set -uo pipefail
+          set +e
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerHostTableLayoutTest' \
+            --no-daemon --rerun-tasks 2>&1 | tee "$RUNNER_TEMP/f1-red.log"
+          status=${PIPESTATUS[0]}
+          set -e
+
+          if [[ "$status" -eq 0 ]]; then
+            echo 'Expected F1 contract to be RED before production implementation, but it was GREEN.'
+            exit 1
+          fi
+
+          if ! grep -Eq 'HostTableLayoutConstraints|hostTableLayout' "$RUNNER_TEMP/f1-red.log"; then
+            echo 'Focused test failed, but not because the new F1 layout contract is missing.'
+            exit 1
+          fi
+
+          echo 'RED PASS: the new F1 typed layout contract is absent before implementation.'
