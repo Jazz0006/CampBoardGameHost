@@ -214,6 +214,18 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         emptyList()
     }
+    val usesResultFirstRegistration =
+        !automaticStorytellerInfo && step.usesResultFirstRegistrationDomain()
+    val resultFirstRegistrationCandidates = if (usesResultFirstRegistration) {
+        distinctClocktowerFinalInformationResults(step.manualInformationCandidates)
+    } else {
+        emptyList()
+    }
+    val nonPairResultFirstCandidates = resultFirstRegistrationCandidates.takeUnless {
+        step.roleEnName in setOf("Washerwoman", "Librarian", "Investigator") ||
+            step.action == ClocktowerNightAction.FortuneTeller
+    }.orEmpty()
+
     var showManualPairSelection by remember(
         informationDecisionKey,
         step.roleEnName,
@@ -431,13 +443,23 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         null
     }
-    val fortuneTellerLegalResults = structuredFortuneTellerUiModel
-        ?.choices
-        ?.mapTo(linkedSetOf()) { choice -> choice.value }
-        .orEmpty()
+    val resultFirstFortuneTellerOptions = resultFirstRegistrationCandidates.filter { option ->
+        val proposition = option.proposition as? InformationProposition.BooleanResult
+        proposition?.metric == BooleanMetric.DEMON_OR_RED_HERRING_PRESENT
+    }
+    val fortuneTellerLegalResults = if (resultFirstFortuneTellerOptions.isNotEmpty()) {
+        resultFirstFortuneTellerOptions.mapNotNullTo(linkedSetOf()) { option ->
+            (option.proposition as? InformationProposition.BooleanResult)?.value
+        }
+    } else {
+        structuredFortuneTellerUiModel
+            ?.choices
+            ?.mapTo(linkedSetOf()) { choice -> choice.value }
+            .orEmpty()
+    }
     val fortuneTellerRecommendedResult = structuredFortuneTellerUiModel
         ?.choices
-        ?.firstOrNull { choice -> choice.recommended }
+        ?.firstOrNull { choice -> choice.recommended && choice.value in fortuneTellerLegalResults }
         ?.value
     val structuredNumberUiModel = structuredEmpathUiModel ?: structuredChefUiModel
 
@@ -472,6 +494,12 @@ internal fun ClocktowerNightStepCardLocalized(
     }
 
     fun showStructuredFortuneTellerResult(value: Boolean) {
+        resultFirstFortuneTellerOptions.firstOrNull { option ->
+            (option.proposition as? InformationProposition.BooleanResult)?.value == value
+        }?.let { option ->
+            showRecommendedDisplayOption(option)
+            return
+        }
         val model = structuredFortuneTellerUiModel ?: return
         val actorSeat = structuredFortuneTellerActorSeat ?: return
         val subjectSeats = structuredFortuneTellerSelectedSeats ?: return
@@ -579,7 +607,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 fontWeight = FontWeight.Black,
             )
 
-            if (step.spyRegistrationKey != null && spyCard != null) {
+            if (!usesResultFirstRegistration && step.spyRegistrationKey != null && spyCard != null && spyCanRegister) {
                 SpyRegistrationPanel(
                     automaticStorytellerInfo = automaticStorytellerInfo,
                     cards = cards,
@@ -596,7 +624,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     onRoleChange = onSpyRegistrationRoleChange,
                 )
             }
-            if (step.recluseRegistrationKey != null && recluseCard != null) {
+            if (!usesResultFirstRegistration && step.recluseRegistrationKey != null && recluseCard != null && recluseCanRegister) {
                 RecluseRegistrationPanel(
                     automaticStorytellerInfo = automaticStorytellerInfo,
                     automaticStorytellerStyle = automaticStorytellerStyle,
@@ -912,7 +940,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     onPrevious = onPrevious,
                     onNext = onNext,
                     secondaryActionLabel = stringResource(R.string.clocktower_host_show_to_player),
-                    secondaryActionEnabled = step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None,
+                    secondaryActionEnabled = resultFirstRegistrationCandidates.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None,
                     onSecondaryAction = { onShowPlayerDisplay(step) },
                 )
             }
@@ -983,6 +1011,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 pairRecommendationPresentation == null &&
                 structuredNumberUiModel == null &&
                 structuredFortuneTellerUiModel == null &&
+                resultFirstRegistrationCandidates.isEmpty() &&
                 displayedInformationOptions.isNotEmpty() &&
                 step.action != ClocktowerNightAction.FortuneTeller
             ) {
@@ -1033,6 +1062,32 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
 
+            if (nonPairResultFirstCandidates.isNotEmpty()) {
+                Text(
+                    if (language == "en") "Choose the final information" else "选择最终展示信息",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    if (language == "en") {
+                        "Any Spy or Recluse registration needed for the chosen result is resolved automatically."
+                    } else {
+                        "选择结果即可；该结果所需的间谍或隐士登记会自动完成。"
+                    },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                nonPairResultFirstCandidates.forEach { option ->
+                    OutlinedButton(
+                        onClick = { showRecommendedDisplayOption(option) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                    ) {
+                        Text(option.label)
+                    }
+                }
+            }
+
             if (manualPairCandidates.isNotEmpty()) {
                 OutlinedButton(
                     onClick = { showManualPairSelection = true },
@@ -1052,7 +1107,7 @@ internal fun ClocktowerNightStepCardLocalized(
                                 label = card.name,
                             )
                         },
-                        roleLabel = { roleId -> roleId },
+                        roleLabel = { roleId -> clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language) },
                         onDismiss = { showManualPairSelection = false },
                         onConfirm = { manualOption ->
                             showRecommendedDisplayOption(manualOption)
@@ -1063,6 +1118,7 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             if (
+                resultFirstRegistrationCandidates.isEmpty() &&
                 structuredNumberUiModel == null &&
                 structuredFortuneTellerUiModel == null &&
                 firstNightPool == null && step.displayOptions.isNotEmpty() &&
@@ -1093,7 +1149,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     }
                     RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
                 }
-            } else if (structuredNumberUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
+            } else if (resultFirstRegistrationCandidates.isEmpty() && structuredNumberUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
                 OutlinedButton(
                     onClick = { onShowPlayerDisplay(step) },
                     modifier = Modifier.fillMaxWidth(),

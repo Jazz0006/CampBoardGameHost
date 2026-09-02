@@ -993,7 +993,10 @@ internal fun ClocktowerJudgeScreen(
     val fortuneTellerRecluseRegistrationKey = recluseCard
         ?.takeIf { it.name == fortuneTellerFirst || it.name == fortuneTellerSecond }
         ?.let { registrationKey("FortuneTellerRecluse", it.name) }
-    val fortuneTellerMatched = if (fortuneTellerFirst != null && fortuneTellerSecond != null) {
+    val roleDefinitionsById = clocktowerRoleDefinitionsForScript(script)
+        .associateBy { it.id }
+    fun fortuneTellerMatches(recluseRegistersAsDemon: Boolean): Boolean? {
+        if (fortuneTellerFirst == null || fortuneTellerSecond == null) return null
         val targets = setOf(fortuneTellerFirst, fortuneTellerSecond)
         val fortuneTellerInteractionId = ClocktowerProductionNightStepIdentity
             .role(RoleId("Fortune Teller"))
@@ -1004,10 +1007,8 @@ internal fun ClocktowerJudgeScreen(
                 ClocktowerInteractionBoundary.BEFORE,
             )
         }
-        val roleDefinitionsById = clocktowerRoleDefinitionsForScript(script)
-            .associateBy { it.id }
-        cards.any { card ->
-            val seat = cards.indexOf(card).plus(1)
+        return cards.any { card ->
+            val seat = cards.indexOf(card) + 1
             val currentRoleIsDemon =
                 seat > 0 &&
                     clocktowerFortuneTellerRoleAuthority(
@@ -1023,18 +1024,13 @@ internal fun ClocktowerJudgeScreen(
             card.name in targets && (
                 currentRoleIsDemon ||
                     card.name == redHerring ||
-                    (
-                        card.name == recluseCard?.name &&
-                            recluseRegistersEvil(
-                                fortuneTellerRecluseRegistrationKey,
-                                "Fortune Teller",
-                            )
-                        )
+                    (card.name == recluseCard?.name && recluseRegistersAsDemon)
                 )
         }
-    } else {
-        null
     }
+    val fortuneTellerMatched = fortuneTellerMatches(
+        recluseRegistersEvil(fortuneTellerRecluseRegistrationKey, "Fortune Teller"),
+    )
     val fortuneTellerResult = fortuneTellerMatched?.let { matched ->
         if (matched) stringResource(R.string.clocktower_yes) else stringResource(R.string.clocktower_no)
     }
@@ -2710,6 +2706,152 @@ internal fun ClocktowerJudgeScreen(
             }
         }
     }
+    fun resultFirstNumericRegistrationOptions(
+        title: String,
+        actor: PlayerCard,
+        roleEnName: String,
+        metric: NumericMetric,
+        subjectSeats: List<Int>,
+        footer: String,
+        spyKey: String?,
+        recluseKey: String?,
+        valueFor: (ClocktowerAlignmentRegistrationWitness) -> Int,
+    ): List<ClocktowerDisplayOption> {
+        val spySelectable = spyKey != null && spyCanRegister(roleEnName)
+        val recluseSelectable = recluseKey != null && recluseCanRegister(roleEnName)
+        if (!spySelectable && !recluseSelectable) return emptyList()
+        val sourceSeat = cards.indexOf(actor) + 1
+        if (sourceSeat <= 0) return emptyList()
+        val witnesses = clocktowerAlignmentRegistrationWitnesses(
+            currentSpyRegistersGood = spyRegistersGood(spyKey, roleEnName),
+            spySelectable = spySelectable,
+            currentRecluseRegistersEvil = recluseRegistersEvil(recluseKey, roleEnName),
+            recluseSelectable = recluseSelectable,
+        )
+        return distinctClocktowerFinalInformationResults(
+            witnesses.map { witness ->
+                val value = valueFor(witness)
+                ClocktowerDisplayOption(
+                    label = value.toString(),
+                    displayKind = ClocktowerDisplayKind.Number,
+                    displayTitle = title,
+                    displayPrimary = value.toString(),
+                    displaySecondary = null,
+                    displayFooter = footer,
+                    proposition = InformationProposition.NumericResult(
+                        metric = metric,
+                        sourceSeat = sourceSeat,
+                        subjectSeats = subjectSeats,
+                        value = value,
+                    ),
+                    spyRegistersGood = witness.spyRegistersGood,
+                    recluseRegistersEvil = witness.recluseRegistersEvil,
+                    isTruthful = true,
+                )
+            },
+        )
+    }
+
+    fun resultFirstFortuneTellerRegistrationOptions(actor: PlayerCard): List<ClocktowerDisplayOption> {
+        val key = fortuneTellerRecluseRegistrationKey ?: return emptyList()
+        if (!recluseCanRegister("Fortune Teller")) return emptyList()
+        val sourceSeat = cards.indexOf(actor) + 1
+        val subjectSeats = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond).mapNotNull { name ->
+            cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
+        }
+        if (sourceSeat <= 0 || subjectSeats.size != 2 || subjectSeats.distinct().size != 2) return emptyList()
+        val current = recluseRegistersEvil(key, "Fortune Teller")
+        val demonRole = completeTroubleBrewingRoles.firstOrNull { it.team == ClocktowerTeam.Demon }
+        return distinctClocktowerFinalInformationResults(
+            listOf(current, !current).mapNotNull { recluseEvil ->
+                val value = fortuneTellerMatches(recluseEvil) ?: return@mapNotNull null
+                val resultText = if (value) text("有", "Yes") else text("没有", "No")
+                ClocktowerDisplayOption(
+                    label = resultText,
+                    displayKind = ClocktowerDisplayKind.YesNo,
+                    displayTitle = text("占卜师信息", "Fortune Teller information"),
+                    displayPrimary = resultText,
+                    displaySecondary = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+                        .mapNotNull { name -> cards.firstOrNull { it.name == name } }
+                        .joinToString("   ") { seatNumberText(it) }
+                        .takeIf { it.isNotBlank() },
+                    displayFooter = text("查询这两名玩家", "Checking these two players"),
+                    proposition = InformationProposition.BooleanResult(
+                        BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+                        sourceSeat,
+                        subjectSeats,
+                        value,
+                    ),
+                    recluseRegistersEvil = recluseEvil,
+                    recluseRegisteredRoleEnName = demonRole?.enName?.takeIf { recluseEvil },
+                    isTruthful = true,
+                )
+            },
+        )
+    }
+
+    fun resultFirstRoleRevealRegistrationOptions(
+        title: String,
+        roleEnName: String,
+        target: PlayerCard?,
+        footer: String,
+        spyKey: String?,
+        spyTeams: List<ClocktowerTeam>,
+        recluseKey: String?,
+        recluseTeams: List<ClocktowerTeam>,
+    ): List<ClocktowerDisplayOption> {
+        val resolvedTarget = target ?: return emptyList()
+        val targetSeat = cards.indexOf(resolvedTarget) + 1
+        if (targetSeat <= 0) return emptyList()
+        val candidates = mutableListOf<ClocktowerDisplayOption>()
+
+        fun add(
+            role: ClocktowerRole,
+            spyGood: Boolean? = null,
+            spyRole: String? = null,
+            recluseEvil: Boolean? = null,
+            recluseRole: String? = null,
+        ) {
+            candidates += ClocktowerDisplayOption(
+                label = role.nameFor(language),
+                displayKind = ClocktowerDisplayKind.RoleReveal,
+                displayTitle = title,
+                displayPrimary = role.nameFor(language),
+                displaySecondary = null,
+                displayFooter = footer,
+                proposition = InformationProposition.RoleAt(targetSeat, RoleId(role.enName)),
+                spyRegistersGood = spyGood,
+                spyRegisteredRoleEnName = spyRole,
+                recluseRegistersEvil = recluseEvil,
+                recluseRegisteredRoleEnName = recluseRole,
+                isTruthful = true,
+            )
+        }
+
+        if (resolvedTarget.name == spyCard?.name && spyKey != null && spyCanRegister(roleEnName)) {
+            val allowed = completeTroubleBrewingRoles.filter { it.team in spyTeams && it.enName != "Spy" }
+            val currentGood = spyRegistersGood(spyKey, roleEnName)
+            if (currentGood) {
+                registeredRole(spyKey, spyTeams, roleEnName)?.let { add(it, true, it.enName) }
+            }
+            resolvedTarget.clocktowerRole?.let { add(it, false) }
+            allowed.forEach { role -> add(role, true, role.enName) }
+        } else if (
+            resolvedTarget.name == recluseCard?.name &&
+            recluseKey != null &&
+            recluseCanRegister(roleEnName)
+        ) {
+            val allowed = completeTroubleBrewingRoles.filter { it.team in recluseTeams }
+            val currentEvil = recluseRegistersEvil(recluseKey, roleEnName)
+            if (currentEvil) {
+                recluseRegisteredRole(recluseKey, recluseTeams, roleEnName)?.let { add(it, recluseEvil = true, recluseRole = it.enName) }
+            }
+            resolvedTarget.clocktowerRole?.let { add(it, recluseEvil = false) }
+            allowed.forEach { role -> add(role, recluseEvil = true, recluseRole = role.enName) }
+        }
+        return distinctClocktowerFinalInformationResults(candidates)
+    }
+
     val nightSteps = if (phase == ClocktowerPhase.FirstNight) {
         val firstNightInteractions =
             ClocktowerProductionFirstNightFlow.interactions(
@@ -2953,6 +3095,30 @@ internal fun ClocktowerJudgeScreen(
                                 numericMinimumValue = 0,
                                 numericMaximumValue = chefMaximumValue,
                                 displayOptions = { actor -> recommendedNumberOptions(text("厨师信息", "Chef information"), actor, chefReferenceValue, chefMaximumValue, text("邪恶玩家相邻对数", "Adjacent evil pairs"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.ADJACENT_EVIL_PAIRS, cards.indexOf(actor) + 1, cards.indices.map { it + 1 }, value) }) },
+                                legalSelectionOptions = { actor ->
+                                    if (chefAbilityUnreliable) {
+                                        emptyList()
+                                    } else {
+                                        resultFirstNumericRegistrationOptions(
+                                            title = text("厨师信息", "Chef information"),
+                                            actor = actor,
+                                            roleEnName = "Chef",
+                                            metric = NumericMetric.ADJACENT_EVIL_PAIRS,
+                                            subjectSeats = cards.indices.map { it + 1 },
+                                            footer = text("邪恶玩家相邻对数", "Adjacent evil pairs"),
+                                            spyKey = chefRegistrationKey,
+                                            recluseKey = chefRecluseRegistrationKey,
+                                        ) { witness ->
+                                            chefEvilPairs(cards) { card ->
+                                                when {
+                                                    card.name == spyCard?.name && witness.spyRegistersGood != null -> !witness.spyRegistersGood
+                                                    card.name == recluseCard?.name && witness.recluseRegistersEvil != null -> witness.recluseRegistersEvil
+                                                    else -> isClocktowerEvil(card)
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
                                 spyRegistrationKey = chefRegistrationKey,
                                 spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
                                 spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
@@ -2974,7 +3140,31 @@ internal fun ClocktowerJudgeScreen(
                                 previousShownNumber = empathActor?.let { actor ->
                                     previousUnreliableNumber(text("共情者信息", "Empath information"), actor)
                                         ?.takeIf { it in 0..2 }
+                                },                                legalSelectionOptions = { actor ->
+                                    if (empathAbilityUnreliable) {
+                                        emptyList()
+                                    } else {
+                                        resultFirstNumericRegistrationOptions(
+                                            title = text("共情者信息", "Empath information"),
+                                            actor = actor,
+                                            roleEnName = "Empath",
+                                            metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+                                            subjectSeats = empathNeighbors.map { cards.indexOf(it) + 1 },
+                                            footer = text("邪恶存活邻居数量", "Evil living neighbors"),
+                                            spyKey = empathRegistrationKey,
+                                            recluseKey = empathRecluseRegistrationKey,
+                                        ) { witness ->
+                                            empathNeighbors.count { card ->
+                                                when {
+                                                    card.name == spyCard?.name && witness.spyRegistersGood != null -> !witness.spyRegistersGood
+                                                    card.name == recluseCard?.name && witness.recluseRegistersEvil != null -> witness.recluseRegistersEvil
+                                                    else -> isClocktowerEvil(card)
+                                                }
+                                            }
+                                        }
+                                    }
                                 },
+
                                 spyRegistrationKey = empathRegistrationKey,
                                 spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
                                 spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
@@ -3090,7 +3280,14 @@ internal fun ClocktowerJudgeScreen(
                                             ) },
                                         )
                                     }.orEmpty()
+                                },                                legalSelectionOptions = { actor ->
+                                    if (actorIsUnreliable("Fortune Teller", actor)) {
+                                        emptyList()
+                                    } else {
+                                        resultFirstFortuneTellerRegistrationOptions(actor)
+                                    }
                                 },
+
                                 recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,
                                 recluseRegistrationTeams = listOf(ClocktowerTeam.Demon),
                             )
@@ -3179,7 +3376,31 @@ internal fun ClocktowerJudgeScreen(
                 previousShownNumber = empathActor?.let { actor ->
                     previousUnreliableNumber(text("共情者信息", "Empath information"), actor)
                         ?.takeIf { it in 0..2 }
-                },
+                },                                legalSelectionOptions = { actor ->
+                                    if (empathAbilityUnreliable) {
+                                        emptyList()
+                                    } else {
+                                        resultFirstNumericRegistrationOptions(
+                                            title = text("共情者信息", "Empath information"),
+                                            actor = actor,
+                                            roleEnName = "Empath",
+                                            metric = NumericMetric.LIVING_EVIL_NEIGHBOURS,
+                                            subjectSeats = empathNeighbors.map { cards.indexOf(it) + 1 },
+                                            footer = text("邪恶存活邻居数量", "Evil living neighbors"),
+                                            spyKey = empathRegistrationKey,
+                                            recluseKey = empathRecluseRegistrationKey,
+                                        ) { witness ->
+                                            empathNeighbors.count { card ->
+                                                when {
+                                                    card.name == spyCard?.name && witness.spyRegistersGood != null -> !witness.spyRegistersGood
+                                                    card.name == recluseCard?.name && witness.recluseRegistersEvil != null -> witness.recluseRegistersEvil
+                                                    else -> isClocktowerEvil(card)
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+
                 spyRegistrationKey = empathRegistrationKey,
                 spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
                 spyRegistrationDetail = ClocktowerRegistrationDetail.AlignmentOnly,
@@ -3294,7 +3515,14 @@ internal fun ClocktowerJudgeScreen(
                             ) },
                         )
                     }.orEmpty()
-                },
+                },                                legalSelectionOptions = { actor ->
+                                    if (actorIsUnreliable("Fortune Teller", actor)) {
+                                        emptyList()
+                                    } else {
+                                        resultFirstFortuneTellerRegistrationOptions(actor)
+                                    }
+                                },
+
                 recluseRegistrationKey = fortuneTellerRecluseRegistrationKey,
                 recluseRegistrationTeams = listOf(ClocktowerTeam.Demon),
             )
@@ -3340,6 +3568,22 @@ internal fun ClocktowerJudgeScreen(
                                 truthfulRole = undertakerTarget?.clocktowerRole,
                                 footer = text("今天被处决：${playerSeatLabel(cards, executedName)}", "Executed today: ${playerSeatLabel(cards, executedName)}"),
                             )
+                        },
+                        legalSelectionOptions = { actor ->
+                            if (actorIsUnreliable("Undertaker", actor)) {
+                                emptyList()
+                            } else {
+                                resultFirstRoleRevealRegistrationOptions(
+                                    title = text("送葬者信息", "Undertaker information"),
+                                    roleEnName = "Undertaker",
+                                    target = undertakerTarget,
+                                    footer = text("今天被处决：${playerSeatLabel(cards, lastExecutedName)}", "Executed today: ${playerSeatLabel(cards, lastExecutedName)}"),
+                                    spyKey = undertakerRegistrationKey,
+                                    spyTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
+                                    recluseKey = undertakerRecluseRegistrationKey,
+                                    recluseTeams = listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon),
+                                )
+                            }
                         },
                         spyRegistrationKey = undertakerRegistrationKey,
                         spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
@@ -3538,6 +3782,22 @@ internal fun ClocktowerJudgeScreen(
                                 truthfulRole = ravenkeeperTargetCard?.clocktowerRole,
                                 footer = ravenkeeperTarget?.let { text("查询目标：${playerSeatLabel(cards, it)}", "Checked player: ${playerSeatLabel(cards, it)}") }.orEmpty(),
                             )
+                        },
+                        legalSelectionOptions = { actor ->
+                            if (actorIsUnreliable("Ravenkeeper", actor)) {
+                                emptyList()
+                            } else {
+                                resultFirstRoleRevealRegistrationOptions(
+                                    title = text("守鸦人信息", "Ravenkeeper information"),
+                                    roleEnName = "Ravenkeeper",
+                                    target = ravenkeeperTargetCard,
+                                    footer = ravenkeeperTarget?.let { text("查询目标：${playerSeatLabel(cards, it)}", "Checked player: ${playerSeatLabel(cards, it)}") }.orEmpty(),
+                                    spyKey = ravenkeeperRegistrationKey,
+                                    spyTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
+                                    recluseKey = ravenkeeperRecluseRegistrationKey,
+                                    recluseTeams = listOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon),
+                                )
+                            }
                         },
                         spyRegistrationKey = ravenkeeperRegistrationKey,
                         spyRegistrationTeams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
