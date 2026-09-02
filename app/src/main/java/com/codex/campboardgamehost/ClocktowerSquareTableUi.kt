@@ -5,13 +5,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.abs
 
 internal enum class ClocktowerSquareTableSeatState {
     Neutral,
@@ -57,40 +61,73 @@ internal data class ClocktowerSquareTableSeatUiModel(
 
 internal data class ClocktowerSquareTableSeatPlacement(
     val seat: ClocktowerSquareTableSeatUiModel,
-    val edge: ClocktowerSquareTableEdge,
-    val indexOnEdge: Int,
-)
+    val spatialSlot: HostTableSpatialSlot,
+) {
+    val edge: ClocktowerSquareTableEdge
+        get() = spatialSlot.edge
+
+    val indexOnEdge: Int
+        get() = spatialSlot.indexOnEdge
+}
 
 internal fun clocktowerSquareTablePlacements(
     seats: List<ClocktowerSquareTableSeatUiModel>,
+    layout: HostTableLayout,
 ): List<ClocktowerSquareTableSeatPlacement> {
     require(seats.map { it.seatId }.distinct().size == seats.size) {
         "Square-table seat identity must be unique"
     }
-    if (seats.isEmpty()) return emptyList()
-
-    val edges = ClocktowerSquareTableEdge.values()
-    val baseCount = seats.size / edges.size
-    val remainder = seats.size % edges.size
-    val edgeCounts = edges.indices.map { edgeIndex ->
-        baseCount + if (edgeIndex < remainder) 1 else 0
+    require(layout.slots.size == seats.size) {
+        "Square-table layout slot count must match seat count"
     }
 
-    var seatIndex = 0
-    return buildList(seats.size) {
-        edges.forEachIndexed { edgeIndex, edge ->
-            repeat(edgeCounts[edgeIndex]) { indexOnEdge ->
-                add(
-                    ClocktowerSquareTableSeatPlacement(
-                        seat = seats[seatIndex],
-                        edge = edge,
-                        indexOnEdge = indexOnEdge,
-                    ),
-                )
-                seatIndex += 1
-            }
-        }
+    return seats.zip(layout.slots) { seat, spatialSlot ->
+        ClocktowerSquareTableSeatPlacement(
+            seat = seat,
+            spatialSlot = spatialSlot,
+        )
     }
+}
+
+private const val HOST_TABLE_SEAT_CARD_WIDTH = 64f
+private const val HOST_TABLE_SEAT_CARD_HEIGHT = 50f
+private const val HOST_TABLE_MINIMUM_SEPARATION = 4f
+private const val HOST_TABLE_CENTER_WIDTH_FRACTION = 0.56f
+private const val HOST_TABLE_CENTER_HEIGHT_FRACTION = 0.52f
+
+/**
+ * Current visual-density policy for the shared table surface.
+ *
+ * Geometry remains constraint-driven: these values describe one seat card and the preferred center
+ * workspace, while edge capacity comes from [hostTableLayout]. The center is narrowed when needed
+ * to preserve the requested seat/workspace clearance on smaller widths/heights.
+ */
+internal fun hostTableSurfaceLayoutConstraints(
+    availableWidth: Float,
+    availableHeight: Float,
+): HostTableLayoutConstraints {
+    val maximumCenterWidth = (
+        availableWidth - 2f * (HOST_TABLE_SEAT_CARD_WIDTH + HOST_TABLE_MINIMUM_SEPARATION)
+        ).coerceAtLeast(0f)
+    val maximumCenterHeight = (
+        availableHeight - 2f * (HOST_TABLE_SEAT_CARD_HEIGHT + HOST_TABLE_MINIMUM_SEPARATION)
+        ).coerceAtLeast(0f)
+
+    return HostTableLayoutConstraints(
+        availableWidth = availableWidth,
+        availableHeight = availableHeight,
+        seatCardWidth = HOST_TABLE_SEAT_CARD_WIDTH,
+        seatCardHeight = HOST_TABLE_SEAT_CARD_HEIGHT,
+        minimumSafeSeparation = HOST_TABLE_MINIMUM_SEPARATION,
+        centerWorkspaceWidth = minOf(
+            availableWidth * HOST_TABLE_CENTER_WIDTH_FRACTION,
+            maximumCenterWidth,
+        ),
+        centerWorkspaceHeight = minOf(
+            availableHeight * HOST_TABLE_CENTER_HEIGHT_FRACTION,
+            maximumCenterHeight,
+        ),
+    )
 }
 
 @Composable
@@ -99,61 +136,62 @@ internal fun ClocktowerSquareTableSeatSurface(
     modifier: Modifier = Modifier,
     interactionMode: ClocktowerSquareTableInteractionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
     onSeatClick: (String) -> Unit = {},
+    layout: HostTableLayout? = null,
     centerContent: @Composable BoxScope.() -> Unit = {},
 ) {
-    val placements = remember(seats) { clocktowerSquareTablePlacements(seats) }
-    val top = placements.filter { it.edge == ClocktowerSquareTableEdge.Top }
-    val right = placements.filter { it.edge == ClocktowerSquareTableEdge.Right }
-    val bottom = placements.filter { it.edge == ClocktowerSquareTableEdge.Bottom }.reversed()
-    val left = placements.filter { it.edge == ClocktowerSquareTableEdge.Left }.reversed()
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(8.dp),
+    BoxWithConstraints(
+        modifier = modifier.fillMaxSize(),
     ) {
-        ClocktowerSquareTableHorizontalEdge(
-            placements = top,
-            interactionMode = interactionMode,
-            onSeatClick = onSeatClick,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .padding(horizontal = 46.dp),
-        )
-        ClocktowerSquareTableVerticalEdge(
-            placements = right,
-            interactionMode = interactionMode,
-            onSeatClick = onSeatClick,
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .fillMaxHeight()
-                .padding(vertical = 54.dp),
-        )
-        ClocktowerSquareTableHorizontalEdge(
-            placements = bottom,
-            interactionMode = interactionMode,
-            onSeatClick = onSeatClick,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(horizontal = 46.dp),
-        )
-        ClocktowerSquareTableVerticalEdge(
-            placements = left,
-            interactionMode = interactionMode,
-            onSeatClick = onSeatClick,
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .fillMaxHeight()
-                .padding(vertical = 54.dp),
-        )
+        val availableWidth = maxWidth.value
+        val availableHeight = maxHeight.value
+        val resolvedLayout = layout ?: remember(availableWidth, availableHeight, seats.size) {
+            hostTableLayout(
+                playerCount = seats.size,
+                constraints = hostTableSurfaceLayoutConstraints(
+                    availableWidth = availableWidth,
+                    availableHeight = availableHeight,
+                ),
+            )
+        }
+        require(abs(resolvedLayout.constraints.availableWidth - availableWidth) < 0.01f) {
+            "Provided square-table layout width must match rendering constraints"
+        }
+        require(abs(resolvedLayout.constraints.availableHeight - availableHeight) < 0.01f) {
+            "Provided square-table layout height must match rendering constraints"
+        }
+
+        val placements = remember(seats, resolvedLayout) {
+            clocktowerSquareTablePlacements(
+                seats = seats,
+                layout = resolvedLayout,
+            )
+        }
+        val seatCardWidth = resolvedLayout.constraints.seatCardWidth.dp
+        val seatCardHeight = resolvedLayout.constraints.seatCardHeight.dp
+
+        placements.forEach { placement ->
+            val slot = placement.spatialSlot
+            ClocktowerSquareTableSeat(
+                seat = placement.seat,
+                interactionMode = interactionMode,
+                onSeatClick = onSeatClick,
+                modifier = Modifier
+                    .offset(
+                        x = (slot.centerX - resolvedLayout.constraints.seatCardWidth / 2f).dp,
+                        y = (slot.centerY - resolvedLayout.constraints.seatCardHeight / 2f).dp,
+                    )
+                    .size(
+                        width = seatCardWidth,
+                        height = seatCardHeight,
+                    ),
+            )
+        }
 
         Surface(
             modifier = Modifier
                 .align(Alignment.Center)
-                .fillMaxWidth(0.56f)
-                .fillMaxHeight(0.52f),
+                .width(resolvedLayout.constraints.centerWorkspaceWidth.dp)
+                .height(resolvedLayout.constraints.centerWorkspaceHeight.dp),
             shape = RoundedCornerShape(18.dp),
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -165,56 +203,6 @@ internal fun ClocktowerSquareTableSeatSurface(
                     .padding(12.dp),
                 contentAlignment = Alignment.Center,
                 content = centerContent,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ClocktowerSquareTableHorizontalEdge(
-    placements: List<ClocktowerSquareTableSeatPlacement>,
-    interactionMode: ClocktowerSquareTableInteractionMode,
-    onSeatClick: (String) -> Unit,
-    modifier: Modifier,
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        placements.forEach { placement ->
-            ClocktowerSquareTableSeat(
-                seat = placement.seat,
-                interactionMode = interactionMode,
-                onSeatClick = onSeatClick,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 2.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ClocktowerSquareTableVerticalEdge(
-    placements: List<ClocktowerSquareTableSeatPlacement>,
-    interactionMode: ClocktowerSquareTableInteractionMode,
-    onSeatClick: (String) -> Unit,
-    modifier: Modifier,
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.SpaceEvenly,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        placements.forEach { placement ->
-            ClocktowerSquareTableSeat(
-                seat = placement.seat,
-                interactionMode = interactionMode,
-                onSeatClick = onSeatClick,
-                modifier = Modifier
-                    .width(70.dp)
-                    .padding(vertical = 2.dp),
             )
         }
     }
