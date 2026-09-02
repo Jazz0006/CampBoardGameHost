@@ -1,0 +1,103 @@
+name: UI-R3 player display one-shot host patch
+
+on:
+  push:
+    branches:
+      - codex/ui-r3-player-information-square-table
+    paths:
+      - .github/workflows/ui-r3-player-display-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/ui-r3-player-information-square-table
+          fetch-depth: 0
+
+      - name: Verify bootstrap head and blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/codex/ui-r3-player-information-square-table | cut -f1)" = "$GITHUB_SHA"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt)" = "2765832affe440b264796b2e8fb895d9800e4836"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayUi.kt)" = "8dce023bfda2b77082bac41b910f228fcbcb0e3a"
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayPresentationTest.kt)" = "412256bbd55945e911cad9c5098b188828d678a8"
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerDisplayedInformationReliabilityTest.kt)" = "266a52c85f3aa8bb6027d5e73430661938778012"
+          test "$(git hash-object .github/scripts/ui_r3_player_display_host_patch.py)" = "72432d9172997f862b0748294cdab562f0f8ef31"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Apply exact host wiring
+        run: python3 .github/scripts/ui_r3_player_display_host_patch.py
+
+      - name: Exact diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt'
+          git diff --check
+          test "$(git diff --name-only | paste -sd ' ' -)" = "$target"
+          git diff -- "$target"
+
+      - name: Run focused UI-R3 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerPlayerDisplayPresentationTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerDisplayedInformationReliabilityTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Run UI-R3 checkpoint suite
+        run: ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Reconfirm remote head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/ui-r3-player-information-square-table | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Commit and push host wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$target"
+          test "$(git diff --cached --name-only | paste -sd ' ' -)" = "$target"
+          git commit -m 'UI-R3: pass players to full-screen information display'
+          git push origin HEAD:codex/ui-r3-player-information-square-table
+          echo "PRODUCT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/ui-r3-player-display-one-shot.yml .github/scripts/ui_r3_player_display_host_patch.py
+          git commit -m 'chore(ci): remove UI-R3 one-shot patch'
+          git push origin HEAD:codex/ui-r3-player-information-square-table
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report checkpoints
+        run: |
+          echo "Product checkpoint: $PRODUCT_SHA"
+          echo "Cleanup checkpoint: $CLEANUP_SHA"
