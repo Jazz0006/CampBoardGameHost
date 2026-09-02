@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost
 
+// Durable UI-R3 contract: player-facing seat emphasis comes only from typed display semantics.
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import org.junit.Assert.assertEquals
