@@ -20,6 +20,13 @@ internal fun isClocktowerEvil(card: PlayerCard): Boolean =
 internal fun PlayerCard.clocktowerShownAsDifferentRole(): Boolean =
     clocktowerRole?.enName != null && clocktowerShownRole?.enName != null && clocktowerRole?.enName != clocktowerShownRole?.enName
 
+internal fun clocktowerDisplayedInformationIsUnreliable(
+    step: ClocktowerNightStepUi,
+    actorIsUnreliable: (String, PlayerCard?) -> Boolean,
+): Boolean =
+    step.actor?.clocktowerRole?.enName == "Drunk" ||
+        step.roleEnName?.let { roleEnName -> actorIsUnreliable(roleEnName, step.actor) } == true
+
 internal fun clocktowerPrivateObservationRecordId(
     gameId: String,
     phase: ClocktowerPhase,

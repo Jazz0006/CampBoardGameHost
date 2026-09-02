@@ -4492,7 +4492,7 @@ internal fun ClocktowerJudgeScreen(
                     if (!publishFirstNightInformation(displayStep)) return@showPlayerDisplay
                     recordReliablePrivateInformation(displayStep)
                     val actor = displayStep.actor
-                    val unreliable = actor?.clocktowerRole?.enName == "Drunk" || actorIsUnreliable(displayStep.roleEnName.orEmpty(), actor)
+                    val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
                     val primary = displayStep.displayPrimary ?: displayStep.tellPlayer
                     val secondary = displayStep.displaySecondary
                     val recordDetail = when (displayStep.displayKind) {
@@ -4708,7 +4708,7 @@ internal fun ClocktowerJudgeScreen(
                             if (!publishFirstNightInformation(displayStep)) return@showPlayerDisplay
                             recordReliablePrivateInformation(displayStep)
                             val actor = displayStep.actor
-                            val unreliable = actor?.clocktowerRole?.enName == "Drunk" || actorIsUnreliable(displayStep.roleEnName.orEmpty(), actor)
+                            val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
                             val shownInformation = listOfNotNull(
                                 displayStep.displayPrimary ?: displayStep.tellPlayer,
                                 displayStep.displaySecondary,
