@@ -24,11 +24,11 @@ class ClocktowerHostTableContractTest {
     @Test
     fun `interaction state never filters or repositions the physical seats`() {
         val allSeats = seats(7)
-        val passiveFrames = hostTableSeatFrames(
+        val passiveFrames = frames(
             seats = allSeats,
             interaction = HostTableInteractionState(),
         )
-        val activeFrames = hostTableSeatFrames(
+        val activeFrames = frames(
             seats = allSeats,
             interaction = HostTableInteractionState(
                 mode = HostTableInteractionMode.Selection,
@@ -61,7 +61,7 @@ class ClocktowerHostTableContractTest {
             HostSeatPresentation(ClocktowerSeatId(3), playerName = "Casey", isAlive = true),
         )
 
-        val frames = hostTableSeatFrames(
+        val frames = frames(
             seats = duplicateNames,
             interaction = HostTableInteractionState(
                 mode = HostTableInteractionMode.Selection,
@@ -76,7 +76,7 @@ class ClocktowerHostTableContractTest {
 
     @Test
     fun `ordered selection projects explicit typed selection order`() {
-        val frames = hostTableSeatFrames(
+        val frames = frames(
             seats = seats(5),
             interaction = HostTableInteractionState(
                 mode = HostTableInteractionMode.OrderedSelection,
@@ -98,7 +98,7 @@ class ClocktowerHostTableContractTest {
         )
 
         try {
-            hostTableSeatFrames(missingSeat, HostTableInteractionState())
+            frames(missingSeat, HostTableInteractionState())
             fail("Expected a non-contiguous physical seat topology to be rejected")
         } catch (_: IllegalArgumentException) {
             // Expected: the shell must not invent a new seat order from a malformed list.
@@ -114,9 +114,31 @@ class ClocktowerHostTableContractTest {
             )
         }
 
+    private fun frames(
+        seats: List<HostSeatPresentation>,
+        interaction: HostTableInteractionState,
+    ): List<HostTableSeatFrame> = hostTableSeatFrames(
+        seats = seats,
+        interaction = interaction,
+        layout = layoutFor(seats.size),
+    )
+
     private fun placementsBySeat(
         seats: List<HostSeatPresentation>,
     ): Map<ClocktowerSeatId, HostTableSpatialSlot> =
-        hostTableSeatFrames(seats, HostTableInteractionState())
+        frames(seats, HostTableInteractionState())
             .associate { it.seat.seatId to it.spatialSlot }
+
+    private fun layoutFor(playerCount: Int): HostTableLayout = hostTableLayout(
+        playerCount = playerCount,
+        constraints = HostTableLayoutConstraints(
+            availableWidth = 360f,
+            availableHeight = 600f,
+            seatCardWidth = 64f,
+            seatCardHeight = 50f,
+            minimumSafeSeparation = 4f,
+            centerWorkspaceWidth = 200f,
+            centerWorkspaceHeight = 312f,
+        ),
+    )
 }
