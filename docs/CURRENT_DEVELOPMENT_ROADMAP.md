@@ -12,27 +12,29 @@ live main at roadmap refresh:
 967fdadaa3b3999d81e49c123d39ea5f0acd7de8
 
 active campaign:
-UI Information Presentation Campaign
-field-test target: Friday 2026-09-04
+UI Information / Storyteller Workspace Campaign
 
-latest validated UI stack:
-UI-R4B — Night Action Square-Table Surface
-branch: codex/ui-r4b-night-action-square-table
-last validated executable checkpoint: 11f63647944e3063a8df3a5f2875ffb04d9f3708
-PR #76: draft / open / mergeable / unmerged
-
-next implementation slice:
+latest validated executable checkpoint:
 UI-R4C — Field-Test UI Corrections
+branch: codex/ui-r4c-field-test-ui-corrections
+validated product checkpoint: cb62c4d48c822db10f2b0b18b4f8e19336c7abb1
+PR #77: draft / open / mergeable / unmerged
+
+next development target:
+UI-R4D — Persistent Host Table / Storyteller Workspace
+
+stabilization after UI-R4D:
+UI-R5 — Real-Device Stabilization / Feature Freeze
 
 algorithm campaign after UI stabilization:
 EPI-MQ / Productive Uncertainty / PlayerWorldSet
 ```
 
-Docs-only commits created while refreshing roadmap/handoff may advance the UI-R4B branch beyond the executable checkpoint above. Always distinguish docs-only head movement from new product code.
+Docs-only commits created while refreshing roadmap/handoff may advance the UI-R4C branch beyond `cb62c4d48c822db10f2b0b18b4f8e19336c7abb1`. Always distinguish docs-only head movement from the latest validated executable checkpoint.
 
-The UI campaign is intentionally ahead of EPI-MQ because a real group play session is scheduled for Friday 2026-09-04. EPI-MQ is paused, not cancelled.
+The UI campaign remains intentionally ahead of EPI-MQ. EPI-MQ is paused, not cancelled.
 
-UI-R1 through UI-R4B are stacked draft work and are **not yet on main**. Do not create the next UI branch from `main` or the stack will be lost.
+UI-R1 through UI-R4C are stacked draft work and are **not yet on main**. Do not create the next UI branch from `main` or the stack will be lost.
 
 ## 2. Campaign status
 
@@ -50,8 +52,9 @@ UI-R3   player information presentation                       COMPLETE / VERIFIE
 UI-R4   Fortune Teller two-target + result flow               COMPLETE / VERIFIED / DRAFT #73
 HOTFIX  Monk/Ravenkeeper target legality                      COMPLETE / VERIFIED / DRAFT #75
 UI-R4B  night-action square-table unification                 COMPLETE / VERIFIED / DRAFT #76
-UI-R4C  real-device UI corrections                            ACTIVE NEXT
-UI-R5   Friday field-test stabilization                       QUEUED AFTER UI-R4C
+UI-R4C  real-device UI corrections                            COMPLETE / VERIFIED / DRAFT #77
+UI-R4D  persistent Host table / Storyteller workspace         ACTIVE NEXT
+UI-R5   real-device stabilization / feature freeze            QUEUED AFTER UI-R4D
 
 EPI-MQ / ALG
         Productive Uncertainty / PlayerWorldSet mainline      PAUSED UNTIL UI CAMPAIGN STABLE
@@ -59,29 +62,27 @@ EPI-MQ / ALG
 UX-R6   replace legacy ranking behind stable UX contract      QUEUED AFTER EPI-MQ
 ```
 
-Do not redo Monk/Ravenkeeper legality or UI-R4B. They are complete and validated.
+Do not redo Monk/Ravenkeeper legality, UI-R4B, or completed R4C corrections.
 
 ## 3. Active authorities
 
-Primary product reference:
+Current next-development handoff:
+
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_PERSISTENT_HOST_TABLE.md`
+
+Primary information-display reference:
 
 `docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`
 
-Current implementation handoff:
+Completed R4C handoff, now historical implementation context:
 
 `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_R4C_FIELD_TEST_CORRECTIONS.md`
-
-Previous campaign handoff:
-
-`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_INFORMATION_CAMPAIGN.md`
-
-The previous handoff is retained for historical campaign context but is no longer the current resume authority.
 
 Existing semantic/UX authority remains:
 
 `docs/CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md`
 
-The UI campaign may change presentation and interaction, but must not take ownership of legal-domain or recommendation semantics.
+The UI campaign may change presentation, navigation and interaction state, but must not take ownership of legal-domain or recommendation semantics.
 
 ## 4. Frozen permanent architecture
 
@@ -117,6 +118,14 @@ Permanent invariants:
 - A3 exact enumeration remains the algorithm correctness baseline;
 - A4/ZDD remains shadow/prototype until separately validated.
 
+UI-R4D adds another permanent presentation invariant:
+
+```text
+stable seatId -> stable physical table position for the whole session
+```
+
+A player must not move to a different on-screen table position merely because the app changes from setup to day, voting or night action.
+
 ## 5. Stable recommendation / Manual contract
 
 ```text
@@ -151,169 +160,354 @@ primary recommendation
 + all remaining legal outcomes when the full domain comfortably fits
 ```
 
-UI-R4C must not change these semantics.
+UI-R4D must not change these semantics.
 
-## 6. Completed UI-R1..R4B checkpoint
+## 6. Completed UI-R4C checkpoint
 
-The current UI stack has already delivered:
+UI-R4C corrected the real-device issues that were safe to close before the larger table redesign:
 
-- reusable full-screen square-table seat surface;
-- dedicated pair Manual square-table selection;
-- normal recommendation reason/warning clutter hidden from product UI;
-- Fortune Teller two-target square-table flow with typed Boolean adjudication;
-- corrected Monk/Ravenkeeper target legality;
-- reusable single-target and two-target night-action square-table surfaces;
-- Monk/Ravenkeeper/Chambermaid core action migration;
-- typed subject-seat projection for supported information propositions;
-- full focused / `:app:testFast` / CI / R2 validation for the latest executable checkpoint;
-- temporary large-file and APK-export workflows cleaned up.
+- pair Manual role labels now use the current app language without changing typed role identity;
+- player-facing final information is information-first full-screen rather than table-first;
+- registration-sensitive Chef / Empath / Fortune Teller / Undertaker / Ravenkeeper flows use complete final-information result domains while preserving registration witness/provenance;
+- focused UI-R4C tests passed;
+- `:app:testFast` passed;
+- `git diff --check` passed;
+- exact product diff audit passed;
+- temporary one-shot workflow/script self-removed;
+- validated product commit is `cb62c4d48c822db10f2b0b18b4f8e19336c7abb1`;
+- Draft PR #77 is stacked on UI-R4B and remains unmerged.
 
-These are completed prerequisites, not active work.
+The original standalone R4C-2 proposal — adding richer role context only to the night-action square-table seat card — is **superseded** by UI-R4D. Do not implement a separate night-only R4C-2 patch.
 
-## 7. Active target — UI-R4C Field-Test UI Corrections
+## 7. Active target — UI-R4D Persistent Host Table / Storyteller Workspace
 
-Real-device testing after UI-R4B exposed four product issues.
+### Product principle
 
-### R4C-1 — Manual role labels must follow current app language
+The core interaction principle is:
 
-Problem:
+> **Players always remain seated around the same square table; the Storyteller changes the current task in the center of that table.**
 
-- pair Manual role selection exposes internal English role names / `RoleId` presentation in Chinese mode.
-
-Target:
+Equivalent UI rule:
 
 ```text
-typed RoleId
--> existing role definition/localization mapping
--> current-language role label
+table edge = WHO / stable game state
+center     = WHAT THE STORYTELLER IS DOING NOW
 ```
 
-Do not parse localized labels back into semantic ids and do not create a duplicate hard-coded translation authority.
+The square table is no longer a night-action widget. It becomes the stable Storyteller workspace from initial seating through day, nomination, voting and night action.
 
-### R4C-2 — Storyteller square-table seat cards need role context
+### Explicit privacy exception
 
-Problem:
+There is one deliberate full-screen exception:
 
-- seat number + player name alone is insufficient during Storyteller night action.
+```text
+Storyteller workspace -> persistent square table
+Player-facing reveal  -> sanitized information-only full screen, NO table
+```
 
-Target Storyteller-only seat model:
+The Player Reveal screen is the safe phone-handoff boundary. Actual identity, shown/perceived identity, public claims, hidden state, registration provenance, recommendation metadata and voting/host state must never leak into Player Reveal.
+
+## 8. UI-R4D interaction modes
+
+The shared table should support a bounded set of interaction modes instead of separate screens inventing separate player selectors.
+
+### R4D Mode A — Seating
+
+Seat content:
 
 ```text
 seat number
 player name
-actual role
-shown/perceived role when different
 ```
 
-For the Drunk, the Storyteller should see both actual Drunk identity and the committed shown role.
+Center:
 
-Long player names must fit safely through adaptive typography / bounded layout. Do not allow ambiguous truncation.
+- common/recent player choices;
+- add-new-player input/action;
+- seat editing/reordering where supported;
+- primary CTA: `确定座位` / `Confirm seats`.
 
-### R4C-3 — player-facing final information should be information-first, not table-first
-
-Real-device testing showed that keeping the square table on the phone while the player reads the final clue/result wastes space and makes the reveal too busy.
-
-Correct product boundary:
+The preferred true setup flow becomes:
 
 ```text
-Storyteller target/action interaction -> square-table-first
-Player-facing final reveal            -> information-first full-screen
+Arrange players and seats
+-> Confirm seats
+-> Choose game
+-> Game-specific settings
+-> Start game
 ```
 
-Preserve typed subject-seat identity in the model/history path, but do not require the player reveal to render the whole table.
+Do not merely hide a game that was already selected. Seating becomes a game-independent session foundation.
 
-Player reveal must remain privacy-safe and must not expose actual identity, Poisoned/Drunk state, truth flags, recommendation reasons, or other Storyteller-only context.
+### R4D Mode B — Day Overview
 
-### R4C-4 — remove duplicate Spy registration/identity UI in pair Manual
+The app is Storyteller-private except during explicit Player Reveal, so the normal day table may display actual identities.
 
-Problem:
-
-- exact typed pair legal candidates already carry Spy/Recluse registration semantics where applicable;
-- UI adds a second large registration/identity choice layer, duplicating semantics and creating unnecessary interaction.
-
-Target:
+Seat presentation can include:
 
 ```text
-exact typed legal pair candidate
-(including registration semantics)
--> Manual presentation
--> exact candidate confirmation
+#3 Alice ☠
+Washerwoman
+Claim: Fortune Teller
 ```
 
-Remove only the redundant presentation/control layer.
-
-Do not remove or flatten registration facts, candidate identity, legality, confirmation, or durable observation semantics.
-
-## 8. Recommended UI-R4C implementation order
+Where actual and shown/perceived identity differ, keep them explicit rather than collapsing them. For the Drunk, for example:
 
 ```text
-R4C-1  localized Manual role labels
-R4C-2  richer Storyteller square-table seat presentation
-R4C-3  information-first player reveal
-R4C-4  remove duplicate Spy registration UI
+#5 David
+Actual: Drunk
+Perceived: Empath
+Claim: Empath
 ```
 
-Prefer narrow, auditable commits and behavioral tests.
-
-Suggested branch:
+The following are separate semantic concepts and must remain separate in data/model/presentation:
 
 ```text
-codex/ui-r4c-field-test-ui-corrections
+Actual Role
+Perceived / Shown Role
+Public Claim
 ```
 
-Base it on the **live UI-R4B head**, not on main.
+The day center should become operational rather than informational. Remove redundant large player-status lists and unnecessary explanatory chrome.
 
-Suggested draft PR title:
+Trouble Brewing day actions should keep at least:
 
 ```text
-UI-R4C: fix real-device information UI regressions
+Slayer action
+Start nomination
+Host tools
 ```
 
-Do not merge automatically.
+The Slayer action must remain available throughout the day because the button represents a public Slayer claim/action event, not proof that the acting player is actually a live unused Slayer.
 
-## 9. UI-R5 after UI-R4C
+### R4D Mode C — Nomination
 
-UI-R5 becomes active only after all four R4C issues are corrected and the executable checkpoint is green.
+Use the same stable table positions to choose:
 
-R5 is a feature freeze / real-device stabilization pass, not a place for another redesign.
+```text
+nominator
+-> nominee
+```
 
-Required real-device walkthrough should cover at least:
+Do not replace the table with a separate unordered player list.
 
-- Minion introduction;
-- Demon introduction;
-- pair recommendation and Manual;
-- Spy/Recluse registration-sensitive pair clues;
-- Chef / Empath;
-- Fortune Teller;
-- Chambermaid;
-- Ravenkeeper;
-- Monk and other single-target night actions;
-- impaired/discretionary information;
-- long player names;
-- Drunk actual/shown identity on Storyteller table only;
-- player-facing reveal readability and return/navigation.
+Core nomination legality should continue to be enforced by the appropriate rules/state authority, not by visual position.
 
-Field-test usability outranks optional animation/theme polish.
+### R4D Mode D — Vote
 
-## 10. Testing / implementation strategy
+Voting should be represented as a sequential state machine, not as a free-edit checkbox grid.
+
+The square table remains fixed while vote state changes:
+
+```text
+upcoming -> current -> counted/locked
+```
+
+The vote cursor should proceed clockwise and end with the nominee according to the app's Blood on the Clocktower voting rules authority.
+
+Center summary should expose core operational state such as:
+
+- nominator -> nominee;
+- alive count;
+- majority threshold;
+- current vote count;
+- current high score / on-the-block state;
+- current voter;
+- next/skip action;
+- narrowly scoped undo-last-input correction.
+
+Once the cursor has moved past a player's committed vote, ordinary editing of that prior vote should be locked. Any correction path must represent Storyteller input correction, not retroactive player vote changes.
+
+The first implementation should automate core voting mechanics only:
+
+- clockwise order;
+- alive/dead status;
+- dead player's remaining ghost vote;
+- majority threshold;
+- current vote total;
+- tie / current on-the-block logic;
+- durable nomination/vote history.
+
+Do not turn UI-R4D into a complete special-character vote-modifier engine. Leave a clean extension seam for later role-specific validation/assistance.
+
+### R4D Mode E — Night Action
+
+Reuse the same stable table positions for existing night actions.
+
+- legal targets highlighted;
+- illegal targets disabled/non-actionable;
+- one- or two-target selection preserves typed seat identity;
+- center contains the action-specific controls/results;
+- Storyteller seat presentation may include actual and shown/perceived roles where useful.
+
+This mode absorbs the old standalone R4C-2 seat-detail idea into one unified Host Seat Presentation policy shared across the whole app.
+
+### R4D Mode F — Player Reveal
+
+This is intentionally **not** a table mode.
+
+Player Reveal remains the R4C information-first full-screen surface and must stay sanitized.
+
+## 9. Shared seat presentation architecture
+
+Do not let Setup, Day, Vote and Night each invent their own seat-card identity logic.
+
+Introduce a cohesive typed presentation seam conceptually equivalent to:
+
+```text
+HostTableSeatPresentation
+```
+
+It should consume stable semantic/session state such as:
+
+- typed stable `seatId`;
+- seat number/order;
+- player name;
+- actual role;
+- shown/perceived role where different;
+- alive/dead state;
+- dead-vote availability where relevant;
+- latest public claim where relevant;
+- interaction flags such as selectable / selected / current / locked.
+
+Presentation policy decides which fields are visible in each table mode. Do not infer identity from localized text in Compose.
+
+Long names/roles must use bounded, adaptive typography/layout and must not silently become ambiguous.
+
+## 10. Public role claim history
+
+Public role claims are valuable Storyteller memory and future algorithm input.
+
+Do **not** model this only as a mutable scalar such as:
+
+```text
+player.claimedRole = Soldier
+```
+
+Claims can change and the change itself is strategically meaningful.
+
+Use a durable event/history model conceptually like:
+
+```text
+PublicRoleClaimEvent(
+    seatId,
+    claimedRoleId,
+    dayIndex,
+    sequence/time,
+    ...
+)
+```
+
+The table may project only the latest/current claim:
+
+```text
+Claim: Soldier
+```
+
+but history must retain the sequence of claims.
+
+Initial product UI can support a single explicit role claim at a time while keeping the model extensible to later changed/retracted/multiple/ambiguous claims.
+
+Recording claims must not yet alter recommendation ranking during UI-R4D. EPI-MQ may consume this richer public-state history later behind a separate algorithm task.
+
+## 11. Recommended UI-R4D implementation slices
+
+Do not attempt the entire workspace redesign in one large PR.
+
+Recommended order:
+
+```text
+R4D-1  Persistent Table Foundation
+       - stable seatId -> spatial slot
+       - shared Host table shell
+       - shared typed seat-presentation model
+       - bounded interaction-mode state
+       - center content/action slot
+
+R4D-2  Seating-First Session Flow
+       - square table starts during player arrangement
+       - common/recent players in center
+       - add/remove/reorder seats
+       - Confirm seats
+       - game selection moves after seating confirmation
+
+R4D-3  Day Storyteller Workspace
+       - migrate day overview to shared table
+       - show actual identity / relevant perceived identity
+       - keep Slayer action always available during day
+       - nomination entry point
+       - Host tools
+       - remove redundant day information chrome/lists
+
+R4D-4  Public Claim History
+       - durable PublicRoleClaimEvent model
+       - seat quick action to record/update claim
+       - latest-claim projection on table
+       - persistence/history coverage
+       - no recommendation behavior change yet
+
+R4D-5  Nomination / Vote State Machine
+       - table-based nominator/nominee selection
+       - sequential clockwise vote cursor
+       - counted/locked states
+       - narrowly scoped undo-last correction
+       - dead vote / threshold / tie / on-the-block core logic
+       - durable nomination/vote history
+
+R4D-6  Unified Host Seat Presentation Migration
+       - finish Setup/Day/Night adoption
+       - actual vs shown/perceived role policy
+       - Drunk presentation
+       - adaptive long-name/role layout
+       - remove remaining duplicated player-selector/presentation paths
+```
+
+The exact commit boundaries may be adjusted after code ownership audit, but preserve this dependency direction.
+
+## 12. UI-R4D testing strategy
 
 Authority: `docs/TESTING_STRATEGY.md` and root `AGENTS.md`.
 
-Use risk-based tests-first.
+Use risk-based tests-first. Do not create ceremonial source-shape tests for every Compose edit.
 
-High-value UI-R4C contracts:
+High-value permanent contracts:
 
-- Manual role presentation uses current-language label while preserving typed role identity;
-- Storyteller seat presentation exposes actual/shown identity as separate typed values;
-- player-facing reveal does not depend on table rendering and remains privacy-safe;
-- exact pair candidate survives Manual presentation and confirmation;
-- Spy/Recluse registration semantics remain unchanged when duplicate UI is removed;
-- no legal candidate is lost or invented by presentation changes;
-- first-night `EvilInfo` remains safe.
+### Stable spatial identity
 
-Avoid brittle source-string or exact-pixel permanent tests.
+- same typed `seatId` maps to the same table position across Seating -> Day -> Nomination/Vote -> Night;
+- filtered legal-target sets do not renumber/reposition players.
 
-For large/protected files such as `ClocktowerNightStepUi.kt` or `clocktower/ui/ClocktowerHostScreen.kt`, use the repository-approved exact-anchor one-shot Python patch workflow.
+### Privacy boundary
+
+Player Reveal must never expose:
+
+- actual role;
+- shown/perceived role beyond the intended player-visible information;
+- public claim metadata;
+- poison/drunk/reliability state;
+- registration witness/provenance;
+- recommendation reasons/truth flags;
+- vote/host-only state.
+
+### Day / Slayer
+
+- Slayer action remains reachable during the whole day regardless of whether a real Slayer exists, is alive, or has already used the ability;
+- actual hidden game state determines resolution after the public claim/action is recorded.
+
+### Public claims
+
+- adding a new claim preserves prior claim history;
+- latest-claim projection is deterministic;
+- save/restore preserves claim sequence.
+
+### Voting
+
+- voter order is correct and stable;
+- advancing the cursor locks prior committed input from ordinary editing;
+- undo-last is narrowly scoped;
+- dead vote can be consumed only according to core rules;
+- majority threshold, tie and on-the-block transitions are correct;
+- nomination/vote history persists correctly.
 
 At meaningful executable checkpoints:
 
@@ -322,76 +516,118 @@ focused behavior tests
 -> :app:testFast
 ```
 
-At UI-R4C completion run ordinary CI/R2 and `[full-ci]` where risk/classifier requires broad Android validation.
+Use ordinary CI/R2 / `[full-ci]` according to repository classifier and risk when a slice reaches its validation checkpoint.
 
-## 11. Source ownership / growth guards
+## 13. Source ownership / growth guards
 
-`ClocktowerNightStepUi.kt` remains an orchestration/wiring owner, not the home for new visual policy.
+`ClocktowerHostScreen.kt` remains protected orchestration. Do not make it the implementation home for the persistent-table component, claim history or vote state machine.
 
-`ClocktowerHostScreen.kt` remains protected orchestration.
+`ClocktowerNightStepUi.kt` remains orchestration/wiring, not the owner of table-wide visual policy.
 
-New presentation logic should prefer small cohesive owners/models.
+Prefer small cohesive owners for:
+
+- host table shell/layout;
+- host seat presentation model/policy;
+- seating/session state;
+- public claim event/history;
+- nomination/vote session state;
+- mode-specific center controls.
 
 Do not create a generic `Utils`, `Helpers`, `Manager`, or God context merely to reduce argument count.
 
-## 12. UI campaign scope guards
+For large/protected files, continue using the repository-approved exact-anchor one-shot Python patch workflow when necessary.
 
-Do not expand UI-R4C into:
+## 14. UI-R4D scope guards
+
+Do not expand UI-R4D into:
 
 - EPI-MQ / Productive Uncertainty implementation;
-- new recommendation ranking/scoring/diversity behavior;
-- new legality ownership in recommendation/UI code;
-- PlayerWorldSet production recommendation integration;
+- recommendation ranking/scoring/diversity changes;
+- using public claims to change clue recommendations yet;
+- new legal-domain ownership inside UI code;
 - A4/ZDD production rollout;
-- broad Host/App decomposition;
-- unrelated persistence/history redesign;
 - Mayor redirect / Imp succession redesign;
-- broad theme/animation work;
-- unsupported-script expansion merely for UI completeness.
+- broad Host/App decomposition unrelated to the table boundary;
+- broad unsupported-script expansion;
+- complete special-character voting modifier automation;
+- theme/animation polish unrelated to usability.
 
-If another correctness bug is discovered, isolate and characterize it rather than hiding it inside visual refactoring.
+If a correctness bug is discovered, isolate and characterize it rather than hiding it in table refactoring.
 
-## 13. EPI-MQ after UI stabilization
+## 15. UI-R5 after UI-R4D
 
-After UI-R5 reaches a stable field-test checkpoint, restore EPI-MQ as the active algorithm campaign.
+UI-R5 remains a feature-freeze / real-device stabilization pass.
+
+It becomes active only after the intended UI-R4D slices reach a coherent executable checkpoint.
+
+R5 should validate the complete Storyteller workflow on device, including:
+
+- seating-first session start;
+- game selection after seat confirmation;
+- Minion/Demon introduction;
+- pair recommendation and Manual;
+- registration-sensitive information;
+- day overview;
+- Slayer public-action flow;
+- nomination and vote recording;
+- public claim recording;
+- night actions;
+- long player/role names;
+- Drunk actual/shown presentation in Storyteller workspace;
+- player-facing reveal privacy/readability and return navigation.
+
+R5 is not the place for another structural redesign.
+
+## 16. EPI-MQ after UI stabilization
+
+After UI-R5 reaches a stable real-device checkpoint, restore EPI-MQ as the active algorithm campaign.
 
 Primary authorities remain:
 
 - `docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`
 - `docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`
 
-Do not redesign the stabilized interaction when EPI-MQ resumes; the algorithm should improve recommendations behind the stable UI/decision contract.
+The new public-claim history and stable session state may later become inputs to EPI-MQ, but the algorithm must improve recommendations behind the stabilized interaction contract rather than redesigning the UI again.
 
-## 14. Documentation authority / new-conversation resume protocol
+## 17. Documentation authority / new-conversation resume protocol
 
 Current active set:
 
 ```text
 AGENTS.md
 docs/CURRENT_DEVELOPMENT_ROADMAP.md
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_PERSISTENT_HOST_TABLE.md
 docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md
-docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_R4C_FIELD_TEST_CORRECTIONS.md
 docs/CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md
 docs/TESTING_STRATEGY.md
 docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md
 ```
 
-The previous `NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_INFORMATION_CAMPAIGN.md` is historical campaign context and should not be used as the current resume target.
+Historical implementation context:
 
-New conversation must first re-query live `main`, PR #75, PR #76 and UI-R4B head/checks before creating UI-R4C. It must distinguish docs-only commits after the last validated executable checkpoint from product changes.
+```text
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_R4C_FIELD_TEST_CORRECTIONS.md
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_INFORMATION_CAMPAIGN.md
+```
 
-## 15. Deferred / queued registry
+New conversation must first re-query live `main`, PR #75, PR #76, PR #77 and the UI-R4C branch head/checks. It must distinguish docs-only commits after `cb62c4d48c822db10f2b0b18b4f8e19336c7abb1` from new executable product changes.
+
+The next implementation branch should be based on the **live UI-R4C stack head**, not on `main`, unless the stack has since been explicitly merged/rebased by the user.
+
+## 18. Deferred / queued registry
 
 | Area | Status |
 |---|---|
 | UI-R1 square-table foundation | COMPLETE / VERIFIED / DRAFT |
 | UI-R2 pair Manual redesign | COMPLETE / VERIFIED / DRAFT |
-| UI-R3 player information presentation | COMPLETE / VERIFIED / DRAFT; player reveal boundary to be corrected in R4C |
+| UI-R3 player information presentation | COMPLETE / VERIFIED / DRAFT; player reveal corrected by R4C |
 | UI-R4 Fortune Teller interaction | COMPLETE / VERIFIED / DRAFT |
 | Monk/Ravenkeeper legality hotfix | COMPLETE / VERIFIED / DRAFT |
 | UI-R4B night action surface | COMPLETE / VERIFIED / DRAFT |
-| UI-R4C field-test UI corrections | NEXT IMMEDIATE SLICE |
-| UI-R5 field-test stabilization | QUEUED AFTER UI-R4C |
+| UI-R4C field-test UI corrections | COMPLETE / VERIFIED / DRAFT #77 |
+| old standalone R4C-2 night seat-detail patch | SUPERSEDED BY UI-R4D UNIFIED SEAT PRESENTATION |
+| UI-R4D persistent Host table / Storyteller workspace | ACTIVE NEXT |
+| UI-R5 real-device stabilization | QUEUED AFTER UI-R4D |
 | EPI-MQ Productive Uncertainty | PAUSED UNTIL UI-R5 STABLE |
 | ALG cognitive-consistency / PlayerWorldSet | PAUSED UNTIL UI-R5 STABLE |
 | UX-R6 legacy ranking replacement | QUEUED AFTER EPI-MQ |
