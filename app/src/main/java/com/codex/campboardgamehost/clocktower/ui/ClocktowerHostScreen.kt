@@ -3523,6 +3523,7 @@ internal fun ClocktowerJudgeScreen(
     playerDisplayStep?.let { displayStep ->
         ClocktowerPlayerDisplayCardLocalized(
             step = displayStep,
+            cards = cards,
             onDismiss = { playerDisplayStep = null },
         )
         return
