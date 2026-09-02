@@ -1,8 +1,10 @@
 package com.codex.campboardgamehost
 
-// Durable UI-R3 contract: player-facing seat emphasis comes only from typed display semantics.
+// Durable UI-R3/R4B contract: player-facing seat emphasis comes only from typed display semantics.
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -25,6 +27,52 @@ class ClocktowerPlayerDisplayPresentationTest {
     }
 
     @Test
+    fun `role reveal highlights the exact typed subject seat`() {
+        val step = displayStep(
+            kind = ClocktowerDisplayKind.RoleReveal,
+            secondary = "seat-like text 9",
+            proposition = InformationProposition.RoleAt(4, RoleId("Empath")),
+            roleEnName = "Ravenkeeper",
+        )
+
+        assertEquals(setOf(4), clocktowerPlayerDisplayHighlightedSeats(step))
+    }
+
+    @Test
+    fun `number result highlights typed subject seats`() {
+        val step = displayStep(
+            kind = ClocktowerDisplayKind.Number,
+            secondary = "untrusted text 7 8",
+            proposition = InformationProposition.NumericResult(
+                metric = NumericMetric.ADJACENT_EVIL_PAIRS,
+                sourceSeat = 1,
+                subjectSeats = listOf(3, 6),
+                value = 1,
+            ),
+            roleEnName = "Chambermaid",
+        )
+
+        assertEquals(setOf(3, 6), clocktowerPlayerDisplayHighlightedSeats(step))
+    }
+
+    @Test
+    fun `yes no result highlights typed subject seats`() {
+        val step = displayStep(
+            kind = ClocktowerDisplayKind.YesNo,
+            secondary = "untrusted text 1 9",
+            proposition = InformationProposition.BooleanResult(
+                metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+                sourceSeat = 2,
+                subjectSeats = listOf(4, 7),
+                value = true,
+            ),
+            roleEnName = "Fortune Teller",
+        )
+
+        assertEquals(setOf(4, 7), clocktowerPlayerDisplayHighlightedSeats(step))
+    }
+
+    @Test
     fun `zero pair result keeps the square table neutral`() {
         val step = displayStep(
             kind = ClocktowerDisplayKind.EitherOne,
@@ -38,7 +86,7 @@ class ClocktowerPlayerDisplayPresentationTest {
     }
 
     @Test
-    fun `number display remains neutral even when proposition contains seat-like data`() {
+    fun `unsupported proposition does not create number highlights from seat-like data`() {
         val step = displayStep(
             kind = ClocktowerDisplayKind.Number,
             secondary = "2   5",
