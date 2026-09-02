@@ -1,6 +1,6 @@
 package com.codex.campboardgamehost
 
-// Durable UI-R4 RED contract: the square-table surface renders supplied target legality and Boolean choices only.
+// Durable UI-R4 contract: the square-table surface renders supplied target legality and Boolean choices only.
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
