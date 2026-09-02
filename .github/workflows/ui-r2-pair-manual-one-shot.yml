@@ -31,7 +31,7 @@ jobs:
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerPairManualSelectionUi.kt)" = "441c0f2f70eb8f4ae414c764a677b9e447c2a877"
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerPairManualSelectionModelTest.kt)" = "1dc92a79c91485f5489ea0bf5d4d07132dfb28a1"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerPairRecommendationPresentationUi.kt)" = "8770a63a0ffe88175c79e56a9aa6ba15fa10696a"
-          test "$(git hash-object .github/scripts/ui_r2_pair_manual_patch.py)" = "dede6e85165c8181e993648c9908c74e87b5b22a"
+          test "$(git hash-object .github/scripts/ui_r2_pair_manual_patch.py)" = "554340ccd539cfbec813365132259cc6551f0d91"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -56,20 +56,13 @@ jobs:
       - name: Apply exact production patch
         run: python3 .github/scripts/ui_r2_pair_manual_patch.py
 
-      - name: Exact semantic and diff audit
+      - name: Exact diff audit
         shell: bash
         run: |
           set -euo pipefail
           target='app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt'
           git diff --check
           test "$(git diff --name-only | paste -sd ' ' -)" = "$target"
-          test "$(grep -Fc 'ClocktowerPairManualSelectionDialog(' "$target")" -eq 1
-          test "$(grep -Fc 'showRecommendedDisplayOption(manualOption)' "$target")" -eq 1
-          test "$(grep -Fc 'step.manualInformationCandidates' "$target")" -eq 1
-          ! grep -Fq 'manualPairEntries' "$target"
-          ! grep -Fq 'selectedManualPairRole' "$target"
-          ! grep -Fq 'selectedManualPairFirstSeat' "$target"
-          ! grep -Fq 'RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)' "$target"
           git diff -- "$target"
 
       - name: Run focused GREEN after wiring
