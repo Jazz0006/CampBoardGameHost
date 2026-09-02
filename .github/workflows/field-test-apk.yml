@@ -1,0 +1,219 @@
+name: Field Test APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Branch, tag, or commit to build
+        required: true
+        default: main
+  push:
+    branches:
+      - main
+      - codex/android-field-test-apk-distribution
+
+concurrency:
+  group: field-test-apk
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: field-test-latest
+      APK_NAME: CampBoardGameHost-field-test.apk
+
+    steps:
+      - name: Resolve source ref
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            source_ref='${{ inputs.source_ref }}'
+          else
+            source_ref='${{ github.sha }}'
+          fi
+          [[ -n "$source_ref" ]] || { echo 'Source ref must not be blank.' >&2; exit 1; }
+          echo "ref=$source_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout requested source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.source.outputs.ref }}
+          fetch-depth: 0
+
+      - name: Resolve immutable source and install version
+        id: buildmeta
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_sha="$(git rev-parse HEAD)"
+          short_sha="${source_sha:0:12}"
+          version_code=$((100000 + GITHUB_RUN_NUMBER * 10 + GITHUB_RUN_ATTEMPT))
+          if (( version_code > 2100000000 )); then
+            echo "Computed Android versionCode is too large: $version_code" >&2
+            exit 1
+          fi
+          version_name="0.1.4-ft.${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}.${short_sha}"
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$short_sha" >> "$GITHUB_OUTPUT"
+          echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
+          echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
+          echo "Building $source_sha as versionCode=$version_code versionName=$version_name"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Install fixed field-test signing key
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+        env:
+          FIELD_TEST_DEBUG_KEYSTORE_BASE64: ${{ secrets.FIELD_TEST_DEBUG_KEYSTORE_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$FIELD_TEST_DEBUG_KEYSTORE_BASE64" ]]; then
+            echo '::error::Missing repository secret FIELD_TEST_DEBUG_KEYSTORE_BASE64. See docs/FIELD_TEST_APK_DISTRIBUTION.md.'
+            exit 1
+          fi
+          mkdir -p "$HOME/.android"
+          printf '%s' "$FIELD_TEST_DEBUG_KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
+          chmod 600 "$HOME/.android/debug.keystore"
+          keytool -list \
+            -keystore "$HOME/.android/debug.keystore" \
+            -storepass android \
+            -alias androiddebugkey >/dev/null
+
+      - name: Run FAST tests and build field-test APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testFast :app:assembleDebug \
+            -PfieldTestVersionCode='${{ steps.buildmeta.outputs.version_code }}' \
+            -PfieldTestVersionName='${{ steps.buildmeta.outputs.version_name }}' \
+            --no-daemon --rerun-tasks
+
+      - name: Verify APK identity and version
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          metadata_path = Path('app/build/outputs/apk/debug/output-metadata.json')
+          metadata = json.loads(metadata_path.read_text(encoding='utf-8'))
+          expected_application_id = 'com.codex.campboardgamehost.fieldtest'
+          expected_version_code = int('${{ steps.buildmeta.outputs.version_code }}')
+          actual_application_id = metadata['applicationId']
+          element = metadata['elements'][0]
+          actual_version_code = int(element['versionCode'])
+          if actual_application_id != expected_application_id:
+              raise SystemExit(f'Unexpected applicationId: {actual_application_id!r}')
+          if actual_version_code != expected_version_code:
+              raise SystemExit(
+                  f'Unexpected versionCode: {actual_version_code}; expected {expected_version_code}'
+              )
+          print(f'APK identity OK: {actual_application_id} versionCode={actual_version_code}')
+          PY
+
+      - name: Verify APK signature
+        id: signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          [[ -n "$sdk_root" ]] || { echo 'Android SDK root is unavailable.' >&2; exit 1; }
+          apksigner="$(find "$sdk_root/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
+          [[ -x "$apksigner" ]] || { echo 'apksigner not found.' >&2; exit 1; }
+          apk='app/build/outputs/apk/debug/app-debug.apk'
+          "$apksigner" verify --verbose --print-certs "$apk"
+          cert_sha256="$($apksigner verify --print-certs "$apk" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n 1)"
+          [[ -n "$cert_sha256" ]] || { echo 'Unable to resolve signing certificate digest.' >&2; exit 1; }
+          echo "cert_sha256=$cert_sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare stable download asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/$APK_NAME"
+          cat > "$RUNNER_TEMP/field-test-build.txt" <<EOF
+          source_ref=${{ steps.source.outputs.ref }}
+          source_sha=${{ steps.buildmeta.outputs.source_sha }}
+          version_code=${{ steps.buildmeta.outputs.version_code }}
+          version_name=${{ steps.buildmeta.outputs.version_name }}-fieldtest
+          application_id=com.codex.campboardgamehost.fieldtest
+          certificate_sha256=${{ steps.signature.outputs.cert_sha256 }}
+          workflow_run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EOF
+
+      - name: Publish or replace fixed GitHub Release asset
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          notes="$RUNNER_TEMP/release-notes.md"
+          cat > "$notes" <<EOF
+          Latest sideloadable Android field-test build.
+
+          - Source ref: \`${{ steps.source.outputs.ref }}\`
+          - Source commit: \`${{ steps.buildmeta.outputs.source_sha }}\`
+          - Version code: \`${{ steps.buildmeta.outputs.version_code }}\`
+          - Version name: \`${{ steps.buildmeta.outputs.version_name }}-fieldtest\`
+          - Application ID: \`com.codex.campboardgamehost.fieldtest\`
+          - Signing certificate SHA-256: \`${{ steps.signature.outputs.cert_sha256 }}\`
+
+          Stable APK asset: \`$APK_NAME\`
+
+          Direct download URL:
+          https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/$APK_NAME
+          EOF
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" \
+              --title 'Field Test APK (latest)' \
+              --notes-file "$notes"
+          else
+            gh release create "$RELEASE_TAG" \
+              --target '${{ steps.buildmeta.outputs.source_sha }}' \
+              --title 'Field Test APK (latest)' \
+              --notes-file "$notes" \
+              --prerelease
+          fi
+
+          gh release upload "$RELEASE_TAG" \
+            "$RUNNER_TEMP/$APK_NAME" \
+            "$RUNNER_TEMP/field-test-build.txt" \
+            --clobber
+
+      - name: Write job summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo '## Field Test APK'
+            echo
+            echo "- Source: \`${{ steps.source.outputs.ref }}\` / \`${{ steps.buildmeta.outputs.short_sha }}\`"
+            echo "- Version code: \`${{ steps.buildmeta.outputs.version_code }}\`"
+            echo '- Application ID: `com.codex.campboardgamehost.fieldtest`'
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.ref }}" == "refs/heads/main" ]]; then
+              echo "- Release: https://github.com/${{ github.repository }}/releases/tag/$RELEASE_TAG"
+              echo "- Direct APK: https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/$APK_NAME"
+            else
+              echo '- Publish skipped on infrastructure-branch validation push.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
