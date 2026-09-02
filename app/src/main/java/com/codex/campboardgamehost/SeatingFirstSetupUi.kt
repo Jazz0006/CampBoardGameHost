@@ -99,8 +99,8 @@ internal fun SeatingFirstSetupScreen(
                     )
                     Text(
                         text = text(
-                            "确认后，整局保持相同座位位置",
-                            "Confirmed seats stay in the same position for the whole game",
+                            "长按拖动座位；确认后整局保持相同位置",
+                            "Long-press and drag seats; confirmed positions stay fixed for the whole game",
                         ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -142,6 +142,18 @@ internal fun SeatingFirstSetupScreen(
                     interaction = interaction,
                     onSeatClick = { seatId ->
                         selectedPlayerName = playerNames.getOrNull(seatId.number - 1)
+                    },
+                    dragEnabled = seats.size > 1,
+                    seatMotionKey = HostSeatPresentation::playerName,
+                    onSeatDragCommit = { seatId, targetRingIndex ->
+                        val fromIndex = seatId.number - 1
+                        if (
+                            fromIndex in playerNames.indices &&
+                            targetRingIndex in playerNames.indices &&
+                            fromIndex != targetRingIndex
+                        ) {
+                            onMoveCurrentPlayerTo(fromIndex, targetRingIndex)
+                        }
                     },
                 ) {
                     Column(
