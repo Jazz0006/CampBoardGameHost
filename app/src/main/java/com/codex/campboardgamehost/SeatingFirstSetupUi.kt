@@ -77,7 +77,6 @@ internal fun SeatingFirstSetupScreen(
     val availableCommonPlayers = commonPlayers
         .filterNot(playerNames::contains)
         .distinct()
-        .take(8)
 
     ClocktowerDarkTheme {
         Column(
