@@ -20,6 +20,15 @@ internal data class HostSeatingSetupFlow(
         return copy(selectedGame = game)
     }
 
+    fun playerNamesFor(game: GameKind): List<String> {
+        require(selectedGame == game) {
+            "Production start requires the currently selected game"
+        }
+        return requireNotNull(confirmedSeating) {
+            "Production start requires confirmed seating"
+        }.playerNames
+    }
+
     fun returnToGameSelection(): HostSeatingSetupFlow {
         requireNotNull(confirmedSeating) { "Game selection requires confirmed seating" }
         return copy(selectedGame = null)
