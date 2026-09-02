@@ -1,6 +1,6 @@
 package com.codex.campboardgamehost
 
-// Durable target-legality contract; initial PR state intentionally RED until production helpers exist.
+// Durable target-legality contract for Monk and Ravenkeeper target candidates.
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
