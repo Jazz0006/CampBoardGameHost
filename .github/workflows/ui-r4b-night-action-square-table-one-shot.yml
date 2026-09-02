@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "a4f8d8ca883d90f7155921f23633fb7aea109fbf"
+          test "$(git rev-parse HEAD^)" = "17bdbc0e98059fb6d6e317ac03c591dfefe1f6d4"
           test "$(git hash-object .github/scripts/ui_r4b_night_action_square_table_patch.py)" = "6f3549476fe0ffb4af08f8f54bd3fca60d1aac71"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt)" = "2681ad67c99e1bb3875b8c53b98401bd33c28ca1"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayUi.kt)" = "8dce023bfda2b77082bac41b910f228fcbcb0e3a"
@@ -54,7 +54,7 @@ jobs:
             --tests 'com.codex.campboardgamehost.ClocktowerChambermaidPresentationSemanticsTest' \
             --tests 'com.codex.campboardgamehost.ClocktowerNightTargetLegalityTest'
 
-      - name: Normalize exact Fortune signature anchors in one-shot script
+      - name: Normalize exact multi-site anchors in one-shot script
         shell: bash
         run: |
           set -euo pipefail
@@ -66,6 +66,22 @@ jobs:
               count = text.count(old)
           '''
           new = '''def replace_exact(text: str, label: str, old: str, new: str, expected: int = 1) -> str:
+              if label in {"Chambermaid reliable typed proposition", "Chambermaid discretionary typed propositions"}:
+                  def deeper(block: str) -> str:
+                      return "".join(
+                          ("                " + line if line.strip() else line)
+                          for line in block.splitlines(keepends=True)
+                      )
+                  deep_old = deeper(old)
+                  deep_new = deeper(new)
+                  shallow_count = text.count(old)
+                  deep_count = text.count(deep_old)
+                  if shallow_count != 1 or deep_count != 1:
+                      raise SystemExit(
+                          f"{label}: expected one shallow and one deep exact anchor; "
+                          f"found shallow={shallow_count}, deep={deep_count}"
+                      )
+                  return text.replace(old, new, 1).replace(deep_old, deep_new, 1)
               if label == "Fortune Teller dialog onNext signature":
                   expected = 2
               if label == "Fortune Teller center signature onNext":
