@@ -1,0 +1,130 @@
+name: UI-R4 Fortune Teller one-shot
+
+on:
+  push:
+    branches:
+      - codex/ui-r4-fortune-teller-square-table
+    paths:
+      - .github/workflows/ui-r4-fortune-teller-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/ui-r4-fortune-teller-square-table
+          fetch-depth: 0
+
+      - name: Verify bootstrap head and blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='codex/ui-r4-fortune-teller-square-table'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/$branch | cut -f1)" = "$GITHUB_SHA"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt)" = 'a56b9c966bd7b5cc9d5efd4194bbe050a8ada075'
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt)" = '2de9945d94e7eaa0f011dae28fbc0fff5025193d'
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/StructuredBooleanInformationAdapter.kt)" = '1425d3676cbfd55f70fa26358e9fe1eae2e9c007'
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/session/StructuredBooleanInformationUiModel.kt)" = 'bf0138628da1d8efb569414e4e0cc74639cc405b'
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTablePresentationTest.kt)" = '4545f5a4d5a196212f8238d2f65959b5f2a2e939'
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/StructuredFortuneTellerInformationAdapterTest.kt)" = '09a13184168fccfd5cac3c5ccd9dc765d72db24f'
+          test "$(git hash-object .github/scripts/ui_r4_fortune_teller_patch.py)" = 'c850c23288edb1adcd844e1c51ddccf26380ca95'
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Run focused GREEN baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerFortuneTellerSquareTablePresentationTest' \
+            --tests 'com.codex.campboardgamehost.StructuredFortuneTellerInformationAdapterTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerFortuneTellerPhaseAuthorityTest' \
+            --tests 'com.codex.campboardgamehost.TwoPlayerSelectionActionTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Apply exact NightStep patch
+        run: python3 .github/scripts/ui_r4_fortune_teller_patch.py
+
+      - name: Audit localized patch before tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          test "$(git diff --name-only | paste -sd ' ' -)" = 'app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt'
+          grep -Fq 'ClocktowerFortuneTellerSquareTableDialog(' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          ! grep -Fq 'showFortuneTellerDisplayOptions' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          ! grep -Fq 'fortuneTellerLimitExceeded' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+
+      - name: Run focused GREEN after wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerFortuneTellerSquareTablePresentationTest' \
+            --tests 'com.codex.campboardgamehost.StructuredFortuneTellerInformationAdapterTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerFortuneTellerPhaseAuthorityTest' \
+            --tests 'com.codex.campboardgamehost.TwoPlayerSelectionActionTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Run Android FAST checkpoint
+        run: ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Exact diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          test "$(git diff --name-only | paste -sd ' ' -)" = 'app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt'
+          git diff -- app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+
+      - name: Reconfirm remote head
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='codex/ui-r4-fortune-teller-square-table'
+          test "$(git ls-remote origin refs/heads/$branch | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Commit and push product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='codex/ui-r4-fortune-teller-square-table'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          test "$(git diff --cached --name-only | paste -sd ' ' -)" = 'app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt'
+          git commit -m 'UI-R4: wire Fortune Teller square-table adjudication'
+          git push origin HEAD:$branch
+          echo "PRODUCT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='codex/ui-r4-fortune-teller-square-table'
+          git rm .github/workflows/ui-r4-fortune-teller-one-shot.yml .github/scripts/ui_r4_fortune_teller_patch.py
+          git commit -m 'chore(ci): remove UI-R4 Fortune Teller one-shot'
+          git push origin HEAD:$branch
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report checkpoints
+        run: |
+          echo "Product checkpoint: $PRODUCT_SHA"
+          echo "Cleanup checkpoint: $CLEANUP_SHA"
