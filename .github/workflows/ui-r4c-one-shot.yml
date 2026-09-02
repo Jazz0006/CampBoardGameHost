@@ -1,0 +1,90 @@
+name: UI-R4C one-shot patch
+
+on:
+  push:
+    branches:
+      - codex/ui-r4c-field-test-ui-corrections
+    paths:
+      - .github/workflows/ui-r4c-one-shot.yml
+      - .github/scripts/ui_r4c_patch.py
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ui-r4c-one-shot
+  cancel-in-progress: false
+
+jobs:
+  patch-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout locked branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/ui-r4c-field-test-ui-corrections
+          fetch-depth: 0
+
+      - name: Verify one-shot preconditions
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_BASE=975bcfa7f4b145fcad0a8ab1287454233e678a4f
+          test "$(git branch --show-current)" = "codex/ui-r4c-field-test-ui-corrections"
+          git merge-base --is-ancestor "$EXPECTED_BASE" HEAD
+          actual="$(git diff --name-only "$EXPECTED_BASE"..HEAD | sort)"
+          expected="$(printf '%s\n' '.github/scripts/ui_r4c_patch.py' '.github/workflows/ui-r4c-one-shot.yml' | sort)"
+          test "$actual" = "$expected"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt)" = "cf2adc83eb459935dfd8a4b53f00c7a946f1f05f"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt)" = "98aebb41c79fb8007a0205268306a850dd77cb41"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Apply exact-anchor patch
+        run: python3 .github/scripts/ui_r4c_patch.py
+
+      - name: Focused UI-R4C tests
+        run: |
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerRoleLocalizationTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerPairManualSelectionModelTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerPlayerDisplayPresentationTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerRegistrationResultDomainTest'
+
+      - name: Fast regression suite
+        run: ./gradlew :app:testFast
+
+      - name: Audit product diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            'app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt' \
+            'app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt' | sort)"
+          test "$actual" = "$expected"
+
+      - name: Commit product patch and self-remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/scripts/ui_r4c_patch.py .github/workflows/ui-r4c-one-shot.yml
+          git diff --check
+          git add app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt \
+                  app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          staged="$(git diff --cached --name-only | sort)"
+          expected="$(printf '%s\n' \
+            '.github/scripts/ui_r4c_patch.py' \
+            '.github/workflows/ui-r4c-one-shot.yml' \
+            'app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt' \
+            'app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt' | sort)"
+          test "$staged" = "$expected"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m 'UI-R4C: use final information as registration authority'
+          git push origin HEAD:codex/ui-r4c-field-test-ui-corrections
