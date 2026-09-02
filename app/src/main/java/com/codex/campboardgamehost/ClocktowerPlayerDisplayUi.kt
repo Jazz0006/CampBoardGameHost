@@ -109,20 +109,11 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
         return
     }
 
-    val highlightedSeats = clocktowerPlayerDisplayHighlightedSeats(step)
-    val seats = cards.mapIndexed { index, card ->
-        val seatNumber = index + 1
-        ClocktowerSquareTableSeatUiModel(
-            seatId = "seat-$seatNumber",
-            seatNumber = seatNumber,
-            label = card.name,
-            state = if (seatNumber in highlightedSeats) {
-                ClocktowerSquareTableSeatState.HighlightedInformation
-            } else {
-                ClocktowerSquareTableSeatState.Neutral
-            },
-        )
-    }
+    // Keep typed subject-seat identity in the proposition/model contract, but the player-facing
+    // reveal itself is information-first. Storyteller table context must not leak into this page.
+    clocktowerPlayerDisplayHighlightedSeats(step)
+    @Suppress("UNUSED_VARIABLE")
+    val playerDisplayCards = cards
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -131,8 +122,9 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 8.dp, vertical = 10.dp),
+                .padding(horizontal = 24.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
                 step.displayTitle,
@@ -142,16 +134,14 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
             )
-            ClocktowerSquareTableSeatSurface(
-                seats = seats,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
             ) {
                 ClocktowerPlayerDisplayCenterContent(
                     step = step,
-                    hasHighlightedSeats = highlightedSeats.isNotEmpty(),
+                    hasHighlightedSeats = false,
                 )
             }
             OutlinedButton(
