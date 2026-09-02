@@ -2262,6 +2262,7 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun startUndercoverGame() {
+        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Undercover)
         if (playerNames.size < MIN_PLAYERS) return
         val pair = wordPairsFor(language).random()
         val blankCount = if (includeBlank) 1 else 0
@@ -2286,6 +2287,7 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun startWerewolfGame() {
+        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Werewolf)
         if (playerNames.size < MIN_WEREWOLF_PLAYERS) return
         val roles = werewolfRolesFor(
             playerCount = playerNames.size,
@@ -2308,6 +2310,7 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun startTroubleBrewingGame() {
+        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Clocktower)
         val preparedSeed = newClocktowerSeed()
 
         val datasetJson = baseContext.assets
@@ -2422,6 +2425,7 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun startClocktowerGame() {
+        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Clocktower)
         if (playerNames.size < MIN_CLOCKTOWER_PLAYERS) return
         val script = if (playerNames.size in 5..6) {
             selectedClocktowerScript ?: defaultClocktowerScriptFor(playerNames.size)
