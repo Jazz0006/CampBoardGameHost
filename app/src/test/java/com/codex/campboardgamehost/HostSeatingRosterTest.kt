@@ -100,4 +100,34 @@ class HostSeatingRosterTest {
         assertNull(reopened.confirmedSeating)
         assertNull(reopened.selectedGame)
     }
+
+    @Test
+    fun `production player names come only from the frozen confirmed roster`() {
+        val arrangement = mutableListOf("Alice", "Bob", "Casey", "Dana")
+        val selected = HostSeatingSetupFlow()
+            .confirmSeats(arrangement)
+            .chooseGame(GameKind.Werewolf)
+
+        arrangement.reverse()
+        arrangement[0] = "Changed"
+
+        assertEquals(
+            listOf("Alice", "Bob", "Casey", "Dana"),
+            selected.playerNamesFor(GameKind.Werewolf),
+        )
+    }
+
+    @Test
+    fun `production player names reject a game that is not the selected game`() {
+        val selected = HostSeatingSetupFlow()
+            .confirmSeats(listOf("Alice", "Bob", "Casey", "Dana", "Evan"))
+            .chooseGame(GameKind.Clocktower)
+
+        try {
+            selected.playerNamesFor(GameKind.Undercover)
+            fail("Expected mismatched production game authority to be rejected")
+        } catch (_: IllegalArgumentException) {
+            // Expected.
+        }
+    }
 }
