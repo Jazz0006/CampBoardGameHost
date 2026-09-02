@@ -1,0 +1,29 @@
+name: R4D2 F2 Focused
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d2-seating-first-setup
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+      - name: Run F2 focused tests
+        run: |
+          ./gradlew \
+            :app:testDebugUnitTest \
+            --tests com.codex.campboardgamehost.ClocktowerHostTableReorderTest \
+            --no-daemon \
+            --rerun-tasks
