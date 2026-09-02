@@ -110,16 +110,22 @@ new_setup = """                    Screen.Setup -> SeatingFirstSetupScreen(
 """
 replace_exact(old_setup, new_setup)
 
-replace_exact(
-    """                        onBack = { screen = Screen.Setup },
+for start_callback in (
+    "::startUndercoverGame",
+    "::startWerewolfGame",
+    "::startClocktowerGame",
+):
+    replace_exact(
+        f"""                        onBack = {{ screen = Screen.Setup }},
+                        onStart = {start_callback},
 """,
-    """                        onBack = {
+        f"""                        onBack = {{
                             hostSeatingSetupFlow = hostSeatingSetupFlow.returnToGameSelection()
                             screen = Screen.GameSelection
-                        },
+                        }},
+                        onStart = {start_callback},
 """,
-    expected_count=3,
-)
+    )
 
 replace_exact(
     """                    Screen.ClocktowerSettings -> ClocktowerSettingsScreen(
