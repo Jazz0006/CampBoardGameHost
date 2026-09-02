@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost
 
+// Durable UI-R2 contract: selection continuity is derived only from supplied legal candidates.
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import org.junit.Assert.assertEquals
