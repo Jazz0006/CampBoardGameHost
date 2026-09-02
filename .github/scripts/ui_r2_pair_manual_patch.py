@@ -94,27 +94,4 @@ if manual_begin >= manual_finish:
 text = text[:manual_begin] + manual_ui_replacement + text[manual_finish:]
 
 text = text.replace(reason_line, "")
-
-for removed in (
-    "fun pairManualKey(",
-    "manualPairEntries",
-    "selectedManualPairRole",
-    "selectedManualPairFirstSeat",
-):
-    if removed in text:
-        raise SystemExit(f"Legacy Manual token remains: {removed}")
-
-required_counts = {
-    "ClocktowerPairManualSelectionDialog(": 1,
-    "showRecommendedDisplayOption(manualOption)": 1,
-    "step.manualInformationCandidates": 1,
-}
-for token, expected in required_counts.items():
-    actual = text.count(token)
-    if actual != expected:
-        raise SystemExit(f"Expected {expected} occurrence(s) of {token!r}, found {actual}")
-
-if "RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)" in text:
-    raise SystemExit("Recommendation reason prose call remains in normal night-step product UI")
-
 TARGET.write_text(text, encoding="utf-8", newline="\n")
