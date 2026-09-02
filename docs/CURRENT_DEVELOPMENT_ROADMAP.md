@@ -18,7 +18,7 @@ field-test target: Friday 2026-09-04
 latest validated UI stack:
 UI-R4B — Night Action Square-Table Surface
 branch: codex/ui-r4b-night-action-square-table
-head at refresh: 11f63647944e3063a8df3a5f2875ffb04d9f3708
+last validated executable checkpoint: 11f63647944e3063a8df3a5f2875ffb04d9f3708
 PR #76: draft / open / mergeable / unmerged
 
 next implementation slice:
@@ -27,6 +27,8 @@ UI-R4C — Field-Test UI Corrections
 algorithm campaign after UI stabilization:
 EPI-MQ / Productive Uncertainty / PlayerWorldSet
 ```
+
+Docs-only commits created while refreshing roadmap/handoff may advance the UI-R4B branch beyond the executable checkpoint above. Always distinguish docs-only head movement from new product code.
 
 The UI campaign is intentionally ahead of EPI-MQ because a real group play session is scheduled for Friday 2026-09-04. EPI-MQ is paused, not cancelled.
 
@@ -376,7 +378,7 @@ docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md
 
 The previous `NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_INFORMATION_CAMPAIGN.md` is historical campaign context and should not be used as the current resume target.
 
-New conversation must first re-query live `main`, PR #75, PR #76 and UI-R4B head/checks before creating UI-R4C.
+New conversation must first re-query live `main`, PR #75, PR #76 and UI-R4B head/checks before creating UI-R4C. It must distinguish docs-only commits after the last validated executable checkpoint from product changes.
 
 ## 15. Deferred / queued registry
 
