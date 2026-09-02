@@ -34,7 +34,9 @@ jobs:
           ./gradlew :app:testDebugUnitTest \
             --tests 'com.codex.campboardgamehost.ClocktowerHostTableLayoutTest' \
             --tests 'com.codex.campboardgamehost.ClocktowerHostTableContractTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerHostTableGameStateProjectionTest' \
             --tests 'com.codex.campboardgamehost.ClocktowerSquareTableSeatLayoutTest' \
+            --tests 'com.codex.campboardgamehost.HostSeatingRosterTest' \
             --no-daemon --rerun-tasks
 
       - name: Run Android FAST checkpoint
@@ -54,8 +56,10 @@ jobs:
             'app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableUi.kt'
             'app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt'
             'app/src/test/java/com/codex/campboardgamehost/ClocktowerHostTableContractTest.kt'
+            'app/src/test/java/com/codex/campboardgamehost/ClocktowerHostTableGameStateProjectionTest.kt'
             'app/src/test/java/com/codex/campboardgamehost/ClocktowerHostTableLayoutTest.kt'
             'app/src/test/java/com/codex/campboardgamehost/ClocktowerSquareTableSeatLayoutTest.kt'
+            'app/src/test/java/com/codex/campboardgamehost/HostSeatingRosterTest.kt'
           )
           mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
           if [[ "$(printf '%s\n' "${changed[@]}")" != "$(printf '%s\n' "${expected_sorted[@]}")" ]]; then
