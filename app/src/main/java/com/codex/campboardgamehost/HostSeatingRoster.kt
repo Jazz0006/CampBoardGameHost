@@ -13,7 +13,7 @@ internal data class HostSeatAssignment(
  * game-specific settings, and hosted play should consume this ordered roster instead of rebuilding
  * physical seat identity from whichever list a screen happens to render.
  */
-internal data class ConfirmedHostSeating internal constructor(
+internal data class ConfirmedHostSeating(
     val seats: List<HostSeatAssignment>,
 ) {
     init {
