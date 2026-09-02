@@ -28,13 +28,35 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 internal fun clocktowerPlayerDisplayHighlightedSeats(
     step: ClocktowerNightStepUi,
 ): Set<Int> {
-    if (step.displayKind != ClocktowerDisplayKind.EitherOne) return emptySet()
-    val anyOf = step.displayProposition as? InformationProposition.AnyOf ?: return emptySet()
-    val roleAt = anyOf.alternatives.map { it as? InformationProposition.RoleAt ?: return emptySet() }
-    if (roleAt.size != 2) return emptySet()
-    if (roleAt.map { it.role }.distinct().size != 1) return emptySet()
-    val seats = roleAt.map { it.seat }.distinct()
-    return if (seats.size == 2) seats.toSet() else emptySet()
+    return when (step.displayKind) {
+    ClocktowerDisplayKind.EitherOne -> {
+        val anyOf = step.displayProposition as? InformationProposition.AnyOf ?: return emptySet()
+        val roleAt = anyOf.alternatives.map { it as? InformationProposition.RoleAt ?: return emptySet() }
+        if (roleAt.size != 2 || roleAt.map { it.role }.distinct().size != 1) return emptySet()
+        roleAt.map { it.seat }.distinct().takeIf { it.size == 2 }?.toSet().orEmpty()
+    }
+
+    ClocktowerDisplayKind.RoleReveal ->
+        (step.displayProposition as? InformationProposition.RoleAt)?.let { setOf(it.seat) }.orEmpty()
+
+    ClocktowerDisplayKind.Number ->
+        (step.displayProposition as? InformationProposition.NumericResult)
+            ?.subjectSeats
+            ?.distinct()
+            ?.takeIf { it.size in 1..2 }
+            ?.toSet()
+            .orEmpty()
+
+    ClocktowerDisplayKind.YesNo ->
+        (step.displayProposition as? InformationProposition.BooleanResult)
+            ?.subjectSeats
+            ?.distinct()
+            ?.takeIf { it.size in 1..2 }
+            ?.toSet()
+            .orEmpty()
+
+    else -> emptySet()
+    }
 }
 
 @Composable

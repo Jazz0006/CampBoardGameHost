@@ -2992,6 +2992,23 @@ internal fun ClocktowerJudgeScreen(
                                 tellPlayer = chambermaidResult,
                                 explanation = text("侍女选择两名玩家，得知其中有几人今晚因自己的能力醒来。", "The Chambermaid chooses two players and learns how many woke tonight because of their own ability."),
                                 action = ClocktowerNightAction.Chambermaid,
+                                displayProposition = chambermaidResult?.toIntOrNull()?.let { value ->
+                                    val firstTargetName = chambermaidResolution.selection.first
+                                    val secondTargetName = chambermaidResolution.selection.second
+                                    if (firstTargetName != null && secondTargetName != null) {
+                                        roleActor("Chambermaid")?.let { actor ->
+                                            clocktowerChambermaidDisplayProposition(
+                                                cards = cards,
+                                                actor = actor,
+                                                firstTargetName = firstTargetName,
+                                                secondTargetName = secondTargetName,
+                                                value = value,
+                                            )
+                                        }
+                                    } else {
+                                        null
+                                    }
+                                },
                                 displaySecondary = listOfNotNull(chambermaidResolution.selection.first, chambermaidResolution.selection.second)
                                     .mapNotNull { name -> cards.firstOrNull { it.name == name } }
                                     .joinToString("   ") { seatNumberText(it) }
@@ -3011,6 +3028,15 @@ internal fun ClocktowerJudgeScreen(
                                                 .mapNotNull { name -> cards.firstOrNull { it.name == name } }
                                                 .joinToString("   ") { seatNumberText(it) }
                                                 .takeIf { it.isNotBlank() },
+                                            propositionForValue = { value ->
+                                                clocktowerChambermaidDisplayProposition(
+                                                    cards = cards,
+                                                    actor = actor,
+                                                    firstTargetName = requireNotNull(chambermaidResolution.selection.first),
+                                                    secondTargetName = requireNotNull(chambermaidResolution.selection.second),
+                                                    value = value,
+                                                )
+                                            },
                                         )
                                     }.orEmpty()
                                 },
@@ -3171,6 +3197,23 @@ internal fun ClocktowerJudgeScreen(
                 tellPlayer = chambermaidResult,
                 explanation = text("侍女选择两名玩家，得知其中有几人今晚因自己的能力醒来。", "The Chambermaid chooses two players and learns how many woke tonight because of their own ability."),
                 action = ClocktowerNightAction.Chambermaid,
+                displayProposition = chambermaidResult?.toIntOrNull()?.let { value ->
+                    val firstTargetName = chambermaidResolution.selection.first
+                    val secondTargetName = chambermaidResolution.selection.second
+                    if (firstTargetName != null && secondTargetName != null) {
+                        roleActor("Chambermaid")?.let { actor ->
+                            clocktowerChambermaidDisplayProposition(
+                                cards = cards,
+                                actor = actor,
+                                firstTargetName = firstTargetName,
+                                secondTargetName = secondTargetName,
+                                value = value,
+                            )
+                        }
+                    } else {
+                        null
+                    }
+                },
                 displaySecondary = listOfNotNull(chambermaidResolution.selection.first, chambermaidResolution.selection.second)
                     .mapNotNull { name -> cards.firstOrNull { it.name == name } }
                     .joinToString("   ") { seatNumberText(it) }
@@ -3190,6 +3233,15 @@ internal fun ClocktowerJudgeScreen(
                                 .mapNotNull { name -> cards.firstOrNull { it.name == name } }
                                 .joinToString("   ") { seatNumberText(it) }
                                 .takeIf { it.isNotBlank() },
+                            propositionForValue = { value ->
+                                clocktowerChambermaidDisplayProposition(
+                                    cards = cards,
+                                    actor = actor,
+                                    firstTargetName = requireNotNull(chambermaidResolution.selection.first),
+                                    secondTargetName = requireNotNull(chambermaidResolution.selection.second),
+                                    value = value,
+                                )
+                            },
                         )
                     }.orEmpty()
                 },

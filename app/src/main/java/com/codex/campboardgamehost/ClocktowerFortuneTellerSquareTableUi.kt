@@ -72,6 +72,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     onResultSelected: (Boolean) -> Unit,
     onAutomaticResultSelected: (Boolean) -> Unit,
     onPrevious: () -> Unit,
+    onNext: () -> Unit,
 ) {
     Dialog(
         onDismissRequest = {
@@ -118,6 +119,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
                     onResultSelected = onResultSelected,
                     onAutomaticResultSelected = onAutomaticResultSelected,
                     onPrevious = onPrevious,
+                    onNext = onNext,
                 )
             }
         }
@@ -135,6 +137,7 @@ private fun ClocktowerFortuneTellerCenterControls(
     onResultSelected: (Boolean) -> Unit,
     onAutomaticResultSelected: (Boolean) -> Unit,
     onPrevious: () -> Unit,
+    onNext: () -> Unit,
 ) {
     val actions = clocktowerFortuneTellerResultActions(
         legalResults = legalResults,
@@ -271,6 +274,14 @@ private fun ClocktowerFortuneTellerCenterControls(
                     }
                 }
             }
+        }
+
+        Spacer(Modifier.height(6.dp))
+        Button(
+            onClick = onNext,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(if (language == "en") "Finish / Next" else "完成 / 下一步")
         }
 
         if (canGoPrevious) {
