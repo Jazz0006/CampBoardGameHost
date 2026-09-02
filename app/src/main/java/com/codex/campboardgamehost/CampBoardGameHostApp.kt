@@ -254,6 +254,7 @@ import java.util.UUID
 private enum class Screen {
     Landing,
     Setup,
+    GameSelection,
     UndercoverSettings,
     WerewolfSettings,
     ClocktowerSettings,
@@ -369,6 +370,7 @@ private fun Screen.isActiveGameScreen(): Boolean = when (this) {
     Screen.Game -> true
     Screen.Landing,
     Screen.Setup,
+    Screen.GameSelection,
     Screen.UndercoverSettings,
     Screen.WerewolfSettings,
     Screen.ClocktowerSettings,
@@ -933,6 +935,7 @@ internal fun CampBoardGameHostApp() {
     var newCommonPlayerName by remember { mutableStateOf("") }
     val commonPlayers = remember { mutableStateListOf<String>().apply { addAll(baseContext.loadCommonPlayers()) } }
     val playerNames = remember { mutableStateListOf<String>() }
+    var hostSeatingSetupFlow by remember { mutableStateOf(HostSeatingSetupFlow()) }
     val cards = remember { mutableStateListOf<PlayerCard>() }
     val records = remember { mutableStateListOf<EliminationRecord>() }
     val clocktowerEvents = remember { mutableStateListOf<ClocktowerEvent>() }
@@ -2689,25 +2692,49 @@ internal fun CampBoardGameHostApp() {
                         when (screen) {
                     Screen.Landing -> ClocktowerLandingScreen(
                         hasSavedGame = savedGamePreview != null,
-                        onStartGame = { screen = Screen.Setup },
+                        onStartGame = {
+                            hostSeatingSetupFlow = HostSeatingSetupFlow()
+                            screen = Screen.Setup
+                        },
                         onContinueGame = ::restoreSavedGame,
                     )
 
-                    Screen.Setup -> SetupScreen(
-                    playerCount = playerCount,
+                    Screen.Setup -> SeatingFirstSetupScreen(
                     savedGamePreview = savedGamePreview,
                     commonPlayers = commonPlayers,
                     playerNames = playerNames,
                     onAddCurrentPlayer = ::addCurrentPlayer,
-                    onAddTemporaryPlayer = ::addCurrentPlayer,
                     onRemoveCurrentPlayer = ::removeCurrentPlayer,
                     onMoveCurrentPlayerTo = ::moveCurrentPlayerTo,
                     onResumeSavedGame = ::restoreSavedGame,
                     onDiscardSavedGame = ::clearSavedGameState,
                     onOpenSettings = { screen = Screen.Settings },
-                    onOpenUndercoverSettings = { screen = Screen.UndercoverSettings },
-                    onOpenWerewolfSettings = { screen = Screen.WerewolfSettings },
-                    onOpenClocktowerSettings = { screen = Screen.ClocktowerSettings },
+                    onConfirmSeats = {
+                        hostSeatingSetupFlow = hostSeatingSetupFlow.confirmSeats(playerNames)
+                        screen = Screen.GameSelection
+                    },
+                )
+
+                    Screen.GameSelection -> SeatingFirstGameSelectionScreen(
+                    seating = requireNotNull(hostSeatingSetupFlow.confirmedSeating) {
+                        "Game selection requires confirmed seating"
+                    },
+                    onBackToSeating = {
+                        hostSeatingSetupFlow = hostSeatingSetupFlow.reopenSeating()
+                        screen = Screen.Setup
+                    },
+                    onOpenUndercoverSettings = {
+                        hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Undercover)
+                        screen = Screen.UndercoverSettings
+                    },
+                    onOpenWerewolfSettings = {
+                        hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Werewolf)
+                        screen = Screen.WerewolfSettings
+                    },
+                    onOpenClocktowerSettings = {
+                        hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Clocktower)
+                        screen = Screen.ClocktowerSettings
+                    },
                 )
 
                     Screen.UndercoverSettings -> UndercoverSettingsScreen(
@@ -2719,7 +2746,10 @@ internal fun CampBoardGameHostApp() {
                             includeBlank = checked
                             clampUndercoverCount()
                         },
-                        onBack = { screen = Screen.Setup },
+                        onBack = {
+                            hostSeatingSetupFlow = hostSeatingSetupFlow.returnToGameSelection()
+                            screen = Screen.GameSelection
+                        },
                         onStart = ::startUndercoverGame,
                     )
 
@@ -2754,16 +2784,24 @@ internal fun CampBoardGameHostApp() {
                             includeHunter = template.includeHunter
                             clampWerewolfSettings()
                         },
-                        onBack = { screen = Screen.Setup },
+                        onBack = {
+                            hostSeatingSetupFlow = hostSeatingSetupFlow.returnToGameSelection()
+                            screen = Screen.GameSelection
+                        },
                         onStart = ::startWerewolfGame,
                     )
 
                     Screen.ClocktowerSettings -> ClocktowerSettingsScreen(
                         playerCount = playerCount,
-                        playerNames = playerNames,
+                        playerNames = requireNotNull(hostSeatingSetupFlow.confirmedSeating) {
+                            "Clocktower settings require confirmed seating"
+                        }.playerNames,
                         selectedScript = selectedClocktowerScript ?: defaultClocktowerScriptFor(playerCount),
                         onScriptChange = { selectedClocktowerScript = it },
-                        onBack = { screen = Screen.Setup },
+                        onBack = {
+                            hostSeatingSetupFlow = hostSeatingSetupFlow.returnToGameSelection()
+                            screen = Screen.GameSelection
+                        },
                         onStart = ::startClocktowerGame,
                     )
 
