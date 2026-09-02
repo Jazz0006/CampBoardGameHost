@@ -116,7 +116,7 @@ class ClocktowerHostTableContractTest {
 
     private fun placementsBySeat(
         seats: List<HostSeatPresentation>,
-    ): Map<ClocktowerSeatId, ClocktowerSquareTablePlacement> =
+    ): Map<ClocktowerSeatId, ClocktowerSquareTableSeatPlacement> =
         hostTableSeatFrames(seats, HostTableInteractionState())
             .associate { it.seat.seatId to it.placement }
 }
