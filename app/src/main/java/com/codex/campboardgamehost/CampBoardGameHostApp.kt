@@ -2132,11 +2132,16 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    fun moveCurrentPlayerTo(index: Int, insertIndex: Int) {
-        if (index !in playerNames.indices) return
-        val name = playerNames.removeAt(index)
-        val adjustedIndex = if (insertIndex > index) insertIndex - 1 else insertIndex
-        playerNames.add(adjustedIndex.coerceIn(0, playerNames.size), name)
+    fun moveCurrentPlayerTo(index: Int, targetIndex: Int) {
+        if (index !in playerNames.indices || targetIndex !in playerNames.indices) return
+        if (index == targetIndex) return
+        val reordered = reorderHostTableItems(
+            items = playerNames,
+            fromIndex = index,
+            targetIndex = targetIndex,
+        )
+        playerNames.clear()
+        playerNames.addAll(reordered)
     }
 
     fun addCommonPlayer() {
