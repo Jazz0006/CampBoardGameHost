@@ -1,0 +1,93 @@
+name: R4D2 F2 App Patch
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d2-seating-first-setup
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'build: add temporary F2 app patch workflow'
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: codex/ui-r4d2-seating-first-setup
+      TARGET: app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+      EXPECTED_TARGET_BLOB: ff7c5be5fc2d61609cd8b7e7b1d47f5d6fa5775f
+      TEST_FILE: app/src/test/java/com/codex/campboardgamehost/ClocktowerHostTableReorderTest.kt
+      EXPECTED_TEST_BLOB: faf0821e9f26e72bfec49fde8effbff9ab8e9362
+      SCRIPT: .github/scripts/r4d2_f2_move_semantics_patch.py
+      WORKFLOW: .github/workflows/r4d2-f2-app-patch.yml
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Verify exact remote checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          remote_head="$(git ls-remote origin "refs/heads/${BRANCH}" | awk '{print $1}')"
+          test "$remote_head" = "${GITHUB_SHA}"
+          test "$(git hash-object "$TARGET")" = "$EXPECTED_TARGET_BLOB"
+          test "$(git hash-object "$TEST_FILE")" = "$EXPECTED_TEST_BLOB"
+          test -f "$SCRIPT"
+      - name: Apply exact move-semantics patch
+        run: python "$SCRIPT"
+      - name: Audit product diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only)"
+          test "$changed" = "$TARGET"
+          git diff --check
+          grep -F 'fun moveCurrentPlayerTo(index: Int, targetIndex: Int)' "$TARGET"
+          grep -F 'val reordered = reorderHostTableItems(' "$TARGET"
+          if grep -Fq 'fun moveCurrentPlayerTo(index: Int, insertIndex: Int)' "$TARGET"; then
+            echo 'Old insertion-index contract remains.' >&2
+            exit 1
+          fi
+      - name: Run F2 checkpoint tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew \
+            :app:testDebugUnitTest \
+            --tests com.codex.campboardgamehost.ClocktowerHostTableReorderTest \
+            --tests com.codex.campboardgamehost.ClocktowerHostTableLayoutTest \
+            --tests com.codex.campboardgamehost.ClocktowerSquareTableSeatLayoutTest \
+            --tests com.codex.campboardgamehost.HostSeatingRosterTest \
+            --no-daemon \
+            --rerun-tasks
+          ./gradlew :app:testFast --no-daemon --rerun-tasks
+      - name: Commit product patch and self-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          remote_head="$(git ls-remote origin "refs/heads/${BRANCH}" | awk '{print $1}')"
+          test "$remote_head" = "${GITHUB_SHA}"
+
+          git add "$TARGET"
+          git commit -m 'fix: align seating move target semantics'
+          product_sha="$(git rev-parse HEAD)"
+          git push origin "HEAD:${BRANCH}"
+
+          remote_product_head="$(git ls-remote origin "refs/heads/${BRANCH}" | awk '{print $1}')"
+          test "$remote_product_head" = "$product_sha"
+
+          git rm "$SCRIPT" "$WORKFLOW"
+          git commit -m 'chore: remove temporary F2 app patch'
+          git push origin "HEAD:${BRANCH}"
+
+          echo "Product checkpoint: $product_sha"
