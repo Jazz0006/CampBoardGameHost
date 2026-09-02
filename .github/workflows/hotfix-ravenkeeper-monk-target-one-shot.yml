@@ -30,7 +30,7 @@ jobs:
           test "$(git ls-remote origin refs/heads/$branch | cut -f1)" = "$GITHUB_SHA"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt)" = 'aa2abbf36ff5d1cef7769013abd244ba7f37a5e8'
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightTargetLegality.kt)" = 'eeb15eb97cca6f714b1ea62e83dea8410e6fe94e'
-          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerNightTargetLegalityTest.kt)" = '3d47fbb6c83b8e4fbb57905469d9e28c430caac0'
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerNightTargetLegalityTest.kt)" = '9a790560c3bc7903673f5d2752d65f5a9dc24c39'
           test "$(git hash-object .github/scripts/hotfix_ravenkeeper_monk_target_patch.py)" = '87e0c449b7b116eb1e41b2aed3dd03ccda76157b'
 
       - name: Set up JDK 17
