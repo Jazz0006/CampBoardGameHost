@@ -1,0 +1,64 @@
+name: R4D2 Review Closeout Validation
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d2-seating-first-setup
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-clean:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Lock exact product checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          remote_head="$(git ls-remote origin refs/heads/codex/ui-r4d2-seating-first-setup | cut -f1)"
+          test "$remote_head" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "4bd8ce9b6c40c4f383f9124b2c805188c1f055a2"
+          test "$(git diff --name-only 33ce4bd6da4212f4fe26d173af3c29706350389f..4bd8ce9b6c40c4f383f9124b2c805188c1f055a2)" = "app/src/main/java/com/codex/campboardgamehost/SeatingFirstSetupUi.kt"
+
+      - name: Run focused seating-first behavior tests
+        run: |
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.HostSeatingRosterTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerHostTableContractTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerHostTableGameStateProjectionTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Run Android FAST unit tests
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Diff check
+        run: git diff --check 524f55bac945f1be8ee9d9ec77e4e4ca6935781e..4bd8ce9b6c40c4f383f9124b2c805188c1f055a2
+
+      - name: Self-remove validation workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/r4d2-review-closeout-validation.yml
+          git commit -m "ci: remove R4D2 review closeout validation"
+          git push origin HEAD:codex/ui-r4d2-seating-first-setup
