@@ -8,6 +8,7 @@ class ClocktowerNightTargetLegalityTest {
     private fun card(name: String, eliminatedRound: Int? = null) = PlayerCard(
         name = name,
         role = Role.Civilian,
+        word = "",
         eliminatedRound = eliminatedRound,
     )
 
