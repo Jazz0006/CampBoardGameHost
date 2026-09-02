@@ -88,6 +88,8 @@ No temporary `.github` files remain.
 
 ## Final validation requested by this checkpoint
 
+The repository PR workflows listen only to PRs whose base is `main`. PR #76 is temporarily retargeted to `main` only for this acceptance run; after the checks finish it must be restored to `hotfix/ravenkeeper-monk-target-legality`.
+
 This commit intentionally carries `[full-ci]` so the final field-test candidate receives ordinary broad validation in addition to the successful one-shot `:app:testFast` checkpoint.
 
 Required final evidence:
