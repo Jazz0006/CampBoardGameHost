@@ -62,6 +62,7 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
     onSeatSelected: (Int) -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
+    nextEnabled: Boolean = true,
     secondaryActionLabel: String? = null,
     secondaryActionEnabled: Boolean = false,
     onSecondaryAction: () -> Unit = {},
@@ -125,7 +126,7 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
             Spacer(Modifier.height(6.dp))
             Button(
                 onClick = onNext,
-                enabled = selectedSeat != null,
+                enabled = nextEnabled,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(if (language == "en") "Finish / Next" else "完成 / 下一步")
