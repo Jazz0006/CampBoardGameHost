@@ -33,7 +33,6 @@ manual_ui_end = """            if (
                 firstNightPool == null && step.displayOptions.isNotEmpty() &&
 """
 manual_ui_replacement = """            if (manualPairCandidates.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
                 OutlinedButton(
                     onClick = { showManualPairSelection = true },
                     modifier = Modifier.fillMaxWidth(),
