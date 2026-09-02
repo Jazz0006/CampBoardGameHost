@@ -57,11 +57,6 @@ internal data class HostTableInteractionState(
     val lockedSeatIds: Set<ClocktowerSeatId> = emptySet(),
 )
 
-internal data class HostTableSpatialSlot(
-    val edge: ClocktowerSquareTableEdge,
-    val indexOnEdge: Int,
-)
-
 internal data class HostTableSeatFrame(
     val seat: HostSeatPresentation,
     val spatialSlot: HostTableSpatialSlot,
@@ -77,15 +72,20 @@ internal data class HostTableSeatFrame(
  * Projects phase-specific Host presentation into the permanent physical table topology.
  *
  * Input order is intentionally ignored. Spatial order is always canonical seat-number order so the
- * same [ClocktowerSeatId] occupies the same edge/slot across Setup, Day, Night and future modes.
+ * same [ClocktowerSeatId] consumes the same position in the supplied deterministic layout across
+ * Setup, Day, Night and future modes.
  */
 internal fun hostTableSeatFrames(
     seats: List<HostSeatPresentation>,
     interaction: HostTableInteractionState,
+    layout: HostTableLayout,
 ): List<HostTableSeatFrame> {
     if (seats.isEmpty()) {
         require(interaction.referencedSeatIds().isEmpty()) {
             "Host-table interaction cannot reference seats when the table is empty"
+        }
+        require(layout.slots.isEmpty()) {
+            "Host-table layout cannot contain slots when the table is empty"
         }
         return emptyList()
     }
@@ -95,6 +95,12 @@ internal fun hostTableSeatFrames(
     val expectedSeatIds = (1..canonicalSeats.size).map(::ClocktowerSeatId)
     require(canonicalSeatIds == expectedSeatIds) {
         "Host-table physical seats must be unique and contiguous from seat 1"
+    }
+    require(layout.slots.size == canonicalSeats.size) {
+        "Host-table layout slot count must match the physical seat count"
+    }
+    require(layout.slots.map { it.ringIndex } == layout.slots.indices.toList()) {
+        "Host-table layout slots must form one deterministic ordered ring"
     }
     require(interaction.selectedSeatIds.distinct().size == interaction.selectedSeatIds.size) {
         "Selected host-table seat identity must be unique"
@@ -106,19 +112,8 @@ internal fun hostTableSeatFrames(
         "Host-table interaction references unknown physical seats: $unknownSeatIds"
     }
 
-    val bridgeSeats = canonicalSeats.map { seat ->
-        ClocktowerSquareTableSeatUiModel(
-            seatId = seat.seatId.renderKey(),
-            seatNumber = seat.seatId.number,
-            label = seat.playerName,
-        )
-    }
-    val spatialSlotsBySeat = clocktowerSquareTablePlacements(bridgeSeats).associate { placement ->
-        ClocktowerSeatId(placement.seat.seatNumber) to HostTableSpatialSlot(
-            edge = placement.edge,
-            indexOnEdge = placement.indexOnEdge,
-        )
-    }
+    val spatialSlotsBySeat = canonicalSeats.zip(layout.slots)
+        .associate { (seat, spatialSlot) -> seat.seatId to spatialSlot }
     val selectionOrderBySeat = interaction.selectedSeatIds
         .mapIndexed { index, seatId -> seatId to index + 1 }
         .toMap()
