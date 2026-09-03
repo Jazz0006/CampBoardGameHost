@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           test "${GITHUB_REF_NAME}" = "codex/ui-r4d2-seating-first-setup"
-          test "$(git rev-parse HEAD^)" = "ceff6a703b44b292aa39f4118b2bbdc94b74c762"
+          test "$(git rev-parse HEAD^)" = "20eefc353ad89619298a4f2f750f6ff1650d48c9"
           test -f tools/r4d2_f4_wire_resolved_display.py
           test -f .github/workflows/r4d2-f4-focused.yml
 
