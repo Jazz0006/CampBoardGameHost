@@ -4410,12 +4410,27 @@ internal fun ClocktowerJudgeScreen(
             automaticStorytellerStyle,
             ClocktowerRegistrationRecommendationOption::style,
         )
-        ClocktowerSpecialDayActionScreen(
+        val klutzTableState = clocktowerKlutzTableState(
+            seats = clocktowerDayOverviewTableState(
+                cards.toClocktowerGameState(
+                    script = script,
+                    seed = gameSeed,
+                    poisonedPlayerName = poisonTarget,
+                ),
+            ).seats,
+            klutzName = pendingKlutzName,
+            alivePlayerNames = publicAliveCards.mapTo(mutableSetOf()) { it.name },
+            choiceName = klutzChoiceName,
+        )
+        ClocktowerKlutzTableScreen(
             round = round,
-            title = text("呆瓜选择", "Klutz choice"),
-            primaryLabel = text("确认呆瓜选择", "Confirm Klutz choice"),
-            primaryEnabled = klutzChoiceName != null && gameOutcome == null,
-            onPrimary = {
+            tableState = klutzTableState,
+            actionsEnabled = gameOutcome == null,
+            onSeatClick = { seatId ->
+                val playerName = klutzTableState.playerNameForSeat(seatId)
+                onSelectKlutzChoice(if (klutzChoiceName == playerName) null else playerName)
+            },
+            onConfirm = {
                 if (
                     automaticStorytellerInfo &&
                     spyCanRegister("Klutz") &&
@@ -4430,55 +4445,36 @@ internal fun ClocktowerJudgeScreen(
                         }
                     }
                 }
-                            recordSpyRegistration(klutzRegistrationKey, listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider), "Klutz")
+                recordSpyRegistration(
+                    klutzRegistrationKey,
+                    listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
+                    "Klutz",
+                )
                 onConfirmKlutzChoice(spyRegistersGood(klutzRegistrationKey, "Klutz"))
             },
-        ) {
-            pendingKlutzName?.let { klutzName ->
-                Surface(
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    shape = RoundedCornerShape(12.dp),
-                ) {
-                    Text(
-                        playerSeatLabel(cards, klutzName),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        fontWeight = FontWeight.Bold,
+            specialContent = {
+                if (klutzRegistrationKey != null && spyCard != null) {
+                    SpyRegistrationPanel(
+                        automaticStorytellerInfo = automaticStorytellerInfo,
+                        automaticStorytellerStyle = automaticStorytellerStyle,
+                        cards = cards,
+                        spy = spyCard,
+                        teams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
+                        registersGood = spyRegistersGood(klutzRegistrationKey, "Klutz"),
+                        registeredRoleEnName = spyRegistrationRole[klutzRegistrationKey],
+                        recommendations = klutzSpyRecommendations,
+                        enabled = spyCanRegister("Klutz"),
+                        onRegistersGoodChange = { good ->
+                            spyRegistrationGood[klutzRegistrationKey] = good
+                            if (good && spyRegistrationRole[klutzRegistrationKey] == null) {
+                                spyRegistrationRole[klutzRegistrationKey] = "Washerwoman"
+                            }
+                        },
+                        onRoleChange = { spyRegistrationRole[klutzRegistrationKey] = it },
                     )
                 }
-            }
-            HostActionSection(title = text("选择一名存活玩家", "Choose a living player")) {
-                SelectablePlayerChips(
-                    cards = publicAliveCards.filter { it.name != pendingKlutzName },
-                    selectedName = klutzChoiceName,
-                    enabled = gameOutcome == null,
-                    allCards = cards,
-                    onSelect = { onSelectKlutzChoice(if (klutzChoiceName == it) null else it) },
-                )
-            }
-            if (klutzRegistrationKey != null && spyCard != null) {
-                SpyRegistrationPanel(
-                    automaticStorytellerInfo = automaticStorytellerInfo,
-                    automaticStorytellerStyle = automaticStorytellerStyle,
-                    cards = cards,
-                    spy = spyCard,
-                    teams = listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
-                    registersGood = spyRegistersGood(klutzRegistrationKey, "Klutz"),
-                    registeredRoleEnName = spyRegistrationRole[klutzRegistrationKey],
-                    recommendations = klutzSpyRecommendations,
-                    enabled = spyCanRegister("Klutz"),
-                    onRegistersGoodChange = { good ->
-                        spyRegistrationGood[klutzRegistrationKey] = good
-                        if (good && spyRegistrationRole[klutzRegistrationKey] == null) {
-                            spyRegistrationRole[klutzRegistrationKey] = "Washerwoman"
-                        }
-                    },
-                    onRoleChange = { spyRegistrationRole[klutzRegistrationKey] = it },
-                )
-            }
-        }
+            },
+        )
         return
     }
 
