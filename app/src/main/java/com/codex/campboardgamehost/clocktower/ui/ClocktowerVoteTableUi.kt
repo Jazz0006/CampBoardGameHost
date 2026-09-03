@@ -38,7 +38,7 @@ internal fun ClocktowerVoteTableScreen(
     nomineeName: String?,
     highestVoteText: String,
     actionsEnabled: Boolean,
-    onConfirm: (ClocktowerConfirmedVoteRecord, ClocktowerGhostVoteAuthority) -> Unit,
+    onConfirm: (ClocktowerTableVoteState) -> Unit,
     onCancel: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
@@ -154,15 +154,7 @@ internal fun ClocktowerVoteTableScreen(
                             textAlign = TextAlign.Center,
                         )
                         Button(
-                            onClick = {
-                                onConfirm(
-                                    voteState.confirmedVoteRecord(),
-                                    voteState.ghostVoteAuthority.confirmVote(
-                                        selectedVoterSeatIds = voteState.selectedVoterSeatIds,
-                                        seats = voteState.seats,
-                                    ),
-                                )
-                            },
+                            onClick = { onConfirm(voteState) },
                             enabled = actionsEnabled,
                             modifier = Modifier
                                 .fillMaxWidth()
