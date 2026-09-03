@@ -1,0 +1,71 @@
+name: R4D-5.1 nomination gesture GREEN
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d5-nomination-gesture
+
+permissions:
+  contents: write
+
+jobs:
+  green:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+      - run: chmod +x ./gradlew
+      - name: Guard stacked baseline
+        run: |
+          git merge-base --is-ancestor 683fb734af07ddafd7c3f2de094b98c03b0be538 HEAD
+      - name: Apply exact R4D-5.1 patch
+        run: |
+          python .github/scripts/r4d5_1_patch.py
+          python .github/scripts/r4d5_1_compile_fix.py
+      - name: Focused gesture and table contracts
+        run: |
+          ./gradlew :app:testDebugUnitTest \
+            --tests com.codex.campboardgamehost.ClocktowerDayNominationGestureTest \
+            --tests com.codex.campboardgamehost.ClocktowerDayOverviewTableStateTest \
+            --tests com.codex.campboardgamehost.ClocktowerHostTableContractTest \
+            --tests com.codex.campboardgamehost.ClocktowerSquareTableSeatLayoutTest \
+            --tests com.codex.campboardgamehost.ClocktowerRoundedRectanglePerimeterLayoutTest \
+            --no-daemon --build-cache
+      - name: Fast suite
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+      - name: Remove temporary validation files
+        run: |
+          rm .github/scripts/r4d5_1_patch.py
+          rm .github/scripts/r4d5_1_compile_fix.py
+          rm .github/workflows/r4d5-1-nomination-gesture-green.yml
+      - name: Exact permanent diff audit
+        run: |
+          git add -N \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerDayNominationGesture.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerPendingNominationTableUi.kt
+          git diff --check 683fb734af07ddafd7c3f2de094b98c03b0be538
+          git diff --name-only 683fb734af07ddafd7c3f2de094b98c03b0be538 | sort > /tmp/actual.txt
+          cat > /tmp/expected.txt <<'EOF'
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerDayNominationGesture.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayOverviewTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerPendingNominationTableUi.kt
+          app/src/test/java/com/codex/campboardgamehost/ClocktowerDayNominationGestureTest.kt
+          EOF
+          sed -i 's/^          //' /tmp/expected.txt
+          diff -u /tmp/expected.txt /tmp/actual.txt
+      - name: Commit validated product checkpoint
+        run: |
+          git add -A
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "feat(R4D-5.1): add directional day nomination gesture"
+          git push origin HEAD:codex/ui-r4d5-nomination-gesture
