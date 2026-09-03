@@ -1,0 +1,74 @@
+name: R4D-6.2 Artist Table Migration
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d6-2-artist-table-selection
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Verify stacked parent and protected Host blob
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a0d08a5b2c35dc5f9576c87391cebd40a256674f
+          HOST=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          test "$(git hash-object "$HOST")" = "7355fb7086229fd51c84c0fc87a21f56a5512f3c"
+
+      - name: Apply exact active Artist migration
+        run: python3 .github/scripts/r4d6_2_patch.py
+
+      - name: Focused Artist and shared table regressions
+        run: |
+          ./gradlew :app:testDebugUnitTest --no-daemon --build-cache \
+            --tests com.codex.campboardgamehost.ClocktowerArtistTableStateTest \
+            --tests com.codex.campboardgamehost.ClocktowerDayOverviewTableStateTest \
+            --tests com.codex.campboardgamehost.ClocktowerHostTableContractTest \
+            --tests com.codex.campboardgamehost.ClocktowerSquareTableSeatLayoutTest \
+            --tests com.codex.campboardgamehost.ClocktowerSlayerTableStateTest
+
+      - name: Fast suite
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Remove temporary files and audit exact permanent diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a0d08a5b2c35dc5f9576c87391cebd40a256674f
+          rm .github/scripts/r4d6_2_patch.py
+          rm .github/workflows/r4d6-2-artist-table.yml
+          expected=$(cat <<'EOF'
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerArtistTableState.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerArtistTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          app/src/test/java/com/codex/campboardgamehost/ClocktowerArtistTableStateTest.kt
+          EOF
+          )
+          actual=$(git diff --name-only "$BASE" -- | sort)
+          test "$actual" = "$expected"
+          git diff --check "$BASE" --
+
+      - name: Commit validated product checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat(R4D-6.2): migrate Artist claimant to persistent table"
+          git push origin HEAD:codex/ui-r4d6-2-artist-table-selection
