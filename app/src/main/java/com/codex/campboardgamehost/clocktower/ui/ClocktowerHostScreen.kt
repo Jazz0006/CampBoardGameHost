@@ -4155,12 +4155,40 @@ internal fun ClocktowerJudgeScreen(
             automaticStorytellerStyle,
             ClocktowerRegistrationRecommendationOption::style,
         )
-        ClocktowerSpecialDayActionScreen(
+        val slayerTableState = clocktowerSlayerTableState(
+            seats = clocktowerDayOverviewTableState(
+                cards.toClocktowerGameState(
+                    script = script,
+                    seed = gameSeed,
+                    poisonedPlayerName = poisonTarget,
+                ),
+            ).seats,
+            claimantCandidateNames = slayerClaimantCandidates.mapTo(mutableSetOf()) { it.name },
+            alivePlayerNames = publicAliveCards.mapTo(mutableSetOf()) { it.name },
+            claimantName = slayerClaimantName,
+            targetName = slayerTargetName,
+        )
+        ClocktowerSlayerTableScreen(
             round = round,
-            title = text("杀手行动", "Slayer action"),
-            primaryLabel = text("结算杀手行动", "Resolve Slayer action"),
-            primaryEnabled = slayerClaimantName != null && slayerTargetName != null && gameOutcome == null,
-            onPrimary = {
+            tableState = slayerTableState,
+            actionsEnabled = gameOutcome == null,
+            onSeatClick = { seatId ->
+                val selectedName = slayerTableState.playerNameForSeat(seatId)
+                if (slayerClaimantName == null) {
+                    slayerClaimantName = selectedName
+                    slayerTargetName = null
+                    slayerRecluseRegistersDemon = false
+                } else {
+                    slayerTargetName = if (slayerTargetName == selectedName) null else selectedName
+                    slayerRecluseRegistersDemon = false
+                }
+            },
+            onResetClaimant = {
+                slayerClaimantName = null
+                slayerTargetName = null
+                slayerRecluseRegistersDemon = false
+            },
+            onResolve = {
                 val claimantName = slayerClaimantName
                 val targetName = slayerTargetName
                 if (claimantName != null && targetName != null) {
@@ -4189,53 +4217,7 @@ internal fun ClocktowerJudgeScreen(
                 slayerRecluseRegistersDemon = false
                 dayMode = ClocktowerDayMode.Overview
             },
-        ) {
-            if (slayerClaimantCandidates.isEmpty()) {
-                Text(
-                    text("没有可用的杀手声称者", "No eligible Slayer claimant"),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                HostActionSection(title = text("谁声称发动杀手能力？", "Who claims the Slayer ability?")) {
-                    SelectablePlayerChips(
-                        cards = slayerClaimantCandidates,
-                        selectedName = slayerClaimantName,
-                        enabled = gameOutcome == null,
-                        allCards = cards,
-                        onSelect = {
-                            slayerClaimantName = if (slayerClaimantName == it) null else it
-                            if (slayerTargetName == it) slayerTargetName = null
-                        },
-                    )
-                }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
-                HostActionSection(title = text("选择目标", "Choose target")) {
-                    SelectablePlayerChips(
-                        cards = publicAliveCards.filter { it.name != slayerClaimantName },
-                        selectedName = slayerTargetName,
-                        enabled = gameOutcome == null,
-                        allCards = cards,
-                        onSelect = {
-                            slayerTargetName = if (slayerTargetName == it) null else it
-                            slayerRecluseRegistersDemon = false
-                        },
-                    )
-                }
-                if (slayerClaimantName != null && slayerTargetName != null) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                        shape = RoundedCornerShape(12.dp),
-                    ) {
-                        Text(
-                            "${playerSeatLabel(cards, slayerClaimantName)} → ${playerSeatLabel(cards, slayerTargetName)}",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                }
+            specialContent = {
                 if (slayerTargetCard?.clocktowerRole?.enName == "Recluse") {
                     val slayerRecluse = slayerTargetCard
                     RecluseRegistrationPanel(
@@ -4252,8 +4234,8 @@ internal fun ClocktowerJudgeScreen(
                         onRoleChange = {},
                     )
                 }
-            }
-        }
+            },
+        )
         return
     }
 
