@@ -9,8 +9,8 @@ pattern = re.compile(
     re.S,
 )
 matches = list(pattern.finditer(text))
-if len(matches) < 2:
-    raise SystemExit(f'Expected active + legacy Klutz blocks, found {len(matches)}')
+if len(matches) != 1:
+    raise SystemExit(f'Expected exactly one active early-return Klutz block, found {len(matches)}')
 
 replacement = '''    if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Klutz) {
         val klutzChoiceCard = cards.firstOrNull { it.name == klutzChoiceName }
