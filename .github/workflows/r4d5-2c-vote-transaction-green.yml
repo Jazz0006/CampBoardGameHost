@@ -1,0 +1,73 @@
+name: R4D-5.2C Vote Transaction GREEN
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d5-2c-vote-transaction
+
+permissions:
+  contents: write
+
+jobs:
+  green:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+
+      - name: Verify exact branch and Host blob
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt)" = "3c09a03d5f1150d59550f07eda22f66fe1f20629"
+          git fetch origin codex/ui-r4d5-3-vote-detail-history --depth=1
+          test "$(git rev-parse FETCH_HEAD)" = "3f9a12530156d41db25ccfe263f0d8414c0b8bc7"
+
+      - name: Apply exact Host transaction patch
+        run: python3 .github/scripts/r4d5_2c_vote_transaction_patch.py
+
+      - name: Focused vote transaction regressions
+        run: |
+          ./gradlew :app:testDebugUnitTest \
+            --tests com.codex.campboardgamehost.ClocktowerVoteTransactionTest \
+            --tests com.codex.campboardgamehost.ClocktowerVoteHistoryRecordTest \
+            --tests com.codex.campboardgamehost.ClocktowerGhostVoteAuthorityTest \
+            --tests com.codex.campboardgamehost.ClocktowerTableVoteStateTest \
+            --no-daemon --build-cache --rerun-tasks
+
+      - name: Fast suite
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Remove temporary files and audit exact permanent diff
+        run: |
+          set -euo pipefail
+          git rm .github/scripts/r4d5_2c_vote_transaction_patch.py
+          git rm .github/workflows/r4d5-2c-vote-transaction-green.yml
+          git diff --check 3f9a12530156d41db25ccfe263f0d8414c0b8bc7
+          actual="$(git diff --name-only 3f9a12530156d41db25ccfe263f0d8414c0b8bc7 | sort)"
+          expected="$(printf '%s\n' \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerVoteTransaction.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt \
+            app/src/test/java/com/codex/campboardgamehost/ClocktowerVoteTransactionTest.kt | sort)"
+          test "$actual" = "$expected"
+          test "$(grep -c 'fun recordCurrentVote()' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt || true)" = "0"
+          test "$(grep -c 'commitClocktowerVoteTransaction(' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt)" = "1"
+
+      - name: Commit validated product checkpoint
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "refactor(R4D-5.2C): route vote confirmation through transaction"
+          git push origin HEAD:${GITHUB_REF_NAME}
