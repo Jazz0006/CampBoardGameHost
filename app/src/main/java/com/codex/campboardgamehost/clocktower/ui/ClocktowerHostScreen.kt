@@ -4304,29 +4304,35 @@ internal fun ClocktowerJudgeScreen(
                 onSelectArtistShownAnswer(automaticArtistAnswer)
             }
         }
-        ClocktowerSpecialDayActionScreen(
+        val artistTableState = clocktowerArtistTableState(
+            seats = clocktowerDayOverviewTableState(
+                cards.toClocktowerGameState(
+                    script = script,
+                    seed = gameSeed,
+                    poisonedPlayerName = poisonTarget,
+                ),
+            ).seats,
+            claimantCandidateNames = artistClaimantCandidates.mapTo(mutableSetOf()) { it.name },
+            claimantName = artistClaimantName,
+        )
+        ClocktowerArtistTableScreen(
             round = round,
-            title = text("艺术家提问", "Artist question"),
-            primaryLabel = text("记录艺术家提问", "Record Artist question"),
+            tableState = artistTableState,
+            actionsEnabled = gameOutcome == null,
             primaryEnabled = artistClaimantName != null &&
                 artistTruthfulAnswer != null &&
                 artistShownAnswer != null &&
                 gameOutcome == null,
+            onSeatClick = { seatId ->
+                val claimant = artistTableState.playerNameForSeat(seatId)
+                onSelectArtistClaimant(if (artistClaimantName == claimant) null else claimant)
+            },
             onPrimary = onConfirmArtistQuestion,
             onBack = {
                 onSelectArtistClaimant(null)
                 dayMode = ClocktowerDayMode.Overview
             },
         ) {
-            HostActionSection(title = text("选择提问者", "Choose claimant")) {
-                SelectablePlayerChips(
-                    cards = artistClaimantCandidates,
-                    selectedName = artistClaimantName,
-                    enabled = gameOutcome == null,
-                    allCards = cards,
-                    onSelect = { onSelectArtistClaimant(if (artistClaimantName == it) null else it) },
-                )
-            }
             if (artistClaimant != null) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
                 HostActionSection(title = text("问题的真实答案", "Truthful answer")) {
