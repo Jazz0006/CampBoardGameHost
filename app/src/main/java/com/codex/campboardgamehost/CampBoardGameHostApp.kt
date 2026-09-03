@@ -340,14 +340,22 @@ private fun Context.saveStorytellerAutomationMode(mode: StorytellerAutomationMod
 }
 
 private fun Context.loadCommonPlayers(): List<String> {
-    val raw = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(COMMON_PLAYERS_KEY, null) ?: return emptyList()
-    return runCatching {
-        val json = JSONArray(raw)
-        List(json.length()) { index -> json.getString(index) }
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .distinct()
-    }.getOrDefault(emptyList())
+    val preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val hasStoredPlayers = preferences.contains(COMMON_PLAYERS_KEY)
+    val raw = preferences.getString(COMMON_PLAYERS_KEY, null)
+    val storedPlayers = raw?.let { encoded ->
+        runCatching {
+            val json = JSONArray(encoded)
+            List(json.length()) { index -> json.getString(index) }
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
+        }.getOrElse { emptyList() }
+    } ?: emptyList()
+    return resolveInitialCommonPlayers(
+        hasStoredPlayers = hasStoredPlayers,
+        storedPlayers = storedPlayers,
+    )
 }
 
 private fun Context.saveCommonPlayers(players: List<String>) {
