@@ -1,0 +1,68 @@
+name: R4D2 F3 Roadmap Closeout
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d2-seating-first-setup
+
+permissions:
+  contents: write
+
+jobs:
+  closeout:
+    if: "${{ github.event.head_commit.message == 'docs: run temporary F3 roadmap closeout' }}"
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: codex/ui-r4d2-seating-first-setup
+      TARGET: docs/CURRENT_DEVELOPMENT_ROADMAP.md
+      EXPECTED_TARGET_BLOB: cc23c9f647530b1a51747b7816b6aadbb9187b10
+      SCRIPT: .github/scripts/r4d2_f3_roadmap_closeout.py
+      WORKFLOW: .github/workflows/r4d2-f3-roadmap-closeout.yml
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact remote checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          remote_head="$(git ls-remote origin "refs/heads/${BRANCH}" | awk '{print $1}')"
+          test "$remote_head" = "${GITHUB_SHA}"
+          test "$(git hash-object "$TARGET")" = "$EXPECTED_TARGET_BLOB"
+          test -f "$SCRIPT"
+
+      - name: Patch roadmap
+        run: python "$SCRIPT"
+
+      - name: Audit roadmap-only diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git diff --name-only)" = "$TARGET"
+          git diff --check
+          grep -F 'UI-R4D-2F / F4 — Manual pair resolved-display transition RED -> GREEN' "$TARGET"
+          grep -F '#### F3 — seating return / Android Back — COMPLETE' "$TARGET"
+          grep -F 'F3 executable cleanup head `5c0027eb180ee5c95ca52ee8cca03d7204258c61`' "$TARGET"
+
+      - name: Commit roadmap and self-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          remote_head="$(git ls-remote origin "refs/heads/${BRANCH}" | awk '{print $1}')"
+          test "$remote_head" = "${GITHUB_SHA}"
+
+          git add "$TARGET"
+          git commit -m 'docs: close F3 and activate F4'
+          docs_sha="$(git rev-parse HEAD)"
+          git push origin "HEAD:${BRANCH}"
+
+          git rm "$SCRIPT" "$WORKFLOW"
+          git commit -m 'chore: remove temporary F3 roadmap closeout'
+          git push origin "HEAD:${BRANCH}"
+
+          echo "Roadmap checkpoint: $docs_sha"
