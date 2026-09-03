@@ -131,70 +131,108 @@ private fun ClocktowerPairPlayerRevealContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            presentation.seats.forEach { seat ->
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(Color(0xFF1B1F25), RoundedCornerShape(18.dp))
-                        .padding(horizontal = 10.dp, vertical = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Text(
-                        text = clocktowerSeatNumberLabel(seat.seatId.number, language),
-                        color = Color(0xFFC5A56A),
-                        fontSize = 64.sp,
-                        fontWeight = FontWeight.Black,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                    )
-                    Text(
-                        text = seat.playerName,
-                        color = Color(0xFFF7F1E6),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        maxLines = 2,
-                    )
-                }
-            }
-        }
-
         when (presentation.displayKind) {
+            ClocktowerDisplayKind.EitherOne -> {
+                ClocktowerPairPlayerRevealPrimary(presentation)
+                ClocktowerPairPlayerRevealFooter(presentation)
+                ClocktowerPairPlayerRevealSeats(presentation, language)
+            }
+
             ClocktowerDisplayKind.Number,
             ClocktowerDisplayKind.YesNo,
-            -> Text(
-                text = presentation.primary,
-                color = Color(0xFFC5A56A),
-                fontSize = 60.sp,
-                fontWeight = FontWeight.Black,
-                textAlign = TextAlign.Center,
-            )
+            -> {
+                ClocktowerPairPlayerRevealFooter(presentation)
+                ClocktowerPairPlayerRevealSeats(presentation, language)
+                ClocktowerPairPlayerRevealPrimary(presentation)
+            }
 
-            ClocktowerDisplayKind.EitherOne -> Text(
-                text = presentation.primary,
-                color = Color(0xFFF7F1E6),
-                fontSize = 38.sp,
-                fontWeight = FontWeight.Black,
-                textAlign = TextAlign.Center,
-            )
-
-            else -> Unit
+            else -> {
+                ClocktowerPairPlayerRevealSeats(presentation, language)
+                ClocktowerPairPlayerRevealPrimary(presentation)
+                ClocktowerPairPlayerRevealFooter(presentation)
+            }
         }
+    }
+}
 
-        presentation.footer?.let { footer ->
-            Text(
-                text = footer,
-                color = Color(0xFFAAA397),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-            )
+@Composable
+private fun ClocktowerPairPlayerRevealSeats(
+    presentation: ClocktowerPairPlayerRevealPresentation,
+    language: String,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        presentation.seats.forEach { seat ->
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .background(Color(0xFF1B1F25), RoundedCornerShape(18.dp))
+                    .padding(horizontal = 10.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    text = clocktowerSeatNumberLabel(seat.seatId.number, language),
+                    color = Color(0xFFC5A56A),
+                    fontSize = 64.sp,
+                    fontWeight = FontWeight.Black,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                )
+                Text(
+                    text = seat.playerName,
+                    color = Color(0xFFF7F1E6),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun ClocktowerPairPlayerRevealPrimary(
+    presentation: ClocktowerPairPlayerRevealPresentation,
+) {
+    when (presentation.displayKind) {
+        ClocktowerDisplayKind.Number,
+        ClocktowerDisplayKind.YesNo,
+        -> Text(
+            text = presentation.primary,
+            color = Color(0xFFC5A56A),
+            fontSize = 60.sp,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+        )
+
+        ClocktowerDisplayKind.EitherOne -> Text(
+            text = presentation.primary,
+            color = Color(0xFFF7F1E6),
+            fontSize = 38.sp,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+        )
+
+        else -> Unit
+    }
+}
+
+@Composable
+private fun ClocktowerPairPlayerRevealFooter(
+    presentation: ClocktowerPairPlayerRevealPresentation,
+) {
+    presentation.footer?.let { footer ->
+        Text(
+            text = footer,
+            color = Color(0xFFAAA397),
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
