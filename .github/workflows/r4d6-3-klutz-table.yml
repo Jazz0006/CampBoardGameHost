@@ -1,0 +1,64 @@
+name: R4D-6.3 Klutz Table Migration
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d6-3-klutz-table-selection
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Verify stacked parent
+        run: |
+          set -euo pipefail
+          BASE=fe2e2052ba5802f7b022d20e64ecc09a5e8517c3
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+
+      - name: Apply active Klutz table migration
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/r4d6_3_klutz_table_patch.py
+          git diff --check
+
+      - name: Fast regression suite
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Remove temporary files and audit exact permanent diff
+        run: |
+          set -euo pipefail
+          BASE=fe2e2052ba5802f7b022d20e64ecc09a5e8517c3
+          rm .github/scripts/r4d6_3_klutz_table_patch.py
+          rm .github/workflows/r4d6-3-klutz-table.yml
+          git add -A
+          git diff --cached --check
+          mapfile -t files < <(git diff --cached --name-only "$BASE" | sort)
+          expected=(
+            "app/src/main/java/com/codex/campboardgamehost/ClocktowerKlutzTableState.kt"
+            "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt"
+            "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerKlutzTableUi.kt"
+          )
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          printf 'Permanent diff:\n%s\n' "${files[*]}"
+          test "${#files[@]}" -eq "${#expected_sorted[@]}"
+          diff -u <(printf '%s\n' "${expected_sorted[@]}") <(printf '%s\n' "${files[@]}")
+
+      - name: Commit validated product checkpoint
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m 'feat(R4D-6.3): migrate Klutz choice to persistent table'
+          git push origin HEAD:codex/ui-r4d6-3-klutz-table-selection
