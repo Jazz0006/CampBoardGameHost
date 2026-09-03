@@ -298,11 +298,13 @@ internal fun ClocktowerJudgeScreen(
     nominatorNameState: MutableState<String?>,
     nomineeNameState: MutableState<String?>,
     currentVoteCountState: MutableState<Int>,
+    ghostVoteAuthority: ClocktowerGhostVoteAuthority,
     highestVoteNameState: MutableState<String?>,
     highestVoteCountState: MutableState<Int>,
     slayerClaimantNameState: MutableState<String?>,
     slayerTargetNameState: MutableState<String?>,
     gameOutcome: GameOutcome?,
+    onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,
     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
     onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
     onPhaseChange: (ClocktowerPhase) -> Unit,
@@ -4074,6 +4076,7 @@ internal fun ClocktowerJudgeScreen(
         ClocktowerVoteTableScreen(
             round = round,
             cards = cards,
+            ghostVoteAuthority = ghostVoteAuthority,
             tableState = clocktowerDayOverviewTableState(
                 cards.toClocktowerGameState(
                     script = script,
@@ -4086,7 +4089,8 @@ internal fun ClocktowerJudgeScreen(
             nomineeName = nomineeName,
             highestVoteText = highestVoteText,
             actionsEnabled = gameOutcome == null,
-            onConfirm = { selectedVoterSeatIds ->
+            onConfirm = { selectedVoterSeatIds, confirmedGhostVoteAuthority ->
+                onGhostVoteAuthorityChange(confirmedGhostVoteAuthority)
                 currentVoteCount = selectedVoterSeatIds.size
                 recordVoteEvent()
                 recordCurrentVote()

@@ -956,6 +956,7 @@ internal fun CampBoardGameHostApp() {
     val clocktowerNominatorNameState = remember { mutableStateOf<String?>(null) }
     val clocktowerNomineeNameState = remember { mutableStateOf<String?>(null) }
     val clocktowerCurrentVoteCountState = remember { mutableStateOf(0) }
+    val clocktowerGhostVoteAuthorityState = remember { mutableStateOf(ClocktowerGhostVoteAuthority()) }
     val clocktowerHighestVoteNameState = remember { mutableStateOf<String?>(null) }
     val clocktowerHighestVoteCountState = remember { mutableStateOf(0) }
     val clocktowerSlayerClaimantNameState = remember { mutableStateOf<String?>(null) }
@@ -1722,6 +1723,10 @@ internal fun CampBoardGameHostApp() {
         putNullableString("clocktowerNominatorName", clocktowerNominatorNameState.value)
         putNullableString("clocktowerNomineeName", clocktowerNomineeNameState.value)
         put("clocktowerCurrentVoteCount", clocktowerCurrentVoteCountState.value)
+        put(
+            ClocktowerGhostVoteAuthorityPersistence.ROOT_KEY,
+            ClocktowerGhostVoteAuthorityPersistence.encode(clocktowerGhostVoteAuthorityState.value),
+        )
         putNullableString("clocktowerHighestVoteName", clocktowerHighestVoteNameState.value)
         put("clocktowerHighestVoteCount", clocktowerHighestVoteCountState.value)
         putNullableString("clocktowerSlayerClaimantName", clocktowerSlayerClaimantNameState.value)
@@ -2065,6 +2070,7 @@ internal fun CampBoardGameHostApp() {
             clocktowerNominatorNameState.value = json.optNullableString("clocktowerNominatorName")
             clocktowerNomineeNameState.value = json.optNullableString("clocktowerNomineeName")
             clocktowerCurrentVoteCountState.value = json.optInt("clocktowerCurrentVoteCount", 0).coerceAtLeast(0)
+            clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthorityPersistence.decode(json)
             clocktowerHighestVoteNameState.value = json.optNullableString("clocktowerHighestVoteName")
             clocktowerHighestVoteCountState.value = json.optInt("clocktowerHighestVoteCount", 0).coerceAtLeast(0)
             clocktowerSlayerClaimantNameState.value = json.optNullableString("clocktowerSlayerClaimantName")
@@ -2269,6 +2275,7 @@ internal fun CampBoardGameHostApp() {
         clocktowerPendingKlutzName = null
         clocktowerKlutzChoiceName = null
         clocktowerKlutzReturnToDawn = false
+        clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
         resetClocktowerFlow()
         screen = Screen.PassPhone
         persistActiveGameStateIfNeeded()
@@ -3073,6 +3080,8 @@ internal fun CampBoardGameHostApp() {
                         nominatorNameState = clocktowerNominatorNameState,
                         nomineeNameState = clocktowerNomineeNameState,
                         currentVoteCountState = clocktowerCurrentVoteCountState,
+                        ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,
+                        onGhostVoteAuthorityChange = { clocktowerGhostVoteAuthorityState.value = it },
                         highestVoteNameState = clocktowerHighestVoteNameState,
                         highestVoteCountState = clocktowerHighestVoteCountState,
                         slayerClaimantNameState = clocktowerSlayerClaimantNameState,
