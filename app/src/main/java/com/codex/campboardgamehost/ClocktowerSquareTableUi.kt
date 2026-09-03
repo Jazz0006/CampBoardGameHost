@@ -206,6 +206,22 @@ internal fun ClocktowerSquareTableSeatSurface(
         }
         val seatCardWidth = resolvedLayout.constraints.seatCardWidth
         val seatCardHeight = resolvedLayout.constraints.seatCardHeight
+        val tabletopGeometry = remember(resolvedLayout.constraints) {
+            hostTableTabletopGeometry(resolvedLayout.constraints)
+        }
+
+        Surface(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(tabletopGeometry.width.dp)
+                .height(tabletopGeometry.height.dp),
+            shape = RoundedCornerShape(tabletopGeometry.cornerRadius.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.32f),
+            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outlineVariant),
+            tonalElevation = 2.dp,
+        ) {
+            Box(modifier = Modifier.fillMaxSize())
+        }
 
         placements.forEach { placement ->
             key(placement.seat.motionKey) {

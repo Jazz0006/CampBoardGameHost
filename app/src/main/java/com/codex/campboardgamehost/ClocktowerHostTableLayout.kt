@@ -1,6 +1,9 @@
 package com.codex.campboardgamehost
 
-import kotlin.math.floor
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 
 /**
  * Pure geometry inputs for the persistent Storyteller table.
@@ -60,8 +63,8 @@ internal data class HostTableLayoutConstraints(
 /**
  * One deterministic point on the clockwise physical table ring.
  *
- * [ringIndex] is the shared ordering authority for rendering and future drag insertion. Coordinates
- * are seat-card centers in the same units as [HostTableLayoutConstraints].
+ * [ringIndex] is the shared ordering authority for rendering and drag insertion. Coordinates are
+ * seat-card centers in the same units as [HostTableLayoutConstraints].
  */
 internal data class HostTableSpatialSlot(
     val ringIndex: Int,
@@ -77,10 +80,47 @@ internal data class HostTableLayout(
 )
 
 /**
- * Computes a capacity-aware clockwise slot ring from actual geometry.
+ * Geometry for the visible tabletop inside the seat-card ring.
  *
- * Horizontal and vertical edge capacities are deliberately independent. Portrait layouts therefore
- * naturally place more seats on the longer left/right edges without per-player-count tables.
+ * Keeping this separate from Compose styling means future wood/cloth/shadow treatments can change
+ * without creating a second seat-position authority.
+ */
+internal data class HostTableTabletopGeometry(
+    val width: Float,
+    val height: Float,
+    val cornerRadius: Float,
+)
+
+internal fun hostTableTabletopGeometry(
+    constraints: HostTableLayoutConstraints,
+): HostTableTabletopGeometry {
+    val width = (
+        constraints.availableWidth -
+            2f * (constraints.seatCardWidth + constraints.minimumSafeSeparation)
+        ).coerceAtLeast(0f)
+    val height = (
+        constraints.availableHeight -
+            2f * (constraints.seatCardHeight + constraints.minimumSafeSeparation)
+        ).coerceAtLeast(0f)
+    val cornerRadius = minOf(
+        maxOf(constraints.seatCardWidth, constraints.seatCardHeight) / 2f,
+        width / 2f,
+        height / 2f,
+    ).coerceAtLeast(0f)
+
+    return HostTableTabletopGeometry(
+        width = width,
+        height = height,
+        cornerRadius = cornerRadius,
+    )
+}
+
+/**
+ * Computes one capacity-aware clockwise slot ring from a continuous rounded-rectangle path.
+ *
+ * Every player is sampled at the same path-length interval around the complete perimeter. The
+ * resulting [HostTableSpatialSlot] list remains the single authority shared by rendering and drag
+ * hit testing.
  */
 internal fun hostTableLayout(
     playerCount: Int,
@@ -89,107 +129,25 @@ internal fun hostTableLayout(
     require(playerCount >= 0) { "Host-table player count cannot be negative" }
     if (playerCount == 0) return HostTableLayout(constraints, emptyList())
 
-    val horizontalCenterStart = constraints.seatCardWidth / 2f
-    val horizontalCenterEnd = constraints.availableWidth - constraints.seatCardWidth / 2f
-
-    // Reserve one top/bottom seat-card band plus the requested separation before side-edge seats.
-    // This prevents a side seat from colliding with a horizontal seat at either corner.
-    val verticalCenterInset = constraints.seatCardHeight * 1.5f + constraints.minimumSafeSeparation
-    val verticalCenterStart = verticalCenterInset
-    val verticalCenterEnd = constraints.availableHeight - verticalCenterInset
-
-    val horizontalCapacity = edgeCapacity(
-        centerSpan = horizontalCenterEnd - horizontalCenterStart,
-        cardExtent = constraints.seatCardWidth,
-        minimumSafeSeparation = constraints.minimumSafeSeparation,
-    )
-    val verticalCapacity = edgeCapacity(
-        centerSpan = verticalCenterEnd - verticalCenterStart,
-        cardExtent = constraints.seatCardHeight,
-        minimumSafeSeparation = constraints.minimumSafeSeparation,
-    )
-    val edgeCapacities = intArrayOf(
-        horizontalCapacity,
-        verticalCapacity,
-        horizontalCapacity,
-        verticalCapacity,
-    )
-    require(edgeCapacities.sum() >= playerCount) {
-        "Host-table perimeter capacity ${edgeCapacities.sum()} is insufficient for $playerCount players"
+    val perimeter = RoundedRectangleSeatPerimeter(constraints)
+    val pathStep = perimeter.totalLength / playerCount.toFloat()
+    val nextIndexOnEdge = IntArray(ClocktowerSquareTableEdge.values().size)
+    val slots = List(playerCount) { ringIndex ->
+        val point = perimeter.pointAt(pathStep * ringIndex)
+        val edgeIndex = point.edge.ordinal
+        HostTableSpatialSlot(
+            ringIndex = ringIndex,
+            edge = point.edge,
+            indexOnEdge = nextIndexOnEdge[edgeIndex]++,
+            centerX = point.x,
+            centerY = point.y,
+        )
     }
 
-    val edgeCounts = allocateEdgeCounts(
-        playerCount = playerCount,
-        edgeCapacities = edgeCapacities,
+    requireSafeSeatSeparation(
+        slots = slots,
+        constraints = constraints,
     )
-
-    val topX = evenlySpacedCenters(
-        count = edgeCounts[ClocktowerSquareTableEdge.Top.ordinal],
-        start = horizontalCenterStart,
-        end = horizontalCenterEnd,
-    )
-    val rightY = evenlySpacedCenters(
-        count = edgeCounts[ClocktowerSquareTableEdge.Right.ordinal],
-        start = verticalCenterStart,
-        end = verticalCenterEnd,
-    )
-    val bottomX = evenlySpacedCenters(
-        count = edgeCounts[ClocktowerSquareTableEdge.Bottom.ordinal],
-        start = horizontalCenterEnd,
-        end = horizontalCenterStart,
-    )
-    val leftY = evenlySpacedCenters(
-        count = edgeCounts[ClocktowerSquareTableEdge.Left.ordinal],
-        start = verticalCenterEnd,
-        end = verticalCenterStart,
-    )
-
-    val slots = buildList(playerCount) {
-        topX.forEachIndexed { indexOnEdge, centerX ->
-            add(
-                HostTableSpatialSlot(
-                    ringIndex = size,
-                    edge = ClocktowerSquareTableEdge.Top,
-                    indexOnEdge = indexOnEdge,
-                    centerX = centerX,
-                    centerY = constraints.seatCardHeight / 2f,
-                ),
-            )
-        }
-        rightY.forEachIndexed { indexOnEdge, centerY ->
-            add(
-                HostTableSpatialSlot(
-                    ringIndex = size,
-                    edge = ClocktowerSquareTableEdge.Right,
-                    indexOnEdge = indexOnEdge,
-                    centerX = constraints.availableWidth - constraints.seatCardWidth / 2f,
-                    centerY = centerY,
-                ),
-            )
-        }
-        bottomX.forEachIndexed { indexOnEdge, centerX ->
-            add(
-                HostTableSpatialSlot(
-                    ringIndex = size,
-                    edge = ClocktowerSquareTableEdge.Bottom,
-                    indexOnEdge = indexOnEdge,
-                    centerX = centerX,
-                    centerY = constraints.availableHeight - constraints.seatCardHeight / 2f,
-                ),
-            )
-        }
-        leftY.forEachIndexed { indexOnEdge, centerY ->
-            add(
-                HostTableSpatialSlot(
-                    ringIndex = size,
-                    edge = ClocktowerSquareTableEdge.Left,
-                    indexOnEdge = indexOnEdge,
-                    centerX = constraints.seatCardWidth / 2f,
-                    centerY = centerY,
-                ),
-            )
-        }
-    }
 
     return HostTableLayout(
         constraints = constraints,
@@ -197,49 +155,156 @@ internal fun hostTableLayout(
     )
 }
 
-private fun edgeCapacity(
-    centerSpan: Float,
-    cardExtent: Float,
-    minimumSafeSeparation: Float,
-): Int {
-    if (centerSpan < 0f) return 0
-    val pitch = cardExtent + minimumSafeSeparation
-    return floor(centerSpan / pitch).toInt() + 1
-}
+private data class RoundedPerimeterPoint(
+    val x: Float,
+    val y: Float,
+    val edge: ClocktowerSquareTableEdge,
+)
 
-/**
- * Fill the least-used fraction of each edge capacity first. This keeps opposite edges balanced when
- * possible while still allowing a longer edge to absorb proportionally more seats.
- */
-private fun allocateEdgeCounts(
-    playerCount: Int,
-    edgeCapacities: IntArray,
-): IntArray {
-    val counts = IntArray(edgeCapacities.size)
-    repeat(playerCount) {
-        val nextEdge = edgeCapacities.indices
-            .filter { edgeIndex -> counts[edgeIndex] < edgeCapacities[edgeIndex] }
-            .minWithOrNull(
-                compareBy<Int>(
-                    { edgeIndex -> counts[edgeIndex].toDouble() / edgeCapacities[edgeIndex].toDouble() },
-                    { edgeIndex -> edgeIndex },
-                ),
-            )
-            ?: error("Host-table capacity allocation exhausted unexpectedly")
-        counts[nextEdge] += 1
+private class RoundedRectangleSeatPerimeter(
+    constraints: HostTableLayoutConstraints,
+) {
+    private val left = constraints.seatCardWidth / 2f
+    private val top = constraints.seatCardHeight / 2f
+    private val right = constraints.availableWidth - constraints.seatCardWidth / 2f
+    private val bottom = constraints.availableHeight - constraints.seatCardHeight / 2f
+    private val pathWidth = right - left
+    private val pathHeight = bottom - top
+    private val radius = minOf(
+        maxOf(constraints.seatCardWidth, constraints.seatCardHeight) +
+            constraints.minimumSafeSeparation,
+        pathWidth / 2f,
+        pathHeight / 2f,
+    )
+    private val horizontalStraight = pathWidth - 2f * radius
+    private val verticalStraight = pathHeight - 2f * radius
+    private val quarterArc = PI.toFloat() * radius / 2f
+
+    val totalLength: Float =
+        2f * horizontalStraight + 2f * verticalStraight + 4f * quarterArc
+
+    init {
+        require(totalLength.isFinite() && totalLength > 0f) {
+            "Host-table rounded perimeter must have positive finite length"
+        }
     }
-    return counts
+
+    fun pointAt(rawDistance: Float): RoundedPerimeterPoint {
+        var distance = ((rawDistance % totalLength) + totalLength) % totalLength
+
+        if (distance <= horizontalStraight) {
+            return RoundedPerimeterPoint(
+                x = left + radius + distance,
+                y = top,
+                edge = ClocktowerSquareTableEdge.Top,
+            )
+        }
+        distance -= horizontalStraight
+
+        if (distance <= quarterArc) {
+            return arcPoint(
+                centerX = right - radius,
+                centerY = top + radius,
+                startAngleRadians = -PI.toFloat() / 2f,
+                arcDistance = distance,
+                firstEdge = ClocktowerSquareTableEdge.Top,
+                secondEdge = ClocktowerSquareTableEdge.Right,
+            )
+        }
+        distance -= quarterArc
+
+        if (distance <= verticalStraight) {
+            return RoundedPerimeterPoint(
+                x = right,
+                y = top + radius + distance,
+                edge = ClocktowerSquareTableEdge.Right,
+            )
+        }
+        distance -= verticalStraight
+
+        if (distance <= quarterArc) {
+            return arcPoint(
+                centerX = right - radius,
+                centerY = bottom - radius,
+                startAngleRadians = 0f,
+                arcDistance = distance,
+                firstEdge = ClocktowerSquareTableEdge.Right,
+                secondEdge = ClocktowerSquareTableEdge.Bottom,
+            )
+        }
+        distance -= quarterArc
+
+        if (distance <= horizontalStraight) {
+            return RoundedPerimeterPoint(
+                x = right - radius - distance,
+                y = bottom,
+                edge = ClocktowerSquareTableEdge.Bottom,
+            )
+        }
+        distance -= horizontalStraight
+
+        if (distance <= quarterArc) {
+            return arcPoint(
+                centerX = left + radius,
+                centerY = bottom - radius,
+                startAngleRadians = PI.toFloat() / 2f,
+                arcDistance = distance,
+                firstEdge = ClocktowerSquareTableEdge.Bottom,
+                secondEdge = ClocktowerSquareTableEdge.Left,
+            )
+        }
+        distance -= quarterArc
+
+        if (distance <= verticalStraight) {
+            return RoundedPerimeterPoint(
+                x = left,
+                y = bottom - radius - distance,
+                edge = ClocktowerSquareTableEdge.Left,
+            )
+        }
+        distance -= verticalStraight
+
+        return arcPoint(
+            centerX = left + radius,
+            centerY = top + radius,
+            startAngleRadians = PI.toFloat(),
+            arcDistance = distance,
+            firstEdge = ClocktowerSquareTableEdge.Left,
+            secondEdge = ClocktowerSquareTableEdge.Top,
+        )
+    }
+
+    private fun arcPoint(
+        centerX: Float,
+        centerY: Float,
+        startAngleRadians: Float,
+        arcDistance: Float,
+        firstEdge: ClocktowerSquareTableEdge,
+        secondEdge: ClocktowerSquareTableEdge,
+    ): RoundedPerimeterPoint {
+        val angle = startAngleRadians + arcDistance / radius
+        return RoundedPerimeterPoint(
+            x = centerX + radius * cos(angle.toDouble()).toFloat(),
+            y = centerY + radius * sin(angle.toDouble()).toFloat(),
+            edge = if (arcDistance <= quarterArc / 2f) firstEdge else secondEdge,
+        )
+    }
 }
 
-private fun evenlySpacedCenters(
-    count: Int,
-    start: Float,
-    end: Float,
-): List<Float> = when (count) {
-    0 -> emptyList()
-    1 -> listOf((start + end) / 2f)
-    else -> {
-        val step = (end - start) / (count - 1).toFloat()
-        List(count) { index -> start + step * index }
+private fun requireSafeSeatSeparation(
+    slots: List<HostTableSpatialSlot>,
+    constraints: HostTableLayoutConstraints,
+) {
+    val epsilon = 0.001f
+    slots.forEachIndexed { firstIndex, first ->
+        slots.drop(firstIndex + 1).forEach { second ->
+            val horizontalClearance = abs(first.centerX - second.centerX) + epsilon >=
+                constraints.seatCardWidth + constraints.minimumSafeSeparation
+            val verticalClearance = abs(first.centerY - second.centerY) + epsilon >=
+                constraints.seatCardHeight + constraints.minimumSafeSeparation
+            require(horizontalClearance || verticalClearance) {
+                "Host-table rounded perimeter capacity is insufficient for ${slots.size} players"
+            }
+        }
     }
 }
