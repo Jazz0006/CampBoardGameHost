@@ -2660,6 +2660,29 @@ internal fun CampBoardGameHostApp() {
         return promoteScarletWomanIfNeeded()
     }
 
+    fun applyHostSeatingBack(origin: HostSeatingBackOrigin) {
+        val transition = hostSeatingBackTransition(
+            flow = hostSeatingSetupFlow,
+            origin = origin,
+        )
+        hostSeatingSetupFlow = transition.flow
+        screen = when (transition.destination) {
+            HostSeatingSetupDestination.Seating -> Screen.Setup
+            HostSeatingSetupDestination.GameSelection -> Screen.GameSelection
+        }
+    }
+
+    val hostSeatingBackOrigin = when (screen) {
+        Screen.GameSelection -> HostSeatingBackOrigin.GameSelection
+        Screen.UndercoverSettings,
+        Screen.WerewolfSettings,
+        Screen.ClocktowerSettings -> HostSeatingBackOrigin.GameSettings
+        else -> null
+    }
+    BackHandler(enabled = hostSeatingBackOrigin != null) {
+        applyHostSeatingBack(requireNotNull(hostSeatingBackOrigin))
+    }
+
     CompositionLocalProvider(LocalContext provides context) {
         MaterialTheme(
             colorScheme = androidx.compose.material3.lightColorScheme(
@@ -2729,8 +2752,7 @@ internal fun CampBoardGameHostApp() {
                         "Game selection requires confirmed seating"
                     },
                     onBackToSeating = {
-                        hostSeatingSetupFlow = hostSeatingSetupFlow.reopenSeating()
-                        screen = Screen.Setup
+                        applyHostSeatingBack(HostSeatingBackOrigin.GameSelection)
                     },
                     onOpenUndercoverSettings = {
                         hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Undercover)
@@ -2756,8 +2778,7 @@ internal fun CampBoardGameHostApp() {
                             clampUndercoverCount()
                         },
                         onBack = {
-                            hostSeatingSetupFlow = hostSeatingSetupFlow.returnToGameSelection()
-                            screen = Screen.GameSelection
+                            applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
                         },
                         onStart = ::startUndercoverGame,
                     )
@@ -2794,8 +2815,7 @@ internal fun CampBoardGameHostApp() {
                             clampWerewolfSettings()
                         },
                         onBack = {
-                            hostSeatingSetupFlow = hostSeatingSetupFlow.returnToGameSelection()
-                            screen = Screen.GameSelection
+                            applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
                         },
                         onStart = ::startWerewolfGame,
                     )
@@ -2808,8 +2828,7 @@ internal fun CampBoardGameHostApp() {
                         selectedScript = selectedClocktowerScript ?: defaultClocktowerScriptFor(playerCount),
                         onScriptChange = { selectedClocktowerScript = it },
                         onBack = {
-                            hostSeatingSetupFlow = hostSeatingSetupFlow.returnToGameSelection()
-                            screen = Screen.GameSelection
+                            applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
                         },
                         onStart = ::startClocktowerGame,
                     )
