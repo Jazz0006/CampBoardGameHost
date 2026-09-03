@@ -1,0 +1,95 @@
+name: R4D2 F4 Wire Resolved Player Display
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d2-seating-first-setup
+    paths:
+      - .github/workflows/r4d2-f4-wire-resolved-display.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-cleanup:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Guard exact workflow parent and branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "codex/ui-r4d2-seating-first-setup"
+          test "$(git rev-parse HEAD^)" = "ceff6a703b44b292aa39f4118b2bbdc94b74c762"
+          test -f tools/r4d2_f4_wire_resolved_display.py
+          test -f .github/workflows/r4d2-f4-focused.yml
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Apply exact F4 wiring patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/r4d2_f4_wire_resolved_display.py
+
+      - name: Audit exact production diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git diff --name-only)" = "app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt"
+          test "$(git diff --numstat)" = $'1\t14\tapp/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt'
+          git diff --check
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt')
+          text = p.read_text(encoding='utf-8')
+          needle = 'onShowPlayerDisplay(resolveClocktowerPlayerDisplay(step, option))'
+          assert text.count(needle) == 1, text.count(needle)
+          PY
+
+      - name: Run F4 focused contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew \
+            :app:testDebugUnitTest \
+            --tests com.codex.campboardgamehost.ClocktowerPlayerDisplayResolutionTest \
+            --tests com.codex.campboardgamehost.ClocktowerPairManualSelectionModelTest \
+            --tests com.codex.campboardgamehost.ClocktowerPlayerDisplayPresentationTest \
+            --no-daemon \
+            --rerun-tasks
+
+      - name: Run fast regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testFast --no-daemon --rerun-tasks
+
+      - name: Commit product checkpoint and self-cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          git commit -m "refactor: route pair reveal through resolved display contract"
+          echo "Product checkpoint: $(git rev-parse HEAD)"
+
+          git rm \
+            .github/workflows/r4d2-f4-wire-resolved-display.yml \
+            .github/workflows/r4d2-f4-focused.yml \
+            tools/r4d2_f4_wire_resolved_display.py
+          git commit -m "build: remove temporary F4 validation workflows"
+          echo "Cleanup checkpoint: $(git rev-parse HEAD)"
+
+          git push origin HEAD:codex/ui-r4d2-seating-first-setup
