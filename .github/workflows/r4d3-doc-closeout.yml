@@ -39,7 +39,7 @@ jobs:
           hs=h.read_text()
           marker='''\n## F7 closeout — 2026-09-03\n\nF7.1-F7.5 are executable and validated. F7.6 workflow run `33722208538` built a fresh debug APK from product checkpoint `40b604eae7ea489347357f88fd3d07be83ce5a78`. The user completed real-device acceptance and reported the F7 checklist passes.\n\nF7 is COMPLETE. R4D-3 is unblocked. Continue from `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-03_UI_R4D3_DAY_WORKSPACE.md`; do not merge Draft PR #78/#79 without explicit authorization.\n'''
           if '## F7 closeout — 2026-09-03' not in hs:
-              h.write_text(hs.rstrip()+marker+'\n')
+              h.write_text(hs.rstrip()+marker)
           PY
       - name: Remove temporary workflow
         run: rm .github/workflows/r4d3-doc-closeout.yml
