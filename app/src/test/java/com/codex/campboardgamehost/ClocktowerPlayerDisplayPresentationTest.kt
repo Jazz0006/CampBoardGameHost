@@ -47,7 +47,7 @@ class ClocktowerPlayerDisplayPresentationTest {
                     primary = "1",
                     secondary = "untrusted 8 / 9",
                     proposition = InformationProposition.NumericResult(
-                        metric = NumericMetric.ADJACENT_EVIL_PAIRS,
+                        metric = NumericMetric.PLAYERS_WAKING_FOR_ABILITY,
                         sourceSeat = 1,
                         subjectSeats = listOf(3, 6),
                         value = 1,
@@ -79,6 +79,26 @@ class ClocktowerPlayerDisplayPresentationTest {
         assertEquals(listOf("Cathy", "Frank"), number.seats.map { it.playerName })
         assertEquals(listOf(ClocktowerSeatId(4), ClocktowerSeatId(7)), yesNo.seats.map { it.seatId })
         assertEquals(listOf("David", "Grace"), yesNo.seats.map { it.playerName })
+    }
+
+    @Test
+    fun `pair reveal does not fall back to storyteller only explanation`() {
+        val step = displayStep(
+            kind = ClocktowerDisplayKind.EitherOne,
+            primary = "Chef",
+            secondary = "2 / 5",
+            footer = null,
+            proposition = InformationProposition.AnyOf(
+                listOf(
+                    InformationProposition.RoleAt(2, RoleId("Chef")),
+                    InformationProposition.RoleAt(5, RoleId("Chef")),
+                ),
+            ),
+        )
+
+        val presentation = requireNotNull(clocktowerPairPlayerRevealPresentation(step, roster()))
+
+        assertNull(presentation.footer)
     }
 
     @Test
@@ -126,6 +146,7 @@ class ClocktowerPlayerDisplayPresentationTest {
         secondary: String?,
         proposition: InformationProposition?,
         roleEnName: String? = "Washerwoman",
+        footer: String? = "player-visible footer",
     ) = ClocktowerNightStepUi(
         title = "information",
         actor = null,
@@ -138,7 +159,7 @@ class ClocktowerPlayerDisplayPresentationTest {
         displayTitle = "information",
         displayPrimary = primary,
         displaySecondary = secondary,
-        displayFooter = "player-visible footer",
+        displayFooter = footer,
         displayProposition = proposition,
         roleEnName = roleEnName,
     )
