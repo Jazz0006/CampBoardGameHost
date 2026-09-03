@@ -1,0 +1,66 @@
+name: F7.4 game selection GREEN
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d2-seating-first-setup
+
+permissions:
+  contents: write
+
+jobs:
+  game-selection-green:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Apply F7.4 patch
+        run: python .github/scripts/f7_4_patch.py
+
+      - name: Run focused authority/table contracts
+        run: |
+          ./gradlew :app:testDebugUnitTest \
+            --tests com.codex.campboardgamehost.HostSeatingRosterTest \
+            --tests com.codex.campboardgamehost.ClocktowerHostTableContractTest \
+            --tests com.codex.campboardgamehost.ClocktowerSquareTableSeatLayoutTest \
+            --no-daemon
+
+      - name: Run Android FAST regression
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Remove temporary validation files
+        run: |
+          rm .github/scripts/f7_4_patch.py
+          rm .github/workflows/f7-4-game-selection-green.yml
+
+      - name: Audit exact permanent diff
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff --name-only 2999f68ec92bb8ffcf184e40c215a8ad1d61b22d | sort > /tmp/actual.txt
+          printf '%s\n' 'app/src/main/java/com/codex/campboardgamehost/SeatingFirstSetupUi.kt' > /tmp/expected.txt
+          diff -u /tmp/expected.txt /tmp/actual.txt
+
+      - name: Commit verified F7.4 product checkpoint
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(F7.4): clarify game selection hierarchy"
+          git push origin HEAD:codex/ui-r4d2-seating-first-setup
