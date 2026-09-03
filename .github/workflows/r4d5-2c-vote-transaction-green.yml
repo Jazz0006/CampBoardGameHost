@@ -32,7 +32,7 @@ jobs:
           git fetch origin codex/ui-r4d5-3-vote-detail-history --depth=1
           test "$(git rev-parse FETCH_HEAD)" = "3f9a12530156d41db25ccfe263f0d8414c0b8bc7"
 
-      - name: Apply exact Host transaction patch
+      - name: Apply exact persistent-vote Host transaction patch
         run: python3 .github/scripts/r4d5_2c_vote_transaction_patch.py
 
       - name: Focused vote transaction regressions
@@ -60,8 +60,9 @@ jobs:
             app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt \
             app/src/test/java/com/codex/campboardgamehost/ClocktowerVoteTransactionTest.kt | sort)"
           test "$actual" = "$expected"
-          test "$(grep -c 'fun recordCurrentVote()' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt || true)" = "0"
+          test "$(grep -c 'fun recordCurrentVote()' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt || true)" = "1"
           test "$(grep -c 'commitClocktowerVoteTransaction(' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt)" = "1"
+          test "$(grep -c 'onConfirm = { voteRecord, confirmedGhostVoteAuthority ->' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt || true)" = "0"
 
       - name: Commit validated product checkpoint
         run: |
@@ -69,5 +70,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "refactor(R4D-5.2C): route vote confirmation through transaction"
+          git commit -m "refactor(R4D-5.2C): route persistent vote confirmation through transaction"
           git push origin HEAD:${GITHUB_REF_NAME}
