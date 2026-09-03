@@ -39,6 +39,7 @@ internal enum class HostTableInteractionMode {
     ReadOnly,
     Selection,
     OrderedSelection,
+    MultiSelection,
     Sequential,
 }
 

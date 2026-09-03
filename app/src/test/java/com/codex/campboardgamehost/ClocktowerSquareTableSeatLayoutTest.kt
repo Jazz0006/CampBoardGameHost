@@ -65,13 +65,15 @@ class ClocktowerSquareTableSeatLayoutTest {
     }
 
     @Test
-    fun `surface exposes the six product seat states`() {
+    fun `surface exposes ordered and arbitrary multi-selection seat states`() {
         assertEquals(
             setOf(
                 ClocktowerSquareTableSeatState.Neutral,
                 ClocktowerSquareTableSeatState.Selectable,
                 ClocktowerSquareTableSeatState.SelectedFirst,
                 ClocktowerSquareTableSeatState.SelectedSecond,
+                ClocktowerSquareTableSeatState.Selected,
+                ClocktowerSquareTableSeatState.SelectedHighlighted,
                 ClocktowerSquareTableSeatState.HighlightedInformation,
                 ClocktowerSquareTableSeatState.Disabled,
             ),

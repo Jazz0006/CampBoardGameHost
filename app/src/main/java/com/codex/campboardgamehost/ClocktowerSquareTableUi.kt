@@ -51,6 +51,8 @@ internal enum class ClocktowerSquareTableSeatState {
     Selectable,
     SelectedFirst,
     SelectedSecond,
+    Selected,
+    SelectedHighlighted,
     HighlightedInformation,
     Disabled,
 }
@@ -76,8 +78,11 @@ internal data class ClocktowerSquareTableSeatUiModel(
         ClocktowerSquareTableSeatState.Selectable,
         ClocktowerSquareTableSeatState.SelectedFirst,
         ClocktowerSquareTableSeatState.SelectedSecond,
+        ClocktowerSquareTableSeatState.Selected,
+        ClocktowerSquareTableSeatState.SelectedHighlighted,
     ),
     val motionKey: String = seatId,
+    val badge: String? = null,
 )
 
 internal data class ClocktowerSquareTableSeatPlacement(
@@ -557,6 +562,15 @@ private fun ClocktowerSquareTableSeat(
                     lineHeight = 16.sp,
                     fontWeight = FontWeight.Black,
                 )
+                seat.badge?.let { badge ->
+                    Text(
+                        text = badge,
+                        fontSize = 10.sp,
+                        lineHeight = 12.sp,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(start = 2.dp),
+                    )
+                }
             }
             Text(
                 text = seat.label,
@@ -567,6 +581,8 @@ private fun ClocktowerSquareTableSeat(
                 fontWeight = if (seat.state in setOf(
                         ClocktowerSquareTableSeatState.SelectedFirst,
                         ClocktowerSquareTableSeatState.SelectedSecond,
+                        ClocktowerSquareTableSeatState.Selected,
+                        ClocktowerSquareTableSeatState.SelectedHighlighted,
                         ClocktowerSquareTableSeatState.HighlightedInformation,
                     )
                 ) {
@@ -616,6 +632,18 @@ private fun clocktowerSquareTableSeatPalette(
             border = colors.secondary,
             borderWidth = 3.dp,
         )
+        ClocktowerSquareTableSeatState.Selected -> ClocktowerSquareTableSeatPalette(
+            container = colors.primaryContainer,
+            content = colors.onPrimaryContainer,
+            border = colors.primary,
+            borderWidth = 3.dp,
+        )
+        ClocktowerSquareTableSeatState.SelectedHighlighted -> ClocktowerSquareTableSeatPalette(
+            container = colors.tertiaryContainer,
+            content = colors.onTertiaryContainer,
+            border = colors.primary,
+            borderWidth = 3.5.dp,
+        )
         ClocktowerSquareTableSeatState.HighlightedInformation -> ClocktowerSquareTableSeatPalette(
             container = colors.tertiaryContainer,
             content = colors.onTertiaryContainer,
@@ -638,6 +666,8 @@ private fun clocktowerSquareTableStateMarker(
     ClocktowerSquareTableSeatState.Selectable -> "○"
     ClocktowerSquareTableSeatState.SelectedFirst -> "①"
     ClocktowerSquareTableSeatState.SelectedSecond -> "②"
+    ClocktowerSquareTableSeatState.Selected -> "✓"
+    ClocktowerSquareTableSeatState.SelectedHighlighted -> "✓★"
     ClocktowerSquareTableSeatState.HighlightedInformation -> "★"
     ClocktowerSquareTableSeatState.Disabled -> "×"
 }

@@ -21,6 +21,7 @@ internal fun HostTableShell(
     onSeatClick: (ClocktowerSeatId) -> Unit = {},
     dragEnabled: Boolean = false,
     neutralSelectionChrome: Boolean = false,
+    seatBadge: (HostSeatPresentation) -> String? = { null },
     seatMotionKey: (HostSeatPresentation) -> String = { seat -> seat.seatId.renderKey() },
     onSeatDragCommit: (ClocktowerSeatId, Int) -> Unit = { _, _ -> },
     directionalGesture: HostTableDirectionalGesturePolicy? = null,
@@ -54,6 +55,8 @@ internal fun HostTableShell(
             frame.toSquareTableSeatUiModel(
                 motionKey = seatMotionKey(frame.seat),
                 neutralSelectionChrome = neutralSelectionChrome,
+                interactionMode = interaction.mode,
+                badge = seatBadge(frame.seat),
             )
         }
         val knownSeatIds = frames.map { frame -> frame.seat.seatId }.toSet()
@@ -112,6 +115,8 @@ internal fun HostTableShell(
 private fun HostTableSeatFrame.toSquareTableSeatUiModel(
     motionKey: String,
     neutralSelectionChrome: Boolean,
+    interactionMode: HostTableInteractionMode,
+    badge: String?,
 ): ClocktowerSquareTableSeatUiModel =
     ClocktowerSquareTableSeatUiModel(
         seatId = seat.seatId.renderKey(),
@@ -120,14 +125,23 @@ private fun HostTableSeatFrame.toSquareTableSeatUiModel(
         state = if (neutralSelectionChrome) {
             ClocktowerSquareTableSeatState.Neutral
         } else {
-            squareTableSeatState()
+            squareTableSeatState(interactionMode)
         },
         isInteractionEnabled = isSelectable && !isLocked,
         motionKey = motionKey,
+        badge = badge,
     )
 
-private fun HostTableSeatFrame.squareTableSeatState(): ClocktowerSquareTableSeatState = when {
+private fun HostTableSeatFrame.squareTableSeatState(
+    interactionMode: HostTableInteractionMode,
+): ClocktowerSquareTableSeatState = when {
     isLocked -> ClocktowerSquareTableSeatState.Disabled
+    interactionMode == HostTableInteractionMode.MultiSelection && isSelected && isHighlighted ->
+        ClocktowerSquareTableSeatState.SelectedHighlighted
+    interactionMode == HostTableInteractionMode.MultiSelection && isSelected ->
+        ClocktowerSquareTableSeatState.Selected
+    interactionMode == HostTableInteractionMode.MultiSelection && isHighlighted ->
+        ClocktowerSquareTableSeatState.HighlightedInformation
     selectionOrder == 1 -> ClocktowerSquareTableSeatState.SelectedFirst
     selectionOrder == 2 -> ClocktowerSquareTableSeatState.SelectedSecond
     isSelected -> ClocktowerSquareTableSeatState.SelectedFirst

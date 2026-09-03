@@ -4071,18 +4071,23 @@ internal fun ClocktowerJudgeScreen(
                 listOfNotNull(nominatorName, nomineeName),
             )
         }
-        ClocktowerVoteScreen(
+        ClocktowerVoteTableScreen(
             round = round,
             cards = cards,
-            aliveCount = publicAliveCards.size,
+            tableState = clocktowerDayOverviewTableState(
+                cards.toClocktowerGameState(
+                    script = script,
+                    seed = gameSeed,
+                    poisonedPlayerName = poisonTarget,
+                ),
+            ),
             executionThreshold = executionThreshold,
             nominatorName = nominatorName,
             nomineeName = nomineeName,
-            voteCount = currentVoteCount,
             highestVoteText = highestVoteText,
             actionsEnabled = gameOutcome == null,
-            onVoteCountChange = { currentVoteCount = it },
-            onRecordAndContinue = {
+            onConfirm = { selectedVoterSeatIds ->
+                currentVoteCount = selectedVoterSeatIds.size
                 recordVoteEvent()
                 recordCurrentVote()
                 nominatorName = null
@@ -4090,12 +4095,7 @@ internal fun ClocktowerJudgeScreen(
                 currentVoteCount = 0
                 dayMode = ClocktowerDayMode.Overview
             },
-            onRecordAndEndDay = {
-                recordVoteEvent()
-                onSelectExecution(recordCurrentVote())
-                dayMode = ClocktowerDayMode.EndConfirm
-            },
-            onBack = {
+            onCancel = {
                 currentVoteCount = 0
                 dayMode = ClocktowerDayMode.Nomination
             },
