@@ -104,6 +104,37 @@ class HostSeatingRosterTest {
     }
 
     @Test
+    fun `back from game selection reopens seating and releases confirmation`() {
+        val confirmed = HostSeatingSetupFlow()
+            .confirmSeats(listOf("Alice", "Bob", "Casey", "Dana", "Evan"))
+
+        val transition = hostSeatingBackTransition(
+            flow = confirmed,
+            origin = HostSeatingBackOrigin.GameSelection,
+        )
+
+        assertEquals(HostSeatingSetupDestination.Seating, transition.destination)
+        assertNull(transition.flow.confirmedSeating)
+        assertNull(transition.flow.selectedGame)
+    }
+
+    @Test
+    fun `back from game settings preserves confirmation and returns game selection`() {
+        val confirmed = HostSeatingSetupFlow()
+            .confirmSeats(listOf("Alice", "Bob", "Casey", "Dana", "Evan"))
+        val selected = confirmed.chooseGame(GameKind.Clocktower)
+
+        val transition = hostSeatingBackTransition(
+            flow = selected,
+            origin = HostSeatingBackOrigin.GameSettings,
+        )
+
+        assertEquals(HostSeatingSetupDestination.GameSelection, transition.destination)
+        assertEquals(confirmed.confirmedSeating, transition.flow.confirmedSeating)
+        assertNull(transition.flow.selectedGame)
+    }
+
+    @Test
     fun `production player names come only from the frozen confirmed roster`() {
         val arrangement = mutableListOf("Alice", "Bob", "Casey", "Dana")
         val selected = HostSeatingSetupFlow()
