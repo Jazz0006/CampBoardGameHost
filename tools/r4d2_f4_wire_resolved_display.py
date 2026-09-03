@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import hashlib
+import subprocess
 
 TARGET = Path("app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt")
 EXPECTED_BLOB = "40c2cc68e339c523c68f1700281c1f8984480693"
@@ -24,20 +24,16 @@ NEW = '''        onShowPlayerDisplay(resolveClocktowerPlayerDisplay(step, option
 '''
 
 
-def git_blob_sha(data: bytes) -> str:
-    header = f"blob {len(data)}\\0".encode()
-    return hashlib.sha1(header + data).hexdigest()
-
-
 def main() -> None:
-    data = TARGET.read_bytes()
-    actual_blob = git_blob_sha(data)
+    actual_blob = subprocess.check_output(
+        ["git", "hash-object", str(TARGET)], text=True
+    ).strip()
     if actual_blob != EXPECTED_BLOB:
         raise SystemExit(
             f"Refusing patch: {TARGET} blob is {actual_blob}, expected {EXPECTED_BLOB}"
         )
 
-    text = data.decode("utf-8")
+    text = TARGET.read_text(encoding="utf-8")
     count = text.count(OLD)
     if count != 1:
         raise SystemExit(f"Refusing patch: exact reveal block count is {count}, expected 1")
