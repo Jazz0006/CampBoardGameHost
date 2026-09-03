@@ -477,20 +477,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 ),
             )
         }
-        onShowPlayerDisplay(
-            step.copy(
-                tellPlayer = option.displayPrimary,
-                displayKind = option.displayKind,
-                displayTitle = option.displayTitle,
-                displayPrimary = option.displayPrimary,
-                displaySecondary = option.displaySecondary,
-                displayFooter = option.displayFooter,
-                displayProposition = option.proposition,
-                selectedInformationTruthful = option.isTruthful,
-                displayOptions = emptyList(),
-                recommendedDisplayOptions = emptyList(),
-            ),
-        )
+        onShowPlayerDisplay(resolveClocktowerPlayerDisplay(step, option))
     }
 
     fun showStructuredFortuneTellerResult(value: Boolean) {
