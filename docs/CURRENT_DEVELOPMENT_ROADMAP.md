@@ -15,15 +15,12 @@ active campaign:
 UI Information / Storyteller Workspace Campaign
 
 latest validated executable checkpoint:
-UI-R4D-2F / F5 — dedicated typed pair Player Reveal / readable seat-number hierarchy
+UI-R4D-2F / F6 — high-contrast Host seat/state typography
 branch: codex/ui-r4d2-seating-first-setup
-F5 RED contract checkpoint: 98622ab624401217282466829bc200e67782b25e
-F5 RED run: 33702857698
-F5 product checkpoint: f8cb06a2774821e9b1bc007e563c6b9f759f063f
-F5 strengthened presentation/privacy contract checkpoint: 8bf1087396544633b52046ddfc670a8c1c75034b
-F5 final validation run: 33703495351
-F5 executable cleanup head: c4f106c7cddd4d3bd9c8215d33c4d503d279e57b
-later branch heads after that checkpoint may be docs-only; always distinguish them from executable F5 state
+F6 product checkpoint: ae3fa44063e6d8ad6457d0b5b06a48f4eccb579a
+F6 validation run: 33704315219
+F6 executable cleanup head: e5109cc95ebb18fdb51a336c24fd4d96e388a0c4
+later branch heads after that checkpoint may be docs-only; always distinguish them from executable F6 state
 PR #79: draft / open / mergeable / unmerged
 
 validated F1 immediately below it:
@@ -38,7 +35,7 @@ cleanup head: 524f55bac945f1be8ee9d9ec77e4e4ca6935781e
 PR #78: draft / open / mergeable / unmerged
 
 active development target:
-UI-R4D-2F / F6 — high-contrast seat/state typography corrections
+UI-R4D-2F / F7 — real-device closeout for 5 / 8 / 12 / 15 players, cross-corner drag and Manual reveal
 
 blocked until R4D-2F is clean:
 UI-R4D-3 — Day Storyteller Workspace
@@ -78,8 +75,8 @@ UI-R4D-2F F2 shared-slot drag-to-reorder                       COMPLETE / VERIFI
 UI-R4D-2F F3 seating return / Android Back                       COMPLETE / VERIFIED
 UI-R4D-2F F4 Manual pair resolved-display transition                COMPLETE / VERIFIED
 UI-R4D-2F F5 typed pair Player Reveal hierarchy                        COMPLETE / VERIFIED
-UI-R4D-2F F6 high-contrast seat/state typography                       ACTIVE NEXT
-UI-R4D-2F F7 real-device closeout                                      QUEUED
+UI-R4D-2F F6 high-contrast seat/state typography                       COMPLETE / VERIFIED
+UI-R4D-2F F7 real-device closeout                                      ACTIVE NEXT
 UI-R4D-3 day Storyteller workspace                             QUEUED AFTER R4D-2F
 UI-R4D-4 public claim history                                  QUEUED
 UI-R4D-5 nomination / vote state machine                       QUEUED
@@ -92,7 +89,7 @@ EPI-MQ / ALG
 UX-R6   replace legacy ranking behind stable UX contract      QUEUED AFTER EPI-MQ
 ```
 
-Do not redo Monk/Ravenkeeper legality, UI-R4B, completed R4C corrections, F1 layout, F2 drag ordering, F3 seating navigation, F4 resolved-display authority, or F5 typed pair Player Reveal presentation.
+Do not redo Monk/Ravenkeeper legality, UI-R4B, completed R4C corrections, F1 layout, F2 drag ordering, F3 seating navigation, F4 resolved-display authority, F5 typed pair Player Reveal presentation, or F6 Host seat/state typography.
 
 ## 3. Active authorities
 
@@ -717,11 +714,28 @@ Permanent F5 diff vs F4 closeout is exactly:
 - `ClocktowerPlayerDisplayUi.kt`;
 - `ClocktowerPlayerDisplayPresentationTest.kt`.
 
-#### F6 — next active slice
+#### F6 — COMPLETE / VERIFIED
 
-Apply the queued high-contrast seat/state typography corrections without changing seat authority, legality, F5 Player Reveal identity, or F4 information-resolution semantics.
+F6 strengthened the shared Storyteller Host-table seat readability without changing table geometry or interaction semantics:
 
-#### F7 — remaining field-test closeout
+- seat number typography increased from 12sp/Bold to 15sp/Black;
+- player-name typography increased from 11sp to 12sp with stronger SemiBold/Black emphasis;
+- typed state markers increased from 13sp/Bold to 14sp/Black;
+- neutral/selectable/selected/highlighted borders were strengthened so state is not conveyed by fill color alone;
+- disabled content/border contrast was raised while preserving an unmistakably disabled appearance;
+- 64x50 seat-card geometry, stable seat identity, layout capacity, click legality, drag ordering and state mapping were unchanged.
+
+Testing followed the risk-based visual-adjustment rule: no ceremonial pixel/source-shape RED was added. Existing semantic/layout contracts plus regression coverage remained authoritative.
+
+Evidence:
+
+- product checkpoint: `ae3fa44063e6d8ad6457d0b5b06a48f4eccb579a`;
+- validation run `33704315219`: exact-head guard + focused square-table/layout/reorder contracts + `:app:testFast` + exact diff audit + `git diff --check` GREEN;
+- executable cleanup head: `e5109cc95ebb18fdb51a336c24fd4d96e388a0c4`;
+- temporary F6 workflow self-removed;
+- permanent F6 executable diff is only `ClocktowerSquareTableUi.kt` (`+21/-19`).
+
+#### F7 — ACTIVE NEXT / remaining field-test closeout
 
 Real-device closeout for 5 / 8 / 12 / 15 players, cross-corner drag and Manual reveal.
 
