@@ -857,38 +857,34 @@ internal fun ClocktowerNightStepCardLocalized(
             ClocktowerNightAction.MayorRedirect -> {
                 val mayor = aliveCards.firstOrNull { it.clocktowerRole?.enName == "Mayor" }
                 if (!automaticStorytellerInfo) {
-                HostActionSection(
-                    title = if (language == "en") "The Demon attacked the Mayor" else "市长被恶魔击杀",
-                    helper = if (language == "en") "Choosing a dead or protected player as the redirect target can result in no death tonight." else "选择死亡或受保护的玩家作为转移目标，可能导致今夜无人死亡。",
-                ) {
-                    if (mayor != null) {
-                        if (selectedName == mayor.name) {
-                            Button(
-                                onClick = { onSelectName(mayor.name) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(if (language == "en") "Mayor dies" else "市长死亡")
-                            }
+                    ClocktowerSingleTargetSquareTableDialog(
+                        seats = nightActionSeats,
+                        selectedSeat = seatNumberForName(selectedName),
+                        selectableSeats = if (mayor != null) {
+                            selectableSeatNumbers(mayorRedirectTargetCards)
                         } else {
-                            OutlinedButton(
-                                onClick = { onSelectName(mayor.name) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(if (language == "en") "Mayor dies" else "市长死亡")
-                            }
-                        }
-                        Text(if (language == "en") "Or redirect the death to:" else "或将死亡转移给：", fontWeight = FontWeight.SemiBold)
-                        SelectablePlayerChips(
-                        cards = mayorRedirectTargetCards,
-                            selectedName = selectedName,
-                            enabled = step.isRealAction,
-                            allCards = cards,
-                            onSelect = onSelectName,
-                        )
-                    }
-                }
+                            emptySet()
+                        },
+                        enabled = step.isRealAction && mayor != null,
+                        title = if (language == "en") "The Demon attacked the Mayor" else "市长被恶魔击杀",
+                        helper = if (language == "en") {
+                            "Choosing a dead or protected player as the redirect target can result in no death tonight."
+                        } else {
+                            "选择死亡或受保护的玩家作为转移目标，可能导致今夜无人死亡。"
+                        },
+                        language = language,
+                        canGoPrevious = canGoPrevious,
+                        onSeatSelected = { seatNumber ->
+                            cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
+                        },
+                        onPrevious = onPrevious,
+                        onNext = onNext,
+                        secondaryActionLabel = if (language == "en") "Mayor dies" else "市长死亡",
+                        secondaryActionEnabled = step.isRealAction && mayor != null,
+                        onSecondaryAction = {
+                            mayor?.name?.let(onSelectName)
+                        },
+                    )
                 }
             }
 
