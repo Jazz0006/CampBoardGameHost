@@ -28,10 +28,13 @@ jobs:
           set -euo pipefail
           git merge-base --is-ancestor 945787a73722fe2f8c71da37d22a55cf39bdf4ba HEAD
           test -f .github/r4d5-2a-apply.py
+          test -f .github/r4d5-2a-expand-seat-state-test.py
           test -f app/src/test/java/com/codex/campboardgamehost/ClocktowerTableVoteStateTest.kt
 
       - name: Apply exact R4D-5.2A migration
-        run: python3 .github/r4d5-2a-apply.py
+        run: |
+          python3 .github/r4d5-2a-apply.py
+          python3 .github/r4d5-2a-expand-seat-state-test.py
 
       - name: Focused table-vote and Host-table contracts
         run: |
@@ -50,6 +53,7 @@ jobs:
         shell: bash
         run: |
           rm -f .github/r4d5-2a-apply.py
+          rm -f .github/r4d5-2a-expand-seat-state-test.py
           rm -f .github/workflows/r4d5-2a-table-vote-green.yml
 
       - name: Exact permanent diff audit
