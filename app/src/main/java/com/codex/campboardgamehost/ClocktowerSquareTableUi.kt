@@ -2,6 +2,7 @@ package com.codex.campboardgamehost
 
 import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 
 internal enum class ClocktowerSquareTableSeatState {
     Neutral,
@@ -159,6 +163,10 @@ internal fun ClocktowerSquareTableSeatSurface(
     layout: HostTableLayout? = null,
     dragEnabled: Boolean = false,
     onSeatDragCommit: (String, Int) -> Unit = { _, _ -> },
+    directionalGestureSourceSeatIds: Set<String> = emptySet(),
+    directionalGestureTargetSeatIds: Set<String> = emptySet(),
+    directionalLink: Pair<String, String>? = null,
+    onDirectionalGestureCommit: (String, String) -> Unit = { _, _ -> },
     centerContent: @Composable BoxScope.() -> Unit = {},
 ) {
     BoxWithConstraints(
@@ -182,10 +190,25 @@ internal fun ClocktowerSquareTableSeatSurface(
         require(abs(resolvedLayout.constraints.availableHeight - availableHeight) < 0.01f) {
             "Provided square-table layout height must match rendering constraints"
         }
+        require(!dragEnabled || directionalGestureSourceSeatIds.isEmpty()) {
+            "Reorder drag and directional gesture cannot own the same square-table surface"
+        }
+        val knownSeatIds = seats.map { seat -> seat.seatId }.toSet()
+        require((directionalGestureSourceSeatIds + directionalGestureTargetSeatIds).all { it in knownSeatIds }) {
+            "Directional square-table gesture references an unknown seat"
+        }
+        directionalLink?.let { (sourceSeatId, targetSeatId) ->
+            require(sourceSeatId in knownSeatIds && targetSeatId in knownSeatIds && sourceSeatId != targetSeatId) {
+                "Directional square-table link must reference two distinct known seats"
+            }
+        }
 
         var draggedMotionKey by remember { mutableStateOf<String?>(null) }
         var dragTargetRingIndex by remember { mutableStateOf<Int?>(null) }
         var dragPointerPosition by remember { mutableStateOf(Offset.Zero) }
+        var directionalDragSourceSeatId by remember { mutableStateOf<String?>(null) }
+        var directionalDragTargetRingIndex by remember { mutableStateOf<Int?>(null) }
+        var directionalDragPointerPosition by remember { mutableStateOf(Offset.Zero) }
 
         val dragSourceIndex = draggedMotionKey?.let { motionKey ->
             seats.indexOfFirst { seat -> seat.motionKey == motionKey }.takeIf { it >= 0 }
@@ -215,6 +238,42 @@ internal fun ClocktowerSquareTableSeatSurface(
         val tabletopGeometry = remember(resolvedLayout.constraints) {
             hostTableTabletopGeometry(resolvedLayout.constraints)
         }
+        val directionalTargetRingIndices = directionalGestureTargetSeatIds.mapNotNullTo(mutableSetOf()) { seatId ->
+            seats.indexOfFirst { seat -> seat.seatId == seatId }.takeIf { it >= 0 }
+        }
+        val activeDirectionalSourceRingIndex = directionalDragSourceSeatId?.let { sourceSeatId ->
+            seats.indexOfFirst { seat -> seat.seatId == sourceSeatId }.takeIf { it >= 0 }
+        }
+        val persistentDirectionalSourceRingIndex = directionalLink?.first?.let { sourceSeatId ->
+            seats.indexOfFirst { seat -> seat.seatId == sourceSeatId }.takeIf { it >= 0 }
+        }
+        val persistentDirectionalTargetRingIndex = directionalLink?.second?.let { targetSeatId ->
+            seats.indexOfFirst { seat -> seat.seatId == targetSeatId }.takeIf { it >= 0 }
+        }
+        val arrowStartDp = activeDirectionalSourceRingIndex
+            ?.let { ringIndex -> resolvedLayout.slots[ringIndex] }
+            ?.let { slot -> Offset(slot.centerX, slot.centerY) }
+            ?: persistentDirectionalSourceRingIndex
+                ?.let { ringIndex -> resolvedLayout.slots[ringIndex] }
+                ?.let { slot -> Offset(slot.centerX, slot.centerY) }
+        val arrowEndDp = if (activeDirectionalSourceRingIndex != null) {
+            directionalDragPointerPosition
+        } else {
+            persistentDirectionalTargetRingIndex
+                ?.let { ringIndex -> resolvedLayout.slots[ringIndex] }
+                ?.let { slot -> Offset(slot.centerX, slot.centerY) }
+        }
+        val arrowIsValid = if (activeDirectionalSourceRingIndex != null) {
+            directionalDragTargetRingIndex != null
+        } else {
+            directionalLink != null
+        }
+        val arrowColor = if (arrowIsValid) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.outline
+        }
+        val densityScale = density.density
 
         Surface(
             modifier = Modifier
@@ -227,6 +286,41 @@ internal fun ClocktowerSquareTableSeatSurface(
             tonalElevation = 2.dp,
         ) {
             Box(modifier = Modifier.fillMaxSize())
+        }
+
+        if (arrowStartDp != null && arrowEndDp != null) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(0.5f),
+            ) {
+                val start = Offset(arrowStartDp.x * densityScale, arrowStartDp.y * densityScale)
+                val end = Offset(arrowEndDp.x * densityScale, arrowEndDp.y * densityScale)
+                val deltaX = end.x - start.x
+                val deltaY = end.y - start.y
+                if (deltaX * deltaX + deltaY * deltaY > 4f) {
+                    val strokeWidth = 4.dp.toPx()
+                    drawLine(
+                        color = arrowColor,
+                        start = start,
+                        end = end,
+                        strokeWidth = strokeWidth,
+                    )
+                    val angle = atan2(deltaY.toDouble(), deltaX.toDouble())
+                    val headLength = 12.dp.toPx()
+                    val headSpread = 0.55
+                    val firstHead = Offset(
+                        x = (end.x - headLength * cos(angle - headSpread)).toFloat(),
+                        y = (end.y - headLength * sin(angle - headSpread)).toFloat(),
+                    )
+                    val secondHead = Offset(
+                        x = (end.x - headLength * cos(angle + headSpread)).toFloat(),
+                        y = (end.y - headLength * sin(angle + headSpread)).toFloat(),
+                    )
+                    drawLine(arrowColor, end, firstHead, strokeWidth)
+                    drawLine(arrowColor, end, secondHead, strokeWidth)
+                }
+            }
         }
 
         placements.forEach { placement ->
@@ -302,6 +396,72 @@ internal fun ClocktowerSquareTableSeatSurface(
                 } else {
                     Modifier
                 }
+                val directionalDragModifier = if (
+                    !dragEnabled &&
+                    placement.seat.seatId in directionalGestureSourceSeatIds &&
+                    directionalGestureTargetSeatIds.any { targetSeatId -> targetSeatId != placement.seat.seatId }
+                ) {
+                    Modifier.pointerInput(
+                        placement.seat.seatId,
+                        resolvedLayout,
+                        directionalGestureSourceSeatIds,
+                        directionalGestureTargetSeatIds,
+                        densityScale,
+                    ) {
+                        detectDragGesturesAfterLongPress(
+                            onDragStart = {
+                                val sourceRingIndex = seats.indexOfFirst { seat ->
+                                    seat.seatId == placement.seat.seatId
+                                }
+                                if (sourceRingIndex >= 0) {
+                                    val sourceSlot = resolvedLayout.slots[sourceRingIndex]
+                                    directionalDragSourceSeatId = placement.seat.seatId
+                                    directionalDragTargetRingIndex = null
+                                    directionalDragPointerPosition = Offset(sourceSlot.centerX, sourceSlot.centerY)
+                                }
+                            },
+                            onDrag = { change, dragAmount ->
+                                change.consume()
+                                val sourceSeatId = directionalDragSourceSeatId
+                                val sourceRingIndex = sourceSeatId?.let { id ->
+                                    seats.indexOfFirst { seat -> seat.seatId == id }.takeIf { it >= 0 }
+                                }
+                                if (sourceRingIndex != null) {
+                                    val nextPointer = directionalDragPointerPosition + Offset(
+                                        x = dragAmount.x / densityScale,
+                                        y = dragAmount.y / densityScale,
+                                    )
+                                    directionalDragPointerPosition = nextPointer
+                                    directionalDragTargetRingIndex = resolveHostTableDirectionalTargetRingIndex(
+                                        layout = resolvedLayout,
+                                        pointerX = nextPointer.x,
+                                        pointerY = nextPointer.y,
+                                        sourceRingIndex = sourceRingIndex,
+                                        eligibleTargetRingIndices = directionalTargetRingIndices,
+                                    )
+                                }
+                            },
+                            onDragEnd = {
+                                val sourceSeatId = directionalDragSourceSeatId
+                                val targetSeatId = directionalDragTargetRingIndex
+                                    ?.let { ringIndex -> seats.getOrNull(ringIndex)?.seatId }
+                                directionalDragSourceSeatId = null
+                                directionalDragTargetRingIndex = null
+                                directionalDragPointerPosition = Offset.Zero
+                                if (sourceSeatId != null && targetSeatId != null && sourceSeatId != targetSeatId) {
+                                    onDirectionalGestureCommit(sourceSeatId, targetSeatId)
+                                }
+                            },
+                            onDragCancel = {
+                                directionalDragSourceSeatId = null
+                                directionalDragTargetRingIndex = null
+                                directionalDragPointerPosition = Offset.Zero
+                            },
+                        )
+                    }
+                } else {
+                    Modifier
+                }
 
                 ClocktowerSquareTableSeat(
                     seat = placement.seat,
@@ -316,8 +476,9 @@ internal fun ClocktowerSquareTableSeatSurface(
                             width = seatCardWidth.dp,
                             height = seatCardHeight.dp,
                         )
-                        .zIndex(if (isDragged) 1f else 0f)
-                        .then(dragModifier),
+                        .zIndex(if (isDragged) 2f else 1f)
+                        .then(dragModifier)
+                        .then(directionalDragModifier),
                 )
             }
         }
@@ -326,7 +487,8 @@ internal fun ClocktowerSquareTableSeatSurface(
             modifier = Modifier
                 .align(Alignment.Center)
                 .width(resolvedLayout.constraints.centerWorkspaceWidth.dp)
-                .height(resolvedLayout.constraints.centerWorkspaceHeight.dp),
+                .height(resolvedLayout.constraints.centerWorkspaceHeight.dp)
+                .zIndex(0.25f),
             shape = RoundedCornerShape(18.dp),
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),

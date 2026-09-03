@@ -23,6 +23,9 @@ internal fun HostTableShell(
     neutralSelectionChrome: Boolean = false,
     seatMotionKey: (HostSeatPresentation) -> String = { seat -> seat.seatId.renderKey() },
     onSeatDragCommit: (ClocktowerSeatId, Int) -> Unit = { _, _ -> },
+    directionalGesture: HostTableDirectionalGesturePolicy? = null,
+    directionalLink: HostTableDirectionalLink? = null,
+    onDirectionalGestureCommit: (ClocktowerSeatId, ClocktowerSeatId) -> Unit = { _, _ -> },
     centerContent: @Composable BoxScope.() -> Unit = {},
 ) {
     BoxWithConstraints(modifier = modifier) {
@@ -53,6 +56,17 @@ internal fun HostTableShell(
                 neutralSelectionChrome = neutralSelectionChrome,
             )
         }
+        val knownSeatIds = frames.map { frame -> frame.seat.seatId }.toSet()
+        directionalGesture?.let { gesture ->
+            require((gesture.sourceSeatIds + gesture.targetSeatIds).all { it in knownSeatIds }) {
+                "Directional Host-table gesture references an unknown physical seat"
+            }
+        }
+        directionalLink?.let { link ->
+            require(link.sourceSeatId in knownSeatIds && link.targetSeatId in knownSeatIds) {
+                "Directional Host-table link references an unknown physical seat"
+            }
+        }
 
         ClocktowerSquareTableSeatSurface(
             seats = renderSeats,
@@ -70,6 +84,24 @@ internal fun HostTableShell(
             onSeatDragCommit = { renderKey, targetRingIndex ->
                 seatIdsByRenderKey[renderKey]?.let { seatId ->
                     onSeatDragCommit(seatId, targetRingIndex)
+                }
+            },
+            directionalGestureSourceSeatIds = directionalGesture
+                ?.sourceSeatIds
+                ?.mapTo(mutableSetOf()) { seatId -> seatId.renderKey() }
+                .orEmpty(),
+            directionalGestureTargetSeatIds = directionalGesture
+                ?.targetSeatIds
+                ?.mapTo(mutableSetOf()) { seatId -> seatId.renderKey() }
+                .orEmpty(),
+            directionalLink = directionalLink?.let { link ->
+                link.sourceSeatId.renderKey() to link.targetSeatId.renderKey()
+            },
+            onDirectionalGestureCommit = { sourceRenderKey, targetRenderKey ->
+                val sourceSeatId = seatIdsByRenderKey[sourceRenderKey]
+                val targetSeatId = seatIdsByRenderKey[targetRenderKey]
+                if (sourceSeatId != null && targetSeatId != null) {
+                    onDirectionalGestureCommit(sourceSeatId, targetSeatId)
                 }
             },
             centerContent = centerContent,

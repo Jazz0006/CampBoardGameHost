@@ -18,6 +18,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,13 +40,16 @@ internal fun ClocktowerDayOverviewScreen(
     artistActionEnabled: Boolean,
     actionsEnabled: Boolean,
     diagnosticContent: (@Composable () -> Unit)? = null,
-    onStartNomination: () -> Unit,
+    onNominationGesture: (ClocktowerSeatId, ClocktowerSeatId) -> Unit,
     onOpenSlayer: () -> Unit,
     onOpenArtist: () -> Unit,
     onEndDay: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
+    val nominationGesture = remember(tableState) {
+        clocktowerDayNominationGesturePolicy(tableState)
+    }
 
     ClocktowerDarkTheme {
         Surface(
@@ -57,6 +61,8 @@ internal fun ClocktowerDayOverviewScreen(
                 seats = tableState.seats,
                 modifier = Modifier.fillMaxSize(),
                 interaction = tableState.interaction,
+                directionalGesture = nominationGesture.takeIf { actionsEnabled },
+                onDirectionalGestureCommit = onNominationGesture,
                 centerContent = {
                     ClocktowerDayOverviewCenterContent(
                         round = round,
@@ -70,7 +76,6 @@ internal fun ClocktowerDayOverviewScreen(
                         actionsEnabled = actionsEnabled,
                         diagnosticContent = diagnosticContent,
                         text = ::text,
-                        onStartNomination = onStartNomination,
                         onOpenSlayer = onOpenSlayer,
                         onOpenArtist = onOpenArtist,
                         onEndDay = onEndDay,
@@ -94,7 +99,6 @@ private fun ClocktowerDayOverviewCenterContent(
     actionsEnabled: Boolean,
     diagnosticContent: (@Composable () -> Unit)?,
     text: (String, String) -> String,
-    onStartNomination: () -> Unit,
     onOpenSlayer: () -> Unit,
     onOpenArtist: () -> Unit,
     onEndDay: () -> Unit,
@@ -143,8 +147,8 @@ private fun ClocktowerDayOverviewCenterContent(
         }
         Text(
             text = text(
-                "自由讨论 · 有人提名时进入提名流程",
-                "Open discussion · start nominations when someone nominates",
+                "自由讨论 · 长按一名玩家并拖向另一名玩家以发起提名",
+                "Open discussion · long-press a player and drag to another player to nominate",
             ),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodySmall,
@@ -176,16 +180,6 @@ private fun ClocktowerDayOverviewCenterContent(
             }
         }
 
-        Button(
-            onClick = onStartNomination,
-            enabled = actionsEnabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 44.dp),
-            shape = RoundedCornerShape(12.dp),
-        ) {
-            Text(text("开始提名", "Start nomination"))
-        }
         TextButton(
             onClick = onEndDay,
             enabled = actionsEnabled,

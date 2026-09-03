@@ -3888,15 +3888,16 @@ internal fun ClocktowerJudgeScreen(
             )
             else -> text("最高票 · 无", "Highest · none")
         }
+        val dayTableState = clocktowerDayOverviewTableState(
+            cards.toClocktowerGameState(
+                script = script,
+                seed = gameSeed,
+                poisonedPlayerName = poisonTarget,
+            ),
+        )
         ClocktowerDayOverviewScreen(
             round = round,
-            tableState = clocktowerDayOverviewTableState(
-                cards.toClocktowerGameState(
-                    script = script,
-                    seed = gameSeed,
-                    poisonedPlayerName = poisonTarget,
-                ),
-            ),
+            tableState = dayTableState,
             aliveCount = publicAliveCards.size,
             executionThreshold = executionThreshold,
             highestVoteText = highestVoteText,
@@ -3906,10 +3907,19 @@ internal fun ClocktowerJudgeScreen(
             artistActionEnabled = artistClaimantCandidates.isNotEmpty(),
             actionsEnabled = gameOutcome == null,
             diagnosticContent = null,
-            onStartNomination = {
-                nominatorName = null
-                nomineeName = null
-                dayMode = ClocktowerDayMode.Nomination
+            onNominationGesture = { sourceSeatId, targetSeatId ->
+                val sourceName = dayTableState.seats
+                    .firstOrNull { seat -> seat.seatId == sourceSeatId && seat.isAlive }
+                    ?.playerName
+                val targetName = dayTableState.seats
+                    .firstOrNull { seat -> seat.seatId == targetSeatId && seat.isAlive }
+                    ?.playerName
+                if (sourceName != null && targetName != null && sourceName != targetName) {
+                    nominatorName = sourceName
+                    nomineeName = targetName
+                    currentVoteCount = 0
+                    dayMode = ClocktowerDayMode.Nomination
+                }
             },
             onOpenSlayer = {
                 slayerClaimantName = null
@@ -3954,10 +3964,16 @@ internal fun ClocktowerJudgeScreen(
             )
             else -> null
         }
-        ClocktowerNominationScreen(
+        ClocktowerPendingNominationTableScreen(
             round = round,
             cards = cards,
-            aliveCards = publicAliveCards,
+            tableState = clocktowerDayOverviewTableState(
+                cards.toClocktowerGameState(
+                    script = script,
+                    seed = gameSeed,
+                    poisonedPlayerName = poisonTarget,
+                ),
+            ),
             executionThreshold = executionThreshold,
             nominatorName = nominatorName,
             nomineeName = nomineeName,
@@ -3966,11 +3982,9 @@ internal fun ClocktowerJudgeScreen(
             continueLabel = when {
                 virginExecutes -> text("确认并处决提名者", "Confirm and execute nominator")
                 virginFirstNomination -> text("记录能力，进入投票", "Record ability and continue")
-                else -> text("确认提名，进入投票", "Confirm nomination and vote")
+                else -> text("开始投票", "Start voting")
             },
             actionsEnabled = gameOutcome == null,
-            onSelectNominator = { nominatorName = if (nominatorName == it) null else it },
-            onSelectNominee = { nomineeName = if (nomineeName == it) null else it },
             onContinue = {
                 val chosenNominator = nominatorName
                 val chosenNominee = nomineeName
