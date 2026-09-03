@@ -4065,12 +4065,17 @@ internal fun ClocktowerJudgeScreen(
             )
             else -> text("当前还没有达到门槛的最高票。", "No qualifying high vote has been recorded yet.")
         }
-        val recordVoteEvent = {
+        val recordVoteEvent: (ClocktowerConfirmedVoteRecord) -> Unit = { voteRecord ->
+            val voterDetail = voteRecord.voterDetail(
+                playerLabel = { playerName -> playerSeatLabel(cards, playerName) },
+                ghostVoteSuffix = text("（幽灵票）", " (ghost vote)"),
+                noVotesLabel = text("无人投票", "No votes"),
+            )
             onRecordEvent(
                 ClocktowerEventType.Vote,
                 text("提名与投票", "Nomination and vote"),
-                "${playerSeatLabel(cards, nominatorName)} → ${playerSeatLabel(cards, nomineeName)} · $currentVoteCount/$executionThreshold",
-                listOfNotNull(nominatorName, nomineeName),
+                "${playerSeatLabel(cards, nominatorName)} → ${playerSeatLabel(cards, nomineeName)} · ${voteRecord.voteCount}/$executionThreshold · ${text("投票人：", "Voters: ")}$voterDetail",
+                listOfNotNull(nominatorName, nomineeName) + voteRecord.voters.map { voter -> voter.playerName },
             )
         }
         ClocktowerVoteTableScreen(
@@ -4089,10 +4094,10 @@ internal fun ClocktowerJudgeScreen(
             nomineeName = nomineeName,
             highestVoteText = highestVoteText,
             actionsEnabled = gameOutcome == null,
-            onConfirm = { selectedVoterSeatIds, confirmedGhostVoteAuthority ->
+            onConfirm = { voteRecord, confirmedGhostVoteAuthority ->
                 onGhostVoteAuthorityChange(confirmedGhostVoteAuthority)
-                currentVoteCount = selectedVoterSeatIds.size
-                recordVoteEvent()
+                currentVoteCount = voteRecord.voteCount
+                recordVoteEvent(voteRecord)
                 recordCurrentVote()
                 nominatorName = null
                 nomineeName = null
