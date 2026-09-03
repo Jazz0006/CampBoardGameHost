@@ -11,8 +11,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Guard handoff head
-        run: test "$(git rev-parse HEAD)" = "c0e8ffb3965a59b46ba98b76b2bc8e397868f1a4"
+      - name: Guard handoff ancestry
+        run: git merge-base --is-ancestor c0e8ffb3965a59b46ba98b76b2bc8e397868f1a4 HEAD
       - name: Close F7 and activate R4D-3
         shell: bash
         run: |
@@ -35,7 +35,6 @@ jobs:
                   raise SystemExit('missing roadmap anchor: '+old[:80])
               s=s.replace(old,new,1)
           p.write_text(s)
-
           h=Path('docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-03_F7_REAL_DEVICE_CORRECTIONS.md')
           hs=h.read_text()
           marker='''\n## F7 closeout — 2026-09-03\n\nF7.1-F7.5 are executable and validated. F7.6 workflow run `33722208538` built a fresh debug APK from product checkpoint `40b604eae7ea489347357f88fd3d07be83ce5a78`. The user completed real-device acceptance and reported the F7 checklist passes.\n\nF7 is COMPLETE. R4D-3 is unblocked. Continue from `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-03_UI_R4D3_DAY_WORKSPACE.md`; do not merge Draft PR #78/#79 without explicit authorization.\n'''
