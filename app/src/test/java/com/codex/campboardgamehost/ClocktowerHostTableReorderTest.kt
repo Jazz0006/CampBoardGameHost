@@ -63,6 +63,34 @@ class ClocktowerHostTableReorderTest {
     }
 
     @Test
+    fun `drag across top-right corner inserts at the resolved clockwise slot`() {
+        val layout = hostTableLayout(
+            playerCount = 12,
+            constraints = portraitConstraints,
+        )
+        val original = List(12) { index -> "P${index + 1}" }
+        val sourceSlot = layout.slots.last { it.edge == ClocktowerSquareTableEdge.Top }
+        val targetSlot = layout.slots.first { it.edge == ClocktowerSquareTableEdge.Right }
+        val draggedPlayer = original[sourceSlot.ringIndex]
+        val targetRingIndex = nearestHostTableRingIndex(
+            layout = layout,
+            pointerX = targetSlot.centerX,
+            pointerY = targetSlot.centerY,
+        )
+
+        val reordered = reorderHostTableItems(
+            items = original,
+            fromIndex = sourceSlot.ringIndex,
+            targetIndex = targetRingIndex,
+        )
+
+        assertEquals(sourceSlot.ringIndex + 1, targetRingIndex)
+        assertEquals(draggedPlayer, reordered[targetRingIndex])
+        assertEquals(original.toSet(), reordered.toSet())
+        assertEquals(original.size, reordered.size)
+    }
+
+    @Test
     fun `equidistant drag target resolves to the smaller ring index`() {
         val layout = hostTableLayout(
             playerCount = 8,
