@@ -684,26 +684,25 @@ internal fun ClocktowerNightStepCardLocalized(
             ClocktowerNightAction.RedHerring -> {
                 if (step.isRealAction) {
                     val candidates = clocktowerRedHerringCandidates(aliveCards)
-                    HostActionSection(
+                    ClocktowerSingleTargetSquareTableDialog(
+                        seats = nightActionSeats,
+                        selectedSeat = seatNumberForName(selectedName),
+                        selectableSeats = selectableSeatNumbers(candidates),
+                        enabled = true,
                         title = stringResource(R.string.clocktower_host_choose_red_herring),
-                        helper = stringResource(R.string.clocktower_host_choose_red_herring_hint),
-                    ) {
-                        if (candidates.isEmpty()) {
-                            Text(
-                                stringResource(R.string.clocktower_host_no_red_herring_candidates),
-                                color = Color(0xFF6F7B74),
-                                style = MaterialTheme.typography.bodySmall,
-                            )
+                        helper = if (candidates.isEmpty()) {
+                            stringResource(R.string.clocktower_host_no_red_herring_candidates)
                         } else {
-                            SelectablePlayerChips(
-                                cards = candidates,
-                                selectedName = selectedName,
-                                enabled = true,
-                                allCards = cards,
-                                onSelect = onSelectName,
-                            )
-                        }
-                    }
+                            stringResource(R.string.clocktower_host_choose_red_herring_hint)
+                        },
+                        language = language,
+                        canGoPrevious = canGoPrevious,
+                        onSeatSelected = { seatNumber ->
+                            cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
+                        },
+                        onPrevious = onPrevious,
+                        onNext = onNext,
+                    )
                 }
             }
 
