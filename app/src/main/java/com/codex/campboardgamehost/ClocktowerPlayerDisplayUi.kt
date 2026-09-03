@@ -23,41 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-
-internal fun clocktowerPlayerDisplayHighlightedSeats(
-    step: ClocktowerNightStepUi,
-): Set<Int> {
-    return when (step.displayKind) {
-    ClocktowerDisplayKind.EitherOne -> {
-        val anyOf = step.displayProposition as? InformationProposition.AnyOf ?: return emptySet()
-        val roleAt = anyOf.alternatives.map { it as? InformationProposition.RoleAt ?: return emptySet() }
-        if (roleAt.size != 2 || roleAt.map { it.role }.distinct().size != 1) return emptySet()
-        roleAt.map { it.seat }.distinct().takeIf { it.size == 2 }?.toSet().orEmpty()
-    }
-
-    ClocktowerDisplayKind.RoleReveal ->
-        (step.displayProposition as? InformationProposition.RoleAt)?.let { setOf(it.seat) }.orEmpty()
-
-    ClocktowerDisplayKind.Number ->
-        (step.displayProposition as? InformationProposition.NumericResult)
-            ?.subjectSeats
-            ?.distinct()
-            ?.takeIf { it.size in 1..2 }
-            ?.toSet()
-            .orEmpty()
-
-    ClocktowerDisplayKind.YesNo ->
-        (step.displayProposition as? InformationProposition.BooleanResult)
-            ?.subjectSeats
-            ?.distinct()
-            ?.takeIf { it.size in 1..2 }
-            ?.toSet()
-            .orEmpty()
-
-    else -> emptySet()
-    }
-}
 
 @Composable
 private fun EvilInfoDisplay(
@@ -109,11 +74,7 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
         return
     }
 
-    // Keep typed subject-seat identity in the proposition/model contract, but the player-facing
-    // reveal itself is information-first. Storyteller table context must not leak into this page.
-    clocktowerPlayerDisplayHighlightedSeats(step)
-    @Suppress("UNUSED_VARIABLE")
-    val playerDisplayCards = cards
+    val pairPresentation = clocktowerPairPlayerRevealPresentation(step, cards)
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -127,7 +88,7 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                step.displayTitle,
+                pairPresentation?.title ?: step.displayTitle,
                 color = Color(0xFFF1EADC),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
@@ -139,10 +100,11 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                ClocktowerPlayerDisplayCenterContent(
-                    step = step,
-                    hasHighlightedSeats = false,
-                )
+                if (pairPresentation != null) {
+                    ClocktowerPairPlayerRevealContent(pairPresentation)
+                } else {
+                    ClocktowerPlayerDisplayCenterContent(step)
+                }
             }
             OutlinedButton(
                 onClick = onDismiss,
@@ -159,9 +121,84 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
 }
 
 @Composable
+private fun ClocktowerPairPlayerRevealContent(
+    presentation: ClocktowerPairPlayerRevealPresentation,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            presentation.seats.forEach { seat ->
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .background(Color(0xFF1B1F25), RoundedCornerShape(18.dp))
+                        .padding(horizontal = 10.dp, vertical = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = "#${seat.seatId.number}",
+                        color = Color(0xFFC5A56A),
+                        fontSize = 64.sp,
+                        fontWeight = FontWeight.Black,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                    )
+                    Text(
+                        text = seat.playerName,
+                        color = Color(0xFFF7F1E6),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                    )
+                }
+            }
+        }
+
+        when (presentation.displayKind) {
+            ClocktowerDisplayKind.Number,
+            ClocktowerDisplayKind.YesNo,
+            -> Text(
+                text = presentation.primary,
+                color = Color(0xFFC5A56A),
+                fontSize = 60.sp,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+            )
+
+            ClocktowerDisplayKind.EitherOne -> Text(
+                text = presentation.primary,
+                color = Color(0xFFF7F1E6),
+                fontSize = 38.sp,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+            )
+
+            else -> Unit
+        }
+
+        presentation.footer?.let { footer ->
+            Text(
+                text = footer,
+                color = Color(0xFFAAA397),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
 private fun ClocktowerPlayerDisplayCenterContent(
     step: ClocktowerNightStepUi,
-    hasHighlightedSeats: Boolean,
 ) {
     val primary = step.displayPrimary ?: step.tellPlayer.orEmpty()
     val secondary = step.displaySecondary
@@ -216,16 +253,14 @@ private fun ClocktowerPlayerDisplayCenterContent(
                         textAlign = TextAlign.Center,
                     )
                 }
-                if (!hasHighlightedSeats) {
-                    secondary?.takeIf { it.isNotBlank() }?.let {
-                        Text(
-                            it,
-                            color = Color(0xFFC5A56A),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+                secondary?.takeIf { it.isNotBlank() }?.let {
+                    Text(
+                        it,
+                        color = Color(0xFFC5A56A),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                    )
                 }
             }
 
