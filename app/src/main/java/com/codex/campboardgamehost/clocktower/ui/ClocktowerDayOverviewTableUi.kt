@@ -1,39 +1,4 @@
-from pathlib import Path
-
-STATE_PATH = Path('app/src/main/java/com/codex/campboardgamehost/ClocktowerDayOverviewTableState.kt')
-UI_PATH = Path('app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayOverviewTableUi.kt')
-DAY_PATH = Path('app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt')
-HOST_PATH = Path('app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt')
-
-if STATE_PATH.exists() or UI_PATH.exists():
-    raise SystemExit('R4D-3.1 product files already exist; refusing non-exact reapply')
-
-STATE_PATH.write_text('''package com.codex.campboardgamehost
-
-import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.RoleId
-
-/**
- * Day Overview presentation boundary for the persistent Storyteller table.
- *
- * Physical identity is projected from the durable domain seat authority. Day Overview is read-only;
- * later R4D slices may add bounded seat interactions without changing this physical topology.
- */
-internal data class ClocktowerDayOverviewTableState(
-    val seats: List<HostSeatPresentation>,
-    val interaction: HostTableInteractionState,
-)
-
-internal fun clocktowerDayOverviewTableState(
-    gameState: GameState,
-    roleDisplayName: (RoleId) -> String = { roleId -> roleId.value },
-): ClocktowerDayOverviewTableState = ClocktowerDayOverviewTableState(
-    seats = gameState.toHostSeatPresentations(roleDisplayName),
-    interaction = HostTableInteractionState(mode = HostTableInteractionMode.ReadOnly),
-)
-''')
-
-UI_PATH.write_text('''package com.codex.campboardgamehost
+package com.codex.campboardgamehost
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -235,33 +200,3 @@ private fun ClocktowerDayOverviewCenterContent(
         diagnosticContent?.invoke()
     }
 }
-''')
-
-day = DAY_PATH.read_text()
-start_marker = '/** Behavior-preserving R2 extraction for Clocktower day/dawn host UI. */\n'
-end_marker = '@Composable\ninternal fun ClocktowerDawnSummaryScreen('
-start = day.find(start_marker)
-end = day.find(end_marker, start)
-if start < 0 or end < 0:
-    raise SystemExit('ClocktowerDayScreen Day Overview extraction anchors not found')
-DAY_PATH.write_text(day[:start] + day[end:])
-
-host = HOST_PATH.read_text()
-call_anchor = '''        ClocktowerDayOverviewScreen(
-            round = round,
-            cards = cards,
-'''
-call_replacement = '''        ClocktowerDayOverviewScreen(
-            round = round,
-            tableState = clocktowerDayOverviewTableState(
-                cards.toClocktowerGameState(
-                    script = script,
-                    seed = gameSeed,
-                    poisonedPlayerName = poisonTarget,
-                ),
-            ),
-'''
-if host.count(call_anchor) != 1:
-    raise SystemExit(f'Expected one Day Overview call anchor, found {host.count(call_anchor)}')
-host = host.replace(call_anchor, call_replacement, 1)
-HOST_PATH.write_text(host)

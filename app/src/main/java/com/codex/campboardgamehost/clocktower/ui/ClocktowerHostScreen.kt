@@ -3890,7 +3890,13 @@ internal fun ClocktowerJudgeScreen(
         }
         ClocktowerDayOverviewScreen(
             round = round,
-            cards = cards,
+            tableState = clocktowerDayOverviewTableState(
+                cards.toClocktowerGameState(
+                    script = script,
+                    seed = gameSeed,
+                    poisonedPlayerName = poisonTarget,
+                ),
+            ),
             aliveCount = publicAliveCards.size,
             executionThreshold = executionThreshold,
             highestVoteText = highestVoteText,
