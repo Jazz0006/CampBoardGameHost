@@ -1,0 +1,46 @@
+name: R4D2 F7 Field Feedback Roadmap
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d2-seating-first-setup
+    paths:
+      - .github/workflows/r4d2-f7-field-feedback-roadmap.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update-roadmap:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Guard exact pre-F7-feedback lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^^)" = "b3c723aa96b09983eb08d78d8053a5dabfc30a0a"
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "scripts/r4d2_f7_field_feedback_roadmap.py"
+          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/r4d2-f7-field-feedback-roadmap.yml"
+
+      - name: Apply roadmap update
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/r4d2_f7_field_feedback_roadmap.py
+          git diff --check
+          test "$(git diff --name-only)" = "docs/CURRENT_DEVELOPMENT_ROADMAP.md"
+
+      - name: Commit roadmap and self-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/CURRENT_DEVELOPMENT_ROADMAP.md
+          git rm scripts/r4d2_f7_field_feedback_roadmap.py .github/workflows/r4d2-f7-field-feedback-roadmap.yml
+          git commit -m "docs: record F7 real-device correction plan"
+          git push origin HEAD:codex/ui-r4d2-seating-first-setup
