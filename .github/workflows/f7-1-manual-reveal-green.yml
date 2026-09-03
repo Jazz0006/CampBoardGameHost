@@ -1,0 +1,130 @@
+name: F7.1 Manual Reveal GREEN
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d2-seating-first-setup
+    paths:
+      - .github/workflows/f7-1-manual-reveal-green.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v6
+      - run: chmod +x ./gradlew
+
+      - name: Apply exact F7.1 lifecycle patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerRevealHandoff.kt <<'EOF'
+          package com.codex.campboardgamehost
+
+          internal data class ClocktowerPlayerRevealHandoff(
+              val openReveal: Boolean,
+              val recordPublication: Boolean,
+          )
+
+          /**
+           * Keeps the player-facing reveal lifecycle separate from the exactly-once
+           * first-night publication lifecycle.
+           */
+          internal fun resolveClocktowerPlayerRevealHandoff(
+              publicationAllowed: Boolean,
+              firstNightPublicationCreated: Boolean,
+          ): ClocktowerPlayerRevealHandoff = when {
+              !publicationAllowed -> ClocktowerPlayerRevealHandoff(
+                  openReveal = false,
+                  recordPublication = false,
+              )
+              firstNightPublicationCreated -> ClocktowerPlayerRevealHandoff(
+                  openReveal = true,
+                  recordPublication = true,
+              )
+              else -> ClocktowerPlayerRevealHandoff(
+                  openReveal = true,
+                  recordPublication = false,
+              )
+          }
+          EOF
+
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt')
+          text = path.read_text()
+          pattern = re.compile(
+              r'(?P<indent>^[ ]*)if \(!informationDecisionPublicationAllowed\(displayStep\)\) return@showPlayerDisplay\n'
+              r'(?P=indent)if \(!publishFirstNightInformation\(displayStep\)\) return@showPlayerDisplay\n'
+              r'(?P=indent)recordReliablePrivateInformation\(displayStep\)',
+              re.MULTILINE,
+          )
+
+          def replacement(match):
+              i = match.group('indent')
+              return (
+                  f'{i}val publicationAllowed = informationDecisionPublicationAllowed(displayStep)\n'
+                  f'{i}val revealHandoff = resolveClocktowerPlayerRevealHandoff(\n'
+                  f'{i}    publicationAllowed = publicationAllowed,\n'
+                  f'{i}    firstNightPublicationCreated = publicationAllowed && publishFirstNightInformation(displayStep),\n'
+                  f'{i})\n'
+                  f'{i}if (!revealHandoff.openReveal) return@showPlayerDisplay\n'
+                  f'{i}if (!revealHandoff.recordPublication) {{\n'
+                  f'{i}    playerDisplayStep = displayStep\n'
+                  f'{i}    return@showPlayerDisplay\n'
+                  f'{i}}}\n'
+                  f'{i}recordReliablePrivateInformation(displayStep)'
+              )
+
+          updated, count = pattern.subn(replacement, text)
+          if count != 2:
+              raise SystemExit(f'expected exactly 2 Player Reveal publication anchors, found {count}')
+          path.write_text(updated)
+          PY
+
+      - name: Focused F7.1 behavior contracts
+        run: |
+          ./gradlew :app:testDebugUnitTest \
+            --tests "com.codex.campboardgamehost.ClocktowerFirstNightPlayerRevealHandoffTest" \
+            --tests "com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigrationTest" \
+            --tests "com.codex.campboardgamehost.ClocktowerPlayerDisplayResolutionTest" \
+            --no-daemon --rerun-tasks
+
+      - name: Android FAST regression
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Exact diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only)"
+          printf '%s\n' "$changed"
+          test "$(printf '%s\n' "$changed" | grep -c '^app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerRevealHandoff.kt$')" -eq 1
+          test "$(printf '%s\n' "$changed" | grep -c '^app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt$')" -eq 1
+          test "$(printf '%s\n' "$changed" | wc -l)" -eq 2
+          git diff -- app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerRevealHandoff.kt app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+
+      - name: Commit product fix and remove temporary workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerRevealHandoff.kt \
+                  app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          git rm .github/workflows/f7-1-manual-reveal-red.yml .github/workflows/f7-1-manual-reveal-green.yml
+          git commit -m "fix(F7.1): separate reveal handoff from first-night publication"
+          git push origin HEAD:codex/ui-r4d2-seating-first-setup
