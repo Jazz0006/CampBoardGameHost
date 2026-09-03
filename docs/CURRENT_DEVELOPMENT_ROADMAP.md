@@ -9,18 +9,18 @@
 
 ```text
 live main at roadmap refresh:
-d71ccb45b81c8cd0f7741abe4707f361c8312898
+bf37bbb (re-confirm live before implementation/merge)
 
 active campaign:
 UI Information / Storyteller Workspace Campaign
 
 latest validated executable checkpoint:
-UI-R4D-2F / F6 — high-contrast Host seat/state typography
+UI-R4D-2F / F7 — real-device correction closeout
 branch: codex/ui-r4d2-seating-first-setup
-F6 product checkpoint: ae3fa44063e6d8ad6457d0b5b06a48f4eccb579a
-F6 validation run: 33704315219
-F6 executable cleanup head: e5109cc95ebb18fdb51a336c24fd4d96e388a0c4
-later branch heads after that checkpoint may be docs-only; always distinguish them from executable F6 state
+final product checkpoint: 40b604eae7ea489347357f88fd3d07be83ce5a78
+F7.6 field APK validation run: 33722208538
+real-device acceptance: PASS (user-confirmed 2026-09-03)
+later #79 heads are CI/docs cleanup only; permanent product files match the checkpoint
 PR #79: draft / open / mergeable / unmerged
 
 validated F1 immediately below it:
@@ -35,9 +35,9 @@ cleanup head: 524f55bac945f1be8ee9d9ec77e4e4ca6935781e
 PR #78: draft / open / mergeable / unmerged
 
 active development target:
-UI-R4D-2F / F7 — real-device defect correction + closeout after 2026-09-03 field feedback
+UI-R4D-3.1 — Day Overview migration into the persistent Host table workspace
 
-blocked until R4D-2F is clean:
+unblocked by completed R4D-2F:
 UI-R4D-3 — Day Storyteller Workspace
 
 stabilization after UI-R4D:
@@ -76,8 +76,8 @@ UI-R4D-2F F3 seating return / Android Back                       COMPLETE / VERI
 UI-R4D-2F F4 Manual pair resolved-display transition                COMPLETE / VERIFIED
 UI-R4D-2F F5 typed pair Player Reveal hierarchy                        COMPLETE / VERIFIED
 UI-R4D-2F F6 high-contrast seat/state typography                       COMPLETE / VERIFIED
-UI-R4D-2F F7 real-device defect correction / closeout                   ACTIVE / FIELD DEFECTS CONFIRMED
-UI-R4D-3 day Storyteller workspace                             QUEUED AFTER R4D-2F
+UI-R4D-2F F7 real-device defect correction / closeout                   COMPLETE / REAL-DEVICE ACCEPTED
+UI-R4D-3 day Storyteller workspace                             ACTIVE — R4D-3.1 DAY OVERVIEW
 UI-R4D-4 public claim history                                  QUEUED
 UI-R4D-5 nomination / vote state machine                       QUEUED
 UI-R4D-6 unified Host seat presentation migration              QUEUED
@@ -95,7 +95,7 @@ Do not redo Monk/Ravenkeeper legality, UI-R4B, completed R4C corrections, F2 dra
 
 Current next-development handoff:
 
-`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-03_F7_REAL_DEVICE_CORRECTIONS.md`
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-03_UI_R4D3_DAY_WORKSPACE.md`
 
 Primary information-display reference:
 
@@ -500,7 +500,7 @@ R4D-6  Unified Host Seat Presentation Migration
 
 ### R4D-2 current checkpoint and 2026-09-03 real-device correction gate
 
-R4D-2 has a **validated structural/authority checkpoint**, but it is **not field-test complete**. Keep Draft PR #79 open and do not advance to R4D-3 yet.
+R4D-2F is **field-test complete**. Keep Draft PR #79 open/unmerged as the accepted upstream stack checkpoint; R4D-3 is now unblocked and must stack on #79 rather than on `main`.
 
 Validated structural behavior already established:
 
@@ -735,7 +735,9 @@ Evidence:
 - temporary F6 workflow self-removed;
 - permanent F6 executable diff is only `ClocktowerSquareTableUi.kt` (`+21/-19`).
 
-#### F7 — ACTIVE / REAL-DEVICE DEFECTS CONFIRMED
+#### F7 — COMPLETE / REAL-DEVICE ACCEPTED
+
+Closeout evidence: F7.1-F7.5 executable corrections are included in product checkpoint `40b604eae7ea489347357f88fd3d07be83ce5a78`; F7.6 workflow run `33722208538` built the fresh field APK from that checkpoint; the user confirmed the required real-device checks pass on 2026-09-03. The detailed defect/correction notes below are retained as historical implementation context.
 
 The 2026-09-03 field-test APK produced useful partial acceptance evidence:
 
@@ -881,7 +883,7 @@ After F7.1-F7.5 are executable and validated, generate a fresh field-test APK an
 - `EitherOne`, Fortune Teller `YesNo`, and a two-subject `Number` result follow the intended reading order;
 - no recommendation/internal explanation/Host-state leak.
 
-Only after F7.6 is clean should R4D-3 become active.
+F7.6 is clean and real-device accepted. R4D-3 is active; begin with R4D-3.1 Day Overview only.
 
 ## 12. UI-R4D testing strategy
 

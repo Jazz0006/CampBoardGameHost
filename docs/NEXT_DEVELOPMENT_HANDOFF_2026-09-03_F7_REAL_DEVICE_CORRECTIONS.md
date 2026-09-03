@@ -360,3 +360,8 @@ Recommended user prompt:
 ```text
 请读取根目录 AGENTS.md、docs/CURRENT_DEVELOPMENT_ROADMAP.md 和 docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-03_F7_REAL_DEVICE_CORRECTIONS.md。先重新确认 live main、Draft PR #78/#79 和 codex/ui-r4d2-seating-first-setup 当前 head/checks，并区分 docs-only head 与最后验证的 F6 executable cleanup e5109cc95ebb18fdb51a336c24fd4d96e388a0c4。然后从 F7.1 Manual pair -> Player Reveal lifecycle regression 开始，先建立能复现真机问题的 focused behavior RED，再定位并修复 publication/lifecycle 边界。不要扩大到 F7.2 以后、R4D-3、EPI-MQ/A4/ZDD/Mayor/Imp，也不要 merge PR。
 ```
+## F7 closeout — 2026-09-03
+
+F7.1-F7.5 are executable and validated. F7.6 workflow run `33722208538` built a fresh debug APK from product checkpoint `40b604eae7ea489347357f88fd3d07be83ce5a78`. The user completed real-device acceptance and reported the F7 checklist passes.
+
+F7 is COMPLETE. R4D-3 is unblocked. Continue from `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-03_UI_R4D3_DAY_WORKSPACE.md`; do not merge Draft PR #78/#79 without explicit authorization.
