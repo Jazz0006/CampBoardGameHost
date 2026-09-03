@@ -28,22 +28,34 @@ class ClocktowerTableVoteStateTest {
     }
 
     @Test
-    fun `alive seats are selectable while dead seats fail closed until ghost vote authority exists`() {
+    fun `dead seat is selectable until its ghost vote authority is spent`() {
         val seats = testSeats(8).map { seat ->
             if (seat.seatId == ClocktowerSeatId(4)) seat.copy(isAlive = false) else seat
         }
-        val state = clocktowerTableVoteState(
+        val available = clocktowerTableVoteState(
             seats = seats,
             nomineeSeatId = ClocktowerSeatId(6),
         )
 
-        assertTrue(ClocktowerSeatId(3) in state.selectableSeatIds)
-        assertFalse(ClocktowerSeatId(4) in state.selectableSeatIds)
-        assertTrue(ClocktowerSeatId(6) in state.selectableSeatIds)
+        assertTrue(ClocktowerSeatId(3) in available.selectableSeatIds)
+        assertTrue(ClocktowerSeatId(4) in available.selectableSeatIds)
+        assertTrue(ClocktowerSeatId(6) in available.selectableSeatIds)
 
-        val afterDeadTap = state.togglePendingVoter(ClocktowerSeatId(4))
-        assertEquals(state, afterDeadTap)
-        assertTrue(afterDeadTap.selectedVoterSeatIds.isEmpty())
+        val pending = available.togglePendingVoter(ClocktowerSeatId(4))
+        assertEquals(setOf(ClocktowerSeatId(4)), pending.selectedVoterSeatIds)
+        assertTrue(pending.ghostVoteAuthority.spentSeatIds.isEmpty())
+
+        val spentAuthority = available.ghostVoteAuthority.confirmVote(
+            selectedVoterSeatIds = setOf(ClocktowerSeatId(4)),
+            seats = seats,
+        )
+        val spent = clocktowerTableVoteState(
+            seats = seats,
+            nomineeSeatId = ClocktowerSeatId(6),
+            ghostVoteAuthority = spentAuthority,
+        )
+        assertFalse(ClocktowerSeatId(4) in spent.selectableSeatIds)
+        assertEquals(spent, spent.togglePendingVoter(ClocktowerSeatId(4)))
     }
 
     @Test
