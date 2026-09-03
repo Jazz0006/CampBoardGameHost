@@ -28,6 +28,14 @@ jobs:
         run: |
           python .github/scripts/r4d5_1_patch.py
           python .github/scripts/r4d5_1_compile_fix.py
+      - name: Diagnose Virgin production wiring guard
+        run: |
+          FILE=$(grep -RIl "class ClocktowerVirginPreflightProductionWiringTest" app/src/test | head -1)
+          echo "VIRGIN_TEST_FILE=$FILE"
+          test -n "$FILE"
+          nl -ba "$FILE" | sed -n '1,120p'
+          echo "--- production nomination anchors ---"
+          grep -n "ClocktowerPendingNominationTableScreen\|ClocktowerNominationScreen\|onPreflightVirginExecution\|recordSpyRegistration\|onVirginNomination" app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt | tail -40
       - name: Focused gesture and table contracts
         run: |
           ./gradlew :app:testDebugUnitTest \
