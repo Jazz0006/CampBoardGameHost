@@ -38,6 +38,9 @@ jobs:
         run: rm .github/r4d3_1_apply.py .github/workflows/r4d3-1-day-overview-green.yml
       - name: Exact permanent diff audit
         run: |
+          git add -N \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerDayOverviewTableState.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayOverviewTableUi.kt
           git diff --check 6dc5e5b5ee9433b156aed14ac24d021bfe947138
           git diff --name-only 6dc5e5b5ee9433b156aed14ac24d021bfe947138 | sort > /tmp/actual
           printf '%s\n' \
