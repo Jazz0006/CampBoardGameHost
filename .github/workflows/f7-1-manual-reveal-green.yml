@@ -109,6 +109,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git add -N app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerRevealHandoff.kt
           git diff --check
           changed="$(git diff --name-only)"
           printf '%s\n' "$changed"
