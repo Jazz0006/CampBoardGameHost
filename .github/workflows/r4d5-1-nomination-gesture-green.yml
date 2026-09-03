@@ -28,15 +28,8 @@ jobs:
         run: |
           python .github/scripts/r4d5_1_patch.py
           python .github/scripts/r4d5_1_compile_fix.py
-      - name: Diagnose Virgin production wiring guard
-        run: |
-          FILE=$(grep -RIl "class ClocktowerVirginPreflightProductionWiringTest" app/src/test | head -1)
-          echo "VIRGIN_TEST_FILE=$FILE"
-          test -n "$FILE"
-          nl -ba "$FILE" | sed -n '1,120p'
-          echo "--- production nomination anchors ---"
-          grep -n "ClocktowerPendingNominationTableScreen\|ClocktowerNominationScreen\|onPreflightVirginExecution\|recordSpyRegistration\|onVirginNomination" app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt | tail -40
-      - name: Focused gesture and table contracts
+          python .github/scripts/r4d5_1_wiring_test_fix.py
+      - name: Focused gesture table and Virgin contracts
         run: |
           ./gradlew :app:testDebugUnitTest \
             --tests com.codex.campboardgamehost.ClocktowerDayNominationGestureTest \
@@ -44,6 +37,7 @@ jobs:
             --tests com.codex.campboardgamehost.ClocktowerHostTableContractTest \
             --tests com.codex.campboardgamehost.ClocktowerSquareTableSeatLayoutTest \
             --tests com.codex.campboardgamehost.ClocktowerRoundedRectanglePerimeterLayoutTest \
+            --tests com.codex.campboardgamehost.ClocktowerVirginPreflightProductionWiringTest \
             --no-daemon --build-cache
       - name: Fast suite
         run: ./gradlew :app:testFast --no-daemon --build-cache
@@ -51,6 +45,7 @@ jobs:
         run: |
           rm .github/scripts/r4d5_1_patch.py
           rm .github/scripts/r4d5_1_compile_fix.py
+          rm .github/scripts/r4d5_1_wiring_test_fix.py
           rm .github/workflows/r4d5-1-nomination-gesture-green.yml
       - name: Exact permanent diff audit
         run: |
@@ -67,6 +62,7 @@ jobs:
           app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
           app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerPendingNominationTableUi.kt
           app/src/test/java/com/codex/campboardgamehost/ClocktowerDayNominationGestureTest.kt
+          app/src/test/java/com/codex/campboardgamehost/persistence/ClocktowerVirginPreflightProductionWiringTest.kt
           EOF
           sed -i 's/^          //' /tmp/expected.txt
           diff -u /tmp/expected.txt /tmp/actual.txt
