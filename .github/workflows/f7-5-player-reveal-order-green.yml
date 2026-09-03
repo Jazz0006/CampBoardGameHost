@@ -1,0 +1,69 @@
+name: F7.5 player reveal order GREEN
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d2-seating-first-setup
+
+permissions:
+  contents: write
+
+jobs:
+  player-reveal-order-green:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Guard F7.5 baseline
+        run: test "$(git rev-parse HEAD^^)" = "f60d75c6bc75f29b68a35c2d57fa4e821d37ff0c"
+
+      - name: Apply F7.5 patch
+        run: python .github/scripts/f7_5_patch.py
+
+      - name: Run focused reveal contracts
+        run: |
+          ./gradlew :app:testDebugUnitTest \
+            --tests com.codex.campboardgamehost.ClocktowerPlayerDisplayPresentationTest \
+            --tests com.codex.campboardgamehost.ClocktowerPlayerDisplayResolutionTest \
+            --tests com.codex.campboardgamehost.ClocktowerFirstNightPlayerRevealHandoffTest \
+            --no-daemon
+
+      - name: Run Android FAST regression
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Remove temporary validation files
+        run: |
+          rm .github/scripts/f7_5_patch.py
+          rm .github/workflows/f7-5-player-reveal-order-green.yml
+
+      - name: Audit exact permanent diff
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff --name-only f60d75c6bc75f29b68a35c2d57fa4e821d37ff0c | sort > /tmp/actual.txt
+          printf '%s\n' 'app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayUi.kt' > /tmp/expected.txt
+          diff -u /tmp/expected.txt /tmp/actual.txt
+
+      - name: Commit verified F7.5 product checkpoint
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix(F7.5): order pair player reveal semantically"
+          git push origin HEAD:codex/ui-r4d2-seating-first-setup
