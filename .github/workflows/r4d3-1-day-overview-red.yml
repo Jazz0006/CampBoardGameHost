@@ -1,0 +1,17 @@
+name: R4D3.1 Day overview RED
+on:
+  push:
+    branches: [codex/ui-r4d3-day-storyteller-workspace]
+jobs:
+  red:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+      - run: chmod +x ./gradlew
+      - name: Focused R4D3.1 RED
+        run: ./gradlew :app:testDebugUnitTest --tests com.codex.campboardgamehost.ClocktowerDayOverviewTableStateTest --no-daemon
