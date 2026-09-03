@@ -19,7 +19,8 @@ UI-R4D-2F / F2 — drag-to-reorder on shared computed Host-table slots
 branch: codex/ui-r4d2-seating-first-setup
 F2 product checkpoint: 5857e2324fc8bf1fd6526adc95710751735dd3b6
 F2 final cross-corner contract commit: bfb91ff9746ac0da2f4d182c5c319270da62ebdd
-cleanup head after temporary validation removal: 0e3b23dd96c164affd8540e1926ffdcada0fc3c6
+F2 executable cleanup head: 0e3b23dd96c164affd8540e1926ffdcada0fc3c6
+later docs-only roadmap head may advance beyond that cleanup checkpoint
 PR #79: draft / open / mergeable / unmerged
 
 validated F1 immediately below it:
@@ -552,7 +553,7 @@ Evidence:
 - final large-file one-shot run `33697007750`: exact head/blob/anchor/allowlist + focused F1/F2 tests + `:app:testFast` + `git diff --check` GREEN, temporary writer self-removed;
 - integrated cross-corner contract commit `bfb91ff9746ac0da2f4d182c5c319270da62ebdd`;
 - final focused cross-corner run `33697631594`: GREEN;
-- final cleanup head after removing temporary validation workflow: `0e3b23dd96c164affd8540e1926ffdcada0fc3c6`.
+- F2 executable cleanup head `0e3b23dd96c164affd8540e1926ffdcada0fc3c6`; later commits after this point may be docs-only.
 
 Permanent F2 product/test diff relative to F1 touches only:
 
@@ -752,7 +753,7 @@ docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_INFORMATION_CAMPAIGN.md
 
 New conversation must first re-query live `main`, Draft PR #78 and Draft PR #79, plus the live `codex/ui-r4d2-seating-first-setup` head/checks. Older stacked PRs remain historical dependencies, but the immediate execution boundary is PR #79.
 
-Resume from **R4D-2F / F3** after confirming the current cleanup head. Do **not** start R4D-3 until F1-F7 closeout is complete. Do not merge #78 or #79 without explicit user authorization.
+Resume from **R4D-2F / F3** after confirming the current live head and distinguishing any docs-only head movement from F2 executable cleanup head `0e3b23dd96c164affd8540e1926ffdcada0fc3c6`. Do **not** start R4D-3 until F1-F7 closeout is complete. Do not merge #78 or #79 without explicit user authorization.
 
 ## 18. Deferred / queued registry
 
