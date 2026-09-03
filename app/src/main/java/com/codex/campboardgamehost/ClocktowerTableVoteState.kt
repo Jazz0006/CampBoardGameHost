@@ -6,6 +6,7 @@ internal data class ClocktowerTableVoteState(
     val orderedSeatIds: List<ClocktowerSeatId>,
     val selectableSeatIds: Set<ClocktowerSeatId>,
     val selectedVoterSeatIds: Set<ClocktowerSeatId>,
+    val ghostVoteAuthority: ClocktowerGhostVoteAuthority,
     val interaction: HostTableInteractionState,
 ) {
     val voteCount: Int
@@ -22,13 +23,7 @@ internal data class ClocktowerTableVoteState(
             seats = seats,
             nomineeSeatId = nomineeSeatId,
             selectedVoterSeatIds = nextSelected,
-            ghostVoteAuthority = ClocktowerGhostVoteAuthority(
-                spentSeatIds = seats
-                    .asSequence()
-                    .filter { seat -> !seat.isAlive && seat.seatId !in selectableSeatIds }
-                    .map(HostSeatPresentation::seatId)
-                    .toSet(),
-            ),
+            ghostVoteAuthority = ghostVoteAuthority,
         )
     }
 }
@@ -68,6 +63,7 @@ internal fun clocktowerTableVoteState(
         orderedSeatIds = orderedSeatIds,
         selectableSeatIds = selectableSeatIds,
         selectedVoterSeatIds = selectedVoterSeatIds,
+        ghostVoteAuthority = ghostVoteAuthority,
         interaction = HostTableInteractionState(
             mode = HostTableInteractionMode.MultiSelection,
             selectableSeatIds = selectableSeatIds,
