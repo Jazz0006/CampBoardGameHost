@@ -12,6 +12,20 @@ internal data class ClocktowerConfirmedVoteRecord(
 ) {
     val voteCount: Int
         get() = voters.size
+
+    fun voterDetail(
+        playerLabel: (String) -> String,
+        ghostVoteSuffix: String,
+        noVotesLabel: String,
+    ): String {
+        if (voters.isEmpty()) return noVotesLabel
+        return voters.joinToString(separator = "、") { voter ->
+            buildString {
+                append(playerLabel(voter.playerName))
+                if (voter.isGhostVote) append(ghostVoteSuffix)
+            }
+        }
+    }
 }
 
 internal fun ClocktowerTableVoteState.confirmedVoteRecord(): ClocktowerConfirmedVoteRecord {
