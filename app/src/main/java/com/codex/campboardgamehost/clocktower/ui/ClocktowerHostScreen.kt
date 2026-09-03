@@ -4801,8 +4801,16 @@ internal fun ClocktowerJudgeScreen(
                     }
                 },
                 onShowPlayerDisplay = showPlayerDisplay@{ displayStep ->
-                    if (!informationDecisionPublicationAllowed(displayStep)) return@showPlayerDisplay
-                    if (!publishFirstNightInformation(displayStep)) return@showPlayerDisplay
+                    val publicationAllowed = informationDecisionPublicationAllowed(displayStep)
+                    val revealHandoff = resolveClocktowerPlayerRevealHandoff(
+                        publicationAllowed = publicationAllowed,
+                        firstNightPublicationCreated = publicationAllowed && publishFirstNightInformation(displayStep),
+                    )
+                    if (!revealHandoff.openReveal) return@showPlayerDisplay
+                    if (!revealHandoff.recordPublication) {
+                        playerDisplayStep = displayStep
+                        return@showPlayerDisplay
+                    }
                     recordReliablePrivateInformation(displayStep)
                     val actor = displayStep.actor
                     val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
@@ -5017,8 +5025,16 @@ internal fun ClocktowerJudgeScreen(
                             }
                         },
                         onShowPlayerDisplay = showPlayerDisplay@{ displayStep ->
-                            if (!informationDecisionPublicationAllowed(displayStep)) return@showPlayerDisplay
-                            if (!publishFirstNightInformation(displayStep)) return@showPlayerDisplay
+                            val publicationAllowed = informationDecisionPublicationAllowed(displayStep)
+                            val revealHandoff = resolveClocktowerPlayerRevealHandoff(
+                                publicationAllowed = publicationAllowed,
+                                firstNightPublicationCreated = publicationAllowed && publishFirstNightInformation(displayStep),
+                            )
+                            if (!revealHandoff.openReveal) return@showPlayerDisplay
+                            if (!revealHandoff.recordPublication) {
+                                playerDisplayStep = displayStep
+                                return@showPlayerDisplay
+                            }
                             recordReliablePrivateInformation(displayStep)
                             val actor = displayStep.actor
                             val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
