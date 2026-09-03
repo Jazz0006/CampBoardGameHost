@@ -22,6 +22,13 @@ internal data class ClocktowerTableVoteState(
             seats = seats,
             nomineeSeatId = nomineeSeatId,
             selectedVoterSeatIds = nextSelected,
+            ghostVoteAuthority = ClocktowerGhostVoteAuthority(
+                spentSeatIds = seats
+                    .asSequence()
+                    .filter { seat -> !seat.isAlive && seat.seatId !in selectableSeatIds }
+                    .map(HostSeatPresentation::seatId)
+                    .toSet(),
+            ),
         )
     }
 }
@@ -30,6 +37,7 @@ internal fun clocktowerTableVoteState(
     seats: List<HostSeatPresentation>,
     nomineeSeatId: ClocktowerSeatId,
     selectedVoterSeatIds: Set<ClocktowerSeatId> = emptySet(),
+    ghostVoteAuthority: ClocktowerGhostVoteAuthority = ClocktowerGhostVoteAuthority(),
 ): ClocktowerTableVoteState {
     require(seats.isNotEmpty()) { "Table vote requires at least one physical seat" }
     val canonicalSeats = seats.sortedBy { seat -> seat.seatId.number }
@@ -46,7 +54,7 @@ internal fun clocktowerTableVoteState(
         expectedSeatIds.take(nomineeIndex + 1)
     val selectableSeatIds = canonicalSeats
         .asSequence()
-        .filter(HostSeatPresentation::isAlive)
+        .filter { seat -> ghostVoteAuthority.canVote(seat.seatId, canonicalSeats) }
         .map(HostSeatPresentation::seatId)
         .toSet()
     require(selectedVoterSeatIds.all { seatId -> seatId in selectableSeatIds }) {
