@@ -67,12 +67,13 @@ jobs:
           app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt
           app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
           app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt
+          app/src/test/java/com/codex/campboardgamehost/ClocktowerSquareTableSeatLayoutTest.kt
           app/src/test/java/com/codex/campboardgamehost/ClocktowerTableVoteStateTest.kt
           EOF
           git diff --name-only 945787a73722fe2f8c71da37d22a55cf39bdf4ba | sort > "$RUNNER_TEMP/actual.txt"
           sort "$RUNNER_TEMP/expected.txt" > "$RUNNER_TEMP/expected.sorted.txt"
           diff -u "$RUNNER_TEMP/expected.sorted.txt" "$RUNNER_TEMP/actual.txt"
-          test $(git diff --name-only 945787a73722fe2f8c71da37d22a55cf39bdf4ba | wc -l) -eq 7
+          test $(git diff --name-only 945787a73722fe2f8c71da37d22a55cf39bdf4ba | wc -l) -eq 8
 
       - name: Commit validated product checkpoint
         shell: bash
