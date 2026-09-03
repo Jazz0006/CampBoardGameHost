@@ -265,22 +265,6 @@ internal fun SeatingFirstGameSelectionScreen(
                     .padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TextButton(onClick = onBackToSeating) {
-                    Text(text("重新安排座位", "Edit seats"))
-                }
-                Text(
-                    text = text("选择游戏", "Choose game"),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(text("${playerCount}人", "$playerCount players"))
-            }
-
             HostTableShell(
                 seats = seating.toHostSeatPresentations(),
                 modifier = Modifier
@@ -290,7 +274,18 @@ internal fun SeatingFirstGameSelectionScreen(
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
+                    Text(
+                        text = text("选择游戏", "Choose game"),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = text("${playerCount}人", "$playerCount players"),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                     Button(
                         onClick = onOpenClocktowerSettings,
                         enabled = playerCount >= MIN_CLOCKTOWER_PLAYERS,
@@ -311,6 +306,18 @@ internal fun SeatingFirstGameSelectionScreen(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(text("狼人杀", "Werewolf"))
+                    }
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    ) {}
+                    TextButton(
+                        onClick = onBackToSeating,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(text("重新安排座位", "Edit seats"))
                     }
                 }
             }
