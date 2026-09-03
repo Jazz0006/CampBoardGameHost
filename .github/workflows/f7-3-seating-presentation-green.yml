@@ -53,6 +53,8 @@ jobs:
       - name: Audit exact permanent diff
         run: |
           set -euo pipefail
+          git add -N app/src/main/java/com/codex/campboardgamehost/ClocktowerSeatNumberLabel.kt
+          git add -N app/src/test/java/com/codex/campboardgamehost/ClocktowerSeatNumberLabelTest.kt
           git diff --check
           git diff --name-only 3b757cdfcca5a672b4d500a1da12a95db680213b | sort > /tmp/actual.txt
           cat > /tmp/expected.txt <<'EOF'
