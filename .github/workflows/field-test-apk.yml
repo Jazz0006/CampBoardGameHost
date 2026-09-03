@@ -76,6 +76,103 @@ jobs:
       - name: Ensure Gradle wrapper is executable
         run: chmod +x ./gradlew
 
+      - name: Ensure field-test build overlay for requested source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("app/build.gradle.kts")
+          text = path.read_text(encoding="utf-8")
+          original = text
+
+          has_code_property = 'providers.gradleProperty("fieldTestVersionCode")' in text
+          has_name_property = 'providers.gradleProperty("fieldTestVersionName")' in text
+          if has_code_property != has_name_property:
+              raise SystemExit("Partial field-test version-property support in app/build.gradle.kts")
+
+          if not has_code_property:
+              marker = "\nandroid {\n"
+              if text.count(marker) != 1:
+                  raise SystemExit("Unable to locate a unique android block for field-test overlay")
+              text = text.replace(
+                  marker,
+                  '\nval fieldTestVersionCode = providers.gradleProperty("fieldTestVersionCode").orNull?.toInt()\n'
+                  'val fieldTestVersionName = providers.gradleProperty("fieldTestVersionName").orNull\n\n'
+                  'android {\n',
+                  1,
+              )
+
+          if "versionCode = fieldTestVersionCode ?:" not in text:
+              text, replacements = re.subn(
+                  r'(?m)^(\s*)versionCode\s*=\s*(\d+)\s*$',
+                  r'\1versionCode = fieldTestVersionCode ?: \2',
+                  text,
+                  count=1,
+              )
+              if replacements != 1:
+                  raise SystemExit("Unable to overlay field-test versionCode")
+
+          if "versionName = fieldTestVersionName ?:" not in text:
+              text, replacements = re.subn(
+                  r'(?m)^(\s*)versionName\s*=\s*"([^"]+)"\s*$',
+                  r'\1versionName = fieldTestVersionName ?: "\2"',
+                  text,
+                  count=1,
+              )
+              if replacements != 1:
+                  raise SystemExit("Unable to overlay field-test versionName")
+
+          if 'applicationIdSuffix = ".fieldtest"' not in text:
+              if "buildTypes {" in text:
+                  raise SystemExit(
+                      "Requested source has custom buildTypes but no field-test suffix; "
+                      "refusing an unsafe automatic overlay"
+                  )
+              marker = "\n    compileOptions {\n"
+              if text.count(marker) != 1:
+                  raise SystemExit("Unable to locate compileOptions for field-test debug overlay")
+              text = text.replace(
+                  marker,
+                  '\n    buildTypes {\n'
+                  '        getByName("debug") {\n'
+                  '            applicationIdSuffix = ".fieldtest"\n'
+                  '            versionNameSuffix = "-fieldtest"\n'
+                  '        }\n'
+                  '    }\n\n'
+                  '    compileOptions {\n',
+                  1,
+              )
+
+          required = (
+              'providers.gradleProperty("fieldTestVersionCode")',
+              'providers.gradleProperty("fieldTestVersionName")',
+              'versionCode = fieldTestVersionCode ?:',
+              'versionName = fieldTestVersionName ?:',
+              'applicationIdSuffix = ".fieldtest"',
+              'versionNameSuffix = "-fieldtest"',
+          )
+          missing = [needle for needle in required if needle not in text]
+          if missing:
+              raise SystemExit(f"Incomplete field-test build overlay: {missing}")
+
+          if text != original:
+              path.write_text(text, encoding="utf-8")
+              print("Applied transient field-test build overlay to requested source.")
+          else:
+              print("Requested source already contains field-test build support.")
+          PY
+
+          changed="$(git diff --name-only)"
+          if [[ -n "$changed" && "$changed" != "app/build.gradle.kts" ]]; then
+            echo "Unexpected files changed by field-test overlay:" >&2
+            printf '%s\n' "$changed" >&2
+            exit 1
+          fi
+          git diff -- app/build.gradle.kts
+
       - name: Install fixed field-test signing key
         if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
         env:
