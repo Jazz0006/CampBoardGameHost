@@ -1,0 +1,148 @@
+name: R4D-5.2B Ghost Vote GREEN
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d5-2b-ghost-vote-authority
+
+permissions:
+  contents: write
+
+jobs:
+  green:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Patch, validate, audit, and commit
+        shell: bash
+        run: |
+          set +e
+          status=0
+
+          python3 - <<'PY' || status=$?
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected exactly one match, found {count}: {old!r}")
+              p.write_text(text.replace(old, new, 1))
+
+          app = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
+          host = "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt"
+
+          replace_once(
+              app,
+              '''    val clocktowerCurrentVoteCountState = remember { mutableStateOf(0) }\n    val clocktowerHighestVoteNameState = remember { mutableStateOf<String?>(null) }''',
+              '''    val clocktowerCurrentVoteCountState = remember { mutableStateOf(0) }\n    val clocktowerGhostVoteAuthorityState = remember { mutableStateOf(ClocktowerGhostVoteAuthority()) }\n    val clocktowerHighestVoteNameState = remember { mutableStateOf<String?>(null) }''',
+          )
+          replace_once(
+              app,
+              '''        put("clocktowerCurrentVoteCount", clocktowerCurrentVoteCountState.value)\n        putNullableString("clocktowerHighestVoteName", clocktowerHighestVoteNameState.value)''',
+              '''        put("clocktowerCurrentVoteCount", clocktowerCurrentVoteCountState.value)\n        put(\n            ClocktowerGhostVoteAuthorityPersistence.ROOT_KEY,\n            ClocktowerGhostVoteAuthorityPersistence.encode(clocktowerGhostVoteAuthorityState.value),\n        )\n        putNullableString("clocktowerHighestVoteName", clocktowerHighestVoteNameState.value)''',
+          )
+          replace_once(
+              app,
+              '''            clocktowerCurrentVoteCountState.value = json.optInt("clocktowerCurrentVoteCount", 0).coerceAtLeast(0)\n            clocktowerHighestVoteNameState.value = json.optNullableString("clocktowerHighestVoteName")''',
+              '''            clocktowerCurrentVoteCountState.value = json.optInt("clocktowerCurrentVoteCount", 0).coerceAtLeast(0)\n            clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthorityPersistence.decode(json)\n            clocktowerHighestVoteNameState.value = json.optNullableString("clocktowerHighestVoteName")''',
+          )
+          replace_once(
+              app,
+              '''        clocktowerKlutzReturnToDawn = false\n        resetClocktowerFlow()''',
+              '''        clocktowerKlutzReturnToDawn = false\n        clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()\n        resetClocktowerFlow()''',
+          )
+          replace_once(
+              app,
+              '''                        currentVoteCountState = clocktowerCurrentVoteCountState,\n                        highestVoteNameState = clocktowerHighestVoteNameState,''',
+              '''                        currentVoteCountState = clocktowerCurrentVoteCountState,\n                        ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,\n                        onGhostVoteAuthorityChange = { clocktowerGhostVoteAuthorityState.value = it },\n                        highestVoteNameState = clocktowerHighestVoteNameState,''',
+          )
+
+          replace_once(
+              host,
+              '''    currentVoteCountState: MutableState<Int>,\n    highestVoteNameState: MutableState<String?>,''',
+              '''    currentVoteCountState: MutableState<Int>,\n    ghostVoteAuthority: ClocktowerGhostVoteAuthority,\n    highestVoteNameState: MutableState<String?>,''',
+          )
+          replace_once(
+              host,
+              '''    gameOutcome: GameOutcome?,\n    onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,''',
+              '''    gameOutcome: GameOutcome?,\n    onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,\n    onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,''',
+          )
+          replace_once(
+              host,
+              '''        ClocktowerVoteTableScreen(\n            round = round,\n            cards = cards,''',
+              '''        ClocktowerVoteTableScreen(\n            round = round,\n            cards = cards,\n            ghostVoteAuthority = ghostVoteAuthority,''',
+          )
+          replace_once(
+              host,
+              '''            onConfirm = { selectedVoterSeatIds ->\n                currentVoteCount = selectedVoterSeatIds.size''',
+              '''            onConfirm = { selectedVoterSeatIds, confirmedGhostVoteAuthority ->\n                onGhostVoteAuthorityChange(confirmedGhostVoteAuthority)\n                currentVoteCount = selectedVoterSeatIds.size''',
+          )
+          PY
+
+          if [ "$status" -eq 0 ]; then
+            ./gradlew :app:testDebugUnitTest \
+              --tests com.codex.campboardgamehost.ClocktowerGhostVoteAuthorityTest \
+              --tests com.codex.campboardgamehost.ClocktowerTableVoteStateTest \
+              --no-daemon --build-cache || status=$?
+          fi
+
+          if [ "$status" -eq 0 ]; then
+            ./gradlew :app:testFast --no-daemon --build-cache || status=$?
+          fi
+
+          if [ "$status" -eq 0 ]; then
+            git rm .github/workflows/r4d5-2b-green.yml || status=$?
+          fi
+
+          if [ "$status" -eq 0 ]; then
+            git add -A
+            expected=$(cat <<'EOF'
+          app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt
+          app/src/test/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthorityTest.kt
+          app/src/test/java/com/codex/campboardgamehost/ClocktowerTableVoteStateTest.kt
+          EOF
+          )
+            actual=$(git diff --cached --name-only a03ed9bdc9cfe1a33621862eb0b9b7f3ec86b2cf | sort)
+            expected_sorted=$(printf '%s\n' "$expected" | sed 's/^          //' | sort)
+            if [ "$actual" != "$expected_sorted" ]; then
+              echo "Unexpected permanent diff:" >&2
+              printf '%s\n' "$actual" >&2
+              echo "Expected:" >&2
+              printf '%s\n' "$expected_sorted" >&2
+              status=1
+            fi
+          fi
+
+          if [ "$status" -eq 0 ]; then
+            git diff --cached --check || status=$?
+          fi
+
+          if [ "$status" -eq 0 ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "feat(R4D-5.2B): persist one ghost vote per dead seat" || status=$?
+            git push origin HEAD:${GITHUB_REF_NAME} || status=$?
+          else
+            echo "GREEN validation failed; discarding uncommitted production patch and removing temporary workflow." >&2
+            git reset --hard HEAD
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git rm .github/workflows/r4d5-2b-green.yml
+            git commit -m "chore: remove failed R4D-5.2B GREEN workflow"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
+
+          exit "$status"
