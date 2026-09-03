@@ -9,26 +9,32 @@
 
 ```text
 live main at roadmap refresh:
-967fdadaa3b3999d81e49c123d39ea5f0acd7de8
+d71ccb45b81c8cd0f7741abe4707f361c8312898
 
 active campaign:
 UI Information / Storyteller Workspace Campaign
 
 latest validated executable checkpoint:
-UI-R4D-2 — Seating-First Session Flow structural/authority checkpoint
+UI-R4D-2F / F2 — drag-to-reorder on shared computed Host-table slots
 branch: codex/ui-r4d2-seating-first-setup
-validated product checkpoint: 4bd8ce9b6c40c4f383f9124b2c805188c1f055a2
-cleanup head before this roadmap refresh: f93a1dce261ce8a601d68ef533f1fd1039073181
+F2 product checkpoint: 5857e2324fc8bf1fd6526adc95710751735dd3b6
+F2 final cross-corner contract commit: bfb91ff9746ac0da2f4d182c5c319270da62ebdd
+cleanup head after temporary validation removal: 0e3b23dd96c164affd8540e1926ffdcada0fc3c6
 PR #79: draft / open / mergeable / unmerged
 
-validated foundation immediately below it:
+validated F1 immediately below it:
+UI-R4D-2F / F1 — constraint/capacity-aware HostTableLayout
+validated executable checkpoint: f49e9f6a4be5109cd16fe724e24071179310004c
+cleanup head: 37ea5e9b3b1283c6f1f5fc71e35603ff9e88aaad
+
+validated foundation below R4D-2:
 UI-R4D-1 — Persistent Host Table Foundation
 branch: codex/ui-r4d-persistent-table-foundation
 cleanup head: 524f55bac945f1be8ee9d9ec77e4e4ca6935781e
 PR #78: draft / open / mergeable / unmerged
 
 active development target:
-UI-R4D-2F — Real-Device Field-Test Corrections / Seating Workspace Closeout
+UI-R4D-2F / F3 — explicit GameSelection/Edit-seating + Android Back navigation
 
 blocked until R4D-2F is clean:
 UI-R4D-3 — Day Storyteller Workspace
@@ -40,11 +46,9 @@ algorithm campaign after UI stabilization:
 EPI-MQ / Productive Uncertainty / PlayerWorldSet
 ```
 
-Docs-only commits created while refreshing this roadmap may advance the UI-R4D-2 branch beyond cleanup head `f93a1dce261ce8a601d68ef533f1fd1039073181`. Always distinguish later docs-only head movement from the latest validated executable product checkpoint `4bd8ce9b6c40c4f383f9124b2c805188c1f055a2`.
-
 The UI campaign remains intentionally ahead of EPI-MQ. EPI-MQ is paused, not cancelled.
 
-UI-R1 through UI-R4D-2 are stacked draft work and are **not yet on main**. Do not create the next UI branch from `main` or the stack will be lost. Do not start R4D-3 until the R4D-2 field-test correction gate below is closed.
+UI-R1 through UI-R4D-2 are stacked draft work and are **not yet on main**. Do not create the next UI branch from `main` or the stack will be lost. Do not start R4D-3 until the R4D-2F field-test correction gate below is closed.
 
 ## 2. Campaign status
 
@@ -65,7 +69,10 @@ UI-R4B  night-action square-table unification                 COMPLETE / VERIFIE
 UI-R4C  real-device UI corrections                            COMPLETE / VERIFIED / DRAFT #77
 UI-R4D-1 persistent Host table foundation                      COMPLETE / VERIFIED / DRAFT #78
 UI-R4D-2 seating-first session flow / seat authority           STRUCTURALLY VERIFIED / DRAFT #79
-UI-R4D-2F field-test corrections / seating workspace closeout  ACTIVE NOW / BLOCKS R4D-3
+UI-R4D-2F F1 responsive Host-table layout                      COMPLETE / VERIFIED
+UI-R4D-2F F2 shared-slot drag-to-reorder                       COMPLETE / VERIFIED
+UI-R4D-2F F3 seating return / Android Back                     ACTIVE NEXT
+UI-R4D-2F F4-F7 remaining field-test closeout                  QUEUED
 UI-R4D-3 day Storyteller workspace                             QUEUED AFTER R4D-2F
 UI-R4D-4 public claim history                                  QUEUED
 UI-R4D-5 nomination / vote state machine                       QUEUED
@@ -78,7 +85,7 @@ EPI-MQ / ALG
 UX-R6   replace legacy ranking behind stable UX contract      QUEUED AFTER EPI-MQ
 ```
 
-Do not redo Monk/Ravenkeeper legality, UI-R4B, or completed R4C corrections.
+Do not redo Monk/Ravenkeeper legality, UI-R4B, completed R4C corrections, F1 layout, or F2 drag ordering.
 
 ## 3. Active authorities
 
@@ -487,8 +494,6 @@ R4D-6  Unified Host Seat Presentation Migration
        - remove remaining duplicated player-selector/presentation paths
 ```
 
-The exact commit boundaries may be adjusted after code ownership audit, but preserve this dependency direction.
-
 ### R4D-2 current checkpoint and 2026-09-03 real-device correction gate
 
 R4D-2 has a **validated structural/authority checkpoint**, but it is **not field-test complete**. Keep Draft PR #79 open and do not advance to R4D-3 yet.
@@ -499,80 +504,89 @@ Validated structural behavior already established:
 - game selection is unavailable before seat confirmation;
 - confirmed seating survives entry to and return from game-specific settings;
 - Undercover, Werewolf, Trouble Brewing and other Clocktower production starts explicitly consume the frozen confirmed roster rather than mutable setup UI order;
-- all unseated common players remain reachable in the scrollable center palette;
-- focused R4D seating/table tests, `:app:testFast` and diff validation were green at product checkpoint `4bd8ce9b6c40c4f383f9124b2c805188c1f055a2`;
-- cleanup head `f93a1dce261ce8a601d68ef533f1fd1039073181` has zero product-file diff from that validated checkpoint.
+- all unseated common players remain reachable in the scrollable center palette.
 
-Real-device testing then exposed the following correction work. Treat these as R4D-2 closeout, not R4D-3 scope:
+#### F1 — constraint/capacity-aware layout — COMPLETE
 
-#### P0 — restore drag seat editing
+Validated behavior:
 
-The previous Setup UI supported long-press drag/reorder. The new seating-first UI regressed to tap + Earlier/Later buttons only. Restore drag as the primary seat-editing interaction while retaining button-based fallback where useful.
+- actual width/height, seat dimensions, safe separation and center clearance determine edge capacity;
+- portrait layouts naturally allocate more seats to the longer left/right edges;
+- one deterministic clockwise `HostTableLayout.slots` ring is the rendering authority;
+- slot `ringIndex` is contiguous and stable;
+- insufficient perimeter capacity fails closed;
+- F1 validated executable checkpoint `f49e9f6a4be5109cd16fe724e24071179310004c`;
+- F1 cleanup head `37ea5e9b3b1283c6f1f5fc71e35603ff9e88aaad`;
+- Actions run `33690432944`: focused contracts + `:app:testFast` + diff audit GREEN.
 
-Do **not** create a second independent drag geometry. Rendering, hit testing, nearest insertion, cross-corner movement and preview animation must consume the same computed Host-table spatial-slot model.
+#### F2 — drag-to-reorder on computed slots — COMPLETE
 
-#### P0 — return from game selection to editable seating
-
-The state contract already supports releasing confirmation through `reopenSeating()`, but real-device navigation is not sufficiently reachable/obvious. Provide a clear top-level `Back / Edit players and seats` action and Android system-Back behavior. Both paths must call the same state transition so screen state and seating confirmation cannot diverge.
-
-Game-specific Settings -> Back should continue to return to Game Selection **without** releasing confirmed seating.
-
-#### P0 — Manual pair clue confirmation must reliably open Player Reveal
-
-The dedicated Manual pair selection dialog itself works: role/seat selection resolves a legal `ClocktowerDisplayOption`. Real-device testing shows that after confirmation, the subsequent `Show to player` / Player Reveal transition can fail to appear.
-
-Treat this as a real behavior bug. Establish a durable RED around the resolved Manual-display transition before GREEN. Do not fix it with a source-shape test or by blindly issuing duplicate callbacks. Prefer one explicit immutable resolved-display handoff:
+Permanent architecture:
 
 ```text
-Manual / recommendation result
--> resolved player-display payload
--> commit selection
--> sanitized Player Reveal
+pointer position
+-> nearest slot from the SAME HostTableLayout.slots used by rendering
+-> ringIndex
+-> transient preview order
+-> final reorder commit
 ```
 
-The Player Reveal privacy boundary remains unchanged.
+Validated behavior:
 
-#### P1 — constraint/capacity-aware square-table layout
+- no second edge/corner drag geometry exists;
+- long-press drag uses the same computed spatial slots as rendering;
+- cross-corner Top -> Right movement resolves deterministically through adjacent ring indices;
+- an explicit integrated typed test proves Top-last -> Right-first hit-test + insertion preserves the dragged player and all identities exactly once;
+- drag preview animates non-dragged seats toward shared computed slots while the dragged card follows the pointer;
+- setup animation uses stable player identity as motion identity while normal Host modes default to stable typed seat identity;
+- fallback Earlier/Later controls and drag now share one **final target index** contract;
+- corrected the previous forward-move bug where `Later` could remove and reinsert at the same position;
+- final confirmation still freezes the resulting physical order into contiguous typed `ClocktowerSeatId`s.
 
-Do **not** hard-code fixed gaps or fixed player counts per edge. The current equal-four-edge distribution is not appropriate for portrait phones: left/right edges have substantially more usable length than top/bottom edges and should naturally accept more seats.
+Evidence:
 
-Introduce/extend a pure Host-table layout calculation that consumes actual constraints, including conceptually:
+- F2 RED anchor `1ac5bbf6ea8bf1979c85c011f2dedd359017ce1b`;
+- RED run `33696408877`: failed only because the new typed reorder/hit-test contract did not yet exist;
+- initial production focused GREEN run `33696750805`;
+- exact large-file App patch product checkpoint `5857e2324fc8bf1fd6526adc95710751735dd3b6`;
+- final large-file one-shot run `33697007750`: exact head/blob/anchor/allowlist + focused F1/F2 tests + `:app:testFast` + `git diff --check` GREEN, temporary writer self-removed;
+- integrated cross-corner contract commit `bfb91ff9746ac0da2f4d182c5c319270da62ebdd`;
+- final focused cross-corner run `33697631594`: GREEN;
+- final cleanup head after removing temporary validation workflow: `0e3b23dd96c164affd8540e1926ffdcada0fc3c6`.
+
+Permanent F2 product/test diff relative to F1 touches only:
+
+- `CampBoardGameHostApp.kt`;
+- `ClocktowerHostTableReorder.kt`;
+- `ClocktowerHostTableUi.kt`;
+- `ClocktowerSquareTableUi.kt`;
+- `SeatingFirstSetupUi.kt`;
+- `ClocktowerHostTableReorderTest.kt`.
+
+No temporary workflow/script is part of the permanent F2 diff.
+
+#### F3 — next active slice
+
+Make return from Game Selection to editable seating explicit and support Android system Back.
+
+Required invariant:
 
 ```text
-available width / height
-seat-card width / height
-minimum safe separation
-center-workspace clearance
-player count
+visible Edit/Back action
+          \
+           -> SAME reopenSeating transition -> Screen.Setup
+          /
+Android system Back
 ```
 
-and returns a deterministic ordered ring of typed spatial slots. Edge capacity/distribution should emerge from available geometry. On portrait screens, left/right will normally receive more players than top/bottom without a per-player-count lookup table.
+Game-specific Settings -> Back must continue to return to Game Selection **without** releasing confirmed seating.
 
-The same output must be the authority for both rendering and drag insertion. Preserve stable typed seat identity and deterministic clockwise ordering.
+#### Remaining F4-F7
 
-#### P1 — typography / state-color readability
-
-Real-device testing found the newly introduced typography/state colors too low-contrast. Keep important seat/player text high-contrast. Prefer border/background/marker changes for interaction state; do not encode critical state primarily by making small text dim or low-alpha.
-
-Do not expand this into unrelated theme polish. This item is a usability correction.
-
-#### P1 — pair Player Reveal hierarchy
-
-Numeric/Yes-No reveal already gives the main number a large visual treatment, while pair/EitherOne information currently renders its primary/secondary content at much smaller generic headline/title sizes. Create a dedicated pair-information reveal hierarchy using the typed proposition rather than parsing localized display strings.
-
-For Washerwoman / Librarian / Investigator-style pair information, the two seat numbers should be the strongest visual anchors, with player names and role/instruction text secondary. Typography should be adaptive to available width rather than one device-specific magic size.
-
-#### Recommended R4D-2F implementation order
-
-```text
-F1  constraint/capacity-aware HostTableLayout + behavior tests
-F2  drag-to-reorder on computed slots, including cross-corner insertion
-F3  explicit GameSelection/Edit-seating + Android Back navigation
-F4  Manual pair resolved-display RED -> GREEN
-F5  dedicated typed pair Player Reveal / readable seat-number hierarchy
-F6  high-contrast seat/state typography corrections
-F7  real-device closeout: 5 / 8 / 12 / 15 players + cross-corner drag + Manual reveal
-```
+- F4 Manual pair resolved-display RED -> GREEN;
+- F5 dedicated typed pair Player Reveal hierarchy;
+- F6 high-contrast seat/state typography corrections;
+- F7 real-device closeout for 5 / 8 / 12 / 15 players, cross-corner drag and Manual reveal.
 
 Only after F7 is clean should R4D-3 become active.
 
@@ -641,6 +655,8 @@ focused behavior tests
 
 Use ordinary CI/R2 / `[full-ci]` according to repository classifier and risk when a slice reaches its validation checkpoint.
 
+Note: PR #79 is intentionally stacked on PR #78 rather than based on `main`, while the repository's ordinary CI/R2 pull-request triggers target `main`. Therefore normal PR CI/R2 does not automatically execute for this stacked PR. F1/F2 executable evidence comes from the dedicated checkpoint workflows above; do not misreport absence of main-target PR CI as a failure.
+
 ## 13. Source ownership / growth guards
 
 `ClocktowerHostScreen.kt` remains protected orchestration. Do not make it the implementation home for the persistent-table component, claim history or vote state machine.
@@ -650,6 +666,7 @@ Use ordinary CI/R2 / `[full-ci]` according to repository classifier and risk whe
 Prefer small cohesive owners for:
 
 - host table shell/layout;
+- host drag/reorder interaction contract;
 - host seat presentation model/policy;
 - seating/session state;
 - public claim event/history;
@@ -735,9 +752,7 @@ docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_INFORMATION_CAMPAIGN.md
 
 New conversation must first re-query live `main`, Draft PR #78 and Draft PR #79, plus the live `codex/ui-r4d2-seating-first-setup` head/checks. Older stacked PRs remain historical dependencies, but the immediate execution boundary is PR #79.
 
-Distinguish the latest validated executable product checkpoint `4bd8ce9b6c40c4f383f9124b2c805188c1f055a2` / cleanup head `f93a1dce261ce8a601d68ef533f1fd1039073181` from later docs-only roadmap commits.
-
-Resume from **R4D-2F Real-Device Field-Test Corrections** in the live PR #79 branch/stack. Do **not** start R4D-3 until the F1-F7 closeout gate in this roadmap is complete. Do not merge #78 or #79 without explicit user authorization.
+Resume from **R4D-2F / F3** after confirming the current cleanup head. Do **not** start R4D-3 until F1-F7 closeout is complete. Do not merge #78 or #79 without explicit user authorization.
 
 ## 18. Deferred / queued registry
 
@@ -753,15 +768,13 @@ Resume from **R4D-2F Real-Device Field-Test Corrections** in the live PR #79 bra
 | old standalone R4C-2 night seat-detail patch | SUPERSEDED BY UI-R4D UNIFIED SEAT PRESENTATION |
 | UI-R4D-1 persistent Host table foundation | COMPLETE / VERIFIED / DRAFT #78 |
 | UI-R4D-2 seating-first session flow / seat authority | STRUCTURALLY VERIFIED / DRAFT #79 |
-| UI-R4D-2F field-test corrections / seating workspace closeout | ACTIVE NOW; BLOCKS R4D-3 |
+| UI-R4D-2F / F1 responsive layout | COMPLETE / VERIFIED |
+| UI-R4D-2F / F2 shared-slot drag reorder | COMPLETE / VERIFIED |
+| UI-R4D-2F / F3 seating return + Android Back | ACTIVE NEXT |
+| UI-R4D-2F / F4-F7 remaining closeout | QUEUED |
 | UI-R4D-3 Day Storyteller workspace | QUEUED AFTER R4D-2F |
 | UI-R4D-4 public claim history | QUEUED |
 | UI-R4D-5 nomination/vote state machine | QUEUED |
 | UI-R4D-6 unified Host seat presentation migration | QUEUED |
 | UI-R5 real-device stabilization | QUEUED AFTER UI-R4D |
-| EPI-MQ Productive Uncertainty | PAUSED UNTIL UI-R5 STABLE |
-| ALG cognitive-consistency / PlayerWorldSet | PAUSED UNTIL UI-R5 STABLE |
-| UX-R6 legacy ranking replacement | QUEUED AFTER EPI-MQ |
-| A4/ZDD production rollout | SHADOW / FUTURE AFTER EXACT BASELINE GATES |
-| REC-R1 | QUEUED SEPARATE CAMPAIGN |
-| GCR-4 Chambermaid wake-history authority | DEFERRED FOLLOW-UP |
+| EPI-MQ / Productive Uncertainty | PAUSED UNTIL UI STABLE |
