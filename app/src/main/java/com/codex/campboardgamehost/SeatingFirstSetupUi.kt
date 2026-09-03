@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -64,11 +64,9 @@ internal fun SeatingFirstSetupScreen(
         )
     }
     val selectedIndex = selectedPlayerName?.let(playerNames::indexOf)?.takeIf { it >= 0 }
-    val selectedSeatId = selectedIndex?.let { ClocktowerSeatId(it + 1) }
     val interaction = HostTableInteractionState(
         mode = if (seats.isEmpty()) HostTableInteractionMode.ReadOnly else HostTableInteractionMode.Selection,
         selectableSeatIds = seats.map { it.seatId }.toSet(),
-        selectedSeatIds = selectedSeatId?.let(::listOf).orEmpty(),
     )
     val trimmedNewPlayerName = newPlayerName.trim()
     val canAddTypedPlayer = trimmedNewPlayerName.isNotEmpty() &&
@@ -79,13 +77,17 @@ internal fun SeatingFirstSetupScreen(
         .distinct()
 
     ClocktowerDarkTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background,
+            contentColor = MaterialTheme.colorScheme.onBackground,
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -144,6 +146,7 @@ internal fun SeatingFirstSetupScreen(
                         selectedPlayerName = playerNames.getOrNull(seatId.number - 1)
                     },
                     dragEnabled = seats.size > 1,
+                    neutralSelectionChrome = true,
                     seatMotionKey = HostSeatPresentation::playerName,
                     onSeatDragCommit = { seatId, targetRingIndex ->
                         val fromIndex = seatId.number - 1
@@ -165,33 +168,16 @@ internal fun SeatingFirstSetupScreen(
                     ) {
                         selectedIndex?.let { index ->
                             Text(
-                                text = text(
-                                    "座位 ${index + 1} · ${playerNames[index]}",
-                                    "Seat ${index + 1} · ${playerNames[index]}",
-                                ),
+                                text = "${clocktowerSeatNumberLabel(index + 1, language)} · ${playerNames[index]}",
                                 fontWeight = FontWeight.SemiBold,
                             )
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                OutlinedButton(
-                                    onClick = { onMoveCurrentPlayerTo(index, index - 1) },
-                                    enabled = index > 0,
-                                ) {
-                                    Text(text("前移", "Earlier"))
-                                }
-                                OutlinedButton(
-                                    onClick = { onMoveCurrentPlayerTo(index, index + 1) },
-                                    enabled = index < playerNames.lastIndex,
-                                ) {
-                                    Text(text("后移", "Later"))
-                                }
-                                OutlinedButton(
-                                    onClick = {
-                                        onRemoveCurrentPlayer(index)
-                                        selectedPlayerName = null
-                                    },
-                                ) {
-                                    Text(text("移除", "Remove"))
-                                }
+                            OutlinedButton(
+                                onClick = {
+                                    onRemoveCurrentPlayer(index)
+                                    selectedPlayerName = null
+                                },
+                            ) {
+                                Text(text("移除", "Remove"))
                             }
                         }
 
@@ -249,6 +235,7 @@ internal fun SeatingFirstSetupScreen(
                     fontWeight = FontWeight.Bold,
                 )
             }
+            }
         }
     }
 }
@@ -267,13 +254,17 @@ internal fun SeatingFirstGameSelectionScreen(
     val playerCount = seating.seats.size
 
     ClocktowerDarkTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background,
+            contentColor = MaterialTheme.colorScheme.onBackground,
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -322,6 +313,7 @@ internal fun SeatingFirstGameSelectionScreen(
                         Text(text("狼人杀", "Werewolf"))
                     }
                 }
+            }
             }
         }
     }

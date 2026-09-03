@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,6 +68,11 @@ internal data class ClocktowerSquareTableSeatUiModel(
     val seatNumber: Int,
     val label: String,
     val state: ClocktowerSquareTableSeatState = ClocktowerSquareTableSeatState.Neutral,
+    val isInteractionEnabled: Boolean = state in setOf(
+        ClocktowerSquareTableSeatState.Selectable,
+        ClocktowerSquareTableSeatState.SelectedFirst,
+        ClocktowerSquareTableSeatState.SelectedSecond,
+    ),
     val motionKey: String = seatId,
 )
 
@@ -345,12 +351,9 @@ private fun ClocktowerSquareTableSeat(
     modifier: Modifier = Modifier,
 ) {
     val canSelect = interactionMode == ClocktowerSquareTableInteractionMode.Selectable &&
-        seat.state in setOf(
-            ClocktowerSquareTableSeatState.Selectable,
-            ClocktowerSquareTableSeatState.SelectedFirst,
-            ClocktowerSquareTableSeatState.SelectedSecond,
-        )
+        seat.isInteractionEnabled
     val palette = clocktowerSquareTableSeatPalette(seat.state)
+    val language = LocalContext.current.resources.configuration.locales[0].language
     val clickModifier = if (canSelect) {
         Modifier.clickable { onSeatClick(seat.seatId) }
     } else {
@@ -365,7 +368,7 @@ private fun ClocktowerSquareTableSeat(
         color = palette.container,
         contentColor = palette.content,
         border = BorderStroke(palette.borderWidth, palette.border),
-        tonalElevation = if (canSelect) 2.dp else 0.dp,
+        tonalElevation = if (canSelect && seat.state != ClocktowerSquareTableSeatState.Neutral) 2.dp else 0.dp,
     ) {
         Column(
             modifier = Modifier
@@ -387,7 +390,7 @@ private fun ClocktowerSquareTableSeat(
                     )
                 }
                 Text(
-                    text = "#${seat.seatNumber}",
+                    text = clocktowerSeatNumberLabel(seat.seatNumber, language),
                     fontSize = 15.sp,
                     lineHeight = 16.sp,
                     fontWeight = FontWeight.Black,

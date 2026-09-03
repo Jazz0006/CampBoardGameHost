@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -124,6 +125,7 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
 private fun ClocktowerPairPlayerRevealContent(
     presentation: ClocktowerPairPlayerRevealPresentation,
 ) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -144,7 +146,7 @@ private fun ClocktowerPairPlayerRevealContent(
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Text(
-                        text = "#${seat.seatId.number}",
+                        text = clocktowerSeatNumberLabel(seat.seatId.number, language),
                         color = Color(0xFFC5A56A),
                         fontSize = 64.sp,
                         fontWeight = FontWeight.Black,

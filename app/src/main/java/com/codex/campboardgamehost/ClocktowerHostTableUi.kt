@@ -20,6 +20,7 @@ internal fun HostTableShell(
     interaction: HostTableInteractionState = HostTableInteractionState(),
     onSeatClick: (ClocktowerSeatId) -> Unit = {},
     dragEnabled: Boolean = false,
+    neutralSelectionChrome: Boolean = false,
     seatMotionKey: (HostSeatPresentation) -> String = { seat -> seat.seatId.renderKey() },
     onSeatDragCommit: (ClocktowerSeatId, Int) -> Unit = { _, _ -> },
     centerContent: @Composable BoxScope.() -> Unit = {},
@@ -49,6 +50,7 @@ internal fun HostTableShell(
         val renderSeats = frames.map { frame ->
             frame.toSquareTableSeatUiModel(
                 motionKey = seatMotionKey(frame.seat),
+                neutralSelectionChrome = neutralSelectionChrome,
             )
         }
 
@@ -77,12 +79,18 @@ internal fun HostTableShell(
 
 private fun HostTableSeatFrame.toSquareTableSeatUiModel(
     motionKey: String,
+    neutralSelectionChrome: Boolean,
 ): ClocktowerSquareTableSeatUiModel =
     ClocktowerSquareTableSeatUiModel(
         seatId = seat.seatId.renderKey(),
         seatNumber = seat.seatId.number,
         label = hostTablePrimarySeatLabel(seat),
-        state = squareTableSeatState(),
+        state = if (neutralSelectionChrome) {
+            ClocktowerSquareTableSeatState.Neutral
+        } else {
+            squareTableSeatState()
+        },
+        isInteractionEnabled = isSelectable && !isLocked,
         motionKey = motionKey,
     )
 
