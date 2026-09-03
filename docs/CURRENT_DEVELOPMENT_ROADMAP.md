@@ -20,7 +20,7 @@ branch: codex/ui-r4d2-seating-first-setup
 F2 product checkpoint: 5857e2324fc8bf1fd6526adc95710751735dd3b6
 F2 final cross-corner contract commit: bfb91ff9746ac0da2f4d182c5c319270da62ebdd
 F2 executable cleanup head: 0e3b23dd96c164affd8540e1926ffdcada0fc3c6
-current docs-only roadmap head after F2 closeout: 2c73d07e0096f4b7bef0b65e0763bdd11cf552a2
+later branch heads after that checkpoint may be docs-only; always distinguish them from executable F2 state
 PR #79: draft / open / mergeable / unmerged
 
 validated F1 immediately below it:
