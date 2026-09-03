@@ -354,7 +354,7 @@ private fun ClocktowerSquareTableSeat(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 5.dp),
+                .padding(horizontal = 4.dp, vertical = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -365,31 +365,33 @@ private fun ClocktowerSquareTableSeat(
                 clocktowerSquareTableStateMarker(seat.state)?.let { marker ->
                     Text(
                         text = marker,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(end = 1.dp),
                     )
                 }
                 Text(
                     text = "#${seat.seatNumber}",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight.Black,
                 )
             }
             Text(
                 text = seat.label,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                fontSize = 11.sp,
-                lineHeight = 13.sp,
+                fontSize = 12.sp,
+                lineHeight = 14.sp,
                 fontWeight = if (seat.state in setOf(
                         ClocktowerSquareTableSeatState.SelectedFirst,
                         ClocktowerSquareTableSeatState.SelectedSecond,
                         ClocktowerSquareTableSeatState.HighlightedInformation,
                     )
                 ) {
-                    FontWeight.Bold
+                    FontWeight.Black
                 } else {
-                    FontWeight.Medium
+                    FontWeight.SemiBold
                 },
             )
         }
@@ -412,38 +414,38 @@ private fun clocktowerSquareTableSeatPalette(
         ClocktowerSquareTableSeatState.Neutral -> ClocktowerSquareTableSeatPalette(
             container = colors.surfaceVariant,
             content = colors.onSurfaceVariant,
-            border = colors.outlineVariant,
-            borderWidth = 1.dp,
+            border = colors.outline,
+            borderWidth = 1.5.dp,
         )
         ClocktowerSquareTableSeatState.Selectable -> ClocktowerSquareTableSeatPalette(
             container = colors.surface,
             content = colors.onSurface,
             border = colors.primary,
-            borderWidth = 1.5.dp,
+            borderWidth = 2.dp,
         )
         ClocktowerSquareTableSeatState.SelectedFirst -> ClocktowerSquareTableSeatPalette(
             container = colors.primaryContainer,
             content = colors.onPrimaryContainer,
             border = colors.primary,
-            borderWidth = 2.5.dp,
+            borderWidth = 3.dp,
         )
         ClocktowerSquareTableSeatState.SelectedSecond -> ClocktowerSquareTableSeatPalette(
             container = colors.secondaryContainer,
             content = colors.onSecondaryContainer,
             border = colors.secondary,
-            borderWidth = 2.5.dp,
+            borderWidth = 3.dp,
         )
         ClocktowerSquareTableSeatState.HighlightedInformation -> ClocktowerSquareTableSeatPalette(
             container = colors.tertiaryContainer,
             content = colors.onTertiaryContainer,
             border = colors.tertiary,
-            borderWidth = 2.5.dp,
+            borderWidth = 3.dp,
         )
         ClocktowerSquareTableSeatState.Disabled -> ClocktowerSquareTableSeatPalette(
-            container = colors.surfaceVariant.copy(alpha = 0.45f),
-            content = colors.onSurfaceVariant.copy(alpha = 0.55f),
-            border = colors.outlineVariant.copy(alpha = 0.55f),
-            borderWidth = 1.dp,
+            container = colors.surfaceVariant.copy(alpha = 0.55f),
+            content = colors.onSurfaceVariant.copy(alpha = 0.72f),
+            border = colors.outline.copy(alpha = 0.72f),
+            borderWidth = 1.5.dp,
         )
     }
 }
