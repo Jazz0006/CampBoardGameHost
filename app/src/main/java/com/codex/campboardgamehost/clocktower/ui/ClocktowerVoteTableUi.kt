@@ -32,12 +32,13 @@ internal fun ClocktowerVoteTableScreen(
     round: Int,
     cards: List<PlayerCard>,
     tableState: ClocktowerDayOverviewTableState,
+    ghostVoteAuthority: ClocktowerGhostVoteAuthority,
     executionThreshold: Int,
     nominatorName: String?,
     nomineeName: String?,
     highestVoteText: String,
     actionsEnabled: Boolean,
-    onConfirm: (Set<ClocktowerSeatId>) -> Unit,
+    onConfirm: (Set<ClocktowerSeatId>, ClocktowerGhostVoteAuthority) -> Unit,
     onCancel: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
@@ -70,11 +71,12 @@ internal fun ClocktowerVoteTableScreen(
                 return@Surface
             }
 
-            var voteState by remember(tableState.seats, nomineeSeat.seatId) {
+            var voteState by remember(tableState.seats, nomineeSeat.seatId, ghostVoteAuthority) {
                 mutableStateOf(
                     clocktowerTableVoteState(
                         seats = tableState.seats,
                         nomineeSeatId = nomineeSeat.seatId,
+                        ghostVoteAuthority = ghostVoteAuthority,
                     ),
                 )
             }
@@ -152,7 +154,15 @@ internal fun ClocktowerVoteTableScreen(
                             textAlign = TextAlign.Center,
                         )
                         Button(
-                            onClick = { onConfirm(voteState.selectedVoterSeatIds) },
+                            onClick = {
+                                onConfirm(
+                                    voteState.selectedVoterSeatIds,
+                                    voteState.ghostVoteAuthority.confirmVote(
+                                        selectedVoterSeatIds = voteState.selectedVoterSeatIds,
+                                        seats = voteState.seats,
+                                    ),
+                                )
+                            },
                             enabled = actionsEnabled,
                             modifier = Modifier
                                 .fillMaxWidth()
