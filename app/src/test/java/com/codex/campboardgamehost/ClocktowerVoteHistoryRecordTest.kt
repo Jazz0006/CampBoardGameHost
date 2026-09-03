@@ -39,6 +39,14 @@ class ClocktowerVoteHistoryRecordTest {
         assertTrue(record.voters[0].isGhostVote)
         assertTrue(record.voters[1].isGhostVote)
         assertFalse(record.voters[2].isGhostVote)
+        assertEquals(
+            "#7 Player 7（幽灵票）、#2 Player 2（幽灵票）、#5 Player 5",
+            record.voterDetail(
+                playerLabel = { playerName -> "#${playerName.substringAfter("Player ")} $playerName" },
+                ghostVoteSuffix = "（幽灵票）",
+                noVotesLabel = "无人投票",
+            ),
+        )
     }
 
     @Test
@@ -59,5 +67,13 @@ class ClocktowerVoteHistoryRecordTest {
 
         assertEquals(0, record.voteCount)
         assertTrue(record.voters.isEmpty())
+        assertEquals(
+            "No votes",
+            record.voterDetail(
+                playerLabel = { it },
+                ghostVoteSuffix = " (ghost vote)",
+                noVotesLabel = "No votes",
+            ),
+        )
     }
 }
