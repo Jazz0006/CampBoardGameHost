@@ -4094,11 +4094,18 @@ internal fun ClocktowerJudgeScreen(
             nomineeName = nomineeName,
             highestVoteText = highestVoteText,
             actionsEnabled = gameOutcome == null,
-            onConfirm = { voteRecord, confirmedGhostVoteAuthority ->
-                onGhostVoteAuthorityChange(confirmedGhostVoteAuthority)
-                currentVoteCount = voteRecord.voteCount
-                recordVoteEvent(voteRecord)
-                recordCurrentVote()
+            onConfirm = { voteState ->
+                val voteTransaction = commitClocktowerVoteTransaction(
+                    voteState = voteState,
+                    nomineeName = requireNotNull(nomineeName) { "Confirmed vote requires nominee" },
+                    executionThreshold = executionThreshold,
+                    highestVoteName = highestVoteName,
+                    highestVoteCount = highestVoteCount,
+                )
+                onGhostVoteAuthorityChange(voteTransaction.ghostVoteAuthority)
+                highestVoteName = voteTransaction.highestVoteName
+                highestVoteCount = voteTransaction.highestVoteCount
+                recordVoteEvent(voteTransaction.voteRecord)
                 nominatorName = null
                 nomineeName = null
                 currentVoteCount = 0
