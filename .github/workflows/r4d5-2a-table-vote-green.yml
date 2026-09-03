@@ -1,0 +1,85 @@
+name: R4D-5.2A table voter GREEN
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d5-2a-table-voting
+
+permissions:
+  contents: write
+
+jobs:
+  green:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v6
+      - run: chmod +x ./gradlew
+
+      - name: Guard stacked baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 945787a73722fe2f8c71da37d22a55cf39bdf4ba HEAD
+          test -f .github/r4d5-2a-apply.py
+          test -f app/src/test/java/com/codex/campboardgamehost/ClocktowerTableVoteStateTest.kt
+
+      - name: Apply exact R4D-5.2A migration
+        run: python3 .github/r4d5-2a-apply.py
+
+      - name: Focused table-vote and Host-table contracts
+        run: |
+          ./gradlew :app:testDebugUnitTest --no-daemon --build-cache \
+            --tests com.codex.campboardgamehost.ClocktowerTableVoteStateTest \
+            --tests com.codex.campboardgamehost.ClocktowerHostTableContractTest \
+            --tests com.codex.campboardgamehost.ClocktowerHostTableLayoutTest \
+            --tests com.codex.campboardgamehost.ClocktowerRoundedRectanglePerimeterLayoutTest \
+            --tests com.codex.campboardgamehost.ClocktowerSquareTableSeatLayoutTest \
+            --tests com.codex.campboardgamehost.ClocktowerDayNominationGestureTest
+
+      - name: Fast regression suite
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Remove temporary migration tooling
+        shell: bash
+        run: |
+          rm -f .github/r4d5-2a-apply.py
+          rm -f .github/workflows/r4d5-2a-table-vote-green.yml
+
+      - name: Exact permanent diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -N \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt
+          git diff --check 945787a73722fe2f8c71da37d22a55cf39bdf4ba
+          cat > "$RUNNER_TEMP/expected.txt" <<'EOF'
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableContract.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt
+          app/src/test/java/com/codex/campboardgamehost/ClocktowerTableVoteStateTest.kt
+          EOF
+          git diff --name-only 945787a73722fe2f8c71da37d22a55cf39bdf4ba | sort > "$RUNNER_TEMP/actual.txt"
+          sort "$RUNNER_TEMP/expected.txt" > "$RUNNER_TEMP/expected.sorted.txt"
+          diff -u "$RUNNER_TEMP/expected.sorted.txt" "$RUNNER_TEMP/actual.txt"
+          test $(git diff --name-only 945787a73722fe2f8c71da37d22a55cf39bdf4ba | wc -l) -eq 7
+
+      - name: Commit validated product checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat(R4D-5.2A): add table voter selection"
+          git push
