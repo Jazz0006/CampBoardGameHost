@@ -568,25 +568,15 @@ private fun ClocktowerSquareTableSeat(
         ) {
             Text(
                 text = seat.seatNumber.toString(),
-                color = palette.content.copy(alpha = 0.35f),
-                fontSize = (density.cardWidth * 0.45f).sp,
-                lineHeight = (density.cardWidth * 0.48f).sp,
+                color = palette.content,
+                fontSize = (density.cardWidth * 0.25f).coerceIn(16f, 20f).sp,
+                lineHeight = (density.cardWidth * 0.28f).coerceIn(18f, 22f).sp,
                 fontWeight = FontWeight.Black,
                 maxLines = 1,
-                modifier = Modifier.align(Alignment.Center),
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 4.dp, top = 2.dp),
             )
-
-            if (seat.isCurrentActor) {
-                Text(
-                    text = "➤",
-                    color = MaterialTheme.colorScheme.tertiary,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Black,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(start = 3.dp, top = 2.dp),
-                )
-            }
 
             clocktowerSquareTableStateMarker(seat.state)?.let { marker ->
                 Text(
