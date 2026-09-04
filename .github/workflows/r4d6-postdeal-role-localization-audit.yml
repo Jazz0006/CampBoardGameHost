@@ -1,4 +1,4 @@
-name: R4D-6 post-deal role localization audit
+name: R4D-6 post-deal role visibility GREEN
 
 on:
   push:
@@ -6,21 +6,101 @@ on:
       - codex/ui-r4d6-closeout-postdeal-role-visibility
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  locate-day-role-caller:
+  green:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
           ref: codex/ui-r4d6-closeout-postdeal-role-visibility
-      - name: Locate Day Host-table projection caller
+          fetch-depth: 2
+
+      - name: Lock bootstrap state
         shell: bash
         run: |
           set -euo pipefail
-          echo "HEAD=$(git rev-parse HEAD)"
-          grep -R -n -C 8 --include='*.kt' 'clocktowerDayOverviewTableState' app/src/main/java
-          count=$(grep -R -l --include='*.kt' 'clocktowerDayOverviewTableState' app/src/main/java | wc -l)
-          echo "files_with_symbol=$count"
-          test "$count" -ge 1
+          test "$(git rev-parse HEAD^)" = "e3471008d576af0a1a70cf763a21d66dcf619b68"
+          test "$(git rev-parse HEAD:app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt)" = "0de1b74e911591c6c38b52fde566b49f7a9d6133"
+          test "$(git rev-parse HEAD:app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSeatContentPresentation.kt)" = "fc6746eb7b61072b0c2994d5661fd08aca02ee36"
+          test "$(git rev-parse HEAD:app/src/test/java/com/codex/campboardgamehost/ClocktowerHostSeatContentPresentationTest.kt)" = "855a61440c7ca47f0c3dd29b3ba717c859827348"
+          test "$(git rev-parse HEAD:.github/scripts/r4d6_postdeal_role_localization_patch.py)" = "73811587bcc0bb0fa670a9b74474e521db5f980f"
+          test "$(git rev-parse HEAD:app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayUi.kt)" = "930762d4a13108799ace45580ed1d9aeb57a6518"
+          test "$(git rev-parse HEAD:app/src/main/java/com/codex/campboardgamehost/ClocktowerPairPlayerRevealPresentation.kt)" = "5ebf9353297cd44f7ee6839ee8761f9881c0f64d"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - name: Apply exact Day localization patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/r4d6_postdeal_role_localization_patch.py
+
+      - name: Run focused GREEN
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest --tests 'com.codex.campboardgamehost.ClocktowerHostSeatContentPresentationTest' --tests 'com.codex.campboardgamehost.ClocktowerDayOverviewTableStateTest' --no-daemon
+
+      - name: Run testFast
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Audit exact product diff and privacy boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected='app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt'
+          actual="$(git diff --name-only)"
+          printf 'changed=%s\n' "$actual"
+          test "$actual" = "$expected"
+          git diff --check
+          test "$(grep -cF 'roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },' "$expected")" -eq 6
+          test "$(grep -cF 'clocktowerDayOverviewTableState(' "$expected")" -eq 6
+          test "$(git rev-parse HEAD:app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayUi.kt)" = "930762d4a13108799ace45580ed1d9aeb57a6518"
+          test "$(git rev-parse HEAD:app/src/main/java/com/codex/campboardgamehost/ClocktowerPairPlayerRevealPresentation.kt)" = "5ebf9353297cd44f7ee6839ee8761f9881c0f64d"
+
+      - name: Recheck remote head
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote="$(git ls-remote origin refs/heads/codex/ui-r4d6-closeout-postdeal-role-visibility | cut -f1)"
+          test "$remote" = "$(git rev-parse HEAD)"
+
+      - name: Commit and push product fix
+        id: product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          git commit -m 'fix(R4D-6): localize Day Host role labels'
+          product_sha="$(git rev-parse HEAD)"
+          echo "product_sha=$product_sha" >> "$GITHUB_OUTPUT"
+          git push origin HEAD:codex/ui-r4d6-closeout-postdeal-role-visibility
+
+      - name: Remove one-shot files
+        id: cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/r4d6-postdeal-role-localization-audit.yml .github/scripts/r4d6_postdeal_role_localization_patch.py
+          git commit -m 'chore(ci): remove R4D-6 post-deal role one-shot files'
+          cleanup_sha="$(git rev-parse HEAD)"
+          echo "cleanup_sha=$cleanup_sha" >> "$GITHUB_OUTPUT"
+          git push origin HEAD:codex/ui-r4d6-closeout-postdeal-role-visibility
+
+      - name: Report
+        shell: bash
+        run: |
+          echo "PRODUCT_SHA=${{ steps.product.outputs.product_sha }}"
+          echo "CLEANUP_SHA=${{ steps.cleanup.outputs.cleanup_sha }}"
