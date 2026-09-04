@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-03 Australia/Sydney
+> Updated: 2026-09-04 Australia/Sydney
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **This file is the single current project-status authority.**  
 > Always re-query live GitHub state before implementation or merge.
@@ -9,39 +9,27 @@
 
 ```text
 live main at roadmap refresh:
-bf37bbb (re-confirm live before implementation/merge)
+bf37bbbced8b1ec71a1ffe209954d328de453c95 (re-confirm live before merge)
 
 active campaign:
 UI Information / Storyteller Workspace Campaign
 
-latest validated executable checkpoint:
-UI-R4D-2F / F7 — real-device correction closeout
-branch: codex/ui-r4d2-seating-first-setup
-final product checkpoint: 40b604eae7ea489347357f88fd3d07be83ce5a78
-F7.6 field APK validation run: 33722208538
-real-device acceptance: PASS (user-confirmed 2026-09-03)
-later #79 heads are CI/docs cleanup only; permanent product files match the checkpoint
-PR #79: draft / open / mergeable / unmerged
+closeout integration candidate:
+branch: codex/ui-stack-closeout-2026-09-04
+base product lineage: PR #92 head 5501fb02cf37fa2da9ad63bbef7d78608784d787
+main field-test APK infrastructure: carried forward unchanged into the closeout candidate
 
-validated F1 immediately below it:
-UI-R4D-2F / F1 — constraint/capacity-aware HostTableLayout
-validated executable checkpoint: f49e9f6a4be5109cd16fe724e24071179310004c
-cleanup head: 37ea5e9b3b1283c6f1f5fc71e35603ff9e88aaad
+latest stacked product checkpoint:
+UI-R4D-6.4B — Mayor redirect selection migrated to shared square table
+PR #92: draft / open / mergeable / unmerged at closeout start
+validated checkpoint: 5501fb02cf37fa2da9ad63bbef7d78608784d787
 
-validated foundation below R4D-2:
-UI-R4D-1 — Persistent Host Table Foundation
-branch: codex/ui-r4d-persistent-table-foundation
-cleanup head: 524f55bac945f1be8ee9d9ec77e4e4ca6935781e
-PR #78: draft / open / mergeable / unmerged
+closeout status:
+FINAL MERGE GATE ACTIVE — closeout PR + final [full-ci] + R2 required before merge
 
-active development target:
-UI-R4D-3.1 — Day Overview migration into the persistent Host table workspace
-
-unblocked by completed R4D-2F:
-UI-R4D-3 — Day Storyteller Workspace
-
-stabilization after UI-R4D:
-UI-R5 — Real-Device Stabilization / Feature Freeze
+next independent UI slice after closeout merge:
+Night persistent Host Table wake/action lifecycle
+WAKE -> ACT -> RESOLVE -> SHOW -> COMPLETE
 
 algorithm campaign after UI stabilization:
 EPI-MQ / Productive Uncertainty / PlayerWorldSet
@@ -49,7 +37,7 @@ EPI-MQ / Productive Uncertainty / PlayerWorldSet
 
 The UI campaign remains intentionally ahead of EPI-MQ. EPI-MQ is paused, not cancelled.
 
-UI-R1 through UI-R4D-2 are stacked draft work and are **not yet on main**. Do not create the next UI branch from `main` or the stack will be lost. Do not start R4D-3 until the R4D-2F field-test correction gate below is closed.
+UI-R1 through UI-R4D-6.4B are accumulated stacked draft work and are **not yet on main**. The active task is stack closeout, not new feature development. Do not branch new UI work from `main` until the closeout merge lands. The known Night wake/action UX gap is explicitly deferred to the next independent branch from the post-closeout `main`.
 
 ## 2. Campaign status
 
@@ -77,11 +65,20 @@ UI-R4D-2F F4 Manual pair resolved-display transition                COMPLETE / V
 UI-R4D-2F F5 typed pair Player Reveal hierarchy                        COMPLETE / VERIFIED
 UI-R4D-2F F6 high-contrast seat/state typography                       COMPLETE / VERIFIED
 UI-R4D-2F F7 real-device defect correction / closeout                   COMPLETE / REAL-DEVICE ACCEPTED
-UI-R4D-3 day Storyteller workspace                             ACTIVE — R4D-3.1 DAY OVERVIEW
-UI-R4D-4 public claim history                                  QUEUED
-UI-R4D-5 nomination / vote state machine                       QUEUED
-UI-R4D-6 unified Host seat presentation migration              QUEUED
-UI-R5   real-device stabilization / feature freeze             QUEUED AFTER UI-R4D
+UI-R4D-3.1 Day Overview persistent workspace                    COMPLETE / VERIFIED / DRAFT #82
+UI-R4D-4 public claim history                                  DEFERRED / NOT IN CLOSEOUT
+UI-R4D-5.1 nomination gesture                                  COMPLETE / VERIFIED / DRAFT #83
+UI-R4D-5.2A individual table voting                            COMPLETE / VERIFIED / DRAFT #84
+UI-R4D-5.2B dead-player ghost-vote authority                   COMPLETE / VERIFIED / DRAFT #85
+UI-R4D-5.3 detailed voter history                              COMPLETE / VERIFIED / DRAFT #86
+UI-R4D-5.2C confirmed vote transaction                         COMPLETE / VERIFIED / DRAFT #87
+UI-R4D-6.1 Slayer table migration                              COMPLETE / VERIFIED / DRAFT #88
+UI-R4D-6.2 Artist table migration                              COMPLETE / VERIFIED / DRAFT #89
+UI-R4D-6.3 Klutz table migration                               COMPLETE / VERIFIED / DRAFT #90
+UI-R4D-6.4A Red Herring table migration                        COMPLETE / VERIFIED / DRAFT #91
+UI-R4D-6.4B Mayor redirect table migration                     COMPLETE / VERIFIED / DRAFT #92
+UI-R4D-N Night wake/action lifecycle                            NEXT AFTER CLOSEOUT MERGE
+UI-R5   real-device stabilization / feature freeze             CLOSEOUT GATE ACTIVE
 
 EPI-MQ / ALG
         Productive Uncertainty / PlayerWorldSet mainline      PAUSED UNTIL UI CAMPAIGN STABLE
@@ -93,7 +90,11 @@ Do not redo Monk/Ravenkeeper legality, UI-R4B, completed R4C corrections, F2 dra
 
 ## 3. Active authorities
 
-Current next-development handoff:
+Current closeout authority:
+
+`docs/UI_STACK_CLOSEOUT_2026-09-04.md`
+
+Historical Day-workspace handoff:
 
 `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-03_UI_R4D3_DAY_WORKSPACE.md`
 
