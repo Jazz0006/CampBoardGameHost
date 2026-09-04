@@ -542,9 +542,9 @@ internal fun ClocktowerNightStepCardLocalized(
     val command = when {
         step.action == ClocktowerNightAction.FortuneTeller && step.actor != null -> {
             if (language == "en") {
-                "Ask ${step.actor.seatLabel(cards)} to choose two players to check"
+                "Wake ${step.actor.seatLabel(cards)} and ask them to choose two players to check"
             } else {
-                "让 ${step.actor.seatLabel(cards)} 选择两名想要查验的玩家"
+                "唤醒 ${step.actor.seatLabel(cards)}，让他选择两名想要查验的玩家"
             }
         }
         step.wakeText != null -> step.wakeText
@@ -678,6 +678,7 @@ internal fun ClocktowerNightStepCardLocalized(
         fun selectableSeatNumbers(candidates: List<PlayerCard>): Set<Int> = candidates
             .mapNotNull { candidate -> seatNumberForName(candidate.name) }
             .toSet()
+        val actionActorSeat = seatNumberForName(step.actor?.name)
 
         when (step.action) {
             ClocktowerNightAction.RedHerring -> {
@@ -712,6 +713,8 @@ internal fun ClocktowerNightStepCardLocalized(
                     selectedSeat = seatNumberForName(selectedName),
                     selectableSeats = selectableSeatNumbers(candidates),
                     enabled = step.isRealAction,
+                    actorSeat = actionActorSeat,
+                    wakeInstruction = command,
                     title = stringResource(R.string.clocktower_host_choose_poison_target),
                     helper = null,
                     language = language,
@@ -731,6 +734,8 @@ internal fun ClocktowerNightStepCardLocalized(
                     selectedSeat = seatNumberForName(selectedName),
                     selectableSeats = selectableSeatNumbers(candidates),
                     enabled = step.isRealAction,
+                    actorSeat = actionActorSeat,
+                    wakeInstruction = command,
                     title = if (language == "en") "Choose the Butler's master" else "选择管家的主人",
                     helper = null,
                     language = language,
@@ -750,6 +755,8 @@ internal fun ClocktowerNightStepCardLocalized(
                     selectedSeat = seatNumberForName(selectedName),
                     selectableSeats = selectableSeatNumbers(candidates),
                     enabled = step.isRealAction,
+                    actorSeat = actionActorSeat,
+                    wakeInstruction = command,
                     title = stringResource(R.string.clocktower_host_choose_monk_protect),
                     helper = stringResource(R.string.clocktower_host_choose_monk_protect_hint),
                     language = language,
@@ -768,6 +775,8 @@ internal fun ClocktowerNightStepCardLocalized(
                     selectedSeats = fortuneTellerSelectedSeats,
                     selectableSeats = fortuneTellerSelectableSeats,
                     enabled = step.isRealAction,
+                    actorSeat = actionActorSeat,
+                    wakeInstruction = command,
                     legalResults = fortuneTellerLegalResults,
                     recommendedResult = fortuneTellerRecommendedResult,
                     automaticStorytellerInfo = automaticStorytellerInfo,
@@ -809,6 +818,8 @@ internal fun ClocktowerNightStepCardLocalized(
                     selectedSeats = selectedSeats,
                     selectableSeats = selectableSeats,
                     enabled = step.isRealAction,
+                    actorSeat = actionActorSeat,
+                    wakeInstruction = command,
                     resultOptions = resultOptions,
                     language = language,
                     canGoPrevious = canGoPrevious,
@@ -835,6 +846,8 @@ internal fun ClocktowerNightStepCardLocalized(
                     selectedSeat = seatNumberForName(selectedName),
                     selectableSeats = selectableSeatNumbers(candidates),
                     enabled = step.isRealAction,
+                    actorSeat = actionActorSeat,
+                    wakeInstruction = command,
                     title = stringResource(R.string.clocktower_host_choose_night_death),
                     helper = stringResource(R.string.clocktower_host_choose_night_death_hint),
                     language = language,
@@ -908,6 +921,8 @@ internal fun ClocktowerNightStepCardLocalized(
                     selectedSeat = seatNumberForName(selectedName),
                     selectableSeats = selectableSeatNumbers(candidates),
                     enabled = step.isRealAction,
+                    actorSeat = actionActorSeat,
+                    wakeInstruction = command,
                     title = stringResource(R.string.clocktower_host_ravenkeeper_target),
                     helper = stringResource(R.string.clocktower_host_ravenkeeper_target_hint),
                     language = language,

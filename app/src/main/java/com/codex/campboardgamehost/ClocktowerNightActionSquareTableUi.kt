@@ -32,6 +32,25 @@ internal fun clocktowerSingleTargetSeatState(
     else -> ClocktowerSquareTableSeatState.Disabled
 }
 
+internal data class ClocktowerNightActionSeatPresentation(
+    val targetState: ClocktowerSquareTableSeatState,
+    val isCurrentActor: Boolean,
+)
+
+internal fun clocktowerSingleTargetSeatPresentation(
+    seatNumber: Int,
+    actorSeat: Int?,
+    selectedSeat: Int?,
+    selectableSeats: Set<Int>,
+): ClocktowerNightActionSeatPresentation = ClocktowerNightActionSeatPresentation(
+    targetState = clocktowerSingleTargetSeatState(
+        seatNumber = seatNumber,
+        selectedSeat = selectedSeat,
+        selectableSeats = selectableSeats,
+    ),
+    isCurrentActor = seatNumber == actorSeat,
+)
+
 internal fun clocktowerTwoTargetSeatState(
     seatNumber: Int,
     selectedSeats: List<Int>,
@@ -43,12 +62,42 @@ internal fun clocktowerTwoTargetSeatState(
     else -> ClocktowerSquareTableSeatState.Disabled
 }
 
+internal fun clocktowerTwoTargetSeatPresentation(
+    seatNumber: Int,
+    actorSeat: Int?,
+    selectedSeats: List<Int>,
+    selectableSeats: Set<Int>,
+): ClocktowerNightActionSeatPresentation = ClocktowerNightActionSeatPresentation(
+    targetState = clocktowerTwoTargetSeatState(
+        seatNumber = seatNumber,
+        selectedSeats = selectedSeats,
+        selectableSeats = selectableSeats,
+    ),
+    isCurrentActor = seatNumber == actorSeat,
+)
+
+@Composable
+internal fun ClocktowerNightActionWakeInstruction(instruction: String?) {
+    instruction?.takeIf { it.isNotBlank() }?.let { value ->
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(4.dp))
+    }
+}
+
 @Composable
 internal fun ClocktowerSingleTargetSquareTableDialog(
     seats: List<HostSeatPresentation>,
     selectedSeat: Int?,
     selectableSeats: Set<Int>,
     enabled: Boolean,
+    actorSeat: Int? = null,
+    wakeInstruction: String? = null,
     title: String,
     helper: String?,
     language: String,
@@ -65,9 +114,10 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
         seats = seats,
         enabled = enabled,
         language = language,
-        seatState = { seatNumber ->
-            clocktowerSingleTargetSeatState(
+        seatPresentation = { seatNumber ->
+            clocktowerSingleTargetSeatPresentation(
                 seatNumber = seatNumber,
+                actorSeat = actorSeat,
                 selectedSeat = selectedSeat,
                 selectableSeats = if (enabled) selectableSeats else emptySet(),
             )
@@ -83,6 +133,7 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
+            ClocktowerNightActionWakeInstruction(wakeInstruction)
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
@@ -141,7 +192,7 @@ internal fun ClocktowerNightActionSquareTableDialog(
     seats: List<HostSeatPresentation>,
     enabled: Boolean,
     language: String,
-    seatState: (Int) -> ClocktowerSquareTableSeatState,
+    seatPresentation: (Int) -> ClocktowerNightActionSeatPresentation,
     onSeatSelected: (Int) -> Unit,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
@@ -160,12 +211,14 @@ internal fun ClocktowerNightActionSquareTableDialog(
             ClocktowerSquareTableSeatSurface(
                 seats = seats.map { seat ->
                     val content = hostSeatContentPresentation(seat, language)
+                    val presentation = seatPresentation(seat.seatId.number)
                     ClocktowerSquareTableSeatUiModel(
                         seatId = seat.seatId.renderKey(),
                         seatNumber = seat.seatId.number,
                         label = content.primaryLabel,
                         detailLabels = content.detailLabels,
-                        state = seatState(seat.seatId.number),
+                        state = presentation.targetState,
+                        isCurrentActor = presentation.isCurrentActor,
                     )
                 },
                 modifier = Modifier.fillMaxSize(),

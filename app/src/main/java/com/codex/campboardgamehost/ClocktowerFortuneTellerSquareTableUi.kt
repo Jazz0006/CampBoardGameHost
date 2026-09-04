@@ -57,6 +57,8 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     selectedSeats: List<Int>,
     selectableSeats: Set<Int>,
     enabled: Boolean,
+    actorSeat: Int? = null,
+    wakeInstruction: String? = null,
     legalResults: Set<Boolean>,
     recommendedResult: Boolean?,
     automaticStorytellerInfo: Boolean,
@@ -91,6 +93,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
                             selectedSeats = selectedSeats,
                             selectableSeats = if (enabled) selectableSeats else emptySet(),
                         ),
+                        isCurrentActor = seat.seatId.number == actorSeat,
                     )
                 },
                 modifier = Modifier.fillMaxSize(),
@@ -107,6 +110,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
                 },
             ) {
                 ClocktowerFortuneTellerCenterControls(
+                    wakeInstruction = wakeInstruction,
                     selectedSeats = selectedSeats,
                     legalResults = legalResults,
                     recommendedResult = recommendedResult,
@@ -125,6 +129,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
 
 @Composable
 private fun ClocktowerFortuneTellerCenterControls(
+    wakeInstruction: String?,
     selectedSeats: List<Int>,
     legalResults: Set<Boolean>,
     recommendedResult: Boolean?,
@@ -149,6 +154,7 @@ private fun ClocktowerFortuneTellerCenterControls(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
+        ClocktowerNightActionWakeInstruction(wakeInstruction)
         Text(
             text = if (language == "en") "Fortune Teller" else "占卜师",
             style = MaterialTheme.typography.titleSmall,

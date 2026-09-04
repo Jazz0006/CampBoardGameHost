@@ -25,6 +25,8 @@ internal fun ClocktowerChambermaidSquareTableDialog(
     selectedSeats: List<Int>,
     selectableSeats: Set<Int>,
     enabled: Boolean,
+    actorSeat: Int? = null,
+    wakeInstruction: String? = null,
     resultOptions: List<ClocktowerDisplayOption>,
     language: String,
     canGoPrevious: Boolean,
@@ -38,9 +40,10 @@ internal fun ClocktowerChambermaidSquareTableDialog(
         seats = seats,
         enabled = enabled,
         language = language,
-        seatState = { seatNumber ->
-            clocktowerTwoTargetSeatState(
+        seatPresentation = { seatNumber ->
+            clocktowerTwoTargetSeatPresentation(
                 seatNumber = seatNumber,
+                actorSeat = actorSeat,
                 selectedSeats = selectedSeats,
                 selectableSeats = if (enabled) selectableSeats else emptySet(),
             )
@@ -50,6 +53,7 @@ internal fun ClocktowerChambermaidSquareTableDialog(
         onPrevious = onPrevious,
     ) {
         ClocktowerChambermaidCenterControls(
+            wakeInstruction = wakeInstruction,
             selectedSeats = selectedSeats,
             resultOptions = resultOptions,
             language = language,
@@ -64,6 +68,7 @@ internal fun ClocktowerChambermaidSquareTableDialog(
 
 @Composable
 private fun ClocktowerChambermaidCenterControls(
+    wakeInstruction: String?,
     selectedSeats: List<Int>,
     resultOptions: List<ClocktowerDisplayOption>,
     language: String,
@@ -83,6 +88,7 @@ private fun ClocktowerChambermaidCenterControls(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
+        ClocktowerNightActionWakeInstruction(wakeInstruction)
         Text(
             text = if (language == "en") "Chambermaid" else "侍女",
             style = MaterialTheme.typography.titleSmall,
