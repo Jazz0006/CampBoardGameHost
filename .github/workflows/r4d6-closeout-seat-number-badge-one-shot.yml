@@ -34,7 +34,7 @@ jobs:
           player_display_test='app/src/test/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayPresentationTest.kt'
           patch_script='.github/scripts/r4d6_closeout_seat_number_badge_patch.py'
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = '3c146a04de5ae09828a5203b2ffcaca8e9f1e9b7'
+          test "$(git rev-parse HEAD^)" = '4a1611541ecfdb24b32148b245b7465de20757cf'
           test "$(git ls-remote origin refs/heads/codex/ui-r4d6-closeout-seat-number-badge | cut -f1)" = "$GITHUB_SHA"
           test "$(git hash-object "$square")" = 'ca2916ec1b28acec66f8f12e9ca7e1bb1fd6469f'
           test "$(git hash-object "$player_display")" = '2e50e1923378cc7f17a325adae37bba8a3f34882'
@@ -92,6 +92,7 @@ jobs:
           square='app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt'
           pair_presentation='app/src/main/java/com/codex/campboardgamehost/ClocktowerPairPlayerRevealPresentation.kt'
           expected=$(printf '%s\n' "$player_display" "$badge" "$square")
+          git add -N "$badge"
           git diff --check
           test "$(git diff --name-only)" = "$expected"
           grep -F 'text = seatNumber.toString()' "$badge"
