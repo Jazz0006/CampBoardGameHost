@@ -8,20 +8,24 @@
 ## 1. Live development context
 
 ```text
-live main after UI stack closeout:
-1a4c628d2a7404ae71d4a73c9457b7cb0f7f3d4c
+live main after roadmap normalization:
+622985aac0231d385bfb386b40fe92a17fe60961
 
-merged closeout:
+merged UI closeout:
 PR #94 — UI stack closeout: integrate Storyteller workspace campaign
+
+merged roadmap normalization:
+PR #95 — normalize roadmap after UI stack closeout
 
 active UI target:
 Night persistent Host Table wake/action lifecycle
 
-intended lifecycle:
+intended lifecycle vocabulary:
 WAKE -> ACT -> RESOLVE -> SHOW -> COMPLETE
 
 algorithm campaign after UI stabilization:
 EPI-MQ / Productive Uncertainty / PlayerWorldSet
+-> UX-R6 legacy recommendation-provider replacement
 ```
 
 Always re-query live GitHub state before implementation, validation or merge.
@@ -42,7 +46,7 @@ Target interaction model:
 stable physical table
 -> WAKE: current actor/wake target emphasized on the table
 -> ACT: choose one/two targets or provide role-specific input
--> RESOLVE: Storyteller/rules result selection when needed
+-> RESOLVE: Storyteller/rules result or information selection when needed
 -> SHOW: sanitized Player Reveal when player-facing information is required
 -> COMPLETE: advance to the next Host interaction
 ```
@@ -54,7 +58,8 @@ Product requirements:
 - center content states the current phase and owns the current task;
 - target selection uses existing typed legal-seat authority;
 - actor/wake state and selected-target state remain semantically distinct;
-- pure-information and action roles share the same lifecycle vocabulary but may skip irrelevant stages;
+- information and action roles share the same lifecycle vocabulary but may skip irrelevant stages;
+- recommendation/Manual choice remains a Storyteller-authority step and must not be collapsed into Player Reveal;
 - Player Reveal remains a separate sanitized full-screen phone-handoff boundary;
 - navigation/back/restore must not silently lose or repeat the active stage;
 - no recommendation-ranking, legality or rules redesign is part of this slice.
@@ -62,10 +67,13 @@ Product requirements:
 Representative flows:
 
 ```text
-pure information:
+deterministic information with no Storyteller choice:
 WAKE -> SHOW -> COMPLETE
 
-single-target action:
+selectable/recommended information such as Washerwoman/Librarian/Investigator:
+WAKE -> RESOLVE -> SHOW -> COMPLETE
+
+single-target action with no player-facing result:
 WAKE -> ACT -> COMPLETE
 
 Fortune Teller-style mixed flow:
@@ -122,6 +130,21 @@ Primary authorities:
 The quality layer remains downstream of legal semantic authority and should evaluate candidate observations through recipient PlayerWorldSet BEFORE/AFTER reasoning, credibility, persistence, breakability, interaction value and Productive Uncertainty.
 
 Do not redesign the stabilized UI contract merely to fit a new ranking engine.
+
+### UX-R6 — replace legacy recommendation provider — AFTER EPI-MQ
+
+After EPI-MQ has passed its correctness, quality, shadow-comparison, performance and rollout gates, replace the legacy recommendation provider behind the already-stable legal-domain / decision / presentation contract.
+
+UX-R6 must preserve:
+
+- the complete legal semantic candidate domain as upstream authority;
+- Manual independence from recommendation availability;
+- typed recommendation/confirmation identity;
+- the stabilized Storyteller UI contract;
+- Player Reveal privacy;
+- existing fallback/degraded behavior until the new provider is proven production-safe.
+
+Do not treat completion of EPI-MQ shadow evaluation as equivalent to production cutover; the legacy provider is replaced only by this explicit UX-R6 stage.
 
 ## 3. Explicitly deferred product features
 
@@ -308,6 +331,7 @@ Algorithm authorities after UI stabilization:
 ```text
 docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md
 docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md
+docs/CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md
 ```
 
 ## 8. Resume protocol
@@ -319,7 +343,8 @@ For a new development conversation:
 3. if UI-N1 has not yet started, branch from current `main` and begin with the Night wake/action lifecycle only;
 4. preserve current target legality, information authority, Player Reveal privacy and stable seat identity;
 5. do not start Public Claim History or Sequential Vote redesign;
-6. do not resume EPI-MQ until UI-R5 stabilization says the interaction contract is stable.
+6. do not resume EPI-MQ until UI-R5 stabilization says the interaction contract is stable;
+7. after EPI-MQ is validated, retain UX-R6 as the explicit production cutover that replaces the legacy recommendation provider behind the stable contract.
 
 ## 9. Completed work / archive rule
 
