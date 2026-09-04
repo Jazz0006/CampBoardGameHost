@@ -91,12 +91,11 @@ jobs:
             grep -q "internal fun ${name}" "$day"
           done
 
-          for name in ClocktowerDayPlayerTile ClocktowerDayActionHeader; do
-            if grep -q "fun ${name}(" "$day"; then
-              echo "Legacy ${name} returned to ClocktowerDayScreen.kt" >&2
-              exit 1
-            fi
-          done
+          if grep -q "fun ClocktowerDayPlayerTile(" "$day"; then
+            echo "Legacy ClocktowerDayPlayerTile returned to ClocktowerDayScreen.kt" >&2
+            exit 1
+          fi
+          grep -q "private fun ClocktowerDayActionHeader" "$day"
 
           for name in ClocktowerNightActiveScreen ClocktowerNightReadyCard; do
             if grep -q "fun ${name}(" "$root"; then
