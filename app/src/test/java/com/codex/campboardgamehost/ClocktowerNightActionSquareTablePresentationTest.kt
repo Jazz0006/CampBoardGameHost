@@ -1,6 +1,8 @@
 package com.codex.campboardgamehost
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerNightActionSquareTablePresentationTest {
@@ -30,6 +32,27 @@ class ClocktowerNightActionSquareTablePresentationTest {
                 selectableSeats = setOf(2, 3, 5),
             ),
         )
+    }
+
+    @Test
+    fun `single-target presentation keeps acting seat cue independent from target state`() {
+        val actingSeat = clocktowerSingleTargetSeatPresentation(
+            seatNumber = 3,
+            actorSeat = 3,
+            selectedSeat = 3,
+            selectableSeats = setOf(2, 3, 5),
+        )
+        assertEquals(ClocktowerSquareTableSeatState.SelectedFirst, actingSeat.targetState)
+        assertTrue(actingSeat.isCurrentActor)
+
+        val selectedTarget = clocktowerSingleTargetSeatPresentation(
+            seatNumber = 5,
+            actorSeat = 3,
+            selectedSeat = 5,
+            selectableSeats = setOf(2, 3, 5),
+        )
+        assertEquals(ClocktowerSquareTableSeatState.SelectedFirst, selectedTarget.targetState)
+        assertFalse(selectedTarget.isCurrentActor)
     }
 
     @Test
