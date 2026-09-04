@@ -75,6 +75,7 @@ internal data class ClocktowerSquareTableSeatUiModel(
     val label: String,
     val detailLabels: List<String> = emptyList(),
     val state: ClocktowerSquareTableSeatState = ClocktowerSquareTableSeatState.Neutral,
+    val isCurrentActor: Boolean = false,
     val isInteractionEnabled: Boolean = state in setOf(
         ClocktowerSquareTableSeatState.Selectable,
         ClocktowerSquareTableSeatState.SelectedFirst,
@@ -553,8 +554,16 @@ private fun ClocktowerSquareTableSeat(
         shape = RoundedCornerShape(12.dp),
         color = palette.container,
         contentColor = palette.content,
-        border = BorderStroke(palette.borderWidth, palette.border),
-        tonalElevation = if (canSelect && seat.state != ClocktowerSquareTableSeatState.Neutral) 2.dp else 0.dp,
+        border = if (seat.isCurrentActor) {
+            BorderStroke(4.dp, MaterialTheme.colorScheme.tertiary)
+        } else {
+            BorderStroke(palette.borderWidth, palette.border)
+        },
+        tonalElevation = when {
+            seat.isCurrentActor -> 4.dp
+            canSelect && seat.state != ClocktowerSquareTableSeatState.Neutral -> 2.dp
+            else -> 0.dp
+        },
     ) {
         Column(
             modifier = Modifier
@@ -570,6 +579,15 @@ private fun ClocktowerSquareTableSeat(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
             ) {
+                if (seat.isCurrentActor) {
+                    Text(
+                        text = "➤",
+                        color = MaterialTheme.colorScheme.tertiary,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(end = 2.dp),
+                    )
+                }
                 clocktowerSquareTableStateMarker(seat.state)?.let { marker ->
                     Text(
                         text = marker,
@@ -602,7 +620,7 @@ private fun ClocktowerSquareTableSeat(
                 overflow = TextOverflow.Ellipsis,
                 fontSize = density.primaryFontSizeSp.sp,
                 lineHeight = density.primaryLineHeightSp.sp,
-                fontWeight = if (seat.state in setOf(
+                fontWeight = if (seat.isCurrentActor || seat.state in setOf(
                         ClocktowerSquareTableSeatState.SelectedFirst,
                         ClocktowerSquareTableSeatState.SelectedSecond,
                         ClocktowerSquareTableSeatState.Selected,
