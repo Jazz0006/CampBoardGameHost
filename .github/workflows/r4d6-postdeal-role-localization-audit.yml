@@ -1,0 +1,26 @@
+name: R4D-6 post-deal role localization audit
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d6-closeout-postdeal-role-visibility
+
+permissions:
+  contents: read
+
+jobs:
+  locate-day-role-caller:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/ui-r4d6-closeout-postdeal-role-visibility
+      - name: Locate Day Host-table projection caller
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "HEAD=$(git rev-parse HEAD)"
+          grep -R -n -C 8 --include='*.kt' 'clocktowerDayOverviewTableState' app/src/main/java
+          count=$(grep -R -l --include='*.kt' 'clocktowerDayOverviewTableState' app/src/main/java | wc -l)
+          echo "files_with_symbol=$count"
+          test "$count" -ge 1
