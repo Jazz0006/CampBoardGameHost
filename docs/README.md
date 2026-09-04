@@ -153,7 +153,11 @@ actual identity
 
 Historical handoffs live under `archive/handoffs/`; deferred work under `archive/deferred/`; superseded workflow guidance under `archive/workflows/`.
 
-## 9. Status authority rule
+## 9. Current checkpoint gate
+
+PR #99 intentionally requests a `[full-ci]` checkpoint after the final reconciliation docs update so the current PR head receives the complete remote acceptance gate, not only the earlier production-head validation.
+
+## 10. Status authority rule
 
 If documents disagree:
 
