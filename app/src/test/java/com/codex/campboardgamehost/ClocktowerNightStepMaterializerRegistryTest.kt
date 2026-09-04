@@ -58,6 +58,40 @@ class ClocktowerNightStepMaterializerRegistryTest {
     }
 
     @Test
+    fun `other night omits normal role step without effective actor but keeps death trigger actor`() {
+        val otherNightPhase = ClocktowerNightFlowPhase.OTHER_NIGHT
+        val fortuneTellerIdentity = ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller"))
+        val ravenkeeperIdentity = ClocktowerProductionNightStepIdentity.role(RoleId("Ravenkeeper"))
+        val ravenkeeperActor = PlayerCard(
+            name = "Ravenkeeper",
+            role = Role.Civilian,
+            word = "",
+        )
+        val registry = ClocktowerNightStepMaterializerRegistry(
+            phase = otherNightPhase,
+            entries = listOf(
+                ClocktowerNightStepMaterializerRegistry.Entry(
+                    identity = fortuneTellerIdentity,
+                    build = { step("Fortune Teller") },
+                ),
+                ClocktowerNightStepMaterializerRegistry.Entry(
+                    identity = ravenkeeperIdentity,
+                    build = { step("Ravenkeeper", actor = ravenkeeperActor) },
+                ),
+            ),
+        )
+
+        val materialized = registry.materialize(
+            listOf(
+                roleInteraction(fortuneTellerIdentity, "Fortune Teller", otherNightPhase),
+                roleInteraction(ravenkeeperIdentity, "Ravenkeeper", otherNightPhase),
+            ),
+        )
+
+        assertEquals(listOf("Ravenkeeper"), materialized.map { it.title })
+    }
+
+    @Test
     fun `missing projected actionable interaction fails closed`() {
         val empathIdentity = ClocktowerProductionNightStepIdentity.role(RoleId("Empath"))
         val chefIdentity = ClocktowerProductionNightStepIdentity.role(RoleId("Chef"))
@@ -112,9 +146,10 @@ class ClocktowerNightStepMaterializerRegistryTest {
     private fun roleInteraction(
         identity: ClocktowerProductionNightStepIdentity,
         roleName: String,
+        interactionPhase: ClocktowerNightFlowPhase = phase,
     ): ClocktowerHostInteraction = ClocktowerHostInteraction(
-        id = identity.interactionId(phase),
-        phase = phase,
+        id = identity.interactionId(interactionPhase),
+        phase = interactionPhase,
         roleId = RoleId(roleName),
         kind = ClocktowerHostInteractionKind.ROLE_PHASE_ACTION,
         completionPolicy = ClocktowerInteractionCompletionPolicy.ROLE_RESOLUTION,
@@ -128,9 +163,12 @@ class ClocktowerNightStepMaterializerRegistryTest {
         completionPolicy = ClocktowerInteractionCompletionPolicy.SYSTEM_TRANSITION,
     )
 
-    private fun step(title: String): ClocktowerNightStepUi = ClocktowerNightStepUi(
+    private fun step(
+        title: String,
+        actor: PlayerCard? = null,
+    ): ClocktowerNightStepUi = ClocktowerNightStepUi(
         title = title,
-        actor = null,
+        actor = actor,
         isRealAction = true,
         reason = "",
         storytellerAction = "",
