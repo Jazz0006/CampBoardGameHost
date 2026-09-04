@@ -49,10 +49,20 @@ internal class ClocktowerNightStepMaterializerRegistry(
             "Clocktower projected materialization interaction IDs must be unique."
         }
 
-        return actionableInteractions.map { interaction ->
-            requireNotNull(byInteractionId[interaction.id]) {
+        return actionableInteractions.mapNotNull { interaction ->
+            val step = requireNotNull(byInteractionId[interaction.id]) {
                 "Missing Clocktower night-step materializer for '${interaction.id.value}'."
             }.invoke()
+
+            // The planner projects the night's ordering skeleton before same-night deaths resolve.
+            // By materialization time, normal later-night role lookup is cursor-relative and returns
+            // no actor when that role has already become mechanically dead. Death-trigger roles such
+            // as Ravenkeeper/Sage explicitly supply their trigger actor, so they remain materialized.
+            step.takeUnless {
+                phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
+                    interaction.kind == ClocktowerHostInteractionKind.ROLE_PHASE_ACTION &&
+                    step.actor == null
+            }
         }
     }
 }
