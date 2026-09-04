@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   patch-roadmap:
-    if: github.event.head_commit.message == 'Tooling: run UI stack closeout roadmap patch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exact closeout head
@@ -67,7 +66,6 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/CURRENT_DEVELOPMENT_ROADMAP.md
           git commit -m '[full-ci] Docs: update roadmap for UI stack closeout'
-          product_head="$(git rev-parse HEAD)"
           before_push_parent="$(git rev-parse HEAD^)"
           git fetch origin "$branch"
           remote_head="$(git rev-parse "refs/remotes/origin/$branch")"
@@ -76,7 +74,6 @@ jobs:
             exit 1
           }
           git push origin "HEAD:$branch"
-          echo "product_head=$product_head" >> "$GITHUB_ENV"
 
       - name: Remove one-shot tooling
         shell: bash
