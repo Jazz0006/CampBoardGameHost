@@ -1,0 +1,179 @@
+name: R4D-6 adaptive Host seat closeout one-shot
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d6-closeout-adaptive-seat-presentation
+    paths:
+      - .github/workflows/r4d6-closeout-adaptive-seat-presentation-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/ui-r4d6-closeout-adaptive-seat-presentation
+          fetch-depth: 0
+
+      - name: Verify bootstrap head and blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='app/src/main/java/com/codex/campboardgamehost'
+          tests='app/src/test/java/com/codex/campboardgamehost'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 'bec423cc5e4288a2c4aa418abf9e1e3bf91ea6df'
+          test "$(git ls-remote origin refs/heads/codex/ui-r4d6-closeout-adaptive-seat-presentation | cut -f1)" = "$GITHUB_SHA"
+          test "$(git hash-object "$root/ClocktowerSquareTableUi.kt")" = '0cd1fef73dee7a3aff870fc5e595f9870ca8c3db'
+          test "$(git hash-object "$root/ClocktowerHostTableUi.kt")" = '5f35eed6ec750b09e94974ac2989815531e7248c'
+          test "$(git hash-object "$root/ClocktowerPairManualSelectionUi.kt")" = '441c0f2f70eb8f4ae414c764a677b9e447c2a877'
+          test "$(git hash-object "$root/ClocktowerNightStepUi.kt")" = '5ec8a51f68fd7b2341b71efc6d4ed23fe1e6299d'
+          test "$(git hash-object "$root/ClocktowerPlayerDisplayUi.kt")" = '930762d4a13108799ace45580ed1d9aeb57a6518'
+          test "$(git hash-object "$root/ClocktowerPairPlayerRevealPresentation.kt")" = '5ebf9353297cd44f7ee6839ee8761f9881c0f64d'
+          test "$(git hash-object "$tests/ClocktowerSquareTableSeatDensityPolicyTest.kt")" = '76aab3046587be87b67b9150d1051602be6aea13'
+          test "$(git hash-object "$tests/ClocktowerPairManualSeatPresentationTest.kt")" = '98a1ccc45725cd5ef0e39ee0c278d767ff2f5ae7'
+          test "$(git hash-object .github/scripts/r4d6_closeout_adaptive_seat_presentation_patch.py)" = '87a09b11d4331f02c952a9293f496e4b0457162f'
+          test "$(git hash-object .github/scripts/r4d6_closeout_adaptive_seat_empty_policy_fix.py)" = '8a26a3c28351da7449725b7624b0a5422fe64bab'
+          test ! -e "$root/ClocktowerSquareTableSeatDensityPolicy.kt"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Prove focused RED
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerSquareTableSeatDensityPolicyTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerPairManualSeatPresentationTest' \
+            --rerun-tasks --no-daemon 2>&1 | tee /tmp/r4d6-adaptive-seat-red.log
+          status=${PIPESTATUS[0]}
+          set -e
+          test "$status" -ne 0
+          grep -F 'clocktowerSquareTableSeatDensity' /tmp/r4d6-adaptive-seat-red.log
+          grep -F 'clocktowerPairManualSquareTableSeat' /tmp/r4d6-adaptive-seat-red.log
+
+      - name: Apply exact production patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/r4d6_closeout_adaptive_seat_presentation_patch.py
+          python3 .github/scripts/r4d6_closeout_adaptive_seat_empty_policy_fix.py
+
+      - name: Run focused GREEN
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerSquareTableSeatDensityPolicyTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerPairManualSeatPresentationTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerPairManualSelectionModelTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerPairManualAuthorityTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerHostSeatContentPresentationTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerSquareTableSeatLayoutTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerHostTableLayoutTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Run checkpoint testFast
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Exact diff and semantic audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='app/src/main/java/com/codex/campboardgamehost'
+          density="$root/ClocktowerSquareTableSeatDensityPolicy.kt"
+          host="$root/ClocktowerHostTableUi.kt"
+          night="$root/ClocktowerNightStepUi.kt"
+          pair="$root/ClocktowerPairManualSelectionUi.kt"
+          square="$root/ClocktowerSquareTableUi.kt"
+          git add -N "$density"
+          expected=$(printf '%s\n' \
+            "$host" \
+            "$night" \
+            "$pair" \
+            "$density" \
+            "$square")
+          git diff --check
+          test "$(git diff --name-only)" = "$expected"
+          grep -F 'cardWidth = 80f' "$density"
+          grep -F 'cardHeight = 90f' "$density"
+          grep -F 'cardWidth = 72f' "$density"
+          grep -F 'cardHeight = 84f' "$density"
+          grep -F 'cardWidth = 64f' "$density"
+          grep -F 'cardHeight = 70f' "$density"
+          grep -F 'primaryMaxLines = 2' "$density"
+          grep -F 'detailMaxLines = 2' "$density"
+          grep -F 'playerCount = seats.size' "$host"
+          grep -F 'playerCount = seats.size' "$square"
+          grep -F 'seats: List<HostSeatPresentation>' "$pair"
+          grep -F 'detailLabels = content.detailLabels' "$pair"
+          grep -F 'card.toStorytellerHostSeatPresentation' "$night"
+          if grep -R -F 'ClocktowerPairManualSeatUiModel' "$root"; then
+            echo 'Legacy Pair Manual seat model remains' >&2
+            exit 1
+          fi
+          test "$(git hash-object "$root/ClocktowerPlayerDisplayUi.kt")" = '930762d4a13108799ace45580ed1d9aeb57a6518'
+          test "$(git hash-object "$root/ClocktowerPairPlayerRevealPresentation.kt")" = '5ebf9353297cd44f7ee6839ee8761f9881c0f64d'
+          git diff -- "$host" "$night" "$pair" "$density" "$square"
+
+      - name: Reconfirm remote head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/ui-r4d6-closeout-adaptive-seat-presentation | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Commit and push product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='app/src/main/java/com/codex/campboardgamehost'
+          files=(
+            "$root/ClocktowerHostTableUi.kt"
+            "$root/ClocktowerNightStepUi.kt"
+            "$root/ClocktowerPairManualSelectionUi.kt"
+            "$root/ClocktowerSquareTableSeatDensityPolicy.kt"
+            "$root/ClocktowerSquareTableUi.kt"
+          )
+          expected=$(printf '%s\n' "${files[@]}")
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "${files[@]}"
+          test "$(git diff --cached --name-only)" = "$expected"
+          git commit -m 'feat(R4D-6): close adaptive Host seat presentation'
+          git push origin HEAD:codex/ui-r4d6-closeout-adaptive-seat-presentation
+          echo "PRODUCT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/ui-r4d6-closeout-adaptive-seat-presentation | cut -f1)" = "$PRODUCT_SHA"
+          git rm \
+            .github/workflows/r4d6-closeout-adaptive-seat-presentation-one-shot.yml \
+            .github/scripts/r4d6_closeout_adaptive_seat_presentation_patch.py \
+            .github/scripts/r4d6_closeout_adaptive_seat_empty_policy_fix.py
+          git commit -m 'chore(ci): remove R4D-6 adaptive seat one-shot files'
+          git push origin HEAD:codex/ui-r4d6-closeout-adaptive-seat-presentation
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report checkpoints
+        run: |
+          echo "Product checkpoint: $PRODUCT_SHA"
+          echo "Cleanup checkpoint: $CLEANUP_SHA"
