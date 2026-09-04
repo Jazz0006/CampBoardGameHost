@@ -3,71 +3,75 @@
 > Updated: 2026-09-04 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **This file is the single current project-status and execution-priority authority.**  
-> Keep this file short. Completed implementation detail belongs in historical/archive documents.
+> Keep this file concise. Historical implementation detail belongs in archive/checkpoint documents.
 
 ## 1. Live development context
 
+Repository-authority cleanup checkpoint started from:
+
 ```text
-live main after roadmap normalization:
-622985aac0231d385bfb386b40fe92a17fe60961
+upstream main at checkpoint start:
+958d08099e2be38fb579d95086ed519fe4509f54
 
-merged UI closeout:
-PR #94 — UI stack closeout: integrate Storyteller workspace campaign
-
-merged roadmap normalization:
-PR #95 — normalize roadmap after UI stack closeout
-
-active UI target:
-Night persistent Host Table wake/action lifecycle
-
-intended lifecycle vocabulary:
-WAKE -> ACT -> RESOLVE -> SHOW -> COMPLETE
-
-algorithm campaign after UI stabilization:
-EPI-MQ / Productive Uncertainty / PlayerWorldSet
--> UX-R6 legacy recommendation-provider replacement
+checkpoint branch:
+codex/repository-authority-residual-reconciliation
 ```
 
-Always re-query live GitHub state before implementation, validation or merge.
+The exact `main` SHA above is evidence for this checkpoint only. **Always re-query live GitHub `main` before implementation, validation or merge.** After this docs-only checkpoint is merged, do not continue treating `958d0809...` as the live head.
 
-The Persistent Host Table / Storyteller Workspace campaign through PR #92 is now on `main` via PR #94. Do not reopen or re-stack the historical UI-R1 through UI-R4D slices merely because their original PRs were stacked.
+Recent integrated milestones:
+
+```text
+PR #94 — UI stack closeout: integrate Storyteller workspace campaign
+PR #95 — normalize roadmap after UI stack closeout
+PR #96 — address roadmap normalization review
+```
+
+Current active product target:
+
+```text
+UI-N1 — Night persistent Host Table wake/action lifecycle
+
+WAKE -> ACT -> RESOLVE -> SHOW -> COMPLETE
+```
+
+Current active handoff:
+
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-04_UI_N1_NIGHT_LIFECYCLE.md`
 
 ## 2. Current execution order
 
-### UI-N1 — Night persistent Host Table wake/action lifecycle — ACTIVE NEXT
+```text
+UI-N1 Night persistent Host Table lifecycle
+-> UI-R4D residual migration audit
+-> UI-R5 final real-device stabilization / feature freeze
+-> EPI-MQ / Productive Uncertainty / PlayerWorldSet
+-> UX-R6 legacy recommendation-provider replacement
+```
 
-Real-device testing identified a structural Night UX gap: an action-role square-table selector can cover or replace the wake instruction before the Storyteller has clearly acknowledged whom to wake.
+Do not resume historical stacked UI PRs or archived handoffs as if they were active work.
 
-The next Night slice should extend the existing persistent `HostTableShell`; it must not create a second table framework.
+## 3. UI-N1 — Night persistent Host Table wake/action lifecycle — ACTIVE NEXT
 
-Target interaction model:
+Real-device testing identified a structural Night UX gap: an action-role selector can cover/replace the wake instruction before the Storyteller has clearly acknowledged whom to wake.
+
+Extend the existing persistent `HostTableShell`; do not create another table framework.
+
+Target lifecycle:
 
 ```text
 stable physical table
--> WAKE: current actor/wake target emphasized on the table
--> ACT: choose one/two targets or provide role-specific input
+-> WAKE: current actor/wake target emphasized
+-> ACT: choose target(s) or role-specific input
 -> RESOLVE: Storyteller/rules result or information selection when needed
 -> SHOW: sanitized Player Reveal when player-facing information is required
--> COMPLETE: advance to the next Host interaction
+-> COMPLETE: durably accept/record and advance
 ```
-
-Product requirements:
-
-- the player being awakened remains in the same physical table slot;
-- the waking/acting seat receives the strongest visual cue, including a clear directional/arrow-style indicator where useful;
-- center content states the current phase and owns the current task;
-- target selection uses existing typed legal-seat authority;
-- actor/wake state and selected-target state remain semantically distinct;
-- information and action roles share the same lifecycle vocabulary but may skip irrelevant stages;
-- recommendation/Manual choice remains a Storyteller-authority step and must not be collapsed into Player Reveal;
-- Player Reveal remains a separate sanitized full-screen phone-handoff boundary;
-- navigation/back/restore must not silently lose or repeat the active stage;
-- no recommendation-ranking, legality or rules redesign is part of this slice.
 
 Representative flows:
 
 ```text
-deterministic information with no Storyteller choice:
+deterministic information:
 WAKE -> SHOW -> COMPLETE
 
 selectable/recommended information such as Washerwoman/Librarian/Investigator:
@@ -80,13 +84,28 @@ Fortune Teller-style mixed flow:
 WAKE -> ACT -> RESOLVE -> SHOW -> COMPLETE
 ```
 
-Implementation should prefer a small typed presentation/session-stage owner rather than transient Compose-only state when lifecycle state must survive recomposition, navigation or restore.
+Product requirements:
 
-### UI-R4D residual migration audit — AFTER UI-N1
+- the awakened/acting player remains in the same stable physical seat;
+- WAKE receives the strongest actor cue, optionally including a directional/clock-hand-style indicator;
+- actor/wake, legal target, selected target, illegal/disabled and dead states remain semantically distinct;
+- center content owns the current phase/task;
+- target legality remains typed upstream authority;
+- recommendation/Manual remains Storyteller authority and is not collapsed into Player Reveal;
+- Player Reveal remains a sanitized full-screen handoff boundary;
+- back/navigation/recomposition/restore must not silently lose, repeat or advance the active stage;
+- lifecycle state should be owned by a small typed presentation/session model when persistence across recomposition/navigation is required;
+- no recommendation-ranking, gameplay-legality or rules redesign belongs in UI-N1.
 
-After the Night lifecycle is stable, audit the remaining Host interaction surfaces for incomplete migration to the shared table/presentation architecture.
+Primary execution authority:
 
-Known audit targets include:
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-04_UI_N1_NIGHT_LIFECYCLE.md`
+
+## 4. UI-R4D residual migration audit — AFTER UI-N1
+
+After UI-N1 reaches a coherent executable checkpoint, audit still-active Host interaction surfaces for incomplete migration to the shared table/presentation architecture.
+
+Known audit targets:
 
 - Demon Successor / other still-legacy player-selection surfaces;
 - remaining legacy/non-persistent vote paths that still require compatibility handling;
@@ -95,13 +114,53 @@ Known audit targets include:
 - long player-name / long role-name bounded readability;
 - duplicated player selector / seat presentation paths that can now be retired safely.
 
-This is a completion audit, not permission for a broad rewrite. Migrate only paths that are still active and materially inconsistent with the shared Host Table contract.
+This is a completion audit, not permission for a broad rewrite.
 
-### UI-R5 — final real-device stabilization / feature freeze
+### Preserved post-#92 salvage lineage
 
-After UI-N1 and the residual migration audit reach a coherent executable checkpoint, perform a full Storyteller workflow stabilization pass on real devices.
+A post-#92 R4D-6 implementation chain was intentionally excluded from PR #94 and remains outside current `main`.
 
-Required coverage includes:
+Common base:
+
+```text
+PR #92 head:
+5501fb02cf37fa2da9ad63bbef7d78608784d787
+```
+
+Known lineage:
+
+```text
+codex/ui-r4d6-4c-demon-successor-table
+-> codex/ui-r4d6-closeout-seat-number-badge
+-> codex/ui-r4d6-closeout-host-seat-role-presentation
+-> codex/ui-r4d6-closeout-adaptive-seat-presentation
+-> codex/ui-r4d6-closeout-postdeal-role-visibility
+```
+
+Furthest audited descendant:
+
+```text
+branch: codex/ui-r4d6-closeout-postdeal-role-visibility
+head:   b0eabb24620a14ce704c6e3de5df9ec569e0c864
+```
+
+GitHub compare from the #92 head reports this descendant as **44 commits ahead** of the common base.
+
+The lineage contains potentially reusable work around Demon Successor square-table migration, seat numbers, Host actual/shown role presentation, adaptive seat density, pair/manual presentation and post-deal role visibility.
+
+Rules for this lineage:
+
+- preserve it until the residual migration audit completes;
+- do not bulk merge or bulk cherry-pick it into UI-N1;
+- treat it as historical implementation evidence because it predates the final #94/#95/#96 main lineage and overlaps Night presentation files;
+- classify each surviving change as `REUSE / REIMPLEMENT / SUPERSEDED / DEFER` against post-UI-N1 `main`;
+- delete the salvage branches only after that reconciliation is complete.
+
+## 5. UI-R5 — final real-device stabilization / feature freeze
+
+After UI-N1 and the residual migration audit reach a coherent executable checkpoint, perform one full Storyteller workflow stabilization pass on real devices.
+
+Required coverage:
 
 - seating-first session start and reorder;
 - game selection after seat confirmation;
@@ -111,14 +170,14 @@ Required coverage includes:
 - Day Overview;
 - Slayer / Artist / Klutz and other migrated Day actions;
 - nomination and current vote-recording flow;
-- night wake/action flow;
+- night wake/action lifecycle;
 - Drunk actual/shown Storyteller presentation;
 - long player/role names;
 - Player Reveal privacy/readability and return navigation.
 
-UI-R5 is a stabilization pass. Do not use it for another structural redesign.
+UI-R5 is a stabilization/feature-freeze pass. Do not use it for another structural redesign.
 
-### EPI-MQ / Productive Uncertainty — AFTER UI-R5
+## 6. EPI-MQ / Productive Uncertainty — AFTER UI-R5
 
 Once the interaction contract is stable on device, resume the misinformation-quality / epistemic recommendation campaign.
 
@@ -127,59 +186,64 @@ Primary authorities:
 - `docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`
 - `docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`
 
-The quality layer remains downstream of legal semantic authority and should evaluate candidate observations through recipient PlayerWorldSet BEFORE/AFTER reasoning, credibility, persistence, breakability, interaction value and Productive Uncertainty.
+Target quality pipeline remains downstream of legal semantic authority:
+
+```text
+actual state + visible history + recipient knowledge + perceived ability semantic domain
+-> legal observation candidate
+-> hypothetical apply
+-> recipient PlayerWorldSet AFTER
+-> quality features
+-> safety/fairness gates
+-> Productive Uncertainty / Pareto ranking
+-> Storyteller policy
+-> generic selector
+-> committed AbilityObservation
+```
 
 Do not redesign the stabilized UI contract merely to fit a new ranking engine.
 
-### UX-R6 — replace legacy recommendation provider — AFTER EPI-MQ
+A4/ZDD remains shadow/prototype unless separately reactivated and validated through its own correctness/performance gates.
 
-After EPI-MQ has passed its correctness, quality, shadow-comparison, performance and rollout gates, replace the legacy recommendation provider behind the already-stable legal-domain / decision / presentation contract.
+## 7. UX-R6 — replace legacy recommendation provider — AFTER EPI-MQ
+
+After EPI-MQ has passed correctness, quality, shadow-comparison, performance and rollout gates, replace the legacy recommendation provider behind the already-stable legal-domain / decision / presentation contract.
 
 UX-R6 must preserve:
 
-- the complete legal semantic candidate domain as upstream authority;
+- complete legal semantic candidate domain as upstream authority;
 - Manual independence from recommendation availability;
 - typed recommendation/confirmation identity;
-- the stabilized Storyteller UI contract;
+- stabilized Storyteller UI contract;
 - Player Reveal privacy;
-- existing fallback/degraded behavior until the new provider is proven production-safe.
+- existing fallback/degraded behavior until the new provider is production-safe.
 
-Do not treat completion of EPI-MQ shadow evaluation as equivalent to production cutover; the legacy provider is replaced only by this explicit UX-R6 stage.
+EPI-MQ shadow success is not itself production cutover; provider replacement occurs only in explicit UX-R6 work.
 
-## 3. Explicitly deferred product features
+## 8. Explicitly deferred product features
 
-The following items are intentionally **not active development targets**.
+These are intentionally **not active development targets** unless the user explicitly reopens the product decision.
 
-### Public Claim History — DEFERRED BY PRODUCT DECISION
+### Public Claim History — DEFERRED
 
-Do not implement durable `PublicRoleClaimEvent`, claim editing/history UI, latest-claim seat projection, or recommendation use of public claims at this time.
+Do not implement durable `PublicRoleClaimEvent`, claim editing/history UI, latest-claim seat projection or claim-driven recommendation behavior now.
 
-The earlier design remains historical reference only. If this feature is reconsidered later, it must return as a new explicit product decision and independent slice.
+### Sequential Vote UX — DEFERRED
 
-### Sequential Vote UX — DEFERRED BY PRODUCT DECISION
+The current merged product uses pending multi-selection followed by explicit `Confirm vote`, while preserving clockwise recorded voter history, ghost-vote authority, vote transaction, threshold/tie/on-the-block behavior.
 
-The original R4D design proposed a strict per-player vote cursor:
+Do not convert to a strict per-seat cursor/lock/undo-last lifecycle unless this product decision is explicitly reopened.
 
-```text
-upcoming -> current -> counted/locked
-```
-
-The current merged product instead uses pending multi-selection of voters followed by one explicit `Confirm vote`, while preserving canonical clockwise ordering for recorded voter history, ghost-vote authority, vote transaction, threshold/tie/on-the-block behavior.
-
-Accept the current merged interaction for now.
-
-Do **not** convert voting to a sequential cursor, counted/locked seat progression, or `undo-last` workflow unless the product decision is explicitly reopened.
-
-### Other deferred / later work
+### Other deferred/later work
 
 - complete special-character vote-modifier automation, including Butler assistance;
 - public-claim-driven recommendation behavior;
 - broad unsupported-script expansion;
-- A4/ZDD production rollout before its own correctness/performance gates;
+- A4/ZDD production rollout before its own gates;
 - theme/animation polish unrelated to usability;
 - broad Host/App decomposition unrelated to an active ownership problem.
 
-## 4. Permanent architecture invariants
+## 9. Permanent architecture invariants
 
 ### Epistemic / information authority
 
@@ -215,145 +279,30 @@ Permanent rules:
 ### Persistent Host Table
 
 ```text
-stable typed seatId
+stable typed ClocktowerSeatId
 -> stable physical table position for the whole session
 ```
 
-The table contract is:
+Presentation states must not become gameplay truth authority.
 
-```text
-table edge = WHO / stable physical players and relevant Host-private state
-center     = WHAT THE STORYTELLER IS DOING NOW
-```
+## 10. Development / validation authority
 
-Required invariants:
+Root `AGENTS.md` is normative.
 
-- filtered legal-target sets must not renumber or reposition players;
-- interaction state uses typed seat identity, never localized text parsing;
-- domain/rules owners decide legal targets and outcomes;
-- table presentation may show Host-private actual/shown state where appropriate;
-- Player Reveal is not a Host Table mode.
+Use risk-based evidence, not RED ceremony. Add new typed tests for stable behavior/invariant changes; use existing characterization/compile/diff evidence for refactors when that is sufficient.
 
-### Player Reveal privacy boundary
+Before every implementation or merge:
 
-```text
-Storyteller workspace -> persistent Host Table
-Player-facing reveal  -> sanitized information-only full screen
-```
+1. re-query live `main` and relevant PR/head/checks;
+2. distinguish historical checkpoint SHAs from live state;
+3. keep scope within the active handoff;
+4. use normal remote CI/R2 gates required by repository policy;
+5. do not merge without explicit user authorization when merge approval has not already been given.
 
-Player Reveal must never expose unintended Host-only context such as:
+## 11. Documentation authority / lifecycle
 
-- actual hidden role;
-- Storyteller-only actual/shown comparison;
-- poison/drunk/reliability state;
-- registration witness/provenance;
-- recommendation reasons/truth flags;
-- hidden vote/Host state.
+`docs/README.md` is the navigation entrypoint; this roadmap is the status/priority authority.
 
-## 5. Stable recommendation / Manual contract
+Only one `NEXT_DEVELOPMENT_HANDOFF_*.md` may be active in the docs root. Historical handoffs belong under `docs/archive/handoffs/`; explicitly deferred unfinished handoffs belong under `docs/archive/deferred/`.
 
-```text
-Complete legal semantic candidate domain
-        |
-        +--> Manual / direct legal selection
-        |
-        +--> Recommendation Provider
-                 -> presentation
-```
-
-Permanent condition:
-
-```text
-recommendation unavailable != manual unavailable
-```
-
-Normal execution remains Storyteller-confirmed / ASSISTED.
-
-For pair/combinatorial domains:
-
-```text
-Top-1 recommendation
-+ 0–2 alternatives
-+ persistent Manual over complete legal domain
-```
-
-For naturally small domains:
-
-```text
-primary recommendation
-+ all remaining legal outcomes when the full domain comfortably fits
-```
-
-## 6. Testing and source-ownership policy
-
-Authorities:
-
-- root `AGENTS.md`;
-- `docs/TESTING_STRATEGY.md`;
-- `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` for protected large-source edits.
-
-Use risk-based behavior-first testing. Do not create ceremonial source-shape or pixel tests for ordinary visual/refactor work.
-
-High-value Night-lifecycle contracts should protect observable state transitions and privacy rather than exact Compose structure.
-
-`ClocktowerHostScreen.kt` remains orchestration; do not make it the implementation home for the app-wide table shell, Night lifecycle policy, voting engine or recommendation semantics.
-
-`ClocktowerNightStepUi.kt` remains Night orchestration/wiring; avoid growing it into another monolith. Prefer cohesive small owners for lifecycle/presentation state and reusable table controls.
-
-## 7. Current documentation authority
-
-Current execution authority:
-
-```text
-AGENTS.md
-docs/CURRENT_DEVELOPMENT_ROADMAP.md
-docs/TESTING_STRATEGY.md
-```
-
-Current UI/product reference:
-
-```text
-docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md
-docs/CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md
-```
-
-Completed/historical campaign detail:
-
-```text
-docs/COMPLETED_DEVELOPMENT_HISTORY.md
-docs/UI_STACK_CLOSEOUT_2026-09-04.md
-docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_PERSISTENT_HOST_TABLE.md
-docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-03_UI_R4D3_DAY_WORKSPACE.md
-```
-
-Algorithm authorities after UI stabilization:
-
-```text
-docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md
-docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md
-docs/CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md
-```
-
-## 8. Resume protocol
-
-For a new development conversation:
-
-1. read root `AGENTS.md` and this roadmap;
-2. re-query live `main` and any active PR/head/checks;
-3. if UI-N1 has not yet started, branch from current `main` and begin with the Night wake/action lifecycle only;
-4. preserve current target legality, information authority, Player Reveal privacy and stable seat identity;
-5. do not start Public Claim History or Sequential Vote redesign;
-6. do not resume EPI-MQ until UI-R5 stabilization says the interaction contract is stable;
-7. after EPI-MQ is validated, retain UX-R6 as the explicit production cutover that replaces the legacy recommendation provider behind the stable contract.
-
-## 9. Completed work / archive rule
-
-Do not grow this file by re-adding completed slice-by-slice evidence.
-
-Completed campaign details, exact checkpoints, CI evidence and historical implementation notes belong in:
-
-- `docs/COMPLETED_DEVELOPMENT_HISTORY.md`;
-- campaign-specific historical handoff/checkpoint documents;
-- `docs/UI_STACK_CLOSEOUT_2026-09-04.md` for the UI stack merged by PR #94.
-
-When a future active slice completes and merges, move its detailed acceptance/validation notes out of this roadmap and leave only permanent invariants plus the next active route.
+Historical branches, archive documents and old PRs are evidence only unless this roadmap explicitly reactivates them.
