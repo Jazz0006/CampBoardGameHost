@@ -1079,10 +1079,9 @@ internal fun ClocktowerNightStepCardLocalized(
                         interactionKey = informationDecisionKey,
                         candidates = manualPairCandidates,
                         seats = cards.mapIndexed { index, card ->
-                            ClocktowerPairManualSeatUiModel(
-                                seatId = "seat-${index + 1}",
+                            card.toStorytellerHostSeatPresentation(
                                 seatNumber = index + 1,
-                                label = card.name,
+                                language = language,
                             )
                         },
                         roleLabel = { roleId -> clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language) },

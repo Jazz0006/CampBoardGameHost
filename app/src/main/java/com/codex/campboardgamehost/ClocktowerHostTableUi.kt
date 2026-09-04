@@ -44,6 +44,7 @@ internal fun HostTableShell(
                     availableWidth = availableWidth,
                     availableHeight = availableHeight,
                     detailedSeatCards = detailedSeatCards,
+                    playerCount = seats.size,
                 ),
             )
         }

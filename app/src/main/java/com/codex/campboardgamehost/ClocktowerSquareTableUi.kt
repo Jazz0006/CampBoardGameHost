@@ -119,9 +119,6 @@ internal fun clocktowerSquareTablePlacements(
     }
 }
 
-private const val HOST_TABLE_SEAT_CARD_WIDTH = 64f
-private const val HOST_TABLE_SEAT_CARD_HEIGHT = 50f
-private const val HOST_TABLE_DETAILED_SEAT_CARD_HEIGHT = 70f
 private const val HOST_TABLE_MINIMUM_SEPARATION = 4f
 private const val HOST_TABLE_CENTER_WIDTH_FRACTION = 0.56f
 private const val HOST_TABLE_CENTER_HEIGHT_FRACTION = 0.52f
@@ -137,24 +134,24 @@ internal fun hostTableSurfaceLayoutConstraints(
     availableWidth: Float,
     availableHeight: Float,
     detailedSeatCards: Boolean = false,
+    playerCount: Int = 15,
 ): HostTableLayoutConstraints {
-    val seatCardHeight = if (detailedSeatCards) {
-        HOST_TABLE_DETAILED_SEAT_CARD_HEIGHT
-    } else {
-        HOST_TABLE_SEAT_CARD_HEIGHT
-    }
+    val seatDensity = clocktowerSquareTableSeatDensity(
+        playerCount = playerCount,
+        detailedSeatCards = detailedSeatCards,
+    )
     val maximumCenterWidth = (
-        availableWidth - 2f * (HOST_TABLE_SEAT_CARD_WIDTH + HOST_TABLE_MINIMUM_SEPARATION)
+        availableWidth - 2f * (seatDensity.cardWidth + HOST_TABLE_MINIMUM_SEPARATION)
         ).coerceAtLeast(0f)
     val maximumCenterHeight = (
-        availableHeight - 2f * (seatCardHeight + HOST_TABLE_MINIMUM_SEPARATION)
+        availableHeight - 2f * (seatDensity.cardHeight + HOST_TABLE_MINIMUM_SEPARATION)
         ).coerceAtLeast(0f)
 
     return HostTableLayoutConstraints(
         availableWidth = availableWidth,
         availableHeight = availableHeight,
-        seatCardWidth = HOST_TABLE_SEAT_CARD_WIDTH,
-        seatCardHeight = seatCardHeight,
+        seatCardWidth = seatDensity.cardWidth,
+        seatCardHeight = seatDensity.cardHeight,
         minimumSafeSeparation = HOST_TABLE_MINIMUM_SEPARATION,
         centerWorkspaceWidth = minOf(
             availableWidth * HOST_TABLE_CENTER_WIDTH_FRACTION,
@@ -201,6 +198,7 @@ internal fun ClocktowerSquareTableSeatSurface(
                     availableWidth = availableWidth,
                     availableHeight = availableHeight,
                     detailedSeatCards = detailedSeatCards,
+                    playerCount = seats.size,
                 ),
             )
         }
@@ -255,6 +253,10 @@ internal fun ClocktowerSquareTableSeatSurface(
         }
         val seatCardWidth = resolvedLayout.constraints.seatCardWidth
         val seatCardHeight = resolvedLayout.constraints.seatCardHeight
+        val seatDensity = clocktowerSquareTableSeatDensity(
+            playerCount = seats.size,
+            detailedSeatCards = detailedSeatCards,
+        )
         val tabletopGeometry = remember(resolvedLayout.constraints) {
             hostTableTabletopGeometry(resolvedLayout.constraints)
         }
@@ -487,6 +489,7 @@ internal fun ClocktowerSquareTableSeatSurface(
                     seat = placement.seat,
                     interactionMode = interactionMode,
                     onSeatClick = onSeatClick,
+                    density = seatDensity,
                     modifier = Modifier
                         .offset(
                             x = displayedTopLeft.x.dp,
@@ -530,6 +533,7 @@ private fun ClocktowerSquareTableSeat(
     seat: ClocktowerSquareTableSeatUiModel,
     interactionMode: ClocktowerSquareTableInteractionMode,
     onSeatClick: (String) -> Unit,
+    density: ClocktowerSquareTableSeatDensity,
     modifier: Modifier = Modifier,
 ) {
     val canSelect = interactionMode == ClocktowerSquareTableInteractionMode.Selectable &&
@@ -544,10 +548,7 @@ private fun ClocktowerSquareTableSeat(
 
     Surface(
         modifier = modifier
-            .heightIn(
-                min = 48.dp,
-                max = if (seat.detailLabels.isEmpty()) 62.dp else HOST_TABLE_DETAILED_SEAT_CARD_HEIGHT.dp,
-            )
+            .heightIn(min = 48.dp, max = density.cardHeight.dp)
             .then(clickModifier),
         shape = RoundedCornerShape(12.dp),
         color = palette.container,
@@ -558,7 +559,10 @@ private fun ClocktowerSquareTableSeat(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 4.dp),
+                .padding(
+                    horizontal = density.horizontalPaddingDp.dp,
+                    vertical = density.verticalPaddingDp.dp,
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -594,10 +598,10 @@ private fun ClocktowerSquareTableSeat(
             }
             Text(
                 text = seat.label,
-                maxLines = 1,
+                maxLines = density.primaryMaxLines,
                 overflow = TextOverflow.Ellipsis,
-                fontSize = 12.sp,
-                lineHeight = 14.sp,
+                fontSize = density.primaryFontSizeSp.sp,
+                lineHeight = density.primaryLineHeightSp.sp,
                 fontWeight = if (seat.state in setOf(
                         ClocktowerSquareTableSeatState.SelectedFirst,
                         ClocktowerSquareTableSeatState.SelectedSecond,
@@ -614,10 +618,10 @@ private fun ClocktowerSquareTableSeat(
             seat.detailLabels.forEach { detail ->
                 Text(
                     text = detail,
-                    maxLines = 1,
+                    maxLines = density.detailMaxLines,
                     overflow = TextOverflow.Ellipsis,
-                    fontSize = 9.sp,
-                    lineHeight = 10.sp,
+                    fontSize = density.detailFontSizeSp.sp,
+                    lineHeight = density.detailLineHeightSp.sp,
                     fontWeight = FontWeight.Medium,
                 )
             }
