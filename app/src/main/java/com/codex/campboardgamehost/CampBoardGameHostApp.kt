@@ -254,6 +254,7 @@ import java.util.UUID
 private enum class Screen {
     Landing,
     Setup,
+    GameSelection,
     UndercoverSettings,
     WerewolfSettings,
     ClocktowerSettings,
@@ -339,14 +340,22 @@ private fun Context.saveStorytellerAutomationMode(mode: StorytellerAutomationMod
 }
 
 private fun Context.loadCommonPlayers(): List<String> {
-    val raw = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(COMMON_PLAYERS_KEY, null) ?: return emptyList()
-    return runCatching {
-        val json = JSONArray(raw)
-        List(json.length()) { index -> json.getString(index) }
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .distinct()
-    }.getOrDefault(emptyList())
+    val preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val hasStoredPlayers = preferences.contains(COMMON_PLAYERS_KEY)
+    val raw = preferences.getString(COMMON_PLAYERS_KEY, null)
+    val storedPlayers = raw?.let { encoded ->
+        runCatching {
+            val json = JSONArray(encoded)
+            List(json.length()) { index -> json.getString(index) }
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
+        }.getOrElse { emptyList() }
+    } ?: emptyList()
+    return resolveInitialCommonPlayers(
+        hasStoredPlayers = hasStoredPlayers,
+        storedPlayers = storedPlayers,
+    )
 }
 
 private fun Context.saveCommonPlayers(players: List<String>) {
@@ -369,6 +378,7 @@ private fun Screen.isActiveGameScreen(): Boolean = when (this) {
     Screen.Game -> true
     Screen.Landing,
     Screen.Setup,
+    Screen.GameSelection,
     Screen.UndercoverSettings,
     Screen.WerewolfSettings,
     Screen.ClocktowerSettings,
@@ -933,6 +943,7 @@ internal fun CampBoardGameHostApp() {
     var newCommonPlayerName by remember { mutableStateOf("") }
     val commonPlayers = remember { mutableStateListOf<String>().apply { addAll(baseContext.loadCommonPlayers()) } }
     val playerNames = remember { mutableStateListOf<String>() }
+    var hostSeatingSetupFlow by remember { mutableStateOf(HostSeatingSetupFlow()) }
     val cards = remember { mutableStateListOf<PlayerCard>() }
     val records = remember { mutableStateListOf<EliminationRecord>() }
     val clocktowerEvents = remember { mutableStateListOf<ClocktowerEvent>() }
@@ -945,6 +956,7 @@ internal fun CampBoardGameHostApp() {
     val clocktowerNominatorNameState = remember { mutableStateOf<String?>(null) }
     val clocktowerNomineeNameState = remember { mutableStateOf<String?>(null) }
     val clocktowerCurrentVoteCountState = remember { mutableStateOf(0) }
+    val clocktowerGhostVoteAuthorityState = remember { mutableStateOf(ClocktowerGhostVoteAuthority()) }
     val clocktowerHighestVoteNameState = remember { mutableStateOf<String?>(null) }
     val clocktowerHighestVoteCountState = remember { mutableStateOf(0) }
     val clocktowerSlayerClaimantNameState = remember { mutableStateOf<String?>(null) }
@@ -1711,6 +1723,10 @@ internal fun CampBoardGameHostApp() {
         putNullableString("clocktowerNominatorName", clocktowerNominatorNameState.value)
         putNullableString("clocktowerNomineeName", clocktowerNomineeNameState.value)
         put("clocktowerCurrentVoteCount", clocktowerCurrentVoteCountState.value)
+        put(
+            ClocktowerGhostVoteAuthorityPersistence.ROOT_KEY,
+            ClocktowerGhostVoteAuthorityPersistence.encode(clocktowerGhostVoteAuthorityState.value),
+        )
         putNullableString("clocktowerHighestVoteName", clocktowerHighestVoteNameState.value)
         put("clocktowerHighestVoteCount", clocktowerHighestVoteCountState.value)
         putNullableString("clocktowerSlayerClaimantName", clocktowerSlayerClaimantNameState.value)
@@ -2054,6 +2070,7 @@ internal fun CampBoardGameHostApp() {
             clocktowerNominatorNameState.value = json.optNullableString("clocktowerNominatorName")
             clocktowerNomineeNameState.value = json.optNullableString("clocktowerNomineeName")
             clocktowerCurrentVoteCountState.value = json.optInt("clocktowerCurrentVoteCount", 0).coerceAtLeast(0)
+            clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthorityPersistence.decode(json)
             clocktowerHighestVoteNameState.value = json.optNullableString("clocktowerHighestVoteName")
             clocktowerHighestVoteCountState.value = json.optInt("clocktowerHighestVoteCount", 0).coerceAtLeast(0)
             clocktowerSlayerClaimantNameState.value = json.optNullableString("clocktowerSlayerClaimantName")
@@ -2129,11 +2146,16 @@ internal fun CampBoardGameHostApp() {
         }
     }
 
-    fun moveCurrentPlayerTo(index: Int, insertIndex: Int) {
-        if (index !in playerNames.indices) return
-        val name = playerNames.removeAt(index)
-        val adjustedIndex = if (insertIndex > index) insertIndex - 1 else insertIndex
-        playerNames.add(adjustedIndex.coerceIn(0, playerNames.size), name)
+    fun moveCurrentPlayerTo(index: Int, targetIndex: Int) {
+        if (index !in playerNames.indices || targetIndex !in playerNames.indices) return
+        if (index == targetIndex) return
+        val reordered = reorderHostTableItems(
+            items = playerNames,
+            fromIndex = index,
+            targetIndex = targetIndex,
+        )
+        playerNames.clear()
+        playerNames.addAll(reordered)
     }
 
     fun addCommonPlayer() {
@@ -2253,12 +2275,14 @@ internal fun CampBoardGameHostApp() {
         clocktowerPendingKlutzName = null
         clocktowerKlutzChoiceName = null
         clocktowerKlutzReturnToDawn = false
+        clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
         resetClocktowerFlow()
         screen = Screen.PassPhone
         persistActiveGameStateIfNeeded()
     }
 
     fun startUndercoverGame() {
+        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Undercover)
         if (playerNames.size < MIN_PLAYERS) return
         val pair = wordPairsFor(language).random()
         val blankCount = if (includeBlank) 1 else 0
@@ -2283,6 +2307,7 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun startWerewolfGame() {
+        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Werewolf)
         if (playerNames.size < MIN_WEREWOLF_PLAYERS) return
         val roles = werewolfRolesFor(
             playerCount = playerNames.size,
@@ -2305,6 +2330,7 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun startTroubleBrewingGame() {
+        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Clocktower)
         val preparedSeed = newClocktowerSeed()
 
         val datasetJson = baseContext.assets
@@ -2419,6 +2445,7 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun startClocktowerGame() {
+        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Clocktower)
         if (playerNames.size < MIN_CLOCKTOWER_PLAYERS) return
         val script = if (playerNames.size in 5..6) {
             selectedClocktowerScript ?: defaultClocktowerScriptFor(playerNames.size)
@@ -2648,6 +2675,29 @@ internal fun CampBoardGameHostApp() {
         return promoteScarletWomanIfNeeded()
     }
 
+    fun applyHostSeatingBack(origin: HostSeatingBackOrigin) {
+        val transition = hostSeatingBackTransition(
+            flow = hostSeatingSetupFlow,
+            origin = origin,
+        )
+        hostSeatingSetupFlow = transition.flow
+        screen = when (transition.destination) {
+            HostSeatingSetupDestination.Seating -> Screen.Setup
+            HostSeatingSetupDestination.GameSelection -> Screen.GameSelection
+        }
+    }
+
+    val hostSeatingBackOrigin = when (screen) {
+        Screen.GameSelection -> HostSeatingBackOrigin.GameSelection
+        Screen.UndercoverSettings,
+        Screen.WerewolfSettings,
+        Screen.ClocktowerSettings -> HostSeatingBackOrigin.GameSettings
+        else -> null
+    }
+    BackHandler(enabled = hostSeatingBackOrigin != null) {
+        applyHostSeatingBack(requireNotNull(hostSeatingBackOrigin))
+    }
+
     CompositionLocalProvider(LocalContext provides context) {
         MaterialTheme(
             colorScheme = androidx.compose.material3.lightColorScheme(
@@ -2689,25 +2739,48 @@ internal fun CampBoardGameHostApp() {
                         when (screen) {
                     Screen.Landing -> ClocktowerLandingScreen(
                         hasSavedGame = savedGamePreview != null,
-                        onStartGame = { screen = Screen.Setup },
+                        onStartGame = {
+                            hostSeatingSetupFlow = HostSeatingSetupFlow()
+                            screen = Screen.Setup
+                        },
                         onContinueGame = ::restoreSavedGame,
                     )
 
-                    Screen.Setup -> SetupScreen(
-                    playerCount = playerCount,
+                    Screen.Setup -> SeatingFirstSetupScreen(
                     savedGamePreview = savedGamePreview,
                     commonPlayers = commonPlayers,
                     playerNames = playerNames,
                     onAddCurrentPlayer = ::addCurrentPlayer,
-                    onAddTemporaryPlayer = ::addCurrentPlayer,
                     onRemoveCurrentPlayer = ::removeCurrentPlayer,
                     onMoveCurrentPlayerTo = ::moveCurrentPlayerTo,
                     onResumeSavedGame = ::restoreSavedGame,
                     onDiscardSavedGame = ::clearSavedGameState,
                     onOpenSettings = { screen = Screen.Settings },
-                    onOpenUndercoverSettings = { screen = Screen.UndercoverSettings },
-                    onOpenWerewolfSettings = { screen = Screen.WerewolfSettings },
-                    onOpenClocktowerSettings = { screen = Screen.ClocktowerSettings },
+                    onConfirmSeats = {
+                        hostSeatingSetupFlow = hostSeatingSetupFlow.confirmSeats(playerNames)
+                        screen = Screen.GameSelection
+                    },
+                )
+
+                    Screen.GameSelection -> SeatingFirstGameSelectionScreen(
+                    seating = requireNotNull(hostSeatingSetupFlow.confirmedSeating) {
+                        "Game selection requires confirmed seating"
+                    },
+                    onBackToSeating = {
+                        applyHostSeatingBack(HostSeatingBackOrigin.GameSelection)
+                    },
+                    onOpenUndercoverSettings = {
+                        hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Undercover)
+                        screen = Screen.UndercoverSettings
+                    },
+                    onOpenWerewolfSettings = {
+                        hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Werewolf)
+                        screen = Screen.WerewolfSettings
+                    },
+                    onOpenClocktowerSettings = {
+                        hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Clocktower)
+                        screen = Screen.ClocktowerSettings
+                    },
                 )
 
                     Screen.UndercoverSettings -> UndercoverSettingsScreen(
@@ -2719,7 +2792,9 @@ internal fun CampBoardGameHostApp() {
                             includeBlank = checked
                             clampUndercoverCount()
                         },
-                        onBack = { screen = Screen.Setup },
+                        onBack = {
+                            applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
+                        },
                         onStart = ::startUndercoverGame,
                     )
 
@@ -2754,16 +2829,22 @@ internal fun CampBoardGameHostApp() {
                             includeHunter = template.includeHunter
                             clampWerewolfSettings()
                         },
-                        onBack = { screen = Screen.Setup },
+                        onBack = {
+                            applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
+                        },
                         onStart = ::startWerewolfGame,
                     )
 
                     Screen.ClocktowerSettings -> ClocktowerSettingsScreen(
                         playerCount = playerCount,
-                        playerNames = playerNames,
+                        playerNames = requireNotNull(hostSeatingSetupFlow.confirmedSeating) {
+                            "Clocktower settings require confirmed seating"
+                        }.playerNames,
                         selectedScript = selectedClocktowerScript ?: defaultClocktowerScriptFor(playerCount),
                         onScriptChange = { selectedClocktowerScript = it },
-                        onBack = { screen = Screen.Setup },
+                        onBack = {
+                            applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
+                        },
                         onStart = ::startClocktowerGame,
                     )
 
@@ -2999,6 +3080,8 @@ internal fun CampBoardGameHostApp() {
                         nominatorNameState = clocktowerNominatorNameState,
                         nomineeNameState = clocktowerNomineeNameState,
                         currentVoteCountState = clocktowerCurrentVoteCountState,
+                        ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,
+                        onGhostVoteAuthorityChange = { clocktowerGhostVoteAuthorityState.value = it },
                         highestVoteNameState = clocktowerHighestVoteNameState,
                         highestVoteCountState = clocktowerHighestVoteCountState,
                         slayerClaimantNameState = clocktowerSlayerClaimantNameState,

@@ -20,11 +20,11 @@ class ClocktowerVirginPreflightProductionWiringTest {
             .substringBefore(") {")
         assertTrue(signature.contains("onPreflightVirginExecution: (String, Boolean) -> Unit"))
 
-        val nominationScreenFlow = hostSource
-            .substringAfter("ClocktowerNominationScreen(")
+        val pendingNominationFlow = hostSource
+            .substringAfter("ClocktowerPendingNominationTableScreen(")
             .substringBefore("onCancel =")
-        val nominationPreflightIndex = nominationScreenFlow.indexOf("onPreflightVirginExecution(")
-        val nominationRegistrationIndex = nominationScreenFlow.indexOf("recordSpyRegistration(")
+        val nominationPreflightIndex = pendingNominationFlow.indexOf("onPreflightVirginExecution(")
+        val nominationRegistrationIndex = pendingNominationFlow.indexOf("recordSpyRegistration(")
         assertTrue(nominationPreflightIndex >= 0)
         assertTrue(nominationRegistrationIndex > nominationPreflightIndex)
 

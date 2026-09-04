@@ -22,8 +22,8 @@ class ClocktowerMayorDemonExclusionWiringTest {
         assertTrue(hostSource.contains("MayorRedirectLegality.canReceiveRedirect"))
         assertTrue(hostSource.contains("mayorRedirectTargetCards"))
         assertTrue(
-            Regex("""cards\s*=\s*mayorRedirectTargetCards\s*,""")
-                .containsMatchIn(nightUiSource),
+            "Square-table Mayor selection must consume the rules-owned redirect target set.",
+            nightUiSource.contains("selectableSeatNumbers(mayorRedirectTargetCards)"),
         )
         assertFalse(
             "Manual Mayor legality must not be reconstructed from assisted recommendations.",

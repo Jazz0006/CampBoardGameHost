@@ -205,40 +205,31 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         null
     }
-    fun pairManualKey(option: ClocktowerDisplayOption): Pair<String?, List<Int>>? = when (val structured = option.proposition) {
-        is InformationProposition.AnyOf -> {
-            val roleAt = structured.alternatives.mapNotNull { it as? InformationProposition.RoleAt }
-            if (roleAt.size != structured.alternatives.size) {
-                null
-            } else {
-                val role = roleAt.map { it.role.value }.distinct().singleOrNull()
-                val seats = roleAt.map { it.seat }.distinct().sorted()
-                if (role == null || seats.size != 2) null else role to seats
-            }
-        }
-        is InformationProposition.AllOf -> {
-            val roleInPlay = structured.propositions.mapNotNull { it as? InformationProposition.RoleInPlay }
-            if (roleInPlay.size == structured.propositions.size && roleInPlay.isNotEmpty() && roleInPlay.all { !it.inPlay }) {
-                null to emptyList()
-            } else {
-                null
-            }
-        }
-        else -> null
-    }
-    val manualPairEntries = if (
+    val manualPairCandidates = if (
+        !automaticStorytellerInfo &&
         phase == ClocktowerPhase.FirstNight &&
         step.roleEnName in setOf("Washerwoman", "Librarian", "Investigator")
     ) {
-        step.manualInformationCandidates.mapNotNull { option ->
-            pairManualKey(option)?.let { key -> key to option }
-        }
+        step.manualInformationCandidates
     } else {
         emptyList()
     }
-    var showManualPairSelection by remember(step.actor?.name, step.title) { mutableStateOf(false) }
-    var selectedManualPairRole by remember(step.actor?.name, step.title) { mutableStateOf<String?>(null) }
-    var selectedManualPairFirstSeat by remember(step.actor?.name, step.title) { mutableStateOf<Int?>(null) }
+    val usesResultFirstRegistration =
+        !automaticStorytellerInfo && step.usesResultFirstRegistrationDomain()
+    val resultFirstRegistrationCandidates = if (usesResultFirstRegistration) {
+        distinctClocktowerFinalInformationResults(step.manualInformationCandidates)
+    } else {
+        emptyList()
+    }
+    val nonPairResultFirstCandidates = resultFirstRegistrationCandidates.takeUnless {
+        step.roleEnName in setOf("Washerwoman", "Librarian", "Investigator") ||
+            step.action == ClocktowerNightAction.FortuneTeller
+    }.orEmpty()
+
+    var showManualPairSelection by remember(
+        informationDecisionKey,
+        step.roleEnName,
+    ) { mutableStateOf(false) }
     val dynamicDecisionFamily = when (step.action) {
         ClocktowerNightAction.MayorRedirect -> "mayor-redirect"
         ClocktowerNightAction.DemonSuccessor -> "demon-succession"
@@ -390,13 +381,21 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val structuredFortuneTellerActorSeat = step.actor
         ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
-    val structuredFortuneTellerSelectedSeats = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
+    val fortuneTellerSelectedSeats = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
         .mapNotNull { selectedName ->
             cards.indexOfFirst { it.name == selectedName }
                 .takeIf { it >= 0 }
                 ?.plus(1)
         }
+    val structuredFortuneTellerSelectedSeats = fortuneTellerSelectedSeats
         .takeIf { seats -> seats.size == 2 && seats.distinct().size == 2 }
+    val fortuneTellerSelectableSeats = when (fortuneTellerSelectedSeats.size) {
+        0 -> cards.indices.mapTo(linkedSetOf()) { index -> index + 1 }
+        1 -> cards.indices
+            .map { index -> index + 1 }
+            .filterTo(linkedSetOf()) { seat -> seat !in fortuneTellerSelectedSeats }
+        else -> emptySet()
+    }
     val structuredFortuneTellerProposition = (step.displayProposition as? InformationProposition.BooleanResult)
         ?.takeIf { proposition ->
             proposition.metric == BooleanMetric.DEMON_OR_RED_HERRING_PRESENT &&
@@ -421,7 +420,6 @@ internal fun ClocktowerNightStepCardLocalized(
     val structuredFortuneTellerUiModel = if (
         step.action == ClocktowerNightAction.FortuneTeller &&
         step.roleEnName == "Fortune Teller" &&
-        step.informationReliability != InformationReliability.RELIABLE &&
         structuredFortuneTellerActorSeat != null &&
         structuredFortuneTellerSelectedSeats != null &&
         structuredFortuneTellerProposition != null
@@ -445,6 +443,24 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         null
     }
+    val resultFirstFortuneTellerOptions = resultFirstRegistrationCandidates.filter { option ->
+        val proposition = option.proposition as? InformationProposition.BooleanResult
+        proposition?.metric == BooleanMetric.DEMON_OR_RED_HERRING_PRESENT
+    }
+    val fortuneTellerLegalResults = if (resultFirstFortuneTellerOptions.isNotEmpty()) {
+        resultFirstFortuneTellerOptions.mapNotNullTo(linkedSetOf()) { option ->
+            (option.proposition as? InformationProposition.BooleanResult)?.value
+        }
+    } else {
+        structuredFortuneTellerUiModel
+            ?.choices
+            ?.mapTo(linkedSetOf()) { choice -> choice.value }
+            .orEmpty()
+    }
+    val fortuneTellerRecommendedResult = structuredFortuneTellerUiModel
+        ?.choices
+        ?.firstOrNull { choice -> choice.recommended && choice.value in fortuneTellerLegalResults }
+        ?.value
     val structuredNumberUiModel = structuredEmpathUiModel ?: structuredChefUiModel
 
     fun showRecommendedDisplayOption(option: ClocktowerDisplayOption) {
@@ -461,7 +477,39 @@ internal fun ClocktowerNightStepCardLocalized(
                 ),
             )
         }
-        onShowPlayerDisplay(
+        onShowPlayerDisplay(resolveClocktowerPlayerDisplay(step, option))
+    }
+
+    fun showStructuredFortuneTellerResult(value: Boolean) {
+        resultFirstFortuneTellerOptions.firstOrNull { option ->
+            (option.proposition as? InformationProposition.BooleanResult)?.value == value
+        }?.let { option ->
+            showRecommendedDisplayOption(option)
+            return
+        }
+        val model = structuredFortuneTellerUiModel ?: return
+        val actorSeat = structuredFortuneTellerActorSeat ?: return
+        val subjectSeats = structuredFortuneTellerSelectedSeats ?: return
+        val choice = model.choices.firstOrNull { it.value == value } ?: return
+        val currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision)
+        val confirmation = if (choice.recommended) {
+            model.acceptRecommendation(choice.candidateId, currentRevision)
+        } else {
+            model.chooseManually(choice.candidateId, currentRevision)
+        }
+        val confirmed = confirmation.confirmed ?: return
+        val selectedOption = findBooleanDisplayOption(
+            options = (
+                displayedInformationOptions +
+                    step.displayOptions +
+                    step.legacyInformationCandidates
+                ).distinctBy(::optionId),
+            metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+            sourceSeat = actorSeat,
+            subjectSeats = subjectSeats,
+            value = value,
+        )
+        val displayStep = selectedOption?.let { option ->
             step.copy(
                 tellPlayer = option.displayPrimary,
                 displayKind = option.displayKind,
@@ -469,20 +517,28 @@ internal fun ClocktowerNightStepCardLocalized(
                 displayPrimary = option.displayPrimary,
                 displaySecondary = option.displaySecondary,
                 displayFooter = option.displayFooter,
-                displayProposition = option.proposition,
+                displayProposition = confirmed.draft.proposition,
                 selectedInformationTruthful = option.isTruthful,
+                informationDecisionConfirmation = confirmed,
+                informationDecisionExpectedSnapshot = model.contextSnapshot,
                 displayOptions = emptyList(),
                 recommendedDisplayOptions = emptyList(),
-            ),
+            )
+        } ?: step.copy(
+            displayProposition = confirmed.draft.proposition,
+            informationDecisionConfirmation = confirmed,
+            informationDecisionExpectedSnapshot = model.contextSnapshot,
+            displayOptions = emptyList(),
+            recommendedDisplayOptions = emptyList(),
         )
+        onShowPlayerDisplay(displayStep)
     }
+
     LaunchedEffect(automaticStorytellerInfo, step.title, automaticDecisionTargetName) {
         if (automaticStorytellerInfo && automaticDecisionTargetName != null && selectedName != automaticDecisionTargetName) {
             onSelectName(automaticDecisionTargetName)
         }
     }
-    var fortuneTellerLimitExceeded by remember(step.actor?.name, step.title) { mutableStateOf(false) }
-    var showFortuneTellerDisplayOptions by remember(step.actor?.name, step.title) { mutableStateOf(false) }
     val command = when {
         step.action == ClocktowerNightAction.FortuneTeller && step.actor != null -> {
             if (language == "en") {
@@ -538,7 +594,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 fontWeight = FontWeight.Black,
             )
 
-            if (step.spyRegistrationKey != null && spyCard != null) {
+            if (!usesResultFirstRegistration && step.spyRegistrationKey != null && spyCard != null && spyCanRegister) {
                 SpyRegistrationPanel(
                     automaticStorytellerInfo = automaticStorytellerInfo,
                     cards = cards,
@@ -555,7 +611,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     onRoleChange = onSpyRegistrationRoleChange,
                 )
             }
-            if (step.recluseRegistrationKey != null && recluseCard != null) {
+            if (!usesResultFirstRegistration && step.recluseRegistrationKey != null && recluseCard != null && recluseCanRegister) {
                 RecluseRegistrationPanel(
                     automaticStorytellerInfo = automaticStorytellerInfo,
                     automaticStorytellerStyle = automaticStorytellerStyle,
@@ -605,223 +661,230 @@ internal fun ClocktowerNightStepCardLocalized(
                                 Text(option.label)
                             }
                         }
-                        RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
                     }
                 }
             }
+
+        val nightActionSeats = cards.mapIndexed { index, card ->
+            ClocktowerNightActionSeatUiModel(
+                seatId = "seat-${index + 1}",
+                seatNumber = index + 1,
+                label = card.name,
+            )
+        }
+        fun seatNumberForName(name: String?): Int? = name
+            ?.let { selected -> cards.indexOfFirst { card -> card.name == selected } }
+            ?.takeIf { index -> index >= 0 }
+            ?.plus(1)
+        fun selectableSeatNumbers(candidates: List<PlayerCard>): Set<Int> = candidates
+            .mapNotNull { candidate -> seatNumberForName(candidate.name) }
+            .toSet()
 
         when (step.action) {
             ClocktowerNightAction.RedHerring -> {
                 if (step.isRealAction) {
                     val candidates = clocktowerRedHerringCandidates(aliveCards)
-                    HostActionSection(
+                    ClocktowerSingleTargetSquareTableDialog(
+                        seats = nightActionSeats,
+                        selectedSeat = seatNumberForName(selectedName),
+                        selectableSeats = selectableSeatNumbers(candidates),
+                        enabled = true,
                         title = stringResource(R.string.clocktower_host_choose_red_herring),
-                        helper = stringResource(R.string.clocktower_host_choose_red_herring_hint),
-                    ) {
-                        if (candidates.isEmpty()) {
-                            Text(
-                                stringResource(R.string.clocktower_host_no_red_herring_candidates),
-                                color = Color(0xFF6F7B74),
-                                style = MaterialTheme.typography.bodySmall,
-                            )
+                        helper = if (candidates.isEmpty()) {
+                            stringResource(R.string.clocktower_host_no_red_herring_candidates)
                         } else {
-                            SelectablePlayerChips(
-                                cards = candidates,
-                                selectedName = selectedName,
-                                enabled = true,
-                                allCards = cards,
-                                onSelect = onSelectName,
-                            )
-                        }
-                    }
+                            stringResource(R.string.clocktower_host_choose_red_herring_hint)
+                        },
+                        language = language,
+                        canGoPrevious = canGoPrevious,
+                        onSeatSelected = { seatNumber ->
+                            cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
+                        },
+                        onPrevious = onPrevious,
+                        onNext = onNext,
+                    )
                 }
             }
 
             ClocktowerNightAction.Poison -> {
-                HostActionSection(title = stringResource(R.string.clocktower_host_choose_poison_target)) {
-                    SelectablePlayerChips(
-                        cards = aliveCards,
-                        selectedName = selectedName,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectName,
-                    )
-                }
+                val candidates = aliveCards
+                ClocktowerSingleTargetSquareTableDialog(
+                    seats = nightActionSeats,
+                    selectedSeat = seatNumberForName(selectedName),
+                    selectableSeats = selectableSeatNumbers(candidates),
+                    enabled = step.isRealAction,
+                    title = stringResource(R.string.clocktower_host_choose_poison_target),
+                    helper = null,
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onSeatSelected = { seatNumber ->
+                        cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
+                    },
+                    onPrevious = onPrevious,
+                    onNext = onNext,
+                )
             }
 
             ClocktowerNightAction.ButlerMaster -> {
-                HostActionSection(
-                    title = if (LocalContext.current.resources.configuration.locales[0].language == "en") "Choose the Butler's master" else "选择管家的主人",
-                ) {
-                    SelectablePlayerChips(
-                        cards = cards.filter { it.name != step.actor?.name },
-                        selectedName = selectedName,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectName,
-                    )
-                }
+                val candidates = cards.filter { it.name != step.actor?.name }
+                ClocktowerSingleTargetSquareTableDialog(
+                    seats = nightActionSeats,
+                    selectedSeat = seatNumberForName(selectedName),
+                    selectableSeats = selectableSeatNumbers(candidates),
+                    enabled = step.isRealAction,
+                    title = if (language == "en") "Choose the Butler's master" else "选择管家的主人",
+                    helper = null,
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onSeatSelected = { seatNumber ->
+                        cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
+                    },
+                    onPrevious = onPrevious,
+                    onNext = onNext,
+                )
             }
 
             ClocktowerNightAction.MonkProtect -> {
-                HostActionSection(
+                val candidates = clocktowerMonkTargetCards(cards, step.actor?.name)
+                ClocktowerSingleTargetSquareTableDialog(
+                    seats = nightActionSeats,
+                    selectedSeat = seatNumberForName(selectedName),
+                    selectableSeats = selectableSeatNumbers(candidates),
+                    enabled = step.isRealAction,
                     title = stringResource(R.string.clocktower_host_choose_monk_protect),
                     helper = stringResource(R.string.clocktower_host_choose_monk_protect_hint),
-                ) {
-                    SelectablePlayerChips(
-                        cards = aliveCards.filter { it.name != step.actor?.name },
-                        selectedName = selectedName,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectName,
-                    )
-                }
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onSeatSelected = { seatNumber ->
+                        cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
+                    },
+                    onPrevious = onPrevious,
+                    onNext = onNext,
+                )
             }
 
             ClocktowerNightAction.FortuneTeller -> {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SelectableTwoPlayerChips(
-                        cards = cards,
-                        firstSelectedName = fortuneTellerFirst,
-                        secondSelectedName = fortuneTellerSecond,
-                        enabled = step.isRealAction,
-                        onSelect = { name ->
-                            showFortuneTellerDisplayOptions = false
+                ClocktowerFortuneTellerSquareTableDialog(
+                    seats = cards.mapIndexed { index, card ->
+                        ClocktowerFortuneTellerSeatUiModel(
+                            seatId = "seat-${index + 1}",
+                            seatNumber = index + 1,
+                            label = card.name,
+                        )
+                    },
+                    selectedSeats = fortuneTellerSelectedSeats,
+                    selectableSeats = fortuneTellerSelectableSeats,
+                    enabled = step.isRealAction,
+                    legalResults = fortuneTellerLegalResults,
+                    recommendedResult = fortuneTellerRecommendedResult,
+                    automaticStorytellerInfo = automaticStorytellerInfo,
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onSeatSelected = { seatNumber ->
+                        cards.getOrNull(seatNumber - 1)?.name?.let { name ->
                             when (twoPlayerSelectionAction(fortuneTellerFirst, fortuneTellerSecond, name)) {
-                                TwoPlayerSelectionAction.ToggleFirst -> {
-                                    fortuneTellerLimitExceeded = false
-                                    onSelectFortuneTellerFirst(name)
-                                }
-                                TwoPlayerSelectionAction.ToggleSecond -> {
-                                    fortuneTellerLimitExceeded = false
-                                    onSelectFortuneTellerSecond(name)
-                                }
-                                TwoPlayerSelectionAction.RejectLimit -> {
-                                    fortuneTellerLimitExceeded = true
-                                }
+                                TwoPlayerSelectionAction.ToggleFirst -> onSelectFortuneTellerFirst(name)
+                                TwoPlayerSelectionAction.ToggleSecond -> onSelectFortuneTellerSecond(name)
+                                TwoPlayerSelectionAction.RejectLimit -> Unit
                             }
-                        },
-                    )
-                    if (fortuneTellerLimitExceeded) {
-                        Text(
-                            stringResource(R.string.clocktower_fortune_cannot_select_more_than_two),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    } else if (fortuneTellerFirst == null || fortuneTellerSecond == null) {
-                        Text(
-                            stringResource(R.string.clocktower_fortune_must_select_two),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                    Button(
-                        onClick = {
-                            if (automaticStorytellerInfo && automaticDisplayOption != null) {
-                                showRecommendedDisplayOption(automaticDisplayOption)
-                            } else if (step.displayOptions.isNotEmpty() || displayedInformationOptions.isNotEmpty()) {
-                                showFortuneTellerDisplayOptions = true
-                            } else {
-                                onShowPlayerDisplay(step)
-                            }
-                        },
-                        enabled = step.isRealAction && fortuneTellerFirst != null && fortuneTellerSecond != null,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Text(stringResource(R.string.clocktower_fortune_show_result))
-                    }
-                    if (showFortuneTellerDisplayOptions) {
-                        Text(
-                            stringResource(R.string.clocktower_fortune_unreliable_choose_result),
-                            color = Color(0xFF8C4B20),
-                        )
-                    }
-                }
+                        }
+                    },
+                    onResultSelected = ::showStructuredFortuneTellerResult,
+                    onAutomaticResultSelected = ::showStructuredFortuneTellerResult,
+                    onPrevious = onPrevious,
+                    onNext = onNext,
+                )
             }
 
             ClocktowerNightAction.Chambermaid -> {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    val candidates = chambermaidTargetCards.filter { it.name != step.actor?.name }
-                    SelectableSeatNumbers(
-                        cards = candidates,
-                        selectedName = chambermaidFirst,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectChambermaidFirst,
-                    )
-                    SelectableSeatNumbers(
-                        cards = candidates.filter { it.name != chambermaidFirst },
-                        selectedName = chambermaidSecond,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectChambermaidSecond,
-                    )
-                    if (step.displayOptions.isEmpty()) {
-                        Button(
-                            onClick = { onShowPlayerDisplay(step) },
-                            enabled = step.isRealAction && chambermaidFirst != null && chambermaidSecond != null,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                        ) {
-                            Text(if (language == "en") "Check and show" else "查询并展示")
-                        }
-                    } else {
-                        Text(if (language == "en") "This ability is unreliable. Choose the final result below." else "能力不可靠：请在下方选择最终展示结果。", color = Color(0xFF8C4B20))
-                    }
+                val candidates = chambermaidTargetCards.filter { it.name != step.actor?.name }
+                val selectedSeats = listOfNotNull(chambermaidFirst, chambermaidSecond)
+                    .mapNotNull(::seatNumberForName)
+                val candidateSeats = selectableSeatNumbers(candidates)
+                val selectableSeats = when (selectedSeats.size) {
+                    0 -> candidateSeats
+                    1 -> candidateSeats - selectedSeats.first()
+                    else -> emptySet()
                 }
+                val resultOptions = when {
+                    step.displayOptions.isEmpty() -> emptyList()
+                    automaticStorytellerInfo -> listOfNotNull(automaticDisplayOption)
+                    else -> step.displayOptions
+                }
+                ClocktowerChambermaidSquareTableDialog(
+                    seats = nightActionSeats,
+                    selectedSeats = selectedSeats,
+                    selectableSeats = selectableSeats,
+                    enabled = step.isRealAction,
+                    resultOptions = resultOptions,
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onSeatSelected = { seatNumber ->
+                        cards.getOrNull(seatNumber - 1)?.name?.let { name ->
+                            when (twoPlayerSelectionAction(chambermaidFirst, chambermaidSecond, name)) {
+                                TwoPlayerSelectionAction.ToggleFirst -> onSelectChambermaidFirst(name)
+                                TwoPlayerSelectionAction.ToggleSecond -> onSelectChambermaidSecond(name)
+                                TwoPlayerSelectionAction.RejectLimit -> Unit
+                            }
+                        }
+                    },
+                    onShowDeterminedResult = { onShowPlayerDisplay(step) },
+                    onResultSelected = ::showRecommendedDisplayOption,
+                    onPrevious = onPrevious,
+                    onNext = onNext,
+                )
             }
 
             ClocktowerNightAction.DemonKill -> {
-                HostActionSection(
+                val candidates = aliveCards
+                ClocktowerSingleTargetSquareTableDialog(
+                    seats = nightActionSeats,
+                    selectedSeat = seatNumberForName(selectedName),
+                    selectableSeats = selectableSeatNumbers(candidates),
+                    enabled = step.isRealAction,
                     title = stringResource(R.string.clocktower_host_choose_night_death),
                     helper = stringResource(R.string.clocktower_host_choose_night_death_hint),
-                ) {
-                    SelectablePlayerChips(
-                        cards = aliveCards,
-                        selectedName = selectedName,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectName,
-                    )
-                }
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onSeatSelected = { seatNumber ->
+                        cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
+                    },
+                    onPrevious = onPrevious,
+                    onNext = onNext,
+                )
             }
 
             ClocktowerNightAction.MayorRedirect -> {
                 val mayor = aliveCards.firstOrNull { it.clocktowerRole?.enName == "Mayor" }
                 if (!automaticStorytellerInfo) {
-                HostActionSection(
-                    title = if (language == "en") "The Demon attacked the Mayor" else "市长被恶魔击杀",
-                    helper = if (language == "en") "Choosing a dead or protected player as the redirect target can result in no death tonight." else "选择死亡或受保护的玩家作为转移目标，可能导致今夜无人死亡。",
-                ) {
-                    if (mayor != null) {
-                        if (selectedName == mayor.name) {
-                            Button(
-                                onClick = { onSelectName(mayor.name) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(if (language == "en") "Mayor dies" else "市长死亡")
-                            }
+                    ClocktowerSingleTargetSquareTableDialog(
+                        seats = nightActionSeats,
+                        selectedSeat = seatNumberForName(selectedName),
+                        selectableSeats = if (mayor != null) {
+                            selectableSeatNumbers(mayorRedirectTargetCards)
                         } else {
-                            OutlinedButton(
-                                onClick = { onSelectName(mayor.name) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(if (language == "en") "Mayor dies" else "市长死亡")
-                            }
-                        }
-                        Text(if (language == "en") "Or redirect the death to:" else "或将死亡转移给：", fontWeight = FontWeight.SemiBold)
-                        SelectablePlayerChips(
-                        cards = mayorRedirectTargetCards,
-                            selectedName = selectedName,
-                            enabled = step.isRealAction,
-                            allCards = cards,
-                            onSelect = onSelectName,
-                        )
-                    }
-                }
+                            emptySet()
+                        },
+                        enabled = step.isRealAction && mayor != null,
+                        title = if (language == "en") "The Demon attacked the Mayor" else "市长被恶魔击杀",
+                        helper = if (language == "en") {
+                            "Choosing a dead or protected player as the redirect target can result in no death tonight."
+                        } else {
+                            "选择死亡或受保护的玩家作为转移目标，可能导致今夜无人死亡。"
+                        },
+                        language = language,
+                        canGoPrevious = canGoPrevious,
+                        onSeatSelected = { seatNumber ->
+                            cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
+                        },
+                        onPrevious = onPrevious,
+                        onNext = onNext,
+                        secondaryActionLabel = if (language == "en") "Mayor dies" else "市长死亡",
+                        secondaryActionEnabled = step.isRealAction && mayor != null,
+                        onSecondaryAction = {
+                            mayor?.name?.let(onSelectName)
+                        },
+                    )
                 }
             }
 
@@ -843,18 +906,25 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             ClocktowerNightAction.Ravenkeeper -> {
-                HostActionSection(
+                val candidates = clocktowerRavenkeeperTargetCards(cards)
+                ClocktowerSingleTargetSquareTableDialog(
+                    seats = nightActionSeats,
+                    selectedSeat = seatNumberForName(selectedName),
+                    selectableSeats = selectableSeatNumbers(candidates),
+                    enabled = step.isRealAction,
                     title = stringResource(R.string.clocktower_host_ravenkeeper_target),
                     helper = stringResource(R.string.clocktower_host_ravenkeeper_target_hint),
-                ) {
-                    SelectablePlayerChips(
-                        cards = aliveCards.filter { it.name != step.actor?.name },
-                        selectedName = selectedName,
-                        enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectName,
-                    )
-                }
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onSeatSelected = { seatNumber ->
+                        cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
+                    },
+                    onPrevious = onPrevious,
+                    onNext = onNext,
+                    secondaryActionLabel = stringResource(R.string.clocktower_host_show_to_player),
+                    secondaryActionEnabled = resultFirstRegistrationCandidates.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None,
+                    onSecondaryAction = { onShowPlayerDisplay(step) },
+                )
             }
 
             else -> Unit
@@ -911,51 +981,6 @@ internal fun ClocktowerNightStepCardLocalized(
                 )
             }
 
-            if (showFortuneTellerDisplayOptions) {
-                structuredFortuneTellerUiModel?.let { model ->
-                    val actorSeat = requireNotNull(structuredFortuneTellerActorSeat)
-                    val subjectSeats = requireNotNull(structuredFortuneTellerSelectedSeats)
-                    StructuredBooleanInformationDecisionPanel(
-                        model = model,
-                        currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
-                        automaticStorytellerInfo = automaticStorytellerInfo,
-                        language = language,
-                        roleLabel = step.title,
-                        onConfirmed = { confirmed, value ->
-                            val selectedOption = findBooleanDisplayOption(
-                                options = (
-                                    displayedInformationOptions +
-                                        step.displayOptions +
-                                        step.legacyInformationCandidates
-                                    ).distinctBy(::optionId),
-                                metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
-                                sourceSeat = actorSeat,
-                                subjectSeats = subjectSeats,
-                                value = value,
-                            )
-                            if (selectedOption != null) {
-                                onShowPlayerDisplay(
-                                    step.copy(
-                                        tellPlayer = selectedOption.displayPrimary,
-                                        displayKind = selectedOption.displayKind,
-                                        displayTitle = selectedOption.displayTitle,
-                                        displayPrimary = selectedOption.displayPrimary,
-                                        displaySecondary = selectedOption.displaySecondary,
-                                        displayFooter = selectedOption.displayFooter,
-                                        displayProposition = confirmed.draft.proposition,
-                                        selectedInformationTruthful = selectedOption.isTruthful,
-                                        informationDecisionConfirmation = confirmed,
-                                        informationDecisionExpectedSnapshot = model.contextSnapshot,
-                                        displayOptions = emptyList(),
-                                        recommendedDisplayOptions = emptyList(),
-                                    ),
-                                )
-                            }
-                        },
-                    )
-                }
-            }
-
             pairRecommendationPresentation?.let { presentation ->
                 ClocktowerPairRecommendationPresentationSection(
                     presentation = presentation,
@@ -968,8 +993,9 @@ internal fun ClocktowerNightStepCardLocalized(
                 pairRecommendationPresentation == null &&
                 structuredNumberUiModel == null &&
                 structuredFortuneTellerUiModel == null &&
+                resultFirstRegistrationCandidates.isEmpty() &&
                 displayedInformationOptions.isNotEmpty() &&
-                (step.action != ClocktowerNightAction.FortuneTeller || showFortuneTellerDisplayOptions)
+                step.action != ClocktowerNightAction.FortuneTeller
             ) {
                 Text(if (language == "en") "Recommended information" else "推荐给说书人的完整信息", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 Text(
@@ -1005,7 +1031,6 @@ internal fun ClocktowerNightStepCardLocalized(
                                 Text(option.label)
                             }
                         }
-                        RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
                     }
                 if (!automaticStorytellerInfo && firstNightPool == null) {
                     OutlinedButton(
@@ -1019,144 +1044,67 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
 
-            if (!automaticStorytellerInfo && manualPairEntries.isNotEmpty()) {
+            if (nonPairResultFirstCandidates.isNotEmpty()) {
                 Text(
-                    if (language == "en") "Manual clue" else "手动选择线索",
+                    if (language == "en") "Choose the final information" else "选择最终展示信息",
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
                     if (language == "en") {
-                        "Manual choices come from the complete legal domain, even when recommendation coverage is empty or narrower."
+                        "Any Spy or Recluse registration needed for the chosen result is resolved automatically."
                     } else {
-                        "手动选项直接来自完整合法域，即使推荐为空或只覆盖其中一部分也仍然可用。"
+                        "选择结果即可；该结果所需的间谍或隐士登记会自动完成。"
                     },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
                 )
-                OutlinedButton(
-                    onClick = {
-                        showManualPairSelection = !showManualPairSelection
-                        if (!showManualPairSelection) {
-                            selectedManualPairRole = null
-                            selectedManualPairFirstSeat = null
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                ) {
-                    Text(
-                        if (showManualPairSelection) {
-                            if (language == "en") "Close manual selection" else "收起手动选择"
-                        } else {
-                            if (language == "en") "Manually choose clue" else "手动选择线索"
-                        },
-                    )
-                }
-                if (showManualPairSelection) {
-                    val zeroOutcome = manualPairEntries.firstOrNull { (key, _) -> key.first == null }
-                    zeroOutcome?.let { (_, option) ->
-                        OutlinedButton(
-                            onClick = { showRecommendedDisplayOption(option) },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                        ) {
-                            Text(option.displayPrimary ?: option.label)
-                        }
-                    }
-                    val roleEntries = manualPairEntries.filter { (key, _) -> key.first != null }
-                    val roles = roleEntries.mapNotNull { (key, _) -> key.first }.distinct()
-                    if (selectedManualPairRole == null) {
-                        Text(
-                            if (language == "en") "1. Choose the character to show" else "1. 选择要展示的角色",
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        roles.forEach { role ->
-                            val option = roleEntries.first { (key, _) -> key.first == role }.second
-                            OutlinedButton(
-                                onClick = {
-                                    selectedManualPairRole = role
-                                    selectedManualPairFirstSeat = null
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(option.displayPrimary ?: role)
-                            }
-                        }
-                    } else {
-                        val selectedRole = requireNotNull(selectedManualPairRole)
-                        val selectedRoleEntries = roleEntries.filter { (key, _) -> key.first == selectedRole }
-                        if (selectedManualPairFirstSeat == null) {
-                            Text(
-                                if (language == "en") "2. Choose the first player" else "2. 选择第一名玩家",
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            selectedRoleEntries
-                                .flatMap { (key, _) -> key.second }
-                                .distinct()
-                                .sorted()
-                                .forEach { seat ->
-                                    OutlinedButton(
-                                        onClick = { selectedManualPairFirstSeat = seat },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(8.dp),
-                                    ) {
-                                        Text(cards.getOrNull(seat - 1)?.seatLabel(cards) ?: if (language == "en") "Seat $seat" else "$seat 号")
-                                    }
-                                }
-                        } else {
-                            val firstSeat = requireNotNull(selectedManualPairFirstSeat)
-                            Text(
-                                if (language == "en") "3. Choose the second player" else "3. 选择第二名玩家",
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            selectedRoleEntries
-                                .filter { (key, _) -> firstSeat in key.second }
-                                .flatMap { (key, _) -> key.second.filter { it != firstSeat } }
-                                .distinct()
-                                .sorted()
-                                .forEach { secondSeat ->
-                                    val option = selectedRoleEntries.firstOrNull { (key, _) ->
-                                        key.second.contains(firstSeat) && key.second.contains(secondSeat)
-                                    }?.second
-                                    if (option != null) {
-                                        OutlinedButton(
-                                            onClick = { showRecommendedDisplayOption(option) },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            shape = RoundedCornerShape(8.dp),
-                                        ) {
-                                            Text(cards.getOrNull(secondSeat - 1)?.seatLabel(cards) ?: if (language == "en") "Seat $secondSeat" else "$secondSeat 号")
-                                        }
-                                    }
-                                }
-                            OutlinedButton(
-                                onClick = { selectedManualPairFirstSeat = null },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(if (language == "en") "Choose a different first player" else "重新选择第一名玩家")
-                            }
-                        }
-                        OutlinedButton(
-                            onClick = {
-                                selectedManualPairRole = null
-                                selectedManualPairFirstSeat = null
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                        ) {
-                            Text(if (language == "en") "Choose a different character" else "重新选择角色")
-                        }
+                nonPairResultFirstCandidates.forEach { option ->
+                    OutlinedButton(
+                        onClick = { showRecommendedDisplayOption(option) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                    ) {
+                        Text(option.label)
                     }
                 }
             }
 
+            if (manualPairCandidates.isNotEmpty()) {
+                OutlinedButton(
+                    onClick = { showManualPairSelection = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    Text(if (language == "en") "Manually choose clue" else "手动选择展示信息")
+                }
+                if (showManualPairSelection) {
+                    ClocktowerPairManualSelectionDialog(
+                        interactionKey = informationDecisionKey,
+                        candidates = manualPairCandidates,
+                        seats = cards.mapIndexed { index, card ->
+                            ClocktowerPairManualSeatUiModel(
+                                seatId = "seat-${index + 1}",
+                                seatNumber = index + 1,
+                                label = card.name,
+                            )
+                        },
+                        roleLabel = { roleId -> clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language) },
+                        onDismiss = { showManualPairSelection = false },
+                        onConfirm = { manualOption ->
+                            showRecommendedDisplayOption(manualOption)
+                            showManualPairSelection = false
+                        },
+                    )
+                }
+            }
+
             if (
+                resultFirstRegistrationCandidates.isEmpty() &&
                 structuredNumberUiModel == null &&
                 structuredFortuneTellerUiModel == null &&
                 firstNightPool == null && step.displayOptions.isNotEmpty() &&
-                (step.action != ClocktowerNightAction.FortuneTeller || showFortuneTellerDisplayOptions)
+                step.action != ClocktowerNightAction.FortuneTeller
             ) {
                 Text(if (language == "en") "This ability is unreliable. Choose a result to show." else "能力不可靠：请选择一个结果展示。", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                 step.displayOptions.forEach { option ->
@@ -1183,7 +1131,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     }
                     RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
                 }
-            } else if (structuredNumberUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
+            } else if (resultFirstRegistrationCandidates.isEmpty() && structuredNumberUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
                 OutlinedButton(
                     onClick = { onShowPlayerDisplay(step) },
                     modifier = Modifier.fillMaxWidth(),
