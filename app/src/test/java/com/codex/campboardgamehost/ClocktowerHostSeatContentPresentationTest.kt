@@ -6,13 +6,29 @@ import org.junit.Test
 
 class ClocktowerHostSeatContentPresentationTest {
     @Test
-    fun `identity only mode hides host role detail even when typed role data exists`() {
+    fun `typed actual role automatically shows host role detail after deal`() {
         val seat = HostSeatPresentation(
             seatId = ClocktowerSeatId(1),
             playerName = "Alice",
             isAlive = true,
             actualRole = HostRolePresentation(roleId = "Drunk", displayName = "酒鬼"),
             shownRole = HostRolePresentation(roleId = "Empath", displayName = "共情者"),
+        )
+
+        val presentation = hostSeatContentPresentation(seat, language = "zh")
+
+        assertEquals("Alice", presentation.primaryLabel)
+        assertEquals(listOf("实际：酒鬼", "认为：共情者"), presentation.detailLabels)
+    }
+
+    @Test
+    fun `seat without actual role remains identity only before deal`() {
+        val seat = HostSeatPresentation(
+            seatId = ClocktowerSeatId(1),
+            playerName = "Alice",
+            isAlive = true,
+            shownRole = HostRolePresentation(roleId = "Empath", displayName = "共情者"),
+            contentMode = HostSeatContentMode.StorytellerRoleDetail,
         )
 
         val presentation = hostSeatContentPresentation(seat, language = "zh")
