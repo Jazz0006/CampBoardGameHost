@@ -4,8 +4,8 @@ package com.codex.campboardgamehost
  * Capacity-aware visual density for one square-table seat card.
  *
  * Storyteller detail seats expand while the physical ring has room, then compact deliberately as
- * player count grows. The 15-player tier preserves the proven 360 x 600 table capacity instead of
- * silently allowing enlarged cards to overlap.
+ * player count grows. Geometry still preserves the proven 360 x 600 table capacity, while detailed
+ * player names and role/status text keep the same readable typography floor through 15 players.
  */
 internal data class ClocktowerSquareTableSeatDensity(
     val cardWidth: Float,
@@ -58,11 +58,11 @@ internal fun clocktowerSquareTableSeatDensity(
             cardWidth = 72f,
             cardHeight = 84f,
             primaryMaxLines = 2,
-            primaryFontSizeSp = 10f,
-            primaryLineHeightSp = 11f,
+            primaryFontSizeSp = 11f,
+            primaryLineHeightSp = 12f,
             detailMaxLines = 2,
-            detailFontSizeSp = 9f,
-            detailLineHeightSp = 9.5f,
+            detailFontSizeSp = 10f,
+            detailLineHeightSp = 10.5f,
             horizontalPaddingDp = 3f,
             verticalPaddingDp = 2f,
         )
@@ -70,11 +70,11 @@ internal fun clocktowerSquareTableSeatDensity(
             cardWidth = 64f,
             cardHeight = 70f,
             primaryMaxLines = 2,
-            primaryFontSizeSp = 9f,
-            primaryLineHeightSp = 9.5f,
+            primaryFontSizeSp = 11f,
+            primaryLineHeightSp = 12f,
             detailMaxLines = 2,
-            detailFontSizeSp = 7.5f,
-            detailLineHeightSp = 8f,
+            detailFontSizeSp = 10f,
+            detailLineHeightSp = 10.5f,
             horizontalPaddingDp = 2f,
             verticalPaddingDp = 1f,
         )
