@@ -1,0 +1,127 @@
+name: UI-N1 inline wake one-shot
+
+on:
+  push:
+    branches:
+      - codex/ui-n1-inline-wake-cue
+    paths:
+      - .github/workflows/ui-n1-inline-wake-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'chore(ci): run UI-N1 inline wake one-shot'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/ui-n1-inline-wake-cue
+          fetch-depth: 0
+
+      - name: Verify bootstrap head and blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/codex/ui-n1-inline-wake-cue | cut -f1)" = "$GITHUB_SHA"
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTablePresentationTest.kt)" = "586d2bbfd61cd2cc7a25914b51946440d85161c5"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt)" = "d8c2c95f3dee1c11cddd8c417fa15555b192fa63"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt)" = "a6f757fd9020159531e633808d26f5e8e6bf0d55"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt)" = "a1977ec7ffbbd2b4e8956f4b7de10e2d28a8898c"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt)" = "2f18294fedbe9fba00d682a6de4690f49f920c1f"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt)" = "5072f307a7c0c0337eb5ff68298b63b802f86a57"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Prove focused RED
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerNightActionSquareTablePresentationTest' \
+            --rerun-tasks --no-daemon 2>&1 | tee /tmp/red.log
+          status=${PIPESTATUS[0]}
+          set -e
+          test "$status" -ne 0
+          grep -F 'clocktowerSingleTargetSeatPresentation' /tmp/red.log
+
+      - name: Apply exact production patch
+        run: python3 .github/scripts/ui_n1_inline_wake_patch.py
+
+      - name: Run focused GREEN
+        run: |
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerNightActionSquareTablePresentationTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Run FAST checkpoint tests
+        run: ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Exact diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          actual="$(git diff --name-only | sort | tr '\n' ' ' | sed 's/ $//')"
+          expected="app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt"
+          test "$actual" = "$expected"
+          grep -F 'val actionActorSeat = seatNumberForName(step.actor?.name)' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          grep -F 'isCurrentActor = presentation.isCurrentActor' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt
+          grep -F 'text = "➤"' app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt
+          git diff --stat
+
+      - name: Reconfirm remote head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/ui-n1-inline-wake-cue | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Commit and push production patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt
+          staged="$(git diff --cached --name-only | sort | tr '\n' ' ' | sed 's/ $//')"
+          expected="app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt"
+          test "$staged" = "$expected"
+          git commit -m 'feat(ui): show inline night actor wake cues'
+          git push origin HEAD:codex/ui-n1-inline-wake-cue
+          echo "PRODUCT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/ui-n1-inline-wake-cue | cut -f1)" = "$PRODUCT_SHA"
+          git rm .github/workflows/ui-n1-inline-wake-one-shot.yml .github/scripts/ui_n1_inline_wake_patch.py
+          git commit -m 'chore(ci): remove UI-N1 inline wake one-shot'
+          git push origin HEAD:codex/ui-n1-inline-wake-cue
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report checkpoints
+        run: |
+          echo "Product checkpoint: $PRODUCT_SHA"
+          echo "Cleanup checkpoint: $CLEANUP_SHA"
