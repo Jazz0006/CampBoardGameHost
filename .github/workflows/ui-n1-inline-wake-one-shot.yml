@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   patch:
-    if: github.event.head_commit.message == 'chore(ci): run UI-N1 inline wake one-shot'
+    if: "${{ github.event.head_commit.message == 'chore(ci): fix UI-N1 one-shot YAML guard' }}"
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
