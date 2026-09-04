@@ -568,7 +568,7 @@ private fun ClocktowerSquareTableSeat(
         ) {
             Text(
                 text = seat.seatNumber.toString(),
-                color = palette.content.copy(alpha = 0.10f),
+                color = palette.content.copy(alpha = 0.35f),
                 fontSize = (density.cardWidth * 0.45f).sp,
                 lineHeight = (density.cardWidth * 0.48f).sp,
                 fontWeight = FontWeight.Black,
