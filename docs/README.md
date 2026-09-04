@@ -1,101 +1,114 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-09-01 Australia/Sydney  
-> 目标：让新的开发会话只读少量真正有权威性的文档，不再被历史 handoff / checkpoint 淹没。
+> 最后整理：2026-09-04 Australia/Sydney  
+> 目标：让新的开发会话只读取少量真正有权威性的文档，不再被历史 handoff / checkpoint 误导。
 
 ## 1. 新任务默认阅读顺序
 
 1. 根目录 `AGENTS.md` — 项目级 AI / Git / 测试执行规范；
-2. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态权威**；
-3. 当前 active handoff；
+2. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前项目状态与执行顺序权威**；
+3. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-04_UI_N1_NIGHT_LIFECYCLE.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-04_UI_N1_NIGHT_LIFECYCLE.md) — **唯一当前 active handoff**；
 4. 当前任务需要的 specialized design / semantic reference；
 5. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)；
 6. 查询 live GitHub state 后再实施。
 
-不要从旧 commit SHA、旧 PR 状态、archive 文档或历史 handoff 推断当前状态。
+不要从旧 commit SHA、旧 PR、历史 branch、archive 文档或旧 handoff 推断当前状态。
 
 ## 2. 当前 active task
 
 ```text
-MS-SETUP — Generic Multi-Script Setup Architecture
-MS-S6D — First-night Perceived-Ability Semantic Completion
-当前阶段：S6D-6 production consistency / authority closeout
+UI-N1 — Night persistent Host Table wake/action lifecycle
+
+WAKE -> ACT -> RESOLVE -> SHOW -> COMPLETE
 ```
+
+当前目标：让夜间唤醒、行动、裁定/信息选择、玩家展示和完成推进共享同一个 persistent Host Table 生命周期，避免 action selector 在 Storyteller 尚未明确确认唤醒对象前覆盖 wake instruction。
 
 Active handoff：
 
-- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S6D_CLOSEOUT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S6D_CLOSEOUT.md) — **CURRENT HANDOFF**
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-04_UI_N1_NIGHT_LIFECYCLE.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-04_UI_N1_NIGHT_LIFECYCLE.md)
 
-Current roadmap：
+当前 roadmap：
 
-- [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — current branch/PR/checkpoint/stage authority.
+- [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)
 
-Current next behavior target：
+## 3. 当前 UI 设计/架构参考
 
-> 修复 pair-family 在 generic selector 之前被旧 `recommendPair` 预裁剪的问题，同时把完整 semantic domain 与 ASSISTED UI 的可见推荐列表分离，避免 UI 候选爆炸。
+- [`BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`](BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md)
+- [`UI_R4B_NIGHT_ACTION_SURFACE_PLAN_2026-09-02.md`](UI_R4B_NIGHT_ACTION_SURFACE_PLAN_2026-09-02.md)
+- [`UI_STACK_CLOSEOUT_2026-09-04.md`](UI_STACK_CLOSEOUT_2026-09-04.md) — historical closeout evidence; not current next-step authority.
 
-S7 remains blocked until S6D full acceptance.
+Persistent Host Table current principles:
 
-## 3. Current S6D references
+```text
+stable typed seatId
+-> stable physical table position
+-> phase-specific center task
+-> typed actor / legal target / selected target presentation
+-> sanitized Player Reveal boundary
+```
 
-- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S6D_CLOSEOUT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-01_MS_S6D_CLOSEOUT.md) — current execution boundary and next RED；
-- [`MS_S6D_FIRST_NIGHT_PERCEIVED_ABILITY_AUDIT_2026-09-01.md`](MS_S6D_FIRST_NIGHT_PERCEIVED_ABILITY_AUDIT_2026-09-01.md) — historical S6D-0 audit evidence, **not current next-step authority**；
-- [`MS_S6C_GENERIC_INFORMATION_SEMANTICS_CHECKPOINT_2026-08-31.md`](MS_S6C_GENERIC_INFORMATION_SEMANTICS_CHECKPOINT_2026-08-31.md) — historical accepted S6C checkpoint evidence；
-- [`MS_S6C_GENERIC_IMPAIRED_INFORMATION_REPLAN_2026-08-31.md`](MS_S6C_GENERIC_IMPAIRED_INFORMATION_REPLAN_2026-08-31.md) — historical S6C planning evidence, superseded for current execution by the roadmap/handoff above.
+## 4. Preserved post-#92 R4D-6 salvage lineage
 
-Do not resume from the old 2026-08-31 MS-SETUP handoff. It has been retired because its “S6D-1 RED NEXT” instruction is no longer true.
+A post-#92 implementation chain was intentionally excluded from PR #94 and remains outside `main`.
 
-## 4. Future epistemic / misinformation-quality design
+Preserve these branches until the `UI-R4D residual migration audit` is complete:
 
-The new long-lived design reference is:
+```text
+codex/ui-r4d6-4c-demon-successor-table
+-> codex/ui-r4d6-closeout-seat-number-badge
+-> codex/ui-r4d6-closeout-host-seat-role-presentation
+-> codex/ui-r4d6-closeout-adaptive-seat-presentation
+-> codex/ui-r4d6-closeout-postdeal-role-visibility
+```
+
+Furthest audited descendant:
+
+```text
+b0eabb24620a14ce704c6e3de5df9ec569e0c864
+```
+
+Do not bulk merge/cherry-pick this lineage into UI-N1. It is a historical implementation reference to be reconciled after UI-N1 as `REUSE / REIMPLEMENT / SUPERSEDED / DEFER`.
+
+## 5. Execution order after UI-N1
+
+```text
+UI-N1 Night lifecycle
+-> UI-R4D residual migration audit
+-> UI-R5 final real-device stabilization / feature freeze
+-> EPI-MQ / Productive Uncertainty
+-> UX-R6 legacy recommendation-provider replacement
+```
+
+Public Claim History and Sequential Vote UX remain deferred by product decision unless explicitly reopened in the roadmap.
+
+## 6. Epistemic / misinformation quality references
+
+Future long-lived design reference:
 
 - [`EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`](EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md)
 
-This is **DESIGN / DEFERRED**. It must not be implemented in PR #61.
-
-It extends the player-cognition consistency direction from:
-
-```text
-Is the displayed answer true/false?
-```
-
-to:
-
-```text
-What mistaken player world does a legal false answer create?
-Is it credible, sustainable, interactive, eventually breakable, and fair?
-```
-
-Its core principles include credibility, false-world persistence, breakability, cross-role interaction, social impact, Productive Uncertainty, avoiding direct Drunk exposure, avoiding confirmation locks, narrative value over degree of falsity, and player agency/fairness.
-
-Related long-lived foundations:
+Foundational algorithm reference:
 
 - [`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`](CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md)
-- [`R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md`](R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md)
-- [`r6_p1_2_knowledge_timeline_semantics_2026-08-21.md`](r6_p1_2_knowledge_timeline_semantics_2026-08-21.md)
-- [`epistemic_reference_matrix.md`](epistemic_reference_matrix.md)
-- [`unified_semantic_model.md`](unified_semantic_model.md)
 
-## 5. Frozen information architecture
-
-Current semantic authority:
+Frozen semantic ordering:
 
 ```text
 actual identity
 -> committed shown identity
 -> perceived ability
--> role semantic legal/truth space
+-> complete legal/truth semantic domain
 -> RELIABLE / POISONED / DRUNK
--> generic selection
+-> recommendation/manual decision
 -> AbilityObservation
+-> durable player-visible history
 -> UI
 ```
 
-Future quality ranking may only sit **after** legal semantic candidates exist. It must never mutate committed identity or replace official role/registration semantics.
+Future quality ranking may only operate downstream of legal semantic authority.
 
-## 6. Other active long-lived architecture references
-
-### Same-night / night transaction
+## 7. Same-night / rules architecture references
 
 - [`SAME_NIGHT_EFFECTIVE_STATE_ARCHITECTURE_2026-08-25.md`](SAME_NIGHT_EFFECTIVE_STATE_ARCHITECTURE_2026-08-25.md)
 - [`SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md`](SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md)
@@ -103,7 +116,7 @@ Future quality ranking may only sit **after** legal semantic candidates exist. I
 - [`DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md`](DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md)
 - [`SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md`](SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md)
 
-### Future architecture references
+## 8. Future architecture references
 
 - [`storyteller_revision_driven_dynamic_decision_engine_plan.md`](storyteller_revision_driven_dynamic_decision_engine_plan.md)
 - [`storyteller_a4_zdd_prototype.md`](storyteller_a4_zdd_prototype.md)
@@ -112,54 +125,46 @@ Future quality ranking may only sit **after** legal semantic candidates exist. I
 - [`asp_oracle_cross_validation.md`](asp_oracle_cross_validation.md)
 - [`external_solver_evaluation.md`](external_solver_evaluation.md)
 
-## 7. Deferred unfinished work
+These are not current implementation permission unless reactivated by the roadmap.
 
-Unfinished future work that is not currently active belongs under `archive/deferred/` and may only be resumed after the roadmap explicitly reactivates it.
+## 9. Normative development workflow
 
-Examples:
+- [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
+- [`AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`](AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md)
+- [`LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`](LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md)
+- [`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`](SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md)
+- [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md)
 
-- `archive/deferred/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_A3_SETUP_SNAPSHOT.md`；
-- `archive/deferred/NEXT_DEVELOPMENT_HANDOFF_2026-08-25_APP_ROOT_S9.md`.
+The older `CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` has been archived under `archive/workflows/` and is historical only.
 
-A deferred handoff is context only. Before resuming it, re-audit live `main` and current architecture.
+## 10. Documentation lifecycle policy
 
-## 8. Normative development workflow
-
-- [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md) — T0/T1/T2/T3/T4 test strategy；
-- [`AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`](AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md) — current AI development workflow；
-- [`LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`](LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md) — normative large/truncated-file one-shot workflow + Python patch SOP；
-- [`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`](SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md) — GitHub connector workflow；
-- [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md) — connector large-file constraints/playbook.
-
-## 9. Documentation lifecycle policy
-
-Active docs root should contain only:
+Active docs root should contain:
 
 ```text
 CURRENT_DEVELOPMENT_ROADMAP.md
 one active NEXT_DEVELOPMENT_HANDOFF_*.md
 long-lived architecture / semantic references
 normative test / workflow references
-limited historical checkpoint evidence that has not yet been consolidated
+limited historical checkpoint evidence pending later consolidation
 ```
 
-When a task closes:
+Historical handoffs are under `archive/handoffs/`. Deferred unfinished work belongs under `archive/deferred/`.
 
-- retire the old active handoff immediately when it gives a stale next step;
-- preserve useful audit/checkpoint history as evidence, but mark it historical;
-- consolidate or archive batches of micro-checkpoints at campaign/PR closeout instead of creating large documentation churn mid-PR;
-- if a document carries genuinely unfinished future work, move it under `archive/deferred/`;
-- update the existing roadmap + active handoff rather than creating a new handoff for every micro-GREEN.
+When an active task closes:
 
-For the current S6D closeout, only the stale 2026-08-31 active handoff is removed. Historical S6C/S6D audit evidence remains until PR #61 closeout, when a broader MS-SETUP archival cleanup can be done safely in one docs-only batch.
+- retire the old active handoff immediately;
+- update the existing roadmap and create/activate only the next required handoff;
+- archive completed micro-handoffs/checkpoints in batches rather than allowing them to remain active-looking;
+- do not delete historical implementation branches that are explicitly registered as salvage sources until their reconciliation audit is complete.
 
-## 10. Status authority rule
+## 11. Status authority rule
 
 If documents disagree:
 
 1. official Blood on the Clocktower rules/rulings control gameplay correctness;
 2. root `AGENTS.md` controls project execution rules;
-3. `CURRENT_DEVELOPMENT_ROADMAP.md` controls current project state;
+3. `CURRENT_DEVELOPMENT_ROADMAP.md` controls current project state and priority;
 4. the one active task handoff controls the approved narrow implementation plan;
 5. specialized design docs control their semantic/architecture domain;
-6. archive / historical Git / old PR records are evidence, not current instructions.
+6. archive documents, old Git branches and historical PR records are evidence, not current instructions.
