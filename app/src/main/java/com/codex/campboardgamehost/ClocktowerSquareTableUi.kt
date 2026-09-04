@@ -556,11 +556,13 @@ private fun ClocktowerSquareTableSeat(
                         modifier = Modifier.padding(end = 1.dp),
                     )
                 }
-                Text(
-                    text = clocktowerSeatNumberLabel(seat.seatNumber, language),
-                    fontSize = 15.sp,
-                    lineHeight = 16.sp,
-                    fontWeight = FontWeight.Black,
+                ClocktowerSeatNumberBadge(
+                    seatNumber = seat.seatNumber,
+                    languageCode = language,
+                    scale = ClocktowerSeatNumberBadgeScale.Compact,
+                    contentColor = palette.content,
+                    containerColor = palette.content.copy(alpha = 0.08f),
+                    borderColor = palette.content.copy(alpha = 0.45f),
                 )
                 seat.badge?.let { badge ->
                     Text(
