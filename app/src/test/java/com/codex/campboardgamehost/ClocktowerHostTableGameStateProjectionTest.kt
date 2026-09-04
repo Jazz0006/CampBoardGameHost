@@ -47,6 +47,7 @@ class ClocktowerHostTableGameStateProjectionTest {
 
         val presentation = state.toHostSeatPresentations().single()
 
+        assertEquals(HostSeatContentMode.StorytellerRoleDetail, presentation.contentMode)
         assertEquals("Drunk", presentation.actualRole?.roleId)
         assertEquals("Empath", presentation.shownRole?.roleId)
         assertFalse(presentation.isAlive)
