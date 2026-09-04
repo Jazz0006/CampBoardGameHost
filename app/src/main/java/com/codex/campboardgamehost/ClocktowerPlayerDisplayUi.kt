@@ -174,13 +174,13 @@ private fun ClocktowerPairPlayerRevealSeats(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text(
-                    text = clocktowerSeatNumberLabel(seat.seatId.number, language),
-                    color = Color(0xFFC5A56A),
-                    fontSize = 64.sp,
-                    fontWeight = FontWeight.Black,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
+                ClocktowerSeatNumberBadge(
+                    seatNumber = seat.seatId.number,
+                    languageCode = language,
+                    scale = ClocktowerSeatNumberBadgeScale.PlayerReveal,
+                    contentColor = Color(0xFFC5A56A),
+                    containerColor = Color(0xFFC5A56A).copy(alpha = 0.10f),
+                    borderColor = Color(0xFFC5A56A).copy(alpha = 0.65f),
                 )
                 Text(
                     text = seat.playerName,

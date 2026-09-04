@@ -22,12 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
-internal data class ClocktowerFortuneTellerSeatUiModel(
-    val seatId: String,
-    val seatNumber: Int,
-    val label: String,
-)
-
 internal fun clocktowerFortuneTellerSeatState(
     seatNumber: Int,
     selectedSeats: List<Int>,
@@ -59,7 +53,7 @@ internal fun clocktowerFortuneTellerResultActions(
 
 @Composable
 internal fun ClocktowerFortuneTellerSquareTableDialog(
-    seats: List<ClocktowerFortuneTellerSeatUiModel>,
+    seats: List<HostSeatPresentation>,
     selectedSeats: List<Int>,
     selectableSeats: Set<Int>,
     enabled: Boolean,
@@ -86,12 +80,14 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
         ) {
             ClocktowerSquareTableSeatSurface(
                 seats = seats.map { seat ->
+                    val content = hostSeatContentPresentation(seat, language)
                     ClocktowerSquareTableSeatUiModel(
-                        seatId = seat.seatId,
-                        seatNumber = seat.seatNumber,
-                        label = seat.label,
+                        seatId = seat.seatId.renderKey(),
+                        seatNumber = seat.seatId.number,
+                        label = content.primaryLabel,
+                        detailLabels = content.detailLabels,
                         state = clocktowerFortuneTellerSeatState(
-                            seatNumber = seat.seatNumber,
+                            seatNumber = seat.seatId.number,
                             selectedSeats = selectedSeats,
                             selectableSeats = if (enabled) selectableSeats else emptySet(),
                         ),
@@ -103,9 +99,10 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
                 } else {
                     ClocktowerSquareTableInteractionMode.ReadOnly
                 },
-                onSeatClick = { seatId ->
-                    seats.firstOrNull { it.seatId == seatId }
-                        ?.seatNumber
+                onSeatClick = { renderKey ->
+                    seats.firstOrNull { seat -> seat.seatId.renderKey() == renderKey }
+                        ?.seatId
+                        ?.number
                         ?.let(onSeatSelected)
                 },
             ) {

@@ -22,12 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
-internal data class ClocktowerNightActionSeatUiModel(
-    val seatId: String,
-    val seatNumber: Int,
-    val label: String,
-)
-
 internal fun clocktowerSingleTargetSeatState(
     seatNumber: Int,
     selectedSeat: Int?,
@@ -51,7 +45,7 @@ internal fun clocktowerTwoTargetSeatState(
 
 @Composable
 internal fun ClocktowerSingleTargetSquareTableDialog(
-    seats: List<ClocktowerNightActionSeatUiModel>,
+    seats: List<HostSeatPresentation>,
     selectedSeat: Int?,
     selectableSeats: Set<Int>,
     enabled: Boolean,
@@ -70,6 +64,7 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
     ClocktowerNightActionSquareTableDialog(
         seats = seats,
         enabled = enabled,
+        language = language,
         seatState = { seatNumber ->
             clocktowerSingleTargetSeatState(
                 seatNumber = seatNumber,
@@ -143,8 +138,9 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
 
 @Composable
 internal fun ClocktowerNightActionSquareTableDialog(
-    seats: List<ClocktowerNightActionSeatUiModel>,
+    seats: List<HostSeatPresentation>,
     enabled: Boolean,
+    language: String,
     seatState: (Int) -> ClocktowerSquareTableSeatState,
     onSeatSelected: (Int) -> Unit,
     canGoPrevious: Boolean,
@@ -163,11 +159,13 @@ internal fun ClocktowerNightActionSquareTableDialog(
         ) {
             ClocktowerSquareTableSeatSurface(
                 seats = seats.map { seat ->
+                    val content = hostSeatContentPresentation(seat, language)
                     ClocktowerSquareTableSeatUiModel(
-                        seatId = seat.seatId,
-                        seatNumber = seat.seatNumber,
-                        label = seat.label,
-                        state = seatState(seat.seatNumber),
+                        seatId = seat.seatId.renderKey(),
+                        seatNumber = seat.seatId.number,
+                        label = content.primaryLabel,
+                        detailLabels = content.detailLabels,
+                        state = seatState(seat.seatId.number),
                     )
                 },
                 modifier = Modifier.fillMaxSize(),
@@ -176,9 +174,10 @@ internal fun ClocktowerNightActionSquareTableDialog(
                 } else {
                     ClocktowerSquareTableInteractionMode.ReadOnly
                 },
-                onSeatClick = { seatId ->
-                    seats.firstOrNull { it.seatId == seatId }
-                        ?.seatNumber
+                onSeatClick = { renderKey ->
+                    seats.firstOrNull { seat -> seat.seatId.renderKey() == renderKey }
+                        ?.seatId
+                        ?.number
                         ?.let(onSeatSelected)
                 },
             ) {
