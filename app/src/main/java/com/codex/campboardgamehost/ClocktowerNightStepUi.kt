@@ -666,10 +666,9 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
         val nightActionSeats = cards.mapIndexed { index, card ->
-            ClocktowerNightActionSeatUiModel(
-                seatId = "seat-${index + 1}",
+            card.toStorytellerHostSeatPresentation(
                 seatNumber = index + 1,
-                label = card.name,
+                language = language,
             )
         }
         fun seatNumberForName(name: String?): Int? = name
@@ -765,13 +764,7 @@ internal fun ClocktowerNightStepCardLocalized(
 
             ClocktowerNightAction.FortuneTeller -> {
                 ClocktowerFortuneTellerSquareTableDialog(
-                    seats = cards.mapIndexed { index, card ->
-                        ClocktowerFortuneTellerSeatUiModel(
-                            seatId = "seat-${index + 1}",
-                            seatNumber = index + 1,
-                            label = card.name,
-                        )
-                    },
+                    seats = nightActionSeats,
                     selectedSeats = fortuneTellerSelectedSeats,
                     selectableSeats = fortuneTellerSelectableSeats,
                     enabled = step.isRealAction,

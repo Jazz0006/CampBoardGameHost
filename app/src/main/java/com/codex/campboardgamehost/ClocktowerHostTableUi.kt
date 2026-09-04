@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 
 /**
  * Shared Storyteller-private table shell.
@@ -32,12 +33,17 @@ internal fun HostTableShell(
     BoxWithConstraints(modifier = modifier) {
         val availableWidth = maxWidth.value
         val availableHeight = maxHeight.value
-        val layout = remember(availableWidth, availableHeight, seats.size) {
+        val language = LocalContext.current.resources.configuration.locales[0].language
+        val detailedSeatCards = seats.any { seat ->
+            hostSeatContentPresentation(seat, language).detailLabels.isNotEmpty()
+        }
+        val layout = remember(availableWidth, availableHeight, seats.size, detailedSeatCards) {
             hostTableLayout(
                 playerCount = seats.size,
                 constraints = hostTableSurfaceLayoutConstraints(
                     availableWidth = availableWidth,
                     availableHeight = availableHeight,
+                    detailedSeatCards = detailedSeatCards,
                 ),
             )
         }
@@ -57,6 +63,7 @@ internal fun HostTableShell(
                 neutralSelectionChrome = neutralSelectionChrome,
                 interactionMode = interaction.mode,
                 badge = seatBadge(frame.seat),
+                language = language,
             )
         }
         val knownSeatIds = frames.map { frame -> frame.seat.seatId }.toSet()
@@ -117,11 +124,14 @@ private fun HostTableSeatFrame.toSquareTableSeatUiModel(
     neutralSelectionChrome: Boolean,
     interactionMode: HostTableInteractionMode,
     badge: String?,
-): ClocktowerSquareTableSeatUiModel =
-    ClocktowerSquareTableSeatUiModel(
+    language: String,
+): ClocktowerSquareTableSeatUiModel {
+    val content = hostSeatContentPresentation(seat, language)
+    return ClocktowerSquareTableSeatUiModel(
         seatId = seat.seatId.renderKey(),
         seatNumber = seat.seatId.number,
-        label = hostTablePrimarySeatLabel(seat),
+        label = content.primaryLabel,
+        detailLabels = content.detailLabels,
         state = if (neutralSelectionChrome) {
             ClocktowerSquareTableSeatState.Neutral
         } else {
@@ -131,6 +141,7 @@ private fun HostTableSeatFrame.toSquareTableSeatUiModel(
         motionKey = motionKey,
         badge = badge,
     )
+}
 
 private fun HostTableSeatFrame.squareTableSeatState(
     interactionMode: HostTableInteractionMode,
@@ -150,10 +161,3 @@ private fun HostTableSeatFrame.squareTableSeatState(
     isSelectable -> ClocktowerSquareTableSeatState.Selectable
     else -> ClocktowerSquareTableSeatState.Neutral
 }
-
-/**
- * Foundation density policy. Role detail stays typed on [HostSeatPresentation] and will be surfaced
- * mode-by-mode during migration instead of being re-derived from localized labels.
- */
-private fun hostTablePrimarySeatLabel(seat: HostSeatPresentation): String =
-    if (seat.isAlive) seat.playerName else "${seat.playerName} ☠"
