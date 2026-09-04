@@ -1,4 +1,4 @@
-# NEXT DEVELOPMENT HANDOFF — UI-N1 Night Persistent Host Table Lifecycle
+# NEXT DEVELOPMENT HANDOFF — R4D-6 Full Integration -> UI-N1 Night Lifecycle
 
 > Status: **CURRENT ACTIVE HANDOFF**  
 > Date: 2026-09-04 Australia/Sydney  
@@ -6,15 +6,147 @@
 
 ## 1. Purpose
 
-Implement the next independent Storyteller UI slice after the UI stack closeout: a persistent Night Host Table lifecycle that makes wake/action/result/show progression explicit without replacing the existing square-table architecture.
+This handoff now covers two immediately consecutive phases:
 
-This handoff is subordinate to root `AGENTS.md` and `docs/CURRENT_DEVELOPMENT_ROADMAP.md`. Always re-query live `main` before creating the implementation branch.
+```text
+Phase A — R4D-6 preserved-lineage full integration / reconciliation
+Phase B — UI-N1 Night persistent Host Table lifecycle
+```
 
-## 2. Problem being solved
+The execution order was explicitly changed by the user on 2026-09-04 after the repository-wide audit found a preserved post-#92 R4D-6 lineage with useful completed Host Table work. The goal is to absorb that mature work while its design intent is still clear, then implement UI-N1 on top of the stronger shared table foundation.
 
-Real-device testing showed that action-role selectors can replace or cover the wake instruction before the Storyteller has clearly acknowledged whom to wake. Fortune Teller is the clearest example, but the problem is architectural rather than role-specific.
+This handoff is subordinate to root `AGENTS.md` and `docs/CURRENT_DEVELOPMENT_ROADMAP.md`.
 
-The Night interaction should remain on the same physical Host Table and use one shared lifecycle vocabulary:
+## 2. Phase A — R4D-6 full integration — ACTIVE
+
+### 2.1 Historical source
+
+Common validated historical base:
+
+```text
+PR #92 head:
+5501fb02cf37fa2da9ad63bbef7d78608784d787
+```
+
+Preserved lineage:
+
+```text
+codex/ui-r4d6-4c-demon-successor-table
+-> codex/ui-r4d6-closeout-seat-number-badge
+-> codex/ui-r4d6-closeout-host-seat-role-presentation
+-> codex/ui-r4d6-closeout-adaptive-seat-presentation
+-> codex/ui-r4d6-closeout-postdeal-role-visibility
+```
+
+Final descendant:
+
+```text
+b0eabb24620a14ce704c6e3de5df9ec569e0c864
+```
+
+Historical compare showed 44 commits ahead of the #92 base.
+
+### 2.2 Current integration state
+
+Current-main checkpoint before Phase A:
+
+```text
+2ac88ef170373f7d98684baab99495675fe6a00a
+```
+
+Integration branch:
+
+```text
+codex/r4d6-full-integration
+```
+
+Internal integration PR:
+
+```text
+#98 — final salvage descendant -> integration branch
+```
+
+PR #98 completed a real three-way Git merge. It did **not** target `main`.
+
+Draft main PR:
+
+```text
+#99 — R4D-6: absorb preserved Host Table closeout lineage
+```
+
+At integration head `b9a19b2be31ce2aa82698c54c67a9873752ffd80`, before the subsequent docs-authority commits:
+
+```text
+CI #1546 — success
+R2 #1444 — success
+```
+
+Any later head must receive the appropriate current-head remote gates before main merge.
+
+### 2.3 Functional absorption contract
+
+Do not replay 44 historical commits one by one. Judge the final integrated tree against current main.
+
+Default: **KEEP surviving product behavior**.
+
+Remove/replace only when proven to be:
+
+- temporary one-shot tooling;
+- a duplicate with a stronger current-main equivalent;
+- an obsolete implementation shape conflicting with current architecture;
+- an unintended gameplay/rules/epistemic authority change outside UI scope.
+
+Current-main authority always wins over historical implementation shape.
+
+### 2.4 Intended surviving capabilities
+
+The final integration is expected to preserve:
+
+- Demon Successor square-table target selection;
+- typed shared `HostSeatPresentation` consumption in Night/Fortune Teller/pair Manual surfaces;
+- shared seat number badge;
+- Storyteller-private actual vs shown role presentation, including Drunk;
+- automatic post-deal Host role visibility;
+- adaptive square-table density and bounded long-name readiness;
+- shared seat-number presentation in Player Reveal;
+- corresponding typed tests.
+
+The final tree must not restore already-cleaned temporary patch workflow/script files.
+
+### 2.5 Architecture boundaries during Phase A
+
+Preserve existing ownership of:
+
+- target/action legality;
+- same-night effective-state rules;
+- actual/shown identity semantics;
+- registration/provenance;
+- recommendation/manual legal candidate identity;
+- durable observation/history ordering;
+- Player Reveal privacy.
+
+The R4D-6 integration may improve presentation and shared seat projections; it must not become new gameplay truth authority.
+
+The integrated Night seat wiring is foundation work only. It must **not** be treated as the future Night lifecycle implementation.
+
+### 2.6 Phase A validation / exit
+
+Before merging #99 to main:
+
+1. exact PR diff contains only intended production/test/docs files;
+2. no temporary `.github` one-shot residue;
+3. no current-main behavior/architecture regression is visible in the final patch;
+4. typed tests introduced by the lineage remain meaningful and GREEN;
+5. current-head CI and R2 are GREEN;
+6. merge to main occurs only after explicit user authorization.
+
+After Phase A lands, do not delete the historical lineage until the final post-UI-N1 residual verification confirms no unique behavior remains stranded there.
+
+## 3. Phase B — UI-N1 Night persistent Host Table lifecycle — NEXT
+
+Real-device testing showed that action-role selectors can replace or cover the wake instruction before the Storyteller has clearly acknowledged whom to wake. Fortune Teller is the clearest example, but the issue is architectural.
+
+Use one lifecycle vocabulary:
 
 ```text
 WAKE -> ACT -> RESOLVE -> SHOW -> COMPLETE
@@ -38,132 +170,100 @@ Fortune Teller-style mixed flow:
 WAKE -> ACT -> RESOLVE -> SHOW -> COMPLETE
 ```
 
-## 3. Product contract
+## 4. UI-N1 product contract
 
-- Reuse the existing `HostTableShell` and stable `ClocktowerSeatId`; do not create a second table framework.
-- The player being awakened remains in the same physical seat.
-- WAKE has the strongest actor/wake visual treatment and may use a directional/clock-hand-style cue.
-- ACT target state is visually and semantically distinct from the actor/wake state.
-- The center task area owns the current phase label/instruction and phase-specific controls.
-- Legal target authority remains typed and upstream of presentation.
-- RESOLVE is the Storyteller/rules decision boundary when a result or information choice is required.
-- Recommendation and Manual remain Storyteller-authority paths; do not collapse them into Player Reveal.
+- Reuse existing `HostTableShell` and stable `ClocktowerSeatId`; do not create a second table framework.
+- The awakened player stays in the same physical seat.
+- WAKE has the strongest actor cue and may use a directional/clock-hand-style indicator.
+- ACT target state is distinct from actor/wake state.
+- Center task content owns current phase label/instruction and phase-specific controls.
+- Legal target authority remains typed and upstream.
+- RESOLVE is Storyteller/rules result or information-choice authority when required.
+- Recommendation and Manual remain Storyteller authority; do not collapse them into Player Reveal.
 - SHOW remains a sanitized player-facing full-screen handoff boundary.
-- COMPLETE advances only after the current interaction has been durably accepted/recorded as required by existing domain/history authority.
-- Back/navigation/recomposition/restore must not silently lose, repeat, or advance lifecycle state.
+- COMPLETE advances only after existing domain/history authority has durably accepted the interaction as required.
+- Back/navigation/recomposition/restore must not silently lose, repeat or advance lifecycle state.
 
-## 4. State ownership
+## 5. UI-N1 state ownership
 
-Prefer a small typed presentation/session lifecycle owner over transient Compose-only booleans whenever stage state must survive recomposition, navigation or restore.
+Prefer a small typed presentation/session lifecycle owner over transient Compose-only booleans whenever stage state must survive recomposition/navigation/restore.
 
-The lifecycle owner is presentation/session state. It must not become new gameplay truth authority.
+The lifecycle owner is presentation/session state, not gameplay truth authority.
 
 Preserve existing ownership of:
 
-- current role/action legality;
-- same-night effective-state rules;
+- role/action legality;
+- same-night effective state;
 - registration/provenance;
 - recommendation/manual candidate identity;
-- durable player-visible observation/history ordering;
-- sanitized Player Reveal content.
+- durable visible observation/history ordering;
+- sanitized reveal content.
 
-## 5. Representative implementation scope
+## 6. UI-N1 representative scope
 
-Use a small set of representative role families first rather than migrating every Night role in one PR:
+Implement representative patterns first:
 
-1. Fortune Teller or equivalent two-target + result + reveal flow;
-2. one single-target action role such as Monk/Poisoner where existing legality authority can be reused;
-3. one deterministic information role that can demonstrate `WAKE -> SHOW -> COMPLETE`.
+1. Fortune Teller or equivalent two-target + result + reveal;
+2. one single-target role such as Monk/Poisoner;
+3. one deterministic information role;
+4. one selectable/recommended information role if required to prove RESOLVE authority cleanly.
 
-After these patterns are stable, extend only as needed to make the Night lifecycle coherent.
+Extend only as needed to make the lifecycle coherent.
 
-## 6. Explicit non-goals
+## 7. Explicit non-goals
 
-Do not include in UI-N1:
+Neither Phase A nor UI-N1 may expand into:
 
 - EPI-MQ / Productive Uncertainty ranking;
 - recommendation-provider replacement;
-- public claim history;
-- sequential vote redesign;
-- broad unsupported-script expansion;
+- Public Claim History;
+- Sequential Vote redesign;
+- unsupported-script expansion;
 - broad Host/App decomposition;
 - Mayor legality redesign;
-- direct integration of the historical R4D-6 salvage branch;
-- broad Demon Successor/seat-presentation cleanup unless a minimal compatibility adjustment is strictly required for UI-N1.
+- broad rules-semantic rewrites.
 
-## 7. Historical R4D-6 salvage source — preserve, do not merge directly
-
-A post-#92 implementation lineage was intentionally excluded from PR #94 closeout and remains outside current `main`.
-
-Common validated base:
-
-```text
-PR #92 head:
-5501fb02cf37fa2da9ad63bbef7d78608784d787
-```
-
-Known lineage:
-
-```text
-codex/ui-r4d6-4c-demon-successor-table
--> codex/ui-r4d6-closeout-seat-number-badge
--> codex/ui-r4d6-closeout-host-seat-role-presentation
--> codex/ui-r4d6-closeout-adaptive-seat-presentation
--> codex/ui-r4d6-closeout-postdeal-role-visibility
-```
-
-Furthest descendant checkpoint at this audit:
-
-```text
-branch: codex/ui-r4d6-closeout-postdeal-role-visibility
-head:   b0eabb24620a14ce704c6e3de5df9ec569e0c864
-```
-
-GitHub compare from #92 head reports this descendant as 44 commits ahead of the #92 base.
-
-The lineage contains potentially reusable work around Demon Successor square-table migration, seat number badges, Host actual/shown role presentation, adaptive seat density, pair/manual seat presentation and post-deal role visibility.
-
-**Do not merge or bulk cherry-pick this branch into UI-N1.** It predates the final closeout/main lineage and overlaps Night presentation files. Treat it as historical implementation evidence only.
-
-After UI-N1, the `UI-R4D residual migration audit` must review this final descendant and classify each surviving idea/change as:
-
-```text
-REUSE / REIMPLEMENT / SUPERSEDED / DEFER
-```
-
-Do not delete these salvage branches until that residual audit is complete.
-
-## 8. Validation strategy
+## 8. Testing strategy
 
 Follow `AGENTS.md` risk-based evidence rules.
 
-New typed tests are appropriate for stable lifecycle invariants, for example:
+Phase A mostly integrates already-tested behavior. Do not manufacture new RED tests solely because historical production code moved into current main lineage. Existing typed tests + current remote gates + exact diff audit are valid evidence where behavior is unchanged.
 
-- explicit WAKE stage exists before action selection;
-- actor/wake seat state differs from legal/selected target state;
-- role families skip only irrelevant stages;
-- restore/back does not duplicate or silently advance active stage;
+For UI-N1, new typed tests are appropriate for stable lifecycle invariants such as:
+
+- explicit WAKE before action selection;
+- actor/wake state distinct from legal/selected targets;
+- roles skip only irrelevant stages;
+- restore/back does not duplicate or silently advance stage;
 - SHOW cannot expose Storyteller-private state;
-- existing target legality and committed outcome identity remain authoritative.
+- existing legality and committed outcome identity remain authoritative.
 
-Avoid source-string/pixel tests and tests that only freeze Compose implementation shape.
+Avoid pixel/source-shape tests unless an explicit architecture boundary cannot be protected otherwise.
 
-Use the smallest focused GREEN evidence during development; require normal PR CI/R2 and the repository-prescribed broader gate at the logical checkpoint.
+## 9. Resume protocol
 
-## 9. Start protocol
+If a new session resumes while #99 is still open:
 
-When implementation begins:
+1. read root `AGENTS.md`, roadmap and this handoff;
+2. re-query live `main`, #99 head/state/checks and current diff;
+3. do not repeat the historical 44-commit audit from scratch unless the integration head changed materially;
+4. finish Phase A reconciliation/validation first;
+5. do not merge #99 without explicit user authorization.
 
-1. re-read root `AGENTS.md`, `docs/CURRENT_DEVELOPMENT_ROADMAP.md`, and this handoff;
-2. re-query live `main` and open PR state;
-3. create a fresh UI-N1 branch from exact current `main`;
-4. audit current Night presentation/session state ownership before adding a new lifecycle type;
-5. establish the smallest durable lifecycle RED/characterization evidence;
-6. implement representative flows without broad migration;
-7. stop for remote diff/CI review before merge.
+If #99 has already merged:
 
-## 10. Exit condition
+1. re-query live main;
+2. start a fresh UI-N1 branch from that exact main;
+3. audit current Night presentation/session state ownership;
+4. establish the smallest durable lifecycle behavior evidence;
+5. implement representative flows;
+6. stop for remote diff/CI review before main merge.
 
-UI-N1 is complete when the persistent table provides a coherent and restorable Night wake/action lifecycle for representative role families, Player Reveal privacy remains intact, no second table framework exists, and remote validation is green.
+## 10. Overall exit condition
 
-After UI-N1, return to `CURRENT_DEVELOPMENT_ROADMAP.md` and execute the `UI-R4D residual migration audit`; do not jump directly to EPI-MQ.
+This handoff is complete when:
+
+1. the preserved R4D-6 final functionality has been safely reconciled into current main without restoring obsolete temporary tooling or rules authority; and
+2. UI-N1 provides a coherent/restorable persistent-table Night wake/action lifecycle for representative role families while Player Reveal privacy and current semantic authority remain intact.
+
+After that, perform only a narrow R4D residual verification before UI-R5.

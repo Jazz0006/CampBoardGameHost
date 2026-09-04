@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 internal fun ClocktowerChambermaidSquareTableDialog(
-    seats: List<ClocktowerNightActionSeatUiModel>,
+    seats: List<HostSeatPresentation>,
     selectedSeats: List<Int>,
     selectableSeats: Set<Int>,
     enabled: Boolean,
@@ -37,6 +37,7 @@ internal fun ClocktowerChambermaidSquareTableDialog(
     ClocktowerNightActionSquareTableDialog(
         seats = seats,
         enabled = enabled,
+        language = language,
         seatState = { seatNumber ->
             clocktowerTwoTargetSeatState(
                 seatNumber = seatNumber,

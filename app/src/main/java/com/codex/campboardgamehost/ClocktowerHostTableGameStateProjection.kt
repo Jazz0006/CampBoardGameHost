@@ -37,6 +37,7 @@ internal fun GameState.toHostSeatPresentations(
                     displayName = roleDisplayName(shownRole),
                 )
             },
+            contentMode = HostSeatContentMode.StorytellerRoleDetail,
         )
     }
 }

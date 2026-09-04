@@ -666,10 +666,9 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
         val nightActionSeats = cards.mapIndexed { index, card ->
-            ClocktowerNightActionSeatUiModel(
-                seatId = "seat-${index + 1}",
+            card.toStorytellerHostSeatPresentation(
                 seatNumber = index + 1,
-                label = card.name,
+                language = language,
             )
         }
         fun seatNumberForName(name: String?): Int? = name
@@ -765,13 +764,7 @@ internal fun ClocktowerNightStepCardLocalized(
 
             ClocktowerNightAction.FortuneTeller -> {
                 ClocktowerFortuneTellerSquareTableDialog(
-                    seats = cards.mapIndexed { index, card ->
-                        ClocktowerFortuneTellerSeatUiModel(
-                            seatId = "seat-${index + 1}",
-                            seatNumber = index + 1,
-                            label = card.name,
-                        )
-                    },
+                    seats = nightActionSeats,
                     selectedSeats = fortuneTellerSelectedSeats,
                     selectableSeats = fortuneTellerSelectableSeats,
                     enabled = step.isRealAction,
@@ -890,18 +883,21 @@ internal fun ClocktowerNightStepCardLocalized(
 
             ClocktowerNightAction.DemonSuccessor -> {
                 if (!automaticStorytellerInfo) {
-                HostActionSection(
-                    title = if (language == "en") "Choose the new Imp" else "选择新小恶魔",
-                    helper = step.explanation,
-                ) {
-                    SelectablePlayerChips(
-                        cards = demonSuccessorTargetCards,
-                        selectedName = selectedName,
+                    ClocktowerSingleTargetSquareTableDialog(
+                        seats = nightActionSeats,
+                        selectedSeat = seatNumberForName(selectedName),
+                        selectableSeats = selectableSeatNumbers(demonSuccessorTargetCards),
                         enabled = step.isRealAction,
-                        allCards = cards,
-                        onSelect = onSelectName,
+                        title = if (language == "en") "Choose the new Imp" else "选择新小恶魔",
+                        helper = step.explanation,
+                        language = language,
+                        canGoPrevious = canGoPrevious,
+                        onSeatSelected = { seatNumber ->
+                            cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
+                        },
+                        onPrevious = onPrevious,
+                        onNext = onNext,
                     )
-                }
                 }
             }
 
@@ -1083,10 +1079,9 @@ internal fun ClocktowerNightStepCardLocalized(
                         interactionKey = informationDecisionKey,
                         candidates = manualPairCandidates,
                         seats = cards.mapIndexed { index, card ->
-                            ClocktowerPairManualSeatUiModel(
-                                seatId = "seat-${index + 1}",
+                            card.toStorytellerHostSeatPresentation(
                                 seatNumber = index + 1,
-                                label = card.name,
+                                language = language,
                             )
                         },
                         roleLabel = { roleId -> clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language) },

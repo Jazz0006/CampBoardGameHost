@@ -23,18 +23,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-
-internal data class ClocktowerPairManualSeatUiModel(
-    val seatId: String,
-    val seatNumber: Int,
-    val label: String,
-)
 
 private data class ClocktowerPairManualCandidate(
     val option: ClocktowerDisplayOption,
@@ -210,11 +205,26 @@ internal fun clocktowerPairManualSelectionModel(
     candidates: List<ClocktowerDisplayOption>,
 ): ClocktowerPairManualSelectionModel = ClocktowerPairManualSelectionModel.from(candidates)
 
+internal fun clocktowerPairManualSquareTableSeat(
+    seat: HostSeatPresentation,
+    language: String,
+    state: ClocktowerSquareTableSeatState,
+): ClocktowerSquareTableSeatUiModel {
+    val content = hostSeatContentPresentation(seat, language)
+    return ClocktowerSquareTableSeatUiModel(
+        seatId = seat.seatId.renderKey(),
+        seatNumber = seat.seatId.number,
+        label = content.primaryLabel,
+        detailLabels = content.detailLabels,
+        state = state,
+    )
+}
+
 @Composable
 internal fun ClocktowerPairManualSelectionDialog(
     interactionKey: String,
     candidates: List<ClocktowerDisplayOption>,
-    seats: List<ClocktowerPairManualSeatUiModel>,
+    seats: List<HostSeatPresentation>,
     roleLabel: (String) -> String,
     onDismiss: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
@@ -222,6 +232,7 @@ internal fun ClocktowerPairManualSelectionDialog(
     var selection by remember(interactionKey, candidates) {
         mutableStateOf(clocktowerPairManualSelectionModel(candidates))
     }
+    val language = LocalContext.current.resources.configuration.locales[0].language
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -233,17 +244,19 @@ internal fun ClocktowerPairManualSelectionDialog(
         ) {
             ClocktowerSquareTableSeatSurface(
                 seats = seats.map { seat ->
-                    ClocktowerSquareTableSeatUiModel(
-                        seatId = seat.seatId,
-                        seatNumber = seat.seatNumber,
-                        label = seat.label,
-                        state = clocktowerPairManualSeatState(selection, seat.seatNumber),
+                    clocktowerPairManualSquareTableSeat(
+                        seat = seat,
+                        language = language,
+                        state = clocktowerPairManualSeatState(selection, seat.seatId.number),
                     )
                 },
                 modifier = Modifier.fillMaxSize(),
                 interactionMode = ClocktowerSquareTableInteractionMode.Selectable,
-                onSeatClick = { seatId ->
-                    val seatNumber = seats.firstOrNull { it.seatId == seatId }?.seatNumber
+                onSeatClick = { seatKey ->
+                    val seatNumber = seats
+                        .firstOrNull { seat -> seat.seatId.renderKey() == seatKey }
+                        ?.seatId
+                        ?.number
                     if (seatNumber != null) {
                         selection = selection.selectSeat(seatNumber)
                     }
