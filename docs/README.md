@@ -7,7 +7,7 @@
 
 1. 根目录 `AGENTS.md` — 项目级 AI / Git / 测试执行规范；
 2. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前项目状态与执行顺序权威**；
-3. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-04_UI_N1_NIGHT_LIFECYCLE.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-04_UI_N1_NIGHT_LIFECYCLE.md) — **唯一当前 active handoff**；
+3. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-04_UI_N1_NIGHT_LIFECYCLE.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-04_UI_N1_NIGHT_LIFECYCLE.md) — **唯一当前 active handoff**，现覆盖 R4D-6 full integration prerequisite 与紧随其后的 UI-N1；
 4. 当前任务需要的 specialized design / semantic reference；
 5. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)；
 6. 查询 live GitHub state 后再实施。
@@ -17,82 +17,119 @@
 ## 2. 当前 active task
 
 ```text
-UI-N1 — Night persistent Host Table wake/action lifecycle
-
-WAKE -> ACT -> RESOLVE -> SHOW -> COMPLETE
+R4D-6 FULL INTEGRATION / RECONCILIATION
+-> UI-N1 Night persistent Host Table lifecycle
 ```
 
-当前目标：让夜间唤醒、行动、裁定/信息选择、玩家展示和完成推进共享同一个 persistent Host Table 生命周期，避免 action selector 在 Storyteller 尚未明确确认唤醒对象前覆盖 wake instruction。
+2026-09-04 的全局审计发现，PR #94 明确排除的一条 post-#92 R4D-6 lineage 仍保留有可用的 Host Table 完成工作。用户随后明确决定：趁设计意图仍清楚，先完整吸收这条 lineage 的有效最终功能，再开始 UI-N1。
 
-Active handoff：
+当前 integration branch：
 
-- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-04_UI_N1_NIGHT_LIFECYCLE.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-04_UI_N1_NIGHT_LIFECYCLE.md)
+`codex/r4d6-full-integration`
 
-当前 roadmap：
+当前 Draft PR：
 
-- [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)
+`#99 — R4D-6: absorb preserved Host Table closeout lineage`
 
-## 3. 当前 UI 设计/架构参考
+内部三方 merge PR #98 已将最终 salvage descendant 合入 integration branch；**这不是对 main 的 merge 授权**。
 
-- [`BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`](BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md)
-- [`UI_R4B_NIGHT_ACTION_SURFACE_PLAN_2026-09-02.md`](UI_R4B_NIGHT_ACTION_SURFACE_PLAN_2026-09-02.md)
-- [`UI_STACK_CLOSEOUT_2026-09-04.md`](UI_STACK_CLOSEOUT_2026-09-04.md) — historical closeout evidence; not current next-step authority.
+## 3. R4D-6 full integration contract
 
-Persistent Host Table current principles:
+最终 salvage descendant：
 
 ```text
-stable typed seatId
--> stable physical table position
--> phase-specific center task
--> typed actor / legal target / selected target presentation
--> sanitized Player Reveal boundary
-```
-
-## 4. Preserved post-#92 R4D-6 salvage lineage
-
-A post-#92 implementation chain was intentionally excluded from PR #94 and remains outside `main`.
-
-Preserve these branches until the `UI-R4D residual migration audit` is complete:
-
-```text
-codex/ui-r4d6-4c-demon-successor-table
--> codex/ui-r4d6-closeout-seat-number-badge
--> codex/ui-r4d6-closeout-host-seat-role-presentation
--> codex/ui-r4d6-closeout-adaptive-seat-presentation
--> codex/ui-r4d6-closeout-postdeal-role-visibility
-```
-
-Furthest audited descendant:
-
-```text
+codex/ui-r4d6-closeout-postdeal-role-visibility
 b0eabb24620a14ce704c6e3de5df9ec569e0c864
 ```
 
-Do not bulk merge/cherry-pick this lineage into UI-N1. It is a historical implementation reference to be reconciled after UI-N1 as `REUSE / REIMPLEMENT / SUPERSEDED / DEFER`.
+它与当前 main 的共同基线是 PR #92 head `5501fb02...`，历史上 44 commits ahead；但三方 merge 后相对当前 main 的最终净差异仅集中在 Host Table presentation / tests。
 
-## 5. Execution order after UI-N1
+当前吸收目标包括：
+
+- Demon Successor square-table migration；
+- shared typed `HostSeatPresentation` consumption for Night / Fortune Teller / pair Manual；
+- seat number badge；
+- Storyteller actual/shown role presentation，包括 Drunk；
+- adaptive seat density / bounded long-name readiness；
+- post-deal Host role visibility；
+- shared seat-number presentation in Player Reveal；
+- corresponding typed tests。
+
+吸收原则：
+
+- 默认保留最终仍有效的产品能力；
+- current `main` 的后续架构与规则 authority 优先；
+- 不恢复已经自删除的 one-shot workflow / patch script；
+- 不把旧 Night presentation shape 当成未来 UI-N1 lifecycle authority；
+- 若三方 merge 后的净 patch 只是 typed seat/presentation wiring，不因其历史来源而重新实现；
+- final `main` merge 仍需正常 CI/R2、exact diff audit 与用户明确授权。
+
+## 4. 紧随其后的 UI-N1
+
+R4D-6 integration 合并后，立即进入：
 
 ```text
-UI-N1 Night lifecycle
--> UI-R4D residual migration audit
+UI-N1 — Night persistent Host Table wake/action lifecycle
+WAKE -> ACT -> RESOLVE -> SHOW -> COMPLETE
+```
+
+UI-N1 继续复用现有 `HostTableShell` / stable `ClocktowerSeatId`，不创建第二套 table framework。
+
+关键产品边界：
+
+- WAKE 必须在 action selector 前成为明确阶段；
+- actor / legal target / selected / disabled / dead presentation 语义分离；
+- RESOLVE 保留 Storyteller recommendation / Manual authority；
+- SHOW 仍是 sanitized Player Reveal boundary；
+- lifecycle state 不接管 gameplay legality / rule truth；
+- navigation / recomposition / restore 不得静默丢失、重复或提前推进阶段。
+
+## 5. Execution order
+
+```text
+R4D-6 full integration / reconciliation
+-> UI-N1 Night lifecycle
+-> R4D-6 residual verification only
 -> UI-R5 final real-device stabilization / feature freeze
 -> EPI-MQ / Productive Uncertainty
 -> UX-R6 legacy recommendation-provider replacement
 ```
 
-Public Claim History and Sequential Vote UX remain deferred by product decision unless explicitly reopened in the roadmap.
+UI-N1 后的 residual 工作应只处理 full integration 与 UI-N1 都未覆盖的真实 active legacy path；不要重新打开已经吸收完成的 R4D-6 功能。
 
-## 6. Epistemic / misinformation quality references
+Public Claim History 与 Sequential Vote UX 继续按产品决定延期。
 
-Future long-lived design reference:
+## 6. 当前 UI / architecture references
+
+- [`BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`](BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md)
+- [`UI_R4B_NIGHT_ACTION_SURFACE_PLAN_2026-09-02.md`](UI_R4B_NIGHT_ACTION_SURFACE_PLAN_2026-09-02.md)
+- [`UI_STACK_CLOSEOUT_2026-09-04.md`](UI_STACK_CLOSEOUT_2026-09-04.md) — historical closeout evidence only.
+
+Persistent Host Table principles:
+
+```text
+stable typed seatId
+-> stable physical table position
+-> Storyteller-private typed seat content
+-> phase-specific center task
+-> typed interaction state
+-> sanitized Player Reveal boundary
+```
+
+## 7. Epistemic / rules references
+
+Future misinformation-quality design：
 
 - [`EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`](EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md)
-
-Foundational algorithm reference:
-
 - [`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`](CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md)
 
-Frozen semantic ordering:
+Same-night / rules architecture：
+
+- [`SAME_NIGHT_EFFECTIVE_STATE_ARCHITECTURE_2026-08-25.md`](SAME_NIGHT_EFFECTIVE_STATE_ARCHITECTURE_2026-08-25.md)
+- [`SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md`](SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md)
+- [`SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md`](SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md)
+
+Frozen semantic ordering remains：
 
 ```text
 actual identity
@@ -106,28 +143,7 @@ actual identity
 -> UI
 ```
 
-Future quality ranking may only operate downstream of legal semantic authority.
-
-## 7. Same-night / rules architecture references
-
-- [`SAME_NIGHT_EFFECTIVE_STATE_ARCHITECTURE_2026-08-25.md`](SAME_NIGHT_EFFECTIVE_STATE_ARCHITECTURE_2026-08-25.md)
-- [`SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md`](SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md)
-- [`SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md`](SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md)
-- [`DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md`](DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md)
-- [`SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md`](SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md)
-
-## 8. Future architecture references
-
-- [`storyteller_revision_driven_dynamic_decision_engine_plan.md`](storyteller_revision_driven_dynamic_decision_engine_plan.md)
-- [`storyteller_a4_zdd_prototype.md`](storyteller_a4_zdd_prototype.md)
-- [`storyteller_a4_5_observation_cache_rebuild_spec.md`](storyteller_a4_5_observation_cache_rebuild_spec.md)
-- [`多剧本多板子与动态游戏流程架构设计_v1.md`](多剧本多板子与动态游戏流程架构设计_v1.md)
-- [`asp_oracle_cross_validation.md`](asp_oracle_cross_validation.md)
-- [`external_solver_evaluation.md`](external_solver_evaluation.md)
-
-These are not current implementation permission unless reactivated by the roadmap.
-
-## 9. Normative development workflow
+## 8. Normative development workflow
 
 - [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
 - [`AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`](AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md)
@@ -135,30 +151,9 @@ These are not current implementation permission unless reactivated by the roadma
 - [`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`](SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md)
 - [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md)
 
-The older `CHATGPT_CODEX_LUNA_LOCAL_PATCH_WORKFLOW.md` has been archived under `archive/workflows/` and is historical only.
+Historical handoffs live under `archive/handoffs/`; deferred work under `archive/deferred/`; superseded workflow guidance under `archive/workflows/`.
 
-## 10. Documentation lifecycle policy
-
-Active docs root should contain:
-
-```text
-CURRENT_DEVELOPMENT_ROADMAP.md
-one active NEXT_DEVELOPMENT_HANDOFF_*.md
-long-lived architecture / semantic references
-normative test / workflow references
-limited historical checkpoint evidence pending later consolidation
-```
-
-Historical handoffs are under `archive/handoffs/`. Deferred unfinished work belongs under `archive/deferred/`.
-
-When an active task closes:
-
-- retire the old active handoff immediately;
-- update the existing roadmap and create/activate only the next required handoff;
-- archive completed micro-handoffs/checkpoints in batches rather than allowing them to remain active-looking;
-- do not delete historical implementation branches that are explicitly registered as salvage sources until their reconciliation audit is complete.
-
-## 11. Status authority rule
+## 9. Status authority rule
 
 If documents disagree:
 
