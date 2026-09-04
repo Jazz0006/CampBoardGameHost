@@ -1,11 +1,12 @@
 package com.codex.campboardgamehost
 
 /**
- * Capacity-aware visual density for one square-table seat card.
+ * Shared capacity-aware visual density for every square-table seat card.
  *
- * Storyteller detail seats expand while the physical ring has room, then compact deliberately as
- * player count grows. Geometry still preserves the proven 360 x 600 table capacity, while detailed
- * player names and role/status text keep the same readable typography floor through 15 players.
+ * Identity-only and Storyteller-detail tables intentionally use the same large-card tiers. Detail
+ * presence changes seat content, not geometry or typography. The tiers still preserve the proven
+ * 360 x 600 table capacity while keeping player names and role/status text readable through 15
+ * players.
  */
 internal data class ClocktowerSquareTableSeatDensity(
     val cardWidth: Float,
@@ -20,37 +21,23 @@ internal data class ClocktowerSquareTableSeatDensity(
     val verticalPaddingDp: Float,
 )
 
+@Suppress("UNUSED_PARAMETER")
 internal fun clocktowerSquareTableSeatDensity(
     playerCount: Int,
     detailedSeatCards: Boolean,
 ): ClocktowerSquareTableSeatDensity {
     require(playerCount >= 0) { "Square-table player count cannot be negative" }
 
-    if (!detailedSeatCards) {
-        return ClocktowerSquareTableSeatDensity(
-            cardWidth = 64f,
-            cardHeight = 50f,
-            primaryMaxLines = 2,
-            primaryFontSizeSp = 11f,
-            primaryLineHeightSp = 12f,
-            detailMaxLines = 1,
-            detailFontSizeSp = 9f,
-            detailLineHeightSp = 10f,
-            horizontalPaddingDp = 4f,
-            verticalPaddingDp = 3f,
-        )
-    }
-
     return when {
         playerCount <= 11 -> ClocktowerSquareTableSeatDensity(
             cardWidth = 80f,
             cardHeight = 90f,
             primaryMaxLines = 2,
-            primaryFontSizeSp = 11f,
-            primaryLineHeightSp = 12f,
+            primaryFontSizeSp = 13f,
+            primaryLineHeightSp = 14f,
             detailMaxLines = 2,
-            detailFontSizeSp = 10f,
-            detailLineHeightSp = 10.5f,
+            detailFontSizeSp = 12f,
+            detailLineHeightSp = 13f,
             horizontalPaddingDp = 4f,
             verticalPaddingDp = 3f,
         )
@@ -58,11 +45,11 @@ internal fun clocktowerSquareTableSeatDensity(
             cardWidth = 72f,
             cardHeight = 84f,
             primaryMaxLines = 2,
-            primaryFontSizeSp = 11f,
-            primaryLineHeightSp = 12f,
+            primaryFontSizeSp = 12f,
+            primaryLineHeightSp = 13f,
             detailMaxLines = 2,
-            detailFontSizeSp = 10f,
-            detailLineHeightSp = 10.5f,
+            detailFontSizeSp = 11f,
+            detailLineHeightSp = 12f,
             horizontalPaddingDp = 3f,
             verticalPaddingDp = 2f,
         )
@@ -70,11 +57,11 @@ internal fun clocktowerSquareTableSeatDensity(
             cardWidth = 64f,
             cardHeight = 70f,
             primaryMaxLines = 2,
-            primaryFontSizeSp = 11f,
-            primaryLineHeightSp = 12f,
+            primaryFontSizeSp = 12f,
+            primaryLineHeightSp = 13f,
             detailMaxLines = 2,
-            detailFontSizeSp = 10f,
-            detailLineHeightSp = 10.5f,
+            detailFontSizeSp = 11f,
+            detailLineHeightSp = 12f,
             horizontalPaddingDp = 2f,
             verticalPaddingDp = 1f,
         )
