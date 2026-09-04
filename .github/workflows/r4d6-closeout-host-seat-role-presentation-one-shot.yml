@@ -1,0 +1,187 @@
+name: R4D-6 Host seat role presentation one-shot patch
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d6-closeout-host-seat-role-presentation
+    paths:
+      - .github/workflows/r4d6-closeout-host-seat-role-presentation-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/ui-r4d6-closeout-host-seat-role-presentation
+          fetch-depth: 0
+
+      - name: Verify bootstrap head and blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='app/src/main/java/com/codex/campboardgamehost'
+          tests='app/src/test/java/com/codex/campboardgamehost'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = 'af9ff6d78905206935620f8c30e96755390e820b'
+          test "$(git ls-remote origin refs/heads/codex/ui-r4d6-closeout-host-seat-role-presentation | cut -f1)" = "$GITHUB_SHA"
+          test "$(git hash-object "$root/ClocktowerHostTableContract.kt")" = '5672ac24ba56f74d19628653e92cb6a2e04fd2ee'
+          test "$(git hash-object "$root/ClocktowerHostTableGameStateProjection.kt")" = '3e33667287ed1d21b6ef09ae2db1a9561e620ea8'
+          test "$(git hash-object "$root/ClocktowerHostTableUi.kt")" = '2928cb426b856065e841ffce2077c3a902047abd'
+          test "$(git hash-object "$root/ClocktowerSquareTableUi.kt")" = '6104c3544c64cdb1f50415b2df5ac614d582b24f'
+          test "$(git hash-object "$root/ClocktowerNightActionSquareTableUi.kt")" = '6ce91ceb5c1ae407c7a2816a5ccfaeece8051ed4'
+          test "$(git hash-object "$root/ClocktowerChambermaidSquareTableUi.kt")" = 'ec0e3222f9f37880ffdfcc6599381098a7dacb31'
+          test "$(git hash-object "$root/ClocktowerFortuneTellerSquareTableUi.kt")" = 'b265bd2fa727fa7d92bed3690d094e572f846bc2'
+          test "$(git hash-object "$root/ClocktowerNightStepUi.kt")" = 'e704dbd9edb6eb4b794055cfe366c1a6c46a89f3'
+          test "$(git hash-object "$root/ClocktowerPlayerDisplayUi.kt")" = '930762d4a13108799ace45580ed1d9aeb57a6518'
+          test "$(git hash-object "$root/ClocktowerPairPlayerRevealPresentation.kt")" = '5ebf9353297cd44f7ee6839ee8761f9881c0f64d'
+          test "$(git hash-object "$tests/ClocktowerHostSeatContentPresentationTest.kt")" = '7a4659f56d474ffcea6d343ef8921d880fad0129'
+          test "$(git hash-object "$tests/ClocktowerHostTableGameStateProjectionTest.kt")" = 'b1c9809dab229ef2809db4f14da08d935cdbe05d'
+          test "$(git hash-object "$tests/ClocktowerDayOverviewTableStateTest.kt")" = '8ddbb327be1e0db5e9dfbd2bfc201c59aa8c2c09'
+          test "$(git hash-object "$tests/ClocktowerSquareTableSeatLayoutTest.kt")" = '009a8a9f33c5a48d521938c91db8eb7bb8c5d7a6'
+          test "$(git hash-object "$tests/ClocktowerNightActionSquareTablePresentationTest.kt")" = '9789fdab104a62ebfa1296ddd2ee29ec1943336d'
+          test "$(git hash-object .github/scripts/r4d6_closeout_host_seat_role_presentation_patch.py)" = '48526d048cc8fab197f8283b928fb147b898cde8'
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Prove focused RED
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerHostSeatContentPresentationTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerHostTableGameStateProjectionTest' \
+            --rerun-tasks --no-daemon 2>&1 | tee /tmp/r4d6-host-seat-red.log
+          status=${PIPESTATUS[0]}
+          set -e
+          test "$status" -ne 0
+          grep -F 'HostSeatContentMode' /tmp/r4d6-host-seat-red.log
+
+      - name: Apply exact production patch
+        run: python3 .github/scripts/r4d6_closeout_host_seat_role_presentation_patch.py
+
+      - name: Run focused GREEN
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerHostSeatContentPresentationTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerHostTableGameStateProjectionTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerDayOverviewTableStateTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerSquareTableSeatLayoutTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerNightActionSquareTablePresentationTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Run checkpoint testFast
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Exact diff and semantic audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='app/src/main/java/com/codex/campboardgamehost'
+          policy="$root/ClocktowerHostSeatContentPresentation.kt"
+          contract="$root/ClocktowerHostTableContract.kt"
+          projection="$root/ClocktowerHostTableGameStateProjection.kt"
+          host_ui="$root/ClocktowerHostTableUi.kt"
+          square="$root/ClocktowerSquareTableUi.kt"
+          night_action="$root/ClocktowerNightActionSquareTableUi.kt"
+          chambermaid="$root/ClocktowerChambermaidSquareTableUi.kt"
+          fortune="$root/ClocktowerFortuneTellerSquareTableUi.kt"
+          night_step="$root/ClocktowerNightStepUi.kt"
+          git add -N "$policy"
+          expected=$(printf '%s\n' \
+            "$chambermaid" \
+            "$fortune" \
+            "$policy" \
+            "$contract" \
+            "$projection" \
+            "$host_ui" \
+            "$night_action" \
+            "$night_step" \
+            "$square")
+          git diff --check
+          test "$(git diff --name-only)" = "$expected"
+          grep -F 'HostSeatContentMode.IdentityOnly' "$contract"
+          grep -F 'contentMode = HostSeatContentMode.StorytellerRoleDetail' "$projection"
+          grep -F 'detailLabels = content.detailLabels' "$host_ui"
+          grep -F 'HOST_TABLE_DETAILED_SEAT_CARD_HEIGHT = 70f' "$square"
+          grep -F 'detailedSeatCards = detailedSeatCards' "$square"
+          grep -F 'seats: List<HostSeatPresentation>' "$night_action"
+          grep -F 'seats: List<HostSeatPresentation>' "$fortune"
+          grep -F 'card.toStorytellerHostSeatPresentation' "$night_step"
+          grep -F 'Actual: ${actualRole.displayName}' "$policy"
+          grep -F '实际：${actualRole.displayName}' "$policy"
+          if grep -R -F 'ClocktowerNightActionSeatUiModel' "$root"; then
+            echo 'Legacy NightAction seat model remains' >&2
+            exit 1
+          fi
+          if grep -R -F 'ClocktowerFortuneTellerSeatUiModel' "$root"; then
+            echo 'Legacy Fortune Teller seat model remains' >&2
+            exit 1
+          fi
+          test "$(git hash-object "$root/ClocktowerPlayerDisplayUi.kt")" = '930762d4a13108799ace45580ed1d9aeb57a6518'
+          test "$(git hash-object "$root/ClocktowerPairPlayerRevealPresentation.kt")" = '5ebf9353297cd44f7ee6839ee8761f9881c0f64d'
+          git diff -- "$chambermaid" "$fortune" "$policy" "$contract" "$projection" "$host_ui" "$night_action" "$night_step" "$square"
+
+      - name: Reconfirm remote head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/ui-r4d6-closeout-host-seat-role-presentation | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Commit and push product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='app/src/main/java/com/codex/campboardgamehost'
+          files=(
+            "$root/ClocktowerChambermaidSquareTableUi.kt"
+            "$root/ClocktowerFortuneTellerSquareTableUi.kt"
+            "$root/ClocktowerHostSeatContentPresentation.kt"
+            "$root/ClocktowerHostTableContract.kt"
+            "$root/ClocktowerHostTableGameStateProjection.kt"
+            "$root/ClocktowerHostTableUi.kt"
+            "$root/ClocktowerNightActionSquareTableUi.kt"
+            "$root/ClocktowerNightStepUi.kt"
+            "$root/ClocktowerSquareTableUi.kt"
+          )
+          expected=$(printf '%s\n' "${files[@]}")
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "${files[@]}"
+          test "$(git diff --cached --name-only)" = "$expected"
+          git commit -m 'feat(R4D-6): unify Host seat role presentation'
+          git push origin HEAD:codex/ui-r4d6-closeout-host-seat-role-presentation
+          echo "PRODUCT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/ui-r4d6-closeout-host-seat-role-presentation | cut -f1)" = "$PRODUCT_SHA"
+          git rm .github/workflows/r4d6-closeout-host-seat-role-presentation-one-shot.yml .github/scripts/r4d6_closeout_host_seat_role_presentation_patch.py
+          git commit -m 'chore(ci): remove R4D-6 Host seat role one-shot files'
+          git push origin HEAD:codex/ui-r4d6-closeout-host-seat-role-presentation
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report checkpoints
+        run: |
+          echo "Product checkpoint: $PRODUCT_SHA"
+          echo "Cleanup checkpoint: $CLEANUP_SHA"
