@@ -1,0 +1,27 @@
+name: R4D-6 Day role language audit
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d6-closeout-postdeal-role-visibility
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/ui-r4d6-closeout-postdeal-role-visibility
+      - name: Locate role label and language paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== clocktowerRoleLabel ==='
+          grep -R -n -C 8 --include='*.kt' 'clocktowerRoleLabel' app/src/main/java || true
+          echo '=== language parameter / resolver context ==='
+          grep -R -n -C 4 --include='*.kt' 'language: String' app/src/main/java/com/codex/campboardgamehost/clocktower/ui app/src/main/java/com/codex/campboardgamehost | head -n 300 || true
+          echo '=== nameFor(language) ==='
+          grep -R -n -C 5 --include='*.kt' 'nameFor(language)' app/src/main/java | head -n 200 || true
