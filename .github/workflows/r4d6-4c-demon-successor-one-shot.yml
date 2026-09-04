@@ -1,0 +1,125 @@
+name: R4D-6.4C Demon Successor one-shot patch
+
+on:
+  push:
+    branches:
+      - codex/ui-r4d6-4c-demon-successor-table
+    paths:
+      - .github/workflows/r4d6-4c-demon-successor-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/ui-r4d6-4c-demon-successor-table
+          fetch-depth: 0
+
+      - name: Verify bootstrap head and blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt'
+          square_test='app/src/test/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTablePresentationTest.kt'
+          succession_test='app/src/test/java/com/codex/campboardgamehost/ClocktowerPendingSuccessionFlowAuthorityTest.kt'
+          patch_script='.github/scripts/r4d6_4c_demon_successor_patch.py'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/codex/ui-r4d6-4c-demon-successor-table | cut -f1)" = "$GITHUB_SHA"
+          test "$(git hash-object "$target")" = '4265d2d0707f37d5db59fcd1bffcfb9d0a518ab6'
+          test "$(git hash-object "$square_test")" = '9789fdab104a62ebfa1296ddd2ee29ec1943336d'
+          test "$(git hash-object "$succession_test")" = '30e0a6fb377362e9658d4ccdd576cfcae252c8c1'
+          test "$(git hash-object "$patch_script")" = '317183706dba5887c1e14ef9467740aa807df518'
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Prove focused baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerNightActionSquareTablePresentationTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerPendingSuccessionFlowAuthorityTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Apply exact production patch
+        run: python3 .github/scripts/r4d6_4c_demon_successor_patch.py
+
+      - name: Run focused post-patch evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerNightActionSquareTablePresentationTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerPendingSuccessionFlowAuthorityTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Run checkpoint testFast
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Exact diff and semantic audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt'
+          git diff --check
+          test "$(git diff --name-only | paste -sd ' ' -)" = "$target"
+          grep -F 'ClocktowerNightAction.DemonSuccessor -> {' "$target"
+          grep -F 'selectableSeats = selectableSeatNumbers(demonSuccessorTargetCards)' "$target"
+          grep -F 'selectedSeat = seatNumberForName(selectedName)' "$target"
+          grep -F 'automaticDecisionTargetName' "$target"
+          grep -F 'step.action == ClocktowerNightAction.DemonSuccessor' "$target"
+          if grep -F 'cards = demonSuccessorTargetCards' "$target"; then
+            echo 'Legacy DemonSuccessor chip wiring remains' >&2
+            exit 1
+          fi
+          git diff -- "$target"
+
+      - name: Reconfirm remote head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/ui-r4d6-4c-demon-successor-table | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Commit and push product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$target"
+          test "$(git diff --cached --name-only | paste -sd ' ' -)" = "$target"
+          git commit -m 'feat(R4D-6.4C): move Demon successor selection to square table'
+          git push origin HEAD:codex/ui-r4d6-4c-demon-successor-table
+          echo "PRODUCT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/ui-r4d6-4c-demon-successor-table | cut -f1)" = "$PRODUCT_SHA"
+          git rm .github/workflows/r4d6-4c-demon-successor-one-shot.yml .github/scripts/r4d6_4c_demon_successor_patch.py
+          git commit -m 'chore(ci): remove R4D-6.4C one-shot files'
+          git push origin HEAD:codex/ui-r4d6-4c-demon-successor-table
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report checkpoints
+        run: |
+          echo "Product checkpoint: $PRODUCT_SHA"
+          echo "Cleanup checkpoint: $CLEANUP_SHA"
