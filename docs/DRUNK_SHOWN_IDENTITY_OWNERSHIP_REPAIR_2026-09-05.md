@@ -1,6 +1,6 @@
 # Drunk Shown-Identity Ownership Repair — 2026-09-05
 
-> Status: **ACTIVE HOTFIX / OWNERSHIP CLEANUP**  
+> Status: **IMPLEMENTED — FINAL CHECKPOINT VALIDATION PENDING**  
 > Branch: `codex/drunk-shown-identity-ownership-cleanup`  
 > Base checkpoint: `9cd72cba22737d1d803f8a30d25c2a5c25570211`  
 > Scope: Trouble Brewing setup identity commitment, setup recommendation ownership, Host lock-state wiring, related history/legacy cleanup.  
@@ -46,7 +46,7 @@ setup template history / diversity selection
 
 - read `PlayerState.shownRole`;
 - generate fake information appropriate to that already committed shown identity;
-- jointly evaluate that remaining information with Red Herring, Demon Bluffs and other mutable Storyteller choices where applicable.
+- use the complete committed GameState as the semantic/legal basis for later recommendation work.
 
 `Recommendation` must **never**:
 
@@ -64,19 +64,19 @@ setup template history / diversity selection
 
 ## 2. Confirmed regression
 
-The current Host setup-recommendation path still reconstructs the already committed Drunk shown identity as a `StorytellerDecision.DrunkShownRole` lock and preserves/reinserts it during reevaluation and clear-lock operations.
+The pre-repair Host setup-recommendation path reconstructed the already committed Drunk shown identity as a `StorytellerDecision.DrunkShownRole` lock and preserved/reinserted it during reevaluation and clear-lock operations.
 
-The recommendation service correctly rejects such a lock as `shown-identity-is-committed-setup-fact`. The result is a false lock conflict, and downstream manual Demon Bluff display may become pending/empty because no valid setup recommendation survives.
+The recommendation service correctly rejected such a lock as `shown-identity-is-committed-setup-fact`. The result was a false lock conflict, and downstream manual Demon Bluff display could become pending/empty because no valid setup recommendation survived.
 
-This is an incomplete authority migration, not a Demon Bluff algorithm defect.
+This was an incomplete authority migration, not a Demon Bluff algorithm defect.
 
 ## 3. Test strategy
 
 Follow root `AGENTS.md`: behavior-first, typed seams, no new source-string wiring tests merely to force RED.
 
-### 3.1 Existing coverage to preserve
+### 3.1 Existing coverage preserved
 
-`SetupShownIdentityCommitterTest` already protects durable setup behavior:
+`SetupShownIdentityCommitterTest` protects durable setup behavior:
 
 - same candidate/policy/setup seed -> same committed shown identity;
 - selected shown identity is always legal under the setup policy;
@@ -84,98 +84,115 @@ Follow root `AGENTS.md`: behavior-first, typed seams, no new source-string wirin
 - commitment is immutable with respect to input candidate/policy;
 - illegal options fail closed.
 
-Do not duplicate these assertions.
-
-`SetupRecommendationShownIdentityOwnershipTest` already protects the downstream ownership contract:
+`SetupRecommendationShownIdentityOwnershipTest` protects the downstream ownership contract:
 
 - committed shown identity is consumed by recommendation;
 - recommendation output does not contain `DrunkShownRole`;
 - shown identity supplied as a recommendation lock is rejected;
 - impaired information can be generated as observations from the committed shown role.
 
-Strengthen this test only where a durable ownership gap remains.
+### 3.2 Added lock-boundary contract
 
-### 3.2 New regression proof
-
-The missing regression is the Host/recommendation-lock boundary:
+A typed `SetupRecommendationLockPolicy` now owns mutable setup-recommendation lock semantics:
 
 ```text
-Given a legal committed setup with Drunk.shownRole
-When recommendation lock state is initialized / replaced / cleared
-Then shownRole is not synthesized into mutable locks
-And clear returns an empty mutable lock set
+initial locks = empty
+replace = supplied mutable decisions, excluding committed shown identity
+clear = empty
 ```
 
-Prefer a small typed lock-state owner if needed because the bug is caused by recommendation-lock semantics living inline in Compose state. Do not add a `ClocktowerHostScreen.kt` source-text assertion.
+This gives durable typed coverage without a `ClocktowerHostScreen.kt` source-text test.
 
-### 3.3 Legacy-test retirement
+### 3.3 Added history regression
 
-Audit old setup migration coverage for:
+A behavior test now proves that two otherwise identical impaired-information observations with different committed perceived abilities produce the same recommendation-history signature.
+
+The test was established against the pre-fix behavior and produced the intended RED before history production code changed.
+
+## 4. Implementation status
+
+### Slice A — visible regression and lock ownership — COMPLETE
+
+Implemented:
+
+1. Added `SetupRecommendationLockPolicy`.
+2. Host recommendation locks now initialize empty.
+3. Host reevaluation replaces locks through the mutable-lock policy.
+4. Host clear-lock action clears to empty.
+5. Removed `committedIdentityDecisions` and `preservingCommittedIdentity()` from Host lock ownership.
+6. The large Host edit was applied through the repository-standard fail-closed one-shot workflow with exact branch/blob/anchor locks.
+7. Focused ownership tests passed before and after the Host patch.
+
+### Slice B — history / recommendation ownership cleanup — COMPLETE
+
+Implemented:
+
+1. Newly generated `HistoricalClueSignature` no longer records Drunk committed shown identity.
+2. `HistoricalClueSignature.canonical()` excludes the legacy `drunkShownRole` field, so it cannot alter `CrossGameHistory.digest()` or recommendation selection seed.
+3. `HistoryCooldown` no longer applies any Drunk shown-role repetition penalty.
+4. The legacy `drunkShownRole` data field is temporarily retained as an inert compatibility field only; new signatures leave it null and neither digest nor cooldown consumes it.
+5. Template history/de-duplication remains unchanged and still acts upstream during setup-template selection.
+
+Evidence:
+
+- meaningful history RED established on the pre-fix checkpoint;
+- focused `HistoryCooldownTest`, `SetupRecommendationLockPolicyTest`, and `SetupRecommendationShownIdentityOwnershipTest` GREEN after the fix.
+
+A temporary audit command incorrectly included Markdown files in `git diff --check`; Markdown hard-break trailing spaces caused that audit step to fail after the tests had already passed. Final checkpoint validation must run diff-check only on code/test files.
+
+### Slice C — legacy Drunk recommendation path retirement — COMPLETE WITH EXPLICIT COMPATIBILITY BOUNDARY
+
+Retired:
 
 - `SetupCandidateGenerator.generateDrunkCandidates()`;
-- `SetupClueOutcome.DrunkShownRole`;
-- `StorytellerDecision.DrunkInvestigatorInfo` as a legacy setup recommendation path.
+- its historical candidate-generation test;
+- the private option/pair helpers used only by that historical generator.
 
-If a path has no production caller after the ownership cutover, remove the obsolete production path and its tests rather than preserving it only for test compatibility.
+Intentionally retained for now:
 
-## 4. Implementation slices
+- `StorytellerDecision.DrunkShownRole` as an explicit legacy/invalid-input type so service/validator boundaries can reject it deterministically;
+- `StorytellerDecision.DrunkInvestigatorInfo` compatibility lock behavior, because current legality and constrained-recommendation paths still exercise it;
+- associated legacy evaluator branches that remain required by that compatibility path.
 
-### Slice A — visible regression and lock ownership
+Do not delete these retained types merely to eliminate old names; retire them only when the compatibility lock path itself is deliberately replaced.
 
-1. Add the smallest durable typed regression for mutable setup recommendation lock state.
-2. Remove Host synthesis/preservation of committed shown identity from recommendation locks.
-3. Initial mutable locks are empty unless the user has explicitly locked a mutable recommendation decision.
-4. Reevaluation replaces mutable locks with exactly the supplied mutable lock set.
-5. Clear-lock action clears mutable locks to empty.
-6. Verify the false `InvalidLocks` path disappears for a legal Drunk setup.
+## 5. Additional audit finding — information-quality parity is a separate follow-up
 
-### Slice B — history / recommendation ownership cleanup
-
-Audit and remove downstream ownership remnants where they are no longer meaningful:
-
-- Drunk shown-role history signature dimension;
-- history cooldown/penalty based on repeated shown identity;
-- recommendation tie-break/scoring branches that still treat `DrunkShownRole` as selectable;
-- `drunkSuitability` metadata if it no longer serves any live setup/template responsibility.
-
-Important: template history/de-duplication remains unchanged. Only independent shown-identity history influence is removed.
-
-### Slice C — legacy Drunk recommendation path retirement
-
-Audit production references for:
-
-- `generateDrunkCandidates()`;
-- `SetupClueOutcome.DrunkShownRole`;
-- `StorytellerDecision.DrunkShownRole`;
-- `StorytellerDecision.DrunkInvestigatorInfo`.
-
-Rules:
-
-- zero production callers -> retire production path + obsolete test;
-- test-only caller -> normally retire;
-- live production caller -> migrate only if it conflicts with the committed-shown-role observation pipeline, then remove legacy branch;
-- do not delete a type blindly if a real compatibility boundary still uses it.
-
-## 5. Validation cadence
+The ownership migration is now conceptually clear, but the audit found a distinct recommendation-quality issue that should not be hidden inside this hotfix:
 
 ```text
-new typed regression
--> meaningful RED on current bug when executable
--> Slice A GREEN
--> focused setup shown-identity + recommendation ownership tests
--> Slice B cleanup + focused history/recommendation tests
--> Slice C legacy retirement + affected setup/recommendation tests
--> :app:testFast at logical checkpoint
--> assembleDebug
--> git diff --check / exact changed-file audit
--> GitHub CI checkpoint
+committed Drunk shownRole
+-> PairInformationAbilityRecommender
+-> one generic impaired AbilityObservation
+```
+
+The active generic path correctly reads the committed shown identity and complete `GameState`, but the selected impaired observation is currently produced inside `SetupEvaluator` rather than enumerated as part of the aggregate `CandidatePlan` Cartesian product.
+
+Consequently, the old Investigator-specific path's explicit cross-choice scoring — for example Red Herring overlap and several pair-specific interaction scores — is not automatically equivalent to the new generic observation path.
+
+This is **not** a shown-identity ownership defect and does not justify restoring recommendation authority over `shownRole`. It is a recommendation-quality migration/parity question.
+
+Before claiming full equivalence with the historical joint optimizer, a follow-up should decide how generic fixed-identity information candidates participate in aggregate scoring with Red Herring, Demon Bluffs and future mutable setup choices. This can be discussed immediately before, or together with, the planned Demon Bluff recommendation-algorithm redesign.
+
+## 6. Final validation cadence
+
+Run at the logical checkpoint:
+
+```text
+focused setup/history/ownership tests
+-> :app:testFast
+-> :app:assembleDebug
+-> code/test-only git diff --check
+-> semantic ownership audit
+-> verify temporary one-shot/proof files are absent
+-> GitHub PR/CI gate before merge
 ```
 
 Do not run the full suite after every cleanup micro-edit.
 
-## 6. Acceptance criteria
+## 7. Acceptance criteria
 
-The repair is complete only when all are true:
+The ownership repair is complete when all are true:
 
 1. A selected template fully determines the legal Drunk shown-identity pool.
 2. One shown identity is committed as part of setup and survives same-setup recovery/recomposition.
@@ -183,10 +200,16 @@ The repair is complete only when all are true:
 4. Host/UI cannot synthesize committed shown identity into recommendation locks.
 5. Clearing recommendation locks produces no hidden reinserted identity lock.
 6. A legal setup containing Drunk can still produce setup recommendations and downstream Demon Bluff data under the existing bluff algorithm.
-7. Independent Drunk shown-role history cooldown no longer affects recommendation scoring.
-8. Fake information continues to be generated from the fixed shown identity and remains jointly evaluated with other mutable setup recommendation choices.
-9. No Demon Bluff recommendation-quality redesign is included in this repair.
+7. Independent Drunk shown-role history/cooldown no longer affects recommendation weighting or stable-selection history digest.
+8. Fake information continues to be generated from the fixed shown identity and committed GameState.
+9. The separate cross-choice information-quality parity gap is documented rather than incorrectly represented as solved by this ownership hotfix.
+10. No Demon Bluff recommendation-quality redesign is included in this repair.
 
-## 7. Explicitly deferred
+## 8. Explicitly deferred
 
-After this ownership repair is stable, separately design the Demon Bluff recommendation algorithm. That future work may improve bluff strategic quality, role synergy, interactions, difficulty and history behavior, but must consume the already fixed committed setup established here.
+After this ownership repair is stable:
+
+1. decide the generic impaired-information / aggregate-plan interaction-quality model described in Section 5;
+2. separately design the Demon Bluff recommendation algorithm.
+
+Both future tasks must consume the already fixed committed setup established here and must not move Drunk shown-identity authority back into recommendation.
