@@ -24,40 +24,29 @@ class HistoryCooldownTest {
     @Test
     fun `history retains newest ten games in canonical order`() {
         val history = (0..10).fold(CrossGameHistory()) { current, index ->
-            current.append(signature(drunkRole = "Role-$index"))
+            current.append(signature(shownCharacter = "Role-$index"))
         }
 
         assertEquals(10, history.recentSignatures.size)
-        assertEquals(RoleId("Role-10"), history.recentSignatures.first().drunkShownRole)
-        assertEquals(RoleId("Role-1"), history.recentSignatures.last().drunkShownRole)
+        assertEquals(RoleId("Role-10"), history.recentSignatures.first().shownCharacter)
+        assertEquals(RoleId("Role-1"), history.recentSignatures.last().shownCharacter)
         assertEquals(history.digest(), CrossGameHistory(history.recentSignatures).digest())
     }
 
     @Test
-    fun `same drunk role last game receives stronger cooldown than an older match`() {
-        val candidate = signature(drunkRole = "Investigator")
-        val previousGame = HistoryCooldown.multiplierFixedPoint(
-            candidate,
-            CrossGameHistory(listOf(candidate)),
+    fun `committed impaired ability identity does not enter recommendation history fingerprint`() {
+        val game = TroubleBrewingFixtures.eightPlayerExample()
+        val librarian = HistoricalClueSignature.fromSetupPlan(
+            game,
+            planWithObservation(candidateSeats = listOf(2, 4), perceivedRole = "Librarian"),
         )
-        val fourGamesAgo = HistoryCooldown.multiplierFixedPoint(
-            candidate,
-            CrossGameHistory(
-                listOf(
-                    signature("Chef"),
-                    signature("Empath"),
-                    signature("Monk"),
-                    candidate,
-                ),
-            ),
+        val investigator = HistoricalClueSignature.fromSetupPlan(
+            game,
+            planWithObservation(candidateSeats = listOf(2, 4), perceivedRole = "Investigator"),
         )
 
-        assertTrue(previousGame < fourGamesAgo)
-        assertEquals(WeightedStableSelector.FIXED_POINT_SCALE, fourGamesAgo)
-        assertEquals(
-            WeightedStableSelector.FIXED_POINT_SCALE,
-            HistoryCooldown.multiplierFixedPoint(candidate, CrossGameHistory(listOf(signature("Chef")))),
-        )
+        assertEquals(librarian, investigator)
+        assertEquals(librarian.canonical(), investigator.canonical())
     }
 
     @Test
@@ -74,11 +63,11 @@ class HistoryCooldownTest {
     }
 
     @Test
-    fun `generic impaired pair observation participates in setup cooldown`() {
+    fun `generic impaired pair observation participates in setup cooldown by clue content`() {
         val game = TroubleBrewingFixtures.eightPlayerExample()
         val repeated = HistoricalClueSignature.fromSetupPlan(
             game,
-            planWithObservation(candidateSeats = listOf(2, 4)),
+            planWithObservation(candidateSeats = listOf(2, 4), perceivedRole = "Librarian"),
         )
         val withMatchingHistory = HistoryCooldown.multiplierFixedPoint(
             repeated,
@@ -89,7 +78,6 @@ class HistoryCooldownTest {
             CrossGameHistory(),
         )
 
-        assertEquals(RoleId("Librarian"), repeated.drunkShownRole)
         assertEquals(RoleId("Drunk"), repeated.shownCharacter)
         assertTrue(withMatchingHistory < withoutHistory)
     }
@@ -102,9 +90,9 @@ class HistoryCooldownTest {
             evaluation("outside", score = 10),
         )
         val pool = CandidatePoolBuilder.build(evaluations, scoreTolerance = 4)
-        val history = CrossGameHistory(listOf(signature(drunkRole = "Investigator")))
+        val history = CrossGameHistory(listOf(signature(shownCharacter = "Investigator")))
         val cooled = HistoryCooldown.apply(pool, history) { item ->
-            signature(drunkRole = if (item.candidate.candidateId == "best") "Investigator" else "Chef")
+            signature(shownCharacter = if (item.candidate.candidateId == "best") "Investigator" else "Chef")
         }
 
         assertEquals(listOf("best", "inside"), cooled.map { it.candidate.candidateId })
@@ -121,12 +109,15 @@ class HistoryCooldownTest {
         assertEquals(first.canonical(), second.canonical())
     }
 
-    private fun planWithObservation(candidateSeats: List<Int>) = RecommendationPlan(
+    private fun planWithObservation(
+        candidateSeats: List<Int>,
+        perceivedRole: String,
+    ) = RecommendationPlan(
         decisions = emptyList(),
         observations = listOf(
             AbilityObservation(
                 sourceSeat = 6,
-                perceivedRole = RoleId("Librarian"),
+                perceivedRole = RoleId(perceivedRole),
                 shownRole = RoleId("Drunk"),
                 candidateSeats = candidateSeats,
                 reliability = ReliabilityState.DRUNK,
@@ -141,9 +132,9 @@ class HistoryCooldownTest {
         effectSignature = PlanEffectSignature(),
     )
 
-    private fun signature(drunkRole: String) = HistoricalClueSignature(
+    private fun signature(shownCharacter: String) = HistoricalClueSignature(
         decisionType = "setup-plan",
-        drunkShownRole = RoleId(drunkRole),
+        shownCharacter = RoleId(shownCharacter),
     )
 
     private fun evaluation(id: String, score: Int): DecisionEvaluation<String> = DecisionEvaluation(
