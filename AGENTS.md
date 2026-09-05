@@ -132,6 +132,47 @@ The repository uses **risk-based test-first development**, not “a new RED test
 
 The objective is to protect stable behavior, regressions, invariants, and architectural boundaries with the cheapest reliable evidence. A production change does **not** automatically require a newly created failing test.
 
+Before choosing tests, first classify both the **change type** and the **ownership boundary**. Test strategy follows architecture; it must not be chosen independently of it.
+
+Use this implementation pre-flight:
+
+1. What kind of change is this: bug fix, new/changed behavior, behavior-preserving refactor, UI/presentation-only change, architecture/ownership change, or mechanical move/rename?
+2. Which module is the authoritative owner of the behavior or invariant being protected?
+3. What is the narrowest durable callable seam that proves the intended contract?
+4. Does useful existing coverage already protect that contract?
+5. If no durable callable seam exists, is that because the architecture genuinely lacks one, or only because the current implementation is coupled?
+6. What is the cheapest reliable evidence for this slice: RED/GREEN, existing baseline, typed characterization, integration test, compile/static check, architecture guard, or exact diff audit?
+
+The default evidence mapping is:
+
+```text
+bug fix / new stable behavior / changed stable behavior
+  -> smallest durable typed test first
+  -> meaningful RED when executable
+  -> implementation
+  -> GREEN
+
+behavior-preserving refactor / ownership extraction
+  -> identify existing owning tests
+  -> establish GREEN baseline when useful
+  -> add durable characterization only if a real behavior gap exists
+  -> refactor
+  -> rerun focused evidence + compile/static/diff checks
+
+UI/presentation-only change
+  -> test durable interaction/presentation behavior when valuable
+  -> otherwise use focused compile/static/UI evidence and exact diff review
+  -> do not invent domain REDs for visual restructuring
+
+mechanical move / rename / formatting
+  -> existing baseline + compile/static/diff evidence
+  -> no manufactured RED
+
+new architectural seam that becomes a durable contract
+  -> test the seam at its true ownership boundary
+  -> do not require every intermediate extraction step to have an independent RED
+```
+
 A new test should normally be added before production implementation when the change introduces or modifies a stable contract, including:
 
 - a bug fix that can be reproduced deterministically;
@@ -164,15 +205,23 @@ A **new RED is not required** merely because production source will change. In p
 
 For such changes, establish the relevant existing GREEN baseline when useful, make the change, then re-run the smallest affected evidence plus compile/static/diff checks as appropriate.
 
-### 3.2 Test-value rule
+### 3.2 Test-value and ownership rule
 
 Before adding a test, ask:
 
 > If the implementation is substantially refactored later but the intended behavior remains correct, should this test still pass and still be valuable?
 
-If the answer is no, the proposed test is probably protecting implementation shape rather than a durable contract. Prefer a higher-value typed behavior/integration test, an explicit architecture guard, compile/static validation, or exact diff audit instead.
+Also ask:
+
+> Is this test attached to the module that should own the contract, or is it reaching across layers because the current architecture is coupled?
+
+If the first answer is no, the proposed test is probably protecting implementation shape rather than a durable contract. If the second answer reveals cross-layer reach-through, prefer moving proof toward the true owner rather than cementing the accidental dependency.
+
+Prefer a higher-value typed behavior/integration test, an explicit architecture guard, compile/static validation, or exact diff audit over incidental source-shape assertions.
 
 **Do not introduce a production seam, helper, adapter, visibility expansion, or abstraction solely to satisfy a process requirement for a new RED.** Introduce seams because they improve ownership/testability of a durable contract, not because every intermediate edit needs an independently failing test.
+
+A seam introduced for architectural reasons may become a useful test boundary. In that case, test the resulting stable contract once it exists; do not redesign production code around an artificial test seam that has no ownership value.
 
 ### 3.3 Existing coverage can be test-first evidence
 
@@ -182,13 +231,18 @@ For a behavior-preserving refactor the preferred cycle is:
 
 ```text
 identify existing owning tests / characterization
+-> identify the intended post-refactor owner
 -> confirm baseline when needed
--> refactor
+-> add durable characterization only for uncovered stable behavior
+-> refactor toward the intended owner/seam
 -> run affected tests / compile checks
+-> retire or narrow superseded source-shape tests
 -> exact diff and invariant audit
 ```
 
 Do not deliberately break or rewrite a correct test just to manufacture RED provenance.
+
+For decomposition work, the owning test surface should normally move **downward toward the extracted responsibility**, not upward into a broader Host/screen source test. A successful extraction should reduce the amount of production source shape that tests need to know.
 
 ### 3.4 Test retirement is allowed and expected
 
@@ -201,6 +255,8 @@ A test retirement must satisfy all applicable conditions:
 - ensure the removed assertion is not the only regression proof for a real product contract;
 - delete obsolete production scaffolding that existed only to satisfy that test when safe and in scope;
 - run the affected suite after retirement.
+
+When a refactor creates a typed seam that proves the same behavior more directly, migrate coverage to that seam and retire source-string or cross-layer assertions that only protect the old ownership shape.
 
 Do not retain a test merely because it already exists, because historical test counts are expected to monotonically increase, or because deleting it would lower a numeric coverage count.
 
@@ -282,6 +338,107 @@ For Clocktower decomposition work:
 - do **not** introduce poor abstractions, giant parameter bags, state-lifetime changes, or unnecessary `internal` exposure merely to satisfy a byte threshold;
 - cohesion, stable ownership, transaction ordering, and future feature isolation outrank the numeric size target;
 - decomposition should stop when further extraction would increase coupling or regression risk more than it improves maintainability.
+
+### AI-first architecture guardrails
+
+The primary optimization target is **local reasoning**: a developer or agent should be able to make a normal feature change by understanding a small, cohesive set of files rather than loading a broad application surface. File count and line count are secondary signals. Track the practical **change context radius**: how much code and how many owners must be understood to safely change one feature.
+
+Before adding substantial production behavior, perform a short architecture pre-flight:
+
+1. Which existing module owns this behavior?
+2. Which mutable state does it read or change, and who is the authoritative owner of each state value?
+3. Does it perform domain/rules decisions, presentation preparation, rendering, persistence/I/O, telemetry, or another side effect?
+4. What is the narrowest stable input/result boundary for the new behavior?
+5. Does the proposed change add a new responsibility to an already broad file, screen, Host, controller, ViewModel, session object, or repository?
+6. Can the change be implemented while preserving a clear dependency direction and keeping the normal change context radius small?
+
+If the answers expose mixed ownership or a new responsibility, establish the boundary before expanding the feature implementation.
+
+#### Soft complexity triggers
+
+These are **audit triggers, not automatic failure thresholds**:
+
+- roughly 400–700 LOC in a handwritten production file: check whether responsibilities are still cohesive;
+- above roughly 700 LOC: before adding a substantial feature, perform a decomposition/ownership check;
+- above roughly 1000 LOC: do not add a new responsibility by default; justify why the existing owner is still correct;
+- a function around 80–120+ LOC: check whether it mixes state read, decision, effects, and rendering;
+- a function/composable with roughly 8–10+ parameters: check whether ownership or the input contract is unclear;
+- an interaction surface with roughly 5–6+ callbacks: check whether an interaction/event boundary is missing;
+- a core file growing by about 30% over a short feature campaign: perform a fresh architecture audit before further growth.
+
+Do not mechanically split code to satisfy these numbers. A cohesive 900-line owner may be healthier than ten 90-line files that must all be opened for one change.
+
+#### Ownership and dependency rules
+
+- Every mutable state value must have one authoritative owner. Other layers may observe or request changes; they must not become competing sources of truth.
+- Prefer the conceptual flow `state/input -> domain or decision operation -> result -> side effects -> rendering` over callbacks that directly mutate several states, call services, update revisions, persist data, and render results in one block.
+- UI may decide **how** to render a legal result. UI must not become the authority for domain legality, rules semantics, candidate legality, transaction validity, or persistence identity.
+- New modules should depend on narrow data/interfaces or typed inputs/results, not on the whole Host, screen, controller, ViewModel, session object, or a giant shared context.
+- A parameter object is acceptable only when it represents a real cohesive concept. Replacing 30 parameters with a 30-field `Context`, `State`, `Args`, or `Environment` object is not decomposition.
+- Do not widen `private -> internal -> public` solely because extracted code cannot otherwise reach an implementation detail. First ask whether a narrower input/result boundary should exist.
+
+#### Forbidden false-decomposition patterns
+
+Agents must not treat any of the following as architectural success by themselves:
+
+- moving code into `Utils`, `Helpers`, `Manager`, `Common`, `Misc`, or similarly vague dumping-ground modules;
+- replacing a long parameter list with a God Context/God State object;
+- moving a function to another file while it still depends on the entire former owner;
+- creating one file per tiny function/model when a feature then requires understanding many files at once;
+- extracting UI components that still receive the same broad domain/service dependency surface as the original screen;
+- increasing visibility or adding adapters whose only purpose is to satisfy a source-shape test or a file-size target.
+
+New `Utils`, `Helpers`, `Manager`, `Common`, or broad `Context` modules require explicit ownership justification.
+
+#### Abstraction discipline
+
+Avoid both duplication panic and premature generalization.
+
+- First similar implementation: note the pattern.
+- Second similar implementation: compare semantics and lifecycle; duplication may still be cheaper than a wrong abstraction.
+- Extract a shared abstraction when the common ownership/contract is stable, not merely because two blocks look syntactically similar.
+- Prefer domain- or responsibility-named abstractions such as `PairInformationLegalDomain`, `NightCheckpointReducer`, or `InformationDecisionCoordinator` over generic helpers.
+
+#### Interaction and callback discipline
+
+A growing callback list is an ownership signal. If an interaction needs many independent `onSelectX`, `onConfirmX`, `onChangeY`, and `onCancelZ` callbacks, check whether a cohesive interaction owner and a typed intent/result contract should exist.
+
+Do not overcorrect by creating one application-wide `AppIntent` or event object containing every possible action. Intent/event types should follow the smallest cohesive interaction owner.
+
+UI-local transient state should remain with the lowest cohesive UI owner. Do not hoist drawer/overlay/expanded/temporary selection state into application/session state merely to centralize state.
+
+#### Change-scope discipline
+
+For risky or architecture-sensitive work, keep the main dimension of change explicit:
+
+- behavior/product change;
+- architecture/ownership change;
+- mechanical move/rename/formatting.
+
+Do not casually combine all three in one slice. A feature PR may contain necessary structural work, but unrelated cleanup, broad renaming, and speculative abstraction should be split out when they enlarge the review or regression surface.
+
+#### Architecture maintenance cadence
+
+After roughly 5–10 feature PRs in the same subsystem, or when a protected/core file grows materially, perform a lightweight architecture audit. Check at least:
+
+- largest handwritten production files;
+- functions with unusually large parameter/callback surfaces;
+- high fan-in/fan-out or broad dependency surfaces;
+- shared mutable state and unclear authoritative owners;
+- cross-layer dependencies and UI-owned domain decisions;
+- duplicated semantic interpretation in different layers;
+- source-string tests that may now protect obsolete implementation shape;
+- visibility expansion caused by extraction;
+- God Context / Utils / Helpers / Manager growth;
+- practical change context radius for common feature changes.
+
+The audit may conclude that no decomposition is needed. Its purpose is to catch ownership drift before a file becomes the default destination for unrelated future work.
+
+#### AI precedent and architecture-document drift
+
+AI agents tend to copy existing repository patterns. A large or poorly-owned file is **not** automatically an approved pattern merely because similar code already exists. When extending an unhealthy legacy area, prefer the intended architectural direction documented here and in current architecture/handoff documents instead of cloning the legacy shape.
+
+Keep architecture documentation lightweight and current. If a current `ARCHITECTURE.md`, roadmap, handoff, or ownership document disagrees materially with live code, report the drift and resolve it rather than silently following a stale document or treating the current code accident as the intended architecture.
 
 ### Post-PR #43 Host growth rule
 
