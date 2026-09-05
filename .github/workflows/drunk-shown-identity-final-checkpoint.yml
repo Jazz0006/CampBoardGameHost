@@ -26,8 +26,8 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "2ede853a09761f016caea122c0810135eb8409de"
-          test "$(git rev-parse HEAD^^)" = "0cf7d0b9d55518937f8b82c61cc44dc13393c1e9"
+          test "$(git rev-parse HEAD^)" = "5775ff0b689980fa4b77e4da93d94b870be3ca5b"
+          test "$(git rev-parse HEAD^^)" = "11c687ca958668c3ed94ee04c04be5dcf9993b28"
           test "$(git ls-remote origin refs/heads/codex/drunk-shown-identity-ownership-cleanup | cut -f1)" = "$GITHUB_SHA"
 
       - name: Set up JDK 17
@@ -46,6 +46,7 @@ jobs:
           ./gradlew :app:testDebugUnitTest \
             --tests 'com.codex.campboardgamehost.clocktower.history.HistoryCooldownTest' \
             --tests 'com.codex.campboardgamehost.clocktower.recommendation.SetupRecommendationLockPolicyTest' \
+            --tests 'com.codex.campboardgamehost.clocktower.recommendation.SetupCandidateGeneratorTest' \
             --tests 'com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationShownIdentityOwnershipTest' \
             --tests 'com.codex.campboardgamehost.clocktower.recommendation.setup.SetupMigrationTest' \
             --tests 'com.codex.campboardgamehost.clocktower.rules.PlanLegalityValidatorTest' \
