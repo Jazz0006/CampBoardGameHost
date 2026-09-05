@@ -1,12 +1,12 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-05 Australia/Sydney  
+> Updated: 2026-09-06 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **This file is the single current project-status and execution-priority authority.**
 
 ## 1. Live development context
 
-Live `main` at the start of the current hotfix campaign:
+Live `main` at the start of the completed Drunk shown-identity hotfix campaign:
 
 ```text
 9cd72cba22737d1d803f8a30d25c2a5c25570211
@@ -43,17 +43,25 @@ The following work is integrated into `main`:
    - retained durable typed behavior/domain coverage;
    - reinforces the current risk-based, behavior-first test policy.
 
-## 2. Immediate current priority — Drunk shown-identity ownership repair
+## 2. Completed hotfix — Drunk shown-identity ownership repair
 
-Before resuming the Night Step UI decomposition campaign, complete the targeted setup/recommendation ownership hotfix documented in:
+The targeted setup/recommendation ownership repair documented in:
 
 `docs/DRUNK_SHOWN_IDENTITY_OWNERSHIP_REPAIR_2026-09-05.md`
 
-Current implementation branch:
+is now **implemented and locally/CI-workflow checkpoint validated** on branch:
 
 `codex/drunk-shown-identity-ownership-cleanup`
 
-The authoritative product flow is:
+Validated code checkpoint:
+
+`a7c24fb5e7a0909bc77b84b9dcab5cf8b6e459b7`
+
+Post-validation temporary-workflow cleanup head:
+
+`18d122fd1c3cab7461010ebb1b913ad1b2616198`
+
+The permanent product flow is:
 
 ```text
 template history/diversity selection
@@ -65,34 +73,36 @@ template history/diversity selection
 -> recommendation generates remaining mutable Storyteller information/decisions
 ```
 
-Permanent ownership rule for this repair:
+Permanent ownership rule:
 
 - template history/de-duplication applies to template selection;
 - Drunk shown identity has no independent history/cooldown/de-duplication rule;
 - shown identity is a committed setup fact;
 - recommendation may consume it but may not select, replace, emit or lock it;
 - Host/UI must not convert committed `shownRole` back into recommendation lock state;
-- Demon Bluff recommendation-quality redesign is explicitly deferred until after this repair.
+- Demon Bluff recommendation-quality redesign remains deferred.
 
-The confirmed regression is an incomplete authority migration: Host setup-recommendation wiring still synthesizes committed Drunk shown identity into a legacy `DrunkShownRole` lock, while recommendation correctly rejects that lock. This can produce a false lock conflict and downstream pending/empty Demon Bluff presentation.
+Completed repair evidence:
 
-Required repair sequence:
+- typed mutable-lock ownership contract added;
+- Host committed shown-identity lock synthesis/preservation removed;
+- recommendation history digest/cooldown no longer depends on committed Drunk shown identity;
+- obsolete `generateDrunkCandidates()` path and tests retired;
+- focused ownership/migration tests passed;
+- `:app:testFast` passed;
+- `:app:assembleDebug` passed;
+- code/test-only diff and semantic ownership audit passed;
+- temporary proof/checkpoint workflows self-cleaned.
 
-```text
-durable typed lock-boundary regression
--> remove Host shown-identity lock synthesis/preservation
--> clean downstream shown-role history/recommendation ownership remnants
--> retire obsolete legacy Drunk recommendation paths where no production caller remains
--> focused setup/recommendation/history validation
--> :app:testFast + assembleDebug checkpoint
--> exact diff / GitHub CI gate
-```
+A separate recommendation-quality parity finding remains intentionally deferred: generic impaired information derived from fixed `shownRole` is currently selected inside `SetupEvaluator`, not jointly enumerated with all aggregate setup-plan choices. This must be addressed as recommendation-quality work without returning shown-identity authority to recommendation.
 
-Do not reintroduce source-string wiring tests for `ClocktowerHostScreen.kt`.
+A normal PR/CI gate is still required before merge.
 
-## 3. Next priority after the hotfix — Night Step UI decomposition
+## 3. Immediate current priority — Night Step UI decomposition
 
-The next architecture checkpoint remains:
+Resume the Night Step UI decomposition campaign from a fresh live-state audit.
+
+The next architecture checkpoint is:
 
 ```text
 fresh Night Step UI cluster ownership audit
@@ -110,7 +120,7 @@ Current active handoff:
 
 `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-05_NIGHT_STEP_UI_DECOMPOSITION.md`
 
-The Drunk shown-identity repair is a bounded hotfix inserted before this architecture campaign; it does not supersede or redesign the Night Step UI plan.
+Before executing the next slice, re-query live `main` and the Drunk hotfix branch/PR state. Do not assume the validated hotfix branch is merged until GitHub confirms it.
 
 ## 4. Night Step UI decomposition — NEXT ARCHITECTURE CAMPAIGN
 
@@ -238,9 +248,10 @@ Replace the legacy recommendation provider only after EPI-MQ correctness, qualit
 
 Preserve Manual independence, typed outcome identity, stabilized Storyteller UI and safe fallback behavior.
 
-## 9. Explicitly deferred / not part of the current hotfix or next architecture slice
+## 9. Explicitly deferred / not part of the current architecture slice
 
-- Demon Bluff recommendation-quality redesign during the Drunk ownership repair;
+- generic impaired-information / aggregate-plan interaction-quality redesign;
+- Demon Bluff recommendation-quality redesign;
 - Public Claim History;
 - Sequential Vote redesign;
 - broad unsupported-script expansion;
