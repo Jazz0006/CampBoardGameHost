@@ -1,12 +1,12 @@
 # NEXT DEVELOPMENT HANDOFF — Night Step UI Ownership Decomposition
 
 > Status: **CURRENT ACTIVE HANDOFF**  
-> Date: 2026-09-05 Australia/Sydney  
+> Date: 2026-09-06 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`
 
 ## 1. Purpose
 
-The next architecture campaign is to reduce coupling in the Night Step UI after the recent Host Table / inline-wake work has landed.
+The next architecture campaign is to reduce coupling in the Night Step UI after the recent Host Table / inline-wake / Manual bluff / Drunk ownership work has landed.
 
 This is **ownership decomposition**, not a file-size cleanup campaign.
 
@@ -16,13 +16,13 @@ Primary reference:
 
 This handoff is subordinate to root `AGENTS.md` and `docs/CURRENT_DEVELOPMENT_ROADMAP.md`.
 
-## 2. Known live baseline at handoff creation
+## 2. Confirmed live baseline at handoff refresh
 
-At 2026-09-05 documentation sync, live `main` was:
+At 2026-09-06 documentation refresh, live `main` was:
 
 ```text
-6d787172d4084e0af9ab74cb35e06f492cbb19fd
-Merge PR #102: Fix manual Demon bluff consistency
+93f99e0576be7b93d479ffa931bae3e4083c25af
+Fix Drunk shown-identity ownership boundary (#105)
 ```
 
 Recent integrated milestones:
@@ -32,13 +32,17 @@ PR #99  R4D-6 Host Table integration
 PR #100 UI-N1 inline wake cues + shared square-table readability
 PR #101 same-night dead-role wake-step fix
 PR #102 Manual Demon bluff consistency fix
+PR #104 obsolete source-wiring guard retirement
+PR #105 Drunk shown-identity ownership repair
 ```
 
 Re-query live `main` before doing any implementation; do not assume this SHA remains current.
 
-## 3. Important superseded product assumption
+The earlier handoff warning that the Drunk ownership repair might still be unmerged is now obsolete. PR #105 is integrated into `main`.
 
-The older 2026-09-04 UI-N1 handoff described an explicit:
+## 3. Product assumptions that must not regress
+
+The older 2026-09-04 UI-N1 design described an explicit:
 
 ```text
 WAKE -> ACT -> RESOLVE -> SHOW -> COMPLETE
@@ -53,7 +57,13 @@ PR #100 reflects the later user-approved product decision:
 - actor state is visually/semantically orthogonal to legal/selected/disabled target state;
 - selection remains editable until the existing finish/next boundary.
 
-Do not resurrect the obsolete explicit wake-phase state during decomposition.
+Also preserve:
+
+- Drunk shown identity as committed setup state, not recommendation lock state;
+- Manual Demon bluff display consuming the intended recommendation triple rather than arbitrary legal fallback;
+- recommendation-rationale UI remaining minimal until quality/consistency algorithms can provide meaningful explanations.
+
+Do not resurrect superseded lifecycle or ownership assumptions during decomposition.
 
 ## 4. First required step — read-only fresh ownership audit
 
@@ -135,7 +145,27 @@ Choose the first implementation slice only after the current audit shows that it
 
 Pair Manual is the default candidate, not a mandate.
 
-## 7. Test/evidence contract
+## 7. Required first-slice report
+
+Before implementation of the selected first slice, produce a concise architecture report containing:
+
+```text
+selected responsibility
+current owner
+new owner
+input contract
+output / intent contract
+state lifetime before -> after
+dependency direction before -> after
+file allowlist
+focused evidence
+obsolete source-shape tests to retire/narrow
+expected context-radius reduction
+```
+
+The first slice should be independently reviewable and behavior-preserving. Do not bundle a second seam merely because nearby code is convenient to move.
+
+## 8. Test/evidence contract
 
 Follow the integrated architecture + test-first policy in `AGENTS.md`.
 
@@ -157,9 +187,9 @@ If the slice creates a new durable typed seam that represents a real contract, a
 
 Known source-shape debt around structured Empath/Night Step wiring should be re-evaluated when typed seams replace the old local wiring; do not preserve obsolete source spelling/order for those tests.
 
-## 8. Architecture guardrails
+## 9. Architecture guardrails
 
-The first decomposition campaign must not:
+The decomposition campaign must not:
 
 - create `NightStepContext` / broad `State` / `Args` parameter bags;
 - create vague `Utils`, `Helpers`, `Manager`, `Common` owners;
@@ -169,9 +199,10 @@ The first decomposition campaign must not:
 - move domain legality into UI;
 - introduce one file per tiny function/role;
 - change gameplay behavior as an incidental refactor;
-- redesign recommendation quality / EPI-MQ.
+- redesign recommendation quality / EPI-MQ;
+- start Demon Bluff Recommendation V1 inside the decomposition slice.
 
-## 9. Product constraints to preserve
+## 10. Product constraints to preserve
 
 - persistent square-table physical seat identity;
 - current actor cue on the same table as action selection;
@@ -182,25 +213,54 @@ The first decomposition campaign must not:
 - Manual selection direction remains compatible with a dedicated full-screen workflow;
 - recommendation-rationale UI should not pretend to have meaningful explanations before the quality/consistency system can provide them.
 
-## 10. Stop / checkpoint rule
+## 11. Architecture checkpoint completion rule
 
-After the fresh audit and first-slice design, report:
+The campaign reaches its checkpoint when the selected decomposition work has produced a meaningfully smaller Night Step change context radius and the following hold:
 
-- proposed owner and API;
-- file allowlist;
-- state ownership before/after;
-- dependency direction before/after;
-- evidence plan;
-- source-string tests to retire/narrow;
-- expected change-context-radius improvement.
+- coherent responsibilities have moved to narrow owners rather than merely new files;
+- `ClocktowerNightStepUi.kt` is materially more composition-oriented;
+- no God context or reverse dependency was introduced;
+- existing behavior is preserved by typed evidence / compile checks / exact diff audit;
+- obsolete source-shape tests created by old ownership have been retired or narrowed;
+- further decomposition candidates can be deferred without leaving a half-migrated ownership boundary.
 
-Then implement only within that approved slice. Do not expand into the next candidate seam merely because the first extraction is convenient.
+Do not chase a numeric file-size target if ownership is already clean enough for the next product phase.
 
-## 11. Next phases after architecture checkpoint
+## 12. Next phases after architecture checkpoint
+
+The approved order after this decomposition campaign is:
 
 ```text
 Night Step ownership decomposition checkpoint
 -> UI-R5 real-device stabilization / feature freeze
+-> Demon Bluff Recommendation V1
 -> EPI-MQ / Productive Uncertainty
 -> UX-R6 recommendation-provider replacement
+-> Beginner Storyteller Mode policy rollout
+```
+
+Demon Bluff V1 authority:
+
+`docs/DEMON_BLUFF_RECOMMENDATION_V1_PLAN_2026-09-06.md`
+
+Important boundary:
+
+- Demon Bluff V1 is setup-time package recommendation and can be implemented before EPI-MQ;
+- it must not pull historical world replay or cognitive-consistency work forward;
+- EPI-MQ remains the later owner of hypothetical-world / productive-uncertainty capability;
+- a future Bluff V2 may consume EPI-MQ outputs after that foundation is complete.
+
+## 13. Start command for the next development session
+
+A new development session can begin with this instruction:
+
+```text
+Read root AGENTS.md, docs/CURRENT_DEVELOPMENT_ROADMAP.md,
+docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-05_NIGHT_STEP_UI_DECOMPOSITION.md,
+and docs/CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md.
+Re-query live main, then perform the required read-only Night Step UI ownership audit.
+Select exactly one first behavior-preserving decomposition slice and report its owner/API,
+file allowlist, state/dependency changes, evidence plan, obsolete source-shape tests,
+and expected change-context-radius reduction before production edits.
+Do not redesign gameplay, recommendation quality, Demon Bluff V1, or EPI-MQ in this slice.
 ```
