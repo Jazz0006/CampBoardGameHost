@@ -6,6 +6,9 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 
 data class HistoricalClueSignature(
     val decisionType: String,
+    // Legacy compatibility field only. Committed Drunk shown identity is not a recommendation-
+    // history dimension: new signatures leave this null, canonical() excludes it, and cooldown
+    // scoring ignores it.
     val drunkShownRole: RoleId? = null,
     val shownCharacter: RoleId? = null,
     val candidateAlignmentPattern: String? = null,
@@ -20,7 +23,6 @@ data class HistoricalClueSignature(
 
     fun canonical(): String = listOf(
         decisionType,
-        drunkShownRole?.value.orEmpty(),
         shownCharacter?.value.orEmpty(),
         candidateAlignmentPattern.orEmpty(),
         candidateSeatDistance?.toString().orEmpty(),
@@ -47,7 +49,6 @@ data class HistoricalClueSignature(
             }
             return HistoricalClueSignature(
                 decisionType = "setup-plan",
-                drunkShownRole = informationObservation?.perceivedRole ?: plan.effectSignature.drunkShownRole,
                 shownCharacter = informationObservation?.shownRole ?: plan.effectSignature.drunkInvestigatorShownMinion,
                 candidateAlignmentPattern = alignmentPattern,
                 candidateSeatDistance = distance,
