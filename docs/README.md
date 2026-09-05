@@ -60,6 +60,7 @@ Future misinformation-quality design：
 
 - [`EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`](EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md)
 - [`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`](CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md)
+- [`BEGINNER_STORYTELLER_MODE_POLICY_2026-09-06.md`](BEGINNER_STORYTELLER_MODE_POLICY_2026-09-06.md) — cognitive-consistency / EPI-MQ 之后实施的新手说书人自动线索、自动登记与 bounded evil-assistance 策略；当前仅记录，不提前实施。
 
 Same-night / rules architecture：
 
