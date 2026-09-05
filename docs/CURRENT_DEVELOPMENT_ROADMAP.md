@@ -248,10 +248,34 @@ Replace the legacy recommendation provider only after EPI-MQ correctness, qualit
 
 Preserve Manual independence, typed outcome identity, stabilized Storyteller UI and safe fallback behavior.
 
+### 8.1 Beginner Storyteller Mode — AFTER cognitive-consistency / EPI-MQ foundation
+
+Future product/strategy authority:
+
+`docs/BEGINNER_STORYTELLER_MODE_POLICY_2026-09-06.md`
+
+Do **not** implement Beginner Storyteller clue automation as a pre-EPI heuristic campaign.
+
+The intended boundary is:
+
+```text
+legal semantic domain
+-> cognitive-consistency / hypothetical-world evaluation
+-> plausibility and safety gates
+-> bounded evil-assistance utility ranking
+-> automatic Beginner policy choice
+-> minimal-decision UI
+```
+
+Beginner Mode should minimize Storyteller decisions, automatically resolve clue selection and registration-sensitive interactions, strongly prefer useful misinformation for Drunk/Poisoned information without creating an `impaired => always false` invariant, and prefer strategically useful Spy/Recluse registration without making misregistration mechanically mandatory.
+
+The evil-assistance objective is a **downstream Storyteller policy**, not a semantic truth rule and not the objective of the cognitive-consistency engine itself.
+
 ## 9. Explicitly deferred / not part of the current architecture slice
 
 - generic impaired-information / aggregate-plan interaction-quality redesign;
 - Demon Bluff recommendation-quality redesign;
+- Beginner Storyteller automatic clue / bounded evil-assistance policy;
 - Public Claim History;
 - Sequential Vote redesign;
 - broad unsupported-script expansion;
