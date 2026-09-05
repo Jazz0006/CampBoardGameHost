@@ -1,7 +1,6 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
@@ -42,22 +41,6 @@ class SetupCandidateGeneratorTest {
                     .seat == 3
             },
         )
-    }
-
-    @Test
-    fun `legacy Drunk Investigator generator remains available only for compatibility`() {
-        val candidates = SetupCandidateGenerator.generateDrunkCandidates(
-            TroubleBrewingFixtures.eightPlayerExample(),
-            TroubleBrewingFixtures.roleDefinitions(),
-        )
-
-        assertTrue(candidates.isNotEmpty())
-        assertTrue(candidates.any { candidate ->
-            val outcome = candidate.outcome as SetupClueOutcome.DrunkShownRole
-            outcome.investigatorInformation?.let { info ->
-                info.shownMinion == RoleId("Poisoner") && info.candidateSeats == listOf(1, 4)
-            } == true
-        })
     }
 
     @Test
