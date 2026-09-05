@@ -1,8 +1,10 @@
 # Drunk Shown-Identity Ownership Repair — 2026-09-05
 
-> Status: **IMPLEMENTED — FINAL CHECKPOINT VALIDATION PENDING**  
+> Status: **COMPLETE — FINAL CHECKPOINT PASSED**  
 > Branch: `codex/drunk-shown-identity-ownership-cleanup`  
 > Base checkpoint: `9cd72cba22737d1d803f8a30d25c2a5c25570211`  
+> Validated code checkpoint: `a7c24fb5e7a0909bc77b84b9dcab5cf8b6e459b7`  
+> Post-validation workflow cleanup head: `18d122fd1c3cab7461010ebb1b913ad1b2616198`  
 > Scope: Trouble Brewing setup identity commitment, setup recommendation ownership, Host lock-state wiring, related history/legacy cleanup.  
 > Explicit non-goal: Demon Bluff recommendation-quality redesign.
 
@@ -138,14 +140,14 @@ Evidence:
 - meaningful history RED established on the pre-fix checkpoint;
 - focused `HistoryCooldownTest`, `SetupRecommendationLockPolicyTest`, and `SetupRecommendationShownIdentityOwnershipTest` GREEN after the fix.
 
-A temporary audit command incorrectly included Markdown files in `git diff --check`; Markdown hard-break trailing spaces caused that audit step to fail after the tests had already passed. Final checkpoint validation must run diff-check only on code/test files.
+A temporary audit command incorrectly included Markdown files in `git diff --check`; Markdown hard-break trailing spaces caused that audit step to fail after the tests had already passed. The final checkpoint correctly limited diff-check to code/test files.
 
 ### Slice C — legacy Drunk recommendation path retirement — COMPLETE WITH EXPLICIT COMPATIBILITY BOUNDARY
 
 Retired:
 
 - `SetupCandidateGenerator.generateDrunkCandidates()`;
-- its historical candidate-generation test;
+- all tests whose only purpose was to keep that historical generator alive;
 - the private option/pair helpers used only by that historical generator.
 
 Intentionally retained for now:
@@ -155,6 +157,21 @@ Intentionally retained for now:
 - associated legacy evaluator branches that remain required by that compatibility path.
 
 Do not delete these retained types merely to eliminate old names; retire them only when the compatibility lock path itself is deliberately replaced.
+
+### 4.4 Final checkpoint — PASS
+
+The final validation workflow passed all required gates on code checkpoint `a7c24fb5e7a0909bc77b84b9dcab5cf8b6e459b7`:
+
+- focused ownership/migration suite, including `SetupCandidateGeneratorTest`;
+- `:app:testFast`;
+- `:app:assembleDebug`;
+- code/test-only `git diff --check`;
+- semantic ownership audit confirming no Host committed-identity lock synthesis remains;
+- history audit confirming shown identity no longer participates in recommendation history digest/cooldown;
+- audit confirming `generateDrunkCandidates` has no remaining production/test references;
+- remote branch-head reconfirmation.
+
+The temporary final-checkpoint workflow then deleted itself successfully, producing cleanup head `18d122fd1c3cab7461010ebb1b913ad1b2616198`.
 
 ## 5. Additional audit finding — information-quality parity is a separate follow-up
 
@@ -176,7 +193,7 @@ Before claiming full equivalence with the historical joint optimizer, a follow-u
 
 ## 6. Final validation cadence
 
-Run at the logical checkpoint:
+Completed logical checkpoint:
 
 ```text
 focused setup/history/ownership tests
@@ -185,14 +202,14 @@ focused setup/history/ownership tests
 -> code/test-only git diff --check
 -> semantic ownership audit
 -> verify temporary one-shot/proof files are absent
--> GitHub PR/CI gate before merge
+-> PASS
 ```
 
-Do not run the full suite after every cleanup micro-edit.
+A normal PR/CI gate is still required before merge if this branch is opened as a PR.
 
-## 7. Acceptance criteria
+## 7. Acceptance criteria — COMPLETE
 
-The ownership repair is complete when all are true:
+All ownership-hotfix acceptance criteria are satisfied:
 
 1. A selected template fully determines the legal Drunk shown-identity pool.
 2. One shown identity is committed as part of setup and survives same-setup recovery/recomposition.
@@ -207,7 +224,7 @@ The ownership repair is complete when all are true:
 
 ## 8. Explicitly deferred
 
-After this ownership repair is stable:
+After this ownership repair:
 
 1. decide the generic impaired-information / aggregate-plan interaction-quality model described in Section 5;
 2. separately design the Demon Bluff recommendation algorithm.
