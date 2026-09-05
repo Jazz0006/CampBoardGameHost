@@ -2622,29 +2622,41 @@ internal fun ClocktowerJudgeScreen(
         scriptRoles = clocktowerRolesForScript(script),
         inPlayRoleNames = cards.mapNotNull { it.clocktowerRole?.enName }.toSet(),
     )
-    val appliedDemonBluffs = recommendedDemonBluffRoleNames
-        .mapNotNull { roleName -> legalDemonBluffs.firstOrNull { it.enName == roleName } }
-        .distinctBy(ClocktowerRole::enName)
-    val demonBluffs = if (appliedDemonBluffs.size == 3) appliedDemonBluffs else legalDemonBluffs.take(3)
+    val setupPlansForDemonBluffs =
+        (recommendationUiState as? RecommendationUiState.Ready)?.plans.orEmpty()
+    val demonBluffRoleNames = demonBluffRoleNamesForPresentation(
+        automaticStorytellerInfo = automaticStorytellerInfo,
+        appliedRoleNames = recommendedDemonBluffRoleNames,
+        setupPlans = setupPlansForDemonBluffs,
+    )
+    val demonBluffPresentation = resolveDemonBluffPresentation(
+        recommendedRoleNames = demonBluffRoleNames,
+        legalRoles = legalDemonBluffs,
+    )
+    val demonBluffs =
+        (demonBluffPresentation as? DemonBluffPresentationResolution.Ready)?.roles.orEmpty()
     val minionInfoText = demonCard?.let { stringResource(R.string.clocktower_first_night_minion_info_format, it.seatLabel(cards)) }
-    val demonInfoText = buildList {
-        add(
-            if (minionCards.isEmpty()) {
-                stringResource(R.string.clocktower_first_night_demon_no_minions)
-            } else {
-                stringResource(
-                    R.string.clocktower_first_night_demon_minions_format,
-                    minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) },
+    val demonInfoText =
+        (demonBluffPresentation as? DemonBluffPresentationResolution.Ready)?.let { ready ->
+            buildList {
+                add(
+                    if (minionCards.isEmpty()) {
+                        stringResource(R.string.clocktower_first_night_demon_no_minions)
+                    } else {
+                        stringResource(
+                            R.string.clocktower_first_night_demon_minions_format,
+                            minionCards.joinToString(stringResource(R.string.name_separator)) { it.seatLabel(cards) },
+                        )
+                    },
                 )
-            },
-        )
-        add(
-            stringResource(
-                R.string.clocktower_first_night_demon_bluffs_format,
-                demonBluffs.joinToString(stringResource(R.string.name_separator)) { it.nameFor(language) },
-            ),
-        )
-    }.joinToString("\n")
+                add(
+                    stringResource(
+                        R.string.clocktower_first_night_demon_bluffs_format,
+                        ready.roles.joinToString(stringResource(R.string.name_separator)) { it.nameFor(language) },
+                    ),
+                )
+            }.joinToString("\n")
+        }
     val minionInfoTitle = stringResource(R.string.clocktower_first_night_minion_title)
     val demonInfoTitle = stringResource(R.string.clocktower_first_night_demon_title)
     val firstNightNameSeparator = stringResource(R.string.name_separator)
@@ -2681,8 +2693,14 @@ internal fun ClocktowerJudgeScreen(
     val firstNightDemonActionText = demonCard?.let {
         stringResource(R.string.clocktower_first_night_demon_action_format, it.seatLabel(cards))
     }.orEmpty()
-    val firstNightDemonExplain =
-        stringResource(R.string.clocktower_first_night_demon_explain)
+    val firstNightDemonExplain = when (demonBluffPresentation) {
+        is DemonBluffPresentationResolution.Ready ->
+            stringResource(R.string.clocktower_first_night_demon_explain)
+        DemonBluffPresentationResolution.Pending ->
+            text("正在准备恶魔伪装身份，推荐完成后即可展示。", "Preparing Demon bluffs. Reveal is enabled when the recommendation is ready.")
+        is DemonBluffPresentationResolution.Invalid ->
+            text("恶魔伪装身份推荐无效，已阻止错误信息展示。", "Demon bluff recommendation is invalid; incorrect reveal has been blocked.")
+    }
     val firstNightDemonDisplayPrimary =
         if (demonCard != null && shouldGiveFirstNightEvilInfo) {
             "${stringResource(R.string.clocktower_evil_display_minions)}\n${if (minionCards.isEmpty()) stringResource(R.string.clocktower_first_night_demon_no_minions) else minionCards.joinToString(firstNightNameSeparator) { it.seatLabel(cards) }}"
@@ -2690,7 +2708,11 @@ internal fun ClocktowerJudgeScreen(
             null
         }
     val firstNightDemonDisplaySecondary =
-        if (demonCard != null && shouldGiveFirstNightEvilInfo) {
+        if (
+            demonCard != null &&
+            shouldGiveFirstNightEvilInfo &&
+            demonBluffPresentation is DemonBluffPresentationResolution.Ready
+        ) {
             "${stringResource(R.string.clocktower_evil_display_bluffs)}\n${demonBluffs.joinToString(firstNightNameSeparator) { it.nameFor(language) }}"
         } else {
             null
@@ -2917,7 +2939,11 @@ internal fun ClocktowerJudgeScreen(
                                 } else {
                                     firstNightPlaceholderAction
                                 },
-                                tellPlayer = if (demonCard != null && shouldGiveFirstNightEvilInfo) demonInfoText else null,
+                                tellPlayer = if (
+                                    demonCard != null &&
+                                    shouldGiveFirstNightEvilInfo &&
+                                    demonBluffPresentation is DemonBluffPresentationResolution.Ready
+                                ) demonInfoText else null,
                                 explanation = if (shouldGiveFirstNightEvilInfo) {
                                     firstNightDemonExplain
                                 } else {
