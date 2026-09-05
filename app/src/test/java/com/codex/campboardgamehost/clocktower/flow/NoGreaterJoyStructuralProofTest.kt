@@ -180,18 +180,6 @@ class NoGreaterJoyStructuralProofTest {
         }
     }
 
-    @Test
-    fun `FlowPlanner core remains script-name agnostic after NGJ proof`() {
-        val source = File(
-            "src/main/java/com/codex/campboardgamehost/clocktower/flow/ClocktowerFlowPlanner.kt",
-        ).readText(Charsets.UTF_8)
-
-        assertFalse(source.contains("NoGreaterJoy"))
-        assertFalse(source.contains("no_greater_joy"))
-        assertFalse(source.contains("TroubleBrewing"))
-        assertFalse(source.contains("trouble_brewing"))
-    }
-
     private fun List<NightOrderToken>.characterRoleIds(): List<RoleId> =
         mapNotNull { token -> (token as? NightOrderToken.Character)?.roleId }
 

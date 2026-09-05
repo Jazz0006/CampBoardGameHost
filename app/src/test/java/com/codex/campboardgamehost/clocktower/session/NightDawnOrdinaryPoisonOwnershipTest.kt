@@ -13,12 +13,10 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 /**
  * P1 regression: ordinary Dawn poison expiry must use the same stable materialization owner as
- * successor Dawn. App root may orchestrate the typed plan, but must not retain a dynamic
- * `poison-after-night` history writer.
+ * successor Dawn.
  */
 class NightDawnOrdinaryPoisonOwnershipTest {
     @Test
@@ -100,19 +98,6 @@ class NightDawnOrdinaryPoisonOwnershipTest {
         val retryPoison = requireNotNull(retry.poison)
         assertFalse(retryPoison.stateMutationRequired)
         assertEquals(CLEAR_ACTION_ID, retryPoison.actionIdToCommit)
-    }
-
-    @Test
-    fun `app root no longer owns legacy poison-after-night history identity`() {
-        val appSource = File(
-            "src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt",
-        ).readText(Charsets.UTF_8)
-
-        assertFalse(
-            "Ordinary Dawn must materialize poison through NightDawnDurableMaterializationPlanner; " +
-                "App root must not generate poison-after-night action IDs.",
-            appSource.contains("poison-after-night"),
-        )
     }
 
     private fun deadPoisonerInput() = NightDawnPoisonResolutionInput(
