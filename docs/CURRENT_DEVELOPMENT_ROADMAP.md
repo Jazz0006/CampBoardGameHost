@@ -6,18 +6,18 @@
 
 ## 1. Live development context
 
-Live `main` at this documentation checkpoint:
+Live `main` at the start of the current hotfix campaign:
 
 ```text
-6d787172d4084e0af9ab74cb35e06f492cbb19fd
-Merge PR #102: Fix manual Demon bluff consistency
+9cd72cba22737d1d803f8a30d25c2a5c25570211
+Tests: retire obsolete source-wiring guards (#104)
 ```
 
 Always re-query live GitHub state before implementation, validation or merge.
 
 ### Recently completed / integrated
 
-The previous roadmap and handoff were stale by 2026-09-05. The following work is now integrated into `main`:
+The following work is integrated into `main`:
 
 1. **PR #99 — R4D-6 Host Table preserved-lineage integration**
    - recovered surviving shared Host Table / `HostSeatPresentation` work;
@@ -38,21 +38,69 @@ The previous roadmap and handoff were stale by 2026-09-05. The following work is
    - MANUAL mode now consumes the intended setup recommendation bluff triple instead of falling back to arbitrary first legal roles;
    - invalid/pending/partial bluff recommendation state fails closed rather than silently substituting values.
 
-## 2. Current priority
+5. **PR #104 — obsolete source-wiring guard retirement**
+   - removed low-value source-string / production-wiring / decomposition guards;
+   - retained durable typed behavior/domain coverage;
+   - reinforces the current risk-based, behavior-first test policy.
 
-The current engineering checkpoint is:
+## 2. Immediate current priority — Drunk shown-identity ownership repair
+
+Before resuming the Night Step UI decomposition campaign, complete the targeted setup/recommendation ownership hotfix documented in:
+
+`docs/DRUNK_SHOWN_IDENTITY_OWNERSHIP_REPAIR_2026-09-05.md`
+
+Current implementation branch:
+
+`codex/drunk-shown-identity-ownership-cleanup`
+
+The authoritative product flow is:
 
 ```text
-AI-first architecture/test policy hardening
-+ documentation consolidation
--> fresh Night Step UI cluster ownership audit
+template history/diversity selection
+-> select setup template
+-> commit actual role composition
+-> if Drunk exists, choose one shown identity from template drunkAsOptions
+-> committed setup is complete
+-> recommendation reads committed GameState
+-> recommendation generates remaining mutable Storyteller information/decisions
+```
+
+Permanent ownership rule for this repair:
+
+- template history/de-duplication applies to template selection;
+- Drunk shown identity has no independent history/cooldown/de-duplication rule;
+- shown identity is a committed setup fact;
+- recommendation may consume it but may not select, replace, emit or lock it;
+- Host/UI must not convert committed `shownRole` back into recommendation lock state;
+- Demon Bluff recommendation-quality redesign is explicitly deferred until after this repair.
+
+The confirmed regression is an incomplete authority migration: Host setup-recommendation wiring still synthesizes committed Drunk shown identity into a legacy `DrunkShownRole` lock, while recommendation correctly rejects that lock. This can produce a false lock conflict and downstream pending/empty Demon Bluff presentation.
+
+Required repair sequence:
+
+```text
+durable typed lock-boundary regression
+-> remove Host shown-identity lock synthesis/preservation
+-> clean downstream shown-role history/recommendation ownership remnants
+-> retire obsolete legacy Drunk recommendation paths where no production caller remains
+-> focused setup/recommendation/history validation
+-> :app:testFast + assembleDebug checkpoint
+-> exact diff / GitHub CI gate
+```
+
+Do not reintroduce source-string wiring tests for `ClocktowerHostScreen.kt`.
+
+## 3. Next priority after the hotfix — Night Step UI decomposition
+
+The next architecture checkpoint remains:
+
+```text
+fresh Night Step UI cluster ownership audit
 -> select first behavior-preserving decomposition slice
 -> UI-R5 real-device stabilization / feature freeze
 -> EPI-MQ / Productive Uncertainty
 -> UX-R6 recommendation-provider replacement
 ```
-
-The documentation hardening does not itself authorize production-code refactoring. The next production campaign begins with a **fresh live-state audit** of the Night Step UI cluster after the latest Host Table / inline-wake work.
 
 Primary decomposition reference:
 
@@ -62,9 +110,11 @@ Current active handoff:
 
 `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-05_NIGHT_STEP_UI_DECOMPOSITION.md`
 
-## 3. Night Step UI decomposition — NEXT ARCHITECTURE CAMPAIGN
+The Drunk shown-identity repair is a bounded hotfix inserted before this architecture campaign; it does not supersede or redesign the Night Step UI plan.
 
-### 3.1 Goal
+## 4. Night Step UI decomposition — NEXT ARCHITECTURE CAMPAIGN
+
+### 4.1 Goal
 
 Reduce the practical **change context radius** of Night Step changes. The target is not a numeric file-size score; it is clearer ownership and smaller feature-local reasoning scope.
 
@@ -78,7 +128,7 @@ The current concern is that `ClocktowerNightStepUi.kt` has historically mixed:
 - telemetry/diagnostics;
 - action rendering.
 
-### 3.2 Fresh-audit requirement
+### 4.2 Fresh-audit requirement
 
 Do not execute the earlier S1–S5 proposal mechanically. PR #99/#100 changed the surrounding square-table/presentation surface, and PR #101/#102 changed current main after that.
 
@@ -107,7 +157,7 @@ For each proposed seam identify:
 - dependency direction before/after;
 - expected reduction in change context radius.
 
-### 3.3 Candidate slice order from pre-latest-UI audit
+### 4.3 Candidate slice order from pre-latest-UI audit
 
 The earlier architecture reconnaissance identified these candidates:
 
@@ -119,7 +169,7 @@ The earlier architecture reconnaissance identified these candidates:
 
 **This ordering is provisional.** Pair Manual remains a strong first candidate because legal authority already exists, but the fresh audit may select a different first seam if current code ownership has changed.
 
-### 3.4 Decomposition invariants
+### 4.4 Decomposition invariants
 
 - no God `NightStepContext` / giant parameter bag;
 - no generic `Utils` / `Helpers` dumping ground;
@@ -131,9 +181,9 @@ The earlier architecture reconnaissance identified these candidates:
 - a slice must remove one coherent responsibility from the broad owner;
 - behavior-preserving refactors must remain behavior-preserving.
 
-## 4. Test/evidence policy for the architecture campaign
+## 5. Test/evidence policy for the architecture campaign
 
-Root `AGENTS.md` is normative and now integrates architecture pre-flight with risk-based test-first development.
+Root `AGENTS.md` is normative and integrates architecture pre-flight with risk-based test-first development.
 
 For each slice:
 
@@ -151,7 +201,7 @@ classify change type
 
 Do **not** manufacture RED tests for file movement or decomposition. A genuinely new stable typed seam should receive durable contract coverage when existing tests do not already protect it.
 
-## 5. UI-R5 — AFTER architecture checkpoint
+## 6. UI-R5 — AFTER architecture checkpoint
 
 Run a final real-device stabilization / feature-freeze pass after the selected Night Step ownership work reaches a clean checkpoint.
 
@@ -171,7 +221,7 @@ Cover at least:
 
 UI-R5 is stabilization, not another broad visual redesign.
 
-## 6. EPI-MQ / Productive Uncertainty — AFTER UI-R5
+## 7. EPI-MQ / Productive Uncertainty — AFTER UI-R5
 
 Primary authorities:
 
@@ -182,14 +232,15 @@ Quality ranking remains downstream of legal semantic authority.
 
 A4/ZDD remains shadow/prototype unless separately reactivated and validated.
 
-## 7. UX-R6 — AFTER EPI-MQ
+## 8. UX-R6 — AFTER EPI-MQ
 
 Replace the legacy recommendation provider only after EPI-MQ correctness, quality, performance and rollout gates pass.
 
 Preserve Manual independence, typed outcome identity, stabilized Storyteller UI and safe fallback behavior.
 
-## 8. Explicitly deferred / not part of the next architecture slice
+## 9. Explicitly deferred / not part of the current hotfix or next architecture slice
 
+- Demon Bluff recommendation-quality redesign during the Drunk ownership repair;
 - Public Claim History;
 - Sequential Vote redesign;
 - broad unsupported-script expansion;
@@ -198,7 +249,7 @@ Preserve Manual independence, typed outcome identity, stabilized Storyteller UI 
 - recommendation-quality algorithm redesign during a UI decomposition slice;
 - gameplay-rule changes hidden inside structural refactoring.
 
-## 9. Permanent architecture invariants
+## 10. Permanent architecture invariants
 
 ### Epistemic / information authority
 
@@ -235,7 +286,7 @@ stable typed ClocktowerSeatId
 
 Actor/wake cue and target state are orthogonal presentation concepts. The final UI-N1 product decision does not require a separate wake acknowledgement phase.
 
-## 10. Documentation authority / lifecycle
+## 11. Documentation authority / lifecycle
 
 `docs/README.md` is the navigation entrypoint. This roadmap is the current status/priority authority.
 
