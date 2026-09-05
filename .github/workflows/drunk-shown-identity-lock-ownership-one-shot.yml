@@ -1,0 +1,109 @@
+name: Drunk shown-identity lock ownership one-shot
+
+on:
+  push:
+    branches:
+      - codex/drunk-shown-identity-ownership-cleanup
+    paths:
+      - .github/workflows/drunk-shown-identity-lock-ownership-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/drunk-shown-identity-ownership-cleanup
+          fetch-depth: 0
+
+      - name: Verify bootstrap head and blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/codex/drunk-shown-identity-ownership-cleanup | cut -f1)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "31175680de2d86b52b91631bbd04329c7c546be5"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt)" = "20a5a2cd0d5b3f5ae73e7804a2399bfb1240a032"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/recommendation/SetupRecommendationLockPolicy.kt)" = "cbf0808243c2aef941e709d4945e5bdd54dcc107"
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/clocktower/recommendation/SetupRecommendationLockPolicyTest.kt)" = "306189706e811d56ae698a5e7fd5c5b74ce612d2"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run focused ownership baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.clocktower.recommendation.SetupRecommendationLockPolicyTest' \
+            --tests 'com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationShownIdentityOwnershipTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Apply exact Host production patch
+        run: python3 .github/scripts/drunk_shown_identity_lock_ownership_patch.py
+
+      - name: Run focused ownership GREEN
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.clocktower.recommendation.SetupRecommendationLockPolicyTest' \
+            --tests 'com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationShownIdentityOwnershipTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Exact diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          test "$(git diff --name-only | paste -sd ' ' -)" = "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt"
+          grep -F 'SetupRecommendationLockPolicy.initialLocks()' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          grep -F 'SetupRecommendationLockPolicy.replaceWith(nextLockedDecisions)' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          grep -F 'SetupRecommendationLockPolicy.clear()' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          ! grep -F 'val committedIdentityDecisions =' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          ! grep -F 'fun preservingCommittedIdentity(' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          git diff -- app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+
+      - name: Reconfirm remote head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/drunk-shown-identity-ownership-cleanup | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Commit and push Host repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          test "$(git diff --cached --name-only | paste -sd ' ' -)" = "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt"
+          git commit -m 'Fix Drunk shown-identity recommendation lock ownership'
+          git push origin HEAD:codex/drunk-shown-identity-ownership-cleanup
+          echo "PRODUCT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/drunk-shown-identity-ownership-cleanup | cut -f1)" = "$(git rev-parse HEAD)"
+          git rm .github/workflows/drunk-shown-identity-lock-ownership-one-shot.yml .github/scripts/drunk_shown_identity_lock_ownership_patch.py
+          git commit -m 'chore(ci): remove Drunk lock ownership one-shot'
+          git push origin HEAD:codex/drunk-shown-identity-ownership-cleanup
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report checkpoints
+        run: |
+          echo "Product checkpoint: $PRODUCT_SHA"
+          echo "Cleanup checkpoint: $CLEANUP_SHA"
