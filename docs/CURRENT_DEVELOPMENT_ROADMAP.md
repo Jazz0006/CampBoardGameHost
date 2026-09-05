@@ -6,11 +6,11 @@
 
 ## 1. Live development context
 
-Live `main` at the start of the completed Drunk shown-identity hotfix campaign:
+Latest confirmed live `main` at this documentation checkpoint:
 
 ```text
-9cd72cba22737d1d803f8a30d25c2a5c25570211
-Tests: retire obsolete source-wiring guards (#104)
+93f99e0576be7b93d479ffa931bae3e4083c25af
+Fix Drunk shown-identity ownership boundary (#105)
 ```
 
 Always re-query live GitHub state before implementation, validation or merge.
@@ -43,23 +43,19 @@ The following work is integrated into `main`:
    - retained durable typed behavior/domain coverage;
    - reinforces the current risk-based, behavior-first test policy.
 
-## 2. Completed hotfix — Drunk shown-identity ownership repair
+6. **PR #105 — Drunk shown-identity ownership repair**
+   - Drunk shown identity is committed setup state;
+   - recommendation consumes but does not select/replace it;
+   - Host/UI no longer synthesizes committed shown identity back into recommendation lock state;
+   - recommendation history/cooldown no longer treats shown identity as an independent recommendation decision.
 
-The targeted setup/recommendation ownership repair documented in:
+## 2. Completed ownership repair — Drunk shown identity
+
+The repair documented in:
 
 `docs/DRUNK_SHOWN_IDENTITY_OWNERSHIP_REPAIR_2026-09-05.md`
 
-is now **implemented and locally/CI-workflow checkpoint validated** on branch:
-
-`codex/drunk-shown-identity-ownership-cleanup`
-
-Validated code checkpoint:
-
-`a7c24fb5e7a0909bc77b84b9dcab5cf8b6e459b7`
-
-Post-validation temporary-workflow cleanup head:
-
-`18d122fd1c3cab7461010ebb1b913ad1b2616198`
+is now integrated into `main` through PR #105.
 
 The permanent product flow is:
 
@@ -79,37 +75,24 @@ Permanent ownership rule:
 - Drunk shown identity has no independent history/cooldown/de-duplication rule;
 - shown identity is a committed setup fact;
 - recommendation may consume it but may not select, replace, emit or lock it;
-- Host/UI must not convert committed `shownRole` back into recommendation lock state;
-- Demon Bluff recommendation-quality redesign remains deferred.
+- Host/UI must not convert committed `shownRole` back into recommendation lock state.
 
-Completed repair evidence:
-
-- typed mutable-lock ownership contract added;
-- Host committed shown-identity lock synthesis/preservation removed;
-- recommendation history digest/cooldown no longer depends on committed Drunk shown identity;
-- obsolete `generateDrunkCandidates()` path and tests retired;
-- focused ownership/migration tests passed;
-- `:app:testFast` passed;
-- `:app:assembleDebug` passed;
-- code/test-only diff and semantic ownership audit passed;
-- temporary proof/checkpoint workflows self-cleaned.
-
-A separate recommendation-quality parity finding remains intentionally deferred: generic impaired information derived from fixed `shownRole` is currently selected inside `SetupEvaluator`, not jointly enumerated with all aggregate setup-plan choices. This must be addressed as recommendation-quality work without returning shown-identity authority to recommendation.
-
-A normal PR/CI gate is still required before merge.
+A separate recommendation-quality parity finding remains intentionally deferred to recommendation-quality work: generic impaired information derived from fixed `shownRole` is currently selected inside `SetupEvaluator`, not jointly enumerated with all aggregate setup-plan choices. This must be addressed without returning shown-identity authority to recommendation.
 
 ## 3. Immediate current priority — Night Step UI decomposition
 
-Resume the Night Step UI decomposition campaign from a fresh live-state audit.
+Resume the Night Step UI decomposition campaign from a fresh live-state audit against current `main`.
 
-The next architecture checkpoint is:
+The current execution order is:
 
 ```text
 fresh Night Step UI cluster ownership audit
--> select first behavior-preserving decomposition slice
+-> selected behavior-preserving decomposition slices / architecture checkpoint
 -> UI-R5 real-device stabilization / feature freeze
+-> Demon Bluff Recommendation V1
 -> EPI-MQ / Productive Uncertainty
 -> UX-R6 recommendation-provider replacement
+-> Beginner Storyteller Mode policy rollout
 ```
 
 Primary decomposition reference:
@@ -120,7 +103,11 @@ Current active handoff:
 
 `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-05_NIGHT_STEP_UI_DECOMPOSITION.md`
 
-Before executing the next slice, re-query live `main` and the Drunk hotfix branch/PR state. Do not assume the validated hotfix branch is merged until GitHub confirms it.
+Demon Bluff V1 planning authority:
+
+`docs/DEMON_BLUFF_RECOMMENDATION_V1_PLAN_2026-09-06.md`
+
+The Drunk ownership hotfix is now merged; do not retain old handoff assumptions that it is pending.
 
 ## 4. Night Step UI decomposition — NEXT ARCHITECTURE CAMPAIGN
 
@@ -140,7 +127,7 @@ The current concern is that `ClocktowerNightStepUi.kt` has historically mixed:
 
 ### 4.2 Fresh-audit requirement
 
-Do not execute the earlier S1–S5 proposal mechanically. PR #99/#100 changed the surrounding square-table/presentation surface, and PR #101/#102 changed current main after that.
+Do not execute the earlier S1–S5 proposal mechanically. Recent Host Table, square-table, wake-cue, Manual bluff and Drunk-ownership work changed surrounding assumptions.
 
 Before implementation, inspect live `main` as one cluster:
 
@@ -231,7 +218,31 @@ Cover at least:
 
 UI-R5 is stabilization, not another broad visual redesign.
 
-## 7. EPI-MQ / Productive Uncertainty — AFTER UI-R5
+## 7. Demon Bluff Recommendation V1 — AFTER UI-R5, BEFORE EPI-MQ
+
+Primary authority:
+
+`docs/DEMON_BLUFF_RECOMMENDATION_V1_PLAN_2026-09-06.md`
+
+Demon Bluff recommendation is now a separate setup-time recommendation subsystem rather than ordinary EPI-MQ misinformation work.
+
+V1 should:
+
+- keep legal bluff-domain authority separate from quality ranking;
+- rank complete three-role bluff packages, not greedily select three individually high-scoring roles;
+- use explicit role-level bluff profiles / setup-aware features;
+- consider evil-team synergy, combination diversity, beginner executability and contingency value;
+- exhaustively evaluate legal triples for Trouble Brewing where practical;
+- preserve compatibility with existing MANUAL and Host presentation flows;
+- avoid pulling historical replay, public claims or full hypothetical-world reasoning forward from EPI-MQ.
+
+V1 target:
+
+> Maximize the practical usefulness of the legal three-role bluff package for an inexperienced evil team, without changing rules semantics or requiring the cognitive-consistency engine.
+
+A future Bluff V2 may consume EPI-MQ capabilities after that foundation is mature.
+
+## 8. EPI-MQ / Productive Uncertainty — AFTER Demon Bluff V1
 
 Primary authorities:
 
@@ -242,13 +253,15 @@ Quality ranking remains downstream of legal semantic authority.
 
 A4/ZDD remains shadow/prototype unless separately reactivated and validated.
 
-## 8. UX-R6 — AFTER EPI-MQ
+Demon Bluff V1 must not be treated as a substitute for EPI-MQ. Bluff V2 may later use cognitive-consistency/world-sustainability signals, but those signals remain owned by EPI-MQ.
+
+## 9. UX-R6 — AFTER EPI-MQ
 
 Replace the legacy recommendation provider only after EPI-MQ correctness, quality, performance and rollout gates pass.
 
 Preserve Manual independence, typed outcome identity, stabilized Storyteller UI and safe fallback behavior.
 
-### 8.1 Beginner Storyteller Mode — AFTER cognitive-consistency / EPI-MQ foundation
+### 9.1 Beginner Storyteller Mode — AFTER cognitive-consistency / EPI-MQ foundation
 
 Future product/strategy authority:
 
@@ -271,10 +284,11 @@ Beginner Mode should minimize Storyteller decisions, automatically resolve clue 
 
 The evil-assistance objective is a **downstream Storyteller policy**, not a semantic truth rule and not the objective of the cognitive-consistency engine itself.
 
-## 9. Explicitly deferred / not part of the current architecture slice
+## 10. Explicitly deferred / not part of the current architecture slice
 
 - generic impaired-information / aggregate-plan interaction-quality redesign;
-- Demon Bluff recommendation-quality redesign;
+- Demon Bluff Recommendation V1 implementation during the active Night Step decomposition slice;
+- Demon Bluff V2 cognitive-consistency enhancement before EPI-MQ;
 - Beginner Storyteller automatic clue / bounded evil-assistance policy;
 - Public Claim History;
 - Sequential Vote redesign;
@@ -284,7 +298,7 @@ The evil-assistance objective is a **downstream Storyteller policy**, not a sema
 - recommendation-quality algorithm redesign during a UI decomposition slice;
 - gameplay-rule changes hidden inside structural refactoring.
 
-## 10. Permanent architecture invariants
+## 11. Permanent architecture invariants
 
 ### Epistemic / information authority
 
@@ -321,7 +335,7 @@ stable typed ClocktowerSeatId
 
 Actor/wake cue and target state are orthogonal presentation concepts. The final UI-N1 product decision does not require a separate wake acknowledgement phase.
 
-## 11. Documentation authority / lifecycle
+## 12. Documentation authority / lifecycle
 
 `docs/README.md` is the navigation entrypoint. This roadmap is the current status/priority authority.
 
