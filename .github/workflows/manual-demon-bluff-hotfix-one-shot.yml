@@ -1,0 +1,137 @@
+name: Manual Demon Bluff Hotfix One-Shot
+
+on:
+  push:
+    branches:
+      - fix/manual-demon-bluff-consistency
+    paths:
+      - .github/workflows/manual-demon-bluff-hotfix-one-shot.yml
+      - .github/scripts/manual_demon_bluff_hotfix_patch.py
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/manual-demon-bluff-consistency
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Verify exact checkout and protected blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='fix/manual-demon-bluff-consistency'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          remote_head="$(git ls-remote origin "refs/heads/$branch" | cut -f1)"
+          test "$remote_head" = "$GITHUB_SHA"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt)" = '8ee1df0f33c249dc6c6021513a72c821014ceddc'
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerDemonBluffPresentation.kt)" = '7bf99cc24aadac0ae9b0e7a0434a723b100ba661'
+          test -f app/src/test/java/com/codex/campboardgamehost/ClocktowerDemonBluffPresentationTest.kt
+
+      - name: Focused RED proves the field bug
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          rm -rf app/build/test-results/testDebugUnitTest
+          set +e
+          ./gradlew :app:testDebugUnitTest \
+            --tests com.codex.campboardgamehost.ClocktowerDemonBluffPresentationTest \
+            --rerun-tasks
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo 'Expected the focused regression class to fail before the hotfix.' >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          path = Path('app/build/test-results/testDebugUnitTest/TEST-com.codex.campboardgamehost.ClocktowerDemonBluffPresentationTest.xml')
+          if not path.exists():
+              raise SystemExit('Focused RED did not produce JUnit results; refusing to treat compile/setup failure as RED evidence.')
+          root = ET.parse(path).getroot()
+          failures = int(root.attrib.get('failures', '0'))
+          errors = int(root.attrib.get('errors', '0'))
+          tests = int(root.attrib.get('tests', '0'))
+          if tests < 4 or failures + errors == 0:
+              raise SystemExit(f'Unexpected RED evidence: tests={tests} failures={failures} errors={errors}')
+          print(f'RED confirmed: tests={tests} failures={failures} errors={errors}')
+          PY
+
+      - name: Apply exact hotfix patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/manual_demon_bluff_hotfix_patch.py
+          git diff --check
+          mapfile -t changed < <(git diff --name-only | sort)
+          expected=(
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerDemonBluffPresentation.kt
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          )
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          if [ "${changed[*]}" != "${expected_sorted[*]}" ]; then
+            printf 'Unexpected product diff. Changed:\n%s\n' "${changed[*]}" >&2
+            exit 1
+          fi
+          ! grep -q 'legalDemonBluffs.take(3)' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          grep -q 'demonBluffRoleNamesForPresentation' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          grep -q 'DemonBluffPresentationResolution.Pending' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+
+      - name: Focused GREEN
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests com.codex.campboardgamehost.ClocktowerDemonBluffPresentationTest \
+            --rerun-tasks
+
+      - name: FAST regression gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testFast --rerun-tasks
+          git diff --check
+
+      - name: Commit and push product fix
+        shell: bash
+        env:
+          BRANCH: fix/manual-demon-bluff-consistency
+        run: |
+          set -euo pipefail
+          remote_head="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
+          test "$remote_head" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerDemonBluffPresentation.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          git commit -m 'fix: keep demon bluffs consistent in manual mode'
+          git push origin "HEAD:$BRANCH"
+
+      - name: Remove one-shot tooling
+        shell: bash
+        env:
+          BRANCH: fix/manual-demon-bluff-consistency
+        run: |
+          set -euo pipefail
+          product_head="$(git rev-parse HEAD)"
+          remote_head="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
+          test "$remote_head" = "$product_head"
+          git rm \
+            .github/scripts/manual_demon_bluff_hotfix_patch.py \
+            .github/workflows/manual-demon-bluff-hotfix-one-shot.yml
+          git commit -m 'chore: remove manual demon bluff hotfix tooling'
+          git push origin "HEAD:$BRANCH"
