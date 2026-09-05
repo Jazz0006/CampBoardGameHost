@@ -26,7 +26,8 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "0cf7d0b9d55518937f8b82c61cc44dc13393c1e9"
+          test "$(git rev-parse HEAD^)" = "2ede853a09761f016caea122c0810135eb8409de"
+          test "$(git rev-parse HEAD^^)" = "0cf7d0b9d55518937f8b82c61cc44dc13393c1e9"
           test "$(git ls-remote origin refs/heads/codex/drunk-shown-identity-ownership-cleanup | cut -f1)" = "$GITHUB_SHA"
 
       - name: Set up JDK 17
@@ -103,4 +104,6 @@ jobs:
           echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Report final cleanup head
-        run: echo "Final cleanup head: $CLEANUP_SHA"
+        shell: bash
+        run: |
+          echo "Final cleanup head: $CLEANUP_SHA"
