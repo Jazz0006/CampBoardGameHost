@@ -1,0 +1,106 @@
+name: Drunk shown-identity final checkpoint
+
+on:
+  push:
+    branches:
+      - codex/drunk-shown-identity-ownership-cleanup
+    paths:
+      - .github/workflows/drunk-shown-identity-final-checkpoint.yml
+
+permissions:
+  contents: write
+
+jobs:
+  checkpoint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/drunk-shown-identity-ownership-cleanup
+          fetch-depth: 0
+
+      - name: Verify checkpoint head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "0cf7d0b9d55518937f8b82c61cc44dc13393c1e9"
+          test "$(git ls-remote origin refs/heads/codex/drunk-shown-identity-ownership-cleanup | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run focused ownership and migration tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.clocktower.history.HistoryCooldownTest' \
+            --tests 'com.codex.campboardgamehost.clocktower.recommendation.SetupRecommendationLockPolicyTest' \
+            --tests 'com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationShownIdentityOwnershipTest' \
+            --tests 'com.codex.campboardgamehost.clocktower.recommendation.setup.SetupMigrationTest' \
+            --tests 'com.codex.campboardgamehost.clocktower.rules.PlanLegalityValidatorTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Run testFast checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testFast --no-daemon
+
+      - name: Assemble debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:assembleDebug --no-daemon
+
+      - name: Audit code and ownership invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check 9cd72cba22737d1d803f8a30d25c2a5c25570211..HEAD -- app/src/main app/src/test
+
+          host='app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt'
+          history_sig='app/src/main/java/com/codex/campboardgamehost/clocktower/history/HistoricalClueSignature.kt'
+          history_cooldown='app/src/main/java/com/codex/campboardgamehost/clocktower/history/HistoryCooldown.kt'
+
+          grep -F 'SetupRecommendationLockPolicy.initialLocks()' "$host"
+          grep -F 'SetupRecommendationLockPolicy.replaceWith(nextLockedDecisions)' "$host"
+          grep -F 'SetupRecommendationLockPolicy.clear()' "$host"
+          ! grep -F 'val committedIdentityDecisions =' "$host"
+          ! grep -F 'fun preservingCommittedIdentity(' "$host"
+
+          ! grep -F 'drunkShownRole?.value' "$history_sig"
+          ! grep -F 'informationObservation?.perceivedRole ?: plan.effectSignature.drunkShownRole' "$history_sig"
+          ! grep -F 'candidate.drunkShownRole' "$history_cooldown"
+
+          ! git grep -q 'generateDrunkCandidates' -- app/src/main app/src/test
+          test "$(git ls-files '.github/workflows/drunk-*' | wc -l)" -eq 1
+
+      - name: Reconfirm remote head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/drunk-shown-identity-ownership-cleanup | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Remove final checkpoint workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/drunk-shown-identity-final-checkpoint.yml
+          git commit -m 'chore(ci): remove Drunk ownership final checkpoint'
+          git push origin HEAD:codex/drunk-shown-identity-ownership-cleanup
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report final cleanup head
+        run: echo "Final cleanup head: $CLEANUP_SHA"
