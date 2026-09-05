@@ -38,37 +38,6 @@ internal object SetupCandidateGenerator {
         addAll(generateDemonBluffCandidates(game, roleDefinitions))
     }.sortedBy { it.candidateId }
 
-    /**
-     * Legacy compatibility surface for historical Drunk-Investigator setup data.
-     * New aggregate setup recommendation no longer calls this generator.
-     */
-    fun generateDrunkCandidates(
-        game: GameState,
-        roleDefinitions: List<RoleDefinition>,
-    ): List<DecisionCandidate<SetupClueOutcome>> {
-        val drunkPlayer = game.players.firstOrNull { it.actualRole == drunk } ?: return emptyList()
-        if (drunkPlayer.shownRole != investigator) return emptyList()
-        val scriptRoles = scriptRoles(game, roleDefinitions)
-        return drunkInformationOptions(game, scriptRoles).map { decisions ->
-            val investigatorInfo = decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().single()
-            val canonical = listOf(
-                investigatorInfo.shownMinion.value,
-                investigatorInfo.candidateSeats.sorted().joinToString(","),
-            ).joinToString("|")
-            DecisionCandidate<SetupClueOutcome>(
-                candidateId = stableId("drunk-investigator-info", canonical),
-                candidateFamilyId = "drunk-investigator-info",
-                outcome = SetupClueOutcome.DrunkShownRole(drunkPlayer.shownRole, investigatorInfo),
-                abilityState = AbilityState.MALFUNCTIONING_DRUNK,
-                truthRelation = TruthRelation.NOT_APPLICABLE,
-                effects = listOf(
-                    EffectDraft.Reminder(drunkPlayer.seat, "drunk-investigator-info"),
-                ),
-                metadata = metadata("drunk-investigator-info", setOf("setup", "drunk", "information")),
-            )
-        }.toList()
-    }
-
     fun generatePairInformationCandidates(game: GameState): List<DecisionCandidate<SetupClueOutcome>> = game.players
         .asSequence()
         .mapNotNull { source ->
@@ -259,33 +228,6 @@ internal object SetupCandidateGenerator {
             .map { StorytellerDecision.RedHerring(it.seat) }
     }
 
-    private fun drunkInformationOptions(
-        game: GameState,
-        scriptRoles: List<RoleDefinition>,
-    ): Sequence<List<StorytellerDecision>> {
-        val drunkPlayer = game.players.firstOrNull { it.actualRole == drunk }
-            ?: return sequenceOf(emptyList())
-        if (drunkPlayer.shownRole != investigator) return sequenceOf(emptyList())
-
-        val minionRoles = scriptRoles.filter { it.type == CharacterType.MINION }.map { it.id }
-        val candidatePairs = unorderedSeatPairs(game.players.map { it.seat }.sorted())
-
-        return sequence {
-            for (minionRole in minionRoles) {
-                for (pair in candidatePairs) {
-                    yield(
-                        listOf(
-                            StorytellerDecision.DrunkInvestigatorInfo(
-                                shownMinion = minionRole,
-                                candidateSeats = pair,
-                            ),
-                        ),
-                    )
-                }
-            }
-        }
-    }
-
     private fun demonBluffOptions(
         game: GameState,
         scriptRoles: List<RoleDefinition>,
@@ -302,14 +244,6 @@ internal object SetupCandidateGenerator {
             .map { it.id }
             .distinct()
         return chooseThree(legalRoles).map { StorytellerDecision.DemonBluffs(it) }
-    }
-
-    private fun unorderedSeatPairs(seats: List<Int>): List<List<Int>> = buildList {
-        for (firstIndex in 0 until seats.lastIndex) {
-            for (secondIndex in firstIndex + 1 until seats.size) {
-                add(listOf(seats[firstIndex], seats[secondIndex]))
-            }
-        }
     }
 
     private fun chooseThree(items: List<RoleId>): Sequence<List<RoleId>> = sequence {
