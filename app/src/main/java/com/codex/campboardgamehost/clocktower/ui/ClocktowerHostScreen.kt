@@ -151,6 +151,7 @@ import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import com.codex.campboardgamehost.clocktower.recommendation.RecommendationUiState
+import com.codex.campboardgamehost.clocktower.recommendation.SetupRecommendationLockPolicy
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.recommendation.GameBalanceEvaluator
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
@@ -1266,18 +1267,6 @@ internal fun ClocktowerJudgeScreen(
         }
     }
     val recommendationCards = cards.toList()
-    val committedIdentityDecisions = cards.firstOrNull { it.clocktowerRole?.enName == "Drunk" }
-        ?.clocktowerShownRole
-        ?.let { shownRole ->
-            buildList<StorytellerDecision> {
-                add(StorytellerDecision.DrunkShownRole(RoleId(shownRole.enName)))
-            }
-        }
-        .orEmpty()
-    fun preservingCommittedIdentity(decisions: List<StorytellerDecision>): List<StorytellerDecision> {
-        val committedKinds = committedIdentityDecisions.mapTo(hashSetOf(), StorytellerDecision::kind)
-        return committedIdentityDecisions + decisions.filterNot { it.kind() in committedKinds }
-    }
     var recommendationUiState by remember(recommendationKey) {
         mutableStateOf<RecommendationUiState>(RecommendationUiState.Loading)
     }
@@ -1288,7 +1277,7 @@ internal fun ClocktowerJudgeScreen(
         mutableStateOf<RecommendationStyle?>(null)
     }
     var lockedRecommendationDecisions by remember(recommendationKey) {
-        mutableStateOf(committedIdentityDecisions)
+        mutableStateOf(SetupRecommendationLockPolicy.initialLocks())
     }
     val recommendationRequest = SetupCoordinationRequest(
         game = recommendationCards.toClocktowerGameState(
@@ -4545,12 +4534,12 @@ internal fun ClocktowerJudgeScreen(
                     appliedRecommendationStyle = plan.style
                 },
                 onReevaluate = { nextLockedDecisions ->
-                    lockedRecommendationDecisions = preservingCommittedIdentity(nextLockedDecisions)
+                    lockedRecommendationDecisions = SetupRecommendationLockPolicy.replaceWith(nextLockedDecisions)
                     selectedRecommendationStyle = RecommendationStyle.BALANCED
                     appliedRecommendationStyle = null
                 },
                 onClearLocks = {
-                    lockedRecommendationDecisions = committedIdentityDecisions
+                    lockedRecommendationDecisions = SetupRecommendationLockPolicy.clear()
                     selectedRecommendationStyle = RecommendationStyle.BALANCED
                 },
             )

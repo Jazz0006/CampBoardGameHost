@@ -5,7 +5,6 @@ import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelec
 
 internal object HistoryCooldown {
     private const val MINIMUM_MULTIPLIER = 200_000L
-    private const val STRONG_PENALTY = 600_000L
     private const val MEDIUM_PENALTY = 300_000L
     private const val LIGHT_PENALTY = 120_000L
 
@@ -40,9 +39,6 @@ internal object HistoryCooldown {
             val decayTenths = (10 - age).coerceAtLeast(1)
             fun decayed(value: Long): Long = value * decayTenths / 10L
 
-            if (age == 0 && candidate.drunkShownRole != null && candidate.drunkShownRole == previous.drunkShownRole) {
-                penalty += decayed(STRONG_PENALTY)
-            }
             if (age < 3 && candidate.shownCharacter != null && candidate.shownCharacter == previous.shownCharacter) {
                 penalty += decayed(MEDIUM_PENALTY)
             }
