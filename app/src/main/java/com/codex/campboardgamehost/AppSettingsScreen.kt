@@ -19,12 +19,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import com.codex.campboardgamehost.clocktower.domain.StorytellerAutomationMode
+import com.codex.campboardgamehost.debug.DebugFlightRecorder
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -40,6 +42,8 @@ internal fun SettingsScreen(
     onRemoveCommonPlayer: (String) -> Unit,
     onBack: () -> Unit,
 ) {
+    val context = LocalContext.current
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -144,6 +148,36 @@ internal fun SettingsScreen(
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text(
+                        stringResource(R.string.debug_diagnostics_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        stringResource(R.string.debug_diagnostics_description),
+                        color = Color(0xFF5C6A63),
+                    )
+                    OutlinedButton(
+                        onClick = { DebugFlightRecorder.shareDebugBundle(context) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                    ) {
+                        Text(stringResource(R.string.export_debug_bundle))
                     }
                 }
             }
