@@ -1,0 +1,81 @@
+name: Crash Flight Recorder Execution One Shot
+
+on:
+  push:
+    branches:
+      - codex/crash-flight-recorder
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-commit:
+    if: github.event.head_commit.message == 'chore: run execution crash breadcrumb patch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact event head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Verify exact branch head and target blob
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          remote_head="$(git ls-remote origin refs/heads/codex/crash-flight-recorder | cut -f1)"
+          test "$remote_head" = "$GITHUB_SHA"
+          target='app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt'
+          test "$(git hash-object "$target")" = '90efec1a8cea52d3dbdc1b1a6b670eaaf4169697'
+
+      - name: Apply exact execution breadcrumb patch
+        run: python3 .github/scripts/crash_flight_recorder_execution_patch.py
+
+      - name: Verify patch scope and semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected='app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt'
+          actual="$(git diff --name-only)"
+          test "$actual" = "$expected"
+          grep -q 'DebugFlightRecorder.updateState(executionDebugFields)' "$expected"
+          grep -q 'event = "EXECUTION_PREFLIGHT"' "$expected"
+          grep -q '"observationAlreadyExists" to observationAlreadyExists.toString()' "$expected"
+          grep -q 'public-alive-${clocktowerGameId}-${proposedSequence}-${preflightIndex + 1}' "$expected"
+          git diff --check
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run focused and checkpoint validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew \
+            :app:testDebugUnitTest --tests com.codex.campboardgamehost.debug.DebugFlightRecorderCoreTest \
+            :app:testFast \
+            :app:assembleDebug \
+            --no-daemon --stacktrace
+
+      - name: Remove temporary one-shot files and commit product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/scripts/crash_flight_recorder_execution_patch.py
+          rm .github/workflows/crash-flight-recorder-execution-one-shot.yml
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: add execution crash breadcrumbs'
+          remote_head="$(git ls-remote origin refs/heads/codex/crash-flight-recorder | cut -f1)"
+          test "$remote_head" = "$GITHUB_SHA"
+          git push origin HEAD:codex/crash-flight-recorder
