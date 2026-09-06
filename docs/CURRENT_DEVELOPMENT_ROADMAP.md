@@ -399,7 +399,22 @@ any extraction. D6 and real-device UI-R5 remain later gates. Keep PR #106 draft;
 
 Baseline: `123938fab065bfec0bc202e333a5b36bf2ba4dd2`; live main remains
 `93f99e0576be7b93d479ffa931bae3e4083c25af`. User requested continuing after D4.
-Status: **implemented locally; exact audit and full CI/R2 checkpoint pending**.
+Status: **D5.1 implemented and full CI/R2 checkpoint validated; draft PR #106 open, not merged**.
+
+Validated code checkpoint: `a76fb9accc956316e0d94cb277a552842130da4d`.
+
+- [Full CI run 34006496894](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/34006496894)
+  passed: production/test Kotlin compilation, `:app:testDebugUnitTest` via `:app:testFull`,
+  and `:app:assembleDebug` executed. Android logged `BUILD SUCCESSFUL in 3m 16s`.
+- ASP contract tests, Real Clingo cross-validation and the overall CI gate passed.
+  [R2 run 34006496861](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/34006496861)
+  passed as well. This full checkpoint includes the preceding D1–D4 changes.
+- Five remote blobs/full tree matched local. Exact audit proved Host outside authorization/handoff
+  unchanged, and history body unchanged modulo indentation; existing local R2 script passed.
+- The six new contract tests supplement existing reveal/migration/session coverage. No source-string
+  tests retired, because remaining telemetry/history guards cover unmoved owners.
+- This evidence update is docs-only. Debug APK was built, but no real-device validation was performed.
+  D5.2 remains open; D5 overall is not yet complete.
 
 Fresh publication audit:
 
