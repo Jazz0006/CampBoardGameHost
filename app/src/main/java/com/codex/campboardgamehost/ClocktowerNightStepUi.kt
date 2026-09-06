@@ -812,7 +812,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 if (showManualPairSelection) {
                     ClocktowerPairManualSelectionDialog(
                         interactionKey = informationDecisionKey,
-                        candidates = manualPairCandidates,
+                        presentation = ClocktowerPairManualAuthority.selectionPresentation(manualPairCandidates),
                         seats = cards.mapIndexed { index, card ->
                             card.toStorytellerHostSeatPresentation(
                                 seatNumber = index + 1,

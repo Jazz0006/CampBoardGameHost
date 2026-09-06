@@ -29,181 +29,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-
-private data class ClocktowerPairManualCandidate(
-    val option: ClocktowerDisplayOption,
-    val roleId: String,
-    val seats: List<Int>,
-)
-
-internal data class ClocktowerPairManualSelectionModel private constructor(
-    private val pairCandidates: List<ClocktowerPairManualCandidate>,
-    private val zeroCaseOption: ClocktowerDisplayOption?,
-    val selectedRoleId: String? = null,
-    val selectedFirstSeat: Int? = null,
-    val selectedSecondSeat: Int? = null,
-    val isZeroCaseSelected: Boolean = false,
-) {
-    val roleIds: List<String>
-        get() = pairCandidates.map { it.roleId }.distinct()
-
-    val hasZeroCase: Boolean
-        get() = zeroCaseOption != null
-
-    val resolvedOption: ClocktowerDisplayOption?
-        get() {
-            if (isZeroCaseSelected) return zeroCaseOption
-            val roleId = selectedRoleId ?: return null
-            val first = selectedFirstSeat ?: return null
-            val second = selectedSecondSeat ?: return null
-            if (first == second) return null
-            val selectedSeats = listOf(first, second).sorted()
-            return pairCandidates.firstOrNull { candidate ->
-                candidate.roleId == roleId && candidate.seats == selectedSeats
-            }?.option
-        }
-
-    fun firstSeats(roleId: String): List<Int> = pairCandidates
-        .asSequence()
-        .filter { it.roleId == roleId }
-        .flatMap { it.seats.asSequence() }
-        .distinct()
-        .sorted()
-        .toList()
-
-    fun secondSeats(roleId: String, firstSeat: Int): List<Int> = pairCandidates
-        .asSequence()
-        .filter { candidate -> candidate.roleId == roleId && firstSeat in candidate.seats }
-        .mapNotNull { candidate -> candidate.seats.firstOrNull { it != firstSeat } }
-        .distinct()
-        .sorted()
-        .toList()
-
-    fun selectRole(roleId: String): ClocktowerPairManualSelectionModel {
-        if (roleId !in roleIds) return this
-        if (roleId == selectedRoleId && !isZeroCaseSelected) return this
-        return copy(
-            selectedRoleId = roleId,
-            selectedFirstSeat = null,
-            selectedSecondSeat = null,
-            isZeroCaseSelected = false,
-        )
-    }
-
-    fun selectZeroCase(): ClocktowerPairManualSelectionModel {
-        if (!hasZeroCase) return this
-        return copy(
-            selectedRoleId = null,
-            selectedFirstSeat = null,
-            selectedSecondSeat = null,
-            isZeroCaseSelected = true,
-        )
-    }
-
-    fun clearChoice(): ClocktowerPairManualSelectionModel = copy(
-        selectedRoleId = null,
-        selectedFirstSeat = null,
-        selectedSecondSeat = null,
-        isZeroCaseSelected = false,
-    )
-
-    fun selectSeat(seatNumber: Int): ClocktowerPairManualSelectionModel {
-        val roleId = selectedRoleId ?: return this
-        val validFirstSeats = firstSeats(roleId)
-        if (seatNumber !in validFirstSeats) return this
-
-        val first = selectedFirstSeat
-        val second = selectedSecondSeat
-        if (first == null) {
-            return copy(
-                selectedFirstSeat = seatNumber,
-                selectedSecondSeat = null,
-                isZeroCaseSelected = false,
-            )
-        }
-
-        if (second == null) {
-            if (seatNumber == first) {
-                return copy(selectedFirstSeat = null, selectedSecondSeat = null)
-            }
-            if (seatNumber in secondSeats(roleId, first)) {
-                return copy(selectedSecondSeat = seatNumber)
-            }
-            return copy(selectedFirstSeat = seatNumber, selectedSecondSeat = null)
-        }
-
-        if (seatNumber == second) {
-            return copy(selectedSecondSeat = null)
-        }
-        if (seatNumber == first) {
-            return copy(selectedFirstSeat = second, selectedSecondSeat = null)
-        }
-        if (seatNumber in secondSeats(roleId, first)) {
-            return copy(selectedSecondSeat = seatNumber)
-        }
-
-        val retainedSecond = second.takeIf { existingSecond ->
-            existingSecond != seatNumber && existingSecond in secondSeats(roleId, seatNumber)
-        }
-        return copy(
-            selectedFirstSeat = seatNumber,
-            selectedSecondSeat = retainedSecond,
-        )
-    }
-
-    companion object {
-        internal fun from(
-            options: List<ClocktowerDisplayOption>,
-        ): ClocktowerPairManualSelectionModel {
-            val pairs = mutableListOf<ClocktowerPairManualCandidate>()
-            var zeroCase: ClocktowerDisplayOption? = null
-
-            options.forEach { option ->
-                when (val proposition = option.proposition) {
-                    is InformationProposition.AnyOf -> {
-                        val roleAt = proposition.alternatives
-                            .mapNotNull { it as? InformationProposition.RoleAt }
-                        if (roleAt.size != proposition.alternatives.size) return@forEach
-                        val roleId = roleAt.map { it.role.value }.distinct().singleOrNull()
-                            ?: return@forEach
-                        val seats = roleAt.map { it.seat }.distinct().sorted()
-                        if (seats.size != 2) return@forEach
-                        pairs += ClocktowerPairManualCandidate(
-                            option = option,
-                            roleId = roleId,
-                            seats = seats,
-                        )
-                    }
-
-                    is InformationProposition.AllOf -> {
-                        val roleInPlay = proposition.propositions
-                            .mapNotNull { it as? InformationProposition.RoleInPlay }
-                        if (
-                            zeroCase == null &&
-                            roleInPlay.size == proposition.propositions.size &&
-                            roleInPlay.isNotEmpty() &&
-                            roleInPlay.all { !it.inPlay }
-                        ) {
-                            zeroCase = option
-                        }
-                    }
-
-                    else -> Unit
-                }
-            }
-
-            return ClocktowerPairManualSelectionModel(
-                pairCandidates = pairs,
-                zeroCaseOption = zeroCase,
-            )
-        }
-    }
-}
-
-internal fun clocktowerPairManualSelectionModel(
-    candidates: List<ClocktowerDisplayOption>,
-): ClocktowerPairManualSelectionModel = ClocktowerPairManualSelectionModel.from(candidates)
 
 internal fun clocktowerPairManualSquareTableSeat(
     seat: HostSeatPresentation,
@@ -223,14 +48,14 @@ internal fun clocktowerPairManualSquareTableSeat(
 @Composable
 internal fun ClocktowerPairManualSelectionDialog(
     interactionKey: String,
-    candidates: List<ClocktowerDisplayOption>,
+    presentation: ClocktowerPairManualPresentation,
     seats: List<HostSeatPresentation>,
     roleLabel: (String) -> String,
     onDismiss: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
 ) {
-    var selection by remember(interactionKey, candidates) {
-        mutableStateOf(clocktowerPairManualSelectionModel(candidates))
+    var selection by remember(interactionKey, presentation) {
+        mutableStateOf(ClocktowerPairManualSelectionModel.from(presentation))
     }
     val language = LocalContext.current.resources.configuration.locales[0].language
 

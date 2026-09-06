@@ -18,7 +18,7 @@ class ClocktowerPlayerDisplayResolutionTest {
     @Test
     fun `same resolved pair option produces identical player display for manual and recommendation paths`() {
         val option = pairOption("Chef", 2, 5)
-        val manualResolved = clocktowerPairManualSelectionModel(listOf(option))
+        val manualResolved = ClocktowerPairManualSelectionModel.from(ClocktowerPairManualAuthority.selectionPresentation(listOf(option)))
             .selectRole("Chef")
             .selectSeat(2)
             .selectSeat(5)

@@ -14,7 +14,22 @@ The user explicitly authorized a fresh architectural decision and local editing 
 Connector/one-shot/Luna writer-routing restrictions do not apply to this complete local workspace.
 This exception does not change gameplay invariants, evidence requirements or merge authorization.
 
-## Active implementation contract — D4.1
+## Active implementation contract — D4.2
+
+Continue from the validated D4.1 checkpoint. Retain existing Fortune Teller/Chambermaid renderers:
+Boolean confirmation and determined/option results are distinct contracts, not duplication to erase.
+
+Complete the Manual typed-input seam: the authority adapter interprets its existing pair-key grammar
+once and prepares selectable roles/seats plus exact original options. The pure selection model lives
+outside Compose. UI consumes the prepared input without proposition parsing. Preserve supplied
+candidate order, malformed filtering, duplicate/zero first-match semantics and candidate-change reset
+identity (including ignored options). Keep the interaction key and show/dismiss/confirm state lifetime.
+
+Use existing selection/authority/display tests plus focused characterization for projection and reset
+identity. No source guards, Host changes, publication side effects, or merge. Current evidence and
+D4 closure live in the roadmap; D5 begins with a separate publication-transaction audit.
+
+## Prior implementation contract — D4.1
 
 After D3 the user requested continuing. Split D4 into independently verifiable D4.1 single-target/
 ruling renderers, then D4.2 two-target/Manual contracts. Current evidence/status stays in roadmap.

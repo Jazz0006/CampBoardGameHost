@@ -16,7 +16,7 @@ class ClocktowerPairManualSelectionModelTest {
             option("Chef", 1, 7),
             option("Empath", 2, 6),
         )
-        val model = clocktowerPairManualSelectionModel(candidates)
+        val model = ClocktowerPairManualSelectionModel.from(ClocktowerPairManualAuthority.selectionPresentation(candidates))
 
         assertEquals(listOf("Chef", "Empath"), model.roleIds)
         assertEquals(setOf(1, 4, 7), model.firstSeats("Chef").toSet())
@@ -25,9 +25,9 @@ class ClocktowerPairManualSelectionModelTest {
 
     @Test
     fun `first seat constrains legal second seats and changing it cannot retain stale second seat`() {
-        val model = clocktowerPairManualSelectionModel(
+        val model = ClocktowerPairManualSelectionModel.from(ClocktowerPairManualAuthority.selectionPresentation(
             listOf(option("Chef", 1, 4), option("Chef", 1, 7), option("Chef", 2, 8)),
-        )
+        ))
 
         val first = model.selectRole("Chef").selectSeat(1).selectSeat(7)
         assertEquals(1, first.selectedFirstSeat)
@@ -44,7 +44,7 @@ class ClocktowerPairManualSelectionModelTest {
     fun `two selected seats resolve the exact typed candidate independent of display label`() {
         val expected = option("Chef", 1, 7, label = "same label")
         val wrong = option("Chef", 1, 4, label = "same label")
-        val state = clocktowerPairManualSelectionModel(listOf(wrong, expected))
+        val state = ClocktowerPairManualSelectionModel.from(ClocktowerPairManualAuthority.selectionPresentation(listOf(wrong, expected)))
             .selectRole("Chef")
             .selectSeat(7)
             .selectSeat(1)
@@ -54,12 +54,60 @@ class ClocktowerPairManualSelectionModelTest {
 
     @Test
     fun `zero case is exposed only when supplied by legal candidates`() {
-        val withZero = clocktowerPairManualSelectionModel(listOf(option("Chef", 1, 4), zeroOption()))
-        val withoutZero = clocktowerPairManualSelectionModel(listOf(option("Minion", 1, 4)))
+        val withZero = ClocktowerPairManualSelectionModel.from(ClocktowerPairManualAuthority.selectionPresentation(listOf(option("Chef", 1, 4), zeroOption())))
+        val withoutZero = ClocktowerPairManualSelectionModel.from(ClocktowerPairManualAuthority.selectionPresentation(listOf(option("Minion", 1, 4))))
 
         assertTrue(withZero.hasZeroCase)
         assertEquals(zeroOption(), withZero.selectZeroCase().resolvedOption)
         assertTrue(!withoutZero.hasZeroCase)
+    }
+
+    @Test
+    fun `malformed candidates are ignored and first duplicate wins`() {
+        val first = option("Chef", 7, 1, "first")
+        val duplicate = option("Chef", 1, 7, "second")
+        val mixed = first.copy(proposition = InformationProposition.AnyOf(listOf(
+            InformationProposition.RoleAt(1, RoleId("Chef")),
+            InformationProposition.RoleAt(7, RoleId("Empath")),
+        )))
+        val repeated = option("Chef", 1, 1)
+        val emptyZero = zeroOption().copy(proposition = InformationProposition.AllOf(emptyList()))
+        val presentRole = zeroOption().copy(proposition = InformationProposition.AllOf(listOf(
+            InformationProposition.RoleInPlay(RoleId("Outsider"), true),
+        )))
+        val malformed = listOf(mixed, repeated, emptyZero, presentRole)
+        val empty = ClocktowerPairManualSelectionModel.from(ClocktowerPairManualAuthority.selectionPresentation(malformed))
+        assertTrue(empty.roleIds.isEmpty())
+        assertTrue(!empty.hasZeroCase)
+        val model = ClocktowerPairManualSelectionModel.from(ClocktowerPairManualAuthority.selectionPresentation(malformed + first + duplicate))
+        assertEquals(first, model.selectRole("Chef").selectSeat(1).selectSeat(7).resolvedOption)
+    }
+
+    @Test
+    fun `first zero option wins and switching roles clears the old pair`() {
+        val zero = zeroOption()
+        val model = ClocktowerPairManualSelectionModel.from(ClocktowerPairManualAuthority.selectionPresentation(listOf(
+            option("Chef", 1, 4), option("Empath", 2, 6), zero, zero.copy(label = "second zero"),
+        )))
+        assertEquals(zero, model.selectZeroCase().resolvedOption)
+        val changed = model.selectRole("Chef").selectSeat(1).selectSeat(4).selectRole("Empath")
+        assertNull(changed.selectedFirstSeat)
+        assertNull(changed.selectedSecondSeat)
+        assertNull(changed.resolvedOption)
+    }
+
+    @Test
+    fun `presentation equality preserves candidate change reset identity`() {
+        val option = option("Chef", 1, 4)
+        val first = ClocktowerPairManualAuthority.selectionPresentation(listOf(option))
+        val equalCopy = ClocktowerPairManualAuthority.selectionPresentation(listOf(option.copy()))
+        val ignored = option.copy(proposition = null)
+        val changed = ClocktowerPairManualAuthority.selectionPresentation(listOf(option, ignored))
+        assertEquals(first, equalCopy)
+        assertTrue(first != changed)
+        assertEquals(first.candidates, changed.candidates)
+        val relabeled = ClocktowerPairManualAuthority.selectionPresentation(listOf(option.copy(label = "new")))
+        assertTrue(first != relabeled)
     }
 
     private fun option(role: String, first: Int, second: Int, label: String = "$role $first/$second") =

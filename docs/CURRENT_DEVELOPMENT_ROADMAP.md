@@ -300,7 +300,7 @@ assertion is replaced by the direct priority-order test; telemetry and Host hist
 because those owning seams have not moved. Tests were written before implementation; no executable
 RED is claimed with local Gradle dependencies unavailable. Use existing PR FAST/R2 checkpoint.
 
-### 4.6 Current slice — D4.1 single-target and ruling renderers
+### 4.6 Completed slice — D4.1 single-target and ruling renderers
 
 The user requested continuing after D3. D4 is split into D4.1 (single-target/ruling) and D4.2
 (two-target/Manual contracts) to keep interaction lifecycle verification bounded. This turn
@@ -345,7 +345,41 @@ local Gradle dependencies remain unavailable, so no executable local RED is clai
 Next after this checkpoint: **D4.2 — two-target/Manual contract audit and extraction where useful**.
 Do not advance to D5 publication coordination until D4 scope is explicitly closed.
 
-### 4.7 Decomposition invariants
+### 4.7 Current slice — D4.2 Manual typed presentation and selection ownership
+
+Baseline: `beaec9a64abbaf6f34eb97698483ed7ab2892e66`; live main remains
+`93f99e0576be7b93d479ffa931bae3e4083c25af`. The user requested continuing after D4.1.
+Status: **implemented locally; exact audit and FAST/R2 checkpoint pending**.
+
+Fresh audit decisions:
+
+- Fortune Teller and Chambermaid already have separate narrow renderers. Their Boolean-confirmation
+  vs determined/option-result paths differ; retain these existing owners and wiring. A generic
+  two-target wrapper would add indirection without removing a responsibility.
+- Manual UI still parsed AnyOf/AllOf grammar independently of its authority adapter and contained
+  the pure selection model. Move the model to `ClocktowerPairManualSelectionModel.kt` and project
+  typed Manual presentation in the existing `ClocktowerPairManualAuthority` using its existing
+  pair-key parser. The renderer now accepts prepared presentation and does not interpret propositions.
+- This projection consumes the existing authoritative candidates; it never creates legal outcomes,
+  reranks recommendations or authorizes publication. Keep the exact original option as the result.
+- Preserve malformed-option filtering, duplicate/zero first-match behavior and seat normalization.
+  Original source options participate in presentation equality, including ignored options, to preserve
+  the old candidate-list-based remember reset. Interaction key, open/close state, selection transitions,
+  actor/seat rendering and confirmation-before-close callback order remain unchanged.
+
+Allowlist: Night Step (one argument only), Manual authority, Manual selection UI, new pure selection
+model, existing Manual selection/authority/display-resolution tests, roadmap and active handoff.
+Existing selection and display tests migrate to the prepared-input API; three new characterization
+cases cover malformed/duplicate inputs, zero/role switching and equality/reset identity. Existing
+legal-domain projection test now verifies every projected option resolves through the selection model.
+No new source-string tests. Local Gradle dependencies are still unavailable; no executable RED claimed.
+
+D4 scope closes at a successful checkpoint for D4.2: existing two-target owners are accepted,
+Manual now has a typed preparation boundary, and single-target/ruling owners were completed in D4.1.
+Next: **D5 publication coordination audit**, with a separately bounded transaction contract before
+any extraction. D6 and real-device UI-R5 remain later gates. Keep PR #106 draft; do not merge.
+
+### 4.8 Decomposition invariants
 
 - no God `NightStepContext` / giant parameter bag;
 - no generic `Utils` / `Helpers` dumping ground;
