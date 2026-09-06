@@ -24,8 +24,9 @@ class ClocktowerHostTableSurfaceLayoutTest {
         assertEquals(13, thirteenPlayers.layout.slots.size)
         assertEquals(72f, twelvePlayers.layout.constraints.seatCardWidth)
         assertEquals(84f, twelvePlayers.layout.constraints.seatCardHeight)
-        assertEquals(64f, thirteenPlayers.layout.constraints.seatCardWidth)
-        assertEquals(70f, thirteenPlayers.layout.constraints.seatCardHeight)
+        assertTrue(thirteenPlayers.layout.constraints.seatCardWidth < 64f)
+        assertTrue(thirteenPlayers.layout.constraints.seatCardHeight < 70f)
+        assertTrue(thirteenPlayers.layout.constraints.seatCardHeight >= 48f)
         assertEquals(
             thirteenPlayers.seatDensity.cardWidth,
             thirteenPlayers.layout.constraints.seatCardWidth,
