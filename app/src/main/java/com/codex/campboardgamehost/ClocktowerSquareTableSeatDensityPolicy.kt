@@ -4,9 +4,9 @@ package com.codex.campboardgamehost
  * Shared capacity-aware visual density for every square-table seat card.
  *
  * Identity-only and Storyteller-detail tables intentionally use the same large-card tiers. Detail
- * presence changes seat content, not geometry or typography. The tiers still preserve the proven
- * 360 x 600 table capacity while keeping player names and role/status text readable through 15
- * players.
+ * presence changes seat content, not geometry or typography. The preferred tiers preserve the
+ * proven 360 x 600 table capacity; constrained surfaces may progressively fall back to smaller
+ * tiers while keeping player names and role/status text readable through 15 players.
  */
 internal data class ClocktowerSquareTableSeatDensity(
     val cardWidth: Float,
@@ -66,4 +66,32 @@ internal fun clocktowerSquareTableSeatDensity(
             verticalPaddingDp = 1f,
         )
     }
+}
+
+/**
+ * Ordered visual-density candidates for a constrained square-table surface.
+ *
+ * The normal player-count density remains the first choice. Smaller existing tiers are only tried
+ * when the strict rounded-perimeter capacity check rejects the preferred geometry.
+ */
+internal fun clocktowerSquareTableSeatDensityCandidates(
+    playerCount: Int,
+    detailedSeatCards: Boolean,
+): List<ClocktowerSquareTableSeatDensity> {
+    require(playerCount >= 0) { "Square-table player count cannot be negative" }
+
+    return listOf(
+        clocktowerSquareTableSeatDensity(
+            playerCount = playerCount,
+            detailedSeatCards = detailedSeatCards,
+        ),
+        clocktowerSquareTableSeatDensity(
+            playerCount = 12,
+            detailedSeatCards = detailedSeatCards,
+        ),
+        clocktowerSquareTableSeatDensity(
+            playerCount = 15,
+            detailedSeatCards = detailedSeatCards,
+        ),
+    ).distinct()
 }

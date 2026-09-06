@@ -5,6 +5,34 @@
 > Scope: `ClocktowerNightStepUi.kt` and the surrounding Night Step UI cluster  
 > Execution state: **Do not mechanically execute the slice order below without a fresh live-state audit.**
 
+## Fresh audit addendum — 2026-09-06
+
+The current roadmap's D1–D6 route supersedes the historical S1–S5 order below.
+The initial reference is retained as rationale, not an executable plan.
+
+At `93f99e05` the fresh code audit found:
+
+- Pair Manual already owns its full-screen dialog and local selection model in
+  `ClocktowerPairManualSelectionUi.kt`; remaining proposition parsing should become a typed
+  presentation input, not another wholesale UI extraction.
+- `ClocktowerPlayerDisplayResolution.kt` already handles ordinary resolved options with direct
+  tests. Numeric/boolean paths still build copies inline; preserve their confirmation and snapshot
+  differences while extending this seam. A copied full Storyteller step is not a sanitized payload.
+- The Host persistent-table night route returns before the old night fallback. Nonempty nights
+  therefore use only the new route; empty started nights currently throw on an invalid index range.
+  Remove the superseded path before creating further abstractions, retaining explicit failure for
+  the empty case. Do not extend this cleanup to the other fallback phase bodies.
+- Host has 103 parameters / 39 on-callbacks; Night Step has 49 / 13. App root owns many separate
+  Compose values alongside snapshot/restore and setup transactions. Narrow responsibility owners
+  are needed; a universal Context or ViewModel would retain the coupling.
+- `StructuredEmpathInformationAdapterTest` still reads source text after #104. Replace those
+  assertions only when the corresponding stable typed contract is available in D2/D3.
+
+The revised strategy uses behavior-preserving incremental refactoring and state ownership close to
+consumers. References: [Fowler refactoring](https://martinfowler.com/books/refactoring.html),
+[Android Compose state hoisting](https://developer.android.com/develop/ui/compose/state-hoisting).
+Current execution scope and evidence are recorded only in the roadmap and active handoff.
+
 ## 1. Purpose
 
 This document records the architecture reconnaissance performed before the next Night Step UI decomposition campaign. The goal is not to split a large file by line count. The goal is to reduce the **change context radius** by assigning state, domain preparation, interaction logic, side effects and rendering to stable owners.
@@ -288,3 +316,57 @@ This audit does not authorize:
 - broad App/Host decomposition unrelated to the Night Step ownership problem;
 - one-file-per-role fragmentation;
 - mechanical pursuit of a file-size threshold at the expense of cohesion.
+
+
+## Post-implementation global audit — 2026-09-06
+
+Scope: all D1–D5 production/test changes on PR #106 and their immediate Host, UI, migration and
+publication dependencies. This is not a new proof of every game rule or algorithm in the repository.
+Reviewed head: `76321c4e2c9f14fc62a3853f479841733de784c1` against main
+`93f99e0576be7b93d479ffa931bae3e4083c25af`. The exact executable checkpoint is
+`7f2c67603bc70022033cd80a508baa926bf70db9`; the intervening change is roadmap-only.
+
+Conclusion: **no blocking regression identified in the reviewed change set**. One trivial whitespace
+finding (extra EOF blank line in the new request adapter) was corrected. No semantic production fix
+was needed. Current progress and next actions remain authoritative in CURRENT_DEVELOPMENT_ROADMAP.md.
+
+| Boundary | Review result |
+|---|---|
+| D1 routing | Ready/started routes remain; empty started-night failure is explicit; deleted fallback was superseded. Dawn/Day stay intact. |
+| D2 display | Numeric per-field null fallback, Boolean missing-option fallback, exact confirmation/snapshot and legacy recommendation-list differences are preserved. |
+| D3 preparation | Actor/ordered pair identity, registration gates, recommendation priority, numeric bounds/history and existing adapter authority are retained. |
+| D4 interaction | Same seat/candidate/actor semantics and callbacks; action keys preserve child reset boundaries. Manual parsing is shared with authority; selection transitions and candidate-change resets are retained. |
+| D5 publication | Authorization precedes migration; parity telemetry retains its position; duplicate first-night publication reopens without recording; private observation precedes history and reveal. Failures propagate without rollback. |
+| Dependency direction | New renderers do not capture Host, session or roster. Request conversion is an explicit transitional adapter, not a state owner. No new mutable global/Compose state owner. |
+| Tests | Typed projection, adapter parity, selection, freshness, duplicate and failure-order coverage; one superseded priority source assertion retired, remaining guards cover unmoved owners. |
+
+Measured large-file changes (main -> reviewed head):
+
+| File | Lines before | Lines after |
+|---|---:|---:|
+| ClocktowerHostScreen.kt | 5790 | 5473 |
+| ClocktowerNightStepUi.kt | 1203 | 913 |
+| ClocktowerPairManualSelectionUi.kt | 421 | 246 |
+
+This is a reduction in ownership overlap, not total-code minimization. The Host and App root remain
+large (about 329 KB and 259 KB respectively); their mutable state/persistence ownership is D6 work.
+No performance improvement has been measured or is claimed.
+
+Non-blocking limitations and future contracts:
+
+- Player-display projection still returns the broad NightStep model. It is not a privacy sanitizer;
+  the player renderer still owns what is exposed. A future payload type must preserve actual/shown
+  identity separation, particularly Spy/grimoire and Drunk identity.
+- Registration/selection telemetry precedes Host authorization; publication is not atomic, and global
+  exactly-once semantics are not introduced. These are retained behavior, not regressions from this PR.
+- Migration resolvePublication accepts a caller-supplied shadow. Its single production caller computes
+  that shadow from the same migration/request immediately before telemetry and resolution. If another
+  caller is added, encapsulate this pairing or recompute it internally; do not accept unrelated shadow data.
+- Data classes enforce only part of their invariants; current factories/callers supply valid action
+  families and authoritative candidate sets. Do not promote these internal seams to public APIs as-is.
+- JVM tests do not establish Compose dialog continuity, touch targets, inset behavior or real-device
+  readability. Device acceptance is the remaining release gate, not another automatic test-count target.
+
+Evidence: full CI 34008604939 (Android complete JVM suite and debug assemble, ASP, Real Clingo) and
+R2 34008604873 passed. Reviewed docs head CI 34008781928/R2 34008781940 passed. No unnecessary repeat
+of full tests for this audit's documentation/EOF cleanup; normalized production parity is checked.

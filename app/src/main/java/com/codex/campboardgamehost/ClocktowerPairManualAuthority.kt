@@ -23,6 +23,21 @@ import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLega
  * reconstructed from localized UI text.
  */
 internal object ClocktowerPairManualAuthority {
+    /** Interpret already-authoritative options once, before they reach the Manual renderer. */
+    fun selectionPresentation(options: List<ClocktowerDisplayOption>): ClocktowerPairManualPresentation {
+        val pairs = mutableListOf<ClocktowerPairManualCandidate>()
+        var zeroCase: ClocktowerDisplayOption? = null
+        options.forEach { option ->
+            val key = option.pairInformationKeyOrNull() ?: return@forEach
+            if (key.shownRole != null) {
+                pairs += ClocktowerPairManualCandidate(option, key.shownRole.value, key.candidateSeats)
+            } else if (zeroCase == null) {
+                zeroCase = option
+            }
+        }
+        return ClocktowerPairManualPresentation(options.toList(), pairs, zeroCase)
+    }
+
     fun projectLegalOptions(
         game: GameState,
         roleDefinitions: List<RoleDefinition>,
@@ -158,3 +173,18 @@ private fun ClocktowerDisplayOption.pairInformationKeyOrNull(): PairInformationP
         else -> null
     }
 }
+
+/** Original options participate in equality to preserve candidate-change selection resets,
+ * including changes to ignored malformed options. They are not exposed to the renderer.
+ */
+internal data class ClocktowerPairManualPresentation(
+    private val sourceOptions: List<ClocktowerDisplayOption>,
+    val candidates: List<ClocktowerPairManualCandidate>,
+    val zeroCaseOption: ClocktowerDisplayOption?,
+)
+
+internal data class ClocktowerPairManualCandidate(
+    val option: ClocktowerDisplayOption,
+    val roleId: String,
+    val seats: List<Int>,
+)

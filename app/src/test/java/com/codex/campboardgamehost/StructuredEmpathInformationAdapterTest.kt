@@ -133,19 +133,6 @@ class StructuredEmpathInformationAdapterTest {
     }
 
     @Test
-    fun `assisted impaired Empath derives recommendation from unreliable display options`() {
-        val source = nightStepUiSource()
-        val recommendationBlock = source
-            .substringAfter("val structuredEmpathRecommendedOption =")
-            .substringBefore("val structuredEmpathRecommendedValue")
-        val unreliableDefault = recommendationBlock.indexOf("step.displayOptions.firstOrNull { it.isDefaultRecommendation }")
-        val automaticFallback = recommendationBlock.indexOf("?: automaticDisplayOption")
-
-        assertTrue(unreliableDefault >= 0)
-        assertTrue(automaticFallback > unreliableDefault)
-    }
-
-    @Test
     fun `later-night Empath step preserves previous unreliable number`() {
         val source = hostScreenSource()
         val firstEmpath = source.indexOf("enName = \"Empath\",")

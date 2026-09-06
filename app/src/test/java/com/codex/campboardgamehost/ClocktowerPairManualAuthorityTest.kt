@@ -65,6 +65,16 @@ class ClocktowerPairManualAuthorityTest {
             projected.mapNotNull(::keyOf).toSet(),
         )
         assertFalse(projected.any { it.displayPrimary == "No Minions" })
+        val selection = ClocktowerPairManualSelectionModel.from(
+            ClocktowerPairManualAuthority.selectionPresentation(projected),
+        )
+        projected.forEach { option ->
+            val (role, seats) = requireNotNull(keyOf(option))
+            val resolved = if (role == null) selection.selectZeroCase().resolvedOption else {
+                selection.selectRole(role.value).selectSeat(seats[0]).selectSeat(seats[1]).resolvedOption
+            }
+            assertEquals(option, resolved)
+        }
     }
 
     @Test

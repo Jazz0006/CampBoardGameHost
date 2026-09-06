@@ -4,14 +4,17 @@
 
 ## 当前开发状态
 
-自动说书人正在进行 **Phase A Possible Worlds / epistemic engine 修复与重新验收**。
+当前工程重点是 **Night Step UI 的职责拆分与解耦**。已完成最新代码审计，实施顺序调整为：
 
-- A0 / A1 / A1.1 基础语义与外部参考基本稳定；
-- A2 / A2.1 需要补 schema-v2 fixture 契约；
-- A3 已在 2026-08-19 审计后重新打开，存在 poisoned Spy/Recluse 数字登记语义缺口；
-- A4 ZDD 仍是性能/表示层原型，生产不得切换到 `ZDD_DEVICE_VALIDATED`；
-- A4.5 observation cache rebuild 已重新打开，需要补 durability、lifecycle cancellation/invalidation 和 cache invariant；
-- Phase B / 动态决策下一批在 Phase A 重新通过前保持阻塞。
+1. 清理 Host 遗留夜间路径；
+2. 统一展示结果转换；
+3. 分离信息准备与渲染；
+4. 按交互职责拆分；
+5. 独立验收发布事务边界，后续再推进 Host/App 根的状态与持久化解耦。
+
+近期已合并酒鬼展示身份所有权修复（#105）及旧源码接线测试清理（#104）。
+详细进度、切片边界与验证结果只维护在当前开发路线中。结构检查点之后继续
+UI-R5 真机稳定性、EPI-MQ 信息质量与 UX-R6 推荐提供者替换；A4/ZDD 仍不切换到生产。
 
 **开发前请先阅读 [`docs/README.md`](docs/README.md) 和 [`docs/CURRENT_DEVELOPMENT_ROADMAP.md`](docs/CURRENT_DEVELOPMENT_ROADMAP.md)。** 其他设计文档中的旧 `PASS / COMPLETE / READY` 状态如果与当前路线冲突，以这两份入口文档为准。
 
