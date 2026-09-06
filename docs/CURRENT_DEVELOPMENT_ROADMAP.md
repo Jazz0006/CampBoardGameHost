@@ -449,7 +449,20 @@ owner. Do not treat pre-authorization telemetry or partial failure as a behavior
 
 Baseline: `b545637f6c8318c9192343e3130e272304be5520`; live main remains
 `93f99e0576be7b93d479ffa931bae3e4083c25af`. User requested continuing after D5.1.
-Status: **implemented locally; exact audit and full CI/R2 pending**.
+Status: **D5.2 validated; selected D1–D5 structural checkpoint complete; draft PR #106 unmerged**.
+
+Validated code checkpoint: `7f2c67603bc70022033cd80a508baa926bf70db9`.
+
+- [Full CI run 34008604939](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/34008604939)
+  passed. Production/test Kotlin compilation, `:app:testDebugUnitTest` via `:app:testFull`, and
+  `:app:assembleDebug` executed; Android logged `BUILD SUCCESSFUL in 2m 31s`.
+- ASP contracts, Real Clingo cross-validation and overall CI gate passed.
+  [R2 run 34008604873](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/34008604873)
+  and the existing local R2 script passed.
+- Seven remote blobs and the full tree matched local. Request conversion was exact modulo indentation;
+  Host outside the migration slice stayed unchanged. Host decreased from 5586 to 5473 lines (113 net).
+- All seven new adapter/resolution tests passed with the complete suite, including preceding D1–D5.1.
+  This evidence update is docs-only. APK construction is verified; real-device validation is pending.
 
 - Extract the existing Host-to-migration request conversion into
   `ClocktowerFirstNightInformationRequest.kt`. Explicit inputs are the display step, phase/round,
@@ -473,7 +486,7 @@ structured pair authority, mismatch fallback, pair publication and retention of 
 Existing lifecycle/poison/pair/confirmation tests remain; no obsolete source assertion is created.
 Run full CI/R2 for this migration/publication checkpoint; no local executable RED is claimed.
 
-At successful D5.2 validation, close the selected D1–D5 structural checkpoint. Remaining broad Host
+The successful D5.2 validation closes the selected D1–D5 structural checkpoint. Remaining broad Host
 state, legacy observation fallback and App/persistence ownership belong to D6, not mandatory extra
 micro-extractions. Next is architecture acceptance and UI-R5 real-device stabilization before the
 EPI-MQ/UX-R6 route. PR #106 remains draft; merge requires explicit user authorization.
