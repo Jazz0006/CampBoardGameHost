@@ -143,7 +143,7 @@ D1–D4 form the near-term structural checkpoint; D5 is separately risk-gated. D
 campaign requiring its own live audit and implementation scope. This route does not authorize all
 steps at once. After the selected architecture checkpoint, resume UI-R5, then EPI-MQ and UX-R6.
 
-### 4.3 Current slice — D1
+### 4.3 Completed slice — D1
 
 Branch: `codex/night-ui-legacy-path-cleanup`, based on `93f99e05`.
 
@@ -201,7 +201,41 @@ Do not manufacture a RED or a permanent source-shape test for a deletion. Local 
 was attempted but blocked before execution by the Gradle distribution network restriction; use
 existing PR CI supplied executable verification as recorded above; local tests did not execute.
 
-### 4.4 Decomposition invariants
+### 4.4 Current slice — D2 display-result projection
+
+The user's subsequent “continue” authorizes D2 as a separate commit on draft PR #106. D1 remains
+validated at its recorded checkpoint. No merge or D3 implementation is authorized by this slice.
+
+Baseline: `d9ddff9ad2263852b6b47cb6a5d983aa24b72bce` (D1 plus docs-only evidence).
+Status: **implemented locally; exact diff audit passed; PR T1/R2 validation pending**.
+
+D2 owns presentation conversion only, in the existing `ClocktowerPlayerDisplayResolution.kt`:
+
+- ordinary resolved choices use the existing `resolveClocktowerPlayerDisplay` contract;
+- numeric conversion receives a template, chosen value/truth flag and the existing confirmation /
+  expected snapshot, applying the same per-field null fallbacks (including explanation footer);
+- Boolean conversion uses matched-option presentation when available, otherwise retains the base
+  presentation/truth flag. Its proposition always comes from the supplied confirmed draft;
+- the legacy unreliable picker retains its recommendation list while clearing display options;
+- helpers preserve the supplied expected snapshot, including mismatches; they do not authorize,
+  repair or publish a decision, recompute truth, or change observation/registration/telemetry order.
+
+Production allowlist: `ClocktowerPlayerDisplayResolution.kt`, `ClocktowerNightStepUi.kt`.
+Test allowlist: `ClocktowerPlayerDisplayResolutionTest.kt`.
+Documentation: this roadmap and active handoff.
+
+Six new typed tests cover confirmed numeric output, null/empty per-field fallbacks, Boolean
+matched/unmatched options, preservation of publication rejection, and legacy-list compatibility.
+They were written before the new helper implementation; no executable RED is claimed because the
+local Gradle distribution remains unavailable. Existing ordinary/manual parity tests remain.
+Existing Empath source tests still protect preparation/telemetry wiring, which D2 does not move;
+do not retire them on the strength of display-projection tests. Revisit in D3/D5 at the real owner.
+
+No Host, session, state lifetime, ranking, legal candidate set, schema or player-renderer change.
+The remaining UI `step.copy` only suppresses recommendations; it is not display-field
+projection and remains out of scope. Use existing PR FAST/R2 CI as the executable checkpoint.
+
+### 4.5 Decomposition invariants
 
 - no God `NightStepContext` / giant parameter bag;
 - no generic `Utils` / `Helpers` dumping ground;

@@ -14,6 +14,29 @@ The user explicitly authorized a fresh architectural decision and local editing 
 Connector/one-shot/Luna writer-routing restrictions do not apply to this complete local workspace.
 This exception does not change gameplay invariants, evidence requirements or merge authorization.
 
+## Active implementation contract — D2
+
+Following the user-authorized D1 checkpoint, the user requested continuing with D2. Use a separate
+commit on existing draft PR #106; current status/evidence stays in the roadmap. Preserve D1's
+validated source and do not merge.
+
+Extend `ClocktowerPlayerDisplayResolution.kt` with narrow numeric, Boolean and legacy-unreliable
+conversion entry points. Reuse private option/confirmation projection within that file. Replace
+only the three inline display-payload construction blocks in `ClocktowerNightStepUi.kt`.
+
+Preserve numeric per-field null fallbacks, including empty-string semantics; Boolean missing-option
+fallback; the legacy recommendation-list difference; exact confirmation and expected snapshot.
+Never replace the caller's expected snapshot with the confirmation's snapshot, as that can erase a
+publication rejection. Projection does not authorize or publish. Keep all surrounding callback,
+telemetry and registration order unchanged.
+
+Add typed coverage in the existing `ClocktowerPlayerDisplayResolutionTest.kt`. Do not remove
+preparation/telemetry source guards until their contracts have a corresponding typed replacement.
+No Host/session changes, new state, visibility widening or generic context. Stop at the D2
+FAST/R2 checkpoint; D3 is the following slice.
+
+The D1 contract below is retained as historical scope for the preceding commit.
+
 ## 2. D1 scope — legacy night-path cleanup
 
 The first slice removes the old night-rendering fallback in `ClocktowerHostScreen.kt`.

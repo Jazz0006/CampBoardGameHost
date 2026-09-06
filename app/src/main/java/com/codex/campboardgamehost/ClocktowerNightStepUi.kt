@@ -509,27 +509,11 @@ internal fun ClocktowerNightStepCardLocalized(
             subjectSeats = subjectSeats,
             value = value,
         )
-        val displayStep = selectedOption?.let { option ->
-            step.copy(
-                tellPlayer = option.displayPrimary,
-                displayKind = option.displayKind,
-                displayTitle = option.displayTitle,
-                displayPrimary = option.displayPrimary,
-                displaySecondary = option.displaySecondary,
-                displayFooter = option.displayFooter,
-                displayProposition = confirmed.draft.proposition,
-                selectedInformationTruthful = option.isTruthful,
-                informationDecisionConfirmation = confirmed,
-                informationDecisionExpectedSnapshot = model.contextSnapshot,
-                displayOptions = emptyList(),
-                recommendedDisplayOptions = emptyList(),
-            )
-        } ?: step.copy(
-            displayProposition = confirmed.draft.proposition,
-            informationDecisionConfirmation = confirmed,
-            informationDecisionExpectedSnapshot = model.contextSnapshot,
-            displayOptions = emptyList(),
-            recommendedDisplayOptions = emptyList(),
+        val displayStep = resolveClocktowerBooleanPlayerDisplay(
+            step = step,
+            option = selectedOption,
+            confirmed = confirmed,
+            expectedSnapshot = model.contextSnapshot,
         )
         onShowPlayerDisplay(displayStep)
     }
@@ -973,19 +957,13 @@ internal fun ClocktowerNightStepCardLocalized(
                             }
                         }
                         onShowPlayerDisplay(
-                            step.copy(
-                                tellPlayer = value.toString(),
-                                displayKind = ClocktowerDisplayKind.Number,
-                                displayTitle = template?.displayTitle ?: step.displayTitle,
-                                displayPrimary = value.toString(),
-                                displaySecondary = template?.displaySecondary ?: step.displaySecondary,
-                                displayFooter = template?.displayFooter ?: step.displayFooter ?: step.explanation,
-                                displayProposition = confirmed.draft.proposition,
-                                selectedInformationTruthful = structuredEmpathSelectionIsTruthful(value),
-                                informationDecisionConfirmation = confirmed,
-                                informationDecisionExpectedSnapshot = structuredNumberUiModel.contextSnapshot,
-                                displayOptions = emptyList(),
-                                recommendedDisplayOptions = emptyList(),
+                            resolveClocktowerNumericPlayerDisplay(
+                                step = step,
+                                template = template,
+                                value = value,
+                                truthful = structuredEmpathSelectionIsTruthful(value),
+                                confirmed = confirmed,
+                                expectedSnapshot = model.contextSnapshot,
                             ),
                         )
                     },
@@ -1121,17 +1099,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     OutlinedButton(
                         onClick = {
                             onShowPlayerDisplay(
-                                step.copy(
-                                    tellPlayer = option.displayPrimary,
-                                    displayKind = option.displayKind,
-                                    displayTitle = option.displayTitle,
-                                    displayPrimary = option.displayPrimary,
-                                    displaySecondary = option.displaySecondary,
-                                    displayFooter = option.displayFooter,
-                                    displayProposition = option.proposition,
-                                    selectedInformationTruthful = option.isTruthful,
-                                    displayOptions = emptyList(),
-                                ),
+                                resolveClocktowerLegacyUnreliablePlayerDisplay(step, option),
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
