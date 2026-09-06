@@ -71,11 +71,14 @@ class ClocktowerPairManualSelectionModelTest {
             InformationProposition.RoleAt(7, RoleId("Empath")),
         )))
         val repeated = option("Chef", 1, 1)
-        val emptyZero = zeroOption().copy(proposition = InformationProposition.AllOf(emptyList()))
+        val mixedZero = zeroOption().copy(proposition = InformationProposition.AllOf(listOf(
+            InformationProposition.RoleInPlay(RoleId("Outsider"), false),
+            InformationProposition.RoleAt(1, RoleId("Chef")),
+        )))
         val presentRole = zeroOption().copy(proposition = InformationProposition.AllOf(listOf(
             InformationProposition.RoleInPlay(RoleId("Outsider"), true),
         )))
-        val malformed = listOf(mixed, repeated, emptyZero, presentRole)
+        val malformed = listOf(mixed, repeated, mixedZero, presentRole)
         val empty = ClocktowerPairManualSelectionModel.from(ClocktowerPairManualAuthority.selectionPresentation(malformed))
         assertTrue(empty.roleIds.isEmpty())
         assertTrue(!empty.hasZeroCase)
