@@ -1,6 +1,6 @@
 from pathlib import Path
 
-# Trigger the one-shot workflow only after its path-filtered definition is present on the branch.
+# Trigger the one-shot workflow after the core-test assertion was made JSON-format independent.
 TARGET = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
 text = TARGET.read_text(encoding="utf-8")
 
