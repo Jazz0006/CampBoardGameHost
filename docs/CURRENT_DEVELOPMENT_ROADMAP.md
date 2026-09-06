@@ -256,7 +256,25 @@ projection and remains out of scope. Use existing PR FAST/R2 CI as the executabl
 The user requested continuing after D2. Implement D3 as its own commit on draft PR #106,
 without merging or expanding into D4/D5.
 Baseline: `807b0eee3ef7317a6de5452dee79c32ef76cd123` (D2 plus documentation).
-Status: **implemented locally; static audit and FAST/R2 CI pending**.
+Status: **D3 implemented and FAST/R2 checkpoint validated; draft PR #106 open, not merged**.
+
+Validated code checkpoint: `84af55e0ee0af2c434965bed1c942fba0e42ccc5`.
+
+- [CI run 34001487622](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/34001487622)
+  passed. Production/test Kotlin compilation and `:app:testFast` executed (not cached/up-to-date);
+  Android logged `BUILD SUCCESSFUL in 1m 42s`.
+- [R2 run 34001487585](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/34001487585)
+  and overall CI gate passed. FAST includes all nine new preparation tests and D2 regressions.
+- Existing R2 script and exact local diff audit passed; the rendering/publication tail is identical
+  except two equivalent variable references. Six remote blobs and the full tree matched local.
+- Night Step UI dropped 128 lines; the new 175-line preparation owner has no Compose or mutable
+  state dependency. One obsolete source-string assertion was replaced by typed priority coverage.
+- This evidence update is docs-only; the checkpoint above remains the executable baseline.
+  Full tests/APK and real-device validation were not performed for this T1 checkpoint.
+
+Next: **D4 — interaction-family rendering ownership**. Start with narrow single-target/two-target/
+information-choice/ruling contracts, preserve the existing square-table and selection lifetime.
+D5 publication coordination and D6 Host/App-root state migration remain separate scopes.
 
 New owner: `ClocktowerStructuredInformationPreparation.kt` (no Compose imports or mutable state).
 It projects an existing Host step plus actor/target identity into numeric or Boolean adapter input.
