@@ -43,7 +43,6 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.Information
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import kotlinx.coroutines.Dispatchers
@@ -280,107 +279,22 @@ internal fun ClocktowerNightStepCardLocalized(
         styleOf = ClocktowerDisplayOption::recommendationStyle,
         selectionAudit = selectionAudit,
     )
-    fun numericOptionValue(option: ClocktowerDisplayOption?): Int? =
-        (option?.proposition as? InformationProposition.NumericResult)?.value
-            ?: option?.displayPrimary?.toIntOrNull()
-    val structuredEmpathActorSeat = step.actor
+    val informationIdentity = ClocktowerInformationDecisionIdentity(
+        gameId, phase, round, sequence, InformationDecisionRevision(gameStateRevision, playerInputRevision),
+    )
+    val structuredStyle = if (automaticStorytellerInfo) automaticStorytellerStyle else RecommendationStyle.BALANCED
+    val structuredActorSeat = step.actor
         ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
-    val structuredEmpathSubjectSeats = step
-        .legacyInformationCandidates
-        .asSequence()
-        .mapNotNull { it.proposition as? InformationProposition.NumericResult }
-        .firstOrNull { it.metric == NumericMetric.LIVING_EVIL_NEIGHBOURS }
-        ?.subjectSeats
-        ?: (step.displayProposition as? InformationProposition.NumericResult)
-            ?.takeIf { it.metric == NumericMetric.LIVING_EVIL_NEIGHBOURS }
-            ?.subjectSeats
-        ?: emptyList()
-    val structuredEmpathTruthValue = step
-        .takeIf { it.roleEnName == "Empath" }
-        ?.legacyInformationCandidates
-        ?.firstOrNull { it.isTruthful }
-        ?.let(::numericOptionValue)
-        ?: (step.displayProposition as? InformationProposition.NumericResult)?.value
-        ?: step.tellPlayer?.toIntOrNull()
+    val structuredRecommendedOption = clocktowerStructuredRecommendedOption(
+        automatic = automaticStorytellerInfo,
+        automaticOption = automaticDisplayOption,
+        displayedOptions = displayedInformationOptions,
+        unreliableOptions = step.displayOptions,
+    )
+    val numericPreparation = clocktowerNumericInformationPreparation(step, structuredActorSeat, structuredRecommendedOption)
+    val structuredNumberUiModel = numericPreparation?.prepareUiModel(recommendationCoordinator, informationIdentity, structuredStyle)
     fun structuredEmpathSelectionIsTruthful(value: Int): Boolean =
-        projectedFirstNightInformationCandidates
-            .firstOrNull { numericOptionValue(it) == value }
-            ?.isTruthful
-            ?: (value == structuredEmpathTruthValue)
-    val structuredEmpathRecommendedOption = if (automaticStorytellerInfo) {
-        automaticDisplayOption
-    } else {
-        displayedInformationOptions.firstOrNull { it.isDefaultRecommendation }
-            ?: step.displayOptions.firstOrNull { it.isDefaultRecommendation }
-            ?: automaticDisplayOption
-    }
-    val structuredEmpathRecommendedValue = numericOptionValue(structuredEmpathRecommendedOption)
-    val structuredEmpathUiModel = if (
-        step.roleEnName == "Empath" &&
-        step.spyRegistrationKey == null &&
-        step.recluseRegistrationKey == null &&
-        structuredEmpathActorSeat != null &&
-        structuredEmpathSubjectSeats.isNotEmpty() &&
-        structuredEmpathTruthValue != null
-    ) {
-        prepareEmpathNumberInformationUiModel(
-            coordinator = recommendationCoordinator,
-            gameId = gameId,
-            phase = phase,
-            round = round,
-            sequence = sequence,
-            actorSeat = structuredEmpathActorSeat,
-            subjectSeats = structuredEmpathSubjectSeats,
-            trueValue = structuredEmpathTruthValue,
-            reliability = step.informationReliability,
-            recommendationStyle = if (automaticStorytellerInfo) automaticStorytellerStyle else RecommendationStyle.BALANCED,
-            revision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
-            recommendedValue = structuredEmpathRecommendedValue,
-            previousShownValue = step.previousShownNumber,
-            pressureCostPerPoint = 1,
-        )
-    } else {
-        null
-    }
-    val structuredChefActorSeat = step.actor
-        ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
-    val structuredChefProposition = (step.displayProposition as? InformationProposition.NumericResult)
-        ?.takeIf { it.metric == NumericMetric.ADJACENT_EVIL_PAIRS }
-    val structuredChefUiModel = if (
-        step.roleEnName == "Chef" &&
-        step.informationReliability != InformationReliability.RELIABLE &&
-        step.spyRegistrationKey == null &&
-        step.recluseRegistrationKey == null &&
-        structuredChefActorSeat != null &&
-        structuredChefProposition != null &&
-        step.numericMinimumValue != null &&
-        step.numericMaximumValue != null
-    ) {
-        prepareNumericInformationUiModel(
-            coordinator = recommendationCoordinator,
-            gameId = gameId,
-            phase = phase,
-            round = round,
-            sequence = sequence,
-            actorSeat = structuredChefActorSeat,
-            abilityRole = com.codex.campboardgamehost.clocktower.domain.RoleId("Chef"),
-            metric = NumericMetric.ADJACENT_EVIL_PAIRS,
-            subjectSeats = structuredChefProposition.subjectSeats,
-            trueValue = structuredChefProposition.value,
-            minimumValue = step.numericMinimumValue,
-            maximumValue = step.numericMaximumValue,
-            reliability = step.informationReliability,
-            recommendationStyle = if (automaticStorytellerInfo) automaticStorytellerStyle else RecommendationStyle.BALANCED,
-            revision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
-            recommendedValue = structuredEmpathRecommendedValue,
-            previousShownValue = step.previousShownNumber,
-            pressureCostPerPoint = 1,
-        )
-    } else {
-        null
-    }
-    val structuredFortuneTellerActorSeat = step.actor
-        ?.let { actor -> cards.indexOf(actor).plus(1).takeIf { it > 0 } }
+        numericPreparation?.isTruthful(value, projectedFirstNightInformationCandidates) ?: false
     val fortuneTellerSelectedSeats = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
         .mapNotNull { selectedName ->
             cards.indexOfFirst { it.name == selectedName }
@@ -396,53 +310,12 @@ internal fun ClocktowerNightStepCardLocalized(
             .filterTo(linkedSetOf()) { seat -> seat !in fortuneTellerSelectedSeats }
         else -> emptySet()
     }
-    val structuredFortuneTellerProposition = (step.displayProposition as? InformationProposition.BooleanResult)
-        ?.takeIf { proposition ->
-            proposition.metric == BooleanMetric.DEMON_OR_RED_HERRING_PRESENT &&
-                proposition.sourceSeat == structuredFortuneTellerActorSeat &&
-                proposition.subjectSeats == structuredFortuneTellerSelectedSeats
-        }
-    val structuredFortuneTellerRecommendedOption = if (automaticStorytellerInfo) {
-        automaticDisplayOption
-    } else {
-        displayedInformationOptions.firstOrNull { it.isDefaultRecommendation }
-            ?: step.displayOptions.firstOrNull { it.isDefaultRecommendation }
-            ?: automaticDisplayOption
-    }
-    val structuredFortuneTellerRecommendedValue =
-        (structuredFortuneTellerRecommendedOption?.proposition as? InformationProposition.BooleanResult)
-            ?.takeIf { proposition ->
-                proposition.metric == BooleanMetric.DEMON_OR_RED_HERRING_PRESENT &&
-                    proposition.sourceSeat == structuredFortuneTellerActorSeat &&
-                    proposition.subjectSeats == structuredFortuneTellerSelectedSeats
-            }
-            ?.value
-    val structuredFortuneTellerUiModel = if (
-        step.action == ClocktowerNightAction.FortuneTeller &&
-        step.roleEnName == "Fortune Teller" &&
-        structuredFortuneTellerActorSeat != null &&
-        structuredFortuneTellerSelectedSeats != null &&
-        structuredFortuneTellerProposition != null
-    ) {
-        prepareBooleanInformationUiModel(
-            coordinator = recommendationCoordinator,
-            gameId = gameId,
-            phase = phase,
-            round = round,
-            sequence = sequence,
-            actorSeat = structuredFortuneTellerActorSeat,
-            abilityRole = com.codex.campboardgamehost.clocktower.domain.RoleId("Fortune Teller"),
-            metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
-            subjectSeats = structuredFortuneTellerSelectedSeats,
-            trueValue = structuredFortuneTellerProposition.value,
-            reliability = step.informationReliability,
-            recommendationStyle = if (automaticStorytellerInfo) automaticStorytellerStyle else RecommendationStyle.BALANCED,
-            revision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
-            recommendedValue = structuredFortuneTellerRecommendedValue,
-        )
-    } else {
-        null
-    }
+    val booleanPreparation = clocktowerBooleanInformationPreparation(
+        step, structuredActorSeat, fortuneTellerSelectedSeats, structuredRecommendedOption,
+    )
+    val structuredFortuneTellerUiModel = booleanPreparation?.prepareUiModel(
+        recommendationCoordinator, informationIdentity, structuredStyle,
+    )
     val resultFirstFortuneTellerOptions = resultFirstRegistrationCandidates.filter { option ->
         val proposition = option.proposition as? InformationProposition.BooleanResult
         proposition?.metric == BooleanMetric.DEMON_OR_RED_HERRING_PRESENT
@@ -461,7 +334,6 @@ internal fun ClocktowerNightStepCardLocalized(
         ?.choices
         ?.firstOrNull { choice -> choice.recommended && choice.value in fortuneTellerLegalResults }
         ?.value
-    val structuredNumberUiModel = structuredEmpathUiModel ?: structuredChefUiModel
 
     fun showRecommendedDisplayOption(option: ClocktowerDisplayOption) {
         onApplyRecommendedDisplayOption(option)
@@ -488,7 +360,7 @@ internal fun ClocktowerNightStepCardLocalized(
             return
         }
         val model = structuredFortuneTellerUiModel ?: return
-        val actorSeat = structuredFortuneTellerActorSeat ?: return
+        val actorSeat = structuredActorSeat ?: return
         val subjectSeats = structuredFortuneTellerSelectedSeats ?: return
         val choice = model.choices.firstOrNull { it.value == value } ?: return
         val currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision)
@@ -932,7 +804,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 }
 
             structuredNumberUiModel?.let { model ->
-                val template = structuredEmpathRecommendedOption
+                val template = structuredRecommendedOption
                     ?: displayedInformationOptions.firstOrNull()
                     ?: step.displayOptions.firstOrNull()
                 StructuredNumberInformationDecisionPanel(

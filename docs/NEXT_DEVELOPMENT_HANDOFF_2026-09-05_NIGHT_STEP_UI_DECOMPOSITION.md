@@ -14,7 +14,19 @@ The user explicitly authorized a fresh architectural decision and local editing 
 Connector/one-shot/Luna writer-routing restrictions do not apply to this complete local workspace.
 This exception does not change gameplay invariants, evidence requirements or merge authorization.
 
-## Active implementation contract — D2
+## Active implementation contract — D3
+
+The user requested continuing after D2. Current progress/evidence lives in the roadmap.
+Introduce a Compose-free numeric/Boolean preparation owner and adapter request types. Keep
+identity/freshness as narrow immutable data and continue calling the existing legality adapters.
+
+Preserve numeric fallback/default order, history/pressure/style arguments, registration gating,
+Chef bounds, and exact ordered Boolean actor/target matching. Leave target selection and
+publication effects in place. Direct tests must cover these input contracts and adapter parity.
+Replace only the source-string recommendation-priority assertion superseded by typed coverage.
+Do not retire telemetry or Host-history guards here. No D4/D5 or merge in this slice.
+
+## Prior implementation contract — D2
 
 Following the user-authorized D1 checkpoint, the user requested continuing with D2. Use a separate
 commit on existing draft PR #106; current status/evidence stays in the roadmap. Preserve D1's

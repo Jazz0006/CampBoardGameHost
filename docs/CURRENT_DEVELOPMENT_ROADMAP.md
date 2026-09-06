@@ -201,7 +201,7 @@ Do not manufacture a RED or a permanent source-shape test for a deletion. Local 
 was attempted but blocked before execution by the Gradle distribution network restriction; use
 existing PR CI supplied executable verification as recorded above; local tests did not execute.
 
-### 4.4 Current slice — D2 display-result projection
+### 4.4 Completed slice — D2 display-result projection
 
 The user's subsequent “continue” authorizes D2 as a separate commit on draft PR #106. D1 remains
 validated at its recorded checkpoint. No merge or D3 implementation is authorized by this slice.
@@ -251,7 +251,38 @@ No Host, session, state lifetime, ranking, legal candidate set, schema or player
 The remaining UI `step.copy` only suppresses recommendations; it is not display-field
 projection and remains out of scope. Use existing PR FAST/R2 CI as the executable checkpoint.
 
-### 4.5 Decomposition invariants
+### 4.5 Current slice — D3 structured information preparation
+
+The user requested continuing after D2. Implement D3 as its own commit on draft PR #106,
+without merging or expanding into D4/D5.
+Baseline: `807b0eee3ef7317a6de5452dee79c32ef76cd123` (D2 plus documentation).
+Status: **implemented locally; static audit and FAST/R2 CI pending**.
+
+New owner: `ClocktowerStructuredInformationPreparation.kt` (no Compose imports or mutable state).
+It projects an existing Host step plus actor/target identity into numeric or Boolean adapter input.
+The prepared request owns only information semantics; it never captures the Host, roster, callbacks
+or a mutable session. `ClocktowerInformationDecisionIdentity` is the five-field game/phase/round/
+sequence/revision identity shared by adapter calls, not an application Context object.
+
+- preserve Empath legacy-subject/truth/display/text fallback order and 0..2 bounds;
+- preserve Chef unreliable-only and explicit-bounds gating; registration routes stay separate;
+- preserve first matching projected numeric truth classification;
+- preserve automatic/default/unreliable/fallback recommendation selection without reranking;
+- preserve exact ordered Boolean source/target matching and typed-only recommended value;
+- call existing numeric/Boolean adapters with unchanged identity, style, history and pressure inputs;
+- keep target editing, confirmation, registration, telemetry and publication with current owners.
+
+Allowlist: new preparation owner, `ClocktowerNightStepUi.kt`, new
+`ClocktowerStructuredInformationPreparationTest.kt`, `StructuredEmpathInformationAdapterTest.kt`,
+this roadmap and active handoff. No changes to Host, lower adapters, session, schema or persistence.
+
+Nine new typed tests characterize preparation boundaries and compare model choices, snapshots and
+confirmed drafts with the existing adapters. The old assisted-Empath source-string recommendation
+assertion is replaced by the direct priority-order test; telemetry and Host history assertions stay
+because those owning seams have not moved. Tests were written before implementation; no executable
+RED is claimed with local Gradle dependencies unavailable. Use existing PR FAST/R2 checkpoint.
+
+### 4.6 Decomposition invariants
 
 - no God `NightStepContext` / giant parameter bag;
 - no generic `Utils` / `Helpers` dumping ground;
