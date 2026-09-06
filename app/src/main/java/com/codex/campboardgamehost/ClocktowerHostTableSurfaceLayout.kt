@@ -11,14 +11,18 @@ internal data class ResolvedHostTableSurfaceLayout(
     val seatDensity: ClocktowerSquareTableSeatDensity,
 )
 
+private val HOST_TABLE_COMPACT_FALLBACK_SCALES = listOf(0.96f, 0.92f, 0.88f, 0.84f, 0.80f)
+
 /**
  * Chooses the largest supported seat density that satisfies the strict rounded-perimeter capacity
  * invariant for the actual surface constraints.
  *
  * The normal player-count density is always attempted first. Only when it cannot fit do we descend
- * through the existing medium/compact tiers. If an unusually constrained surface cannot safely fit
- * even the compact tier, rendering falls back to compact best-effort geometry rather than allowing
- * a capacity assertion to terminate the Activity.
+ * through the existing medium/compact tiers, followed by small geometry-only reductions of the
+ * compact tier. Typography remains at the compact readable minimum while card geometry adapts to
+ * the real viewport. If an unusually constrained surface still cannot satisfy the invariant,
+ * rendering uses the smallest best-effort geometry rather than allowing a capacity assertion to
+ * terminate the Activity.
  */
 internal fun resolveHostTableSurfaceLayout(
     availableWidth: Float,
@@ -32,10 +36,18 @@ internal fun resolveHostTableSurfaceLayout(
         detailedSeatCards = detailedSeatCards,
         playerCount = playerCount,
     )
-    val densityCandidates = clocktowerSquareTableSeatDensityCandidates(
+    val tierCandidates = clocktowerSquareTableSeatDensityCandidates(
         playerCount = playerCount,
         detailedSeatCards = detailedSeatCards,
     )
+    val compactDensity = tierCandidates.last()
+    val scaledCompactCandidates = HOST_TABLE_COMPACT_FALLBACK_SCALES.map { scale ->
+        compactDensity.copy(
+            cardWidth = compactDensity.cardWidth * scale,
+            cardHeight = compactDensity.cardHeight * scale,
+        )
+    }
+    val densityCandidates = (tierCandidates + scaledCompactCandidates).distinct()
 
     densityCandidates.forEach { density ->
         val constraints = preferredConstraints.copy(
