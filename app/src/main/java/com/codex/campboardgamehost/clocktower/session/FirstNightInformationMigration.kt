@@ -136,6 +136,25 @@ internal data class FirstNightInformationMigration(
         ),
     )
 
+    /** Complete a reveal attempt after the caller has recorded this state's shadow telemetry. */
+    fun resolvePublication(
+        request: FirstNightInformationRequest,
+        shadow: FirstNightShadowResult,
+    ): FirstNightPublicationResolution {
+        val authoritativePairDomain = request.family.usesAuthoritativePairDomain()
+        val prepared = if (authoritativePairDomain) {
+            publishAuthoritativePairDomain(request)
+        } else {
+            publishIfShadowMatches(request)
+        }
+        if (prepared.isDisplayed(request.decisionId)) return FirstNightPublicationResolution.AlreadyDisplayed
+        return if (authoritativePairDomain || shadow is FirstNightShadowResult.Ready) {
+            FirstNightPublicationResolution.Published(prepared.display(request.decisionId, request.selectedCandidateId))
+        } else {
+            FirstNightPublicationResolution.LegacyFallback
+        }
+    }
+
     /** Display is the sole commit boundary: it creates exactly one typed observation. */
     fun display(decisionId: String, candidateId: String): FirstNightInformationMigration {
         if (decisionId in displayedObservations) return this
@@ -157,4 +176,11 @@ internal data class FirstNightInformationMigration(
     fun isDisplayed(decisionId: String): Boolean = decisionId in displayedObservations
     fun isReady(decisionId: String): Boolean = decisionId in lifecycle.readyDecisionIds
     fun generation(): Long = lifecycle.generation
+}
+
+/** A fallback is permission to retain the legacy reveal, not a newly committed migration fact. */
+internal sealed interface FirstNightPublicationResolution {
+    data class Published(val migration: FirstNightInformationMigration) : FirstNightPublicationResolution
+    data object AlreadyDisplayed : FirstNightPublicationResolution
+    data object LegacyFallback : FirstNightPublicationResolution
 }

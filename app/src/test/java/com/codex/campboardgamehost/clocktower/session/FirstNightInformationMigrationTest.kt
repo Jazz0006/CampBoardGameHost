@@ -124,6 +124,33 @@ class FirstNightInformationMigrationTest {
         assertTrue(FirstNightInformationMigration().shadow(request) is FirstNightShadowResult.Mismatch)
     }
 
+    @Test fun `reveal resolution preserves non-pair mismatch fallback without state update`() {
+        val request = request(FirstNightInformationFamily.CHEF, 2, ReliabilityState.POISONED, "old", "new")
+        val migration = FirstNightInformationMigration()
+        assertEquals(FirstNightPublicationResolution.LegacyFallback,
+            migration.resolvePublication(request, migration.shadow(request)))
+        assertFalse(migration.isDisplayed(request.decisionId))
+    }
+
+    @Test fun `reveal resolution commits selected authoritative pair despite parity mismatch`() {
+        val request = request(FirstNightInformationFamily.INVESTIGATOR, 2, ReliabilityState.DRUNK, "old", "new")
+        val migration = FirstNightInformationMigration()
+        val result = migration.resolvePublication(request, migration.shadow(request)) as FirstNightPublicationResolution.Published
+        assertEquals(request.migratedCandidates.single().observation, result.migration.displayedObservation(request.decisionId))
+        assertEquals(FirstNightPublicationResolution.AlreadyDisplayed,
+            result.migration.resolvePublication(request, result.migration.shadow(request)))
+    }
+
+    @Test fun `reveal resolution never replaces a displayed fact even when request changes`() {
+        val original = request(FirstNightInformationFamily.CHEF, 2, ReliabilityState.RELIABLE, "first")
+        val initial = FirstNightInformationMigration()
+        val published = (initial.resolvePublication(original, initial.shadow(original)) as FirstNightPublicationResolution.Published).migration
+        val changed = request(FirstNightInformationFamily.CHEF, 2, ReliabilityState.RELIABLE, "other", "new")
+        assertEquals(FirstNightPublicationResolution.AlreadyDisplayed,
+            published.resolvePublication(changed, published.shadow(changed)))
+        assertEquals(original.migratedCandidates.single().observation, published.displayedObservation(original.decisionId))
+    }
+
     private fun request(
         family: FirstNightInformationFamily,
         seat: Int,

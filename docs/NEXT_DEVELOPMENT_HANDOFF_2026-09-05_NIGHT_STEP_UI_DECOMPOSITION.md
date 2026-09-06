@@ -14,7 +14,20 @@ The user explicitly authorized a fresh architectural decision and local editing 
 Connector/one-shot/Luna writer-routing restrictions do not apply to this complete local workspace.
 This exception does not change gameplay invariants, evidence requirements or merge authorization.
 
-## Active implementation contract — D5.1
+## Active implementation contract — D5.2
+
+Extract Host-to-first-night request conversion verbatim into a dedicated adapter with explicit inputs.
+Keep pair legality with the existing authority and localized legacy conversion only for parity/fallback.
+Give migration a typed publication resolution: Published updates state; AlreadyDisplayed reopens only;
+LegacyFallback retains old reveal behavior without a new migration fact. Parity telemetry stays before
+resolution and uses the same migration/request shadow. No state/effect lifetime or failure-order change.
+
+Keep upstream registration/selection telemetry at its current role-specific owner after audit. D5.2
+closes the selected structural campaign on full CI/R2 success; D6 is a separate Host/App-state campaign.
+Then proceed to architecture acceptance and UI-R5 real-device stabilization. No merge authorization.
+Current progress/evidence lives only in the roadmap.
+
+## Prior implementation contract — D5.1
 
 Extend the existing player-reveal handoff seam to own synchronous Host effect ordering and the narrow
 confirmation/snapshot/revision authorization check. Keep authorization lazy, publication short-circuited

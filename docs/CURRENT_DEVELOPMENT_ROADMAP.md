@@ -395,7 +395,7 @@ Manual now has a typed preparation boundary, and single-target/ruling owners wer
 Next: **D5 publication coordination audit**, with a separately bounded transaction contract before
 any extraction. D6 and real-device UI-R5 remain later gates. Keep PR #106 draft; do not merge.
 
-### 4.8 Current slice — D5.1 Host publication handoff ordering
+### 4.8 Completed slice — D5.1 Host publication handoff ordering
 
 Baseline: `123938fab065bfec0bc202e333a5b36bf2ba4dd2`; live main remains
 `93f99e0576be7b93d479ffa931bae3e4083c25af`. User requested continuing after D4.
@@ -445,7 +445,40 @@ no executable local RED claimed. Current slice is D5.1 only; PR stays draft and 
 Next D5.2: audit the upstream registration/telemetry and first-night migration effects for a coherent
 owner. Do not treat pre-authorization telemetry or partial failure as a behavior fix hidden in refactoring.
 
-### 4.9 Decomposition invariants
+### 4.9 Current slice — D5.2 first-night migration preparation and resolution
+
+Baseline: `b545637f6c8318c9192343e3130e272304be5520`; live main remains
+`93f99e0576be7b93d479ffa931bae3e4083c25af`. User requested continuing after D5.1.
+Status: **implemented locally; exact audit and full CI/R2 pending**.
+
+- Extract the existing Host-to-migration request conversion into
+  `ClocktowerFirstNightInformationRequest.kt`. Explicit inputs are the display step, phase/round,
+  roster, script/seed/poison, language and style; no captured Host or mutable context. The existing
+  conversion body is preserved, including family/actor gating, selected-option fallback, stable
+  deduplication, rank/metadata, localized legacy parsing and authoritative pair observation resolution.
+- Move publication branch policy into `FirstNightInformationMigration.resolvePublication` with
+  typed Published / AlreadyDisplayed / LegacyFallback results. Only Published replaces Host state.
+  Host still records parity telemetry before invoking the resolution; the supplied shadow comes from
+  the same current migration/request. Existing publish/display/lifecycle methods remain authoritative.
+- Keep registration and selection telemetry in Night Step. Their role-specific timing precedes Host
+  authorization and they do not share the migration state lifetime. Combining these into one generic
+  transaction would either capture Host state or silently change callback/failure order.
+- Preserve legacy mismatch fallback (allowed reveal without a migrated fact), pair-authority mismatch
+  acceptance, duplicate reveal and first displayed fact. No rollback, new deduplication, rule, ranking,
+  persistence or confirmation change. D5.1 handoff and observation/history/reveal tail remain unchanged.
+
+Allowlist: new request adapter/test, Host, existing migration/test, roadmap and active handoff.
+Seven new tests cover request gating, identity/reliability/fallback, duplicate ranking/metadata,
+structured pair authority, mismatch fallback, pair publication and retention of displayed facts.
+Existing lifecycle/poison/pair/confirmation tests remain; no obsolete source assertion is created.
+Run full CI/R2 for this migration/publication checkpoint; no local executable RED is claimed.
+
+At successful D5.2 validation, close the selected D1–D5 structural checkpoint. Remaining broad Host
+state, legacy observation fallback and App/persistence ownership belong to D6, not mandatory extra
+micro-extractions. Next is architecture acceptance and UI-R5 real-device stabilization before the
+EPI-MQ/UX-R6 route. PR #106 remains draft; merge requires explicit user authorization.
+
+### 4.10 Decomposition invariants
 
 - no God `NightStepContext` / giant parameter bag;
 - no generic `Utils` / `Helpers` dumping ground;
