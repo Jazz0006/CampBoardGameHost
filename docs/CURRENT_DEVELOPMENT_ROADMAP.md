@@ -1,16 +1,16 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-06 Australia/Sydney  
+> Updated: 2026-09-06 Australia/Sydney
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **This file is the single current project-status and execution-priority authority.**
 
 ## 1. Live development context
 
-Live `main` at the start of the completed Drunk shown-identity hotfix campaign:
+Live `main` verified for the current decomposition campaign:
 
 ```text
-9cd72cba22737d1d803f8a30d25c2a5c25570211
-Tests: retire obsolete source-wiring guards (#104)
+93f99e0576be7b93d479ffa931bae3e4083c25af
+Fix Drunk shown-identity ownership boundary (#105)
 ```
 
 Always re-query live GitHub state before implementation, validation or merge.
@@ -49,7 +49,7 @@ The targeted setup/recommendation ownership repair documented in:
 
 `docs/DRUNK_SHOWN_IDENTITY_OWNERSHIP_REPAIR_2026-09-05.md`
 
-is now **implemented and locally/CI-workflow checkpoint validated** on branch:
+is now **merged into main through PR #105**. Historical implementation branch:
 
 `codex/drunk-shown-identity-ownership-cleanup`
 
@@ -96,88 +96,96 @@ Completed repair evidence:
 
 A separate recommendation-quality parity finding remains intentionally deferred: generic impaired information derived from fixed `shownRole` is currently selected inside `SetupEvaluator`, not jointly enumerated with all aggregate setup-plan choices. This must be addressed as recommendation-quality work without returning shown-identity authority to recommendation.
 
-A normal PR/CI gate is still required before merge.
+PR #105 is merged; its historical branch/checkpoint identifiers above are provenance, not pending work.
 
 ## 3. Immediate current priority — Night Step UI decomposition
 
-Resume the Night Step UI decomposition campaign from a fresh live-state audit.
+The fresh audit and revised route were accepted by the user on 2026-09-06 (Australia/Sydney).
+The user authorized updating this route and implementing **D1 only**. Work is performed in a
+complete local Git workspace; the Chat/connector large-file writer restrictions are waived for
+this campaign. All behavior, state-lifetime, validation and merge constraints remain applicable.
 
-The next architecture checkpoint is:
+Primary reference: `docs/CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md`.
+Active handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-05_NIGHT_STEP_UI_DECOMPOSITION.md`.
 
-```text
-fresh Night Step UI cluster ownership audit
--> select first behavior-preserving decomposition slice
--> UI-R5 real-device stabilization / feature freeze
--> EPI-MQ / Productive Uncertainty
--> UX-R6 recommendation-provider replacement
-```
+## 4. Revised ownership-decomposition route
 
-Primary decomposition reference:
+### 4.1 Fresh audit findings
 
-`docs/CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md`
+Baseline `93f99e05`:
 
-Current active handoff:
+| Production owner | Lines | Bytes | Boundary concern |
+|---|---:|---:|---|
+| ClocktowerHostScreen.kt | 5790 | 349860 | 103 parameters / 39 on-callbacks; duplicated legacy night wiring |
+| CampBoardGameHostApp.kt | 4517 | 258783 | application state, persistence, setup and transaction orchestration |
+| ClocktowerNightStepUi.kt | 1203 | 62631 | 49 parameters / 13 on-callbacks; preparation, selection, effects and rendering |
 
-`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-05_NIGHT_STEP_UI_DECOMPOSITION.md`
+Pair Manual already has a dedicated full-screen dialog and selection model. The existing
+`resolveClocktowerPlayerDisplay` pure function already covers ordinary resolved choices; typed
+numeric/boolean paths still construct their own display copies. Its return type remains the full
+Storyteller step, so it is not yet a sanitized player-only payload.
 
-Before executing the next slice, re-query live `main` and the Drunk hotfix branch/PR state. Do not assume the validated hotfix branch is merged until GitHub confirms it.
+The earlier Pair-Manual-first S1–S5 order is superseded by the route below. File size remains a
+signal; acceptance measures ownership clarity and the code needed to understand a normal change.
 
-## 4. Night Step UI decomposition — NEXT ARCHITECTURE CAMPAIGN
+### 4.2 Implementation sequence
 
-### 4.1 Goal
+| Step | Scope | Acceptance boundary |
+|---|---|---|
+| D1 | Remove superseded Host night fallback | one active night wiring path; preserve empty-step fail-closed behavior and all active callbacks |
+| D2 | Consolidate display-result projection | ordinary, numeric and boolean conversions preserve proposition, truth flag, confirmation, snapshot and existing fallback differences |
+| D3 | Separate structured preparation from rendering | reuse numeric/boolean adapters; prepared narrow models consumed by UI |
+| D4 | Extract interaction families | single-target, two-target, information-choice and Storyteller-ruling ownership; complete typed Pair Manual input without a God context |
+| D5 | Consolidate information publication coordination | preserve registration, authorization, observation/history, telemetry and reveal ordering; prove rejection and duplicate-publication behavior |
+| D6 | Follow-on Host/App-root decomposition | incremental checkpoint state, snapshot codec/restore and setup ownership; no wholesale ViewModel migration |
 
-Reduce the practical **change context radius** of Night Step changes. The target is not a numeric file-size score; it is clearer ownership and smaller feature-local reasoning scope.
+D1–D4 form the near-term structural checkpoint; D5 is separately risk-gated. D6 is a follow-on
+campaign requiring its own live audit and implementation scope. This route does not authorize all
+steps at once. After the selected architecture checkpoint, resume UI-R5, then EPI-MQ and UX-R6.
 
-The current concern is that `ClocktowerNightStepUi.kt` has historically mixed:
+### 4.3 Current slice — D1
 
-- external state/wiring;
-- recommendation/selection orchestration;
-- structured information preparation;
-- interaction-local state;
-- player-display projection;
-- telemetry/diagnostics;
-- action rendering.
+Branch: `codex/night-ui-legacy-path-cleanup`, based on `93f99e05`.
 
-### 4.2 Fresh-audit requirement
+Status: **implemented; static checks passed; user authorized branch publication and draft PR/CI; remote validation pending**.
 
-Do not execute the earlier S1–S5 proposal mechanically. PR #99/#100 changed the surrounding square-table/presentation surface, and PR #101/#102 changed current main after that.
+Local evidence:
 
-Before implementation, inspect live `main` as one cluster:
+- removed the legacy night renderer and its duplicate callback graph;
+- Host reduced from 5790 to 5592 lines (349860 to 335500 bytes);
+- night-card call sites reduced from two to one;
+- pre-route source, active night callback region and trailing Dawn/Day bodies match baseline exactly;
+- `git diff --check` passed; production diff is restricted to the Host file;
+- local focused Gradle invocation did not execute tests: distribution download failed with
+  `Network is unreachable`; no local GREEN is claimed;
+- the existing R2 boundary shell script executed locally and passed (exit 0); this is not remote CI;
+- product/document implementation commit: `6844026d12e1aa24bfe156ee77519b06444db8c8`;
+- the initial automatic approval rejection was resolved by explicit user authorization on 2026-09-06
+  to publish this branch, create a draft PR and run existing CI; no merge is authorized;
+- command-line Git publication lacks HTTPS credentials in this workspace. Transfer the exact local
+  file blobs/tree through the connected GitHub API and verify tree identity before creating the PR;
+- normal PR T1/R2 remain pending. No new test or workflow added.
 
-```text
-ClocktowerNightStepUi.kt
-+ HostTableShell / square-table presentation owners
-+ HostSeatPresentation / actor-cue owners
-+ Pair Manual / Pair recommendation owners
-+ StructuredNumericInformationAdapter.kt
-+ StructuredBooleanInformationAdapter.kt
-+ selection-semantics / target interaction owners
-+ relevant typed tests
-```
+Production allowlist: `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt`.
+Documentation allowlist: root README plus the docs README, this roadmap, active handoff and audit reference.
+No test changes are planned unless validation exposes a real coverage gap.
 
-For each proposed seam identify:
+Reachability proof:
 
-- authoritative state owner;
-- domain/rules owner;
-- side-effect owner;
-- rendering owner;
-- narrow typed input/result contract;
-- existing owning tests;
-- source-shape tests that become obsolete;
-- dependency direction before/after;
-- expected reduction in change context radius.
+- unstarted FirstNight and Night already render their ready screens and return;
+- started nonempty nights render the persistent table/current step and return;
+- a started empty night previously reached the old fallback and threw `IllegalArgumentException`
+  from `coerceIn(0, -1)`; retain failure explicitly before indexing;
+- remove only the old night block, preserving the surrounding Dawn/Day fallback bodies exactly.
 
-### 4.3 Candidate slice order from pre-latest-UI audit
+No state moves, new API, callback reordering, automatic empty-night completion or semantic fixes.
+The existing active Host remains the owner. Empty-night recovery UI is a separate behavior change.
 
-The earlier architecture reconnaissance identified these candidates:
-
-1. Pair Manual presentation + local-state owner;
-2. player-display projection;
-3. structured information preparation;
-4. narrowed interaction renderer families;
-5. recommendation/audit/diagnostics cleanup.
-
-**This ordering is provisional.** Pair Manual remains a strong first candidate because legal authority already exists, but the fresh audit may select a different first seam if current code ownership has changed.
+Evidence: existing materializer, checkpoint transaction and first-night reveal-handoff coverage;
+exact source-region comparison and `git diff --check`; compile and T1 at the logical checkpoint.
+Do not manufacture a RED or a permanent source-shape test for a deletion. Local Gradle baseline
+was attempted but blocked before execution by the Gradle distribution network restriction; use
+existing PR CI for executable verification and report that distinction accurately.
 
 ### 4.4 Decomposition invariants
 

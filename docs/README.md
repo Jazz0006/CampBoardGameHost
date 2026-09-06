@@ -1,6 +1,6 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-09-05 Australia/Sydney  
+> 最后整理：2026-09-06 Australia/Sydney
 > 目标：新的开发会话只读取少量当前权威文档；历史 checkpoint / handoff 默认进入 archive，不参与当前决策。
 
 ## 1. 新任务默认阅读顺序
@@ -17,19 +17,21 @@
 
 ## 2. 当前状态
 
-2026-09-05 已集成的重要节点：
+2026-09-06 已集成的重要节点：
 
 ```text
 PR #99  R4D-6 Host Table preserved-lineage integration
 PR #100 UI-N1 inline actor/wake cue + square-table readability
 PR #101 same-night dead-role wake-step fix
 PR #102 Manual Demon bluff consistency fix
+PR #104 Obsolete source-wiring guard retirement
+PR #105 Drunk shown-identity ownership repair
 ```
 
 创建本次文档 checkpoint 时 live `main`：
 
 ```text
-6d787172d4084e0af9ab74cb35e06f492cbb19fd
+93f99e0576be7b93d479ffa931bae3e4083c25af
 ```
 
 PR #100 的最终产品决定取代旧 UI-N1 handoff 中“独立 WAKE acknowledgement state”的设计：当前 actor/wake cue 与 target selection 共存于同一 persistent table。
@@ -37,13 +39,17 @@ PR #100 的最终产品决定取代旧 UI-N1 handoff 中“独立 WAKE acknowled
 ## 3. 当前执行顺序
 
 ```text
-architecture/test policy + docs hardening
--> fresh Night Step UI cluster ownership audit
--> first behavior-preserving decomposition slice
+D1 legacy night-path cleanup
+-> D2 display projection
+-> D3 structured preparation
+-> D4 interaction owners
+-> selected architecture checkpoint (D5 publication coordination separately risk-gated)
 -> UI-R5 real-device stabilization / feature freeze
 -> EPI-MQ / Productive Uncertainty
 -> UX-R6 legacy recommendation-provider replacement
 ```
+
+最新重审计与 D1–D6 路线见当前 roadmap；D6 Host/App 根深度解耦为后续独立批次。
 
 Night Step decomposition 不是机械降文件大小。主要指标是 **ownership clarity + change context radius**。
 

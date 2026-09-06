@@ -5,6 +5,34 @@
 > Scope: `ClocktowerNightStepUi.kt` and the surrounding Night Step UI cluster  
 > Execution state: **Do not mechanically execute the slice order below without a fresh live-state audit.**
 
+## Fresh audit addendum — 2026-09-06
+
+The current roadmap's D1–D6 route supersedes the historical S1–S5 order below.
+The initial reference is retained as rationale, not an executable plan.
+
+At `93f99e05` the fresh code audit found:
+
+- Pair Manual already owns its full-screen dialog and local selection model in
+  `ClocktowerPairManualSelectionUi.kt`; remaining proposition parsing should become a typed
+  presentation input, not another wholesale UI extraction.
+- `ClocktowerPlayerDisplayResolution.kt` already handles ordinary resolved options with direct
+  tests. Numeric/boolean paths still build copies inline; preserve their confirmation and snapshot
+  differences while extending this seam. A copied full Storyteller step is not a sanitized payload.
+- The Host persistent-table night route returns before the old night fallback. Nonempty nights
+  therefore use only the new route; empty started nights currently throw on an invalid index range.
+  Remove the superseded path before creating further abstractions, retaining explicit failure for
+  the empty case. Do not extend this cleanup to the other fallback phase bodies.
+- Host has 103 parameters / 39 on-callbacks; Night Step has 49 / 13. App root owns many separate
+  Compose values alongside snapshot/restore and setup transactions. Narrow responsibility owners
+  are needed; a universal Context or ViewModel would retain the coupling.
+- `StructuredEmpathInformationAdapterTest` still reads source text after #104. Replace those
+  assertions only when the corresponding stable typed contract is available in D2/D3.
+
+The revised strategy uses behavior-preserving incremental refactoring and state ownership close to
+consumers. References: [Fowler refactoring](https://martinfowler.com/books/refactoring.html),
+[Android Compose state hoisting](https://developer.android.com/develop/ui/compose/state-hoisting).
+Current execution scope and evidence are recorded only in the roadmap and active handoff.
+
 ## 1. Purpose
 
 This document records the architecture reconnaissance performed before the next Night Step UI decomposition campaign. The goal is not to split a large file by line count. The goal is to reduce the **change context radius** by assigning state, domain preparation, interaction logic, side effects and rendering to stable owners.
