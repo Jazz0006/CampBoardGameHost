@@ -1,0 +1,88 @@
+name: Poison execution crash fix once
+
+on:
+  push:
+    branches:
+      - codex/poison-execution-crash-audit
+    paths:
+      - .github/workflows/poison-execution-fix-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-validate-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/poison-execution-crash-audit
+          fetch-depth: 0
+
+      - name: Patch exact Poisoner chronology call
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt")
+          text = path.read_text()
+
+          old_import = "import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightStateProjector\n"
+          new_import = old_import + "import com.codex.campboardgamehost.clocktower.rules.ClocktowerOptionalNightSourceChronology\n"
+          if text.count(old_import) != 1:
+              raise SystemExit(f"expected exactly one import anchor, found {text.count(old_import)}")
+          if "import com.codex.campboardgamehost.clocktower.rules.ClocktowerOptionalNightSourceChronology\n" not in text:
+              text = text.replace(old_import, new_import, 1)
+
+          old = '''        val cursor = ClocktowerEffectiveNightCursor(interactionId, boundary)
+          val sourceAfter = ClocktowerEffectiveNightCursor(
+              ClocktowerProductionNightStepIdentity.role(RoleId("Poisoner"))
+                  .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT),
+              ClocktowerInteractionBoundary.AFTER,
+          )
+          if (interactionId !in otherNightCanonicalInteractionIds ||
+              !ClocktowerEffectiveNightChronology.isAtOrAfter(otherNightCanonicalInteractionIds, cursor, sourceAfter)
+          ) return null
+          '''
+          new = '''        val cursor = ClocktowerEffectiveNightCursor(interactionId, boundary)
+          val sourceInteractionId = ClocktowerProductionNightStepIdentity.role(RoleId("Poisoner"))
+              .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+          if (!ClocktowerOptionalNightSourceChronology.hasActedBy(
+                  canonicalInteractionIds = otherNightCanonicalInteractionIds,
+                  cursor = cursor,
+                  sourceInteractionId = sourceInteractionId,
+              )
+          ) return null
+          '''
+          if text.count(old) != 1:
+              raise SystemExit(f"expected exactly one Poisoner chronology anchor, found {text.count(old)}")
+          text = text.replace(old, new, 1)
+          path.write_text(text)
+
+      - name: Verify diff scope
+        run: |
+          git diff --check
+          changed="$(git diff --name-only)"
+          test "$changed" = "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt"
+          git diff -- app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+
+      - name: Focused regression tests
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:testFast --tests 'com.codex.campboardgamehost.clocktower.rules.ClocktowerOptionalNightSourceChronologyTest' --tests 'com.codex.campboardgamehost.clocktower.session.PoisonExecutionDuskTimelineRegressionTest'
+
+      - name: FAST unit tests
+        run: ./gradlew :app:testFast
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Commit product patch and remove one-shot workflow
+        run: |
+          rm .github/workflows/poison-execution-fix-once.yml
+          git add app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt .github/workflows/poison-execution-fix-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: ignore absent Poisoner night chronology'
+          git push origin HEAD:codex/poison-execution-crash-audit
