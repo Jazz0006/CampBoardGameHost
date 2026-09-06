@@ -349,7 +349,23 @@ Do not advance to D5 publication coordination until D4 scope is explicitly close
 
 Baseline: `beaec9a64abbaf6f34eb97698483ed7ab2892e66`; live main remains
 `93f99e0576be7b93d479ffa931bae3e4083c25af`. The user requested continuing after D4.1.
-Status: **implemented locally; exact audit and FAST/R2 checkpoint pending**.
+Status: **D4.2 and D4 checkpoint validated; draft PR #106 open, not merged**.
+
+Validated code/test checkpoint: `e24c0518aa1e2fb826099f05930f3f912d068c89`.
+
+- [CI run 34005528591](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/34005528591)
+  and [R2 run 34005528598](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/34005528598)
+  passed. Test Kotlin compilation and `:app:testFast` executed; `BUILD SUCCESSFUL in 44s`.
+  Production compilation was reused from cache on this test-only correction.
+- Initial implementation `f97ee5ddbeee8b182dc78b5b5ad91aa7cab8423b` compiled production/test
+  Kotlin, but CI 34005378402 ran 1131 tests with one new fixture failure: empty AllOf is rejected
+  by the domain constructor before selection. The correction uses a constructible mixed proposition;
+  no production code changed. This was a test-fixture error, not a behavioral RED.
+- Exact transition, UI-tail, authority/parser and Night Step one-argument audits passed; local R2
+  passed. Nine remote blobs/full tree matched local, followed by an exact test-file correction.
+- Manual UI decreased from 421 to 246 lines; the pure selection model occupies 125 lines.
+  No obsolete production convenience factory or source-string test was retained.
+- This evidence update is docs-only. Full tests/APK and real-device validation remain unperformed.
 
 Fresh audit decisions:
 
@@ -374,7 +390,7 @@ cases cover malformed/duplicate inputs, zero/role switching and equality/reset i
 legal-domain projection test now verifies every projected option resolves through the selection model.
 No new source-string tests. Local Gradle dependencies are still unavailable; no executable RED claimed.
 
-D4 scope closes at a successful checkpoint for D4.2: existing two-target owners are accepted,
+D4 scope is closed at this successful D4.2 checkpoint: existing two-target owners are accepted,
 Manual now has a typed preparation boundary, and single-target/ruling owners were completed in D4.1.
 Next: **D5 publication coordination audit**, with a separately bounded transaction contract before
 any extraction. D6 and real-device UI-R5 remain later gates. Keep PR #106 draft; do not merge.
