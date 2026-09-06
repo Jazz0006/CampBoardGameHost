@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# This second push intentionally occurs after the one-shot workflow exists so the push trigger fires.
 TARGET = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
 text = TARGET.read_text(encoding="utf-8")
 
