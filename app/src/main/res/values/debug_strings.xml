@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="debug_diagnostics_title">调试与诊断</string>
-    <string name="debug_diagnostics_description">崩溃与关键操作日志仅保存在本机，除非你主动导出。当前日志不会记录玩家姓名。</string>
+    <string name="debug_diagnostics_description">崩溃与关键操作日志仅保存在本机，除非你主动导出。结构化诊断不会主动记录玩家姓名；崩溃堆栈可能包含运行时错误文本。</string>
     <string name="export_debug_bundle">导出调试信息</string>
 </resources>
