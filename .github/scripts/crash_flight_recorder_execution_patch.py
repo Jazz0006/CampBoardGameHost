@@ -1,6 +1,6 @@
 from pathlib import Path
 
-# This second push intentionally occurs after the one-shot workflow exists so the push trigger fires.
+# Trigger the one-shot workflow only after its path-filtered definition is present on the branch.
 TARGET = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
 text = TARGET.read_text(encoding="utf-8")
 
