@@ -207,7 +207,23 @@ The user's subsequent “continue” authorizes D2 as a separate commit on draft
 validated at its recorded checkpoint. No merge or D3 implementation is authorized by this slice.
 
 Baseline: `d9ddff9ad2263852b6b47cb6a5d983aa24b72bce` (D1 plus docs-only evidence).
-Status: **implemented locally; exact diff audit passed; PR T1/R2 validation pending**.
+Status: **D2 implemented and T1/R2 checkpoint validated; draft PR #106 remains open, not merged**.
+
+Validated code checkpoint: `0450b48ddaae7e930a9ba6a58e6ee02a7c3c0232`.
+
+- [CI run 34000901077](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/34000901077)
+  passed; production/test Kotlin compilation and `:app:testFast` executed, not FROM-CACHE or
+  UP-TO-DATE. Android logged `BUILD SUCCESSFUL in 1m 42s`.
+- [R2 run 34000901065](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/34000901065)
+  and the overall CI gate passed. FAST includes the six new typed tests and existing regressions.
+- Five changed blobs and the remote tree matched the locally audited D2 snapshot exactly; only
+  three display-construction regions changed in Night Step UI. No Host/session changes.
+- This follow-up evidence update is docs-only. The code checkpoint above remains the executable
+  verification baseline. Full tests/APK/device validation is not claimed for this T1 checkpoint.
+
+Next: **D3 — separate structured information preparation from rendering**, starting with narrow
+inputs to the existing numeric/Boolean adapters. Do not move recommendation/telemetry/publication
+ownership as a side effect; D5 remains separate.
 
 D2 owns presentation conversion only, in the existing `ClocktowerPlayerDisplayResolution.kt`:
 
