@@ -14,7 +14,21 @@ The user explicitly authorized a fresh architectural decision and local editing 
 Connector/one-shot/Luna writer-routing restrictions do not apply to this complete local workspace.
 This exception does not change gameplay invariants, evidence requirements or merge authorization.
 
-## Active implementation contract — D3
+## Active implementation contract — D4.1
+
+After D3 the user requested continuing. Split D4 into independently verifiable D4.1 single-target/
+ruling renderers, then D4.2 two-target/Manual contracts. Current evidence/status stays in roadmap.
+
+Use immutable target selection plus separate ability/ruling presentation. New renderers accept
+prepared data and a scoped target event callback, never the whole Host/step or game services.
+Keep target legality upstream and all mutation/publication callbacks at their existing owner.
+Preserve action-specific visibility, actor cues, Ravenkeeper reveal permission and Mayor secondary
+action. Key grouped renderer calls by action to preserve child-state reset boundaries.
+
+Leave Fortune Teller/Chambermaid and later information UI unchanged in D4.1. Six direct presentation
+tests supplement existing legality/table tests. No new source-string guard, D5, or merge.
+
+## Prior implementation contract — D3
 
 The user requested continuing after D2. Current progress/evidence lives in the roadmap.
 Introduce a Compose-free numeric/Boolean preparation owner and adapter request types. Keep

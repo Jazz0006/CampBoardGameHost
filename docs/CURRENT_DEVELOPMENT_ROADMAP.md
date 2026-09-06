@@ -251,7 +251,7 @@ No Host, session, state lifetime, ranking, legal candidate set, schema or player
 The remaining UI `step.copy` only suppresses recommendations; it is not display-field
 projection and remains out of scope. Use existing PR FAST/R2 CI as the executable checkpoint.
 
-### 4.5 Current slice — D3 structured information preparation
+### 4.5 Completed slice — D3 structured information preparation
 
 The user requested continuing after D2. Implement D3 as its own commit on draft PR #106,
 without merging or expanding into D4/D5.
@@ -300,7 +300,39 @@ assertion is replaced by the direct priority-order test; telemetry and Host hist
 because those owning seams have not moved. Tests were written before implementation; no executable
 RED is claimed with local Gradle dependencies unavailable. Use existing PR FAST/R2 checkpoint.
 
-### 4.6 Decomposition invariants
+### 4.6 Current slice — D4.1 single-target and ruling renderers
+
+The user requested continuing after D3. D4 is split into D4.1 (single-target/ruling) and D4.2
+(two-target/Manual contracts) to keep interaction lifecycle verification bounded. This turn
+implements D4.1 on draft PR #106; it does not claim the whole D4 campaign complete.
+Baseline: `04c26112a3dab13f041b6ebdfcf096550036dc2a`.
+Status: **implemented locally; static audit and PR FAST/R2 CI pending**.
+
+- `ClocktowerSingleTargetInteractionPresentation.kt` holds immutable selection/presentation and
+  the scoped SelectSeat/ShowResult/Previous/Next event contract. It receives already-authoritative
+  target seat sets; it does not compute game-rule eligibility or own mutable selection.
+- `ClocktowerSingleTargetInteractionUi.kt` renders two families: ordinary ability target tasks
+  and Storyteller rulings. Both use the existing square-table dialog and accept only prepared
+  presentation, seats, language, navigation availability and one typed event callback.
+- Night Step retains the existing candidate helpers and maps seats/events to its existing callbacks.
+  The renderers cannot access PlayerCard rosters, the whole step, recommendation services or Host.
+- Preserve Red Herring visibility/no actor cue, disabled real-action behavior, Ravenkeeper reveal
+  gating, automatic-ruling hiding, missing-Mayor disabling and the Mayor-dies secondary action.
+- Key grouped renderer calls by action so switching roles does not accidentally retain transient
+  child UI state that previously belonged to separate action branches. Parent selection remains.
+- Fortune Teller/Chambermaid blocks and all downstream information confirmation, telemetry and
+  publication remain unchanged. No lower square-table or Host modification.
+
+Allowlist: the two new production files above, `ClocktowerNightStepUi.kt`,
+`ClocktowerSingleTargetInteractionPresentationTest.kt`, roadmap and active handoff.
+Six direct tests protect visibility, candidate/actor separation, result permission and ruling
+availability. Existing target-legality and square-table tests remain. Tests precede implementation;
+local Gradle dependencies remain unavailable, so no executable local RED is claimed.
+
+Next after this checkpoint: **D4.2 — two-target/Manual contract audit and extraction where useful**.
+Do not advance to D5 publication coordination until D4 scope is explicitly closed.
+
+### 4.7 Decomposition invariants
 
 - no God `NightStepContext` / giant parameter bag;
 - no generic `Utils` / `Helpers` dumping ground;
