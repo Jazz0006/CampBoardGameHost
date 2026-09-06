@@ -115,7 +115,7 @@ object DebugFlightRecorder {
         val context = appContext ?: return
         runCatching {
             synchronized(ioLock) {
-                val root = File(context.filesDir, ROOT_DIR).apply { mkdirs() }
+                val root = File(context.noBackupFilesDir, ROOT_DIR).apply { mkdirs() }
                 val trace = File(root, TRACE_FILE)
                 trace.appendText(DebugFlightRecorderCodec.encodeEvents(listOf(event)))
                 if (trace.length() > MAX_TRACE_BYTES) {
@@ -139,7 +139,7 @@ object DebugFlightRecorder {
         )
 
         synchronized(ioLock) {
-            val root = File(context.filesDir, ROOT_DIR).apply { mkdirs() }
+            val root = File(context.noBackupFilesDir, ROOT_DIR).apply { mkdirs() }
             val crashDir = File(root, LATEST_CRASH_DIR)
             if (crashDir.exists()) crashDir.deleteRecursively()
             crashDir.mkdirs()
@@ -159,7 +159,7 @@ object DebugFlightRecorder {
     }
 
     private fun createDebugBundle(context: Context): File {
-        val root = File(context.filesDir, ROOT_DIR).apply { mkdirs() }
+        val root = File(context.noBackupFilesDir, ROOT_DIR).apply { mkdirs() }
         val crashDir = File(root, LATEST_CRASH_DIR)
         val exportDir = File(context.cacheDir, EXPORT_DIR).apply { mkdirs() }
         exportDir.listFiles()?.forEach { old ->
