@@ -306,7 +306,20 @@ The user requested continuing after D3. D4 is split into D4.1 (single-target/rul
 (two-target/Manual contracts) to keep interaction lifecycle verification bounded. This turn
 implements D4.1 on draft PR #106; it does not claim the whole D4 campaign complete.
 Baseline: `04c26112a3dab13f041b6ebdfcf096550036dc2a`.
-Status: **implemented locally; static audit and PR FAST/R2 CI pending**.
+Status: **D4.1 implemented and FAST/R2 checkpoint validated; draft PR #106 open, not merged**.
+
+Validated code checkpoint: `519dbd34c7bbfad460290ea983c0986559aa0ef2`.
+
+- [CI run 34004925613](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/34004925613)
+  passed. Production/test Kotlin compilation and `:app:testFast` actually executed;
+  Android logged `BUILD SUCCESSFUL in 1m 47s`. FAST includes all six new contract tests.
+- [R2 run 34004925601](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/34004925601)
+  and the overall CI gate passed. The existing R2 script also passed locally.
+- Exact diff audit verified unchanged preparation, Fortune Teller/Chambermaid branches and
+  downstream confirmation/publication. All six remote blobs and the full tree matched local.
+- `ClocktowerNightStepUi.kt` decreased from 1043 to 913 lines (130 removed net); the extracted
+  renderers consume narrow presentation/events and introduce no mutable state owner.
+- This evidence update is docs-only. Full tests/APK and real-device validation were not performed.
 
 - `ClocktowerSingleTargetInteractionPresentation.kt` holds immutable selection/presentation and
   the scoped SelectSeat/ShowResult/Previous/Next event contract. It receives already-authoritative
