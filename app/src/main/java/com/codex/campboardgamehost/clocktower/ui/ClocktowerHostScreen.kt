@@ -2485,14 +2485,12 @@ internal fun ClocktowerJudgeScreen(
         else -> null
     }
     val empathNumber = empathValue.toString()
-    fun informationDecisionPublicationAllowed(displayStep: ClocktowerNightStepUi): Boolean {
-        val confirmation = displayStep.informationDecisionConfirmation ?: return true
-        val expectedSnapshot = displayStep.informationDecisionExpectedSnapshot ?: return false
-        return confirmation.authorizes(
-            expectedCurrentSnapshot = expectedSnapshot,
+    fun informationDecisionPublicationAllowed(displayStep: ClocktowerNightStepUi): Boolean =
+        clocktowerInformationPublicationAllowed(
+            confirmation = displayStep.informationDecisionConfirmation,
+            expectedSnapshot = displayStep.informationDecisionExpectedSnapshot,
             currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
         )
-    }
     fun recordReliablePrivateInformation(displayStep: ClocktowerNightStepUi) {
         val actor = displayStep.actor ?: return
         val actorSeat = cards.indexOf(actor).takeIf { it >= 0 }?.plus(1) ?: return
@@ -4842,61 +4840,57 @@ internal fun ClocktowerJudgeScreen(
                         }
                     }
                 },
-                onShowPlayerDisplay = showPlayerDisplay@{ displayStep ->
-                    val publicationAllowed = informationDecisionPublicationAllowed(displayStep)
-                    val revealHandoff = resolveClocktowerPlayerRevealHandoff(
-                        publicationAllowed = publicationAllowed,
-                        firstNightPublicationCreated = publicationAllowed && publishFirstNightInformation(displayStep),
-                    )
-                    if (!revealHandoff.openReveal) return@showPlayerDisplay
-                    if (!revealHandoff.recordPublication) {
-                        playerDisplayStep = displayStep
-                        return@showPlayerDisplay
-                    }
-                    recordReliablePrivateInformation(displayStep)
-                    val actor = displayStep.actor
-                    val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
-                    val primary = displayStep.displayPrimary ?: displayStep.tellPlayer
-                    val secondary = displayStep.displaySecondary
-                    val recordDetail = when (displayStep.displayKind) {
-                        ClocktowerDisplayKind.EitherOne ->
-                            if (primary != null && secondary != null)
-                                text("$primary 在 ${secondary.trim().replace("   ", " / ")} 号之中", "$primary: seats ${secondary.trim().replace("   ", " / ")}")
-                            else primary.orEmpty()
-                        ClocktowerDisplayKind.Number ->
-                            if (primary != null)
-                                text("${displayStep.displayFooter.orEmpty()}：$primary", "${displayStep.displayFooter.orEmpty()}: $primary")
-                            else primary.orEmpty()
-                        ClocktowerDisplayKind.YesNo ->
-                            if (secondary != null && primary != null)
-                                text("查验 ${secondary.trim().replace("   ", " + ")} 号：$primary", "Checked seats ${secondary.trim().replace("   ", " + ")}: $primary")
-                            else primary.orEmpty()
-                        ClocktowerDisplayKind.RoleReveal ->
-                            primary.orEmpty()
-                        ClocktowerDisplayKind.Grimoire ->
-                            text("间谍查看了魔典", "Spy viewed the grimoire")
-                        else ->
-                            primary.orEmpty()
-                    }
-                    val referencedPlayerNames = DecisionHistoryRepository.extractSeatNumbers(
-                        values = listOf(displayStep.displaySecondary, displayStep.displayFooter),
-                        maximumSeat = cards.size,
-                    ).mapNotNull { seat -> cards.getOrNull(seat - 1)?.name }
-                    onRecordEvent(
-                        if (unreliable) ClocktowerEventType.UnreliableInformation else ClocktowerEventType.Information,
-                        if (unreliable) {
-                            if (displayStep.selectedInformationTruthful == false) {
-                                text("${displayStep.displayTitle}（误导）", "${displayStep.displayTitle} (misleading)")
-                            } else {
-                                text("${displayStep.displayTitle}（不可靠）", "${displayStep.displayTitle} (unreliable)")
+                onShowPlayerDisplay = { displayStep ->
+                    performClocktowerPlayerRevealHandoff(
+                        authorize = { informationDecisionPublicationAllowed(displayStep) },
+                        publishFirstNight = { publishFirstNightInformation(displayStep) },
+                        recordPrivateInformation = { recordReliablePrivateInformation(displayStep) },
+                        recordHistory = {
+                            val actor = displayStep.actor
+                            val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
+                            val primary = displayStep.displayPrimary ?: displayStep.tellPlayer
+                            val secondary = displayStep.displaySecondary
+                            val recordDetail = when (displayStep.displayKind) {
+                                ClocktowerDisplayKind.EitherOne ->
+                                    if (primary != null && secondary != null)
+                                        text("$primary 在 ${secondary.trim().replace("   ", " / ")} 号之中", "$primary: seats ${secondary.trim().replace("   ", " / ")}")
+                                    else primary.orEmpty()
+                                ClocktowerDisplayKind.Number ->
+                                    if (primary != null)
+                                        text("${displayStep.displayFooter.orEmpty()}：$primary", "${displayStep.displayFooter.orEmpty()}: $primary")
+                                    else primary.orEmpty()
+                                ClocktowerDisplayKind.YesNo ->
+                                    if (secondary != null && primary != null)
+                                        text("查验 ${secondary.trim().replace("   ", " + ")} 号：$primary", "Checked seats ${secondary.trim().replace("   ", " + ")}: $primary")
+                                    else primary.orEmpty()
+                                ClocktowerDisplayKind.RoleReveal ->
+                                    primary.orEmpty()
+                                ClocktowerDisplayKind.Grimoire ->
+                                    text("间谍查看了魔典", "Spy viewed the grimoire")
+                                else ->
+                                    primary.orEmpty()
                             }
-                        } else {
-                            displayStep.displayTitle
+                            val referencedPlayerNames = DecisionHistoryRepository.extractSeatNumbers(
+                                values = listOf(displayStep.displaySecondary, displayStep.displayFooter),
+                                maximumSeat = cards.size,
+                            ).mapNotNull { seat -> cards.getOrNull(seat - 1)?.name }
+                            onRecordEvent(
+                                if (unreliable) ClocktowerEventType.UnreliableInformation else ClocktowerEventType.Information,
+                                if (unreliable) {
+                                    if (displayStep.selectedInformationTruthful == false) {
+                                        text("${displayStep.displayTitle}（误导）", "${displayStep.displayTitle} (misleading)")
+                                    } else {
+                                        text("${displayStep.displayTitle}（不可靠）", "${displayStep.displayTitle} (unreliable)")
+                                    }
+                                } else {
+                                    displayStep.displayTitle
+                                },
+                                recordDetail,
+                                (listOfNotNull(actor?.name) + referencedPlayerNames).distinct(),
+                            )
                         },
-                        recordDetail,
-                        (listOfNotNull(actor?.name) + referencedPlayerNames).distinct(),
+                        openReveal = { playerDisplayStep = displayStep },
                     )
-                    playerDisplayStep = displayStep
                 },
                 canGoPrevious = currentStepIndex > 0,
                 onPrevious = onMovePreviousNightStep,

@@ -14,7 +14,20 @@ The user explicitly authorized a fresh architectural decision and local editing 
 Connector/one-shot/Luna writer-routing restrictions do not apply to this complete local workspace.
 This exception does not change gameplay invariants, evidence requirements or merge authorization.
 
-## Active implementation contract — D4.2
+## Active implementation contract — D5.1
+
+Extend the existing player-reveal handoff seam to own synchronous Host effect ordering and the narrow
+confirmation/snapshot/revision authorization check. Keep authorization lazy, publication short-circuited
+on denial, duplicate publication reveal-only, and private observation before history before reveal.
+Exceptions propagate without rollback or subsequent callbacks. Preserve the private recorder recheck.
+
+No registration/telemetry/confirmation/migration/history-format/state-owner change. Existing history
+body remains in its callback. Add direct order/rejection/duplicate/failure tests and real-adapter freshness
+coverage. Run full checkpoint CI and R2 because central publication orchestration is touched. No merge.
+D5.2 upstream effects require a fresh ownership decision; no atomicity or global exactly-once claim.
+Current evidence lives only in the roadmap.
+
+## Prior implementation contract — D4.2
 
 Continue from the validated D4.1 checkpoint. Retain existing Fortune Teller/Chambermaid renderers:
 Boolean confirmation and determined/option results are distinct contracts, not duplication to erase.

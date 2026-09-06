@@ -345,7 +345,7 @@ local Gradle dependencies remain unavailable, so no executable local RED is clai
 Next after this checkpoint: **D4.2 — two-target/Manual contract audit and extraction where useful**.
 Do not advance to D5 publication coordination until D4 scope is explicitly closed.
 
-### 4.7 Current slice — D4.2 Manual typed presentation and selection ownership
+### 4.7 Completed slice — D4.2 Manual typed presentation and selection ownership
 
 Baseline: `beaec9a64abbaf6f34eb97698483ed7ab2892e66`; live main remains
 `93f99e0576be7b93d479ffa931bae3e4083c25af`. The user requested continuing after D4.1.
@@ -395,7 +395,42 @@ Manual now has a typed preparation boundary, and single-target/ruling owners wer
 Next: **D5 publication coordination audit**, with a separately bounded transaction contract before
 any extraction. D6 and real-device UI-R5 remain later gates. Keep PR #106 draft; do not merge.
 
-### 4.8 Decomposition invariants
+### 4.8 Current slice — D5.1 Host publication handoff ordering
+
+Baseline: `123938fab065bfec0bc202e333a5b36bf2ba4dd2`; live main remains
+`93f99e0576be7b93d479ffa931bae3e4083c25af`. User requested continuing after D4.
+Status: **implemented locally; exact audit and full CI/R2 checkpoint pending**.
+
+Fresh publication audit:
+
+1. Night Step applies selected registration, then selection telemetry, then calls Host publication.
+   Structured Boolean and numeric confirmation paths have intentionally different preprocessing.
+2. Host authorizes exact confirmation snapshot/current revision (legacy unconfirmed display allowed).
+3. Only authorized requests enter first-night migration/parity/deduplication. Already-published
+   first-night decisions reopen reveal without a second observation/history record.
+4. Fresh requests record private observation, format/write history, then set player-display state.
+   The private recorder retains its own authorization recheck and existing legacy role fallback.
+
+D5.1 extends the existing `ClocktowerPlayerRevealHandoff.kt` with typed authorization and a synchronous
+ordered effect executor. It owns only sequencing, never session state or deduplication. Five scoped
+callbacks preserve lazy authorization, short-circuiting, exactly-once invocation within one attempt,
+and exception propagation. This is not an atomic/rollback transaction; earlier effects are not undone
+if a later callback throws. No new freshness guarantee or non-first-night deduplication is claimed.
+
+Host delegates authorization and effect order; history body stays byte-identical modulo indentation.
+Night Step registration/telemetry/confirmation, migration, private observation, state and persistence
+owners remain unchanged. Allowlist: existing handoff, Host, existing handoff test, roadmap/handoff.
+Six new tests cover effect order, duplicate reopen, denial, each exception boundary, legacy allowance
+and real-adapter confirmation with missing/mismatched/stale snapshots. Existing migration/session
+coverage remains. No source-string retirement here: remaining telemetry/history guards own unmoved seams.
+
+Because this touches central publication orchestration, use `[full-ci]` for the checkpoint (full Android
+JVM tests, debug assemble and selected external gates), plus R2. Local Gradle dependencies are unavailable;
+no executable local RED claimed. Current slice is D5.1 only; PR stays draft and merge is not authorized.
+Next D5.2: audit the upstream registration/telemetry and first-night migration effects for a coherent
+owner. Do not treat pre-authorization telemetry or partial failure as a behavior fix hidden in refactoring.
+
+### 4.9 Decomposition invariants
 
 - no God `NightStepContext` / giant parameter bag;
 - no generic `Utils` / `Helpers` dumping ground;
