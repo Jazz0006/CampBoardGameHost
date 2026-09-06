@@ -147,7 +147,11 @@ steps at once. After the selected architecture checkpoint, resume UI-R5, then EP
 
 Branch: `codex/night-ui-legacy-path-cleanup`, based on `93f99e05`.
 
-Status: **implemented; static checks passed; user authorized branch publication and draft PR/CI; remote validation pending**.
+Status: **D1 implemented and T1/R2 checkpoint validated; draft PR #106 open, not merged**.
+
+Remote validated code checkpoint: `427413447c5d7e400247a583a806af6302d556f7`.
+[Draft PR #106](https://github.com/Jazz0006/CampBoardGameHost/pull/106).
+This evidence update is docs-only; it does not replace the validated code checkpoint.
 
 Local evidence:
 
@@ -164,7 +168,17 @@ Local evidence:
   to publish this branch, create a draft PR and run existing CI; no merge is authorized;
 - command-line Git publication lacks HTTPS credentials in this workspace. Transfer the exact local
   file blobs/tree through the connected GitHub API and verify tree identity before creating the PR;
-- normal PR T1/R2 remain pending. No new test or workflow added.
+- remote transfer completed: all six blobs and tree `fc495d804f195507b4804a484a426029c9e9074b`
+  matched the audited local tree; the remote checkpoint has parent `93f99e05`;
+- [CI run 34000384515](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/34000384515)
+  passed. `compileDebugKotlin`, `compileDebugUnitTestKotlin` and `:app:testFast` executed;
+  Android job logged `BUILD SUCCESSFUL in 1m 43s`. The test task was not FROM-CACHE/UP-TO-DATE;
+- [R2 run 34000384564](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/34000384564)
+  passed; overall CI gate passed;
+- normal T1 validation intentionally skipped full tests/APK assemble and ASP/Clingo for this
+  Host-only structural change. No full-suite, APK or real-device validation is claimed;
+- no new test or workflow added. D1 is complete at its scoped checkpoint; D2 display-result
+  projection is the next implementation slice. Do not merge or expand PR #106 without authorization.
 
 Production allowlist: `app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt`.
 Documentation allowlist: root README plus the docs README, this roadmap, active handoff and audit reference.
@@ -185,7 +199,7 @@ Evidence: existing materializer, checkpoint transaction and first-night reveal-h
 exact source-region comparison and `git diff --check`; compile and T1 at the logical checkpoint.
 Do not manufacture a RED or a permanent source-shape test for a deletion. Local Gradle baseline
 was attempted but blocked before execution by the Gradle distribution network restriction; use
-existing PR CI for executable verification and report that distinction accurately.
+existing PR CI supplied executable verification as recorded above; local tests did not execute.
 
 ### 4.4 Decomposition invariants
 
