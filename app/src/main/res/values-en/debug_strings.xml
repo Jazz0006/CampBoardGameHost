@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="debug_diagnostics_title">Debug &amp; diagnostics</string>
+    <string name="debug_diagnostics_description">Crash and critical-action logs stay on this device unless you explicitly export them. Structured diagnostics do not deliberately record player names; crash stack traces may include runtime error text.</string>
+    <string name="export_debug_bundle">Export debug information</string>
+</resources>

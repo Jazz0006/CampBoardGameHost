@@ -235,6 +235,7 @@ import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 import com.codex.campboardgamehost.clocktower.rules.RegistrationInteractionRules
 import com.codex.campboardgamehost.clocktower.rules.RulesetContentHasher
 import com.codex.campboardgamehost.clocktower.rules.RulesetJsonLoader
+import com.codex.campboardgamehost.debug.DebugFlightRecorder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.isActive
@@ -3772,15 +3773,54 @@ internal fun CampBoardGameHostApp() {
                         },
                         onConfirmDay = {
                             val preflightExecutionName = clocktowerSelectedExecution
-                            if (preflightExecutionName != null) {
-                                val preflightIndex = cards.indexOfFirst { it.name == preflightExecutionName }
-                                val preflightCard = cards.getOrNull(preflightIndex)
-                                if (preflightIndex >= 0 && preflightCard != null && preflightCard.eliminatedRound == null) {
-                                    preflightClocktowerPublicAliveObservation(
-                                        playerName = preflightExecutionName,
-                                        eventSequence = clocktowerEventCounter + 1,
-                                    )
+                            val preflightIndex = preflightExecutionName
+                                ?.let { selectedName -> cards.indexOfFirst { it.name == selectedName } }
+                                ?: -1
+                            val preflightCard = cards.getOrNull(preflightIndex)
+                            val proposedSequence = clocktowerEventCounter + 1
+                            val proposedObservationId = if (preflightIndex >= 0) {
+                                "public-alive-${clocktowerGameId}-${proposedSequence}-${preflightIndex + 1}"
+                            } else {
+                                ""
+                            }
+                            val observationAlreadyExists = proposedObservationId.isNotEmpty() &&
+                                clocktowerEpistemicObservations.any { observation ->
+                                    observation.recordId == proposedObservationId
                                 }
+                            val executionDebugFields = mapOf(
+                                "lastCriticalAction" to "CONFIRM_EXECUTION_CLICKED",
+                                "phaseAtAction" to clocktowerPhase.name,
+                                "roundAtAction" to round.toString(),
+                                "selectedSeat" to if (preflightIndex >= 0) (preflightIndex + 1).toString() else "",
+                                "targetAlive" to (preflightCard?.eliminatedRound == null).toString(),
+                                "eventCounter" to clocktowerEventCounter.toString(),
+                                "gameStateRevision" to clocktowerGameStateRevision.toString(),
+                                "playerInputRevision" to clocktowerPlayerInputRevision.toString(),
+                                "eventCount" to clocktowerEvents.size.toString(),
+                                "observationCount" to clocktowerEpistemicObservations.size.toString(),
+                                "proposedObservationId" to proposedObservationId,
+                                "observationAlreadyExists" to observationAlreadyExists.toString(),
+                            )
+                            DebugFlightRecorder.updateState(executionDebugFields)
+                            DebugFlightRecorder.record(
+                                event = "CONFIRM_EXECUTION_CLICKED",
+                                fields = executionDebugFields,
+                            )
+                            if (preflightExecutionName != null &&
+                                preflightIndex >= 0 &&
+                                preflightCard != null &&
+                                preflightCard.eliminatedRound == null
+                            ) {
+                                DebugFlightRecorder.record(
+                                    event = "EXECUTION_PREFLIGHT",
+                                    fields = executionDebugFields + mapOf(
+                                        "proposedSequence" to proposedSequence.toString(),
+                                    ),
+                                )
+                                preflightClocktowerPublicAliveObservation(
+                                    playerName = preflightExecutionName,
+                                    eventSequence = proposedSequence,
+                                )
                             }
                             // Confirming the day commits its execution/no-execution result and
                             // closes the day decision window, including when no one dies.
