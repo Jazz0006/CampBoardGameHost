@@ -4,17 +4,18 @@ on:
   push:
     branches:
       - codex/crash-flight-recorder
+    paths:
+      - .github/scripts/crash_flight_recorder_execution_patch.py
 
 permissions:
   contents: write
 
 jobs:
   patch-test-commit:
-    if: github.event.head_commit.message == 'chore: run execution crash breadcrumb patch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exact event head
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
@@ -42,7 +43,7 @@ jobs:
           grep -q 'DebugFlightRecorder.updateState(executionDebugFields)' "$expected"
           grep -q 'event = "EXECUTION_PREFLIGHT"' "$expected"
           grep -q '"observationAlreadyExists" to observationAlreadyExists.toString()' "$expected"
-          grep -q 'public-alive-${clocktowerGameId}-${proposedSequence}-${preflightIndex + 1}' "$expected"
+          grep -Fq 'public-alive-${clocktowerGameId}-${proposedSequence}-${preflightIndex + 1}' "$expected"
           git diff --check
 
       - name: Set up Java
@@ -59,11 +60,10 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x ./gradlew
-          ./gradlew \
-            :app:testDebugUnitTest --tests com.codex.campboardgamehost.debug.DebugFlightRecorderCoreTest \
-            :app:testFast \
-            :app:assembleDebug \
+          ./gradlew :app:testDebugUnitTest \
+            --tests com.codex.campboardgamehost.debug.DebugFlightRecorderCoreTest \
             --no-daemon --stacktrace
+          ./gradlew :app:testFast :app:assembleDebug --no-daemon --stacktrace
 
       - name: Remove temporary one-shot files and commit product patch
         shell: bash
