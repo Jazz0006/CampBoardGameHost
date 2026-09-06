@@ -131,4 +131,3 @@ internal fun clocktowerFirstNightInformationRequest(
         migratedCandidates = migratedCandidates,
     )
 }
-

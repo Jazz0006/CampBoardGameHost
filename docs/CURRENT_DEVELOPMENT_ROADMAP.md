@@ -15,6 +15,12 @@ Fix Drunk shown-identity ownership boundary (#105)
 
 Always re-query live GitHub state before implementation, validation or merge.
 
+### Immediate next action — UI-R5 acceptance preparation
+
+D1–D5 implementation and global change-set audit are complete on draft PR #106; no blocking
+regression was identified. Do not resume D6 immediately. Prepare a traceable installable APK and
+execute the UI-R5 device matrix below, then resolve only demonstrated defects. No merge is authorized.
+
 ### Recently completed / integrated
 
 The following work is integrated into `main`:
@@ -491,7 +497,48 @@ state, legacy observation fallback and App/persistence ownership belong to D6, n
 micro-extractions. Next is architecture acceptance and UI-R5 real-device stabilization before the
 EPI-MQ/UX-R6 route. PR #106 remains draft; merge requires explicit user authorization.
 
-### 4.10 Decomposition invariants
+### 4.10 Global audit and concrete next route — 2026-09-06
+
+Reviewed PR head `76321c4e2c9f14fc62a3853f479841733de784c1`, main
+`93f99e0576be7b93d479ffa931bae3e4083c25af`; full validated code `7f2c67603bc70022033cd80a508baa926bf70db9`.
+Conclusion: no blocking behavior/ownership regression found across D1–D5 and immediate dependencies.
+Correct one extra EOF blank line; all other edits in this audit are documentation. Full CI/R2 evidence
+from D5.2 remains the executable baseline; semantic production content is unchanged.
+Detailed findings: `CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md`, post-implementation audit.
+
+Accepted residual limits: broad reveal payload, non-atomic publication and pre-authorization telemetry,
+caller-matched migration shadow, and large Host/App state owners. Current calls preserve their contracts;
+these are future design constraints, not reasons for more incidental extraction in PR #106.
+
+Next steps:
+
+1. Prepare an installable test APK from the accepted branch, recording SHA, package/version and build
+   provenance. Existing CI proves assemble succeeded but does not itself prove a downloadable APK was
+   retained. Reuse an available matching artifact; otherwise build/export using existing release tooling.
+2. Run the following device matrix. Start with one complete 8–10-player manual/assisted game through
+   the second night, then targeted automatic/edge scenarios and a 15-player layout pass. Record device,
+   Android version, app SHA, scenario, expected/actual result and screenshot/log for each failure.
+3. Fix only reproducible regressions or release-blocking usability defects with owning tests where useful.
+   No broad redesign, recommendation-policy change or D6 state migration during stabilization.
+4. On device pass, review current head/checks and present merge-ready evidence for explicit authorization.
+   Reuse current code evidence when only docs/formatting changed; meaningful fixes require affected/full gates.
+5. After UI-R5, continue EPI-MQ correctness/quality and UX-R6 provider replacement. D6 remains a separately
+   planned ownership campaign, selected when state/persistence changes justify it.
+
+| Device scenario | Acceptance condition |
+|---|---|
+| First-night Minion/Demon reveal | Opens/closes without crash; correct player-facing information and return step. |
+| Single-target roles and back/next | Selection stays with the correct role; actor cue is independent of eligibility; no stale child UI across actions. |
+| Fortune Teller / Chambermaid | Ordered two-seat selection, edit/deselect and deterministic/discretionary result controls remain correct. |
+| Pair Manual | Role/pair/zero-case selection, cancel/reopen and confirm resolve the chosen clue; candidate changes reset appropriately. |
+| Drunk/poison and Spy/Recluse routes | Correct actual/shown identity, legal candidate route and registration; no old result after a changed decision. |
+| Reopen first-night result | Reveal opens again; history/observation is not duplicated and original migrated fact is retained. |
+| Mayor/succession and death-trigger role | Manual/automatic gating, disabled targets and Ravenkeeper reveal remain usable. |
+| 15 seats, long names, navigation/lifecycle | Labels/buttons usable, no inset overlap; background/foreground and supported restore flow preserve intended state. |
+
+Device acceptance is pending. This plan does not claim physical-device execution or authorize merge.
+
+### 4.11 Decomposition invariants
 
 - no God `NightStepContext` / giant parameter bag;
 - no generic `Utils` / `Helpers` dumping ground;

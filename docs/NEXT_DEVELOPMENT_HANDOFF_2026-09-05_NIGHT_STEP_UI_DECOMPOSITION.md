@@ -14,7 +14,15 @@ The user explicitly authorized a fresh architectural decision and local editing 
 Connector/one-shot/Luna writer-routing restrictions do not apply to this complete local workspace.
 This exception does not change gameplay invariants, evidence requirements or merge authorization.
 
-## Active implementation contract — D5.2
+## Active handoff — UI-R5 acceptance preparation
+
+D1–D5 and the global change-set audit are complete; use the roadmap for exact evidence/current status.
+Next prepare a traceable installable APK and run the device acceptance matrix in roadmap section 4.10.
+Keep this branch stable, reproduce/fix only concrete defects, and collect real-device evidence before
+requesting merge authorization. No immediate D6, algorithm-policy changes or broad visual redesign.
+The prior implementation contracts below are historical scope, not instructions to repeat extraction.
+
+## Prior implementation contract — D5.2
 
 Extract Host-to-first-night request conversion verbatim into a dedicated adapter with explicit inputs.
 Keep pair legality with the existing authority and localized legacy conversion only for parity/fallback.
