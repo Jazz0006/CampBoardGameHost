@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.debug
 
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -57,11 +58,12 @@ class DebugFlightRecorderCoreTest {
         )
 
         val stateJson = DebugFlightRecorderCodec.encodeState(snapshot.state)
+        val decodedState = JSONObject(stateJson)
         val crashText = DebugFlightRecorderCodec.encodeCrash(snapshot)
 
-        assertTrue(stateJson.contains("\"selectedSeat\":\"5\""))
+        assertEquals("5", decodedState.getString("selectedSeat"))
         assertTrue(crashText.contains("IllegalStateException"))
         assertTrue(crashText.contains("duplicate observation"))
-        assertFalse(stateJson.contains("playerName"))
+        assertFalse(decodedState.has("playerName"))
     }
 }
