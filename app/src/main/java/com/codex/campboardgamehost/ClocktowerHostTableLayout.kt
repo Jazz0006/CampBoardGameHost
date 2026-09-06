@@ -120,9 +120,59 @@ internal fun hostTableTabletopGeometry(
  *
  * Every player is sampled at the same path-length interval around the complete perimeter. The
  * resulting [HostTableSpatialSlot] list remains the single authority shared by rendering and drag
- * hit testing.
+ * hit testing. This strict API deliberately fails closed when the requested card geometry overlaps.
  */
 internal fun hostTableLayout(
+    playerCount: Int,
+    constraints: HostTableLayoutConstraints,
+): HostTableLayout {
+    val layout = buildHostTableLayout(
+        playerCount = playerCount,
+        constraints = constraints,
+    )
+    requireSafeSeatSeparation(
+        slots = layout.slots,
+        constraints = constraints,
+    )
+    return layout
+}
+
+/**
+ * Capacity probe used by adaptive UI policy. Invalid player counts remain programming errors, while
+ * an otherwise valid geometry that cannot fit all seats returns null instead of throwing.
+ */
+internal fun hostTableLayoutOrNull(
+    playerCount: Int,
+    constraints: HostTableLayoutConstraints,
+): HostTableLayout? {
+    val layout = buildHostTableLayout(
+        playerCount = playerCount,
+        constraints = constraints,
+    )
+    return layout.takeIf {
+        hasSafeSeatSeparation(
+            slots = layout.slots,
+            constraints = constraints,
+        )
+    }
+}
+
+/**
+ * Last-resort rendering geometry after every supported safe density has been exhausted.
+ *
+ * The strict [hostTableLayout] API remains authoritative for correctness checks. UI callers may use
+ * this only to avoid terminating the Activity on an unusually constrained surface; some overlap is
+ * preferable to a process crash when no supported card density can satisfy the capacity invariant.
+ */
+internal fun hostTableLayoutBestEffort(
+    playerCount: Int,
+    constraints: HostTableLayoutConstraints,
+): HostTableLayout = buildHostTableLayout(
+    playerCount = playerCount,
+    constraints = constraints,
+)
+
+private fun buildHostTableLayout(
     playerCount: Int,
     constraints: HostTableLayoutConstraints,
 ): HostTableLayout {
@@ -143,11 +193,6 @@ internal fun hostTableLayout(
             centerY = point.y,
         )
     }
-
-    requireSafeSeatSeparation(
-        slots = slots,
-        constraints = constraints,
-    )
 
     return HostTableLayout(
         constraints = constraints,
@@ -295,16 +340,26 @@ private fun requireSafeSeatSeparation(
     slots: List<HostTableSpatialSlot>,
     constraints: HostTableLayoutConstraints,
 ) {
+    require(hasSafeSeatSeparation(slots, constraints)) {
+        "Host-table rounded perimeter capacity is insufficient for ${slots.size} players"
+    }
+}
+
+private fun hasSafeSeatSeparation(
+    slots: List<HostTableSpatialSlot>,
+    constraints: HostTableLayoutConstraints,
+): Boolean {
     val epsilon = 0.001f
-    slots.forEachIndexed { firstIndex, first ->
-        slots.drop(firstIndex + 1).forEach { second ->
+    for (firstIndex in slots.indices) {
+        val first = slots[firstIndex]
+        for (secondIndex in firstIndex + 1 until slots.size) {
+            val second = slots[secondIndex]
             val horizontalClearance = abs(first.centerX - second.centerX) + epsilon >=
                 constraints.seatCardWidth + constraints.minimumSafeSeparation
             val verticalClearance = abs(first.centerY - second.centerY) + epsilon >=
                 constraints.seatCardHeight + constraints.minimumSafeSeparation
-            require(horizontalClearance || verticalClearance) {
-                "Host-table rounded perimeter capacity is insufficient for ${slots.size} players"
-            }
+            if (!horizontalClearance && !verticalClearance) return false
         }
     }
+    return true
 }
