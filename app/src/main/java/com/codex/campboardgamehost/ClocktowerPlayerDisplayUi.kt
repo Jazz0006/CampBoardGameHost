@@ -1,6 +1,8 @@
 package com.codex.campboardgamehost
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -350,7 +352,7 @@ private fun ClocktowerPlayerGrimoireDisplay(
                 .fillMaxSize()
                 .padding(28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
                 step.displayTitle,
@@ -360,7 +362,11 @@ private fun ClocktowerPlayerGrimoireDisplay(
                 textAlign = TextAlign.Center,
             )
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(5.dp),
             ) {
                 lines.forEach { line ->
@@ -390,14 +396,17 @@ private fun ClocktowerPlayerGrimoireDisplay(
                         )
                     }
                 }
-            }
-            if (footer.isNotBlank()) {
-                Text(
-                    footer,
-                    color = Color(0xFFAAA397),
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                )
+                if (footer.isNotBlank()) {
+                    Text(
+                        footer,
+                        color = Color(0xFFAAA397),
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                    )
+                }
             }
             OutlinedButton(
                 onClick = onDismiss,
