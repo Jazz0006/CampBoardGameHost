@@ -59,16 +59,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p .tmp-crash-recorder-validation
           chmod +x ./gradlew
           ./gradlew :app:testDebugUnitTest \
             --tests com.codex.campboardgamehost.debug.DebugFlightRecorderCoreTest \
-            --no-daemon --stacktrace
-          ./gradlew :app:testFast :app:assembleDebug --no-daemon --stacktrace
+            --no-daemon --stacktrace 2>&1 | tee .tmp-crash-recorder-validation/validation.log
+          ./gradlew :app:testFast :app:assembleDebug \
+            --no-daemon --stacktrace 2>&1 | tee -a .tmp-crash-recorder-validation/validation.log
+
+      - name: Upload validation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crash-flight-recorder-validation
+          path: .tmp-crash-recorder-validation/validation.log
+          if-no-files-found: ignore
 
       - name: Remove temporary one-shot files and commit product patch
         shell: bash
         run: |
           set -euo pipefail
+          rm -rf .tmp-crash-recorder-validation
           rm .github/scripts/crash_flight_recorder_execution_patch.py
           rm .github/workflows/crash-flight-recorder-execution-one-shot.yml
           git diff --check
