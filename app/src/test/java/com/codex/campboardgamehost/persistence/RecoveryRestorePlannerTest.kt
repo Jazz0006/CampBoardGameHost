@@ -287,14 +287,6 @@ class RecoveryRestorePlannerTest {
         pendingNewDemonName: String? = "Demon 2",
         pendingNightNewDemonIdentityName: String? = "Demon 2",
     ): RecoverySnapshot {
-        val identity = PersistedActiveGameIdentityEnvelope.clocktower(
-            PersistedGameContentIdentity(
-                kind = PersistedVariantKind.CLOCKTOWER_SCRIPT,
-                variantId = "trouble-brewing-test",
-                contentHash = "0123456789abcdef0123456789abcdef",
-                semanticVersion = "1",
-            ),
-        )
         return RecoverySnapshot(
             compatibilityToken = TOKEN,
             savedAtMillis = NOW - 1_000L,

@@ -66,17 +66,6 @@ class RecoverySnapshotJsonCodecTest {
 
     @Test
     fun werewolfRecoveryRetainsAlreadyPerformedNightInteractions() {
-        val identity = PersistedActiveGameIdentityEnvelope.werewolf(
-            PersistedWerewolfGameIdentity(
-                board = PersistedGameContentIdentity(
-                    kind = PersistedVariantKind.WEREWOLF_BOARD,
-                    variantId = "test-board",
-                    contentHash = "0123456789abcdef0123456789abcdef",
-                    semanticVersion = "1",
-                ),
-                ruleOptions = WerewolfRuleOptions(LastWordsMode.FirstDay),
-            ),
-        )
         val snapshot = RecoverySnapshot(
             compatibilityToken = "test-current-build",
             savedAtMillis = 1234L,
@@ -116,14 +105,6 @@ class RecoverySnapshotJsonCodecTest {
 
     @Test
     fun clocktowerRecoveryKeepsConfirmedFactsButDiscardsDraftTargetsAndDayUi() {
-        val identity = PersistedActiveGameIdentityEnvelope.clocktower(
-            PersistedGameContentIdentity(
-                kind = PersistedVariantKind.CLOCKTOWER_SCRIPT,
-                variantId = "trouble-brewing-test",
-                contentHash = "0123456789abcdef0123456789abcdef",
-                semanticVersion = "1",
-            ),
-        )
         val snapshot = RecoverySnapshot(
             compatibilityToken = "test-current-build",
             savedAtMillis = 1234L,

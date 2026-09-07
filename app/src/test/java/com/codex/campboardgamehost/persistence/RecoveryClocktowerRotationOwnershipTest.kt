@@ -48,14 +48,6 @@ class RecoveryClocktowerRotationOwnershipTest {
         cards: List<PlayerCard>,
         rotationRecord: TroubleBrewingSetupRotationRecord?,
     ): RecoverySnapshot {
-        val persistedIdentity = PersistedActiveGameIdentityEnvelope.clocktower(
-            PersistedGameContentIdentity(
-                kind = PersistedVariantKind.CLOCKTOWER_SCRIPT,
-                variantId = "rotation-ownership-test",
-                contentHash = "0123456789abcdef0123456789abcdef",
-                semanticVersion = "1",
-            ),
-        )
         return RecoverySnapshot(
             compatibilityToken = "test-current-build",
             savedAtMillis = 1234L,
