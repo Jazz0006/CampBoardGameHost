@@ -40,9 +40,9 @@ Persistence Simplification remains the active campaign. PS3 typed Recovery is co
 
 Immediate next slice:
 
-> **PS4.3 — typed Recovery wire cleanup / format bump**
+> **PS4.4 — retire old ActiveGame identity/coordinator infrastructure**
 
-PS4.1 and PS4.2 are complete. Do not begin PS5, Werewolf module deletion or D6 decomposition as part of PS4.3.
+PS4.1 through PS4.3 are complete. Do not begin PS5, Werewolf module deletion or D6 decomposition as part of PS4.4.
 
 ## 3. Frozen product contract — Recent Emergency Recovery
 
@@ -98,7 +98,7 @@ PS0  product/recovery contract freeze               COMPLETE
 PS1  Archive / active Recovery separation           COMPLETE
 PS2  minimal typed RecoverySnapshot + writer        COMPLETE
 PS3  typed safe Preview/Restore + atomic apply       COMPLETE
-PS4  retire superseded active-save infrastructure   IN PROGRESS (PS4.1–PS4.2 COMPLETE)
+PS4  retire superseded active-save infrastructure   IN PROGRESS (PS4.1–PS4.3 COMPLETE)
 PS5  simplify persistence triggers                   NOT STARTED
 ```
 
@@ -205,7 +205,7 @@ Checkpoint:
 
 ## 6. PS4 — Retire superseded active-save infrastructure
 
-Status: **in progress — PS4.1 and PS4.2 complete; PS4.3 next**.
+Status: **in progress — PS4.1 through PS4.3 complete; PS4.4 next**.
 
 Authoritative route:
 
@@ -287,7 +287,7 @@ This is behavior-preserving dead-code cleanup. Do **not** manufacture a RED test
 
 Status: **COMPLETE**. RED checkpoint: `64c9866fccffa501ae1e1e3889c478b33764231e`; production GREEN checkpoint: `9fa0e3f86832cd847fb71126e4de54524e0326d2`.
 
-Recovery compatibility is now derived from `RecoverySnapshot.CURRENT_FORMAT_VERSION`, producing `recovery-v1:<GameKind>` for format v1. The token no longer depends on `ActiveGamePersistenceCoordinator.CURRENT_VERSION`. No migration support was added, and the 4-hour/fail-closed policy is unchanged.
+Recovery compatibility is derived from `RecoverySnapshot.CURRENT_FORMAT_VERSION`. At the PS4.2 checkpoint format v1 produced `recovery-v1:<GameKind>`; PS4.3 subsequently advanced the current format to v2, producing `recovery-v2:<GameKind>`. The token no longer depends on `ActiveGamePersistenceCoordinator.CURRENT_VERSION`. No migration support was added, and the 4-hour/fail-closed policy is unchanged.
 
 Cut dependency on `ActiveGamePersistenceCoordinator.CURRENT_VERSION` and give Recovery its own current-format/current-contract token authority.
 
@@ -302,27 +302,38 @@ Protect existing typed behavior:
 
 #### PS4.3 — Typed Recovery wire cleanup / format bump
 
-Order:
+Status: **COMPLETE**.
 
-1. move `TroubleBrewingSetupRotationRecord` into typed Clocktower Recovery ownership;
-2. update writer/strict decoder/App apply;
-3. deliberately bump current Recovery format;
-4. remove obsolete active-save metadata from Recovery wire;
-5. remove `LegacyRestoreCompatibility` after no real durable field remains.
+PS4.3a first moved genuine durable `TroubleBrewingSetupRotationRecord` bookkeeping into typed `ClocktowerRecovery` ownership and preserved its existing wire key. PS4.3b then deliberately advanced current Recovery format `v1 -> v2` and removed obsolete ActiveGame-shaped Recovery metadata.
 
-Likely retired Recovery metadata after proof:
+Tests-first / production checkpoints:
+
+```text
+1e856f0fe7c246bbb5f977810eb95fb34d8d08d1
+test: define typed Clocktower rotation recovery ownership
+
+e4cde20f8449eed49e36ef6e0162f696f3901096
+test: define Recovery v2 schema contract
+
+58d687cc8c8082c040cf07eabcf5c1cfbd4dda15
+refactor: cut Recovery over to v2 schema
+```
+
+Current Recovery v2 no longer persists:
 
 ```text
 legacy active-state version
-PersistedActiveGameIdentity
-CommittedClocktowerSetup
+gameContentIdentity / PersistedActiveGameIdentity
+committedClocktowerSetup
 persisted clocktowerRulesetRoleIds
 persisted clocktowerRulesetRef
 ```
 
-Current Recovery must remain strict/all-or-nothing.
+`LegacyRestoreCompatibility` is deleted. Previous v1 Recovery fails the current-format gate as `UnsupportedFormat`; no migration framework was introduced. Current Clocktower ruleset basis/ref are reconstructed from recovered actual roles and current rules. The existing `activeGamePersistenceCoordinator.identityForSave(...)` call is temporarily retained only for its save-time validation behavior and is the key PS4.4 ownership question.
 
 #### PS4.4 — Retire ActiveGame identity/coordinator infrastructure
+
+Status: **NEXT — NOT STARTED**.
 
 After PS4.2/PS4.3, perform a new reference audit. Delete only proven unreachable types/functions, potentially including old ActiveGame coordinator/identity/envelope/json-codec and legacy restore paths.
 
