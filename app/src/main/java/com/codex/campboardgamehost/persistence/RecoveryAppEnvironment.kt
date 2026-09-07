@@ -7,7 +7,7 @@ import org.json.JSONObject
 /** Current short-horizon recovery contract token shared by typed read/write paths. */
 internal object RecoveryCompatibilityToken {
     fun currentFor(gameKind: GameKind): String =
-        "active-v${ActiveGamePersistenceCoordinator.CURRENT_VERSION}:${gameKind.name}"
+        "recovery-v${RecoverySnapshot.CURRENT_FORMAT_VERSION}:${gameKind.name}"
 }
 
 /**
