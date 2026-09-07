@@ -1,14 +1,14 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-09-06 Australia/Sydney
+> 最后整理：2026-09-07 Australia/Sydney
 > 目标：新的开发会话只读取少量当前权威文档；历史 checkpoint / handoff 默认进入 archive，不参与当前决策。
 
 ## 1. 新任务默认阅读顺序
 
 1. 根目录 `AGENTS.md` — **项目级 AI / architecture / test-first / Git 执行规范**；
 2. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前项目状态与执行优先级权威**；
-3. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-05_NIGHT_STEP_UI_DECOMPOSITION.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-05_NIGHT_STEP_UI_DECOMPOSITION.md) — **唯一当前 active handoff**；
-4. [`CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md`](CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md) — 当前 Night Step ownership decomposition reference；
+3. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-07_D6_APP_HOST_OWNERSHIP.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-07_D6_APP_HOST_OWNERSHIP.md) — **唯一当前 active handoff**；
+4. [`CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md`](CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md) — 已完成 Night Step decomposition 的审计参考；
 5. 当前任务需要的 specialized semantic / product design；
 6. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)；
 7. 查询 live GitHub state 后再实施。
@@ -17,7 +17,7 @@
 
 ## 2. 当前状态
 
-2026-09-06 已集成的重要节点：
+2026-09-07 已核对集成的重要节点：
 
 ```text
 PR #99  R4D-6 Host Table preserved-lineage integration
@@ -26,12 +26,16 @@ PR #101 same-night dead-role wake-step fix
 PR #102 Manual Demon bluff consistency fix
 PR #104 Obsolete source-wiring guard retirement
 PR #105 Drunk shown-identity ownership repair
+PR #106 D1–D5 Night Step / publication ownership decomposition
+PR #107 Offline crash flight recorder
+PR #108 Recorder installation before Activity startup
+PR #110 Optional Poisoner chronology / execution-dusk regression fix
 ```
 
 创建本次文档 checkpoint 时 live `main`：
 
 ```text
-93f99e0576be7b93d479ffa931bae3e4083c25af
+ac71cbe392fb542727dc0c2d69ac82c5fdc0435e
 ```
 
 PR #100 的最终产品决定取代旧 UI-N1 handoff 中“独立 WAKE acknowledgement state”的设计：当前 actor/wake cue 与 target selection 共存于同一 persistent table。
@@ -39,19 +43,18 @@ PR #100 的最终产品决定取代旧 UI-N1 handoff 中“独立 WAKE acknowled
 ## 3. 当前执行顺序
 
 ```text
-D1 legacy night-path cleanup
--> D2 display projection
--> D3 structured preparation
--> D4 interaction owners
--> selected architecture checkpoint (D5 publication coordination separately risk-gated)
--> UI-R5 real-device stabilization / feature freeze
+D6.0 实施启动检查
+-> D6.1 活动存档编码边界
+-> D6.2 完整恢复解析与应用边界（首个持久化里程碑）
+-> 复审 D6.3 夜间状态 / D6.4 命令副作用
+-> UI-R5 稳定性验收收口
 -> EPI-MQ / Productive Uncertainty
 -> UX-R6 legacy recommendation-provider replacement
 ```
 
-最新重审计与 D1–D6 路线见当前 roadmap；D6 Host/App 根深度解耦为后续独立批次。
-
-Night Step decomposition 不是机械降文件大小。主要指标是 **ownership clarity + change context radius**。
+D6 当前为规划；本轮没有生产实现。最新请求允许现在规划 D6，UI-R5 真机要求继续有效。
+D1–D5 已合并；历史证据见 archive 中的 D1–D5 roadmap record。主要指标仍是
+**ownership clarity + change context radius**，不以行数或拆出文件数量验收。
 
 ## 4. 当前 architecture / UI references
 

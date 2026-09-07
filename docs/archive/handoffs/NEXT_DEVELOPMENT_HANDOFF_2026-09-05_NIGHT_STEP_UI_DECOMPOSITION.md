@@ -1,6 +1,6 @@
 # NEXT DEVELOPMENT HANDOFF — Night Step UI Ownership Decomposition
 
-> Role: **CURRENT ACTIVE HANDOFF**
+> Role: **HISTORICAL / SUPERSEDED by the 2026-09-07 D6 handoff**
 > Revised: 2026-09-06 Australia/Sydney
 > Repository: `Jazz0006/CampBoardGameHost`
 
@@ -14,7 +14,7 @@ The user explicitly authorized a fresh architectural decision and local editing 
 Connector/one-shot/Luna writer-routing restrictions do not apply to this complete local workspace.
 This exception does not change gameplay invariants, evidence requirements or merge authorization.
 
-## Active handoff — UI-R5 acceptance preparation
+## Historical handoff — UI-R5 acceptance preparation
 
 D1–D5 and the global change-set audit are complete; use the roadmap for exact evidence/current status.
 Next prepare a traceable installable APK and run the device acceptance matrix in roadmap section 4.10.
