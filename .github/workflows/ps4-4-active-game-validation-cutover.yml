@@ -34,9 +34,9 @@ jobs:
         run: |
           set -euo pipefail
           GREEN_SHA='344c709c35d2a7c99548eb330e595a6b9c2ae5c7'
-          EXPECTED_PARENT='c7740c5f09a8ccab72239821eae10646368c6ed1'
+          EXPECTED_PARENT='4921fb76228243347a8d421984e7836fe8c60b6e'
           APP_BLOB='a1fc22725a4bf6f242ff6de19c10ccf1e89fd48a'
-          SCRIPT_BLOB='5328986f4484e2c04f731c4eeeee0276e0894750'
+          SCRIPT_BLOB='6deaa016df3faadc146de3f2d134723f92b3110e'
           WORKFLOW='.github/workflows/ps4-4-active-game-validation-cutover.yml'
           SCRIPT='scripts/ps4_4_active_game_validation_cutover.py'
           APP='app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt'
