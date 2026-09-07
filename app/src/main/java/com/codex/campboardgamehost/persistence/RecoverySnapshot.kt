@@ -44,7 +44,7 @@ internal data class LegacyRestoreCompatibility(
     val identity: PersistedActiveGameIdentityEnvelope,
     val committedClocktowerSetup: CommittedClocktowerSetup? = null,
     val troubleBrewingSetupRotationRecord: TroubleBrewingSetupRotationRecord? = null,
-    val clocktowerRulesetRoleIds: List<RoleId> = emptyList(),
+    val clocktowerRulesetRoleIds: Set<RoleId> = emptySet(),
     val clocktowerRulesetRef: RulesetRef? = null,
 )
 
