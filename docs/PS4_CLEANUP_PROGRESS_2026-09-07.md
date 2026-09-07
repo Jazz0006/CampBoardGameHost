@@ -3,7 +3,7 @@
 > Date: 2026-09-07 Australia/Sydney  
 > Branch: `codex/persistence-simplification`  
 > Draft PR: #112  
-> Status: **PS4.2 complete; stop before PS4.3**
+> Status: **PS4.3a complete; stop before PS4.3b**
 
 ## 1. Current campaign position
 
@@ -17,7 +17,9 @@ PS3 typed safe Preview/Restore      COMPLETE
 PS4 legacy cleanup                  IN PROGRESS
   PS4.1 dead active snapshot        COMPLETE
   PS4.2 Recovery token ownership    COMPLETE
-  PS4.3 Recovery wire cleanup       NOT STARTED
+  PS4.3 Recovery wire cleanup       IN PROGRESS
+    PS4.3a typed TB rotation owner  COMPLETE
+    PS4.3b Recovery v2/wire cleanup NOT STARTED
 PS5 trigger simplification          NOT STARTED
 ```
 
@@ -43,38 +45,25 @@ PS4.1 production checkpoint remains:
 refactor: remove dead active snapshot
 ```
 
-PS4.2 started from the fully validated PS4.1 checkpoint head:
+PS4.2 production checkpoint remains:
 
 ```text
-3c6b76c898127e7fd1d9e2384f43c32a3bc69c1c
-docs: record PS4.1 cleanup checkpoint [full-ci]
+9fa0e3f86832cd847fb71126e4de54524e0326d2
+refactor: give Recovery independent compatibility token
+```
+
+PS4.2 validated docs checkpoint before PS4.3a:
+
+```text
+c7d476ad079716dd11d6e3f2911ae4ca94df948f
+docs: record PS4.2 cleanup checkpoint
 ```
 
 ## 2. PS4.1 — completed
 
 PS4.1 removed the proven-dead `activeGameSnapshotJson()` path and only helpers proven exclusive to it. It did not change Recovery format/token semantics or remove `LegacyRestoreCompatibility`.
 
-See the PS4.1 production checkpoint above and repository history for the exact deletion audit.
-
 ## 3. PS4.2 — completed Recovery compatibility ownership
-
-### Ownership problem before PS4.2
-
-Before this slice, current Recovery compatibility was generated as:
-
-```text
-active-v${ActiveGamePersistenceCoordinator.CURRENT_VERSION}:<GameKind>
-```
-
-That made short-horizon typed Recovery depend on the obsolete ActiveGame persistence version authority even though Recovery already owned:
-
-```text
-RecoverySnapshot.CURRENT_FORMAT_VERSION = 1
-```
-
-PS4.2 deliberately cut only this ownership dependency. It did **not** clean the legacy Recovery wire fields or bump the Recovery format; those remain PS4.3 work.
-
-### Chosen current contract
 
 Recovery now owns its compatibility token through its own current format version:
 
@@ -90,176 +79,239 @@ recovery-v1:Undercover
 recovery-v1:Clocktower
 ```
 
-There is intentionally no second independent Recovery compatibility-version constant. A later deliberate Recovery format bump naturally changes the current token as well.
+PS4.2 deliberately did not clean the legacy Recovery wire fields or bump the Recovery format.
 
-Old `active-v3:*` tokens are not migrated. This is consistent with the frozen product contract: active Recovery is current-format-only, short-horizon emergency continuity with no cross-version migration promise.
+## 4. PS4.3a — completed typed Trouble Brewing rotation ownership
 
-## 4. PS4.2 RED/GREEN evidence
+### 4.1 Fresh ownership audit
 
-### Typed RED
+Before implementation, the live writer/decoder/application/bookkeeping path was re-audited.
 
-RED checkpoint:
+`TroubleBrewingSetupRotationRecord` is genuine durable current-game bookkeeping, not obsolete compatibility debris:
 
 ```text
-64c9866fccffa501ae1e1e3889c478b33764231e
-test: define Recovery-owned compatibility token contract
+TB preset selection
+-> committedTroubleBrewingSetupRotationRecord
+-> active Recovery persistence
+-> strict Recovery decode
+-> App Recovery apply
+-> completed-game rotation history
+```
+
+Therefore it had to move before `LegacyRestoreCompatibility` could later be deleted.
+
+The audit also established two safe cross-invariants for the typed model:
+
+1. a Trouble Brewing rotation record may only be carried by `ClocktowerScript.TroubleBrewing` Recovery;
+2. when present, `record.playerCount` must equal the recovered card count.
+
+No runtime-role/external-preset role-ID equality check was added because those layers use different identifier authorities and such a check would introduce unnecessary coupling.
+
+### 4.2 Tests-first contract checkpoint
+
+Typed ownership test checkpoint:
+
+```text
+1e856f0fe7c246bbb5f977810eb95fb34d8d08d1
+test: define typed Clocktower rotation recovery ownership
 ```
 
 Added:
 
 ```text
-app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryCompatibilityTokenTest.kt
+app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryClocktowerRotationOwnershipTest.kt
 ```
 
-The new typed test protects two durable ownership expectations:
+The test protects:
 
-- Undercover current token is `recovery-v1:Undercover` and is accepted by the planner when writer/reader agree;
-- Clocktower uses the same Recovery-owned format authority and produces `recovery-v1:Clocktower`.
+- typed `ClocktowerRecovery` ownership and v1 round-trip of the TB rotation record;
+- rejection of a TB rotation record on No Greater Joy Recovery;
+- rejection when rotation `playerCount` does not match recovered cards.
 
-The RED was exact and meaningful:
+The branch advanced while the initial test-only CI run was active, so that CI run was cancelled by normal concurrency before an exact compiler diagnostic was retained. The checkpoint still precedes the production model change and references the then-missing typed field. Final focused and fast validation below are the authoritative GREEN evidence.
+
+### 4.3 Typed model / writer / decoder implementation
+
+Implementation lineage:
 
 ```text
-:app:testFast
-1185 tests completed, 2 failed
+c70058abe3401138995493c54f4b9ba73d7ca7af
+refactor: move TB rotation fact into typed Clocktower recovery
+
+2c2e9a6e645a8756dd0b6fb68c6d0cc9dbbf1514
+refactor: encode TB rotation from typed recovery
+
+e3179d48d1abcff02072da9868b0761f209ffc45
+refactor: decode TB rotation into typed Clocktower recovery
 ```
 
-Both failures were only the two new `RecoveryCompatibilityTokenTest` comparison assertions. There was no compile failure or unrelated regression.
-
-### Production GREEN
-
-Production checkpoint:
+The resulting ownership is:
 
 ```text
-9fa0e3f86832cd847fb71126e4de54524e0326d2
-refactor: give Recovery independent compatibility token
+ClocktowerRecovery.troubleBrewingSetupRotationRecord
 ```
 
-The production change was exactly one line in:
+`LegacyRestoreCompatibility` remains present for PS4.3b, but it no longer owns the Trouble Brewing rotation record.
+
+The v1 external wire key remains unchanged:
 
 ```text
-app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryAppEnvironment.kt
+TroubleBrewingSetupCompletionPersistence.ROOT_KEY
+= "troubleBrewingSetupCompletion"
 ```
 
-Changed from ActiveGame-owned versioning to:
+The writer now emits that key from the typed `ClocktowerRecovery` field. The strict decoder places the decoded record directly into typed `ClocktowerRecovery`.
+
+### 4.4 Large-App wiring
+
+`CampBoardGameHostApp.kt` was changed through the required fail-closed GitHub Actions + separate Python large-file workflow.
+
+The exact App product commit is:
 
 ```text
-RecoverySnapshot.CURRENT_FORMAT_VERSION
+8ed54f855d095f3f9c4473822ba32f06af4630db
+refactor: wire typed TB rotation recovery in App
 ```
 
-The PS4.2 source/test diff from the PS4.1 checkpoint contains only:
+That commit changes only `CampBoardGameHostApp.kt`, with:
 
 ```text
-app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryAppEnvironment.kt
-app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryCompatibilityTokenTest.kt
+2 additions
+2 deletions
 ```
 
-No Recovery codec/schema fields were changed.
+Its three semantic changes are exactly:
 
-## 5. Validation evidence
+1. stop placing `committedTroubleBrewingSetupRotationRecord` into `LegacyRestoreCompatibility`;
+2. place it into `ClocktowerRecovery.troubleBrewingSetupRotationRecord` when saving;
+3. restore App bookkeeping from `game.troubleBrewingSetupRotationRecord`, not from the legacy shell.
 
-GREEN checkpoint evidence:
+The one-shot tooling self-removed in:
 
 ```text
-RecoveryCompatibilityTokenTest                 PASS
-:app:testFast                                  PASS
-CI gate                                        PASS
-R2 main-thread boundary                        PASS
+77ddfb0e0cbd058f37835d52cf3fccce0625cd94
+chore: remove PS4.3a one-shot tooling
 ```
 
-Existing typed Recovery tests continue to protect the unchanged eligibility/fail-closed matrix:
+The temporary `.github/scripts/ps4_3a_typed_rotation_patch.py` and `.github/workflows/ps4-3a-typed-rotation-one-shot.yml` do not remain in the final branch tree.
 
-- correct current token accepted;
-- wrong token rejected as `CompatibilityMismatch`;
-- wrong Recovery format rejected;
-- future timestamp rejected;
-- exactly 4 hours accepted;
-- older than 4 hours expired.
+## 5. PS4.3a validation evidence
 
-The 4-hour `RecoveryValidityPolicy` and strict preparation/application behavior were not changed.
-
-A one-shot checkpoint audit then independently passed:
+One-shot run:
 
 ```text
-exact branch/lineage lock                       PASS
-git diff --check over PS4.2 source/test diff    PASS
-exact two-file source/test allowlist            PASS
-absence of ActiveGame CURRENT_VERSION coupling  PASS
-presence of Recovery format ownership           PASS
-roadmap exact-anchor patch                       PASS
-remote-head race lock                            PASS
-temporary tooling self-removal                   PASS
+PS4.3a typed rotation one-shot
+run 34109004051
+SUCCESS
 ```
 
-Roadmap checkpoint:
+The fail-closed workflow passed all stages:
 
 ```text
-e3f40244348dfa8cb5ec22df28c1ba59ff1eb3b6
-docs: record PS4.2 roadmap checkpoint
+exact branch/parent/blob locks                  PASS
+prepatch ownership/reference audit              PASS
+large-App exact-anchor patch                    PASS
+postpatch semantic + one-file diff audit        PASS
+focused Recovery ownership tests                PASS
+:app:compileDebugKotlin                          PASS
+:app:testFast                                    PASS
+git diff --check                                PASS
+remote-head race audit                          PASS
+App product commit/push                         PASS
+temporary tooling self-removal                  PASS
 ```
 
-Temporary checkpoint tooling was removed in:
+Focused Recovery coverage included:
 
 ```text
-31753859578907eadaec50efb1fdbf5cedabbcac
-chore: remove PS4.2 checkpoint tooling
+RecoveryClocktowerRotationOwnershipTest
+RecoverySnapshotJsonCodecTest
+RecoveryRestorePlannerTest
+RecoveryPreviewLoaderTest
+RecoveryApplicationCoordinatorTest
 ```
 
-## 6. Frozen boundaries after PS4.2
+The post-cleanup repository audit confirmed:
 
-PS4.2 did **not**:
+- `ClocktowerRecovery` directly owns the rotation record;
+- `LegacyRestoreCompatibility` no longer contains that field;
+- App save writes it into typed `ClocktowerRecovery`;
+- App apply reads `game.troubleBrewingSetupRotationRecord`;
+- no App reference remains to `plan.snapshot.legacyRestoreCompatibility.troubleBrewingSetupRotationRecord`.
 
-- bump `RecoverySnapshot.CURRENT_FORMAT_VERSION`; it remains v1;
-- remove or rename any current Recovery wire field;
-- remove `LegacyRestoreCompatibility`;
-- move `TroubleBrewingSetupRotationRecord` out of the legacy shell;
-- remove legacy persisted identity/setup/ruleset metadata from Recovery;
+## 6. Frozen boundaries after PS4.3a
+
+PS4.3a deliberately did **not**:
+
+- bump `RecoverySnapshot.CURRENT_FORMAT_VERSION`; it remains `1`;
+- change current compatibility tokens; they remain `recovery-v1:*`;
+- remove or rename the existing TB completion wire key;
+- remove the remaining `LegacyRestoreCompatibility` shell;
+- delete persisted ActiveGame identity metadata from Recovery;
+- delete committed Clocktower setup metadata from Recovery;
+- delete persisted Clocktower ruleset-role/ref metadata from Recovery;
+- remove `ActiveGamePersistenceCoordinator.identityForSave()` validation behavior;
 - change Recovery save timing or persistence triggers;
-- alter the 4-hour validity window;
-- add migration support for old Recovery tokens/formats;
+- change the 4-hour validity policy;
+- add cross-version Recovery migration;
 - change Archive compatibility;
-- delete the Werewolf module;
+- delete Werewolf;
 - begin PS5;
 - begin D6;
 - merge PR #112.
 
-Current production active writes still use:
+Current Recovery format remains intentionally:
 
 ```text
-RecoverySnapshotJsonCodec.encode(activeGameRecoverySnapshot())
+RecoverySnapshot.CURRENT_FORMAT_VERSION = 1
 ```
 
-`LegacyRestoreCompatibility` remains intentionally present because its `troubleBrewingSetupRotationRecord` field still carries genuine current-game bookkeeping until PS4.3 moves that ownership safely.
-
-## 7. Next approved slice — PS4.3, not started
-
-The roadmap now points to:
+`LegacyRestoreCompatibility` now retains only the still-unmigrated PS4.3b shell fields:
 
 ```text
-PS4.3 — typed Recovery wire cleanup / format bump
+activeGameStateVersion
+identity
+committedClocktowerSetup
+clocktowerRulesetRoleIds
+clocktowerRulesetRef
 ```
 
-PS4.3 is a materially larger schema/ownership change and must remain separate from PS4.2. Its planned order remains:
+## 7. Next approved slice — PS4.3b, not started
 
-1. move `TroubleBrewingSetupRotationRecord` into typed Clocktower Recovery ownership;
-2. update typed writer / strict decoder / App apply;
-3. deliberately bump current Recovery format;
-4. remove obsolete ActiveGame-shaped metadata from the Recovery wire;
-5. remove `LegacyRestoreCompatibility` only after no genuine durable field remains in it.
+PS4.3b is the deliberate Recovery v2 / obsolete-wire cleanup slice.
 
-Do not introduce migration support for the previous Recovery format; the previous format should fail closed.
+Before production edits, re-audit the current writer, strict decoder, planner and App save/apply references. Then establish tests that explicitly prove the chosen current-format-only behavior.
+
+Planned PS4.3b order:
+
+1. add/strengthen tests for Recovery v2 and explicit v1 rejection;
+2. bump `RecoverySnapshot.CURRENT_FORMAT_VERSION` from 1 to 2;
+3. allow `RecoveryCompatibilityToken` to naturally become `recovery-v2:<GameKind>` through the existing Recovery-owned authority;
+4. remove obsolete ActiveGame-shaped Recovery wire metadata:
+   - legacy `version`;
+   - persisted ActiveGame identity envelope;
+   - committed Clocktower setup copy;
+   - persisted Clocktower ruleset role IDs;
+   - persisted Clocktower ruleset ref;
+5. delete `LegacyRestoreCompatibility` once no genuine durable field remains;
+6. keep the existing save-time identity/coordinator validation behavior unless separately re-homed and tested in PS4.4.
+
+Do not add migration support for Recovery v1. Under the frozen product contract, previous-format Recovery must fail closed rather than be migrated.
+
+Do not redesign the entire JSON hierarchy merely for aesthetics; PS4.3b should remove wrong ownership with the smallest safe wire change.
 
 ## 8. Current stop point
 
-**Stop after PS4.2. Do not begin PS4.3 without a fresh live-state/checks review and explicit continuation.**
+**Stop after PS4.3a. PS4.3b has not started.**
 
-Before PS4.3 implementation:
+Before PS4.3b implementation:
 
 1. re-query live `main`;
 2. re-query PR #112 head/state/checks;
-3. confirm the PS4.2 checkpoint head is green;
+3. confirm this PS4.3a checkpoint is green;
 4. keep PR #112 draft and unmerged;
-5. re-audit the exact `TroubleBrewingSetupRotationRecord` writer/decoder/application/bookkeeping path before moving it;
-6. establish the PS4.3 current-format/previous-format behavior tests before production schema changes.
+5. re-audit all remaining `LegacyRestoreCompatibility` consumers;
+6. establish explicit v2/current-format and old-v1 rejection tests before removing wire fields.
 
 ## 9. Retain boundaries throughout remaining PS4
 
