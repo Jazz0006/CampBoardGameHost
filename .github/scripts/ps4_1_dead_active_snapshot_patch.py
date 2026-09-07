@@ -63,11 +63,11 @@ missing = [token for token in required_active_tokens if token not in active_bloc
 if missing:
     raise SystemExit(f"Active snapshot body no longer matches audited shape; missing: {missing}")
 
-# Every .toJson() occurrence in this App file belongs to the dead writer's
-# private encode-helper chain: four private encoder definitions/calls plus the
-# active snapshot's GameOutcome call. If that set changes, stop for re-audit.
-if app.count(".toJson()") != 5:
-    raise SystemExit(f"Expected exactly five App .toJson() occurrences, found {app.count('.toJson()')}")
+# All eight .toJson() occurrences in this App file belong to the dead writer's
+# private encode chain: four private encoder definitions, three array-encoder
+# calls, and the active snapshot's GameOutcome call. If that set changes, stop.
+if app.count(".toJson()") != 8:
+    raise SystemExit(f"Expected exactly eight App .toJson() occurrences, found {app.count('.toJson()')}")
 
 # Validate all private encoder boundaries before mutating anything.
 encoder_boundaries = (
