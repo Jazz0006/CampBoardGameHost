@@ -26,7 +26,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "9968b8570574af12e8b8a8a2c183ab2b2651e633"
+          test "$(git rev-parse HEAD^)" = "ffe74faabc898d9d3a9b4e6b48821cce549254e8"
           test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$GITHUB_SHA"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = "623fbbf2862ca2a689f52a5ceb4e9c020d620313"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/persistence/AppJsonPrimitives.kt)" = "6fe2f642281e231506388fcc80a748de2d8a792b"
@@ -86,7 +86,6 @@ jobs:
             stringsToJsonArray \
             putNullableString \
             putNullableInt \
-            optNullableBoolean \
             ClocktowerSemanticHistoryPersistence \
             ClocktowerRulesetPersistenceBasisJsonCodec \
             ClocktowerNightCheckpoint \
@@ -97,6 +96,8 @@ jobs:
             echo "$token main-source refs before: $count"
             test "$count" -ge 2
           done
+          test "$(git grep -F 'optNullableBoolean' -- app/src/main | wc -l | tr -d ' ')" = "1"
+          test "$(git grep -F 'optNullableBoolean(' -- app/src/test/java/com/codex/campboardgamehost/persistence/AppJsonPrimitivesTest.kt | wc -l | tr -d ' ')" = "3"
 
       - name: Apply exact dead-code patch
         shell: bash
@@ -196,7 +197,6 @@ jobs:
             stringsToJsonArray \
             putNullableString \
             putNullableInt \
-            optNullableBoolean \
             ClocktowerSemanticHistoryPersistence \
             ClocktowerRulesetPersistenceBasisJsonCodec \
             ClocktowerNightCheckpoint \
@@ -207,6 +207,8 @@ jobs:
             echo "$token main-source refs after: $count"
             test "$count" -ge 1
           done
+          test "$(git grep -F 'optNullableBoolean' -- app/src/main | wc -l | tr -d ' ')" = "1"
+          test "$(git grep -F 'optNullableBoolean(' -- app/src/test/java/com/codex/campboardgamehost/persistence/AppJsonPrimitivesTest.kt | wc -l | tr -d ' ')" = "3"
 
       - name: Reconfirm remote head
         shell: bash
