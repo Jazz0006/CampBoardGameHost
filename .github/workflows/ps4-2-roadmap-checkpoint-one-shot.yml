@@ -1,0 +1,91 @@
+name: PS4.2 roadmap checkpoint one-shot
+
+on:
+  push:
+    branches:
+      - codex/persistence-simplification
+    paths:
+      - .github/workflows/ps4-2-roadmap-checkpoint-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  checkpoint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/persistence-simplification
+          fetch-depth: 0
+
+      - name: Verify exact checkpoint lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "93e87261bbad09019678043b338ba0460af21b36"
+          test "$(git rev-parse HEAD^^)" = "9fa0e3f86832cd847fb71126e4de54524e0326d2"
+          test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Exact PS4.2 diff and ownership audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=3c6b76c898127e7fd1d9e2384f43c32a3bc69c1c
+          green=9fa0e3f86832cd847fb71126e4de54524e0326d2
+          git diff --check "$base" "$green"
+          mapfile -t changed < <(git diff --name-only "$base" "$green")
+          test "${#changed[@]}" = "2"
+          test "${changed[0]}" = "app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryAppEnvironment.kt"
+          test "${changed[1]}" = "app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryCompatibilityTokenTest.kt"
+          if git grep -n -F 'ActiveGamePersistenceCoordinator.CURRENT_VERSION' "$green" -- app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryAppEnvironment.kt; then
+            echo 'RecoveryCompatibilityToken still depends on ActiveGame persistence version' >&2
+            exit 1
+          fi
+          git grep -n -F 'RecoverySnapshot.CURRENT_FORMAT_VERSION' "$green" -- app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryAppEnvironment.kt
+          git grep -n -F 'recovery-v1:Undercover' "$green" -- app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryCompatibilityTokenTest.kt
+          git grep -n -F 'recovery-v1:Clocktower' "$green" -- app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryCompatibilityTokenTest.kt
+          git grep -n -F 'RecoveryValidityPolicy.MAX_AGE_MILLIS' "$green" -- app/src/test || true
+
+      - name: Apply roadmap checkpoint patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/ps4_2_roadmap_checkpoint_patch.py
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          test "${#changed[@]}" = "1"
+          test "${changed[0]}" = "docs/CURRENT_DEVELOPMENT_ROADMAP.md"
+          git diff -- docs/CURRENT_DEVELOPMENT_ROADMAP.md
+
+      - name: Reconfirm remote head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Commit and push roadmap checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/CURRENT_DEVELOPMENT_ROADMAP.md
+          test "$(git diff --cached --name-only)" = "docs/CURRENT_DEVELOPMENT_ROADMAP.md"
+          git commit -m 'docs: record PS4.2 roadmap checkpoint'
+          checkpoint_sha=$(git rev-parse HEAD)
+          test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$GITHUB_SHA"
+          git push origin HEAD:refs/heads/codex/persistence-simplification
+          echo "CHECKPOINT_SHA=$checkpoint_sha" >> "$GITHUB_ENV"
+
+      - name: Self-remove one-shot tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$CHECKPOINT_SHA"
+          git rm .github/scripts/ps4_2_roadmap_checkpoint_patch.py
+          git rm .github/workflows/ps4-2-roadmap-checkpoint-one-shot.yml
+          git commit -m 'chore: remove PS4.2 checkpoint tooling'
+          git push origin HEAD:refs/heads/codex/persistence-simplification
