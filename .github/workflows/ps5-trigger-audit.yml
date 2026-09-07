@@ -23,7 +23,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = '22086dd984fb7992d00e3226d444affb76adb509'
+          test "$(git rev-parse HEAD^)" = 'c8d3c0b8f9ef0bb3a63f4a6f667c8283e04689b7'
           test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$(git rev-parse HEAD)"
 
       - name: Patch App to use semantic Recovery write gate
@@ -50,8 +50,8 @@ jobs:
                   '''    fun persistActiveGameStateIfNeeded(force: Boolean = false): Boolean {\n        if (!screen.isActiveGameScreen() || cards.isEmpty()) return false\n        val snapshot = activeGameRecoverySnapshot()\n        return recoveryWriteGate.persist(snapshot, force = force) { durableSnapshot ->\n            baseContext.saveActiveGameState(RecoverySnapshotJsonCodec.encode(durableSnapshot))\n        }\n    }\n\n    fun persistAndReleaseA4ObservationRebuildIfDurable(force: Boolean = false) {\n        val persisted = persistActiveGameStateIfNeeded(force = force)\n        val recordId = a4ObservationDurabilityGate.releaseAfterPersistence(persisted) ?: return\n        a4ObservationCacheRebuildRequest = a4ObservationCacheRebuildRequestOrNull(recordId)\n    }''',
               ),
               (
-                  '''    val latestPersistActiveGameState by rememberUpdatedState {\n        persistAndReleaseA4ObservationRebuildIfDurable()\n    }''',
-                  '''    val latestPersistActiveGameState by rememberUpdatedState {\n        persistAndReleaseA4ObservationRebuildIfDurable(force = true)\n    }''',
+                  '    val latestPersistActiveGameState by rememberUpdatedState { persistAndReleaseA4ObservationRebuildIfDurable() }',
+                  '    val latestPersistActiveGameState by rememberUpdatedState { persistAndReleaseA4ObservationRebuildIfDurable(force = true) }',
               ),
           ]
 
