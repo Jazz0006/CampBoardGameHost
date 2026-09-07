@@ -406,18 +406,12 @@ private fun Context.clearActiveGameState() {
         .commit()
 }
 
-private fun Context.loadSavedGamePreview(localizedContext: Context): SavedGamePreview? {
-    val json = loadActiveGameStateJson() ?: return null
-    val preview = runCatching { savedGamePreviewFromJson(localizedContext, json) }
-        .getOrElse {
-            clearActiveGameState()
-            null
-        }
-    if (preview == null) {
-        clearActiveGameState()
-    }
-    return preview
-}
+private fun Context.loadSavedGamePreview(localizedContext: Context): SavedGamePreview? =
+    RecoveryPreviewLoader.load(
+        raw = loadActiveGameStateJson(),
+        prepare = { raw -> prepareCurrentRecoveryPlan(raw) },
+        clearRejected = { clearActiveGameState() },
+    )?.toSavedGamePreview(localizedContext)
 
 private fun clocktowerRoleByName(enName: String?): ClocktowerRole? {
     if (enName.isNullOrBlank()) return null
@@ -619,51 +613,7 @@ private fun gameOutcomeFromJson(json: JSONObject?): GameOutcome? {
     )
 }
 
-private fun savedGamePreviewFromJson(context: Context, json: JSONObject): SavedGamePreview? {
-    if (!ActiveGamePersistenceCoordinator.isSupportedVersion(json.optInt("version", 0))) return null
-    val gameKind = enumByName<GameKind>(json.optNullableString("currentGameKind")) ?: return null
-    val screen = enumByName<Screen>(json.optNullableString("screen")) ?: return null
-    val playerCount = json.optJSONArray("cards")?.length() ?: 0
-    if (playerCount == 0) return null
-    if (
-        gameKind == GameKind.Clocktower &&
-        enumByName<ClocktowerScript>(json.optNullableString("currentClocktowerScript")) == ClocktowerScript.TroubleBrewing &&
-        (!json.has(CommittedClocktowerSetupPersistence.ROOT_KEY) ||
-            !json.has(TroubleBrewingSetupCompletionPersistence.ROOT_KEY))
-    ) return null
-    val round = json.optInt("round", 1)
-    val gameName = when (gameKind) {
-        GameKind.Undercover -> context.getString(R.string.game_who_is_undercover)
-        GameKind.Werewolf -> context.getString(R.string.game_werewolf)
-        GameKind.Clocktower -> context.getString(R.string.game_clocktower)
-    }
-    val stage = when {
-        json.optBoolean("showResults", false) || json.optJSONObject("gameOutcome") != null ->
-            context.getString(R.string.saved_game_stage_results)
-        screen == Screen.PassPhone || screen == Screen.RevealCard ->
-            context.getString(R.string.saved_game_stage_dealing)
-        gameKind == GameKind.Clocktower -> {
-            when (enumByName<ClocktowerPhase>(json.optNullableString("clocktowerPhase")) ?: ClocktowerPhase.FirstNight) {
-                ClocktowerPhase.FirstNight -> context.getString(R.string.clocktower_phase_first_night)
-                ClocktowerPhase.Dawn -> context.getString(R.string.saved_game_stage_dawn)
-                ClocktowerPhase.Day -> context.getString(R.string.clocktower_phase_day, round)
-                ClocktowerPhase.Night -> context.getString(R.string.clocktower_phase_night, round)
-            }
-        }
-        else -> context.getString(R.string.round_format, round)
-    }
-    return SavedGamePreview(
-        title = context.getString(R.string.resume_saved_game),
-        subtitle = context.getString(R.string.saved_game_summary_format, gameName, stage, playerCount),
-        savedAtLabel = json.optLong("savedAtMillis", 0L)
-            .takeIf { it > 0L }
-            ?.let { savedAtMillis ->
-                val locale = context.resources.configuration.locales[0]
-                val pattern = if (locale.language == "en") "MMM d, HH:mm" else "M月d日 HH:mm"
-                java.text.SimpleDateFormat(pattern, locale).format(java.util.Date(savedAtMillis))
-            },
-    )
-}
+
 
 internal fun Role.labelResId(): Int = when (this) {
     Role.Civilian -> R.string.role_civilian
@@ -1861,7 +1811,7 @@ internal fun CampBoardGameHostApp() {
             )
         }
         return RecoverySnapshot(
-            compatibilityToken = "active-v${ACTIVE_GAME_STATE_VERSION}:${currentGameKind.name}",
+            compatibilityToken = RecoveryCompatibilityToken.currentFor(currentGameKind),
             savedAtMillis = System.currentTimeMillis(),
             legacyRestoreCompatibility = legacyRestoreCompatibility,
             game = recoveryGame,
