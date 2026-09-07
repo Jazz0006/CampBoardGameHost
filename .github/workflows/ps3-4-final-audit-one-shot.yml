@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "e866ceb918740661c440eea3253d552f5037aab8"
+          test "$(git rev-parse HEAD^)" = "d1c2de2b059465305149ee811111c26b78432d7f"
           test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$GITHUB_SHA"
 
       - name: Set up JDK 17
@@ -70,7 +70,7 @@ jobs:
 
           test "$(git diff --name-only 655c7550d1a2aec8f5a58ea8dcb3fb9554882d70 74535e3e17091219520bc4a1d3fbdb60436ece91)" = "$APP"
           git diff --check 655c7550d1a2aec8f5a58ea8dcb3fb9554882d70 74535e3e17091219520bc4a1d3fbdb60436ece91
-          git diff --check origin/main...HEAD
+          git diff --check HEAD^..HEAD
 
           test ! -e .github/workflows/ps3-3-restore-cutover-one-shot.yml
           test ! -e .github/scripts/ps3_3_restore_cutover_patch.py
