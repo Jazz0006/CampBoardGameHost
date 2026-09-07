@@ -26,11 +26,11 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "c5702e9893ef8a033bd6fafd9690df705a2dd989"
+          test "$(git rev-parse HEAD^)" = "46ac3ec84acedeacd8888fa6bc936a0edcdff80c"
           test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$GITHUB_SHA"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = "623fbbf2862ca2a689f52a5ceb4e9c020d620313"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/persistence/AppJsonPrimitives.kt)" = "6fe2f642281e231506388fcc80a748de2d8a792b"
-          test "$(git hash-object .github/scripts/ps4_1_dead_active_snapshot_patch.py)" = "b84042e7bac66f0d27a6c3d9b3557a1a97314000"
+          test "$(git hash-object .github/scripts/ps4_1_dead_active_snapshot_patch.py)" = "6efc4f6e0a608421544375042c3bc6fbe508dbb7"
 
       - name: Fresh repository-wide reference audit
         shell: bash
@@ -58,7 +58,7 @@ jobs:
           test "$(git grep -F 'clocktowerEventsToJsonArray' -- app/src/main | wc -l | tr -d ' ')" = "2"
           test "$(git grep -F 'recordedEpistemicObservationsToJsonArray' -- app/src/main | wc -l | tr -d ' ')" = "2"
           test "$(git grep -F 'putNullableBoolean' -- app/src/main | wc -l | tr -d ' ')" = "3"
-          test "$(grep -F -c '.toJson()' "$app")" = "5"
+          test "$(grep -F -c '.toJson()' "$app")" = "8"
           grep -n -F 'private fun PlayerCard.toJson()' "$app"
           grep -n -F 'private fun EliminationRecord.toJson()' "$app"
           grep -n -F 'private fun GameOutcome.toJson()' "$app"
