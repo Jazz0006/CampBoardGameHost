@@ -2,6 +2,7 @@ from pathlib import Path
 
 APP = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
 PRIMITIVES = Path("app/src/main/java/com/codex/campboardgamehost/persistence/AppJsonPrimitives.kt")
+PRIMITIVES_TEST = Path("app/src/test/java/com/codex/campboardgamehost/persistence/AppJsonPrimitivesTest.kt")
 
 
 def read_lf(path: Path) -> str:
@@ -29,6 +30,7 @@ def remove_between(text: str, start_marker: str, end_marker: str, label: str) ->
 
 app = read_lf(APP)
 primitives = read_lf(PRIMITIVES)
+primitives_test = read_lf(PRIMITIVES_TEST)
 
 # PS4.1 is deliberately narrow: the dead broad active snapshot writer plus
 # serialization helpers that are consumed only by that writer. Decoder-side
@@ -125,12 +127,24 @@ nullable_boolean_block = """internal fun JSONObject.putNullableBoolean(key: Stri
 """
 require_once(primitives, nullable_boolean_block, "putNullableBoolean helper")
 
+# The helper has no independent production consumer, but its primitive test
+# currently uses it to seed optNullableBoolean reader cases. Preserve that
+# reader coverage by seeding JSONObject directly before deleting the writer.
+test_old = """        json.putNullableBoolean("booleanValue", true)
+        json.putNullableBoolean("booleanNull", null)
+"""
+test_new = """        json.put("booleanValue", true)
+        json.put("booleanNull", JSONObject.NULL)
+"""
+require_once(primitives_test, test_old, "putNullableBoolean test seed")
+
 # First remove the broad writer. Then remove only its proven-exclusive private
 # encode helpers. Deletion uses semantic function boundaries, not line numbers.
 app, removed_active = remove_between(app, active_start, active_end, "active snapshot")
 for start, end, label in encoder_boundaries:
     app, _ = remove_between(app, start, end, label)
 primitives = primitives.replace(nullable_boolean_block, "", 1)
+primitives_test = primitives_test.replace(test_old, test_new, 1)
 
 # Required absence after cleanup.
 for token in (
@@ -146,8 +160,8 @@ for token in (
 ):
     if token in app:
         raise SystemExit(f"PS4.1 dead encoder token remains in App: {token}")
-if "putNullableBoolean(" in primitives:
-    raise SystemExit("putNullableBoolean helper remains after cleanup")
+if "putNullableBoolean(" in primitives or "putNullableBoolean(" in primitives_test:
+    raise SystemExit("putNullableBoolean reference remains after cleanup")
 
 # Explicit non-goal / retained-boundary assertions.
 for token in (
@@ -165,8 +179,12 @@ for token in (
 ):
     if token not in app:
         raise SystemExit(f"PS4.1 unexpectedly damaged retained boundary: {token}")
+if primitives_test.count("optNullableBoolean(") != 3:
+    raise SystemExit("optNullableBoolean reader coverage changed unexpectedly")
 
 APP.write_text(app, encoding="utf-8", newline="\n")
 PRIMITIVES.write_text(primitives, encoding="utf-8", newline="\n")
+PRIMITIVES_TEST.write_text(primitives_test, encoding="utf-8", newline="\n")
 print(f"Removed activeGameSnapshotJson block: {removed_active.count(chr(10))} lines")
 print("Removed only its private encode-helper chain and putNullableBoolean primitive")
+print("Preserved optNullableBoolean test coverage with direct JSONObject seeds")
