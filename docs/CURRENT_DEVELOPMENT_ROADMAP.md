@@ -34,11 +34,11 @@ The previous D6 branch `codex/d6-ownership-plan` and closed draft PR #111 are hi
 
 ## 2. Current priority — PS4 Persistence Cleanup
 
-Persistence Simplification remains the active campaign. PS4 cleanup implementation is complete through PS4.5 and the current task is:
+Persistence Simplification PS0–PS4 is complete. The next planned campaign slice is:
 
-> **PS4.6 — final architecture / full-validation checkpoint**
+> **PS5 — simplify persistence triggers**
 
-Do not begin PS5, Werewolf module deletion or D6 decomposition until PS4.6 has passed the full validation gate and the checkpoint is documented.
+PS5 is NEXT / NOT STARTED. Start it only with a fresh audit of current save triggers/timing; do not mix trigger redesign with persistence-content/schema changes. Werewolf module deletion and D6 remain separate future work.
 
 ## 3. Frozen product contract — Recent Emergency Recovery
 
@@ -94,8 +94,8 @@ PS0  product/recovery contract freeze               COMPLETE
 PS1  Archive / active Recovery separation           COMPLETE
 PS2  minimal typed RecoverySnapshot + writer        COMPLETE
 PS3  typed safe Preview/Restore + atomic apply       COMPLETE
-PS4  retire superseded active-save infrastructure   IN PROGRESS (PS4.1–PS4.5 COMPLETE; PS4.6 VALIDATING)
-PS5  simplify persistence triggers                   NOT STARTED
+PS4  retire superseded active-save infrastructure   COMPLETE
+PS5  simplify persistence triggers                   NEXT / NOT STARTED
 ```
 
 ### PS1 — Archive / Recovery separation
@@ -201,15 +201,16 @@ Checkpoint:
 
 ## 6. PS4 — Retire superseded active-save infrastructure
 
-Status: **in progress — PS4.1 through PS4.5 complete; PS4.6 final validation in progress**.
+Status: **COMPLETE — PS4.1 through PS4.6 complete**.
 
 Authoritative route:
 
 - `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-07_PS4_CLEANUP.md`
 
-Current progress:
+Current progress / final checkpoint:
 
 - `docs/PS4_CLEANUP_PROGRESS_2026-09-07.md`
+- `docs/PS4_FINAL_CHECKPOINT_2026-09-08.md`
 
 ### 6.1 PS4 entry audit findings
 
@@ -354,6 +355,8 @@ Must retain:
 
 #### PS4.6 — Final architecture checkpoint
 
+Status: **COMPLETE**. Static architecture audit run `34169917902` passed; final `[full-ci]` run `34170266988` and R2 run `34170266998` also passed. Formal checkpoint: `docs/PS4_FINAL_CHECKPOINT_2026-09-08.md`.
+
 Target absence:
 
 ```text
@@ -381,11 +384,11 @@ setup-rotation bookkeeping
 durable semantic/history persistence
 ```
 
-Final PS4 checkpoint should run focused Recovery + Archive behavior tests, `:app:testFast`, `:app:testFull`, `:app:assembleDebug`, applicable ASP/Clingo, R2, exact diff/reference audits and remote-head race lock.
+Final PS4 validation completed successfully: current Archive rejection tests, static ownership audit, `:app:testFull`, `:app:assembleDebug`, ASP/oracle harness, real Clingo cross-validation, R2, exact post-audit change comparison and remote-head race checks all passed.
 
 ## 7. PS5 — Simplify persistence triggers
 
-Status: **not started; do not enter from PS4 cleanup automatically**.
+Status: **NEXT / NOT STARTED**.
 
 Only after Recovery contents/ownership are fully simplified should current blanket synchronous write timing be re-audited.
 
@@ -496,8 +499,9 @@ Current execution authority:
 
 - root `AGENTS.md`;
 - `docs/CURRENT_DEVELOPMENT_ROADMAP.md` — this file;
-- `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-07_PS4_CLEANUP.md` — **current next-chat implementation authority**;
-- `docs/PS4_CLEANUP_PROGRESS_2026-09-07.md` — current PS4 audited progress/entry checkpoint.
+- `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-07_PS4_CLEANUP.md` — historical PS4 implementation route;
+- `docs/PS4_CLEANUP_PROGRESS_2026-09-07.md` — completed PS4 progress record;
+- `docs/PS4_FINAL_CHECKPOINT_2026-09-08.md` — authoritative PS4 completion evidence.
 
 Persistence campaign history/evidence:
 
