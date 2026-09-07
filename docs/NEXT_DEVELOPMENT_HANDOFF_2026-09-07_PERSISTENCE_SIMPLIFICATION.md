@@ -48,11 +48,14 @@ Before production edits, re-read/live-audit at least:
 
 - `CampBoardGameHostApp.kt`
   - `activeGameSnapshotJson`
+  - `activeGameRecoverySnapshot`
   - `persistActiveGameStateIfNeeded`
   - `persistAndReleaseA4ObservationRebuildIfDurable`
   - `restoreSavedGame`
   - `archiveCurrentGameForRestart`
   - `loadSavedGamePreview` / saved-game preview path
+- `persistence/RecoverySnapshot.kt`
+- `persistence/RecoverySnapshotJsonCodec.kt`
 - `persistence/ActiveGamePersistenceCoordinator.kt`
 - `persistence/AppJsonPrimitives.kt`
 - `clocktower/session/ClocktowerNightCheckpoint.kt`
@@ -63,6 +66,10 @@ Before production edits, re-read/live-audit at least:
 The audit reference is:
 
 `docs/PERSISTENCE_REQUIREMENT_REDUCTION_AUDIT_2026-09-07.md`
+
+PS2 completion evidence is:
+
+`docs/PS2_TYPED_RECOVERY_SNAPSHOT_CHECKPOINT_2026-09-07.md`
 
 ## 4. Non-negotiable behavior invariants
 
@@ -118,87 +125,63 @@ No production code required. The product contract and classification rules are f
 
 **Status: complete on draft PR #112.**
 
-Production now owns an independent `GameArchiveRecord` / `GameArchiveJsonCodec` boundary. New archive writes no longer call or consume `activeGameSnapshotJson()`, while legacy snapshot-shaped archive records remain reviewable without active-Recovery version/identity validation. Active Recovery behavior and lifecycle triggers were intentionally left unchanged.
+Production owns an independent `GameArchiveRecord` / `GameArchiveJsonCodec` boundary. New archive writes no longer call or consume `activeGameSnapshotJson()`, while legacy snapshot-shaped archive records remain reviewable without active-Recovery version/identity validation.
 
-Goal: stop using the active-game snapshot as the archive payload.
+PS1 validation evidence is recorded in:
 
-#### Required design
-
-Introduce a narrow typed archive projection such as:
-
-```text
-GameArchiveRecord
-├── archivedAt / id metadata owned by archive store
-├── gameKind
-├── round/stage needed for review
-├── cards / final player state
-├── records
-├── Clocktower events where applicable
-├── outcome
-└── only other fields that archive review actually consumes
-```
-
-The exact name may change after code audit, but the concept must remain independent from `RecoverySnapshot`.
-
-#### PS1 acceptance
-
-- new archive writes no longer call/use `activeGameSnapshotJson()` as their payload;
-- archive review shows the same information for newly archived games;
-- existing stored archive entries remain readable where currently supported;
-- active recovery save/restore behavior remains otherwise unchanged;
-- no lifecycle persistence trigger changes;
-- no D6/App-root extraction beyond what is necessary to create the archive boundary.
-
-#### PS1 test strategy
-
-First inspect existing archive tests and review parsing. Add behavior coverage only where the current contract is not
-already directly protected.
-
-At minimum characterize/prove:
-
-- a new archive contains all review-visible data currently expected;
-- old `{"snapshot": ...}` archive entries still parse/review;
-- archive read does not require current active-save compatibility identity;
-- archive write does not mutate or consume active recovery state.
-
-This is a durability/data-model boundary, so tests-first behavior coverage is appropriate when a real missing
-contract is identified. Do not create source-string tests to assert `activeGameSnapshotJson` text disappeared.
-
-PS1 validation evidence: focused `GameArchiveJsonCodecTest` GREEN after the typed seam was introduced; `:app:testFast` GREEN; exact diff audit confirmed only the intended App archive anchors changed. The temporary one-shot patch workflow/script were removed after use.
-
-Stop after PS1 validation before beginning PS2 unless the user explicitly asks to continue.
+`docs/PS1_ARCHIVE_RECOVERY_SEPARATION_CHECKPOINT_2026-09-07.md`
 
 ### PS2 — Minimal typed RecoverySnapshot
 
-**Status: next slice; not started.**
+**Status: complete on draft PR #112.**
 
-Goal: create a common envelope with game-specific payloads and remove persistence of state that is not needed for
-emergency continuation.
+Goal achieved: create a common typed envelope with game-specific payloads and remove persistence of state that is not needed for emergency continuation from the production active-save writer.
 
-Expected envelope:
+Implemented shape:
 
 ```text
-RecoveryEnvelope(
-    recoveryFormatVersion,
-    compatibilityToken,
-    savedAtMillis,
-    game = UndercoverRecovery | WerewolfRecovery | ClocktowerRecovery,
-)
+RecoverySnapshot
+├── recoveryFormatVersion
+├── compatibilityToken
+├── savedAtMillis
+├── transitional LegacyRestoreCompatibility
+└── game
+    ├── UndercoverRecovery
+    ├── WerewolfRecovery
+    └── ClocktowerRecovery
 ```
 
-Requirements:
+Key implementation results:
 
-- deterministic codec;
-- capture timestamp/compatibility outside encoding;
-- no Android/Compose dependency in the codec/model;
-- no flat God snapshot;
-- no cross-version migration framework;
-- preserve current persistence trigger timing during this slice unless a behavior test proves it must change.
+- `persistActiveGameStateIfNeeded()` now writes `RecoverySnapshotJsonCodec.encode(activeGameRecoverySnapshot())`;
+- `activeGameSnapshotJson()` is no longer the production active-save payload, but remains temporarily in source until PS4 cleanup;
+- arbitrary UI/navigation state is not persisted;
+- only `PassPhone` / `RevealCard` are retained as narrow deal-flow recovery entry points;
+- Clocktower confirmed facts, mandatory continuations and durable semantic/history state are retained;
+- ordinary Clocktower night draft targets and day UI state are omitted;
+- Werewolf already-completed night-role interactions remain conservative continuation state until finer commit boundaries exist;
+- lifecycle persistence timing and A4 success/failure ordering remain unchanged.
 
-Clocktower should group identity, safe position, durable mechanics, history and bookkeeping. Unconfirmed drafts are
-excluded unless individually justified.
+The old restore parser still requires selected legacy identity/setup/provenance fields. PS2 therefore isolates those requirements inside `LegacyRestoreCompatibility` so the writer cutover does not create an intermediate broken recovery format. This structure is transitional PS2→PS3 support, not the intended final product model.
+
+PS2 validation:
+
+- controlled cutover run `34081179361` GREEN;
+- focused `RecoverySnapshotJsonCodecTest` + `GameArchiveJsonCodecTest` GREEN before App wiring;
+- exact App single-file diff audit + `git diff --check` GREEN;
+- focused recovery/archive tests GREEN after wiring;
+- `:app:testFast` GREEN;
+- `:app:assembleDebug` GREEN;
+- product commit `abeb056d9f8b2fbe99b62da7f3dcaa5c169b522a`;
+- one-shot workflow/script removed by cleanup commit `37ec38a4ed2a57ba42b4ab2f50a09d34db589601`.
+
+Detailed checkpoint:
+
+`docs/PS2_TYPED_RECOVERY_SNAPSHOT_CHECKPOINT_2026-09-07.md`
 
 ### PS3 — Typed safe restore
+
+**Status: next slice; not started.**
 
 Goal:
 
@@ -217,6 +200,18 @@ Preview becomes a typed projection, not another raw JSON parser.
 Recovery should prefer stable entry points (for example Day Overview) over reconstructing arbitrary UI modes.
 Mandatory continuations are exceptions.
 
+PS3 must also implement the frozen Recent Emergency Recovery validity policy rather than preserving the old broad restore contract by inertia:
+
+- validate the typed recovery envelope completely before live mutation;
+- enforce the current short-horizon compatibility/expiry policy;
+- fail closed on invalid/expired/incompatible recovery;
+- preserve confirmed/published facts without replay;
+- safely re-enter unresolved mandatory continuations;
+- preserve enough Werewolf continuation to avoid repeating already-performed social interactions;
+- remove old restore-only compatibility/provenance fields from the typed model when PS3 proves they are unnecessary.
+
+Do not begin PS3 from a mechanical port of the existing raw JSON mutation sequence. First audit the current restore parser's consumers and distinguish genuine game facts from legacy restore-validation baggage.
+
 ### PS4 — Delete superseded active-save infrastructure
 
 After PS2/PS3 are proven, remove the old responsibilities rather than maintaining dual active schemas.
@@ -229,7 +224,8 @@ Audit/deletion candidates:
 - Clocktower draft persistence;
 - committed setup provenance used only for old restore validation;
 - unreachable legacy active-restore branches/shims;
-- obsolete tests tied only to removed active-save structure.
+- obsolete tests tied only to removed active-save structure;
+- old `activeGameSnapshotJson()` after the typed read/write path no longer depends on it.
 
 Do not delete archive compatibility or durable history tests by association.
 
@@ -245,16 +241,16 @@ coverage and full validation.
 
 Treat this as a starting audit table, not a license to delete without checking consumers.
 
-| State family | Initial classification |
+| State family | Current classification |
 |---|---|
 | cards / actual + shown identity / elimination | DURABLE_GAME_FACT |
 | current round + semantic Clocktower phase | DURABLE_GAME_FACT / RECOVERY_CONTINUATION |
 | Clocktower confirmed poison/Monk/attack/Mayor/successor facts | DURABLE_GAME_FACT when still relevant |
-| Clocktower corresponding draft targets | TRANSIENT_UI by default |
+| Clocktower corresponding draft targets | TRANSIENT_UI by default; omitted by PS2 writer |
 | Virgin/Slayer/Artist consumed state | DURABLE_GAME_FACT |
 | ghost vote + confirmed highest vote | DURABLE_GAME_FACT |
-| current nomination/nominee/vote count before confirmation | TRANSIENT_UI |
-| current Slayer/Artist input before confirm | TRANSIENT_UI |
+| current nomination/nominee/vote count before confirmation | TRANSIENT_UI; omitted by PS2 writer |
+| current Slayer/Artist input before confirm | TRANSIENT_UI; omitted by PS2 writer |
 | pending Klutz / unresolved Demon succession | RECOVERY_CONTINUATION |
 | semantic action timeline / epistemic observations | DURABLE_GAME_FACT |
 | `clocktowerEvents` / records | DURABLE while production still reads them |
@@ -263,8 +259,8 @@ Treat this as a starting audit table, not a license to delete without checking c
 | recommendation loading/candidate/lock UI | TRANSIENT_UI / DERIVED_RECOMPUTABLE |
 | provisional Drunk recommendation | DERIVED_RECOMPUTABLE |
 | applied Demon bluff role names | KEEP initially pending better owner |
-| full `committedClocktowerSetup` | candidate for removal from recovery |
-| setup rotation completion record | ARCHIVE_OR_BOOKKEEPING; keep minimal |
+| full `committedClocktowerSetup` | transitional legacy-restore compatibility; PS3 re-audit |
+| setup rotation completion record | transitional/bookkeeping; PS3 re-audit |
 | setup counts/include flags derivable from cards | DERIVED_RECOMPUTABLE |
 | Werewolf already-performed night-role inputs pre-Dawn | RECOVERY_CONTINUATION initially |
 
@@ -318,15 +314,18 @@ Instead:
 
 ## 10. Immediate next action
 
-PS1 is complete and this handoff now stops at that checkpoint.
+PS1 and PS2 are complete on draft PR #112. The next implementation slice is **PS3 — Typed safe restore**, but it has **not** started.
 
-The next implementation slice is **PS2 — Minimal typed RecoverySnapshot**, but it has **not** started. Before PS2 production edits:
+Before PS3 production edits:
 
-1. re-query live `main`, PR #112 and branch head;
-2. re-read the recovery classification and current active-save consumers;
-3. design the minimal common envelope plus game-specific payloads;
-4. identify real behavior contracts that deserve tests-first coverage;
-5. do not manufacture RED tests for purely mechanical ownership moves or rewiring;
-6. keep current persistence trigger timing stable during PS2 unless a behavior defect requires otherwise.
+1. re-query live `main`, PR #112 and branch head and distinguish docs-only head from the last validated product checkpoint;
+2. re-read `RecoverySnapshot.kt`, `RecoverySnapshotJsonCodec.kt`, `restoreSavedGame`, saved-game preview parsing and `ActiveGamePersistenceCoordinator`;
+3. inventory every old restore field and classify it as typed recovery fact, safe derived state, mandatory continuation, or legacy validation baggage;
+4. design a complete parse/validate object that performs no live Compose/App mutation;
+5. design a single atomic application boundary from validated typed recovery into live state;
+6. enforce the 12-hour/compatibility fail-closed policy;
+7. define safe UI re-entry for stable gameplay and mandatory continuations;
+8. add tests-first coverage for genuine restore behavior/atomicity contracts, but do not create source-string RED tests for mechanical rewiring;
+9. keep lifecycle persistence trigger timing unchanged during PS3 unless a proven defect requires otherwise.
 
-Do not begin PS2 without explicit user authorization.
+Do not begin PS3 without explicit user authorization.
