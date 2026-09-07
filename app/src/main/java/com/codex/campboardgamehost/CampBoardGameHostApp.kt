@@ -1831,332 +1831,197 @@ internal fun CampBoardGameHostApp() {
         a4ObservationCacheRebuildRequest = a4ObservationCacheRebuildRequestOrNull(recordId)
     }
 
+    fun applyValidatedRecoveryPlan(plan: ValidatedRecoveryPlan) {
+        val game = plan.snapshot.game
+        val restoredCards = game.cards.map(::localizedRestoredCard)
+
+        playerNames.clear()
+        playerNames.addAll(restoredCards.map(PlayerCard::name))
+        cards.clear()
+        cards.addAll(restoredCards)
+        records.clear()
+        records.addAll(game.records)
+
+        currentGameKind = game.gameKind
+        currentDealIndex = game.currentDealIndex
+        round = game.round
+        gameOutcome = game.outcome
+        showResults = plan.presentResults
+        savedGamePreview = null
+        showHostTools = false
+        showNewGameConfirmation = false
+
+        undercoverCount = 1
+        includeBlank = false
+        lastWordsMode = LastWordsMode.FirstDay
+        lastWordsPromptNames = emptyList()
+        selectedElimination = null
+
+        werewolfCount = 1
+        includeSeer = true
+        includeWitch = false
+        includeHunter = false
+        werewolfJudgeStepIndex = 0
+        pendingNightDeath = null
+        seerCheckTarget = null
+        witchSaveUsed = false
+        witchPoisonUsed = false
+        witchSavedTonight = false
+        witchPoisonTarget = null
+        hunterShotTarget = null
+        selectedDayExile = null
+
+        selectedClocktowerScript = null
+        currentClocktowerScript = ClocktowerScript.TroubleBrewing
+        committedClocktowerSetup = null
+        committedTroubleBrewingSetupRotationRecord = null
+        clocktowerGameId = ""
+        clocktowerGameSeed = 0L
+        clocktowerGameStateRevision = 0L
+        clocktowerPlayerInputRevision = 0L
+        clocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL
+        clocktowerNextTimelineGlobalSequence = 0L
+        clocktowerRulesetRoleIds = emptySet()
+        clocktowerRulesetRef = null
+        clocktowerPhase = ClocktowerPhase.FirstNight
+        clocktowerNightStartedState.value = false
+        clocktowerNightStepIndexState.value = 0
+
+        clocktowerEvents.clear()
+        clocktowerEpistemicObservations.clear()
+        clocktowerActionTimeline = ActionFactTimeline()
+        clocktowerEventCounter = 0
+
+        clocktowerPendingNightDeath = null
+        clocktowerDemonAttackDraftTarget = null
+        clocktowerSelectedExecution = null
+        clocktowerPoisonTarget = null
+        clocktowerConfirmedPoisonTarget = null
+        clocktowerFortuneTellerFirst = null
+        clocktowerFortuneTellerSecond = null
+        clocktowerChambermaidFirst = null
+        clocktowerChambermaidSecond = null
+        clocktowerRavenkeeperTarget = null
+        clocktowerRedHerring = null
+        clocktowerRecommendedDemonBluffRoleNames = emptyList()
+        clocktowerRecommendedDrunkInvestigatorRoleName = null
+        clocktowerRecommendedDrunkInvestigatorSeats = emptyList()
+        clocktowerButlerMaster = null
+        clocktowerMonkProtectedTarget = null
+        clocktowerConfirmedMonkProtectedTarget = null
+        clocktowerMayorRedirectTarget = null
+        clocktowerConfirmedMayorRedirectTarget = null
+        clocktowerPendingNewDemonName = null
+        clocktowerPendingNightNewDemonIdentityName = null
+        clocktowerDemonSuccessorTarget = null
+        clocktowerConfirmedDemonSuccessorTarget = null
+        clocktowerVirginUsed = false
+        clocktowerSlayerUsed = false
+        clocktowerSlayerClaimedNames = emptyList()
+        clocktowerArtistUsed = false
+        clocktowerArtistClaimedNames = emptyList()
+        clocktowerArtistClaimantName = null
+        clocktowerArtistTruthfulAnswer = null
+        clocktowerArtistShownAnswer = null
+        clocktowerLastExecutedName = null
+        clocktowerPendingKlutzName = null
+        clocktowerKlutzChoiceName = null
+        clocktowerKlutzReturnToDawn = false
+
+        clocktowerDayModeState.value = ClocktowerDayMode.Overview
+        clocktowerNominatorNameState.value = null
+        clocktowerNomineeNameState.value = null
+        clocktowerCurrentVoteCountState.value = 0
+        clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
+        clocktowerHighestVoteNameState.value = null
+        clocktowerHighestVoteCountState.value = 0
+        clocktowerSlayerClaimantNameState.value = null
+        clocktowerSlayerTargetNameState.value = null
+
+        when (game) {
+            is UndercoverRecovery -> {
+                undercoverCount = game.undercoverCount
+                includeBlank = game.includeBlank
+                lastWordsMode = game.lastWordsMode
+            }
+            is ClocktowerRecovery -> {
+                val runtime = plan.clocktowerRuntime
+                val safeClocktower = plan.safeReentry as? RecoverySafeReentry.ClocktowerJudge
+                val mechanics = game.mechanics
+                val history = game.history
+
+                currentClocktowerScript = game.identity.script
+                committedTroubleBrewingSetupRotationRecord =
+                    plan.snapshot.legacyRestoreCompatibility.troubleBrewingSetupRotationRecord
+                clocktowerGameId = game.identity.gameId
+                clocktowerGameSeed = game.identity.gameSeed
+                clocktowerGameStateRevision = history.gameStateRevision
+                clocktowerPlayerInputRevision = history.playerInputRevision
+                clocktowerSemanticHistoryMode = history.semanticHistoryMode
+                clocktowerNextTimelineGlobalSequence = history.nextTimelineGlobalSequence
+                clocktowerRulesetRoleIds = if (game.identity.script == ClocktowerScript.TroubleBrewing) {
+                    runtime?.rulesetBasis?.roleIds.orEmpty()
+                } else {
+                    emptySet()
+                }
+                clocktowerRulesetRef = runtime?.rulesetRef
+                clocktowerPhase = safeClocktower?.phase ?: game.position.phase
+                clocktowerNightStartedState.value = game.position.nightStarted
+                clocktowerNightStepIndexState.value =
+                    safeClocktower?.nightStepIndex ?: game.position.nightStepIndex
+
+                clocktowerEvents.addAll(history.events)
+                clocktowerEpistemicObservations.addAll(history.epistemicObservations)
+                clocktowerActionTimeline = history.actionTimeline
+                clocktowerEventCounter = history.events.maxOfOrNull(ClocktowerEvent::sequence) ?: 0
+
+                clocktowerPendingNightDeath = mechanics.confirmedAttackTarget
+                clocktowerConfirmedPoisonTarget = mechanics.confirmedPoisonTarget
+                clocktowerConfirmedMonkProtectedTarget = mechanics.confirmedMonkProtectedTarget
+                clocktowerConfirmedMayorRedirectTarget = mechanics.confirmedMayorRedirectTarget
+                clocktowerPendingNewDemonName = mechanics.pendingNewDemonName
+                clocktowerPendingNightNewDemonIdentityName = mechanics.pendingNightNewDemonIdentityName
+                clocktowerConfirmedDemonSuccessorTarget = mechanics.confirmedDemonSuccessorTarget
+                clocktowerRedHerring = mechanics.redHerring
+                clocktowerRecommendedDemonBluffRoleNames = mechanics.demonBluffRoleNames
+                clocktowerButlerMaster = mechanics.butlerMaster
+                clocktowerVirginUsed = mechanics.virginUsed
+                clocktowerSlayerUsed = mechanics.slayerUsed
+                clocktowerSlayerClaimedNames = mechanics.slayerClaimedNames
+                clocktowerArtistUsed = mechanics.artistUsed
+                clocktowerArtistClaimedNames = mechanics.artistClaimedNames
+                clocktowerLastExecutedName = mechanics.lastExecutedName
+                clocktowerPendingKlutzName = mechanics.pendingKlutzName
+                clocktowerKlutzReturnToDawn = mechanics.klutzReturnToDawn
+                clocktowerGhostVoteAuthorityState.value = mechanics.ghostVoteAuthority
+                clocktowerHighestVoteNameState.value = mechanics.highestVoteName
+                clocktowerHighestVoteCountState.value = mechanics.highestVoteCount
+                clocktowerDayModeState.value =
+                    if (safeClocktower?.continuation == ClocktowerRecoveryContinuation.Klutz) {
+                        ClocktowerDayMode.Klutz
+                    } else {
+                        ClocktowerDayMode.Overview
+                    }
+            }
+            is WerewolfRecovery -> Unit
+        }
+
+        screen = when (plan.safeReentry) {
+            RecoverySafeReentry.UndercoverGame -> Screen.Game
+            is RecoverySafeReentry.PassPhone -> Screen.PassPhone
+            is RecoverySafeReentry.RevealCard -> Screen.RevealCard
+            is RecoverySafeReentry.ClocktowerJudge -> Screen.ClocktowerJudge
+        }
+    }
+
     fun restoreSavedGame() {
-        val json = baseContext.loadActiveGameStateJson() ?: return
-        invalidateA4SessionBoundary()
-        val restored = runCatching {
-            if (!ActiveGamePersistenceCoordinator.isSupportedVersion(json.optInt("version", 0))) {
-                error("Unsupported active game state version")
-            }
-            val restoredGameKind = enumByName<GameKind>(json.optNullableString("currentGameKind"))
-                ?: error("Missing game kind")
-            val restoredCards = json.optJSONArray("cards")?.toPlayerCards().orEmpty()
-            if (restoredCards.isEmpty()) error("Missing player cards")
-            val restoredPersistence = activeGamePersistenceCoordinator.resolveForRestore(
-                json = json,
-                gameKind = restoredGameKind,
-                assignedClocktowerRoleIds = if (restoredGameKind == GameKind.Clocktower) {
-                    restoredCards.map { card ->
-                        RoleId(requireNotNull(card.clocktowerRole) {
-                            "Clocktower restored save is missing an assigned role."
-                        }.enName)
-                    }
-                } else {
-                    emptyList()
-                },
-                assignedWerewolfRoles = if (restoredGameKind == GameKind.Werewolf) {
-                    restoredCards.map { it.role }
-                } else {
-                    emptyList()
-                },
-            )
-            val restoredCommittedClocktowerSetup = if (restoredGameKind == GameKind.Clocktower) {
-                val setup = CommittedClocktowerSetupPersistence.decodeOrNull(json)
-                if (restoredPersistence.clocktowerScript == ClocktowerScript.TroubleBrewing) {
-                    requireNotNull(setup) {
-                        "Current Trouble Brewing save is missing its exact committed setup."
-                    }
-                }
-                setup?.also { committedSetup ->
-                    val restoredScript = requireNotNull(restoredPersistence.clocktowerScript) {
-                        "Clocktower committed setup restore requires a resolved script."
-                    }
-                    require(committedSetup.script == restoredScript.toRecommendationScriptId()) {
-                        "Persisted committed Clocktower setup script does not match active-game identity."
-                    }
-                    if (json.has("clocktowerGameSeed")) {
-                        require(committedSetup.setupSeed == json.optLong("clocktowerGameSeed")) {
-                            "Persisted committed Clocktower setup seed does not match active-game seed."
-                        }
-                    }
-                }
-            } else {
-                null
-            }
-            val restoredTroubleBrewingSetupRotationRecord = if (
-                restoredGameKind == GameKind.Clocktower &&
-                restoredPersistence.clocktowerScript == ClocktowerScript.TroubleBrewing
-            ) {
-                val committedSetup = requireNotNull(restoredCommittedClocktowerSetup)
-                val record = requireNotNull(TroubleBrewingSetupCompletionPersistence.decodeOrNull(json)) {
-                    "Current Trouble Brewing save is missing its completion/diversity summary."
-                }
-                require(committedSetup.playerCount == record.playerCount) {
-                    "Trouble Brewing committed setup and completion summary player counts disagree."
-                }
-                require(committedSetup.provenance.providerId == record.datasetId) {
-                    "Trouble Brewing committed setup and completion summary providers disagree."
-                }
-                require(committedSetup.provenance.candidateId == record.presetId) {
-                    "Trouble Brewing committed setup and completion summary candidates disagree."
-                }
-                record
-            } else {
-                null
-            }
-            val restoredClocktowerRulesetRef = json.opt("clocktowerRulesetRef")
-                .takeUnless { raw -> raw == null || raw == JSONObject.NULL }
-                ?.let { raw ->
-                    val ref = raw as? JSONObject
-                        ?: error("Invalid Clocktower ruleset reference payload.")
-                    RulesetRef(
-                        scriptId = ScriptId(ref.getString("scriptId")),
-                        scriptContentHash = ref.getString("scriptContentHash"),
-                        rulesetVersion = ref.getString("rulesetVersion"),
-                        sourceRevision = ref.getString("sourceRevision"),
-                        coverage = enumByName<RuleCoverage>(ref.getString("coverage"))
-                            ?: error("Invalid Clocktower ruleset coverage."),
-                    )
-                }
-            val restoredRulesetBasis = if (
-                restoredGameKind == GameKind.Clocktower &&
-                restoredPersistence.clocktowerScript == ClocktowerScript.TroubleBrewing
-            ) {
-                when (json.optInt("version", 0)) {
-                    ActiveGamePersistenceCoordinator.LEGACY_VERSION ->
-                        TroubleBrewingRulesetPersistence.resolveLegacyBasisForRestore(
-                            knowledge = troubleBrewingRulesetKnowledge()
-                                ?: error("Unable to resolve current Trouble Brewing ruleset knowledge."),
-                            assignedRoleIds = restoredCards.map { card ->
-                                RoleId(requireNotNull(card.clocktowerRole) {
-                                    "Legacy Clocktower save is missing an assigned role."
-                                }.enName)
-                            },
-                            persistedRef = restoredClocktowerRulesetRef,
-                        )
-                    ActiveGamePersistenceCoordinator.CURRENT_VERSION ->
-                        ClocktowerRulesetPersistenceBasisJsonCodec.decode(
-                            json.optJSONArray("clocktowerRulesetRoleIds")
-                                ?: error("Version 2 Clocktower save is missing ruleset role basis."),
-                        )
-                    else -> error("Unsupported active game state version")
-                }
-            } else {
-                null
-            }
-            val resolvedClocktowerRulesetRef = if (
-                restoredGameKind == GameKind.Clocktower &&
-                restoredPersistence.clocktowerScript == ClocktowerScript.TroubleBrewing
-            ) {
-                TroubleBrewingRulesetPersistence.resolveForRestore(
-                    knowledge = troubleBrewingRulesetKnowledge()
-                        ?: error("Unable to resolve current Trouble Brewing ruleset knowledge."),
-                    persistedRef = restoredClocktowerRulesetRef,
-                    basis = requireNotNull(restoredRulesetBasis),
-                    allowLegacyFallback = restoredPersistence.allowLegacyClocktowerRulesetFallback,
-                )
-            } else {
-                restoredClocktowerRulesetRef
-            }
-            val localizedRestoredCards = restoredCards.map(::localizedRestoredCard)
-            val restoredScreen = enumByName<Screen>(json.optNullableString("screen"))
-                ?.takeIf { it.isActiveGameScreen() }
-                ?: when (restoredGameKind) {
-                    GameKind.Undercover -> Screen.Game
-                    GameKind.Werewolf -> Screen.WerewolfJudge
-                    GameKind.Clocktower -> Screen.ClocktowerJudge
-                }
-            val restoredPlayerNames = json.optJSONArray("playerNames")
-                ?.toStringList()
-                .orEmpty()
-                .ifEmpty { localizedRestoredCards.map { it.name } }
-            val restoredSemanticHistoryMode = if (restoredGameKind == GameKind.Clocktower) {
-                ClocktowerSemanticHistoryPersistence.decodeMode(json)
-            } else {
-                ClocktowerSemanticHistoryMode.LEGACY_LOCAL
-            }
-            val restoredClocktowerActionTimeline = if (restoredGameKind == GameKind.Clocktower) {
-                ClocktowerSemanticHistoryPersistence.decodeActionTimeline(json)
-            } else {
-                ActionFactTimeline()
-            }
-            val restoredClocktowerEpistemicObservations = if (restoredGameKind == GameKind.Clocktower) {
-                json.optJSONArray("clocktowerEpistemicObservations")
-                    ?.toRecordedEpistemicObservations()
-                    .orEmpty()
-            } else {
-                emptyList()
-            }
-            val restoredNightCheckpointValues = mutableMapOf<String, Any?>(
-                "clocktowerPhase" to json.optNullableString("clocktowerPhase"),
-                "round" to json.optInt("round", 1),
-                "clocktowerGameStateRevision" to json.optLong("clocktowerGameStateRevision", 0L),
-                "clocktowerPlayerInputRevision" to json.optLong("clocktowerPlayerInputRevision", 0L),
-                "clocktowerNightStarted" to json.optBoolean("clocktowerNightStarted", false),
-                "clocktowerNightStepIndex" to json.optInt("clocktowerNightStepIndex", 0),
-                "clocktowerPendingNightDeath" to json.optNullableString("clocktowerPendingNightDeath"),
-                "clocktowerDemonAttackDraftTarget" to json.optNullableString("clocktowerDemonAttackDraftTarget"),
-                "clocktowerConfirmedPoisonTarget" to json.optNullableString("clocktowerConfirmedPoisonTarget"),
-                "clocktowerPoisonTarget" to json.optNullableString("clocktowerPoisonTarget"),
-                "clocktowerConfirmedMonkProtectedTarget" to json.optNullableString("clocktowerConfirmedMonkProtectedTarget"),
-                "clocktowerMonkProtectedTarget" to json.optNullableString("clocktowerMonkProtectedTarget"),
-                "clocktowerConfirmedMayorRedirectTarget" to json.optNullableString("clocktowerConfirmedMayorRedirectTarget"),
-                "clocktowerMayorRedirectTarget" to json.optNullableString("clocktowerMayorRedirectTarget"),
-                "clocktowerPendingNewDemonName" to json.optNullableString("clocktowerPendingNewDemonName"),
-                "clocktowerPendingNightNewDemonIdentityName" to json.optNullableString("clocktowerPendingNightNewDemonIdentityName"),
-                "clocktowerDemonSuccessorTarget" to json.optNullableString("clocktowerDemonSuccessorTarget"),
-                "clocktowerConfirmedDemonSuccessorTarget" to json.optNullableString("clocktowerConfirmedDemonSuccessorTarget"),
-            )
-            if (json.has("clocktowerNextTimelineGlobalSequence")) {
-                restoredNightCheckpointValues["clocktowerNextTimelineGlobalSequence"] =
-                    json.opt("clocktowerNextTimelineGlobalSequence")
-            }
-            val restoredNightCheckpoint =
-                ClocktowerNightCheckpoint.fromPersistedValues(restoredNightCheckpointValues)
-            restoredSemanticHistoryMode.requireCompatible(
-                actionTimeline = restoredClocktowerActionTimeline,
-                observationLog = EpistemicObservationLog(restoredClocktowerEpistemicObservations),
-                nextTimelineGlobalSequence = restoredNightCheckpoint.nextTimelineGlobalSequence,
-            )
-
-            playerNames.clear()
-            playerNames.addAll(restoredPlayerNames)
-            cards.clear()
-            cards.addAll(localizedRestoredCards)
-            records.clear()
-            records.addAll(json.optJSONArray("records")?.toEliminationRecords().orEmpty())
-            clocktowerEvents.clear()
-            clocktowerEvents.addAll(json.optJSONArray("clocktowerEvents")?.toClocktowerEvents().orEmpty())
-            clocktowerEpistemicObservations.clear()
-            clocktowerEpistemicObservations.addAll(restoredClocktowerEpistemicObservations)
-            clocktowerActionTimeline = restoredClocktowerActionTimeline
-            clocktowerEventCounter = maxOf(
-                json.optInt("clocktowerEventCounter", 0),
-                clocktowerEvents.maxOfOrNull { it.sequence } ?: 0,
-            )
-
-            currentGameKind = restoredGameKind
-            undercoverCount = json.optInt("undercoverCount", 1).coerceAtLeast(1)
-            includeBlank = json.optBoolean("includeBlank", false)
-            werewolfCount = json.optInt("werewolfCount", 1).coerceAtLeast(1)
-            includeSeer = json.optBoolean("includeSeer", true)
-            includeWitch = json.optBoolean("includeWitch", false)
-            includeHunter = json.optBoolean("includeHunter", false)
-            lastWordsMode = enumByName<LastWordsMode>(json.optNullableString("lastWordsMode")) ?: LastWordsMode.FirstDay
-            lastWordsPromptNames = json.optJSONArray("lastWordsPromptNames")?.toStringList().orEmpty()
-            currentDealIndex = json.optInt("currentDealIndex", 0).coerceIn(0, localizedRestoredCards.lastIndex)
-            round = json.optInt("round", 1).coerceAtLeast(1)
-            selectedElimination = json.optNullableString("selectedElimination")
-            werewolfJudgeStepIndex = json.optInt("werewolfJudgeStepIndex", 0).coerceAtLeast(0)
-            pendingNightDeath = json.optNullableString("pendingNightDeath")
-            seerCheckTarget = json.optNullableString("seerCheckTarget")
-            witchSaveUsed = json.optBoolean("witchSaveUsed", false)
-            witchPoisonUsed = json.optBoolean("witchPoisonUsed", false)
-            witchSavedTonight = json.optBoolean("witchSavedTonight", false)
-            witchPoisonTarget = json.optNullableString("witchPoisonTarget")
-            hunterShotTarget = json.optNullableString("hunterShotTarget")
-            selectedDayExile = json.optNullableString("selectedDayExile")
-            clocktowerPhase = enumByName<ClocktowerPhase>(json.optNullableString("clocktowerPhase")) ?: ClocktowerPhase.FirstNight
-            if (restoredGameKind == GameKind.Clocktower) {
-                currentClocktowerScript = requireNotNull(restoredPersistence.clocktowerScript)
-            }
-            committedClocktowerSetup = restoredCommittedClocktowerSetup
-            committedTroubleBrewingSetupRotationRecord = restoredTroubleBrewingSetupRotationRecord
-            clocktowerGameId = json.optString("clocktowerGameId")
-                .takeIf { it.isNotBlank() }
-                ?: UUID.randomUUID().toString()
-            clocktowerGameSeed = if (json.has("clocktowerGameSeed")) {
-                json.optLong("clocktowerGameSeed")
-            } else {
-                newClocktowerSeed()
-            }
-            clocktowerGameStateRevision = json.optLong("clocktowerGameStateRevision", 0L).coerceAtLeast(0L)
-            clocktowerPlayerInputRevision = json.optLong("clocktowerPlayerInputRevision", 0L).coerceAtLeast(0L)
-            clocktowerSemanticHistoryMode = restoredSemanticHistoryMode
-            clocktowerNextTimelineGlobalSequence = restoredNightCheckpoint.nextTimelineGlobalSequence
-            clocktowerRulesetRoleIds = restoredRulesetBasis?.roleIds.orEmpty()
-            clocktowerRulesetRef = resolvedClocktowerRulesetRef
-            clocktowerPendingNightDeath = json.optNullableString("clocktowerPendingNightDeath")
-            clocktowerDemonAttackDraftTarget = json.optNullableString("clocktowerDemonAttackDraftTarget")
-                ?: clocktowerPendingNightDeath
-            clocktowerSelectedExecution = json.optNullableString("clocktowerSelectedExecution")
-            clocktowerPoisonTarget = json.optNullableString("clocktowerPoisonTarget")
-            clocktowerConfirmedPoisonTarget = json.optNullableString("clocktowerConfirmedPoisonTarget")
-                ?: clocktowerPoisonTarget
-            clocktowerFortuneTellerFirst = json.optNullableString("clocktowerFortuneTellerFirst")
-            clocktowerFortuneTellerSecond = json.optNullableString("clocktowerFortuneTellerSecond")
-            clocktowerChambermaidFirst = json.optNullableString("clocktowerChambermaidFirst")
-            clocktowerChambermaidSecond = json.optNullableString("clocktowerChambermaidSecond")
-            clocktowerRavenkeeperTarget = json.optNullableString("clocktowerRavenkeeperTarget")
-            clocktowerRedHerring = json.optNullableString("clocktowerRedHerring")
-            clocktowerRecommendedDemonBluffRoleNames = json
-                .optJSONArray("clocktowerRecommendedDemonBluffRoleNames")
-                ?.toStringList()
-                .orEmpty()
-            clocktowerRecommendedDrunkInvestigatorRoleName = json.optNullableString("clocktowerRecommendedDrunkInvestigatorRoleName")
-            clocktowerRecommendedDrunkInvestigatorSeats = json
-                .optJSONArray("clocktowerRecommendedDrunkInvestigatorSeats")
-                ?.let { seats -> (0 until seats.length()).map { index -> seats.optInt(index) }.filter { it > 0 } }
-                .orEmpty()
-            clocktowerButlerMaster = json.optNullableString("clocktowerButlerMaster")
-            clocktowerMonkProtectedTarget = json.optNullableString("clocktowerMonkProtectedTarget")
-            clocktowerConfirmedMonkProtectedTarget = json.optNullableString("clocktowerConfirmedMonkProtectedTarget")
-                ?: clocktowerMonkProtectedTarget
-            clocktowerMayorRedirectTarget = json.optNullableString("clocktowerMayorRedirectTarget")
-            clocktowerConfirmedMayorRedirectTarget = json.optNullableString("clocktowerConfirmedMayorRedirectTarget")
-                ?: clocktowerMayorRedirectTarget
-            clocktowerPendingNewDemonName = json.optNullableString("clocktowerPendingNewDemonName")
-            clocktowerPendingNightNewDemonIdentityName = json.optNullableString("clocktowerPendingNightNewDemonIdentityName")
-            clocktowerDemonSuccessorTarget = json.optNullableString("clocktowerDemonSuccessorTarget")
-            clocktowerPhase = enumByName<ClocktowerPhase>(restoredNightCheckpoint.phaseName) ?: ClocktowerPhase.FirstNight
-            round = restoredNightCheckpoint.round
-            clocktowerGameStateRevision = restoredNightCheckpoint.gameStateRevision
-            clocktowerPlayerInputRevision = restoredNightCheckpoint.playerInputRevision
-            clocktowerNightStartedState.value = restoredNightCheckpoint.nightStarted
-            clocktowerNightStepIndexState.value = restoredNightCheckpoint.nightStepIndex
-            clocktowerPendingNightDeath = restoredNightCheckpoint.confirmedAttackTarget
-            clocktowerDemonAttackDraftTarget = restoredNightCheckpoint.attackDraftTarget
-            clocktowerConfirmedPoisonTarget = restoredNightCheckpoint.confirmedPoisonTarget
-            clocktowerPoisonTarget = restoredNightCheckpoint.poisonDraftTarget
-            clocktowerConfirmedMonkProtectedTarget = restoredNightCheckpoint.confirmedMonkTarget
-            clocktowerMonkProtectedTarget = restoredNightCheckpoint.monkDraftTarget
-            clocktowerConfirmedMayorRedirectTarget = restoredNightCheckpoint.confirmedMayorRedirectTarget
-            clocktowerMayorRedirectTarget = restoredNightCheckpoint.mayorRedirectDraftTarget
-            clocktowerPendingNewDemonName = restoredNightCheckpoint.pendingNewDemonName
-            clocktowerPendingNightNewDemonIdentityName = restoredNightCheckpoint.pendingNightNewDemonIdentityName
-            clocktowerDemonSuccessorTarget = restoredNightCheckpoint.demonSuccessorDraftTarget
-            clocktowerConfirmedDemonSuccessorTarget = restoredNightCheckpoint.confirmedDemonSuccessorTarget
-            clocktowerVirginUsed = json.optBoolean("clocktowerVirginUsed", false)
-            clocktowerSlayerUsed = json.optBoolean("clocktowerSlayerUsed", false)
-            clocktowerSlayerClaimedNames = json.optJSONArray("clocktowerSlayerClaimedNames")?.toStringList().orEmpty()
-            clocktowerArtistUsed = json.optBoolean("clocktowerArtistUsed", false)
-            clocktowerArtistClaimedNames = json.optJSONArray("clocktowerArtistClaimedNames")?.toStringList().orEmpty()
-            clocktowerArtistClaimantName = json.optNullableString("clocktowerArtistClaimantName")
-            clocktowerArtistTruthfulAnswer = json.optNullableBoolean("clocktowerArtistTruthfulAnswer")
-            clocktowerArtistShownAnswer = json.optNullableBoolean("clocktowerArtistShownAnswer")
-            clocktowerLastExecutedName = json.optNullableString("clocktowerLastExecutedName")
-            clocktowerPendingKlutzName = json.optNullableString("clocktowerPendingKlutzName")
-            clocktowerKlutzChoiceName = json.optNullableString("clocktowerKlutzChoiceName")
-            clocktowerKlutzReturnToDawn = json.optBoolean("clocktowerKlutzReturnToDawn", false)
-            clocktowerNightStartedState.value = json.optBoolean("clocktowerNightStarted", false)
-            clocktowerNightStepIndexState.value = json.optInt("clocktowerNightStepIndex", 0).coerceAtLeast(0)
-            clocktowerDayModeState.value = enumByName<ClocktowerDayMode>(json.optNullableString("clocktowerDayMode"))
-                ?: ClocktowerDayMode.Overview
-            clocktowerNominatorNameState.value = json.optNullableString("clocktowerNominatorName")
-            clocktowerNomineeNameState.value = json.optNullableString("clocktowerNomineeName")
-            clocktowerCurrentVoteCountState.value = json.optInt("clocktowerCurrentVoteCount", 0).coerceAtLeast(0)
-            clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthorityPersistence.decode(json)
-            clocktowerHighestVoteNameState.value = json.optNullableString("clocktowerHighestVoteName")
-            clocktowerHighestVoteCountState.value = json.optInt("clocktowerHighestVoteCount", 0).coerceAtLeast(0)
-            clocktowerSlayerClaimantNameState.value = json.optNullableString("clocktowerSlayerClaimantName")
-            clocktowerSlayerTargetNameState.value = json.optNullableString("clocktowerSlayerTargetName")
-            gameOutcome = gameOutcomeFromJson(json.optJSONObject("gameOutcome"))
-            showResults = json.optBoolean("showResults", false)
-            screen = restoredScreen
-        }
-        if (restored.isFailure) {
-            clearSavedGameState()
-        }
+        RecoveryApplicationCoordinator.apply(
+            raw = baseContext.loadActiveGameStateJson(),
+            prepare = { raw -> baseContext.prepareCurrentRecoveryPlan(raw) },
+            clearRejected = ::clearSavedGameState,
+            crossSessionBoundary = ::invalidateA4SessionBoundary,
+            applyValidated = ::applyValidatedRecoveryPlan,
+        )
     }
 
     val latestPersistActiveGameState by rememberUpdatedState { persistAndReleaseA4ObservationRebuildIfDurable() }
