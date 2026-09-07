@@ -22,7 +22,7 @@ jobs:
       - name: Verify locked parent
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = '44d4ab11bfd621c7f49acf4edb55393355b3ec04'
+          test "$(git rev-parse HEAD^)" = 'f4e23ed1263a75c8cc081419f95f4346dbd93e55'
 
       - name: Patch roadmap to current-only PS4.6 contract
         shell: bash
@@ -35,8 +35,8 @@ jobs:
 
           replacements = [
               (
-                  '> Updated: 2026-09-07 Australia/Sydney',
-                  '> Updated: 2026-09-08 Australia/Sydney',
+                  '> Updated: 2026-09-07 Australia/Sydney  \n',
+                  '> Updated: 2026-09-08 Australia/Sydney\n',
               ),
               (
                   '''Persistence Simplification remains the active campaign. PS3 typed Recovery is complete; the next approved work is:\n\n> **PS4 — Retire superseded active-save infrastructure**\n\nImmediate next slice:\n\n> **PS4.4 — retire old ActiveGame identity/coordinator infrastructure**\n\nPS4.1 through PS4.3 are complete. Do not begin PS5, Werewolf module deletion or D6 decomposition as part of PS4.4.''',
