@@ -32,7 +32,7 @@ The PS4 handoff/progress documentation commits advance the branch head beyond th
 
 The previous D6 branch `codex/d6-ownership-plan` and closed draft PR #111 are historical evidence only. Do not implement the old D6 sequence.
 
-## 2. Current priority — PS4 Persistence Cleanup
+## 2. Current priority — PS5 Persistence Trigger Simplification
 
 Persistence Simplification PS0–PS4 is complete. The next planned campaign slice is:
 
