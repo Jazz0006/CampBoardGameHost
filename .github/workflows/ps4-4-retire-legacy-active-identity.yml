@@ -33,7 +33,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = '769c14aa2a36ee7d21020458f88c1e3be025c988'
+          test "$(git rev-parse HEAD^)" = 'b22545841b922f4010aa793ee1ecdfda39b3d6ee'
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/clocktower/catalog/BuiltInClocktowerRulesetCatalogTest.kt)" = 'e43ef76627c0114863fdfa42190c62cefa4ce935'
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/persistence/ActiveGamePersistenceCoordinator.kt)" = '41f56040746259a99ae7da06878c22f32285de76'
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/persistence/ActiveGameIdentityEnvelope.kt)" = 'a23e6bec2acc68ce1d7659c1e306b6d5f4592cd8'
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/persistence/PersistedGameIdentity.kt)" = 'ce26177dc87c1faa8d3492bf5cf6ae6089c73e4d'
