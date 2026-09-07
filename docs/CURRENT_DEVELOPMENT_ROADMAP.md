@@ -141,7 +141,9 @@ cache; retain it until publication ownership proves a better durable source.
 
 ## 4. Archive and active recovery are separate products
 
-PS1 now enforces this separation in production: new archive writes project live game state into a narrow `GameArchiveRecord` and encode it with `GameArchiveJsonCodec`; they no longer consume `activeGameSnapshotJson()`. Legacy `{\"snapshot\": ...}` archive entries remain readable through an archive-only compatibility fallback, while active Recovery save/restore remains on its existing path.
+PS1 enforces the archive boundary: new archive writes project live game state into a narrow `GameArchiveRecord` and encode it with `GameArchiveJsonCodec`; they no longer consume `activeGameSnapshotJson()`. Legacy `{\"snapshot\": ...}` archive entries remain readable through an archive-only compatibility fallback.
+
+PS2 now independently enforces the active-write boundary: production active saves build a typed `RecoverySnapshot` and encode it with `RecoverySnapshotJsonCodec`; `persistActiveGameStateIfNeeded()` no longer writes the broad `activeGameSnapshotJson()` payload. The old restore parser remains temporarily supported until PS3, so PS2 carries an explicit transitional `LegacyRestoreCompatibility` bridge rather than breaking recovery between slices.
 
 Define two independent concepts:
 
@@ -200,33 +202,52 @@ PS1 validation completed with the focused `GameArchiveJsonCodecTest`, `:app:test
 
 ### PS2 — Introduce minimal typed `RecoverySnapshot`
 
-Status: **next slice; not started**.
+Status: **complete on draft PR #112**.
 
-Goal: replace “serialize App runtime” with a typed recovery model containing common envelope + game-specific
-payloads.
+Goal achieved: production active-save writes no longer serialize the broad App-runtime snapshot. They project live state into a typed common envelope with game-specific payloads and encode through `RecoverySnapshotJsonCodec`.
 
-Required shape:
+Implemented shape:
 
 ```text
-RecoveryEnvelope
+RecoverySnapshot
 ├── recoveryFormatVersion
 ├── compatibility token
 ├── savedAtMillis
+├── transitional LegacyRestoreCompatibility
 └── game
     ├── UndercoverRecovery
     ├── WerewolfRecovery
     └── ClocktowerRecovery
 ```
 
-`ClocktowerRecovery` should be grouped by real concepts such as identity, position, players, durable mechanics,
-history and bookkeeping. Do not create a flat 50–70-field God DTO.
+Key PS2 results:
 
-The codec must be deterministic: capture time/compatibility inputs before encoding. Encoding owns wire format;
-it must not derive game identity or inspect Compose/Android state.
+- `persistActiveGameStateIfNeeded()` now writes `RecoverySnapshotJsonCodec.encode(activeGameRecoverySnapshot())`;
+- arbitrary navigation state is not persisted; only narrow `PassPhone` / `RevealCard` deal continuation survives explicitly;
+- Clocktower confirmed facts, mandatory continuations and durable semantic/history state are retained;
+- normal Clocktower draft targets and day UI state are omitted from the new write model;
+- Werewolf already-performed night-role inputs remain conservative recovery continuation until finer commit boundaries exist;
+- current lifecycle save trigger timing and A4 durability ordering remain unchanged;
+- the old `activeGameSnapshotJson()` implementation remains temporarily in source but is no longer the production active-save payload;
+- old restore requirements are isolated behind `LegacyRestoreCompatibility` pending PS3/PS4 rather than copied as the intended final design.
 
-At this stage, prefer changing the write model while keeping existing save trigger semantics stable.
+PS2 validation evidence:
+
+- successful controlled cutover run `34081179361`;
+- focused `RecoverySnapshotJsonCodecTest` + `GameArchiveJsonCodecTest` passed before and after App wiring;
+- exact App single-file diff audit and `git diff --check` passed;
+- `:app:testFast` passed;
+- `:app:assembleDebug` passed;
+- product commit `abeb056d9f8b2fbe99b62da7f3dcaa5c169b522a`;
+- temporary one-shot workflow/script removed by cleanup commit `37ec38a4ed2a57ba42b4ab2f50a09d34db589601`.
+
+Detailed checkpoint:
+
+- `docs/PS2_TYPED_RECOVERY_SNAPSHOT_CHECKPOINT_2026-09-07.md`
 
 ### PS3 — Simplify restore around safe re-entry
+
+Status: **next slice; not started**.
 
 Goal:
 
@@ -248,6 +269,8 @@ Recovery UI policy examples:
 - Werewolf retains the minimum night continuation needed to avoid repeating already-performed role interactions.
 
 Landing/Setup preview must consume typed recovery metadata rather than independently re-parsing raw JSON keys.
+
+Before PS3 implementation, re-audit the live head and current old restore consumers. Do not preserve PS2's `LegacyRestoreCompatibility` fields by inertia; retain only what typed safe restore still proves necessary.
 
 ### PS4 — Retire superseded active-save infrastructure
 
@@ -377,6 +400,8 @@ Active campaign documents:
 
 - `docs/PERSISTENCE_REQUIREMENT_REDUCTION_AUDIT_2026-09-07.md`
 - `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-07_PERSISTENCE_SIMPLIFICATION.md`
+- `docs/PS1_ARCHIVE_RECOVERY_SEPARATION_CHECKPOINT_2026-09-07.md`
+- `docs/PS2_TYPED_RECOVERY_SNAPSHOT_CHECKPOINT_2026-09-07.md`
 
 Long-lived engineering authority:
 
