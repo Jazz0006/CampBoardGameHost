@@ -179,7 +179,7 @@ for token in (
 ):
     if token not in app:
         raise SystemExit(f"PS4.1 unexpectedly damaged retained boundary: {token}")
-if primitives_test.count("optNullableBoolean(") != 3:
+if primitives_test.count("optNullableBoolean(") != 2:
     raise SystemExit("optNullableBoolean reader coverage changed unexpectedly")
 
 APP.write_text(app, encoding="utf-8", newline="\n")
