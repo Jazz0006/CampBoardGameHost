@@ -1,0 +1,41 @@
+name: PS5 persistence trigger audit
+
+on:
+  push:
+    branches:
+      - codex/persistence-simplification
+    paths:
+      - .github/workflows/ps5-trigger-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/persistence-simplification
+          fetch-depth: 0
+
+      - name: Verify locked parent and dump trigger ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 'b59fea8e90c8028b9fe5d80eb0246d69b3f3d04c'
+
+          echo '=== persistActiveGameStateIfNeeded references ==='
+          git grep -n -C 4 'persistActiveGameStateIfNeeded' -- app/src/main app/src/test || true
+
+          echo '=== Recovery writer/storage references ==='
+          git grep -n -C 3 -E 'RecoverySnapshotJsonCodec|RECENT_ACTIVE_GAME_KEY|activeGame|recentActive|SharedPreferences' -- app/src/main/java/com/codex/campboardgamehost app/src/test || true
+
+          echo '=== Android lifecycle / save trigger references ==='
+          git grep -n -C 4 -E 'ON_PAUSE|ON_STOP|onPause|onStop|LifecycleEventObserver|DisposableEffect|ProcessLifecycleOwner|Lifecycle\.Event' -- app/src/main/java/com/codex/campboardgamehost app/src/test || true
+
+          echo '=== direct SharedPreferences write methods ==='
+          git grep -n -C 2 -E '\.(apply|commit)\(\)' -- app/src/main/java/com/codex/campboardgamehost | grep -E 'SharedPreferences|edit\(|putString|remove\(' -B 3 -A 3 || true
+
+          echo '=== persistence function inventory ==='
+          git grep -n -E 'fun .*persist|fun .*save|fun .*archive|persist[A-Z]|save[A-Z]' -- app/src/main/java/com/codex/campboardgamehost | head -n 400 || true
