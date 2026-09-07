@@ -29,6 +29,7 @@ internal object GameArchiveJsonCodec {
         entry: JSONObject,
         roleByName: (String) -> ClocktowerRole?,
     ): ArchivedGameReview? {
+        if (!entry.has("id")) return null
         val payload = entry.optJSONObject(PAYLOAD_KEY) ?: return null
         return decodeCurrentEntry(entry, payload, roleByName)
     }
@@ -55,7 +56,7 @@ internal object GameArchiveJsonCodec {
             .orEmpty()
         if (cards.isEmpty()) return null
         return ArchivedGameReview(
-            id = entry.archiveId(),
+            id = entry.optLong("id", 0L),
             archivedAtMillis = entry.optLong("archivedAtMillis", 0L),
             gameKind = gameKind,
             round = payload.optInt("round", 1).coerceAtLeast(1),
@@ -69,7 +70,4 @@ internal object GameArchiveJsonCodec {
             outcome = AppGameStateJsonCodec.decodeOutcome(payload.optJSONObject("outcome")),
         )
     }
-
-    private fun JSONObject.archiveId(): Long =
-        optLong("id", optLong("archivedAtMillis", 0L))
 }
