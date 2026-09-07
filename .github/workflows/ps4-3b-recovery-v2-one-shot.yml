@@ -1,0 +1,103 @@
+name: PS4.3b Recovery v2 one-shot
+
+on:
+  push:
+    branches:
+      - codex/persistence-simplification
+    paths:
+      - .github/workflows/ps4-3b-recovery-v2-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  recovery-v2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/persistence-simplification
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Verify exact RED/tooling lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "5abd8f65fc024da7f91c5bc811b771ead6daee3d"
+          test "$(git rev-parse HEAD^^)" = "e4cde20f8449eed49e36ef6e0162f696f3901096"
+          mapfile -t changed < <(git diff --name-only e4cde20f8449eed49e36ef6e0162f696f3901096..HEAD | sort)
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = ".github/scripts/ps4_3b_recovery_v2_patch.py"
+          test "${changed[1]}" = ".github/workflows/ps4-3b-recovery-v2-one-shot.yml"
+          git fetch origin codex/persistence-simplification
+          test "$(git rev-parse origin/codex/persistence-simplification)" = "$(git rev-parse HEAD)"
+
+      - name: Apply fail-closed Recovery v2 patch
+        run: python3 .github/scripts/ps4_3b_recovery_v2_patch.py
+
+      - name: Exact post-patch audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          ! git grep -n 'LegacyRestoreCompatibility' -- app
+          ! git grep -n 'legacyRestoreCompatibility' -- app
+          grep -F 'const val CURRENT_FORMAT_VERSION: Int = 2' app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshot.kt
+          grep -F 'identityForSave(' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          test "$(grep -F -c 'identityForSave(' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" -eq 1
+          ! grep -F 'PersistedActiveGameIdentityJsonCodec' app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt
+          ! grep -F 'CommittedClocktowerSetupPersistence' app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt
+          ! grep -F 'clocktowerRulesetRoleIds' app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt
+          ! grep -F 'clocktowerRulesetRef' app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt
+          ! grep -F 'put("version"' app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt
+
+      - name: Compile
+        run: ./gradlew :app:compileDebugKotlin --no-daemon --build-cache
+
+      - name: Run Android FAST unit tests
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Reconfirm remote head before product commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/persistence-simplification
+          test "$(git rev-parse origin/codex/persistence-simplification)" = "$(git rev-parse HEAD)"
+          git diff --check
+
+      - name: Commit and push Recovery v2 product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app
+          test -n "$(git diff --cached --name-only)"
+          git commit -m "refactor: cut Recovery over to v2 schema"
+          PRODUCT_SHA="$(git rev-parse HEAD)"
+          echo "PRODUCT_SHA=${PRODUCT_SHA}"
+          git push origin HEAD:codex/persistence-simplification
+
+      - name: Self-remove one-shot tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          PRODUCT_SHA="$(git rev-parse HEAD)"
+          git fetch origin codex/persistence-simplification
+          test "$(git rev-parse origin/codex/persistence-simplification)" = "${PRODUCT_SHA}"
+          git rm .github/scripts/ps4_3b_recovery_v2_patch.py .github/workflows/ps4-3b-recovery-v2-one-shot.yml
+          git commit -m "chore: remove PS4.3b one-shot tooling"
+          CLEANUP_SHA="$(git rev-parse HEAD)"
+          echo "CLEANUP_SHA=${CLEANUP_SHA}"
+          git push origin HEAD:codex/persistence-simplification
