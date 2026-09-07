@@ -38,12 +38,11 @@ internal data class RecoverySnapshot(
     }
 }
 
-/** Temporary PS2 bridge. PS3 replaces the legacy raw restore reader and removes this compatibility shell. */
+/** Temporary PS4 bridge while obsolete ActiveGame-shaped Recovery metadata is retired. */
 internal data class LegacyRestoreCompatibility(
     val activeGameStateVersion: Int,
     val identity: PersistedActiveGameIdentityEnvelope,
     val committedClocktowerSetup: CommittedClocktowerSetup? = null,
-    val troubleBrewingSetupRotationRecord: TroubleBrewingSetupRotationRecord? = null,
     val clocktowerRulesetRoleIds: Set<RoleId> = emptySet(),
     val clocktowerRulesetRef: RulesetRef? = null,
 )
@@ -111,11 +110,23 @@ internal data class ClocktowerRecovery(
     override val records: List<EliminationRecord>,
     override val outcome: GameOutcome?,
     val identity: ClocktowerRecoveryIdentity,
+    val troubleBrewingSetupRotationRecord: TroubleBrewingSetupRotationRecord? = null,
     val position: ClocktowerRecoveryPosition,
     val mechanics: ClocktowerRecoveryMechanics,
     val history: ClocktowerRecoveryHistory,
 ) : RecoveryGame {
     override val gameKind: GameKind = GameKind.Clocktower
+
+    init {
+        troubleBrewingSetupRotationRecord?.let { record ->
+            require(identity.script == ClocktowerScript.TroubleBrewing) {
+                "Only Trouble Brewing recovery can carry Trouble Brewing setup rotation bookkeeping."
+            }
+            require(record.playerCount == cards.size) {
+                "Trouble Brewing setup rotation player count must match recovered cards."
+            }
+        }
+    }
 }
 
 internal data class ClocktowerRecoveryIdentity(
