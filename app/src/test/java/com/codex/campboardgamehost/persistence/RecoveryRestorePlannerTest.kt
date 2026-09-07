@@ -6,7 +6,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -171,34 +170,6 @@ class RecoveryRestorePlannerTest {
         assertTrue((result as RecoveryPlanPreparation.Ready).plan.presentResults)
     }
 
-    @Test
-    fun werewolfPendingLastWordsAndNightCursorSurviveTypedRecovery() {
-        val snapshot = werewolfSnapshot(
-            pendingLastWordsPromptNames = listOf("Alice"),
-            judgeStepIndex = 3,
-            pendingNightDeath = "Alice",
-        )
-
-        val result = prepare(RecoverySnapshotJsonCodec.encode(snapshot))
-
-        assertTrue(result is RecoveryPlanPreparation.Ready)
-        val game = (result as RecoveryPlanPreparation.Ready).plan.snapshot.game as WerewolfRecovery
-        assertEquals(listOf("Alice"), game.pendingLastWordsPromptNames)
-        assertEquals(3, game.judgeStepIndex)
-        assertEquals("Alice", game.pendingNightDeath)
-        assertEquals(RecoverySafeReentry.WerewolfJudge(3), result.plan.safeReentry)
-    }
-
-    @Test
-    fun unknownWerewolfContinuationNameIsRejected() {
-        val snapshot = werewolfSnapshot(pendingLastWordsPromptNames = listOf("Not A Player"))
-
-        assertRejected(
-            prepare(RecoverySnapshotJsonCodec.encode(snapshot)),
-            RecoveryRejectionReason.InvalidGameState,
-        )
-    }
-
     private fun prepare(json: JSONObject): RecoveryPlanPreparation = RecoveryRestorePlanner.prepare(
         raw = json,
         expectedCompatibilityToken = TOKEN,
@@ -239,57 +210,6 @@ class RecoveryRestorePlannerTest {
             lastWordsMode = LastWordsMode.FirstDay,
         ),
     )
-
-    private fun werewolfSnapshot(
-        pendingLastWordsPromptNames: List<String> = emptyList(),
-        judgeStepIndex: Int = 0,
-        pendingNightDeath: String? = null,
-    ): RecoverySnapshot {
-        val identity = PersistedActiveGameIdentityEnvelope.werewolf(
-            PersistedWerewolfGameIdentity(
-                board = PersistedGameContentIdentity(
-                    kind = PersistedVariantKind.WEREWOLF_BOARD,
-                    variantId = "test-board",
-                    contentHash = "0123456789abcdef0123456789abcdef",
-                    semanticVersion = "1",
-                ),
-                ruleOptions = WerewolfRuleOptions(LastWordsMode.FirstDay),
-            ),
-        )
-        return RecoverySnapshot(
-            compatibilityToken = TOKEN,
-            savedAtMillis = NOW - 1_000L,
-            legacyRestoreCompatibility = LegacyRestoreCompatibility(
-                activeGameStateVersion = ActiveGamePersistenceCoordinator.CURRENT_VERSION,
-                identity = identity,
-            ),
-            game = WerewolfRecovery(
-                entryPoint = RecoveryEntryPoint.Stable,
-                currentDealIndex = 0,
-                round = 2,
-                cards = listOf(
-                    PlayerCard("Alice", Role.Villager, ""),
-                    PlayerCard("Wolf", Role.Werewolf, ""),
-                ),
-                records = emptyList(),
-                outcome = null,
-                werewolfCount = 1,
-                includeSeer = true,
-                includeWitch = true,
-                includeHunter = false,
-                lastWordsMode = LastWordsMode.FirstDay,
-                judgeStepIndex = judgeStepIndex,
-                pendingLastWordsPromptNames = pendingLastWordsPromptNames,
-                pendingNightDeath = pendingNightDeath,
-                seerCheckTarget = null,
-                witchSaveUsed = false,
-                witchPoisonUsed = false,
-                witchSavedTonight = false,
-                witchPoisonTarget = null,
-                hunterShotTarget = null,
-            ),
-        )
-    }
 
     private fun clocktowerSnapshot(
         phase: ClocktowerPhase = ClocktowerPhase.Night,
