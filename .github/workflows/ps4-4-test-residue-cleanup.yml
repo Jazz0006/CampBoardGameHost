@@ -1,0 +1,182 @@
+name: PS4.4 test residue cleanup
+
+on:
+  push:
+    branches:
+      - codex/persistence-simplification
+    paths:
+      - .github/workflows/ps4-4-test-residue-cleanup.yml
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout locked branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/persistence-simplification
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Verify cleanup preconditions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 'b561aa7afdb2a9db1b6e707a9caef1205e63c74e'
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryClocktowerRotationOwnershipTest.kt)" = 'fc21de62fd610a5217c2edc7bb34eaa38091330e'
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryRestorePlannerTest.kt)" = 'e1d578eed4321ac56c659bf505907490dcc1f917'
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodecTest.kt)" = '57e172cc77c66a4e70a20cc1b0c26cc898ed369e'
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/clocktower/catalog/BuiltInClocktowerRulesetCatalogTest.kt)" = '88e490cd551c4138be87983697624e3ee910e26a'
+
+      - name: Remove audited test-only legacy identity residue
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              'app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryClocktowerRotationOwnershipTest.kt': [(
+          '''        val persistedIdentity = PersistedActiveGameIdentityEnvelope.clocktower(
+              PersistedGameContentIdentity(
+                  kind = PersistedVariantKind.CLOCKTOWER_SCRIPT,
+                  variantId = "rotation-ownership-test",
+                  contentHash = "0123456789abcdef0123456789abcdef",
+                  semanticVersion = "1",
+              ),
+          )
+          ''', ''
+              )],
+              'app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryRestorePlannerTest.kt': [(
+          '''        val identity = PersistedActiveGameIdentityEnvelope.clocktower(
+              PersistedGameContentIdentity(
+                  kind = PersistedVariantKind.CLOCKTOWER_SCRIPT,
+                  variantId = "trouble-brewing-test",
+                  contentHash = "0123456789abcdef0123456789abcdef",
+                  semanticVersion = "1",
+              ),
+          )
+          ''', ''
+              )],
+              'app/src/test/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodecTest.kt': [(
+          '''        val identity = PersistedActiveGameIdentityEnvelope.werewolf(
+              PersistedWerewolfGameIdentity(
+                  board = PersistedGameContentIdentity(
+                      kind = PersistedVariantKind.WEREWOLF_BOARD,
+                      variantId = "test-board",
+                      contentHash = "0123456789abcdef0123456789abcdef",
+                      semanticVersion = "1",
+                  ),
+                  ruleOptions = WerewolfRuleOptions(LastWordsMode.FirstDay),
+              ),
+          )
+          ''', ''
+              ), (
+          '''        val identity = PersistedActiveGameIdentityEnvelope.clocktower(
+              PersistedGameContentIdentity(
+                  kind = PersistedVariantKind.CLOCKTOWER_SCRIPT,
+                  variantId = "trouble-brewing-test",
+                  contentHash = "0123456789abcdef0123456789abcdef",
+                  semanticVersion = "1",
+              ),
+          )
+          ''', ''
+              )],
+              'app/src/test/java/com/codex/campboardgamehost/clocktower/catalog/BuiltInClocktowerRulesetCatalogTest.kt': [(
+          '''    @Test
+              fun `persistence coordinator consumes the shared catalog and owns no duplicate built-in loader`() {
+                  val source = File(
+                      "src/main/java/com/codex/campboardgamehost/persistence/ActiveGamePersistenceCoordinator.kt",
+                  ).readText(Charsets.UTF_8)
+          
+                  assertTrue(source.contains("BuiltInClocktowerRulesetCatalog.fromContext(context)"))
+                  assertTrue(source.contains("catalog.ruleset(script).script"))
+                  assertFalse(source.contains("private object BuiltInClocktowerPersistenceCatalog"))
+                  assertFalse(source.contains("context.assets.open(\\\"scripts/"))
+              }
+          ''',
+          '''    @Test
+              fun `recovery save validation consumes the shared catalog directly`() {
+                  val source = File(
+                      "src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt",
+                  ).readText(Charsets.UTF_8)
+          
+                  assertTrue(source.contains("BuiltInClocktowerRulesetCatalog.fromContext(baseContext)"))
+                  assertTrue(
+                      source.contains(
+                          "activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript).script",
+                      ),
+                  )
+                  assertFalse(source.contains("ActiveGamePersistenceCoordinator.fromContext(baseContext)"))
+              }
+          '''
+              )],
+          }
+
+          for path_str, pairs in replacements.items():
+              path = Path(path_str)
+              text = path.read_text(encoding='utf-8')
+              for old, new in pairs:
+                  count = text.count(old)
+                  if count != 1:
+                      raise SystemExit(f'{path}: expected one exact cleanup anchor, found {count}')
+                  text = text.replace(old, new, 1)
+              path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify exact cleanup surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          test "$(git diff --name-only | sort)" = "$(printf '%s\n' \
+            app/src/test/java/com/codex/campboardgamehost/clocktower/catalog/BuiltInClocktowerRulesetCatalogTest.kt \
+            app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryClocktowerRotationOwnershipTest.kt \
+            app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryRestorePlannerTest.kt \
+            app/src/test/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodecTest.kt | sort)"
+          if git grep -nE 'PersistedActiveGameIdentityEnvelope|PersistedGameContentIdentity|PersistedWerewolfGameIdentity' -- \
+            app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryClocktowerRotationOwnershipTest.kt \
+            app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryRestorePlannerTest.kt \
+            app/src/test/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodecTest.kt; then
+            echo 'Dead legacy identity fixtures remain in typed Recovery tests.' >&2
+            exit 1
+          fi
+
+      - name: Run affected tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.RecoveryClocktowerRotationOwnershipTest' \
+            --tests 'com.codex.campboardgamehost.RecoveryRestorePlannerTest' \
+            --tests 'com.codex.campboardgamehost.RecoverySnapshotJsonCodecTest' \
+            --tests 'com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalogTest'
+
+      - name: Run FAST regression suite
+        run: ./gradlew testFast
+
+      - name: Commit cleanup and remove workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/ps4-4-test-residue-cleanup.yml
+          git add app/src/test/java/com/codex/campboardgamehost/clocktower/catalog/BuiltInClocktowerRulesetCatalogTest.kt \
+            app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryClocktowerRotationOwnershipTest.kt \
+            app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryRestorePlannerTest.kt \
+            app/src/test/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodecTest.kt
+          git diff --cached --check
+          git commit -m 'test: remove retired active identity residue'
+          git push origin HEAD:codex/persistence-simplification
