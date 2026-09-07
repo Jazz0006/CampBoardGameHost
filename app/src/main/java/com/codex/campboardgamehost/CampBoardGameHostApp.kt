@@ -725,8 +725,11 @@ private fun generateClocktowerAssignments(playerCount: Int, script: ClocktowerSc
 @Composable
 internal fun CampBoardGameHostApp() {
     val baseContext = LocalContext.current
-    val activeGamePersistenceCoordinator = remember(baseContext) {
-        ActiveGamePersistenceCoordinator.fromContext(baseContext)
+    val activeGameClocktowerRulesetCatalog = remember(baseContext) {
+        BuiltInClocktowerRulesetCatalog.fromContext(baseContext)
+    }
+    val activeGameWerewolfSaveValidator = remember {
+        WerewolfActiveGameSaveValidator(WerewolfRoleRegistry.builtIn())
     }
     val lifecycleOwner = LocalLifecycleOwner.current
     var languageMode by remember { mutableStateOf(baseContext.loadLanguageMode()) }
@@ -1436,31 +1439,28 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun activeGameRecoverySnapshot(): RecoverySnapshot {
-        activeGamePersistenceCoordinator.identityForSave(
-            ActiveGamePersistenceInputs(
-                gameKind = currentGameKind,
-                clocktowerScript = currentClocktowerScript,
-                assignedClocktowerRoleIds = if (currentGameKind == GameKind.Clocktower) {
-                    cards.map { card ->
+        when (currentGameKind) {
+            GameKind.Undercover -> Unit
+            GameKind.Clocktower -> {
+                ClocktowerActiveSessionValidator.validateForRecoverySave(
+                    script = activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript).script,
+                    assignedRoleIds = cards.map { card ->
                         RoleId(requireNotNull(card.clocktowerRole) {
                             "Clocktower recovery save is missing an assigned role."
                         }.enName)
-                    }
-                } else {
-                    emptyList()
-                },
-                assignedWerewolfRoles = if (currentGameKind == GameKind.Werewolf) {
-                    cards.map { it.role }
-                } else {
-                    emptyList()
-                },
-                werewolfCount = werewolfCount,
-                includeSeer = includeSeer,
-                includeWitch = includeWitch,
-                includeHunter = includeHunter,
-                lastWordsMode = lastWordsMode,
-            ),
-        )
+                    },
+                )
+            }
+            GameKind.Werewolf -> {
+                activeGameWerewolfSaveValidator.validate(
+                    assignedRoles = cards.map { card -> card.role },
+                    werewolfCount = werewolfCount,
+                    includeSeer = includeSeer,
+                    includeWitch = includeWitch,
+                    includeHunter = includeHunter,
+                )
+            }
+        }
         val entryPoint = when (screen) {
             Screen.PassPhone -> RecoveryEntryPoint.PassPhone
             Screen.RevealCard -> RecoveryEntryPoint.RevealCard
