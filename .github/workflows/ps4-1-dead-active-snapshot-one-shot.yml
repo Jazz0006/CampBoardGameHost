@@ -1,0 +1,193 @@
+name: PS4.1 dead active snapshot one-shot
+
+on:
+  push:
+    branches:
+      - codex/persistence-simplification
+    paths:
+      - .github/workflows/ps4-1-dead-active-snapshot-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/persistence-simplification
+          fetch-depth: 0
+
+      - name: Verify bootstrap head and blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "aa9820b5a171287b81d3f45b2ff2a76a0c9cff65"
+          test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$GITHUB_SHA"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = "623fbbf2862ca2a689f52a5ceb4e9c020d620313"
+          test "$(git hash-object .github/scripts/ps4_1_dead_active_snapshot_patch.py)" = "7beddd8bddbcf01d2c225e5cb7083b0034dda81d"
+
+      - name: Fresh repository-wide reference audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '--- all repository references before deletion ---'
+          git grep -n -F 'activeGameSnapshotJson(' -- . || true
+          echo '--- main-source references before deletion ---'
+          git grep -n -F 'activeGameSnapshotJson(' -- app/src/main | tee /tmp/ps4_1_main_refs_before.txt
+          test "$(wc -l < /tmp/ps4_1_main_refs_before.txt | tr -d ' ')" = "1"
+          grep -F 'fun activeGameSnapshotJson(): JSONObject' /tmp/ps4_1_main_refs_before.txt
+          echo '--- test references before deletion ---'
+          git grep -n -F 'activeGameSnapshotJson(' -- app/src/test || true
+
+      - name: Audit shared dependencies before deletion
+        shell: bash
+        run: |
+          set -euo pipefail
+          for token in \
+            ACTIVE_GAME_STATE_VERSION \
+            activeGamePersistenceCoordinator \
+            ActiveGamePersistenceInputs \
+            PersistedActiveGameIdentityJsonCodec \
+            CommittedClocktowerSetupPersistence \
+            TroubleBrewingSetupCompletionPersistence \
+            stringsToJsonArray \
+            putNullableString \
+            ClocktowerSemanticHistoryPersistence \
+            ClocktowerRulesetPersistenceBasisJsonCodec \
+            ClocktowerNightCheckpoint \
+            ClocktowerGhostVoteAuthorityPersistence \
+            putNullableBoolean \
+            playerCardsToJsonArray \
+            eliminationRecordsToJsonArray \
+            clocktowerEventsToJsonArray \
+            recordedEpistemicObservationsToJsonArray
+          do
+            count=$(git grep -F "$token" -- app/src/main | wc -l | tr -d ' ')
+            echo "$token main-source refs before: $count"
+            test "$count" -ge 2
+          done
+
+      - name: Apply exact dead-code patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/ps4_1_dead_active_snapshot_patch.py
+
+      - name: Post-patch reference and scope audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -n -F 'activeGameSnapshotJson(' -- app/src/main; then
+            echo 'activeGameSnapshotJson main-source reference remains' >&2
+            exit 1
+          fi
+          test "$(git diff --name-only | paste -sd ' ' -)" = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
+          git diff --check
+          git diff --numstat -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          git diff -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          git grep -n -F 'LegacyRestoreCompatibility(' -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          git grep -n -F 'RecoverySnapshotJsonCodec.encode(activeGameRecoverySnapshot())' -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run owning Recovery tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.persistence.RecoverySnapshotJsonCodecTest' \
+            --tests 'com.codex.campboardgamehost.persistence.RecoveryApplicationCoordinatorTest' \
+            --tests 'com.codex.campboardgamehost.persistence.RecoveryRestorePlannerTest' \
+            --tests 'com.codex.campboardgamehost.persistence.RecoveryPreviewLoaderTest' \
+            --tests 'com.codex.campboardgamehost.persistence.RecoveryRestorePlannerNoGreaterJoyTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Compile app
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:compileDebugKotlin --rerun-tasks --no-daemon
+
+      - name: Run fast checkpoint suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Final exact diff and dependency audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          test "$(git diff --name-only | paste -sd ' ' -)" = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
+          if git grep -n -F 'activeGameSnapshotJson(' -- app/src/main; then
+            echo 'activeGameSnapshotJson main-source reference remains' >&2
+            exit 1
+          fi
+          echo '--- repository references after deletion (docs/history may remain) ---'
+          git grep -n -F 'activeGameSnapshotJson(' -- . || true
+          for token in \
+            ACTIVE_GAME_STATE_VERSION \
+            activeGamePersistenceCoordinator \
+            ActiveGamePersistenceInputs \
+            PersistedActiveGameIdentityJsonCodec \
+            CommittedClocktowerSetupPersistence \
+            TroubleBrewingSetupCompletionPersistence \
+            stringsToJsonArray \
+            putNullableString \
+            ClocktowerSemanticHistoryPersistence \
+            ClocktowerRulesetPersistenceBasisJsonCodec \
+            ClocktowerNightCheckpoint \
+            ClocktowerGhostVoteAuthorityPersistence \
+            putNullableBoolean \
+            playerCardsToJsonArray \
+            eliminationRecordsToJsonArray \
+            clocktowerEventsToJsonArray \
+            recordedEpistemicObservationsToJsonArray
+          do
+            count=$(git grep -F "$token" -- app/src/main | wc -l | tr -d ' ')
+            echo "$token main-source refs after: $count"
+            test "$count" -ge 1
+          done
+
+      - name: Reconfirm remote head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Commit and push PS4.1 product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          test "$(git diff --cached --name-only | paste -sd ' ' -)" = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
+          git commit -m 'refactor: remove dead active snapshot'
+          product_sha=$(git rev-parse HEAD)
+          test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$GITHUB_SHA"
+          git push origin HEAD:refs/heads/codex/persistence-simplification
+          echo "PRODUCT_SHA=$product_sha" >> "$GITHUB_ENV"
+
+      - name: Self-remove one-shot tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$PRODUCT_SHA"
+          git rm .github/scripts/ps4_1_dead_active_snapshot_patch.py
+          git rm .github/workflows/ps4-1-dead-active-snapshot-one-shot.yml
+          git commit -m 'chore: remove PS4.1 one-shot tooling'
+          git push origin HEAD:refs/heads/codex/persistence-simplification
