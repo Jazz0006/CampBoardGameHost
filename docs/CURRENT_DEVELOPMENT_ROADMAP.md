@@ -141,7 +141,7 @@ cache; retain it until publication ownership proves a better durable source.
 
 ## 4. Archive and active recovery are separate products
 
-Current code archives `activeGameSnapshotJson()` directly. This coupling must end.
+PS1 now enforces this separation in production: new archive writes project live game state into a narrow `GameArchiveRecord` and encode it with `GameArchiveJsonCodec`; they no longer consume `activeGameSnapshotJson()`. Legacy `{\"snapshot\": ...}` archive entries remain readable through an archive-only compatibility fallback, while active Recovery save/restore remains on its existing path.
 
 Define two independent concepts:
 
@@ -181,6 +181,8 @@ identity framework merely under a new name.
 
 ### PS1 — Separate Archive from Recovery
 
+Status: **complete on draft PR #112**.
+
 Goal: remove the product/data-model assumption that the active recovery snapshot is also the archive payload.
 
 Required results:
@@ -194,7 +196,11 @@ Required results:
 
 Do not yet change lifecycle persistence timing.
 
+PS1 validation completed with the focused `GameArchiveJsonCodecTest`, `:app:testFast`, `git diff --check`, and an exact App wiring diff audit. The App wiring change is limited to archive decode/store/restart anchors; active Recovery snapshot generation, restore semantics and lifecycle save triggers were not changed.
+
 ### PS2 — Introduce minimal typed `RecoverySnapshot`
+
+Status: **next slice; not started**.
 
 Goal: replace “serialize App runtime” with a typed recovery model containing common envelope + game-specific
 payloads.

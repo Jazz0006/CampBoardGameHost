@@ -116,7 +116,9 @@ No production code required. The product contract and classification rules are f
 
 ### PS1 — Archive / Recovery separation
 
-**This is the next implementation slice.**
+**Status: complete on draft PR #112.**
+
+Production now owns an independent `GameArchiveRecord` / `GameArchiveJsonCodec` boundary. New archive writes no longer call or consume `activeGameSnapshotJson()`, while legacy snapshot-shaped archive records remain reviewable without active-Recovery version/identity validation. Active Recovery behavior and lifecycle triggers were intentionally left unchanged.
 
 Goal: stop using the active-game snapshot as the archive payload.
 
@@ -162,9 +164,13 @@ At minimum characterize/prove:
 This is a durability/data-model boundary, so tests-first behavior coverage is appropriate when a real missing
 contract is identified. Do not create source-string tests to assert `activeGameSnapshotJson` text disappeared.
 
+PS1 validation evidence: focused `GameArchiveJsonCodecTest` GREEN after the typed seam was introduced; `:app:testFast` GREEN; exact diff audit confirmed only the intended App archive anchors changed. The temporary one-shot patch workflow/script were removed after use.
+
 Stop after PS1 validation before beginning PS2 unless the user explicitly asks to continue.
 
 ### PS2 — Minimal typed RecoverySnapshot
+
+**Status: next slice; not started.**
 
 Goal: create a common envelope with game-specific payloads and remove persistence of state that is not needed for
 emergency continuation.
@@ -312,14 +318,15 @@ Instead:
 
 ## 10. Immediate next action
 
-Start **PS1 only**:
+PS1 is complete and this handoff now stops at that checkpoint.
 
-1. re-query branch/main heads;
-2. inspect the current archive write/read/review path and its tests;
-3. establish missing behavior characterization where needed;
-4. introduce the narrow archive projection;
-5. switch new archive writes away from active snapshot;
-6. validate old archive reading + new archive review parity;
-7. stop and report the PS1 checkpoint before PS2.
+The next implementation slice is **PS2 — Minimal typed RecoverySnapshot**, but it has **not** started. Before PS2 production edits:
 
-No production implementation has been performed by this documentation checkpoint.
+1. re-query live `main`, PR #112 and branch head;
+2. re-read the recovery classification and current active-save consumers;
+3. design the minimal common envelope plus game-specific payloads;
+4. identify real behavior contracts that deserve tests-first coverage;
+5. do not manufacture RED tests for purely mechanical ownership moves or rewiring;
+6. keep current persistence trigger timing stable during PS2 unless a behavior defect requires otherwise.
+
+Do not begin PS2 without explicit user authorization.
