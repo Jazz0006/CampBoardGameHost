@@ -1,11 +1,16 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
+import com.codex.campboardgamehost.clocktower.domain.RulesetRef
+import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -122,7 +127,7 @@ class RecoveryRestorePlannerTest {
     @Test
     fun clocktowerConfirmedFactsRoundTripWhileDraftTargetsRemainAbsent() {
         val json = RecoverySnapshotJsonCodec.encode(clocktowerSnapshot())
-        val decoded = RecoverySnapshotJsonCodec.decodeStrict(json, roleByName = { null })
+        val decoded = RecoverySnapshotJsonCodec.decodeStrict(json, roleByName = ::testRoleByName)
         val game = decoded.game as ClocktowerRecovery
 
         assertEquals("Alice", game.mechanics.confirmedAttackTarget)
@@ -133,6 +138,17 @@ class RecoveryRestorePlannerTest {
         assertTrue(json.isNull("clocktowerPoisonTarget"))
         assertTrue(json.isNull("clocktowerMonkProtectedTarget"))
         assertTrue(json.isNull("clocktowerDemonSuccessorTarget"))
+    }
+
+    @Test
+    fun clocktowerPlanCarriesCurrentResolvedRuleset() {
+        val result = prepare(RecoverySnapshotJsonCodec.encode(clocktowerSnapshot()))
+
+        assertTrue(result is RecoveryPlanPreparation.Ready)
+        val runtime = (result as RecoveryPlanPreparation.Ready).plan.clocktowerRuntime
+        assertNotNull(runtime)
+        assertEquals(TEST_RULESET_REF, runtime?.rulesetRef)
+        assertEquals(TEST_ROLE_IDS, runtime?.rulesetBasis?.roleIds)
     }
 
     @Test
@@ -160,6 +176,26 @@ class RecoveryRestorePlannerTest {
     }
 
     @Test
+    fun unconfirmedKlutzChoiceIsDiscardedByTypedRecovery() {
+        val snapshot = clocktowerSnapshot(
+            phase = ClocktowerPhase.Day,
+            pendingKlutzName = "Dave",
+            klutzChoiceName = "Alice",
+            confirmedDemonSuccessorTarget = null,
+            pendingNewDemonName = null,
+            pendingNightNewDemonIdentityName = null,
+        )
+
+        val json = RecoverySnapshotJsonCodec.encode(snapshot)
+        assertTrue(json.isNull("clocktowerKlutzChoiceName"))
+
+        val result = prepare(json)
+        assertTrue(result is RecoveryPlanPreparation.Ready)
+        val game = (result as RecoveryPlanPreparation.Ready).plan.snapshot.game as ClocktowerRecovery
+        assertEquals(null, game.mechanics.klutzChoiceName)
+    }
+
+    @Test
     fun gameOutcomeDerivesResultsPresentation() {
         val outcome = GameOutcome("Good wins", "summary", "reason")
         val result = prepare(
@@ -174,8 +210,15 @@ class RecoveryRestorePlannerTest {
         raw = json,
         expectedCompatibilityToken = TOKEN,
         nowMillis = NOW,
-        roleByName = { null },
+        roleByName = ::testRoleByName,
+        clocktowerRulesetResolver = { script, basis ->
+            TEST_RULESET_REF.takeIf {
+                script == ClocktowerScript.TroubleBrewing && basis.roleIds == TEST_ROLE_IDS
+            }
+        },
     )
+
+    private fun testRoleByName(name: String): ClocktowerRole? = TEST_ROLES_BY_NAME[name]
 
     private fun assertRejected(
         result: RecoveryPlanPreparation,
@@ -214,9 +257,10 @@ class RecoveryRestorePlannerTest {
     private fun clocktowerSnapshot(
         phase: ClocktowerPhase = ClocktowerPhase.Night,
         pendingKlutzName: String? = null,
+        klutzChoiceName: String? = null,
         confirmedDemonSuccessorTarget: String? = "Demon 2",
         pendingNewDemonName: String? = "Demon 2",
-        pendingNightNewDemonIdentityName: String? = "Imp",
+        pendingNightNewDemonIdentityName: String? = "Demon 2",
     ): RecoverySnapshot {
         val identity = PersistedActiveGameIdentityEnvelope.clocktower(
             PersistedGameContentIdentity(
@@ -238,11 +282,11 @@ class RecoveryRestorePlannerTest {
                 currentDealIndex = 0,
                 round = 2,
                 cards = listOf(
-                    PlayerCard("Alice", Role.Civilian, ""),
-                    PlayerCard("Bob", Role.Civilian, ""),
-                    PlayerCard("Carol", Role.Civilian, ""),
-                    PlayerCard("Dave", Role.Civilian, ""),
-                    PlayerCard("Demon 2", Role.Civilian, ""),
+                    clocktowerCard("Alice", "Chef"),
+                    clocktowerCard("Bob", "Washerwoman"),
+                    clocktowerCard("Carol", "Monk"),
+                    clocktowerCard("Dave", "Poisoner"),
+                    clocktowerCard("Demon 2", "Imp"),
                 ),
                 records = emptyList(),
                 outcome = null,
@@ -265,7 +309,7 @@ class RecoveryRestorePlannerTest {
                     pendingNightNewDemonIdentityName = pendingNightNewDemonIdentityName,
                     confirmedDemonSuccessorTarget = confirmedDemonSuccessorTarget,
                     redHerring = "Bob",
-                    demonBluffRoleNames = listOf("Chef", "Monk", "Mayor"),
+                    demonBluffRoleNames = listOf("Mayor", "Butler", "Soldier"),
                     butlerMaster = "Carol",
                     virginUsed = true,
                     slayerUsed = true,
@@ -274,7 +318,7 @@ class RecoveryRestorePlannerTest {
                     artistClaimedNames = listOf("Bob"),
                     lastExecutedName = "Carol",
                     pendingKlutzName = pendingKlutzName,
-                    klutzChoiceName = null,
+                    klutzChoiceName = klutzChoiceName,
                     klutzReturnToDawn = pendingKlutzName != null,
                     ghostVoteAuthority = ClocktowerGhostVoteAuthority(),
                     highestVoteName = "Alice",
@@ -293,9 +337,40 @@ class RecoveryRestorePlannerTest {
         )
     }
 
+    private fun clocktowerCard(name: String, roleName: String): PlayerCard {
+        val role = requireNotNull(TEST_ROLES_BY_NAME[roleName])
+        return PlayerCard(
+            name = name,
+            role = Role.Civilian,
+            word = "",
+            roleLabel = role.enName,
+            actualRoleLabel = role.enName,
+            clocktowerTeam = role.team,
+            clocktowerRole = role,
+            clocktowerShownRole = role,
+        )
+    }
+
     private companion object {
         const val TOKEN = "test-current-build"
         const val NOW = 20_000_000L
         const val FOUR_HOURS_MILLIS = 4L * 60L * 60L * 1000L
+
+        val TEST_ROLES = listOf(
+            ClocktowerRole(ClocktowerTeam.Townsfolk, "厨师", "Chef", "", ""),
+            ClocktowerRole(ClocktowerTeam.Townsfolk, "洗衣妇", "Washerwoman", "", ""),
+            ClocktowerRole(ClocktowerTeam.Townsfolk, "僧侣", "Monk", "", ""),
+            ClocktowerRole(ClocktowerTeam.Minion, "投毒者", "Poisoner", "", ""),
+            ClocktowerRole(ClocktowerTeam.Demon, "小恶魔", "Imp", "", ""),
+        )
+        val TEST_ROLES_BY_NAME = TEST_ROLES.associateBy(ClocktowerRole::enName)
+        val TEST_ROLE_IDS = TEST_ROLES.mapTo(linkedSetOf()) { RoleId(it.enName) }
+        val TEST_RULESET_REF = RulesetRef(
+            scriptId = ScriptId("trouble_brewing"),
+            scriptContentHash = "0123456789abcdef0123456789abcdef",
+            rulesetVersion = "test-rules-v1",
+            sourceRevision = "test",
+            coverage = RuleCoverage.PARTIAL,
+        )
     }
 }
