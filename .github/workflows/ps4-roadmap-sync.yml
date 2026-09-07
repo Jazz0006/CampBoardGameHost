@@ -1,0 +1,110 @@
+name: PS4 roadmap sync
+
+on:
+  push:
+    branches:
+      - codex/persistence-simplification
+    paths:
+      - .github/workflows/ps4-roadmap-sync.yml
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/persistence-simplification
+          fetch-depth: 0
+
+      - name: Verify locked parent
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = '44d4ab11bfd621c7f49acf4edb55393355b3ec04'
+
+      - name: Patch roadmap to current-only PS4.6 contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('docs/CURRENT_DEVELOPMENT_ROADMAP.md')
+          text = path.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  '> Updated: 2026-09-07 Australia/Sydney',
+                  '> Updated: 2026-09-08 Australia/Sydney',
+              ),
+              (
+                  '''Persistence Simplification remains the active campaign. PS3 typed Recovery is complete; the next approved work is:\n\n> **PS4 — Retire superseded active-save infrastructure**\n\nImmediate next slice:\n\n> **PS4.4 — retire old ActiveGame identity/coordinator infrastructure**\n\nPS4.1 through PS4.3 are complete. Do not begin PS5, Werewolf module deletion or D6 decomposition as part of PS4.4.''',
+                  '''Persistence Simplification remains the active campaign. PS4 cleanup implementation is complete through PS4.5 and the current task is:\n\n> **PS4.6 — final architecture / full-validation checkpoint**\n\nDo not begin PS5, Werewolf module deletion or D6 decomposition until PS4.6 has passed the full validation gate and the checkpoint is documented.''',
+              ),
+              (
+                  '''PS1 separated archive writes from the active snapshot. Archive compatibility may remain broader than active Recovery compatibility, and a strict current Recovery decoder must not become the archive-review parser.\n\nRetain real archive-read compatibility where currently supported. PS4 cleanup must not delete it merely because old active-save infrastructure is being retired.''',
+                  '''PS1 separated archive writes from the active snapshot, and the strict current Recovery decoder must not become the archive-review parser.\n\nPersistence is now explicitly current-version continuity infrastructure. Archive remains a separate completed-game review product, but old Archive wire layouts are not a compatibility promise: legacy readers/fallbacks may be deleted when they serve only older app versions. Current format/version rejection remains fail-closed.''',
+              ),
+              (
+                  'PS4  retire superseded active-save infrastructure   IN PROGRESS (PS4.1–PS4.3 COMPLETE)',
+                  'PS4  retire superseded active-save infrastructure   IN PROGRESS (PS4.1–PS4.5 COMPLETE; PS4.6 VALIDATING)',
+              ),
+              (
+                  '- legacy `{ "snapshot": ... }` archive entries remain readable through archive-only compatibility;',
+                  '- Archive remains independent from active Recovery; legacy `{ "snapshot": ... }` readability was later retired in PS4.6 under the current-version-only persistence contract;',
+              ),
+              (
+                  'Status: **in progress — PS4.1 through PS4.3 complete; PS4.4 next**.',
+                  'Status: **in progress — PS4.1 through PS4.5 complete; PS4.6 final validation in progress**.',
+              ),
+              (
+                  '''#### PS4.4 — Retire ActiveGame identity/coordinator infrastructure\n\nStatus: **NEXT — NOT STARTED**.\n\nAfter PS4.2/PS4.3, perform a new reference audit. Delete only proven unreachable types/functions, potentially including old ActiveGame coordinator/identity/envelope/json-codec and legacy restore paths.\n\nTests protecting only removed implementation/schema details should be retired under the `AGENTS.md` test-retirement policy after confirming no unique product contract is lost.''',
+                  '''#### PS4.4 — Retire ActiveGame identity/coordinator infrastructure\n\nStatus: **COMPLETE**. Final production retirement checkpoint: `7ba98aa78285daa29e2380d0c6b0f933d8e37133`.\n\nReal save-time invariants were re-homed into current domain validators, then the obsolete ActiveGame coordinator/identity/factory schema and dedicated implementation-shape tests were deleted. Recovery no longer depends on that ownership chain.''',
+              ),
+              (
+                  '''#### PS4.5 — Setup / ruleset / test hygiene\n\nAudit remaining transitional persistence code.''',
+                  '''#### PS4.5 — Setup / ruleset / test hygiene\n\nStatus: **COMPLETE**. Dead committed-setup persistence and legacy ruleset JSON/restore helpers were removed after fresh ownership audits.''',
+              ),
+              (
+                  '- real archive compatibility;',
+                  '- current-format Archive review ownership;',
+              ),
+              (
+                  'separate Archive compatibility',
+                  'separate current-format Archive ownership',
+              ),
+              (
+                  '- archive review remains readable after Recovery cleanup;',
+                  '- current-format archive review remains readable after Recovery cleanup; old Archive formats are not a compatibility target;',
+              ),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected exactly one roadmap anchor, found {count}: {old[:100]!r}')
+              text = text.replace(old, new)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+          git diff --check
+          git diff -- docs/CURRENT_DEVELOPMENT_ROADMAP.md
+
+      - name: Commit roadmap sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/CURRENT_DEVELOPMENT_ROADMAP.md
+          git commit -m 'docs: sync roadmap to PS4.6 current-only persistence'
+          git push origin HEAD:codex/persistence-simplification
+
+      - name: Self-clean workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/ps4-roadmap-sync.yml
+          git commit -m 'chore: remove PS4 roadmap sync workflow'
+          git push origin HEAD:codex/persistence-simplification
