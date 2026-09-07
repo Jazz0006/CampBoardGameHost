@@ -166,7 +166,9 @@ internal object RecoverySnapshotJsonCodec {
         put("clocktowerArtistClaimedNames", stringsToJsonArray(game.mechanics.artistClaimedNames))
         putNullableString("clocktowerLastExecutedName", game.mechanics.lastExecutedName)
         putNullableString("clocktowerPendingKlutzName", game.mechanics.pendingKlutzName)
-        putNullableString("clocktowerKlutzChoiceName", game.mechanics.klutzChoiceName)
+        // A selected Klutz target is ordinary unconfirmed UI input. Recovery preserves the pending
+        // Klutz obligation and safely re-enters the choice, but never promotes this draft to fact.
+        putNullableString("clocktowerKlutzChoiceName", null)
         put("clocktowerKlutzReturnToDawn", game.mechanics.klutzReturnToDawn)
         put(
             ClocktowerGhostVoteAuthorityPersistence.ROOT_KEY,
