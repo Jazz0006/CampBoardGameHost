@@ -1734,9 +1734,145 @@ internal fun CampBoardGameHostApp() {
         put("clocktowerEpistemicObservations", recordedEpistemicObservationsToJsonArray(clocktowerEpistemicObservations))
     }
 
+    fun activeGameRecoverySnapshot(): RecoverySnapshot {
+        val gameContentIdentity = activeGamePersistenceCoordinator.identityForSave(
+            ActiveGamePersistenceInputs(
+                gameKind = currentGameKind,
+                clocktowerScript = currentClocktowerScript,
+                assignedClocktowerRoleIds = if (currentGameKind == GameKind.Clocktower) {
+                    cards.map { card ->
+                        RoleId(requireNotNull(card.clocktowerRole) {
+                            "Clocktower recovery save is missing an assigned role."
+                        }.enName)
+                    }
+                } else {
+                    emptyList()
+                },
+                assignedWerewolfRoles = if (currentGameKind == GameKind.Werewolf) {
+                    cards.map { it.role }
+                } else {
+                    emptyList()
+                },
+                werewolfCount = werewolfCount,
+                includeSeer = includeSeer,
+                includeWitch = includeWitch,
+                includeHunter = includeHunter,
+                lastWordsMode = lastWordsMode,
+            ),
+        )
+        val entryPoint = when (screen) {
+            Screen.PassPhone -> RecoveryEntryPoint.PassPhone
+            Screen.RevealCard -> RecoveryEntryPoint.RevealCard
+            else -> RecoveryEntryPoint.Stable
+        }
+        val commonCards = cards.toList()
+        val commonRecords = records.toList()
+        val legacyRestoreCompatibility = LegacyRestoreCompatibility(
+            activeGameStateVersion = ACTIVE_GAME_STATE_VERSION,
+            identity = gameContentIdentity,
+            committedClocktowerSetup = committedClocktowerSetup,
+            troubleBrewingSetupRotationRecord = committedTroubleBrewingSetupRotationRecord,
+            clocktowerRulesetRoleIds = clocktowerRulesetRoleIds.toSet(),
+            clocktowerRulesetRef = clocktowerRulesetRef,
+        )
+        val recoveryGame: RecoveryGame = when (currentGameKind) {
+            GameKind.Undercover -> UndercoverRecovery(
+                entryPoint = entryPoint,
+                currentDealIndex = currentDealIndex,
+                round = round,
+                cards = commonCards,
+                records = commonRecords,
+                outcome = gameOutcome,
+                undercoverCount = undercoverCount,
+                includeBlank = includeBlank,
+                lastWordsMode = lastWordsMode,
+            )
+            GameKind.Werewolf -> WerewolfRecovery(
+                entryPoint = entryPoint,
+                currentDealIndex = currentDealIndex,
+                round = round,
+                cards = commonCards,
+                records = commonRecords,
+                outcome = gameOutcome,
+                werewolfCount = werewolfCount,
+                includeSeer = includeSeer,
+                includeWitch = includeWitch,
+                includeHunter = includeHunter,
+                lastWordsMode = lastWordsMode,
+                judgeStepIndex = werewolfJudgeStepIndex,
+                pendingNightDeath = pendingNightDeath,
+                seerCheckTarget = seerCheckTarget,
+                witchSaveUsed = witchSaveUsed,
+                witchPoisonUsed = witchPoisonUsed,
+                witchSavedTonight = witchSavedTonight,
+                witchPoisonTarget = witchPoisonTarget,
+                hunterShotTarget = hunterShotTarget,
+            )
+            GameKind.Clocktower -> ClocktowerRecovery(
+                entryPoint = entryPoint,
+                currentDealIndex = currentDealIndex,
+                round = round,
+                cards = commonCards,
+                records = commonRecords,
+                outcome = gameOutcome,
+                identity = ClocktowerRecoveryIdentity(
+                    script = currentClocktowerScript,
+                    gameId = clocktowerGameId,
+                    gameSeed = clocktowerGameSeed,
+                ),
+                position = ClocktowerRecoveryPosition(
+                    phase = clocktowerPhase,
+                    nightStarted = clocktowerNightStartedState.value,
+                    nightStepIndex = clocktowerNightStepIndexState.value,
+                ),
+                mechanics = ClocktowerRecoveryMechanics(
+                    confirmedAttackTarget = clocktowerPendingNightDeath,
+                    confirmedPoisonTarget = clocktowerConfirmedPoisonTarget,
+                    confirmedMonkProtectedTarget = clocktowerConfirmedMonkProtectedTarget,
+                    confirmedMayorRedirectTarget = clocktowerConfirmedMayorRedirectTarget,
+                    pendingNewDemonName = clocktowerPendingNewDemonName,
+                    pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
+                    confirmedDemonSuccessorTarget = clocktowerConfirmedDemonSuccessorTarget,
+                    redHerring = clocktowerRedHerring,
+                    demonBluffRoleNames = clocktowerRecommendedDemonBluffRoleNames.toList(),
+                    butlerMaster = clocktowerButlerMaster,
+                    virginUsed = clocktowerVirginUsed,
+                    slayerUsed = clocktowerSlayerUsed,
+                    slayerClaimedNames = clocktowerSlayerClaimedNames.toList(),
+                    artistUsed = clocktowerArtistUsed,
+                    artistClaimedNames = clocktowerArtistClaimedNames.toList(),
+                    lastExecutedName = clocktowerLastExecutedName,
+                    pendingKlutzName = clocktowerPendingKlutzName,
+                    klutzChoiceName = clocktowerKlutzChoiceName,
+                    klutzReturnToDawn = clocktowerKlutzReturnToDawn,
+                    ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,
+                    highestVoteName = clocktowerHighestVoteNameState.value,
+                    highestVoteCount = clocktowerHighestVoteCountState.value,
+                ),
+                history = ClocktowerRecoveryHistory(
+                    gameStateRevision = clocktowerGameStateRevision,
+                    playerInputRevision = clocktowerPlayerInputRevision,
+                    semanticHistoryMode = clocktowerSemanticHistoryMode,
+                    actionTimeline = clocktowerActionTimeline,
+                    nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
+                    events = clocktowerEvents.toList(),
+                    epistemicObservations = clocktowerEpistemicObservations.toList(),
+                ),
+            )
+        }
+        return RecoverySnapshot(
+            compatibilityToken = "active-v${ACTIVE_GAME_STATE_VERSION}:${currentGameKind.name}",
+            savedAtMillis = System.currentTimeMillis(),
+            legacyRestoreCompatibility = legacyRestoreCompatibility,
+            game = recoveryGame,
+        )
+    }
+
     fun persistActiveGameStateIfNeeded(): Boolean {
         if (!screen.isActiveGameScreen() || cards.isEmpty()) return false
-        return baseContext.saveActiveGameState(activeGameSnapshotJson())
+        return baseContext.saveActiveGameState(
+            RecoverySnapshotJsonCodec.encode(activeGameRecoverySnapshot()),
+        )
     }
 
     fun persistAndReleaseA4ObservationRebuildIfDurable() {
