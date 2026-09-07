@@ -51,7 +51,7 @@ new_persist = '''    fun activeGameRecoverySnapshot(): RecoverySnapshot {
             identity = gameContentIdentity,
             committedClocktowerSetup = committedClocktowerSetup,
             troubleBrewingSetupRotationRecord = committedTroubleBrewingSetupRotationRecord,
-            clocktowerRulesetRoleIds = clocktowerRulesetRoleIds.toList(),
+            clocktowerRulesetRoleIds = clocktowerRulesetRoleIds.toSet(),
             clocktowerRulesetRef = clocktowerRulesetRef,
         )
         val recoveryGame: RecoveryGame = when (currentGameKind) {
