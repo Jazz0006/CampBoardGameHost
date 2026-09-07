@@ -1,0 +1,98 @@
+name: PS4.6 final architecture audit
+
+on:
+  push:
+    branches:
+      - codex/persistence-simplification
+    paths:
+      - .github/workflows/ps4-6-final-architecture-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout locked branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/persistence-simplification
+          fetch-depth: 0
+
+      - name: Verify audit preconditions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = '93ab1d98c9071daf8db06f360737b8f2c9f37e53'
+
+      - name: Prove retired persistence ownership stays absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          PATTERN='activeGameSnapshotJson|LegacyRestoreCompatibility|ActiveGamePersistenceCoordinator|PersistedActiveGameIdentityEnvelope|PersistedActiveGameIdentityJsonCodec|ClocktowerPersistenceIdentityFactory|WerewolfPersistenceIdentityFactory|CommittedClocktowerSetupPersistence|ClocktowerRulesetPersistenceBasisJsonCodec|resolveLegacyBasisForRestore|resolveForRestore'
+          if git grep -nE "$PATTERN" -- app/src/main; then
+            echo 'Retired PS4 production symbol remains.' >&2
+            exit 1
+          fi
+
+      - name: Prove Recovery v2 wire excludes retired authorities
+        shell: bash
+        run: |
+          set -euo pipefail
+          WRITER='app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt'
+          DECODER='app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotStrictDecoder.kt'
+          PATTERN='gameContentIdentity|committedClocktowerSetup|clocktowerRulesetRoleIds|clocktowerRulesetRef'
+          if grep -nE "$PATTERN" "$WRITER" "$DECODER"; then
+            echo 'Recovery v2 still owns a retired legacy authority.' >&2
+            exit 1
+          fi
+          grep -q 'RecoverySnapshot.CURRENT_FORMAT_VERSION' "$WRITER"
+          grep -q 'RecoverySnapshotStrictDecoder.decode' "$WRITER"
+
+      - name: Prove one strict decode and shared preparation authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== production decodeStrict callers ==='
+          git grep -n 'RecoverySnapshotJsonCodec.decodeStrict' -- app/src/main || true
+          python3 - <<'PY'
+          import subprocess
+          out = subprocess.check_output(
+              ['git','grep','-l','RecoverySnapshotJsonCodec.decodeStrict','--','app/src/main'],
+              text=True,
+          ).splitlines()
+          expected = ['app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryRestorePlanner.kt']
+          if out != expected:
+              raise SystemExit(f'Unexpected strict Recovery decoder ownership: {out}')
+          PY
+          echo '=== shared App preparation references ==='
+          git grep -n 'prepareCurrentRecoveryPlan' -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          COUNT="$(git grep -c 'prepareCurrentRecoveryPlan' -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt | cut -d: -f2)"
+          test "$COUNT" -ge 3
+
+      - name: Prove atomic Recovery apply and separate Archive remain
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -e app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryApplicationCoordinator.kt
+          grep -q 'RecoveryApplicationCoordinator' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          test -e app/src/main/java/com/codex/campboardgamehost/archive/GameArchiveJsonCodec.kt
+          test -e app/src/main/java/com/codex/campboardgamehost/archive/GameArchiveStore.kt
+          echo '=== Recovery application references ==='
+          git grep -n 'RecoveryApplicationCoordinator' -- app/src/main
+          echo '=== Archive production files ==='
+          find app/src/main/java/com/codex/campboardgamehost/archive -type f | sort
+
+      - name: Prove current durable Clocktower facts remain
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'TroubleBrewingSetupCompletionPersistence.ROOT_KEY' app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt
+          grep -q 'ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY' app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt
+          grep -q 'clocktowerEpistemicObservations' app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt
+          grep -q 'fun refFor(' app/src/main/java/com/codex/campboardgamehost/clocktower/persistence/ClocktowerRulesetPersistence.kt
+          grep -q 'ClocktowerNightCheckpoint' app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt
+
+      - name: Exact hygiene check
+        run: git diff --check
