@@ -38,4 +38,44 @@ class GameArchiveLegacyRejectionTest {
             role.takeIf { it.enName == name }
         })
     }
+
+    @Test
+    fun `current archive without explicit id is rejected`() {
+        val role = ClocktowerRole(
+            team = ClocktowerTeam.Townsfolk,
+            zhName = "洗衣妇",
+            enName = "Washerwoman",
+            zhDescription = "",
+            enDescription = "",
+        )
+        val entry = GameArchiveJsonCodec.encodeEntry(
+            record = GameArchiveRecord(
+                gameKind = GameKind.Clocktower,
+                round = 1,
+                cards = listOf(
+                    PlayerCard(
+                        name = "Alice",
+                        role = Role.Civilian,
+                        word = "shown text",
+                        roleLabel = "洗衣妇",
+                        actualRoleLabel = "洗衣妇",
+                        clocktowerTeam = ClocktowerTeam.Townsfolk,
+                        clocktowerRole = role,
+                        clocktowerShownRole = role,
+                    ),
+                ),
+                records = emptyList(),
+                events = emptyList(),
+                outcome = null,
+            ),
+            id = 111L,
+            archivedAtMillis = 222L,
+        ).apply {
+            remove("id")
+        }
+
+        assertNull(GameArchiveJsonCodec.decodeEntry(entry) { name ->
+            role.takeIf { it.enName == name }
+        })
+    }
 }
