@@ -156,7 +156,7 @@ class RecoverySnapshotJsonCodecTest {
                     gameSeed = 99L,
                 ),
                 position = ClocktowerRecoveryPosition(
-                    phase = ClocktowerPhase.OtherNight,
+                    phase = ClocktowerPhase.Night,
                     nightStarted = true,
                     nightStepIndex = 5,
                 ),
