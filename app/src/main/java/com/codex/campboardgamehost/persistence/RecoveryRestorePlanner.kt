@@ -41,7 +41,7 @@ internal sealed interface RecoverySafeReentry {
 
 internal data class ValidatedClocktowerRecoveryRuntime(
     val rulesetBasis: ClocktowerRulesetPersistenceBasis,
-    val rulesetRef: RulesetRef,
+    val rulesetRef: RulesetRef?,
 )
 
 internal data class ValidatedRecoveryPlan(
@@ -293,10 +293,23 @@ internal object RecoveryRestorePlanner {
         val basis = ClocktowerRulesetPersistenceBasis(
             actualRoles.mapTo(linkedSetOf()) { role -> RoleId(role.enName) },
         )
-        val resolvedRuleset = clocktowerRulesetResolver(game.identity.script, basis)
-            ?: throw IllegalArgumentException("Current Clocktower rules cannot resolve the recovered assigned roles.")
-        require(resolvedRuleset.scriptId == game.identity.script.toRecommendationScriptId()) {
-            "Resolved Clocktower ruleset belongs to a different script."
+        val allowedRoleIds = clocktowerRolesForScript(game.identity.script)
+            .mapTo(linkedSetOf()) { role -> RoleId(role.enName) }
+        require(basis.roleIds.all { roleId -> roleId in allowedRoleIds }) {
+            "Recovered Clocktower roles do not belong to the selected current script."
+        }
+
+        val resolvedRuleset = when (game.identity.script) {
+            ClocktowerScript.TroubleBrewing -> clocktowerRulesetResolver(game.identity.script, basis)
+                ?: throw IllegalArgumentException(
+                    "Current Trouble Brewing rules cannot resolve the recovered assigned roles.",
+                )
+            ClocktowerScript.NoGreaterJoy -> null
+        }
+        resolvedRuleset?.let { ruleset ->
+            require(ruleset.scriptId == game.identity.script.toRecommendationScriptId()) {
+                "Resolved Clocktower ruleset belongs to a different script."
+            }
         }
 
         return ValidatedClocktowerRecoveryRuntime(
