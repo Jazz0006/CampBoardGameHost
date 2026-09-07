@@ -29,12 +29,8 @@ internal object GameArchiveJsonCodec {
         entry: JSONObject,
         roleByName: (String) -> ClocktowerRole?,
     ): ArchivedGameReview? {
-        val payload = entry.optJSONObject(PAYLOAD_KEY)
-        return if (payload != null) {
-            decodeCurrentEntry(entry, payload, roleByName)
-        } else {
-            decodeLegacyEntry(entry, roleByName)
-        }
+        val payload = entry.optJSONObject(PAYLOAD_KEY) ?: return null
+        return decodeCurrentEntry(entry, payload, roleByName)
     }
 
     private fun encodePayload(record: GameArchiveRecord): JSONObject = JSONObject().apply {
@@ -71,32 +67,6 @@ internal object GameArchiveJsonCodec {
                 ?.let(AppGameStateJsonCodec::decodeEvents)
                 .orEmpty(),
             outcome = AppGameStateJsonCodec.decodeOutcome(payload.optJSONObject("outcome")),
-        )
-    }
-
-    private fun decodeLegacyEntry(
-        entry: JSONObject,
-        roleByName: (String) -> ClocktowerRole?,
-    ): ArchivedGameReview? {
-        val snapshot = entry.optJSONObject("snapshot") ?: return null
-        val gameKind = enumByName<GameKind>(snapshot.optNullableString("currentGameKind")) ?: return null
-        val cards = snapshot.optJSONArray("cards")
-            ?.let { AppGameStateJsonCodec.decodeCards(it, roleByName) }
-            .orEmpty()
-        if (cards.isEmpty()) return null
-        return ArchivedGameReview(
-            id = entry.archiveId(),
-            archivedAtMillis = entry.optLong("archivedAtMillis", 0L),
-            gameKind = gameKind,
-            round = snapshot.optInt("round", 1).coerceAtLeast(1),
-            cards = cards,
-            records = snapshot.optJSONArray("records")
-                ?.let(AppGameStateJsonCodec::decodeRecords)
-                .orEmpty(),
-            events = snapshot.optJSONArray("clocktowerEvents")
-                ?.let(AppGameStateJsonCodec::decodeEvents)
-                .orEmpty(),
-            outcome = AppGameStateJsonCodec.decodeOutcome(snapshot.optJSONObject("gameOutcome")),
         )
     }
 
