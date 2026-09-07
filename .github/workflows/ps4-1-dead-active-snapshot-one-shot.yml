@@ -26,12 +26,12 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "ffe74faabc898d9d3a9b4e6b48821cce549254e8"
+          test "$(git rev-parse HEAD^)" = "35c842fca84eeb7989c962776fcc0b193a954001"
           test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$GITHUB_SHA"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = "623fbbf2862ca2a689f52a5ceb4e9c020d620313"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/persistence/AppJsonPrimitives.kt)" = "6fe2f642281e231506388fcc80a748de2d8a792b"
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/persistence/AppJsonPrimitivesTest.kt)" = "37122f621d78348687f34eeeb07f84a271a7f363"
-          test "$(git hash-object .github/scripts/ps4_1_dead_active_snapshot_patch.py)" = "163c6b182546ca20a4e0e3603ebed7f72b10a146"
+          test "$(git hash-object .github/scripts/ps4_1_dead_active_snapshot_patch.py)" = "1c5a2e62ff9f2153c27f66d85b59a9c18bc9c8c0"
 
       - name: Fresh repository-wide reference audit
         shell: bash
@@ -97,7 +97,7 @@ jobs:
             test "$count" -ge 2
           done
           test "$(git grep -F 'optNullableBoolean' -- app/src/main | wc -l | tr -d ' ')" = "1"
-          test "$(git grep -F 'optNullableBoolean(' -- app/src/test/java/com/codex/campboardgamehost/persistence/AppJsonPrimitivesTest.kt | wc -l | tr -d ' ')" = "3"
+          test "$(git grep -F 'optNullableBoolean(' -- app/src/test/java/com/codex/campboardgamehost/persistence/AppJsonPrimitivesTest.kt | wc -l | tr -d ' ')" = "2"
 
       - name: Apply exact dead-code patch
         shell: bash
@@ -135,7 +135,7 @@ jobs:
           for retained in playerCardFromJson toPlayerCards eliminationRecordFromJson toEliminationRecords clocktowerEventFromJson toClocktowerEvents toRecordedEpistemicObservations gameOutcomeFromJson; do
             git grep -n -F "$retained" -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
           done
-          test "$(git grep -F 'optNullableBoolean(' -- app/src/test/java/com/codex/campboardgamehost/persistence/AppJsonPrimitivesTest.kt | wc -l | tr -d ' ')" = "3"
+          test "$(git grep -F 'optNullableBoolean(' -- app/src/test/java/com/codex/campboardgamehost/persistence/AppJsonPrimitivesTest.kt | wc -l | tr -d ' ')" = "2"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -208,7 +208,7 @@ jobs:
             test "$count" -ge 1
           done
           test "$(git grep -F 'optNullableBoolean' -- app/src/main | wc -l | tr -d ' ')" = "1"
-          test "$(git grep -F 'optNullableBoolean(' -- app/src/test/java/com/codex/campboardgamehost/persistence/AppJsonPrimitivesTest.kt | wc -l | tr -d ' ')" = "3"
+          test "$(git grep -F 'optNullableBoolean(' -- app/src/test/java/com/codex/campboardgamehost/persistence/AppJsonPrimitivesTest.kt | wc -l | tr -d ' ')" = "2"
 
       - name: Reconfirm remote head
         shell: bash
