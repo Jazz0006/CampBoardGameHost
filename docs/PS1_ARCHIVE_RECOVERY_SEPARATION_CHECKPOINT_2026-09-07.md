@@ -44,7 +44,7 @@ PS1 was validated with:
 - exact App wiring audit showing only archive decode/store/restart anchors changed;
 - temporary one-shot patch workflow/script removed after use.
 
-A prior final cleanup commit was authored by `github-actions[bot]`, which caused GitHub's normal PR CI/R2 runs for that exact bot-authored head to report `action_required` without creating jobs. This checkpoint commit is intentionally a normal repository-user commit so the ordinary PR checks can run against a clean head.
+A prior final cleanup commit was authored by `github-actions[bot]`, which caused GitHub's normal PR CI/R2 runs for that exact bot-authored head to report `action_required` without creating jobs. A normal repository-user checkpoint restored ordinary PR workflow execution. This final checkpoint requests the repository's `[full-ci]` gate so the complete accumulated PR diff is validated rather than treating the final docs-only synchronize commit as representative.
 
 ## Next
 
