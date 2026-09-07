@@ -116,6 +116,35 @@ class RecoveryRestorePlannerTest {
     }
 
     @Test
+    fun incompatibleSemanticHistoryModeFailsBeforeApplication() {
+        val fact = JSONObject().apply {
+            put("actionId", "attack-1")
+            put("sequence", 1L)
+            put("kind", "attack")
+            put("targetSeat", 1)
+        }
+        val point = JSONObject().apply {
+            put("phase", "NIGHT")
+            put("round", 1)
+            put("sequence", 1)
+            put("globalSequence", 1L)
+        }
+        val json = RecoverySnapshotJsonCodec.encode(clocktowerSnapshot()).apply {
+            put(
+                ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY,
+                JSONArray().put(JSONObject().put("fact", fact).put("point", point)),
+            )
+            put(
+                ClocktowerSemanticHistoryPersistence.MODE_KEY,
+                ClocktowerSemanticHistoryMode.LEGACY_LOCAL.name,
+            )
+            put(ClocktowerSemanticHistoryPersistence.CURSOR_KEY, 2L)
+        }
+
+        assertRejected(prepare(json), RecoveryRejectionReason.InvalidGameState)
+    }
+
+    @Test
     fun malformedEpistemicObservationFailsClosed() {
         val json = RecoverySnapshotJsonCodec.encode(clocktowerSnapshot()).apply {
             put("clocktowerEpistemicObservations", JSONArray().put(17))
