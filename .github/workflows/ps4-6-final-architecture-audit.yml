@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = 'a1e91213d96c2a3bfef8ad84029815a775170abf'
+          test "$(git rev-parse HEAD^)" = 'ca82aa1a86da2e34e3f89c8be054662828d522b1'
 
       - name: Prove retired persistence ownership stays absent
         shell: bash
@@ -97,14 +97,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          APP='app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt'
+          ARCHIVE='app/src/main/java/com/codex/campboardgamehost/persistence/GameArchiveJsonCodec.kt'
+          ARCHIVE_TEST='app/src/test/java/com/codex/campboardgamehost/persistence/GameArchiveJsonCodecTest.kt'
           test -e app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryApplicationCoordinator.kt
-          grep -q 'RecoveryApplicationCoordinator' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-          test -e app/src/main/java/com/codex/campboardgamehost/archive/GameArchiveJsonCodec.kt
-          test -e app/src/main/java/com/codex/campboardgamehost/archive/GameArchiveStore.kt
+          grep -q 'RecoveryApplicationCoordinator' "$APP"
+          test -e "$ARCHIVE"
+          test -e "$ARCHIVE_TEST"
+          if grep -nE 'RecoverySnapshot|RecoveryCompatibilityToken|ValidatedRecoveryPlan|RecoveryApplicationCoordinator' "$ARCHIVE"; then
+            echo 'Archive codec must remain independent from active Recovery ownership.' >&2
+            exit 1
+          fi
+          grep -q 'private fun decodeLegacyEntry(' "$ARCHIVE"
+          grep -q 'decodeLegacyEntry(entry, roleByName)' "$ARCHIVE"
+          grep -q 'legacy snapshot archive remains readable without active recovery compatibility' "$ARCHIVE_TEST"
           echo '=== Recovery application references ==='
           git grep -n 'RecoveryApplicationCoordinator' -- app/src/main
-          echo '=== Archive production files ==='
-          find app/src/main/java/com/codex/campboardgamehost/archive -type f | sort
+          echo '=== Archive production ownership ==='
+          git grep -n 'GameArchiveJsonCodec' -- app/src/main
 
       - name: Prove current durable Clocktower facts remain
         shell: bash
