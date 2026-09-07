@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = 'ca82aa1a86da2e34e3f89c8be054662828d522b1'
+          test "$(git rev-parse HEAD^)" = '7f4cd7ff202284c270c73b9c57f7cfc77a6611d6'
 
       - name: Prove retired persistence ownership stays absent
         shell: bash
@@ -93,24 +93,30 @@ jobs:
               raise SystemExit('Shared Recovery preparation definition moved or disappeared.')
           PY
 
-      - name: Prove atomic Recovery apply and separate Archive remain
+      - name: Prove atomic Recovery apply and current-only Archive remain
         shell: bash
         run: |
           set -euo pipefail
           APP='app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt'
           ARCHIVE='app/src/main/java/com/codex/campboardgamehost/persistence/GameArchiveJsonCodec.kt'
           ARCHIVE_TEST='app/src/test/java/com/codex/campboardgamehost/persistence/GameArchiveJsonCodecTest.kt'
+          ARCHIVE_REJECTION_TEST='app/src/test/java/com/codex/campboardgamehost/persistence/GameArchiveLegacyRejectionTest.kt'
           test -e app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryApplicationCoordinator.kt
           grep -q 'RecoveryApplicationCoordinator' "$APP"
           test -e "$ARCHIVE"
           test -e "$ARCHIVE_TEST"
+          test -e "$ARCHIVE_REJECTION_TEST"
           if grep -nE 'RecoverySnapshot|RecoveryCompatibilityToken|ValidatedRecoveryPlan|RecoveryApplicationCoordinator' "$ARCHIVE"; then
             echo 'Archive codec must remain independent from active Recovery ownership.' >&2
             exit 1
           fi
-          grep -q 'private fun decodeLegacyEntry(' "$ARCHIVE"
-          grep -q 'decodeLegacyEntry(entry, roleByName)' "$ARCHIVE"
-          grep -q 'legacy snapshot archive remains readable without active recovery compatibility' "$ARCHIVE_TEST"
+          if grep -nE 'decodeLegacyEntry|"snapshot"|archiveId\(|optLong\("id", optLong\("archivedAtMillis"' "$ARCHIVE"; then
+            echo 'Legacy Archive reader or identity fallback reappeared.' >&2
+            exit 1
+          fi
+          grep -q 'if (!entry.has("id")) return null' "$ARCHIVE"
+          grep -q 'legacy snapshot archive is rejected' "$ARCHIVE_REJECTION_TEST"
+          grep -q 'current archive without explicit id is rejected' "$ARCHIVE_REJECTION_TEST"
           echo '=== Recovery application references ==='
           git grep -n 'RecoveryApplicationCoordinator' -- app/src/main
           echo '=== Archive production ownership ==='
