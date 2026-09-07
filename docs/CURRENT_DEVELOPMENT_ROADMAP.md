@@ -31,11 +31,12 @@ closed without merge. Do not implement the old D6 save/restore plan.
 
 The app does **not** need a general-purpose long-lived Save Game system.
 
-The supported product need is narrow:
+The supported product need is narrower than the old implementation:
 
 - a game is actively being hosted on one phone;
-- the user may receive a call, switch apps, lock the phone, suffer process reclamation, crash, or accidentally close the app;
-- reopening shortly afterwards should recover enough durable game state to continue safely;
+- ordinary app switching, a phone call, screen lock or background/foreground movement should simply continue from the existing in-memory App/Compose state when the Android process survives;
+- disk recovery is needed only when the in-memory process state is actually lost, for example Android process reclamation, crash, accidental close or equivalent process death;
+- reopening shortly afterwards should recover enough durable game state to continue the same game safely;
 - there is no requirement to save today and continue tomorrow;
 - there is no promise that an active game can survive an app upgrade or an incompatible recovery-schema change;
 - there is no requirement to reconstruct the exact pre-crash UI/runtime state.
@@ -44,10 +45,12 @@ The governing rule is:
 
 > **Restore the game, not the App.**
 
-The active-game persistence feature is therefore redefined as **Recent Emergency Recovery**.
+The active-game persistence feature is therefore redefined as **Recent Emergency Recovery**, specifically a
+process-loss fallback rather than a normal Save/Load workflow.
 
-Initial recovery horizon: **12 hours**. Expired or compatibility-mismatched active recovery may be discarded
-rather than migrated. This horizon is a recovery safety policy, not a long-term archive retention rule.
+Current stale-recovery hygiene window: **4 hours from the last successful persisted snapshot**. This is not a
+user-facing save duration and must not create a session/migration subsystem. It exists only so an abandoned old
+game is not presented as resumable much later or the next day.
 
 ### 2.2 Why this work precedes D6 decomposition
 
@@ -77,10 +80,10 @@ Every active-recovery field must be classified into one of the following categor
 | Category | Meaning | Recovery policy |
 |---|---|---|
 | `DURABLE_GAME_FACT` | Losing it changes the game that has already happened | Persist |
-| `RECOVERY_CONTINUATION` | Needed to safely resume an unfinished mandatory flow | Persist narrowly |
+| `RECOVERY_CONTINUATION` | Needed to safely resume an unfinished mandatory/social flow | Persist narrowly |
 | `DERIVED_RECOMPUTABLE` | Can be deterministically rebuilt from durable facts/current rules | Recompute |
 | `TRANSIENT_UI` | Unconfirmed selection, navigation, presentation, loading/cache state | Do not persist |
-| `ARCHIVE_OR_BOOKKEEPING` | Long-lived review/history/cross-game accounting, not active recovery | Separate owner |
+| `ARCHIVE_OR_BOOKKEEPING` | Long-lived review/history/cross-game accounting, not ordinary active recovery | Separate owner or keep only the minimum current-game bookkeeping actually required |
 
 ### 3.1 Must remain durable
 
@@ -104,18 +107,20 @@ At minimum, preserve the already-committed facts needed to avoid changing or rep
 The new recovery design should remove active persistence of state whose loss merely requires re-entering an
 unfinished interaction or rebuilding presentation:
 
-- generic raw `screen` restoration;
-- Clocktower day `dayMode` where a safe Day Overview can be entered instead;
+- generic raw `screen` restoration for stable gameplay;
+- Clocktower day `dayMode` where a safe Day Overview can be derived instead;
 - current nominator/nominee/current vote count before vote confirmation;
 - selected execution before end-day confirmation;
 - Slayer claimant/target UI selection before resolution;
 - Artist claimant/truthful/shown-answer UI selection before confirmation;
 - Clocktower attack/poison/Monk/Mayor/successor **draft** targets when the corresponding fact has not been confirmed;
+- Fortune Teller/Chambermaid/Ravenkeeper current draft targets;
 - recommendation loading state, locks, temporary candidate lists and other cache/UI state;
 - provisional Drunk-information recommendation cache;
 - setup/count flags that can be derived from the committed dealt cards;
 - event counter when it can be safely reconstructed from durable events;
-- preview-only data that can be projected from a typed recovery object.
+- `showResults` as stored UI state when it can be derived from a durable `gameOutcome`;
+- preview-only data that can be projected from a typed validated recovery object.
 
 ### 3.3 Important exceptions and cautions
 
@@ -124,6 +129,9 @@ Do not apply “drafts are disposable” mechanically across all games.
 The current Werewolf night flow retains several selections until a single Dawn confirmation. Re-waking roles
 after a crash may itself change the social game. Until Werewolf gains explicit per-step commit boundaries, its
 already-completed night-role inputs may remain `RECOVERY_CONTINUATION` even though they look like draft fields.
+
+A pending Werewolf last-words prompt created after a committed death/exile is also a narrow recovery continuation:
+dropping it would skip a configured post-death flow rather than merely discard unconfirmed UI input.
 
 Clocktower information also uses a publication boundary:
 
@@ -139,11 +147,14 @@ not silently change after recovery.
 `recommendedDemonBluffRoleNames` currently behaves closer to an applied/committed bluff triple than a disposable
 cache; retain it until publication ownership proves a better durable source.
 
+For Klutz, preserve the pending Klutz owner and whether the resolution returns to Dawn, but do not preserve the
+unconfirmed `clocktowerKlutzChoiceName`. On recovery the mandatory Klutz interaction should be re-entered safely.
+
 ## 4. Archive and active recovery are separate products
 
-PS1 enforces the archive boundary: new archive writes project live game state into a narrow `GameArchiveRecord` and encode it with `GameArchiveJsonCodec`; they no longer consume `activeGameSnapshotJson()`. Legacy `{\"snapshot\": ...}` archive entries remain readable through an archive-only compatibility fallback.
+PS1 enforces the archive boundary: new archive writes project live game state into a narrow `GameArchiveRecord` and encode it with `GameArchiveJsonCodec`; they no longer consume `activeGameSnapshotJson()`. Legacy `{"snapshot": ...}` archive entries remain readable through an archive-only compatibility fallback.
 
-PS2 now independently enforces the active-write boundary: production active saves build a typed `RecoverySnapshot` and encode it with `RecoverySnapshotJsonCodec`; `persistActiveGameStateIfNeeded()` no longer writes the broad `activeGameSnapshotJson()` payload. The old restore parser remains temporarily supported until PS3, so PS2 carries an explicit transitional `LegacyRestoreCompatibility` bridge rather than breaking recovery between slices.
+PS2 independently enforces the active-write boundary: production active saves build a typed `RecoverySnapshot` and encode it with `RecoverySnapshotJsonCodec`; `persistActiveGameStateIfNeeded()` no longer writes the broad `activeGameSnapshotJson()` payload. The old restore parser remains temporarily supported until PS3, so PS2 carries an explicit transitional `LegacyRestoreCompatibility` bridge rather than breaking recovery between slices.
 
 Define two independent concepts:
 
@@ -165,21 +176,23 @@ A strict active-game restore parser must never become the archive-review parser.
 
 ### PS0 — Freeze the recovery product contract
 
-Status: **complete at planning level**.
+Status: **complete at planning level; refined after PS3 re-audit**.
 
 Frozen requirements:
 
 - one recent active recovery only;
-- 12-hour initial horizon;
+- recovery exists for loss of in-memory process state, not ordinary background/foreground movement while the process survives;
+- current stale-recovery hygiene window is 4 hours from the last successful persisted snapshot;
 - no user-facing long-term Save Game contract;
+- no next-day continuation contract;
 - no cross-version active-recovery compatibility promise;
 - exact UI/runtime reconstruction is not required;
 - confirmed game facts and already-published information must survive;
 - unconfirmed transient UI may be discarded;
 - recovery must enter a safe, non-duplicating continuation point.
 
-Implementation details such as the exact compatibility token remain owned by PS2; do not rebuild the old content
-identity framework merely under a new name.
+Do not rebuild the old content identity framework merely under a new name. Compatibility for Recent Emergency
+Recovery should remain a small current-format/current-contract check.
 
 ### PS1 — Separate Archive from Recovery
 
@@ -187,18 +200,15 @@ Status: **complete on draft PR #112**.
 
 Goal: remove the product/data-model assumption that the active recovery snapshot is also the archive payload.
 
-Required results:
+Required results achieved:
 
-- introduce a typed `GameArchiveRecord` or equivalent narrow archive projection;
+- typed `GameArchiveRecord` / `GameArchiveJsonCodec` archive projection;
 - archive write no longer consumes the active recovery JSON object;
-- preserve existing user-visible archive/review content;
-- preserve old archive-read compatibility where currently supported;
-- do not route archive review through strict recent-recovery validation;
-- add behavior tests around archive projection/legacy reading where needed.
+- existing user-visible archive/review content preserved;
+- old archive-read compatibility retained where currently supported;
+- archive review remains separate from strict recent-recovery validation.
 
-Do not yet change lifecycle persistence timing.
-
-PS1 validation completed with the focused `GameArchiveJsonCodecTest`, `:app:testFast`, `git diff --check`, and an exact App wiring diff audit. The App wiring change is limited to archive decode/store/restart anchors; active Recovery snapshot generation, restore semantics and lifecycle save triggers were not changed.
+PS1 validation completed with the focused `GameArchiveJsonCodecTest`, `:app:testFast`, `git diff --check`, and an exact App wiring diff audit.
 
 ### PS2 — Introduce minimal typed `RecoverySnapshot`
 
@@ -245,32 +255,67 @@ Detailed checkpoint:
 
 - `docs/PS2_TYPED_RECOVERY_SNAPSHOT_CHECKPOINT_2026-09-07.md`
 
-### PS3 — Simplify restore around safe re-entry
+### PS3 — Typed safe restore for process-loss recovery
 
-Status: **next slice; not started**.
+Status: **next large implementation task; not started**.
 
-Goal:
+Dedicated implementation authority:
+
+- `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-07_PS3_TYPED_SAFE_RESTORE.md`
+
+Target architecture:
 
 ```text
-Recovery JSON
--> parse + validate complete RecoverySnapshot
--> rebuild durable game state
--> choose safe continuation UI
+raw persisted recovery
+-> strict complete typed decode
+-> current-format / current-contract / <=4h validation
+-> derive current-rules/runtime state
+-> ValidatedRecoveryPlan
+       ↙             ↘
+SavedGamePreview     atomic App apply
 ```
 
-Do not incrementally mutate live Compose state during parsing.
+Do not incrementally mutate live Compose state during parsing, content/ruleset resolution or semantic validation.
 
-Recovery UI policy examples:
+Known defects found in the PS3 audit that must be fixed:
 
-- Clocktower Day -> Day Overview unless a mandatory continuation requires a narrower mode;
-- Clocktower Night -> safe current/next step reconstructed from durable facts; unconfirmed selection is re-entered;
-- Klutz / unresolved Demon succession -> restore the mandatory continuation;
-- already-confirmed vote/mechanical facts must not be replayed;
-- Werewolf retains the minimum night continuation needed to avoid repeating already-performed role interactions.
+1. **Stable preview deletion** — PS2 stable snapshots intentionally omit generic `screen`, but the legacy preview reader still requires it and can clear a valid recovery.
+2. **Klutz safe re-entry** — PS2 correctly omits generic `dayMode`, but `pendingKlutzName` must derive the mandatory Klutz continuation rather than fall back to Day Overview.
+3. **Legacy checkpoint draft synthesis** — the new typed read path must not use legacy fallback decoding that recreates intentionally discarded draft targets from confirmed facts.
+4. **Partial live mutation risk** — old `restoreSavedGame()` can mutate live state before a later parse/validation failure.
+5. **Tolerant decoder mismatch** — Archive may skip malformed historical entries, but active Recovery must reject malformed cards/records/events rather than silently restore a partial game.
 
-Landing/Setup preview must consume typed recovery metadata rather than independently re-parsing raw JSON keys.
+Re-audited transitional compatibility fields:
 
-Before PS3 implementation, re-audit the live head and current old restore consumers. Do not preserve PS2's `LegacyRestoreCompatibility` fields by inertia; retain only what typed safe restore still proves necessary.
+- old active-state version -> remove from final Recovery;
+- old persisted content identity envelope -> do not preserve as the new short-horizon contract;
+- full `committedClocktowerSetup` -> remove from Recovery when typed restore proves no gameplay consumer;
+- `clocktowerRulesetRoleIds` -> derive from cards;
+- `clocktowerRulesetRef` -> reconstruct from recovered cards/current ruleset knowledge and fail closed if impossible;
+- Trouble Brewing setup rotation record -> keep as explicit current-game bookkeeping because completed-game rotation history still consumes it.
+
+PS3 implementation sequence:
+
+#### PS3.1 — Typed read foundation
+
+Create pure Kotlin strict decoder, validity policy, game-specific validation and `ValidatedRecoveryPlan`/equivalent
+safe-reentry derivation. Use meaningful typed RED/GREEN tests for the new durability contract.
+
+#### PS3.2 — Preview cutover
+
+Saved-game preview must consume the same validated typed recovery path as actual restore. A valid Stable snapshot
+without a raw `screen` key must remain resumable and must not be cleared.
+
+#### PS3.3 — Restore cutover
+
+Replace the large raw mutation sequence with load -> prepare validated plan -> apply. Use the established locked
+GitHub Actions one-shot Python patch for the large App file if stable unique anchors make it safe. Do not mix D6 decomposition into this change.
+
+#### PS3.4 — checkpoint audit
+
+Require focused recovery tests, exact App diff audit, `git diff --check`, `:app:testFast`, `:app:assembleDebug`,
+normal PR CI/R2 appropriate to the production checkpoint, and verification that no temporary one-shot machinery
+remains. Stop before PS4 and do not merge PR #112 without explicit authorization.
 
 ### PS4 — Retire superseded active-save infrastructure
 
@@ -279,15 +324,17 @@ schemas indefinitely.
 
 Candidates include:
 
-- old v3-only active-save compatibility plumbing that exists only to support long-lived full restore;
+- `LegacyRestoreCompatibility` and old active v3 restore compatibility/identity plumbing no longer needed by short-horizon recovery;
 - separate raw saved-game preview parser;
-- duplicated Clocktower checkpoint key writes;
+- duplicate Clocktower checkpoint key mapping/writes;
 - persistence of Clocktower draft fields and other transient UI;
 - committed setup provenance that has no post-start gameplay consumer;
+- obsolete ruleset-basis/reference persistence used only by old active recovery when the new reader can derive it;
 - unreachable legacy active-save branches/shims;
-- tests that only protect removed schema/implementation details.
+- tests that only protect removed schema/implementation details;
+- old `activeGameSnapshotJson()` after typed production read/write no longer depends on it.
 
-Retain real archive compatibility and durable semantic/history tests.
+Retain real archive compatibility, setup-rotation bookkeeping and durable semantic/history tests.
 
 ### PS5 — Simplify persistence triggers
 
@@ -315,13 +362,18 @@ are not.
 Required coverage should include representative Undercover, Werewolf and Clocktower recovery states and the
 highest-risk boundaries:
 
+- valid stable Recovery without generic `screen` survives preview/restart;
 - confirmed fact survives restart;
-- unconfirmed Clocktower draft is intentionally discarded/re-entered;
+- unconfirmed Clocktower draft is intentionally discarded/re-entered and is not recreated by legacy fallback;
 - published information/history is unchanged;
 - ghost-vote/highest-vote state survives while unconfirmed current nomination does not;
-- unresolved mandatory continuation survives;
+- pending Klutz derives the mandatory Klutz continuation;
+- unresolved Demon continuation survives;
 - Werewolf night continuation does not force already-performed social interactions to repeat;
-- expired/incompatible recovery fails closed without partially mutating live state;
+- pending configured Werewolf last-words continuation is not silently skipped;
+- `gameOutcome` derives result presentation rather than persisting raw `showResults` UI state;
+- expired (>4h), future-dated, wrong-format or incompatible recovery fails closed without partially mutating live state;
+- malformed active-recovery cards/records/events fail all-or-nothing rather than silently restoring a partial game;
 - archive review remains readable after archive/recovery separation;
 - no duplicate semantic action/observation occurs because of recovery.
 
@@ -332,6 +384,11 @@ At logical checkpoints use the project risk-based test policy from `AGENTS.md` /
 Persistence/restore/transaction boundaries merit focused behavior coverage and a full validation gate before
 merge. Real-device recovery testing is required before this campaign is considered complete.
 
+Real-device acceptance should distinguish:
+
+- ordinary background/foreground with process alive -> live in-memory state continues normally;
+- explicit restart/process-loss-style recovery -> typed disk Recovery restores the same game safely.
+
 ## 7. Explicit non-goals
 
 The current campaign does **not** include:
@@ -340,7 +397,9 @@ The current campaign does **not** include:
 - a global ViewModel migration;
 - DataStore migration merely for modernization;
 - long-lived save slots or manual Save/Load UX;
+- next-day continuation;
 - cross-version active-game migration framework;
+- a general session database;
 - recommendation-quality redesign;
 - A4/ZDD production cutover;
 - unrelated Host UI redesign.
@@ -398,22 +457,23 @@ Remain non-production. Do not treat this persistence campaign as authorization f
 
 Active campaign documents:
 
-- `docs/PERSISTENCE_REQUIREMENT_REDUCTION_AUDIT_2026-09-07.md`
-- `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-07_PERSISTENCE_SIMPLIFICATION.md`
-- `docs/PS1_ARCHIVE_RECOVERY_SEPARATION_CHECKPOINT_2026-09-07.md`
-- `docs/PS2_TYPED_RECOVERY_SNAPSHOT_CHECKPOINT_2026-09-07.md`
+- `docs/PERSISTENCE_REQUIREMENT_REDUCTION_AUDIT_2026-09-07.md` — original requirement-reduction audit; later product-horizon refinements are superseded by this roadmap and the PS3 handoff;
+- `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-07_PERSISTENCE_SIMPLIFICATION.md` — campaign umbrella handoff;
+- `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-07_PS3_TYPED_SAFE_RESTORE.md` — **current next-chat implementation authority**;
+- `docs/PS1_ARCHIVE_RECOVERY_SEPARATION_CHECKPOINT_2026-09-07.md`;
+- `docs/PS2_TYPED_RECOVERY_SNAPSHOT_CHECKPOINT_2026-09-07.md`.
 
 Long-lived engineering authority:
 
-- root `AGENTS.md`
-- `docs/TESTING_STRATEGY.md`
-- `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`
+- root `AGENTS.md`;
+- `docs/TESTING_STRATEGY.md`;
+- `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`.
 
 Prior Night Step decomposition/reference evidence remains historical support, not the active execution route:
 
-- `docs/CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md`
-- PR #106 and its merged commits/checks
-- closed PR #111 for the superseded D6 plan
+- `docs/CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md`;
+- PR #106 and its merged commits/checks;
+- closed PR #111 for the superseded D6 plan.
 
 ## 11. Status authority rule
 
@@ -421,7 +481,8 @@ If documents disagree:
 
 1. official Blood on the Clocktower rules/rulings control gameplay correctness;
 2. root `AGENTS.md` controls project execution and architecture/test rules;
-3. this roadmap controls current project state and priority;
-4. the active Persistence Simplification handoff controls the approved narrow campaign plan;
-5. specialized design docs control their own semantic/product domain where non-conflicting;
-6. archive documents, old Git branches and historical PR records are evidence only.
+3. this roadmap controls current project state, product boundary and priority;
+4. `NEXT_DEVELOPMENT_HANDOFF_2026-09-07_PS3_TYPED_SAFE_RESTORE.md` controls the approved PS3 implementation slice;
+5. the umbrella Persistence Simplification handoff controls the remaining campaign where it does not conflict with the PS3 handoff;
+6. specialized design docs control their own semantic/product domain where non-conflicting;
+7. archive documents, old Git branches and historical PR records are evidence only.
