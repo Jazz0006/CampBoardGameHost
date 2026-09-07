@@ -16,10 +16,6 @@ internal fun JSONObject.putNullableInt(key: String, value: Int?) {
     put(key, value ?: JSONObject.NULL)
 }
 
-internal fun JSONObject.putNullableBoolean(key: String, value: Boolean?) {
-    put(key, value ?: JSONObject.NULL)
-}
-
 internal fun JSONObject.optNullableString(key: String): String? {
     return if (has(key) && !isNull(key)) optString(key) else null
 }
