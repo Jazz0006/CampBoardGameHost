@@ -144,6 +144,7 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerResolvedFlowFact
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerResolvedFlowFacts
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightCursor
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightStateProjector
+import com.codex.campboardgamehost.clocktower.rules.ClocktowerOptionalNightSourceChronology
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
 import com.codex.campboardgamehost.clocktower.rules.ResolvedNightMechanicalEvent
 import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
@@ -782,13 +783,13 @@ internal fun ClocktowerJudgeScreen(
         val source = actualClocktowerRoleCards(cards, "Poisoner").firstOrNull() ?: return null
         val sourceSeat = cards.indexOf(source).plus(1).takeIf { it > 0 } ?: return null
         val cursor = ClocktowerEffectiveNightCursor(interactionId, boundary)
-        val sourceAfter = ClocktowerEffectiveNightCursor(
-            ClocktowerProductionNightStepIdentity.role(RoleId("Poisoner"))
-                .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT),
-            ClocktowerInteractionBoundary.AFTER,
-        )
-        if (interactionId !in otherNightCanonicalInteractionIds ||
-            !ClocktowerEffectiveNightChronology.isAtOrAfter(otherNightCanonicalInteractionIds, cursor, sourceAfter)
+        val sourceInteractionId = ClocktowerProductionNightStepIdentity.role(RoleId("Poisoner"))
+            .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
+        if (!ClocktowerOptionalNightSourceChronology.hasActedBy(
+                canonicalInteractionIds = otherNightCanonicalInteractionIds,
+                cursor = cursor,
+                sourceInteractionId = sourceInteractionId,
+            )
         ) return null
         val effectiveState = effectiveNightStateAt(interactionId, boundary)
         val sourceFunctioning =
