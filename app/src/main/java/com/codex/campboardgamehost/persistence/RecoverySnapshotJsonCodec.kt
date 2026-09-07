@@ -56,6 +56,12 @@ internal object RecoverySnapshotJsonCodec {
         }
     }
 
+    /** Strict PS3 read boundary. Malformed nested state is never repaired or partially decoded. */
+    fun decodeStrict(
+        json: JSONObject,
+        roleByName: (String) -> ClocktowerRole?,
+    ): RecoverySnapshot = RecoverySnapshotStrictDecoder.decode(json, roleByName)
+
     private fun JSONObject.encodeEntryPoint(entryPoint: RecoveryEntryPoint) {
         when (entryPoint) {
             RecoveryEntryPoint.Stable -> Unit
