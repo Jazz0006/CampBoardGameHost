@@ -3,7 +3,7 @@
 > Date: 2026-09-07 Australia/Sydney  
 > Branch: `codex/persistence-simplification`  
 > Draft PR: #112  
-> Status: **PS4 audited/planned; implementation not started**
+> Status: **PS4.1 complete; stop before PS4.2**
 
 ## 1. Current campaign position
 
@@ -14,11 +14,13 @@ PS0 contract freeze                 COMPLETE
 PS1 Archive / Recovery separation   COMPLETE
 PS2 typed Recovery writer           COMPLETE
 PS3 typed safe Preview/Restore      COMPLETE
-PS4 legacy cleanup                  AUDITED / NEXT
+PS4 legacy cleanup                  IN PROGRESS
+  PS4.1 dead active snapshot        COMPLETE
+  PS4.2 Recovery token ownership    NOT STARTED
 PS5 trigger simplification          NOT STARTED
 ```
 
-PS3 authoritative production checkpoint:
+PS3 authoritative production checkpoint remains:
 
 ```text
 74535e3e17091219520bc4a1d3fbdb60436ece91
@@ -32,101 +34,158 @@ PS3 final audit/cleanup lineage includes:
 8ab643bec947d818b12b29ad43cee3b02ccf1727
 ```
 
-At the PS4 planning audit, PR #112 was open, draft, unmerged and mergeable. Its head before the PS4 documentation commits was `8ab643...`.
-
-The PS4 route handoff itself was then created in commit:
+PS4 planning after PS3 was docs-only before implementation. Live `main` remained:
 
 ```text
-53478e05295375489dbd69b12b623ef58f12255f
-docs: add PS4 cleanup implementation handoff
+ac71cbe392fb542727dc0c2d69ac82c5fdc0435e
 ```
 
-Later documentation commits may advance the head again. Re-query live state before implementation.
+PR #112 remains open, draft and unmerged.
 
-## 2. What is already proven by PS3
+## 2. PS4.1 — completed production checkpoint
 
-The current production path is:
+### Fresh reference audit
+
+Immediately before deletion, repository-wide audit proved:
+
+- `activeGameSnapshotJson(` had exactly one `app/src/main` occurrence;
+- that occurrence was the definition itself;
+- there was no `app/src/test` caller;
+- archive writes, active Recovery writes, Preview and Restore had already moved away from this function.
+
+Therefore `activeGameSnapshotJson()` had no real production consumer and was safe for behavior-preserving dead-code removal.
+
+### Deleted dead implementation
+
+PS4.1 production commit:
 
 ```text
-live state
--> typed RecoverySnapshot
--> RecoverySnapshotJsonCodec
--> disk recovery
-
-raw recovery
--> prepareCurrentRecoveryPlan(raw)
--> strict current recovery validation
--> ValidatedRecoveryPlan
-       |                  |
-       v                  v
-    Preview       RecoveryApplicationCoordinator
-                         |
-                         v
-                    atomic App apply
+721c7394115cdc839afb189f88eb9234cd5ea204
+refactor: remove dead active snapshot
 ```
 
-PS3 proved:
+Deleted:
 
-- active Recovery writes no longer use the broad `activeGameSnapshotJson()` payload;
-- Preview no longer has an independent raw parser;
-- Restore no longer uses the legacy raw restore path;
-- malformed/rejected Recovery fails before live-state mutation;
-- Stable recovery no longer depends on generic `screen`;
-- pending Klutz derives a safe mandatory continuation;
-- confirmed durable facts/history are restored while ordinary unconfirmed Clocktower UI drafts are discarded;
-- typed Recovery support is intentionally Undercover + Blood on the Clocktower only.
+- `activeGameSnapshotJson()`;
+- `PlayerCard.toJson()`;
+- `playerCardsToJsonArray()`;
+- `EliminationRecord.toJson()`;
+- `eliminationRecordsToJsonArray()`;
+- `GameOutcome.toJson()`;
+- `ClocktowerEvent.toJson()`;
+- `clocktowerEventsToJsonArray()`;
+- `recordedEpistemicObservationsToJsonArray()`;
+- `putNullableBoolean()` after proving it had no remaining production consumer.
 
-## 3. PS4 audit findings
+`AppJsonPrimitivesTest` was adjusted only to seed boolean JSON values directly so the retained `optNullableBoolean()` reader coverage remains intact.
 
-### Proven-dead / first cleanup target
+### Explicitly retained dependencies
 
-`activeGameSnapshotJson()` has no current Recovery write/Preview/Restore caller and is the safest first deletion target.
+Fresh audit proved the following remain shared/current and were not deleted:
 
-### Transitional shell that must be dismantled in order
+- `ACTIVE_GAME_STATE_VERSION`;
+- `activeGamePersistenceCoordinator`;
+- `ActiveGamePersistenceInputs`;
+- `PersistedActiveGameIdentityJsonCodec`;
+- `CommittedClocktowerSetupPersistence`;
+- `TroubleBrewingSetupCompletionPersistence`;
+- `stringsToJsonArray`;
+- `putNullableString`;
+- `putNullableInt`;
+- `optNullableBoolean`;
+- `ClocktowerSemanticHistoryPersistence`;
+- `ClocktowerRulesetPersistenceBasisJsonCodec`;
+- `ClocktowerNightCheckpoint`;
+- `ClocktowerGhostVoteAuthorityPersistence`;
+- `EpistemicSemanticJson`.
 
-`LegacyRestoreCompatibility` is mostly obsolete, but one field is not dead:
+Reader-side legacy helpers such as `playerCardFromJson`, `toPlayerCards`, `eliminationRecordFromJson`, `toEliminationRecords`, `clocktowerEventFromJson`, `toClocktowerEvents`, `toRecordedEpistemicObservations` and `gameOutcomeFromJson` were also intentionally retained because PS4.1 did not authorize broad restore-shell cleanup.
+
+`LegacyRestoreCompatibility` remains present.
+
+### Validation evidence
+
+PS4.1 used no manufactured RED. The cleanup passed:
+
+```text
+fresh repository-wide reference audit        PASS
+exclusive encode-helper dependency audit     PASS
+retained shared-dependency audit              PASS
+post-patch exact reference/scope audit        PASS
+owning Recovery/persistence tests             PASS
+:app:compileDebugKotlin --rerun-tasks         PASS
+:app:testFast --rerun-tasks                   PASS
+git diff --check                              PASS
+final exact changed-file/reference audit      PASS
+remote-head race lock before commit           PASS
+```
+
+The exact production diff was limited to:
+
+```text
+app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+app/src/main/java/com/codex/campboardgamehost/persistence/AppJsonPrimitives.kt
+app/src/test/java/com/codex/campboardgamehost/persistence/AppJsonPrimitivesTest.kt
+```
+
+Production/test patch statistics were:
+
+```text
+3 files changed, 2 insertions(+), 254 deletions(-)
+```
+
+Temporary one-shot patch/workflow tooling was then removed in:
+
+```text
+9c69c30ce57c57d8927c3b9e99dd49a8488e53d2
+chore: remove PS4.1 one-shot tooling
+```
+
+That bot-authored cleanup head caused the normal PR CI/R2 runs to be reported as `action_required` with no jobs. This progress commit is intentionally user-authored and marked `[full-ci]` so normal PR gates can run against the cleaned branch head.
+
+## 3. Frozen boundaries after PS4.1
+
+PS4.1 did **not**:
+
+- change Recovery format;
+- change Recovery compatibility-token semantics;
+- remove `LegacyRestoreCompatibility`;
+- move `TroubleBrewingSetupRotationRecord`;
+- change persistence triggers/save timing;
+- delete the Werewolf module;
+- begin PS5;
+- begin D6;
+- merge PR #112.
+
+Current production active writes still use:
+
+```text
+RecoverySnapshotJsonCodec.encode(activeGameRecoverySnapshot())
+```
+
+The typed Recovery / Preview / Restore architecture and 4-hour fail-closed contract are unchanged.
+
+## 4. Transitional shell still present for later PS4 work
+
+`LegacyRestoreCompatibility` is mostly obsolete, but one field remains genuine current bookkeeping:
 
 ```text
 troubleBrewingSetupRotationRecord
 ```
 
-Current typed Clocktower App recovery still restores this record from the legacy shell, and completed-game setup-rotation bookkeeping needs it. It must move into the typed `ClocktowerRecovery` model before the shell is removed.
+It must not be deleted until a separately authorized later PS4 slice moves that durable field into typed Recovery ownership and proves the bookkeeping path.
 
-### Old ownership coupling still present
+`RecoveryCompatibilityToken.currentFor(gameKind)` also still derives its version component from `ActiveGamePersistenceCoordinator.CURRENT_VERSION`. Changing that ownership belongs to PS4.2, not PS4.1.
 
-`RecoveryCompatibilityToken.currentFor(gameKind)` still derives its version component from:
+Typed Recovery also still serializes transitional active-save metadata such as old state version/identity/setup/ruleset fields. Their removal belongs to later explicit PS4 slices and may require a deliberate Recovery format bump.
 
-```text
-ActiveGamePersistenceCoordinator.CURRENT_VERSION
-```
-
-Recovery should own its own compatibility/version identity before the old ActiveGame coordinator/identity system is deleted.
-
-### Legacy-shaped current wire payload remains
-
-Current typed Recovery still serializes transitional active-save metadata such as:
+## 5. Approved PS4 sequence remains unchanged
 
 ```text
-version
-PersistedActiveGameIdentity
-CommittedClocktowerSetup
-clocktowerRulesetRoleIds
-clocktowerRulesetRef
-```
-
-The 4-hour/current-format Recovery product contract does not justify keeping this migration baggage indefinitely.
-
-### Important retain decision
-
-`ClocktowerRulesetPersistenceBasis` is not automatically legacy debt. Current typed Clocktower runtime resolution still uses a basis to derive the current Trouble Brewing `RulesetRef`. Keep this current semantic unless a later reference/architecture audit proves it unnecessary.
-
-## 4. Approved PS4 checkpoint sequence
-
-```text
-PS4.1  delete proven-dead activeGameSnapshotJson path
+PS4.1  delete proven-dead activeGameSnapshotJson path     COMPLETE
   |
   v
-PS4.2  give Recovery independent format/token ownership
+PS4.2  give Recovery independent format/token ownership   NOT STARTED
   |
   v
 PS4.3  typed Recovery wire cleanup + format bump + move setup rotation
@@ -144,50 +203,19 @@ PS4.6  full architecture/reference/test checkpoint
 
 Do not collapse these into one broad deletion commit.
 
-## 5. Immediate next slice — PS4.1
+## 6. Current stop point
 
-### Scope
+**Stop after PS4.1. Do not begin PS4.2 without a fresh live-state/checks review and explicit continuation.**
 
-Start only with a fresh live reference audit around:
+Before any next implementation slice:
 
-```text
-activeGameSnapshotJson()
-```
+1. re-query live `main`;
+2. re-query PR #112 head/state/checks;
+3. confirm this `[full-ci]` checkpoint is green;
+4. keep PR #112 draft and unmerged;
+5. only then plan the separately scoped PS4.2 work if authorized.
 
-Then delete:
-
-- that dead function;
-- only helpers/constants/imports proven exclusive to it;
-- tests only if they protect no remaining product contract and are demonstrably implementation-only.
-
-Do not in PS4.1:
-
-- change Recovery format;
-- change compatibility token semantics;
-- remove `LegacyRestoreCompatibility`;
-- change save timing/triggers;
-- delete Werewolf module;
-- begin D6 decomposition.
-
-### Evidence strategy
-
-This is behavior-preserving dead-code cleanup. Under `AGENTS.md`, do not manufacture a RED test merely because source is deleted.
-
-Use:
-
-```text
-fresh reference audit
--> identify existing owning tests/baseline
--> delete dead source
--> focused affected tests/compile
--> :app:testFast at logical checkpoint
--> git diff --check
--> exact diff/reference audit
-```
-
-Escalate if the compiler/reference audit reveals a hidden consumer; do not broaden deletion heuristically.
-
-## 6. Retain boundaries throughout PS4
+## 7. Retain boundaries throughout PS4
 
 Must remain intact unless separately re-audited:
 
@@ -200,16 +228,6 @@ Must remain intact unless separately re-audited:
 - 4-hour Recovery validity policy;
 - fail-closed all-or-nothing preparation/application;
 - atomic App apply boundary.
-
-## 7. Werewolf product direction
-
-Do not spend PS4 effort repairing Werewolf recovery. The current product direction is to remove the Werewolf module in a separate campaign after Persistence Simplification is complete.
-
-This means:
-
-- Werewolf may remain as legacy source while PS4 removes shared obsolete persistence infrastructure;
-- do not keep shared dead infrastructure solely to support a recovery feature that is intentionally outside the typed-recovery product surface;
-- do not delete the entire Werewolf module as part of PS4 unless separately authorized.
 
 ## 8. Post-PS4 order
 
@@ -224,17 +242,5 @@ PS5 trigger audit/simplification if still warranted
 ```
 
 The old D6 route is historical evidence only; do not resume it unchanged.
-
-## 9. Next-conversation loading set
-
-Read in this order:
-
-1. root `AGENTS.md`;
-2. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
-3. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-07_PS4_CLEANUP.md`;
-4. this progress file;
-5. `docs/PS3_TYPED_SAFE_RESTORE_CHECKPOINT_2026-09-07.md` only when PS3 validation detail is needed.
-
-Then re-query live GitHub state and begin PS4.1 only.
 
 PR #112 remains draft. Do not merge without explicit user authorization.
