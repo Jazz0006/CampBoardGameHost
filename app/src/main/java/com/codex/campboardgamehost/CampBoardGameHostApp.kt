@@ -1473,7 +1473,6 @@ internal fun CampBoardGameHostApp() {
             activeGameStateVersion = ACTIVE_GAME_STATE_VERSION,
             identity = gameContentIdentity,
             committedClocktowerSetup = committedClocktowerSetup,
-            troubleBrewingSetupRotationRecord = committedTroubleBrewingSetupRotationRecord,
             clocktowerRulesetRoleIds = clocktowerRulesetRoleIds.toSet(),
             clocktowerRulesetRef = clocktowerRulesetRef,
         )
@@ -1522,6 +1521,7 @@ internal fun CampBoardGameHostApp() {
                     gameId = clocktowerGameId,
                     gameSeed = clocktowerGameSeed,
                 ),
+                troubleBrewingSetupRotationRecord = committedTroubleBrewingSetupRotationRecord,
                 position = ClocktowerRecoveryPosition(
                     phase = clocktowerPhase,
                     nightStarted = clocktowerNightStartedState.value,
@@ -1704,7 +1704,7 @@ internal fun CampBoardGameHostApp() {
 
                 currentClocktowerScript = game.identity.script
                 committedTroubleBrewingSetupRotationRecord =
-                    plan.snapshot.legacyRestoreCompatibility.troubleBrewingSetupRotationRecord
+                    game.troubleBrewingSetupRotationRecord
                 clocktowerGameId = game.identity.gameId
                 clocktowerGameSeed = game.identity.gameSeed
                 clocktowerGameStateRevision = history.gameStateRevision
