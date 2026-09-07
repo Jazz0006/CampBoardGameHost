@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-07 Australia/Sydney  
+> Updated: 2026-09-08 Australia/Sydney
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **This file is the single current project-status and execution-priority authority.**
 
@@ -34,15 +34,11 @@ The previous D6 branch `codex/d6-ownership-plan` and closed draft PR #111 are hi
 
 ## 2. Current priority — PS4 Persistence Cleanup
 
-Persistence Simplification remains the active campaign. PS3 typed Recovery is complete; the next approved work is:
+Persistence Simplification remains the active campaign. PS4 cleanup implementation is complete through PS4.5 and the current task is:
 
-> **PS4 — Retire superseded active-save infrastructure**
+> **PS4.6 — final architecture / full-validation checkpoint**
 
-Immediate next slice:
-
-> **PS4.4 — retire old ActiveGame identity/coordinator infrastructure**
-
-PS4.1 through PS4.3 are complete. Do not begin PS5, Werewolf module deletion or D6 decomposition as part of PS4.4.
+Do not begin PS5, Werewolf module deletion or D6 decomposition until PS4.6 has passed the full validation gate and the checkpoint is documented.
 
 ## 3. Frozen product contract — Recent Emergency Recovery
 
@@ -87,9 +83,9 @@ GameArchiveRecord
     long-lived completed/restarted-game review and cross-game history
 ```
 
-PS1 separated archive writes from the active snapshot. Archive compatibility may remain broader than active Recovery compatibility, and a strict current Recovery decoder must not become the archive-review parser.
+PS1 separated archive writes from the active snapshot, and the strict current Recovery decoder must not become the archive-review parser.
 
-Retain real archive-read compatibility where currently supported. PS4 cleanup must not delete it merely because old active-save infrastructure is being retired.
+Persistence is now explicitly current-version continuity infrastructure. Archive remains a separate completed-game review product, but old Archive wire layouts are not a compatibility promise: legacy readers/fallbacks may be deleted when they serve only older app versions. Current format/version rejection remains fail-closed.
 
 ## 5. Persistence Simplification campaign status
 
@@ -98,7 +94,7 @@ PS0  product/recovery contract freeze               COMPLETE
 PS1  Archive / active Recovery separation           COMPLETE
 PS2  minimal typed RecoverySnapshot + writer        COMPLETE
 PS3  typed safe Preview/Restore + atomic apply       COMPLETE
-PS4  retire superseded active-save infrastructure   IN PROGRESS (PS4.1–PS4.3 COMPLETE)
+PS4  retire superseded active-save infrastructure   IN PROGRESS (PS4.1–PS4.5 COMPLETE; PS4.6 VALIDATING)
 PS5  simplify persistence triggers                   NOT STARTED
 ```
 
@@ -110,7 +106,7 @@ Result:
 
 - new archive writes use typed `GameArchiveRecord` / `GameArchiveJsonCodec`;
 - archive writes no longer consume `activeGameSnapshotJson()`;
-- legacy `{ "snapshot": ... }` archive entries remain readable through archive-only compatibility;
+- Archive remains independent from active Recovery; legacy `{ "snapshot": ... }` readability was later retired in PS4.6 under the current-version-only persistence contract;
 - archive review no longer depends on strict active-Recovery compatibility.
 
 Checkpoint:
@@ -205,7 +201,7 @@ Checkpoint:
 
 ## 6. PS4 — Retire superseded active-save infrastructure
 
-Status: **in progress — PS4.1 through PS4.3 complete; PS4.4 next**.
+Status: **in progress — PS4.1 through PS4.5 complete; PS4.6 final validation in progress**.
 
 Authoritative route:
 
@@ -333,15 +329,13 @@ persisted clocktowerRulesetRef
 
 #### PS4.4 — Retire ActiveGame identity/coordinator infrastructure
 
-Status: **NEXT — NOT STARTED**.
+Status: **COMPLETE**. Final production retirement checkpoint: `7ba98aa78285daa29e2380d0c6b0f933d8e37133`.
 
-After PS4.2/PS4.3, perform a new reference audit. Delete only proven unreachable types/functions, potentially including old ActiveGame coordinator/identity/envelope/json-codec and legacy restore paths.
-
-Tests protecting only removed implementation/schema details should be retired under the `AGENTS.md` test-retirement policy after confirming no unique product contract is lost.
+Real save-time invariants were re-homed into current domain validators, then the obsolete ActiveGame coordinator/identity/factory schema and dedicated implementation-shape tests were deleted. Recovery no longer depends on that ownership chain.
 
 #### PS4.5 — Setup / ruleset / test hygiene
 
-Audit remaining transitional persistence code.
+Status: **COMPLETE**. Dead committed-setup persistence and legacy ruleset JSON/restore helpers were removed after fresh ownership audits.
 
 Potential cleanup:
 
@@ -353,7 +347,7 @@ Potential cleanup:
 Must retain:
 
 - Trouble Brewing setup-rotation bookkeeping/history;
-- real archive compatibility;
+- current-format Archive review ownership;
 - durable semantic/history persistence;
 - action timeline / epistemic observations;
 - current ruleset resolution behavior.
@@ -382,7 +376,7 @@ Preview ----\
             -> prepareCurrentRecoveryPlan(raw)
 Restore ----/
 one atomic RecoveryApplicationCoordinator apply boundary
-separate Archive compatibility
+separate current-format Archive ownership
 setup-rotation bookkeeping
 durable semantic/history persistence
 ```
@@ -423,7 +417,7 @@ Current supported Recovery acceptance matrix must include representative **Under
 - `gameOutcome` derives results presentation;
 - expired (>4h), future-dated, wrong-format and incompatible Recovery fail closed before App mutation;
 - malformed cards/records/events/history fail all-or-nothing;
-- archive review remains readable after Recovery cleanup;
+- current-format archive review remains readable after Recovery cleanup; old Archive formats are not a compatibility target;
 - Recovery does not duplicate semantic actions/observations;
 - Trouble Brewing setup-rotation bookkeeping survives the PS4 legacy-shell removal.
 
