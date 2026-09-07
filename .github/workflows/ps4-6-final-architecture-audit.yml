@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = '93ab1d98c9071daf8db06f360737b8f2c9f37e53'
+          test "$(git rev-parse HEAD^)" = '77c860aae199ac4b8c9a10cd12dc0ad03ef48449'
 
       - name: Prove retired persistence ownership stays absent
         shell: bash
@@ -40,6 +40,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          SNAPSHOT='app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshot.kt'
           WRITER='app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt'
           DECODER='app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotStrictDecoder.kt'
           PATTERN='gameContentIdentity|committedClocktowerSetup|clocktowerRulesetRoleIds|clocktowerRulesetRef'
@@ -47,7 +48,9 @@ jobs:
             echo 'Recovery v2 still owns a retired legacy authority.' >&2
             exit 1
           fi
-          grep -q 'RecoverySnapshot.CURRENT_FORMAT_VERSION' "$WRITER"
+          grep -q 'const val CURRENT_FORMAT_VERSION: Int = 2' "$SNAPSHOT"
+          grep -q 'val recoveryFormatVersion: Int = CURRENT_FORMAT_VERSION' "$SNAPSHOT"
+          grep -q 'put(FORMAT_VERSION_KEY, snapshot.recoveryFormatVersion)' "$WRITER"
           grep -q 'RecoverySnapshotStrictDecoder.decode' "$WRITER"
 
       - name: Prove one strict decode and shared preparation authority
