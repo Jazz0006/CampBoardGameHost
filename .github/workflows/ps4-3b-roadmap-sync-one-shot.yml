@@ -1,0 +1,81 @@
+name: PS4.3b roadmap sync one-shot
+
+on:
+  push:
+    branches:
+      - codex/persistence-simplification
+    paths:
+      - .github/workflows/ps4-3b-roadmap-sync-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  sync-roadmap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/persistence-simplification
+          fetch-depth: 0
+
+      - name: Verify exact docs-tooling lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "7daf5b83ca1dcbdf5e2114f165c966396cb9f8b2"
+          test "$(git rev-parse HEAD^^)" = "19266c7075364e6a09187cf1a7552918939fc219"
+          mapfile -t changed < <(git diff --name-only 19266c7075364e6a09187cf1a7552918939fc219..HEAD | sort)
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = ".github/scripts/ps4_3b_roadmap_sync.py"
+          test "${changed[1]}" = ".github/workflows/ps4-3b-roadmap-sync-one-shot.yml"
+          git fetch origin codex/persistence-simplification
+          test "$(git rev-parse origin/codex/persistence-simplification)" = "$(git rev-parse HEAD)"
+
+      - name: Apply exact roadmap sync
+        run: python3 .github/scripts/ps4_3b_roadmap_sync.py
+
+      - name: Audit roadmap result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t changed < <(git diff --name-only | sort)
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "docs/CURRENT_DEVELOPMENT_ROADMAP.md"
+          grep -F '> **PS4.4 — retire old ActiveGame identity/coordinator infrastructure**' docs/CURRENT_DEVELOPMENT_ROADMAP.md
+          grep -F 'PS4  retire superseded active-save infrastructure   IN PROGRESS (PS4.1–PS4.3 COMPLETE)' docs/CURRENT_DEVELOPMENT_ROADMAP.md
+          grep -F 'Status: **in progress — PS4.1 through PS4.3 complete; PS4.4 next**.' docs/CURRENT_DEVELOPMENT_ROADMAP.md
+          grep -F '58d687cc8c8082c040cf07eabcf5c1cfbd4dda15' docs/CURRENT_DEVELOPMENT_ROADMAP.md
+          grep -F 'Status: **NEXT — NOT STARTED**.' docs/CURRENT_DEVELOPMENT_ROADMAP.md
+
+      - name: Reconfirm remote head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/persistence-simplification
+          test "$(git rev-parse origin/codex/persistence-simplification)" = "$(git rev-parse HEAD)"
+
+      - name: Commit and push roadmap sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/CURRENT_DEVELOPMENT_ROADMAP.md
+          git commit -m "docs: advance roadmap to PS4.4"
+          echo "ROADMAP_SHA=$(git rev-parse HEAD)"
+          git push origin HEAD:codex/persistence-simplification
+
+      - name: Self-remove docs tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROADMAP_SHA="$(git rev-parse HEAD)"
+          git fetch origin codex/persistence-simplification
+          test "$(git rev-parse origin/codex/persistence-simplification)" = "${ROADMAP_SHA}"
+          git rm .github/scripts/ps4_3b_roadmap_sync.py .github/workflows/ps4-3b-roadmap-sync-one-shot.yml
+          git commit -m "chore: remove PS4.3b roadmap sync tooling"
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)"
+          git push origin HEAD:codex/persistence-simplification
