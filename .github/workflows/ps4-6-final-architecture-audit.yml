@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = '77c860aae199ac4b8c9a10cd12dc0ad03ef48449'
+          test "$(git rev-parse HEAD^)" = 'a1e91213d96c2a3bfef8ad84029815a775170abf'
 
       - name: Prove retired persistence ownership stays absent
         shell: bash
@@ -69,10 +69,29 @@ jobs:
           if out != expected:
               raise SystemExit(f'Unexpected strict Recovery decoder ownership: {out}')
           PY
-          echo '=== shared App preparation references ==='
-          git grep -n 'prepareCurrentRecoveryPlan' -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-          COUNT="$(git grep -c 'prepareCurrentRecoveryPlan' -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt | cut -d: -f2)"
-          test "$COUNT" -ge 3
+          echo '=== shared preparation references ==='
+          git grep -n 'prepareCurrentRecoveryPlan' -- app/src/main
+          python3 - <<'PY'
+          import subprocess
+          files = set(subprocess.check_output(
+              ['git','grep','-l','prepareCurrentRecoveryPlan','--','app/src/main'],
+              text=True,
+          ).splitlines())
+          expected = {
+              'app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt',
+              'app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryAppEnvironment.kt',
+          }
+          if files != expected:
+              raise SystemExit(f'Unexpected Recovery preparation ownership: {sorted(files)}')
+          app = 'app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt'
+          count = subprocess.check_output(['grep','-c','prepareCurrentRecoveryPlan',app], text=True).strip()
+          if count != '2':
+              raise SystemExit(f'Expected Preview/Restore to share exactly two App prepare calls, found {count}')
+          env = 'app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryAppEnvironment.kt'
+          text = open(env, encoding='utf-8').read()
+          if 'internal fun Context.prepareCurrentRecoveryPlan(' not in text:
+              raise SystemExit('Shared Recovery preparation definition moved or disappeared.')
+          PY
 
       - name: Prove atomic Recovery apply and separate Archive remain
         shell: bash
