@@ -126,9 +126,11 @@ PASS:
 
 The first PS3.4 attempt also passed the executable gates but failed an over-broad `git diff --check origin/main...HEAD` because older project Markdown intentionally uses trailing double spaces for hard line breaks. The final audit narrowed that check to the authoritative PS3 product/audit changes while preserving every production-path assertion.
 
+The final checkpoint head is intentionally re-triggered with a user-authored `[full-ci]` docs commit so ordinary PR CI and the R2 boundary execute against the final repository state rather than being skipped as docs-only or blocked by bot-authored workflow dispatch.
+
 ## 7. Remaining cleanup is PS4, not PS3
 
-PS3 deliberately does not delete every superseeded source artifact. PS4 is the cleanup campaign for proven-dead compatibility and duplicate persistence infrastructure, including candidates such as:
+PS3 deliberately does not delete every superseded source artifact. PS4 is the cleanup campaign for proven-dead compatibility and duplicate persistence infrastructure, including candidates such as:
 
 - `activeGameSnapshotJson()` dead active-save implementation;
 - `LegacyRestoreCompatibility` and obsolete active-state compatibility plumbing;
