@@ -5,11 +5,12 @@ import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
 import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Strict PS3 reader for the reduced emergency-recovery schema.
+ * Strict typed reader for the current emergency-recovery schema.
  *
  * Unlike the legacy active-game reader, this boundary never skips malformed collection entries,
  * invents enum defaults, or repairs partially missing durable facts. A payload either becomes one
@@ -47,7 +48,6 @@ internal object RecoverySnapshotStrictDecoder {
             activeGameStateVersion = activeGameStateVersion,
             identity = identity,
             committedClocktowerSetup = committedSetup,
-            troubleBrewingSetupRotationRecord = setupRotationRecord,
             clocktowerRulesetRoleIds = clocktowerRulesetRoleIds,
             clocktowerRulesetRef = clocktowerRulesetRef,
         )
@@ -81,6 +81,7 @@ internal object RecoverySnapshotStrictDecoder {
                 cards = cards,
                 records = records,
                 outcome = outcome,
+                setupRotationRecord = setupRotationRecord,
             )
 
             GameKind.Werewolf -> throw IllegalArgumentException(
@@ -105,6 +106,7 @@ internal object RecoverySnapshotStrictDecoder {
         cards: List<PlayerCard>,
         records: List<EliminationRecord>,
         outcome: GameOutcome?,
+        setupRotationRecord: TroubleBrewingSetupRotationRecord?,
     ): ClocktowerRecovery {
         val phase = json.requiredEnum<ClocktowerPhase>("clocktowerPhase")
         val gameStateRevision = json.requiredLong("clocktowerGameStateRevision")
@@ -131,6 +133,7 @@ internal object RecoverySnapshotStrictDecoder {
                 gameId = json.requiredNonBlankString("clocktowerGameId"),
                 gameSeed = json.requiredLong("clocktowerGameSeed"),
             ),
+            troubleBrewingSetupRotationRecord = setupRotationRecord,
             position = ClocktowerRecoveryPosition(
                 phase = phase,
                 nightStarted = json.requiredBoolean("clocktowerNightStarted"),
