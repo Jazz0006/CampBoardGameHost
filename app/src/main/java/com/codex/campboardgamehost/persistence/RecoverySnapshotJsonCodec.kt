@@ -6,10 +6,10 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * PS2 encoder for the typed emergency-recovery model.
+ * Typed emergency-recovery encoder.
  *
- * The output intentionally keeps the legacy flat keys that the PS2 restore reader still consumes.
- * PS3 replaces that reader; until then this codec is the only owner of the reduced write schema.
+ * The v1 output still carries the remaining obsolete ActiveGame-shaped compatibility fields until
+ * PS4.3b deliberately bumps the Recovery format and retires that shell.
  */
 internal object RecoverySnapshotJsonCodec {
     const val FORMAT_VERSION_KEY = "recoveryFormatVersion"
@@ -40,12 +40,6 @@ internal object RecoverySnapshotJsonCodec {
             put(
                 CommittedClocktowerSetupPersistence.ROOT_KEY,
                 CommittedClocktowerSetupPersistence.encode(setup),
-            )
-        }
-        legacy.troubleBrewingSetupRotationRecord?.let { record ->
-            put(
-                TroubleBrewingSetupCompletionPersistence.ROOT_KEY,
-                TroubleBrewingSetupCompletionPersistence.encode(record),
             )
         }
 
@@ -100,6 +94,12 @@ internal object RecoverySnapshotJsonCodec {
         put("currentClocktowerScript", game.identity.script.name)
         put("clocktowerGameId", game.identity.gameId)
         put("clocktowerGameSeed", game.identity.gameSeed)
+        game.troubleBrewingSetupRotationRecord?.let { record ->
+            put(
+                TroubleBrewingSetupCompletionPersistence.ROOT_KEY,
+                TroubleBrewingSetupCompletionPersistence.encode(record),
+            )
+        }
         put("clocktowerGameStateRevision", game.history.gameStateRevision.coerceAtLeast(0L))
         put("clocktowerPlayerInputRevision", game.history.playerInputRevision.coerceAtLeast(0L))
         put(
