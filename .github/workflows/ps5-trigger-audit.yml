@@ -23,19 +23,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = 'b59fea8e90c8028b9fe5d80eb0246d69b3f3d04c'
+          test "$(git rev-parse HEAD^)" = 'f8984b77a272bb8225999056e41424706ab18c2a'
 
-          echo '=== persistActiveGameStateIfNeeded references ==='
-          git grep -n -C 4 'persistActiveGameStateIfNeeded' -- app/src/main app/src/test || true
+          echo '=== all active Recovery persist call sites ==='
+          git grep -n -C 6 -E 'persistActiveGameStateIfNeeded\(|persistAndReleaseA4ObservationRebuildIfDurable\(' -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt app/src/test || true
 
-          echo '=== Recovery writer/storage references ==='
-          git grep -n -C 3 -E 'RecoverySnapshotJsonCodec|RECENT_ACTIVE_GAME_KEY|activeGame|recentActive|SharedPreferences' -- app/src/main/java/com/codex/campboardgamehost app/src/test || true
+          echo '=== A4 durability gate ownership ==='
+          git grep -n -C 6 -E 'a4ObservationDurabilityGate|A4ObservationDurabilityGate|releaseAfterPersistence|arm|mark.*Durab|pending.*Observation' -- app/src/main app/src/test || true
 
-          echo '=== Android lifecycle / save trigger references ==='
-          git grep -n -C 4 -E 'ON_PAUSE|ON_STOP|onPause|onStop|LifecycleEventObserver|DisposableEffect|ProcessLifecycleOwner|Lifecycle\.Event' -- app/src/main/java/com/codex/campboardgamehost app/src/test || true
+          echo '=== mutation/persistence tests ==='
+          git grep -n -C 4 -E 'SideEffect|ON_PAUSE|ON_STOP|persistActiveGameStateIfNeeded|saveActiveGameState|ACTIVE_GAME_STATE_KEY' -- app/src/test || true
 
-          echo '=== direct SharedPreferences write methods ==='
-          git grep -n -C 2 -E '\.(apply|commit)\(\)' -- app/src/main/java/com/codex/campboardgamehost | grep -E 'SharedPreferences|edit\(|putString|remove\(' -B 3 -A 3 || true
+          echo '=== likely game transaction entry points around active state ==='
+          git grep -n -E '^    fun (start|confirm|commit|apply|resolve|advance|record|complete|finish|archive|restart|return|persist)[A-Z]' -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt | head -n 500 || true
 
-          echo '=== persistence function inventory ==='
-          git grep -n -E 'fun .*persist|fun .*save|fun .*archive|persist[A-Z]|save[A-Z]' -- app/src/main/java/com/codex/campboardgamehost | head -n 400 || true
+          echo '=== exact SideEffect/lifecycle block ==='
+          sed -n '1758,1792p' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+
+          echo '=== explicit start-save contexts ==='
+          sed -n '1948,1972p' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          sed -n '2098,2120p' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+
+          echo '=== archive/clear contexts ==='
+          sed -n '2208,2272p' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
