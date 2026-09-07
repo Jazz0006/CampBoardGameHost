@@ -224,7 +224,7 @@ internal object RecoverySnapshotStrictDecoder {
                     word = card.requiredString("word"),
                     roleLabel = card.requiredNullableString("roleLabel"),
                     actualRoleLabel = card.requiredNullableString("actualRoleLabel"),
-                    clocktowerTeam = card.requiredNullableEnum("clocktowerTeam") ?: clocktowerRole?.team,
+                    clocktowerTeam = card.requiredNullableEnum<ClocktowerTeam>("clocktowerTeam") ?: clocktowerRole?.team,
                     clocktowerRole = clocktowerRole,
                     clocktowerShownRole = shownRole,
                     eliminatedRound = card.requiredNullableInt("eliminatedRound"),
