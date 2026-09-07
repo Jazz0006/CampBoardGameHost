@@ -40,9 +40,9 @@ Persistence Simplification remains the active campaign. PS3 typed Recovery is co
 
 Immediate next slice:
 
-> **PS4.1 — proven-dead `activeGameSnapshotJson()` removal**
+> **PS4.3 — typed Recovery wire cleanup / format bump**
 
-Do not begin PS5, Werewolf module deletion or D6 decomposition as part of PS4.1.
+PS4.1 and PS4.2 are complete. Do not begin PS5, Werewolf module deletion or D6 decomposition as part of PS4.3.
 
 ## 3. Frozen product contract — Recent Emergency Recovery
 
@@ -98,7 +98,7 @@ PS0  product/recovery contract freeze               COMPLETE
 PS1  Archive / active Recovery separation           COMPLETE
 PS2  minimal typed RecoverySnapshot + writer        COMPLETE
 PS3  typed safe Preview/Restore + atomic apply       COMPLETE
-PS4  retire superseded active-save infrastructure   AUTHORIZED / NEXT
+PS4  retire superseded active-save infrastructure   IN PROGRESS (PS4.1–PS4.2 COMPLETE)
 PS5  simplify persistence triggers                   NOT STARTED
 ```
 
@@ -205,7 +205,7 @@ Checkpoint:
 
 ## 6. PS4 — Retire superseded active-save infrastructure
 
-Status: **authorized and next**.
+Status: **in progress — PS4.1 and PS4.2 complete; PS4.3 next**.
 
 Authoritative route:
 
@@ -263,6 +263,8 @@ Retain the current basis/`refFor()` semantics unless a later fresh audit proves 
 
 #### PS4.1 — Proven-dead active snapshot removal
 
+Status: **COMPLETE**. Production checkpoint: `721c7394115cdc839afb189f88eb9234cd5ea204`.
+
 Delete:
 
 - `activeGameSnapshotJson()`;
@@ -282,6 +284,10 @@ Evidence:
 This is behavior-preserving dead-code cleanup. Do **not** manufacture a RED test merely because source is deleted.
 
 #### PS4.2 — Recovery owns compatibility identity
+
+Status: **COMPLETE**. RED checkpoint: `64c9866fccffa501ae1e1e3889c478b33764231e`; production GREEN checkpoint: `9fa0e3f86832cd847fb71126e4de54524e0326d2`.
+
+Recovery compatibility is now derived from `RecoverySnapshot.CURRENT_FORMAT_VERSION`, producing `recovery-v1:<GameKind>` for format v1. The token no longer depends on `ActiveGamePersistenceCoordinator.CURRENT_VERSION`. No migration support was added, and the 4-hour/fail-closed policy is unchanged.
 
 Cut dependency on `ActiveGamePersistenceCoordinator.CURRENT_VERSION` and give Recovery its own current-format/current-contract token authority.
 
