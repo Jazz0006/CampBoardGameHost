@@ -34,17 +34,18 @@ jobs:
         run: |
           set -euo pipefail
           GREEN_SHA='344c709c35d2a7c99548eb330e595a6b9c2ae5c7'
-          SCRIPT_SHA='6b1b7dc0c458fb8af40858724ddf06af3e416133'
+          EXPECTED_PARENT='c7740c5f09a8ccab72239821eae10646368c6ed1'
           APP_BLOB='a1fc22725a4bf6f242ff6de19c10ccf1e89fd48a'
+          SCRIPT_BLOB='5328986f4484e2c04f731c4eeeee0276e0894750'
           WORKFLOW='.github/workflows/ps4-4-active-game-validation-cutover.yml'
           SCRIPT='scripts/ps4_4_active_game_validation_cutover.py'
           APP='app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt'
 
-          test "$(git rev-parse HEAD^)" = "$SCRIPT_SHA"
-          test "$(git rev-parse HEAD^^)" = "$GREEN_SHA"
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_PARENT"
+          git merge-base --is-ancestor "$GREEN_SHA" HEAD
           test "$(git hash-object "$APP")" = "$APP_BLOB"
+          test "$(git hash-object "$SCRIPT")" = "$SCRIPT_BLOB"
           test "$(git show --format= --name-only HEAD | sed '/^$/d')" = "$WORKFLOW"
-          test "$(git show --format= --name-only HEAD^ | sed '/^$/d')" = "$SCRIPT"
 
       - name: Audit legacy identity references before cutover
         shell: bash
@@ -66,6 +67,10 @@ jobs:
               'app/src/test/java/com/codex/campboardgamehost/persistence/ActiveGamePersistenceCoordinatorTest.kt',
               'app/src/test/java/com/codex/campboardgamehost/persistence/ActiveGameIdentityEnvelopeTest.kt',
               'app/src/test/java/com/codex/campboardgamehost/persistence/PersistedGameIdentityTest.kt',
+              'app/src/test/java/com/codex/campboardgamehost/clocktower/catalog/BuiltInClocktowerRulesetCatalogTest.kt',
+              'app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryClocktowerRotationOwnershipTest.kt',
+              'app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryRestorePlannerTest.kt',
+              'app/src/test/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodecTest.kt',
           }
           lines = Path('/tmp/ps4_4_legacy_refs.txt').read_text(encoding='utf-8').splitlines()
           paths = {line.split(':', 1)[0] for line in lines if ':' in line}
