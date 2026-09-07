@@ -1,0 +1,46 @@
+name: PS4.5 committed setup ownership audit
+
+on:
+  push:
+    branches:
+      - codex/persistence-simplification
+    paths:
+      - .github/workflows/ps4-5-committed-setup-ownership-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout locked branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/persistence-simplification
+          fetch-depth: 0
+
+      - name: Verify audit preconditions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = '34eec921087f78e877c92cb92324ddc72f863ebd'
+
+      - name: Audit App committed setup state
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== exact App state references ==='
+          git grep -n 'committedClocktowerSetup' -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt || true
+          echo
+          echo '=== production CommittedClocktowerSetup chain ==='
+          git grep -nE 'CommittedClocktowerSetup|CommittedSetupSeat|SetupProvenance|SetupSourceKind|TroubleBrewingCommittedSetupAdapter' -- app/src/main || true
+          echo
+          echo '=== test CommittedClocktowerSetup chain ==='
+          git grep -nE 'CommittedClocktowerSetup|CommittedSetupSeat|SetupProvenance|SetupSourceKind|TroubleBrewingCommittedSetupAdapter' -- app/src/test || true
+
+      - name: Show rotation factory ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed -n '1,220p' app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingSetupRotationRecordFactory.kt
