@@ -1,0 +1,72 @@
+name: PS4.5 fresh persistence audit
+
+on:
+  push:
+    branches:
+      - codex/persistence-simplification
+    paths:
+      - .github/workflows/ps4-5-fresh-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout locked branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/persistence-simplification
+          fetch-depth: 0
+
+      - name: Verify audit preconditions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 'c2a52201e12beefe0cc2d92c295e03bad4f61dbe'
+
+      - name: Inventory remaining persistence files
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== app/src/main persistence-related files ==='
+          find app/src/main/java/com/codex/campboardgamehost -type f \( -iname '*persist*' -o -iname '*recovery*' -o -iname '*archive*' -o -iname '*checkpoint*' \) | sort
+          echo
+          echo '=== app/src/test persistence-related files ==='
+          find app/src/test/java/com/codex/campboardgamehost -type f \( -iname '*persist*' -o -iname '*recovery*' -o -iname '*archive*' -o -iname '*checkpoint*' \) | sort
+
+      - name: Audit transitional setup ruleset checkpoint symbols
+        shell: bash
+        run: |
+          set -euo pipefail
+          PATTERN='CommittedClocktowerSetup|CommittedClocktowerSetupPersistence|ClocktowerRulesetPersistenceBasis|TroubleBrewingRulesetPersistence|ClocktowerNightCheckpoint|fromPersistedValues|clocktowerRulesetRoleIds|clocktowerRulesetRef|committedClocktowerSetup|activeGameStateVersion|gameContentIdentity|LegacyRestoreCompatibility|activeGameSnapshotJson'
+          git grep -nE "$PATTERN" -- app/src/main app/src/test || true
+
+      - name: Audit committed setup call directions
+        shell: bash
+        run: |
+          set -euo pipefail
+          git grep -nE 'CommittedClocktowerSetup|committedClocktowerSetup' -- app/src/main app/src/test || true
+
+      - name: Audit ruleset persistence call directions
+        shell: bash
+        run: |
+          set -euo pipefail
+          git grep -nE 'ClocktowerRulesetPersistenceBasis|TroubleBrewingRulesetPersistence|rulesetRoleIds|rulesetRef|refFor\(' -- app/src/main app/src/test || true
+
+      - name: Audit checkpoint legacy mappings
+        shell: bash
+        run: |
+          set -euo pipefail
+          git grep -nE 'ClocktowerNightCheckpoint|fromPersistedValues|toPersisted|checkpoint' -- app/src/main/java/com/codex/campboardgamehost app/src/test/java/com/codex/campboardgamehost || true
+
+      - name: Confirm already-retired PS4 symbols stay absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          PATTERN='ActiveGamePersistenceInputs|ActiveGamePersistenceResolution|ActiveGamePersistenceCoordinator|PersistedActiveGameIdentityEnvelope|PersistedActiveGameIdentityJsonCodec|PersistedGameContentIdentity|PersistedVariantKind|PersistedGameCompatibility|PersistedWerewolfGameIdentity|ClocktowerPersistenceIdentityFactory|WerewolfPersistenceIdentityFactory|LegacyRestoreCompatibility|activeGameSnapshotJson'
+          if git grep -nE "$PATTERN" -- app/src/main app/src/test; then
+            echo 'Unexpected retired PS4 symbol found.' >&2
+            exit 1
+          fi
