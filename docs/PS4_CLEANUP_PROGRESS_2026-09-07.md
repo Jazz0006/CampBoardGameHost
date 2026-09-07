@@ -1,9 +1,9 @@
 # PS4 Persistence Cleanup — Progress Checkpoint
 
-> Date: 2026-09-08 Australia/Sydney  
-> Branch: `codex/persistence-simplification`  
-> Draft PR: #112  
-> Status: **PS4.6 final validation in progress; PS5 not started**
+> Date: 2026-09-08 Australia/Sydney
+> Branch: `codex/persistence-simplification`
+> Draft PR: #112
+> Status: **PS4 COMPLETE; PS5 NEXT / NOT STARTED**
 
 ## 1. Campaign position
 
@@ -12,14 +12,14 @@ PS0 contract freeze                    COMPLETE
 PS1 Archive / Recovery separation      COMPLETE
 PS2 typed Recovery writer              COMPLETE
 PS3 typed safe Preview/Restore         COMPLETE
-PS4 legacy cleanup                     IN PROGRESS
+PS4 legacy cleanup                     COMPLETE
   PS4.1 dead active snapshot           COMPLETE
   PS4.2 Recovery token ownership       COMPLETE
   PS4.3 Recovery wire cleanup          COMPLETE
   PS4.4 ActiveGame identity cleanup    COMPLETE
   PS4.5 persistence/setup hygiene      COMPLETE
-  PS4.6 final audit / full validation  IN PROGRESS
-PS5 trigger simplification             NOT STARTED
+  PS4.6 final audit / full validation  COMPLETE
+PS5 trigger simplification             NEXT / NOT STARTED
 ```
 
 Live base remains:
@@ -216,7 +216,7 @@ Completed game
 
 No cross-version migration bridge is part of either path.
 
-Durable Clocktower facts that must remain include:
+Durable Clocktower facts that remain include:
 
 - Trouble Brewing setup completion / rotation bookkeeping;
 - semantic history;
@@ -225,22 +225,49 @@ Durable Clocktower facts that must remain include:
 - current ruleset hash basis/ref;
 - `ClocktowerNightCheckpoint` writer/state.
 
-## 8. Remaining PS4.6 work
+## 8. PS4.6 final validation — complete
 
-Before PS4 can be declared complete:
+Stable full-validation checkpoint:
 
-1. remove the temporary PS4.6 audit workflow after its successful run;
-2. update the main development roadmap to this current checkpoint;
-3. run the final full validation checkpoint:
-   - `:app:testFull`;
-   - `:app:assembleDebug`;
-   - ASP compile/static/contract gate;
-   - Python knowledge-oracle parity;
-   - real Clingo semantic smoke;
-   - R2 structural regression;
-4. perform final changed-file/reference/race audit;
-5. only then mark PS4 complete and identify PS5 as the next slice.
+```text
+3e81f08b6ef8afc5c4b701bfd5dcfe33b177bba0
+docs: trigger PS4 final validation [full-ci]
+```
 
-Do not begin PS5, Werewolf whole-module removal, D6, A4/ZDD, or merge PR #112 during this checkpoint.
+Validation results:
+
+```text
+CI run 34170266988
+Android testFull + assembleDebug       PASS
+ASP contract / oracle harness          PASS
+Real Clingo cross-validation           PASS
+CI gate                                PASS
+
+R2 main-thread boundary run 34170266998
+PASS
+```
+
+A final compare from the successful static-audit checkpoint `5ca1f814...` to the full-validation head `3e81f08...` contains no `app/src` changes. Only documentation and deletion of the temporary audit workflow changed after the architecture audit. The final full CI therefore validated the same audited production architecture.
+
+Formal final checkpoint:
+
+```text
+docs/PS4_FINAL_CHECKPOINT_2026-09-08.md
+```
+
+## 9. Final PS4 result
+
+**PS4 is complete.** The persistence layer now follows the current-version-only contract and no known legacy compatibility bridge remains solely to support old persisted formats.
+
+Next planned campaign slice:
+
+```text
+PS5 — persistence-trigger simplification
+Status: NOT STARTED
+```
+
+Do not begin PS5 automatically from this checkpoint. PS5 should start with a fresh audit of current save triggers/timing and must not mix trigger redesign with further persistence-content/schema changes.
+
+Do not begin Werewolf whole-module removal, D6, A4/ZDD, or merge PR #112 as part of this checkpoint.
 
 PR #112 remains draft. Do not merge without explicit user authorization.
