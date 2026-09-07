@@ -15,54 +15,54 @@ new_init = '''    val activeGameClocktowerRulesetCatalog = remember(baseContext)
     }
 '''
 
-old_validation = '''    activeGamePersistenceCoordinator.identityForSave(
-        ActiveGamePersistenceInputs(
-            gameKind = currentGameKind,
-            clocktowerScript = currentClocktowerScript,
-            assignedClocktowerRoleIds = if (currentGameKind == GameKind.Clocktower) {
-                cards.map { card ->
-                    requireNotNull(card.clocktowerRole?.enName?.let(::RoleId)) {
-                        "Clocktower recovery requires assigned role IDs."
+old_validation = '''        activeGamePersistenceCoordinator.identityForSave(
+            ActiveGamePersistenceInputs(
+                gameKind = currentGameKind,
+                clocktowerScript = currentClocktowerScript,
+                assignedClocktowerRoleIds = if (currentGameKind == GameKind.Clocktower) {
+                    cards.map { card ->
+                        RoleId(requireNotNull(card.clocktowerRole) {
+                            "Clocktower recovery save is missing an assigned role."
+                        }.enName)
                     }
-                }
-            } else {
-                emptyList()
-            },
-            assignedWerewolfRoles = if (currentGameKind == GameKind.Werewolf) {
-                cards.map { it.role }
-            } else {
-                emptyList()
-            },
-            werewolfCount = werewolfCount,
-            includeSeer = includeSeer,
-            includeWitch = includeWitch,
-            includeHunter = includeHunter,
-            lastWordsMode = lastWordsMode,
-        ),
-    )
-'''
-new_validation = '''    when (currentGameKind) {
-        GameKind.Undercover -> Unit
-        GameKind.Clocktower -> {
-            ClocktowerActiveSessionValidator.validateForRecoverySave(
-                script = activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript).script,
-                assignedRoleIds = cards.map { card ->
-                    requireNotNull(card.clocktowerRole?.enName?.let(::RoleId)) {
-                        "Clocktower recovery requires assigned role IDs."
-                    }
+                } else {
+                    emptyList()
                 },
-            )
-        }
-        GameKind.Werewolf -> {
-            activeGameWerewolfSaveValidator.validate(
-                assignedRoles = cards.map { card -> card.role },
+                assignedWerewolfRoles = if (currentGameKind == GameKind.Werewolf) {
+                    cards.map { it.role }
+                } else {
+                    emptyList()
+                },
                 werewolfCount = werewolfCount,
                 includeSeer = includeSeer,
                 includeWitch = includeWitch,
                 includeHunter = includeHunter,
-            )
+                lastWordsMode = lastWordsMode,
+            ),
+        )
+'''
+new_validation = '''        when (currentGameKind) {
+            GameKind.Undercover -> Unit
+            GameKind.Clocktower -> {
+                ClocktowerActiveSessionValidator.validateForRecoverySave(
+                    script = activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript).script,
+                    assignedRoleIds = cards.map { card ->
+                        RoleId(requireNotNull(card.clocktowerRole) {
+                            "Clocktower recovery save is missing an assigned role."
+                        }.enName)
+                    },
+                )
+            }
+            GameKind.Werewolf -> {
+                activeGameWerewolfSaveValidator.validate(
+                    assignedRoles = cards.map { card -> card.role },
+                    werewolfCount = werewolfCount,
+                    includeSeer = includeSeer,
+                    includeWitch = includeWitch,
+                    includeHunter = includeHunter,
+                )
+            }
         }
-    }
 '''
 
 for label, anchor in (("coordinator initialization", old_init), ("identityForSave validation block", old_validation)):
