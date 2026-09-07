@@ -33,7 +33,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = 'b561aa7afdb2a9db1b6e707a9caef1205e63c74e'
+          test "$(git rev-parse HEAD^)" = 'a3869c646893bfb0272d4e66a716f58417ee3294'
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryClocktowerRotationOwnershipTest.kt)" = 'fc21de62fd610a5217c2edc7bb34eaa38091330e'
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryRestorePlannerTest.kt)" = 'e1d578eed4321ac56c659bf505907490dcc1f917'
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodecTest.kt)" = '57e172cc77c66a4e70a20cc1b0c26cc898ed369e'
@@ -45,93 +45,65 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          replacements = {
-              'app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryClocktowerRotationOwnershipTest.kt': [(
-          '''        val persistedIdentity = PersistedActiveGameIdentityEnvelope.clocktower(
-              PersistedGameContentIdentity(
-                  kind = PersistedVariantKind.CLOCKTOWER_SCRIPT,
-                  variantId = "rotation-ownership-test",
-                  contentHash = "0123456789abcdef0123456789abcdef",
-                  semanticVersion = "1",
-              ),
-          )
-          ''', ''
-              )],
-              'app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryRestorePlannerTest.kt': [(
-          '''        val identity = PersistedActiveGameIdentityEnvelope.clocktower(
-              PersistedGameContentIdentity(
-                  kind = PersistedVariantKind.CLOCKTOWER_SCRIPT,
-                  variantId = "trouble-brewing-test",
-                  contentHash = "0123456789abcdef0123456789abcdef",
-                  semanticVersion = "1",
-              ),
-          )
-          ''', ''
-              )],
-              'app/src/test/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodecTest.kt': [(
-          '''        val identity = PersistedActiveGameIdentityEnvelope.werewolf(
-              PersistedWerewolfGameIdentity(
-                  board = PersistedGameContentIdentity(
-                      kind = PersistedVariantKind.WEREWOLF_BOARD,
-                      variantId = "test-board",
-                      contentHash = "0123456789abcdef0123456789abcdef",
-                      semanticVersion = "1",
-                  ),
-                  ruleOptions = WerewolfRuleOptions(LastWordsMode.FirstDay),
-              ),
-          )
-          ''', ''
-              ), (
-          '''        val identity = PersistedActiveGameIdentityEnvelope.clocktower(
-              PersistedGameContentIdentity(
-                  kind = PersistedVariantKind.CLOCKTOWER_SCRIPT,
-                  variantId = "trouble-brewing-test",
-                  contentHash = "0123456789abcdef0123456789abcdef",
-                  semanticVersion = "1",
-              ),
-          )
-          ''', ''
-              )],
-              'app/src/test/java/com/codex/campboardgamehost/clocktower/catalog/BuiltInClocktowerRulesetCatalogTest.kt': [(
-          '''    @Test
-              fun `persistence coordinator consumes the shared catalog and owns no duplicate built-in loader`() {
-                  val source = File(
-                      "src/main/java/com/codex/campboardgamehost/persistence/ActiveGamePersistenceCoordinator.kt",
-                  ).readText(Charsets.UTF_8)
-          
-                  assertTrue(source.contains("BuiltInClocktowerRulesetCatalog.fromContext(context)"))
-                  assertTrue(source.contains("catalog.ruleset(script).script"))
-                  assertFalse(source.contains("private object BuiltInClocktowerPersistenceCatalog"))
-                  assertFalse(source.contains("context.assets.open(\\\"scripts/"))
-              }
-          ''',
-          '''    @Test
-              fun `recovery save validation consumes the shared catalog directly`() {
-                  val source = File(
-                      "src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt",
-                  ).readText(Charsets.UTF_8)
-          
-                  assertTrue(source.contains("BuiltInClocktowerRulesetCatalog.fromContext(baseContext)"))
-                  assertTrue(
-                      source.contains(
-                          "activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript).script",
-                      ),
-                  )
-                  assertFalse(source.contains("ActiveGamePersistenceCoordinator.fromContext(baseContext)"))
-              }
-          '''
-              )],
-          }
-
-          for path_str, pairs in replacements.items():
+          def remove_between(path_str: str, start: str, end: str) -> None:
               path = Path(path_str)
               text = path.read_text(encoding='utf-8')
-              for old, new in pairs:
-                  count = text.count(old)
-                  if count != 1:
-                      raise SystemExit(f'{path}: expected one exact cleanup anchor, found {count}')
-                  text = text.replace(old, new, 1)
+              if text.count(start) != 1:
+                  raise SystemExit(f'{path}: expected exactly one start marker: {start!r}')
+              start_index = text.index(start)
+              end_index = text.find(end, start_index)
+              if end_index < 0:
+                  raise SystemExit(f'{path}: end marker not found after start: {end!r}')
+              text = text[:start_index] + text[end_index:]
               path.write_text(text, encoding='utf-8')
+
+          remove_between(
+              'app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryClocktowerRotationOwnershipTest.kt',
+              '        val persistedIdentity = PersistedActiveGameIdentityEnvelope.clocktower(',
+              '        return RecoverySnapshot(',
+          )
+          remove_between(
+              'app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryRestorePlannerTest.kt',
+              '        val identity = PersistedActiveGameIdentityEnvelope.clocktower(',
+              '        return RecoverySnapshot(',
+          )
+          remove_between(
+              'app/src/test/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodecTest.kt',
+              '        val identity = PersistedActiveGameIdentityEnvelope.werewolf(',
+              '        val snapshot = RecoverySnapshot(',
+          )
+          remove_between(
+              'app/src/test/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodecTest.kt',
+              '        val identity = PersistedActiveGameIdentityEnvelope.clocktower(',
+              '        val snapshot = RecoverySnapshot(',
+          )
+
+          catalog = Path('app/src/test/java/com/codex/campboardgamehost/clocktower/catalog/BuiltInClocktowerRulesetCatalogTest.kt')
+          text = catalog.read_text(encoding='utf-8')
+          marker = '    @Test\n    fun `persistence coordinator consumes the shared catalog and owns no duplicate built-in loader`() {'
+          if text.count(marker) != 1:
+              raise SystemExit('Expected exactly one obsolete catalog architecture test.')
+          start_index = text.index(marker)
+          class_close = text.rfind('\n}')
+          if class_close <= start_index:
+              raise SystemExit('Could not locate catalog test class closing brace.')
+          replacement = '''    @Test
+          fun `recovery save validation consumes the shared catalog directly`() {
+              val source = File(
+                  "src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt",
+              ).readText(Charsets.UTF_8)
+
+              assertTrue(source.contains("BuiltInClocktowerRulesetCatalog.fromContext(baseContext)"))
+              assertTrue(
+                  source.contains(
+                      "activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript).script",
+                  ),
+              )
+              assertFalse(source.contains("ActiveGamePersistenceCoordinator.fromContext(baseContext)"))
+          }
+          '''
+          text = text[:start_index] + replacement + text[class_close:]
+          catalog.write_text(text, encoding='utf-8')
           PY
 
       - name: Verify exact cleanup surface
