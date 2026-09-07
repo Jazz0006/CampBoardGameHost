@@ -1,0 +1,102 @@
+name: PS3.4 final audit one-shot
+
+on:
+  push:
+    branches:
+      - codex/persistence-simplification
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/persistence-simplification
+          fetch-depth: 0
+
+      - name: Verify audit bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "e866ceb918740661c440eea3253d552f5037aab8"
+          test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Run focused typed recovery gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.RecoveryApplicationCoordinatorTest' \
+            --tests 'com.codex.campboardgamehost.RecoveryRestorePlannerTest' \
+            --tests 'com.codex.campboardgamehost.RecoveryPreviewLoaderTest' \
+            --tests 'com.codex.campboardgamehost.RecoveryRestorePlannerNoGreaterJoyTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Run Android FAST checkpoint
+        run: ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug --rerun-tasks --no-daemon
+
+      - name: Audit typed production paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP='app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt'
+
+          grep -Fq 'RecoverySnapshotJsonCodec.encode(activeGameRecoverySnapshot())' "$APP"
+          test "$(grep -Fc 'prepareCurrentRecoveryPlan(raw)' "$APP")" -eq 2
+          test "$(grep -Fc 'RecoveryApplicationCoordinator.apply(' "$APP")" -eq 1
+          test "$(grep -R -F 'activeGameSnapshotJson(' app/src/main/java --include='*.kt' | wc -l)" -eq 1
+          ! grep -Fq 'ClocktowerNightCheckpoint.fromPersistedValues' "$APP"
+          ! grep -Fq 'activeGamePersistenceCoordinator.resolveForRestore' "$APP"
+
+          test "$(git diff --name-only 655c7550d1a2aec8f5a58ea8dcb3fb9554882d70 74535e3e17091219520bc4a1d3fbdb60436ece91)" = "$APP"
+          git diff --check 655c7550d1a2aec8f5a58ea8dcb3fb9554882d70 74535e3e17091219520bc4a1d3fbdb60436ece91
+          git diff --check origin/main...HEAD
+
+          test ! -e .github/workflows/ps3-3-restore-cutover-one-shot.yml
+          test ! -e .github/scripts/ps3_3_restore_cutover_patch.py
+
+          echo 'PS3.4 production-path audit PASS'
+
+      - name: Reconfirm remote head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/ps3-4-final-audit-one-shot.yml
+          test "$(git diff --cached --name-only)" = ".github/workflows/ps3-4-final-audit-one-shot.yml"
+          git commit -m 'ci: remove ps3.4 final audit one-shot'
+          git push origin HEAD:codex/persistence-simplification
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report checkpoint evidence
+        run: |
+          echo "Audit bootstrap: $GITHUB_SHA"
+          echo "Cleanup checkpoint: $CLEANUP_SHA"
+          echo "Production checkpoint: 74535e3e17091219520bc4a1d3fbdb60436ece91"
