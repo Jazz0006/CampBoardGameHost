@@ -77,10 +77,6 @@ class RecoveryApplicationCoordinatorTest {
         val snapshot = RecoverySnapshot(
             compatibilityToken = "test-current",
             savedAtMillis = 1L,
-            legacyRestoreCompatibility = LegacyRestoreCompatibility(
-                activeGameStateVersion = ActiveGamePersistenceCoordinator.CURRENT_VERSION,
-                identity = PersistedActiveGameIdentityEnvelope.undercover(),
-            ),
             game = UndercoverRecovery(
                 entryPoint = RecoveryEntryPoint.Stable,
                 currentDealIndex = 0,

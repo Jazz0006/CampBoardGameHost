@@ -263,10 +263,6 @@ class RecoveryRestorePlannerTest {
     ): RecoverySnapshot = RecoverySnapshot(
         compatibilityToken = TOKEN,
         savedAtMillis = savedAtMillis,
-        legacyRestoreCompatibility = LegacyRestoreCompatibility(
-            activeGameStateVersion = ActiveGamePersistenceCoordinator.CURRENT_VERSION,
-            identity = PersistedActiveGameIdentityEnvelope.undercover(),
-        ),
         game = UndercoverRecovery(
             entryPoint = RecoveryEntryPoint.Stable,
             currentDealIndex = 0,
@@ -302,10 +298,6 @@ class RecoveryRestorePlannerTest {
         return RecoverySnapshot(
             compatibilityToken = TOKEN,
             savedAtMillis = NOW - 1_000L,
-            legacyRestoreCompatibility = LegacyRestoreCompatibility(
-                activeGameStateVersion = ActiveGamePersistenceCoordinator.CURRENT_VERSION,
-                identity = identity,
-            ),
             game = ClocktowerRecovery(
                 entryPoint = RecoveryEntryPoint.Stable,
                 currentDealIndex = 0,

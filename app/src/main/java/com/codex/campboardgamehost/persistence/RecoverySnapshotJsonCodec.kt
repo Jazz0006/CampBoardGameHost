@@ -5,12 +5,7 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import org.json.JSONArray
 import org.json.JSONObject
 
-/**
- * Typed emergency-recovery encoder.
- *
- * The v1 output still carries the remaining obsolete ActiveGame-shaped compatibility fields until
- * PS4.3b deliberately bumps the Recovery format and retires that shell.
- */
+/** Typed current-format emergency-recovery encoder. */
 internal object RecoverySnapshotJsonCodec {
     const val FORMAT_VERSION_KEY = "recoveryFormatVersion"
     const val COMPATIBILITY_TOKEN_KEY = "recoveryCompatibilityToken"
@@ -18,7 +13,6 @@ internal object RecoverySnapshotJsonCodec {
     fun encode(snapshot: RecoverySnapshot): JSONObject = JSONObject().apply {
         put(FORMAT_VERSION_KEY, snapshot.recoveryFormatVersion)
         put(COMPATIBILITY_TOKEN_KEY, snapshot.compatibilityToken)
-        put("version", snapshot.legacyRestoreCompatibility.activeGameStateVersion)
         put("savedAtMillis", snapshot.savedAtMillis)
         put("currentGameKind", snapshot.game.gameKind.name)
         encodeEntryPoint(snapshot.game.entryPoint)
@@ -31,22 +25,10 @@ internal object RecoverySnapshotJsonCodec {
             snapshot.game.outcome?.let(AppGameStateJsonCodec::encodeOutcome) ?: JSONObject.NULL,
         )
 
-        val legacy = snapshot.legacyRestoreCompatibility
-        put(
-            PersistedActiveGameIdentityJsonCodec.ROOT_KEY,
-            PersistedActiveGameIdentityJsonCodec.encode(legacy.identity),
-        )
-        legacy.committedClocktowerSetup?.let { setup ->
-            put(
-                CommittedClocktowerSetupPersistence.ROOT_KEY,
-                CommittedClocktowerSetupPersistence.encode(setup),
-            )
-        }
-
         when (val game = snapshot.game) {
             is UndercoverRecovery -> encodeUndercover(game)
             is WerewolfRecovery -> encodeWerewolf(game)
-            is ClocktowerRecovery -> encodeClocktower(game, legacy)
+            is ClocktowerRecovery -> encodeClocktower(game)
         }
     }
 
@@ -86,10 +68,7 @@ internal object RecoverySnapshotJsonCodec {
         putNullableString("hunterShotTarget", game.hunterShotTarget)
     }
 
-    private fun JSONObject.encodeClocktower(
-        game: ClocktowerRecovery,
-        legacy: LegacyRestoreCompatibility,
-    ) {
+    private fun JSONObject.encodeClocktower(game: ClocktowerRecovery) {
         put("clocktowerPhase", game.position.phase.name)
         put("currentClocktowerScript", game.identity.script.name)
         put("clocktowerGameId", game.identity.gameId)
@@ -110,29 +89,6 @@ internal object RecoverySnapshotJsonCodec {
             ClocktowerSemanticHistoryPersistence.ACTION_TIMELINE_KEY,
             ClocktowerSemanticHistoryPersistence.encodeActionTimeline(game.history.actionTimeline),
         )
-
-        if (legacy.clocktowerRulesetRoleIds.isEmpty()) {
-            put("clocktowerRulesetRoleIds", JSONObject.NULL)
-        } else {
-            put(
-                "clocktowerRulesetRoleIds",
-                ClocktowerRulesetPersistenceBasisJsonCodec.encode(
-                    ClocktowerRulesetPersistenceBasis(legacy.clocktowerRulesetRoleIds),
-                ),
-            )
-        }
-        val rulesetRef = legacy.clocktowerRulesetRef
-        if (rulesetRef == null) {
-            put("clocktowerRulesetRef", JSONObject.NULL)
-        } else {
-            put("clocktowerRulesetRef", JSONObject().apply {
-                put("scriptId", rulesetRef.scriptId.value)
-                put("scriptContentHash", rulesetRef.scriptContentHash)
-                put("rulesetVersion", rulesetRef.rulesetVersion)
-                put("sourceRevision", rulesetRef.sourceRevision)
-                put("coverage", rulesetRef.coverage.name)
-            })
-        }
 
         ClocktowerNightCheckpoint(
             phaseName = game.position.phase.name,

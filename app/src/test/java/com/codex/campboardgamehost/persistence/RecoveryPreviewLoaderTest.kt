@@ -71,10 +71,6 @@ class RecoveryPreviewLoaderTest {
     private fun undercoverSnapshot(savedAtMillis: Long): RecoverySnapshot = RecoverySnapshot(
         compatibilityToken = TOKEN,
         savedAtMillis = savedAtMillis,
-        legacyRestoreCompatibility = LegacyRestoreCompatibility(
-            activeGameStateVersion = ActiveGamePersistenceCoordinator.CURRENT_VERSION,
-            identity = PersistedActiveGameIdentityEnvelope.undercover(),
-        ),
         game = UndercoverRecovery(
             entryPoint = RecoveryEntryPoint.Stable,
             currentDealIndex = 0,

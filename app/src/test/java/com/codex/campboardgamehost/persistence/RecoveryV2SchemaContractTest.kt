@@ -35,8 +35,8 @@ class RecoveryV2SchemaContractTest {
         val raw = currentUndercoverRaw()
 
         assertFalse(raw.has("version"))
-        assertFalse(raw.has(PersistedActiveGameIdentityJsonCodec.ROOT_KEY))
-        assertFalse(raw.has(CommittedClocktowerSetupPersistence.ROOT_KEY))
+        assertFalse(raw.has("gameContentIdentity"))
+        assertFalse(raw.has("committedClocktowerSetup"))
         assertFalse(raw.has("clocktowerRulesetRoleIds"))
         assertFalse(raw.has("clocktowerRulesetRef"))
     }
@@ -45,10 +45,6 @@ class RecoveryV2SchemaContractTest {
         RecoverySnapshot(
             compatibilityToken = RecoveryCompatibilityToken.currentFor(GameKind.Undercover),
             savedAtMillis = NOW - 1_000L,
-            legacyRestoreCompatibility = LegacyRestoreCompatibility(
-                activeGameStateVersion = ActiveGamePersistenceCoordinator.CURRENT_VERSION,
-                identity = PersistedActiveGameIdentityEnvelope.undercover(),
-            ),
             game = UndercoverRecovery(
                 entryPoint = RecoveryEntryPoint.Stable,
                 currentDealIndex = 0,

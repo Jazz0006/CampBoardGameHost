@@ -13,10 +13,6 @@ class RecoverySnapshotJsonCodecTest {
         val snapshot = RecoverySnapshot(
             compatibilityToken = "test-current-build",
             savedAtMillis = 1234L,
-            legacyRestoreCompatibility = LegacyRestoreCompatibility(
-                activeGameStateVersion = ActiveGamePersistenceCoordinator.CURRENT_VERSION,
-                identity = PersistedActiveGameIdentityEnvelope.undercover(),
-            ),
             game = UndercoverRecovery(
                 entryPoint = RecoveryEntryPoint.Stable,
                 currentDealIndex = 2,
@@ -49,10 +45,6 @@ class RecoverySnapshotJsonCodecTest {
         val snapshot = RecoverySnapshot(
             compatibilityToken = "test-current-build",
             savedAtMillis = 1234L,
-            legacyRestoreCompatibility = LegacyRestoreCompatibility(
-                activeGameStateVersion = ActiveGamePersistenceCoordinator.CURRENT_VERSION,
-                identity = PersistedActiveGameIdentityEnvelope.undercover(),
-            ),
             game = UndercoverRecovery(
                 entryPoint = RecoveryEntryPoint.RevealCard,
                 currentDealIndex = 4,
@@ -88,10 +80,6 @@ class RecoverySnapshotJsonCodecTest {
         val snapshot = RecoverySnapshot(
             compatibilityToken = "test-current-build",
             savedAtMillis = 1234L,
-            legacyRestoreCompatibility = LegacyRestoreCompatibility(
-                activeGameStateVersion = ActiveGamePersistenceCoordinator.CURRENT_VERSION,
-                identity = identity,
-            ),
             game = WerewolfRecovery(
                 entryPoint = RecoveryEntryPoint.Stable,
                 currentDealIndex = 0,
@@ -139,10 +127,6 @@ class RecoverySnapshotJsonCodecTest {
         val snapshot = RecoverySnapshot(
             compatibilityToken = "test-current-build",
             savedAtMillis = 1234L,
-            legacyRestoreCompatibility = LegacyRestoreCompatibility(
-                activeGameStateVersion = ActiveGamePersistenceCoordinator.CURRENT_VERSION,
-                identity = identity,
-            ),
             game = ClocktowerRecovery(
                 entryPoint = RecoveryEntryPoint.Stable,
                 currentDealIndex = 0,

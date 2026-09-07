@@ -17,17 +17,6 @@ class RecoveryRestorePlannerNoGreaterJoyTest {
         val snapshot = RecoverySnapshot(
             compatibilityToken = TOKEN,
             savedAtMillis = NOW - 1_000L,
-            legacyRestoreCompatibility = LegacyRestoreCompatibility(
-                activeGameStateVersion = ActiveGamePersistenceCoordinator.CURRENT_VERSION,
-                identity = PersistedActiveGameIdentityEnvelope.clocktower(
-                    PersistedGameContentIdentity(
-                        kind = PersistedVariantKind.CLOCKTOWER_SCRIPT,
-                        variantId = "no_greater_joy",
-                        contentHash = "0123456789abcdef0123456789abcdef",
-                        semanticVersion = "1",
-                    ),
-                ),
-            ),
             game = ClocktowerRecovery(
                 entryPoint = RecoveryEntryPoint.Stable,
                 currentDealIndex = 0,

@@ -59,10 +59,6 @@ class RecoveryClocktowerRotationOwnershipTest {
         return RecoverySnapshot(
             compatibilityToken = "test-current-build",
             savedAtMillis = 1234L,
-            legacyRestoreCompatibility = LegacyRestoreCompatibility(
-                activeGameStateVersion = ActiveGamePersistenceCoordinator.CURRENT_VERSION,
-                identity = persistedIdentity,
-            ),
             game = ClocktowerRecovery(
                 entryPoint = RecoveryEntryPoint.Stable,
                 currentDealIndex = 0,

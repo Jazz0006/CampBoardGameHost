@@ -289,7 +289,6 @@ private const val AUTOMATIC_STORYTELLER_INFO_KEY = "automatic_storyteller_info"
 private const val STORYTELLER_AUTOMATION_MODE_KEY = "storyteller_automation_mode"
 private const val ACTIVE_GAME_STATE_KEY = "active_game_state"
 private const val GAME_HISTORY_KEY = "game_history"
-private const val ACTIVE_GAME_STATE_VERSION = ActiveGamePersistenceCoordinator.CURRENT_VERSION
 internal const val A4_IDENTITY_PREWARM_LOG_TAG = "A4IdentityPrewarm"
 internal const val A4_OBSERVATION_CACHE_UPDATE_LOG_TAG = "A4ObservationCacheUpdate"
 internal const val UNIFIED_SETUP_SELECTOR_BENCHMARK_LOG_TAG = "UnifiedSetupSelectorBenchmark"
@@ -1437,7 +1436,7 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun activeGameRecoverySnapshot(): RecoverySnapshot {
-        val gameContentIdentity = activeGamePersistenceCoordinator.identityForSave(
+        activeGamePersistenceCoordinator.identityForSave(
             ActiveGamePersistenceInputs(
                 gameKind = currentGameKind,
                 clocktowerScript = currentClocktowerScript,
@@ -1469,13 +1468,6 @@ internal fun CampBoardGameHostApp() {
         }
         val commonCards = cards.toList()
         val commonRecords = records.toList()
-        val legacyRestoreCompatibility = LegacyRestoreCompatibility(
-            activeGameStateVersion = ACTIVE_GAME_STATE_VERSION,
-            identity = gameContentIdentity,
-            committedClocktowerSetup = committedClocktowerSetup,
-            clocktowerRulesetRoleIds = clocktowerRulesetRoleIds.toSet(),
-            clocktowerRulesetRef = clocktowerRulesetRef,
-        )
         val recoveryGame: RecoveryGame = when (currentGameKind) {
             GameKind.Undercover -> UndercoverRecovery(
                 entryPoint = entryPoint,
@@ -1565,7 +1557,6 @@ internal fun CampBoardGameHostApp() {
         return RecoverySnapshot(
             compatibilityToken = RecoveryCompatibilityToken.currentFor(currentGameKind),
             savedAtMillis = System.currentTimeMillis(),
-            legacyRestoreCompatibility = legacyRestoreCompatibility,
             game = recoveryGame,
         )
     }

@@ -8,17 +8,13 @@ import org.junit.Test
 class RecoveryCompatibilityTokenTest {
     @Test
     fun currentTokenIsOwnedByRecoveryFormatAndAcceptedByPlanner() {
-        val expectedToken = "recovery-v1:Undercover"
+        val expectedToken = "recovery-v2:Undercover"
         assertEquals(expectedToken, RecoveryCompatibilityToken.currentFor(GameKind.Undercover))
 
         val raw = RecoverySnapshotJsonCodec.encode(
             RecoverySnapshot(
                 compatibilityToken = expectedToken,
                 savedAtMillis = NOW - 1_000L,
-                legacyRestoreCompatibility = LegacyRestoreCompatibility(
-                    activeGameStateVersion = ActiveGamePersistenceCoordinator.CURRENT_VERSION,
-                    identity = PersistedActiveGameIdentityEnvelope.undercover(),
-                ),
                 game = UndercoverRecovery(
                     entryPoint = RecoveryEntryPoint.Stable,
                     currentDealIndex = 0,
@@ -50,7 +46,7 @@ class RecoveryCompatibilityTokenTest {
     @Test
     fun clocktowerTokenUsesTheSameRecoveryOwnedFormatAuthority() {
         assertEquals(
-            "recovery-v1:Clocktower",
+            "recovery-v2:Clocktower",
             RecoveryCompatibilityToken.currentFor(GameKind.Clocktower),
         )
     }

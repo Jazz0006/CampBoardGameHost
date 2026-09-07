@@ -1,9 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
-import com.codex.campboardgamehost.clocktower.domain.RulesetRef
-import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
 import org.json.JSONArray
@@ -23,7 +19,6 @@ internal object RecoverySnapshotStrictDecoder {
     ): RecoverySnapshot {
         val formatVersion = json.requiredInt(RecoverySnapshotJsonCodec.FORMAT_VERSION_KEY)
         val compatibilityToken = json.requiredNonBlankString(RecoverySnapshotJsonCodec.COMPATIBILITY_TOKEN_KEY)
-        val activeGameStateVersion = json.requiredInt("version")
         val savedAtMillis = json.requiredLong("savedAtMillis")
         val gameKind = json.requiredEnum<GameKind>("currentGameKind")
         val entryPoint = json.strictEntryPoint()
@@ -32,33 +27,12 @@ internal object RecoverySnapshotStrictDecoder {
         val cards = json.requiredArray("cards").decodeCardsStrict(roleByName)
         val records = json.requiredArray("records").decodeRecordsStrict()
         val outcome = json.decodeOutcomeStrict("gameOutcome")
-        val identity = PersistedActiveGameIdentityJsonCodec.decode(
-            json.requiredObject(PersistedActiveGameIdentityJsonCodec.ROOT_KEY),
-        )
-        require(identity.gameKind == gameKind) {
-            "Recovery game kind does not match persisted content identity."
-        }
-
-        val committedSetup = CommittedClocktowerSetupPersistence.decodeOrNull(json)
         val setupRotationRecord = TroubleBrewingSetupCompletionPersistence.decodeOrNull(json)
-        val clocktowerRulesetRoleIds = json.decodeRulesetRoleIdsStrict()
-        val clocktowerRulesetRef = json.decodeRulesetRefStrict()
-
-        val legacy = LegacyRestoreCompatibility(
-            activeGameStateVersion = activeGameStateVersion,
-            identity = identity,
-            committedClocktowerSetup = committedSetup,
-            clocktowerRulesetRoleIds = clocktowerRulesetRoleIds,
-            clocktowerRulesetRef = clocktowerRulesetRef,
-        )
 
         val game: RecoveryGame = when (gameKind) {
             GameKind.Undercover -> {
-                require(committedSetup == null && setupRotationRecord == null) {
+                require(setupRotationRecord == null) {
                     "Undercover recovery cannot carry Clocktower setup metadata."
-                }
-                require(clocktowerRulesetRoleIds.isEmpty() && clocktowerRulesetRef == null) {
-                    "Undercover recovery cannot carry Clocktower ruleset metadata."
                 }
                 UndercoverRecovery(
                     entryPoint = entryPoint,
@@ -93,7 +67,6 @@ internal object RecoverySnapshotStrictDecoder {
             recoveryFormatVersion = formatVersion,
             compatibilityToken = compatibilityToken,
             savedAtMillis = savedAtMillis,
-            legacyRestoreCompatibility = legacy,
             game = game,
         )
     }
@@ -184,28 +157,6 @@ internal object RecoverySnapshotStrictDecoder {
             "RevealCard" -> RecoveryEntryPoint.RevealCard
             else -> throw IllegalArgumentException("Unsupported recovery screen.")
         }
-    }
-
-    private fun JSONObject.decodeRulesetRoleIdsStrict(): Set<RoleId> {
-        if (!has("clocktowerRulesetRoleIds")) return emptySet()
-        if (isNull("clocktowerRulesetRoleIds")) return emptySet()
-        val raw = opt("clocktowerRulesetRoleIds")
-        require(raw is JSONArray) { "clocktowerRulesetRoleIds must be an array or null." }
-        return ClocktowerRulesetPersistenceBasisJsonCodec.decode(raw).roleIds
-    }
-
-    private fun JSONObject.decodeRulesetRefStrict(): RulesetRef? {
-        if (!has("clocktowerRulesetRef")) return null
-        if (isNull("clocktowerRulesetRef")) return null
-        val raw = opt("clocktowerRulesetRef")
-        require(raw is JSONObject) { "clocktowerRulesetRef must be an object or null." }
-        return RulesetRef(
-            scriptId = ScriptId(raw.requiredNonBlankString("scriptId")),
-            scriptContentHash = raw.requiredNonBlankString("scriptContentHash"),
-            rulesetVersion = raw.requiredNonBlankString("rulesetVersion"),
-            sourceRevision = raw.requiredNonBlankString("sourceRevision"),
-            coverage = raw.requiredEnum<RuleCoverage>("coverage"),
-        )
     }
 
     private fun JSONArray.decodeCardsStrict(
@@ -317,11 +268,6 @@ internal object RecoverySnapshotStrictDecoder {
     private fun JSONObject.requireNull(key: String) {
         require(has(key)) { "$key is required." }
         require(isNull(key)) { "$key must be null in typed recovery; draft interaction state is not durable." }
-    }
-
-    private fun JSONObject.requiredObject(key: String): JSONObject {
-        require(has(key) && !isNull(key)) { "$key is required." }
-        return opt(key) as? JSONObject ?: throw IllegalArgumentException("$key must be an object.")
     }
 
     private fun JSONObject.requiredArray(key: String): JSONArray {

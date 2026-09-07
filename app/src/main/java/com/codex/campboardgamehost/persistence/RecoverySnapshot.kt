@@ -1,9 +1,6 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
-import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
-import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
@@ -19,7 +16,6 @@ internal data class RecoverySnapshot(
     val recoveryFormatVersion: Int = CURRENT_FORMAT_VERSION,
     val compatibilityToken: String,
     val savedAtMillis: Long,
-    val legacyRestoreCompatibility: LegacyRestoreCompatibility,
     val game: RecoveryGame,
 ) {
     init {
@@ -28,24 +24,12 @@ internal data class RecoverySnapshot(
         }
         require(compatibilityToken.isNotBlank()) { "Recovery compatibility token cannot be blank." }
         require(savedAtMillis >= 0L) { "Recovery timestamp cannot be negative." }
-        require(legacyRestoreCompatibility.identity.gameKind == game.gameKind) {
-            "Recovery identity game kind must match the game payload."
-        }
     }
 
     companion object {
-        const val CURRENT_FORMAT_VERSION: Int = 1
+        const val CURRENT_FORMAT_VERSION: Int = 2
     }
 }
-
-/** Temporary PS4 bridge while obsolete ActiveGame-shaped Recovery metadata is retired. */
-internal data class LegacyRestoreCompatibility(
-    val activeGameStateVersion: Int,
-    val identity: PersistedActiveGameIdentityEnvelope,
-    val committedClocktowerSetup: CommittedClocktowerSetup? = null,
-    val clocktowerRulesetRoleIds: Set<RoleId> = emptySet(),
-    val clocktowerRulesetRef: RulesetRef? = null,
-)
 
 internal enum class RecoveryEntryPoint {
     Stable,
