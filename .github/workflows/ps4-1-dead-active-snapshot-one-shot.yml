@@ -26,10 +26,11 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "aa9820b5a171287b81d3f45b2ff2a76a0c9cff65"
+          test "$(git rev-parse HEAD^)" = "c5702e9893ef8a033bd6fafd9690df705a2dd989"
           test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$GITHUB_SHA"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = "623fbbf2862ca2a689f52a5ceb4e9c020d620313"
-          test "$(git hash-object .github/scripts/ps4_1_dead_active_snapshot_patch.py)" = "7beddd8bddbcf01d2c225e5cb7083b0034dda81d"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/persistence/AppJsonPrimitives.kt)" = "6fe2f642281e231506388fcc80a748de2d8a792b"
+          test "$(git hash-object .github/scripts/ps4_1_dead_active_snapshot_patch.py)" = "b84042e7bac66f0d27a6c3d9b3557a1a97314000"
 
       - name: Fresh repository-wide reference audit
         shell: bash
@@ -42,9 +43,36 @@ jobs:
           test "$(wc -l < /tmp/ps4_1_main_refs_before.txt | tr -d ' ')" = "1"
           grep -F 'fun activeGameSnapshotJson(): JSONObject' /tmp/ps4_1_main_refs_before.txt
           echo '--- test references before deletion ---'
-          git grep -n -F 'activeGameSnapshotJson(' -- app/src/test || true
+          if git grep -n -F 'activeGameSnapshotJson(' -- app/src/test; then
+            echo 'Unexpected test consumer of activeGameSnapshotJson' >&2
+            exit 1
+          fi
 
-      - name: Audit shared dependencies before deletion
+      - name: Audit exclusive encode-helper chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          app='app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt'
+          test "$(git grep -F 'playerCardsToJsonArray' -- app/src/main | wc -l | tr -d ' ')" = "2"
+          test "$(git grep -F 'eliminationRecordsToJsonArray' -- app/src/main | wc -l | tr -d ' ')" = "2"
+          test "$(git grep -F 'clocktowerEventsToJsonArray' -- app/src/main | wc -l | tr -d ' ')" = "2"
+          test "$(git grep -F 'recordedEpistemicObservationsToJsonArray' -- app/src/main | wc -l | tr -d ' ')" = "2"
+          test "$(git grep -F 'putNullableBoolean' -- app/src/main | wc -l | tr -d ' ')" = "3"
+          test "$(grep -F -c '.toJson()' "$app")" = "5"
+          grep -n -F 'private fun PlayerCard.toJson()' "$app"
+          grep -n -F 'private fun EliminationRecord.toJson()' "$app"
+          grep -n -F 'private fun GameOutcome.toJson()' "$app"
+          grep -n -F 'private fun ClocktowerEvent.toJson()' "$app"
+          grep -n -F 'gameOutcome!!.toJson()' "$app"
+          echo '--- helper references in tests ---'
+          for token in playerCardsToJsonArray eliminationRecordsToJsonArray clocktowerEventsToJsonArray recordedEpistemicObservationsToJsonArray putNullableBoolean; do
+            if git grep -n -F "$token" -- app/src/test; then
+              echo "Unexpected test consumer of $token" >&2
+              exit 1
+            fi
+          done
+
+      - name: Audit retained shared dependencies
         shell: bash
         run: |
           set -euo pipefail
@@ -57,15 +85,12 @@ jobs:
             TroubleBrewingSetupCompletionPersistence \
             stringsToJsonArray \
             putNullableString \
+            putNullableInt \
             ClocktowerSemanticHistoryPersistence \
             ClocktowerRulesetPersistenceBasisJsonCodec \
             ClocktowerNightCheckpoint \
             ClocktowerGhostVoteAuthorityPersistence \
-            putNullableBoolean \
-            playerCardsToJsonArray \
-            eliminationRecordsToJsonArray \
-            clocktowerEventsToJsonArray \
-            recordedEpistemicObservationsToJsonArray
+            EpistemicSemanticJson
           do
             count=$(git grep -F "$token" -- app/src/main | wc -l | tr -d ' ')
             echo "$token main-source refs before: $count"
@@ -82,16 +107,31 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git grep -n -F 'activeGameSnapshotJson(' -- app/src/main; then
-            echo 'activeGameSnapshotJson main-source reference remains' >&2
-            exit 1
-          fi
-          test "$(git diff --name-only | paste -sd ' ' -)" = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
+          for token in \
+            'activeGameSnapshotJson(' \
+            'playerCardsToJsonArray' \
+            'eliminationRecordsToJsonArray' \
+            'clocktowerEventsToJsonArray' \
+            'recordedEpistemicObservationsToJsonArray' \
+            'putNullableBoolean'
+          do
+            if git grep -n -F "$token" -- app/src/main; then
+              echo "PS4.1 dead token remains in main source: $token" >&2
+              exit 1
+            fi
+          done
+          mapfile -t changed < <(git diff --name-only)
+          test "${#changed[@]}" = "2"
+          test "${changed[0]}" = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
+          test "${changed[1]}" = "app/src/main/java/com/codex/campboardgamehost/persistence/AppJsonPrimitives.kt"
           git diff --check
-          git diff --numstat -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-          git diff -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          git diff --numstat -- "${changed[@]}"
+          git diff -- "${changed[@]}"
           git grep -n -F 'LegacyRestoreCompatibility(' -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
           git grep -n -F 'RecoverySnapshotJsonCodec.encode(activeGameRecoverySnapshot())' -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          for retained in playerCardFromJson toPlayerCards eliminationRecordFromJson toEliminationRecords clocktowerEventFromJson toClocktowerEvents toRecordedEpistemicObservations gameOutcomeFromJson; do
+            git grep -n -F "$retained" -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          done
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -131,13 +171,16 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check
-          test "$(git diff --name-only | paste -sd ' ' -)" = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
-          if git grep -n -F 'activeGameSnapshotJson(' -- app/src/main; then
-            echo 'activeGameSnapshotJson main-source reference remains' >&2
-            exit 1
-          fi
-          echo '--- repository references after deletion (docs/history may remain) ---'
-          git grep -n -F 'activeGameSnapshotJson(' -- . || true
+          mapfile -t changed < <(git diff --name-only)
+          test "${#changed[@]}" = "2"
+          test "${changed[0]}" = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
+          test "${changed[1]}" = "app/src/main/java/com/codex/campboardgamehost/persistence/AppJsonPrimitives.kt"
+          for token in 'activeGameSnapshotJson(' playerCardsToJsonArray eliminationRecordsToJsonArray clocktowerEventsToJsonArray recordedEpistemicObservationsToJsonArray putNullableBoolean; do
+            if git grep -n -F "$token" -- app/src/main; then
+              echo "PS4.1 dead token remains after validation: $token" >&2
+              exit 1
+            fi
+          done
           for token in \
             ACTIVE_GAME_STATE_VERSION \
             activeGamePersistenceCoordinator \
@@ -147,15 +190,12 @@ jobs:
             TroubleBrewingSetupCompletionPersistence \
             stringsToJsonArray \
             putNullableString \
+            putNullableInt \
             ClocktowerSemanticHistoryPersistence \
             ClocktowerRulesetPersistenceBasisJsonCodec \
             ClocktowerNightCheckpoint \
             ClocktowerGhostVoteAuthorityPersistence \
-            putNullableBoolean \
-            playerCardsToJsonArray \
-            eliminationRecordsToJsonArray \
-            clocktowerEventsToJsonArray \
-            recordedEpistemicObservationsToJsonArray
+            EpistemicSemanticJson
           do
             count=$(git grep -F "$token" -- app/src/main | wc -l | tr -d ' ')
             echo "$token main-source refs after: $count"
@@ -174,8 +214,12 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-          test "$(git diff --cached --name-only | paste -sd ' ' -)" = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
+          git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt \
+                  app/src/main/java/com/codex/campboardgamehost/persistence/AppJsonPrimitives.kt
+          mapfile -t staged < <(git diff --cached --name-only)
+          test "${#staged[@]}" = "2"
+          test "${staged[0]}" = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
+          test "${staged[1]}" = "app/src/main/java/com/codex/campboardgamehost/persistence/AppJsonPrimitives.kt"
           git commit -m 'refactor: remove dead active snapshot'
           product_sha=$(git rev-parse HEAD)
           test "$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)" = "$GITHUB_SHA"
