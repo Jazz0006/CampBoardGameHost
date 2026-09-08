@@ -3,7 +3,7 @@
 > Date: 2026-09-08 Australia/Sydney
 > Branch: `codex/persistence-simplification`
 > Draft PR: #112
-> Status: **PS5 IMPLEMENTATION COMPLETE — recovery quick-restart hotfix automated GREEN; renewed T4 + real-device acceptance pending**
+> Status: **PS5 IMPLEMENTATION + POST-HOTFIX AUTOMATED ACCEPTANCE COMPLETE — real-device acceptance pending**
 
 ## Campaign
 
@@ -22,7 +22,7 @@ PS5 IN PROGRESS — release acceptance pending only
   PS5.2b SideEffect ownership audit COMPLETE
   original final automated T4 COMPLETE
   recovery quick-restart hotfix automated GREEN
-  renewed post-hotfix T4 PENDING
+  renewed post-hotfix T4 COMPLETE
   real-device process-loss/restart acceptance PENDING
 ```
 
@@ -37,9 +37,10 @@ recovery quick-restart RED: 3bc389349bba00a155d55ec01508d6b271125ff0
 recovery seating-owner helper: d8e1123d1535672dc04271ab41e18ec979ccaa7f
 latest production GREEN: e622960a9c75c0b110d2c92e34b46828cb949e0a
 one-shot cleanup head: b8b63cb62061ce29c471aa37fb036a4199be81ef
+renewed full-T4 checkpoint: 686b52a79cd4ea183c81884d34d54223fecae124
 ```
 
-The original T4 was valid for the pre-device-acceptance production slice. Real-device process-loss/restart testing then exposed a separate Recovery ownership bug, so the production checkpoint advanced and a renewed full T4 is required before release acceptance.
+The original T4 was valid for the pre-device-acceptance production slice. Real-device process-loss/restart testing then exposed a separate Recovery ownership bug. That bug is now fixed, focused/FAST validated, and covered by a renewed full T4.
 
 ## Validation evidence
 
@@ -198,13 +199,25 @@ one-shot run 34191324182 — PASS
   temporary workflow/script cleanup PASS
 ```
 
-The final bot-generated cleanup head produced `action_required` PR workflow states rather than test failures, so this docs checkpoint requests a fresh full T4 from a normal branch head.
+Renewed post-hotfix T4:
 
-## Current next step — renewed T4, then real-device acceptance
+```text
+CI 34191738571 — PASS
+  Classify changes             PASS / full checkpoint selected
+  Android testFull             PASS
+  :app:assembleDebug           PASS
+  ASP golden/contract tests    PASS
+  Real Clingo 5.8 cross-check  PASS
+  CI gate                      PASS
 
-The recovery ownership bug is automated GREEN but the campaign is **not release-ready yet**.
+R2 34191738649 — PASS
+```
 
-First, this `[full-ci]` checkpoint must re-run the reserved full automated acceptance against the new production checkpoint. After that passes, repeat the real-device path that exposed the bug:
+## Current next step — real-device acceptance
+
+Automated acceptance is complete against the new production checkpoint. The campaign is **not release-ready yet** because the real-device path that exposed the bug must be repeated on the fixed APK.
+
+Priority retest:
 
 ```text
 6-player No Greater Joy
@@ -228,7 +241,7 @@ Then continue/confirm the minimum device matrix:
 8. exercise normal pause -> stop backgrounding and confirm no visible regression from the lifecycle deduplication policy;
 9. if feasible, exercise a forced persistence-failure test build/path and confirm a later ordinary/stop attempt retries rather than falsely treating the state as durable.
 
-Only after renewed T4 and device acceptance should Persistence Simplification be marked release-ready and PR #112 considered for merge. Do not merge without explicit authorization.
+Only after device acceptance should Persistence Simplification be marked release-ready and PR #112 considered for merge. Do not merge without explicit authorization.
 
 ## Non-goals
 
