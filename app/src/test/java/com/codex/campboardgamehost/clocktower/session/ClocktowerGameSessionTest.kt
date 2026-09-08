@@ -49,7 +49,7 @@ class ClocktowerGameSessionTest {
     @Test
     fun `unchanged game state does not create a revision`() {
         val session = newSession()
-        val before = session.snapshot
+        val before = session.state
 
         val after = session.updateGameState(initialState)
 
