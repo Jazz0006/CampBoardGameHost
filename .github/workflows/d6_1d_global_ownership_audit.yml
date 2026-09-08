@@ -1,4 +1,5 @@
 name: D6.1d global ownership audit
+# Source diff-check is intentionally scoped away from Markdown hard-break whitespace.
 
 on:
   push:
@@ -48,7 +49,7 @@ jobs:
         run: |
           set -euo pipefail
           git fetch origin main:refs/remotes/origin/main
-          git diff --check origin/main...HEAD
+          git diff --check origin/main...HEAD -- app/src/main app/src/test
           echo '=== production files changed from main ==='
           git diff --name-only origin/main...HEAD -- app/src/main | sort
           actual="$(git diff --name-only origin/main...HEAD -- app/src/main | sort)"
