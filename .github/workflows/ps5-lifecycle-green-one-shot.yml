@@ -1,0 +1,71 @@
+name: PS5 lifecycle focused GREEN one-shot
+
+on:
+  push:
+    branches:
+      - codex/persistence-simplification
+    paths:
+      - .github/workflows/ps5-lifecycle-green-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  validate-green:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: codex/persistence-simplification
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Guard exact GREEN parent and audit slice diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch=codex/persistence-simplification
+          green=5926138d0557835f281ba15b4051f50fa3ae741e
+          slice_base=1aa9ea06237b601a798d1452b17e75e3e6e9f897
+
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "$green"
+          git fetch origin "$branch"
+          test "$(git rev-parse origin/$branch)" = "$GITHUB_SHA"
+
+          git diff --check "$slice_base" "$green"
+          mapfile -t changed < <(git diff --name-only "$slice_base" "$green")
+          test "${#changed[@]}" -eq 2
+          printf '%s\n' "${changed[@]}" | grep -Fxq 'app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryLifecyclePersistence.kt'
+          printf '%s\n' "${changed[@]}" | grep -Fxq 'app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryLifecyclePersistenceTest.kt'
+
+      - name: Run focused lifecycle GREEN
+        run: |
+          ./gradlew :app:testFast \
+            --tests 'com.codex.campboardgamehost.RecoveryLifecyclePersistenceTest' \
+            --no-daemon --rerun-tasks
+
+      - name: Run Android FAST checkpoint
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Remove temporary GREEN workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch=codex/persistence-simplification
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git fetch origin "$branch"
+          test "$(git rev-parse origin/$branch)" = "$GITHUB_SHA"
+          git rm .github/workflows/ps5-lifecycle-green-one-shot.yml
+          git commit -m 'chore: remove PS5 lifecycle GREEN runner'
+          git push origin "HEAD:$branch"
