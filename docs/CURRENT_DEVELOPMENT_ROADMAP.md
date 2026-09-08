@@ -11,13 +11,13 @@ main: d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e
 D6.2 branch: codex/d6-2-ui-composition
 Draft PR: #115 — OPEN / DRAFT / DO NOT AUTO-MERGE
 Latest validated production checkpoint:
-15342f9e22ac204602680e6ef831fb4e95c7b0bf
-refactor: remove retired storyteller plumbing
+5e0891e7611787300b01d83b889f27a903c0768b
+refactor: localize Day nomination selection ownership [full-ci]
 ```
 
-Commits after `15342f9...` are documentation-only unless a later handoff explicitly records a newer validated production checkpoint. Always re-query live branch head and keep **production checkpoint** distinct from **docs-only branch head**.
+Closeout commits after `5e0891e...` are documentation-only unless a later handoff explicitly records a newer validated production checkpoint. Always re-query live branch head and keep **production checkpoint** distinct from **docs-only branch head**.
 
-Validated D6.2g clean-head gates:
+Historical D6.2g clean-head gates:
 
 ```text
 R2 34289616209 — PASS
@@ -43,7 +43,7 @@ CI 34288731376 — PASS
 
 ## Current priority
 
-> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h READ-ONLY RE-AUDIT COMPLETE → D6.2i DAY NOMINATION TRANSIENT OWNERSHIP NEXT.**
+> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h READ-ONLY RE-AUDIT COMPLETE → D6.2i DAY NOMINATION TRANSIENT OWNERSHIP COMPLETE / VALIDATED → RESIDUAL COMPOSITION RE-AUDIT NEXT.**
 
 D6.2 stays on `codex/d6-2-ui-composition`. Do not reopen PR #113 or move this work back to `codex/d6-root-reaudit`.
 
@@ -280,63 +280,55 @@ remember(gameId, round)
 
 because Day completion advances `round` before entering Night, while Virgin and Klutz special paths preserve equivalent reset semantics. No Recovery contract requires restoring an in-progress nomination pair.
 
-## D6.2i — NEXT: Day nomination transient ownership
+## D6.2i — COMPLETE / VALIDATED: Day nomination transient ownership
 
-Recommended exact slice:
+Production checkpoint: `5e0891e7611787300b01d83b889f27a903c0768b`.
 
-```text
-App removes:
-  clocktowerNominatorNameState
-  clocktowerNomineeNameState
-  clocktowerCurrentVoteCountState
+- App no longer declares, resets or forwards the nomination pair or dead outer vote count.
+- Judge owns `nominatorName` and `nomineeName` with `remember(gameId, round)`.
+- Cancel nomination and confirm vote still clear both names; cancel vote retains the pair.
+- Day mode, ghost-vote authority, highest-vote mechanics, Virgin callbacks and Recovery remain external and unchanged.
 
-Judge removes 3 MutableState parameters.
-Judge owns:
-  nominatorName
-  nomineeName
-with remember(gameId, round).
-
-currentVoteCount is deleted completely.
-```
-
-Preserve:
+Verified boundary metrics:
 
 ```text
-dayModeState
-ghostVoteAuthority
-highestVoteNameState
-highestVoteCountState
-Virgin callbacks
-vote transaction semantics
-Recovery schema/state
+Judge parameters:                  92 -> 89
+on... callbacks:                   34 unchanged
+function-valued providers:          3 unchanged
+MutableState parameters:            8 -> 5
+App explicit remembered state vals: 9 -> 6
+App delegated remembered vars:     38 unchanged
+Combined scalar state declarations:47 -> 44
 ```
 
-Expected metrics:
+**Metric correction:** the old expected `App-root vars 36 -> 33` had no reproducible counting definition. The counts above include root `clocktower*` declarations directly initialized with `remember { mutableStateOf(...) }`, both delegated `var` and explicit `val`; they exclude derived views and state lists. Earlier campaign figures are historical, not the current measured total.
+
+Exact production diff: App +0/-12; Host +2/-11; exactly two files and one commit from `bffa52095585bd9ee37e77fce31c2a71219ce895`.
+
+Acceptance:
 
 ```text
-Judge parameters:         92 -> 89
-callbacks:                34 unchanged
-MutableState params:       8 -> 5
-App-root clocktower vars: 36 -> 33
+CI 34291666237 — PASS / FULL
+  Android full JVM + debug APK — PASS
+  ASP contracts — PASS
+  Real Clingo — PASS
+  CI gate — PASS
+R2 34291666241 — PASS
 ```
 
-Relevant existing tests:
+Local Gradle could not download its distribution because of restricted network access. Compilation and the existing nomination/vote tests were validated by the remote full JVM suite, not by a claimed local GREEN. No new tests or production seams were introduced.
 
-- `ClocktowerDayNominationGestureTest`
-- `ClocktowerTableVoteStateTest`
-- `ClocktowerVoteTransactionTest`
+Detailed evidence: `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md`.
 
-Do not add source-string tests just to claim tests-first. For this behavior-preserving ownership refactor, use exact source assertions, compile, focused existing behavior coverage and FAST; prefer a final clean `[full-ci]` checkpoint because state lifetime moves across App/Judge.
+## Next — residual composition re-audit
 
-## GitHub large-file execution rule
+D6.2i is closed. Before another production slice, re-rank the remaining live UI ownership boundaries using the current 89-parameter signature. Day mode and durable vote state still have legitimate external writers; Night navigation remains checkpoint/Recovery-coupled. Do not move those groups wholesale or expand this slice to a Day dispatcher, Recovery redesign or orphan-helper cleanup.
 
-For `CampBoardGameHostApp.kt` / `ClocktowerHostScreen.kt`, do **not** reconstruct the whole file from truncated connector output.
+PR #115 remains OPEN / DRAFT. Merge requires explicit user authorization.
 
-Normative SOP:
+## Execution method
 
-- `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`
-
-The active 2026-09-09 handoff additionally records the D6.2-proven bootstrap + history-squash procedure. A new conversation must read that before attempting a large-file mutation.
+The user explicitly authorized direct local edits in Work. D6.2i used a complete local Git checkout and exact diff auditing. CLI push lacked credentials; the connected GitHub API uploaded the local bytes, verified both blob SHAs and the complete tree SHA, and fast-forwarded the feature branch. No bootstrap workflow or force-push was needed.
 
 ## Frozen invariants
 
@@ -356,16 +348,7 @@ Preserve:
 
 ## Active handoff
 
-For the next conversation, read in this order:
-
-1. root `AGENTS.md`
-2. `docs/TESTING_STRATEGY.md`
-3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
-4. `docs/D6_2H_SURVIVING_SQUARE_TABLE_OWNERSHIP_AUDIT_2026-09-09.md`
-5. latest `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-09_*.md`
-6. `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`
-
-The 2026-09-08 D6.2 handoff is historical after the new 2026-09-09 handoff is created.
+Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md` for the next residual audit. The D6.2i implementation handoff is now historical; do not implement the same slice again.
 
 ## Later priority after D6
 
