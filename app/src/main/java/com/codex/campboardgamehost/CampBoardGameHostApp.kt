@@ -1770,13 +1770,13 @@ internal fun CampBoardGameHostApp() {
         )
     }
 
-    val latestPersistActiveGameState by rememberUpdatedState { persistAndReleaseA4ObservationRebuildIfDurable(force = true) }
+    val latestPersistActiveGameState by rememberUpdatedState { force: Boolean ->
+        persistAndReleaseA4ObservationRebuildIfDurable(force = force)
+    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_PAUSE || event == Lifecycle.Event.ON_STOP) {
-                latestPersistActiveGameState()
-            }
+            persistRecoveryForLifecycleEvent(event, latestPersistActiveGameState)
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
