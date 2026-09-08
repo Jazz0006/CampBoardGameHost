@@ -40,7 +40,7 @@ PS5 lifecycle GREEN one-shot 34178595756
 R2 34178562642        PASS
 ```
 
-Later validation-runner cleanup and documentation commits advance the branch head without changing the checkpointed production behavior. Always re-query live GitHub before implementation, validation or merge.
+Later validation-runner cleanup and documentation commits advance the branch head without changing checkpointed production behavior. Always re-query live GitHub before implementation, validation or merge.
 
 The old D6 branch `codex/d6-ownership-plan` and closed draft PR #111 are historical evidence only. Do not implement that old D6 sequence.
 
@@ -349,4 +349,4 @@ D1–D5 are complete and integrated through PR #106. The old D6 plan assumed the
 
 Still a separate future campaign. Do not mix it into PS5.
 
-> Documentation checkpoint after PS5.2a: branch was advanced only by the two authoritative documentation updates after the validated production GREEN. Re-query live head before PS5.2b implementation.
+> Documentation checkpoint: PS5.2a production remains frozen at `5926138...`; later commits are validation cleanup and documentation only. Re-query live branch state before PS5.2b implementation.
