@@ -4,7 +4,8 @@
 > Repository: `Jazz0006/CampBoardGameHost`
 > Branch: `codex/d6-root-reaudit`
 > Draft PR: #113
-> Status: **PRE-ACCEPTANCE CLOSEOUT COMPLETE — USER-AUTHORED T4 `[full-ci]` CHECKPOINT NEXT — DO NOT MERGE YET**
+> Status: **PRE-ACCEPTANCE CLOSEOUT COMPLETE — USER-AUTHORED T4 `[full-ci]` CHECKPOINT REQUESTED — DO NOT MERGE YET**
+> Acceptance trigger note: this commit is intentionally user-authored so the PR synchronize event can select the full CI checkpoint; exact commit/run evidence is recorded only after completion.
 
 ## Accepted architecture entering T4
 
@@ -48,7 +49,7 @@ The only source cleanup selected is correcting stale KDoc that still described A
 
 ## T4 acceptance gate — PENDING
 
-The next commit must be authored through the user-connected GitHub path and contain `[full-ci]` in its commit message. CI must classify the PR synchronize event as a full checkpoint and run every selected gate at full strength.
+The current user-authored commit contains `[full-ci]` in its commit message. CI must classify the PR synchronize event as a full checkpoint and run every selected gate at full strength.
 
 Acceptance requires:
 
