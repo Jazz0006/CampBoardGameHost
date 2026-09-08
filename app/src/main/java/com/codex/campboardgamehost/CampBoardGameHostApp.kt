@@ -3197,6 +3197,10 @@ internal fun CampBoardGameHostApp() {
                                                 )
                                             }
                                             if (materialization.stateMutationRequired) {
+                                                requireClocktowerGameSession().synchronizePoisonTargetWithinCurrentRevision(
+                                                    targetSeat = materialization.intent.targetSeat,
+                                                )
+                                                publishClocktowerSessionView()
                                                 val poisonTargetName = materialization.intent.targetSeat
                                                     ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
                                                 clocktowerConfirmedPoisonTarget = poisonTargetName
