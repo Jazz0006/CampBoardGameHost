@@ -66,7 +66,7 @@ Suppressed ordinary attempts still pay snapshot + serialization identity cost.
 
 ## PS5.2a COMPLETE
 
-Old policy:
+Old lifecycle policy:
 
 ```text
 ON_PAUSE -> force=true
