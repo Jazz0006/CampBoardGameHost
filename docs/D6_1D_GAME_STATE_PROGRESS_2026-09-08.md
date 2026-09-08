@@ -4,7 +4,7 @@
 > Repository: `Jazz0006/CampBoardGameHost`
 > Branch: `codex/d6-root-reaudit`
 > Draft PR: #113 — do not merge yet
-> Status: **IN PROGRESS — role identity ownership slice complete; poison cadence characterization next**
+> Status: **D6.1d COMPLETE — canonical dynamic GameState writer cutover + global ownership audit PASS — D6.1e acceptance next**
 
 ## Baseline
 
@@ -108,57 +108,71 @@ ClocktowerGameSession role identity = canonical writer
 
 Remaining `clocktowerRole` / `clocktowerShownRole` assignments outside these active-session helpers are setup/restore construction or JSON materialization, not a parallel live-session writer. The Drunk setup-plan shown-role assignment occurs while building `committedCards` before the production session is created.
 
-## Remaining canonical GameState fields
+## D6.1d final cutover — COMPLETE
 
-After role identity, the remaining dynamic per-seat mechanical fields are primarily:
+The remaining dynamic per-seat mechanics were completed after the role-identity slice:
 
-- `alive` — currently derived from `PlayerCard.eliminatedRound`;
-- `poisoned` — currently derived from `clocktowerConfirmedPoisonTarget` plus alive state.
+- alive/death: ordinary execution, Virgin, Slayer and Dawn/night-death materialization all synchronize canonical session state before the `PlayerCard.eliminatedRound` mirror changes;
+- poisoned: Poisoner confirmation owns a `+1` accepted session boundary, while ordinary Dawn, Dusk expiry and successor/retry convergence use `+0` synchronization inside an already-accepted revision;
+- role identity: actual-role and shown-role changes remain session-first;
+- session creation/restore remains exactly one live owner per active Clocktower game.
 
-Seat/name, script and seed are stable/session identity rather than the next dynamic cutover target.
+The important acceptance rule is **writer ownership**, not elimination of every `PlayerCard`-to-`GameState` projection. `cards` still contains UI/presentation fields such as localization and `eliminatedRound`, and pre-session/recommendation/screen-local consumers legitimately construct derived read projections. Those projections are not writable canonical authorities.
 
-## Important revision-cadence finding
+## Global ownership audit — PASS
 
-Neither remaining field can blindly reuse “field mutation = +1 revision”.
+Read-only full-checkout audit run:
 
-### Alive
+```text
+34221212685 — PASS
+```
 
-Alive/death materialization is distributed across execution, Slayer, Virgin and dawn/night death flows. Several of these mutations occur inside a broader accepted day/night revision boundary rather than owning a separate revision. It also interacts with public observations, semantic action facts, Scarlet Woman succession and game-outcome evaluation.
+It proved the post-cutover topology:
 
-Therefore alive is not the next smallest safe slice.
+```text
+death session sync calls       4
+poison +1 commit calls         1
+poison +0 sync calls           3
+actual-role session writers    1
+shown-role session writers     1
+production session create      1
+production session restore     1
+```
 
-### Poisoned
+It also proved that from `main` the only changed production files are the App root plus the four Clocktower session/boundary files, and that Recovery, Clocktower rules, A4 epistemic production code and Werewolf production code remain unchanged. Combined D6.1d focused contracts and `:app:testFast` both passed in the same audit run.
 
-Poison ownership is more concentrated, but it still has two revision shapes:
+## D6.1e compatibility/read-side audit — PASS
 
-1. some poison confirmations explicitly own/trigger a game-state revision;
-2. Dusk expiry and some dawn materializations mutate poison state inside an already accepted broader day/night boundary and must **not** add a second revision.
+Read-only callsite audit run:
 
-Example: `materializeClocktowerPoisonExpiryAtDusk()` records the durable poison-expiry action and clears the current/confirmed poison target when materialization requires it, but does not itself call `advanceClocktowerGameStateRevision()`.
+```text
+34222474745 — PASS
+```
 
-This means the next step must characterize and preserve both semantics before moving poison ownership.
+Findings:
 
-## NEXT — poison cadence characterization
+1. no production caller uses the stateless `ClocktowerGameSession.commitGlobalActionFact(...)` or `commitGlobalEpistemicObservation(...)` companion forms directly; the live App uses instance methods;
+2. the stateless forms remain useful as pure transitions behind the instance API and deterministic replay/contract tests, so deleting them would not improve ownership;
+3. `updateGameState()` has no production callsite but remains a deliberate equality-based session contract protected by tests;
+4. `toGameSnapshot(...)` remains the strict ruleset-backed projection and is not a competing production owner;
+5. `cards.toClocktowerGameState(...)` has many production read callsites across pre-session, recommendation and UI flows, so wholesale replacement would mix presentation concerns back into session ownership;
+6. the only genuinely stale production items were two ownership comments in `ClocktowerGameSession.kt`; D6.1e updates those comments without changing runtime behavior.
 
-Before production edits, prove a narrow session contract capable of updating poison-owned `GameState` fields without forcing revision drift.
+## Final D6.1d ownership model
 
-Required characterization questions:
+```text
+ClocktowerGameSession
+= canonical writable session + dynamic mechanical GameState authority
 
-1. which poison transitions own a new game-state revision;
-2. which poison transitions occur inside an already-revisioned accepted boundary;
-3. target switching/clearing must modify only `PlayerState.poisoned` values;
-4. dead targets must not remain mechanically poisoned in the canonical projection;
-5. role/alive/shown identity and unrelated seats must remain unchanged;
-6. Recovery v2 and the existing durable poison action/materialization contracts remain unchanged.
+PlayerCard / App-root flow variables
+= presentation and orchestration mirrors
+= updated only after the relevant session boundary for canonical mechanics
 
-Do not begin the alive/death cutover until poison is complete and the remaining writer topology is re-audited.
+Derived cards.toClocktowerGameState(...) values
+= read/pre-session/recommendation adapters
+= not writable session authority
+```
 
-## Guardrails
+## NEXT — D6.1e acceptance
 
-- preserve exact revision count and ordering;
-- do not change gameplay semantics;
-- do not change Recovery v2 or persistence topology;
-- do not expose session `GameState` as globally canonical until all remaining audited writers are moved;
-- do not rewrite day/night mechanics wholesale;
-- do not touch Undercover/Werewolf;
-- do not merge PR #113.
+No additional production refactor is selected before acceptance. The next step is one user-authored `[full-ci]` logical checkpoint, then record the T4 result and re-check PR #113 merge readiness. Do not merge automatically.

@@ -5,7 +5,7 @@
 > Audit baseline: live `main` `2c495ee547e8327b0d3c3a811f5c891ba34fd863`
 > Active branch: `codex/d6-root-reaudit`
 > Draft PR: #113 `D6: Clocktower session authority cutover`
-> Status: **D6.0 + D6.1a + D6.1b + D6.1c COMPLETE — D6.1d CANONICAL GAMESTATE OWNERSHIP RE-AUDIT/CUTOVER NEXT — DO NOT MERGE YET**
+> Status: **D6.0–D6.1d COMPLETE — D6.1e T4 ACCEPTANCE NEXT — DO NOT MERGE YET**
 
 ## Read first
 
@@ -18,8 +18,10 @@ Treat these as authority before continuing D6:
 5. `docs/D6_1A_PRODUCTION_WIRING_CHARACTERIZATION_2026-09-08.md`
 6. `docs/D6_1B_SESSION_CORE_PROGRESS_2026-09-08.md`
 7. `docs/D6_1C_SESSION_AUTHORITY_CUTOVER_PROGRESS_2026-09-08.md`
-8. this handoff
-9. persistence archive docs only when historical persistence context is needed
+8. `docs/D6_1D_GAME_STATE_PROGRESS_2026-09-08.md`
+9. `docs/D6_1E_ACCEPTANCE_PROGRESS_2026-09-08.md`
+10. this handoff
+11. persistence archive docs only when historical persistence context is needed
 
 Before every write sequence, re-confirm live `main`, branch head, PR state and current checks.
 
@@ -120,90 +122,45 @@ D6.1c intentionally did **not** make session `gameState` production-canonical.
 
 Mechanics still mutate App-root `cards` and related state. `ClocktowerSessionState.gameState` is therefore not safe to consume as live canonical mechanics until D6.1d audits and moves the relevant mutation authority.
 
-## D6.1d — NEXT
+## D6.1d — COMPLETE: canonical dynamic GameState writer ownership
 
-### Title
+`ClocktowerGameSession` is now the canonical writable owner for the dynamic domain mechanics already represented by `GameState`:
 
-**Canonical GameState ownership re-audit and bounded cutover**
+- actual/shown role identity;
+- alive/death state;
+- poison state;
+- along with the D6.1c identity/revision/history/global-chronology subset.
 
-### First step — mandatory source audit
+App-root `PlayerCard` and flow variables remain necessary presentation/orchestration mirrors. Session mutation occurs first for canonical mechanics; UI mirrors follow.
 
-Do not begin by mechanically replacing `cards.toClocktowerGameState(...)` with `session.state.gameState`.
-
-First map the current post-D6.1c paths for:
-
-1. App-root mechanical state holders;
-2. every `cards` mutation (`add/remove/clear`, player-status/mechanical field mutations, replacements);
-3. every `cards.toClocktowerGameState(...)` projection;
-4. every `advanceClocktowerGameStateRevision()` callsite and its exact ordering relative to mutations/A4/persistence;
-5. every session `gameState` read/write/update path;
-6. Recovery restore/serialization mechanics;
-7. A4/recommendation/Judge consumers that need actual mechanical state versus revision identity only.
-
-Build a responsibility matrix:
+Global writer/dependency audit:
 
 ```text
-mechanical responsibility
--> owned state
--> mutation entry points
--> revision boundary
--> side effects / durability
--> downstream readers
--> current behavioral tests
--> candidate session API / owner
+34221212685 — PASS
 ```
 
-### Candidate ranking
+The audit also reran combined focused D6.1d contracts and `:app:testFast`, both PASS, and proved Recovery/rules/A4-epistemic/Werewolf production packages were not changed by the ownership cutover.
 
-Rank each candidate by:
+D6.1e compatibility/read-side callsite audit:
 
-- ownership cohesion;
-- ability to move complete state + writer authority together;
-- real reduction of root authority;
-- test coverage / characterization quality;
-- Android/Compose coupling;
-- semantic blast radius.
+```text
+34222474745 — PASS
+```
 
-Choose the **smallest high-confidence complete ownership slice**, not the largest block or easiest line-count reduction.
+It found no external production use of stateless session companion transitions or `updateGameState()`. Those APIs remain valid pure/session test contracts and should not be deleted merely for cleanup. It also found many legitimate `cards.toClocktowerGameState(...)` read/pre-session/recommendation/UI projections; do not mechanically replace them with session reads.
 
-### Implementation rule
+## D6.1e — NEXT: T4 acceptance
 
-For a behavior-preserving cutover:
+Before any new architecture slice:
 
-1. identify owning focused tests and baseline them;
-2. add a typed RED only if the source audit exposes a real uncovered invariant;
-3. add/adjust the smallest session-side API required by the chosen slice;
-4. use fail-closed large-file patching for the giant App root when needed;
-5. no intermediate committed state may have two writable canonical owners;
-6. preserve exact revision and side-effect ordering;
-7. rerun focused evidence + `:app:testFast` + affected T2/R2 as required;
-8. exact diff and writer/ownership audit before declaring the slice complete.
+1. finish comment/docs closeout only;
+2. create a user-authored `[full-ci]` checkpoint commit;
+3. verify full CI routing and all selected full-strength gates;
+4. record exact T4 evidence;
+5. re-confirm `main`, branch head and PR #113 checks;
+6. stop for merge/readiness review — do not merge automatically.
 
-### D6.1d non-goals
-
-Do not:
-
-- rewrite every day/night mechanic together;
-- claim session `gameState` is globally canonical before all audited writers for the chosen slice are moved;
-- change gameplay semantics;
-- change Recovery v2 schema/current-version-only policy;
-- reopen persistence trigger topology;
-- create synthetic NGJ `RulesetRef`;
-- add Compose dependency to session/domain;
-- introduce a broad Manager/Controller abstraction;
-- touch Undercover/Werewolf;
-- do opportunistic large-file cleanup;
-- optimize primarily for the 50 KiB target;
-- merge PR #113.
-
-## D6.1e — later acceptance/cleanup
-
-After canonical mechanical ownership is stable enough:
-
-- remove obsolete compatibility APIs only if no production caller remains;
-- re-audit remaining App-root writers;
-- focused + FAST + affected T2;
-- one reserved `[full-ci]` T4 at the D6.1 logical acceptance checkpoint.
+No additional GameState production refactor is authorized before this acceptance gate.
 
 ## Invariants
 
@@ -227,7 +184,5 @@ Preserve all:
 ## Suggested continuation prompt
 
 ```text
-请读取 AGENTS.md、docs/TESTING_STRATEGY.md、docs/CURRENT_DEVELOPMENT_ROADMAP.md、docs/D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md、docs/D6_1A_PRODUCTION_WIRING_CHARACTERIZATION_2026-09-08.md、docs/D6_1B_SESSION_CORE_PROGRESS_2026-09-08.md、docs/D6_1C_SESSION_AUTHORITY_CUTOVER_PROGRESS_2026-09-08.md 和当前 D6 handoff。
-
-重新确认 live main、codex/d6-root-reaudit、draft PR #113 和最新 checks。D6.1c 已完成；继续 D6.1d 时先做 canonical GameState/source writer 审计：映射 App-root mechanical state、所有 cards mutation、cards.toClocktowerGameState、advanceClocktowerGameStateRevision 调用、session gameState update/read，以及 Recovery/A4/recommendation/Judge 消费关系。先排名最小高置信完整 ownership slice，再决定实现，不要机械替换或一次重写 day/night mechanics。保持 Recovery v2、NGJ null RulesetRef、revision cadence、A4/persistence ordering 和 gameplay semantics 不变。按 risk-based tests-first/characterization + fail-closed large-file workflow 实施，完成 focused + FAST + affected T2/R2 + exact ownership audit 后停止，不要 merge PR。
+请读取 AGENTS.md、docs/TESTING_STRATEGY.md、docs/CURRENT_DEVELOPMENT_ROADMAP.md、docs/D6_1D_GAME_STATE_PROGRESS_2026-09-08.md、docs/D6_1E_ACCEPTANCE_PROGRESS_2026-09-08.md 和当前 D6 handoff。重新确认 live main、codex/d6-root-reaudit、draft PR #113 和最新 checks。D6.1d 已完成并通过全局 writer/dependency audit；不要继续扩大 GameState/read-side 重构。继续 D6.1e：确认 acceptance closeout diff 只包含 ownership 注释/docs，然后创建用户侧 `[full-ci]` checkpoint，验证完整 T4（Android full + assemble + ASP + Real Clingo 等所有被 classifier 选中的 gate）。全部 GREEN 后记录 exact commit/run/checks，做 PR merge-readiness 审计，但不要自动 merge。
 ```

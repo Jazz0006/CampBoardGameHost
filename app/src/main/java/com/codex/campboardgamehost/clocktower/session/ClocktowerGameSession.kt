@@ -37,11 +37,12 @@ internal data class GlobalActionFactCommit(
 )
 
 /**
- * Immutable read model for the D6.1c production cutover-safe subset.
+ * Immutable Compose-facing read model for session identity, revision, and semantic chronology.
  *
- * It intentionally excludes [GameState]: App-root mechanics are still the live mechanical source until
- * D6.1d proves and completes canonical GameState cutover. Compose may observe this value, but cannot
- * mutate session-owned identity, revision, or semantic chronology through it.
+ * [GameState] is canonical inside [ClocktowerGameSession], but remains intentionally absent here:
+ * production UI still owns [PlayerCard]-style presentation metadata and uses derived GameState
+ * projections for pre-session, recommendation, and screen-local reads. Excluding GameState keeps this
+ * view narrow and prevents a second broad mechanical read API while preserving the single session writer.
  */
 internal data class ClocktowerSessionView(
     val gameId: String,
@@ -306,9 +307,9 @@ internal class ClocktowerGameSession private constructor(
 
     companion object {
         /**
-         * Stateless session transition used by the production Compose adapter until the full game
-         * state is session-owned. It owns the same cursor/log semantics as the instance API without
-         * requiring a synthetic RulesetRef for scripts whose advanced ruleset is not loaded.
+         * Stateless pure transition retained behind the instance API and deterministic replay/contracts.
+         * It owns the same cursor/log semantics without requiring a synthetic RulesetRef for scripts whose
+         * advanced ruleset is not loaded. Production mutation enters through the live session instance.
          * Mechanical action capture does not increment game/input revisions: the production state
          * mutation that the fact records remains the owner of those revisions.
          */
@@ -361,9 +362,9 @@ internal class ClocktowerGameSession private constructor(
         }
 
         /**
-         * Stateless session transition used by the production Compose adapter until the full game
-         * state is session-owned. It owns the same cursor/log/revision semantics as the instance API
-         * without requiring a synthetic RulesetRef for scripts whose advanced ruleset is not loaded.
+         * Stateless pure transition retained behind the instance API and deterministic replay/contracts.
+         * It owns the same cursor/log/revision semantics without requiring a synthetic RulesetRef for scripts
+         * whose advanced ruleset is not loaded. Production mutation enters through the live session instance.
          */
         fun commitGlobalEpistemicObservation(
             semanticHistoryMode: ClocktowerSemanticHistoryMode,

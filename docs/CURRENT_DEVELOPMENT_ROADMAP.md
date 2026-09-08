@@ -10,8 +10,9 @@
 live main: 2c495ee547e8327b0d3c3a811f5c891ba34fd863
 active branch: codex/d6-root-reaudit
 active draft PR: #113 D6: Clocktower session authority cutover
-latest tested D6 production checkpoint: bd0161c50a7e4d2c94187c553546696bf6e81aee
-pre-closeout cleanup head: 68e8d8c9458a9e9e192c711199e352c9623db712
+latest D6.1d production checkpoint: a7d548991e108ad2adbfa747fc6442e112470321
+global ownership audit cleanup head: 6176e681f2245c5dfbfe1068cd6c168fc7bfd9cc
+D6.1e compatibility-audit cleanup head: 8db22dcf35a15f82382e69c50e64937022b0cc2e
 ```
 
 D6.1c validation evidence:
@@ -26,11 +27,11 @@ PR #113 remains **Draft / open / do not merge yet**.
 
 ## Current priority
 
-> **D6.0 COMPLETE → D6.1a COMPLETE → D6.1b COMPLETE → D6.1c COMPLETE → D6.1d canonical GameState ownership re-audit/cutover NEXT.**
+> **D6.0 COMPLETE → D6.1a COMPLETE → D6.1b COMPLETE → D6.1c COMPLETE → D6.1d COMPLETE → D6.1e T4 ACCEPTANCE NEXT.**
 
 The goal is ownership decomposition, not line-count shuffling. `CampBoardGameHostApp.kt` remains very large, but the primary acceptance criterion is that canonical state and policy move to coherent owners rather than merely moving code into helper files.
 
-The strongest existing owner is `ClocktowerGameSession`. D6.1c has now made it the sole writer for common Clocktower identity/revision/semantic-history authority. The remaining major session-authority gap is canonical mechanical `GameState` ownership.
+The strongest existing owner is `ClocktowerGameSession`. D6.1c made it the sole writer for identity/revision/semantic-history authority, and D6.1d completed canonical dynamic mechanical `GameState` writer ownership. App-root `PlayerCard` state remains a presentation/orchestration mirror rather than a competing canonical owner.
 
 Authoritative D6 docs:
 
@@ -38,6 +39,8 @@ Authoritative D6 docs:
 - `docs/D6_1A_PRODUCTION_WIRING_CHARACTERIZATION_2026-09-08.md`
 - `docs/D6_1B_SESSION_CORE_PROGRESS_2026-09-08.md`
 - `docs/D6_1C_SESSION_AUTHORITY_CUTOVER_PROGRESS_2026-09-08.md`
+- `docs/D6_1D_GAME_STATE_PROGRESS_2026-09-08.md`
+- `docs/D6_1E_ACCEPTANCE_PROGRESS_2026-09-08.md`
 - `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md`
 
 Historical PS5 completion evidence remains under `docs/archive/checkpoints/`.
@@ -150,55 +153,54 @@ D6.1c did **not** make `ClocktowerSessionState.gameState` the live canonical pro
 
 Detailed evidence: `docs/D6_1C_SESSION_AUTHORITY_CUTOVER_PROGRESS_2026-09-08.md`.
 
-## D6.1d — NEXT: canonical GameState ownership in cohesive pieces
+## D6.1d — COMPLETE: canonical dynamic GameState ownership
 
-### First action: source ownership audit, not implementation by assumption
+D6.1d moved complete dynamic writer families to the existing `ClocktowerGameSession` authority without replacing `PlayerCard` presentation state wholesale.
 
-Map the current post-D6.1c production paths for:
+Final writer topology:
 
-- App-root mechanical state holders;
-- every `cards` mutation path;
-- every `cards.toClocktowerGameState(...)` projection;
-- every `advanceClocktowerGameStateRevision()` callsite;
-- session `gameState` reads/writes;
-- A4/recommendation/Judge/Recovery dependencies on revision identity versus actual mechanics.
+```text
+actual role / shown role -> session boundary -> App mirror
+alive/death              -> session synchronization -> App eliminatedRound mirror
+Poisoner confirm          -> session +1 poison boundary -> App poison mirror
+Dawn/Dusk/successor poison-> session +0 synchronization -> App poison mirror
+```
 
-Rank candidate slices by:
+The +1/+0 split preserves the pre-existing accepted revision cadence, including state-only restore/retry convergence. No rule/planner semantics were moved into the session.
 
-1. ownership cohesion;
-2. ability to move state + complete mutation authority together;
-3. actual reduction in App-root authority;
-4. existing behavioral evidence / testability;
-5. Compose/Android coupling;
-6. blast radius.
+Global audit evidence:
 
-Then implement **one smallest high-confidence complete owner slice**. Do not choose the largest code block merely because it reduces the most lines.
+```text
+D6.1d global ownership audit 34221212685 — PASS
+combined focused contracts — PASS
+:app:testFast — PASS
+production dependency/scope audit — PASS
+```
 
-### D6.1d guardrails
+Compatibility/read-side audit:
 
-- do not rewrite all day/night mechanics at once;
-- preserve exact revision cadence/order;
-- do not change gameplay semantics;
-- do not change Recovery v2/current-version-only policy;
-- do not reopen RecoveryWriteGate/lifecycle topology;
-- do not create synthetic NGJ `RulesetRef`;
-- do not make Compose a session/domain dependency;
-- do not introduce a generic Manager/Controller;
-- do not touch Undercover/Werewolf;
-- do not merge PR #113.
+```text
+D6.1e callsite audit 34222474745 — PASS
+```
 
-Testing is risk-based: existing focused characterization first for behavior-preserving ownership movement; add a typed RED only when the audit exposes a real missing invariant. Run focused + `:app:testFast` + affected T2/R2 according to changed surface.
+That audit rejected a size-driven reader migration: many `cards.toClocktowerGameState(...)` callsites are legitimate derived read, pre-session, recommendation or UI projections. They are not writable canonical state. Stateless session transition helpers likewise remain useful internal/test contracts even though production mutation uses instance methods.
 
-## D6.1e — D6.1 cleanup and acceptance
+Detailed evidence: `docs/D6_1D_GAME_STATE_PROGRESS_2026-09-08.md`.
 
-After D6.1d ownership is stable:
+## D6.1e — NEXT: cleanup complete, T4 acceptance pending
 
-- remove obsolete compatibility paths only when no production caller remains;
-- re-audit Recovery/session projections and root writer count;
-- focused + FAST + affected T2;
-- one reserved `[full-ci]` T4 at the D6.1 logical acceptance checkpoint.
+No further production ownership migration is selected before acceptance. D6.1e only corrects stale session ownership comments and records the completed D6.1d topology.
 
-Real Clingo is not selected merely for structural ownership movement.
+Next gate:
+
+1. create one **user-authored** commit whose message contains `[full-ci]`;
+2. confirm CI classifies it as a full checkpoint (`android_full=true`, ASP and Oracle selected);
+3. require complete Android JVM + debug assemble and every selected full-strength external gate to pass;
+4. record exact checkpoint/run IDs in `docs/D6_1E_ACCEPTANCE_PROGRESS_2026-09-08.md`;
+5. re-check PR #113 live head/state/checks and merge readiness;
+6. do not merge automatically.
+
+The acceptance commit is intentionally user-authored rather than a `GITHUB_TOKEN` push, because bot pushes from a workflow do not reliably trigger a second workflow.
 
 ## D6.1 invariants
 
