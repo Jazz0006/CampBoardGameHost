@@ -5,6 +5,7 @@ import com.codex.campboardgamehost.clocktower.domain.DecisionHistoryArchive
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
+import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.requireCompatible
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
@@ -32,6 +33,25 @@ internal data class GlobalEpistemicObservationCommit(
 internal data class GlobalActionFactCommit(
     val entry: TimelineBoundActionFact,
     val actionTimeline: ActionFactTimeline,
+    val nextTimelineGlobalSequence: Long,
+)
+
+/**
+ * Immutable read model for the D6.1c production cutover-safe subset.
+ *
+ * It intentionally excludes [GameState]: App-root mechanics are still the live mechanical source until
+ * D6.1d proves and completes canonical GameState cutover. Compose may observe this value, but cannot
+ * mutate session-owned identity, revision, or semantic chronology through it.
+ */
+internal data class ClocktowerSessionView(
+    val gameId: String,
+    val scriptId: ScriptId,
+    val gameStateRevision: Long,
+    val playerInputRevision: Long,
+    val gameSeed: Long,
+    val actionTimeline: ActionFactTimeline,
+    val epistemicObservationLog: EpistemicObservationLog,
+    val semanticHistoryMode: ClocktowerSemanticHistoryMode,
     val nextTimelineGlobalSequence: Long,
 )
 
@@ -79,6 +99,20 @@ internal class ClocktowerGameSession private constructor(
         private set
 
     private var snapshotCache: GameSnapshot? = initialSnapshotCache
+
+    /** Read-only cutover projection suitable for publishing through an observable UI boundary. */
+    val view: ClocktowerSessionView
+        get() = ClocktowerSessionView(
+            gameId = state.gameId,
+            scriptId = state.gameState.script,
+            gameStateRevision = state.gameStateRevision,
+            playerInputRevision = state.playerInputRevision,
+            gameSeed = state.gameSeed,
+            actionTimeline = state.actionTimeline,
+            epistemicObservationLog = state.epistemicObservationLog,
+            semanticHistoryMode = state.semanticHistoryMode,
+            nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
+        )
 
     /**
      * Backward-compatible strict snapshot view for ruleset-backed sessions.
