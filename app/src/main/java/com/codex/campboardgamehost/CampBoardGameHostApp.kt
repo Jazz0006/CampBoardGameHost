@@ -163,6 +163,8 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
+import com.codex.campboardgamehost.clocktower.session.commitActualRoleBoundary
+import com.codex.campboardgamehost.clocktower.session.commitShownRoleBoundary
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointReducer
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointHostTransaction
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointRevisionIntent
@@ -2328,7 +2330,22 @@ internal fun CampBoardGameHostApp() {
                     ),
                 )
             }
-            advanceClocktowerGameStateRevision()
+            requireClocktowerGameSession().commitActualRoleBoundary(
+                seat = targetSeat,
+                actualRole = RoleId(nextRole.enName),
+                actualAlignment = when (nextRole.team) {
+                    ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider -> ClocktowerAlignment.GOOD
+                    ClocktowerTeam.Minion, ClocktowerTeam.Demon -> ClocktowerAlignment.EVIL
+                },
+                actualType = when (nextRole.team) {
+                    ClocktowerTeam.Townsfolk -> CharacterType.TOWNSFOLK
+                    ClocktowerTeam.Outsider -> CharacterType.OUTSIDER
+                    ClocktowerTeam.Minion -> CharacterType.MINION
+                    ClocktowerTeam.Demon -> CharacterType.DEMON
+                },
+            )
+            publishClocktowerSessionView()
+            invalidateA4RevisionScope()
             cards[index] = cards[index].copy(
                 actualRoleLabel = nextRole.nameFor(language),
                 clocktowerTeam = nextRole.team,
@@ -2340,7 +2357,13 @@ internal fun CampBoardGameHostApp() {
     fun setClocktowerShownRole(playerName: String, nextRole: ClocktowerRole) {
         val index = cards.indexOfFirst { it.name == playerName }
         if (index >= 0) {
-            advanceClocktowerGameStateRevision()
+            val targetSeat = index + 1
+            requireClocktowerGameSession().commitShownRoleBoundary(
+                seat = targetSeat,
+                shownRole = RoleId(nextRole.enName),
+            )
+            publishClocktowerSessionView()
+            invalidateA4RevisionScope()
             cards[index] = cards[index].copy(
                 roleLabel = nextRole.nameFor(language),
                 clocktowerShownRole = nextRole,
