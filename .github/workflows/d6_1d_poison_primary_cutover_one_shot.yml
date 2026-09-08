@@ -1,4 +1,5 @@
 name: D6.1d primary poison cutover one-shot
+# Retry after guard-only correction; production locks remain unchanged.
 
 on:
   push:
