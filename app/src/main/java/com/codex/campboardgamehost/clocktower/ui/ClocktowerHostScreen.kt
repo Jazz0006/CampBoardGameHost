@@ -241,7 +241,6 @@ internal fun ClocktowerJudgeScreen(
     automaticStorytellerInfo: Boolean,
     automaticStorytellerStyle: RecommendationStyle,
     cards: List<PlayerCard>,
-    records: List<EliminationRecord>,
     events: List<ClocktowerEvent>,
     script: ClocktowerScript,
     gameId: String,
@@ -301,7 +300,6 @@ internal fun ClocktowerJudgeScreen(
     onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,
     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
     onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
-    onPhaseChange: (ClocktowerPhase) -> Unit,
     onMovePreviousNightStep: () -> Unit,
     onSelectNightDeath: (String?) -> Unit,
     onConfirmDemonAttack: () -> Unit,
@@ -332,7 +330,6 @@ internal fun ClocktowerJudgeScreen(
     onAdvanceFromFirstNight: () -> Unit,
     onConfirmDay: () -> Unit,
     onConfirmNight: () -> Unit,
-    onShowResults: () -> Unit,
 ) {
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
@@ -1031,31 +1028,6 @@ internal fun ClocktowerJudgeScreen(
         onRecordEvent(ClocktowerEventType.RoleAction, step.title, detail, names)
         recordedNightSteps[recordKey] = true
     }
-    val phaseTitle = when (phase) {
-        ClocktowerPhase.FirstNight -> stringResource(R.string.clocktower_phase_first_night)
-        ClocktowerPhase.Dawn -> text("天亮", "Dawn")
-        ClocktowerPhase.Day -> stringResource(R.string.clocktower_phase_day, round)
-        ClocktowerPhase.Night -> stringResource(R.string.clocktower_phase_night, round)
-    }
-    val phaseProgress = when (phase) {
-        ClocktowerPhase.FirstNight -> stringResource(R.string.clocktower_progress_first_night)
-        ClocktowerPhase.Dawn -> text("天亮", "Dawn")
-        ClocktowerPhase.Day -> stringResource(R.string.clocktower_progress_day)
-        ClocktowerPhase.Night -> stringResource(R.string.clocktower_progress_night)
-    }
-    val phaseScript = when (phase) {
-        ClocktowerPhase.FirstNight -> stringResource(R.string.clocktower_script_first_night)
-        ClocktowerPhase.Dawn -> text("天亮了，所有人睁眼。", "Dawn. Everyone, open your eyes.")
-        ClocktowerPhase.Day -> stringResource(R.string.clocktower_script_day)
-        ClocktowerPhase.Night -> stringResource(R.string.clocktower_script_night)
-    }
-    val phaseAction = when (phase) {
-        ClocktowerPhase.FirstNight -> stringResource(R.string.clocktower_action_first_night)
-        ClocktowerPhase.Dawn -> text("宣布昨晚死亡，然后进入白天。", "Announce last night's deaths, then begin the day.")
-        ClocktowerPhase.Day -> stringResource(R.string.clocktower_action_day)
-        ClocktowerPhase.Night -> stringResource(R.string.clocktower_action_night)
-    }
-
     var nightStarted by nightStartedState
     var nightStepIndex by nightStepIndexState
     var dayMode by dayModeState
@@ -1283,20 +1255,6 @@ internal fun ClocktowerJudgeScreen(
         }
     }
     val executionThreshold = (publicAliveCards.size + 1) / 2
-    fun recordCurrentVote(): String? {
-        if (currentVoteCount >= executionThreshold) {
-            when {
-                currentVoteCount > highestVoteCount -> {
-                    highestVoteName = nomineeName
-                    highestVoteCount = currentVoteCount
-                }
-                currentVoteCount == highestVoteCount -> {
-                    highestVoteName = null
-                }
-            }
-        }
-        return highestVoteName?.takeIf { highestVoteCount >= executionThreshold }
-    }
     val scriptRoleNames = clocktowerRolesForScript(script).map { it.enName }.toSet()
     val scriptHasSlayer = "Slayer" in scriptRoleNames
     val scriptHasArtist = "Artist" in scriptRoleNames

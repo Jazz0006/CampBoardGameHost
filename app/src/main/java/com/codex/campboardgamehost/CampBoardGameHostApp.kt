@@ -2711,7 +2711,6 @@ internal fun CampBoardGameHostApp() {
                         automaticStorytellerInfo = automaticStorytellerInfo,
                         automaticStorytellerStyle = storytellerRecommendationUxPolicy.recommendationStyle,
                         cards = cards,
-                        records = records,
                         events = clocktowerEvents,
                         script = currentClocktowerScript,
                         gameId = clocktowerGameId,
@@ -2801,22 +2800,6 @@ internal fun CampBoardGameHostApp() {
                             addClocktowerEvent(type, title, detail, names)
                         },
                         onRecordEpistemicObservation = ::recordEpistemicObservation,
-                        onPhaseChange = { nextPhase ->
-                            // A phase switch ends the preceding decision window. It is a
-                            // timeline fact, not a provisional UI edit, so stale drafts must
-                            // not be allowed to publish into the new phase.
-                            recordClocktowerPhaseAdvance(nextPhase)
-                            advanceClocktowerGameStateRevision()
-                            clocktowerPhase = nextPhase
-                            if (nextPhase == ClocktowerPhase.FirstNight || nextPhase == ClocktowerPhase.Night) {
-                                resetClocktowerNightFlow()
-                                clocktowerDemonSuccessorTarget = null
-                                clearConfirmedDemonSuccessorTarget()
-                            }
-                            if (nextPhase == ClocktowerPhase.Day) {
-                                resetClocktowerDayFlow()
-                            }
-                        },
                         onSelectNightDeath = { selected ->
                             advanceClocktowerPlayerInputRevision()
                             val reducedCheckpoint = NightCheckpointReducer.reduce(
@@ -4064,15 +4047,6 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerDemonSuccessorTarget = null
                                 clearConfirmedDemonSuccessorTarget()
                             }
-                        },
-                        onShowResults = {
-                            gameOutcome = gameOutcome ?: GameOutcome(
-                                title = context.getString(R.string.outcome_manual_title),
-                                summary = context.getString(R.string.outcome_manual_summary),
-                                reason = context.getString(R.string.outcome_manual_reason),
-                            )
-                            showResults = true
-                            addOutcomeEvent(gameOutcome)
                         },
                     )
 
