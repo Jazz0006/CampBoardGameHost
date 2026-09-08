@@ -3437,6 +3437,10 @@ internal fun CampBoardGameHostApp() {
                                 val index = cards.indexOfFirst { it.name == nominatorName }
                                 val nominatorCard = cards.getOrNull(index)
                                 if (index >= 0 && nominatorCard != null && nominatorCard.eliminatedRound == null) {
+                                    requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
+                                        targetSeat = index + 1,
+                                    )
+                                    publishClocktowerSessionView()
                                     cards[index] = nominatorCard.copy(eliminatedRound = round)
                                     records.add(
                                         EliminationRecord(
