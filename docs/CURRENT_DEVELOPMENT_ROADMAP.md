@@ -20,13 +20,13 @@ Validation on `5926138...`:
 34178562642 — R2 PASS
 ```
 
-Later commits are validation cleanup/docs-only. Re-query live GitHub before implementation or merge.
+PS5.2b was audit/docs-only; no production changes were required after `5926138...`.
 
 ## Current priority
 
-> **PS5.2b — SideEffect ownership audit.**
+> **Final PS5 automated acceptance.**
 
-Map every durable mutation that can change `activeGameRecoverySnapshot()`, identify transitions relying only on later Compose `SideEffect`, then decide whether SideEffect should be retained, guarded by a central dirty/retry signal, or replaced by explicit durable ownership. Do not assume removal is the goal.
+PS5 trigger design is complete. Run the reserved full persistence T4 gate on the current branch, then perform real-device process-loss/restart acceptance before calling the Persistence Simplification campaign release-ready.
 
 Detailed handoff: `docs/PS5_PERSISTENCE_TRIGGER_PROGRESS_2026-09-08.md`.
 
@@ -42,13 +42,13 @@ PS1 COMPLETE
 PS2 COMPLETE
 PS3 COMPLETE
 PS4 COMPLETE
-PS5 IN PROGRESS
+PS5 IN PROGRESS — final acceptance pending
   PS5.0 COMPLETE
   PS5.1a COMPLETE
   PS5.1b COMPLETE
   PS5.1c COMPLETE
   PS5.2a lifecycle pause/stop duplicate-write reduction COMPLETE
-  PS5.2b SideEffect ownership audit NEXT
+  PS5.2b SideEffect ownership audit COMPLETE
 ```
 
 ## PS5.1 safety foundation
@@ -65,20 +65,11 @@ CI 34177323891 PASS
 R2 34177323827 PASS
 ```
 
-PS5.1c found a real nested mutable-alias hazard; the gate now remembers timestamp-normalized persisted Recovery representation as immutable content identity. Suppressed ordinary attempts still pay snapshot + serialization identity cost.
+PS5.1c found a real nested mutable-alias hazard; the gate now remembers timestamp-normalized persisted Recovery representation as immutable content identity.
 
 ## PS5.2a COMPLETE
 
-Old:
-
-```text
-ON_PAUSE -> force=true
-ON_STOP  -> force=true
-```
-
-RED `192f031b67c9b4eb46bada4928425f9de332bb4a`; focused RED `34178392065` proved successful pause + unchanged stop wrote twice while retry and changed-content contracts already passed.
-
-GREEN:
+GREEN production checkpoint:
 
 ```text
 5926138d0557835f281ba15b4051f50fa3ae741e
@@ -88,7 +79,20 @@ ON_STOP  -> force=false
 
 Successful pause refreshes freshness; unchanged stop deduplicates; failed pause is retried at stop via `retryRequired`; changed durable content still writes. A4 ordering remains unchanged.
 
-## Current trigger topology
+## PS5.2b COMPLETE — SideEffect retained by design
+
+The ownership audit rejected mechanical SideEffect removal.
+
+Reasons:
+
+1. `activeGameRecoverySnapshot()` spans common state plus Undercover, Werewolf and Clocktower durable state.
+2. Undercover and Werewolf have direct durable mutations without a central recovery revision.
+3. Clocktower revisions are broad but not universal; persisted mechanics such as ghost-vote authority can change through owners that do not bump the current revision pair.
+4. Explicit per-action persistence calls cover only a small subset of transitions; many gameplay mutations intentionally rely on the generic ordinary trigger.
+5. A failed ordinary/A4 persistence attempt must retain another foreground opportunity; change-only triggering would require a new retry scheduler/state machine.
+6. Physical synchronous `.commit()` duplication is already addressed by `RecoveryWriteGate`, and duplicate lifecycle success writes were reduced in PS5.2a. The remaining snapshot/identity construction cost has not been measured as a performance problem.
+
+Final intended topology:
 
 ```text
 SideEffect -> ordinary persist -> RecoveryWriteGate
@@ -96,29 +100,30 @@ ON_PAUSE  -> forced persist   -> RecoveryWriteGate
 ON_STOP   -> ordinary persist -> RecoveryWriteGate
 ```
 
-## PS5.2b audit requirements
+Do not reopen SideEffect removal without profiling evidence. A future measured performance campaign may introduce a universal durable mutation signal if justified, but it is not part of Persistence Simplification.
 
-Before changing SideEffect:
+## Final PS5 automated acceptance
 
-1. enumerate every `activeGameRecoverySnapshot()` input;
-2. trace every production mutation owner;
-3. map explicit persistence/A4 boundaries;
-4. identify durable changes relying only on later SideEffect;
-5. separate durable changes from transient recomposition;
-6. assess a central dirty/revision signal without scattered UI save calls;
-7. prove future retry after failure with no new mutation;
-8. preserve A4 persistence-before-release;
-9. measure physical `.commit()` and avoidable snapshot/serialization work.
+Run once at this logical campaign checkpoint:
 
-Valid outcomes: retain, guard, or replace SideEffect based on proven correctness and simplicity.
+- Android `testFull`;
+- `:app:assembleDebug`;
+- ASP contract/oracle harness;
+- real Clingo cross-validation;
+- R2;
+- exact production-path/static audit;
+- `git diff --check` and changed-file audit.
 
-## Validation
+Then perform real-device process-loss/restart acceptance covering at minimum:
 
-```text
-behavior RED -> focused tests -> :app:testFast -> R2 -> git diff --check -> exact audit -> remote-head race check
-```
+- restore a recent active game after process kill/relaunch;
+- reject stale/unsupported Recovery as designed;
+- resume safe entry point rather than raw transient UI;
+- verify already-published Clocktower history/information survives;
+- verify mandatory continuation state survives where applicable;
+- verify no duplicated lifecycle write behavior causes visible regression.
 
-Final PS5 acceptance only: Android `testFull`, `:app:assembleDebug`, ASP/oracle, real Clingo, R2, exact production-path audit, real-device process-loss/restart acceptance.
+Only after automated T4 plus real-device acceptance should PS5 / Persistence Simplification be declared release-ready and PR #112 considered for merge.
 
 ## Non-goals
 
