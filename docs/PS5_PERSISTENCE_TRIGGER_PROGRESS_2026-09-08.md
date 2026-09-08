@@ -3,7 +3,7 @@
 > Date: 2026-09-08 Australia/Sydney
 > Branch: `codex/persistence-simplification`
 > Draft PR: #112
-> Status: **PS5 IN PROGRESS — PS5.1 COMPLETE; PS5.2 planning is NEXT**
+> Status: **PS5 IN PROGRESS — PS5.2a COMPLETE; PS5.2b ordinary-trigger audit is NEXT**
 
 ## 1. Campaign position
 
@@ -14,11 +14,12 @@ PS2  typed Recovery writer                             COMPLETE
 PS3  typed safe Preview/Restore + atomic apply         COMPLETE
 PS4  legacy persistence cleanup                        COMPLETE
 PS5  persistence-trigger simplification                IN PROGRESS
-  PS5.0 fresh trigger/ownership audit                  COMPLETE
+  PS5.0  fresh trigger/ownership audit                 COMPLETE
   PS5.1a semantic Recovery write deduplication         COMPLETE
   PS5.1b failed-write retry correctness                COMPLETE
   PS5.1c RecoverySnapshot equality/object-graph audit  COMPLETE
-  PS5.2 further trigger reduction                      NEXT / PLANNING
+  PS5.2a lifecycle pause/stop duplicate-write reduction COMPLETE
+  PS5.2b ordinary trigger / SideEffect ownership audit NEXT
 ```
 
 PS4 completion evidence remains frozen in:
@@ -26,23 +27,18 @@ PS4 completion evidence remains frozen in:
 - `docs/PS4_FINAL_CHECKPOINT_2026-09-08.md`
 - `docs/PS4_CLEANUP_PROGRESS_2026-09-07.md`
 
-Do not reopen PS4 schema/content cleanup as part of PS5 unless a correctness defect proves it necessary.
+Do not reopen PS4 schema/content cleanup unless a correctness defect proves it necessary.
 
-## 2. Live repository state at the PS5.1c GREEN checkpoint
+## 2. Live repository / checkpoint state
 
-The branch was re-queried before PS5.1c implementation. At that time:
+Persistence Simplification still targets:
 
 ```text
 main:
 ac71cbe392fb542727dc0c2d69ac82c5fdc0435e
-
-branch / PR head before PS5.1c code:
-2c56bb026521bd4f7946e77f5dd12651c8023f94
 ```
 
-The head after `39229bf...` and before PS5.1c contained documentation-only commits; no unreviewed production change had appeared.
-
-PR #112 was confirmed:
+PR #112 remains:
 
 ```text
 state: open
@@ -51,47 +47,61 @@ merged: false
 base: main @ ac71cbe392fb542727dc0c2d69ac82c5fdc0435e
 ```
 
-Latest PS5.1c production GREEN checkpoint:
+Latest production-code GREEN for PS5.2a:
 
 ```text
-e2dbd1db05812ecbd0c0b2e751dd42b9fdc3cd23
-fix: freeze recovery write identity
+5926138d0557835f281ba15b4051f50fa3ae741e
+fix: dedupe successful pause-stop Recovery writes
 ```
 
-Validation on `e2dbd1d...`:
+The branch later advanced through temporary validation-runner cleanup only. Immediately before this documentation update the live branch head was:
 
 ```text
-CI run 34177323891
-Android FAST unit tests  PASS
-CI gate                 PASS
-full Android/T4         intentionally not selected
-
-R2 run 34177323827      PASS
+31287f4e1d1999dbdba866db06052230d4179034
+chore: remove PS5 lifecycle GREEN runner
 ```
 
-This remains a FAST logical checkpoint. Full T4 is reserved for final PS5 acceptance.
+That cleanup commit has the same production/test tree as `5926138...` plus no temporary workflow files.
 
-## 3. PS5 product/architecture boundary
+Validation for the PS5.2a GREEN content:
 
-PS5 changes **when/how often current Recovery is physically written**. It must not redesign the Recovery payload that PS4 already stabilized.
+```text
+focused owning GREEN + :app:testFast + git diff --check
+one-shot run 34178595756  PASS
+
+R2 on production GREEN 5926138...
+run 34178562642          PASS
+```
+
+The ordinary PR CI on `5926138...` was cancelled only because the branch immediately advanced to the temporary GREEN validation commit. The one-shot runner executed the required full `:app:testFast` on the same GREEN content and passed. Cleanup commits authored by `github-actions[bot]` report `action_required` for ordinary CI/R2 because GitHub does not recursively trigger workflows from that bot push; this is not a test failure.
+
+Full T4 remains reserved for the final PS5 acceptance checkpoint.
+
+## 3. Frozen product / correctness boundary
+
+PS5 changes **when/how often current Recovery is attempted or physically written**. It must not redesign the Recovery payload stabilized by PS4.
 
 Frozen constraints:
 
 - Recovery remains current-version-only emergency continuity;
 - Recovery v2 schema/content ownership is unchanged;
-- unsupported/old Recovery still fails closed;
+- unsupported/old Recovery fails closed;
 - Archive remains independent;
-- the 4-hour freshness contract remains;
-- A4 observation/cache publication may not cross its durability boundary before persistence is successful;
-- lifecycle last-chance persistence must remain safe until a later audit proves a trigger is redundant.
+- the freshness window remains 4 hours;
+- A4 observation/cache publication may not cross its durability boundary before persistence succeeds;
+- failed physical writes must retain a future retry path;
+- trigger reduction must reduce real synchronous persistence work, not merely relocate it.
 
-Do not combine trigger cleanup with another Recovery schema migration.
+## 4. PS5.0 — fresh trigger audit — COMPLETE
 
-## 4. PS5.0 — fresh trigger audit
+The live persistence path was concentrated around:
 
-The fresh branch audit found that the current app is not dominated by many independent persistence writers. The important path is concentrated around `persistActiveGameStateIfNeeded()` / `persistAndReleaseA4ObservationRebuildIfDurable()`.
+```text
+persistActiveGameStateIfNeeded()
+-> persistAndReleaseA4ObservationRebuildIfDurable()
+```
 
-The two principal trigger classes are:
+At PS5 start the principal trigger topology was:
 
 ```text
 Compose SideEffect
@@ -101,235 +111,234 @@ ON_PAUSE / ON_STOP
 -> force=true lifecycle persistence attempt
 ```
 
-The main inefficiency was that `SideEffect` can run repeatedly during recomposition while the actual durable game content has not changed, causing repeated synchronous SharedPreferences writes.
-
-The audit also confirmed a real correctness invariant:
+The A4 ordering invariant was confirmed as real:
 
 ```text
-A4 durable observation
+A4 observation becomes durable
 -> persistence succeeds
 -> durability gate releases
--> cache rebuild may be published
+-> cache rebuild may publish
 ```
 
-Therefore the first PS5 change was deliberately **not** “delete SideEffect”. It was to make duplicate ordinary attempts cheap while preserving the existing durability boundary.
+Therefore PS5 did not begin by deleting triggers.
 
-## 5. PS5.1a — semantic Recovery write gate
+## 5. PS5.1a / PS5.1b — RecoveryWriteGate — COMPLETE
 
-Tests-first RED checkpoint:
+PS5.1a established semantic duplicate suppression:
 
 ```text
-d4eb000e602ef3a7c170e071292b7249c3a09c2f
-test: define semantic Recovery write deduplication
+d4eb000e602ef3a7c170e071292b7249c3a09c2f  RED
+22086dd984fb7992d00e3226d444affb76adb509  gate introduction
+dbc4dcbd6b81d27524bb6f6688f49972ef17de4d  production cutover
 ```
 
-Production introduction:
+PS5.1b then pinned failed-write retry:
 
 ```text
-22086dd984fb7992d00e3226d444affb76adb509
-feat: add Recovery semantic write gate
-
-dbc4dcbd6b81d27524bb6f6688f49972ef17de4d
-refactor: dedupe semantic Recovery writes
+1b22563691c2a7e6d3ba07cdc37b3c8c03a91130  RED
+39229bfdddba5837a9368706946f62fd94915109  GREEN
+CI 34174011104 PASS
+R2 34174011121 PASS
 ```
 
-Current behavior:
+Current gate contract:
 
-- first snapshot must physically write;
-- ordinary attempts with equal game/recovery content but a different `savedAtMillis` reuse the last successful durable result and do not physically write again;
-- real durable snapshot-content changes must physically write;
-- failed writes are never treated as newly durable;
-- `clearSavedGameState()` clears the write gate;
-- lifecycle persistence uses `force=true` and therefore still performs a physical write / freshness refresh;
-- the A4 release path continues to consume the persistence result rather than bypassing durability.
-
-Current production wiring remains:
-
-```text
-SideEffect
--> persistAndReleaseA4ObservationRebuildIfDurable(force = false)
--> RecoveryWriteGate
-
-ON_PAUSE / ON_STOP
--> persistAndReleaseA4ObservationRebuildIfDurable(force = true)
--> RecoveryWriteGate
-```
-
-No trigger was removed during PS5.1.
-
-## 6. PS5.1b — failed forced-write retry correctness
-
-A safety review found an edge case in the first gate design:
-
-```text
-A successfully durable
--> forced lifecycle rewrite of A fails
--> next ordinary A attempt
-```
-
-The ordinary attempt must **not** be deduplicated merely because A matched the last previously successful content. A failed physical write means another physical attempt is required before duplicate suppression may resume.
-
-RED checkpoint:
-
-```text
-1b22563691c2a7e6d3ba07cdc37b3c8c03a91130
-test: pin recovery retry after forced failure
-CI run 34173747359
-Android FAST unit tests: expected FAIL
-```
-
-GREEN checkpoint:
-
-```text
-39229bfdddba5837a9368706946f62fd94915109
-fix: retry recovery write after forced failure
-```
-
-`RecoveryWriteGate` tracks `retryRequired`:
-
-- any failed physical write sets `retryRequired = true`;
+- the first Recovery must physically write;
+- an ordinary attempt with unchanged durable semantic content may skip the physical write;
+- a real content change must physically write;
+- `force=true` always attempts a physical write;
+- any failed physical write sets `retryRequired`;
 - ordinary duplicate suppression is disabled while retry is required;
-- the next successful physical write clears the retry requirement;
-- clearing saved state also clears the retry requirement.
+- the next successful physical write clears retry-required state;
+- `clearSavedGameState()` resets the gate;
+- A4 release still consumes the persistence result and cannot bypass durability.
 
-Validation on that GREEN head:
+## 6. PS5.1c — mutable-alias safety — COMPLETE
 
-```text
-CI 34174011104  PASS (FAST)
-R2 34174011121  PASS
-```
+The full reachable Recovery object-graph audit disproved the assumption that shallow `data class` equality was universally safe.
 
-## 7. PS5.1c — RecoverySnapshot mutable-alias safety audit — COMPLETE
+Concrete risk:
 
-### 7.1 Risk found
+- Recovery copies major outer lists;
+- `RecordedEpistemicObservation` retains nested proposition values;
+- `InformationProposition.AnyOf`, `AllOf`, `NumericResult.subjectSeats`, and `BooleanResult.subjectSeats` do not universally deep-freeze incoming collections;
+- a shallow remembered `RecoverySnapshot` could therefore alias live nested mutable state and miss a required write after in-place mutation.
 
-The audit disproved the assumption that the complete reachable Recovery object graph can safely be retained as the equality baseline merely because the top-level models use Kotlin `data class` / `val` fields.
+Other requested branches were also audited: `ClocktowerNightCheckpoint`, `ActionFact`, `ActionFactTimeline`, semantic events, setup rotation bookkeeping, ghost-vote authority, highest-vote state, cards, elimination records, outcome and remaining scalar/value recovery fields. Several are intrinsically immutable/replacement based, but the complete graph is not guaranteed recursively immutable.
 
-The original gate normalized only the timestamp:
-
-```text
-lastDurableContent = snapshot.copy(savedAtMillis = 0)
-```
-
-That copy was shallow. A nested mutable object supplied by a caller could therefore remain shared between live state and the gate's remembered baseline.
-
-A concrete durable reachable hole exists in epistemic observations:
-
-- `activeGameRecoverySnapshot()` copies the **outer** `clocktowerEpistemicObservations` list;
-- `RecordedEpistemicObservation` directly retains `recipientSeats` and `proposition`;
-- `InformationProposition.AnyOf`, `AllOf`, `NumericResult.subjectSeats`, and `BooleanResult.subjectSeats` directly retain incoming collection references rather than taking defensive immutable copies;
-- therefore a caller-owned mutable nested collection can be shared by the new snapshot and the gate's previous shallow baseline.
-
-That is sufficient for this failure mode:
-
-```text
-first write succeeds
--> gate remembers shallow Recovery object graph
--> a nested durable collection mutates in place
--> remembered baseline sees the same mutation
--> new structural equality says “unchanged”
--> required physical write is incorrectly suppressed
-```
-
-### 7.2 Object-graph audit evidence
-
-The rest of the specifically requested graph was checked rather than assumed safe:
-
-- `ClocktowerNightCheckpoint` consists of scalar/string/enum checkpoint values and emits a fresh persisted-value map; it is also transiently constructed by the Recovery codec rather than retained as the gate baseline.
-- `ActionFact` variants contain scalar/value identifiers only.
-- `ActionFactTimeline` defensively snapshots `entries.toList()`, wraps it with `Collections.unmodifiableList`, and appends by returning a new timeline.
-- semantic `ClocktowerEvent` elements are value objects; Recovery copies the outer event list.
-- `TroubleBrewingSetupRotationRecord` contains Sets; the type itself does not enforce defensive copying, although the production factory creates `toSet()` snapshots. This is another reason the gate must not depend on universal deep immutability.
-- `ClocktowerGhostVoteAuthority.confirmVote()` returns a copied authority with a replacement set; app wiring replaces the authority state rather than mutating the retained object in place.
-- highest-vote name/count are scalar state replacements.
-- `PlayerCard`, `EliminationRecord`, and `GameOutcome` are value objects; `ClocktowerRole` is scalar/string/enum data. Recovery copies the outer card/record lists.
-- `ClocktowerRecoveryIdentity`, position, scalar mechanics, revisions, sequence counters and outcome fields are value-semantic scalar/enums/strings.
-- `activeGameRecoverySnapshot()` freezes the major outer lists (`cards`, `records`, bluff/slayer/artist name lists, events, observations), but this is not a recursive deep freeze and therefore was not accepted as sufficient protection.
-
-Conclusion: **the reachable graph is not universally alias-safe, so the gate itself must hold an identity that cannot share mutable nested objects with live state.**
-
-### 7.3 Tests-first RED
-
-Behavior-level RED checkpoint:
+Tests-first lineage:
 
 ```text
 5736951007f66df042cb55d5a2b4122d064cf321
-test: expose mutable recovery alias suppression
-```
+  test: expose mutable recovery alias suppression
 
-The owning `RecoveryWriteGateTest` constructs a snapshot backed by a mutable durable nested list, successfully persists it, mutates the same list in place, then attempts persistence again. Correct behavior requires two physical writes.
-
-Against the pre-fix shallow-baseline implementation, the old remembered snapshot and new snapshot share that list, so the second equality check incorrectly suppresses the write. The RED commit's automatically started CI was superseded/cancelled when the GREEN commit advanced the same PR branch; the failing behavior is nevertheless deterministic from the test and the pre-fix implementation. The RED commit remains separate in history as tests-first evidence.
-
-### 7.4 Minimal GREEN
-
-GREEN checkpoint:
-
-```text
 e2dbd1db05812ecbd0c0b2e751dd42b9fdc3cd23
-fix: freeze recovery write identity
+  fix: freeze recovery write identity
 ```
 
-The gate no longer stores a `RecoverySnapshot` object graph as `lastDurableContent`. It computes the exact persisted Recovery representation with `savedAtMillis` normalized to zero and stores its resulting immutable `String` as `lastDurableContentIdentity`.
-
-Consequences:
-
-- the remembered baseline cannot alias any caller/live mutable object;
-- a later in-place nested mutation produces a new serialized durable identity and therefore requires a physical write;
-- timestamp-only changes remain suppressible;
-- `force=true`, `retryRequired`, clear/reset, and A4 persistence-result ordering are unchanged;
-- semantic comparison now follows the actual Recovery payload rather than non-persisted UI/object identity.
-
-Trade-off to carry into PS5.2: ordinary save attempts now build the serialized durable identity before deciding whether `.commit()` is necessary. This still suppresses synchronous physical writes, but `SideEffect` may cause avoidable snapshot/JSON work even when the physical write is skipped. PS5.2 should reduce unnecessary **attempts/identity construction** as well as count actual synchronous `.commit()` calls; do not mistake moving work for eliminating it.
+The gate now remembers the timestamp-normalized **persisted Recovery representation** as an immutable content identity rather than retaining a shallow Recovery object graph.
 
 Validation:
 
 ```text
-CI 34177323891  PASS
-  Android FAST unit tests  PASS
-  CI gate                 PASS
-R2 34177323827            PASS
+CI 34177323891 PASS — Android FAST + CI gate
+R2 34177323827 PASS
 ```
 
-PS5.1c is therefore COMPLETE.
+Important performance consequence carried into PS5.2: an ordinary attempt still constructs a Recovery snapshot and serialized durable identity even when `.commit()` is suppressed.
 
-## 8. PS5.2 — further trigger reduction — NEXT / PLANNING
+## 7. PS5.2a — lifecycle pause/stop duplicate physical write — COMPLETE
 
-PS5.2 must start from the still-live topology, not from a predetermined trigger-deletion target:
+### 7.1 Problem proven
+
+The old lifecycle observer treated both `ON_PAUSE` and the normally following `ON_STOP` as unconditional `force=true` writes. A normal background transition could therefore perform two synchronous physical writes of identical durable content.
+
+The lifecycle policy was first extracted behind a typed helper without changing behavior. The App now delegates lifecycle events to `persistRecoveryForLifecycleEvent(...)`; `SideEffect` remains separate and untouched.
+
+### 7.2 Behavior-level RED
+
+RED test checkpoint:
+
+```text
+192f031b67c9b4eb46bada4928425f9de332bb4a
+test: define lifecycle Recovery write deduplication
+```
+
+The owning test fixes three contracts:
+
+1. successful `ON_PAUSE` followed by unchanged `ON_STOP` must result in only one physical write;
+2. if the pause physical write fails, stop must still physically retry;
+3. if durable content changes between pause and stop, stop must physically write the changed content.
+
+Focused RED validation used a temporary exact-head runner:
+
+```text
+run 34178392065  PASS as RED harness
+3 tests total
+exactly 1 failure required:
+pauseThenStopAvoidsSecondPhysicalWriteAfterSuccessfulPause
+expected physical writes: 1
+actual physical writes:   2
+```
+
+The retry and changed-content tests already passed against the old policy, proving the RED was specific to duplicate successful pause/stop writes rather than a broken fixture.
+
+### 7.3 Minimal GREEN
+
+GREEN checkpoint:
+
+```text
+5926138d0557835f281ba15b4051f50fa3ae741e
+fix: dedupe successful pause-stop Recovery writes
+```
+
+Current lifecycle policy:
+
+```text
+ON_PAUSE
+-> force=true
+-> freshness physical-write checkpoint
+
+ON_STOP
+-> force=false ordinary attempt
+-> unchanged content after successful pause: suppressed
+-> pause failure / retryRequired: physically retried
+-> changed durable content since pause: physically written
+```
+
+This deliberately does **not** delete either lifecycle event. It changes ownership semantics so `ON_STOP` remains a last follow-up opportunity without automatically paying for a second identical `.commit()`.
+
+A4 ordering remains unchanged because both lifecycle paths still call the same `persistAndReleaseA4ObservationRebuildIfDurable(force=...)` boundary.
+
+Validation:
+
+```text
+run 34178595756
+  exact slice changed-file allowlist PASS
+  git diff --check                    PASS
+  focused RecoveryLifecyclePersistenceTest PASS
+  :app:testFast                       PASS
+
+R2 34178562642                        PASS
+```
+
+Exact final diff from the pre-PS5.2a docs head `e2ed598...` through cleanup head `31287f4...` contains only:
+
+```text
+app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryLifecyclePersistence.kt
+app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryLifecyclePersistenceTest.kt
+```
+
+The App change is only the behavior-preserving delegation from inline lifecycle branching to the typed policy helper. No SideEffect, Recovery schema, A4 semantics or domain state was removed.
+
+## 8. Current live trigger architecture
+
+After PS5.2a:
 
 ```text
 Compose SideEffect
--> ordinary persistence attempt
+-> persistAndReleaseA4ObservationRebuildIfDurable(force = false)
 -> RecoveryWriteGate
 
-ON_PAUSE / ON_STOP
--> force=true lifecycle persistence
+ON_PAUSE
+-> persistAndReleaseA4ObservationRebuildIfDurable(force = true)
+-> RecoveryWriteGate
+
+ON_STOP
+-> persistAndReleaseA4ObservationRebuildIfDurable(force = false)
 -> RecoveryWriteGate
 ```
 
-Planning questions and current direction:
+Consequences:
 
-1. **`SideEffect`**: retaining it is currently the safest generic retry/change detector, but it also rebuilds snapshots/serialized identities on recomposition. Prefer moving toward explicit durable-change ownership or a durable dirty/revision marker only after every durable mutation path is proven covered.
-2. **Durable transactions**: evaluate a small transaction/dirty boundary that marks Recovery dirty when durable game facts commit, rather than making Compose recomposition the primary semantic trigger. Do not introduce this until coverage of all durable mutation owners is auditable.
-3. **`ON_PAUSE` + `ON_STOP`**: do not mechanically delete either. Audit whether the successful `ON_PAUSE` write makes an unconditional successful `ON_STOP` force write redundant. A promising shape is to preserve `ON_STOP` as a retry fallback only when the preceding lifecycle write failed, if tests prove the lifecycle contract.
-4. **Failed writes**: any reduced trigger topology must guarantee a future physical attempt while `retryRequired` is true, even if there is no further recomposition or game mutation.
-5. **A4**: `persistAndReleaseA4ObservationRebuildIfDurable()` remains a hard ordering boundary; any dirty/batched model must still synchronously establish durability before releasing the A4 rebuild.
-6. **Measure the right thing**: acceptance should count physical write callbacks / synchronous `.commit()` invocations and also watch snapshot/serialization attempt frequency. Reducing function-call count without reducing physical commits or main-thread work is not success.
+- normal recomposition ordinary attempts still build a snapshot/content identity but duplicate physical commits are suppressed;
+- pause remains the explicit lifecycle freshness checkpoint;
+- stop no longer guarantees a duplicate commit, yet still covers retryRequired and real durable changes;
+- `SideEffect` remains the broad ordinary-attempt safety net;
+- A4 durability ordering remains unchanged.
 
-Do **not** delete `SideEffect`, `ON_PAUSE`, or `ON_STOP` until the above is proven with owning behavior tests and exact topology audit.
+## 9. PS5.2b — ordinary trigger / SideEffect ownership audit — NEXT
 
-## 9. Validation route
+Do **not** delete `SideEffect` yet.
 
-For PS5 behavioral slices:
+The next audit must answer from the live code, not from a desired architecture:
 
-1. behavioral RED when the contract is changing or a correctness bug is being fixed;
-2. focused `RecoveryWriteGate` / persistence tests;
-3. `:app:testFast` at each logical GREEN checkpoint;
-4. R2 structural/main-thread boundary gate;
-5. `git diff --check` and exact changed-file/reference audit;
-6. re-query remote head before/after writes.
+1. enumerate every durable mutation that can change `activeGameRecoverySnapshot()` and identify whether it already crosses an explicit persistence/transaction boundary;
+2. distinguish durable mutations from transient Compose/UI changes that merely cause recomposition;
+3. determine whether a small durable dirty/revision marker can cover all durable mutations without sprinkling persistence calls across UI code;
+4. prove how a failed ordinary physical write obtains another future retry if no further game mutation occurs;
+5. preserve A4's synchronous persistence-before-release contract as a special hard durability boundary;
+6. count both physical `.commit()` calls **and** avoidable snapshot/serialization identity construction;
+7. compare the complexity/risk of explicit durable ownership with simply retaining cheap semantic `SideEffect` attempts.
 
-At the final PS5 acceptance checkpoint, run the full persistence T4 gate, including:
+A valid outcome of PS5.2b may be **retaining `SideEffect`** if removing it requires broad, fragile mutation instrumentation for little measured gain. Trigger reduction is not an end in itself.
+
+Likely investigation order:
+
+```text
+A. map activeGameRecoverySnapshot durable inputs -> mutation owners
+B. map existing explicit persist calls / A4 boundaries
+C. identify uncovered mutations currently relying only on recomposition
+D. design behavior tests for any proposed dirty/revision owner
+E. only then decide whether SideEffect can be removed or narrowed
+```
+
+No PS5.2b production change is authorized by this document merely because the audit has started.
+
+## 10. Validation route
+
+For each PS5 behavioral slice:
+
+1. behavior-level RED when correctness/behavior changes;
+2. focused owning tests first;
+3. `:app:testFast` at logical GREEN;
+4. R2;
+5. `git diff --check`;
+6. exact changed-file/reference audit;
+7. remote-head race check before/after writes.
+
+Final PS5 acceptance only:
 
 - Android `testFull`;
 - `:app:assembleDebug`;
@@ -337,11 +346,9 @@ At the final PS5 acceptance checkpoint, run the full persistence T4 gate, includ
 - real Clingo cross-validation;
 - R2;
 - exact production-path/static audit;
-- real-device process-loss/restart acceptance before calling the whole Persistence Simplification campaign release-ready.
+- real-device process-loss/restart acceptance before the overall Persistence Simplification campaign is release-ready.
 
-Do not use full CI after every tiny PS5 substep; reserve it for a logical campaign checkpoint unless a broader invariant specifically requires it.
-
-## 10. Explicit non-goals
+## 11. Explicit non-goals
 
 PS5 does not include:
 
@@ -354,17 +361,12 @@ PS5 does not include:
 - unrelated Host/UI work;
 - DataStore migration merely for modernization.
 
-## 11. Next conversation start point
+## 12. Next conversation start point
 
-The next conversation should:
-
-1. read root `AGENTS.md`;
-2. read `docs/TESTING_STRATEGY.md`;
-3. read `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
-4. read this file;
-5. re-query live `main`, PR #112, branch head and current checks;
-6. distinguish the PS5.1c production GREEN `e2dbd1db05812ecbd0c0b2e751dd42b9fdc3cd23` from any later docs-only commits;
-7. continue **PS5.2 trigger-topology planning/audit** from the still-live `SideEffect` + `ON_PAUSE` + `ON_STOP` architecture;
-8. do not remove a trigger until retry coverage, A4 ordering and actual `.commit()` reduction are proven;
-9. do not merge PR #112 without explicit authorization;
-10. do not start Werewolf removal, D6, A4/ZDD or unrelated UI work.
+1. Read root `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/CURRENT_DEVELOPMENT_ROADMAP.md` and this file.
+2. Re-query live `main`, branch, PR #112 and current checks.
+3. Distinguish production GREEN `5926138...` from later validation/docs-only commits.
+4. Continue **PS5.2b ordinary-trigger / SideEffect ownership audit**.
+5. Do not delete `SideEffect` until durable-mutation coverage, failure retry and A4 ordering are proven.
+6. Do not merge PR #112 without explicit authorization.
+7. Do not start Werewolf removal, D6, A4/ZDD or unrelated UI work.
