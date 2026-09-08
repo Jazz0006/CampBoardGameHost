@@ -46,7 +46,6 @@ internal enum class ClocktowerDayMode {
     Nomination,
     Vote,
     EndConfirm,
-    ExecutionResult,
 }
 
 internal enum class ClocktowerNightAction {
