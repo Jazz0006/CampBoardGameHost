@@ -13,28 +13,26 @@ PR #112: open / draft / unmerged
 latest validated production GREEN: 5926138d0557835f281ba15b4051f50fa3ae741e
 ```
 
-Validation on `5926138...` content:
+Validation on `5926138...`:
 
 ```text
 34178595756 — focused owning tests + :app:testFast + git diff --check PASS
 34178562642 — R2 PASS
 ```
 
-Later commits are validation cleanup and documentation only. Re-query live GitHub before implementation or merge.
+Later commits are validation cleanup/docs-only. Re-query live GitHub before implementation or merge.
 
 ## Current priority
 
 > **PS5.2b — SideEffect ownership audit.**
 
-Map every durable mutation that can change `activeGameRecoverySnapshot()`, identify durable transitions currently relying only on later Compose `SideEffect`, then decide whether SideEffect should be retained, narrowed behind a central dirty/retry signal, or replaced by explicit durable ownership.
-
-Do not assume removal is the goal.
+Map every durable mutation that can change `activeGameRecoverySnapshot()`, identify transitions relying only on later Compose `SideEffect`, then decide whether SideEffect should be retained, guarded by a central dirty/retry signal, or replaced by explicit durable ownership. Do not assume removal is the goal.
 
 Detailed handoff: `docs/PS5_PERSISTENCE_TRIGGER_PROGRESS_2026-09-08.md`.
 
 ## Frozen Recovery contract
 
-Recovery is current-version-only, 4-hour emergency continuity. Archive is separate. Unsupported/old Recovery fails closed. Restore the game, not the App. Failed writes retain a future retry. A4 cannot release rebuild before persistence succeeds.
+Recovery is current-version-only, 4-hour emergency continuity. Archive is separate. Unsupported/old Recovery fails closed. Restore the game, not the App. Failed writes retain a future retry. A4 cannot release rebuild before successful persistence.
 
 ## Campaign
 
@@ -61,17 +59,13 @@ PS5 IN PROGRESS
 retry GREEN 39229bfdddba5837a9368706946f62fd94915109
 CI 34174011104 PASS
 R2 34174011121 PASS
-```
 
-PS5.1c found a real nested mutable-alias hazard. The gate now remembers timestamp-normalized persisted Recovery representation as immutable content identity.
-
-```text
 alias GREEN e2dbd1db05812ecbd0c0b2e751dd42b9fdc3cd23
 CI 34177323891 PASS
 R2 34177323827 PASS
 ```
 
-Suppressed ordinary attempts still pay snapshot + serialization identity cost.
+PS5.1c found a real nested mutable-alias hazard; the gate now remembers timestamp-normalized persisted Recovery representation as immutable content identity. Suppressed ordinary attempts still pay snapshot + serialization identity cost.
 
 ## PS5.2a COMPLETE
 
@@ -93,14 +87,6 @@ ON_STOP  -> force=false
 ```
 
 Successful pause refreshes freshness; unchanged stop deduplicates; failed pause is retried at stop via `retryRequired`; changed durable content still writes. A4 ordering remains unchanged.
-
-PS5.2a net production/test files:
-
-```text
-CampBoardGameHostApp.kt
-persistence/RecoveryLifecyclePersistence.kt
-persistence/RecoveryLifecyclePersistenceTest.kt
-```
 
 ## Current trigger topology
 
@@ -136,4 +122,4 @@ Final PS5 acceptance only: Android `testFull`, `:app:assembleDebug`, ASP/oracle,
 
 ## Non-goals
 
-No Recovery schema redesign, cross-version migration, Archive redesign, Werewolf removal, D6 decomposition, A4/ZDD rollout, DataStore modernization or unrelated UI work during PS5. D1–D5 are integrated through PR #106; re-plan D6 only after Persistence Simplification is complete and merged.
+No Recovery schema redesign, cross-version migration, Archive redesign, Werewolf removal, D6 decomposition, A4/ZDD rollout, DataStore modernization or unrelated UI work during PS5. Re-plan D6 only after Persistence Simplification is complete and merged.
