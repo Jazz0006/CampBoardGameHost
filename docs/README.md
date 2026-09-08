@@ -7,20 +7,22 @@
 
 1. 根目录 `AGENTS.md` — **项目级 AI / architecture / test / Git 执行规范**；
 2. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前项目状态与执行优先级权威**；
-3. [`D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md`](D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md) — **当前 D6 ownership 决策与 D6.1 边界**；
-4. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md) — **唯一当前 active handoff**；
-5. 当前任务需要的 specialized semantic / product design；
-6. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)；
-7. 查询 live GitHub state 后再实施。
+3. [`D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md`](D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md) — **D6 ownership 基线与 D6.1 边界**；
+4. [`D6_1C_SESSION_AUTHORITY_CUTOVER_PROGRESS_2026-09-08.md`](D6_1C_SESSION_AUTHORITY_CUTOVER_PROGRESS_2026-09-08.md) — **最新完成的 D6.1c production ownership checkpoint**；
+5. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md) — **唯一当前 active handoff，D6.1d continuation contract**；
+6. 当前任务需要的 specialized semantic / product design；
+7. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)；
+8. 查询 live GitHub state 后再实施。
 
 不要从 archive、旧 branch、旧 PR 或旧文档中的 `PASS / COMPLETE / READY / NEXT` 字样推断当前状态。
 
 ## 2. 当前状态与执行顺序
 
-当前 live `main` 为 Persistence Simplification / PR #112 合并后的 docs/CI descendant。PS0–PS5 已全部完成；D6.0 post-persistence App/root responsibility audit 也已完成，当前优先级是：
+当前 live `main` 为 Persistence Simplification / PR #112 合并后的 docs/CI descendant。PS0–PS5 已完成；D6.0、D6.1a、D6.1b、D6.1c 已完成。当前优先级：
 
 ```text
-D6.1 ClocktowerGameSession production authority cutover
+D6.1d canonical GameState ownership re-audit / bounded cutover
+-> D6.1e D6.1 cleanup + acceptance
 -> remaining D6 ownership decomposition after re-audit
 -> UI-R5 real-device stabilization
 -> EPI-MQ / Productive Uncertainty
@@ -39,32 +41,23 @@ ownership first
 -> smaller App/root as a consequence
 ```
 
-D6.0 已决定：第一优先不是继续机械拆 UI/大文件，而是完成现有 `ClocktowerGameSession` 对 `GameSnapshot` canonical session/history state 的 production ownership cutover。
+D6.1c 已将 identity/revision/semantic-history writable authority 切到唯一 `ClocktowerGameSession`；D6.1d 现在只处理仍留在 App-root `cards`/mechanics 的 canonical `GameState` ownership，不做 size-first 或全量 day/night mechanics 重写。
 
 ## 3. 当前 D6 references
 
-- [`D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md`](D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md) — 当前 responsibility map、owner ranking、D6.1 contract；
-- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md) — 当前 D6 continuation contract；
-- [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — 当前优先级、前置完成状态和 guardrails；
+- [`D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md`](D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md) — responsibility map、owner ranking、D6.1 初始 contract；
+- [`D6_1A_PRODUCTION_WIRING_CHARACTERIZATION_2026-09-08.md`](D6_1A_PRODUCTION_WIRING_CHARACTERIZATION_2026-09-08.md) — production wiring / writer characterization；
+- [`D6_1B_SESSION_CORE_PROGRESS_2026-09-08.md`](D6_1B_SESSION_CORE_PROGRESS_2026-09-08.md) — production-compatible session core checkpoint；
+- [`D6_1C_SESSION_AUTHORITY_CUTOVER_PROGRESS_2026-09-08.md`](D6_1C_SESSION_AUTHORITY_CUTOVER_PROGRESS_2026-09-08.md) — latest completed identity/revision/history authority cutover and validation；
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md) — current D6.1d continuation contract；
+- [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — current priority / guardrails；
 - [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md) — risk-based T0–T4 validation；
 - live production code — App/root 与 extracted owners 的最终事实来源。
 
-Persistence Simplification 的 audit、handoff、PS1–PS5 checkpoint 已完成，统一移入：
+Persistence Simplification 的 audit、handoff、PS1–PS5 checkpoint 已完成，统一保留在：
 
 - [`archive/handoffs/`](archive/handoffs/)
 - [`archive/checkpoints/`](archive/checkpoints/)
-
-其中 persistence 历史审计保留为：
-
-`archive/checkpoints/PERSISTENCE_REQUIREMENT_REDUCTION_AUDIT_2026-09-07.md`
-
-PS5 历史完成记录保留为：
-
-`archive/checkpoints/PS5_PERSISTENCE_TRIGGER_PROGRESS_2026-09-08.md`
-
-长期 completed-campaign 汇总历史现保留为：
-
-`archive/COMPLETED_DEVELOPMENT_HISTORY.md`
 
 ## 4. Product / UI / epistemic 长期参考
 
@@ -152,7 +145,8 @@ If documents disagree：
 1. official Blood on the Clocktower rules/rulings control gameplay correctness；
 2. root `AGENTS.md` controls project execution and architecture/test rules；
 3. `CURRENT_DEVELOPMENT_ROADMAP.md` controls current project state and priority；
-4. `D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md` controls the current D6 ownership decision；
-5. the one active D6 handoff controls the approved narrow continuation plan；
-6. specialized design docs control their own semantic/product domain where non-conflicting；
-7. archive documents, old Git branches and historical PR records are evidence only。
+4. `D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md` controls the D6 ownership baseline；
+5. latest D6 progress checkpoint refines completed-slice evidence；
+6. the one active D6 handoff controls the approved narrow continuation plan；
+7. specialized design docs control their own semantic/product domain where non-conflicting；
+8. archive documents, old Git branches and historical PR records are evidence only。
