@@ -38,7 +38,7 @@ jobs:
           echo '=== file sizes ==='
           wc -lc "$APP" "$HOST"
           echo '=== largest Kotlin production files ==='
-          find app/src/main/java -type f -name '*.kt' -printf '%s %p\n' | sort -nr | head -20
+          find app/src/main/java -type f -name '*.kt' -printf '%s %p\n' | sort -nr | sed -n '1,20p'
           echo '=== root local function families ==='
           grep -nE '^    fun (clocktower|currentClocktower|buildClocktower|applyClocktower|restoreClocktower|materializeClocktower|recordClocktower|resetClocktower|setClocktower|clearClocktower|advanceClocktower|publishClocktower|requireClocktower)' "$APP" || true
           echo '=== revision calls ==='
