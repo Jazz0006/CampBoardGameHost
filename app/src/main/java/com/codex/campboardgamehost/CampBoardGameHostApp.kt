@@ -165,7 +165,9 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
 import com.codex.campboardgamehost.clocktower.session.commitActualRoleBoundary
 import com.codex.campboardgamehost.clocktower.session.commitShownRoleBoundary
+import com.codex.campboardgamehost.clocktower.session.commitPoisonTargetBoundary
 import com.codex.campboardgamehost.clocktower.session.synchronizePlayerDeathWithinCurrentRevision
+import com.codex.campboardgamehost.clocktower.session.synchronizePoisonTargetWithinCurrentRevision
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointReducer
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointHostTransaction
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointRevisionIntent
@@ -1178,6 +1180,8 @@ internal fun CampBoardGameHostApp() {
         }
 
         if (materialization.stateMutationRequired) {
+            requireClocktowerGameSession().synchronizePoisonTargetWithinCurrentRevision(targetSeat = null)
+            publishClocktowerSessionView()
             clocktowerPoisonTarget = null
             clocktowerConfirmedPoisonTarget = null
         }
@@ -2901,10 +2905,12 @@ internal fun CampBoardGameHostApp() {
                                     sequence = localSequence,
                                     targetSeat = targetSeat,
                                 ))
+                                requireClocktowerGameSession().commitPoisonTargetBoundary(targetSeat)
+                                publishClocktowerSessionView()
+                                invalidateA4RevisionScope()
                                 clocktowerConfirmedPoisonTarget = transaction.checkpoint.confirmedPoisonTarget
                                 clocktowerConfirmedMayorRedirectTarget = transaction.checkpoint.confirmedMayorRedirectTarget
                                 clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
-                                advanceClocktowerGameStateRevision()
                                 // A Drunk's shown role is committed, but any concrete
                                 // first-night clue remains provisional until displayed.
                                 clocktowerRecommendedDrunkInvestigatorRoleName = null
@@ -4006,6 +4012,10 @@ internal fun CampBoardGameHostApp() {
                                 }
 
                                 if (poisonMaterialization.stateMutationRequired) {
+                                    requireClocktowerGameSession().synchronizePoisonTargetWithinCurrentRevision(
+                                        targetSeat = poisonMaterialization.intent.targetSeat,
+                                    )
+                                    publishClocktowerSessionView()
                                     val poisonTargetName = poisonMaterialization.intent.targetSeat
                                         ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
                                     clocktowerConfirmedPoisonTarget = poisonTargetName
