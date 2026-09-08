@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
+import com.codex.campboardgamehost.clocktower.domain.DecisionHistoryArchive
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
@@ -16,6 +17,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
 import com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint
 import com.codex.campboardgamehost.clocktower.epistemic.bindGlobal
 import com.codex.campboardgamehost.clocktower.epistemic.matches
+import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 
 /** Transient result of one session-owned Global observation transition; never persisted as a second state model. */
@@ -33,28 +35,103 @@ internal data class GlobalActionFactCommit(
     val nextTimelineGlobalSequence: Long,
 )
 
-internal class ClocktowerGameSession private constructor(
-    initialSnapshot: GameSnapshot,
+/**
+ * Ruleset-independent canonical state owned by one production Clocktower session.
+ *
+ * Recovery and scripts without an advanced ruleset still need one identity/revision/history owner.
+ * [GameSnapshot] remains the stricter projection for consumers that have a resolved [RulesetRef].
+ */
+internal data class ClocktowerSessionState(
+    val gameId: String,
+    val gameStateRevision: Long,
+    val playerInputRevision: Long,
+    val gameSeed: Long,
+    val gameState: GameState,
+    val decisionHistory: DecisionHistoryArchive = DecisionHistoryArchive(),
+    val crossGameHistory: CrossGameHistory = CrossGameHistory(),
+    val actionTimeline: ActionFactTimeline = ActionFactTimeline(),
+    val epistemicObservationLog: EpistemicObservationLog = EpistemicObservationLog(),
+    val semanticHistoryMode: ClocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
+    val nextTimelineGlobalSequence: Long = 0L,
 ) {
-    var snapshot: GameSnapshot = initialSnapshot
+    init {
+        require(gameId.isNotBlank()) { "gameId cannot be blank." }
+        require(gameStateRevision >= 0L) { "gameStateRevision cannot be negative." }
+        require(playerInputRevision >= 0L) { "playerInputRevision cannot be negative." }
+        require(nextTimelineGlobalSequence >= 0L) { "nextTimelineGlobalSequence cannot be negative." }
+        require(gameSeed == gameState.seed) {
+            "The session gameSeed must match the GameState seed."
+        }
+        semanticHistoryMode.requireCompatible(
+            actionTimeline = actionTimeline,
+            observationLog = epistemicObservationLog,
+            nextTimelineGlobalSequence = nextTimelineGlobalSequence,
+        )
+    }
+}
+
+internal class ClocktowerGameSession private constructor(
+    initialState: ClocktowerSessionState,
+    private val defaultRulesetRef: RulesetRef?,
+    initialSnapshotCache: GameSnapshot? = null,
+) {
+    var state: ClocktowerSessionState = initialState
         private set
 
-    fun updateGameState(nextState: GameState): GameSnapshot {
-        require(nextState.seed == snapshot.gameSeed) {
+    private var snapshotCache: GameSnapshot? = initialSnapshotCache
+
+    /**
+     * Backward-compatible strict snapshot view for ruleset-backed sessions.
+     * Production sessions without an advanced ruleset must use [state] until a real ref is available.
+     */
+    val snapshot: GameSnapshot
+        get() {
+            val rulesetRef = requireNotNull(defaultRulesetRef) {
+                "This production session has no default advanced RulesetRef; use state or toGameSnapshot(ref)."
+            }
+            snapshotCache?.let { return it }
+            return toGameSnapshot(rulesetRef).also { snapshotCache = it }
+        }
+
+    fun toGameSnapshot(rulesetRef: RulesetRef): GameSnapshot = GameSnapshot(
+        gameId = state.gameId,
+        gameStateRevision = state.gameStateRevision,
+        playerInputRevision = state.playerInputRevision,
+        gameSeed = state.gameSeed,
+        rulesetRef = rulesetRef,
+        gameState = state.gameState,
+        decisionHistory = state.decisionHistory,
+        crossGameHistory = state.crossGameHistory,
+        actionTimeline = state.actionTimeline,
+        epistemicObservationLog = state.epistemicObservationLog,
+        semanticHistoryMode = state.semanticHistoryMode,
+        nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
+    )
+
+    fun updateGameState(nextState: GameState): ClocktowerSessionState {
+        require(nextState.seed == state.gameSeed) {
             "A game session cannot replace its persisted gameSeed."
         }
-        if (nextState == snapshot.gameState) return snapshot
-        snapshot = snapshot.copy(
-            gameStateRevision = snapshot.gameStateRevision + 1,
-            gameState = nextState,
+        require(nextState.script == state.gameState.script) {
+            "A game session cannot replace its script."
+        }
+        if (nextState == state.gameState) return state
+        return updateState(
+            state.copy(
+                gameStateRevision = state.gameStateRevision + 1,
+                gameState = nextState,
+            ),
         )
-        return snapshot
     }
 
-    fun recordPlayerInput(): GameSnapshot {
-        snapshot = snapshot.copy(playerInputRevision = snapshot.playerInputRevision + 1)
-        return snapshot
-    }
+    /** Production event/decision boundary whose accepted revision cadence is independent of state equality. */
+    fun advanceGameStateRevision(): ClocktowerSessionState = updateState(
+        state.copy(gameStateRevision = state.gameStateRevision + 1),
+    )
+
+    fun recordPlayerInput(): ClocktowerSessionState = updateState(
+        state.copy(playerInputRevision = state.playerInputRevision + 1),
+    )
 
     /**
      * Allocates the next game-wide timeline identity without changing semantic game/input revisions.
@@ -69,77 +146,92 @@ internal class ClocktowerGameSession private constructor(
             phase = phase,
             round = round,
             sequence = sequence,
-            nextTimelineGlobalSequence = snapshot.nextTimelineGlobalSequence,
+            nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
         )
-        snapshot = snapshot.copy(nextTimelineGlobalSequence = point.globalSequence + 1)
+        updateState(state.copy(nextTimelineGlobalSequence = point.globalSequence + 1))
         return point
     }
 
     /** Atomic instance authority for newly produced Global actions. */
     fun commitGlobalActionFact(draft: ActionFactDraft): TimelineBoundActionFact {
         val committed = commitGlobalActionFact(
-            semanticHistoryMode = snapshot.semanticHistoryMode,
-            actionTimeline = snapshot.actionTimeline,
-            observationLog = snapshot.epistemicObservationLog,
-            nextTimelineGlobalSequence = snapshot.nextTimelineGlobalSequence,
+            semanticHistoryMode = state.semanticHistoryMode,
+            actionTimeline = state.actionTimeline,
+            observationLog = state.epistemicObservationLog,
+            nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
             draft = draft,
         )
         if (
-            committed.actionTimeline === snapshot.actionTimeline &&
-            committed.nextTimelineGlobalSequence == snapshot.nextTimelineGlobalSequence
+            committed.actionTimeline === state.actionTimeline &&
+            committed.nextTimelineGlobalSequence == state.nextTimelineGlobalSequence
         ) {
             return committed.entry
         }
-        snapshot = snapshot.copy(
-            actionTimeline = committed.actionTimeline,
-            nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
+        updateState(
+            state.copy(
+                actionTimeline = committed.actionTimeline,
+                nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
+            ),
         )
         return committed.entry
     }
 
+    /** Non-mutating validation/projection for production flows that must persist before commit. */
+    fun preflightGlobalEpistemicObservation(draft: EpistemicObservationDraft): GlobalEpistemicObservationCommit =
+        commitGlobalEpistemicObservation(
+            semanticHistoryMode = state.semanticHistoryMode,
+            observationLog = state.epistemicObservationLog,
+            nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
+            playerInputRevision = state.playerInputRevision,
+            draft = draft,
+            actionTimeline = state.actionTimeline,
+        )
+
     /** Atomic instance authority for newly produced Global observations. */
     fun commitGlobalEpistemicObservation(draft: EpistemicObservationDraft): RecordedEpistemicObservation {
-        val committed = commitGlobalEpistemicObservation(
-            semanticHistoryMode = snapshot.semanticHistoryMode,
-            observationLog = snapshot.epistemicObservationLog,
-            nextTimelineGlobalSequence = snapshot.nextTimelineGlobalSequence,
-            playerInputRevision = snapshot.playerInputRevision,
-            draft = draft,
-            actionTimeline = snapshot.actionTimeline,
-        )
+        val committed = preflightGlobalEpistemicObservation(draft)
         if (
-            committed.observationLog === snapshot.epistemicObservationLog &&
-            committed.nextTimelineGlobalSequence == snapshot.nextTimelineGlobalSequence &&
-            committed.playerInputRevision == snapshot.playerInputRevision
+            committed.observationLog === state.epistemicObservationLog &&
+            committed.nextTimelineGlobalSequence == state.nextTimelineGlobalSequence &&
+            committed.playerInputRevision == state.playerInputRevision
         ) {
             return committed.record
         }
-        snapshot = snapshot.copy(
-            playerInputRevision = committed.playerInputRevision,
-            epistemicObservationLog = committed.observationLog,
-            nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
+        updateState(
+            state.copy(
+                playerInputRevision = committed.playerInputRevision,
+                epistemicObservationLog = committed.observationLog,
+                nextTimelineGlobalSequence = committed.nextTimelineGlobalSequence,
+            ),
         )
         return committed.record
     }
 
     /** Records pre-cutover LegacyLocal information only; Global producers must use the draft API. */
-    fun recordEpistemicObservation(record: RecordedEpistemicObservation): GameSnapshot {
-        require(snapshot.semanticHistoryMode == ClocktowerSemanticHistoryMode.LEGACY_LOCAL) {
+    fun recordEpistemicObservation(record: RecordedEpistemicObservation): ClocktowerSessionState {
+        require(state.semanticHistoryMode == ClocktowerSemanticHistoryMode.LEGACY_LOCAL) {
             "Direct durable observation recording is reserved for LEGACY_LOCAL history."
         }
         require(record.timelineBinding === ObservationTimelineBinding.LegacyLocal) {
             "LEGACY_LOCAL session cannot accept a pre-bound Global observation."
         }
-        snapshot = snapshot.copy(
-            playerInputRevision = snapshot.playerInputRevision + 1,
-            epistemicObservationLog = snapshot.epistemicObservationLog.append(record),
+        return updateState(
+            state.copy(
+                playerInputRevision = state.playerInputRevision + 1,
+                epistemicObservationLog = state.epistemicObservationLog.append(record),
+            ),
         )
-        return snapshot
     }
 
-    fun recordCompletedGameSignature(signature: HistoricalClueSignature): GameSnapshot {
-        snapshot = snapshot.copy(crossGameHistory = snapshot.crossGameHistory.append(signature))
-        return snapshot
+    fun recordCompletedGameSignature(signature: HistoricalClueSignature): ClocktowerSessionState = updateState(
+        state.copy(crossGameHistory = state.crossGameHistory.append(signature)),
+    )
+
+    private fun updateState(nextState: ClocktowerSessionState): ClocktowerSessionState {
+        if (nextState == state) return state
+        state = nextState
+        snapshotCache = null
+        return state
     }
 
     companion object {
@@ -265,8 +357,8 @@ internal class ClocktowerGameSession private constructor(
             rulesetRef: RulesetRef,
             initialState: GameState,
             semanticHistoryMode: ClocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
-        ): ClocktowerGameSession = ClocktowerGameSession(
-            GameSnapshot(
+        ): ClocktowerGameSession {
+            val snapshot = GameSnapshot(
                 gameId = gameId,
                 gameStateRevision = 0,
                 playerInputRevision = 0,
@@ -274,10 +366,55 @@ internal class ClocktowerGameSession private constructor(
                 rulesetRef = rulesetRef,
                 gameState = initialState,
                 semanticHistoryMode = semanticHistoryMode,
+            )
+            return ClocktowerGameSession(
+                initialState = snapshot.toSessionState(),
+                defaultRulesetRef = rulesetRef,
+                initialSnapshotCache = snapshot,
+            )
+        }
+
+        fun createProduction(
+            gameId: String,
+            gameSeed: Long,
+            initialState: GameState,
+            semanticHistoryMode: ClocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
+        ): ClocktowerGameSession = ClocktowerGameSession(
+            initialState = ClocktowerSessionState(
+                gameId = gameId,
+                gameStateRevision = 0L,
+                playerInputRevision = 0L,
+                gameSeed = gameSeed,
+                gameState = initialState,
+                semanticHistoryMode = semanticHistoryMode,
             ),
+            defaultRulesetRef = null,
         )
 
-        fun restore(snapshot: GameSnapshot): ClocktowerGameSession = ClocktowerGameSession(snapshot)
+        fun restore(snapshot: GameSnapshot): ClocktowerGameSession = ClocktowerGameSession(
+            initialState = snapshot.toSessionState(),
+            defaultRulesetRef = snapshot.rulesetRef,
+            initialSnapshotCache = snapshot,
+        )
+
+        fun restoreProduction(state: ClocktowerSessionState): ClocktowerGameSession = ClocktowerGameSession(
+            initialState = state,
+            defaultRulesetRef = null,
+        )
+
+        private fun GameSnapshot.toSessionState(): ClocktowerSessionState = ClocktowerSessionState(
+            gameId = gameId,
+            gameStateRevision = gameStateRevision,
+            playerInputRevision = playerInputRevision,
+            gameSeed = gameSeed,
+            gameState = gameState,
+            decisionHistory = decisionHistory,
+            crossGameHistory = crossGameHistory,
+            actionTimeline = actionTimeline,
+            epistemicObservationLog = epistemicObservationLog,
+            semanticHistoryMode = semanticHistoryMode,
+            nextTimelineGlobalSequence = nextTimelineGlobalSequence,
+        )
 
         private fun nextTimelinePoint(
             phase: StorytellerPhase,
