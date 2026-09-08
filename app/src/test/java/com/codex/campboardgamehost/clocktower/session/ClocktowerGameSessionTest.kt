@@ -224,6 +224,39 @@ class ClocktowerGameSessionTest {
     }
 
     @Test
+    fun `session view publishes cutover safe identity revisions and chronology`() {
+        val session = ClocktowerGameSession.createProduction(
+            gameId = "observable-view",
+            gameSeed = initialState.seed,
+            initialState = initialState,
+            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        session.advanceGameStateRevision()
+        session.commitGlobalActionFact(
+            ActionFactDraft.Poison(
+                actionId = "view-poison",
+                phase = StorytellerPhase.FIRST_NIGHT,
+                round = 1,
+                sequence = 0,
+                targetSeat = 2,
+            ),
+        )
+        session.commitGlobalEpistemicObservation(globalPublicDraft("view-public"))
+
+        val view = session.view
+
+        assertEquals("observable-view", view.gameId)
+        assertEquals(initialState.script, view.scriptId)
+        assertEquals(initialState.seed, view.gameSeed)
+        assertEquals(1L, view.gameStateRevision)
+        assertEquals(1L, view.playerInputRevision)
+        assertEquals(ClocktowerSemanticHistoryMode.GLOBAL_V1, view.semanticHistoryMode)
+        assertEquals(listOf("view-poison"), view.actionTimeline.reducerFacts().map { it.actionId })
+        assertEquals(listOf("view-public"), view.epistemicObservationLog.records.map { it.recordId })
+        assertEquals(2L, view.nextTimelineGlobalSequence)
+    }
+
+    @Test
     fun `production session can project strict GameSnapshot when ruleset ref is available`() {
         val session = ClocktowerGameSession.createProduction(
             gameId = "strict-projection",
