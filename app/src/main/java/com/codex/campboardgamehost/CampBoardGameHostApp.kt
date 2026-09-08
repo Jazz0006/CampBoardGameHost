@@ -809,9 +809,6 @@ internal fun CampBoardGameHostApp() {
     var clocktowerSlayerClaimedNames by remember { mutableStateOf<List<String>>(emptyList()) }
     var clocktowerArtistUsed by remember { mutableStateOf(false) }
     var clocktowerArtistClaimedNames by remember { mutableStateOf<List<String>>(emptyList()) }
-    var clocktowerArtistClaimantName by remember { mutableStateOf<String?>(null) }
-    var clocktowerArtistTruthfulAnswer by remember { mutableStateOf<Boolean?>(null) }
-    var clocktowerArtistShownAnswer by remember { mutableStateOf<Boolean?>(null) }
     var clocktowerLastExecutedName by remember { mutableStateOf<String?>(null) }
     var clocktowerPendingKlutzName by remember { mutableStateOf<String?>(null) }
     var clocktowerKlutzChoiceName by remember { mutableStateOf<String?>(null) }
@@ -1417,9 +1414,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerCurrentVoteCountState.value = 0
         clocktowerHighestVoteNameState.value = null
         clocktowerHighestVoteCountState.value = 0
-        clocktowerArtistClaimantName = null
-        clocktowerArtistTruthfulAnswer = null
-        clocktowerArtistShownAnswer = null
     }
 
     fun resetClocktowerFlow() {
@@ -1670,9 +1664,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerSlayerClaimedNames = emptyList()
         clocktowerArtistUsed = false
         clocktowerArtistClaimedNames = emptyList()
-        clocktowerArtistClaimantName = null
-        clocktowerArtistTruthfulAnswer = null
-        clocktowerArtistShownAnswer = null
         clocktowerLastExecutedName = null
         clocktowerPendingKlutzName = null
         clocktowerKlutzChoiceName = null
@@ -1964,9 +1955,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerSlayerClaimedNames = emptyList()
         clocktowerArtistUsed = false
         clocktowerArtistClaimedNames = emptyList()
-        clocktowerArtistClaimantName = null
-        clocktowerArtistTruthfulAnswer = null
-        clocktowerArtistShownAnswer = null
         clocktowerLastExecutedName = null
         clocktowerPendingKlutzName = null
         clocktowerKlutzChoiceName = null
@@ -2784,9 +2772,6 @@ internal fun CampBoardGameHostApp() {
                         slayerClaimedNames = clocktowerSlayerClaimedNames,
                         artistUsed = clocktowerArtistUsed,
                         artistClaimedNames = clocktowerArtistClaimedNames,
-                        artistClaimantName = clocktowerArtistClaimantName,
-                        artistTruthfulAnswer = clocktowerArtistTruthfulAnswer,
-                        artistShownAnswer = clocktowerArtistShownAnswer,
                         lastExecutedName = clocktowerLastExecutedName,
                         pendingKlutzName = clocktowerPendingKlutzName,
                         klutzChoiceName = clocktowerKlutzChoiceName,
@@ -3276,42 +3261,26 @@ internal fun CampBoardGameHostApp() {
                                 }
                             }
                         },
-                        onSelectArtistClaimant = {
-                            clocktowerArtistClaimantName = it
-                            clocktowerArtistTruthfulAnswer = null
-                            clocktowerArtistShownAnswer = null
-                        },
-                        onSelectArtistTruthfulAnswer = {
-                            clocktowerArtistTruthfulAnswer = it
-                            clocktowerArtistShownAnswer = null
-                        },
-                        onSelectArtistShownAnswer = { clocktowerArtistShownAnswer = it },
-                        onConfirmArtistQuestion = {
-                            val claimantName = clocktowerArtistClaimantName
-                            if (claimantName != null) {
-                                if (claimantName !in clocktowerArtistClaimedNames) {
-                                    clocktowerArtistClaimedNames = clocktowerArtistClaimedNames + claimantName
-                                }
-                                val claimantCard = cards.firstOrNull { it.name == claimantName }
-                                if (claimantCard?.clocktowerRole?.enName == "Artist" && !clocktowerArtistUsed) {
-                                    clocktowerArtistUsed = true
-                                }
-                                records.add(EliminationRecord(round, claimantName, localizedText("艺术家提问已处理", "Artist question resolved")))
-                                addClocktowerEvent(
-                                    ClocktowerEventType.RoleAction,
-                                    localizedText("艺术家提问", "Artist question"),
-                                    localizedText(
-                                        "${playerSeatLabel(cards, claimantName)} · 真实答案：${if (clocktowerArtistTruthfulAnswer == true) "是" else "否"} · 展示：${if (clocktowerArtistShownAnswer == true) "是" else "否"}",
-                                        "${playerSeatLabel(cards, claimantName)} · truthful: ${if (clocktowerArtistTruthfulAnswer == true) "yes" else "no"} · shown: ${if (clocktowerArtistShownAnswer == true) "yes" else "no"}",
-                                    ),
-                                    listOf(claimantName),
-                                )
-                                clocktowerArtistClaimantName = null
-                                clocktowerArtistTruthfulAnswer = null
-                                clocktowerArtistShownAnswer = null
-                                clocktowerDayModeState.value = ClocktowerDayMode.Overview
-                                advanceClocktowerGameStateRevision()
+                        onConfirmArtistQuestion = { claimantName, truthfulAnswer, shownAnswer ->
+                            if (claimantName !in clocktowerArtistClaimedNames) {
+                                clocktowerArtistClaimedNames = clocktowerArtistClaimedNames + claimantName
                             }
+                            val claimantCard = cards.firstOrNull { it.name == claimantName }
+                            if (claimantCard?.clocktowerRole?.enName == "Artist" && !clocktowerArtistUsed) {
+                                clocktowerArtistUsed = true
+                            }
+                            records.add(EliminationRecord(round, claimantName, localizedText("艺术家提问已处理", "Artist question resolved")))
+                            addClocktowerEvent(
+                                ClocktowerEventType.RoleAction,
+                                localizedText("艺术家提问", "Artist question"),
+                                localizedText(
+                                    "${playerSeatLabel(cards, claimantName)} · 真实答案：${if (truthfulAnswer) "是" else "否"} · 展示：${if (shownAnswer) "是" else "否"}",
+                                    "${playerSeatLabel(cards, claimantName)} · truthful: ${if (truthfulAnswer) "yes" else "no"} · shown: ${if (shownAnswer) "yes" else "no"}",
+                                ),
+                                listOf(claimantName),
+                            )
+                            clocktowerDayModeState.value = ClocktowerDayMode.Overview
+                            advanceClocktowerGameStateRevision()
                         },
                         onSlayerShot = { claimantName, targetName, recluseRegistersAsDemon ->
                             val claimantCard = cards.firstOrNull { it.name == claimantName }

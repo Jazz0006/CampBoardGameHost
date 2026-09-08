@@ -285,9 +285,6 @@ internal fun ClocktowerJudgeScreen(
     slayerClaimedNames: List<String>,
     artistUsed: Boolean,
     artistClaimedNames: List<String>,
-    artistClaimantName: String?,
-    artistTruthfulAnswer: Boolean?,
-    artistShownAnswer: Boolean?,
     lastExecutedName: String?,
     pendingKlutzName: String?,
     klutzChoiceName: String?,
@@ -328,10 +325,7 @@ internal fun ClocktowerJudgeScreen(
     onConfirmNewDemon: () -> Unit,
     onSelectKlutzChoice: (String?) -> Unit,
     onConfirmKlutzChoice: (Boolean) -> Unit,
-    onSelectArtistClaimant: (String?) -> Unit,
-    onSelectArtistTruthfulAnswer: (Boolean?) -> Unit,
-    onSelectArtistShownAnswer: (Boolean?) -> Unit,
-    onConfirmArtistQuestion: () -> Unit,
+    onConfirmArtistQuestion: (String, Boolean, Boolean) -> Unit,
     onSlayerShot: (String, String, Boolean) -> Unit,
     onPreflightVirginExecution: (String, Boolean) -> Unit,
     onVirginNomination: (String, String, Boolean) -> Unit,
@@ -1072,6 +1066,28 @@ internal fun ClocktowerJudgeScreen(
     var highestVoteCount by highestVoteCountState
     var slayerClaimantName by remember(gameId) { mutableStateOf<String?>(null) }
     var slayerTargetName by remember(gameId) { mutableStateOf<String?>(null) }
+    var artistClaimantName by remember(gameId) { mutableStateOf<String?>(null) }
+    var artistTruthfulAnswer by remember(gameId) { mutableStateOf<Boolean?>(null) }
+    var artistShownAnswer by remember(gameId) { mutableStateOf<Boolean?>(null) }
+    fun selectArtistClaimant(next: String?) {
+        artistClaimantName = next
+        artistTruthfulAnswer = null
+        artistShownAnswer = null
+    }
+    fun selectArtistTruthfulAnswer(next: Boolean?) {
+        artistTruthfulAnswer = next
+        artistShownAnswer = null
+    }
+    fun selectArtistShownAnswer(next: Boolean?) {
+        artistShownAnswer = next
+    }
+    val confirmArtistQuestion = {
+        val claimantName = requireNotNull(artistClaimantName) { "Artist confirmation requires a claimant." }
+        val truthfulAnswer = requireNotNull(artistTruthfulAnswer) { "Artist confirmation requires a truthful answer." }
+        val shownAnswer = requireNotNull(artistShownAnswer) { "Artist confirmation requires a shown answer." }
+        onConfirmArtistQuestion(claimantName, truthfulAnswer, shownAnswer)
+        selectArtistClaimant(null)
+    }
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
     var slayerRecluseRegistersDemon by remember { mutableStateOf(false) }
     val firstNightNaturalPairPrecomputeRequest = if (
@@ -3830,7 +3846,7 @@ internal fun ClocktowerJudgeScreen(
                 dayMode = ClocktowerDayMode.Slayer
             },
             onOpenArtist = {
-                onSelectArtistClaimant(null)
+                selectArtistClaimant(null)
                 dayMode = ClocktowerDayMode.Artist
             },
             onEndDay = {
@@ -4144,24 +4160,25 @@ internal fun ClocktowerJudgeScreen(
 
     if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Artist) {
         val artistClaimant = cards.firstOrNull { it.name == artistClaimantName }
+        val currentArtistTruthfulAnswer = artistTruthfulAnswer
         val artistReliable = artistClaimant?.let {
             it.clocktowerRole?.enName == "Artist" && it.name != poisonTarget
         } == true
-        val answerRecommendations = if (artistClaimant != null && artistTruthfulAnswer != null) {
+        val answerRecommendations = if (artistClaimant != null && currentArtistTruthfulAnswer != null) {
             if (artistReliable) {
-                listOf(Triple(RecommendationStyle.BALANCED, artistTruthfulAnswer, false))
+                listOf(Triple(RecommendationStyle.BALANCED, currentArtistTruthfulAnswer, false))
             } else {
                 recommendationCoordinator.recommendCategory(
                     listOf(
                         UnreliableCategoricalCandidate(
                             id = "yes",
-                            isTruthful = artistTruthfulAnswer,
-                            misinformationPressure = if (artistTruthfulAnswer) 0 else 3,
+                            isTruthful = currentArtistTruthfulAnswer,
+                            misinformationPressure = if (currentArtistTruthfulAnswer) 0 else 3,
                         ),
                         UnreliableCategoricalCandidate(
                             id = "no",
-                            isTruthful = !artistTruthfulAnswer,
-                            misinformationPressure = if (artistTruthfulAnswer) 3 else 0,
+                            isTruthful = !currentArtistTruthfulAnswer,
+                            misinformationPressure = if (currentArtistTruthfulAnswer) 3 else 0,
                         ),
                     ),
                 ).map { recommendation ->
@@ -4191,8 +4208,8 @@ internal fun ClocktowerJudgeScreen(
                 stableKey = "$recommendationKey:artist:$round:${artistClaimant?.name}",
                 recentMisinformationStreak = recentMisinformationStreak(artistClaimant),
                 stableIdOf = { "${it.first.name}:${it.second}" },
-                isTruthful = { it.second == artistTruthfulAnswer },
-                misinformationPressure = { if (it.second == artistTruthfulAnswer) 0 else 3 },
+                isTruthful = { it.second == currentArtistTruthfulAnswer },
+                misinformationPressure = { if (it.second == currentArtistTruthfulAnswer) 0 else 3 },
                 styleOf = { it.first },
             )
         } else {
@@ -4202,9 +4219,9 @@ internal fun ClocktowerJudgeScreen(
             ) { it.first }
         }
         val automaticArtistAnswer = automaticArtistRecommendation?.second
-        LaunchedEffect(automaticStorytellerInfo, artistClaimantName, artistTruthfulAnswer, automaticArtistAnswer) {
+        LaunchedEffect(automaticStorytellerInfo, artistClaimantName, currentArtistTruthfulAnswer, automaticArtistAnswer) {
             if (automaticStorytellerInfo && automaticArtistAnswer != null && artistShownAnswer != automaticArtistAnswer) {
-                onSelectArtistShownAnswer(automaticArtistAnswer)
+                selectArtistShownAnswer(automaticArtistAnswer)
             }
         }
         val artistTableState = clocktowerArtistTableState(
@@ -4224,16 +4241,16 @@ internal fun ClocktowerJudgeScreen(
             tableState = artistTableState,
             actionsEnabled = gameOutcome == null,
             primaryEnabled = artistClaimantName != null &&
-                artistTruthfulAnswer != null &&
+                currentArtistTruthfulAnswer != null &&
                 artistShownAnswer != null &&
                 gameOutcome == null,
             onSeatClick = { seatId ->
                 val claimant = artistTableState.playerNameForSeat(seatId)
-                onSelectArtistClaimant(if (artistClaimantName == claimant) null else claimant)
+                selectArtistClaimant(if (artistClaimantName == claimant) null else claimant)
             },
-            onPrimary = onConfirmArtistQuestion,
+            onPrimary = confirmArtistQuestion,
             onBack = {
-                onSelectArtistClaimant(null)
+                selectArtistClaimant(null)
                 dayMode = ClocktowerDayMode.Overview
             },
         ) {
@@ -4243,14 +4260,14 @@ internal fun ClocktowerJudgeScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf(true, false).forEach { answer ->
                             val label = if (answer) text("是", "Yes") else text("否", "No")
-                            if (artistTruthfulAnswer == answer) {
+                            if (currentArtistTruthfulAnswer == answer) {
                                 Button(
-                                    onClick = { onSelectArtistTruthfulAnswer(answer) },
+                                    onClick = { selectArtistTruthfulAnswer(answer) },
                                     modifier = Modifier.weight(1f),
                                 ) { Text(label) }
                             } else {
                                 OutlinedButton(
-                                    onClick = { onSelectArtistTruthfulAnswer(answer) },
+                                    onClick = { selectArtistTruthfulAnswer(answer) },
                                     modifier = Modifier.weight(1f),
                                 ) { Text(label) }
                             }
@@ -4258,7 +4275,7 @@ internal fun ClocktowerJudgeScreen(
                     }
                 }
             }
-            if (artistClaimant != null && artistTruthfulAnswer != null) {
+            if (artistClaimant != null && currentArtistTruthfulAnswer != null) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
                 HostActionSection(title = text("告诉玩家的答案", "Answer to show")) {
                     answerRecommendations
@@ -4274,12 +4291,12 @@ internal fun ClocktowerJudgeScreen(
                                 Text(label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                             } else if (artistShownAnswer == answer) {
                                 Button(
-                                    onClick = { onSelectArtistShownAnswer(answer) },
+                                    onClick = { selectArtistShownAnswer(answer) },
                                     modifier = Modifier.fillMaxWidth(),
                                 ) { Text(label) }
                             } else {
                                 OutlinedButton(
-                                    onClick = { onSelectArtistShownAnswer(answer) },
+                                    onClick = { selectArtistShownAnswer(answer) },
                                     modifier = Modifier.fillMaxWidth(),
                                 ) { Text(label) }
                             }
@@ -4888,7 +4905,7 @@ internal fun ClocktowerJudgeScreen(
                             if (scriptHasArtist) {
                                 OutlinedButton(
                                     onClick = {
-                                        onSelectArtistClaimant(null)
+                                        selectArtistClaimant(null)
                                         dayMode = ClocktowerDayMode.Artist
                                     },
                                     enabled = gameOutcome == null && artistClaimantCandidates.isNotEmpty(),
@@ -5016,6 +5033,7 @@ internal fun ClocktowerJudgeScreen(
 
                 ClocktowerDayMode.Artist -> {
                     item {
+                        val currentArtistTruthfulAnswer = artistTruthfulAnswer
                         HostScriptCard(
                             title = text("艺术家提问", "Artist question"),
                             script = text("选择公开声称自己是艺术家的玩家。艺术家每局一次，可以私下问说书人一个是/否问题。", "Choose the player publicly claiming to be the Artist. Once per game, the Artist may privately ask the Storyteller a yes/no question."),
@@ -5030,7 +5048,7 @@ internal fun ClocktowerJudgeScreen(
                                     selectedName = artistClaimantName,
                                     enabled = gameOutcome == null,
                                     allCards = cards,
-                                    onSelect = { onSelectArtistClaimant(if (artistClaimantName == it) null else it) },
+                                    onSelect = { selectArtistClaimant(if (artistClaimantName == it) null else it) },
                                 )
                             }
                             val artistClaimant = cards.firstOrNull { it.name == artistClaimantName }
@@ -5045,14 +5063,14 @@ internal fun ClocktowerJudgeScreen(
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                         listOf(true, false).forEach { answer ->
                                             val label = if (answer) text("是", "Yes") else text("否", "No")
-                                            if (artistTruthfulAnswer == answer) {
+                                            if (currentArtistTruthfulAnswer == answer) {
                                                 Button(
-                                                    onClick = { onSelectArtistTruthfulAnswer(answer) },
+                                                    onClick = { selectArtistTruthfulAnswer(answer) },
                                                     modifier = Modifier.weight(1f),
                                                 ) { Text(label) }
                                             } else {
                                                 OutlinedButton(
-                                                    onClick = { onSelectArtistTruthfulAnswer(answer) },
+                                                    onClick = { selectArtistTruthfulAnswer(answer) },
                                                     modifier = Modifier.weight(1f),
                                                 ) { Text(label) }
                                             }
@@ -5060,24 +5078,24 @@ internal fun ClocktowerJudgeScreen(
                                     }
                                 }
                             }
-                            if (artistClaimant != null && artistTruthfulAnswer != null) {
+                            if (artistClaimant != null && currentArtistTruthfulAnswer != null) {
                                 val artistReliable =
                                     artistClaimant.clocktowerRole?.enName == "Artist" &&
                                         artistClaimant.name != poisonTarget
                                 val answerRecommendations = if (artistReliable) {
-                                    listOf(Triple(RecommendationStyle.BALANCED, artistTruthfulAnswer, false))
+                                    listOf(Triple(RecommendationStyle.BALANCED, currentArtistTruthfulAnswer, false))
                                 } else {
                                     recommendationCoordinator.recommendCategory(
                                         listOf(
                                             UnreliableCategoricalCandidate(
                                                 id = "yes",
-                                                isTruthful = artistTruthfulAnswer,
-                                                misinformationPressure = if (artistTruthfulAnswer) 0 else 3,
+                                                isTruthful = currentArtistTruthfulAnswer,
+                                                misinformationPressure = if (currentArtistTruthfulAnswer) 0 else 3,
                                             ),
                                             UnreliableCategoricalCandidate(
                                                 id = "no",
-                                                isTruthful = !artistTruthfulAnswer,
-                                                misinformationPressure = if (artistTruthfulAnswer) 3 else 0,
+                                                isTruthful = !currentArtistTruthfulAnswer,
+                                                misinformationPressure = if (currentArtistTruthfulAnswer) 3 else 0,
                                             ),
                                         ),
                                     ).map { recommendation ->
@@ -5092,9 +5110,9 @@ internal fun ClocktowerJudgeScreen(
                                     it.first == RecommendationStyle.BALANCED
                                 }
                                 val automaticArtistAnswer = automaticArtistRecommendation?.second
-                                LaunchedEffect(automaticStorytellerInfo, artistClaimantName, artistTruthfulAnswer, automaticArtistAnswer) {
+                                LaunchedEffect(automaticStorytellerInfo, artistClaimantName, currentArtistTruthfulAnswer, automaticArtistAnswer) {
                                     if (automaticStorytellerInfo && automaticArtistAnswer != null && artistShownAnswer != automaticArtistAnswer) {
-                                        onSelectArtistShownAnswer(automaticArtistAnswer)
+                                        selectArtistShownAnswer(automaticArtistAnswer)
                                     }
                                 }
                                 HostActionSection(
@@ -5120,12 +5138,12 @@ internal fun ClocktowerJudgeScreen(
                                             Text(label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                                         } else if (style == RecommendationStyle.BALANCED) {
                                             Button(
-                                                onClick = { onSelectArtistShownAnswer(answer) },
+                                                onClick = { selectArtistShownAnswer(answer) },
                                                 modifier = Modifier.fillMaxWidth(),
                                             ) { Text(label) }
                                         } else {
                                             OutlinedButton(
-                                                onClick = { onSelectArtistShownAnswer(answer) },
+                                                onClick = { selectArtistShownAnswer(answer) },
                                                 modifier = Modifier.fillMaxWidth(),
                                             ) { Text(label) }
                                         }
@@ -5142,9 +5160,9 @@ internal fun ClocktowerJudgeScreen(
                                 }
                             }
                             Button(
-                                onClick = onConfirmArtistQuestion,
+                                onClick = confirmArtistQuestion,
                                 enabled = artistClaimantName != null &&
-                                    artistTruthfulAnswer != null &&
+                                    currentArtistTruthfulAnswer != null &&
                                     artistShownAnswer != null &&
                                     gameOutcome == null,
                                 modifier = Modifier.fillMaxWidth(),
@@ -5154,7 +5172,7 @@ internal fun ClocktowerJudgeScreen(
                             }
                             OutlinedButton(
                                 onClick = {
-                                    onSelectArtistClaimant(null)
+                                    selectArtistClaimant(null)
                                     dayMode = ClocktowerDayMode.Overview
                                 },
                                 modifier = Modifier.fillMaxWidth(),
