@@ -3832,6 +3832,10 @@ internal fun CampBoardGameHostApp() {
                                         ))
                                     }
                                     if (dawnDeathMaterialization.stateMutationRequired) {
+                                        requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
+                                            targetSeat = dawnDeathMaterialization.intent.targetSeat,
+                                        )
+                                        publishClocktowerSessionView()
                                         cards[index] = nightDeathCard.copy(eliminatedRound = round)
                                         records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
                                         addClocktowerEvent(
