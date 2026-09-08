@@ -44,23 +44,9 @@ jobs:
           oracle=false
           full_checkpoint=false
 
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event_name }}" == "push" ]]; then
-            # Manual runs and every main push are full acceptance gates.
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # Manual runs are always full acceptance gates.
             full_checkpoint=true
-          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            head="${{ github.event.pull_request.head.sha }}"
-            commit_message="$(git log -1 --format=%B "$head")"
-            if grep -Fqi '[full-ci]' <<< "$commit_message"; then
-              full_checkpoint=true
-            fi
-          fi
-
-          if [[ "$full_checkpoint" == true ]]; then
-            android=true
-            android_full=true
-            asp=true
-            oracle=true
-            echo "Full checkpoint selected."
           else
             if [[ "${{ github.event_name }}" == "pull_request" ]]; then
               head="${{ github.event.pull_request.head.sha }}"
@@ -72,7 +58,14 @@ jobs:
                 # First/opened/reopened PR validation has no prior PR head to compare.
                 base="${{ github.event.pull_request.base.sha }}"
               fi
+
+              commit_message="$(git log -1 --format=%B "$head")"
+              if grep -Fqi '[full-ci]' <<< "$commit_message"; then
+                full_checkpoint=true
+              fi
             else
+              # A main push is full only when it contains a non-documentation change.
+              # Docs-only pushes stay on the lightweight classifier/gate path.
               base="${{ github.event.before }}"
               head="${{ github.sha }}"
             fi
@@ -86,6 +79,36 @@ jobs:
             echo "Changed files:"
             cat "$RUNNER_TEMP/changed-files.txt"
 
+            if [[ "${{ github.event_name }}" == "push" ]]; then
+              while IFS= read -r path; do
+                [[ -z "$path" ]] && continue
+
+                case "$path" in
+                  docs/*|AGENTS.md|README.md|player/*)
+                    continue
+                    ;;
+                  *)
+                    full_checkpoint=true
+                    break
+                    ;;
+                esac
+              done < "$RUNNER_TEMP/changed-files.txt"
+
+              if [[ "$full_checkpoint" == true ]]; then
+                echo "Main push contains executable/configuration changes; full checkpoint selected."
+              else
+                echo "Main push is documentation-only; heavy validation skipped."
+              fi
+            fi
+          fi
+
+          if [[ "$full_checkpoint" == true ]]; then
+            android=true
+            android_full=true
+            asp=true
+            oracle=true
+            echo "Full checkpoint selected."
+          else
             while IFS= read -r path; do
               [[ -z "$path" ]] && continue
 
