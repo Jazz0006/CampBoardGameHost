@@ -3359,6 +3359,10 @@ internal fun CampBoardGameHostApp() {
                                     sequence = localSequence,
                                     targetSeat = targetSeat,
                                 ))
+                                requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
+                                    targetSeat = targetSeat,
+                                )
+                                publishClocktowerSessionView()
                                 cards[targetIndex] = targetCard.copy(eliminatedRound = round)
                                 recordEpistemicObservation(EpistemicObservationDraft(
                                     recordId = "public-alive-${clocktowerGameId}-${localSequence}-$targetSeat",
