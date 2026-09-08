@@ -93,6 +93,22 @@ class HostSeatingRosterTest {
     }
 
     @Test
+    fun `recovered active game rebuilds seating and selected game for quick restart`() {
+        val recoveredNames = listOf("Alice", "Bob", "Casey", "Dana", "Evan", "Finn")
+
+        GameKind.entries.forEach { game ->
+            val recoveredFlow = HostSeatingSetupFlow.recoveredActiveGame(
+                playerNames = recoveredNames,
+                game = game,
+            )
+
+            assertEquals(game, recoveredFlow.selectedGame)
+            assertEquals(recoveredNames, recoveredFlow.confirmedSeating?.playerNames)
+            assertEquals(recoveredNames, recoveredFlow.playerNamesFor(game))
+        }
+    }
+
+    @Test
     fun `returning to seating explicitly releases the old confirmation`() {
         val reopened = HostSeatingSetupFlow()
             .confirmSeats(listOf("Alice", "Bob", "Casey"))
