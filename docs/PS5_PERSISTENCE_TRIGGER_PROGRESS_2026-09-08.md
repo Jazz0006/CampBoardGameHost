@@ -3,7 +3,7 @@
 > Date: 2026-09-08 Australia/Sydney
 > Branch: `codex/persistence-simplification`
 > Draft PR: #112
-> Status: **PS5 IMPLEMENTATION + AUTOMATED ACCEPTANCE COMPLETE — real-device acceptance pending**
+> Status: **PS5 IMPLEMENTATION COMPLETE — recovery quick-restart hotfix automated GREEN; renewed T4 + real-device acceptance pending**
 
 ## Campaign
 
@@ -20,7 +20,9 @@ PS5 IN PROGRESS — release acceptance pending only
   PS5.1c COMPLETE
   PS5.2a lifecycle pause/stop duplicate-write reduction COMPLETE
   PS5.2b SideEffect ownership audit COMPLETE
-  final automated T4 COMPLETE
+  original final automated T4 COMPLETE
+  recovery quick-restart hotfix automated GREEN
+  renewed post-hotfix T4 PENDING
   real-device process-loss/restart acceptance PENDING
 ```
 
@@ -29,16 +31,15 @@ PS5 IN PROGRESS — release acceptance pending only
 ```text
 base main: ac71cbe392fb542727dc0c2d69ac82c5fdc0435e
 PR #112: open / draft / unmerged
-latest production GREEN: 5926138d0557835f281ba15b4051f50fa3ae741e
-full-T4 checkpoint: 88249af2e68064b571da7cec5395c80940cbe021 (docs-only after production GREEN)
+pre-device-acceptance production GREEN: 5926138d0557835f281ba15b4051f50fa3ae741e
+original full-T4 checkpoint: 88249af2e68064b571da7cec5395c80940cbe021
+recovery quick-restart RED: 3bc389349bba00a155d55ec01508d6b271125ff0
+recovery seating-owner helper: d8e1123d1535672dc04271ab41e18ec979ccaa7f
+latest production GREEN: e622960a9c75c0b110d2c92e34b46828cb949e0a
+one-shot cleanup head: b8b63cb62061ce29c471aa37fb036a4199be81ef
 ```
 
-No production/test file changed after `5926138...` through the full-T4 checkpoint. Compare `5926138... -> 88249af...` contains only:
-
-```text
-docs/CURRENT_DEVELOPMENT_ROADMAP.md
-docs/PS5_PERSISTENCE_TRIGGER_PROGRESS_2026-09-08.md
-```
+The original T4 was valid for the pre-device-acceptance production slice. Real-device process-loss/restart testing then exposed a separate Recovery ownership bug, so the production checkpoint advanced and a renewed full T4 is required before release acceptance.
 
 ## Validation evidence
 
@@ -51,7 +52,7 @@ PS5.2a production GREEN:
 34178562642 — R2 PASS
 ```
 
-Final reserved T4:
+Original reserved T4:
 
 ```text
 CI 34179926099 — PASS
@@ -65,7 +66,7 @@ CI 34179926099 — PASS
 R2 34179926105 — PASS
 ```
 
-The literal production `git diff --check` evidence remains run `34178595756`; all later changes before T4 were docs-only. The final static connector audit additionally confirmed the accepted production slice and topology below. Do not describe the later docs-only head as having a separate `git diff --check` run.
+The literal pre-hotfix production `git diff --check` evidence was run `34178595756`; later pre-device-acceptance changes through the original T4 were docs-only.
 
 ## Frozen boundary
 
@@ -142,11 +143,80 @@ Static reference audit confirms one App `SideEffect` persistence block, lifecycl
 
 Do not reopen SideEffect removal unless later profiling demonstrates a real main-thread snapshot/identity cost. If so, treat it as a measured performance campaign with universal durable-mutation ownership, not opportunistic persistence cleanup.
 
-## Current next step — real-device acceptance
+## Device-acceptance hotfix — recovered seating ownership
 
-Automated PS5 acceptance is complete. The campaign is **not release-ready yet** because real-device process-loss/restart behavior must still be exercised.
+Real-device testing exposed a crash in the supported sequence:
 
-Minimum device matrix:
+```text
+process death / relaunch / Recovery restore
+-> continue Clocktower game
+-> same players / quick restart
+-> crash
+```
+
+The exported crash bundle recorded:
+
+```text
+java.lang.IllegalArgumentException: Production start requires the currently selected game
+HostSeatingSetupFlow.playerNamesFor(...)
+-> startClocktowerGame(...)
+-> archiveAndStartNewGame(...)
+```
+
+Root cause: `applyValidatedRecoveryPlan()` correctly restored cards, player names, game kind and durable mechanics, but did not reconstruct the separate `HostSeatingSetupFlow` owner. After process restoration, the active game was valid while `confirmedSeating` / `selectedGame` remained empty. Quick restart therefore hit the existing fail-closed production-start contract.
+
+The fix intentionally does **not** weaken `HostSeatingSetupFlow.playerNamesFor()`. Recovery now rehydrates the setup-flow owner from the already validated recovered roster and recovered game kind:
+
+```text
+Recovered cards/player identities
+-> HostSeatingSetupFlow.recoveredActiveGame(...)
+-> confirmed seating restored
+-> selected active game restored
+-> existing production-start invariant remains fail-closed
+```
+
+The helper is game-independent, so the ownership repair applies to recovered Undercover, Werewolf and Clocktower sessions rather than adding an NGJ-only exception.
+
+Tests-first evidence:
+
+```text
+RED commit 3bc389349bba00a155d55ec01508d6b271125ff0
+CI 34191093216 — expected FAIL
+  HostSeatingRosterTest.kt: unresolved reference recoveredActiveGame
+R2 34191093300 — PASS
+
+helper GREEN d8e1123d1535672dc04271ab41e18ec979ccaa7f
+product GREEN e622960a9c75c0b110d2c92e34b46828cb949e0a
+one-shot run 34191324182 — PASS
+  exact branch/blob locks PASS
+  helper contract focused test PASS before App wiring
+  exact App-only product diff audit PASS
+  git diff --check PASS
+  focused HostSeatingRosterTest PASS
+  :app:testFast PASS
+  product commit/push PASS
+  temporary workflow/script cleanup PASS
+```
+
+The final bot-generated cleanup head produced `action_required` PR workflow states rather than test failures, so this docs checkpoint requests a fresh full T4 from a normal branch head.
+
+## Current next step — renewed T4, then real-device acceptance
+
+The recovery ownership bug is automated GREEN but the campaign is **not release-ready yet**.
+
+First, this `[full-ci]` checkpoint must re-run the reserved full automated acceptance against the new production checkpoint. After that passes, repeat the real-device path that exposed the bug:
+
+```text
+6-player No Greater Joy
+-> create durable progress
+-> background / kill process
+-> relaunch and restore
+-> continue the recovered game
+-> choose same players / quick restart
+-> verify a new NGJ game starts without crash and preserves the recovered roster
+```
+
+Then continue/confirm the minimum device matrix:
 
 1. start a recent active game and create durable progress;
 2. background normally, kill the Android process, relaunch, and restore;
@@ -158,7 +228,7 @@ Minimum device matrix:
 8. exercise normal pause -> stop backgrounding and confirm no visible regression from the lifecycle deduplication policy;
 9. if feasible, exercise a forced persistence-failure test build/path and confirm a later ordinary/stop attempt retries rather than falsely treating the state as durable.
 
-Only after this device acceptance should Persistence Simplification be marked release-ready and PR #112 considered for merge. Do not merge without explicit authorization.
+Only after renewed T4 and device acceptance should Persistence Simplification be marked release-ready and PR #112 considered for merge. Do not merge without explicit authorization.
 
 ## Non-goals
 
