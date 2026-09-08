@@ -50,7 +50,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          actual="$(git diff --name-only | sort)"
+          actual="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort)"
           expected="$(printf '%s\n' \
             'app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSession.kt' \
             'docs/CURRENT_DEVELOPMENT_ROADMAP.md' \
