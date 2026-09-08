@@ -3,7 +3,8 @@
 > Date: 2026-09-08 Australia/Sydney
 > Repository: `Jazz0006/CampBoardGameHost`
 > D6.1 merge commit: `112572cbd3d990737a412cc4b8ead766d00867e8`
-> Status: **ROUTE SELECTED — D6.2a CHARACTERIZATION NEXT — START FROM FRESH MAIN-BASED BRANCH**
+> D6.2 branch base: `d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e`
+> Status: **D6.2a CHARACTERIZATION COMPLETE — SLAYER ACTIVE INTERACTION SELECTED FOR D6.2b**
 
 ## Why D6.2 exists
 
@@ -65,59 +66,118 @@ stable shared Judge read context
 + existing domain/session owners beneath them
 ```
 
-The exact first slice is deliberately not predetermined.
+The exact first slice was deliberately not predetermined before D6.2a.
 
-## D6.2a — NEXT: parameter/callback consumption characterization
+## D6.2a — COMPLETE: parameter/callback consumption characterization
 
-D6.2a is **read/design-first**. Before any production edit:
+D6.2a was performed read-only against the fresh branch `codex/d6-2-ui-composition`, based exactly on live `main` `d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e`.
 
-1. re-confirm live `main` and the merged #113 state;
-2. create a fresh branch from current `main` (recommended name: `codex/d6-2-ui-composition`);
-3. parse all 103 `ClocktowerJudgeScreen` parameters;
-4. for each parameter record responsibility group, phase scope, actual consumer(s), forwarding path and whether it is shared/read-only/transient UI/durable-domain data;
-5. classify all 39 callbacks by cohesive phase/ability responsibility;
-6. identify callbacks that are selection-only versus callbacks crossing durable/session/history boundaries;
-7. inventory all `MutableState<T>` parameters and decide which component naturally owns each transient state;
-8. map existing Day/Night/ability child owners and unchanged forwarding chains;
-9. identify groups that are always consumed together and groups that currently cross unrelated phases;
-10. baseline focused UI/flow tests around the best candidate groups;
-11. rank the smallest cohesive extraction by real fan-out reduction, behavior risk and test coverage;
-12. add a typed RED only if characterization reveals a genuine stable coverage gap.
+The complete 103-row consumption/responsibility matrix is recorded in:
 
-Suggested matrix columns:
+`docs/D6_2A_CLOCKTOWER_JUDGE_CONSUMPTION_MATRIX_2026-09-08.md`
+
+Exact recount:
 
 ```text
-name
-kind (value / MutableState / callback)
-responsibility
-phase scope
-actual consumer(s)
-forwarded unchanged?
-transient UI or durable/domain?
-current owner
-existing tests
-candidate cohesive contract
+103 total parameters
+ 39 on... callbacks
+  3 additional function-valued providers
+ 10 MutableState<T> parameters
 ```
 
-## Candidate ranking after characterization
+Therefore the 42 function-valued dependencies reconcile as 39 callbacks + 3 providers.
 
-Prefer the smallest group that:
+### Zero-consumer parameters
 
-- removes unrelated concepts from both App and HostScreen;
-- maps to one real flow or child owner;
-- does not own canonical domain state;
-- preserves current behavior exactly;
-- has focused characterization coverage;
-- makes subsequent extractions easier rather than creating a new monolith.
+Two inputs are present in the Judge signature but have no Judge consumer:
 
-Potential categories to evaluate, not pre-authorized implementations:
+- `records`
+- `onPhaseChange`
+
+They are legitimate dead-parameter cleanup candidates, but should remain separate from the first production ownership slice unless a focused diff proves combining them is still smaller and clearer.
+
+### MutableState ownership result
+
+The 10 `MutableState<T>` parameters do **not** share one natural owner:
+
+- `nightStartedState` and `nightStepIndexState` participate in checkpoint/recovery restore and cannot safely become child-local state;
+- `dayModeState` is externally written by recovery/Klutz routing;
+- `highestVoteNameState` and `highestVoteCountState` are recovery/mechanics-coupled;
+- nomination/vote selection state is a later cohesive Day candidate;
+- `slayerClaimantNameState` and `slayerTargetNameState` are the clean exception: App only declares, resets and forwards them, with no recovery/session/business read found.
+
+This explicitly rejects a mechanical `DayState`, `NightState`, `ClocktowerJudgeState` or broad Controller extraction.
+
+### Actual child seams confirmed
+
+Current real child owners include:
 
 ```text
-Night-flow transient UI state/actions
-Day-flow transient UI state/actions
-shared Judge read-only context
-ability-specific contracts where a real child owner already exists
+ClocktowerDawnSummaryScreen
+ClocktowerDayOverviewScreen
+ClocktowerPendingNominationTableScreen
+ClocktowerVoteTableScreen
+ClocktowerSlayerTableScreen
+ClocktowerArtistTableScreen
+ClocktowerKlutzTableScreen
+ClocktowerNightActiveScreen
+  -> ClocktowerNightStepCardLocalized
 ```
+
+Night callbacks are frequently adapted according to `ClocktowerNightAction`, rather than being a homogeneous action surface. That is further evidence against a mega actions bag.
+
+### Selected smallest cohesive boundary: Slayer active interaction
+
+D6.2b should first move only the transient Slayer selection ownership:
+
+```text
+slayerClaimantNameState
+slayerTargetNameState
+```
+
+Why this boundary wins:
+
+- exactly two tightly cohesive transient UI selections;
+- current App ownership is plumbing-only;
+- no Recovery/Checkpoint coupling was found;
+- an existing `ClocktowerSlayerTableScreen` seam already owns the interaction presentation;
+- `onSlayerShot(claimantName, targetName, recluseRegistersAsDemon)` already carries complete selected values across the durable boundary;
+- `slayerUsed`, `slayerClaimedNames`, `gameOutcome` and session/domain mutation can remain above unchanged;
+- it removes real App + Judge fan-out without creating a replacement state/actions bag.
+
+### Focused test baseline
+
+`ClocktowerSlayerTableStateTest` already characterizes claimant eligibility, ordered claimant→target selection, living-target restriction and invalid dead-target rejection.
+
+Therefore D6.2a does not justify adding a generic snapshot RED. Before D6.2b production edits, add a new typed RED only if the exact ownership move reveals a stable contract gap not covered by the existing Slayer table-state characterization plus compile/focused tests.
+
+### Candidate order after Slayer
+
+Current ranking after the audit:
+
+1. Slayer active selection ownership;
+2. Artist active selection, after redesigning confirmation to carry selected values rather than read App state;
+3. nomination/vote subsets, respecting Recovery coupling;
+4. whole Day dispatcher only after smaller seams are cleaner;
+5. Night navigation only after a checkpoint/recovery-safe contract is characterized.
+
+## D6.2b — NEXT: focused Slayer ownership extraction
+
+Expected narrow production scope:
+
+```text
+move Slayer claimant/target transient selection ownership down near Slayer UI
+remove App-root Slayer MutableState declarations/reset plumbing
+remove those two MutableState parameters from ClocktowerJudgeScreen
+preserve slayerUsed/slayerClaimedNames/gameOutcome ownership
+preserve onSlayerShot as the durable value-complete action boundary
+retain dayMode routing above for this first slice
+preserve visible behavior exactly
+```
+
+Do not introduce `SlayerState`, `SlayerActions`, a controller or a ViewModel merely to reduce argument count.
+
+`records` / `onPhaseChange` dead-parameter cleanup remains a separately scoped follow-up candidate rather than an automatic part of D6.2b.
 
 ## D6.2 invariants
 
@@ -135,14 +195,14 @@ Preserve:
 
 ## Branch / PR strategy
 
-D6.1 is merged and closed. D6.2 must use a fresh branch from current `main` and a separate PR.
+D6.1 is merged and closed. D6.2 uses the fresh branch `codex/d6-2-ui-composition` from live `main` and must use a separate PR when production work is ready.
 
 ```text
-re-confirm current main
--> create codex/d6-2-ui-composition (or equivalent) from main
--> D6.2a characterization only
--> choose smallest cohesive boundary
--> tests/characterization-first implementation
+main d76b0854...
+-> codex/d6-2-ui-composition
+-> D6.2a characterization COMPLETE
+-> Slayer active interaction selected
+-> D6.2b tests/characterization-first ownership extraction NEXT
 -> re-audit after each completed slice
 ```
 
