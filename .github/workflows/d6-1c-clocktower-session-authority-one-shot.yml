@@ -31,7 +31,7 @@ jobs:
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = 'f3d9a9145e9fcc1424f86ea7221a6572fd06dcb2'
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSession.kt)" = 'e3a3670fee095569a0dbdb8df01d4b04f7f1e92d'
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSessionTest.kt)" = 'afbb242876a68637f07ece914b6da3acf6dc5ed8'
-          test "$(git hash-object .github/scripts/patch_d6_1c_clocktower_session_authority.py)" = '0da0be9887a5db02f4d35f34f0a3cd96491bd442'
+          test "$(git hash-object .github/scripts/patch_d6_1c_clocktower_session_authority.py)" = '1988e4eb8cb77080cd0c2a61e02959a8997875f4'
 
       - name: Set up Java
         uses: actions/setup-java@v5
@@ -80,6 +80,23 @@ jobs:
           for needle in "${forbidden[@]}"; do
             if grep -Fq "$needle" "$app"; then
               echo "Forbidden duplicate authority remains: $needle" >&2
+              exit 1
+            fi
+          done
+
+          writable=(
+            currentClocktowerScript
+            clocktowerGameId
+            clocktowerGameSeed
+            clocktowerGameStateRevision
+            clocktowerPlayerInputRevision
+            clocktowerSemanticHistoryMode
+            clocktowerNextTimelineGlobalSequence
+            clocktowerActionTimeline
+          )
+          for name in "${writable[@]}"; do
+            if grep -Eq "^[[:space:]]*${name}[[:space:]]*=" "$app"; then
+              echo "Forbidden bare assignment remains: $name" >&2
               exit 1
             fi
           done
