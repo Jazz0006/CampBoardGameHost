@@ -7,19 +7,21 @@
 
 1. 根目录 `AGENTS.md` — **项目级 AI / architecture / test / Git 执行规范**；
 2. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前项目状态与执行优先级权威**；
-3. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md) — **唯一当前 active handoff**；
-4. 当前任务需要的 specialized semantic / product design；
-5. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)；
-6. 查询 live GitHub state 后再实施。
+3. [`D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md`](D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md) — **当前 D6 ownership 决策与 D6.1 边界**；
+4. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md) — **唯一当前 active handoff**；
+5. 当前任务需要的 specialized semantic / product design；
+6. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)；
+7. 查询 live GitHub state 后再实施。
 
 不要从 archive、旧 branch、旧 PR 或旧文档中的 `PASS / COMPLETE / READY / NEXT` 字样推断当前状态。
 
 ## 2. 当前状态与执行顺序
 
-当前 live `main` 为 Persistence Simplification / PR #112 合并后的 docs/CI descendant。PS0–PS5 已全部完成，当前优先级是：
+当前 live `main` 为 Persistence Simplification / PR #112 合并后的 docs/CI descendant。PS0–PS5 已全部完成；D6.0 post-persistence App/root responsibility audit 也已完成，当前优先级是：
 
 ```text
-D6 post-persistence App/root ownership re-audit + decomposition
+D6.1 ClocktowerGameSession production authority cutover
+-> remaining D6 ownership decomposition after re-audit
 -> UI-R5 real-device stabilization
 -> EPI-MQ / Productive Uncertainty
 -> UX-R6 legacy recommendation-provider replacement
@@ -31,16 +33,18 @@ A4/ZDD remains non-production。
 
 ```text
 ownership first
+-> complete existing owners before inventing new managers
 -> cohesive state + behavior
 -> explicit dependency direction
 -> smaller App/root as a consequence
 ```
 
-不要机械恢复旧 D6 方案，也不要把文件大小本身当作 owner 边界。
+D6.0 已决定：第一优先不是继续机械拆 UI/大文件，而是完成现有 `ClocktowerGameSession` 对 `GameSnapshot` canonical session/history state 的 production ownership cutover。
 
 ## 3. 当前 D6 references
 
-- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md) — 当前 D6 审计/规划 contract；
+- [`D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md`](D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md) — 当前 responsibility map、owner ranking、D6.1 contract；
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md) — 当前 D6 continuation contract；
 - [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — 当前优先级、前置完成状态和 guardrails；
 - [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md) — risk-based T0–T4 validation；
 - live production code — App/root 与 extracted owners 的最终事实来源。
@@ -57,6 +61,10 @@ Persistence Simplification 的 audit、handoff、PS1–PS5 checkpoint 已完成�
 PS5 历史完成记录保留为：
 
 `archive/checkpoints/PS5_PERSISTENCE_TRIGGER_PROGRESS_2026-09-08.md`
+
+长期 completed-campaign 汇总历史现保留为：
+
+`archive/COMPLETED_DEVELOPMENT_HISTORY.md`
 
 ## 4. Product / UI / epistemic 长期参考
 
@@ -120,7 +128,7 @@ These remain in docs root because they describe reusable contracts or intentiona
 - `FIELD_TEST_APK_DISTRIBUTION.md`
 - `CI_DOCS_ONLY_MAIN_PUSH_POLICY_2026-09-08.md`
 
-Their presence in root does not make them current execution priority；roadmap + active handoff control current work。
+Their presence in root does not make them current execution priority；roadmap + active D6 documents control current work。
 
 ## 7. Archive layout
 
@@ -132,9 +140,10 @@ archive/checkpoints/  completed implementation/test/audit/checkpoint records
 archive/ui/           superseded UI plans / closeout evidence
 archive/deferred/     unfinished but explicitly deferred future work
 archive/workflows/    superseded workflow guidance
+archive/              consolidated historical reports / campaign history / lessons
 ```
 
-Files directly under `archive/` are consolidated historical reports, older design versions or campaign lessons retained for traceability。
+Files under `archive/` are evidence and traceability sources, not current execution authority。
 
 ## 8. Status authority rule
 
@@ -143,6 +152,7 @@ If documents disagree：
 1. official Blood on the Clocktower rules/rulings control gameplay correctness；
 2. root `AGENTS.md` controls project execution and architecture/test rules；
 3. `CURRENT_DEVELOPMENT_ROADMAP.md` controls current project state and priority；
-4. the one active D6 handoff controls the approved narrow campaign plan；
-5. specialized design docs control their own semantic/product domain where non-conflicting；
-6. archive documents, old Git branches and historical PR records are evidence only。
+4. `D6_0_APP_ROOT_RESPONSIBILITY_AUDIT_2026-09-08.md` controls the current D6 ownership decision；
+5. the one active D6 handoff controls the approved narrow continuation plan；
+6. specialized design docs control their own semantic/product domain where non-conflicting；
+7. archive documents, old Git branches and historical PR records are evidence only。
