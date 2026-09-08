@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 TARGET = Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt")
@@ -274,13 +275,23 @@ replace_once(
 )
 
 replace_once(
-    """        clocktowerEvents.clear()
+    """        clocktowerNightStartedState.value = false
+        clocktowerNightStepIndexState.value = 0
+
+        clocktowerEvents.clear()
         clocktowerEpistemicObservations.clear()
         clocktowerActionTimeline = ActionFactTimeline()
         clocktowerEventCounter = 0
+
+        clocktowerPendingNightDeath = null
 """,
-    """        clocktowerEvents.clear()
+    """        clocktowerNightStartedState.value = false
+        clocktowerNightStepIndexState.value = 0
+
+        clocktowerEvents.clear()
         clocktowerEventCounter = 0
+
+        clocktowerPendingNightDeath = null
 """,
     "recovery semantic history reset",
 )
@@ -452,19 +463,25 @@ for forbidden in (
     "var clocktowerActionTimeline by remember",
     "ClocktowerGameSession.commitGlobalActionFact(",
     "ClocktowerGameSession.commitGlobalEpistemicObservation(",
-    "currentClocktowerScript =",
-    "clocktowerGameId =",
-    "clocktowerGameSeed =",
-    "clocktowerGameStateRevision =",
-    "clocktowerPlayerInputRevision =",
-    "clocktowerSemanticHistoryMode =",
-    "clocktowerNextTimelineGlobalSequence =",
-    "clocktowerActionTimeline =",
+    "clocktowerEpistemicObservations +=",
     "clocktowerEpistemicObservations.clear()",
     "clocktowerEpistemicObservations.addAll(",
 ):
     if forbidden in text:
         raise SystemExit(f"Forbidden duplicate authority remains: {forbidden}")
+
+for writable_name in (
+    "currentClocktowerScript",
+    "clocktowerGameId",
+    "clocktowerGameSeed",
+    "clocktowerGameStateRevision",
+    "clocktowerPlayerInputRevision",
+    "clocktowerSemanticHistoryMode",
+    "clocktowerNextTimelineGlobalSequence",
+    "clocktowerActionTimeline",
+):
+    if re.search(rf"(?m)^\s*{re.escape(writable_name)}\s*=", text):
+        raise SystemExit(f"Forbidden bare assignment remains for {writable_name}")
 
 required_counts = {
     "ClocktowerGameSession.createProduction(": 1,
