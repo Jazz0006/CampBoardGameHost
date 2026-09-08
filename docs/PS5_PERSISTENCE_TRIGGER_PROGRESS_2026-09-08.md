@@ -51,22 +51,18 @@ Recovery is current-version-only, 4-hour emergency continuity. Archive remains s
 retry GREEN 39229bfdddba5837a9368706946f62fd94915109
 CI 34174011104 PASS
 R2 34174011121 PASS
-```
 
-PS5.1c found a real nested mutable-alias hazard. The gate now remembers timestamp-normalized persisted Recovery representation as immutable content identity.
-
-```text
 5736951007f66df042cb55d5a2b4122d064cf321 RED
 e2dbd1db05812ecbd0c0b2e751dd42b9fdc3cd23 GREEN
 CI 34177323891 PASS
 R2 34177323827 PASS
 ```
 
-Suppressed ordinary attempts still pay snapshot + serialization identity cost.
+PS5.1c found a real nested mutable-alias hazard. The gate now remembers timestamp-normalized persisted Recovery representation as immutable content identity. Suppressed ordinary attempts still pay snapshot + serialization identity cost.
 
 ## PS5.2a COMPLETE
 
-Old lifecycle policy:
+Old policy:
 
 ```text
 ON_PAUSE -> force=true
