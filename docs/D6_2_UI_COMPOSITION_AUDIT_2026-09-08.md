@@ -2,14 +2,12 @@
 
 > Date: 2026-09-08 Australia/Sydney
 > Repository: `Jazz0006/CampBoardGameHost`
-> Audit baseline: accepted D6.1 tree `dfe4ad99f331361697ea8976c7d72fb529106d54`
-> Status: **ROUTE SELECTED — D6.2a CHARACTERIZATION NEXT — PRODUCTION UNCHANGED**
+> D6.1 merge commit: `112572cbd3d990737a412cc4b8ead766d00867e8`
+> Status: **ROUTE SELECTED — D6.2a CHARACTERIZATION NEXT — START FROM FRESH MAIN-BASED BRANCH**
 
-## Purpose
+## Why D6.2 exists
 
-D6.1 solved canonical Clocktower session and dynamic GameState writer ownership. This audit asks what remaining decomposition work now yields the highest architectural value without reopening accepted persistence/rules/session semantics.
-
-The answer is no longer “move more state into `ClocktowerGameSession`.” The largest remaining problem is the Compose/UI composition surface around `ClocktowerJudgeScreen`.
+D6.1 solved canonical Clocktower session and dynamic GameState writer ownership. The remaining highest-value architecture debt is now the Compose/UI composition surface around `ClocktowerJudgeScreen`, not more state migration into `ClocktowerGameSession`.
 
 ## Residual audit evidence
 
@@ -19,9 +17,7 @@ Read-only residual-root audit:
 34223904849 — PASS
 ```
 
-The audit workflow self-cleaned. Its cleanup returned the branch to exactly the accepted D6.1 tree.
-
-### File-size signal
+Measured hotspots:
 
 ```text
 ClocktowerHostScreen.kt     329,172 bytes / 5,474 lines
@@ -31,170 +27,123 @@ ClocktowerNightStepUi.kt     47,970 bytes
 ClocktowerHistoryScreen.kt   38,365 bytes
 ClocktowerNightScreen.kt     25,063 bytes
 ClocktowerGameSession.kt     22,708 bytes
+
+ClocktowerJudgeScreen
+  parameters: 103
+  callbacks:   39
+
+App-root clocktower vars: 41
 ```
 
-File size is not itself the acceptance criterion, but it shows that the dominant residual monolith has shifted from canonical session ownership to UI composition.
+File size is only a signal. The more important result is the boundary fan-out: unrelated concerns are routed through one giant Judge composition surface.
 
-### JudgeScreen boundary signal
+The callbacks span recommendation, phase/night navigation, semantic event/observation recording, demon attack, execution, poison, Fortune Teller, Chambermaid, Ravenkeeper, Red Herring, Butler, Monk, Mayor redirect, demon succession, Klutz, Artist, Slayer, Virgin, day/night confirmation and result display.
 
-`ClocktowerJudgeScreen` currently exposes:
+## What D6.2 must not do
 
-```text
-function parameters       103
-callback parameters        39
-App invocation span   ~97,718 characters
-```
+Do **not**:
 
-The raw App invocation contains nested named arguments, so the audit's 470 named-argument count is not a semantic parameter count; the function definition's 103 parameters is the reliable boundary metric.
+- replace 39 callback parameters with one 39-function `ClocktowerJudgeActions` bag;
+- replace 103 parameters with one giant state bag;
+- introduce a broad Controller/ViewModel just to hide the same dependencies;
+- move Compose/UI state into `ClocktowerGameSession` or domain code;
+- mechanically replace `cards.toClocktowerGameState(...)` readers;
+- reopen D6.1 canonical state, Recovery v2, PS5 persistence lifecycle or recommendation semantics.
 
-The callbacks span unrelated concerns including:
+A successful extraction must reduce cross-phase knowledge and change amplification, not merely reduce visible argument count.
 
-- recommendation demand/application;
-- phase/night-step movement;
-- semantic event/observation recording;
-- demon attack and execution;
-- poison;
-- Fortune Teller / Chambermaid / Ravenkeeper / Red Herring;
-- Butler / Monk / Mayor redirect;
-- demon succession/new Demon;
-- Klutz / Artist / Slayer / Virgin;
-- day/night confirmation and result display.
+## Existing seams to build on
 
-This is composition fan-out, not one cohesive UI contract.
+The repository already has real child surfaces such as Day, Night and History screens. D6.2 should characterize how Judge currently consumes and forwards data into these children before inventing new abstractions.
 
-### App-root residual state
-
-The audit found 41 `clocktower*` root variables. They now fall mostly into:
-
-- transient selection/draft UI state;
-- day/night flow orchestration;
-- role-action UI state;
-- recommendation/display state;
-- the session owner/view/ruleset references;
-- event/UI sequencing.
-
-This is materially different from the pre-D6.1 problem: these variables are not a second canonical mechanical GameState owner.
-
-### Recovery composition
-
-The App root still contains a substantial Recovery adapter block around snapshot build/apply, but PS5 already established mature Recovery owners and accepted lifecycle/write-gate semantics. It is now a lower-priority decomposition target than the Judge UI boundary.
-
-### Derived GameState readers
-
-Production `toClocktowerGameState` call counts include:
+Preferred architectural direction:
 
 ```text
-ClocktowerHostScreen.kt                    16
-CampBoardGameHostApp.kt                    11
-ClocktowerFirstNightInformationRequest.kt   2
-ClocktowerDemonAttackProductionAdapter.kt   2
-ClocktowerNightScreen.kt                     1
-ClocktowerHistoryScreen.kt                   1
-ClocktowerDayScreen.kt                       1
-ClocktowerGameStateAdapter.kt                1
-```
-
-These are mostly derived read/pre-session/recommendation/UI projections. D6.1e already proved they are not competing writers. Replacing them mechanically is not selected work.
-
-## Candidate ranking
-
-### 1. D6.2 — Judge UI composition boundary decomposition — SELECTED
-
-Why first:
-
-- highest current fan-out;
-- largest production file is now `ClocktowerHostScreen.kt`, not App root;
-- 103 parameters / 39 callbacks create high change amplification and AI/human editing cost;
-- existing Day/Night/History screens provide real seams to build on;
-- can reduce composition coupling without changing canonical session semantics.
-
-### 2. Cohesive day/night durable orchestration extraction — DEFER
-
-Still valuable, but D6.1 has already moved canonical mechanical writers. Starting another broad day/night mutation rewrite now would create more semantic risk than UI-boundary cleanup and could duplicate existing session/planner owners.
-
-Re-audit after D6.2.
-
-### 3. Root Recovery composition cleanup — DEFER
-
-The App adapter is large, but Recovery has mature PS5 owners and frozen behavior. Decomposition should follow clearer per-game/composition boundaries later, not reopen schema/lifecycle design.
-
-### 4. Broad `cards.toClocktowerGameState` reader replacement — REJECT
-
-This would optimize source shape rather than ownership and would increase coupling between presentation and canonical domain state.
-
-## D6.2 design rule
-
-Do **not** solve 39 callbacks by creating one `ClocktowerJudgeActions` object containing the same 39 functions. That only hides fan-out behind one parameter.
-
-Do **not** create a new broad Controller/ViewModel merely because `ClocktowerJudgeScreen` is large. Canonical domain/session ownership is already established.
-
-Instead decompose by **cohesive UI responsibility**:
-
-```text
-stable shared Judge context
-+ phase-specific UI state
+stable shared Judge read context
++ small phase-specific transient UI state contracts
 + small phase/ability action contracts
 + existing domain/session owners beneath them
 ```
 
-A useful boundary must reduce the number of unrelated concepts a caller or child screen must know, not merely reduce the visible argument count.
+The exact first slice is deliberately not predetermined.
 
-## D6.2a — NEXT: parameter-consumption characterization
+## D6.2a — NEXT: parameter/callback consumption characterization
 
-Before production edits:
+D6.2a is **read/design-first**. Before any production edit:
 
-1. classify all 103 `ClocktowerJudgeScreen` parameters by responsibility and actual consumer;
-2. classify the 39 callbacks into cohesive phase/ability groups;
-3. map which values are shared shell context versus FirstNight/Night/Day/Dawn-only;
-4. map existing child screens/components and which parameters are forwarded unchanged;
-5. identify UI state currently passed as `MutableState<T>` and decide which component should own each transient state;
-6. distinguish callbacks that are pure UI selection from callbacks that cross a domain/session/durable boundary;
-7. identify the smallest group whose extraction removes real cross-phase knowledge from both App and HostScreen;
-8. baseline existing focused UI/flow tests; add a new typed characterization only if a genuine stable gap exists.
+1. re-confirm live `main` and the merged #113 state;
+2. create a fresh branch from current `main` (recommended name: `codex/d6-2-ui-composition`);
+3. parse all 103 `ClocktowerJudgeScreen` parameters;
+4. for each parameter record responsibility group, phase scope, actual consumer(s), forwarding path and whether it is shared/read-only/transient UI/durable-domain data;
+5. classify all 39 callbacks by cohesive phase/ability responsibility;
+6. identify callbacks that are selection-only versus callbacks crossing durable/session/history boundaries;
+7. inventory all `MutableState<T>` parameters and decide which component naturally owns each transient state;
+8. map existing Day/Night/ability child owners and unchanged forwarding chains;
+9. identify groups that are always consumed together and groups that currently cross unrelated phases;
+10. baseline focused UI/flow tests around the best candidate groups;
+11. rank the smallest cohesive extraction by real fan-out reduction, behavior risk and test coverage;
+12. add a typed RED only if characterization reveals a genuine stable coverage gap.
 
-D6.2a is read/design-first. Do not edit production until the responsibility matrix and first slice are explicit.
-
-## Likely extraction shape, not yet authorized implementation
-
-Prefer several small contracts aligned with real flows, for example:
+Suggested matrix columns:
 
 ```text
-Judge shared read context
-Night flow UI state/actions
-Day flow UI state/actions
-ability-specific contracts only where a real child owner exists
+name
+kind (value / MutableState / callback)
+responsibility
+phase scope
+actual consumer(s)
+forwarded unchanged?
+transient UI or durable/domain?
+current owner
+existing tests
+candidate cohesive contract
 ```
 
-The exact grouping must come from D6.2a consumption data. Avoid pre-committing to one giant state bag or action bag.
+## Candidate ranking after characterization
+
+Prefer the smallest group that:
+
+- removes unrelated concepts from both App and HostScreen;
+- maps to one real flow or child owner;
+- does not own canonical domain state;
+- preserves current behavior exactly;
+- has focused characterization coverage;
+- makes subsequent extractions easier rather than creating a new monolith.
+
+Potential categories to evaluate, not pre-authorized implementations:
+
+```text
+Night-flow transient UI state/actions
+Day-flow transient UI state/actions
+shared Judge read-only context
+ability-specific contracts where a real child owner already exists
+```
 
 ## D6.2 invariants
 
 Preserve:
 
-- `ClocktowerGameSession` as canonical writable domain/session owner;
-- exact game/input revision cadence;
+- `ClocktowerGameSession` as canonical writable session/domain owner;
+- exact game/player revision cadence;
 - semantic chronology and idempotency;
-- Recovery v2 and PS5 write/lifecycle topology;
+- Recovery v2 + PS5 lifecycle/write-gate topology;
 - A4 durability/invalidation ordering;
-- existing recommendation semantics;
-- all gameplay/rule behavior;
-- current user-visible UI behavior during structural slices;
+- recommendation/gameplay semantics;
+- current user-visible UI behavior for structural slices;
+- no Compose dependency in session/domain;
 - Undercover/Werewolf isolation.
 
-No Compose type may move into session/domain code.
+## Branch / PR strategy
 
-## Branch/PR strategy
-
-D6.1 is a complete accepted logical checkpoint. Do not continue D6.2 production work inside PR #113.
-
-Preferred sequence:
+D6.1 is merged and closed. D6.2 must use a fresh branch from current `main` and a separate PR.
 
 ```text
-user authorizes merge of PR #113
--> re-confirm merged main
--> new D6.2 branch from main
--> D6.2a characterization
--> smallest cohesive UI boundary slice
+re-confirm current main
+-> create codex/d6-2-ui-composition (or equivalent) from main
+-> D6.2a characterization only
+-> choose smallest cohesive boundary
+-> tests/characterization-first implementation
+-> re-audit after each completed slice
 ```
 
-This keeps session-authority and UI-composition refactors independently reviewable.
+Do not reuse `codex/d6-root-reaudit` or PR #113.
