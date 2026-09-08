@@ -5,7 +5,7 @@
 > D6.1 merge commit: `112572cbd3d990737a412cc4b8ead766d00867e8`  
 > D6.2 branch base / current main: `d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e`  
 > Latest validated production checkpoint: `5e0891e7611787300b01d83b889f27a903c0768b`
-> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h READ-ONLY RE-AUDIT COMPLETE; D6.2i COMPLETE / VALIDATED**
+> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h READ-ONLY RE-AUDIT COMPLETE; D6.2i COMPLETE / VALIDATED; D6.2j AUDIT COMPLETE; D6.2k NEXT**
 
 ## Purpose
 
@@ -349,11 +349,11 @@ Local Gradle could not download its distribution because of restricted network a
 
 Detailed evidence: `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md`.
 
-## Next — residual composition re-audit
+## D6.2j residual audit COMPLETE / D6.2k NEXT
 
-D6.2i is closed. Before another production slice, re-rank the remaining live UI ownership boundaries using the current 89-parameter signature. Day mode and durable vote state still have legitimate external writers; Night navigation remains checkpoint/Recovery-coupled. Do not move those groups wholesale or expand this slice to a Day dispatcher, Recovery redesign or orphan-helper cleanup.
+See `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md` for current evidence and the exact next implementation contract. All five remaining mutable inputs retain external owners. Next remove dormant diagnostic composition and dead input/lookup chains in the documented three-file scope; preserve live diagnostics harnesses, A4 services and Recovery.
 
-PR #115 remains OPEN / DRAFT. Merge requires explicit user authorization.
+Judge remains 89 parameters until D6.2k is actually implemented and validated. Expected result is 87, with 34 on-callbacks and five MutableState inputs unchanged. Subsequent work should investigate live rendering/preparation boundaries rather than merely continuing parameter deletion.
 
 ## Frozen invariants
 
@@ -382,6 +382,7 @@ main d76b0854...
 -> D6.2g dead plumbing VALIDATED @ 15342f9...
 -> D6.2h surviving square-table audit COMPLETE
 -> D6.2i Day nomination transient ownership VALIDATED @ 5e0891e...
--> residual composition re-audit NEXT
+-> D6.2j residual composition audit COMPLETE
+-> D6.2k dormant diagnostics / dead inputs NEXT
 -> PR #115 remains OPEN / DRAFT / DO NOT AUTO-MERGE
 ```

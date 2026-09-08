@@ -43,7 +43,7 @@ CI 34288731376 — PASS
 
 ## Current priority
 
-> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h READ-ONLY RE-AUDIT COMPLETE → D6.2i DAY NOMINATION TRANSIENT OWNERSHIP COMPLETE / VALIDATED → RESIDUAL COMPOSITION RE-AUDIT NEXT.**
+> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h READ-ONLY RE-AUDIT COMPLETE → D6.2i DAY NOMINATION TRANSIENT OWNERSHIP COMPLETE / VALIDATED → D6.2j RESIDUAL AUDIT COMPLETE → D6.2k DORMANT DIAGNOSTIC CLEANUP NEXT.**
 
 D6.2 stays on `codex/d6-2-ui-composition`. Do not reopen PR #113 or move this work back to `codex/d6-root-reaudit`.
 
@@ -320,11 +320,19 @@ Local Gradle could not download its distribution because of restricted network a
 
 Detailed evidence: `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md`.
 
-## Next — residual composition re-audit
+## D6.2j — residual composition audit COMPLETE
 
-D6.2i is closed. Before another production slice, re-rank the remaining live UI ownership boundaries using the current 89-parameter signature. Day mode and durable vote state still have legitimate external writers; Night navigation remains checkpoint/Recovery-coupled. Do not move those groups wholesale or expand this slice to a Day dispatcher, Recovery redesign or orphan-helper cleanup.
+Authority: `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md`.
 
-PR #115 remains OPEN / DRAFT. Merge requires explicit user authorization.
+All five remaining Judge MutableState inputs have legitimate external ownership. Four diagnostic effects have permanently zero trigger counters; Judge also has dead `confirmedDemonSuccessorTarget` forwarding, diagnostics-only `rulesetRef`, an unused child diagnostics parameter and eight unused pure role lookups.
+
+## Next — D6.2k dormant diagnostic / dead input cleanup
+
+Use the three-file allowlist and exact contract in the D6.2j audit. Expected Judge parameters 89 -> 87, child NightStep parameters 49 -> 48; callbacks, durable App state and five MutableState inputs stay unchanged. Preserve benchmark harnesses/tests, live A4 prewarming, recommendation effects, telemetry and Recovery.
+
+After this bounded cleanup, investigate a live vote rendering boundary and then phase preparation/effect dependencies. Do not localize Recovery-coupled state or move all pre-dispatch logic into conditional branches.
+
+PR #115 remains OPEN / DRAFT; production checkpoint stays `5e0891e...`. This audit changed documentation only.
 
 ## Execution method
 
@@ -348,7 +356,7 @@ Preserve:
 
 ## Active handoff
 
-Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md` for the next residual audit. The D6.2i implementation handoff is now historical; do not implement the same slice again.
+Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md` and `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md` for D6.2k. The D6.2i implementation handoff is now historical; do not implement the same slice again.
 
 ## Later priority after D6
 
