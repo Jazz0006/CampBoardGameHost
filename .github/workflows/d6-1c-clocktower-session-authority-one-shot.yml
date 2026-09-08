@@ -54,7 +54,22 @@ jobs:
             --rerun-tasks --no-daemon --stacktrace
 
       - name: Apply exact D6.1c App authority patch
-        run: python3 .github/scripts/patch_d6_1c_clocktower_session_authority.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          script='.github/scripts/patch_d6_1c_clocktower_session_authority.py'
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/scripts/patch_d6_1c_clocktower_session_authority.py')
+          text = path.read_text()
+          old = 'if re.search(rf"(?m)^\\s*{re.escape(writable_name)}\\s*=", text):'
+          new = 'if re.search(rf"(?m)^\\s*{re.escape(writable_name)}\\s*=(?!=)", text):'
+          if text.count(old) != 1:
+              raise SystemExit(f'assignment assertion anchor count was {text.count(old)}, expected 1')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          python3 "$script"
+          git checkout -- "$script"
 
       - name: Audit exact ownership cutover diff
         shell: bash
@@ -95,7 +110,7 @@ jobs:
             clocktowerActionTimeline
           )
           for name in "${writable[@]}"; do
-            if grep -Eq "^[[:space:]]*${name}[[:space:]]*=" "$app"; then
+            if grep -Eq "^[[:space:]]*${name}[[:space:]]*=([^=]|$)" "$app"; then
               echo "Forbidden bare assignment remains: $name" >&2
               exit 1
             fi
