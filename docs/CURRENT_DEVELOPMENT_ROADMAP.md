@@ -9,29 +9,31 @@
 ```text
 D6.1 merge commit on main: 112572cbd3d990737a412cc4b8ead766d00867e8
 merged PR: #113 D6: Clocktower session authority cutover
-D6.1 T4 acceptance commit: 30adff1ecb195123c7096757c1454c4a4a61ccca
-next phase: D6.2a Judge UI composition characterization
+D6.2 branch base main: d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e
+D6.2 latest validated production checkpoint: 58bc1e51440d44f36e14d1a9d5a45cfe9c235955
+draft PR: #115 D6.2: localize Slayer UI selection ownership
+next phase: D6.2c Artist confirmation-contract characterization
 ```
 
-Merge validation on `main`:
+D6.2b validation on the exact production checkpoint:
 
 ```text
-CI 34225075948 — PASS
-  Android full JVM + debug APK — PASS
+R2 34283098478 — PASS
+CI 34283098477 — PASS
+  Android FULL unit tests — PASS
+  debug APK build — PASS
   ASP contracts — PASS
   Real Clingo — PASS
   CI gate — PASS
-Field Test APK 34225075992 — PASS
-  FAST tests/build/signature/publish — PASS
 ```
 
-Always re-confirm live `main` before the next write sequence because docs-only descendants may exist after the merge commit.
+Docs-only commits may follow the validated production checkpoint. Keep production-code checkpoint and branch/documentation head distinct when handing off.
 
 ## Current priority
 
-> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a CHARACTERIZATION NEXT.**
+> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a COMPLETE → D6.2b COMPLETE / VALIDATED → D6.2c CHARACTERIZATION NEXT.**
 
-D6.2 must start on a **fresh branch from current `main`**. Do not reopen PR #113 or continue D6.2 work on `codex/d6-root-reaudit`.
+D6.2 remains on the fresh branch `codex/d6-2-ui-composition`, originally cut from current-main checkpoint `d76b0854...`. Do not reopen PR #113 or move D6.2 work back to `codex/d6-root-reaudit`.
 
 ## D6.1 — COMPLETE / ACCEPTED / MERGED
 
@@ -80,7 +82,7 @@ Detailed evidence:
 
 ## Post-D6.1 residual re-audit — COMPLETE
 
-Residual-root audit `34223904849` measured:
+Residual-root audit `34223904849` measured the D6.2 baseline:
 
 ```text
 ClocktowerHostScreen.kt  329,172 bytes / 5,474 lines
@@ -89,47 +91,125 @@ ClocktowerJudgeScreen    103 parameters / 39 callbacks
 App-root clocktower vars 41
 ```
 
-Conclusion: canonical session/GameState ownership is no longer the dominant architecture problem. The highest-value residual debt is the `ClocktowerJudgeScreen` / `ClocktowerHostScreen.kt` UI-composition surface.
+Conclusion: canonical session/GameState ownership was no longer the dominant architecture problem. The highest-value residual debt was the `ClocktowerJudgeScreen` / `ClocktowerHostScreen.kt` UI-composition surface.
 
 Detailed route audit:
 
 - `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md`
 
-## D6.2a — NEXT: UI composition characterization
+## D6.2a — COMPLETE: UI composition characterization
 
-Before any production edit:
+The fresh-branch read-only audit produced the complete 103-row Judge consumption/responsibility matrix:
 
-1. create a fresh D6.2 branch from current `main`;
-2. classify all 103 `ClocktowerJudgeScreen` parameters by responsibility, phase scope and actual consumers;
-3. classify all 39 callbacks into cohesive phase/ability groups;
-4. map shared shell context versus FirstNight/Night/Day/Dawn-only inputs;
-5. map values forwarded unchanged into existing Day/Night/ability children;
-6. classify every `MutableState<T>` parameter by real transient-UI owner;
-7. separate selection-only callbacks from callbacks crossing durable/session/domain boundaries;
-8. rank the smallest cohesive extraction slice by reduction in cross-phase knowledge and testable blast radius;
-9. use existing focused behavior evidence first; add RED only for a genuine stable coverage gap.
+- `docs/D6_2A_CLOCKTOWER_JUDGE_CONSUMPTION_MATRIX_2026-09-08.md`
 
-### Critical design rule
-
-Do **not** replace 39 callback parameters with one 39-function `Actions` bag. Do **not** create a broad Controller/ViewModel merely to hide the same fan-out. A successful extraction must reduce the number of unrelated concepts known by caller and callee.
-
-Likely shape after characterization:
+Exact baseline decomposition:
 
 ```text
-stable shared Judge read context
-+ small phase-specific UI state/action contracts
-+ existing Day/Night/ability child owners
+103 total Judge parameters
+39 callbacks
+3 additional function-valued providers
+10 MutableState<T> parameters
 ```
 
-The exact first extraction group is intentionally not frozen until D6.2a produces consumption evidence.
+Key conclusions:
+
+- `records` and `onPhaseChange` are zero-consumer Judge inputs and remain separate cleanup candidates;
+- Night navigation and several Day/vote states are Recovery/checkpoint/mechanics coupled and cannot simply become child-local;
+- Slayer claimant/target selection was the smallest real cohesive ownership boundary;
+- no broad `ClocktowerJudgeActions`, `DayState`, Controller or ViewModel bag was justified.
+
+## D6.2b — COMPLETE / VALIDATED: Slayer UI selection ownership
+
+Production checkpoint:
+
+```text
+58bc1e51440d44f36e14d1a9d5a45cfe9c235955
+refactor: localize Slayer selection ownership [full-ci]
+```
+
+Exact production diff from D6.2a:
+
+```text
+CampBoardGameHostApp.kt  +0 / -8
+ClocktowerHostScreen.kt  +2 / -4
+```
+
+Ownership result:
+
+```text
+App no longer owns or forwards Slayer claimant/target MutableState.
+ClocktowerJudgeScreen owns the two transient selections with remember(gameId).
+onSlayerShot(claimantName, targetName, recluseRegistersAsDemon)
+remains the complete durable action boundary.
+```
+
+Post-slice metrics:
+
+```text
+ClocktowerJudgeScreen    101 parameters / 39 callbacks
+MutableState parameters    8
+App-root clocktower vars   39
+```
+
+The reduction is deliberately small but real: ownership moved to its actual UI consumer rather than being hidden inside a replacement bag.
+
+No change was made to:
+
+- `slayerUsed` / `slayerClaimedNames` durable mechanics;
+- outcome/session/history/revision semantics;
+- Recovery v2 / PS5;
+- Artist, nomination/vote or Night navigation;
+- Undercover/Werewolf flows.
+
+Validation:
+
+```text
+R2 34283098478 — PASS
+CI 34283098477 — PASS
+  :app:testFull + :app:assembleDebug — PASS
+  ASP contracts — PASS
+  Real Clingo — PASS
+  CI gate — PASS
+```
+
+Draft PR #115 is open. Do not merge automatically.
+
+## D6.2c — NEXT: Artist confirmation-contract characterization
+
+Artist is the next strongest candidate, but unlike Slayer its durable confirmation callback currently reads App-owned transient values.
+
+Current App-owned selection values:
+
+```text
+clocktowerArtistClaimantName
+clocktowerArtistTruthfulAnswer
+clocktowerArtistShownAnswer
+```
+
+Before any Artist production edit:
+
+1. map the exact `ClocktowerArtistTableScreen` selection/confirmation flow;
+2. audit every read/write/reset consumer of the three Artist transient values;
+3. inspect existing Artist-focused tests and use them before inventing new coverage;
+4. determine whether `onConfirmArtistQuestion` can become a narrow value-carrying callback without moving durable behavior;
+5. keep `artistUsed`, `artistClaimedNames`, records/events, revisions and Day routing above;
+6. add a typed RED only if the exact confirmation contract reveals a real stable coverage gap;
+7. do not combine Artist with nomination/vote, Night navigation or unrelated dead-parameter cleanup.
+
+Do not create `ArtistState` / `ArtistActions` bags merely for symmetry.
 
 ## Deferred D6 candidates
 
-After D6.2, re-audit rather than following a rigid sequence:
+After the Artist evidence, re-rank rather than following a rigid sequence:
 
-1. cohesive durable day/night orchestration extraction only where real root policy remains;
-2. root Recovery composition simplification without changing PS5 schema/lifecycle semantics;
-3. final App/HostScreen file-size and callback-fanout audit.
+1. `records` / `onPhaseChange` dead-parameter cleanup as a separate trivial slice if still useful;
+2. nomination/vote subsets with Recovery coupling explicitly preserved;
+3. whole Day dispatcher only after smaller ownership seams are cleaner;
+4. Night navigation only with a checkpoint/recovery-safe contract;
+5. cohesive durable day/night orchestration extraction only where real root policy remains;
+6. root Recovery composition simplification without changing PS5 schema/lifecycle semantics;
+7. final App/HostScreen file-size and callback-fanout audit.
 
 Broad `cards.toClocktowerGameState(...)` reader replacement is explicitly **not** a decomposition goal.
 
@@ -155,6 +235,8 @@ Preserve:
 Use:
 
 - `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_2_UI_COMPOSITION.md`
+- `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md`
+- `docs/D6_2A_CLOCKTOWER_JUDGE_CONSUMPTION_MATRIX_2026-09-08.md`
 
 The previous `NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md` is closed historical handoff material.
 
