@@ -2,158 +2,158 @@
 
 > Date: 2026-09-08 Australia/Sydney
 > Repository: `Jazz0006/CampBoardGameHost`
-> Starting point: merged `main`
-> Persistence Simplification merge commit: `1b502c75357a2de7c928c88668e6a9613521b4ac`
-> Status: **READY FOR FRESH D6 AUDIT / PLANNING — NO D6 IMPLEMENTATION STARTED**
+> Live main: `2c495ee547e8327b0d3c3a811f5c891ba34fd863`
+> Active branch: `codex/d6-root-reaudit`
+> Draft PR: #113
+> Status: **D6.1 ACCEPTED / T4 GREEN — POST-D6.1 RE-AUDIT COMPLETE — MERGE DECISION NEXT, THEN D6.2a ON A NEW BRANCH**
 
 ## Read first
-
-Treat these as authority before doing D6 work:
 
 1. root `AGENTS.md`
 2. `docs/TESTING_STRATEGY.md`
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
-4. this handoff
-5. `docs/PS5_PERSISTENCE_TRIGGER_PROGRESS_2026-09-08.md` only when persistence-history context is needed
+4. `docs/D6_1E_ACCEPTANCE_PROGRESS_2026-09-08.md`
+5. `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md`
+6. this handoff
+7. older D6.0–D6.1d docs only when historical evidence is needed
 
-Before any write, re-confirm live `main`. Documentation-only commits may exist after the PS5 merge commit above.
+Always re-confirm live GitHub state before writes.
 
-## Completed predecessor
+## D6.1 — COMPLETE and accepted
 
-Persistence Simplification / PS5 is fully complete:
-
-- PR #112 merged / closed;
-- automated acceptance complete;
-- renewed post-hotfix full T4 complete;
-- real-device acceptance tests 1–5 complete;
-- recovered 6-player No Greater Joy -> quick restart crash fixed and retested successfully.
-
-Latest PS5 production GREEN inside merged history:
+Accepted checkpoint:
 
 ```text
-e622960a9c75c0b110d2c92e34b46828cb949e0a
-fix: restore seating owner after recovery
+30adff1ecb195123c7096757c1454c4a4a61ccca
+[full-ci] D6.1 acceptance checkpoint
 ```
 
-Renewed post-hotfix T4:
+Validation:
 
 ```text
-CI 34191738571 — PASS
-R2 34191738649 — PASS
+CI 34223133695 — PASS
+R2 34223133706 — PASS
+Android full JVM + debug APK build — PASS
+ASP contracts — PASS
+Real Clingo cross-validation — PASS
+aggregate CI gate — PASS
 ```
 
-Final pre-merge docs checks:
+Pre-acceptance structural evidence:
 
 ```text
-CI 34192745929 — PASS
-R2 34192745940 — PASS
+D6.1d global ownership audit 34221212685 — PASS
+D6.1e compatibility/read-side audit 34222474745 — PASS
 ```
 
-## Why D6 must be re-audited
-
-Do not mechanically resume the old D6 plan. Persistence Simplification changed or clarified several ownership boundaries that directly affect decomposition decisions:
-
-- Recovery is a current-version-only emergency continuity contract, not long-lived Save Game;
-- Archive is separate from Recovery;
-- `RecoveryWriteGate` owns semantic duplicate suppression / retry state;
-- lifecycle persistence is `ON_PAUSE force=true`, `ON_STOP force=false`;
-- Compose `SideEffect` remains the generic ordinary persistence opportunity by explicit architecture decision;
-- A4 durability ordering must not be broken;
-- Recovery restore reconstructs `HostSeatingSetupFlow` ownership for an active recovered game;
-- session/restart/recovery ownership must remain consistent across Undercover, Werewolf and Clocktower.
-
-Any D6 extraction that moves state, callbacks, persistence/recovery wiring or session ownership must preserve those contracts.
-
-## D6 goal
-
-Perform a **fresh ownership-first decomposition audit** of the merged application architecture, then produce the best new D6 plan.
-
-The goal is not merely “make files smaller”. The plan should reduce coupling, improve ownership clarity and make future AI/human edits cheaper without creating cross-file hidden state or callback spaghetti.
-
-## Required audit scope
-
-At minimum inspect:
-
-1. `CampBoardGameHostApp.kt`
-   - current size / responsibility clusters;
-   - mutable state ownership;
-   - game-start / restart / recovery entry points;
-   - persistence trigger/wiring;
-   - Clocktower flow orchestration;
-   - UI/composable ownership still mixed with domain/session logic.
-
-2. Already extracted owners around:
-   - Recovery / persistence;
-   - Archive;
-   - Host seating/setup flow;
-   - Clocktower flow/session helpers;
-   - A4 durability/cache lifecycle;
-   - recommendation / algorithm coordination.
-
-3. Cross-boundary coupling:
-   - callbacks into the App root;
-   - shared mutable collections/state;
-   - hidden ordering constraints;
-   - functions that are only file-local because they capture many App locals;
-   - state clusters that should become explicit owner objects/state holders instead of utility functions.
-
-4. Tests and CI ownership:
-   - identify characterization tests that already protect extraction boundaries;
-   - identify missing REDs required before moving a responsibility;
-   - preserve FAST vs full-T4 strategy from `docs/TESTING_STRATEGY.md`.
-
-## Audit principles
-
-Use mature decomposition criteria rather than a raw line-count target:
-
-- one reason to change per owner;
-- explicit state ownership;
-- minimal bidirectional callbacks;
-- dependency direction should be obvious and preferably one-way;
-- pure/domain logic should not depend on Compose/Android lifecycle when avoidable;
-- persistence contracts should be injected/called through explicit boundaries rather than globally reachable state;
-- prefer extracting cohesive state + behavior together over moving isolated functions;
-- avoid “manager” objects that merely mirror the giant App with dozens of callbacks;
-- preserve fail-closed invariants at production boundaries;
-- do not change user-visible behavior during structural D6 slices unless separately authorized.
-
-File size remains a useful signal, especially for AI edit cost, but it is secondary to ownership quality.
-
-## Deliverable before implementation
-
-Produce a D6 plan that includes:
-
-1. current responsibility map of the remaining large App/root file;
-2. proposed target owners/modules;
-3. dependency graph / extraction order;
-4. each slice's exact behavioral invariants;
-5. tests-first RED/characterization strategy for each risky slice;
-6. expected changed-file allowlist per slice where practical;
-7. rollback/checkpoint strategy;
-8. FAST / R2 / full-T4 cadence;
-9. explicit non-goals to stop D6 expanding into unrelated product work;
-10. whether the old D6 slices should be retained, reordered, replaced or dropped.
-
-Do **not** begin production extraction until this audit/plan has been reviewed and accepted.
-
-## Guardrails carried forward
-
-- Reconfirm remote/live branch head before every write sequence.
-- Behavior changes require tests-first RED.
-- Structural extraction should preserve exact behavior; characterization tests are appropriate.
-- Run focused tests first, then `:app:testFast` at logical GREEN checkpoints.
-- Use R2 for main-thread / structural boundary validation where applicable.
-- Reserve full T4 for campaign/slice acceptance according to `docs/TESTING_STRATEGY.md` rather than running it after every tiny edit.
-- Run `git diff --check` and exact changed-file/reference audits.
-- Treat giant-file edits fail-closed: use precise local/workflow patches rather than broad blind rewrites.
-- Do not mix D6 with Recovery redesign, cross-version migration, Archive redesign, Werewolf removal, A4/ZDD feature rollout, unrelated UI changes or DataStore modernization.
-
-## Suggested new-conversation prompt
+Final canonical owner:
 
 ```text
-请读取根目录 AGENTS.md、docs/TESTING_STRATEGY.md、docs/CURRENT_DEVELOPMENT_ROADMAP.md 和 docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md。
+ClocktowerGameSession
+= identity + revisions + semantic chronology + dynamic GameState writable authority
+```
 
-先重新确认 live main 和当前 checks。Persistence Simplification / PR #112 已完成并合并，不要继续 PS5，也不要直接沿用旧 D6 方案。
+App-root cards/flow variables remain presentation/orchestration mirrors and derived read adapters. Do not reopen broad GameState ownership or mechanically replace `cards.toClocktowerGameState(...)` readers.
 
-请从合并后的真实架构重新审计 CampBoardGameHostApp.kt 及相关 owner，按 ownership / coupling / dependency direction / testability 重新设计 D6。先只做审计和实施路线，不要开始 production extraction。最后给出你认为最佳的 D6 拆分顺序、每一步的 tests-first 边界、风险和验收门。
+## Post-D6.1 residual re-audit — COMPLETE
+
+Audit run:
+
+```text
+34223904849 — PASS
+```
+
+Cleanup head:
+
+```text
+b61af7e7029f8b7df441fb32b35c1fed3a2d4b18
+```
+
+The cleanup tree is exactly the accepted T4 tree:
+
+```text
+dfe4ad99f331361697ea8976c7d72fb529106d54
+```
+
+Key measurements:
+
+```text
+ClocktowerHostScreen.kt  329,172 bytes / 5,474 lines
+CampBoardGameHostApp.kt  241,986 bytes / 4,315 lines
+ClocktowerJudgeScreen    103 parameters / 39 callbacks
+App-root clocktower vars 41
+```
+
+Conclusion: the dominant residual problem is now UI composition fan-out, not session authority.
+
+## PR #113 decision gate
+
+PR #113 is a complete D6.1 checkpoint. Do not add D6.2 production changes to it.
+
+Preferred sequence:
+
+```text
+user explicitly authorizes merge
+-> re-confirm #113 head / checks / main
+-> merge #113
+-> confirm new main
+-> create fresh D6.2 branch
+```
+
+Until merge is explicitly authorized, keep #113 Draft/open and do not begin D6.2 production work on the current branch.
+
+## D6.2a — NEXT after merge: Judge UI composition characterization
+
+No production edit first.
+
+Build a responsibility/consumption matrix for all 103 `ClocktowerJudgeScreen` parameters and 39 callbacks:
+
+```text
+parameter/callback
+-> responsibility group
+-> actual consumer(s)
+-> phase scope
+-> transient UI vs durable/domain boundary
+-> current owner
+-> child-screen forwarding
+-> existing tests
+-> candidate cohesive contract
+```
+
+Also map all `MutableState<T>` parameters and decide where transient UI ownership naturally belongs.
+
+Rank candidate groups by:
+
+- reduction in cross-phase knowledge;
+- complete ownership of a real UI responsibility;
+- existing child-screen seam;
+- behavior/test evidence;
+- Compose-only blast radius;
+- actual reduction in App + HostScreen fan-out.
+
+### Do not
+
+- create one mega `ClocktowerJudgeActions` object containing the same 39 callbacks;
+- create a broad Controller/ViewModel to hide the same dependencies;
+- move Compose/UI state into `ClocktowerGameSession`;
+- change gameplay or recommendation semantics;
+- reopen Recovery v2/PS5 lifecycle topology;
+- mix D6.2 into PR #113.
+
+## Frozen invariants
+
+- same game ID/seed/script behavior;
+- no fake NGJ RulesetRef;
+- exact revision cadence;
+- global chronology/idempotency unchanged;
+- Recovery/A4 ordering unchanged;
+- no hidden-information leak;
+- no Compose dependency in session/domain;
+- Undercover/Werewolf untouched;
+- no intended user-visible behavior change for structural D6.2 slices.
+
+## Suggested continuation prompt
+
+```text
+请读取 AGENTS.md、docs/TESTING_STRATEGY.md、docs/CURRENT_DEVELOPMENT_ROADMAP.md、docs/D6_1E_ACCEPTANCE_PROGRESS_2026-09-08.md、docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md 和当前 handoff。先重新确认 live main、PR #113 head/state/checks。D6.1 已通过 T4，post-D6.1 residual audit 也完成。不要再扩大 session/GameState/read-side 重构。如果 PR #113 尚未合并，先停在 merge decision；若已合并，则从新 main 建立独立 D6.2 分支，从 D6.2a 开始只读 characterization：完整映射 ClocktowerJudgeScreen 103 个参数、39 个 callbacks、MutableState ownership 和 child-screen consumption，选出最小的真实 cohesive UI boundary。不要用一个 mega Actions/State bag 伪装解耦，先不要改 production。
 ```

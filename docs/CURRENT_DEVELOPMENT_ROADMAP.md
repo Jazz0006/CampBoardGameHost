@@ -7,144 +7,155 @@
 ## Live context
 
 ```text
-live main: 1b502c75357a2de7c928c88668e6a9613521b4ac
-merged PR: #112 Persistence Simplification: recent emergency recovery
-merged branch head: 18e7be6b915d654ea6bbfa6a11ff5627fe467153
-latest production GREEN inside merged history: e622960a9c75c0b110d2c92e34b46828cb949e0a
-renewed post-hotfix full-T4 checkpoint: 686b52a79cd4ea183c81884d34d54223fecae124
+live main: 2c495ee547e8327b0d3c3a811f5c891ba34fd863
+active branch: codex/d6-root-reaudit
+active draft PR: #113 D6: Clocktower session authority cutover
+D6.1 T4 acceptance commit: 30adff1ecb195123c7096757c1454c4a4a61ccca
+post-D6.1 residual audit cleanup head: b61af7e7029f8b7df441fb32b35c1fed3a2d4b18
 ```
 
-PR #112 is **merged / closed**. Persistence Simplification / PS5 is complete on `main`.
+The acceptance commit and post-audit cleanup have the same tree SHA:
+
+```text
+dfe4ad99f331361697ea8976c7d72fb529106d54
+```
+
+So no unvalidated production or document change exists after the accepted D6.1 tree.
+
+PR #113 remains **Draft / open / mergeable / not merged**. Do not merge automatically.
 
 ## Current priority
 
-> **D6 post-persistence architecture re-audit and decomposition planning.**
+> **PS5 COMPLETE → D6.0 COMPLETE → D6.1 COMPLETE / T4 GREEN → user-approved PR #113 merge → D6.2 UI composition boundary characterization.**
 
-Do **not** resume an old D6 implementation plan mechanically. Persistence Simplification changed ownership boundaries around Recovery, lifecycle persistence, restart/recovery seating ownership, Archive separation and A4 durability. The next development step is therefore a fresh audit of the merged `main`, followed by a new D6 ownership/decomposition plan.
+Do not append D6.2 production work to PR #113. D6.1 is a complete logical checkpoint and should remain independently reviewable.
 
-New-conversation handoff:
+## D6.1 — COMPLETE: Clocktower session authority
 
-`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md`
+D6.1 selected the strongest existing owner, `ClocktowerGameSession`, instead of inventing a new Manager/Controller.
 
-Historical PS5 handoff:
-
-`docs/PS5_PERSISTENCE_TRIGGER_PROGRESS_2026-09-08.md`
-
-## Persistence Simplification / PS5 — COMPLETE
+Accepted ownership:
 
 ```text
-PS0 COMPLETE
-PS1 COMPLETE
-PS2 COMPLETE
-PS3 COMPLETE
-PS4 COMPLETE
-PS5 COMPLETE
-  PS5.0 COMPLETE
-  PS5.1a COMPLETE
-  PS5.1b COMPLETE
-  PS5.1c COMPLETE
-  PS5.2a lifecycle pause/stop duplicate-write reduction COMPLETE
-  PS5.2b SideEffect ownership audit COMPLETE
-  original final automated T4 COMPLETE
-  recovery quick-restart hotfix COMPLETE
-  renewed post-hotfix T4 COMPLETE
-  real-device process-loss/restart acceptance COMPLETE
-  PR #112 MERGED
+ClocktowerGameSession
+= canonical writable identity
++ revisions
++ semantic chronology
++ dynamic GameState mechanics
+
+ClocktowerSessionView
+= narrow immutable Compose-facing projection
+
+App-root PlayerCard / flow variables
+= presentation and orchestration mirrors
 ```
 
-Final Recovery contract remains frozen unless a future task deliberately reopens it:
+Dynamic canonical mechanics now include actual/shown role identity, alive/death and poison state. Poison `+1` versus `+0` revision cadence is preserved exactly.
 
-- current-version-only, 4-hour emergency continuity;
-- Archive remains a separate contract;
-- unsupported/old Recovery fails closed;
-- failed writes retain a future retry opportunity;
-- A4 cannot release rebuild before persistence succeeds;
-- restore the game, not raw transient UI state.
-
-Final persistence trigger topology:
+Key evidence:
 
 ```text
-SideEffect -> ordinary persist -> RecoveryWriteGate
-ON_PAUSE  -> forced persist   -> RecoveryWriteGate
-ON_STOP   -> ordinary persist -> RecoveryWriteGate
+D6.1d global ownership audit 34221212685 — PASS
+D6.1e compatibility/read-side audit 34222474745 — PASS
+T4 acceptance commit 30adff1ecb195123c7096757c1454c4a4a61ccca
+CI 34223133695 — PASS
+R2 34223133706 — PASS
+Android full JVM + debug APK — PASS
+ASP contracts — PASS
+Real Clingo — PASS
+CI gate — PASS
 ```
 
-`SideEffect` is retained by explicit architecture decision. Do not reopen its removal without profiling evidence and a universal durable-mutation ownership design.
+Recovery/persistence, Clocktower rules, A4 epistemic production code and Werewolf were not redesigned by the canonical writer cutover.
 
-## Final PS5 production / validation evidence
+Detailed evidence:
 
-Latest production GREEN:
+- `docs/D6_1D_GAME_STATE_PROGRESS_2026-09-08.md`
+- `docs/D6_1E_ACCEPTANCE_PROGRESS_2026-09-08.md`
+
+## Post-D6.1 global re-audit — COMPLETE
+
+Residual-root audit:
 
 ```text
-e622960a9c75c0b110d2c92e34b46828cb949e0a
-fix: restore seating owner after recovery
+34223904849 — PASS
 ```
 
-The final real-device-discovered bug was a Recovery ownership gap: a restored active game had valid cards/player identities/game kind but did not reconstruct `HostSeatingSetupFlow`. Recovery now rehydrates confirmed seating plus the selected active game while preserving the existing fail-closed `playerNamesFor()` production-start invariant.
-
-Tests-first hotfix evidence:
+Measured current hotspots:
 
 ```text
-RED 3bc389349bba00a155d55ec01508d6b271125ff0
-CI 34191093216 — expected FAIL
-R2 34191093300 — PASS
-
-helper GREEN d8e1123d1535672dc04271ab41e18ec979ccaa7f
-product GREEN e622960a9c75c0b110d2c92e34b46828cb949e0a
-one-shot 34191324182 — PASS
-  focused HostSeatingRosterTest PASS
-  :app:testFast PASS
-  exact App-only product diff audit PASS
-  git diff --check PASS
+ClocktowerHostScreen.kt  329,172 bytes / 5,474 lines
+CampBoardGameHostApp.kt  241,986 bytes / 4,315 lines
+ClocktowerJudgeScreen    103 parameters / 39 callbacks
+App-root clocktower vars 41
 ```
 
-Renewed post-hotfix reserved T4:
+This changes the D6 priority. Canonical state ownership is no longer the dominant problem; the highest-value residual architecture debt is the `ClocktowerJudgeScreen` / `ClocktowerHostScreen.kt` UI-composition surface.
+
+Detailed route audit:
+
+- `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md`
+
+## D6.2 — NEXT: UI composition boundary decomposition
+
+### D6.2a first — characterization only
+
+Before production edits:
+
+- build a 103-parameter consumption/responsibility matrix;
+- group 39 callbacks by actual phase/ability responsibility;
+- map shared shell context versus FirstNight/Night/Day/Dawn-only inputs;
+- map existing child-screen owners and unchanged forwarding;
+- classify `MutableState<T>` ownership;
+- separate transient UI selection callbacks from durable/session boundaries;
+- rank the smallest cohesive extraction slice;
+- use existing focused behavior evidence first; add RED only for a genuine stable coverage gap.
+
+### Critical design rule
+
+Do not replace 39 callback parameters with one 39-function `Actions` bag. Do not create a broad Controller/ViewModel. A successful extraction must reduce cross-phase knowledge and dependency fan-out, not hide it.
+
+Likely direction after characterization:
 
 ```text
-checkpoint 686b52a79cd4ea183c81884d34d54223fecae124
-CI 34191738571 — PASS
-  Android testFull + :app:assembleDebug PASS
-  ASP contract/golden tests             PASS
-  Real Clingo 5.8 cross-validation      PASS
-  CI gate                               PASS
-R2 34191738649 — PASS
+shared Judge read context
++ small phase-specific UI state/action contracts
++ existing Day/Night/ability child owners
 ```
 
-Final pre-merge docs verification:
+The exact first group is not frozen until D6.2a consumption evidence exists.
+
+## Deferred D6 candidates
+
+After D6.2, re-audit rather than following a rigid sequence:
+
+1. cohesive durable day/night orchestration extraction, only where existing planners/session boundaries leave real root policy;
+2. root Recovery composition simplification without changing PS5 schema/lifecycle semantics;
+3. final root/HostScreen file-size and callback-fanout re-audit.
+
+Broad `cards.toClocktowerGameState(...)` reader replacement is explicitly **not** a decomposition goal.
+
+## Frozen invariants
+
+Preserve:
+
+- no synthetic NGJ `RulesetRef`;
+- exact revision cadence/order;
+- one monotonic collision-free semantic chronology;
+- action/observation idempotency and non-mutating preflight;
+- no storyteller-hidden target leak;
+- Recovery v2 current-version-only policy;
+- SideEffect / ON_PAUSE / ON_STOP + `RecoveryWriteGate` topology;
+- A4 durability/invalidation/prewarm ordering;
+- no Compose dependency in session/domain;
+- no gameplay/user-visible semantic change;
+- Undercover/Werewolf isolation.
+
+## Later priority after D6
 
 ```text
-CI 34192745929 — PASS
-R2 34192745940 — PASS
+D6 ownership/composition decomposition
+-> UI-R5 real-device stabilization
+-> EPI-MQ / Productive Uncertainty
+-> UX-R6 legacy recommendation-provider replacement
 ```
-
-## Real-device acceptance — COMPLETE
-
-On 2026-09-08 the previously defined real-device acceptance tests **1–5 all passed**.
-
-The additional regression path that exposed the recovery bug was also retested successfully after the hotfix:
-
-```text
-6-player No Greater Joy
--> process-loss / relaunch / Recovery restore
--> continue recovered game
--> Host Tools
--> same players / quick restart
--> new game starts without crash
-```
-
-## D6 entry criteria / next actions
-
-Start from live `main` `1b502c75357a2de7c928c88668e6a9613521b4ac` or its verified descendant.
-
-1. Re-read root `AGENTS.md` and `docs/TESTING_STRATEGY.md`.
-2. Reconfirm live `main` before any branch/write.
-3. Audit current large-file and ownership boundaries after the persistence merge, especially `CampBoardGameHostApp.kt` and the extracted persistence/recovery owners.
-4. Re-evaluate which remaining responsibilities genuinely belong together; do not optimize only for file size.
-5. Produce a fresh D6 decomposition sequence with dependency order, invariants, tests-first boundaries and rollback-safe checkpoints.
-6. Only after the audit/plan is accepted should D6 implementation begin on a fresh branch.
-
-The old D6 plan is historical reference only and is superseded where it conflicts with the merged architecture.
-
-## Current non-goals
-
-Until the D6 re-audit defines otherwise, do not mix D6 with new Recovery schema redesign, cross-version migration, Archive redesign, Werewolf removal, A4/ZDD feature rollout, unrelated UI work or DataStore modernization.

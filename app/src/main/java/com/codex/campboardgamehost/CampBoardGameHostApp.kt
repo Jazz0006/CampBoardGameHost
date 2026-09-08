@@ -161,6 +161,13 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableN
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
+import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
+import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
+import com.codex.campboardgamehost.clocktower.session.commitActualRoleBoundary
+import com.codex.campboardgamehost.clocktower.session.commitShownRoleBoundary
+import com.codex.campboardgamehost.clocktower.session.commitPoisonTargetBoundary
+import com.codex.campboardgamehost.clocktower.session.synchronizePlayerDeathWithinCurrentRevision
+import com.codex.campboardgamehost.clocktower.session.synchronizePoisonTargetWithinCurrentRevision
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointReducer
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointHostTransaction
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointRevisionIntent
@@ -810,17 +817,28 @@ internal fun CampBoardGameHostApp() {
     var clocktowerKlutzChoiceName by remember { mutableStateOf<String?>(null) }
     var clocktowerKlutzReturnToDawn by remember { mutableStateOf(false) }
     var selectedClocktowerScript by remember { mutableStateOf<ClocktowerScript?>(null) }
-    var currentClocktowerScript by remember { mutableStateOf(ClocktowerScript.TroubleBrewing) }
-    var clocktowerGameId by remember { mutableStateOf("") }
-    var clocktowerGameSeed by remember { mutableStateOf(0L) }
+    var clocktowerGameSession by remember { mutableStateOf<ClocktowerGameSession?>(null) }
+    var clocktowerSessionView by remember { mutableStateOf<ClocktowerSessionView?>(null) }
+    val currentClocktowerScript = clocktowerSessionView?.scriptId
+        ?.let { scriptId ->
+            ClocktowerScript.entries.singleOrNull { script -> script.toRecommendationScriptId() == scriptId }
+        }
+        ?: ClocktowerScript.TroubleBrewing
+    val clocktowerGameId = clocktowerSessionView?.gameId.orEmpty()
+    val clocktowerGameSeed = clocktowerSessionView?.gameSeed ?: 0L
+    val clocktowerGameStateRevision = clocktowerSessionView?.gameStateRevision ?: 0L
+    val clocktowerPlayerInputRevision = clocktowerSessionView?.playerInputRevision ?: 0L
+    val clocktowerSemanticHistoryMode =
+        clocktowerSessionView?.semanticHistoryMode ?: ClocktowerSemanticHistoryMode.LEGACY_LOCAL
+    val clocktowerNextTimelineGlobalSequence =
+        clocktowerSessionView?.nextTimelineGlobalSequence ?: 0L
+    val clocktowerActionTimeline = clocktowerSessionView?.actionTimeline ?: ActionFactTimeline()
+    val clocktowerEpistemicObservations =
+        clocktowerSessionView?.epistemicObservationLog?.records.orEmpty()
     var committedClocktowerSetup by remember { mutableStateOf<CommittedClocktowerSetup?>(null) }
     var committedTroubleBrewingSetupRotationRecord by remember {
         mutableStateOf<TroubleBrewingSetupRotationRecord?>(null)
     }
-    var clocktowerGameStateRevision by remember { mutableStateOf(0L) }
-    var clocktowerPlayerInputRevision by remember { mutableStateOf(0L) }
-    var clocktowerSemanticHistoryMode by remember { mutableStateOf(ClocktowerSemanticHistoryMode.LEGACY_LOCAL) }
-    var clocktowerNextTimelineGlobalSequence by remember { mutableStateOf(0L) }
     var clocktowerRulesetRef by remember { mutableStateOf<RulesetRef?>(null) }
     var clocktowerRulesetRoleIds by remember { mutableStateOf<Set<RoleId>>(emptySet()) }
     var showResults by remember { mutableStateOf(false) }
@@ -833,8 +851,6 @@ internal fun CampBoardGameHostApp() {
     val records = remember { mutableStateListOf<EliminationRecord>() }
     val recoveryWriteGate = remember { RecoveryWriteGate() }
     val clocktowerEvents = remember { mutableStateListOf<ClocktowerEvent>() }
-    val clocktowerEpistemicObservations = remember { mutableStateListOf<RecordedEpistemicObservation>() }
-    var clocktowerActionTimeline by remember { mutableStateOf(ActionFactTimeline()) }
     var clocktowerEventCounter by remember { mutableStateOf(0) }
     val clocktowerNightStartedState = remember { mutableStateOf(false) }
     val clocktowerNightStepIndexState = remember { mutableStateOf(0) }
@@ -892,13 +908,24 @@ internal fun CampBoardGameHostApp() {
         a4ShadowLifecycleInvalidator.sessionBoundary(clocktowerGameId)
     }
 
+    fun publishClocktowerSessionView() {
+        clocktowerSessionView = clocktowerGameSession?.view
+    }
+
+    fun requireClocktowerGameSession(): ClocktowerGameSession =
+        requireNotNull(clocktowerGameSession) {
+            "Clocktower session authority is unavailable."
+        }
+
     fun advanceClocktowerGameStateRevision() {
-        clocktowerGameStateRevision = clocktowerGameStateRevision + 1
+        requireClocktowerGameSession().advanceGameStateRevision()
+        publishClocktowerSessionView()
         invalidateA4RevisionScope()
     }
 
     fun advanceClocktowerPlayerInputRevision() {
-        clocktowerPlayerInputRevision = clocktowerPlayerInputRevision + 1
+        requireClocktowerGameSession().recordPlayerInput()
+        publishClocktowerSessionView()
         invalidateA4RevisionScope()
     }
     val playerCount = playerNames.size
@@ -1108,15 +1135,8 @@ internal fun CampBoardGameHostApp() {
 
     fun recordClocktowerAction(draft: ActionFactDraft) {
         if (clocktowerSemanticHistoryMode != ClocktowerSemanticHistoryMode.GLOBAL_V1) return
-        val committed = ClocktowerGameSession.commitGlobalActionFact(
-            semanticHistoryMode = clocktowerSemanticHistoryMode,
-            actionTimeline = clocktowerActionTimeline,
-            observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),
-            nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
-            draft = draft,
-        )
-        clocktowerActionTimeline = committed.actionTimeline
-        clocktowerNextTimelineGlobalSequence = committed.nextTimelineGlobalSequence
+        requireClocktowerGameSession().commitGlobalActionFact(draft)
+        publishClocktowerSessionView()
     }
 
     fun materializeClocktowerPoisonExpiryAtDusk() {
@@ -1160,6 +1180,8 @@ internal fun CampBoardGameHostApp() {
         }
 
         if (materialization.stateMutationRequired) {
+            requireClocktowerGameSession().synchronizePoisonTargetWithinCurrentRevision(targetSeat = null)
+            publishClocktowerSessionView()
             clocktowerPoisonTarget = null
             clocktowerConfirmedPoisonTarget = null
         }
@@ -1186,29 +1208,22 @@ internal fun CampBoardGameHostApp() {
     }
 
     fun recordEpistemicObservation(draft: EpistemicObservationDraft) {
+        val session = requireClocktowerGameSession()
         when (clocktowerSemanticHistoryMode) {
             ClocktowerSemanticHistoryMode.LEGACY_LOCAL -> {
                 if (clocktowerEpistemicObservations.any { it.recordId == draft.recordId }) return
-                clocktowerEpistemicObservations += draft.bindLegacyLocal()
-                advanceClocktowerPlayerInputRevision()
+                session.recordEpistemicObservation(draft.bindLegacyLocal())
+                publishClocktowerSessionView()
+                invalidateA4RevisionScope()
                 a4ObservationDurabilityGate.markPending(draft.recordId)
             }
             ClocktowerSemanticHistoryMode.GLOBAL_V1 -> {
-                val committed = ClocktowerGameSession.commitGlobalEpistemicObservation(
-                    semanticHistoryMode = clocktowerSemanticHistoryMode,
-                    observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),
-                    nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
-                    playerInputRevision = clocktowerPlayerInputRevision,
-                    draft = draft,
-                    actionTimeline = clocktowerActionTimeline,
-                )
-                if (committed.playerInputRevision == clocktowerPlayerInputRevision) return
-                clocktowerEpistemicObservations.clear()
-                clocktowerEpistemicObservations.addAll(committed.observationLog.records)
-                clocktowerPlayerInputRevision = committed.playerInputRevision
-                clocktowerNextTimelineGlobalSequence = committed.nextTimelineGlobalSequence
+                val beforeRevision = clocktowerPlayerInputRevision
+                val committed = session.commitGlobalEpistemicObservation(draft)
+                if (session.view.playerInputRevision == beforeRevision) return
+                publishClocktowerSessionView()
                 invalidateA4RevisionScope()
-                a4ObservationDurabilityGate.markPending(committed.record.recordId)
+                a4ObservationDurabilityGate.markPending(committed.recordId)
             }
         }
     }
@@ -1231,12 +1246,8 @@ internal fun CampBoardGameHostApp() {
             ClocktowerPhase.Day -> StorytellerPhase.DAY
             ClocktowerPhase.Night -> StorytellerPhase.NIGHT
         }
-        val committed = ClocktowerGameSession.commitGlobalEpistemicObservation(
-            semanticHistoryMode = clocktowerSemanticHistoryMode,
-            observationLog = EpistemicObservationLog(clocktowerEpistemicObservations.toList()),
-            nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
-            playerInputRevision = clocktowerPlayerInputRevision,
-            draft = EpistemicObservationDraft(
+        val committed = requireClocktowerGameSession().preflightGlobalEpistemicObservation(
+            EpistemicObservationDraft(
                 recordId = recordId ?: "public-alive-${clocktowerGameId}-${eventSequence}-$seat",
                 phase = epistemicPhase,
                 round = eventRound,
@@ -1248,7 +1259,6 @@ internal fun CampBoardGameHostApp() {
                 reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
                 proposition = InformationProposition.AliveAt(seat, false),
             ),
-            actionTimeline = clocktowerActionTimeline,
         )
         check(committed.playerInputRevision != clocktowerPlayerInputRevision) {
             "A new public elimination cannot reuse an existing observation ID."
@@ -1623,15 +1633,10 @@ internal fun CampBoardGameHostApp() {
         selectedDayExile = null
 
         selectedClocktowerScript = null
-        currentClocktowerScript = ClocktowerScript.TroubleBrewing
+        clocktowerGameSession = null
+        publishClocktowerSessionView()
         committedClocktowerSetup = null
         committedTroubleBrewingSetupRotationRecord = null
-        clocktowerGameId = ""
-        clocktowerGameSeed = 0L
-        clocktowerGameStateRevision = 0L
-        clocktowerPlayerInputRevision = 0L
-        clocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL
-        clocktowerNextTimelineGlobalSequence = 0L
         clocktowerRulesetRoleIds = emptySet()
         clocktowerRulesetRef = null
         clocktowerPhase = ClocktowerPhase.FirstNight
@@ -1639,8 +1644,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerNightStepIndexState.value = 0
 
         clocktowerEvents.clear()
-        clocktowerEpistemicObservations.clear()
-        clocktowerActionTimeline = ActionFactTimeline()
         clocktowerEventCounter = 0
 
         clocktowerPendingNightDeath = null
@@ -1701,15 +1704,27 @@ internal fun CampBoardGameHostApp() {
                 val mechanics = game.mechanics
                 val history = game.history
 
-                currentClocktowerScript = game.identity.script
                 committedTroubleBrewingSetupRotationRecord =
                     game.troubleBrewingSetupRotationRecord
-                clocktowerGameId = game.identity.gameId
-                clocktowerGameSeed = game.identity.gameSeed
-                clocktowerGameStateRevision = history.gameStateRevision
-                clocktowerPlayerInputRevision = history.playerInputRevision
-                clocktowerSemanticHistoryMode = history.semanticHistoryMode
-                clocktowerNextTimelineGlobalSequence = history.nextTimelineGlobalSequence
+                val recoveredGameState = restoredCards.toClocktowerGameState(
+                    script = game.identity.script,
+                    seed = game.identity.gameSeed,
+                    poisonedPlayerName = mechanics.confirmedPoisonTarget,
+                )
+                clocktowerGameSession = ClocktowerGameSession.restoreProduction(
+                    ClocktowerSessionState(
+                        gameId = game.identity.gameId,
+                        gameStateRevision = history.gameStateRevision,
+                        playerInputRevision = history.playerInputRevision,
+                        gameSeed = game.identity.gameSeed,
+                        gameState = recoveredGameState,
+                        actionTimeline = history.actionTimeline,
+                        epistemicObservationLog = EpistemicObservationLog(history.epistemicObservations),
+                        semanticHistoryMode = history.semanticHistoryMode,
+                        nextTimelineGlobalSequence = history.nextTimelineGlobalSequence,
+                    ),
+                )
+                publishClocktowerSessionView()
                 clocktowerRulesetRoleIds = if (game.identity.script == ClocktowerScript.TroubleBrewing) {
                     runtime?.rulesetBasis?.roleIds.orEmpty()
                 } else {
@@ -1722,8 +1737,6 @@ internal fun CampBoardGameHostApp() {
                     safeClocktower?.nightStepIndex ?: game.position.nightStepIndex
 
                 clocktowerEvents.addAll(history.events)
-                clocktowerEpistemicObservations.addAll(history.epistemicObservations)
-                clocktowerActionTimeline = history.actionTimeline
                 clocktowerEventCounter = history.events.maxOfOrNull(ClocktowerEvent::sequence) ?: 0
 
                 clocktowerPendingNightDeath = mechanics.confirmedAttackTarget
@@ -1875,15 +1888,9 @@ internal fun CampBoardGameHostApp() {
         currentGameKind = nextGameKind
         records.clear()
         clocktowerEvents.clear()
-        clocktowerEpistemicObservations.clear()
-        clocktowerActionTimeline = ActionFactTimeline()
+        clocktowerGameSession = null
+        publishClocktowerSessionView()
         clocktowerEventCounter = 0
-        clocktowerSemanticHistoryMode = if (nextGameKind == GameKind.Clocktower) {
-            ClocktowerSemanticHistoryMode.GLOBAL_V1
-        } else {
-            ClocktowerSemanticHistoryMode.LEGACY_LOCAL
-        }
-        clocktowerNextTimelineGlobalSequence = 0L
         currentDealIndex = 0
         round = 1
         showResults = false
@@ -1900,12 +1907,20 @@ internal fun CampBoardGameHostApp() {
         hunterShotTarget = null
         selectedDayExile = null
         clocktowerPhase = ClocktowerPhase.FirstNight
-        currentClocktowerScript = clocktowerScript
         if (nextGameKind == GameKind.Clocktower) {
-            clocktowerGameId = UUID.randomUUID().toString()
-            clocktowerGameSeed = preparedClocktowerSeed ?: newClocktowerSeed()
-            clocktowerGameStateRevision = 0L
-            clocktowerPlayerInputRevision = 0L
+            val gameId = UUID.randomUUID().toString()
+            val gameSeed = preparedClocktowerSeed ?: newClocktowerSeed()
+            clocktowerGameSession = ClocktowerGameSession.createProduction(
+                gameId = gameId,
+                gameSeed = gameSeed,
+                initialState = cards.toClocktowerGameState(
+                    script = clocktowerScript,
+                    seed = gameSeed,
+                    poisonedPlayerName = null,
+                ),
+                semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
+            )
+            publishClocktowerSessionView()
             if (clocktowerScript == ClocktowerScript.TroubleBrewing) {
                 val rulesetBasis = ClocktowerRulesetPersistenceBasis(
                     cards.map { card ->
@@ -1922,10 +1937,6 @@ internal fun CampBoardGameHostApp() {
                 clocktowerRulesetRef = null
             }
         } else {
-            clocktowerGameId = ""
-            clocktowerGameSeed = 0L
-            clocktowerGameStateRevision = 0L
-            clocktowerPlayerInputRevision = 0L
             clocktowerRulesetRoleIds = emptySet()
             clocktowerRulesetRef = null
         }
@@ -2249,6 +2260,8 @@ internal fun CampBoardGameHostApp() {
             ),
         )
         clearSavedGameState()
+        clocktowerGameSession = null
+        publishClocktowerSessionView()
         showNewGameConfirmation = false
         showHostTools = false
         showResults = false
@@ -2260,7 +2273,6 @@ internal fun CampBoardGameHostApp() {
         cards.clear()
         records.clear()
         clocktowerEvents.clear()
-        clocktowerEpistemicObservations.clear()
         clocktowerEventCounter = 0
         gameOutcome = null
         currentDealIndex = 0
@@ -2323,7 +2335,22 @@ internal fun CampBoardGameHostApp() {
                     ),
                 )
             }
-            advanceClocktowerGameStateRevision()
+            requireClocktowerGameSession().commitActualRoleBoundary(
+                seat = targetSeat,
+                actualRole = RoleId(nextRole.enName),
+                actualAlignment = when (nextRole.team) {
+                    ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider -> ClocktowerAlignment.GOOD
+                    ClocktowerTeam.Minion, ClocktowerTeam.Demon -> ClocktowerAlignment.EVIL
+                },
+                actualType = when (nextRole.team) {
+                    ClocktowerTeam.Townsfolk -> CharacterType.TOWNSFOLK
+                    ClocktowerTeam.Outsider -> CharacterType.OUTSIDER
+                    ClocktowerTeam.Minion -> CharacterType.MINION
+                    ClocktowerTeam.Demon -> CharacterType.DEMON
+                },
+            )
+            publishClocktowerSessionView()
+            invalidateA4RevisionScope()
             cards[index] = cards[index].copy(
                 actualRoleLabel = nextRole.nameFor(language),
                 clocktowerTeam = nextRole.team,
@@ -2335,7 +2362,13 @@ internal fun CampBoardGameHostApp() {
     fun setClocktowerShownRole(playerName: String, nextRole: ClocktowerRole) {
         val index = cards.indexOfFirst { it.name == playerName }
         if (index >= 0) {
-            advanceClocktowerGameStateRevision()
+            val targetSeat = index + 1
+            requireClocktowerGameSession().commitShownRoleBoundary(
+                seat = targetSeat,
+                shownRole = RoleId(nextRole.enName),
+            )
+            publishClocktowerSessionView()
+            invalidateA4RevisionScope()
             cards[index] = cards[index].copy(
                 roleLabel = nextRole.nameFor(language),
                 clocktowerShownRole = nextRole,
@@ -2872,10 +2905,12 @@ internal fun CampBoardGameHostApp() {
                                     sequence = localSequence,
                                     targetSeat = targetSeat,
                                 ))
+                                requireClocktowerGameSession().commitPoisonTargetBoundary(targetSeat)
+                                publishClocktowerSessionView()
+                                invalidateA4RevisionScope()
                                 clocktowerConfirmedPoisonTarget = transaction.checkpoint.confirmedPoisonTarget
                                 clocktowerConfirmedMayorRedirectTarget = transaction.checkpoint.confirmedMayorRedirectTarget
                                 clocktowerConfirmedDemonSuccessorTarget = transaction.checkpoint.confirmedDemonSuccessorTarget
-                                advanceClocktowerGameStateRevision()
                                 // A Drunk's shown role is committed, but any concrete
                                 // first-night clue remains provisional until displayed.
                                 clocktowerRecommendedDrunkInvestigatorRoleName = null
@@ -3162,6 +3197,10 @@ internal fun CampBoardGameHostApp() {
                                                 )
                                             }
                                             if (materialization.stateMutationRequired) {
+                                                requireClocktowerGameSession().synchronizePoisonTargetWithinCurrentRevision(
+                                                    targetSeat = materialization.intent.targetSeat,
+                                                )
+                                                publishClocktowerSessionView()
                                                 val poisonTargetName = materialization.intent.targetSeat
                                                     ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
                                                 clocktowerConfirmedPoisonTarget = poisonTargetName
@@ -3330,6 +3369,10 @@ internal fun CampBoardGameHostApp() {
                                     sequence = localSequence,
                                     targetSeat = targetSeat,
                                 ))
+                                requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
+                                    targetSeat = targetSeat,
+                                )
+                                publishClocktowerSessionView()
                                 cards[targetIndex] = targetCard.copy(eliminatedRound = round)
                                 recordEpistemicObservation(EpistemicObservationDraft(
                                     recordId = "public-alive-${clocktowerGameId}-${localSequence}-$targetSeat",
@@ -3408,6 +3451,10 @@ internal fun CampBoardGameHostApp() {
                                 val index = cards.indexOfFirst { it.name == nominatorName }
                                 val nominatorCard = cards.getOrNull(index)
                                 if (index >= 0 && nominatorCard != null && nominatorCard.eliminatedRound == null) {
+                                    requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
+                                        targetSeat = index + 1,
+                                    )
+                                    publishClocktowerSessionView()
                                     cards[index] = nominatorCard.copy(eliminatedRound = round)
                                     records.add(
                                         EliminationRecord(
@@ -3531,6 +3578,10 @@ internal fun CampBoardGameHostApp() {
                                 val index = cards.indexOfFirst { it.name == executionName }
                                 val executedCard = cards.getOrNull(index)
                                 if (index >= 0 && executedCard != null && executedCard.eliminatedRound == null) {
+                                    requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
+                                        targetSeat = index + 1,
+                                    )
+                                    publishClocktowerSessionView()
                                     cards[index] = executedCard.copy(eliminatedRound = round)
                                     records.add(EliminationRecord(round, executionName, context.getString(R.string.clocktower_record_execution)))
                                     addClocktowerEvent(
@@ -3791,6 +3842,10 @@ internal fun CampBoardGameHostApp() {
                                         ))
                                     }
                                     if (dawnDeathMaterialization.stateMutationRequired) {
+                                        requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
+                                            targetSeat = dawnDeathMaterialization.intent.targetSeat,
+                                        )
+                                        publishClocktowerSessionView()
                                         cards[index] = nightDeathCard.copy(eliminatedRound = round)
                                         records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
                                         addClocktowerEvent(
@@ -3961,6 +4016,10 @@ internal fun CampBoardGameHostApp() {
                                 }
 
                                 if (poisonMaterialization.stateMutationRequired) {
+                                    requireClocktowerGameSession().synchronizePoisonTargetWithinCurrentRevision(
+                                        targetSeat = poisonMaterialization.intent.targetSeat,
+                                    )
+                                    publishClocktowerSessionView()
                                     val poisonTargetName = poisonMaterialization.intent.targetSeat
                                         ?.let { targetSeat -> cards.getOrNull(targetSeat - 1)?.name }
                                     clocktowerConfirmedPoisonTarget = poisonTargetName
