@@ -290,9 +290,6 @@ internal fun ClocktowerJudgeScreen(
     nightStartedState: MutableState<Boolean>,
     nightStepIndexState: MutableState<Int>,
     dayModeState: MutableState<ClocktowerDayMode>,
-    nominatorNameState: MutableState<String?>,
-    nomineeNameState: MutableState<String?>,
-    currentVoteCountState: MutableState<Int>,
     ghostVoteAuthority: ClocktowerGhostVoteAuthority,
     highestVoteNameState: MutableState<String?>,
     highestVoteCountState: MutableState<Int>,
@@ -1031,9 +1028,8 @@ internal fun ClocktowerJudgeScreen(
     var nightStarted by nightStartedState
     var nightStepIndex by nightStepIndexState
     var dayMode by dayModeState
-    var nominatorName by nominatorNameState
-    var nomineeName by nomineeNameState
-    var currentVoteCount by currentVoteCountState
+    var nominatorName by remember(gameId, round) { mutableStateOf<String?>(null) }
+    var nomineeName by remember(gameId, round) { mutableStateOf<String?>(null) }
     var highestVoteName by highestVoteNameState
     var highestVoteCount by highestVoteCountState
     var slayerClaimantName by remember(gameId) { mutableStateOf<String?>(null) }
@@ -3793,7 +3789,6 @@ internal fun ClocktowerJudgeScreen(
                 if (sourceName != null && targetName != null && sourceName != targetName) {
                     nominatorName = sourceName
                     nomineeName = targetName
-                    currentVoteCount = 0
                     dayMode = ClocktowerDayMode.Nomination
                 }
             },
@@ -3884,14 +3879,12 @@ internal fun ClocktowerJudgeScreen(
                     )
                 }
                 if (!virginExecutes) {
-                    currentVoteCount = 0
                     dayMode = ClocktowerDayMode.Vote
                 }
             },
             onCancel = {
                 nominatorName = null
                 nomineeName = null
-                currentVoteCount = 0
                 dayMode = ClocktowerDayMode.Overview
             },
             specialContent = {
@@ -3984,11 +3977,9 @@ internal fun ClocktowerJudgeScreen(
                 recordVoteEvent(voteTransaction.voteRecord)
                 nominatorName = null
                 nomineeName = null
-                currentVoteCount = 0
                 dayMode = ClocktowerDayMode.Overview
             },
             onCancel = {
-                currentVoteCount = 0
                 dayMode = ClocktowerDayMode.Nomination
             },
         )

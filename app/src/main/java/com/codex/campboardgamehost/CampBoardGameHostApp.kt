@@ -852,9 +852,6 @@ internal fun CampBoardGameHostApp() {
     val clocktowerNightStartedState = remember { mutableStateOf(false) }
     val clocktowerNightStepIndexState = remember { mutableStateOf(0) }
     val clocktowerDayModeState = remember { mutableStateOf(ClocktowerDayMode.Overview) }
-    val clocktowerNominatorNameState = remember { mutableStateOf<String?>(null) }
-    val clocktowerNomineeNameState = remember { mutableStateOf<String?>(null) }
-    val clocktowerCurrentVoteCountState = remember { mutableStateOf(0) }
     val clocktowerGhostVoteAuthorityState = remember { mutableStateOf(ClocktowerGhostVoteAuthority()) }
     val clocktowerHighestVoteNameState = remember { mutableStateOf<String?>(null) }
     val clocktowerHighestVoteCountState = remember { mutableStateOf(0) }
@@ -1409,9 +1406,6 @@ internal fun CampBoardGameHostApp() {
 
     fun resetClocktowerDayFlow() {
         clocktowerDayModeState.value = ClocktowerDayMode.Overview
-        clocktowerNominatorNameState.value = null
-        clocktowerNomineeNameState.value = null
-        clocktowerCurrentVoteCountState.value = 0
         clocktowerHighestVoteNameState.value = null
         clocktowerHighestVoteCountState.value = 0
     }
@@ -1670,9 +1664,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerKlutzReturnToDawn = false
 
         clocktowerDayModeState.value = ClocktowerDayMode.Overview
-        clocktowerNominatorNameState.value = null
-        clocktowerNomineeNameState.value = null
-        clocktowerCurrentVoteCountState.value = 0
         clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
         clocktowerHighestVoteNameState.value = null
         clocktowerHighestVoteCountState.value = 0
@@ -2788,9 +2779,6 @@ internal fun CampBoardGameHostApp() {
                             clocktowerNightStepIndexState.value = transaction.checkpoint.nightStepIndex
                         },
                         dayModeState = clocktowerDayModeState,
-                        nominatorNameState = clocktowerNominatorNameState,
-                        nomineeNameState = clocktowerNomineeNameState,
-                        currentVoteCountState = clocktowerCurrentVoteCountState,
                         ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,
                         onGhostVoteAuthorityChange = { clocktowerGhostVoteAuthorityState.value = it },
                         highestVoteNameState = clocktowerHighestVoteNameState,
