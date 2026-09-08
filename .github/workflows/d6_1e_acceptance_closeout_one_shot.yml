@@ -1,0 +1,97 @@
+name: D6.1e acceptance closeout one-shot
+
+on:
+  push:
+    branches:
+      - codex/d6-root-reaudit
+    paths:
+      - .github/workflows/d6_1e_acceptance_closeout_one_shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-audit-push-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v6
+        with:
+          ref: codex/d6-root-reaudit
+          fetch-depth: 0
+
+      - name: Verify exact baseline and tooling scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='8db22dcf35a15f82382e69c50e64937022b0cc2e'
+          SESSION='app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSession.kt'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/codex/d6-root-reaudit | cut -f1)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git hash-object "$SESSION")" = 'a76661b4f0da40f9eb244482eba71ae7fd906272'
+          test "$(git hash-object docs/D6_1D_GAME_STATE_PROGRESS_2026-09-08.md)" = 'bf3380151ab3368cf5150e1e2dc0ae26cdc601dc'
+          test "$(git hash-object docs/CURRENT_DEVELOPMENT_ROADMAP.md)" = '0c64785cccfbdc7c4f64b81e76796f73fb38d4b9'
+          test "$(git hash-object docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md)" = '91ce043c6147912c52cc0a11a29bb5affef5be85'
+          test ! -e docs/D6_1E_ACCEPTANCE_PROGRESS_2026-09-08.md
+          actual="$(git diff --name-only "$BASE"..HEAD | sort)"
+          expected="$(printf '%s\n' \
+            '.github/scripts/d6_1e_acceptance_closeout_patch.py' \
+            '.github/workflows/d6_1e_acceptance_closeout_one_shot.yml' | sort)"
+          test "$actual" = "$expected"
+
+      - name: Apply bounded closeout patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/d6_1e_acceptance_closeout_patch.py
+
+      - name: Exact closeout diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            'app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSession.kt' \
+            'docs/CURRENT_DEVELOPMENT_ROADMAP.md' \
+            'docs/D6_1D_GAME_STATE_PROGRESS_2026-09-08.md' \
+            'docs/D6_1E_ACCEPTANCE_PROGRESS_2026-09-08.md' \
+            'docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md' | sort)"
+          test "$actual" = "$expected"
+          git diff --check -- \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSession.kt \
+            docs/CURRENT_DEVELOPMENT_ROADMAP.md \
+            docs/D6_1D_GAME_STATE_PROGRESS_2026-09-08.md \
+            docs/D6_1E_ACCEPTANCE_PROGRESS_2026-09-08.md \
+            docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md
+          ! grep -q 'until the full game state is session-owned' app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSession.kt
+          ! grep -q 'App-root mechanics are still the live mechanical source' app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSession.kt
+          grep -q 'D6.1d COMPLETE' docs/D6_1D_GAME_STATE_PROGRESS_2026-09-08.md
+          grep -q 'D6.1e T4 ACCEPTANCE NEXT' docs/CURRENT_DEVELOPMENT_ROADMAP.md
+          grep -q 'USER-AUTHORED T4' docs/D6_1E_ACCEPTANCE_PROGRESS_2026-09-08.md
+          git diff --stat
+
+      - name: Commit and push closeout
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSession.kt \
+            docs/CURRENT_DEVELOPMENT_ROADMAP.md \
+            docs/D6_1D_GAME_STATE_PROGRESS_2026-09-08.md \
+            docs/D6_1E_ACCEPTANCE_PROGRESS_2026-09-08.md \
+            docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md
+          git commit -m 'chore: prepare D6.1 acceptance closeout'
+          git push origin HEAD:codex/d6-root-reaudit
+
+      - name: Remove one-shot tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm \
+            .github/scripts/d6_1e_acceptance_closeout_patch.py \
+            .github/workflows/d6_1e_acceptance_closeout_one_shot.yml
+          git commit -m 'chore: remove D6.1e acceptance closeout tooling'
+          git push origin HEAD:codex/d6-root-reaudit
