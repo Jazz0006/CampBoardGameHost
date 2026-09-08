@@ -1,375 +1,397 @@
 # D6.2 UI Composition Boundary Audit
 
-> Date: 2026-09-09 Australia/Sydney
-> Repository: `Jazz0006/CampBoardGameHost`
-> D6.1 merge commit: `112572cbd3d990737a412cc4b8ead766d00867e8`
-> D6.2 branch base: `d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e`
-> Latest validated production-code checkpoint: `6a5723af0e9fb646d0c66e900a1c4d215d6a2fef`
-> Status: **D6.2a/b/c/d COMPLETE + FULL CI PASS — D6.2e LEGACY STORYTELLER UI REACHABILITY AUDIT NEXT**
+> Updated: 2026-09-09 Australia/Sydney  
+> Repository: `Jazz0006/CampBoardGameHost`  
+> D6.1 merge commit: `112572cbd3d990737a412cc4b8ead766d00867e8`  
+> D6.2 branch base / current main: `d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e`  
+> Latest validated production checkpoint: `15342f9e22ac204602680e6ef831fb4e95c7b0bf`  
+> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h READ-ONLY RE-AUDIT COMPLETE; D6.2i NEXT**
 
-## Why D6.2 exists
+## Purpose
 
-D6.1 solved canonical Clocktower session and dynamic GameState writer ownership. The dominant residual debt is now the Compose/UI composition surface around `ClocktowerJudgeScreen`, not more state migration into `ClocktowerGameSession`.
+D6.1 solved canonical Clocktower session/domain writer ownership. D6.2 addresses the remaining Compose/UI composition fan-out around `ClocktowerJudgeScreen` and `ClocktowerHostScreen.kt`.
 
-D6.2 optimizes **responsibility ownership and modification radius**, not file size for its own sake.
+The optimization target is **responsibility ownership and modification radius**, not file size alone.
 
-## Product/UI direction that now constrains the architecture
+## D6.2 baseline
 
-Near-term Storyteller UI direction is explicit:
-
-> **Operational Storyteller interactions should converge on the square-table/table-based UI. Older HostScriptCard-style interaction screens are being retired progressively.**
-
-Consequences:
-
-- surviving square-table/table components are the preferred future ownership seams;
-- do not create State/Actions/Controller/ViewModel abstractions merely to preserve old HostScriptCard composition;
-- do not add tests that freeze obsolete layout/composition structure unless required by a still-reachable behavior contract;
-- legacy paths may share the same narrow state/action helper only for minimum migration compatibility;
-- if an older UI block is already unreachable, prove and delete it rather than decomposing it.
-
-This direction does not authorize gameplay/recovery/recommendation semantic changes inside D6.2.
-
-## D6.2 baseline evidence
-
-Post-D6.1 residual audit `34223904849` measured:
+Post-D6.1 residual audit:
 
 ```text
 ClocktowerHostScreen.kt     329,172 bytes / 5,474 lines
 CampBoardGameHostApp.kt     241,986 bytes / 4,315 lines
-ClocktowerDayScreen.kt       50,927 bytes
-ClocktowerNightStepUi.kt     47,970 bytes
-ClocktowerHistoryScreen.kt   38,365 bytes
-ClocktowerNightScreen.kt     25,063 bytes
-ClocktowerGameSession.kt     22,708 bytes
-
-ClocktowerJudgeScreen
-  parameters: 103
-  callbacks:   39
-
-App-root clocktower vars: 41
+ClocktowerJudgeScreen       103 parameters
+on... callbacks              39
+function-valued providers     3
+MutableState<T> params        10
+App-root Clocktower vars      41
 ```
 
-File size is a signal, not the target. The important result was giant cross-phase fan-out through one Judge composition surface.
+## Architecture rules
 
-## What D6.2 must not do
+Do not solve fan-out by packaging it into:
 
-Do **not**:
+```text
+ClocktowerJudgeState
+ClocktowerJudgeActions
+DayState / NightState mega-bags
+broad Controller / ViewModel wrappers
+```
 
-- replace callbacks with one giant `ClocktowerJudgeActions` bag;
-- replace parameters with one giant Judge/Day state bag;
-- introduce a broad Controller/ViewModel to hide the same coupling;
-- move Compose/UI state into `ClocktowerGameSession` or domain code;
-- mechanically replace `cards.toClocktowerGameState(...)` readers;
-- reopen D6.1 canonical state, Recovery v2, PS5 lifecycle or recommendation semantics;
-- invest architecture effort in legacy UI that is already scheduled for retirement and may be unreachable.
+Do not move Compose concerns into `ClocktowerGameSession` or domain code.
 
-## D6.2a — COMPLETE: consumption / responsibility characterization
+Move ownership only when a real cohesive UI/phase boundary exists. Keep Recovery-authoritative and durable mechanics state external even if it currently passes through Compose.
 
-Complete matrix:
+The near-term UI direction is square-table/table based. Retired HostScriptCard composition should not receive further architecture investment.
+
+## D6.2a — consumption matrix COMPLETE
+
+Authority:
 
 - `docs/D6_2A_CLOCKTOWER_JUDGE_CONSUMPTION_MATRIX_2026-09-08.md`
 
-Exact baseline recount:
+The 103 inputs were audited by actual consumers rather than name grouping. Key result: they do not form one natural state object.
 
-```text
-103 total parameters
- 39 on... callbacks
-  3 additional function-valued providers
- 10 MutableState<T> parameters
-```
+The baseline also identified zero-consumer `records` and `onPhaseChange`, but they were intentionally left for a later dead-plumbing slice rather than mixed into feature ownership work.
 
-### Zero-consumer parameters
+## D6.2b — Slayer transient ownership COMPLETE / VALIDATED
 
-Two Judge inputs had no consumer beyond the signature:
-
-- `records`
-- `onPhaseChange`
-
-They remain separate trivial cleanup candidates. They were deliberately not mixed into ownership slices.
-
-### MutableState ownership result
-
-The baseline 10 `MutableState<T>` parameters did not form one natural state object:
-
-- `nightStartedState` / `nightStepIndexState`: checkpoint/recovery coupled;
-- `dayModeState`: externally written by recovery/Klutz routing;
-- `highestVoteNameState` / `highestVoteCountState`: recovery/mechanics coupled;
-- nomination/vote state: cohesive but broader Day flow;
-- Slayer claimant/target were the clean UI-local exception.
-
-This rejected mechanical `DayState`, `NightState`, `ClocktowerJudgeState` or broad Controller extraction.
-
-### Existing surviving child seams
-
-```text
-ClocktowerDawnSummaryScreen
-ClocktowerDayOverviewScreen
-ClocktowerPendingNominationTableScreen
-ClocktowerVoteTableScreen
-ClocktowerSlayerTableScreen
-ClocktowerArtistTableScreen
-ClocktowerKlutzTableScreen
-ClocktowerNightActiveScreen
-  -> ClocktowerNightStepCardLocalized
-```
-
-These table/specialized screens align with the newly explicit square-table UI direction.
-
-## D6.2b — COMPLETE / VALIDATED: Slayer active selection ownership
-
-Validated production checkpoint:
+Checkpoint:
 
 ```text
 58bc1e51440d44f36e14d1a9d5a45cfe9c235955
-refactor: localize Slayer selection ownership [full-ci]
 ```
 
-Exact production diff:
-
-```text
-CampBoardGameHostApp.kt
-  +0 / -8
-
-ClocktowerHostScreen.kt
-  +2 / -4
-```
-
-Judge now owns:
+Judge-local:
 
 ```kotlin
-var slayerClaimantName by remember(gameId) { mutableStateOf<String?>(null) }
-var slayerTargetName by remember(gameId) { mutableStateOf<String?>(null) }
+remember(gameId) { slayerClaimantName }
+remember(gameId) { slayerTargetName }
 ```
 
-The complete durable boundary stayed unchanged:
+Durable action boundary unchanged:
 
 ```text
 onSlayerShot(claimantName, targetName, recluseRegistersAsDemon)
 ```
 
-Post-D6.2b metrics:
+Metrics:
 
 ```text
-ClocktowerJudgeScreen
-  parameters:           101
-  callbacks:             39
-  providers:              3
-  MutableState params:    8
-
-App-root clocktower vars: 39
+Judge params:             103 -> 101
+callbacks:                 39 unchanged
+MutableState params:       10 -> 8
+App-root Clocktower vars:  41 -> 39
 ```
 
-Acceptance:
+Validation:
 
 ```text
 R2 34283098478 — PASS
-CI 34283098477 — PASS
-  Android FULL unit tests — PASS
-  debug APK — PASS
+CI 34283098477 — PASS / FULL
+```
+
+## D6.2c/d — Artist contract + transient ownership COMPLETE / VALIDATED
+
+Authority:
+
+- `docs/D6_2C_ARTIST_CONFIRMATION_CONTRACT_AUDIT_2026-09-08.md`
+
+Final validated checkpoint:
+
+```text
+6a5723af0e9fb646d0c66e900a1c4d215d6a2fef
+```
+
+Judge-local transient state:
+
+```text
+artistClaimantName
+artistTruthfulAnswer
+artistShownAnswer
+```
+
+Durable callback:
+
+```text
+onConfirmArtistQuestion(String, Boolean, Boolean)
+```
+
+App retains durable Artist mechanics/history/revision/day routing.
+
+Metrics after D6.2d:
+
+```text
+Judge params:             101 -> 95
+callbacks:                 39 -> 36
+MutableState params:        8 unchanged
+App-root Clocktower vars:  39 -> 36
+```
+
+Validation:
+
+```text
+R2 34286858464 — PASS
+CI 34286858453 — PASS / FULL
+```
+
+A first implementation attempt exposed delegated-property smart-cast compilation issues. The correction only snapshots nullable Compose delegated values into stable locals before Boolean calculations. Failed/bootstrap history was removed from the final production line.
+
+## D6.2e — legacy Storyteller reachability proof COMPLETE
+
+Authority:
+
+- `docs/D6_2E_LEGACY_STORYTELLER_REACHABILITY_AUDIT_2026-09-09.md`
+
+The exhaustive phase/nightStarted/dayMode audit proved the trailing HostScriptCard/HostProgressCard Storyteller block unreachable.
+
+Every legal state already returned through one of the live modern/table paths:
+
+```text
+Dawn
+Day Overview
+Day Nomination
+Day Vote
+Day EndConfirm
+Day Slayer
+Day Artist
+Day Klutz
+FirstNight setup
+Night ready
+active FirstNight/Night flow
+```
+
+Conclusion: delete the old tail rather than decompose it.
+
+## D6.2f — legacy tail retirement COMPLETE / VALIDATED
+
+Authority:
+
+- `docs/D6_2F_LEGACY_STORYTELLER_RETIREMENT_PROGRESS_2026-09-09.md`
+
+Checkpoint:
+
+```text
+cee19c1ab85b4b4400a4d38f958a9014dd10a5e3
+```
+
+Net production diff:
+
+```text
+exactly 2 production files
+0 additions / 685 deletions
+```
+
+`ClocktowerHostScreen.kt`:
+
+```text
+330,257 -> 283,849 bytes
+5,491 -> 4,807 lines
+```
+
+Also removed writerless `ClocktowerDayMode.ExecutionResult`.
+
+Validation:
+
+```text
+R2 34288731422 — PASS
+CI 34288731376 — PASS / FULL
+  Android FULL + debug APK — PASS
   ASP — PASS
   Real Clingo — PASS
   CI gate — PASS
 ```
 
-## D6.2c — COMPLETE: Artist confirmation-contract characterization
+## D6.2g — retired plumbing cleanup COMPLETE / VALIDATED
 
-Detailed audit:
+Authority:
 
-- `docs/D6_2C_ARTIST_CONFIRMATION_CONTRACT_AUDIT_2026-09-08.md`
+- `docs/D6_2G_RETIRED_STORYTELLER_PLUMBING_PROGRESS_2026-09-09.md`
 
-Unlike Slayer, Artist originally made a round trip through App transient state:
-
-```text
-Judge selection
--> selection callback
--> App transient state
--> value forwarded back to Judge
--> onConfirmArtistQuestion()
--> App rereads transient values
-```
-
-Selected durable boundary:
+Checkpoint:
 
 ```text
-onConfirmArtistQuestion(
-  claimantName: String,
-  truthfulAnswer: Boolean,
-  shownAnswer: Boolean,
-)
+15342f9e22ac204602680e6ef831fb4e95c7b0bf
 ```
 
-The three selections remain UI concerns; `artistUsed`, `artistClaimedNames`, records/events, Day routing and revision remain durable App orchestration.
-
-## D6.2d — COMPLETE / VALIDATED: Artist selection ownership
-
-Latest validated production checkpoint:
+Removed zero-consumer plumbing exposed by D6.2f:
 
 ```text
-6a5723af0e9fb646d0c66e900a1c4d215d6a2fef
-refactor: localize Artist selection ownership [full-ci]
+Judge records parameter + App forwarding
+onPhaseChange + App lambda
+onShowResults + App lambda
+phaseTitle
+phaseProgress
+phaseScript
+phaseAction
+recordCurrentVote()
 ```
 
-Exact net production diff from D6.2c docs checkpoint `7a80d4c690e41190c5d70430733056caf05b1523`:
+The shared App `records` collection itself remains because Recovery/history/other game paths still use it.
+
+Net diff:
 
 ```text
-CampBoardGameHostApp.kt
-  +19 / -50
-
-ClocktowerHostScreen.kt
-  +64 / -46
-
-production files changed: exactly 2
-production commits ahead: exactly 1
+CampBoardGameHostApp.kt +0 / -26
+ClocktowerHostScreen.kt +0 / -42
+0 additions / 68 deletions
 ```
 
-### Ownership result
-
-App lost:
-
-```text
-clocktowerArtistClaimantName
-clocktowerArtistTruthfulAnswer
-clocktowerArtistShownAnswer
-```
-
-plus their reset/forwarding plumbing and three selection callbacks.
-
-Judge now owns the transient selection with `remember(gameId)` and narrow helpers enforcing the existing transition semantics:
-
-```text
-claimant change -> clear truthful + shown
-truthful change -> clear shown
-shown change -> update shown only
-confirm -> pass all three values to durable callback, then clear local selection
-```
-
-Durable App behavior is unchanged in responsibility:
-
-- update `artistClaimedNames`;
-- update `artistUsed` for a real unused Artist;
-- add record;
-- add RoleAction event containing exact truthful/shown values;
-- route Day back to Overview;
-- advance game-state revision.
-
-### Square-table versus legacy compatibility
-
-The modern square-table Artist path is the intended surviving UI.
-
-A second older HostScriptCard Artist consumer was discovered during implementation. D6.2d did **not** introduce a special legacy abstraction. It temporarily reuses the same Judge-local selection helpers solely so the old block continues compiling while reachability is audited.
-
-### Compile correction
-
-Moving `artistTruthfulAnswer` from a stable parameter to a Compose delegated property exposed Kotlin smart-cast restrictions. The first full-CI attempt failed only at `compileDebugKotlin`.
-
-The correction was deliberately narrow:
-
-- square-table Artist path snapshots the nullable delegated truth value into an immutable local value for Boolean calculations;
-- legacy compatibility path does the same;
-- no durable/gameplay/recommendation semantics changed.
-
-The branch history was rebuilt afterward so failed/bootstrap commits do not remain in the final production line.
-
-### Post-D6.2d metrics
+Current validated metrics:
 
 ```text
 ClocktowerJudgeScreen
-  parameters:            95   (103 -> 95)
-  callbacks:             36   (39 -> 36)
-  providers:              3
-  MutableState params:    8   (10 -> 8)
+  parameters:              92   (103 -> 92)
+  callbacks:               34   (39 -> 34)
+  providers:                3
+  MutableState params:      8   (10 -> 8)
 
-App-root clocktower vars: 36   (41 -> 36)
+App-root Clocktower vars:   36   (41 -> 36)
 ```
 
-### Final acceptance
+Validation:
 
 ```text
-R2 34286858464 — PASS
-
-CI 34286858453 — PASS
-  Android FULL unit tests — PASS
-  debug APK build — PASS
-  ASP contract tests — PASS
-  Real Clingo cross-validation — PASS
+R2 34289616209 — PASS
+CI 34289616204 — PASS
+  Android FAST — PASS
   CI gate — PASS
 ```
 
-CI head SHA is exactly `6a5723af0e9fb646d0c66e900a1c4d215d6a2fef`.
+A second FULL gate was intentionally not repeated immediately after D6.2f's T4 because D6.2g was pure dead-plumbing deletion.
 
-## D6.2e — NEXT: legacy Storyteller fallback reachability audit
+## D6.2h — surviving square-table ownership re-audit COMPLETE
 
-A preliminary control-flow read found a potentially higher-value next boundary than another local state migration.
+Authority:
 
-Before the old trailing storyteller UI, modern paths already return for:
+- `docs/D6_2H_SURVIVING_SQUARE_TABLE_OWNERSHIP_AUDIT_2026-09-09.md`
 
-```text
-Dawn -> ClocktowerDawnSummaryScreen -> return
+This re-audit considered only live table UI.
 
-Day Overview -> table UI -> return
-Day Nomination -> table UI -> return
-Day Vote -> table UI -> return
-Day EndConfirm -> dedicated screen -> return
-Day Slayer -> square-table UI -> return
-Day Artist -> square-table UI -> return
-Day Klutz -> square-table UI -> return
+### `currentVoteCountState` is dead
 
-FirstNight && !nightStarted -> setup recommendation UI -> return
-Night && !nightStarted -> night-ready UI -> return
-(FirstNight || Night) && nightStarted -> ClocktowerNightActiveScreen -> return
-```
+The modern vote screen owns pending voter selection/count inside typed `ClocktowerTableVoteState` and submits it through `onConfirm(voteState)`.
 
-After these branches the file still contains a large old:
+The outer `currentVoteCount` is never read; it is only reset to `0` at several transitions.
+
+Conclusion: delete it.
+
+### nomination pair is transient UI state
 
 ```text
-ClocktowerDarkTheme {
-  LazyColumn {
-    HostProgressCard / HostScriptCard based Dawn/Day interaction flows
-    ...
-  }
-}
+nominatorNameState
+nomineeNameState
 ```
 
-This tail now looks potentially **entirely unreachable**, not merely deprecated. That has not yet been proven exhaustively.
+App-side responsibilities are declaration/reset/forwarding only. They are not serialized/restored as Clocktower Recovery mechanics.
 
-### Required D6.2e proof
+The only live semantic consumers are the square-table nomination and vote composition paths.
 
-Read-only first:
+Recommended local lifetime:
 
-1. locate authoritative `ClocktowerDayMode` definition;
-2. enumerate every DayMode value;
-3. build exhaustive `ClocktowerPhase × nightStarted × dayMode` reachability coverage;
-4. prove whether every legal state returns before the legacy tail;
-5. identify exact old block start/end range;
-6. inventory helpers/imports/functions that become dead only after tail removal;
-7. audit tests for legacy-only presentation dependencies;
-8. estimate byte/line reduction and risk;
-9. authorize a deletion slice only if proof is complete.
+```kotlin
+remember(gameId, round)
+```
 
-If proven unreachable, D6.2f should **delete** the dead legacy UI instead of decomposing it.
+The round lifecycle proves equivalent reset semantics across normal Day completion, Virgin immediate execution and Klutz paths.
 
-Do not mix the reachability proof with dead-parameter cleanup, nomination/vote ownership, Night checkpoint/navigation, Recovery or recommendation semantics.
+### state that must remain external
 
-## Candidate order after D6.2d
+```text
+dayModeState
+  App/Recovery/Klutz/Artist routing still writes it
 
-1. **D6.2e legacy storyteller reachability proof**;
-2. **D6.2f dead legacy UI deletion if proven unreachable**;
-3. `records` / `onPhaseChange` cleanup as a separate tiny slice if still useful;
-4. nomination/vote subsets with Recovery coupling explicitly preserved;
-5. whole Day dispatcher only around surviving table UI seams;
-6. Night navigation only after checkpoint/recovery-safe ownership characterization.
+ghostVoteAuthority
+highestVoteNameState
+highestVoteCountState
+  durable vote mechanics + Recovery serialization/restore
+```
 
-## D6.2 invariants
+Do not move these with the nomination pair.
+
+## D6.2i — recommended next implementation slice
+
+Exact scope:
+
+```text
+remove App:
+  clocktowerNominatorNameState
+  clocktowerNomineeNameState
+  clocktowerCurrentVoteCountState
+
+remove 3 Judge MutableState parameters
+
+Judge-local:
+  nominatorName
+  nomineeName
+  keyed by remember(gameId, round)
+
+remove currentVoteCount entirely
+```
 
 Preserve:
 
-- `ClocktowerGameSession` as canonical writable session/domain owner;
+```text
+dayModeState
+ghostVoteAuthority
+highestVoteNameState
+highestVoteCountState
+Virgin durable callbacks
+vote transaction behavior
+Recovery v2
+revision cadence
+```
+
+Expected metrics:
+
+```text
+Judge params:             92 -> 89
+callbacks:                34 unchanged
+MutableState params:       8 -> 5
+App-root Clocktower vars: 36 -> 33
+```
+
+Existing relevant tests:
+
+- `ClocktowerDayNominationGestureTest`
+- `ClocktowerTableVoteStateTest`
+- `ClocktowerVoteTransactionTest`
+
+Do not manufacture source-string tests. For this behavior-preserving ownership move, use fail-closed source assertions, compile, existing focused tests and FAST inside the implementation workflow. Prefer a final clean `[full-ci]` checkpoint because state lifetime changes across App/Judge.
+
+## Large-file mutation method
+
+`CampBoardGameHostApp.kt` and `ClocktowerHostScreen.kt` are still large enough that connector whole-file replacement is unnecessarily risky.
+
+Normative SOP:
+
+- `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`
+
+The active 2026-09-09 D6.2i handoff records the D6.2-proven variant used in this connector environment, including:
+
+- bootstrap workflow triggered by the workflow-file push itself;
+- fail-closed exact occurrence and final signature assertions;
+- compile/test before product commit;
+- self-removal of temporary workflow/script;
+- reconstructing one clean production commit from the final tree with the intended parent;
+- force-updating only the feature branch ref;
+- `compare_commits` exact one-commit/file-allowlist audit;
+- normal clean-head CI/R2 after bootstrap history removal.
+
+A new conversation must read that before mutating either large file.
+
+## Frozen invariants
+
+Preserve:
+
+- `ClocktowerGameSession` canonical writable session/domain ownership;
 - exact game/player revision cadence;
 - semantic chronology and idempotency;
-- Recovery v2 + PS5 lifecycle/write-gate topology;
+- Recovery v2 + PS5 write-gate topology;
 - A4 durability/invalidation ordering;
-- recommendation/gameplay semantics;
+- no storyteller-hidden target leak;
 - no Compose dependency in session/domain;
+- recommendation/gameplay semantics unless separately authorized;
 - Undercover/Werewolf isolation.
 
 ## Branch / PR route
@@ -377,14 +399,13 @@ Preserve:
 ```text
 main d76b0854...
 -> codex/d6-2-ui-composition
--> D6.2a characterization COMPLETE
--> D6.2b Slayer ownership VALIDATED @ 58bc1e5...
--> D6.2c Artist contract characterization COMPLETE
--> D6.2d Artist ownership VALIDATED @ 6a5723a...
--> R2 34286858464 PASS
--> FULL CI 34286858453 PASS
--> draft PR #115 OPEN / DO NOT AUTO-MERGE
--> D6.2e legacy Storyteller reachability audit NEXT
+-> D6.2a consumption audit COMPLETE
+-> D6.2b Slayer ownership VALIDATED
+-> D6.2c/d Artist ownership VALIDATED
+-> D6.2e unreachable legacy proof COMPLETE
+-> D6.2f legacy retirement VALIDATED @ cee19c1...
+-> D6.2g dead plumbing VALIDATED @ 15342f9...
+-> D6.2h surviving square-table audit COMPLETE
+-> D6.2i Day nomination transient ownership NEXT
+-> PR #115 remains OPEN / DRAFT / DO NOT AUTO-MERGE
 ```
-
-Do not reuse `codex/d6-root-reaudit` or PR #113.
