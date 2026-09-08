@@ -165,6 +165,7 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
 import com.codex.campboardgamehost.clocktower.session.commitActualRoleBoundary
 import com.codex.campboardgamehost.clocktower.session.commitShownRoleBoundary
+import com.codex.campboardgamehost.clocktower.session.synchronizePlayerDeathWithinCurrentRevision
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointReducer
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointHostTransaction
 import com.codex.campboardgamehost.clocktower.session.NightCheckpointRevisionIntent
@@ -3559,6 +3560,10 @@ internal fun CampBoardGameHostApp() {
                                 val index = cards.indexOfFirst { it.name == executionName }
                                 val executedCard = cards.getOrNull(index)
                                 if (index >= 0 && executedCard != null && executedCard.eliminatedRound == null) {
+                                    requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
+                                        targetSeat = index + 1,
+                                    )
+                                    publishClocktowerSessionView()
                                     cards[index] = executedCard.copy(eliminatedRound = round)
                                     records.add(EliminationRecord(round, executionName, context.getString(R.string.clocktower_record_execution)))
                                     addClocktowerEvent(
