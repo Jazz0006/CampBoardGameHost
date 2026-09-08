@@ -20,7 +20,7 @@ Validation on `5926138...` content:
 34178562642 — R2 PASS
 ```
 
-Later commits are validation cleanup/docs-only. Re-query live GitHub before implementation or merge.
+Later commits are validation cleanup and documentation only. Re-query live GitHub before implementation or merge.
 
 ## Current priority
 
