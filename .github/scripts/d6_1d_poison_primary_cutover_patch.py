@@ -84,9 +84,9 @@ for token in required:
     if token not in text:
         raise SystemExit(f"Missing required post-patch token: {token}")
 
-if text.count("commitPoisonTargetBoundary(") != 2:  # import + one call
+if text.count("commitPoisonTargetBoundary(") != 1:
     raise SystemExit("Unexpected commit poison boundary occurrence count")
-if text.count("synchronizePoisonTargetWithinCurrentRevision(") != 3:  # import + two calls
+if text.count("synchronizePoisonTargetWithinCurrentRevision(") != 2:
     raise SystemExit("Unexpected poison synchronization occurrence count")
 
 PATH.write_text(text, encoding="utf-8", newline="\n")
