@@ -861,8 +861,6 @@ internal fun CampBoardGameHostApp() {
     val clocktowerGhostVoteAuthorityState = remember { mutableStateOf(ClocktowerGhostVoteAuthority()) }
     val clocktowerHighestVoteNameState = remember { mutableStateOf<String?>(null) }
     val clocktowerHighestVoteCountState = remember { mutableStateOf(0) }
-    val clocktowerSlayerClaimantNameState = remember { mutableStateOf<String?>(null) }
-    val clocktowerSlayerTargetNameState = remember { mutableStateOf<String?>(null) }
     val troubleBrewingSetupRecommendationScope = rememberCoroutineScope()
     val troubleBrewingSetupRecommendationPrewarmer = remember {
         val recommendationCoordinator = ClocktowerRecommendationCoordinator()
@@ -1419,8 +1417,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerCurrentVoteCountState.value = 0
         clocktowerHighestVoteNameState.value = null
         clocktowerHighestVoteCountState.value = 0
-        clocktowerSlayerClaimantNameState.value = null
-        clocktowerSlayerTargetNameState.value = null
         clocktowerArtistClaimantName = null
         clocktowerArtistTruthfulAnswer = null
         clocktowerArtistShownAnswer = null
@@ -1689,8 +1685,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
         clocktowerHighestVoteNameState.value = null
         clocktowerHighestVoteCountState.value = 0
-        clocktowerSlayerClaimantNameState.value = null
-        clocktowerSlayerTargetNameState.value = null
 
         when (game) {
             is UndercoverRecovery -> {
@@ -2817,8 +2811,6 @@ internal fun CampBoardGameHostApp() {
                         onGhostVoteAuthorityChange = { clocktowerGhostVoteAuthorityState.value = it },
                         highestVoteNameState = clocktowerHighestVoteNameState,
                         highestVoteCountState = clocktowerHighestVoteCountState,
-                        slayerClaimantNameState = clocktowerSlayerClaimantNameState,
-                        slayerTargetNameState = clocktowerSlayerTargetNameState,
                         gameOutcome = gameOutcome,
                         onRecordEvent = { type, title, detail, names ->
                             addClocktowerEvent(type, title, detail, names)

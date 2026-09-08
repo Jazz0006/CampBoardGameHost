@@ -300,8 +300,6 @@ internal fun ClocktowerJudgeScreen(
     ghostVoteAuthority: ClocktowerGhostVoteAuthority,
     highestVoteNameState: MutableState<String?>,
     highestVoteCountState: MutableState<Int>,
-    slayerClaimantNameState: MutableState<String?>,
-    slayerTargetNameState: MutableState<String?>,
     gameOutcome: GameOutcome?,
     onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,
     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
@@ -1072,8 +1070,8 @@ internal fun ClocktowerJudgeScreen(
     var currentVoteCount by currentVoteCountState
     var highestVoteName by highestVoteNameState
     var highestVoteCount by highestVoteCountState
-    var slayerClaimantName by slayerClaimantNameState
-    var slayerTargetName by slayerTargetNameState
+    var slayerClaimantName by remember(gameId) { mutableStateOf<String?>(null) }
+    var slayerTargetName by remember(gameId) { mutableStateOf<String?>(null) }
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
     var slayerRecluseRegistersDemon by remember { mutableStateOf(false) }
     val firstNightNaturalPairPrecomputeRequest = if (
