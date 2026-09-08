@@ -10,7 +10,7 @@ package com.codex.campboardgamehost
  * intentionally refresh the Recovery timestamp.
  */
 internal class RecoveryWriteGate {
-    private var lastDurableContent: RecoverySnapshot? = null
+    private var lastDurableContentIdentity: String? = null
     private var retryRequired: Boolean = false
 
     fun persist(
@@ -18,22 +18,23 @@ internal class RecoveryWriteGate {
         force: Boolean = false,
         write: (RecoverySnapshot) -> Boolean,
     ): Boolean {
-        val content = snapshot.withoutSaveTimestamp()
-        if (!force && !retryRequired && content == lastDurableContent) return true
+        val contentIdentity = snapshot.durableContentIdentity()
+        if (!force && !retryRequired && contentIdentity == lastDurableContentIdentity) return true
 
         if (!write(snapshot)) {
             retryRequired = true
             return false
         }
-        lastDurableContent = content
+        lastDurableContentIdentity = contentIdentity
         retryRequired = false
         return true
     }
 
     fun clear() {
-        lastDurableContent = null
+        lastDurableContentIdentity = null
         retryRequired = false
     }
 }
 
-private fun RecoverySnapshot.withoutSaveTimestamp(): RecoverySnapshot = copy(savedAtMillis = 0L)
+private fun RecoverySnapshot.durableContentIdentity(): String =
+    RecoverySnapshotJsonCodec.encode(copy(savedAtMillis = 0L)).toString()
