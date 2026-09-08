@@ -8,6 +8,7 @@ import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
@@ -164,6 +165,15 @@ class ClocktowerGameSessionTest {
         original.advanceGameStateRevision()
         original.advanceGameStateRevision()
         original.recordPlayerInput()
+        original.commitGlobalActionFact(
+            ActionFactDraft.Poison(
+                actionId = "night-one-poison-seat-two",
+                phase = StorytellerPhase.FIRST_NIGHT,
+                round = 1,
+                sequence = 0,
+                targetSeat = 2,
+            ),
+        )
         original.commitGlobalEpistemicObservation(globalPublicDraft("public-death"))
         val persisted = original.state
 
@@ -172,7 +182,11 @@ class ClocktowerGameSessionTest {
         assertEquals(persisted, restored.state)
         assertEquals(2L, restored.state.gameStateRevision)
         assertEquals(2L, restored.state.playerInputRevision)
-        assertEquals(1L, restored.state.nextTimelineGlobalSequence)
+        assertEquals(2L, restored.state.nextTimelineGlobalSequence)
+        assertEquals(
+            listOf("night-one-poison-seat-two"),
+            restored.state.actionTimeline.reducerFacts().map { it.actionId },
+        )
         assertEquals(listOf("public-death"), restored.state.epistemicObservationLog.records.map { it.recordId })
     }
 
