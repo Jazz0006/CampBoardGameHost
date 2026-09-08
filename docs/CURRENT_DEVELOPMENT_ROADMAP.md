@@ -348,3 +348,5 @@ D1–D5 are complete and integrated through PR #106. The old D6 plan assumed the
 ### Werewolf module removal
 
 Still a separate future campaign. Do not mix it into PS5.
+
+> Documentation checkpoint after PS5.2a: branch was advanced only by the two authoritative documentation updates after the validated production GREEN. Re-query live head before PS5.2b implementation.
