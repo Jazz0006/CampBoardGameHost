@@ -20,7 +20,7 @@ Validation on `5926138...`:
 34178562642 — R2 PASS
 ```
 
-PS5.2b was audit/docs-only; no production changes were required after `5926138...`.
+PS5.2b was audit/docs-only; no production changes were required after `5926138...`. Final full CI is requested from this docs-only acceptance checkpoint; production content remains the `5926138...` lineage.
 
 ## Current priority
 
@@ -60,7 +60,7 @@ retry GREEN 39229bfdddba5837a9368706946f62fd94915109
 CI 34174011104 PASS
 R2 34174011121 PASS
 
-alias GREEN e2dbd1db05812ecbd0c0b2e751dd42b9fdc3cd23
+alias GREEN e2dbd1db05812ecbd0c2d69ac82c5fdc0435e
 CI 34177323891 PASS
 R2 34177323827 PASS
 ```
