@@ -1,0 +1,110 @@
+name: Recovery Seating Owner One Shot
+
+on:
+  push:
+    branches:
+      - codex/persistence-simplification
+    paths:
+      - .github/workflows/recovery-seating-owner-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact event head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Verify exact branch head and locked blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          remote_head="$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)"
+          test "$remote_head" = "$GITHUB_SHA"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = 'f280e29afce6b6b5e816cbc66e6c792af59029f3'
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/HostSeatingSetupFlow.kt)" = 'd1f8d70bcc66476413cdf909848947c8a53f1371'
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/HostSeatingRosterTest.kt)" = 'a07789708fb13037a0c5ca47c9e5f66870bd544a'
+          test -f .github/scripts/recovery_seating_owner_patch.py
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Confirm helper contract is green before App wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.HostSeatingRosterTest' \
+            --rerun-tasks --no-daemon --stacktrace
+
+      - name: Apply exact App recovery wiring patch
+        run: python3 .github/scripts/recovery_seating_owner_patch.py
+
+      - name: Audit exact product diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected='app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt'
+          actual="$(git diff --name-only)"
+          test "$actual" = "$expected"
+          git diff --check
+          test "$(grep -F -c 'hostSeatingSetupFlow = HostSeatingSetupFlow.recoveredActiveGame(' "$expected")" = '1'
+          test "$(grep -F -c 'playerNames = restoredPlayerNames,' "$expected")" = '1'
+          test "$(grep -F -c 'game = game.gameKind,' "$expected")" = '1'
+
+      - name: Run focused and FAST validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.HostSeatingRosterTest' \
+            --rerun-tasks --no-daemon --stacktrace
+          ./gradlew :app:testFast --rerun-tasks --no-daemon --stacktrace
+
+      - name: Commit and push product patch
+        id: product
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          test "$(git diff --name-only)" = 'app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt'
+          remote_head="$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)"
+          test "$remote_head" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          git commit -m 'fix: restore seating owner after recovery'
+          product_sha="$(git rev-parse HEAD)"
+          echo "sha=$product_sha" >> "$GITHUB_OUTPUT"
+          git push origin HEAD:codex/persistence-simplification
+
+      - name: Remove temporary one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          product_sha='${{ steps.product.outputs.sha }}'
+          remote_head="$(git ls-remote origin refs/heads/codex/persistence-simplification | cut -f1)"
+          test "$remote_head" = "$product_sha"
+          rm .github/scripts/recovery_seating_owner_patch.py
+          rm .github/workflows/recovery-seating-owner-one-shot.yml
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' '.github/scripts/recovery_seating_owner_patch.py' '.github/workflows/recovery-seating-owner-one-shot.yml' | sort)"
+          test "$actual" = "$expected"
+          git add -A
+          git commit -m 'chore: remove recovery seating owner one-shot'
+          git push origin HEAD:codex/persistence-simplification
