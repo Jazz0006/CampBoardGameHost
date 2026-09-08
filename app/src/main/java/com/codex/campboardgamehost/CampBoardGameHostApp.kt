@@ -831,6 +831,7 @@ internal fun CampBoardGameHostApp() {
     var hostSeatingSetupFlow by remember { mutableStateOf(HostSeatingSetupFlow()) }
     val cards = remember { mutableStateListOf<PlayerCard>() }
     val records = remember { mutableStateListOf<EliminationRecord>() }
+    val recoveryWriteGate = remember { RecoveryWriteGate() }
     val clocktowerEvents = remember { mutableStateListOf<ClocktowerEvent>() }
     val clocktowerEpistemicObservations = remember { mutableStateListOf<RecordedEpistemicObservation>() }
     var clocktowerActionTimeline by remember { mutableStateOf(ActionFactTimeline()) }
@@ -1422,6 +1423,7 @@ internal fun CampBoardGameHostApp() {
 
     fun clearSavedGameState() {
         baseContext.clearActiveGameState()
+        recoveryWriteGate.clear()
         savedGamePreview = null
     }
 
@@ -1561,15 +1563,16 @@ internal fun CampBoardGameHostApp() {
         )
     }
 
-    fun persistActiveGameStateIfNeeded(): Boolean {
+    fun persistActiveGameStateIfNeeded(force: Boolean = false): Boolean {
         if (!screen.isActiveGameScreen() || cards.isEmpty()) return false
-        return baseContext.saveActiveGameState(
-            RecoverySnapshotJsonCodec.encode(activeGameRecoverySnapshot()),
-        )
+        val snapshot = activeGameRecoverySnapshot()
+        return recoveryWriteGate.persist(snapshot, force = force) { durableSnapshot ->
+            baseContext.saveActiveGameState(RecoverySnapshotJsonCodec.encode(durableSnapshot))
+        }
     }
 
-    fun persistAndReleaseA4ObservationRebuildIfDurable() {
-        val persisted = persistActiveGameStateIfNeeded()
+    fun persistAndReleaseA4ObservationRebuildIfDurable(force: Boolean = false) {
+        val persisted = persistActiveGameStateIfNeeded(force = force)
         val recordId = a4ObservationDurabilityGate.releaseAfterPersistence(persisted) ?: return
         a4ObservationCacheRebuildRequest = a4ObservationCacheRebuildRequestOrNull(recordId)
     }
@@ -1767,7 +1770,7 @@ internal fun CampBoardGameHostApp() {
         )
     }
 
-    val latestPersistActiveGameState by rememberUpdatedState { persistAndReleaseA4ObservationRebuildIfDurable() }
+    val latestPersistActiveGameState by rememberUpdatedState { persistAndReleaseA4ObservationRebuildIfDurable(force = true) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
