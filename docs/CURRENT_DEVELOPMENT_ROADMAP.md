@@ -12,10 +12,8 @@ PS5 merge commit: 1b502c75357a2de7c928c88668e6a9613521b4ac
 merged PR: #112 Persistence Simplification: recent emergency recovery
 merged branch head: 18e7be6b915d654ea6bbfa6a11ff5627fe467153
 latest PS5 production GREEN inside merged history: e622960a9c75c0b110d2c92e34b46828cb949e0a
-renewed post-hotfix full-T4 checkpoint: 686b52a79cd4ea6bbfa6a11ff5627fe467153
+renewed post-hotfix full-T4 checkpoint: 686b52a79cd4ea183c81884d34d54223fecae124
 ```
-
-> Correction: the renewed post-hotfix full-T4 **checkpoint commit** is `686b52a79cd4ea183c81884d34d54223fecae124`; the line above is retained only as a historical typo guard and must not be used as a SHA. See the validation section below for the authoritative checkpoint.
 
 PR #112 is **merged / closed**. Persistence Simplification / PS5 is complete. Current `main` is a post-merge docs/CI descendant; no later production-architecture change supersedes the PS5 application state relevant to D6.0.
 
