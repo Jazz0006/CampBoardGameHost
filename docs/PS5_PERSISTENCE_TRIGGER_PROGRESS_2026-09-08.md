@@ -1,9 +1,12 @@
-# PS5 Persistence Trigger Simplification — Progress / Handoff
+# PS5 Persistence Trigger Simplification — Final Handoff
 
 > Date: 2026-09-08 Australia/Sydney
-> Branch: `codex/persistence-simplification`
-> Draft PR: #112
-> Status: **PS5 COMPLETE — automated + real-device acceptance PASS — release-ready, unmerged**
+> Historical branch: `codex/persistence-simplification`
+> PR: #112 — **MERGED / CLOSED**
+> Merge commit: `1b502c75357a2de7c928c88668e6a9613521b4ac`
+> Status: **PS5 COMPLETE — automated + real-device acceptance PASS — merged to main**
+
+This document is now a **historical/final PS5 record**. Current execution priority is maintained in `docs/CURRENT_DEVELOPMENT_ROADMAP.md`.
 
 ## Campaign
 
@@ -24,18 +27,19 @@ PS5 COMPLETE
   recovery quick-restart hotfix COMPLETE
   renewed post-hotfix T4 COMPLETE
   real-device process-loss/restart acceptance COMPLETE
+  PR #112 MERGED
 ```
 
-## Final checkpoint
+## Final checkpoints
 
 ```text
-base main: ac71cbe392fb542727dc0c2d69ac82c5fdc0435e
-PR #112: open / draft / unmerged
-pre-device-acceptance production GREEN: 5926138d0557835f281ba15b4051f50fa3ae741e
+pre-campaign base main: ac71cbe392fb542727dc0c2d69ac82c5fdc0435e
 recovery quick-restart RED: 3bc389349bba00a155d55ec01508d6b271125ff0
 recovery seating-owner helper: d8e1123d1535672dc04271ab41e18ec979ccaa7f
 latest production GREEN: e622960a9c75c0b110d2c92e34b46828cb949e0a
 renewed full-T4 checkpoint: 686b52a79cd4ea183c81884d34d54223fecae124
+final branch head before merge: 18e7be6b915d654ea6bbfa6a11ff5627fe467153
+merge commit on main: 1b502c75357a2de7c928c88668e6a9613521b4ac
 ```
 
 ## Frozen Recovery boundary
@@ -50,7 +54,7 @@ ON_PAUSE  -> forced persist   -> RecoveryWriteGate
 ON_STOP   -> ordinary persist -> RecoveryWriteGate
 ```
 
-`SideEffect` remains by explicit PS5.2b architecture decision. It provides a generic ordinary persistence opportunity across Undercover, Werewolf and Clocktower where no universal durable revision exists, and also preserves foreground retry opportunity after failed persistence. Do not reopen removal without profiling evidence and a replacement ownership design.
+`SideEffect` remains by explicit PS5.2b architecture decision. It provides a generic ordinary persistence opportunity across Undercover, Werewolf and Clocktower where no universal durable revision exists, and preserves a foreground retry opportunity after failed persistence. Do not reopen removal without profiling evidence and a replacement ownership design.
 
 ## PS5.1 safety foundation
 
@@ -115,7 +119,7 @@ HostSeatingSetupFlow.playerNamesFor(...)
 
 Root cause: `applyValidatedRecoveryPlan()` restored cards, player names, game kind and durable mechanics but did not reconstruct the separate `HostSeatingSetupFlow` owner. The active recovered game was valid while `confirmedSeating` / `selectedGame` remained empty.
 
-The fix deliberately keeps `playerNamesFor()` fail-closed. Recovery now reconstructs confirmed seating plus the selected recovered game through the new game-independent recovery factory. This covers recovered Undercover, Werewolf and Clocktower sessions rather than adding an NGJ-only exception.
+The fix deliberately keeps `playerNamesFor()` fail-closed. Recovery reconstructs confirmed seating plus the selected recovered game through the game-independent recovery factory. This covers recovered Undercover, Werewolf and Clocktower sessions rather than adding an NGJ-only exception.
 
 Tests-first evidence:
 
@@ -154,16 +158,16 @@ CI 34191738571 — PASS
 R2 34191738649 — PASS
 ```
 
-Final docs-only verification after recording the hotfix acceptance:
+Final pre-merge docs verification:
 
 ```text
-CI 34191972250 — PASS
-R2 34191972340 — PASS
+CI 34192745929 — PASS
+R2 34192745940 — PASS
 ```
 
 ## Real-device acceptance — COMPLETE
 
-On 2026-09-08 the user confirmed that the previously defined real-device tests **1–5 all passed**.
+On 2026-09-08 the previously defined real-device tests **1–5 all passed**.
 
 The regression path that exposed the seating-owner crash was also retested successfully on the fixed build:
 
@@ -175,23 +179,37 @@ The regression path that exposed the seating-owner crash was also retested succe
 -> PASS: no crash, new game starts correctly
 ```
 
-This closes the final PS5 release-acceptance blocker.
+This closed the final PS5 release-acceptance blocker.
 
-## Release status
+## Merge closure
 
-**Persistence Simplification / PS5 is release-ready.**
+The user explicitly authorized merge after all automated and real-device gates passed.
 
-PR #112 remains open / draft / unmerged only because merge requires explicit user authorization. Do not make further production changes on this branch merely to extend PS5.
+PR #112 was marked ready and merged with the branch head locked to:
 
-## Next step after merge
+```text
+18e7be6b915d654ea6bbfa6a11ff5627fe467153
+```
 
-After PR #112 is explicitly authorized and merged:
+GitHub created merge commit:
 
-1. re-confirm live `main`, merged head and checks;
-2. re-audit the post-persistence architecture;
-3. create a fresh D6 ownership/decomposition plan;
-4. treat the previous D6 plan as superseded by the persistence architecture changes.
+```text
+1b502c75357a2de7c928c88668e6a9613521b4ac
+Merge pull request #112 from Jazz0006/codex/persistence-simplification
+```
 
-## Non-goals before merge
+`main` was then confirmed at that merge commit.
 
-No Recovery schema redesign, cross-version migration, Archive redesign, Werewolf removal, D6 implementation, A4/ZDD rollout, unrelated UI work or DataStore modernization unless explicitly requested.
+## Next development step
+
+PS5 is closed. Do not continue production work under this campaign.
+
+The next task is a **fresh post-persistence D6 architecture/ownership re-audit** against the merged `main`. Use:
+
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-08_D6_POST_PERSISTENCE_REAUDIT.md`
+
+The previous D6 plan is historical reference only and is superseded where it conflicts with the merged persistence architecture.
+
+## Historical non-goals
+
+PS5 deliberately did not expand into Recovery cross-version migration, Archive redesign, Werewolf removal, D6 implementation, A4/ZDD feature rollout, unrelated UI work or DataStore modernization.
