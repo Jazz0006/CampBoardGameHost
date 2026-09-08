@@ -179,6 +179,21 @@ internal class ClocktowerGameSession private constructor(
         )
     }
 
+    /**
+     * Synchronizes canonical mechanical state inside a production boundary whose revision was
+     * already accepted by the caller. This never creates an additional game-state revision.
+     */
+    fun synchronizeGameStateWithinCurrentRevision(nextState: GameState): ClocktowerSessionState {
+        require(nextState.seed == state.gameSeed) {
+            "A game session cannot replace its persisted gameSeed."
+        }
+        require(nextState.script == state.gameState.script) {
+            "A game session cannot replace its script."
+        }
+        if (nextState == state.gameState) return state
+        return updateState(state.copy(gameState = nextState))
+    }
+
     /** Production event/decision boundary whose accepted revision cadence is independent of state equality. */
     fun advanceGameStateRevision(): ClocktowerSessionState = updateState(
         state.copy(gameStateRevision = state.gameStateRevision + 1),
