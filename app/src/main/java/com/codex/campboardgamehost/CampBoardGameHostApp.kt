@@ -1580,9 +1580,14 @@ internal fun CampBoardGameHostApp() {
     fun applyValidatedRecoveryPlan(plan: ValidatedRecoveryPlan) {
         val game = plan.snapshot.game
         val restoredCards = game.cards.map(::localizedRestoredCard)
+        val restoredPlayerNames = restoredCards.map(PlayerCard::name)
 
         playerNames.clear()
-        playerNames.addAll(restoredCards.map(PlayerCard::name))
+        playerNames.addAll(restoredPlayerNames)
+        hostSeatingSetupFlow = HostSeatingSetupFlow.recoveredActiveGame(
+            playerNames = restoredPlayerNames,
+            game = game.gameKind,
+        )
         cards.clear()
         cards.addAll(restoredCards)
         records.clear()
