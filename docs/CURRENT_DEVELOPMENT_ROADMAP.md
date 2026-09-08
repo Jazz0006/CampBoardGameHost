@@ -10,23 +10,17 @@
 base main: ac71cbe392fb542727dc0c2d69ac82c5fdc0435e
 branch: codex/persistence-simplification
 PR #112: open / draft / unmerged
-latest validated production GREEN: 5926138d0557835f281ba15b4051f50fa3ae741e
+latest production GREEN: 5926138d0557835f281ba15b4051f50fa3ae741e
+full-T4 checkpoint: 88249af2e68064b571da7cec5395c80940cbe021
 ```
 
-Validation on `5926138...`:
-
-```text
-34178595756 — focused owning tests + :app:testFast + git diff --check PASS
-34178562642 — R2 PASS
-```
-
-PS5.2b was audit/docs-only; no production changes were required after `5926138...`. Final full CI is requested from this docs-only acceptance checkpoint; production content remains the `5926138...` lineage.
+No production/test changes occurred after `5926138...` through the full-T4 checkpoint; later commits are acceptance documentation only.
 
 ## Current priority
 
-> **Final PS5 automated acceptance.**
+> **Real-device process-loss/restart acceptance for Persistence Simplification.**
 
-PS5 trigger design is complete. Run the reserved full persistence T4 gate on the current branch, then perform real-device process-loss/restart acceptance before calling the Persistence Simplification campaign release-ready.
+PS5 implementation/design and automated T4 acceptance are complete. Do not start another persistence refactor. Validate the current Recovery contract on a real Android device, then decide release readiness / PR #112 merge separately.
 
 Detailed handoff: `docs/PS5_PERSISTENCE_TRIGGER_PROGRESS_2026-09-08.md`.
 
@@ -42,14 +36,40 @@ PS1 COMPLETE
 PS2 COMPLETE
 PS3 COMPLETE
 PS4 COMPLETE
-PS5 IN PROGRESS — final acceptance pending
+PS5 IN PROGRESS — real-device acceptance pending only
   PS5.0 COMPLETE
   PS5.1a COMPLETE
   PS5.1b COMPLETE
   PS5.1c COMPLETE
   PS5.2a lifecycle pause/stop duplicate-write reduction COMPLETE
   PS5.2b SideEffect ownership audit COMPLETE
+  final automated T4 COMPLETE
+  real-device process-loss/restart acceptance PENDING
 ```
+
+## Latest validation
+
+PS5.2a production GREEN:
+
+```text
+5926138d0557835f281ba15b4051f50fa3ae741e
+34178595756 — focused owning tests + :app:testFast + git diff --check PASS
+34178562642 — R2 PASS
+```
+
+Final reserved T4, triggered by docs-only `[full-ci]` checkpoint `88249af...`:
+
+```text
+CI 34179926099 — PASS
+  Android testFull + :app:assembleDebug PASS
+  ASP contract/golden tests             PASS
+  Real Clingo 5.8 cross-validation      PASS
+  CI gate                               PASS
+
+R2 34179926105 — PASS
+```
+
+The accepted production diff had literal `git diff --check` PASS in `34178595756`; the later full-T4 checkpoint changed documentation only.
 
 ## PS5.1 safety foundation
 
@@ -60,7 +80,7 @@ retry GREEN 39229bfdddba5837a9368706946f62fd94915109
 CI 34174011104 PASS
 R2 34174011121 PASS
 
-alias GREEN e2dbd1db05812ecbd0c2d69ac82c5fdc0435e
+alias GREEN e2dbd1db05812ecbd0c0b2e751dd42b9fdc3cd23
 CI 34177323891 PASS
 R2 34177323827 PASS
 ```
@@ -69,10 +89,9 @@ PS5.1c found a real nested mutable-alias hazard; the gate now remembers timestam
 
 ## PS5.2a COMPLETE
 
-GREEN production checkpoint:
+Final lifecycle policy:
 
 ```text
-5926138d0557835f281ba15b4051f50fa3ae741e
 ON_PAUSE -> force=true
 ON_STOP  -> force=false
 ```
@@ -89,8 +108,8 @@ Reasons:
 2. Undercover and Werewolf have direct durable mutations without a central recovery revision.
 3. Clocktower revisions are broad but not universal; persisted mechanics such as ghost-vote authority can change through owners that do not bump the current revision pair.
 4. Explicit per-action persistence calls cover only a small subset of transitions; many gameplay mutations intentionally rely on the generic ordinary trigger.
-5. A failed ordinary/A4 persistence attempt must retain another foreground opportunity; change-only triggering would require a new retry scheduler/state machine.
-6. Physical synchronous `.commit()` duplication is already addressed by `RecoveryWriteGate`, and duplicate lifecycle success writes were reduced in PS5.2a. The remaining snapshot/identity construction cost has not been measured as a performance problem.
+5. Failed ordinary/A4 persistence needs another foreground opportunity; change-only triggering would require a new dirty/retry scheduler.
+6. Duplicate physical synchronous `.commit()` is already suppressed by `RecoveryWriteGate`, and PS5.2a removes the normal duplicate successful pause/stop write. Remaining snapshot/identity construction is not a measured performance problem.
 
 Final intended topology:
 
@@ -100,31 +119,27 @@ ON_PAUSE  -> forced persist   -> RecoveryWriteGate
 ON_STOP   -> ordinary persist -> RecoveryWriteGate
 ```
 
-Do not reopen SideEffect removal without profiling evidence. A future measured performance campaign may introduce a universal durable mutation signal if justified, but it is not part of Persistence Simplification.
+Do not reopen SideEffect removal without profiling evidence.
 
-## Final PS5 automated acceptance
+## Real-device acceptance — required before release-ready
 
-Run once at this logical campaign checkpoint:
+Exercise at minimum:
 
-- Android `testFull`;
-- `:app:assembleDebug`;
-- ASP contract/oracle harness;
-- real Clingo cross-validation;
-- R2;
-- exact production-path/static audit;
-- `git diff --check` and changed-file audit.
+- recent active-game restore after process kill/relaunch;
+- safe Recovery entry rather than raw transient UI restoration;
+- cards/round/eliminations/outcome and game-specific durable mechanics;
+- already-published Clocktower history/information;
+- at least one supported mandatory continuation;
+- stale/unsupported Recovery rejection;
+- ordinary background pause -> stop path after the PS5.2a lifecycle change;
+- retry behavior through a failure-injection path if available.
 
-Then perform real-device process-loss/restart acceptance covering at minimum:
+Only after this passes should PS5 / Persistence Simplification be marked release-ready and PR #112 considered for merge. Do not merge without explicit authorization.
 
-- restore a recent active game after process kill/relaunch;
-- reject stale/unsupported Recovery as designed;
-- resume safe entry point rather than raw transient UI;
-- verify already-published Clocktower history/information survives;
-- verify mandatory continuation state survives where applicable;
-- verify no duplicated lifecycle write behavior causes visible regression.
+## Deferred roadmap
 
-Only after automated T4 plus real-device acceptance should PS5 / Persistence Simplification be declared release-ready and PR #112 considered for merge.
+After Persistence Simplification is complete and merged, re-audit live `main` and create a fresh D6 ownership/decomposition plan. The old D6 plan is superseded by the persistence architecture changes.
 
 ## Non-goals
 
-No Recovery schema redesign, cross-version migration, Archive redesign, Werewolf removal, D6 decomposition, A4/ZDD rollout, DataStore modernization or unrelated UI work during PS5. Re-plan D6 only after Persistence Simplification is complete and merged.
+No Recovery schema redesign, cross-version migration, Archive redesign, Werewolf removal, D6 implementation, A4/ZDD rollout, DataStore modernization or unrelated UI work during PS5.
