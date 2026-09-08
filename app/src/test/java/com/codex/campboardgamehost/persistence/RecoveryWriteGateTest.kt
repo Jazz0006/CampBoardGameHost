@@ -41,6 +41,25 @@ class RecoveryWriteGateTest {
     }
 
     @Test
+    fun inPlaceMutationOfNestedDurableCollectionCannotHideSemanticChange() {
+        val gate = RecoveryWriteGate()
+        var writes = 0
+        val cards = mutableListOf(PlayerCard("Alice", Role.Civilian, "cat"))
+
+        assertTrue(gate.persist(snapshot(savedAtMillis = 1_000L, cards = cards)) {
+            writes += 1
+            true
+        })
+        cards += PlayerCard("Bob", Role.Civilian, "cat")
+        assertTrue(gate.persist(snapshot(savedAtMillis = 2_000L, cards = cards)) {
+            writes += 1
+            true
+        })
+
+        assertEquals(2, writes)
+    }
+
+    @Test
     fun failedWriteIsNotRememberedAsDurableAndIsRetried() {
         val gate = RecoveryWriteGate()
         var writes = 0
@@ -117,6 +136,7 @@ class RecoveryWriteGateTest {
     private fun snapshot(
         savedAtMillis: Long,
         round: Int = 1,
+        cards: List<PlayerCard> = listOf(PlayerCard("Alice", Role.Civilian, "cat")),
     ): RecoverySnapshot = RecoverySnapshot(
         compatibilityToken = "recovery-v2:Undercover",
         savedAtMillis = savedAtMillis,
@@ -124,7 +144,7 @@ class RecoveryWriteGateTest {
             entryPoint = RecoveryEntryPoint.Stable,
             currentDealIndex = 0,
             round = round,
-            cards = listOf(PlayerCard("Alice", Role.Civilian, "cat")),
+            cards = cards,
             records = emptyList(),
             outcome = null,
             undercoverCount = 1,
