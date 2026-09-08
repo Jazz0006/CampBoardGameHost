@@ -93,6 +93,27 @@ class RecoveryWriteGateTest {
         assertEquals(2, writes)
     }
 
+    @Test
+    fun failedForceWriteRequiresOrdinaryRetryEvenWhenContentMatchesLastDurableWrite() {
+        val gate = RecoveryWriteGate()
+        var writes = 0
+
+        assertTrue(gate.persist(snapshot(savedAtMillis = 1_000L)) {
+            writes += 1
+            true
+        })
+        assertFalse(gate.persist(snapshot(savedAtMillis = 2_000L), force = true) {
+            writes += 1
+            false
+        })
+        assertTrue(gate.persist(snapshot(savedAtMillis = 3_000L)) {
+            writes += 1
+            true
+        })
+
+        assertEquals(3, writes)
+    }
+
     private fun snapshot(
         savedAtMillis: Long,
         round: Int = 1,
