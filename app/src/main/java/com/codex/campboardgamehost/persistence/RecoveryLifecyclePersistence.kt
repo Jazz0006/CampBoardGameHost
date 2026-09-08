@@ -10,7 +10,7 @@ import androidx.lifecycle.Lifecycle
  */
 internal fun persistRecoveryForLifecycleEvent(
     event: Lifecycle.Event,
-    persist: (force: Boolean) -> Boolean,
+    persist: (force: Boolean) -> Unit,
 ) {
     when (event) {
         Lifecycle.Event.ON_PAUSE,
