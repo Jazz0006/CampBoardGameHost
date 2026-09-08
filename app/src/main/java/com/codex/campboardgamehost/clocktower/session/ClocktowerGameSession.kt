@@ -158,6 +158,27 @@ internal class ClocktowerGameSession private constructor(
         )
     }
 
+    /**
+     * Commits one accepted production mechanical boundary atomically.
+     *
+     * Unlike [updateGameState], accepted production boundaries preserve the established revision
+     * cadence even when their projected [GameState] is value-equal to the previous state.
+     */
+    fun commitGameStateBoundary(nextState: GameState): ClocktowerSessionState {
+        require(nextState.seed == state.gameSeed) {
+            "A game session cannot replace its persisted gameSeed."
+        }
+        require(nextState.script == state.gameState.script) {
+            "A game session cannot replace its script."
+        }
+        return updateState(
+            state.copy(
+                gameStateRevision = state.gameStateRevision + 1,
+                gameState = nextState,
+            ),
+        )
+    }
+
     /** Production event/decision boundary whose accepted revision cadence is independent of state equality. */
     fun advanceGameStateRevision(): ClocktowerSessionState = updateState(
         state.copy(gameStateRevision = state.gameStateRevision + 1),
