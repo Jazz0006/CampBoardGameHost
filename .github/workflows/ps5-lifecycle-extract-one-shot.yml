@@ -34,7 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           branch=codex/persistence-simplification
-          expected_parent=0e952ca94f2735c2d11bc5929c2cf8a64bebee7a
+          expected_parent=9e5479531e8fbce28041fafa30fd1c3c517a37bd
           expected_target_blob=5a38d994ae539e332241d77c286e851306129432
           target=app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
 
