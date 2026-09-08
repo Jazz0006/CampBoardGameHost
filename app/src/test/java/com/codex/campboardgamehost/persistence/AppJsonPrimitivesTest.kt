@@ -22,8 +22,8 @@ class AppJsonPrimitivesTest {
         json.putNullableString("stringNull", null)
         json.putNullableInt("intValue", 7)
         json.putNullableInt("intNull", null)
-        json.putNullableBoolean("booleanValue", true)
-        json.putNullableBoolean("booleanNull", null)
+        json.put("booleanValue", true)
+        json.put("booleanNull", JSONObject.NULL)
 
         assertEquals("alpha", json.optNullableString("stringValue"))
         assertTrue(json.isNull("stringNull"))

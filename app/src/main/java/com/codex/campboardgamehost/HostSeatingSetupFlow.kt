@@ -35,4 +35,13 @@ internal data class HostSeatingSetupFlow(
     }
 
     fun reopenSeating(): HostSeatingSetupFlow = HostSeatingSetupFlow()
+
+    companion object {
+        fun recoveredActiveGame(
+            playerNames: List<String>,
+            game: GameKind,
+        ): HostSeatingSetupFlow = HostSeatingSetupFlow()
+            .confirmSeats(playerNames)
+            .chooseGame(game)
+    }
 }

@@ -1,66 +1,95 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-09-06 Australia/Sydney
-> 目标：新的开发会话只读取少量当前权威文档；历史 checkpoint / handoff 默认进入 archive，不参与当前决策。
+> 最后整理：2026-09-07 Australia/Sydney  
+> 目标：新的开发会话只读取少量当前权威文档；历史 checkpoint / handoff 默认不参与当前决策。
 
 ## 1. 新任务默认阅读顺序
 
-1. 根目录 `AGENTS.md` — **项目级 AI / architecture / test-first / Git 执行规范**；
+1. 根目录 `AGENTS.md` — **项目级 AI / architecture / test / Git 执行规范**；
 2. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前项目状态与执行优先级权威**；
-3. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-05_NIGHT_STEP_UI_DECOMPOSITION.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-05_NIGHT_STEP_UI_DECOMPOSITION.md) — **唯一当前 active handoff**；
-4. [`CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md`](CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md) — 当前 Night Step ownership decomposition reference；
+3. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-07_PERSISTENCE_SIMPLIFICATION.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-07_PERSISTENCE_SIMPLIFICATION.md) — **唯一当前 active handoff**；
+4. [`PERSISTENCE_REQUIREMENT_REDUCTION_AUDIT_2026-09-07.md`](PERSISTENCE_REQUIREMENT_REDUCTION_AUDIT_2026-09-07.md) — 当前 persistence requirement / field-classification audit；
 5. 当前任务需要的 specialized semantic / product design；
 6. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)；
 7. 查询 live GitHub state 后再实施。
 
-不要从 archive 中的旧 SHA、旧 PR、旧 branch、`PASS/READY/NEXT` 字样推断当前状态。
+不要从 archive、旧 branch、旧 PR 或旧文档中的 `PASS / COMPLETE / READY / NEXT` 字样推断当前状态。
 
 ## 2. 当前状态
 
-2026-09-06 已集成的重要节点：
+当前 live-main campaign baseline：
 
 ```text
-PR #99  R4D-6 Host Table preserved-lineage integration
-PR #100 UI-N1 inline actor/wake cue + square-table readability
-PR #101 same-night dead-role wake-step fix
-PR #102 Manual Demon bluff consistency fix
-PR #104 Obsolete source-wiring guard retirement
-PR #105 Drunk shown-identity ownership repair
+ac71cbe392fb542727dc0c2d69ac82c5fdc0435e
+Merge PR #110 — Audit Poisoner execution dusk crash path
 ```
 
-创建本次文档 checkpoint 时 live `main`：
+近期已集成的重要节点：
 
 ```text
-93f99e0576be7b93d479ffa931bae3e4083c25af
+PR #99   R4D-6 Host Table preserved-lineage integration
+PR #100  UI-N1 inline actor/wake cue + square-table readability
+PR #101  same-night dead-role wake-step fix
+PR #102  Manual Demon bluff consistency fix
+PR #104  obsolete source-wiring guard retirement
+PR #105  Drunk shown-identity ownership repair
+PR #106  Night Step D1–D5 ownership/decomposition campaign
+PR #107  crash flight-recorder follow-up
+PR #108  early Application install follow-up
+PR #110  optional Poisoner chronology / execution dusk crash-path fix
 ```
 
-PR #100 的最终产品决定取代旧 UI-N1 handoff 中“独立 WAKE acknowledgement state”的设计：当前 actor/wake cue 与 target selection 共存于同一 persistent table。
+The docs-only D6 planning PR #111 was closed without merge after a fresh persistence audit invalidated its core
+assumption. Its branch remains historical evidence only.
 
 ## 3. 当前执行顺序
 
 ```text
-D1 legacy night-path cleanup
--> D2 display projection
--> D3 structured preparation
--> D4 interaction owners
--> selected architecture checkpoint (D5 publication coordination separately risk-gated)
--> UI-R5 real-device stabilization / feature freeze
+Persistence Simplification / Recent Emergency Recovery
+  PS0 product contract freeze
+  -> PS1 archive/recovery separation
+  -> PS2 minimal typed RecoverySnapshot
+  -> PS3 typed safe restore
+  -> PS4 old active-save infrastructure retirement
+  -> PS5 persistence-trigger simplification
+-> fresh D6 App/Host ownership audit + decomposition
+-> UI-R5 real-device stabilization
 -> EPI-MQ / Productive Uncertainty
 -> UX-R6 legacy recommendation-provider replacement
 ```
 
-最新重审计与 D1–D6 路线见当前 roadmap；D6 Host/App 根深度解耦为后续独立批次。
+A4/ZDD remains non-production.
 
-Night Step decomposition 不是机械降文件大小。主要指标是 **ownership clarity + change context radius**。
+Persistence Simplification is **not** a large-file-decomposition task. The goal is to remove product and state
+responsibility the app does not need. File-size reduction is only a consequence.
 
-## 4. 当前 architecture / UI references
+## 4. 当前 persistence references
 
-- [`CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md`](CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md) — pre-decomposition ownership map、existing seams、candidate slices、test implications；
-- [`BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`](BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md) — 信息展示 / Manual full-screen 产品方向；
-- [`CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md`](CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md) — recommendation / Manual UX 产品决策；
-- persistent Host Table / inline actor-cue 的当前实现以 live code + PR #99/#100 后 `main` 为准。
+- [`PERSISTENCE_REQUIREMENT_REDUCTION_AUDIT_2026-09-07.md`](PERSISTENCE_REQUIREMENT_REDUCTION_AUDIT_2026-09-07.md) — why full Save/Restore is over-scoped; five-category field audit; Clocktower/Werewolf exceptions; target recovery model；
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-07_PERSISTENCE_SIMPLIFICATION.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-07_PERSISTENCE_SIMPLIFICATION.md) — PS0–PS5 implementation contract; PS1 is the next production slice；
+- active production behavior remains authoritative where the audit marks a field/consumer for re-check before deletion.
 
-## 5. Epistemic / rules 长期参考
+Frozen product principle:
+
+```text
+Restore the game, not the App.
+```
+
+Active recovery is short-horizon emergency recovery, not a long-lived Save Game product.
+
+## 5. Prior decomposition / UI references
+
+The Night Step D1–D5 campaign is complete and integrated. Its documents remain useful architecture/history
+references but are not the current execution route:
+
+- [`CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md`](CLOCKTOWER_NIGHT_STEP_UI_DECOMPOSITION_AUDIT_2026-09-05.md)
+- [`BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`](BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md)
+- [`CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md`](CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md)
+
+The old D6 branch/PR #111 must not be resumed as the implementation route. After Persistence Simplification is
+merged, perform a new ownership audit against the reduced App/Host code.
+
+## 6. Epistemic / rules 长期参考
 
 Future misinformation-quality design：
 
@@ -88,20 +117,26 @@ actual identity
 -> UI
 ```
 
-## 6. Normative engineering workflow
+## 7. Normative engineering workflow
 
-- root `AGENTS.md` — first authority;
+- root `AGENTS.md` — first execution/architecture authority;
 - [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md);
 - [`AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md`](AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md);
 - [`LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`](LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md);
 - [`SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md`](SINGLE_DEVELOPER_GITHUB_CONNECTOR_WORKFLOW.md);
 - [`github_connector_large_file_editing_playbook.md`](github_connector_large_file_editing_playbook.md).
 
-`AGENTS.md` now treats architecture pre-flight and test-first as one decision process: classify the change, identify ownership/durable contract, then choose the cheapest reliable evidence. A new production edit does not automatically imply a new RED.
+`AGENTS.md` treats architecture pre-flight and test-first as one decision process: classify the change, identify
+ownership/durable contract, then choose the cheapest reliable evidence. A new production edit does not
+automatically imply a manufactured RED.
 
-## 7. Other active/future architecture references
+For this campaign, persistence/schema/restore boundaries are real durable contracts and therefore justify focused
+behavior coverage. Source-string tests remain inappropriate for ordinary implementation movement/deletion.
 
-These remain in docs root because they describe long-lived contracts, future designs, or reusable engineering decisions rather than a completed checkpoint:
+## 8. Other active/future architecture references
+
+These remain in docs root because they describe long-lived contracts, future designs, or reusable engineering
+decisions rather than the current campaign:
 
 - `TBSP_PRODUCTION_CUTOVER_CONTRACT_V1.md`
 - `TBSP_ROTATION_WEIGHT_CONTRACT_V1.md`
@@ -113,9 +148,10 @@ These remain in docs root because they describe long-lived contracts, future des
 - `多剧本多板子与动态游戏流程架构设计_v1.md`
 - `R6_IMPAIRED_INFORMATION_AND_STORYTELLER_DECISION_DESIGN_2026-08-22.md`
 
-Their presence in root does not make them the current execution priority; current priority is controlled by the roadmap + active handoff.
+Their presence in root does not make them the current execution priority; current priority is controlled by the
+roadmap + active handoff.
 
-## 8. Archive layout
+## 9. Archive layout
 
 Historical evidence belongs under [`archive/`](archive/README.md):
 
@@ -127,15 +163,15 @@ archive/deferred/     unfinished but explicitly deferred future work
 archive/workflows/    superseded workflow guidance
 ```
 
-The repository may retain consolidated history/index docs in root where they provide navigation value, but individual completed checkpoint files should not crowd the active-doc surface.
+Historical branches/PRs may also remain as provenance. Their existence does not make their plan current.
 
-## 9. Status authority rule
+## 10. Status authority rule
 
 If documents disagree:
 
 1. official Blood on the Clocktower rules/rulings control gameplay correctness;
 2. root `AGENTS.md` controls project execution and architecture/test rules;
 3. `CURRENT_DEVELOPMENT_ROADMAP.md` controls current project state and priority;
-4. the one active handoff controls the approved narrow next-campaign plan;
+4. the one active Persistence Simplification handoff controls the approved narrow campaign plan;
 5. specialized design docs control their own semantic/product domain where non-conflicting;
 6. archive documents, old Git branches and historical PR records are evidence only.

@@ -6,7 +6,6 @@ import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -52,14 +51,16 @@ class BuiltInClocktowerRulesetCatalogTest {
     }
 
     @Test
-    fun `persistence coordinator consumes the shared catalog and owns no duplicate built-in loader`() {
+    fun `recovery save validation consumes the shared catalog directly`() {
         val source = File(
-            "src/main/java/com/codex/campboardgamehost/persistence/ActiveGamePersistenceCoordinator.kt",
+            "src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt",
         ).readText(Charsets.UTF_8)
 
-        assertTrue(source.contains("BuiltInClocktowerRulesetCatalog.fromContext(context)"))
-        assertTrue(source.contains("catalog.ruleset(script).script"))
-        assertFalse(source.contains("private object BuiltInClocktowerPersistenceCatalog"))
-        assertFalse(source.contains("context.assets.open(\"scripts/"))
+        assertTrue(source.contains("BuiltInClocktowerRulesetCatalog.fromContext(baseContext)"))
+        assertTrue(
+            source.contains(
+                "activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript).script",
+            ),
+        )
     }
 }

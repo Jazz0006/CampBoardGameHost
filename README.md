@@ -1,22 +1,37 @@
 # CampBoardGameHost
 
-离线优先的 Android 桌游主持/辅助应用。目前代码中包含「谁是卧底」「狼人杀」和 Blood on the Clocktower（血染钟楼）主持流程；当前主要工程重点是 Trouble Brewing（暗流涌动）自动说书人的规则正确性、玩家认知一致性和动态决策架构。
+离线优先的 Android 桌游主持/辅助应用。目前代码中包含「谁是卧底」「狼人杀」和 Blood on the Clocktower（血染钟楼）主持流程；当前主要工程重点是 Trouble Brewing（暗流涌动）自动说书人的规则正确性、玩家认知一致性、主持流程稳定性与可维护架构。
 
 ## 当前开发状态
 
-当前工程重点是 **Night Step UI 的职责拆分与解耦**。已完成最新代码审计，实施顺序调整为：
+当前 active campaign 是 **Persistence Simplification / Recent Emergency Recovery**。
 
-1. 清理 Host 遗留夜间路径；
-2. 统一展示结果转换；
-3. 分离信息准备与渲染；
-4. 按交互职责拆分；
-5. 独立验收发布事务边界，后续再推进 Host/App 根的状态与持久化解耦。
+产品需求已经重新确认：进行中的游戏只需要应对来电、切换 App、进程回收、崩溃或误关闭后的短时恢复；**不需要长期 Save Game，也不要求今天保存、明天继续，或跨 App 版本精确恢复整个 UI/runtime**。
 
-近期已合并酒鬼展示身份所有权修复（#105）及旧源码接线测试清理（#104）。
-详细进度、切片边界与验证结果只维护在当前开发路线中。结构检查点之后继续
-UI-R5 真机稳定性、EPI-MQ 信息质量与 UX-R6 推荐提供者替换；A4/ZDD 仍不切换到生产。
+因此当前工作不属于 D6 大文件拆分。实施顺序调整为：
 
-**开发前请先阅读 [`docs/README.md`](docs/README.md) 和 [`docs/CURRENT_DEVELOPMENT_ROADMAP.md`](docs/CURRENT_DEVELOPMENT_ROADMAP.md)。** 其他设计文档中的旧 `PASS / COMPLETE / READY` 状态如果与当前路线冲突，以这两份入口文档为准。
+1. 冻结 Recent Emergency Recovery 产品合同；
+2. 将 active recovery 与长期 archive/history 分离；
+3. 建立最小 typed `RecoverySnapshot`，只保存已提交游戏事实和必要 continuation；
+4. 简化 restore：恢复游戏，不恢复整个 App UI；
+5. 删除旧 active-save compatibility、preview、重复 checkpoint/draft persistence 等遗留路径；
+6. 最后审计 persistence trigger，避免无意义的整棵运行时频繁同步写盘。
+
+Night Step D1–D5 已完成并通过 PR #106 合入；后续 crash/initialization/Poisoner 修复 #107、#108、#110 也已进入 `main`。原 D6 planning PR #111 已关闭且不合并，因为它基于“完整存档/恢复”前提；Persistence Simplification 完成并合入后，再对缩小后的 App/Host 重新做一次独立 D6 ownership/decomposition audit。
+
+之后的总体顺序是：
+
+```text
+Persistence Simplification
+-> fresh D6 App/Host ownership audit + decomposition
+-> UI-R5 real-device stabilization
+-> EPI-MQ / Productive Uncertainty
+-> UX-R6 recommendation-provider replacement
+```
+
+A4/ZDD 仍不切换到 production。
+
+**开发前请先阅读 [`docs/README.md`](docs/README.md) 和 [`docs/CURRENT_DEVELOPMENT_ROADMAP.md`](docs/CURRENT_DEVELOPMENT_ROADMAP.md)。** 其他设计文档中的旧 `PASS / COMPLETE / READY / NEXT` 状态如果与当前路线冲突，以这两份入口文档为准。
 
 ## 项目结构
 
