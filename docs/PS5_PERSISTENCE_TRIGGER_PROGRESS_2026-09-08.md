@@ -3,7 +3,7 @@
 > Date: 2026-09-08 Australia/Sydney
 > Branch: `codex/persistence-simplification`
 > Draft PR: #112
-> Status: **PS5 IMPLEMENTATION + POST-HOTFIX AUTOMATED ACCEPTANCE COMPLETE — real-device acceptance pending**
+> Status: **PS5 COMPLETE — automated + real-device acceptance PASS — release-ready, unmerged**
 
 ## Campaign
 
@@ -13,7 +13,7 @@ PS1 COMPLETE
 PS2 COMPLETE
 PS3 COMPLETE
 PS4 COMPLETE
-PS5 IN PROGRESS — release acceptance pending only
+PS5 COMPLETE
   PS5.0 COMPLETE
   PS5.1a COMPLETE
   PS5.1b COMPLETE
@@ -21,59 +21,38 @@ PS5 IN PROGRESS — release acceptance pending only
   PS5.2a lifecycle pause/stop duplicate-write reduction COMPLETE
   PS5.2b SideEffect ownership audit COMPLETE
   original final automated T4 COMPLETE
-  recovery quick-restart hotfix automated GREEN
+  recovery quick-restart hotfix COMPLETE
   renewed post-hotfix T4 COMPLETE
-  real-device process-loss/restart acceptance PENDING
+  real-device process-loss/restart acceptance COMPLETE
 ```
 
-## Checkpoint
+## Final checkpoint
 
 ```text
 base main: ac71cbe392fb542727dc0c2d69ac82c5fdc0435e
 PR #112: open / draft / unmerged
 pre-device-acceptance production GREEN: 5926138d0557835f281ba15b4051f50fa3ae741e
-original full-T4 checkpoint: 88249af2e68064b571da7cec5395c80940cbe021
 recovery quick-restart RED: 3bc389349bba00a155d55ec01508d6b271125ff0
 recovery seating-owner helper: d8e1123d1535672dc04271ab41e18ec979ccaa7f
 latest production GREEN: e622960a9c75c0b110d2c92e34b46828cb949e0a
-one-shot cleanup head: b8b63cb62061ce29c471aa37fb036a4199be81ef
 renewed full-T4 checkpoint: 686b52a79cd4ea183c81884d34d54223fecae124
 ```
 
-The original T4 was valid for the pre-device-acceptance production slice. Real-device process-loss/restart testing then exposed a separate Recovery ownership bug. That bug is now fixed, focused/FAST validated, and covered by a renewed full T4.
-
-## Validation evidence
-
-PS5.2a production GREEN:
-
-```text
-34178595756 — focused RecoveryLifecyclePersistenceTest PASS
-              :app:testFast PASS
-              git diff --check PASS
-34178562642 — R2 PASS
-```
-
-Original reserved T4:
-
-```text
-CI 34179926099 — PASS
-  Classify changes             PASS / full checkpoint selected
-  Android testFull             PASS
-  :app:assembleDebug           PASS
-  ASP golden/contract tests    PASS
-  Real Clingo 5.8 cross-check  PASS
-  CI gate                      PASS
-
-R2 34179926105 — PASS
-```
-
-The literal pre-hotfix production `git diff --check` evidence was run `34178595756`; later pre-device-acceptance changes through the original T4 were docs-only.
-
-## Frozen boundary
+## Frozen Recovery boundary
 
 Recovery is current-version-only, 4-hour emergency continuity. Archive remains separate. Unsupported/old Recovery fails closed. Failed writes retain a future retry. A4 may not release rebuild before persistence succeeds.
 
-## PS5.1 foundation
+Final trigger topology:
+
+```text
+SideEffect -> ordinary persist -> RecoveryWriteGate
+ON_PAUSE  -> forced persist   -> RecoveryWriteGate
+ON_STOP   -> ordinary persist -> RecoveryWriteGate
+```
+
+`SideEffect` remains by explicit PS5.2b architecture decision. It provides a generic ordinary persistence opportunity across Undercover, Werewolf and Clocktower where no universal durable revision exists, and also preserves foreground retry opportunity after failed persistence. Do not reopen removal without profiling evidence and a replacement ownership design.
+
+## PS5.1 safety foundation
 
 `RecoveryWriteGate` provides semantic ordinary-write suppression, real-change writes, forced writes, `retryRequired`, clear/reset, and A4 persistence ordering.
 
@@ -88,95 +67,55 @@ CI 34177323891 PASS
 R2 34177323827 PASS
 ```
 
-PS5.1c found a real nested mutable-alias hazard. The gate now remembers timestamp-normalized persisted Recovery representation as immutable content identity rather than retaining a shallow mutable object graph.
+PS5.1c found a real nested mutable-alias hazard. The gate remembers timestamp-normalized persisted Recovery representation as immutable content identity rather than retaining a shallow mutable object graph.
 
-## PS5.2a COMPLETE — lifecycle duplicate physical write reduction
+## PS5.2a lifecycle persistence — COMPLETE
 
-Behavior RED:
-
-```text
-192f031b67c9b4eb46bada4928425f9de332bb4a
-focused RED 34178392065
-```
-
-GREEN:
+Final lifecycle policy:
 
 ```text
-5926138d0557835f281ba15b4051f50fa3ae741e
 ON_PAUSE -> force=true
 ON_STOP  -> force=false
 ```
 
 Successful pause establishes freshness; unchanged stop deduplicates; failed pause is retried at stop through `retryRequired`; changed durable content still writes. A4 ordering is unchanged.
 
-Exact PS5.2a production/test slice relative to the pre-slice docs head `e2ed5989b42dbd36c969ffad9ec6131f1a3bbdf0` is exactly:
+Production GREEN and validation:
 
 ```text
-app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryLifecyclePersistence.kt
-app/src/test/java/com/codex/campboardgamehost/persistence/RecoveryLifecyclePersistenceTest.kt
+5926138d0557835f281ba15b4051f50fa3ae741e
+34178595756 — focused RecoveryLifecyclePersistenceTest PASS
+              :app:testFast PASS
+              git diff --check PASS
+34178562642 — R2 PASS
 ```
-
-## PS5.2b COMPLETE — SideEffect ownership audit
-
-**Decision: retain `SideEffect` as the ordinary generic persistence-attempt trigger.**
-
-This is the final PS5 architecture decision, not deferred cleanup.
-
-Why:
-
-1. Recovery spans common state plus Undercover, Werewolf and Clocktower durable state.
-2. Undercover/Werewolf contain direct durable mutations without a central recovery revision.
-3. Clocktower revisions are broad but not universal; persisted mechanics such as ghost-vote authority can change through an owner without a paired current revision bump.
-4. Explicit `persistActiveGameStateIfNeeded()` calls cover only a small subset of gameplay transitions; ordinary gameplay intentionally relies on the generic trigger rather than scattered storage calls.
-5. `RecoveryWriteGate.retryRequired` and `A4ObservationDurabilityGate` require another foreground persistence opportunity after failure. A pure change-only trigger would need a new universal dirty token plus retry scheduler/state machine.
-6. PS5.1 already suppresses duplicate synchronous physical `.commit()` calls, and PS5.2a removes the normal successful pause/stop double commit. Remaining snapshot/identity construction has not been measured as a performance problem worth a new correctness surface.
-
-Final intended trigger topology:
-
-```text
-SideEffect -> ordinary persist -> RecoveryWriteGate
-ON_PAUSE  -> forced persist   -> RecoveryWriteGate
-ON_STOP   -> ordinary persist -> RecoveryWriteGate
-```
-
-Static reference audit confirms one App `SideEffect` persistence block, lifecycle delegation through `persistRecoveryForLifecycleEvent`, and active Recovery physical write ownership remaining at `saveActiveGameState(...).commit()` behind `RecoveryWriteGate`.
-
-Do not reopen SideEffect removal unless later profiling demonstrates a real main-thread snapshot/identity cost. If so, treat it as a measured performance campaign with universal durable-mutation ownership, not opportunistic persistence cleanup.
 
 ## Device-acceptance hotfix — recovered seating ownership
 
-Real-device testing exposed a crash in the supported sequence:
+Real-device process-loss testing exposed one bug after Recovery restore:
 
 ```text
 process death / relaunch / Recovery restore
 -> continue Clocktower game
+-> Host Tools
 -> same players / quick restart
 -> crash
 ```
 
-The exported crash bundle recorded:
+Crash bundle exception:
 
 ```text
-java.lang.IllegalArgumentException: Production start requires the currently selected game
+java.lang.IllegalArgumentException:
+Production start requires the currently selected game
+
 HostSeatingSetupFlow.playerNamesFor(...)
 -> startClocktowerGame(...)
 -> archiveAndStartNewGame(...)
 ```
 
-Root cause: `applyValidatedRecoveryPlan()` correctly restored cards, player names, game kind and durable mechanics, but did not reconstruct the separate `HostSeatingSetupFlow` owner. After process restoration, the active game was valid while `confirmedSeating` / `selectedGame` remained empty. Quick restart therefore hit the existing fail-closed production-start contract.
+Root cause: `applyValidatedRecoveryPlan()` restored cards, player names, game kind and durable mechanics but did not reconstruct the separate `HostSeatingSetupFlow` owner. The active recovered game was valid while `confirmedSeating` / `selectedGame` remained empty.
 
-The fix intentionally does **not** weaken `HostSeatingSetupFlow.playerNamesFor()`. Recovery now rehydrates the setup-flow owner from the already validated recovered roster and recovered game kind:
-
-```text
-Recovered cards/player identities
--> HostSeatingSetupFlow.recoveredActiveGame(...)
--> confirmed seating restored
--> selected active game restored
--> existing production-start invariant remains fail-closed
-```
-
-The helper is game-independent, so the ownership repair applies to recovered Undercover, Werewolf and Clocktower sessions rather than adding an NGJ-only exception.
+The fix deliberately keeps `playerNamesFor()` fail-closed. Recovery now reconstructs confirmed seating plus the selected recovered game through the new game-independent recovery factory. This covers recovered Undercover, Werewolf and Clocktower sessions rather than adding an NGJ-only exception.
 
 Tests-first evidence:
 
@@ -190,20 +129,22 @@ helper GREEN d8e1123d1535672dc04271ab41e18ec979ccaa7f
 product GREEN e622960a9c75c0b110d2c92e34b46828cb949e0a
 one-shot run 34191324182 — PASS
   exact branch/blob locks PASS
-  helper contract focused test PASS before App wiring
+  helper contract focused test PASS
   exact App-only product diff audit PASS
   git diff --check PASS
   focused HostSeatingRosterTest PASS
   :app:testFast PASS
-  product commit/push PASS
   temporary workflow/script cleanup PASS
 ```
 
-Renewed post-hotfix T4:
+## Renewed automated acceptance — COMPLETE
+
+Post-hotfix reserved T4:
 
 ```text
+checkpoint 686b52a79cd4ea183c81884d34d54223fecae124
+
 CI 34191738571 — PASS
-  Classify changes             PASS / full checkpoint selected
   Android testFull             PASS
   :app:assembleDebug           PASS
   ASP golden/contract tests    PASS
@@ -213,36 +154,44 @@ CI 34191738571 — PASS
 R2 34191738649 — PASS
 ```
 
-## Current next step — real-device acceptance
+Final docs-only verification after recording the hotfix acceptance:
 
-Automated acceptance is complete against the new production checkpoint. The campaign is **not release-ready yet** because the real-device path that exposed the bug must be repeated on the fixed APK.
+```text
+CI 34191972250 — PASS
+R2 34191972340 — PASS
+```
 
-Priority retest:
+## Real-device acceptance — COMPLETE
+
+On 2026-09-08 the user confirmed that the previously defined real-device tests **1–5 all passed**.
+
+The regression path that exposed the seating-owner crash was also retested successfully on the fixed build:
 
 ```text
 6-player No Greater Joy
--> create durable progress
--> background / kill process
--> relaunch and restore
--> continue the recovered game
--> choose same players / quick restart
--> verify a new NGJ game starts without crash and preserves the recovered roster
+-> process-loss / relaunch / Recovery restore
+-> continue recovered game
+-> same players / quick restart
+-> PASS: no crash, new game starts correctly
 ```
 
-Then continue/confirm the minimum device matrix:
+This closes the final PS5 release-acceptance blocker.
 
-1. start a recent active game and create durable progress;
-2. background normally, kill the Android process, relaunch, and restore;
-3. verify safe Recovery entry rather than raw transient UI restoration;
-4. verify cards/round/eliminations/outcome and game-specific durable mechanics survive;
-5. for Clocktower, verify already-published semantic history/information survives;
-6. verify at least one mandatory continuation (for example a supported pending night/Klutz/Demon continuation) resumes correctly;
-7. verify stale/unsupported Recovery is rejected as designed;
-8. exercise normal pause -> stop backgrounding and confirm no visible regression from the lifecycle deduplication policy;
-9. if feasible, exercise a forced persistence-failure test build/path and confirm a later ordinary/stop attempt retries rather than falsely treating the state as durable.
+## Release status
 
-Only after device acceptance should Persistence Simplification be marked release-ready and PR #112 considered for merge. Do not merge without explicit authorization.
+**Persistence Simplification / PS5 is release-ready.**
 
-## Non-goals
+PR #112 remains open / draft / unmerged only because merge requires explicit user authorization. Do not make further production changes on this branch merely to extend PS5.
 
-No Recovery schema redesign, cross-version migration, Archive redesign, Werewolf removal, D6 decomposition, A4/ZDD rollout, unrelated UI work or DataStore modernization during PS5.
+## Next step after merge
+
+After PR #112 is explicitly authorized and merged:
+
+1. re-confirm live `main`, merged head and checks;
+2. re-audit the post-persistence architecture;
+3. create a fresh D6 ownership/decomposition plan;
+4. treat the previous D6 plan as superseded by the persistence architecture changes.
+
+## Non-goals before merge
+
+No Recovery schema redesign, cross-version migration, Archive redesign, Werewolf removal, D6 implementation, A4/ZDD rollout, unrelated UI work or DataStore modernization unless explicitly requested.
