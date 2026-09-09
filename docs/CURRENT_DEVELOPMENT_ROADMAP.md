@@ -43,7 +43,7 @@ CI 34288731376 — PASS
 
 ## Current priority
 
-> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h–n AUDITS / R0 CLEANUP COMPLETE → D6.2o NUMERIC OPTION PREPARATION COMPLETE / VALIDATED → NUMERIC ROLE-STEP INPUT AUDIT NEXT.**
+> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h–n AUDITS / R0 CLEANUP COMPLETE → D6.2o NUMERIC OPTION PREPARATION COMPLETE / VALIDATED → D6.2p NUMERIC ROLE-STEP AUDIT COMPLETE → D6.2q CHAMBERMAID PRESENTATION PREPARATION NEXT.**
 
 D6.2 stays on `codex/d6-2-ui-composition`. Do not reopen PR #113 or move this work back to `codex/d6-root-reaudit`.
 
@@ -370,9 +370,15 @@ Extracted the pure prior-number parser and recommendation-to-display projector i
 
 CI 34296404234 PASS: production/test Kotlin compile, executed FAST and CI gate. R2 34296404229 PASS. Evidence: `docs/D6_2O_NUMERIC_OPTION_PREPARATION_PROGRESS_2026-09-09.md`.
 
-## Next — numeric role-step input audit
+## D6.2p — numeric role-step input audit COMPLETE
 
-Re-audit Clockmaker, Chef, Empath and Chambermaid inputs after D6.2o before moving materializer closures. Define a cohesive immutable input only if registration-aware Chef/Empath and pair-aware Chambermaid differences remain explicit. Do not pass cards, registration maps, coordinator/session or arbitrary callbacks through a shared context.
+Authority: `docs/D6_2P_NUMERIC_ROLE_STEP_INPUT_AUDIT_2026-09-09.md`.
+
+Clockmaker, Chef, Empath and Chambermaid do not share one honest step input beyond the D6.2o option seam. The next cohesive boundary is Chambermaid selected-seat/proposition preparation, duplicated across both night phases and already aligned with a dedicated semantics owner.
+
+## Next — D6.2q Chambermaid presentation preparation
+
+Implement the exact three-file contract in D6.2p. Prepare immutable ordered names/seats/display text once, route both materializers through it, preserve the compatibility proposition function and all materializer order/lifecycle. Validate typed semantics, Android FAST + compile and R2.
 
 PR #115 remains OPEN / DRAFT. Preserve benchmark harnesses/tests, live A4 prewarming, recommendation effects, telemetry and Recovery.
 
