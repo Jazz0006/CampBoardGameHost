@@ -26,12 +26,13 @@ Do not reload the D6 archive by default. D6/R3 are closed.
 branch: codex/ui-r5-square-table-stabilization
 Draft PR: #117
 base main: 60842381dcbc3709ad453209846f66e9b4a7a777
-current verified head: c1ab5578a2fb64e6506d27b898df9f4bbb1388fc
+latest full-T4 verified head: c1ab5578a2fb64e6506d27b898df9f4bbb1388fc
+latest Undertaker implementation: 4e8296600e2144a1c9790181f2b78c471e32adec
 ```
 
 PR #117 remains open, Draft, mergeable, and unmerged. Do not merge without explicit user authorization.
 
-The current verified head is a no-tree-change `[full-ci]` verification commit on top of production fix:
+The latest full-T4 verified head is a no-tree-change `[full-ci]` verification commit on top of production fix:
 
 ```text
 production fix: 0f66b78bbdc9a50e9f1c94db530e3aaaaf488880
@@ -43,6 +44,21 @@ CI #2058 / run 34408187526              PASS
 - CI gate                                 PASS
 R2 #1925 / run 34408187513                PASS
 ```
+
+The later Undertaker per-role implementation checkpoint is:
+
+```text
+implementation head: 4e8296600e2144a1c9790181f2b78c471e32adec
+CI #2067 / run 34411490702               PASS
+- Android FAST unit tests                 PASS / executed
+- Android full unit tests + debug APK     skipped / not requested for this per-role slice
+- ASP contract tests                      skipped / UI-only change
+- Real Clingo cross-validation            skipped / UI-only change
+- CI gate                                 PASS
+R2 #1934 / run 34411490693                PASS
+```
+
+Do not treat `4e829660...` as a replacement for the full-T4 checkpoint. A new logical full T4 remains due after remaining role convergence and legacy retirement.
 
 ## 3. Product target
 
@@ -117,6 +133,34 @@ Implemented behavior:
 
 Do not mark Empath real-device PASS until the user explicitly reports it.
 
+### 4.4 Undertaker — IMPLEMENTED / automated green / device acceptance pending
+
+Undertaker has been migrated to a dedicated read-only square-table information surface.
+
+Implemented behavior:
+
+- current Undertaker actor uses the shared wake highlight and remains visually independent from the information-context seat;
+- the player executed today comes directly from typed `InformationProposition.RoleAt.seat`;
+- the shown character comes from the same typed `RoleAt` proposition;
+- the UI does not infer execution identity from day state, `lastExecutedName`, labels, or localized text;
+- the executed player is highlighted as read-only information context and is never presented as a selectable target;
+- one legal final display gives one Show-information action;
+- multiple legal final displays preserve the existing typed candidate domain and use a compact role menu rather than a long center-button grid;
+- result candidates with missing/non-`RoleAt` propositions, invalid seats, or conflicting executed seats fail closed rather than fabricating context;
+- recommended, unreliable and direct player-facing reveal/observation/history paths remain the existing owners;
+- generic recommendation/result-first/unreliable/direct result controls are suppressed while the specialized Undertaker surface has a valid typed domain, so the migration does not leave a parallel reachable UI.
+
+Checkpoint:
+
+```text
+4e8296600e2144a1c9790181f2b78c471e32adec
+CI #2067 / run 34411490702  Android FAST + CI gate PASS
+R2 #1934 / run 34411490693   PASS
+exact implementation diff from a309dbcb...: 4 Undertaker-related files only
+```
+
+Do not mark Undertaker real-device PASS until the user explicitly reports it.
+
 ## 5. Intervening Ravenkeeper trigger bug — FIXED, separate from UI migration
 
 A real-device report exposed this scenario:
@@ -149,15 +193,14 @@ The fix currently marks `DemonKill` and `MayorRedirect` as flow-expanding action
 
 Automated T4 + R2 are green at `c1ab5578...`. The exact original real-device scenario still requires user retest before claiming device acceptance of the bug fix.
 
-Important: this correctness fix does **not** mean Ravenkeeper's Storyteller interaction UI has been migrated. Ravenkeeper remains a UI-R5 migration target below.
+Important: this correctness fix does **not** mean Ravenkeeper's Storyteller interaction UI has been migrated. Ravenkeeper remains the next UI-R5 migration target below.
 
 ## 6. Immediate next migration sequence
 
-Start the next conversation directly here:
+Start the next development slice directly here:
 
 ```text
-Undertaker
--> Ravenkeeper
+Ravenkeeper
 -> read-only inventory of every remaining active night-role Storyteller surface
 -> migrate any surviving appropriate legacy surface
 -> retire unreachable superseded text/list/manual-dialog UI
@@ -166,23 +209,20 @@ Undertaker
 -> UI-R5 closeout
 ```
 
-### 6.1 Undertaker — NEXT
+### 6.1 Undertaker — IMPLEMENTED / DEVICE PENDING
 
-First audit the live Undertaker path before changing code.
+The Undertaker model planned in the previous handoff state has been implemented at `4e829660...` and is Android FAST + R2 green.
 
-Expected product model:
+The critical ownership result is now explicit:
 
-- wake/highlight the Undertaker actor using shared square-table actor semantics;
-- identify the player executed today as information context, not a selectable target;
-- show the role/result using the existing typed information domain;
-- if there is only one legal final display, use a single Show-information action;
-- if Spy/Recluse registration or impairment creates multiple legal displays, preserve existing typed choice semantics and make any table highlighting explanatory rather than pretending the executed player is manually selectable;
-- preserve existing player-facing reveal/observation/history path;
-- do not reconstruct executed-player identity or role from localized text.
+- typed `InformationProposition.RoleAt` owns both the executed seat and the role shown for that candidate;
+- the square table consumes that authority read-only;
+- no day-UI reconstruction or localized parsing is used;
+- malformed or internally inconsistent typed candidate sets fall back rather than letting presentation invent semantics.
 
-Before implementation, inspect whether the executed-player seat is already carried by typed proposition/step metadata. Reuse it rather than infer from day UI state if an authoritative typed owner exists.
+Real-device acceptance is still pending.
 
-### 6.2 Ravenkeeper — AFTER UNDERTAKER
+### 6.2 Ravenkeeper — NEXT
 
 Ravenkeeper is a different interaction model:
 
@@ -197,7 +237,7 @@ The original Monk-retarget real-device reproduction is a useful Ravenkeeper trig
 
 ## 7. Final surviving-surface audit
 
-After Undertaker and Ravenkeeper, do not assume UI-R5 is complete. Perform a fresh read-only inventory of all active night actions.
+After Ravenkeeper, do not assume UI-R5 is complete. Perform a fresh read-only inventory of all active night actions.
 
 For every role/action classify the Storyteller surface as:
 
