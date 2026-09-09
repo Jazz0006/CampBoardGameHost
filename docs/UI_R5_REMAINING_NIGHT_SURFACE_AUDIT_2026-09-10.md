@@ -2,28 +2,29 @@
 
 > Branch: `codex/ui-r5-square-table-stabilization`  
 > Draft PR: #117  
-> Audit basis: live production first-night / other-night interaction flow, current materializers, and current `ClocktowerNightStepUi` ownership after Ravenkeeper + Spy migration.
+> Audit basis: live production first-night / other-night interaction flow, current materializers, and current `ClocktowerNightStepUi` ownership after Ravenkeeper + Spy + Clockmaker migration.
 
 ## 1. Audit conclusion
 
-The surviving UI-R5 work is now small.
+The surviving UI-R5 implementation work is now limited to Sage plus legacy retirement.
 
 ```text
-CLEAR MIGRATE:
-- Clockmaker
+MIGRATE NEXT:
 - Sage
+
+IMPLEMENTED / ACCEPTED SQUARE TABLE:
+- Clockmaker
+- all other active spatial night interactions listed below
 
 KEEP SPECIALIZED:
 - first-night Minion information
 - first-night Demon information
 - New Demon identity reveal/confirmation
 
-UNREACHABLE LEGACY — RETIRE LATER:
+UNREACHABLE LEGACY — RETIRE AFTER SAGE:
 - old ClocktowerPairManualSelectionDialog / ClocktowerPairManualCenterControls
   (retain the shared pair-manual seat helpers still used by the accepted pair square-table UI)
 ```
-
-All other currently active supported night interactions already have an accepted or implemented square-table Storyteller owner.
 
 ## 2. Classification principle
 
@@ -46,7 +47,7 @@ square-table Storyteller shell
 | Demon information | generic night information card | existing evil-information player reveal | KEEP SPECIALIZED | Keep dedicated Demon/minion/bluff information handoff. No target selection; table adds little semantic value. |
 | Poisoner | shared single-target square table | none | ACCEPTED SQUARE TABLE | No migration. |
 | Fortune Teller red herring setup | shared single-target square table | none | ACCEPTED SQUARE TABLE | No migration. |
-| Clockmaker | generic numeric information controls | existing numeric player reveal | **MIGRATE** | Add thin read-only square-table actor shell with number result control. Preserve current direct/unreliable reveal semantics. |
+| Clockmaker | dedicated read-only Clockmaker square table | existing numeric player reveal | **ACCEPTED SQUARE TABLE** | Implemented / automated green / device pending. |
 | Washerwoman | pair-information square table | existing player reveal | ACCEPTED SQUARE TABLE | No migration. |
 | Librarian | pair-information square table | existing player reveal | ACCEPTED SQUARE TABLE | No migration. |
 | Investigator | pair-information square table | existing player reveal | ACCEPTED SQUARE TABLE | No migration. |
@@ -72,40 +73,44 @@ square-table Storyteller shell
 | Imp / Demon kill | shared single-target square table | none | ACCEPTED SQUARE TABLE | No migration. |
 | Demon successor event | shared night-ruling square table | none | ACCEPTED SQUARE TABLE | No migration. |
 | Mayor redirect event | shared night-ruling square table | none | ACCEPTED SQUARE TABLE | No migration. |
-| Sage | generic pair-result recommendation/unreliable controls | existing pair player reveal | **MIGRATE** | Dedicated/read-only square-table pair-information surface; dead Sage remains actor-highlighted. First establish typed Storyteller pair-seat presentation rather than parsing `displaySecondary`. |
+| Sage | generic pair-result recommendation/unreliable controls | existing pair player reveal | **MIGRATE** | Dedicated/read-only square-table pair-information surface; dead Sage remains actor-highlighted. Establish typed presentation-only pair seats rather than parsing `displaySecondary`. |
 | Ravenkeeper | dedicated Ravenkeeper square table | existing role reveal | ACCEPTED SQUARE TABLE | Automated green/device pending. |
 | Spy | dedicated read-only Spy square-table shell | existing Grimoire reveal | ACCEPTED SQUARE TABLE | Keep existing Grimoire page/button behavior per user decision. |
 
-## 5. Clockmaker audit
+## 5. Clockmaker — implemented
 
-Clockmaker is the simplest remaining migration.
+Clockmaker now uses a dedicated read-only square-table Storyteller surface.
 
-Current properties:
+Implemented contract:
 
-- first-night role information;
-- current actor is already authoritative;
-- result is one number;
-- healthy Clockmaker has a direct number reveal;
-- drunk/poisoned Clockmaker uses the existing `recommendedNumberOptions(...)` result set;
-- those unreliable options may intentionally have no player-visible proposition;
-- current publication/history semantics therefore must remain unchanged.
+- current Clockmaker actor is highlighted independently from seat state;
+- healthy Clockmaker keeps the existing direct number reveal;
+- drunk/poisoned manual mode preserves the existing opaque `displayOptions` candidate set;
+- automatic mode uses only the already-selected `automaticDisplayOption`;
+- shown number text remains presentation content and is never parsed back into semantic state;
+- final reveal still uses the existing `onShowPlayerDisplay`, `showRecommendedDisplayOption`, or `resolveClocktowerLegacyUnreliablePlayerDisplay` paths;
+- generic recommendation/result-first/unreliable/direct controls are suppressed while Clockmaker owns the step;
+- no Host/session/rules/history/persistence behavior was changed.
 
-Recommended design:
+Checkpoint:
 
 ```text
-read-only square table
--> current Clockmaker actor highlighted
--> centre shows role/instruction
--> healthy: one existing number reveal action
--> impaired manual: existing number options, selectable in centre
--> impaired automatic: only the already-selected automatic option
--> final reveal still uses the existing onShowPlayerDisplay / resolve paths
--> no localized text is parsed back into semantic state
+production implementation: ae48eecc6c0931ee608cc1402c6355cc807f8e81
+verified head:             9119ec83f036432ec9b5f0f3a920690ab9719e16
+CI #2106 / run 34417802131              PASS
+- Android FAST unit tests                 PASS / executed
+- full Android + APK                      skipped / per-role UI slice
+- ASP contract                            skipped / UI-only
+- Real Clingo                             skipped / UI-only
+- CI gate                                 PASS
+R2 #1973 / run 34417802113                PASS
 ```
 
-This should be a thin presentation migration and should not change Host/session/rules/history behavior.
+CI #2105 initially failed only because the pre-existing Spy source-wiring test required `!usesSpySquareTable` and `!usesRavenkeeperSquareTable` to be textually adjacent. The test was made ordering-independent in `9119ec83...`; production code did not change in that fix.
 
-## 6. Sage audit
+Real-device acceptance remains pending.
+
+## 6. Sage audit — next
 
 Sage is a genuine spatial information role and should migrate, but it is more sensitive than Clockmaker.
 
@@ -121,12 +126,13 @@ However current Sage `ClocktowerDisplayOption`s expose the two shown seats only 
 Required migration boundary:
 
 1. preserve current recommendation candidate generation and player reveal semantics;
-2. add or expose a typed **Storyteller presentation pair** for each existing candidate without converting misleading information into a reliable epistemic proposition;
-3. highlight the two candidate seats independently from the dead Sage actor;
-4. keep all final player reveal/history behavior on existing paths;
-5. fail closed when pair presentation identity is absent or malformed.
+2. add/expose typed **presentation-only subject seats** for each existing Sage candidate without converting misleading information into an epistemic proposition;
+3. keep unreliable Sage options `proposition = null` so misinformation cannot become a reliable observation merely because UI needs seat identity;
+4. highlight the two information seats independently from the dead Sage actor;
+5. keep final player reveal/history behavior on existing paths;
+6. fail closed when presentation-seat identity is absent, duplicated, out of range, or malformed.
 
-Do Clockmaker first; do Sage second.
+Existing `ClocktowerPairPlayerRevealPresentation` already establishes the correct architectural precedent: pair identity comes from typed data, never by parsing localized display text.
 
 ## 7. New Demon identity is not dead duplication
 
@@ -147,27 +153,18 @@ But `ClocktowerPairManualSelectionUi.kt` still contains shared helpers used by t
 
 Therefore do **not** delete the file wholesale.
 
-Final retirement should:
-
-```text
-remove ClocktowerPairManualSelectionDialog
-remove ClocktowerPairManualCenterControls
-retain/move shared seat projection helpers
-retain ClocktowerPairManualSelectionModel while the accepted pair surface still consumes it
-retain existing helper/model tests that remain semantically relevant
-```
+Final retirement should remove the old dialog/center-controls while retaining or relocating the shared seat helpers and keeping `ClocktowerPairManualSelectionModel` while the accepted pair surface consumes it.
 
 ## 9. Remaining execution order
 
 ```text
-1. Clockmaker square-table migration
-2. Sage typed pair-presentation seam + square-table migration
-3. retire unreachable old pair-manual dialog/center controls
-4. re-audit generic recommendation/result-first/unreliable/direct blocks for newly unreachable branches
-5. exact diff/scope audit
-6. final logical UI-R5 T4
-7. cross-role real-device acceptance
-8. PR #117 closeout / merge only with explicit user authorization
+1. Sage typed presentation-seat seam + square-table migration
+2. retire unreachable old pair-manual dialog/center controls
+3. re-audit generic recommendation/result-first/unreliable/direct blocks for newly unreachable branches
+4. exact diff/scope audit
+5. final logical UI-R5 T4
+6. cross-role real-device acceptance
+7. PR #117 closeout / merge only with explicit user authorization
 ```
 
 ## 10. Current checkpoints
@@ -183,6 +180,10 @@ CI #2087 PASS / R2 #1954 PASS
 Spy per-role checkpoint:
 d45f96ddcdb1142a422d64ee87cf61c5475121f9
 CI #2092 PASS / R2 #1959 PASS
+
+Clockmaker per-role verified head:
+9119ec83f036432ec9b5f0f3a920690ab9719e16
+CI #2106 PASS / R2 #1973 PASS
 ```
 
-Real-device acceptance remains pending for Empath, Undertaker, Ravenkeeper, Spy, and the previous dynamic Ravenkeeper-trigger reproduction unless explicitly reported otherwise by the user.
+Real-device acceptance remains pending for Empath, Undertaker, Ravenkeeper, Spy, Clockmaker, and the previous dynamic Ravenkeeper-trigger reproduction unless explicitly reported otherwise by the user.
