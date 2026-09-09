@@ -7,6 +7,12 @@
 > main：d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e
 > 分支：codex/d6-2-ui-composition；PR #115 OPEN / DRAFT，未授权合并。
 
+## 实施进度更新
+
+D6.2k 已在 `c3a25f640e7e6c9ef2537d7d9387eb27b28b1ece` 完成：三个生产文件净删除 257 行，移除 13 个闲置诊断状态和四个不可触发 effect；Judge 参数 89 → 87，NightStep 参数 49 → 48。CI 34293746781（Android compile + FAST / CI gate）及 R2 34293746779 通过。详见 `D6_2K_DORMANT_DIAGNOSTIC_CLEANUP_PROGRESS_2026-09-09.md`。
+
+下方体积、行号和估算保留为原始审计基线。当前 Host 为 4545 行 / 268260 字节，NightStep 为 868 行 / 45697 字节，App 为 4236 行 / 236956 字节。下一步按 R0 顺序退役旧 Day/History UI 及对应过时 R2 断言，使用 full CI 验证；私有 App decoder 清理另行切片。
+
 ## 1. 结论与审计边界
 
 **仍有明显且值得实施的解耦空间，但主要收益已经从“下放几个 UI 状态”转向“分开准备、渲染与事务编排”。**

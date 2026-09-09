@@ -4,8 +4,8 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > D6.1 merge commit: `112572cbd3d990737a412cc4b8ead766d00867e8`  
 > D6.2 branch base / current main: `d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e`  
-> Latest validated production checkpoint: `5e0891e7611787300b01d83b889f27a903c0768b`
-> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h READ-ONLY RE-AUDIT COMPLETE; D6.2i COMPLETE / VALIDATED; D6.2j AUDIT COMPLETE; D6.2k NEXT**
+> Latest validated production checkpoint: `c3a25f640e7e6c9ef2537d7d9387eb27b28b1ece`
+> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h READ-ONLY RE-AUDIT COMPLETE; D6.2i COMPLETE / VALIDATED; D6.2j AUDIT COMPLETE; D6.2k COMPLETE / VALIDATED**
 
 ## Purpose
 
@@ -349,11 +349,13 @@ Local Gradle could not download its distribution because of restricted network a
 
 Detailed evidence: `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md`.
 
-## D6.2j residual audit COMPLETE / D6.2k NEXT
+## D6.2j residual audit / D6.2k implementation COMPLETE
 
-See `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md` for current evidence and the exact next implementation contract. All five remaining mutable inputs retain external owners. Next remove dormant diagnostic composition and dead input/lookup chains in the documented three-file scope; preserve live diagnostics harnesses, A4 services and Recovery.
+The D6.2j contract was implemented and validated at `c3a25f640e7e6c9ef2537d7d9387eb27b28b1ece`. Exact production diff: three files, +0 / -257; four dormant effects and 13 diagnostic states removed. Judge now has 87 parameters, 34 on-callbacks, three providers and five MutableState inputs. NightStep has 48 parameters and 13 callbacks; App remembered Clocktower scalars remain 44.
 
-Judge remains 89 parameters until D6.2k is actually implemented and validated. Expected result is 87, with 34 on-callbacks and five MutableState inputs unchanged. Subsequent work should investigate live rendering/preparation boundaries rather than merely continuing parameter deletion.
+CI 34293746781 PASS (Android compile + FAST and CI gate); R2 34293746779 PASS. Live recommendation/publication, A4 services and Recovery were preserved. Detailed evidence: `docs/D6_2K_DORMANT_DIAGNOSTIC_CLEANUP_PROGRESS_2026-09-09.md`.
+
+Next follow the global audit's R0 route: retire unused Day/History UI and the corresponding obsolete R2 assertions with full CI, then separately remove App decoder islands before preparing live rendering/information boundaries.
 
 ## Frozen invariants
 
@@ -383,6 +385,7 @@ main d76b0854...
 -> D6.2h surviving square-table audit COMPLETE
 -> D6.2i Day nomination transient ownership VALIDATED @ 5e0891e...
 -> D6.2j residual composition audit COMPLETE
--> D6.2k dormant diagnostics / dead inputs NEXT
+-> D6.2k dormant diagnostics / dead inputs VALIDATED @ c3a25f64...
+-> retired Day/History UI + R2 assertion cleanup NEXT
 -> PR #115 remains OPEN / DRAFT / DO NOT AUTO-MERGE
 ```

@@ -11,11 +11,11 @@ main: d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e
 D6.2 branch: codex/d6-2-ui-composition
 Draft PR: #115 — OPEN / DRAFT / DO NOT AUTO-MERGE
 Latest validated production checkpoint:
-5e0891e7611787300b01d83b889f27a903c0768b
-refactor: localize Day nomination selection ownership [full-ci]
+c3a25f640e7e6c9ef2537d7d9387eb27b28b1ece
+refactor(clocktower): retire dormant D6.2k diagnostic composition
 ```
 
-Closeout commits after `5e0891e...` are documentation-only unless a later handoff explicitly records a newer validated production checkpoint. Always re-query live branch head and keep **production checkpoint** distinct from **docs-only branch head**.
+Closeout commits after `c3a25f64...` are documentation-only unless a later handoff explicitly records a newer validated production checkpoint. Always re-query live branch head and keep **production checkpoint** distinct from **docs-only branch head**.
 
 Historical D6.2g clean-head gates:
 
@@ -43,7 +43,7 @@ CI 34288731376 — PASS
 
 ## Current priority
 
-> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h READ-ONLY RE-AUDIT COMPLETE → D6.2i DAY NOMINATION TRANSIENT OWNERSHIP COMPLETE / VALIDATED → D6.2j RESIDUAL AUDIT COMPLETE → D6.2k DORMANT DIAGNOSTIC CLEANUP NEXT.**
+> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h READ-ONLY RE-AUDIT COMPLETE → D6.2i DAY NOMINATION TRANSIENT OWNERSHIP COMPLETE / VALIDATED → D6.2j RESIDUAL AUDIT COMPLETE → D6.2k DORMANT DIAGNOSTIC CLEANUP COMPLETE / VALIDATED → RETIRED DAY/HISTORY UI + R2 ASSERTION CLEANUP NEXT.**
 
 D6.2 stays on `codex/d6-2-ui-composition`. Do not reopen PR #113 or move this work back to `codex/d6-root-reaudit`.
 
@@ -324,21 +324,29 @@ Detailed evidence: `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md`.
 
 Authority: `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md`.
 
-All five remaining Judge MutableState inputs have legitimate external ownership. Four diagnostic effects have permanently zero trigger counters; Judge also has dead `confirmedDemonSuccessorTarget` forwarding, diagnostics-only `rulesetRef`, an unused child diagnostics parameter and eight unused pure role lookups.
+The D6.2j audit confirmed legitimate external ownership for all five remaining Judge MutableState inputs. At that checkpoint, four diagnostic effects had permanently zero trigger counters; Judge also had dead `confirmedDemonSuccessorTarget` forwarding, diagnostics-only `rulesetRef`, an unused child diagnostics parameter and eight unused pure role lookups.
 
-## Next — D6.2k dormant diagnostic / dead input cleanup
+## D6.2k — dormant diagnostic / dead input cleanup COMPLETE
 
-Use the three-file allowlist and exact contract in the D6.2j audit. Expected Judge parameters 89 -> 87, child NightStep parameters 49 -> 48; callbacks, durable App state and five MutableState inputs stay unchanged. Preserve benchmark harnesses/tests, live A4 prewarming, recommendation effects, telemetry and Recovery.
+Production checkpoint: `c3a25f640e7e6c9ef2537d7d9387eb27b28b1ece`.
 
-After this bounded cleanup, investigate a live vote rendering boundary and then phase preparation/effect dependencies. Do not localize Recovery-coupled state or move all pre-dispatch logic into conditional branches.
+Implemented the D6.2j three-file contract: removed four untriggerable diagnostic effects, 13 diagnostic remembered states, two Judge inputs, one child input, eight unused pure role lookups and directly orphaned imports. Exact production diff: +0 / -257. Judge parameters 89 -> 87; NightStep 49 -> 48. Judge callbacks 34, providers three, MutableState inputs five and App scalar state 44 are unchanged.
 
-PR #115 remains OPEN / DRAFT; production checkpoint stays `5e0891e...`. This audit changed documentation only.
+CI 34293746781 PASS (Android compile + FAST and CI gate); R2 34293746779 PASS. FULL was not selected for this bounded dead-code deletion; the D6.2i full gate remains historical evidence. No local Android GREEN or real-device verification is claimed.
+
+Detailed evidence: `docs/D6_2K_DORMANT_DIAGNOSTIC_CLEANUP_PROGRESS_2026-09-09.md`.
+
+## Next — retired Day/History UI and obsolete R2 assertions
+
+Follow global audit R0 ordering. Recheck references, then retire proven unused Day/History declarations together with their obsolete R2 existence assertions. Preserve current square-table UI and live history rendering. This workflow-aware slice requires full CI. Keep private App decoder cleanup separate, then proceed to information preparation/materializers and live interaction boundaries.
+
+PR #115 remains OPEN / DRAFT. Preserve benchmark harnesses/tests, live A4 prewarming, recommendation effects, telemetry and Recovery. Do not localize Recovery-coupled state or move all pre-dispatch logic into conditional branches.
 
 ## Remaining work — global audit and outcome targets
 
 Authority: `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md`.
 
-The user requested a whole residual audit after D6.2j. D6.2k remains the first bounded implementation slice. Additional verified cleanup includes retired Day/History UI and App private decoder islands; obsolete R2 existence checks must retire with the old UI, in a separate workflow-aware slice.
+The user requested a whole residual audit after D6.2j. D6.2k is now implemented and validated. Additional verified cleanup includes retired Day/History UI and App private decoder islands; obsolete R2 existence checks must retire with the old UI, in a separate workflow-aware slice.
 
 Then prioritize information preparation/role materializers and NightStep/Day interaction boundaries. App transaction application and Recovery/A4 composition are a later, higher-risk wave, using existing session/planner authority. Do not mechanically move all callbacks or conditionally remount live effects.
 
@@ -366,7 +374,7 @@ Preserve:
 
 ## Active handoff
 
-Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md` and `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md` plus `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md` for the overall route; the D6.2j document remains the exact D6.2k contract. The D6.2i implementation handoff is now historical; do not implement the same slice again.
+Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md` and `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md` plus `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md` for the overall route; read `docs/D6_2K_DORMANT_DIAGNOSTIC_CLEANUP_PROGRESS_2026-09-09.md` for the latest validated production checkpoint and next slice. The D6.2i handoff and D6.2j implementation contract are now historical; do not implement completed slices again.
 
 ## Later priority after D6
 

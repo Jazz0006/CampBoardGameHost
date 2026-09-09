@@ -1,7 +1,8 @@
 # D6.2j — Residual UI Composition Audit
 
 > Date: 2026-09-09 Australia/Sydney
-> Status: READ-ONLY SOURCE AUDIT COMPLETE; D6.2k scoped below, not implemented.
+> Status: HISTORICAL READ-ONLY AUDIT COMPLETE; D6.2k contract below implemented and validated at `c3a25f640e7e6c9ef2537d7d9387eb27b28b1ece`.
+> Follow-up: `D6_2K_DORMANT_DIAGNOSTIC_CLEANUP_PROGRESS_2026-09-09.md`. Measurements and future-tense decisions below describe the original audit checkpoint.
 > Branch: codex/d6-2-ui-composition; PR #115 OPEN / DRAFT.
 > Audited head: c6ed1af27868436eae064755f3ec2dfd6a3d27b5.
 > Production checkpoint: 5e0891e7611787300b01d83b889f27a903c0768b.
