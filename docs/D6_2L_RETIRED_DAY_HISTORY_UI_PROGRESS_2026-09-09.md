@@ -58,4 +58,4 @@ The workflow change explicitly requires the full gate; the commit includes `[ful
 
 ## Next
 
-R0 continues with a separate bounded deletion of the private App decoder island and unused `clocktowerRolesFor`. Reconfirm that the actual archive codecs and Recovery v2 planners remain the live owners. Preserve `generateClocktowerAssignments` and every active setup/recovery/archive path. After that cleanup, move to the global audit's information preparation/materializer boundaries rather than further arbitrary file shrinking.
+D6.2m completed the separate App decoder cleanup at `4c16f4c09ae7df693a3b16d6910ab026373e05cd`; archive codecs, Recovery v2 and `generateClocktowerAssignments` remain. R0 cleanup is complete. Next re-audit the live information preparation/materializer boundary against the smaller post-cleanup source.

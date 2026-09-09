@@ -4,8 +4,8 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > D6.1 merge commit: `112572cbd3d990737a412cc4b8ead766d00867e8`  
 > D6.2 branch base / current main: `d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e`  
-> Latest validated production checkpoint: `69655de1d992ec6ec7cf45b2639a048ae4fb32e4`
-> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h READ-ONLY RE-AUDIT COMPLETE; D6.2i COMPLETE / VALIDATED; D6.2j AUDIT COMPLETE; D6.2k–l COMPLETE / VALIDATED**
+> Latest validated production checkpoint: `4c16f4c09ae7df693a3b16d6910ab026373e05cd`
+> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h READ-ONLY RE-AUDIT COMPLETE; D6.2i COMPLETE / VALIDATED; D6.2j AUDIT COMPLETE; D6.2k–m COMPLETE / VALIDATED**
 
 ## Purpose
 
@@ -357,7 +357,9 @@ CI 34293746781 PASS (Android compile + FAST and CI gate); R2 34293746779 PASS. L
 
 D6.2l subsequently retired the unused Day/History UI and corresponding obsolete R2 assertions at `69655de1d992ec6ec7cf45b2639a048ae4fb32e4`. Kotlin +0 / -612; workflow +2 / -8. FULL CI 34294224391 and R2 34294224399 PASS. Retained Day/History function blocks are unchanged. See `docs/D6_2L_RETIRED_DAY_HISTORY_UI_PROGRESS_2026-09-09.md`.
 
-Next separately remove the private App decoder island before preparing live rendering/information boundaries.
+D6.2m removed that isolated App decoder subgraph and unused random role helper at `4c16f4c09ae7df693a3b16d6910ab026373e05cd`: App +0 / -94, Android FAST/CI 34294858685 and R2 34294858697 PASS. Current archive, Recovery v2 and assignment paths remain. See `docs/D6_2M_APP_DECODER_CLEANUP_PROGRESS_2026-09-09.md`.
+
+R0 cleanup is complete. Next re-audit the post-cleanup live information preparation/materializer boundary before moving production code.
 
 ## Frozen invariants
 
@@ -389,6 +391,7 @@ main d76b0854...
 -> D6.2j residual composition audit COMPLETE
 -> D6.2k dormant diagnostics / dead inputs VALIDATED @ c3a25f64...
 -> D6.2l retired Day/History UI + R2 assertions VALIDATED @ 69655de1...
--> private App decoder cleanup NEXT
+-> D6.2m private App decoder cleanup VALIDATED @ 4c16f4c0...
+-> live information preparation boundary re-audit NEXT
 -> PR #115 remains OPEN / DRAFT / DO NOT AUTO-MERGE
 ```

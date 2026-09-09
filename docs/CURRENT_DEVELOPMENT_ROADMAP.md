@@ -11,11 +11,11 @@ main: d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e
 D6.2 branch: codex/d6-2-ui-composition
 Draft PR: #115 — OPEN / DRAFT / DO NOT AUTO-MERGE
 Latest validated production checkpoint:
-69655de1d992ec6ec7cf45b2639a048ae4fb32e4
-refactor(clocktower): retire unused Day and History UI [full-ci]
+4c16f4c09ae7df693a3b16d6910ab026373e05cd
+refactor(app): retire obsolete Clocktower decoder island
 ```
 
-Closeout commits after `69655de1...` are documentation-only unless a later handoff explicitly records a newer validated production checkpoint. Always re-query live branch head and keep **production checkpoint** distinct from **docs-only branch head**.
+Closeout commits after `4c16f4c0...` are documentation-only unless a later handoff explicitly records a newer validated production checkpoint. Always re-query live branch head and keep **production checkpoint** distinct from **docs-only branch head**.
 
 Historical D6.2g clean-head gates:
 
@@ -43,7 +43,7 @@ CI 34288731376 — PASS
 
 ## Current priority
 
-> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h READ-ONLY RE-AUDIT COMPLETE → D6.2i DAY NOMINATION TRANSIENT OWNERSHIP COMPLETE / VALIDATED → D6.2j RESIDUAL AUDIT COMPLETE → D6.2k DORMANT DIAGNOSTIC CLEANUP COMPLETE / VALIDATED → D6.2l RETIRED DAY/HISTORY UI COMPLETE / VALIDATED → PRIVATE APP DECODER CLEANUP NEXT.**
+> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h READ-ONLY RE-AUDIT COMPLETE → D6.2i DAY NOMINATION TRANSIENT OWNERSHIP COMPLETE / VALIDATED → D6.2j RESIDUAL AUDIT COMPLETE → D6.2k DORMANT DIAGNOSTIC CLEANUP COMPLETE / VALIDATED → D6.2l RETIRED DAY/HISTORY UI COMPLETE / VALIDATED → D6.2m APP DECODER CLEANUP COMPLETE / VALIDATED → LIVE INFORMATION PREPARATION BOUNDARY RE-AUDIT NEXT.**
 
 D6.2 stays on `codex/d6-2-ui-composition`. Do not reopen PR #113 or move this work back to `codex/d6-root-reaudit`.
 
@@ -346,17 +346,27 @@ FULL CI 34294224391 PASS: full Android JVM tests + debug APK, ASP, Real Clingo a
 
 Evidence: `docs/D6_2L_RETIRED_DAY_HISTORY_UI_PROGRESS_2026-09-09.md`.
 
-## Next — private App decoder island cleanup
+## D6.2m — private App decoder island cleanup COMPLETE
 
-Follow global audit R0 section 3.C. Reconfirm references before deleting the unused private decoder chain and `clocktowerRolesFor`; preserve active archive codecs, Recovery v2 and `generateClocktowerAssignments`. Keep this bounded cleanup separate from later information preparation/materializer boundaries.
+Production checkpoint: `4c16f4c09ae7df693a3b16d6910ab026373e05cd`.
 
-PR #115 remains OPEN / DRAFT. Preserve benchmark harnesses/tests, live A4 prewarming, recommendation effects, telemetry and Recovery. Do not localize Recovery-coupled state or move all pre-dispatch logic into conditional branches.
+Removed the isolated private JSON decoder call subgraph, unused random `clocktowerRolesFor(playerCount)` and two directly orphaned imports. Exact diff: App +0 / -94, now 4142 lines / 233013 bytes. Current GameArchiveJsonCodec/AppGameStateJsonCodec, Recovery v2 and `generateClocktowerAssignments` paths remain intact.
+
+CI 34294858685 PASS: Android compile + executed FAST and CI gate. R2 34294858697 PASS. FULL was correctly not selected; D6.2l immediately before it passed full JVM tests and debug APK, ASP and Real Clingo. No local Android GREEN or real-device verification is claimed.
+
+Evidence: `docs/D6_2M_APP_DECODER_CLEANUP_PROGRESS_2026-09-09.md`.
+
+## Next — live information preparation boundary re-audit
+
+R0 dead-code cleanup is complete. Re-measure the post-cleanup Host and choose one cohesive information family for the first live extraction. Separate pure facts/candidate preparation from recommendation selection, telemetry and publication effects. Preserve materializer order and avoid a broad NightContext, state bag or callback bag. The next step is a read-only boundary contract before production movement.
+
+PR #115 remains OPEN / DRAFT. Preserve benchmark harnesses/tests, live A4 prewarming, recommendation effects, telemetry and Recovery.
 
 ## Remaining work — global audit and outcome targets
 
 Authority: `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md`.
 
-The user requested a whole residual audit after D6.2j. D6.2k and D6.2l are now implemented and validated. The retired Day/History UI and its obsolete R2 assertions are gone; the private App decoder island is the remaining R0 cleanup.
+The user requested a whole residual audit after D6.2j. D6.2k–m are implemented and validated. Dormant diagnostics, retired Day/History UI plus obsolete R2 assertions, and the private App decoder island are gone. R0 dead-code cleanup is complete.
 
 Then prioritize information preparation/role materializers and NightStep/Day interaction boundaries. App transaction application and Recovery/A4 composition are a later, higher-risk wave, using existing session/planner authority. Do not mechanically move all callbacks or conditionally remount live effects.
 
@@ -384,7 +394,7 @@ Preserve:
 
 ## Active handoff
 
-Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md` and `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md` plus `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md` for the overall route; read `docs/D6_2L_RETIRED_DAY_HISTORY_UI_PROGRESS_2026-09-09.md` for the latest validated production checkpoint and next slice. The D6.2i handoff and D6.2j implementation contract are now historical; do not implement completed slices again.
+Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md` and `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md` plus `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md` for the overall route; read `docs/D6_2M_APP_DECODER_CLEANUP_PROGRESS_2026-09-09.md` for the latest validated production checkpoint and next boundary audit. The D6.2i handoff and D6.2j implementation contract are now historical; do not implement completed slices again.
 
 ## Later priority after D6
 

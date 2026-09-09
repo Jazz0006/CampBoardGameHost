@@ -11,7 +11,7 @@
 
 D6.2k 已在 `c3a25f640e7e6c9ef2537d7d9387eb27b28b1ece` 完成：三个生产文件净删除 257 行，移除 13 个闲置诊断状态和四个不可触发 effect；Judge 参数 89 → 87，NightStep 参数 49 → 48。CI 34293746781（Android compile + FAST / CI gate）及 R2 34293746779 通过。详见 `D6_2K_DORMANT_DIAGNOSTIC_CLEANUP_PROGRESS_2026-09-09.md`。
 
-下方体积、行号和估算保留为原始审计基线。当前 Host 为 4545 行 / 268260 字节，NightStep 为 868 行 / 45697 字节，App 为 4236 行 / 236956 字节。D6.2l 已继续退役旧 Day/History UI 及对应过时 R2 断言：`69655de1d992ec6ec7cf45b2639a048ae4fb32e4`，Kotlin 删除 612 行，workflow +2 / -8；FULL CI 34294224391 与 R2 34294224399 通过。Day 当前 616 行 / 31846 字节，History 530 行 / 29188 字节。详见 `D6_2L_RETIRED_DAY_HISTORY_UI_PROGRESS_2026-09-09.md`。下一步是独立的私有 App decoder 清理。
+下方体积、行号和估算保留为原始审计基线。当前 Host 为 4545 行 / 268260 字节，NightStep 为 868 行 / 45697 字节，App 为 4236 行 / 236956 字节。D6.2l 已继续退役旧 Day/History UI 及对应过时 R2 断言：`69655de1d992ec6ec7cf45b2639a048ae4fb32e4`，Kotlin 删除 612 行，workflow +2 / -8；FULL CI 34294224391 与 R2 34294224399 通过。Day 当前 616 行 / 31846 字节，History 530 行 / 29188 字节。详见 `D6_2L_RETIRED_DAY_HISTORY_UI_PROGRESS_2026-09-09.md`。D6.2m 已完成独立的私有 App decoder 清理：`4c16f4c09ae7df693a3b16d6910ab026373e05cd`，App +0 / -94，CI 34294858685（Android compile + FAST）与 R2 34294858697 通过。App 当前 4142 行 / 233013 字节。R0 死代码清理至此完成，下一步重新审计清理后的活跃信息准备 / materializer 边界。
 
 ## 1. 结论与审计边界
 
