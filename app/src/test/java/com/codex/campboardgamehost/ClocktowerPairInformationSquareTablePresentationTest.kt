@@ -29,7 +29,7 @@ class ClocktowerPairInformationSquareTablePresentationTest {
     }
 
     @Test
-    fun `manual edit keeps recommended pair selected and exposes every legal replacement seat`() {
+    fun `manual edit reuses legal second-seat projection from the existing pair picker`() {
         val recommended = option("Chef", 1, 4)
         val presentation = ClocktowerPairManualAuthority.selectionPresentation(
             listOf(recommended, option("Chef", 2, 4), option("Chef", 2, 8)),
@@ -45,12 +45,30 @@ class ClocktowerPairInformationSquareTablePresentationTest {
             clocktowerPairInformationSeatState(selection, seatNumber = 4, editing = true),
         )
         assertEquals(
-            ClocktowerSquareTableSeatState.Selectable,
+            ClocktowerSquareTableSeatState.Disabled,
             clocktowerPairInformationSeatState(selection, seatNumber = 2, editing = true),
         )
         assertEquals(
-            ClocktowerSquareTableSeatState.Selectable,
+            ClocktowerSquareTableSeatState.Disabled,
             clocktowerPairInformationSeatState(selection, seatNumber = 8, editing = true),
+        )
+
+        val awaitingSecondSeat = selection.selectSeat(4)
+        assertEquals(
+            ClocktowerSquareTableSeatState.SelectedFirst,
+            clocktowerPairInformationSeatState(awaitingSecondSeat, seatNumber = 1, editing = true),
+        )
+        assertEquals(
+            ClocktowerSquareTableSeatState.Selectable,
+            clocktowerPairInformationSeatState(awaitingSecondSeat, seatNumber = 4, editing = true),
+        )
+        assertEquals(
+            ClocktowerSquareTableSeatState.Disabled,
+            clocktowerPairInformationSeatState(awaitingSecondSeat, seatNumber = 2, editing = true),
+        )
+        assertEquals(
+            ClocktowerSquareTableSeatState.Disabled,
+            clocktowerPairInformationSeatState(awaitingSecondSeat, seatNumber = 8, editing = true),
         )
     }
 
