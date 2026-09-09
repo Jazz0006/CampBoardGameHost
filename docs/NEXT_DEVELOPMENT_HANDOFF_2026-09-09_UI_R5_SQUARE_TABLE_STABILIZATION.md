@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — UI-R5 Square-table Storyteller Consolidation / Real-device Stabilization
 
 > Date: 2026-09-09 Australia/Sydney  
-> Status: **ACTIVE HANDOFF — PAIR-INFORMATION SLICE IMPLEMENTED; T4/DEVICE ACCEPTANCE PENDING**  
+> Status: **ACTIVE HANDOFF — PAIR-INFORMATION SLICE T4 ACCEPTED; REAL-DEVICE ACCEPTANCE NEXT**  
 > Scope: presentation / interaction architecture + real-device stabilization
 
 ## 1. Read first
@@ -56,27 +56,26 @@ Draft PR: #117
 base main: 60842381dcbc3709ad453209846f66e9b4a7a777
 ```
 
-Latest validated production/test checkpoint before this documentation-only T4 trigger:
+Latest production-equivalent T4 checkpoint:
 
 ```text
-ecfacb7b11d39e65febef89fb3e058390f9eea5f
+b960be22d217ed2caa06b49c0319eace23470b42
 ```
 
-Validation at that head:
+T4 evidence:
 
 ```text
-CI #2022 / 34339511298             PASS
-Android FAST unit tests            PASS / executed
-full Android unit tests + APK       SKIPPED by ordinary PR policy
+CI #2024 / 34339861281             PASS
+Android full unit tests + debug APK PASS / executed
+ASP contract tests                  PASS / executed
+Real Clingo cross-validation        PASS / executed
 CI gate                             PASS
-R2 #1889 / 34339511280              PASS
+R2 #1891 / 34339861261              PASS
 ```
 
-The first `[full-ci]` documentation trigger was intentionally superseded after a behavior-level audit found one presentation mismatch: the new pair-information Manual state exposed every role-valid seat instead of preserving the existing pair picker's legal second-seat continuation projection. That issue was fixed before this final checkpoint by reusing `clocktowerPairManualSeatState`, and a regression test now protects the behavior.
+The immediately preceding production/test head `ecfacb7b11d39e65febef89fb3e058390f9eea5f` passed ordinary FAST CI #2022 and R2 #1889. The T4 checkpoint contains no later production/test changes. Subsequent roadmap/handoff status synchronization is docs-only and does not invalidate this production-equivalent T4 evidence under `TESTING_STRATEGY.md`.
 
-This final documentation checkpoint intentionally uses `[full-ci]`. Treat the pair-information slice as T4 accepted **only after** the workflows attached to the final branch head complete with the full Android unit suite + debug assemble and all other selected full gates green.
-
-Do not confuse that T4 checkpoint with UI-R5 campaign acceptance: real-device validation is still required.
+The first `[full-ci]` attempt was superseded before acceptance because a behavior-level audit found one presentation mismatch: the new pair-information Manual state exposed every role-valid seat instead of preserving the existing pair picker's legal second-seat continuation projection. That issue was fixed before the accepted T4 checkpoint by reusing `clocktowerPairManualSeatState`, and a regression test now protects the behavior.
 
 ## 4. Implemented pair-information flow
 
@@ -156,9 +155,17 @@ Tests now protect:
 - Manual selectable/selected/disabled seat-state projection;
 - legal second-seat availability after entering Manual edit from a recommendation.
 
-## 5. Exact scope already audited
+## 5. Exact scope audit
 
-Relative to base `main`, the production flow change is localized.
+Relative to base `main`, the final PR production surface is limited to five production files:
+
+```text
+ClocktowerNightStepUi.kt
+ClocktowerPairInformationSquareTableUi.kt
+ClocktowerPairManualAuthority.kt
+ClocktowerPairManualSelectionModel.kt
+ClocktowerPairManualSelectionUi.kt
+```
 
 `ClocktowerNightStepUi.kt` only removes the old local `showManualPairSelection` state / separate Manual dialog wiring and replaces the pair recommendation section with the unified square-table composition. Existing Fortune Teller, Chambermaid, numeric information, registration/result-first, dynamic-decision and player-display semantics remain outside this change.
 
@@ -166,11 +173,11 @@ Relative to base `main`, the production flow change is localized.
 
 No square-table geometry algorithm was rewritten. No domain/session/persistence module acquired Compose dependencies. No recommendation scoring or gameplay rule changed.
 
-PR #117 remains Draft and must not be merged solely because CI is green.
+PR #117 remains Draft and must not be merged solely because automated validation is green.
 
-## 6. Next mandatory step after T4
+## 6. Next mandatory step — UI-R5.4 real-device stabilization
 
-After the final `[full-ci]` checkpoint is green, move to **UI-R5.4 real-device stabilization**, not EPI-MQ.
+The next engineering/product action is **real-device stabilization**, not more pair-information architecture work and not EPI-MQ.
 
 Portrait phone is primary. Record exact device / Android version where practical and exercise at minimum:
 
@@ -188,7 +195,9 @@ Portrait phone is primary. Record exact device / Android version where practical
 12. no first-night display-crash regression;
 13. no Storyteller-only hidden state on the player-facing display.
 
-If a real-device defect is found, fix it within UI-R5 with focused evidence. Do not waive it silently.
+Record PASS/FAIL per exercised path. If a path cannot be exercised, record it as a waiver or not-run item rather than a PASS.
+
+If a real-device defect is found, fix it within UI-R5 with focused evidence and re-escalate validation according to `TESTING_STRATEGY.md`. Do not waive it silently.
 
 ## 7. Product constraints
 
@@ -229,12 +238,12 @@ For UI/presentation-only work:
 - do not manufacture domain REDs;
 - use typed interaction/legality tests for stable contracts;
 - run focused evidence during iteration;
-- run `:app:testFast` at the logical checkpoint when Android production code changes;
-- use `[full-ci]` for the T4 acceptance checkpoint;
+- run `:app:testFast` at logical checkpoints when Android production code changes;
+- use `[full-ci]` for T4 acceptance checkpoints;
 - distinguish an actually executed full suite from a skipped/cached step;
 - real-device validation remains a separate required UI-R5 acceptance artifact.
 
-A green FAST run is not evidence that `testFull` or `assembleDebug` executed. Record the exact workflow step result.
+The pair-information slice has already satisfied its T4 automated checkpoint at `b960be22d217ed2caa06b49c0319eace23470b42`. Do not rerun full Android solely because later changes are status-document-only.
 
 ## 10. Scope fence
 
@@ -265,4 +274,4 @@ shared square-table ownership audited
 + roadmap/handoff updated
 ```
 
-Only then change the active roadmap priority to EPI-MQ / Productive Uncertainty.
+For the pair-information slice, automated implementation/T4/exact-scope work is complete. UI-R5 remains active because real-device critical paths and any remaining broader surface audit must still be completed before priority can move to EPI-MQ / Productive Uncertainty.
