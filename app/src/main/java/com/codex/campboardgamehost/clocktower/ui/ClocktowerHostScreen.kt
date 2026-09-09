@@ -9,7 +9,6 @@ import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -76,7 +75,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.zIndex
@@ -112,11 +110,9 @@ import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRequest
 import com.codex.campboardgamehost.clocktower.domain.DynamicGameState
-import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.DynamicStorytellerChoice
@@ -181,37 +177,22 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.NightTransactionReconstructor
 import com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest
 import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
-import com.codex.campboardgamehost.clocktower.session.UnifiedSetupSelectorDeviceBenchmark
-import com.codex.campboardgamehost.clocktower.session.UnifiedSetupSelectorDeviceBenchmarkReport
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
 import com.codex.campboardgamehost.clocktower.session.FirstNightShadowResult
 import com.codex.campboardgamehost.clocktower.session.FirstNightPublicationResolution
-import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkCase
-import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkHarness
-import com.codex.campboardgamehost.clocktower.epistemic.A4DeviceBenchmarkReport
-import com.codex.campboardgamehost.clocktower.epistemic.A4IdentityRevealPrewarmCoordinator
-import com.codex.campboardgamehost.clocktower.epistemic.A4IdentityRevealPrewarmRequest
-import com.codex.campboardgamehost.clocktower.epistemic.A4MainThreadFrameTelemetry
 import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationCacheRebuildExecutor
 import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationCacheRebuildRequest
-import com.codex.campboardgamehost.clocktower.epistemic.A4PlayerKnowledgeFactory
 import com.codex.campboardgamehost.clocktower.epistemic.A4ShadowWorldSetCache
 import com.codex.campboardgamehost.clocktower.epistemic.A4WorldEngineRollout
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
-import com.codex.campboardgamehost.clocktower.epistemic.FormalGameState
 import com.codex.campboardgamehost.clocktower.epistemic.GrimoireSeatView
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
-import com.codex.campboardgamehost.clocktower.epistemic.PlayerKnowledgeSnapshot
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
-import com.codex.campboardgamehost.clocktower.epistemic.ZddFilterStrategy
 import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightChronology
@@ -219,9 +200,7 @@ import com.codex.campboardgamehost.clocktower.rules.RegistrationInteractionRules
 import com.codex.campboardgamehost.clocktower.rules.RulesetContentHasher
 import com.codex.campboardgamehost.clocktower.rules.RulesetJsonLoader
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -247,7 +226,6 @@ internal fun ClocktowerJudgeScreen(
     gameSeed: Long,
     gameStateRevision: Long,
     playerInputRevision: Long,
-    rulesetRef: RulesetRef?,
     setupHistory: CrossGameHistory,
     setupRecommendationResultProvider: ((SetupCoordinationRequest) -> SetupRecommendationService.ConstrainedResult)? = null,
     firstNightNaturalPairReadyProvider: ((GameState) -> List<DecisionCandidate<SetupClueOutcome>>?)? = null,
@@ -278,7 +256,6 @@ internal fun ClocktowerJudgeScreen(
     pendingNewDemonName: String?,
     pendingNightNewDemonIdentityName: String?,
     demonSuccessorTarget: String?,
-    confirmedDemonSuccessorTarget: String?,
     virginUsed: Boolean,
     slayerUsed: Boolean,
     slayerClaimedNames: List<String>,
@@ -336,16 +313,6 @@ internal fun ClocktowerJudgeScreen(
     val selectionDistributionTelemetry = remember(gameId) { SelectionDistributionTelemetryRecorder() }
     // B7.2 shadow telemetry stores only parity totals; candidate IDs and game facts stay local.
     val firstNightPoolParity = remember(gameId) { SelectionPoolParityRecorder() }
-    var a4DeviceBenchmarkReport by remember { mutableStateOf<A4DeviceBenchmarkReport?>(null) }
-    var a4DeviceBenchmarkRuns by remember { mutableStateOf(0) }
-    var a4DeviceBenchmarkError by remember { mutableStateOf<String?>(null) }
-    var a4PrewarmCancellationProbeRuns by remember { mutableStateOf(0) }
-    var a4PrewarmCancellationProbeResult by remember { mutableStateOf<String?>(null) }
-    var a4PrewarmCancellationProbeError by remember { mutableStateOf<String?>(null) }
-    var unifiedSetupSelectorBenchmarkRuns by remember { mutableStateOf(0) }
-    var unifiedSetupSelectorBenchmarkReport by remember { mutableStateOf<UnifiedSetupSelectorDeviceBenchmarkReport?>(null) }
-    var unifiedSetupSelectorBenchmarkError by remember { mutableStateOf<String?>(null) }
-    var debugDiagnosticsExpanded by remember { mutableStateOf(false) }
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val publicAliveCards = cards.filter { it.eliminatedRound == null }
     // The UI still owns rendering, but first-night information now crosses one
@@ -381,151 +348,6 @@ internal fun ClocktowerJudgeScreen(
             FirstNightPublicationResolution.AlreadyDisplayed -> false
             FirstNightPublicationResolution.LegacyFallback -> true
         }
-    }
-    val a4DiagnosticAvailable = BuildConfig.DEBUG && script == ClocktowerScript.TroubleBrewing &&
-        cards.size == 5 && rulesetRef != null && cards.all { it.clocktowerRole != null }
-    LaunchedEffect(a4DeviceBenchmarkRuns) {
-        if (a4DeviceBenchmarkRuns == 0) return@LaunchedEffect
-        val activeRuleset = rulesetRef ?: return@LaunchedEffect
-        a4DeviceBenchmarkError = null
-        a4DeviceBenchmarkReport = null
-        runCatching {
-            withContext(Dispatchers.Default) {
-                val gameState = cards.toClocktowerGameState(script, gameSeed, poisonTarget)
-                val snapshot = GameSnapshot(
-                    gameId = gameId.ifBlank { "a4-device-diagnostic" },
-                    gameStateRevision = gameStateRevision,
-                    playerInputRevision = playerInputRevision,
-                    gameSeed = gameSeed,
-                    rulesetRef = activeRuleset,
-                    gameState = gameState,
-                )
-                val formal = FormalGameState.from(snapshot, when (phase) {
-                    ClocktowerPhase.FirstNight -> StorytellerPhase.FIRST_NIGHT
-                    ClocktowerPhase.Dawn -> StorytellerPhase.DAWN
-                    ClocktowerPhase.Day -> StorytellerPhase.DAY
-                    ClocktowerPhase.Night -> StorytellerPhase.NIGHT
-                }, round)
-                val perceivedRoles = cards.mapIndexed { index, card ->
-                    index + 1 to RoleId(requireNotNull(card.clocktowerShownRole ?: card.clocktowerRole).enName)
-                }.toMap()
-                // Multi-night timeline replay belongs to B4. The A4 device harness intentionally
-                // measures the current structural fixture plus its synthetic probes only.
-                val knowledge = A4PlayerKnowledgeFactory.createAll(
-                    formal = formal,
-                    perceivedRolesBySeat = perceivedRoles,
-                    observationLog = EpistemicObservationLog(),
-                ).first()
-                fun publicObservation(id: String, proposition: InformationProposition) = EpistemicObservation(
-                    id, formal.snapshotId, formal.phase, formal.round, 0, null, null,
-                    ObservationVisibility.PUBLIC, emptySet(), ObservationReliability.NOT_ABILITY_INFORMATION, proposition,
-                )
-                // Always include one synthetic private numeric observation so the device gate can
-                // measure decode/rebuild on any legal 5-player draw. It is never displayed,
-                // persisted, or fed to recommendation logic; real ability observations retain
-                // their own role and recipient semantics elsewhere.
-                val fallbackSeat = cards.indexOfFirst { it.eliminatedRound == null }.plus(1)
-                check(fallbackSeat > 0) { "A4 diagnostic requires one living recipient." }
-                val numericFallbackCase = A4DeviceBenchmarkCase(
-                    "numeric-synthetic-fallback",
-                    EpistemicObservation(
-                        "a4-device-numeric", formal.snapshotId, formal.phase, formal.round, 1,
-                        fallbackSeat, RoleId("Chef"),
-                        ObservationVisibility.PRIVATE, setOf(fallbackSeat),
-                        ObservationReliability.RECEIVED_AS_FUNCTIONING,
-                        InformationProposition.NumericResult(
-                            NumericMetric.ADJACENT_EVIL_PAIRS,
-                            fallbackSeat,
-                            (1..cards.size).toList(),
-                            1,
-                        ),
-                    ),
-                    ZddFilterStrategy.DECODE_REBUILD,
-                )
-                A4DeviceBenchmarkHarness.run(
-                    deviceLabel = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}",
-                    formal = formal,
-                    knowledge = knowledge,
-                    hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-                    roleDefinitions = clocktowerRoleDefinitionsForScript(script),
-                    cases = listOf(
-                        A4DeviceBenchmarkCase("alive-seat-2", publicObservation("a4-device-alive", InformationProposition.AliveAt(2, true)), ZddFilterStrategy.NATIVE_RESTRICTION),
-                        A4DeviceBenchmarkCase("spy-absent", publicObservation("a4-device-spy", InformationProposition.RoleInPlay(RoleId("Spy"), false)), ZddFilterStrategy.NATIVE_RESTRICTION),
-                        numericFallbackCase,
-                    ),
-                )
-            }
-        }.onSuccess { a4DeviceBenchmarkReport = it }
-            .onFailure { a4DeviceBenchmarkError = it.message ?: it.javaClass.simpleName }
-    }
-    LaunchedEffect(a4PrewarmCancellationProbeRuns) {
-        if (a4PrewarmCancellationProbeRuns == 0) return@LaunchedEffect
-        a4PrewarmCancellationProbeResult = null
-        a4PrewarmCancellationProbeError = null
-        runCatching {
-            check(a4DiagnosticAvailable) { "A4 prewarm diagnostic is unavailable for this game." }
-            val activeRuleset = requireNotNull(rulesetRef)
-            val snapshot = GameSnapshot(
-                gameId = gameId.ifBlank { "a4-prewarm-diagnostic" },
-                gameStateRevision = gameStateRevision,
-                playerInputRevision = playerInputRevision,
-                gameSeed = gameSeed,
-                rulesetRef = activeRuleset,
-                gameState = cards.toClocktowerGameState(script, gameSeed, poisonedPlayerName = null),
-            )
-            val formal = FormalGameState.from(snapshot, StorytellerPhase.FIRST_NIGHT, round = 1)
-            val perceivedRoles = cards.mapIndexed { index, card ->
-                index + 1 to RoleId(requireNotNull(card.clocktowerShownRole ?: card.clocktowerRole).enName)
-            }.toMap()
-            val request = A4IdentityRevealPrewarmRequest(
-                formal = formal,
-                playerInputRevision = playerInputRevision,
-                knowledgeBySeat = A4PlayerKnowledgeFactory.createAll(
-                    formal = formal,
-                    perceivedRolesBySeat = perceivedRoles,
-                    observationLog = EpistemicObservationLog(),
-                ).associateBy(PlayerKnowledgeSnapshot::recipientSeat),
-                revealOrder = cards.indices.map { it + 1 },
-                hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-                roleDefinitions = clocktowerRoleDefinitionsForScript(script),
-            )
-            // This coordinator and its cache are deliberately isolated from the live prewarmer.
-            // The probe reads a snapshot only and must prove its cancelled result is not reusable.
-            val coordinator = A4IdentityRevealPrewarmCoordinator()
-            val session = coordinator.start(request)
-            val frameTelemetry = A4MainThreadFrameTelemetry()
-            val frameMonitor = launch {
-                while (isActive) withFrameNanos(frameTelemetry::recordFrame)
-            }
-            try {
-                val worker = async(Dispatchers.Default) {
-                    coordinator.run(session, prioritizedRecipientSeat = 1)
-                }
-                // Allow an exact build to enter the worker, then cancel at a main-thread frame
-                // boundary so this device run exercises the stale-publication guarantee.
-                withFrameNanos { }
-                withFrameNanos { }
-                val cancellation = coordinator.cancel(session)
-                val report = worker.await()
-                check(report.entries.any { it.status.name == "STALE" }) {
-                    "Cancellation probe did not observe an in-flight stale result."
-                }
-                check(report.entries.all { coordinator.ready(it.key) == null }) {
-                    "Cancellation probe exposed a cancelled shadow result."
-                }
-                val summary = frameTelemetry.summary()
-                val logLine = report.toLogLine(summary) + " " + cancellation.toLogLine() +
-                    " verification=stale-not-published"
-                Log.i(A4_IDENTITY_PREWARM_LOG_TAG, logLine)
-                logLine
-            } finally {
-                frameMonitor.cancel()
-            }
-        }.onSuccess { a4PrewarmCancellationProbeResult = it }
-            .onFailure { error ->
-                a4PrewarmCancellationProbeError = error.message ?: error.javaClass.simpleName
-                Log.e(A4_IDENTITY_PREWARM_LOG_TAG, "A4 prewarm cancellation probe failed", error)
-            }
     }
     val spyCard = cards.firstOrNull { it.clocktowerRole?.enName == "Spy" }
     val recluseCard = cards.firstOrNull { it.clocktowerRole?.enName == "Recluse" }
@@ -603,14 +425,6 @@ internal fun ClocktowerJudgeScreen(
             listOf(recluseCard.name),
         )
     }
-    val firstNightWasherwoman = actualClocktowerRoleCards(cards, "Washerwoman").firstOrNull()
-    val firstNightLibrarian = actualClocktowerRoleCards(cards, "Librarian").firstOrNull()
-    val firstNightInvestigator = actualClocktowerRoleCards(cards, "Investigator").firstOrNull()
-    val chefPlayer = actualClocktowerRoleCards(cards, "Chef").firstOrNull()
-    val empathPlayers = actualClocktowerRoleCards(cards, "Empath").filter { it.eliminatedRound == null }
-    val fortuneTellerPlayers = actualClocktowerRoleCards(cards, "Fortune Teller").filter { it.eliminatedRound == null }
-    val poisonerPlayers = actualClocktowerRoleCards(cards, "Poisoner").filter { it.eliminatedRound == null }
-    val butlerPlayers = actualClocktowerRoleCards(cards, "Butler").filter { it.eliminatedRound == null }
     val canonicalNightDeathResolution = resolveTroubleBrewingDawnDeathResolution(
         cards = cards,
         script = script,
@@ -1225,29 +1039,6 @@ internal fun ClocktowerJudgeScreen(
                 selectedRecommendationStyle = automaticPlan.style
                 appliedRecommendationStyle = automaticPlan.style
             }
-        }
-    }
-    LaunchedEffect(unifiedSetupSelectorBenchmarkRuns) {
-        if (unifiedSetupSelectorBenchmarkRuns == 0) return@LaunchedEffect
-        unifiedSetupSelectorBenchmarkReport = null
-        unifiedSetupSelectorBenchmarkError = null
-        runCatching {
-            val plans = (recommendationUiState as? RecommendationUiState.Ready)?.plans.orEmpty()
-            check(plans.isNotEmpty()) { "Setup selector diagnostic requires a ready setup recommendation." }
-            withContext(Dispatchers.Default) {
-                UnifiedSetupSelectorDeviceBenchmark.run(
-                    coordinator = recommendationCoordinator,
-                    plans = plans,
-                    playerCount = cards.size,
-                    style = automaticStorytellerStyle,
-                )
-            }
-        }.onSuccess { report ->
-            unifiedSetupSelectorBenchmarkReport = report
-            Log.i(UNIFIED_SETUP_SELECTOR_BENCHMARK_LOG_TAG, report.toLogLine())
-        }.onFailure { error ->
-            unifiedSetupSelectorBenchmarkError = error.message ?: error.javaClass.simpleName
-            Log.e(UNIFIED_SETUP_SELECTOR_BENCHMARK_LOG_TAG, "Unified setup selector diagnostic failed", error)
         }
     }
     val executionThreshold = (publicAliveCards.size + 1) / 2
@@ -4571,7 +4362,6 @@ internal fun ClocktowerJudgeScreen(
                 sequence = currentStepIndex,
                 gameStateRevision = gameStateRevision,
                 playerInputRevision = playerInputRevision,
-                debugDiagnosticsExpanded = debugDiagnosticsExpanded,
                 selectionDistributionTelemetry = selectionDistributionTelemetry,
                 evilAdvantage = currentDynamicStorytellerState.evilAdvantage,
                 informationDecisionKey = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}",

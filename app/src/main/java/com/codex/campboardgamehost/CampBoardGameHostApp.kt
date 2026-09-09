@@ -2708,7 +2708,6 @@ internal fun CampBoardGameHostApp() {
                         gameSeed = clocktowerGameSeed,
                         gameStateRevision = clocktowerGameStateRevision,
                         playerInputRevision = clocktowerPlayerInputRevision,
-                        rulesetRef = clocktowerRulesetRef,
                         setupHistory = gameHistory.toClocktowerSetupHistory(),
                         setupRecommendationResultProvider =
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
@@ -2756,7 +2755,6 @@ internal fun CampBoardGameHostApp() {
                         pendingNewDemonName = clocktowerPendingNewDemonName,
                         pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
                         demonSuccessorTarget = clocktowerDemonSuccessorTarget,
-                        confirmedDemonSuccessorTarget = clocktowerConfirmedDemonSuccessorTarget,
                         virginUsed = clocktowerVirginUsed,
                         slayerUsed = clocktowerSlayerUsed,
                         slayerClaimedNames = clocktowerSlayerClaimedNames,
