@@ -47,10 +47,7 @@ internal data class ClocktowerRavenkeeperResultChoice(
     val recommended: Boolean = false,
 )
 
-/**
- * Ravenkeeper result identity is owned by the typed RoleAt proposition and must agree with the
- * current table selection. Presentation never recovers a target from localized display text.
- */
+/** Reliable direct results must use the exact player-visible RoleAt proposition. */
 internal fun clocktowerRavenkeeperTypedResult(
     proposition: InformationProposition?,
     selectedSeat: Int?,
@@ -65,10 +62,25 @@ internal fun clocktowerRavenkeeperTypedResult(
     )
 }
 
+/** Display options may instead carry non-epistemic Storyteller presentation metadata. */
+internal fun clocktowerRavenkeeperTypedResult(
+    option: ClocktowerDisplayOption,
+    selectedSeat: Int?,
+    seatCount: Int,
+): ClocktowerRavenkeeperTypedResult? {
+    if (selectedSeat == null || selectedSeat !in 1..seatCount) return null
+    val resolved = option.resolvedRoleRevealPresentation(seatCount) ?: return null
+    if (resolved.targetSeat != selectedSeat) return null
+    return ClocktowerRavenkeeperTypedResult(
+        targetSeat = resolved.targetSeat,
+        roleId = resolved.roleId,
+    )
+}
+
 /**
  * Thin projection of existing Ravenkeeper result domains. Target legality remains upstream; this
- * adapter only binds a selected target to the typed final role choices already produced by the
- * materializer/registration/reliability layers.
+ * adapter only binds a selected target to typed final-role identity supplied by the materializer,
+ * registration layer, or Storyteller-only presentation metadata.
  */
 internal fun clocktowerRavenkeeperResultChoices(
     step: ClocktowerNightStepUi,
@@ -90,7 +102,7 @@ internal fun clocktowerRavenkeeperResultChoices(
         if (options.isEmpty()) return emptyList()
         val choices = options.map { option ->
             val typed = clocktowerRavenkeeperTypedResult(
-                proposition = option.proposition,
+                option = option,
                 selectedSeat = selectedSeat,
                 seatCount = seatCount,
             ) ?: return emptyList()
