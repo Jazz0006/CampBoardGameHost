@@ -284,6 +284,8 @@ internal fun ClocktowerNightStepCardLocalized(
         emptyList()
     }
     val usesUndertakerSquareTable = undertakerResultChoices.isNotEmpty()
+    val spySquareTablePresentation = clocktowerSpySquareTablePresentation(step)
+    val usesSpySquareTable = spySquareTablePresentation != null
     val usesRavenkeeperSquareTable = step.action == ClocktowerNightAction.Ravenkeeper && step.actor != null
     val ravenkeeperSelectedSeat = if (usesRavenkeeperSquareTable) {
         selectedName
@@ -871,6 +873,19 @@ internal fun ClocktowerNightStepCardLocalized(
                     onConfirm = ::showUndertakerChoice,
                 )
             }
+            spySquareTablePresentation?.let { presentation ->
+                ClocktowerSpySquareTableDialog(
+                    seats = nightActionSeats,
+                    actorSeat = actionActorSeat,
+                    wakeInstruction = command,
+                    presentation = presentation,
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onPrevious = onPrevious,
+                    onNext = onNext,
+                    onShowLegacyReveal = { onShowPlayerDisplay(step) },
+                )
+            }
 
             step.tellPlayer
                 ?.takeIf { step.isRealAction && it.isNotBlank() && step.displayKind == ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid }
@@ -951,6 +966,7 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             if (
+                !usesSpySquareTable &&
                 !usesRavenkeeperSquareTable &&
                 !usesUndertakerSquareTable &&
                 !usesNumericSquareTable &&
@@ -1007,7 +1023,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 }
             }
 
-            if (!usesRavenkeeperSquareTable && !usesUndertakerSquareTable && !usesNumericSquareTable && nonPairResultFirstCandidates.isNotEmpty()) {
+            if (!usesSpySquareTable && !usesRavenkeeperSquareTable && !usesUndertakerSquareTable && !usesNumericSquareTable && nonPairResultFirstCandidates.isNotEmpty()) {
                 Text(
                     if (language == "en") "Choose the final information" else "选择最终展示信息",
                     color = MaterialTheme.colorScheme.primary,
@@ -1034,6 +1050,7 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             if (
+                !usesSpySquareTable &&
                 !usesRavenkeeperSquareTable &&
                 !usesUndertakerSquareTable &&
                 !usesNumericSquareTable &&
@@ -1058,7 +1075,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     }
                     RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
                 }
-            } else if (!usesRavenkeeperSquareTable && !usesUndertakerSquareTable && !usesNumericSquareTable && resultFirstRegistrationCandidates.isEmpty() && structuredNumberUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
+            } else if (!usesSpySquareTable && !usesRavenkeeperSquareTable && !usesUndertakerSquareTable && !usesNumericSquareTable && resultFirstRegistrationCandidates.isEmpty() && structuredNumberUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
                 OutlinedButton(
                     onClick = { onShowPlayerDisplay(step) },
                     modifier = Modifier.fillMaxWidth(),
