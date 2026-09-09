@@ -68,6 +68,17 @@ internal fun clocktowerUndertakerTypedResult(
     )
 }
 
+internal fun clocktowerUndertakerTypedResult(
+    option: ClocktowerDisplayOption,
+    seatCount: Int,
+): ClocktowerUndertakerTypedResult? {
+    val resolved = option.resolvedRoleRevealPresentation(seatCount) ?: return null
+    return ClocktowerUndertakerTypedResult(
+        executedSeat = resolved.targetSeat,
+        roleId = resolved.roleId,
+    )
+}
+
 internal fun clocktowerUndertakerResultChoices(
     step: ClocktowerNightStepUi,
     seatCount: Int,
@@ -83,7 +94,7 @@ internal fun clocktowerUndertakerResultChoices(
     ): List<ClocktowerUndertakerResultChoice> {
         if (options.isEmpty()) return emptyList()
         val choices = options.map { option ->
-            val typed = clocktowerUndertakerTypedResult(option.proposition, seatCount)
+            val typed = clocktowerUndertakerTypedResult(option, seatCount)
                 ?: return emptyList()
             ClocktowerUndertakerResultChoice(
                 key = clocktowerInformationCandidateId(option),
