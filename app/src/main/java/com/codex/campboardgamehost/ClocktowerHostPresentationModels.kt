@@ -55,6 +55,8 @@ internal data class ClocktowerNightStepUi(
     val displaySecondary: String? = null,
     val displayFooter: String? = null,
     val displayProposition: InformationProposition? = null,
+    /** Spatial presentation identity only; it does not make a player-visible claim reliable. */
+    val presentationSubjectSeats: List<Int> = emptyList(),
     val displayOptions: List<ClocktowerDisplayOption> = emptyList(),
     val recommendedDisplayOptions: List<ClocktowerDisplayOption> = emptyList(),
     /**
