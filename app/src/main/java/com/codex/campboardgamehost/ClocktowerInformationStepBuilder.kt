@@ -28,6 +28,7 @@ internal class ClocktowerInformationStepBuilder(
         displayFooter: String? = explanation,
         displayTitle: String? = null,
         displayProposition: InformationProposition? = null,
+        presentationSubjectSeats: List<Int> = emptyList(),
         hostInstruction: String? = null,
         displayOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
         automaticSelectionOptions: (PlayerCard) -> List<ClocktowerDisplayOption> = { emptyList() },
@@ -102,6 +103,7 @@ internal class ClocktowerInformationStepBuilder(
                     displaySecondary = displaySecondary,
                     displayFooter = displayFooter ?: explanation,
                     proposition = displayProposition,
+                    presentationSubjectSeats = presentationSubjectSeats,
                 )
             }
         val completeLegacyCandidates = (unreliableOptions + reliableRecommendations + listOfNotNull(directLegacyCandidate))
@@ -150,6 +152,7 @@ internal class ClocktowerInformationStepBuilder(
             displayKind = if (actor != null && unreliableOptions.isEmpty() && !tellPlayer.isNullOrBlank()) resolvedDisplayKind else ClocktowerDisplayKind.None,
             displayTitle = localizedDisplayTitle,
             displayProposition = displayProposition,
+            presentationSubjectSeats = if (actor != null && unreliableOptions.isEmpty()) presentationSubjectSeats else emptyList(),
             displayPrimary = if (actor != null && unreliableOptions.isEmpty()) displayPrimary ?: tellPlayer else null,
             displaySecondary = if (actor != null && unreliableOptions.isEmpty()) displaySecondary else null,
             displayFooter = if (actor != null && unreliableOptions.isEmpty()) displayFooter ?: explanation else null,
