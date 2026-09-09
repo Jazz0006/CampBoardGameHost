@@ -17,6 +17,16 @@ workflows/    superseded workflow instructions
 
 Files directly under `archive/` are older consolidated closeouts, superseded design versions, or historical reports retained for traceability.
 
+### 2026-09-09 D6 closeout
+
+The completed D6.0 / D6.1 / D6.2 / R3 decomposition evidence is grouped under:
+
+```text
+checkpoints/d6/
+```
+
+Use `checkpoints/d6/D6_DECOMPOSITION_CAMPAIGN_CLOSEOUT_INDEX_2026-09-09.md` as the historical entry point. The individual D6 audit/progress files should not be loaded by default in new UI-R5 sessions.
+
 ## 2. Handoffs
 
 A handoff moves to `handoffs/` when its execution contract is completed, cancelled, or superseded by a new active handoff.
@@ -25,7 +35,7 @@ Even if the filename still contains `NEXT_DEVELOPMENT_HANDOFF`, it is not curren
 
 ## 3. Checkpoints
 
-`checkpoints/` contains historical slice-level implementation, audit and acceptance records such as completed MS/TBSP/UI checkpoints.
+`checkpoints/` contains historical slice-level implementation, audit and acceptance records such as completed MS/TBSP/UI/D6 checkpoints.
 
 Their detailed SHAs, CI results and file lists remain useful evidence, but they should not be loaded by default in new development sessions.
 
