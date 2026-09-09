@@ -846,6 +846,7 @@ internal fun ClocktowerJudgeScreen(
     var nightStarted by nightStartedState
     var nightStepIndex by nightStepIndexState
     var dayMode by dayModeState
+    var deferredNightAdvanceIndex by remember(gameId, round, phase) { mutableStateOf<Int?>(null) }
     var nominatorName by remember(gameId, round) { mutableStateOf<String?>(null) }
     var nomineeName by remember(gameId, round) { mutableStateOf<String?>(null) }
     var highestVoteName by highestVoteNameState
@@ -4204,10 +4205,39 @@ internal fun ClocktowerJudgeScreen(
                 }
             }
             recordNightStep(currentStep)
-            if (currentStepIndex < nightSteps.lastIndex) {
-                nightStepIndex = currentStepIndex + 1
-            } else {
+            val flowMayExpandAfterConfirmation = currentStep.action in setOf(
+                ClocktowerNightAction.DemonKill,
+                ClocktowerNightAction.MayorRedirect,
+            )
+            when (
+                val directive = clocktowerNightAdvanceDirective(
+                    currentStepIndex = currentStepIndex,
+                    currentStepCount = nightSteps.size,
+                    flowMayExpandAfterConfirmation = flowMayExpandAfterConfirmation,
+                )
+            ) {
+                is ClocktowerNightAdvanceDirective.MoveTo -> {
+                    if (directive.stepIndex >= nightSteps.size) {
+                        deferredNightAdvanceIndex = directive.stepIndex
+                    }
+                    nightStepIndex = directive.stepIndex
+                }
+                ClocktowerNightAdvanceDirective.CompleteNight -> onConfirmNight()
+            }
+        }
+
+        LaunchedEffect(nightSteps.size, deferredNightAdvanceIndex) {
+            val requestedIndex = deferredNightAdvanceIndex ?: return@LaunchedEffect
+            if (
+                clocktowerDeferredNightAdvanceShouldComplete(
+                    requestedStepIndex = requestedIndex,
+                    refreshedStepCount = nightSteps.size,
+                )
+            ) {
+                deferredNightAdvanceIndex = null
                 onConfirmNight()
+            } else {
+                deferredNightAdvanceIndex = null
             }
         }
 
