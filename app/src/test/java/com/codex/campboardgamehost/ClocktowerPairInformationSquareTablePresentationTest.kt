@@ -3,6 +3,8 @@ package com.codex.campboardgamehost
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerPairInformationSquareTablePresentationTest {
@@ -26,6 +28,39 @@ class ClocktowerPairInformationSquareTablePresentationTest {
             ClocktowerSquareTableSeatState.Neutral,
             clocktowerPairInformationSeatState(selection, seatNumber = 2, editing = false),
         )
+    }
+
+    @Test
+    fun `current actor highlight is independent from information pair state`() {
+        val recommended = option("Chef", 1, 4)
+        val presentation = ClocktowerPairManualAuthority.selectionPresentation(listOf(recommended))
+        val selection = ClocktowerPairManualSelectionModel.from(presentation, recommended)
+
+        val actor = clocktowerPairInformationSeatPresentation(
+            selection = selection,
+            seatNumber = 6,
+            editing = false,
+            actorSeat = 6,
+        )
+        val firstInformationSeat = clocktowerPairInformationSeatPresentation(
+            selection = selection,
+            seatNumber = 1,
+            editing = false,
+            actorSeat = 6,
+        )
+        val secondInformationSeat = clocktowerPairInformationSeatPresentation(
+            selection = selection,
+            seatNumber = 4,
+            editing = false,
+            actorSeat = 6,
+        )
+
+        assertEquals(ClocktowerSquareTableSeatState.Neutral, actor.targetState)
+        assertTrue(actor.isCurrentActor)
+        assertEquals(ClocktowerSquareTableSeatState.SelectedFirst, firstInformationSeat.targetState)
+        assertFalse(firstInformationSeat.isCurrentActor)
+        assertEquals(ClocktowerSquareTableSeatState.SelectedSecond, secondInformationSeat.targetState)
+        assertFalse(secondInformationSeat.isCurrentActor)
     }
 
     @Test
