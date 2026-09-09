@@ -1,37 +1,26 @@
 # CampBoardGameHost
 
-离线优先的 Android 桌游主持/辅助应用。目前代码中包含「谁是卧底」「狼人杀」和 Blood on the Clocktower（血染钟楼）主持流程；当前主要工程重点是 Trouble Brewing（暗流涌动）自动说书人的规则正确性、玩家认知一致性、主持流程稳定性与可维护架构。
+离线优先的 Android 桌游主持/辅助应用。目前代码中包含「谁是卧底」「狼人杀」和 Blood on the Clocktower（血染钟楼）主持流程；当前主要工程重点仍是 Trouble Brewing（暗流涌动）自动说书人的规则正确性、玩家认知一致性、主持流程稳定性与可维护性。
 
 ## 当前开发状态
 
-当前 active campaign 是 **Persistence Simplification / Recent Emergency Recovery**。
+Persistence Simplification 已完成；D6.1 / D6.2 架构与 UI-composition decomposition 已完成并合入。D6 的可安全、高收益拆分已经结束；R3 对 `CampBoardGameHostApp.kt` 深层事务应用边界的 read-only viability audit 得出 **NO-GO**，因此不再为了缩小文件而继续创建 transaction controller / callback bag / second coordinator。
 
-产品需求已经重新确认：进行中的游戏只需要应对来电、切换 App、进程回收、崩溃或误关闭后的短时恢复；**不需要长期 Save Game，也不要求今天保存、明天继续，或跨 App 版本精确恢复整个 UI/runtime**。
-
-因此当前工作不属于 D6 大文件拆分。实施顺序调整为：
-
-1. 冻结 Recent Emergency Recovery 产品合同；
-2. 将 active recovery 与长期 archive/history 分离；
-3. 建立最小 typed `RecoverySnapshot`，只保存已提交游戏事实和必要 continuation；
-4. 简化 restore：恢复游戏，不恢复整个 App UI；
-5. 删除旧 active-save compatibility、preview、重复 checkpoint/draft persistence 等遗留路径；
-6. 最后审计 persistence trigger，避免无意义的整棵运行时频繁同步写盘。
-
-Night Step D1–D5 已完成并通过 PR #106 合入；后续 crash/initialization/Poisoner 修复 #107、#108、#110 也已进入 `main`。原 D6 planning PR #111 已关闭且不合并，因为它基于“完整存档/恢复”前提；Persistence Simplification 完成并合入后，再对缩小后的 App/Host 重新做一次独立 D6 ownership/decomposition audit。
-
-之后的总体顺序是：
+当前 active campaign 已切换为：
 
 ```text
-Persistence Simplification
--> fresh D6 App/Host ownership audit + decomposition
--> UI-R5 real-device stabilization
+square-table Storyteller UI consolidation / UI-R5 real-device stabilization
 -> EPI-MQ / Productive Uncertainty
--> UX-R6 recommendation-provider replacement
+-> UX-R6 legacy recommendation-provider replacement
 ```
+
+UI-R5 的目标是统一现有方桌 Storyteller 交互语言并完成真机稳定性，而不是修改推荐算法、规则语义或 Persistence/Recovery 架构。完成 UI-R5 并通过真机验收后，才进入 EPI-MQ / Productive Uncertainty。
+
+D6 之后继续保持：`ClocktowerGameSession` 是 canonical writable game/session authority；Planner/Reducer 负责纯语义与 durable intent planning；App 保留跨 owner 的 Compose-facing application choreography。大 composition root 本身不再作为继续拆分的充分理由。
 
 A4/ZDD 仍不切换到 production。
 
-**开发前请先阅读 [`docs/README.md`](docs/README.md) 和 [`docs/CURRENT_DEVELOPMENT_ROADMAP.md`](docs/CURRENT_DEVELOPMENT_ROADMAP.md)。** 其他设计文档中的旧 `PASS / COMPLETE / READY / NEXT` 状态如果与当前路线冲突，以这两份入口文档为准。
+**开发前请先阅读 [`docs/README.md`](docs/README.md)、[`docs/CURRENT_DEVELOPMENT_ROADMAP.md`](docs/CURRENT_DEVELOPMENT_ROADMAP.md) 和当前 active handoff。** 历史 D6/R3 audit、checkpoint 与旧 handoff 已归档；其中的 `PASS / COMPLETE / READY / NEXT` 只作为证据，不控制当前优先级。
 
 ## 项目结构
 
@@ -50,7 +39,8 @@ A4/ZDD 仍不切换到 production。
 常用 JVM 回归测试：
 
 ```bash
-./gradlew testDebugUnitTest --no-daemon
+./gradlew :app:testFast
+./gradlew :app:testFull
 ```
 
 ASP Oracle 工具测试：
@@ -61,7 +51,8 @@ python3 -m unittest discover -s tools/asp_oracle -p 'test_*.py'
 
 ## 文档维护约定
 
-- 当前开发状态只写入 `docs/CURRENT_DEVELOPMENT_ROADMAP.md`。
-- 总体认知一致性架构以 v2.2 主规范为准。
-- 阶段专项 spec 不能绕过主规范的规则权威和玩家知识边界。
-- 已完成、被取代或验收结论失效的文档移入 `docs/archive/`，不再作为新开发入口。
+- 当前开发状态与全局优先级只写入 `docs/CURRENT_DEVELOPMENT_ROADMAP.md`。
+- `docs/README.md` 只维护当前默认阅读入口，不复制详细 checkpoint 历史。
+- 当前 active handoff 只允许一份；完成或被取代后移入 `docs/archive/handoffs/`。
+- 已完成的 slice audit/progress/acceptance 证据移入 `docs/archive/checkpoints/`。
+- 总体认知一致性架构以 v2.2 主规范为准；专项 spec 不能绕过规则权威和玩家知识边界。

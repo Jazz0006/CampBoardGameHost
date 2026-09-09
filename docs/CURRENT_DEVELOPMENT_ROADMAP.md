@@ -4,302 +4,201 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
-## Live context
+## 1. Current project state
 
 ```text
-main:
-f64245573db246cfb3900d8f0a698e94158b9b1c
-docs: close D6.2 merge and set R3 audit next
-
-D6.2 merge commit:
-c75e0f0bc4635ef42ffbece41470c3437a205910
-Merge pull request #115 from Jazz0006/codex/d6-2-ui-composition
-
-D6.2 PR:
-#115 — MERGED
-
-Final D6.2 production checkpoint:
-a692cc722f1e597e747154bf05a2689fee9bed4c
-
-Final production-equivalent code/test head:
-b2263cd08bc2ce223598698324bf2b22243c91f2
-
-Final acceptance trigger head:
-9ec4ce2f9e0d4114f84ee7bde90ff7e409caac8e
-
-R3 audit branch:
-codex/r3-transaction-application-viability-audit
-
-R3 audit result commit:
-a2d09c8a6bde652a4fbd3fd4f62dfe5f35019a59
+Persistence Simplification                         COMPLETE / merged
+D6.1 Clocktower session authority                 COMPLETE / merged
+D6.2 UI Composition R0–R2                         COMPLETE / FULL accepted / merged
+R3 deep transaction-application viability audit   COMPLETE / NO-GO
+D6 decomposition campaign                         COMPLETE
 ```
 
-`f642455...` is documentation-only relative to the D6.2 merge. The production/test/workflow tree remains the same production-equivalent tree that received the final FULL acceptance gate.
-
-## Current priority
-
-> **D6.1 COMPLETE / MERGED → D6.2 R0–R2 COMPLETE / FULL ACCEPTED / MERGED → R3 READ-ONLY VIABILITY AUDIT COMPLETE / NO-GO → D6 DECOMPOSITION CAMPAIGN COMPLETE.**
-
-Do not reopen completed D6.2 slices. Do not implement an R3 transaction controller/applier merely to reduce `CampBoardGameHostApp.kt` size.
-
-The next engineering/product priority is:
+D6.2 was merged through PR #115. The final production-equivalent code/test head was:
 
 ```text
-square-table Storyteller UI consolidation / UI-R5 real-device stabilization
+b2263cd08bc2ce223598698324bf2b22243c91f2
+```
+
+Final D6.2 FULL acceptance was triggered at:
+
+```text
+9ec4ce2f9e0d4114f84ee7bde90ff7e409caac8e
+CI 34307304901 — PASS
+R2 34307304900 — PASS
+```
+
+The D6.2 merge commit was:
+
+```text
+c75e0f0bc4635ef42ffbece41470c3437a205910
+```
+
+Real-device critical-path testing was explicitly waived for the D6.2 merge. That waiver does **not** carry forward to UI-R5.
+
+Detailed D6/R3 evidence is historical and now lives under:
+
+- `docs/archive/checkpoints/d6/`
+- `docs/archive/checkpoints/d6/D6_DECOMPOSITION_CAMPAIGN_CLOSEOUT_INDEX_2026-09-09.md`
+
+## 2. Current priority
+
+> **NEXT: square-table Storyteller UI consolidation / UI-R5 real-device stabilization.**
+
+The global execution order is now frozen as:
+
+```text
+UI-R5 square-table Storyteller consolidation + real-device stabilization
 -> EPI-MQ / Productive Uncertainty
 -> UX-R6 legacy recommendation-provider replacement
 ```
 
-## Final D6.2 acceptance
+Do not start EPI-MQ implementation before UI-R5 acceptance. Do not reopen D6 merely because `CampBoardGameHostApp.kt` remains large.
 
-### Structural / ownership result
+Current active handoff:
 
-D6.2 completed the first-wave UI-composition decomposition without introducing a replacement mega-state or callback/context bag.
+- `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-09_UI_R5_SQUARE_TABLE_STABILIZATION.md`
 
-Measured from the post-D6.1 baseline:
+Primary product/UI reference:
 
-```text
-ClocktowerHostScreen.kt
-  329,172 -> 260,686 bytes   (~-20.8%)
+- `docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`
 
-ClocktowerDayScreen.kt
-  50,927 -> 31,846 bytes     (~-37.5%)
+## 3. UI-R5 mission
 
-ClocktowerHistoryScreen.kt
-  38,365 -> 29,188 bytes     (~-23.9%)
+UI-R5 is a presentation/interaction stabilization campaign. Its purpose is to make the square-table Storyteller experience coherent and reliable on a real phone without changing domain authority.
 
-CampBoardGameHostApp.kt
-  241,986 -> 233,013 bytes   (~-3.7%)
+Primary goals:
 
-ClocktowerNightStepUi.kt
-  ~47,970 -> ~45,697 bytes   (~-4.7%)
-```
+1. audit every surviving square-table Storyteller surface and identify duplicated geometry, seat-state rendering and interaction ownership;
+2. establish one reusable square-table presentation vocabulary where a real shared boundary exists;
+3. converge Manual clue selection, target selection and player-facing information display on the same seat geometry and visual-state rules;
+4. stabilize portrait-phone behavior for real devices, especially dense 8–15 player layouts;
+5. verify readability, safe insets, no clipping/overlap, usable tap targets and stable seat identity;
+6. preserve hidden-information boundaries and the existing typed legal-domain / structured confirmation path;
+7. complete real-device acceptance before moving to EPI-MQ.
 
-Whole-PR production Kotlin delta from base `d76b085...` to final code/test head `b2263cd...`:
+### Explicit non-goals
 
-```text
-+276 / -2,005
-net -1,729 lines
-```
+UI-R5 does **not** authorize:
 
-`ClocktowerHostScreen.kt` alone:
+- recommendation/scoring changes;
+- EPI-MQ / Productive Uncertainty implementation;
+- new gameplay/rules semantics;
+- Persistence/Recovery redesign;
+- a second game/session state owner;
+- broad ViewModel/controller/context bags merely to reduce Compose parameter counts;
+- renewed App-root decomposition based only on file size;
+- A4/ZDD production cutover.
 
-```text
-+106 / -1,141
-net -1,035 lines
-```
+## 4. UI-R5 execution order
 
-Judge ownership surface:
+### UI-R5.0 — fresh read-only UI audit
 
-```text
-ClocktowerJudgeScreen
-  parameters:          103 -> 87
-  callbacks:            39 -> 34
-  providers:             3 -> 3
-  MutableState params:  10 -> 5
+Start from a fresh branch based on live `main` after this documentation closeout is merged.
 
-NightStep parameters:
-  49 -> 48
-  intentionally not chased with a parameter bag
+Audit:
 
-Reproducible App scalar-state metric:
-  47 -> 44
-```
+- surviving square-table composables and call sites;
+- seat geometry / edge allocation logic;
+- selection/highlight state models;
+- Storyteller-only vs player-facing information boundaries;
+- Manual pair-selection flow;
+- Fortune Teller two-target/result flow;
+- final player information display;
+- dense 8–15 player portrait behavior and known real-device risks.
 
-### Final FULL/T4
+The first output is an ownership/duplication map and a smallest-cohesive-boundary proposal. Do not begin by introducing a generic state/action bag.
 
-Final acceptance checkpoint:
+### UI-R5.1 — characterization / layout contract
 
-```text
-9ec4ce2f9e0d4114f84ee7bde90ff7e409caac8e
-[full-ci] docs(d6.2): request final acceptance gate
-```
+Before meaningful structural consolidation, establish the cheapest durable evidence for:
 
-Validation:
+- stable seat identity and ordering;
+- legal target/selectable/selected/highlighted/disabled presentation states;
+- no player-facing hidden-state leak;
+- existing typed Manual legality and Fortune Teller result legality;
+- existing confirmed observation/history boundary.
 
-```text
-CI 34307304901 — PASS
-  Android full JVM tests + debug APK — PASS
-  ASP contract tests — PASS
-  Real Clingo cross-validation — PASS
-  CI gate — PASS
+For purely visual geometry where unit tests would only lock implementation shape, prefer compile/static evidence plus real-device acceptance over artificial source-shape tests.
 
-R2 34307304900 — PASS
-```
+### UI-R5.2 — square-table consolidation
 
-The `[full-ci]` commit was documentation-only and used the repository's existing supported FULL-checkpoint mechanism. It did not alter production source, tests or workflow routing.
+Extract/reuse only boundaries that own real shared presentation behavior, for example geometry, seat placement, seat visual state or common interaction shell.
 
-### Real-device status
+Do not move domain semantics, recommendation invocation, durable observation commit or canonical GameState ownership into the shared UI layer.
 
-Real-device critical-path testing was **explicitly waived by the user for PR #115 merge**.
+### UI-R5.3 — flow convergence
 
-This is a waiver, not a claim that real-device testing executed or passed. Real-device coverage remains part of UI-R5 / field stabilization.
+Bring the active Storyteller flows onto the shared square-table visual language where appropriate:
 
-### Merge
+- Manual clue/seat selection;
+- direct target selection;
+- Fortune Teller two-target/result interaction;
+- final player-facing information display.
 
-PR #115 was marked ready after the final gate and merged with the reviewed exact head.
+Keep the current legal semantic domain as the source of truth. Presentation must not reconstruct semantics from localized labels.
 
-```text
-merge commit:
-c75e0f0bc4635ef42ffbece41470c3437a205910
-```
+### UI-R5.4 — real-device stabilization
 
-## D6.2 completed ownership decisions
+Portrait phone is the primary target. Validate at minimum:
 
-### R0 — dead / wrong ownership cleanup
+- dense player counts up to 15;
+- player/seat text remains readable;
+- no status/navigation inset collision;
+- no seat/center-content overlap;
+- important buttons remain reachable;
+- selection/highlight does not rely on color alone;
+- orientation/recomposition does not corrupt draft selection;
+- player-facing display contains only intended visible information.
 
-Completed:
+Real-device defects found here are part of UI-R5, not deferred merely because JVM tests are green.
 
-- characterized Judge inputs instead of introducing a mega-state;
-- localized Slayer, Artist and nomination transient state while preserving durable callbacks;
-- proved and deleted the unreachable legacy HostScriptCard/HostProgressCard Storyteller tail;
-- removed dead phase/result/record plumbing and dormant diagnostics;
-- retired unused Day/History UI plus obsolete R2 source-shape assertions;
-- removed the isolated private App decoder island while preserving live archive/Recovery codecs.
+### UI-R5.5 — acceptance / closeout
 
-### R1 — information preparation / role materializer
+UI-R5 is complete only when:
 
-Completed:
+- focused/FAST affected validation is green;
+- broader Android validation is run at the logical acceptance checkpoint according to `TESTING_STRATEGY.md`;
+- exact diff/ownership audit confirms no domain/persistence scope creep;
+- real-device critical paths are executed and recorded;
+- roadmap and active handoff are updated before EPI-MQ begins.
 
-- extracted the honest shared previous-number/recommendation-to-display seam;
-- prepared Chambermaid immutable seat/proposition presentation once;
-- extracted one narrow Chambermaid materializer reused in both night phases;
-- kept recommendation invocation, history, style/pressure, telemetry and publication in their existing owners.
-
-### R1/R2 residual NO-GO decisions
-
-The following were audited and deliberately **not** extracted:
-
-- generic Clockmaker/Chef/Empath numeric materializer family;
-- generic numeric NightStep interaction owner;
-- generic all-family NightStep context/owner;
-- extra Day-vote wrapper/controller;
-- generic setup-effect owner/context.
-
-These are accepted outcomes, not unfinished D6.2 work. The audits found that existing specialized typed owners already carry the meaningful responsibility and another wrapper would mostly relocate fan-out.
-
-## R3 — read-only deep transaction application audit — COMPLETE / NO-GO
-
-Authoritative audit:
-
-- `docs/R3_TRANSACTION_APPLICATION_VIABILITY_AUDIT_2026-09-09.md`
-
-The strongest candidate was deep transaction application in `CampBoardGameHostApp.kt`, especially night-confirm / Dawn / succession application sequencing.
-
-The planning and durable authority were already typed before R3:
-
-```text
-NightCheckpointHostTransaction
-  -> checkpoint + revision intent
-  -> no durable side effects
-
-NightDawnResolutionPlanner
-  -> pure continuation/checkpoint/DawnCommitIntent
-
-NightDawnDurableMaterializationPlanner
-  -> pure exactly-once materialization plan
-  -> stable IDs support partial-persistence repair
-
-ClocktowerGameSession
-  -> canonical writable GameState/revision/history authority
-  -> atomic action/observation commit primitives
-```
-
-### R3 finding
-
-The remaining App code is not one missing cohesive transaction owner. It is cross-boundary choreography among existing owners plus:
-
-- non-mutating public-observation/A4 preflight;
-- session mechanical mutation and publication;
-- App `PlayerCard` presentation projection;
-- localized records/events;
-- succession/Klutz/Ravenkeeper/outcome continuation;
-- phase-specific revision cadence;
-- Day/Dusk-specific lifecycle and debug evidence.
-
-A new executor that truly owned the full order would require a broad context/callback surface equivalent to App. A narrow executor would leave the real ordering in App and merely re-express instructions already produced by `NightDawnDurableMaterializationPlanner`.
-
-The audit therefore rejects:
-
-- further night-checkpoint controller extraction;
-- a generic Dawn death executor;
-- a generic Dawn effect executor;
-- a shared Dawn/Day transaction owner;
-- a separate Day execution applier;
-- expanding `ClocktowerGameSession` to absorb presentation/UI application;
-- a low-value materialization-state factory as justification for a second-wave R3 implementation.
-
-### R3 test evidence
-
-`NightTransactionHostIntegrationSmokeTest` explicitly proves the real typed Host/session seams while stopping before App-owned durable side effects so that no second coordinator/state owner is introduced.
-
-`NightDawnRestoreRetryConvergenceAcceptanceTest` consumes a `DawnDurableMaterializationPlan` in a test-local materializer and proves partial-persistence convergence and exactly-once replay. This validates the **plan** as the stable abstraction; it does not establish a missing production executor contract.
-
-### R3 GO-gate result
-
-```text
-small typed inputs/outputs                         FAIL for a complete executor
-clear new single application-order owner           FAIL
-preserve one ClocktowerGameSession authority       PASS by keeping current boundary
-no Compose dependency in session/domain            PASS by keeping current boundary
-typed behavioral evidence                          PASS for existing planner/session seam
-maintainability gain beyond line movement          FAIL
-```
-
-**Final R3 decision: NO-GO.**
-
-Per the original roadmap rule, this ends the D6 decomposition campaign.
-
-## Frozen architecture after D6/R3
+## 5. Frozen architecture after D6/R3
 
 Preserve:
 
 - `ClocktowerGameSession` canonical writable ownership;
-- pure planner/reducer ownership of transaction semantics and exactly-once intent planning;
-- App ownership of the remaining cross-boundary application choreography and Compose-facing projection;
-- exact game/player revision cadence and ordering;
-- one monotonic collision-free semantic chronology;
+- pure planner/reducer ownership of rules/transaction semantics and exactly-once intent planning;
+- existing App ownership of remaining cross-boundary application choreography and Compose-facing projection;
+- exact revision cadence and semantic chronology;
 - action/observation idempotency and non-mutating preflight;
-- no storyteller-hidden target leak;
-- Recovery v2 current-version-only policy;
-- SideEffect / ON_PAUSE / ON_STOP + `RecoveryWriteGate` topology;
+- Recovery v2 current-version-only policy and existing trigger topology;
 - A4 durability/invalidation/prewarm ordering;
 - no Compose dependency in session/domain;
-- gameplay/recommendation semantics unless separately authorized;
+- no storyteller-hidden target leak;
 - Undercover/Werewolf isolation.
 
-A large composition root is acceptable when the remaining code is the wiring between narrower authoritative owners. File size alone is not a reason to create another controller/context layer.
+A future product requirement may justify a new application seam, but file size alone does not.
 
-## R3 revisit trigger
+## 6. Testing / validation authority
 
-Do not reopen R3 merely because `CampBoardGameHostApp.kt` remains large.
+Read and follow:
 
-Re-audit only if a future product change naturally creates a new seam, such as:
+- root `AGENTS.md`;
+- `docs/TESTING_STRATEGY.md`.
 
-- a real typed atomic session transaction API required by multiple non-UI callers;
-- a dedicated presentation projector introduced for independent product reasons;
-- a second production host surface that genuinely reuses the same Dawn commit protocol;
-- persistence semantics changing so that an explicit durable transaction object becomes necessary.
+Documentation-only closeout changes require no Android regression. UI-R5 production work should use the risk-based T0–T4 model; the final UI-R5 gate must include recorded real-device validation because the previous D6.2 waiver is now intentionally closed.
 
-## Authoritative references
+## 7. Current authoritative reading order
 
-For the next session read, in order:
+For a new development session read, in order:
 
 1. root `AGENTS.md`;
-2. `docs/TESTING_STRATEGY.md`;
+2. `docs/README.md`;
 3. this roadmap;
-4. `docs/R3_TRANSACTION_APPLICATION_VIABILITY_AUDIT_2026-09-09.md`;
-5. `docs/D6_2Y_FIRST_WAVE_ACCEPTANCE_REMEASUREMENT_2026-09-09.md`;
-6. `docs/D6_2Z_FINAL_PR_DIFF_OWNERSHIP_REVIEW_2026-09-09.md`;
-7. `docs/D6_2AA_FINAL_ACCEPTANCE_GATE_2026-09-09.md`;
-8. `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md` for historical D6 residual-candidate context.
+4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-09_UI_R5_SQUARE_TABLE_STABILIZATION.md`;
+5. `docs/TESTING_STRATEGY.md`;
+6. `docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`;
+7. specialized semantic/product docs only as required by the chosen slice.
 
-Historical D6.2 implementation details remain in `docs/D6_2A...D6_2X...`. Do not re-implement completed slices.
-
-## Next priority after D6
-
-```text
-square-table Storyteller UI consolidation / UI-R5 real-device stabilization
--> EPI-MQ / Productive Uncertainty
--> UX-R6 legacy recommendation-provider replacement
-```
+Do not load the D6 archive by default. Use `docs/archive/checkpoints/d6/D6_DECOMPOSITION_CAMPAIGN_CLOSEOUT_INDEX_2026-09-09.md` only when historical ownership evidence is needed.
