@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.Alignment as ClocktowerAlignment
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
@@ -80,7 +80,7 @@ internal fun clocktowerChefSeatVisual(
 )
 
 internal fun clocktowerChefActualEvilSeats(players: List<PlayerState>): Set<Int> = players
-    .filter { player -> player.actualAlignment == Alignment.EVIL }
+    .filter { player -> player.actualAlignment == ClocktowerAlignment.EVIL }
     .mapTo(linkedSetOf()) { player -> player.seat }
 
 internal fun clocktowerChefRecluseSeat(players: List<PlayerState>): Int? = players
