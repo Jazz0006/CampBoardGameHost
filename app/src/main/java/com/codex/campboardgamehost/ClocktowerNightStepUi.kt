@@ -666,6 +666,8 @@ internal fun ClocktowerNightStepCardLocalized(
                     presentation = pairManualPresentation,
                     recommendedOption = pairRecommendationPresentation?.primary,
                     seats = nightActionSeats,
+                    actorSeat = actionActorSeat,
+                    wakeInstruction = command,
                     abilityLabel = step.roleEnName
                         ?.let { roleId -> clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language) }
                         ?: step.title,
