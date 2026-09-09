@@ -25,8 +25,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -36,7 +34,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -47,7 +44,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -88,7 +84,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -212,201 +207,11 @@ import kotlin.math.sin
 import java.util.Locale
 import java.util.UUID
 
-@Composable
-internal fun ClocktowerGameRecordPanel(
-    cards: List<PlayerCard>,
-    events: List<ClocktowerEvent>,
-    language: String,
-) {
-    var expanded by remember { mutableStateOf(true) }
-    val context = LocalContext.current
-    fun text(zh: String, en: String): String = if (language == "en") en else zh
-    val visibleEvents = events
-        .filterNot { it.type == ClocktowerEventType.System || it.type == ClocktowerEventType.Phase }
-        .filter { it.phase != ClocktowerPhase.Dawn }
-        .sortedBy { it.sequence }
-
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        HorizontalDivider()
-        OutlinedButton(
-            onClick = { expanded = !expanded },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(text("游戏记录", "Game record"), fontWeight = FontWeight.Bold)
-                    Text(
-                        text("${visibleEvents.size} 条", "${visibleEvents.size} events"),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF6F7B74),
-                    )
-                }
-                Text(if (expanded) "▲" else "▼", fontSize = 14.sp)
-            }
-        }
-
-        if (expanded) {
-            if (visibleEvents.isEmpty()) {
-                Text(text("暂无记录", "No events yet"), color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
-            } else {
-                val grouped = visibleEvents
-                    .groupBy { clocktowerEventPhaseLabel(it, language) }
-                    .entries
-                    .sortedBy { (_, g) -> g.first().sequence }
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    grouped.forEach { (label, group) ->
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(
-                                label,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Black,
-                                color = Color(0xFF6F7B74),
-                            )
-                            group.forEach { event -> ClocktowerTimelineRow(event = event) }
-                        }
-                    }
-                }
-            }
-
-        }
-
-        Text(text("角色信息", "Players"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            cards.forEachIndexed { index, card ->
-                val alive = card.eliminatedRound == null
-                val actualRole = card.clocktowerRole?.nameFor(language) ?: card.hostRoleLabel(context, GameKind.Clocktower)
-                val shownSuffix = if (card.clocktowerShownAsDifferentRole() && card.clocktowerShownRole != null) {
-                    text("（展示：${card.clocktowerShownRole.nameFor(language)}）", " (shown: ${card.clocktowerShownRole.nameFor(language)})")
-                } else {
-                    ""
-                }
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = if (alive) Color(0xFFF5F8F6) else Color(0xFFF8F3F1),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text("${index + 1}", fontWeight = FontWeight.Black, color = Color(0xFF5C6A63), modifier = Modifier.width(24.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .background(if (alive) Color(0xFF2F7D5A) else Color(0xFFB24D3E), CircleShape),
-                        )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(card.name, fontWeight = FontWeight.SemiBold)
-                            Text(actualRole + shownSuffix, style = MaterialTheme.typography.bodySmall, color = Color(0xFF5C6A63))
-                        }
-                        card.clocktowerTeam?.let {
-                            Text(it.label(context), style = MaterialTheme.typography.bodySmall, color = Color(0xFF6F7B74))
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 internal fun clocktowerEventPhaseLabel(event: ClocktowerEvent, language: String): String = when (event.phase) {
     ClocktowerPhase.FirstNight -> if (language == "en") "Night 1" else "第 1 夜"
     ClocktowerPhase.Dawn -> if (language == "en") "Day ${event.round}" else "第 ${event.round} 天"
     ClocktowerPhase.Day -> if (language == "en") "Day ${event.round}" else "第 ${event.round} 天"
     ClocktowerPhase.Night -> if (language == "en") "Night ${event.round}" else "第 ${event.round} 夜"
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ClocktowerTimelineRow(event: ClocktowerEvent) {
-    val accent = when (event.type) {
-        ClocktowerEventType.System, ClocktowerEventType.Phase -> Color(0xFF3D6F63)
-        ClocktowerEventType.Information, ClocktowerEventType.UnreliableInformation -> Color(0xFF3973A8)
-        ClocktowerEventType.Nomination, ClocktowerEventType.Vote -> Color(0xFF8C6A22)
-        ClocktowerEventType.Execution, ClocktowerEventType.Death, ClocktowerEventType.GameEnd -> Color(0xFFAA493B)
-        ClocktowerEventType.RoleAction, ClocktowerEventType.RoleChange -> Color(0xFF76539A)
-    }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .padding(top = 5.dp)
-                .size(10.dp)
-                .background(accent, CircleShape),
-        )
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(event.title, fontWeight = FontWeight.SemiBold)
-            if (event.detail.isNotBlank()) {
-                Text(event.detail, style = MaterialTheme.typography.bodySmall, color = Color(0xFF5C6A63))
-            }
-            if (event.playerNames.isNotEmpty()) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    event.playerNames.forEach { name ->
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = accent.copy(alpha = 0.12f),
-                        ) {
-                            Text(
-                                name,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = accent,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-internal fun ClocktowerPlayerStatusRow(card: PlayerCard) {
-    val context = LocalContext.current
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(card.name, fontWeight = FontWeight.SemiBold)
-                    Text(card.hostRoleLabel(context, GameKind.Clocktower), color = Color(0xFF6F7B74), style = MaterialTheme.typography.bodySmall)
-                }
-                val status = card.eliminatedRound?.let { stringResource(R.string.eliminated_round_format, it) }
-                    ?: stringResource(R.string.active_status)
-                Text(status, color = if (card.eliminatedRound == null) Color(0xFF2F5D50) else Color(0xFF9A4B36))
-            }
-            if (card.clocktowerShownAsDifferentRole() && card.clocktowerShownRole != null) {
-                Text(
-                    stringResource(R.string.clocktower_shown_role_format, card.clocktowerShownRole.nameFor(context.resources.configuration.locales[0].language)),
-                    color = Color(0xFF9A4B36),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        }
-    }
 }
 
 @Composable
