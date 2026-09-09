@@ -243,6 +243,20 @@ internal fun ClocktowerNightStepCardLocalized(
     val structuredNumberUiModel = numericPreparation?.prepareUiModel(recommendationCoordinator, informationIdentity, structuredStyle)
     fun structuredEmpathSelectionIsTruthful(value: Int): Boolean =
         numericPreparation?.isTruthful(value, projectedFirstNightInformationCandidates) ?: false
+    val chefPlayers = cards.toClocktowerPlayerStates(poisonedPlayerName = null)
+    val chefResultChoices = if (step.roleEnName == "Chef" && step.actor != null) {
+        clocktowerChefResultChoices(
+            step = step,
+            players = chefPlayers,
+            automaticStorytellerInfo = automaticStorytellerInfo,
+            automaticDisplayOption = automaticDisplayOption,
+            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,
+            structuredNumberUiModel = structuredNumberUiModel,
+        )
+    } else {
+        emptyList()
+    }
+    val usesChefSquareTable = chefResultChoices.isNotEmpty()
     val fortuneTellerSelectedSeats = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
         .mapNotNull { selectedName ->
             cards.indexOfFirst { it.name == selectedName }
@@ -298,6 +312,56 @@ internal fun ClocktowerNightStepCardLocalized(
             )
         }
         onShowPlayerDisplay(resolveClocktowerPlayerDisplay(step, option))
+    }
+
+    fun showChefChoice(choice: ClocktowerChefResultChoice) {
+        when (choice.sourceKind) {
+            ClocktowerChefResultSourceKind.DisplayOption -> {
+                choice.displayOption?.let(::showRecommendedDisplayOption)
+            }
+
+            ClocktowerChefResultSourceKind.Structured -> {
+                val model = structuredNumberUiModel ?: return
+                val candidateId = choice.structuredCandidateId ?: return
+                val modelChoice = model.choices.firstOrNull { it.candidateId == candidateId } ?: return
+                val currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision)
+                val confirmation = if (modelChoice.recommended) {
+                    model.acceptRecommendation(candidateId, currentRevision)
+                } else {
+                    model.chooseManually(candidateId, currentRevision)
+                }
+                val confirmed = confirmation.confirmed ?: return
+                if (automaticDisplayOption != null) {
+                    selectionAudit?.let { audit ->
+                        audit.recorder.recordCommittedSelection(
+                            SelectionAuditCommit(
+                                selectionId = audit.selectionId,
+                                dimensions = audit.dimensions,
+                                selectedFamilyId = DynamicCandidateGenerator.selectionAuditFamilyId(
+                                    reliability = step.informationReliability,
+                                    truthful = structuredEmpathSelectionIsTruthful(choice.value),
+                                ),
+                            ),
+                        )
+                    }
+                }
+                val template = structuredRecommendedOption
+                    ?: displayedInformationOptions.firstOrNull()
+                    ?: step.displayOptions.firstOrNull()
+                onShowPlayerDisplay(
+                    resolveClocktowerNumericPlayerDisplay(
+                        step = step,
+                        template = template,
+                        value = choice.value,
+                        truthful = structuredEmpathSelectionIsTruthful(choice.value),
+                        confirmed = confirmed,
+                        expectedSnapshot = model.contextSnapshot,
+                    ),
+                )
+            }
+
+            ClocktowerChefResultSourceKind.Direct -> onShowPlayerDisplay(step)
+        }
     }
 
     fun showStructuredFortuneTellerResult(value: Boolean) {
@@ -614,49 +678,67 @@ internal fun ClocktowerNightStepCardLocalized(
             else -> Unit
         }
 
+            if (usesChefSquareTable) {
+                ClocktowerChefSquareTableDialog(
+                    seats = nightActionSeats,
+                    actorSeat = actionActorSeat,
+                    wakeInstruction = command,
+                    actualEvilSeats = clocktowerChefActualEvilSeats(chefPlayers),
+                    recluseSeat = clocktowerChefRecluseSeat(chefPlayers),
+                    choices = chefResultChoices,
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onPrevious = onPrevious,
+                    onNext = onNext,
+                    onConfirm = ::showChefChoice,
+                )
+            }
+
             step.tellPlayer
                 ?.takeIf { step.isRealAction && it.isNotBlank() && step.displayKind == ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid }
                 ?.let {
                     Text(it, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                 }
 
-            structuredNumberUiModel?.let { model ->
-                val template = structuredRecommendedOption
-                    ?: displayedInformationOptions.firstOrNull()
-                    ?: step.displayOptions.firstOrNull()
-                StructuredNumberInformationDecisionPanel(
-                    model = model,
-                    currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
-                    automaticStorytellerInfo = automaticStorytellerInfo,
-                    language = language,
-                    roleLabel = step.title,
-                    onConfirmed = { confirmed, value ->
-                        if (automaticDisplayOption != null) {
-                            selectionAudit?.let { audit ->
-                                audit.recorder.recordCommittedSelection(
-                                    SelectionAuditCommit(
-                                        selectionId = audit.selectionId,
-                                        dimensions = audit.dimensions,
-                                        selectedFamilyId = DynamicCandidateGenerator.selectionAuditFamilyId(
-                                            reliability = step.informationReliability,
-                                            truthful = structuredEmpathSelectionIsTruthful(value),
+            if (!usesChefSquareTable) {
+                structuredNumberUiModel?.let { model ->
+                    val template = structuredRecommendedOption
+                        ?: displayedInformationOptions.firstOrNull()
+                        ?: step.displayOptions.firstOrNull()
+                    StructuredNumberInformationDecisionPanel(
+                        model = model,
+                        currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
+                        automaticStorytellerInfo = automaticStorytellerInfo,
+                        language = language,
+                        roleLabel = step.title,
+                        onConfirmed = { confirmed, value ->
+                            if (automaticDisplayOption != null) {
+                                selectionAudit?.let { audit ->
+                                    audit.recorder.recordCommittedSelection(
+                                        SelectionAuditCommit(
+                                            selectionId = audit.selectionId,
+                                            dimensions = audit.dimensions,
+                                            selectedFamilyId = DynamicCandidateGenerator.selectionAuditFamilyId(
+                                                reliability = step.informationReliability,
+                                                truthful = structuredEmpathSelectionIsTruthful(value),
+                                            ),
                                         ),
-                                    ),
-                                )
+                                    )
+                                }
                             }
-                        }
-                        onShowPlayerDisplay(
-                            resolveClocktowerNumericPlayerDisplay(
-                                step = step,
-                                template = template,
-                                value = value,
-                                truthful = structuredEmpathSelectionIsTruthful(value),
-                                confirmed = confirmed,
-                                expectedSnapshot = model.contextSnapshot,
-                            ),
-                        )
-                    },
-                )
+                            onShowPlayerDisplay(
+                                resolveClocktowerNumericPlayerDisplay(
+                                    step = step,
+                                    template = template,
+                                    value = value,
+                                    truthful = structuredEmpathSelectionIsTruthful(value),
+                                    confirmed = confirmed,
+                                    expectedSnapshot = model.contextSnapshot,
+                                ),
+                            )
+                        },
+                    )
+                }
             }
 
             if (manualPairCandidates.isNotEmpty()) {
@@ -691,6 +773,7 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             if (
+                !usesChefSquareTable &&
                 pairRecommendationPresentation == null &&
                 structuredNumberUiModel == null &&
                 structuredFortuneTellerUiModel == null &&
@@ -744,7 +827,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 }
             }
 
-            if (nonPairResultFirstCandidates.isNotEmpty()) {
+            if (!usesChefSquareTable && nonPairResultFirstCandidates.isNotEmpty()) {
                 Text(
                     if (language == "en") "Choose the final information" else "选择最终展示信息",
                     color = MaterialTheme.colorScheme.primary,
@@ -771,6 +854,7 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             if (
+                !usesChefSquareTable &&
                 resultFirstRegistrationCandidates.isEmpty() &&
                 structuredNumberUiModel == null &&
                 structuredFortuneTellerUiModel == null &&
@@ -792,7 +876,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     }
                     RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
                 }
-            } else if (resultFirstRegistrationCandidates.isEmpty() && structuredNumberUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
+            } else if (!usesChefSquareTable && resultFirstRegistrationCandidates.isEmpty() && structuredNumberUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
                 OutlinedButton(
                     onClick = { onShowPlayerDisplay(step) },
                     modifier = Modifier.fillMaxWidth(),
