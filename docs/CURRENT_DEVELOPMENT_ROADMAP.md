@@ -43,7 +43,7 @@ CI 34288731376 — PASS
 
 ## Current priority
 
-> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h READ-ONLY RE-AUDIT COMPLETE → D6.2i DAY NOMINATION TRANSIENT OWNERSHIP COMPLETE / VALIDATED → D6.2j RESIDUAL AUDIT COMPLETE → D6.2k DORMANT DIAGNOSTIC CLEANUP COMPLETE / VALIDATED → D6.2l RETIRED DAY/HISTORY UI COMPLETE / VALIDATED → D6.2m APP DECODER CLEANUP COMPLETE / VALIDATED → LIVE INFORMATION PREPARATION BOUNDARY RE-AUDIT NEXT.**
+> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h READ-ONLY RE-AUDIT COMPLETE → D6.2i DAY NOMINATION TRANSIENT OWNERSHIP COMPLETE / VALIDATED → D6.2j RESIDUAL AUDIT COMPLETE → D6.2k–m R0 CLEANUP COMPLETE / VALIDATED → D6.2n LIVE INFORMATION PREPARATION AUDIT COMPLETE → D6.2o NUMERIC OPTION PREPARATION NEXT.**
 
 D6.2 stays on `codex/d6-2-ui-composition`. Do not reopen PR #113 or move this work back to `codex/d6-root-reaudit`.
 
@@ -356,9 +356,15 @@ CI 34294858685 PASS: Android compile + executed FAST and CI gate. R2 34294858697
 
 Evidence: `docs/D6_2M_APP_DECODER_CLEANUP_PROGRESS_2026-09-09.md`.
 
-## Next — live information preparation boundary re-audit
+## D6.2n — live information preparation boundary re-audit COMPLETE
 
-R0 dead-code cleanup is complete. Re-measure the post-cleanup Host and choose one cohesive information family for the first live extraction. Separate pure facts/candidate preparation from recommendation selection, telemetry and publication effects. Preserve materializer order and avoid a broad NightContext, state bag or callback bag. The next step is a read-only boundary contract before production movement.
+Authority: `docs/D6_2N_LIVE_INFORMATION_PREPARATION_OWNERSHIP_AUDIT_2026-09-09.md`.
+
+The six numeric recommendation call sites share a pure history/parser and recommendation-result projection seam. The recommendation invocation remains in Host; typed registration facts, role-step assembly, structured decision lifecycle, telemetry and publication remain with their current owners. Moving Chef/Empath/Chambermaid closures first would require a broad captured context, so materializer movement is deferred until this dependency is removed.
+
+## Next — D6.2o numeric option preparation
+
+Implement the exact three-file contract in the D6.2n audit. Add typed adapter tests, extract the pure previous-number parser and recommendation-to-display projector, and leave all six call-site inputs and materializer order unchanged. Use Android FAST + compile and R2 unless the implementation crosses the frozen boundary.
 
 PR #115 remains OPEN / DRAFT. Preserve benchmark harnesses/tests, live A4 prewarming, recommendation effects, telemetry and Recovery.
 
