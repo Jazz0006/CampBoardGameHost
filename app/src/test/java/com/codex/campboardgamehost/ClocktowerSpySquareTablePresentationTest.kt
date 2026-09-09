@@ -60,7 +60,7 @@ class ClocktowerSpySquareTablePresentationTest {
     }
 
     private fun spyStep(
-        actor: PlayerCard? = PlayerCard(name = "S", clocktowerRole = clocktowerRolesForScript(ClocktowerScript.TroubleBrewing).first { it.enName == "Spy" }),
+        actor: PlayerCard? = spyCard(),
         roleEnName: String = "Spy",
         tellPlayer: String? = "P1: Spy",
         displayKind: ClocktowerDisplayKind = ClocktowerDisplayKind.Grimoire,
@@ -79,5 +79,19 @@ class ClocktowerSpySquareTablePresentationTest {
         displayKind = displayKind,
         displayTitle = "Grimoire",
         displayProposition = displayProposition,
+    )
+
+    private fun spyCard() = PlayerCard(
+        name = "S",
+        role = Role.Civilian,
+        word = "",
+        clocktowerTeam = ClocktowerTeam.Minion,
+        clocktowerRole = ClocktowerRole(
+            team = ClocktowerTeam.Minion,
+            zhName = "间谍",
+            enName = "Spy",
+            zhDescription = "",
+            enDescription = "",
+        ),
     )
 }
