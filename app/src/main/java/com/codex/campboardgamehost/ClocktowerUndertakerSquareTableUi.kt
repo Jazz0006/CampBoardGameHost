@@ -44,7 +44,8 @@ internal enum class ClocktowerUndertakerResultSourceKind {
 internal data class ClocktowerUndertakerResultChoice(
     val key: String,
     val executedSeat: Int,
-    val roleId: RoleId,
+    val roleId: RoleId?,
+    val displayLabel: String,
     val sourceKind: ClocktowerUndertakerResultSourceKind,
     val displayOption: ClocktowerDisplayOption? = null,
     val recommended: Boolean = false,
@@ -68,17 +69,6 @@ internal fun clocktowerUndertakerTypedResult(
     )
 }
 
-internal fun clocktowerUndertakerTypedResult(
-    option: ClocktowerDisplayOption,
-    seatCount: Int,
-): ClocktowerUndertakerTypedResult? {
-    val resolved = option.resolvedRoleRevealPresentation(seatCount) ?: return null
-    return ClocktowerUndertakerTypedResult(
-        executedSeat = resolved.targetSeat,
-        roleId = resolved.roleId,
-    )
-}
-
 internal fun clocktowerUndertakerResultChoices(
     step: ClocktowerNightStepUi,
     seatCount: Int,
@@ -87,26 +77,33 @@ internal fun clocktowerUndertakerResultChoices(
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
 ): List<ClocktowerUndertakerResultChoice> {
     if (step.roleEnName != "Undertaker") return emptyList()
+    val anchor = clocktowerRoleRevealAnchor(
+        proposition = step.displayProposition,
+        expectedSeat = (step.displayProposition as? InformationProposition.RoleAt)?.seat,
+        seatCount = seatCount,
+    ) ?: return emptyList()
 
     fun choicesFrom(
         options: List<ClocktowerDisplayOption>,
         sourceKind: ClocktowerUndertakerResultSourceKind,
     ): List<ClocktowerUndertakerResultChoice> {
         if (options.isEmpty()) return emptyList()
-        val choices = options.map { option ->
-            val typed = clocktowerUndertakerTypedResult(option, seatCount)
-                ?: return emptyList()
+        return options.map { option ->
+            val projected = clocktowerRoleRevealChoiceProjection(
+                option = option,
+                targetSeat = anchor.targetSeat,
+                seatCount = seatCount,
+            ) ?: return emptyList()
             ClocktowerUndertakerResultChoice(
                 key = clocktowerInformationCandidateId(option),
-                executedSeat = typed.executedSeat,
-                roleId = typed.roleId,
+                executedSeat = projected.targetSeat,
+                roleId = projected.roleId,
+                displayLabel = projected.displayLabel,
                 sourceKind = sourceKind,
                 displayOption = option,
                 recommended = option.isDefaultRecommendation,
             )
-        }
-        if (choices.map { it.executedSeat }.distinct().size != 1) return emptyList()
-        return choices.distinctBy { it.key }
+        }.distinctBy { it.key }
     }
 
     if (automaticStorytellerInfo) {
@@ -131,12 +128,13 @@ internal fun clocktowerUndertakerResultChoices(
         }
     }
 
-    val direct = clocktowerUndertakerTypedResult(step.displayProposition, seatCount) ?: return emptyList()
+    val displayLabel = step.displayPrimary?.takeIf { it.isNotBlank() } ?: return emptyList()
     return listOf(
         ClocktowerUndertakerResultChoice(
-            key = "direct|${direct.executedSeat}|${direct.roleId.value}",
-            executedSeat = direct.executedSeat,
-            roleId = direct.roleId,
+            key = "direct|${anchor.targetSeat}|${anchor.roleId.value}",
+            executedSeat = anchor.targetSeat,
+            roleId = anchor.roleId,
+            displayLabel = displayLabel,
             sourceKind = ClocktowerUndertakerResultSourceKind.Direct,
             recommended = true,
         ),
@@ -255,7 +253,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                                     onClick = { roleMenuExpanded = true },
                                     modifier = Modifier.fillMaxWidth(),
                                 ) {
-                                    Text(clocktowerRoleLabel(selectedChoice.roleId, language), maxLines = 1)
+                                    Text(selectedChoice.displayLabel, maxLines = 1)
                                 }
                                 DropdownMenu(
                                     expanded = roleMenuExpanded,
@@ -263,7 +261,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                                 ) {
                                     choices.forEach { choice ->
                                         DropdownMenuItem(
-                                            text = { Text(clocktowerRoleLabel(choice.roleId, language)) },
+                                            text = { Text(choice.displayLabel) },
                                             onClick = {
                                                 selectedKey = choice.key
                                                 roleMenuExpanded = false
@@ -281,9 +279,9 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                         ) {
                             Text(
                                 if (language == "en") {
-                                    "Show information: ${clocktowerRoleLabel(selectedChoice.roleId, language)}"
+                                    "Show information: ${selectedChoice.displayLabel}"
                                 } else {
-                                    "展示信息：${clocktowerRoleLabel(selectedChoice.roleId, language)}"
+                                    "展示信息：${selectedChoice.displayLabel}"
                                 },
                                 maxLines = 1,
                             )
