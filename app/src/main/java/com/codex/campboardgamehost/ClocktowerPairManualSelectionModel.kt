@@ -121,5 +121,33 @@ internal data class ClocktowerPairManualSelectionModel private constructor(
     companion object {
         internal fun from(presentation: ClocktowerPairManualPresentation): ClocktowerPairManualSelectionModel =
             ClocktowerPairManualSelectionModel(presentation)
+
+        /**
+         * Enters Manual editing from an already-authoritative displayed recommendation.
+         *
+         * The seed is accepted only when it is the exact option already present in the supplied
+         * legal presentation. No localized label or proposition is reparsed here; stale or foreign
+         * options therefore fail closed to an empty Manual selection.
+         */
+        internal fun from(
+            presentation: ClocktowerPairManualPresentation,
+            initialOption: ClocktowerDisplayOption?,
+        ): ClocktowerPairManualSelectionModel {
+            if (initialOption == null) return from(presentation)
+            if (initialOption == presentation.zeroCaseOption) {
+                return ClocktowerPairManualSelectionModel(
+                    presentation = presentation,
+                    isZeroCaseSelected = true,
+                )
+            }
+            val candidate = presentation.candidates.firstOrNull { it.option == initialOption }
+                ?: return from(presentation)
+            return ClocktowerPairManualSelectionModel(
+                presentation = presentation,
+                selectedRoleId = candidate.roleId,
+                selectedFirstSeat = candidate.seats.getOrNull(0),
+                selectedSecondSeat = candidate.seats.getOrNull(1),
+            )
+        }
     }
 }
