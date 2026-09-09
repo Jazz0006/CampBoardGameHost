@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply:
-    if: github.event.head_commit.message == 'chore: stage Ravenkeeper dynamic-night fix'
+    if: ${{ github.event.head_commit.message == 'chore: stage Ravenkeeper dynamic-night fix' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch head
@@ -39,69 +39,67 @@ jobs:
           if 'deferredNightAdvanceIndex' in text:
               raise SystemExit('HostScreen already contains deferred night advance wiring')
 
-          old_state = '''    var nightStarted by nightStartedState
-    var nightStepIndex by nightStepIndexState
-    var dayMode by dayModeState
-'''
-          new_state = old_state + '''    var deferredNightAdvanceIndex by remember(gameId, round, phase) { mutableStateOf<Int?>(null) }
-'''
+          old_state = "    var nightStarted by nightStartedState\n    var nightStepIndex by nightStepIndexState\n    var dayMode by dayModeState\n"
+          new_state = old_state + "    var deferredNightAdvanceIndex by remember(gameId, round, phase) { mutableStateOf<Int?>(null) }\n"
           if text.count(old_state) != 1:
               raise SystemExit(f'state anchor count={text.count(old_state)}')
           text = text.replace(old_state, new_state, 1)
 
-          old_advance = '''            recordNightStep(currentStep)
-            if (currentStepIndex < nightSteps.lastIndex) {
-                nightStepIndex = currentStepIndex + 1
-            } else {
-                onConfirmNight()
-            }
-        }
-
-        LaunchedEffect(
-            automaticStorytellerInfo,
-            currentStepIndex,
-'''
-          new_advance = '''            recordNightStep(currentStep)
-            val flowMayExpandAfterConfirmation = currentStep.action in setOf(
-                ClocktowerNightAction.DemonKill,
-                ClocktowerNightAction.MayorRedirect,
-            )
-            when (
-                val directive = clocktowerNightAdvanceDirective(
-                    currentStepIndex = currentStepIndex,
-                    currentStepCount = nightSteps.size,
-                    flowMayExpandAfterConfirmation = flowMayExpandAfterConfirmation,
-                )
-            ) {
-                is ClocktowerNightAdvanceDirective.MoveTo -> {
-                    if (directive.stepIndex >= nightSteps.size) {
-                        deferredNightAdvanceIndex = directive.stepIndex
-                    }
-                    nightStepIndex = directive.stepIndex
-                }
-                ClocktowerNightAdvanceDirective.CompleteNight -> onConfirmNight()
-            }
-        }
-
-        LaunchedEffect(nightSteps.size, deferredNightAdvanceIndex) {
-            val requestedIndex = deferredNightAdvanceIndex ?: return@LaunchedEffect
-            if (
-                clocktowerDeferredNightAdvanceShouldComplete(
-                    requestedStepIndex = requestedIndex,
-                    refreshedStepCount = nightSteps.size,
-                )
-            ) {
-                deferredNightAdvanceIndex = null
-                onConfirmNight()
-            } else {
-                deferredNightAdvanceIndex = null
-            }
-        }
-
-        LaunchedEffect(
-            automaticStorytellerInfo,
-            currentStepIndex,
-'''
+          old_advance = "\n".join((
+              "            recordNightStep(currentStep)",
+              "            if (currentStepIndex < nightSteps.lastIndex) {",
+              "                nightStepIndex = currentStepIndex + 1",
+              "            } else {",
+              "                onConfirmNight()",
+              "            }",
+              "        }",
+              "",
+              "        LaunchedEffect(",
+              "            automaticStorytellerInfo,",
+              "            currentStepIndex,",
+          )) + "\n"
+          new_advance = "\n".join((
+              "            recordNightStep(currentStep)",
+              "            val flowMayExpandAfterConfirmation = currentStep.action in setOf(",
+              "                ClocktowerNightAction.DemonKill,",
+              "                ClocktowerNightAction.MayorRedirect,",
+              "            )",
+              "            when (",
+              "                val directive = clocktowerNightAdvanceDirective(",
+              "                    currentStepIndex = currentStepIndex,",
+              "                    currentStepCount = nightSteps.size,",
+              "                    flowMayExpandAfterConfirmation = flowMayExpandAfterConfirmation,",
+              "                )",
+              "            ) {",
+              "                is ClocktowerNightAdvanceDirective.MoveTo -> {",
+              "                    if (directive.stepIndex >= nightSteps.size) {",
+              "                        deferredNightAdvanceIndex = directive.stepIndex",
+              "                    }",
+              "                    nightStepIndex = directive.stepIndex",
+              "                }",
+              "                ClocktowerNightAdvanceDirective.CompleteNight -> onConfirmNight()",
+              "            }",
+              "        }",
+              "",
+              "        LaunchedEffect(nightSteps.size, deferredNightAdvanceIndex) {",
+              "            val requestedIndex = deferredNightAdvanceIndex ?: return@LaunchedEffect",
+              "            if (",
+              "                clocktowerDeferredNightAdvanceShouldComplete(",
+              "                    requestedStepIndex = requestedIndex,",
+              "                    refreshedStepCount = nightSteps.size,",
+              "                )",
+              "            ) {",
+              "                deferredNightAdvanceIndex = null",
+              "                onConfirmNight()",
+              "            } else {",
+              "                deferredNightAdvanceIndex = null",
+              "            }",
+              "        }",
+              "",
+              "        LaunchedEffect(",
+              "            automaticStorytellerInfo,",
+              "            currentStepIndex,",
+          )) + "\n"
           if text.count(old_advance) != 1:
               raise SystemExit(f'advance anchor count={text.count(old_advance)}')
           text = text.replace(old_advance, new_advance, 1)
