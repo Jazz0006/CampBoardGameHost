@@ -284,6 +284,27 @@ internal fun ClocktowerNightStepCardLocalized(
         emptyList()
     }
     val usesUndertakerSquareTable = undertakerResultChoices.isNotEmpty()
+    val usesRavenkeeperSquareTable = step.action == ClocktowerNightAction.Ravenkeeper && step.actor != null
+    val ravenkeeperSelectedSeat = if (usesRavenkeeperSquareTable) {
+        selectedName
+            ?.let { selected -> cards.indexOfFirst { card -> card.name == selected } }
+            ?.takeIf { index -> index >= 0 }
+            ?.plus(1)
+    } else {
+        null
+    }
+    val ravenkeeperResultChoices = if (usesRavenkeeperSquareTable) {
+        clocktowerRavenkeeperResultChoices(
+            step = step,
+            selectedSeat = ravenkeeperSelectedSeat,
+            seatCount = cards.size,
+            automaticStorytellerInfo = automaticStorytellerInfo,
+            automaticDisplayOption = automaticDisplayOption,
+            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,
+        )
+    } else {
+        emptyList()
+    }
     val fortuneTellerSelectedSeats = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
         .mapNotNull { selectedName ->
             cards.indexOfFirst { it.name == selectedName }
@@ -454,6 +475,22 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             ClocktowerUndertakerResultSourceKind.Direct -> onShowPlayerDisplay(step)
+        }
+    }
+
+    fun showRavenkeeperChoice(choice: ClocktowerRavenkeeperResultChoice) {
+        when (choice.sourceKind) {
+            ClocktowerRavenkeeperResultSourceKind.DisplayOption -> {
+                choice.displayOption?.let(::showRecommendedDisplayOption)
+            }
+
+            ClocktowerRavenkeeperResultSourceKind.LegacyUnreliable -> {
+                choice.displayOption?.let { option ->
+                    onShowPlayerDisplay(resolveClocktowerLegacyUnreliablePlayerDisplay(step, option))
+                }
+            }
+
+            ClocktowerRavenkeeperResultSourceKind.Direct -> onShowPlayerDisplay(step)
         }
     }
 
@@ -652,12 +689,11 @@ internal fun ClocktowerNightStepCardLocalized(
         when (step.action) {
             ClocktowerNightAction.RedHerring, ClocktowerNightAction.Poison,
             ClocktowerNightAction.ButlerMaster, ClocktowerNightAction.MonkProtect,
-            ClocktowerNightAction.DemonKill, ClocktowerNightAction.Ravenkeeper -> {
+            ClocktowerNightAction.DemonKill -> {
                 val candidates = when (step.action) {
                     ClocktowerNightAction.RedHerring -> clocktowerRedHerringCandidates(aliveCards)
                     ClocktowerNightAction.ButlerMaster -> cards.filter { it.name != step.actor?.name }
                     ClocktowerNightAction.MonkProtect -> clocktowerMonkTargetCards(cards, step.actor?.name)
-                    ClocktowerNightAction.Ravenkeeper -> clocktowerRavenkeeperTargetCards(cards)
                     else -> aliveCards
                 }
                 val presentation = clocktowerSingleTargetAbilityPresentation(
@@ -667,14 +703,34 @@ internal fun ClocktowerNightStepCardLocalized(
                     ),
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
-                    canShowResult = resultFirstRegistrationCandidates.isEmpty() &&
-                        step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None,
+                    canShowResult = false,
                 )
                 presentation?.let {
                     key(step.action) {
                         ClocktowerSingleTargetAbilitySection(nightActionSeats, it, language, canGoPrevious, onSingleTargetEvent)
                     }
                 }
+            }
+
+            ClocktowerNightAction.Ravenkeeper -> {
+                val candidates = clocktowerRavenkeeperTargetCards(cards)
+                ClocktowerRavenkeeperSquareTableDialog(
+                    seats = nightActionSeats,
+                    actorSeat = actionActorSeat,
+                    selectedSeat = ravenkeeperSelectedSeat,
+                    selectableSeats = selectableSeatNumbers(candidates),
+                    enabled = step.isRealAction,
+                    wakeInstruction = command,
+                    choices = ravenkeeperResultChoices,
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onSeatSelected = { seatNumber ->
+                        cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
+                    },
+                    onPrevious = onPrevious,
+                    onNext = onNext,
+                    onConfirm = ::showRavenkeeperChoice,
+                )
             }
 
             ClocktowerNightAction.FortuneTeller -> {
@@ -894,6 +950,7 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             if (
+                !usesRavenkeeperSquareTable &&
                 !usesUndertakerSquareTable &&
                 !usesNumericSquareTable &&
                 pairRecommendationPresentation == null &&
@@ -949,7 +1006,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 }
             }
 
-            if (!usesUndertakerSquareTable && !usesNumericSquareTable && nonPairResultFirstCandidates.isNotEmpty()) {
+            if (!usesRavenkeeperSquareTable && !usesUndertakerSquareTable && !usesNumericSquareTable && nonPairResultFirstCandidates.isNotEmpty()) {
                 Text(
                     if (language == "en") "Choose the final information" else "选择最终展示信息",
                     color = MaterialTheme.colorScheme.primary,
@@ -976,6 +1033,7 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             if (
+                !usesRavenkeeperSquareTable &&
                 !usesUndertakerSquareTable &&
                 !usesNumericSquareTable &&
                 resultFirstRegistrationCandidates.isEmpty() &&
@@ -999,7 +1057,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     }
                     RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
                 }
-            } else if (!usesUndertakerSquareTable && !usesNumericSquareTable && resultFirstRegistrationCandidates.isEmpty() && structuredNumberUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
+            } else if (!usesRavenkeeperSquareTable && !usesUndertakerSquareTable && !usesNumericSquareTable && resultFirstRegistrationCandidates.isEmpty() && structuredNumberUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
                 OutlinedButton(
                     onClick = { onShowPlayerDisplay(step) },
                     modifier = Modifier.fillMaxWidth(),
