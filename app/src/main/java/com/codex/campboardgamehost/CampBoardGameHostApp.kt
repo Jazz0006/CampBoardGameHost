@@ -230,8 +230,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.PlayerKnowledgeSnapshot
-import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.epistemic.ZddFilterStrategy
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
@@ -480,91 +478,6 @@ private fun Context.archiveGame(record: GameArchiveRecord): List<ArchivedGameRev
     return loadGameHistory()
 }
 
-private fun playerCardFromJson(json: JSONObject): PlayerCard? {
-    val name = json.optString("name").takeIf { it.isNotBlank() } ?: return null
-    val role = enumByName<Role>(json.optNullableString("role")) ?: return null
-    val clocktowerRole = clocktowerRoleByName(json.optNullableString("clocktowerRole"))
-    val clocktowerShownRole = clocktowerRoleByName(json.optNullableString("clocktowerShownRole"))
-    val clocktowerTeam = enumByName<ClocktowerTeam>(json.optNullableString("clocktowerTeam"))
-        ?: clocktowerRole?.team
-    return PlayerCard(
-        name = name,
-        role = role,
-        word = json.optString("word"),
-        roleLabel = json.optNullableString("roleLabel"),
-        actualRoleLabel = json.optNullableString("actualRoleLabel"),
-        clocktowerTeam = clocktowerTeam,
-        clocktowerRole = clocktowerRole,
-        clocktowerShownRole = clocktowerShownRole,
-        eliminatedRound = json.optNullableInt("eliminatedRound"),
-    )
-}
-
-private fun JSONArray.toPlayerCards(): List<PlayerCard> = buildList {
-    for (index in 0 until length()) {
-        optJSONObject(index)?.let { playerCardFromJson(it)?.let(::add) }
-    }
-}
-
-private fun eliminationRecordFromJson(json: JSONObject): EliminationRecord? {
-    val playerName = json.optString("playerName").takeIf { it.isNotBlank() } ?: return null
-    return EliminationRecord(
-        round = json.optInt("round", 1),
-        playerName = playerName,
-        note = json.optNullableString("note"),
-    )
-}
-
-private fun JSONArray.toEliminationRecords(): List<EliminationRecord> = buildList {
-    for (index in 0 until length()) {
-        optJSONObject(index)?.let { eliminationRecordFromJson(it)?.let(::add) }
-    }
-}
-
-private fun clocktowerEventFromJson(json: JSONObject): ClocktowerEvent? {
-    val title = json.optString("title").takeIf { it.isNotBlank() } ?: return null
-    return ClocktowerEvent(
-        sequence = json.optInt("sequence", 0),
-        type = enumByName<ClocktowerEventType>(json.optNullableString("type")) ?: ClocktowerEventType.System,
-        title = title,
-        detail = json.optString("detail"),
-        playerNames = json.optJSONArray("playerNames")?.toStringList().orEmpty(),
-        phase = enumByName<ClocktowerPhase>(json.optNullableString("phase")) ?: ClocktowerPhase.FirstNight,
-        round = json.optInt("round", 1).coerceAtLeast(1),
-    )
-}
-
-private fun JSONArray.toClocktowerEvents(): List<ClocktowerEvent> = buildList {
-    for (index in 0 until length()) {
-        optJSONObject(index)?.let { clocktowerEventFromJson(it)?.let(::add) }
-    }
-}
-
-private fun JSONArray.toRecordedEpistemicObservations(): List<RecordedEpistemicObservation> = buildList {
-    for (index in 0 until length()) {
-        val json = optJSONObject(index)
-            ?: throw IllegalArgumentException("Epistemic observation at index $index is not a JSON object.")
-        val record = try {
-            EpistemicSemanticJson.decodeRecordedEpistemicObservation(json.toString())
-        } catch (error: Exception) {
-            throw IllegalArgumentException("Cannot restore epistemic observation at index $index.", error)
-        }
-        add(record)
-    }
-}
-
-private fun gameOutcomeFromJson(json: JSONObject?): GameOutcome? {
-    if (json == null) return null
-    val title = json.optString("title").takeIf { it.isNotBlank() } ?: return null
-    return GameOutcome(
-        title = title,
-        summary = json.optString("summary"),
-        reason = json.optString("reason"),
-    )
-}
-
-
-
 internal fun Role.labelResId(): Int = when (this) {
     Role.Civilian -> R.string.role_civilian
     Role.Undercover -> R.string.role_undercover
@@ -675,13 +588,6 @@ internal fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int> 
         14 -> mapOf(ClocktowerTeam.Townsfolk to 9, ClocktowerTeam.Outsider to 1, ClocktowerTeam.Minion to 3, ClocktowerTeam.Demon to 1)
         else -> mapOf(ClocktowerTeam.Townsfolk to 9, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 3, ClocktowerTeam.Demon to 1)
     }
-}
-
-private fun clocktowerRolesFor(playerCount: Int): List<ClocktowerRole> {
-    val distribution = clocktowerDistribution(playerCount)
-    return distribution.flatMap { (team, count) ->
-        completeTroubleBrewingRoles.filter { it.team == team }.shuffled().take(count)
-    }.shuffled()
 }
 
 private data class ClocktowerAssignment(
