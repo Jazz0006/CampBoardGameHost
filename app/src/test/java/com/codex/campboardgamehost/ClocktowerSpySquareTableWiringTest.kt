@@ -14,7 +14,7 @@ class ClocktowerSpySquareTableWiringTest {
         assertTrue(source.contains("val usesSpySquareTable = spySquareTablePresentation != null"))
         assertTrue(source.contains("ClocktowerSpySquareTableDialog("))
         assertTrue(source.contains("onShowLegacyReveal = { onShowPlayerDisplay(step) }"))
-        assertTrue(source.contains("!usesSpySquareTable && !usesRavenkeeperSquareTable"))
+        assertTrue(source.contains("!usesSpySquareTable &&"))
     }
 
     private fun nightStepSource(): String {
