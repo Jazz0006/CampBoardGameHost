@@ -56,23 +56,25 @@ Draft PR: #117
 base main: 60842381dcbc3709ad453209846f66e9b4a7a777
 ```
 
-Latest production/test checkpoint before the documentation-only T4 trigger:
+Latest validated production/test checkpoint before this documentation-only T4 trigger:
 
 ```text
-f99df0eaf5f3a1af0ad2651392abdd66997841c5
+ecfacb7b11d39e65febef89fb3e058390f9eea5f
 ```
 
 Validation at that head:
 
 ```text
-CI #2017 / 34337914868             PASS
+CI #2022 / 34339511298             PASS
 Android FAST unit tests            PASS / executed
 full Android unit tests + APK       SKIPPED by ordinary PR policy
 CI gate                             PASS
-R2 #1884 / 34337915036              PASS
+R2 #1889 / 34339511280              PASS
 ```
 
-The final documentation checkpoint for this slice intentionally uses a `[full-ci]` commit message. Treat the pair-information slice as T4 accepted **only after** the workflow attached to that final head completes with the full Android unit suite + debug assemble and the other selected full gates green.
+The first `[full-ci]` documentation trigger was intentionally superseded after a behavior-level audit found one presentation mismatch: the new pair-information Manual state exposed every role-valid seat instead of preserving the existing pair picker's legal second-seat continuation projection. That issue was fixed before this final checkpoint by reusing `clocktowerPairManualSeatState`, and a regression test now protects the behavior.
+
+This final documentation checkpoint intentionally uses `[full-ci]`. Treat the pair-information slice as T4 accepted **only after** the workflows attached to the final branch head complete with the full Android unit suite + debug assemble and all other selected full gates green.
 
 Do not confuse that T4 checkpoint with UI-R5 campaign acceptance: real-device validation is still required.
 
@@ -98,7 +100,8 @@ same square table
 -> recommendation remains selected initially
 -> player selection uses the existing two-seat selection semantics
 -> center role control becomes editable
--> legal seat availability remains driven by the complete Manual domain
+-> selectable/selected/disabled seats use the existing pair Manual projection
+-> after a first seat is retained, only legal second-seat continuations are selectable
 -> [Restore recommendation / 恢复推荐] is available when a recommendation exists
 -> [Show this information / 展示此信息] uses the same final handoff
 ```
@@ -117,6 +120,9 @@ ClocktowerPairManualAuthority
 ClocktowerPairManualSelectionModel
   -> two-player draft state
   -> select/cancel/replace behavior
+
+clocktowerPairManualSeatState
+  -> legal selectable/selected/disabled seat projection
 
 ClocktowerSquareTableSeatSurface
   -> existing square-table geometry and seat rendering
@@ -147,7 +153,8 @@ Tests now protect:
 - fail-closed behavior for an invalid/stale recommendation;
 - structured recommendation-to-Manual canonicalization despite presentation metadata differences;
 - recommended read-only seat highlighting;
-- Manual selectable/selected/disabled seat-state projection.
+- Manual selectable/selected/disabled seat-state projection;
+- legal second-seat availability after entering Manual edit from a recommendation.
 
 ## 5. Exact scope already audited
 
@@ -155,18 +162,20 @@ Relative to base `main`, the production flow change is localized.
 
 `ClocktowerNightStepUi.kt` only removes the old local `showManualPairSelection` state / separate Manual dialog wiring and replaces the pair recommendation section with the unified square-table composition. Existing Fortune Teller, Chambermaid, numeric information, registration/result-first, dynamic-decision and player-display semantics remain outside this change.
 
+`ClocktowerPairManualSelectionUi.kt` changes only one visibility boundary: `clocktowerPairManualSeatState` becomes `internal` so the new pair-information composition can reuse the already-existing legal seat-state projection. The old helper's behavior is unchanged.
+
 No square-table geometry algorithm was rewritten. No domain/session/persistence module acquired Compose dependencies. No recommendation scoring or gameplay rule changed.
 
 PR #117 remains Draft and must not be merged solely because CI is green.
 
 ## 6. Next mandatory step after T4
 
-After the `[full-ci]` checkpoint is green, move to **UI-R5.4 real-device stabilization**, not EPI-MQ.
+After the final `[full-ci]` checkpoint is green, move to **UI-R5.4 real-device stabilization**, not EPI-MQ.
 
 Portrait phone is primary. Record exact device / Android version where practical and exercise at minimum:
 
 1. Washerwoman recommended flow;
-2. Washerwoman Manual flow and replacement/cancel behavior;
+2. Washerwoman Manual flow and selected-seat correction behavior;
 3. Librarian normal pair flow;
 4. Librarian legal zero-Outsider flow if the chosen setup exposes it;
 5. Investigator recommended + Manual flow;
