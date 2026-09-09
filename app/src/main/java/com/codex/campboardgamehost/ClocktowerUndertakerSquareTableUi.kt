@@ -1,14 +1,16 @@
 package com.codex.campboardgamehost
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -164,6 +166,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
     if (choices.isEmpty()) return
     val initialChoice = choices.firstOrNull { it.recommended } ?: choices.first()
     var selectedKey by remember(choices.map { it.key }) { mutableStateOf(initialChoice.key) }
+    var roleMenuExpanded by remember(choices.map { it.key }) { mutableStateOf(false) }
     val selectedChoice = choices.firstOrNull { it.key == selectedKey } ?: initialChoice
 
     Dialog(
@@ -236,33 +239,29 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                                 fontWeight = FontWeight.SemiBold,
                             )
                             Spacer(Modifier.height(4.dp))
-                            choices.chunked(2).forEach { rowChoices ->
-                                Row(
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                OutlinedButton(
+                                    onClick = { roleMenuExpanded = true },
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 ) {
-                                    rowChoices.forEach { choice ->
-                                        val label = clocktowerRoleLabel(choice.roleId, language)
-                                        if (choice.key == selectedChoice.key) {
-                                            Button(
-                                                onClick = { selectedKey = choice.key },
-                                                modifier = Modifier.weight(1f),
-                                            ) {
-                                                Text(label, maxLines = 1)
-                                            }
-                                        } else {
-                                            OutlinedButton(
-                                                onClick = { selectedKey = choice.key },
-                                                modifier = Modifier.weight(1f),
-                                            ) {
-                                                Text(label, maxLines = 1)
-                                            }
-                                        }
-                                    }
-                                    repeat(2 - rowChoices.size) { Spacer(Modifier.weight(1f)) }
+                                    Text(clocktowerRoleLabel(selectedChoice.roleId, language), maxLines = 1)
                                 }
-                                Spacer(Modifier.height(4.dp))
+                                DropdownMenu(
+                                    expanded = roleMenuExpanded,
+                                    onDismissRequest = { roleMenuExpanded = false },
+                                ) {
+                                    choices.forEach { choice ->
+                                        DropdownMenuItem(
+                                            text = { Text(clocktowerRoleLabel(choice.roleId, language)) },
+                                            onClick = {
+                                                selectedKey = choice.key
+                                                roleMenuExpanded = false
+                                            },
+                                        )
+                                    }
+                                }
                             }
+                            Spacer(Modifier.height(6.dp))
                         }
 
                         Button(
