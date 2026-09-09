@@ -126,6 +126,30 @@ internal data class ClocktowerDisplayOption(
     val warningCodes: List<String> = emptyList(),
 )
 
+/**
+ * Prefer the exact player-visible RoleAt proposition when present, otherwise use Storyteller-only
+ * presentation metadata. If both are present they must agree exactly; presentation never repairs a
+ * semantic conflict or an out-of-range seat.
+ */
+internal fun ClocktowerDisplayOption.resolvedRoleRevealPresentation(
+    seatCount: Int,
+): ClocktowerRoleRevealPresentation? {
+    val propositionPresentation = (proposition as? InformationProposition.RoleAt)?.let { roleAt ->
+        ClocktowerRoleRevealPresentation(roleAt.seat, roleAt.role)
+    }
+    val metadataPresentation = roleRevealPresentation
+    if (
+        propositionPresentation != null &&
+        metadataPresentation != null &&
+        propositionPresentation != metadataPresentation
+    ) {
+        return null
+    }
+    val resolved = propositionPresentation ?: metadataPresentation ?: return null
+    if (resolved.targetSeat !in 1..seatCount) return null
+    return resolved
+}
+
 /** Canonical semantic ID shared by legacy, unified-pool and first-night shadow paths. */
 internal fun clocktowerInformationCandidateId(option: ClocktowerDisplayOption): String = listOf(
     option.displayKind.name,
