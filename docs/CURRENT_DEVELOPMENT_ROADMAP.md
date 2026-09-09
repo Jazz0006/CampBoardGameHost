@@ -17,6 +17,7 @@ UI-R5 pair-information baseline                   ACCEPTED / T4 + device
 UI-R5 wake-actor + compact navigation             IMPLEMENTED / automated green
 UI-R5 Chef square-table                           COMPLETE / user device PASS
 UI-R5 Empath square-table                         IMPLEMENTED / automated green / device pending
+UI-R5 Undertaker square-table                     IMPLEMENTED / automated green / device pending
 Dynamic night-trigger navigation bug              FIXED / T4 + R2 green / device retest pending
 UI-R5 overall campaign                            ACTIVE
 ```
@@ -29,7 +30,8 @@ Historical D6/R3 evidence lives under `docs/archive/checkpoints/d6/`. Do not reo
 branch: codex/ui-r5-square-table-stabilization
 Draft PR: #117
 base main: 60842381dcbc3709ad453209846f66e9b4a7a777
-current verified head: c1ab5578a2fb64e6506d27b898df9f4bbb1388fc
+latest full-T4 verified head: c1ab5578a2fb64e6506d27b898df9f4bbb1388fc
+latest Undertaker implementation: 4e8296600e2144a1c9790181f2b78c471e32adec
 ```
 
 PR #117 is open, Draft, mergeable and unmerged. Do not merge without explicit user authorization.
@@ -48,6 +50,21 @@ R2 #1925 / run 34408187513                PASS
 ```
 
 `c1ab5578...` is a no-tree-change `[full-ci]` verification commit on top of the production code at `0f66b78...`.
+
+Latest per-role Undertaker checkpoint:
+
+```text
+implementation head: 4e8296600e2144a1c9790181f2b78c471e32adec
+CI #2067 / run 34411490702               PASS
+- Android FAST unit tests                 PASS / executed
+- Android full unit tests + debug APK     skipped / not requested for this per-role slice
+- ASP contract tests                      skipped / UI-only change
+- Real Clingo cross-validation            skipped / UI-only change
+- CI gate                                 PASS
+R2 #1934 / run 34411490693                PASS
+```
+
+This per-role checkpoint does not replace the full-T4 checkpoint. Another logical full T4 remains required after the remaining role convergence and legacy retirement work.
 
 ## 3. Current priority
 
@@ -119,6 +136,32 @@ Empath now uses the square-table shell with:
 - typed Spy/Recluse registration witnesses;
 - no fabricated contributor highlight for impaired arbitrary information.
 
+### Undertaker
+
+Status: **IMPLEMENTED / Android FAST + R2 green / real-device acceptance pending**.
+
+Undertaker now uses a dedicated read-only square-table information surface with:
+
+- current Undertaker actor highlighted independently from the information-context player;
+- the executed player taken only from typed `InformationProposition.RoleAt.seat` and shown as read-only context;
+- the displayed character taken from the same typed `RoleAt` proposition rather than reconstructed from localized text or day UI state;
+- one legal final result rendered as one Show-information action;
+- multiple legal final results kept inside the existing typed result domain and selected with a compact role menu suitable for small screens;
+- conflicting/malformed/missing typed executed-seat candidates failing closed instead of inventing context;
+- existing recommended, unreliable and direct player-display/history paths preserved;
+- superseded generic result/recommendation/unreliable controls gated off whenever the specialized Undertaker surface has a valid typed domain.
+
+Implementation checkpoint:
+
+```text
+4e8296600e2144a1c9790181f2b78c471e32adec
+CI #2067 / run 34411490702  Android FAST + gate PASS
+R2 #1934 / run 34411490693   PASS
+exact implementation diff: 4 Undertaker-related files from pre-slice docs head a309dbcb...
+```
+
+Do not mark Undertaker device accepted until a real-device run is explicitly reported.
+
 ## 5. Dynamic night-trigger navigation bug
 
 A real-device report exposed:
@@ -147,11 +190,10 @@ This correctness fix is separate from Ravenkeeper's remaining UI migration.
 
 ## 6. Immediate execution sequence
 
-The next development conversation starts here:
+The next development slice starts here:
 
 ```text
-Undertaker
--> Ravenkeeper
+Ravenkeeper
 -> read-only inventory of all remaining active night-role Storyteller surfaces
 -> migrate any remaining appropriate legacy surface
 -> retire superseded reachable text/list/manual-dialog UI
@@ -160,21 +202,13 @@ Undertaker
 -> UI-R5 closeout
 ```
 
-### Undertaker — NEXT
+### Undertaker — IMPLEMENTED / DEVICE PENDING
 
-Expected model:
+The planned model has been implemented at `4e829660...`. The executed player is read-only typed information context, the result remains typed, player-facing reveal/history semantics are preserved, and generic parallel result surfaces are suppressed while the specialized surface is valid.
 
-- shared wake/actor presentation;
-- executed player shown as information context, not a selectable target;
-- typed role/result domain remains authoritative;
-- one legal result -> one Show-information action;
-- multiple legal results -> preserve typed choice semantics without implying the executed player is manually selectable;
-- preserve player-display observation/history path;
-- never infer executed-player identity or role from localized text.
+No real-device acceptance is recorded yet.
 
-Audit the live typed ownership before implementation.
-
-### Ravenkeeper — AFTER UNDERTAKER
+### Ravenkeeper — NEXT
 
 Expected model:
 
@@ -187,7 +221,7 @@ Expected model:
 
 ## 7. Final surviving-surface audit
 
-After Undertaker and Ravenkeeper, perform a fresh complete inventory of every active night action. Classify each Storyteller surface:
+After Ravenkeeper, perform a fresh complete inventory of every active night action. Classify each Storyteller surface:
 
 ```text
 ACCEPTED SQUARE TABLE
