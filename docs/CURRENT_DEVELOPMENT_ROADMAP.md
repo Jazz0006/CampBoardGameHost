@@ -43,7 +43,7 @@ CI 34288731376 — PASS
 
 ## Current priority
 
-> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h–n AUDITS / R0 CLEANUP COMPLETE → D6.2o NUMERIC OPTION PREPARATION COMPLETE / VALIDATED → D6.2p AUDIT COMPLETE → D6.2q CHAMBERMAID PRESENTATION PREPARATION COMPLETE / VALIDATED → CHAMBERMAID MATERIALIZER EXTRACTION AUDIT NEXT.**
+> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h–n AUDITS / R0 CLEANUP COMPLETE → D6.2o NUMERIC OPTION PREPARATION COMPLETE / VALIDATED → D6.2p AUDIT + D6.2q PREPARATION COMPLETE / VALIDATED → D6.2r CHAMBERMAID MATERIALIZER AUDIT COMPLETE → D6.2s MATERIALIZER EXTRACTION NEXT.**
 
 D6.2 stays on `codex/d6-2-ui-composition`. Do not reopen PR #113 or move this work back to `codex/d6-root-reaudit`.
 
@@ -384,9 +384,15 @@ Prepared immutable ordered names, current subject seats, display-secondary text 
 
 CI 34297489467 PASS: production/test Kotlin compile, executed FAST, Real Clingo and CI gate. R2 34297489458 PASS. Evidence: `docs/D6_2Q_CHAMBERMAID_PRESENTATION_PREPARATION_PROGRESS_2026-09-09.md`.
 
-## Next — Chambermaid materializer extraction audit
+## D6.2r — Chambermaid materializer extraction audit COMPLETE
 
-Perform a read-only dependency audit of the two remaining Chambermaid materializer closures. Determine whether they can consume the prepared selection presentation plus a narrow localized-content/number-option input while Host retains recommendation invocation, decision/telemetry lifecycle, publication and navigation ownership. Do not create a broad role-step context or move the closures if they still capture unrelated Host state.
+Authority: `docs/D6_2R_CHAMBERMAID_MATERIALIZER_EXTRACTION_AUDIT_2026-09-09.md`.
+
+The two phase closures are identical and can share one registry entry backed by a narrow typed materializer. Immutable content/result/presentation/proposition move into the assembly contract; one lazy Chambermaid display-option provider crosses the boundary. Recommendation invocation, history, style/pressure policy and lifecycle remain in Host. No general role context is permitted.
+
+## Next — D6.2s Chambermaid materializer extraction
+
+Implement the exact three-file contract in D6.2r. Preserve lazy unreliable-option evaluation, both canonical registry positions and all step fields. Stop if the extraction requires changing the shared builder or receiving more than the single role-specific option provider.
 
 PR #115 remains OPEN / DRAFT. Preserve benchmark harnesses/tests, live A4 prewarming, recommendation effects, telemetry and Recovery.
 
@@ -422,7 +428,7 @@ Preserve:
 
 ## Active handoff
 
-Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md` and `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md` plus `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md` for the overall route; read `docs/D6_2Q_CHAMBERMAID_PRESENTATION_PREPARATION_PROGRESS_2026-09-09.md` for the latest validated production checkpoint and next boundary audit. The D6.2i handoff, D6.2j contract and D6.2p implementation contract are now historical; do not implement completed slices again.
+Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md` for the overall route; read `docs/D6_2R_CHAMBERMAID_MATERIALIZER_EXTRACTION_AUDIT_2026-09-09.md` for the next exact contract and `docs/D6_2Q_CHAMBERMAID_PRESENTATION_PREPARATION_PROGRESS_2026-09-09.md` for the latest validated production checkpoint. Earlier D6.2 implementation contracts are historical; do not implement completed slices again.
 
 ## Later priority after D6
 

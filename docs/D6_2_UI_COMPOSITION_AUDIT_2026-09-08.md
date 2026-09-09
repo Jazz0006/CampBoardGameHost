@@ -363,7 +363,7 @@ D6.2n selected the shared numeric option preparation seam. D6.2o implemented it 
 
 D6.2p rejected a dishonest common input across Clockmaker, Chef, Empath and Chambermaid, then scoped the cohesive Chambermaid selected-seat/proposition seam. D6.2q implemented it at `a5f1654fe9adf56ce7fc3cbc07cd039972715a55`: Host prepares one immutable ordered presentation for both night materializers; the typed owner validates seats/source/value and constructs the proposition. Host -44 lines; CI 34297489467 and R2 34297489458 passed. See `docs/D6_2Q_CHAMBERMAID_PRESENTATION_PREPARATION_PROGRESS_2026-09-09.md`.
 
-Next perform a read-only dependency audit of the two Chambermaid materializer closures. Move them only if the new presentation value plus narrow localized content/options is sufficient without broad Host or lifecycle dependencies.
+D6.2r audited the two identical Chambermaid closures. A narrow assembler can consume immutable localized content/result/presentation/proposition plus one lazy role-specific display-option provider. Recommendation invocation/history/style lifecycle stays in Host; no general role context is needed. D6.2s is scoped in `docs/D6_2R_CHAMBERMAID_MATERIALIZER_EXTRACTION_AUDIT_2026-09-09.md`.
 
 ## Frozen invariants
 
@@ -400,6 +400,7 @@ main d76b0854...
 -> D6.2o numeric option preparation VALIDATED @ ad16ccc6...
 -> D6.2p numeric role-step input audit COMPLETE
 -> D6.2q Chambermaid presentation preparation VALIDATED @ a5f1654f...
--> Chambermaid materializer extraction audit NEXT
+-> D6.2r Chambermaid materializer extraction audit COMPLETE
+-> D6.2s narrow Chambermaid materializer extraction NEXT
 -> PR #115 remains OPEN / DRAFT / DO NOT AUTO-MERGE
 ```

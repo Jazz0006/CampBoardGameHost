@@ -65,4 +65,4 @@ The Android job completed with `BUILD SUCCESSFUL in 1m 40s`. FULL was correctly 
 
 This slice removes the duplicated Chambermaid seat/proposition calculation without introducing a role-step mega-bag, callbacks, Compose state or a second selection authority. A Chambermaid presentation change can now be tested against the typed owner without opening the full Host composition.
 
-The next action is a read-only Chambermaid materializer extraction audit. It should determine whether the two closures can honestly consume this prepared value plus a narrow localized-content/option boundary. Stop if extraction still requires broad Host locals, recommendation/telemetry lifecycle ownership, session writers or a general night-step context.
+The D6.2r read-only audit completed at the following docs checkpoint and scoped a narrow D6.2s materializer extraction. The assembler may receive prepared immutable content/proposition and one lazy Chambermaid option provider; recommendation invocation and lifecycle remain in Host. See `docs/D6_2R_CHAMBERMAID_MATERIALIZER_EXTRACTION_AUDIT_2026-09-09.md`.
