@@ -11,11 +11,11 @@ main: d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e
 D6.2 branch: codex/d6-2-ui-composition
 Draft PR: #115 — OPEN / DRAFT / DO NOT AUTO-MERGE
 Latest validated production checkpoint:
-4c16f4c09ae7df693a3b16d6910ab026373e05cd
-refactor(app): retire obsolete Clocktower decoder island
+ad16ccc694e687ab10e62677cf0369fa26e9c2fd
+refactor(clocktower): extract numeric option preparation
 ```
 
-Closeout commits after `4c16f4c0...` are documentation-only unless a later handoff explicitly records a newer validated production checkpoint. Always re-query live branch head and keep **production checkpoint** distinct from **docs-only branch head**.
+Closeout commits after `ad16ccc6...` are documentation-only unless a later handoff explicitly records a newer validated production checkpoint. Always re-query live branch head and keep **production checkpoint** distinct from **docs-only branch head**.
 
 Historical D6.2g clean-head gates:
 
@@ -43,7 +43,7 @@ CI 34288731376 — PASS
 
 ## Current priority
 
-> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h READ-ONLY RE-AUDIT COMPLETE → D6.2i DAY NOMINATION TRANSIENT OWNERSHIP COMPLETE / VALIDATED → D6.2j RESIDUAL AUDIT COMPLETE → D6.2k–m R0 CLEANUP COMPLETE / VALIDATED → D6.2n LIVE INFORMATION PREPARATION AUDIT COMPLETE → D6.2o NUMERIC OPTION PREPARATION NEXT.**
+> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h–n AUDITS / R0 CLEANUP COMPLETE → D6.2o NUMERIC OPTION PREPARATION COMPLETE / VALIDATED → NUMERIC ROLE-STEP INPUT AUDIT NEXT.**
 
 D6.2 stays on `codex/d6-2-ui-composition`. Do not reopen PR #113 or move this work back to `codex/d6-root-reaudit`.
 
@@ -362,9 +362,17 @@ Authority: `docs/D6_2N_LIVE_INFORMATION_PREPARATION_OWNERSHIP_AUDIT_2026-09-09.m
 
 The six numeric recommendation call sites share a pure history/parser and recommendation-result projection seam. The recommendation invocation remains in Host; typed registration facts, role-step assembly, structured decision lifecycle, telemetry and publication remain with their current owners. Moving Chef/Empath/Chambermaid closures first would require a broad captured context, so materializer movement is deferred until this dependency is removed.
 
-## Next — D6.2o numeric option preparation
+## D6.2o — numeric option preparation COMPLETE
 
-Implement the exact three-file contract in the D6.2n audit. Add typed adapter tests, extract the pure previous-number parser and recommendation-to-display projector, and leave all six call-site inputs and materializer order unchanged. Use Android FAST + compile and R2 unless the implementation crosses the frozen boundary.
+Production/test checkpoint: `ad16ccc694e687ab10e62677cf0369fa26e9c2fd`.
+
+Extracted the pure prior-number parser and recommendation-to-display projector into a 55-line typed adapter. Host retains recommendation context construction and invocation; all six numeric role consumers and materializer order are unchanged. Host is 4520 lines / 267039 bytes, down 25 lines in this slice. Typed adapter tests cover localized history and full display metadata.
+
+CI 34296404234 PASS: production/test Kotlin compile, executed FAST and CI gate. R2 34296404229 PASS. Evidence: `docs/D6_2O_NUMERIC_OPTION_PREPARATION_PROGRESS_2026-09-09.md`.
+
+## Next — numeric role-step input audit
+
+Re-audit Clockmaker, Chef, Empath and Chambermaid inputs after D6.2o before moving materializer closures. Define a cohesive immutable input only if registration-aware Chef/Empath and pair-aware Chambermaid differences remain explicit. Do not pass cards, registration maps, coordinator/session or arbitrary callbacks through a shared context.
 
 PR #115 remains OPEN / DRAFT. Preserve benchmark harnesses/tests, live A4 prewarming, recommendation effects, telemetry and Recovery.
 

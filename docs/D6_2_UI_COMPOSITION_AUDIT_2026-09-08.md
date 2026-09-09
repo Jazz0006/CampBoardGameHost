@@ -4,8 +4,8 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > D6.1 merge commit: `112572cbd3d990737a412cc4b8ead766d00867e8`  
 > D6.2 branch base / current main: `d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e`  
-> Latest validated production checkpoint: `4c16f4c09ae7df693a3b16d6910ab026373e05cd`
-> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h READ-ONLY RE-AUDIT COMPLETE; D6.2i COMPLETE / VALIDATED; D6.2j AUDIT COMPLETE; D6.2k–m COMPLETE / VALIDATED**
+> Latest validated production checkpoint: `ad16ccc694e687ab10e62677cf0369fa26e9c2fd`
+> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h–n AUDITS / R0 CLEANUP COMPLETE; D6.2o COMPLETE / VALIDATED**
 
 ## Purpose
 
@@ -359,7 +359,9 @@ D6.2l subsequently retired the unused Day/History UI and corresponding obsolete 
 
 D6.2m removed that isolated App decoder subgraph and unused random role helper at `4c16f4c09ae7df693a3b16d6910ab026373e05cd`: App +0 / -94, Android FAST/CI 34294858685 and R2 34294858697 PASS. Current archive, Recovery v2 and assignment paths remain. See `docs/D6_2M_APP_DECODER_CLEANUP_PROGRESS_2026-09-09.md`.
 
-R0 cleanup is complete. Next re-audit the post-cleanup live information preparation/materializer boundary before moving production code.
+D6.2n selected the shared numeric option preparation seam. D6.2o implemented it at `ad16ccc694e687ab10e62677cf0369fa26e9c2fd`: a 55-line pure adapter plus typed tests; Host -25 net lines. Production/test Kotlin compilation, FAST and CI gate 34296404234 plus R2 34296404229 passed. All six numeric consumers and materializer order remain unchanged. See `docs/D6_2O_NUMERIC_OPTION_PREPARATION_PROGRESS_2026-09-09.md`.
+
+Next audit a cohesive numeric role-step input before moving Clockmaker, Chef, Empath or Chambermaid materializer closures.
 
 ## Frozen invariants
 
@@ -392,6 +394,8 @@ main d76b0854...
 -> D6.2k dormant diagnostics / dead inputs VALIDATED @ c3a25f64...
 -> D6.2l retired Day/History UI + R2 assertions VALIDATED @ 69655de1...
 -> D6.2m private App decoder cleanup VALIDATED @ 4c16f4c0...
--> live information preparation boundary re-audit NEXT
+-> D6.2n live information preparation audit COMPLETE
+-> D6.2o numeric option preparation VALIDATED @ ad16ccc6...
+-> numeric role-step input audit NEXT
 -> PR #115 remains OPEN / DRAFT / DO NOT AUTO-MERGE
 ```

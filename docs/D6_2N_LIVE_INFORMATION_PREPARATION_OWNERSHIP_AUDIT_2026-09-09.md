@@ -1,7 +1,8 @@
 # D6.2n — Live information preparation ownership audit
 
 > Date: 2026-09-09 Australia/Sydney
-> Status: READ-ONLY POST-R0 AUDIT COMPLETE; D6.2o scoped below.
+> Status: HISTORICAL READ-ONLY AUDIT COMPLETE; D6.2o implemented and validated at `ad16ccc694e687ab10e62677cf0369fa26e9c2fd`.
+> Follow-up: `D6_2O_NUMERIC_OPTION_PREPARATION_PROGRESS_2026-09-09.md`.
 > Branch: `codex/d6-2-ui-composition`; PR #115 OPEN / DRAFT.
 > Audited head: `c283b373adc4e33933c9a2f36f54aa491f3c6043`.
 > Latest validated production checkpoint: `4c16f4c09ae7df693a3b16d6910ab026373e05cd`.
