@@ -1154,23 +1154,6 @@ internal fun ClocktowerJudgeScreen(
             isDefaultRecommendation = true,
         )
     }
-    fun previousUnreliableNumber(title: String, actor: PlayerCard): Int? = events
-        .asReversed()
-        .firstOrNull { event ->
-            event.type == ClocktowerEventType.UnreliableInformation &&
-                actor.name in event.playerNames &&
-                event.title.startsWith(title)
-        }
-        ?.detail
-        ?.let { detail ->
-            val payload = when {
-                "：" in detail -> detail.substringAfter("：")
-                ": " in detail -> detail.substringAfter(": ")
-                else -> detail
-            }
-            Regex("\\d+").find(payload)?.value?.toIntOrNull()
-        }
-
     fun recommendationStyleLabel(style: RecommendationStyle): String = when (style) {
         RecommendationStyle.GENTLE -> text("推荐·稳健", "Recommended · gentle")
         RecommendationStyle.BALANCED -> text("推荐·平衡", "Recommended · balanced")
@@ -1187,35 +1170,27 @@ internal fun ClocktowerJudgeScreen(
         secondary: String? = null,
         propositionForValue: ((Int) -> InformationProposition)? = null,
     ): List<ClocktowerDisplayOption> {
-        return recommendationCoordinator.recommendNumber(
+        val maximumValue = maxOf(trueValue, maxValue)
+        val recommendations = recommendationCoordinator.recommendNumber(
             UnreliableNumberContext(
                 trueValue = trueValue,
                 minimumValue = 0,
-                maximumValue = maxOf(trueValue, maxValue),
-                previousShownValue = previousUnreliableNumber(title, actor)
-                    ?.takeIf { it in 0..maxOf(trueValue, maxValue) },
+                maximumValue = maximumValue,
+                previousShownValue = previousClocktowerUnreliableNumber(events, title, actor.name)
+                    ?.takeIf { it in 0..maximumValue },
                 pressureCostPerPoint = pressureCostPerPoint,
             ),
-        ).map { recommendation ->
-            val styleLabel = recommendationStyleLabel(recommendation.style)
-            val warning = if (recommendation.warningIds.isNotEmpty()) text(" ⚠ 高压", " ⚠ high pressure") else ""
-            displayOption(
-                label = "$styleLabel：${recommendation.value}$warning",
-                kind = ClocktowerDisplayKind.Number,
-                title = title,
-                primary = recommendation.value.toString(),
-                secondary = secondary,
-                footer = footer,
-                proposition = propositionForValue?.invoke(recommendation.value),
-                recommendationStyle = recommendation.style,
-                isTruthful = recommendation.value == trueValue,
-                misinformationPressure = kotlin.math.abs(recommendation.value - trueValue)
-                    .coerceIn(0, 5),
-                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
-                reasonCodes = recommendation.scoreItems.map { it.ruleId },
-                warningCodes = recommendation.warningIds,
-            )
-        }
+        )
+        return clocktowerUnreliableNumberDisplayOptions(
+            recommendations = recommendations,
+            title = title,
+            trueValue = trueValue,
+            secondary = secondary,
+            footer = footer,
+            styleLabel = ::recommendationStyleLabel,
+            highPressureSuffix = text(" ⚠ 高压", " ⚠ high pressure"),
+            propositionForValue = propositionForValue,
+        )
     }
 
     fun recommendedYesNoOptions(
@@ -2800,7 +2775,7 @@ internal fun ClocktowerJudgeScreen(
                                 hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
                                     displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), pressureCostPerPoint = 1, propositionForValue = { value -> InformationProposition.NumericResult(NumericMetric.LIVING_EVIL_NEIGHBOURS, cards.indexOf(actor) + 1, empathNeighbors.map { cards.indexOf(it) + 1 }, value) }) },
                                 previousShownNumber = empathActor?.let { actor ->
-                                    previousUnreliableNumber(text("共情者信息", "Empath information"), actor)
+                                    previousClocktowerUnreliableNumber(events, text("共情者信息", "Empath information"), actor.name)
                                         ?.takeIf { it in 0..2 }
                                 },                                legalSelectionOptions = { actor ->
                                     if (empathAbilityUnreliable) {
@@ -3036,7 +3011,7 @@ internal fun ClocktowerJudgeScreen(
                 hostInstruction = text("轻拍共情者，示意睁眼。把数字只给他看；不要解释是哪位邻居。", "Tap the Empath to wake them. Show only the number; do not identify either neighbor."),
                 displayOptions = { actor -> recommendedNumberOptions(text("共情者信息", "Empath information"), actor, empathReferenceValue, 2, text("邪恶存活邻居数量", "Evil living neighbors"), pressureCostPerPoint = 1) },
                 previousShownNumber = empathActor?.let { actor ->
-                    previousUnreliableNumber(text("共情者信息", "Empath information"), actor)
+                    previousClocktowerUnreliableNumber(events, text("共情者信息", "Empath information"), actor.name)
                         ?.takeIf { it in 0..2 }
                 },                                legalSelectionOptions = { actor ->
                                     if (empathAbilityUnreliable) {
