@@ -3,7 +3,6 @@ package com.codex.campboardgamehost
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,6 +41,8 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     presentation: ClocktowerPairManualPresentation,
     recommendedOption: ClocktowerDisplayOption?,
     seats: List<HostSeatPresentation>,
+    actorSeat: Int? = null,
+    wakeInstruction: String? = null,
     abilityLabel: String,
     roleLabel: (String) -> String,
     language: String,
@@ -84,15 +85,17 @@ internal fun ClocktowerPairInformationSquareTableDialog(
         ) {
             ClocktowerSquareTableSeatSurface(
                 seats = seats.map { seat ->
+                    val seatPresentation = clocktowerPairInformationSeatPresentation(
+                        selection = selection,
+                        seatNumber = seat.seatId.number,
+                        editing = editing,
+                        actorSeat = actorSeat,
+                    )
                     clocktowerPairManualSquareTableSeat(
                         seat = seat,
                         language = language,
-                        state = clocktowerPairInformationSeatState(
-                            selection = selection,
-                            seatNumber = seat.seatId.number,
-                            editing = editing,
-                        ),
-                    )
+                        state = seatPresentation.targetState,
+                    ).copy(isCurrentActor = seatPresentation.isCurrentActor)
                 },
                 modifier = Modifier.fillMaxSize(),
                 interactionMode = if (editing) {
@@ -110,6 +113,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                 },
             ) {
                 ClocktowerPairInformationCenterControls(
+                    wakeInstruction = wakeInstruction,
                     abilityLabel = abilityLabel,
                     selection = selection,
                     recommendedSelection = recommendedSelection,
@@ -149,8 +153,28 @@ internal fun clocktowerPairInformationSeatState(
     return clocktowerPairManualSeatState(selection, seatNumber)
 }
 
+/**
+ * The player who must be woken is a separate visual dimension from the players referenced by the
+ * information. The square-table card can therefore keep the actor border while also retaining a
+ * pair-selection state when those concepts happen to overlap.
+ */
+internal fun clocktowerPairInformationSeatPresentation(
+    selection: ClocktowerPairManualSelectionModel,
+    seatNumber: Int,
+    editing: Boolean,
+    actorSeat: Int?,
+): ClocktowerNightActionSeatPresentation = ClocktowerNightActionSeatPresentation(
+    targetState = clocktowerPairInformationSeatState(
+        selection = selection,
+        seatNumber = seatNumber,
+        editing = editing,
+    ),
+    isCurrentActor = seatNumber == actorSeat,
+)
+
 @Composable
 private fun ClocktowerPairInformationCenterControls(
+    wakeInstruction: String?,
     abilityLabel: String,
     selection: ClocktowerPairManualSelectionModel,
     recommendedSelection: ClocktowerPairManualSelectionModel,
@@ -173,157 +197,153 @@ private fun ClocktowerPairInformationCenterControls(
             .fillMaxSize()
             .padding(6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
     ) {
-        Text(
-            text = abilityLabel,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-        )
-        Text(
-            text = if (editing) {
-                if (language == "en") "Manual edit" else "手动编辑"
-            } else {
-                if (language == "en") "Recommended information" else "推荐信息"
-            },
-            color = MaterialTheme.colorScheme.primary,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(4.dp))
-
-        if (editing) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                OutlinedButton(
-                    onClick = { roleMenuExpanded = true },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        when {
-                            selection.isZeroCaseSelected -> if (language == "en") "0 / None in play" else "0 / 无此类角色"
-                            selection.selectedRoleId != null -> roleLabel(selection.selectedRoleId)
-                            else -> if (language == "en") "Choose character" else "选择身份"
-                        },
-                        maxLines = 1,
-                    )
-                }
-                DropdownMenu(
-                    expanded = roleMenuExpanded,
-                    onDismissRequest = { roleMenuExpanded = false },
-                ) {
-                    selection.roleIds.forEach { roleId ->
-                        DropdownMenuItem(
-                            text = { Text(roleLabel(roleId)) },
-                            onClick = {
-                                onSelectionChange(selection.selectRole(roleId))
-                                roleMenuExpanded = false
-                            },
-                        )
-                    }
-                    if (selection.hasZeroCase) {
-                        DropdownMenuItem(
-                            text = { Text(if (language == "en") "0 / None in play" else "0 / 无此类角色") },
-                            onClick = {
-                                onSelectionChange(selection.selectZeroCase())
-                                roleMenuExpanded = false
-                            },
-                        )
-                    }
-                }
-            }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            ClocktowerNightActionWakeInstruction(wakeInstruction)
+            Text(
+                text = abilityLabel,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = if (editing) {
+                    if (language == "en") "Manual edit" else "手动编辑"
+                } else {
+                    if (language == "en") "Recommended information" else "推荐信息"
+                },
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+            )
             Spacer(Modifier.height(4.dp))
-        }
 
-        when {
-            selection.isZeroCaseSelected -> {
-                Text(
-                    text = if (language == "en") "No character of this type is in play" else "没有此类角色在场",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
+            if (editing) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick = { roleMenuExpanded = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            when {
+                                selection.isZeroCaseSelected -> if (language == "en") "0 / None in play" else "0 / 无此类角色"
+                                selection.selectedRoleId != null -> roleLabel(selection.selectedRoleId)
+                                else -> if (language == "en") "Choose character" else "选择身份"
+                            },
+                            maxLines = 1,
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = roleMenuExpanded,
+                        onDismissRequest = { roleMenuExpanded = false },
+                    ) {
+                        selection.roleIds.forEach { roleId ->
+                            DropdownMenuItem(
+                                text = { Text(roleLabel(roleId)) },
+                                onClick = {
+                                    onSelectionChange(selection.selectRole(roleId))
+                                    roleMenuExpanded = false
+                                },
+                            )
+                        }
+                        if (selection.hasZeroCase) {
+                            DropdownMenuItem(
+                                text = { Text(if (language == "en") "0 / None in play" else "0 / 无此类角色") },
+                                onClick = {
+                                    onSelectionChange(selection.selectZeroCase())
+                                    roleMenuExpanded = false
+                                },
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
             }
 
-            selection.selectedRoleId != null -> {
-                val first = selection.selectedFirstSeat
-                val second = selection.selectedSecondSeat
-                if (first != null && second != null) {
+            when {
+                selection.isZeroCaseSelected -> {
                     Text(
-                        text = "P$first + P$second",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center,
-                    )
-                    Text(
-                        text = if (language == "en") {
-                            "One of these players is ${roleLabel(selection.selectedRoleId)}"
-                        } else {
-                            "其中一人是 ${roleLabel(selection.selectedRoleId)}"
-                        },
+                        text = if (language == "en") "No character of this type is in play" else "没有此类角色在场",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                     )
-                } else if (editing) {
+                }
+
+                selection.selectedRoleId != null -> {
+                    val first = selection.selectedFirstSeat
+                    val second = selection.selectedSecondSeat
+                    if (first != null && second != null) {
+                        Text(
+                            text = "P$first + P$second",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center,
+                        )
+                        Text(
+                            text = if (language == "en") {
+                                "One of these players is ${roleLabel(selection.selectedRoleId)}"
+                            } else {
+                                "其中一人是 ${roleLabel(selection.selectedRoleId)}"
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                        )
+                    } else if (editing) {
+                        Text(
+                            text = if (language == "en") "Select two players on the table" else "请在桌上选择两名玩家",
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+
+                editing -> {
                     Text(
-                        text = if (language == "en") "Select two players on the table" else "请在桌上选择两名玩家",
+                        text = if (language == "en") "Choose a character, then select two players" else "先选择身份，再在桌上选择两名玩家",
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center,
                     )
                 }
             }
 
-            editing -> {
-                Text(
-                    text = if (language == "en") "Choose a character, then select two players" else "先选择身份，再在桌上选择两名玩家",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                )
+            Spacer(Modifier.height(6.dp))
+            selection.resolvedOption?.let { resolved ->
+                Button(
+                    onClick = { onConfirm(resolved) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (language == "en") "Show this information" else "展示此信息")
+                }
+            }
+
+            if (!editing && (selection.roleIds.isNotEmpty() || selection.hasZeroCase)) {
+                OutlinedButton(
+                    onClick = onStartEditing,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (language == "en") "Choose manually" else "手动选择")
+                }
+            } else if (editing && hasRecommendation) {
+                TextButton(onClick = onRestoreRecommendation) {
+                    Text(if (language == "en") "Restore recommendation" else "恢复推荐")
+                }
             }
         }
 
-        Spacer(Modifier.height(6.dp))
-        selection.resolvedOption?.let { resolved ->
-            Button(
-                onClick = { onConfirm(resolved) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(if (language == "en") "Show this information" else "展示此信息")
-            }
-        }
-
-        if (!editing && (selection.roleIds.isNotEmpty() || selection.hasZeroCase)) {
-            OutlinedButton(
-                onClick = onStartEditing,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(if (language == "en") "Choose manually" else "手动选择")
-            }
-        } else if (editing && hasRecommendation) {
-            TextButton(onClick = onRestoreRecommendation) {
-                Text(if (language == "en") "Restore recommendation" else "恢复推荐")
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            OutlinedButton(
-                onClick = onPrevious,
-                enabled = canGoPrevious,
-                modifier = Modifier.weight(1f),
-            ) {
-                Text(if (language == "en") "Previous" else "上一步")
-            }
-            OutlinedButton(
-                onClick = onNext,
-                modifier = Modifier.weight(1f),
-            ) {
-                Text(if (language == "en") "Next" else "下一步")
-            }
-        }
+        ClocktowerSquareTableStepNavigation(
+            language = language,
+            canGoPrevious = canGoPrevious,
+            onPrevious = onPrevious,
+            onNext = onNext,
+        )
     }
 }
