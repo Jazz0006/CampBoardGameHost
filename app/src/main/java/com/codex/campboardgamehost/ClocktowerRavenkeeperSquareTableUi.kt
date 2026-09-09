@@ -41,46 +41,32 @@ internal enum class ClocktowerRavenkeeperResultSourceKind {
 internal data class ClocktowerRavenkeeperResultChoice(
     val key: String,
     val targetSeat: Int,
-    val roleId: RoleId,
+    val roleId: RoleId?,
+    val displayLabel: String,
     val sourceKind: ClocktowerRavenkeeperResultSourceKind,
     val displayOption: ClocktowerDisplayOption? = null,
     val recommended: Boolean = false,
 )
 
-/** Reliable direct results must use the exact player-visible RoleAt proposition. */
 internal fun clocktowerRavenkeeperTypedResult(
     proposition: InformationProposition?,
     selectedSeat: Int?,
     seatCount: Int,
-): ClocktowerRavenkeeperTypedResult? {
-    if (selectedSeat == null || selectedSeat !in 1..seatCount) return null
-    val roleAt = proposition as? InformationProposition.RoleAt ?: return null
-    if (roleAt.seat != selectedSeat || roleAt.seat !in 1..seatCount) return null
-    return ClocktowerRavenkeeperTypedResult(
-        targetSeat = roleAt.seat,
-        roleId = roleAt.role,
-    )
-}
-
-/** Display options may instead carry non-epistemic Storyteller presentation metadata. */
-internal fun clocktowerRavenkeeperTypedResult(
-    option: ClocktowerDisplayOption,
-    selectedSeat: Int?,
-    seatCount: Int,
-): ClocktowerRavenkeeperTypedResult? {
-    if (selectedSeat == null || selectedSeat !in 1..seatCount) return null
-    val resolved = option.resolvedRoleRevealPresentation(seatCount) ?: return null
-    if (resolved.targetSeat != selectedSeat) return null
-    return ClocktowerRavenkeeperTypedResult(
-        targetSeat = resolved.targetSeat,
-        roleId = resolved.roleId,
+): ClocktowerRavenkeeperTypedResult? = clocktowerRoleRevealAnchor(
+    proposition = proposition,
+    expectedSeat = selectedSeat,
+    seatCount = seatCount,
+)?.let { anchor ->
+    ClocktowerRavenkeeperTypedResult(
+        targetSeat = anchor.targetSeat,
+        roleId = anchor.roleId,
     )
 }
 
 /**
- * Thin projection of existing Ravenkeeper result domains. Target legality remains upstream; this
- * adapter only binds a selected target to typed final-role identity supplied by the materializer,
- * registration layer, or Storyteller-only presentation metadata.
+ * Thin projection of existing Ravenkeeper result domains. The step-level RoleAt owns target-seat
+ * identity. Individual options remain opaque display choices when unreliable; typed option
+ * propositions, when present, must agree with that target and are never reconstructed from text.
  */
 internal fun clocktowerRavenkeeperResultChoices(
     step: ClocktowerNightStepUi,
@@ -93,29 +79,33 @@ internal fun clocktowerRavenkeeperResultChoices(
     if (step.action != ClocktowerNightAction.Ravenkeeper || step.roleEnName != "Ravenkeeper") {
         return emptyList()
     }
-    if (selectedSeat == null || selectedSeat !in 1..seatCount) return emptyList()
+    val anchor = clocktowerRoleRevealAnchor(
+        proposition = step.displayProposition,
+        expectedSeat = selectedSeat,
+        seatCount = seatCount,
+    ) ?: return emptyList()
 
     fun choicesFrom(
         options: List<ClocktowerDisplayOption>,
         sourceKind: ClocktowerRavenkeeperResultSourceKind,
     ): List<ClocktowerRavenkeeperResultChoice> {
         if (options.isEmpty()) return emptyList()
-        val choices = options.map { option ->
-            val typed = clocktowerRavenkeeperTypedResult(
+        return options.map { option ->
+            val projected = clocktowerRoleRevealChoiceProjection(
                 option = option,
-                selectedSeat = selectedSeat,
+                targetSeat = anchor.targetSeat,
                 seatCount = seatCount,
             ) ?: return emptyList()
             ClocktowerRavenkeeperResultChoice(
                 key = clocktowerInformationCandidateId(option),
-                targetSeat = typed.targetSeat,
-                roleId = typed.roleId,
+                targetSeat = projected.targetSeat,
+                roleId = projected.roleId,
+                displayLabel = projected.displayLabel,
                 sourceKind = sourceKind,
                 displayOption = option,
                 recommended = option.isDefaultRecommendation,
             )
-        }
-        return choices.distinctBy { it.key }
+        }.distinctBy { it.key }
     }
 
     if (automaticStorytellerInfo) {
@@ -140,16 +130,13 @@ internal fun clocktowerRavenkeeperResultChoices(
         }
     }
 
-    val direct = clocktowerRavenkeeperTypedResult(
-        proposition = step.displayProposition,
-        selectedSeat = selectedSeat,
-        seatCount = seatCount,
-    ) ?: return emptyList()
+    val displayLabel = step.displayPrimary?.takeIf { it.isNotBlank() } ?: return emptyList()
     return listOf(
         ClocktowerRavenkeeperResultChoice(
-            key = "direct|${direct.targetSeat}|${direct.roleId.value}",
-            targetSeat = direct.targetSeat,
-            roleId = direct.roleId,
+            key = "direct|${anchor.targetSeat}|${anchor.roleId.value}",
+            targetSeat = anchor.targetSeat,
+            roleId = anchor.roleId,
+            displayLabel = displayLabel,
             sourceKind = ClocktowerRavenkeeperResultSourceKind.Direct,
             recommended = true,
         ),
@@ -237,9 +224,9 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                 if (selectedSeat != null && choices.isEmpty()) {
                     Text(
                         text = if (language == "en") {
-                            "No typed result is available for the current target. Re-select the target or go back."
+                            "No result is available for the current target. Re-select the target or go back."
                         } else {
-                            "当前目标没有可用的类型化结果。请重新选择目标或返回上一步。"
+                            "当前目标没有可用结果。请重新选择目标或返回上一步。"
                         },
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
@@ -259,7 +246,7 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                             onClick = { roleMenuExpanded = true },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text(clocktowerRoleLabel(selectedChoice.roleId, language), maxLines = 1)
+                            Text(selectedChoice.displayLabel, maxLines = 1)
                         }
                         DropdownMenu(
                             expanded = roleMenuExpanded,
@@ -267,7 +254,7 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                         ) {
                             choices.forEach { choice ->
                                 DropdownMenuItem(
-                                    text = { Text(clocktowerRoleLabel(choice.roleId, language)) },
+                                    text = { Text(choice.displayLabel) },
                                     onClick = {
                                         selectedKey = choice.key
                                         roleMenuExpanded = false
@@ -286,9 +273,9 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                     ) {
                         Text(
                             if (language == "en") {
-                                "Show information: ${clocktowerRoleLabel(choice.roleId, language)}"
+                                "Show information: ${choice.displayLabel}"
                             } else {
-                                "展示信息：${clocktowerRoleLabel(choice.roleId, language)}"
+                                "展示信息：${choice.displayLabel}"
                             },
                             maxLines = 1,
                         )
