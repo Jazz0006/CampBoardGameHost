@@ -66,6 +66,39 @@ class ClocktowerChefSquareTablePresentationTest {
     }
 
     @Test
+    fun `single chef result never presents counted players as a choice`() {
+        val choice = ClocktowerChefResultChoice(
+            key = "only",
+            value = 1,
+            sourceKind = ClocktowerChefResultSourceKind.Direct,
+            effectivePairSeats = setOf(2, 3),
+        )
+
+        assertEquals(emptySet<Int>(), clocktowerChefDisplayedPairSeats(listOf(choice), "only"))
+    }
+
+    @Test
+    fun `multiple chef results present the currently selected witness players`() {
+        val first = ClocktowerChefResultChoice(
+            key = "first",
+            value = 1,
+            sourceKind = ClocktowerChefResultSourceKind.DisplayOption,
+            effectivePairSeats = setOf(2, 3),
+        )
+        val second = ClocktowerChefResultChoice(
+            key = "second",
+            value = 2,
+            sourceKind = ClocktowerChefResultSourceKind.DisplayOption,
+            effectivePairSeats = setOf(2, 3, 4),
+        )
+
+        assertEquals(
+            setOf(2, 3, 4),
+            clocktowerChefDisplayedPairSeats(listOf(first, second), "second"),
+        )
+    }
+
+    @Test
     fun `spy registering good removes the spy from the selected result but keeps static evil identity available`() {
         val players = listOf(
             player(1, "Chef", Alignment.GOOD, CharacterType.TOWNSFOLK),
