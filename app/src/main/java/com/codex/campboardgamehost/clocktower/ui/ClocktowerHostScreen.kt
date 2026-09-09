@@ -2489,6 +2489,39 @@ internal fun ClocktowerJudgeScreen(
         return distinctClocktowerFinalInformationResults(candidates)
     }
 
+    val chambermaidStepContent = ClocktowerChambermaidStepContent(
+        explanation = text("侍女选择两名玩家，得知其中有几人今晚因自己的能力醒来。", "The Chambermaid chooses two players and learns how many woke tonight because of their own ability."),
+        displayFooter = text("查询这两名玩家", "Checking these two players"),
+        hostInstruction = text("轻拍侍女，示意睁眼。让她依次指两名玩家，不能选自己；点查询后只展示数字。", "Tap the Chambermaid to wake them. Have them point to two players other than themself, then show only the number."),
+    )
+    val chambermaidMaterializer = clocktowerChambermaidStepMaterializer(
+        builder = informationStepBuilder,
+        content = chambermaidStepContent,
+        result = chambermaidResult,
+        presentation = chambermaidPresentation,
+        displayProposition = chambermaidResult?.toIntOrNull()?.let { value ->
+            roleActor("Chambermaid")?.let { actor ->
+                chambermaidPresentation.proposition(cards.indexOf(actor) + 1, value)
+            }
+        },
+        displayOptions = { actor ->
+            chambermaidResult?.toIntOrNull()?.let { trueValue ->
+                recommendedNumberOptions(
+                    title = text("侍女信息", "Chambermaid information"),
+                    actor = actor,
+                    trueValue = trueValue,
+                    maxValue = 2,
+                    footer = chambermaidStepContent.displayFooter,
+                    pressureCostPerPoint = 1,
+                    secondary = chambermaidPresentation.displaySecondary,
+                    propositionForValue = { value ->
+                        chambermaidPresentation.proposition(cards.indexOf(actor) + 1, value)
+                    },
+                )
+            }.orEmpty()
+        },
+    )
+
     val nightSteps = if (phase == ClocktowerPhase.FirstNight) {
         val firstNightInteractions =
             ClocktowerProductionFirstNightFlow.interactions(
@@ -2814,42 +2847,7 @@ internal fun ClocktowerJudgeScreen(
                             )
             },
         ),
-        ClocktowerNightStepMaterializerRegistry.Entry(
-            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Chambermaid")),
-            build = {
-                informationStepBuilder.build(
-                                roleName = "侍女",
-                                enName = "Chambermaid",
-                                tellPlayer = chambermaidResult,
-                                explanation = text("侍女选择两名玩家，得知其中有几人今晚因自己的能力醒来。", "The Chambermaid chooses two players and learns how many woke tonight because of their own ability."),
-                                action = ClocktowerNightAction.Chambermaid,
-                                displayProposition = chambermaidResult?.toIntOrNull()?.let { value ->
-                                    roleActor("Chambermaid")?.let { actor ->
-                                        chambermaidPresentation.proposition(cards.indexOf(actor) + 1, value)
-                                    }
-                                },
-                                displaySecondary = chambermaidPresentation.displaySecondary,
-                                displayFooter = text("查询这两名玩家", "Checking these two players"),
-                                hostInstruction = text("轻拍侍女，示意睁眼。让她依次指两名玩家，不能选自己；点查询后只展示数字。", "Tap the Chambermaid to wake them. Have them point to two players other than themself, then show only the number."),
-                                displayOptions = { actor ->
-                                    chambermaidResult?.toIntOrNull()?.let { trueValue ->
-                                        recommendedNumberOptions(
-                                            title = text("侍女信息", "Chambermaid information"),
-                                            actor = actor,
-                                            trueValue = trueValue,
-                                            maxValue = 2,
-                                            footer = text("查询这两名玩家", "Checking these two players"),
-                                            pressureCostPerPoint = 1,
-                                            secondary = chambermaidPresentation.displaySecondary,
-                                            propositionForValue = { value ->
-                                                chambermaidPresentation.proposition(cards.indexOf(actor) + 1, value)
-                                            },
-                                        )
-                                    }.orEmpty()
-                                },
-                            )
-            },
-        ),
+        chambermaidMaterializer,
         ClocktowerNightStepMaterializerRegistry.Entry(
             identity = ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller")),
             build = {
@@ -3026,42 +3024,7 @@ internal fun ClocktowerJudgeScreen(
             )
             },
         ),
-        ClocktowerNightStepMaterializerRegistry.Entry(
-            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Chambermaid")),
-            build = {
-            informationStepBuilder.build(
-                roleName = "侍女",
-                enName = "Chambermaid",
-                tellPlayer = chambermaidResult,
-                explanation = text("侍女选择两名玩家，得知其中有几人今晚因自己的能力醒来。", "The Chambermaid chooses two players and learns how many woke tonight because of their own ability."),
-                action = ClocktowerNightAction.Chambermaid,
-                displayProposition = chambermaidResult?.toIntOrNull()?.let { value ->
-                    roleActor("Chambermaid")?.let { actor ->
-                        chambermaidPresentation.proposition(cards.indexOf(actor) + 1, value)
-                    }
-                },
-                displaySecondary = chambermaidPresentation.displaySecondary,
-                displayFooter = text("查询这两名玩家", "Checking these two players"),
-                hostInstruction = text("轻拍侍女，示意睁眼。让她依次指两名玩家，不能选自己；点查询后只展示数字。", "Tap the Chambermaid to wake them. Have them point to two players other than themself, then show only the number."),
-                displayOptions = { actor ->
-                    chambermaidResult?.toIntOrNull()?.let { trueValue ->
-                        recommendedNumberOptions(
-                            title = text("侍女信息", "Chambermaid information"),
-                            actor = actor,
-                            trueValue = trueValue,
-                            maxValue = 2,
-                            footer = text("查询这两名玩家", "Checking these two players"),
-                            pressureCostPerPoint = 1,
-                            secondary = chambermaidPresentation.displaySecondary,
-                            propositionForValue = { value ->
-                                chambermaidPresentation.proposition(cards.indexOf(actor) + 1, value)
-                            },
-                        )
-                    }.orEmpty()
-                },
-            )
-            },
-        ),
+        chambermaidMaterializer,
         ClocktowerNightStepMaterializerRegistry.Entry(
             identity = ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller")),
             build = {
