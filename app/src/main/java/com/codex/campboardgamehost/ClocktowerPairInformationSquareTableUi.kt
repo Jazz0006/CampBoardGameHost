@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.weight
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -50,13 +51,16 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     onNext: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
 ) {
-    val recommendedSelection = remember(interactionKey, presentation, recommendedOption) {
-        ClocktowerPairManualSelectionModel.from(presentation, recommendedOption)
+    val canonicalRecommendedOption = remember(interactionKey, presentation, recommendedOption) {
+        ClocktowerPairManualAuthority.canonicalManualOption(presentation, recommendedOption)
     }
-    var selection by remember(interactionKey, presentation, recommendedOption) {
+    val recommendedSelection = remember(interactionKey, presentation, canonicalRecommendedOption) {
+        ClocktowerPairManualSelectionModel.from(presentation, canonicalRecommendedOption)
+    }
+    var selection by remember(interactionKey, presentation, canonicalRecommendedOption) {
         mutableStateOf(recommendedSelection)
     }
-    var editing by remember(interactionKey, presentation, recommendedOption) {
+    var editing by remember(interactionKey, presentation, canonicalRecommendedOption) {
         mutableStateOf(recommendedSelection.resolvedOption == null)
     }
 
