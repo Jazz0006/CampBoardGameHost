@@ -703,7 +703,8 @@ internal fun ClocktowerNightStepCardLocalized(
                     ),
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
-                    canShowResult = false,
+                    canShowResult = resultFirstRegistrationCandidates.isEmpty() &&
+                        step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None,
                 )
                 presentation?.let {
                     key(step.action) {
