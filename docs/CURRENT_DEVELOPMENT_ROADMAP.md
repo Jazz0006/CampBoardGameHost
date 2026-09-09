@@ -51,20 +51,20 @@ branch codex/ui-r5-square-table-stabilization
 Draft PR #117
 base main 60842381dcbc3709ad453209846f66e9b4a7a777
 latest validated production/test head before docs checkpoint:
-f99df0eaf5f3a1af0ad2651392abdd66997841c5
+ecfacb7b11d39e65febef89fb3e058390f9eea5f
 ```
 
 At that head:
 
 ```text
-CI #2017 / run 34337914868       PASS
+CI #2022 / run 34339511298       PASS
 - Android FAST unit tests         PASS / executed
 - full Android unit tests + APK   SKIPPED by ordinary PR policy
 - CI gate                         PASS
-R2 #1884 / run 34337915036        PASS
+R2 #1889 / run 34339511280        PASS
 ```
 
-The pair-information flow for Washerwoman / Librarian / Investigator has been converged onto the square-table interaction language without changing domain, recommendation, persistence or player-display commit authority. A `[full-ci]` T4 checkpoint is still required for this logical slice, and real-device validation remains mandatory before UI-R5 can close.
+The pair-information flow for Washerwoman / Librarian / Investigator has been converged onto the square-table interaction language without changing domain, recommendation, persistence or player-display commit authority. A behavior-level exact-diff audit additionally found and fixed one presentation issue: Manual mode now delegates selectable/selected/disabled seat projection to the existing pair Manual helper, so an already-selected first seat exposes only legal second-seat continuations. A `[full-ci]` T4 checkpoint is still required for this logical slice, and real-device validation remains mandatory before UI-R5 can close.
 
 ## 2. Current priority
 
@@ -137,6 +137,7 @@ For the pair-information slice, the audit established that the existing ownershi
 ```text
 ClocktowerPairManualAuthority          typed complete Manual legality
 ClocktowerPairManualSelectionModel     two-seat draft interaction state
+clocktowerPairManualSeatState          legal selectable/selected/disabled projection
 ClocktowerSquareTableSeatSurface       shared square-table geometry/rendering
 existing player-display resolution     commit/reveal handoff
 ```
@@ -153,7 +154,8 @@ Durable evidence now protects:
 - recommended pair seeding into Manual edit mode;
 - fail-closed behavior for an invalid/stale recommendation;
 - recommended read-only seat highlighting;
-- Manual selectable/selected/disabled seat-state projection.
+- Manual selectable/selected/disabled seat-state projection;
+- legal second-seat availability after entering Manual edit from an existing recommendation.
 
 For purely visual geometry where unit tests would only lock implementation shape, continue to prefer compile/static evidence plus real-device acceptance over artificial source-shape tests.
 
@@ -187,7 +189,7 @@ night step
 -> same existing player-display/confirmation path
 ```
 
-Manual player selection follows the existing Fortune Teller-style two-seat interaction model rather than a separate player dropdown/list interaction.
+Manual player selection follows the existing Fortune Teller-style two-seat interaction pattern and the existing pair Manual legal-continuation projection rather than a separate player dropdown/list interaction.
 
 Keep the current legal semantic domain as the source of truth. Presentation must not reconstruct semantics from localized labels.
 
