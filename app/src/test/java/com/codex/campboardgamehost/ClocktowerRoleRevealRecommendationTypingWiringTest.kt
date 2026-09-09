@@ -7,14 +7,14 @@ import org.junit.Test
 
 class ClocktowerRoleRevealRecommendationTypingWiringTest {
     @Test
-    fun `role reveal misinformation keeps typed target seat for Undertaker and Ravenkeeper`() {
+    fun `role reveal misinformation carries presentation metadata without creating a player proposition`() {
         val source = hostScreenSource()
 
-        assertTrue(source.contains("propositionForRole: ((ClocktowerRole) -> InformationProposition)? = null"))
-        assertTrue(source.contains("proposition = propositionForRole?.invoke(role)"))
-        assertTrue(source.contains("propositionForRole = undertakerTarget?.let { target ->"))
-        assertTrue(source.contains("propositionForRole = ravenkeeperTargetCard?.let { target ->"))
-        assertTrue(source.contains("InformationProposition.RoleAt(cards.indexOf(target) + 1, RoleId(role.enName))"))
+        assertTrue(source.contains("roleRevealTargetSeat: Int? = null"))
+        assertTrue(source.contains("roleRevealPresentation = roleRevealTargetSeat?.let { targetSeat ->"))
+        assertTrue(source.contains("ClocktowerRoleRevealPresentation(targetSeat, RoleId(role.enName))"))
+        assertTrue(source.contains("roleRevealTargetSeat = undertakerTarget?.let { cards.indexOf(it) + 1 }"))
+        assertTrue(source.contains("roleRevealTargetSeat = ravenkeeperTargetCard?.let { cards.indexOf(it) + 1 }"))
     }
 
     private fun hostScreenSource(): String {
