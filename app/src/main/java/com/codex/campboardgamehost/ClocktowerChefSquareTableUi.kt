@@ -205,6 +205,14 @@ internal fun clocktowerChefResultChoices(
     )
 }
 
+internal fun clocktowerChefDisplayedPairSeats(
+    choices: List<ClocktowerChefResultChoice>,
+    selectedKey: String,
+): Set<Int> {
+    if (choices.size <= 1) return emptySet()
+    return choices.firstOrNull { it.key == selectedKey }?.effectivePairSeats.orEmpty()
+}
+
 @Composable
 internal fun ClocktowerChefSquareTableDialog(
     seats: List<HostSeatPresentation>,
@@ -223,6 +231,7 @@ internal fun ClocktowerChefSquareTableDialog(
     val initialChoice = choices.firstOrNull { it.recommended } ?: choices.first()
     var selectedKey by remember(choices.map { it.key }) { mutableStateOf(initialChoice.key) }
     val selectedChoice = choices.firstOrNull { it.key == selectedKey } ?: initialChoice
+    val displayedPairSeats = clocktowerChefDisplayedPairSeats(choices, selectedChoice.key)
 
     Dialog(
         onDismissRequest = { if (canGoPrevious) onPrevious() },
@@ -240,7 +249,7 @@ internal fun ClocktowerChefSquareTableDialog(
                         actorSeat = actorSeat,
                         actualEvilSeats = actualEvilSeats,
                         recluseSeat = recluseSeat,
-                        effectivePairSeats = selectedChoice.effectivePairSeats,
+                        effectivePairSeats = displayedPairSeats,
                         language = language,
                     )
                     ClocktowerSquareTableSeatUiModel(
