@@ -1,7 +1,7 @@
 # D6.2r — Chambermaid materializer extraction audit
 
 > Date: 2026-09-09 Australia/Sydney
-> Status: READ-ONLY AUDIT COMPLETE; D6.2s scoped below.
+> Status: HISTORICAL AUDIT COMPLETE; D6.2s IMPLEMENTED / VALIDATED.
 > Branch: `codex/d6-2-ui-composition`; PR #115 OPEN / DRAFT.
 > Audited head: `48eb0d10fcb157a62a5f1613a9906333ab5e684f`.
 > Latest validated production checkpoint: `a5f1654fe9adf56ce7fc3cbc07cd039972715a55`.
@@ -66,3 +66,7 @@ This is a role-specific pilot because Chambermaid has unique ordered two-player 
 Use exact three-file diff review, `git diff --check`, production/test Kotlin compile, FAST and R2. Confirm exactly two Chambermaid list references and unchanged neighboring materializer identities. The D6.2l FULL gate remains sufficient unless workflow, rules, registry order or lifecycle behavior changes.
 
 Stop if implementation requires changing `ClocktowerInformationStepBuilder`, moving `recommendedNumberOptions`, eagerly invoking recommendations, adding Compose/session/Recovery dependencies, or passing more than the one display-option provider.
+
+## Follow-up
+
+D6.2s completed at production/test checkpoint `a692cc722f1e597e747154bf05a2689fee9bed4c`, with the directly affected Empath source assertion corrected at final validated head `b2263cd08bc2ce223598698324bf2b22243c91f2`. Final CI 34299329715 and R2 34299329713 passed. See `docs/D6_2S_CHAMBERMAID_MATERIALIZER_EXTRACTION_PROGRESS_2026-09-09.md`.

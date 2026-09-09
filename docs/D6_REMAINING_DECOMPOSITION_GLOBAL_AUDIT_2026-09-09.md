@@ -9,7 +9,7 @@
 
 ## 实施进度更新
 
-D6.2n 已完成清理后活跃边界审计，D6.2o 在 `ad16ccc694e687ab10e62677cf0369fa26e9c2fd` 抽出数字信息历史值解析与推荐展示投影。D6.2p 随后确认四个数字角色不存在诚实的共享 step input；D6.2q 在 `a5f1654fe9adf56ce7fc3cbc07cd039972715a55` 将 Chambermaid 有序姓名/座位/副文本/typed proposition 准备为单一不可变值，供两个夜晚 materializer 共用。Host 再减少 44 行至 4476 行 / 263777 字节；CI 34297489467 与 R2 34297489458 通过。D6.2r 进一步确认两个 phase closure 完全同构：D6.2s 可抽出窄 step assembler 并复用一个 registry entry，但只允许一个惰性的 Chambermaid display-option provider 越界；推荐协调、历史与 style/pressure 生命周期仍留在 Host。
+D6.2n 已完成清理后活跃边界审计，D6.2o 在 `ad16ccc694e687ab10e62677cf0369fa26e9c2fd` 抽出数字信息历史值解析与推荐展示投影。D6.2p 随后确认四个数字角色不存在诚实的共享 step input；D6.2q 在 `a5f1654fe9adf56ce7fc3cbc07cd039972715a55` 准备 Chambermaid 不可变展示值。D6.2r/s 又在 `a692cc722f1e597e747154bf05a2689fee9bed4c` 抽出 50 行 typed materializer 并让两个 phase registry 复用同一 entry；Host 保留唯一惰性推荐 provider，降至 4439 行 / 260686 字节。最终测试头 `b2263cd08bc2ce223598698324bf2b22243c91f2` 的 CI 34299329715 与 R2 34299329713 通过。下一步审计 Clockmaker/Chef/Empath 的数字 materializer 家族，不按角色机械建文件。
 
 D6.2k 已在 `c3a25f640e7e6c9ef2537d7d9387eb27b28b1ece` 完成：三个生产文件净删除 257 行，移除 13 个闲置诊断状态和四个不可触发 effect；Judge 参数 89 → 87，NightStep 参数 49 → 48。CI 34293746781（Android compile + FAST / CI gate）及 R2 34293746779 通过。详见 `D6_2K_DORMANT_DIAGNOSTIC_CLEANUP_PROGRESS_2026-09-09.md`。
 

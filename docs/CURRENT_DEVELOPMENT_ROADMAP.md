@@ -11,11 +11,11 @@ main: d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e
 D6.2 branch: codex/d6-2-ui-composition
 Draft PR: #115 — OPEN / DRAFT / DO NOT AUTO-MERGE
 Latest validated production checkpoint:
-a5f1654fe9adf56ce7fc3cbc07cd039972715a55
-refactor(clocktower): prepare Chambermaid presentation once
+a692cc722f1e597e747154bf05a2689fee9bed4c
+refactor(clocktower): extract Chambermaid step materializer
 ```
 
-Closeout commits after `a5f1654f...` are documentation-only unless a later handoff explicitly records a newer validated production checkpoint. Always re-query live branch head and keep **production checkpoint** distinct from **docs-only branch head**.
+The directly affected source-test correction `b2263cd08bc2ce223598698324bf2b22243c91f2` is the final validated head; it does not change production. Closeout commits after it are documentation-only unless a later handoff records a newer production checkpoint.
 
 Historical D6.2g clean-head gates:
 
@@ -43,7 +43,7 @@ CI 34288731376 — PASS
 
 ## Current priority
 
-> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h–n AUDITS / R0 CLEANUP COMPLETE → D6.2o NUMERIC OPTION PREPARATION COMPLETE / VALIDATED → D6.2p AUDIT + D6.2q PREPARATION COMPLETE / VALIDATED → D6.2r CHAMBERMAID MATERIALIZER AUDIT COMPLETE → D6.2s MATERIALIZER EXTRACTION NEXT.**
+> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h–n AUDITS / R0 CLEANUP COMPLETE → D6.2o NUMERIC OPTION PREPARATION COMPLETE / VALIDATED → D6.2p–s CHAMBERMAID PREPARATION/MATERIALIZER COMPLETE / VALIDATED → D6.2t NUMERIC MATERIALIZER-FAMILY AUDIT NEXT.**
 
 D6.2 stays on `codex/d6-2-ui-composition`. Do not reopen PR #113 or move this work back to `codex/d6-root-reaudit`.
 
@@ -390,9 +390,15 @@ Authority: `docs/D6_2R_CHAMBERMAID_MATERIALIZER_EXTRACTION_AUDIT_2026-09-09.md`.
 
 The two phase closures are identical and can share one registry entry backed by a narrow typed materializer. Immutable content/result/presentation/proposition move into the assembly contract; one lazy Chambermaid display-option provider crosses the boundary. Recommendation invocation, history, style/pressure policy and lifecycle remain in Host. No general role context is permitted.
 
-## Next — D6.2s Chambermaid materializer extraction
+## D6.2s — Chambermaid materializer extraction COMPLETE / VALIDATED
 
-Implement the exact three-file contract in D6.2r. Preserve lazy unreliable-option evaluation, both canonical registry positions and all step fields. Stop if the extraction requires changing the shared builder or receiving more than the single role-specific option provider.
+Production/test checkpoint: `a692cc722f1e597e747154bf05a2689fee9bed4c`; final validated head after the directly affected source-test correction: `b2263cd08bc2ce223598698324bf2b22243c91f2`.
+
+One 50-line typed materializer now owns Chambermaid content, step assembly and identity. Host reuses one entry in both canonical positions and retains the single lazy recommendation provider. Host is 4439 lines / 260686 bytes, down 37 lines. Final CI 34299329715 and R2 34299329713 passed. Evidence: `docs/D6_2S_CHAMBERMAID_MATERIALIZER_EXTRACTION_PROGRESS_2026-09-09.md`.
+
+## Next — D6.2t numeric materializer-family audit
+
+Read-only audit Clockmaker, Chef and Empath step assembly. Seek one honest number-step shell while keeping registration-specific inputs typed and avoiding nullable cross-role bags. Do not create one file per role or move recommendation lifecycle ownership.
 
 PR #115 remains OPEN / DRAFT. Preserve benchmark harnesses/tests, live A4 prewarming, recommendation effects, telemetry and Recovery.
 
@@ -428,7 +434,7 @@ Preserve:
 
 ## Active handoff
 
-Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md` for the overall route; read `docs/D6_2R_CHAMBERMAID_MATERIALIZER_EXTRACTION_AUDIT_2026-09-09.md` for the next exact contract and `docs/D6_2Q_CHAMBERMAID_PRESENTATION_PREPARATION_PROGRESS_2026-09-09.md` for the latest validated production checkpoint. Earlier D6.2 implementation contracts are historical; do not implement completed slices again.
+Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md` for the overall route; read `docs/D6_2S_CHAMBERMAID_MATERIALIZER_EXTRACTION_PROGRESS_2026-09-09.md` for the latest validated checkpoint and next audit. Earlier D6.2 implementation contracts are historical; do not implement completed slices again.
 
 ## Later priority after D6
 

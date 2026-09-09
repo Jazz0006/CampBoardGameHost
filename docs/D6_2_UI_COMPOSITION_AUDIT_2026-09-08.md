@@ -4,8 +4,8 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > D6.1 merge commit: `112572cbd3d990737a412cc4b8ead766d00867e8`  
 > D6.2 branch base / current main: `d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e`  
-> Latest validated production checkpoint: `a5f1654fe9adf56ce7fc3cbc07cd039972715a55`
-> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h–n AUDITS / R0 CLEANUP COMPLETE; D6.2o COMPLETE / VALIDATED; D6.2p AUDIT + D6.2q COMPLETE / VALIDATED**
+> Latest validated production checkpoint: `a692cc722f1e597e747154bf05a2689fee9bed4c`; final validated test head `b2263cd08bc2ce223598698324bf2b22243c91f2`
+> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h–n AUDITS / R0 CLEANUP COMPLETE; D6.2o COMPLETE; D6.2p–s CHAMBERMAID PREPARATION/MATERIALIZER COMPLETE / VALIDATED**
 
 ## Purpose
 
@@ -363,7 +363,7 @@ D6.2n selected the shared numeric option preparation seam. D6.2o implemented it 
 
 D6.2p rejected a dishonest common input across Clockmaker, Chef, Empath and Chambermaid, then scoped the cohesive Chambermaid selected-seat/proposition seam. D6.2q implemented it at `a5f1654fe9adf56ce7fc3cbc07cd039972715a55`: Host prepares one immutable ordered presentation for both night materializers; the typed owner validates seats/source/value and constructs the proposition. Host -44 lines; CI 34297489467 and R2 34297489458 passed. See `docs/D6_2Q_CHAMBERMAID_PRESENTATION_PREPARATION_PROGRESS_2026-09-09.md`.
 
-D6.2r audited the two identical Chambermaid closures. A narrow assembler can consume immutable localized content/result/presentation/proposition plus one lazy role-specific display-option provider. Recommendation invocation/history/style lifecycle stays in Host; no general role context is needed. D6.2s is scoped in `docs/D6_2R_CHAMBERMAID_MATERIALIZER_EXTRACTION_AUDIT_2026-09-09.md`.
+D6.2r audited the two identical Chambermaid closures. D6.2s then extracted a 50-line typed materializer and reused one entry across both registries at `a692cc722f1e597e747154bf05a2689fee9bed4c`. Host retains the single lazy role-specific display-option provider and is down 37 lines. A directly affected Empath source assertion followed the new boundary at `b2263cd08bc2ce223598698324bf2b22243c91f2`; final CI 34299329715 and R2 34299329713 passed. See `docs/D6_2S_CHAMBERMAID_MATERIALIZER_EXTRACTION_PROGRESS_2026-09-09.md`.
 
 ## Frozen invariants
 
@@ -401,6 +401,7 @@ main d76b0854...
 -> D6.2p numeric role-step input audit COMPLETE
 -> D6.2q Chambermaid presentation preparation VALIDATED @ a5f1654f...
 -> D6.2r Chambermaid materializer extraction audit COMPLETE
--> D6.2s narrow Chambermaid materializer extraction NEXT
+-> D6.2s narrow Chambermaid materializer extraction VALIDATED @ a692cc72... / b2263cd0...
+-> D6.2t numeric materializer-family audit NEXT
 -> PR #115 remains OPEN / DRAFT / DO NOT AUTO-MERGE
 ```
