@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -20,15 +21,13 @@ class ClocktowerUndertakerSquareTablePresentationTest {
 
     @Test
     fun `non role-at or invalid seat fails closed`() {
-        assertEquals(
-            null,
+        assertNull(
             clocktowerUndertakerTypedResult(
                 proposition = InformationProposition.RoleInPlay(RoleId("Chef"), true),
                 seatCount = 7,
             ),
         )
-        assertEquals(
-            null,
+        assertNull(
             clocktowerUndertakerTypedResult(
                 proposition = InformationProposition.RoleAt(8, RoleId("Chef")),
                 seatCount = 7,
@@ -39,18 +38,19 @@ class ClocktowerUndertakerSquareTablePresentationTest {
     @Test
     fun `manual final results keep one fixed executed seat while role may vary`() {
         val chef = option(seat = 4, role = "Chef", recommended = true)
-        val Spy = option(seat = 4, role = "Spy")
+        val spy = option(seat = 4, role = "Spy")
 
         val choices = clocktowerUndertakerResultChoices(
             step = undertakerStep(),
             seatCount = 7,
             automaticStorytellerInfo = false,
             automaticDisplayOption = null,
-            resultFirstRegistrationCandidates = listOf(chef, Spy),
+            resultFirstRegistrationCandidates = listOf(chef, spy),
         )
 
         assertEquals(listOf(4, 4), choices.map { it.executedSeat })
-        assertEquals(listOf("Chef", "Spy"), choices.map { it.roleId.value })
+        assertEquals(listOf("Chef", "Spy"), choices.map { it.roleId?.value })
+        assertEquals(listOf("Chef", "Spy"), choices.map { it.displayLabel })
         assertEquals(
             listOf(
                 ClocktowerUndertakerResultSourceKind.DisplayOption,
@@ -78,16 +78,14 @@ class ClocktowerUndertakerSquareTablePresentationTest {
     }
 
     @Test
-    fun `unreliable role choices remain typed and preserve legacy publish source`() {
-        val step = undertakerStep(
-            displayOptions = listOf(
-                option(seat = 4, role = "Chef"),
-                option(seat = 4, role = "Imp"),
-            ),
-        )
-
+    fun `unreliable role choices stay opaque while execution context remains typed`() {
         val choices = clocktowerUndertakerResultChoices(
-            step = step,
+            step = undertakerStep(
+                displayOptions = listOf(
+                    option(seat = 4, role = "Chef", typed = false),
+                    option(seat = 4, role = "Imp", typed = false),
+                ),
+            ),
             seatCount = 7,
             automaticStorytellerInfo = false,
             automaticDisplayOption = null,
@@ -95,6 +93,8 @@ class ClocktowerUndertakerSquareTablePresentationTest {
         )
 
         assertEquals(setOf(4), choices.map { it.executedSeat }.toSet())
+        assertTrue(choices.all { it.roleId == null })
+        assertEquals(listOf("Chef", "Imp"), choices.map { it.displayLabel })
         assertEquals(
             listOf(
                 ClocktowerUndertakerResultSourceKind.LegacyUnreliable,
@@ -102,6 +102,18 @@ class ClocktowerUndertakerSquareTablePresentationTest {
             ),
             choices.map { it.sourceKind },
         )
+    }
+
+    @Test
+    fun `opaque unreliable option never becomes a player proposition`() {
+        val selected = option(seat = 4, role = "Imp", typed = false)
+        val resolved = resolveClocktowerLegacyUnreliablePlayerDisplay(
+            undertakerStep(displayOptions = listOf(selected)),
+            selected,
+        )
+
+        assertEquals("Imp", resolved.displayPrimary)
+        assertNull(resolved.displayProposition)
     }
 
     @Test
@@ -134,9 +146,11 @@ class ClocktowerUndertakerSquareTablePresentationTest {
         isRealAction = true,
         reason = "",
         storytellerAction = "",
-        tellPlayer = "",
+        tellPlayer = "P4 was Chef",
         explanation = "",
         roleEnName = "Undertaker",
+        displayKind = ClocktowerDisplayKind.RoleReveal,
+        displayPrimary = "Chef",
         displayProposition = InformationProposition.RoleAt(4, RoleId("Chef")),
         displayOptions = displayOptions,
     )
@@ -145,14 +159,15 @@ class ClocktowerUndertakerSquareTablePresentationTest {
         seat: Int,
         role: String,
         recommended: Boolean = false,
+        typed: Boolean = true,
     ) = ClocktowerDisplayOption(
         label = role,
         displayKind = ClocktowerDisplayKind.RoleReveal,
         displayTitle = "Undertaker information",
         displayPrimary = role,
         displaySecondary = null,
-        displayFooter = null,
-        proposition = InformationProposition.RoleAt(seat, RoleId(role)),
+        displayFooter = "Executed today: P$seat",
+        proposition = if (typed) InformationProposition.RoleAt(seat, RoleId(role)) else null,
         isDefaultRecommendation = recommended,
     )
 }
