@@ -334,6 +334,16 @@ After this bounded cleanup, investigate a live vote rendering boundary and then 
 
 PR #115 remains OPEN / DRAFT; production checkpoint stays `5e0891e...`. This audit changed documentation only.
 
+## Remaining work — global audit and outcome targets
+
+Authority: `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md`.
+
+The user requested a whole residual audit after D6.2j. D6.2k remains the first bounded implementation slice. Additional verified cleanup includes retired Day/History UI and App private decoder islands; obsolete R2 existence checks must retire with the old UI, in a separate workflow-aware slice.
+
+Then prioritize information preparation/role materializers and NightStep/Day interaction boundaries. App transaction application and Recovery/A4 composition are a later, higher-risk wave, using existing session/planner authority. Do not mechanically move all callbacks or conditionally remount live effects.
+
+First-wave planning targets: Host roughly 2200–3000 lines, NightStep roughly 350–600 lines, and common feature changes understood through 2–4 cohesive owners/tests. These are estimates to remeasure, not permission to introduce parameter bags or alter behavior. App may remain large until its optional transaction wave. The global audit defines scope, effort bands, invariants, testing and stop criteria; it does not authorize a broad production rewrite.
+
 ## Execution method
 
 The user explicitly authorized direct local edits in Work. D6.2i used a complete local Git checkout and exact diff auditing. CLI push lacked credentials; the connected GitHub API uploaded the local bytes, verified both blob SHAs and the complete tree SHA, and fast-forwarded the feature branch. No bootstrap workflow or force-push was needed.
@@ -356,7 +366,7 @@ Preserve:
 
 ## Active handoff
 
-Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md` and `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md` for D6.2k. The D6.2i implementation handoff is now historical; do not implement the same slice again.
+Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md` and `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md` plus `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md` for the overall route; the D6.2j document remains the exact D6.2k contract. The D6.2i implementation handoff is now historical; do not implement the same slice again.
 
 ## Later priority after D6
 
