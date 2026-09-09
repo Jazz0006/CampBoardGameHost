@@ -4,8 +4,8 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > D6.1 merge commit: `112572cbd3d990737a412cc4b8ead766d00867e8`  
 > D6.2 branch base / current main: `d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e`  
-> Latest validated production checkpoint: `c3a25f640e7e6c9ef2537d7d9387eb27b28b1ece`
-> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h READ-ONLY RE-AUDIT COMPLETE; D6.2i COMPLETE / VALIDATED; D6.2j AUDIT COMPLETE; D6.2k COMPLETE / VALIDATED**
+> Latest validated production checkpoint: `69655de1d992ec6ec7cf45b2639a048ae4fb32e4`
+> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h READ-ONLY RE-AUDIT COMPLETE; D6.2i COMPLETE / VALIDATED; D6.2j AUDIT COMPLETE; D6.2k–l COMPLETE / VALIDATED**
 
 ## Purpose
 
@@ -355,7 +355,9 @@ The D6.2j contract was implemented and validated at `c3a25f640e7e6c9ef2537d7d938
 
 CI 34293746781 PASS (Android compile + FAST and CI gate); R2 34293746779 PASS. Live recommendation/publication, A4 services and Recovery were preserved. Detailed evidence: `docs/D6_2K_DORMANT_DIAGNOSTIC_CLEANUP_PROGRESS_2026-09-09.md`.
 
-Next follow the global audit's R0 route: retire unused Day/History UI and the corresponding obsolete R2 assertions with full CI, then separately remove App decoder islands before preparing live rendering/information boundaries.
+D6.2l subsequently retired the unused Day/History UI and corresponding obsolete R2 assertions at `69655de1d992ec6ec7cf45b2639a048ae4fb32e4`. Kotlin +0 / -612; workflow +2 / -8. FULL CI 34294224391 and R2 34294224399 PASS. Retained Day/History function blocks are unchanged. See `docs/D6_2L_RETIRED_DAY_HISTORY_UI_PROGRESS_2026-09-09.md`.
+
+Next separately remove the private App decoder island before preparing live rendering/information boundaries.
 
 ## Frozen invariants
 
@@ -386,6 +388,7 @@ main d76b0854...
 -> D6.2i Day nomination transient ownership VALIDATED @ 5e0891e...
 -> D6.2j residual composition audit COMPLETE
 -> D6.2k dormant diagnostics / dead inputs VALIDATED @ c3a25f64...
--> retired Day/History UI + R2 assertion cleanup NEXT
+-> D6.2l retired Day/History UI + R2 assertions VALIDATED @ 69655de1...
+-> private App decoder cleanup NEXT
 -> PR #115 remains OPEN / DRAFT / DO NOT AUTO-MERGE
 ```

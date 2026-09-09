@@ -11,11 +11,11 @@ main: d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e
 D6.2 branch: codex/d6-2-ui-composition
 Draft PR: #115 — OPEN / DRAFT / DO NOT AUTO-MERGE
 Latest validated production checkpoint:
-c3a25f640e7e6c9ef2537d7d9387eb27b28b1ece
-refactor(clocktower): retire dormant D6.2k diagnostic composition
+69655de1d992ec6ec7cf45b2639a048ae4fb32e4
+refactor(clocktower): retire unused Day and History UI [full-ci]
 ```
 
-Closeout commits after `c3a25f64...` are documentation-only unless a later handoff explicitly records a newer validated production checkpoint. Always re-query live branch head and keep **production checkpoint** distinct from **docs-only branch head**.
+Closeout commits after `69655de1...` are documentation-only unless a later handoff explicitly records a newer validated production checkpoint. Always re-query live branch head and keep **production checkpoint** distinct from **docs-only branch head**.
 
 Historical D6.2g clean-head gates:
 
@@ -43,7 +43,7 @@ CI 34288731376 — PASS
 
 ## Current priority
 
-> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h READ-ONLY RE-AUDIT COMPLETE → D6.2i DAY NOMINATION TRANSIENT OWNERSHIP COMPLETE / VALIDATED → D6.2j RESIDUAL AUDIT COMPLETE → D6.2k DORMANT DIAGNOSTIC CLEANUP COMPLETE / VALIDATED → RETIRED DAY/HISTORY UI + R2 ASSERTION CLEANUP NEXT.**
+> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h READ-ONLY RE-AUDIT COMPLETE → D6.2i DAY NOMINATION TRANSIENT OWNERSHIP COMPLETE / VALIDATED → D6.2j RESIDUAL AUDIT COMPLETE → D6.2k DORMANT DIAGNOSTIC CLEANUP COMPLETE / VALIDATED → D6.2l RETIRED DAY/HISTORY UI COMPLETE / VALIDATED → PRIVATE APP DECODER CLEANUP NEXT.**
 
 D6.2 stays on `codex/d6-2-ui-composition`. Do not reopen PR #113 or move this work back to `codex/d6-root-reaudit`.
 
@@ -336,9 +336,19 @@ CI 34293746781 PASS (Android compile + FAST and CI gate); R2 34293746779 PASS. F
 
 Detailed evidence: `docs/D6_2K_DORMANT_DIAGNOSTIC_CLEANUP_PROGRESS_2026-09-09.md`.
 
-## Next — retired Day/History UI and obsolete R2 assertions
+## D6.2l — retired Day/History UI and obsolete R2 assertions COMPLETE
 
-Follow global audit R0 ordering. Recheck references, then retire proven unused Day/History declarations together with their obsolete R2 existence assertions. Preserve current square-table UI and live history rendering. This workflow-aware slice requires full CI. Keep private App decoder cleanup separate, then proceed to information preparation/materializers and live interaction boundaries.
+Production/workflow checkpoint: `69655de1d992ec6ec7cf45b2639a048ae4fb32e4`.
+
+Removed the six proven unused Day/History declarations and their obsolete R2 assertions. Exact diff: two Kotlin files +0 / -612, workflow +2 / -8. Day now 616 lines / 31846 bytes; History 530 lines / 29188 bytes. All six retained function blocks are byte-identical to the parent; current square-table rendering, App/Host and persistence are untouched.
+
+FULL CI 34294224391 PASS: full Android JVM tests + debug APK, ASP, Real Clingo and CI gate. R2 34294224399 PASS; the exact R2 shell body also passed locally. No local Android GREEN or real-device verification is claimed.
+
+Evidence: `docs/D6_2L_RETIRED_DAY_HISTORY_UI_PROGRESS_2026-09-09.md`.
+
+## Next — private App decoder island cleanup
+
+Follow global audit R0 section 3.C. Reconfirm references before deleting the unused private decoder chain and `clocktowerRolesFor`; preserve active archive codecs, Recovery v2 and `generateClocktowerAssignments`. Keep this bounded cleanup separate from later information preparation/materializer boundaries.
 
 PR #115 remains OPEN / DRAFT. Preserve benchmark harnesses/tests, live A4 prewarming, recommendation effects, telemetry and Recovery. Do not localize Recovery-coupled state or move all pre-dispatch logic into conditional branches.
 
@@ -346,7 +356,7 @@ PR #115 remains OPEN / DRAFT. Preserve benchmark harnesses/tests, live A4 prewar
 
 Authority: `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md`.
 
-The user requested a whole residual audit after D6.2j. D6.2k is now implemented and validated. Additional verified cleanup includes retired Day/History UI and App private decoder islands; obsolete R2 existence checks must retire with the old UI, in a separate workflow-aware slice.
+The user requested a whole residual audit after D6.2j. D6.2k and D6.2l are now implemented and validated. The retired Day/History UI and its obsolete R2 assertions are gone; the private App decoder island is the remaining R0 cleanup.
 
 Then prioritize information preparation/role materializers and NightStep/Day interaction boundaries. App transaction application and Recovery/A4 composition are a later, higher-risk wave, using existing session/planner authority. Do not mechanically move all callbacks or conditionally remount live effects.
 
@@ -374,7 +384,7 @@ Preserve:
 
 ## Active handoff
 
-Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md` and `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md` plus `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md` for the overall route; read `docs/D6_2K_DORMANT_DIAGNOSTIC_CLEANUP_PROGRESS_2026-09-09.md` for the latest validated production checkpoint and next slice. The D6.2i handoff and D6.2j implementation contract are now historical; do not implement completed slices again.
+Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md` and `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md` plus `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md` for the overall route; read `docs/D6_2L_RETIRED_DAY_HISTORY_UI_PROGRESS_2026-09-09.md` for the latest validated production checkpoint and next slice. The D6.2i handoff and D6.2j implementation contract are now historical; do not implement completed slices again.
 
 ## Later priority after D6
 
