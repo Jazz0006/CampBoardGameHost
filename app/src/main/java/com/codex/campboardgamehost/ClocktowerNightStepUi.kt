@@ -16,11 +16,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -181,10 +177,6 @@ internal fun ClocktowerNightStepCardLocalized(
             step.action == ClocktowerNightAction.FortuneTeller
     }.orEmpty()
 
-    var showManualPairSelection by remember(
-        informationDecisionKey,
-        step.roleEnName,
-    ) { mutableStateOf(false) }
     val dynamicDecisionFamily = when (step.action) {
         ClocktowerNightAction.MayorRedirect -> "mayor-redirect"
         ClocktowerNightAction.DemonSuccessor -> "demon-succession"
@@ -667,12 +659,33 @@ internal fun ClocktowerNightStepCardLocalized(
                 )
             }
 
-            pairRecommendationPresentation?.let { presentation ->
-                ClocktowerPairRecommendationPresentationSection(
-                    presentation = presentation,
+            if (manualPairCandidates.isNotEmpty()) {
+                val pairManualPresentation = ClocktowerPairManualAuthority.selectionPresentation(manualPairCandidates)
+                ClocktowerPairInformationSquareTableDialog(
+                    interactionKey = informationDecisionKey,
+                    presentation = pairManualPresentation,
+                    recommendedOption = pairRecommendationPresentation?.primary,
+                    seats = nightActionSeats,
+                    abilityLabel = step.roleEnName
+                        ?.let { roleId -> clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language) }
+                        ?: step.title,
+                    roleLabel = { roleId ->
+                        clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
+                    },
                     language = language,
-                    onSelect = ::showRecommendedDisplayOption,
+                    canGoPrevious = canGoPrevious,
+                    onPrevious = onPrevious,
+                    onNext = onNext,
+                    onConfirm = ::showRecommendedDisplayOption,
                 )
+            } else {
+                pairRecommendationPresentation?.let { presentation ->
+                    ClocktowerPairRecommendationPresentationSection(
+                        presentation = presentation,
+                        language = language,
+                        onSelect = ::showRecommendedDisplayOption,
+                    )
+                }
             }
 
             if (
@@ -729,7 +742,6 @@ internal fun ClocktowerNightStepCardLocalized(
                 }
             }
 
-
             if (nonPairResultFirstCandidates.isNotEmpty()) {
                 Text(
                     if (language == "en") "Choose the final information" else "选择最终展示信息",
@@ -753,34 +765,6 @@ internal fun ClocktowerNightStepCardLocalized(
                     ) {
                         Text(option.label)
                     }
-                }
-            }
-
-            if (manualPairCandidates.isNotEmpty()) {
-                OutlinedButton(
-                    onClick = { showManualPairSelection = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                ) {
-                    Text(if (language == "en") "Manually choose clue" else "手动选择展示信息")
-                }
-                if (showManualPairSelection) {
-                    ClocktowerPairManualSelectionDialog(
-                        interactionKey = informationDecisionKey,
-                        presentation = ClocktowerPairManualAuthority.selectionPresentation(manualPairCandidates),
-                        seats = cards.mapIndexed { index, card ->
-                            card.toStorytellerHostSeatPresentation(
-                                seatNumber = index + 1,
-                                language = language,
-                            )
-                        },
-                        roleLabel = { roleId -> clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language) },
-                        onDismiss = { showManualPairSelection = false },
-                        onConfirm = { manualOption ->
-                            showRecommendedDisplayOption(manualOption)
-                            showManualPairSelection = false
-                        },
-                    )
                 }
             }
 
