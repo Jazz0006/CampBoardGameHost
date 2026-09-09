@@ -3,6 +3,7 @@ package com.codex.campboardgamehost
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -20,24 +21,21 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
 
     @Test
     fun `missing selected target mismatched seat or invalid proposition fails closed`() {
-        assertEquals(
-            null,
+        assertNull(
             clocktowerRavenkeeperTypedResult(
                 proposition = InformationProposition.RoleAt(5, RoleId("Chef")),
                 selectedSeat = null,
                 seatCount = 7,
             ),
         )
-        assertEquals(
-            null,
+        assertNull(
             clocktowerRavenkeeperTypedResult(
                 proposition = InformationProposition.RoleAt(4, RoleId("Chef")),
                 selectedSeat = 5,
                 seatCount = 7,
             ),
         )
-        assertEquals(
-            null,
+        assertNull(
             clocktowerRavenkeeperTypedResult(
                 proposition = InformationProposition.RoleInPlay(RoleId("Chef"), true),
                 selectedSeat = 5,
@@ -61,7 +59,8 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
         )
 
         assertEquals(listOf(5, 5), choices.map { it.targetSeat })
-        assertEquals(listOf("Chef", "Washerwoman"), choices.map { it.roleId.value })
+        assertEquals(listOf("Chef", "Washerwoman"), choices.map { it.roleId?.value })
+        assertEquals(listOf("Chef", "Washerwoman"), choices.map { it.displayLabel })
         assertEquals(
             listOf(
                 ClocktowerRavenkeeperResultSourceKind.DisplayOption,
@@ -90,12 +89,12 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
     }
 
     @Test
-    fun `unreliable role choices preserve their existing publish path`() {
+    fun `unreliable role choices stay opaque while selected target remains typed`() {
         val choices = clocktowerRavenkeeperResultChoices(
             step = ravenkeeperStep(
                 displayOptions = listOf(
-                    option(seat = 5, role = "Chef"),
-                    option(seat = 5, role = "Imp"),
+                    option(seat = 5, role = "Chef", typed = false),
+                    option(seat = 5, role = "Imp", typed = false),
                 ),
             ),
             selectedSeat = 5,
@@ -105,6 +104,9 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
             resultFirstRegistrationCandidates = emptyList(),
         )
 
+        assertEquals(setOf(5), choices.map { it.targetSeat }.toSet())
+        assertTrue(choices.all { it.roleId == null })
+        assertEquals(listOf("Chef", "Imp"), choices.map { it.displayLabel })
         assertEquals(
             listOf(
                 ClocktowerRavenkeeperResultSourceKind.LegacyUnreliable,
@@ -112,6 +114,18 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
             ),
             choices.map { it.sourceKind },
         )
+    }
+
+    @Test
+    fun `opaque unreliable option never becomes a player proposition`() {
+        val selected = option(seat = 5, role = "Imp", typed = false)
+        val resolved = resolveClocktowerLegacyUnreliablePlayerDisplay(
+            ravenkeeperStep(displayOptions = listOf(selected)),
+            selected,
+        )
+
+        assertEquals("Imp", resolved.displayPrimary)
+        assertNull(resolved.displayProposition)
     }
 
     @Test
@@ -126,15 +140,21 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
         )
 
         assertEquals(1, choices.size)
-        assertEquals("Chef", choices.single().roleId.value)
+        assertEquals("Chef", choices.single().roleId?.value)
+        assertEquals("Chef", choices.single().displayLabel)
         assertEquals(ClocktowerRavenkeeperResultSourceKind.Direct, choices.single().sourceKind)
     }
 
     @Test
-    fun `automatic unreliable result uses only the already selected typed option`() {
-        val selected = option(seat = 5, role = "Imp")
+    fun `automatic unreliable result uses only the already selected opaque option`() {
+        val selected = option(seat = 5, role = "Imp", typed = false)
         val choices = clocktowerRavenkeeperResultChoices(
-            step = ravenkeeperStep(displayOptions = listOf(option(seat = 5, role = "Chef"), selected)),
+            step = ravenkeeperStep(
+                displayOptions = listOf(
+                    option(seat = 5, role = "Chef", typed = false),
+                    selected,
+                ),
+            ),
             selectedSeat = 5,
             seatCount = 7,
             automaticStorytellerInfo = true,
@@ -143,8 +163,29 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
         )
 
         assertEquals(1, choices.size)
-        assertEquals("Imp", choices.single().roleId.value)
+        assertNull(choices.single().roleId)
+        assertEquals("Imp", choices.single().displayLabel)
         assertEquals(ClocktowerRavenkeeperResultSourceKind.DisplayOption, choices.single().sourceKind)
+    }
+
+    @Test
+    fun `non role-at typed option fails closed while null proposition remains valid opaque choice`() {
+        val invalid = ClocktowerDisplayOption(
+            label = "Chef",
+            displayKind = ClocktowerDisplayKind.RoleReveal,
+            displayTitle = "Ravenkeeper information",
+            displayPrimary = "Chef",
+            displaySecondary = null,
+            displayFooter = null,
+            proposition = InformationProposition.RoleInPlay(RoleId("Chef"), true),
+        )
+        assertNull(clocktowerRoleRevealChoiceProjection(invalid, targetSeat = 5, seatCount = 7))
+
+        val opaque = option(seat = 5, role = "Chef", typed = false)
+        val projection = clocktowerRoleRevealChoiceProjection(opaque, targetSeat = 5, seatCount = 7)
+        assertEquals(5, projection?.targetSeat)
+        assertNull(projection?.roleId)
+        assertEquals("Chef", projection?.displayLabel)
     }
 
     private fun ravenkeeperStep(
@@ -169,6 +210,7 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
         seat: Int,
         role: String,
         recommended: Boolean = false,
+        typed: Boolean = true,
     ) = ClocktowerDisplayOption(
         label = role,
         displayKind = ClocktowerDisplayKind.RoleReveal,
@@ -176,7 +218,7 @@ class ClocktowerRavenkeeperSquareTablePresentationTest {
         displayPrimary = role,
         displaySecondary = null,
         displayFooter = "Checked player: P$seat",
-        proposition = InformationProposition.RoleAt(seat, RoleId(role)),
+        proposition = if (typed) InformationProposition.RoleAt(seat, RoleId(role)) else null,
         isDefaultRecommendation = recommended,
     )
 }
