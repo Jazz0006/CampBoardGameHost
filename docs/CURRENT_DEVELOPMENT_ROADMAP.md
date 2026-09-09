@@ -12,37 +12,16 @@ D6.1 Clocktower session authority                 COMPLETE / merged
 D6.2 UI Composition R0–R2                         COMPLETE / FULL accepted / merged
 R3 deep transaction-application viability audit   COMPLETE / NO-GO
 D6 decomposition campaign                         COMPLETE
-UI-R5 pair-information square-table slice         IMPLEMENTED / T4 accepted / device pending
+UI-R5 pair-information square-table slice         COMPLETE / T4 + real-device accepted
+UI-R5 overall campaign                            ACTIVE / final closeout audit remaining
 ```
 
-D6.2 was merged through PR #115. The final production-equivalent code/test head was:
-
-```text
-b2263cd08bc2ce223598698324bf2b22243c91f2
-```
-
-Final D6.2 FULL acceptance was triggered at:
-
-```text
-9ec4ce2f9e0d4114f84ee7bde90ff7e409caac8e
-CI 34307304901 — PASS
-R2 34307304900 — PASS
-```
-
-The D6.2 merge commit was:
-
-```text
-c75e0f0bc4635ef42ffbece41470c3437a205910
-```
-
-Real-device critical-path testing was explicitly waived for the D6.2 merge. That waiver does **not** carry forward to UI-R5.
-
-Detailed D6/R3 evidence is historical and now lives under:
+D6.2 was merged through PR #115. Historical D6/R3 evidence lives under:
 
 - `docs/archive/checkpoints/d6/`
 - `docs/archive/checkpoints/d6/D6_DECOMPOSITION_CAMPAIGN_CLOSEOUT_INDEX_2026-09-09.md`
 
-### UI-R5 live implementation checkpoint
+## 2. UI-R5 accepted pair-information checkpoint
 
 Active branch / PR:
 
@@ -52,13 +31,13 @@ Draft PR #117
 base main 60842381dcbc3709ad453209846f66e9b4a7a777
 ```
 
-Latest production-equivalent T4 checkpoint:
+Production-equivalent automated acceptance checkpoint:
 
 ```text
 b960be22d217ed2caa06b49c0319eace23470b42
 ```
 
-T4 evidence at that checkpoint:
+Automated evidence:
 
 ```text
 CI #2024 / run 34339861281             PASS
@@ -69,23 +48,44 @@ CI #2024 / run 34339861281             PASS
 R2 #1891 / run 34339861261              PASS
 ```
 
-The immediately preceding production/test head `ecfacb7b11d39e65febef89fb3e058390f9eea5f` also passed ordinary FAST CI #2022 and R2 #1889. The final T4 checkpoint contains no additional production/test changes beyond that validated code state; later roadmap/handoff synchronization is docs-only and does not invalidate the production-equivalent T4 evidence.
+The immediately preceding production/test head `ecfacb7b11d39e65febef89fb3e058390f9eea5f` also passed ordinary FAST CI #2022 and R2 #1889.
 
-The pair-information flow for Washerwoman / Librarian / Investigator has been converged onto the square-table interaction language without changing domain, recommendation, persistence or player-display commit authority. A behavior-level exact-diff audit additionally found and fixed one presentation issue before T4: Manual mode now delegates selectable/selected/disabled seat projection to the existing pair Manual helper, so an already-selected first seat exposes only legal second-seat continuations.
+Real-device acceptance was reported PASS by the user on 2026-09-09 Australia/Sydney and is recorded in:
 
-## 2. Current priority
+- `docs/UI_R5_PAIR_INFORMATION_REAL_DEVICE_ACCEPTANCE_2026-09-09.md`
 
-> **CURRENT: UI-R5.4 real-device stabilization of the T4-accepted square-table pair-information flow.**
+Exact device model / Android build were not supplied in this chat and are intentionally not invented in the acceptance record.
 
-The global execution order remains frozen as:
+The accepted pair-information flow covers Washerwoman / Librarian / Investigator:
 
 ```text
-UI-R5 square-table Storyteller consolidation + real-device stabilization
--> EPI-MQ / Productive Uncertainty
+recommended square-table preview
+-> in-place Manual edit on the same table
+-> existing pair legality / seat-state projection
+-> existing show/confirm/player-display path
+```
+
+The accepted implementation did not change square-table geometry, recommendation scoring, gameplay semantics, session ownership, persistence or player-display commit authority.
+
+## 3. Current priority
+
+> **CURRENT: UI-R5.5 final read-only closeout audit.**
+
+The pair-information slice itself is fully accepted and must not be reopened without a concrete defect or new requirement.
+
+Before changing project priority to EPI-MQ, perform one final read-only audit of the remaining active Storyteller square-table surfaces and answer one question:
+
+> Is there any remaining UI-R5 consolidation / device-stabilization work that is materially required, or is the campaign ready to close?
+
+The global execution order remains:
+
+```text
+UI-R5 final closeout audit
+-> if no remaining material work: merge/close UI-R5 and move to EPI-MQ / Productive Uncertainty
 -> UX-R6 legacy recommendation-provider replacement
 ```
 
-Do not start EPI-MQ implementation before UI-R5 acceptance. Do not reopen D6 merely because `CampBoardGameHostApp.kt` remains large.
+Do not start EPI-MQ implementation before UI-R5 closeout. Do not reopen D6 merely because `CampBoardGameHostApp.kt` remains large.
 
 Current active handoff:
 
@@ -95,82 +95,36 @@ Primary product/UI reference:
 
 - `docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`
 
-## 3. UI-R5 mission
+## 4. UI-R5 pair-information acceptance summary
 
-UI-R5 is a presentation/interaction stabilization campaign. Its purpose is to make the square-table Storyteller experience coherent and reliable on a real phone without changing domain authority.
+### UI-R5.0 / ownership
 
-Primary goals:
-
-1. audit every surviving square-table Storyteller surface and identify duplicated geometry, seat-state rendering and interaction ownership;
-2. establish one reusable square-table presentation vocabulary where a real shared boundary exists;
-3. converge Manual clue selection, target selection and player-facing information display on the same seat geometry and visual-state rules;
-4. stabilize portrait-phone behavior for real devices, especially dense 8–15 player layouts;
-5. verify readability, safe insets, no clipping/overlap, usable tap targets and stable seat identity;
-6. preserve hidden-information boundaries and the existing typed legal-domain / structured confirmation path;
-7. complete real-device acceptance before moving to EPI-MQ.
-
-### Explicit non-goals
-
-UI-R5 does **not** authorize:
-
-- recommendation/scoring changes;
-- EPI-MQ / Productive Uncertainty implementation;
-- new gameplay/rules semantics;
-- Persistence/Recovery redesign;
-- a second game/session state owner;
-- broad ViewModel/controller/context bags merely to reduce Compose parameter counts;
-- renewed App-root decomposition based only on file size;
-- A4/ZDD production cutover.
-
-## 4. UI-R5 execution order
-
-### UI-R5.0 — fresh read-only UI audit
-
-**Status: ACTIVE; pair-information ownership slice audited.**
-
-Audit:
-
-- surviving square-table composables and call sites;
-- seat geometry / edge allocation logic;
-- selection/highlight state models;
-- Storyteller-only vs player-facing information boundaries;
-- Manual pair-selection flow;
-- Fortune Teller two-target/result flow;
-- final player information display;
-- dense 8–15 player portrait behavior and known real-device risks.
-
-For the pair-information slice, the audit established that the existing ownership already contains the right reusable seams:
+For the pair-information slice, the reusable owners are:
 
 ```text
-ClocktowerPairManualAuthority          typed complete Manual legality
+ClocktowerPairManualAuthority          complete typed Manual legality
 ClocktowerPairManualSelectionModel     two-seat draft interaction state
 clocktowerPairManualSeatState          legal selectable/selected/disabled projection
-ClocktowerSquareTableSeatSurface       shared square-table geometry/rendering
-existing player-display resolution     commit/reveal handoff
+ClocktowerSquareTableSeatSurface       shared geometry/rendering
+existing player-display resolution     final commit/reveal handoff
 ```
 
-The chosen consolidation therefore reuses those seams rather than introducing a new generic state/action bag or moving domain semantics into Compose.
+No generic callback/state mega-bag was introduced.
 
-### UI-R5.1 — characterization / layout contract
+### UI-R5.1 / characterization
 
-**Status: PARTIAL COMPLETE for pair-information flow.**
-
-Durable evidence now protects:
+Durable evidence protects:
 
 - recommendation-to-Manual canonicalization by structured pair semantics;
-- recommended pair seeding into Manual edit mode;
-- fail-closed behavior for an invalid/stale recommendation;
+- recommendation seeding into Manual mode;
+- fail-closed invalid/stale recommendation behavior;
 - recommended read-only seat highlighting;
-- Manual selectable/selected/disabled seat-state projection;
-- legal second-seat availability after entering Manual edit from an existing recommendation.
+- Manual selectable/selected/disabled states;
+- legal second-seat continuation after entering Manual from a recommendation.
 
-For purely visual geometry where unit tests would only lock implementation shape, continue to prefer compile/static evidence plus real-device acceptance over artificial source-shape tests.
+### UI-R5.2 / consolidation
 
-### UI-R5.2 — square-table consolidation
-
-**Status: pair-information slice COMPLETE; broader campaign remains ACTIVE.**
-
-The new `ClocktowerPairInformationSquareTableUi` composes the existing square-table surface with the existing pair Manual authority/state model. It owns only the Storyteller presentation transition:
+`ClocktowerPairInformationSquareTableUi.kt` is the thin composition owner for:
 
 ```text
 recommended read-only preview
@@ -178,60 +132,23 @@ recommended read-only preview
 -> existing show/confirm handoff
 ```
 
-It does **not** own recommendation ranking, legal-domain generation, durable observation commit or canonical GameState.
+It does not own recommendation ranking, legal-domain generation, durable observation/history, Recovery, or canonical GameState.
 
-### UI-R5.3 — flow convergence
+### UI-R5.3 / flow convergence
 
-**Status: pair-information slice COMPLETE / T4 ACCEPTED; broader UI-R5 campaign remains ACTIVE.**
+Washerwoman / Librarian / Investigator now use the same square-table interaction language rather than the old text/list + separate Manual dialog flow.
 
-Washerwoman / Librarian / Investigator now follow:
+### UI-R5.4 / real-device stabilization
 
-```text
-night step
--> full-screen square table with recommended pair highlighted
--> center information preview
--> [展示此信息] or [手动选择]
--> Manual edits the same table in place
--> center role becomes editable
--> same existing player-display/confirmation path
-```
+**Status: PASS for the pair-information slice.**
 
-Manual player selection follows the existing Fortune Teller-style two-seat interaction pattern and the existing pair Manual legal-continuation projection rather than a separate player dropdown/list interaction.
+User-reported device validation passed, including the required pair-information interaction and dense-layout acceptance surface. See the dedicated acceptance record for scope and evidence wording.
 
-Keep the current legal semantic domain as the source of truth. Presentation must not reconstruct semantics from localized labels.
+### UI-R5.5 / acceptance closeout
 
-### UI-R5.4 — real-device stabilization
+**Status: NEXT.**
 
-**Status: NEXT / REQUIRED.**
-
-Portrait phone is the primary target. Validate at minimum:
-
-- dense player counts up to 15;
-- player/seat text remains readable;
-- no status/navigation inset collision;
-- no seat/center-content overlap;
-- important buttons remain reachable;
-- selection/highlight does not rely on color alone;
-- orientation/recomposition does not corrupt draft selection;
-- player-facing display contains only intended visible information;
-- Washerwoman / Librarian / Investigator recommended and Manual paths work on device;
-- opening/closing player display returns to the correct night flow.
-
-Real-device defects found here are part of UI-R5, not deferred merely because JVM/T4 tests are green.
-
-### UI-R5.5 — acceptance / closeout
-
-**Status: NOT READY — blocked only on remaining UI-R5 audit/device acceptance, not on this pair-information slice's T4 gate.**
-
-UI-R5 is complete only when:
-
-- focused/FAST affected validation is green;
-- broader Android validation is run at the logical acceptance checkpoint according to `TESTING_STRATEGY.md`;
-- exact diff/ownership audit confirms no domain/persistence scope creep;
-- real-device critical paths are executed and recorded;
-- roadmap and active handoff are updated before EPI-MQ begins.
-
-The pair-information implementation has satisfied focused/FAST and T4 validation. UI-R5 as a campaign is **not** complete until the required real-device critical paths and remaining active surface audit are recorded.
+The only remaining UI-R5 action is a read-only campaign closeout audit. Do not add code merely to produce activity. If the audit finds no remaining material gap, UI-R5 is ready to close and PR #117 can move to merge readiness.
 
 ## 5. Frozen architecture after D6/R3
 
@@ -250,16 +167,49 @@ Preserve:
 
 A future product requirement may justify a new application seam, but file size alone does not.
 
-## 6. Testing / validation authority
+## 6. Scope fence
+
+UI-R5 does **not** authorize:
+
+- EPI-MQ scoring or explanation;
+- recommendation-provider replacement;
+- generalized architecture rewrite of `CampBoardGameHostApp.kt`;
+- Persistence Simplification follow-up;
+- gameplay/rules fixes unrelated to a UI-R5 defect;
+- new scripts/characters merely to test layout;
+- A4/ZDD production activation.
+
+If the final audit exposes a real defect, isolate it as a focused tested slice. Otherwise close the campaign rather than continuing speculative refactoring.
+
+## 7. Testing / validation authority
 
 Read and follow:
 
 - root `AGENTS.md`;
 - `docs/TESTING_STRATEGY.md`.
 
-Documentation-only closeout changes require no Android regression. UI-R5 production work should use the risk-based T0–T4 model. The pair-information logical checkpoint is now T4 accepted at `b960be22d217ed2caa06b49c0319eace23470b42`; subsequent status-document synchronization is docs-only. The final UI-R5 gate must also include recorded real-device validation because the previous D6.2 waiver is now intentionally closed.
+The pair-information production-equivalent T4 checkpoint is accepted at `b960be22d217ed2caa06b49c0319eace23470b42`; later status/acceptance records are documentation-only and do not invalidate that evidence.
 
-## 7. Current authoritative reading order
+A read-only closeout audit requires no new Android regression. Any new production change discovered by that audit must re-enter the risk-based T0–T4 model according to its actual semantic risk.
+
+## 8. UI-R5 completion condition
+
+UI-R5 can close when the final read-only audit confirms:
+
+```text
+shared square-table ownership audited
++ approved consolidation implemented
++ focused/FAST affected validation green
++ T4 logical acceptance checkpoint green
++ exact diff / scope audit green
++ real-device critical paths recorded
++ no hidden-information/domain/persistence regression
++ no remaining material UI-R5 surface gap
+```
+
+All conditions except the final cross-surface closeout confirmation are now satisfied for the pair-information work.
+
+## 9. Current authoritative reading order
 
 For a new development session read, in order:
 
@@ -267,8 +217,7 @@ For a new development session read, in order:
 2. `docs/README.md`;
 3. this roadmap;
 4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-09_UI_R5_SQUARE_TABLE_STABILIZATION.md`;
-5. `docs/TESTING_STRATEGY.md`;
-6. `docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`;
-7. specialized semantic/product docs only as required by the chosen slice.
-
-Do not load the D6 archive by default. Use `docs/archive/checkpoints/d6/D6_DECOMPOSITION_CAMPAIGN_CLOSEOUT_INDEX_2026-09-09.md` only when historical ownership evidence is needed.
+5. `docs/UI_R5_PAIR_INFORMATION_REAL_DEVICE_ACCEPTANCE_2026-09-09.md`;
+6. `docs/TESTING_STRATEGY.md`;
+7. `docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`;
+8. specialized semantic/product docs only as required by the closeout audit.
