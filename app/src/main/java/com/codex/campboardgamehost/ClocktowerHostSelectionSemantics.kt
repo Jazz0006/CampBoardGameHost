@@ -103,6 +103,12 @@ internal data class ClocktowerDisplayOption(
     val displayFooter: String?,
     /** Exact player-visible statement; never reconstruct it from localized display strings. */
     val proposition: InformationProposition? = null,
+    /**
+     * Typed seat identity used only to render spatial presentation. This is deliberately separate
+     * from [proposition]: misleading information may need seat highlights without becoming an
+     * epistemic observation.
+     */
+    val presentationSubjectSeats: List<Int> = emptyList(),
     val spyRegistersGood: Boolean? = null,
     val spyRegisteredRoleEnName: String? = null,
     val recluseRegistersEvil: Boolean? = null,
