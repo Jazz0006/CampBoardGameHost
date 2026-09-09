@@ -137,9 +137,9 @@ class StructuredEmpathInformationAdapterTest {
         val source = hostScreenSource()
         val firstEmpath = source.indexOf("enName = \"Empath\",")
         val laterEmpath = source.indexOf("enName = \"Empath\",", firstEmpath + 1)
-        val laterChambermaid = source.indexOf("enName = \"Chambermaid\",", laterEmpath)
-        require(firstEmpath >= 0 && laterEmpath > firstEmpath && laterChambermaid > laterEmpath)
-        val laterEmpathBlock = source.substring(laterEmpath, laterChambermaid)
+        val laterFortuneTeller = source.indexOf("enName = \"Fortune Teller\",", laterEmpath)
+        require(firstEmpath >= 0 && laterEmpath > firstEmpath && laterFortuneTeller > laterEmpath)
+        val laterEmpathBlock = source.substring(laterEmpath, laterFortuneTeller)
 
         assertTrue(laterEmpathBlock.contains("previousShownNumber ="))
     }
