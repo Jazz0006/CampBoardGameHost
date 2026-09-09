@@ -1,7 +1,7 @@
 # D6.2p — Numeric role-step input audit
 
 > Date: 2026-09-09 Australia/Sydney
-> Status: READ-ONLY AUDIT COMPLETE; D6.2q scoped below.
+> Status: HISTORICAL AUDIT COMPLETE; D6.2q IMPLEMENTED / VALIDATED.
 > Branch: `codex/d6-2-ui-composition`; PR #115 OPEN / DRAFT.
 > Audited head: `b5d6cadc96dd79539feeaed0d95e8297fe85758e`.
 > Latest validated production checkpoint: `ad16ccc694e687ab10e62677cf0369fa26e9c2fd`.
@@ -57,3 +57,9 @@ Use exact three-file diff review, `git diff --check`, Android production/test co
 Stop if the extraction requires the recommendation coordinator, registration maps, Compose state, session, telemetry, publication callbacks or a general role-step context. D6.2q prepares immutable facts only; it does not move the full Chambermaid materializer.
 
 Expected result: remove roughly 35–60 duplicated Host lines and make Chambermaid seat/proposition preparation independently testable. After validation, reassess whether a Chambermaid materializer can consume this prepared value plus localized content without receiving broad Host dependencies.
+
+## Follow-up
+
+D6.2q completed at `a5f1654fe9adf56ce7fc3cbc07cd039972715a55`. The implementation stayed inside the three-file allowlist, reduced Host by 44 lines and passed CI 34297489467 plus R2 34297489458. See `docs/D6_2Q_CHAMBERMAID_PRESENTATION_PREPARATION_PROGRESS_2026-09-09.md`.
+
+The next step is a read-only audit of the full Chambermaid materializer boundary. Do not infer that the remaining closures are movable merely because their seat/proposition preparation is now typed.

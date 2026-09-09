@@ -11,11 +11,11 @@ main: d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e
 D6.2 branch: codex/d6-2-ui-composition
 Draft PR: #115 — OPEN / DRAFT / DO NOT AUTO-MERGE
 Latest validated production checkpoint:
-ad16ccc694e687ab10e62677cf0369fa26e9c2fd
-refactor(clocktower): extract numeric option preparation
+a5f1654fe9adf56ce7fc3cbc07cd039972715a55
+refactor(clocktower): prepare Chambermaid presentation once
 ```
 
-Closeout commits after `ad16ccc6...` are documentation-only unless a later handoff explicitly records a newer validated production checkpoint. Always re-query live branch head and keep **production checkpoint** distinct from **docs-only branch head**.
+Closeout commits after `a5f1654f...` are documentation-only unless a later handoff explicitly records a newer validated production checkpoint. Always re-query live branch head and keep **production checkpoint** distinct from **docs-only branch head**.
 
 Historical D6.2g clean-head gates:
 
@@ -43,7 +43,7 @@ CI 34288731376 — PASS
 
 ## Current priority
 
-> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h–n AUDITS / R0 CLEANUP COMPLETE → D6.2o NUMERIC OPTION PREPARATION COMPLETE / VALIDATED → D6.2p NUMERIC ROLE-STEP AUDIT COMPLETE → D6.2q CHAMBERMAID PRESENTATION PREPARATION NEXT.**
+> **PS5 COMPLETE → D6.1 COMPLETE / MERGED → D6.2a–g COMPLETE / VALIDATED → D6.2h–n AUDITS / R0 CLEANUP COMPLETE → D6.2o NUMERIC OPTION PREPARATION COMPLETE / VALIDATED → D6.2p AUDIT COMPLETE → D6.2q CHAMBERMAID PRESENTATION PREPARATION COMPLETE / VALIDATED → CHAMBERMAID MATERIALIZER EXTRACTION AUDIT NEXT.**
 
 D6.2 stays on `codex/d6-2-ui-composition`. Do not reopen PR #113 or move this work back to `codex/d6-root-reaudit`.
 
@@ -376,9 +376,17 @@ Authority: `docs/D6_2P_NUMERIC_ROLE_STEP_INPUT_AUDIT_2026-09-09.md`.
 
 Clockmaker, Chef, Empath and Chambermaid do not share one honest step input beyond the D6.2o option seam. The next cohesive boundary is Chambermaid selected-seat/proposition preparation, duplicated across both night phases and already aligned with a dedicated semantics owner.
 
-## Next — D6.2q Chambermaid presentation preparation
+## D6.2q — Chambermaid presentation preparation COMPLETE / VALIDATED
 
-Implement the exact three-file contract in D6.2p. Prepare immutable ordered names/seats/display text once, route both materializers through it, preserve the compatibility proposition function and all materializer order/lifecycle. Validate typed semantics, Android FAST + compile and R2.
+Production/test checkpoint: `a5f1654fe9adf56ce7fc3cbc07cd039972715a55`.
+
+Prepared immutable ordered names, current subject seats, display-secondary text and typed numeric proposition once, then routed both Chambermaid materializers through that value. The compatibility proposition function and both materializer entries/order remain. Exact diff: semantics +46/-14, Host +14/-58, typed tests +53/-0; Host is now 4476 lines / 263777 bytes.
+
+CI 34297489467 PASS: production/test Kotlin compile, executed FAST, Real Clingo and CI gate. R2 34297489458 PASS. Evidence: `docs/D6_2Q_CHAMBERMAID_PRESENTATION_PREPARATION_PROGRESS_2026-09-09.md`.
+
+## Next — Chambermaid materializer extraction audit
+
+Perform a read-only dependency audit of the two remaining Chambermaid materializer closures. Determine whether they can consume the prepared selection presentation plus a narrow localized-content/number-option input while Host retains recommendation invocation, decision/telemetry lifecycle, publication and navigation ownership. Do not create a broad role-step context or move the closures if they still capture unrelated Host state.
 
 PR #115 remains OPEN / DRAFT. Preserve benchmark harnesses/tests, live A4 prewarming, recommendation effects, telemetry and Recovery.
 
@@ -414,7 +422,7 @@ Preserve:
 
 ## Active handoff
 
-Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md` and `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md` plus `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md` for the overall route; read `docs/D6_2M_APP_DECODER_CLEANUP_PROGRESS_2026-09-09.md` for the latest validated production checkpoint and next boundary audit. The D6.2i handoff and D6.2j implementation contract are now historical; do not implement completed slices again.
+Read this roadmap, `AGENTS.md`, `docs/TESTING_STRATEGY.md`, `docs/D6_2_UI_COMPOSITION_AUDIT_2026-09-08.md` and `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md` and `docs/D6_2J_RESIDUAL_COMPOSITION_AUDIT_2026-09-09.md` plus `docs/D6_REMAINING_DECOMPOSITION_GLOBAL_AUDIT_2026-09-09.md` for the overall route; read `docs/D6_2Q_CHAMBERMAID_PRESENTATION_PREPARATION_PROGRESS_2026-09-09.md` for the latest validated production checkpoint and next boundary audit. The D6.2i handoff, D6.2j contract and D6.2p implementation contract are now historical; do not implement completed slices again.
 
 ## Later priority after D6
 

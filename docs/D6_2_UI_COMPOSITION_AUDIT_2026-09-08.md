@@ -4,8 +4,8 @@
 > Repository: `Jazz0006/CampBoardGameHost`  
 > D6.1 merge commit: `112572cbd3d990737a412cc4b8ead766d00867e8`  
 > D6.2 branch base / current main: `d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e`  
-> Latest validated production checkpoint: `ad16ccc694e687ab10e62677cf0369fa26e9c2fd`
-> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h–n AUDITS / R0 CLEANUP COMPLETE; D6.2o COMPLETE / VALIDATED**
+> Latest validated production checkpoint: `a5f1654fe9adf56ce7fc3cbc07cd039972715a55`
+> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h–n AUDITS / R0 CLEANUP COMPLETE; D6.2o COMPLETE / VALIDATED; D6.2p AUDIT + D6.2q COMPLETE / VALIDATED**
 
 ## Purpose
 
@@ -361,7 +361,9 @@ D6.2m removed that isolated App decoder subgraph and unused random role helper a
 
 D6.2n selected the shared numeric option preparation seam. D6.2o implemented it at `ad16ccc694e687ab10e62677cf0369fa26e9c2fd`: a 55-line pure adapter plus typed tests; Host -25 net lines. Production/test Kotlin compilation, FAST and CI gate 34296404234 plus R2 34296404229 passed. All six numeric consumers and materializer order remain unchanged. See `docs/D6_2O_NUMERIC_OPTION_PREPARATION_PROGRESS_2026-09-09.md`.
 
-Next audit a cohesive numeric role-step input before moving Clockmaker, Chef, Empath or Chambermaid materializer closures.
+D6.2p rejected a dishonest common input across Clockmaker, Chef, Empath and Chambermaid, then scoped the cohesive Chambermaid selected-seat/proposition seam. D6.2q implemented it at `a5f1654fe9adf56ce7fc3cbc07cd039972715a55`: Host prepares one immutable ordered presentation for both night materializers; the typed owner validates seats/source/value and constructs the proposition. Host -44 lines; CI 34297489467 and R2 34297489458 passed. See `docs/D6_2Q_CHAMBERMAID_PRESENTATION_PREPARATION_PROGRESS_2026-09-09.md`.
+
+Next perform a read-only dependency audit of the two Chambermaid materializer closures. Move them only if the new presentation value plus narrow localized content/options is sufficient without broad Host or lifecycle dependencies.
 
 ## Frozen invariants
 
@@ -396,6 +398,8 @@ main d76b0854...
 -> D6.2m private App decoder cleanup VALIDATED @ 4c16f4c0...
 -> D6.2n live information preparation audit COMPLETE
 -> D6.2o numeric option preparation VALIDATED @ ad16ccc6...
--> numeric role-step input audit NEXT
+-> D6.2p numeric role-step input audit COMPLETE
+-> D6.2q Chambermaid presentation preparation VALIDATED @ a5f1654f...
+-> Chambermaid materializer extraction audit NEXT
 -> PR #115 remains OPEN / DRAFT / DO NOT AUTO-MERGE
 ```
