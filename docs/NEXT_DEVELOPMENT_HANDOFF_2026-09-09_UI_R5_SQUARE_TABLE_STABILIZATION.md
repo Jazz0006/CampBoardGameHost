@@ -1,9 +1,8 @@
 # NEXT DEVELOPMENT HANDOFF — UI-R5 Square-table Storyteller Consolidation / Real-device Stabilization
 
 > Date: 2026-09-09 Australia/Sydney  
-> Status: **ACTIVE NEXT HANDOFF**  
-> Scope: presentation / interaction architecture + real-device stabilization  
-> Precondition: D6/R3 documentation closeout merged to `main`, then create a fresh main-based feature branch.
+> Status: **ACTIVE HANDOFF — PAIR-INFORMATION SLICE IMPLEMENTED; T4/DEVICE ACCEPTANCE PENDING**  
+> Scope: presentation / interaction architecture + real-device stabilization
 
 ## 1. Read first
 
@@ -47,62 +46,149 @@ c75e0f0bc4635ef42ffbece41470c3437a205910
 
 The final D6.2 FULL gate passed, but real-device critical-path testing was explicitly waived for that merge. UI-R5 exists partly to close that practical validation gap.
 
-## 3. Mission
+## 3. Live UI-R5 checkpoint
 
-The next product/engineering objective is:
-
-> **square-table Storyteller UI consolidation / UI-R5 real-device stabilization**
-
-The goal is not to reduce source-file size. The goal is to make the Storyteller's square-table interaction model coherent, reusable where ownership is genuinely shared, and reliable on a real phone.
-
-After UI-R5 acceptance, and only after that acceptance, the roadmap proceeds to:
+Active branch / PR:
 
 ```text
-EPI-MQ / Productive Uncertainty
--> UX-R6 legacy recommendation-provider replacement
+branch: codex/ui-r5-square-table-stabilization
+Draft PR: #117
+base main: 60842381dcbc3709ad453209846f66e9b4a7a777
 ```
 
-## 4. First task: UI-R5.0 read-only audit
-
-Start from live `main` on a new branch. Suggested branch name:
+Latest production/test checkpoint before the documentation-only T4 trigger:
 
 ```text
-codex/ui-r5-square-table-stabilization
+f99df0eaf5f3a1af0ad2651392abdd66997841c5
 ```
 
-Before changing production code, inventory the active Storyteller square-table surfaces and their ownership.
-
-At minimum inspect:
-
-- the surviving square-table composable(s) and seat-placement helpers;
-- call sites in Night/Host/Day surfaces;
-- Manual pair-information selection;
-- target-selection flows that already use the table;
-- Fortune Teller two-target/result flow;
-- final player-facing information display;
-- seat-number / player-name / role/status presentation where relevant;
-- selected/highlighted/disabled state representation;
-- center-content sizing and edge allocation;
-- system-bar/safe-inset handling;
-- recomposition/orientation behavior for transient selection state.
-
-Produce an ownership/duplication matrix first. For each candidate shared boundary classify:
+Validation at that head:
 
 ```text
-GO      = real repeated presentation responsibility with small typed inputs
-KEEP    = specialized surface is already the correct owner
-NO-GO   = extraction would require broad state/callback/context plumbing
+CI #2017 / 34337914868             PASS
+Android FAST unit tests            PASS / executed
+full Android unit tests + APK       SKIPPED by ordinary PR policy
+CI gate                             PASS
+R2 #1884 / 34337915036              PASS
 ```
 
-Do not begin implementation merely because two functions look similar.
+The final documentation checkpoint for this slice intentionally uses a `[full-ci]` commit message. Treat the pair-information slice as T4 accepted **only after** the workflow attached to that final head completes with the full Android unit suite + debug assemble and the other selected full gates green.
 
-## 5. Product constraints
+Do not confuse that T4 checkpoint with UI-R5 campaign acceptance: real-device validation is still required.
+
+## 4. Implemented pair-information flow
+
+Washerwoman / Librarian / Investigator now use the square-table interaction language directly.
+
+Default recommended state:
+
+```text
+night step
+-> full-screen square table
+-> recommended two seats already highlighted
+-> center shows the information role / proposition preview
+-> [Show this information / 展示此信息]
+-> [Choose manually / 手动选择]
+```
+
+Manual state:
+
+```text
+same square table
+-> recommendation remains selected initially
+-> player selection uses the existing two-seat selection semantics
+-> center role control becomes editable
+-> legal seat availability remains driven by the complete Manual domain
+-> [Restore recommendation / 恢复推荐] is available when a recommendation exists
+-> [Show this information / 展示此信息] uses the same final handoff
+```
+
+Player-facing display remains the existing display/confirmation path. This slice did **not** create a second observation commit or reveal pipeline.
+
+### Ownership retained
+
+The implementation deliberately reuses the existing owners:
+
+```text
+ClocktowerPairManualAuthority
+  -> complete typed Manual legal projection
+  -> recommendation-to-Manual canonicalization by structured proposition key
+
+ClocktowerPairManualSelectionModel
+  -> two-player draft state
+  -> select/cancel/replace behavior
+
+ClocktowerSquareTableSeatSurface
+  -> existing square-table geometry and seat rendering
+
+existing showRecommendedDisplayOption / player-display resolution
+  -> final display and existing structured confirmation/observation path
+```
+
+New composition owner:
+
+```text
+ClocktowerPairInformationSquareTableUi.kt
+```
+
+Its responsibility is intentionally thin: compose recommendation preview + in-place Manual editing on the square-table surface. It does not own recommendation ranking, legal-domain generation, durable history, Recovery, or GameState.
+
+### Recommendation canonicalization contract
+
+Recommendation candidates and complete Manual-domain candidates can carry different presentation metadata. The implementation therefore does not rely on object equality or localized label parsing.
+
+`ClocktowerPairManualAuthority` canonicalizes the recommendation back onto the complete Manual legal candidate by structured pair semantics. If the recommendation cannot be represented in the current Manual domain, the flow fails closed into Manual editing rather than inventing an illegal candidate.
+
+### Characterization evidence added
+
+Tests now protect:
+
+- seeding a Manual selection model from a valid recommendation;
+- fail-closed behavior for an invalid/stale recommendation;
+- structured recommendation-to-Manual canonicalization despite presentation metadata differences;
+- recommended read-only seat highlighting;
+- Manual selectable/selected/disabled seat-state projection.
+
+## 5. Exact scope already audited
+
+Relative to base `main`, the production flow change is localized.
+
+`ClocktowerNightStepUi.kt` only removes the old local `showManualPairSelection` state / separate Manual dialog wiring and replaces the pair recommendation section with the unified square-table composition. Existing Fortune Teller, Chambermaid, numeric information, registration/result-first, dynamic-decision and player-display semantics remain outside this change.
+
+No square-table geometry algorithm was rewritten. No domain/session/persistence module acquired Compose dependencies. No recommendation scoring or gameplay rule changed.
+
+PR #117 remains Draft and must not be merged solely because CI is green.
+
+## 6. Next mandatory step after T4
+
+After the `[full-ci]` checkpoint is green, move to **UI-R5.4 real-device stabilization**, not EPI-MQ.
+
+Portrait phone is primary. Record exact device / Android version where practical and exercise at minimum:
+
+1. Washerwoman recommended flow;
+2. Washerwoman Manual flow and replacement/cancel behavior;
+3. Librarian normal pair flow;
+4. Librarian legal zero-Outsider flow if the chosen setup exposes it;
+5. Investigator recommended + Manual flow;
+6. player-facing reveal then return to the correct night step;
+7. dense 8–15 player layouts, especially 15 players;
+8. long player names;
+9. selected-first / selected-second / selectable / disabled state readability;
+10. center role dropdown and action buttons without seat collision;
+11. status/navigation inset safety;
+12. no first-night display-crash regression;
+13. no Storyteller-only hidden state on the player-facing display.
+
+If a real-device defect is found, fix it within UI-R5 with focused evidence. Do not waive it silently.
+
+## 7. Product constraints
 
 Preserve the active product decisions in `BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`:
 
 - full-screen rectangular/square-table visual language;
 - stable seat identity independent of filtered-list position;
-- dedicated Manual selection surface;
+- player selection happens on the table, not via player dropdowns;
+- Manual editing stays on the same table surface for pair-information roles;
 - shared visual language between selection and player display;
 - Fortune Teller directly selects two targets then resolves the legal result domain;
 - Storyteller-only reliability/discretion indicators never leak to player-facing display;
@@ -111,27 +197,7 @@ Preserve the active product decisions in `BOCT_INFORMATION_DISPLAY_AND_MANUAL_SE
 
 UI-R5 may refine geometry and presentation, but it must not redefine those semantic contracts.
 
-## 6. Real-device acceptance targets
-
-Portrait phone is primary. The campaign must explicitly exercise dense layouts, not only comfortable small-player examples.
-
-Minimum device-level targets:
-
-1. 8–15 player seat layouts remain readable;
-2. seat number and player identity are visually unambiguous;
-3. role/status text, where that Storyteller surface intentionally shows it, remains useful rather than shrinking below practical readability;
-4. center content does not collide with edge seats;
-5. system/navigation/status insets do not cover actionable content;
-6. tap targets remain operable on the user's real phone;
-7. selected-first / selected-second / highlighted / unavailable states remain distinguishable without relying on color alone;
-8. long player names degrade predictably rather than breaking geometry;
-9. opening/closing the player-facing display returns to the correct existing flow;
-10. no first-night display-crash regression;
-11. no hidden Storyteller state appears on the player-facing screen.
-
-If the audit shows that one single geometry cannot serve both dense Storyteller control and player-facing display cleanly, prefer a shared geometry engine with typed presentation variants rather than forcing every surface into one oversized universal composable.
-
-## 7. Architecture constraints
+## 8. Architecture constraints
 
 UI-R5 must preserve the post-D6 ownership model:
 
@@ -145,24 +211,23 @@ UI-R5 must preserve the post-D6 ownership model:
 - no Compose dependency enters session/domain modules;
 - Undercover/Werewolf remain isolated.
 
-## 8. Validation strategy
+## 9. Validation strategy
 
 Use the repository's risk-based evidence model.
 
-For UI/presentation-only geometry changes:
+For UI/presentation-only work:
 
 - do not manufacture domain REDs;
-- use existing typed interaction/legality coverage where it already protects the flow;
-- add a durable test only when a stable observable interaction contract is genuinely uncovered;
-- run the narrowest compile/focused evidence during implementation;
+- use typed interaction/legality tests for stable contracts;
+- run focused evidence during iteration;
 - run `:app:testFast` at the logical checkpoint when Android production code changes;
-- escalate affected/full validation according to `TESTING_STRATEGY.md`.
+- use `[full-ci]` for the T4 acceptance checkpoint;
+- distinguish an actually executed full suite from a skipped/cached step;
+- real-device validation remains a separate required UI-R5 acceptance artifact.
 
-Real-device validation is a required UI-R5 acceptance artifact, not optional polish.
+A green FAST run is not evidence that `testFull` or `assembleDebug` executed. Record the exact workflow step result.
 
-Record the exact device, Android version/build if practical, player counts exercised, critical flows exercised, and any waived paths. A waiver must be written as a waiver, never as a PASS.
-
-## 9. Scope fence
+## 10. Scope fence
 
 Do not broaden UI-R5 into:
 
@@ -176,7 +241,7 @@ Do not broaden UI-R5 into:
 
 If a real-device bug exposes a genuine semantic defect, isolate it as a separate tested bug-fix slice rather than silently changing rules inside a visual refactor.
 
-## 10. Completion condition
+## 11. Completion condition
 
 UI-R5 is ready to close only when:
 
@@ -184,6 +249,7 @@ UI-R5 is ready to close only when:
 shared square-table ownership audited
 + approved consolidation implemented
 + focused/FAST affected validation green
++ T4 logical acceptance checkpoint green
 + exact diff / scope audit green
 + real-device critical paths recorded
 + no hidden-information/domain/persistence regression
