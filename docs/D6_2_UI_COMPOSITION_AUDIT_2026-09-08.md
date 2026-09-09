@@ -1,149 +1,407 @@
 # D6.2 UI Composition Boundary Audit
 
-> Date: 2026-09-08 Australia/Sydney
-> Repository: `Jazz0006/CampBoardGameHost`
-> D6.1 merge commit: `112572cbd3d990737a412cc4b8ead766d00867e8`
-> Status: **ROUTE SELECTED — D6.2a CHARACTERIZATION NEXT — START FROM FRESH MAIN-BASED BRANCH**
+> Updated: 2026-09-09 Australia/Sydney  
+> Repository: `Jazz0006/CampBoardGameHost`  
+> D6.1 merge commit: `112572cbd3d990737a412cc4b8ead766d00867e8`  
+> D6.2 branch base / current main: `d76b0854d58e7a0abc3bb6ac6ab53b061fcb871e`  
+> Latest validated production checkpoint: `a692cc722f1e597e747154bf05a2689fee9bed4c`; final validated test head `b2263cd08bc2ce223598698324bf2b22243c91f2`
+> Status: **D6.2a–g COMPLETE / VALIDATED; D6.2h–n AUDITS / R0 CLEANUP COMPLETE; D6.2o COMPLETE; D6.2p–s CHAMBERMAID PREPARATION/MATERIALIZER COMPLETE / VALIDATED**
 
-## Why D6.2 exists
+## Purpose
 
-D6.1 solved canonical Clocktower session and dynamic GameState writer ownership. The remaining highest-value architecture debt is now the Compose/UI composition surface around `ClocktowerJudgeScreen`, not more state migration into `ClocktowerGameSession`.
+D6.1 solved canonical Clocktower session/domain writer ownership. D6.2 addresses the remaining Compose/UI composition fan-out around `ClocktowerJudgeScreen` and `ClocktowerHostScreen.kt`.
 
-## Residual audit evidence
+The optimization target is **responsibility ownership and modification radius**, not file size alone.
 
-Read-only residual-root audit:
+## D6.2 baseline
 
-```text
-34223904849 — PASS
-```
-
-Measured hotspots:
+Post-D6.1 residual audit:
 
 ```text
 ClocktowerHostScreen.kt     329,172 bytes / 5,474 lines
 CampBoardGameHostApp.kt     241,986 bytes / 4,315 lines
-ClocktowerDayScreen.kt       50,927 bytes
-ClocktowerNightStepUi.kt     47,970 bytes
-ClocktowerHistoryScreen.kt   38,365 bytes
-ClocktowerNightScreen.kt     25,063 bytes
-ClocktowerGameSession.kt     22,708 bytes
+ClocktowerJudgeScreen       103 parameters
+on... callbacks              39
+function-valued providers     3
+MutableState<T> params        10
+App-root Clocktower vars      41
+```
 
+## Architecture rules
+
+Do not solve fan-out by packaging it into:
+
+```text
+ClocktowerJudgeState
+ClocktowerJudgeActions
+DayState / NightState mega-bags
+broad Controller / ViewModel wrappers
+```
+
+Do not move Compose concerns into `ClocktowerGameSession` or domain code.
+
+Move ownership only when a real cohesive UI/phase boundary exists. Keep Recovery-authoritative and durable mechanics state external even if it currently passes through Compose.
+
+The near-term UI direction is square-table/table based. Retired HostScriptCard composition should not receive further architecture investment.
+
+## D6.2a — consumption matrix COMPLETE
+
+Authority:
+
+- `docs/D6_2A_CLOCKTOWER_JUDGE_CONSUMPTION_MATRIX_2026-09-08.md`
+
+The 103 inputs were audited by actual consumers rather than name grouping. Key result: they do not form one natural state object.
+
+The baseline also identified zero-consumer `records` and `onPhaseChange`, but they were intentionally left for a later dead-plumbing slice rather than mixed into feature ownership work.
+
+## D6.2b — Slayer transient ownership COMPLETE / VALIDATED
+
+Checkpoint:
+
+```text
+58bc1e51440d44f36e14d1a9d5a45cfe9c235955
+```
+
+Judge-local:
+
+```kotlin
+remember(gameId) { slayerClaimantName }
+remember(gameId) { slayerTargetName }
+```
+
+Durable action boundary unchanged:
+
+```text
+onSlayerShot(claimantName, targetName, recluseRegistersAsDemon)
+```
+
+Metrics:
+
+```text
+Judge params:             103 -> 101
+callbacks:                 39 unchanged
+MutableState params:       10 -> 8
+App-root Clocktower vars:  41 -> 39
+```
+
+Validation:
+
+```text
+R2 34283098478 — PASS
+CI 34283098477 — PASS / FULL
+```
+
+## D6.2c/d — Artist contract + transient ownership COMPLETE / VALIDATED
+
+Authority:
+
+- `docs/D6_2C_ARTIST_CONFIRMATION_CONTRACT_AUDIT_2026-09-08.md`
+
+Final validated checkpoint:
+
+```text
+6a5723af0e9fb646d0c66e900a1c4d215d6a2fef
+```
+
+Judge-local transient state:
+
+```text
+artistClaimantName
+artistTruthfulAnswer
+artistShownAnswer
+```
+
+Durable callback:
+
+```text
+onConfirmArtistQuestion(String, Boolean, Boolean)
+```
+
+App retains durable Artist mechanics/history/revision/day routing.
+
+Metrics after D6.2d:
+
+```text
+Judge params:             101 -> 95
+callbacks:                 39 -> 36
+MutableState params:        8 unchanged
+App-root Clocktower vars:  39 -> 36
+```
+
+Validation:
+
+```text
+R2 34286858464 — PASS
+CI 34286858453 — PASS / FULL
+```
+
+A first implementation attempt exposed delegated-property smart-cast compilation issues. The correction only snapshots nullable Compose delegated values into stable locals before Boolean calculations. Failed/bootstrap history was removed from the final production line.
+
+## D6.2e — legacy Storyteller reachability proof COMPLETE
+
+Authority:
+
+- `docs/D6_2E_LEGACY_STORYTELLER_REACHABILITY_AUDIT_2026-09-09.md`
+
+The exhaustive phase/nightStarted/dayMode audit proved the trailing HostScriptCard/HostProgressCard Storyteller block unreachable.
+
+Every legal state already returned through one of the live modern/table paths:
+
+```text
+Dawn
+Day Overview
+Day Nomination
+Day Vote
+Day EndConfirm
+Day Slayer
+Day Artist
+Day Klutz
+FirstNight setup
+Night ready
+active FirstNight/Night flow
+```
+
+Conclusion: delete the old tail rather than decompose it.
+
+## D6.2f — legacy tail retirement COMPLETE / VALIDATED
+
+Authority:
+
+- `docs/D6_2F_LEGACY_STORYTELLER_RETIREMENT_PROGRESS_2026-09-09.md`
+
+Checkpoint:
+
+```text
+cee19c1ab85b4b4400a4d38f958a9014dd10a5e3
+```
+
+Net production diff:
+
+```text
+exactly 2 production files
+0 additions / 685 deletions
+```
+
+`ClocktowerHostScreen.kt`:
+
+```text
+330,257 -> 283,849 bytes
+5,491 -> 4,807 lines
+```
+
+Also removed writerless `ClocktowerDayMode.ExecutionResult`.
+
+Validation:
+
+```text
+R2 34288731422 — PASS
+CI 34288731376 — PASS / FULL
+  Android FULL + debug APK — PASS
+  ASP — PASS
+  Real Clingo — PASS
+  CI gate — PASS
+```
+
+## D6.2g — retired plumbing cleanup COMPLETE / VALIDATED
+
+Authority:
+
+- `docs/D6_2G_RETIRED_STORYTELLER_PLUMBING_PROGRESS_2026-09-09.md`
+
+Checkpoint:
+
+```text
+15342f9e22ac204602680e6ef831fb4e95c7b0bf
+```
+
+Removed zero-consumer plumbing exposed by D6.2f:
+
+```text
+Judge records parameter + App forwarding
+onPhaseChange + App lambda
+onShowResults + App lambda
+phaseTitle
+phaseProgress
+phaseScript
+phaseAction
+recordCurrentVote()
+```
+
+The shared App `records` collection itself remains because Recovery/history/other game paths still use it.
+
+Net diff:
+
+```text
+CampBoardGameHostApp.kt +0 / -26
+ClocktowerHostScreen.kt +0 / -42
+0 additions / 68 deletions
+```
+
+Current validated metrics:
+
+```text
 ClocktowerJudgeScreen
-  parameters: 103
-  callbacks:   39
+  parameters:              92   (103 -> 92)
+  callbacks:               34   (39 -> 34)
+  providers:                3
+  MutableState params:      8   (10 -> 8)
 
-App-root clocktower vars: 41
+App-root Clocktower vars:   36   (41 -> 36)
 ```
 
-File size is only a signal. The more important result is the boundary fan-out: unrelated concerns are routed through one giant Judge composition surface.
-
-The callbacks span recommendation, phase/night navigation, semantic event/observation recording, demon attack, execution, poison, Fortune Teller, Chambermaid, Ravenkeeper, Red Herring, Butler, Monk, Mayor redirect, demon succession, Klutz, Artist, Slayer, Virgin, day/night confirmation and result display.
-
-## What D6.2 must not do
-
-Do **not**:
-
-- replace 39 callback parameters with one 39-function `ClocktowerJudgeActions` bag;
-- replace 103 parameters with one giant state bag;
-- introduce a broad Controller/ViewModel just to hide the same dependencies;
-- move Compose/UI state into `ClocktowerGameSession` or domain code;
-- mechanically replace `cards.toClocktowerGameState(...)` readers;
-- reopen D6.1 canonical state, Recovery v2, PS5 persistence lifecycle or recommendation semantics.
-
-A successful extraction must reduce cross-phase knowledge and change amplification, not merely reduce visible argument count.
-
-## Existing seams to build on
-
-The repository already has real child surfaces such as Day, Night and History screens. D6.2 should characterize how Judge currently consumes and forwards data into these children before inventing new abstractions.
-
-Preferred architectural direction:
+Validation:
 
 ```text
-stable shared Judge read context
-+ small phase-specific transient UI state contracts
-+ small phase/ability action contracts
-+ existing domain/session owners beneath them
+R2 34289616209 — PASS
+CI 34289616204 — PASS
+  Android FAST — PASS
+  CI gate — PASS
 ```
 
-The exact first slice is deliberately not predetermined.
+A second FULL gate was intentionally not repeated immediately after D6.2f's T4 because D6.2g was pure dead-plumbing deletion.
 
-## D6.2a — NEXT: parameter/callback consumption characterization
+## D6.2h — surviving square-table ownership re-audit COMPLETE
 
-D6.2a is **read/design-first**. Before any production edit:
+Authority:
 
-1. re-confirm live `main` and the merged #113 state;
-2. create a fresh branch from current `main` (recommended name: `codex/d6-2-ui-composition`);
-3. parse all 103 `ClocktowerJudgeScreen` parameters;
-4. for each parameter record responsibility group, phase scope, actual consumer(s), forwarding path and whether it is shared/read-only/transient UI/durable-domain data;
-5. classify all 39 callbacks by cohesive phase/ability responsibility;
-6. identify callbacks that are selection-only versus callbacks crossing durable/session/history boundaries;
-7. inventory all `MutableState<T>` parameters and decide which component naturally owns each transient state;
-8. map existing Day/Night/ability child owners and unchanged forwarding chains;
-9. identify groups that are always consumed together and groups that currently cross unrelated phases;
-10. baseline focused UI/flow tests around the best candidate groups;
-11. rank the smallest cohesive extraction by real fan-out reduction, behavior risk and test coverage;
-12. add a typed RED only if characterization reveals a genuine stable coverage gap.
+- `docs/D6_2H_SURVIVING_SQUARE_TABLE_OWNERSHIP_AUDIT_2026-09-09.md`
 
-Suggested matrix columns:
+This re-audit considered only live table UI.
+
+### `currentVoteCountState` is dead
+
+The modern vote screen owns pending voter selection/count inside typed `ClocktowerTableVoteState` and submits it through `onConfirm(voteState)`.
+
+The outer `currentVoteCount` is never read; it is only reset to `0` at several transitions.
+
+Conclusion: delete it.
+
+### nomination pair is transient UI state
 
 ```text
-name
-kind (value / MutableState / callback)
-responsibility
-phase scope
-actual consumer(s)
-forwarded unchanged?
-transient UI or durable/domain?
-current owner
-existing tests
-candidate cohesive contract
+nominatorNameState
+nomineeNameState
 ```
 
-## Candidate ranking after characterization
+App-side responsibilities are declaration/reset/forwarding only. They are not serialized/restored as Clocktower Recovery mechanics.
 
-Prefer the smallest group that:
+The only live semantic consumers are the square-table nomination and vote composition paths.
 
-- removes unrelated concepts from both App and HostScreen;
-- maps to one real flow or child owner;
-- does not own canonical domain state;
-- preserves current behavior exactly;
-- has focused characterization coverage;
-- makes subsequent extractions easier rather than creating a new monolith.
+Recommended local lifetime:
 
-Potential categories to evaluate, not pre-authorized implementations:
+```kotlin
+remember(gameId, round)
+```
+
+The round lifecycle proves equivalent reset semantics across normal Day completion, Virgin immediate execution and Klutz paths.
+
+### state that must remain external
 
 ```text
-Night-flow transient UI state/actions
-Day-flow transient UI state/actions
-shared Judge read-only context
-ability-specific contracts where a real child owner already exists
+dayModeState
+  App/Recovery/Klutz/Artist routing still writes it
+
+ghostVoteAuthority
+highestVoteNameState
+highestVoteCountState
+  durable vote mechanics + Recovery serialization/restore
 ```
 
-## D6.2 invariants
+Do not move these with the nomination pair.
+
+## D6.2i — COMPLETE / VALIDATED: Day nomination transient ownership
+
+Production checkpoint: `5e0891e7611787300b01d83b889f27a903c0768b`.
+
+- App no longer declares, resets or forwards the nomination pair or dead outer vote count.
+- Judge owns `nominatorName` and `nomineeName` with `remember(gameId, round)`.
+- Cancel nomination and confirm vote still clear both names; cancel vote retains the pair.
+- Day mode, ghost-vote authority, highest-vote mechanics, Virgin callbacks and Recovery remain external and unchanged.
+
+Verified boundary metrics:
+
+```text
+Judge parameters:                  92 -> 89
+on... callbacks:                   34 unchanged
+function-valued providers:          3 unchanged
+MutableState parameters:            8 -> 5
+App explicit remembered state vals: 9 -> 6
+App delegated remembered vars:     38 unchanged
+Combined scalar state declarations:47 -> 44
+```
+
+**Metric correction:** the old expected `App-root vars 36 -> 33` had no reproducible counting definition. The counts above include root `clocktower*` declarations directly initialized with `remember { mutableStateOf(...) }`, both delegated `var` and explicit `val`; they exclude derived views and state lists. Earlier campaign figures are historical, not the current measured total.
+
+Exact production diff: App +0/-12; Host +2/-11; exactly two files and one commit from `bffa52095585bd9ee37e77fce31c2a71219ce895`.
+
+Acceptance:
+
+```text
+CI 34291666237 — PASS / FULL
+  Android full JVM + debug APK — PASS
+  ASP contracts — PASS
+  Real Clingo — PASS
+  CI gate — PASS
+R2 34291666241 — PASS
+```
+
+Local Gradle could not download its distribution because of restricted network access. Compilation and the existing nomination/vote tests were validated by the remote full JVM suite, not by a claimed local GREEN. No new tests or production seams were introduced.
+
+Detailed evidence: `docs/D6_2I_DAY_NOMINATION_OWNERSHIP_PROGRESS_2026-09-09.md`.
+
+## D6.2j residual audit / D6.2k implementation COMPLETE
+
+The D6.2j contract was implemented and validated at `c3a25f640e7e6c9ef2537d7d9387eb27b28b1ece`. Exact production diff: three files, +0 / -257; four dormant effects and 13 diagnostic states removed. Judge now has 87 parameters, 34 on-callbacks, three providers and five MutableState inputs. NightStep has 48 parameters and 13 callbacks; App remembered Clocktower scalars remain 44.
+
+CI 34293746781 PASS (Android compile + FAST and CI gate); R2 34293746779 PASS. Live recommendation/publication, A4 services and Recovery were preserved. Detailed evidence: `docs/D6_2K_DORMANT_DIAGNOSTIC_CLEANUP_PROGRESS_2026-09-09.md`.
+
+D6.2l subsequently retired the unused Day/History UI and corresponding obsolete R2 assertions at `69655de1d992ec6ec7cf45b2639a048ae4fb32e4`. Kotlin +0 / -612; workflow +2 / -8. FULL CI 34294224391 and R2 34294224399 PASS. Retained Day/History function blocks are unchanged. See `docs/D6_2L_RETIRED_DAY_HISTORY_UI_PROGRESS_2026-09-09.md`.
+
+D6.2m removed that isolated App decoder subgraph and unused random role helper at `4c16f4c09ae7df693a3b16d6910ab026373e05cd`: App +0 / -94, Android FAST/CI 34294858685 and R2 34294858697 PASS. Current archive, Recovery v2 and assignment paths remain. See `docs/D6_2M_APP_DECODER_CLEANUP_PROGRESS_2026-09-09.md`.
+
+D6.2n selected the shared numeric option preparation seam. D6.2o implemented it at `ad16ccc694e687ab10e62677cf0369fa26e9c2fd`: a 55-line pure adapter plus typed tests; Host -25 net lines. Production/test Kotlin compilation, FAST and CI gate 34296404234 plus R2 34296404229 passed. All six numeric consumers and materializer order remain unchanged. See `docs/D6_2O_NUMERIC_OPTION_PREPARATION_PROGRESS_2026-09-09.md`.
+
+D6.2p rejected a dishonest common input across Clockmaker, Chef, Empath and Chambermaid, then scoped the cohesive Chambermaid selected-seat/proposition seam. D6.2q implemented it at `a5f1654fe9adf56ce7fc3cbc07cd039972715a55`: Host prepares one immutable ordered presentation for both night materializers; the typed owner validates seats/source/value and constructs the proposition. Host -44 lines; CI 34297489467 and R2 34297489458 passed. See `docs/D6_2Q_CHAMBERMAID_PRESENTATION_PREPARATION_PROGRESS_2026-09-09.md`.
+
+D6.2r audited the two identical Chambermaid closures. D6.2s then extracted a 50-line typed materializer and reused one entry across both registries at `a692cc722f1e597e747154bf05a2689fee9bed4c`. Host retains the single lazy role-specific display-option provider and is down 37 lines. A directly affected Empath source assertion followed the new boundary at `b2263cd08bc2ce223598698324bf2b22243c91f2`; final CI 34299329715 and R2 34299329713 passed. See `docs/D6_2S_CHAMBERMAID_MATERIALIZER_EXTRACTION_PROGRESS_2026-09-09.md`.
+
+## Frozen invariants
 
 Preserve:
 
-- `ClocktowerGameSession` as canonical writable session/domain owner;
+- `ClocktowerGameSession` canonical writable session/domain ownership;
 - exact game/player revision cadence;
 - semantic chronology and idempotency;
-- Recovery v2 + PS5 lifecycle/write-gate topology;
+- Recovery v2 + PS5 write-gate topology;
 - A4 durability/invalidation ordering;
-- recommendation/gameplay semantics;
-- current user-visible UI behavior for structural slices;
+- no storyteller-hidden target leak;
 - no Compose dependency in session/domain;
+- recommendation/gameplay semantics unless separately authorized;
 - Undercover/Werewolf isolation.
 
-## Branch / PR strategy
-
-D6.1 is merged and closed. D6.2 must use a fresh branch from current `main` and a separate PR.
+## Branch / PR route
 
 ```text
-re-confirm current main
--> create codex/d6-2-ui-composition (or equivalent) from main
--> D6.2a characterization only
--> choose smallest cohesive boundary
--> tests/characterization-first implementation
--> re-audit after each completed slice
+main d76b0854...
+-> codex/d6-2-ui-composition
+-> D6.2a consumption audit COMPLETE
+-> D6.2b Slayer ownership VALIDATED
+-> D6.2c/d Artist ownership VALIDATED
+-> D6.2e unreachable legacy proof COMPLETE
+-> D6.2f legacy retirement VALIDATED @ cee19c1...
+-> D6.2g dead plumbing VALIDATED @ 15342f9...
+-> D6.2h surviving square-table audit COMPLETE
+-> D6.2i Day nomination transient ownership VALIDATED @ 5e0891e...
+-> D6.2j residual composition audit COMPLETE
+-> D6.2k dormant diagnostics / dead inputs VALIDATED @ c3a25f64...
+-> D6.2l retired Day/History UI + R2 assertions VALIDATED @ 69655de1...
+-> D6.2m private App decoder cleanup VALIDATED @ 4c16f4c0...
+-> D6.2n live information preparation audit COMPLETE
+-> D6.2o numeric option preparation VALIDATED @ ad16ccc6...
+-> D6.2p numeric role-step input audit COMPLETE
+-> D6.2q Chambermaid presentation preparation VALIDATED @ a5f1654f...
+-> D6.2r Chambermaid materializer extraction audit COMPLETE
+-> D6.2s narrow Chambermaid materializer extraction VALIDATED @ a692cc72... / b2263cd0...
+-> D6.2t numeric materializer-family audit NEXT
+-> PR #115 remains OPEN / DRAFT / DO NOT AUTO-MERGE
 ```
-
-Do not reuse `codex/d6-root-reaudit` or PR #113.

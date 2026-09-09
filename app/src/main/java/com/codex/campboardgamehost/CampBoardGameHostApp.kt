@@ -230,8 +230,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.PlayerKnowledgeSnapshot
-import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.epistemic.ZddFilterStrategy
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightState
 import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
@@ -480,91 +478,6 @@ private fun Context.archiveGame(record: GameArchiveRecord): List<ArchivedGameRev
     return loadGameHistory()
 }
 
-private fun playerCardFromJson(json: JSONObject): PlayerCard? {
-    val name = json.optString("name").takeIf { it.isNotBlank() } ?: return null
-    val role = enumByName<Role>(json.optNullableString("role")) ?: return null
-    val clocktowerRole = clocktowerRoleByName(json.optNullableString("clocktowerRole"))
-    val clocktowerShownRole = clocktowerRoleByName(json.optNullableString("clocktowerShownRole"))
-    val clocktowerTeam = enumByName<ClocktowerTeam>(json.optNullableString("clocktowerTeam"))
-        ?: clocktowerRole?.team
-    return PlayerCard(
-        name = name,
-        role = role,
-        word = json.optString("word"),
-        roleLabel = json.optNullableString("roleLabel"),
-        actualRoleLabel = json.optNullableString("actualRoleLabel"),
-        clocktowerTeam = clocktowerTeam,
-        clocktowerRole = clocktowerRole,
-        clocktowerShownRole = clocktowerShownRole,
-        eliminatedRound = json.optNullableInt("eliminatedRound"),
-    )
-}
-
-private fun JSONArray.toPlayerCards(): List<PlayerCard> = buildList {
-    for (index in 0 until length()) {
-        optJSONObject(index)?.let { playerCardFromJson(it)?.let(::add) }
-    }
-}
-
-private fun eliminationRecordFromJson(json: JSONObject): EliminationRecord? {
-    val playerName = json.optString("playerName").takeIf { it.isNotBlank() } ?: return null
-    return EliminationRecord(
-        round = json.optInt("round", 1),
-        playerName = playerName,
-        note = json.optNullableString("note"),
-    )
-}
-
-private fun JSONArray.toEliminationRecords(): List<EliminationRecord> = buildList {
-    for (index in 0 until length()) {
-        optJSONObject(index)?.let { eliminationRecordFromJson(it)?.let(::add) }
-    }
-}
-
-private fun clocktowerEventFromJson(json: JSONObject): ClocktowerEvent? {
-    val title = json.optString("title").takeIf { it.isNotBlank() } ?: return null
-    return ClocktowerEvent(
-        sequence = json.optInt("sequence", 0),
-        type = enumByName<ClocktowerEventType>(json.optNullableString("type")) ?: ClocktowerEventType.System,
-        title = title,
-        detail = json.optString("detail"),
-        playerNames = json.optJSONArray("playerNames")?.toStringList().orEmpty(),
-        phase = enumByName<ClocktowerPhase>(json.optNullableString("phase")) ?: ClocktowerPhase.FirstNight,
-        round = json.optInt("round", 1).coerceAtLeast(1),
-    )
-}
-
-private fun JSONArray.toClocktowerEvents(): List<ClocktowerEvent> = buildList {
-    for (index in 0 until length()) {
-        optJSONObject(index)?.let { clocktowerEventFromJson(it)?.let(::add) }
-    }
-}
-
-private fun JSONArray.toRecordedEpistemicObservations(): List<RecordedEpistemicObservation> = buildList {
-    for (index in 0 until length()) {
-        val json = optJSONObject(index)
-            ?: throw IllegalArgumentException("Epistemic observation at index $index is not a JSON object.")
-        val record = try {
-            EpistemicSemanticJson.decodeRecordedEpistemicObservation(json.toString())
-        } catch (error: Exception) {
-            throw IllegalArgumentException("Cannot restore epistemic observation at index $index.", error)
-        }
-        add(record)
-    }
-}
-
-private fun gameOutcomeFromJson(json: JSONObject?): GameOutcome? {
-    if (json == null) return null
-    val title = json.optString("title").takeIf { it.isNotBlank() } ?: return null
-    return GameOutcome(
-        title = title,
-        summary = json.optString("summary"),
-        reason = json.optString("reason"),
-    )
-}
-
-
-
 internal fun Role.labelResId(): Int = when (this) {
     Role.Civilian -> R.string.role_civilian
     Role.Undercover -> R.string.role_undercover
@@ -675,13 +588,6 @@ internal fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int> 
         14 -> mapOf(ClocktowerTeam.Townsfolk to 9, ClocktowerTeam.Outsider to 1, ClocktowerTeam.Minion to 3, ClocktowerTeam.Demon to 1)
         else -> mapOf(ClocktowerTeam.Townsfolk to 9, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 3, ClocktowerTeam.Demon to 1)
     }
-}
-
-private fun clocktowerRolesFor(playerCount: Int): List<ClocktowerRole> {
-    val distribution = clocktowerDistribution(playerCount)
-    return distribution.flatMap { (team, count) ->
-        completeTroubleBrewingRoles.filter { it.team == team }.shuffled().take(count)
-    }.shuffled()
 }
 
 private data class ClocktowerAssignment(
@@ -809,9 +715,6 @@ internal fun CampBoardGameHostApp() {
     var clocktowerSlayerClaimedNames by remember { mutableStateOf<List<String>>(emptyList()) }
     var clocktowerArtistUsed by remember { mutableStateOf(false) }
     var clocktowerArtistClaimedNames by remember { mutableStateOf<List<String>>(emptyList()) }
-    var clocktowerArtistClaimantName by remember { mutableStateOf<String?>(null) }
-    var clocktowerArtistTruthfulAnswer by remember { mutableStateOf<Boolean?>(null) }
-    var clocktowerArtistShownAnswer by remember { mutableStateOf<Boolean?>(null) }
     var clocktowerLastExecutedName by remember { mutableStateOf<String?>(null) }
     var clocktowerPendingKlutzName by remember { mutableStateOf<String?>(null) }
     var clocktowerKlutzChoiceName by remember { mutableStateOf<String?>(null) }
@@ -855,14 +758,9 @@ internal fun CampBoardGameHostApp() {
     val clocktowerNightStartedState = remember { mutableStateOf(false) }
     val clocktowerNightStepIndexState = remember { mutableStateOf(0) }
     val clocktowerDayModeState = remember { mutableStateOf(ClocktowerDayMode.Overview) }
-    val clocktowerNominatorNameState = remember { mutableStateOf<String?>(null) }
-    val clocktowerNomineeNameState = remember { mutableStateOf<String?>(null) }
-    val clocktowerCurrentVoteCountState = remember { mutableStateOf(0) }
     val clocktowerGhostVoteAuthorityState = remember { mutableStateOf(ClocktowerGhostVoteAuthority()) }
     val clocktowerHighestVoteNameState = remember { mutableStateOf<String?>(null) }
     val clocktowerHighestVoteCountState = remember { mutableStateOf(0) }
-    val clocktowerSlayerClaimantNameState = remember { mutableStateOf<String?>(null) }
-    val clocktowerSlayerTargetNameState = remember { mutableStateOf<String?>(null) }
     val troubleBrewingSetupRecommendationScope = rememberCoroutineScope()
     val troubleBrewingSetupRecommendationPrewarmer = remember {
         val recommendationCoordinator = ClocktowerRecommendationCoordinator()
@@ -1414,16 +1312,8 @@ internal fun CampBoardGameHostApp() {
 
     fun resetClocktowerDayFlow() {
         clocktowerDayModeState.value = ClocktowerDayMode.Overview
-        clocktowerNominatorNameState.value = null
-        clocktowerNomineeNameState.value = null
-        clocktowerCurrentVoteCountState.value = 0
         clocktowerHighestVoteNameState.value = null
         clocktowerHighestVoteCountState.value = 0
-        clocktowerSlayerClaimantNameState.value = null
-        clocktowerSlayerTargetNameState.value = null
-        clocktowerArtistClaimantName = null
-        clocktowerArtistTruthfulAnswer = null
-        clocktowerArtistShownAnswer = null
     }
 
     fun resetClocktowerFlow() {
@@ -1674,23 +1564,15 @@ internal fun CampBoardGameHostApp() {
         clocktowerSlayerClaimedNames = emptyList()
         clocktowerArtistUsed = false
         clocktowerArtistClaimedNames = emptyList()
-        clocktowerArtistClaimantName = null
-        clocktowerArtistTruthfulAnswer = null
-        clocktowerArtistShownAnswer = null
         clocktowerLastExecutedName = null
         clocktowerPendingKlutzName = null
         clocktowerKlutzChoiceName = null
         clocktowerKlutzReturnToDawn = false
 
         clocktowerDayModeState.value = ClocktowerDayMode.Overview
-        clocktowerNominatorNameState.value = null
-        clocktowerNomineeNameState.value = null
-        clocktowerCurrentVoteCountState.value = 0
         clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
         clocktowerHighestVoteNameState.value = null
         clocktowerHighestVoteCountState.value = 0
-        clocktowerSlayerClaimantNameState.value = null
-        clocktowerSlayerTargetNameState.value = null
 
         when (game) {
             is UndercoverRecovery -> {
@@ -1970,9 +1852,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerSlayerClaimedNames = emptyList()
         clocktowerArtistUsed = false
         clocktowerArtistClaimedNames = emptyList()
-        clocktowerArtistClaimantName = null
-        clocktowerArtistTruthfulAnswer = null
-        clocktowerArtistShownAnswer = null
         clocktowerLastExecutedName = null
         clocktowerPendingKlutzName = null
         clocktowerKlutzChoiceName = null
@@ -2729,14 +2608,12 @@ internal fun CampBoardGameHostApp() {
                         automaticStorytellerInfo = automaticStorytellerInfo,
                         automaticStorytellerStyle = storytellerRecommendationUxPolicy.recommendationStyle,
                         cards = cards,
-                        records = records,
                         events = clocktowerEvents,
                         script = currentClocktowerScript,
                         gameId = clocktowerGameId,
                         gameSeed = clocktowerGameSeed,
                         gameStateRevision = clocktowerGameStateRevision,
                         playerInputRevision = clocktowerPlayerInputRevision,
-                        rulesetRef = clocktowerRulesetRef,
                         setupHistory = gameHistory.toClocktowerSetupHistory(),
                         setupRecommendationResultProvider =
                             if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
@@ -2784,15 +2661,11 @@ internal fun CampBoardGameHostApp() {
                         pendingNewDemonName = clocktowerPendingNewDemonName,
                         pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
                         demonSuccessorTarget = clocktowerDemonSuccessorTarget,
-                        confirmedDemonSuccessorTarget = clocktowerConfirmedDemonSuccessorTarget,
                         virginUsed = clocktowerVirginUsed,
                         slayerUsed = clocktowerSlayerUsed,
                         slayerClaimedNames = clocktowerSlayerClaimedNames,
                         artistUsed = clocktowerArtistUsed,
                         artistClaimedNames = clocktowerArtistClaimedNames,
-                        artistClaimantName = clocktowerArtistClaimantName,
-                        artistTruthfulAnswer = clocktowerArtistTruthfulAnswer,
-                        artistShownAnswer = clocktowerArtistShownAnswer,
                         lastExecutedName = clocktowerLastExecutedName,
                         pendingKlutzName = clocktowerPendingKlutzName,
                         klutzChoiceName = clocktowerKlutzChoiceName,
@@ -2810,36 +2683,15 @@ internal fun CampBoardGameHostApp() {
                             clocktowerNightStepIndexState.value = transaction.checkpoint.nightStepIndex
                         },
                         dayModeState = clocktowerDayModeState,
-                        nominatorNameState = clocktowerNominatorNameState,
-                        nomineeNameState = clocktowerNomineeNameState,
-                        currentVoteCountState = clocktowerCurrentVoteCountState,
                         ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,
                         onGhostVoteAuthorityChange = { clocktowerGhostVoteAuthorityState.value = it },
                         highestVoteNameState = clocktowerHighestVoteNameState,
                         highestVoteCountState = clocktowerHighestVoteCountState,
-                        slayerClaimantNameState = clocktowerSlayerClaimantNameState,
-                        slayerTargetNameState = clocktowerSlayerTargetNameState,
                         gameOutcome = gameOutcome,
                         onRecordEvent = { type, title, detail, names ->
                             addClocktowerEvent(type, title, detail, names)
                         },
                         onRecordEpistemicObservation = ::recordEpistemicObservation,
-                        onPhaseChange = { nextPhase ->
-                            // A phase switch ends the preceding decision window. It is a
-                            // timeline fact, not a provisional UI edit, so stale drafts must
-                            // not be allowed to publish into the new phase.
-                            recordClocktowerPhaseAdvance(nextPhase)
-                            advanceClocktowerGameStateRevision()
-                            clocktowerPhase = nextPhase
-                            if (nextPhase == ClocktowerPhase.FirstNight || nextPhase == ClocktowerPhase.Night) {
-                                resetClocktowerNightFlow()
-                                clocktowerDemonSuccessorTarget = null
-                                clearConfirmedDemonSuccessorTarget()
-                            }
-                            if (nextPhase == ClocktowerPhase.Day) {
-                                resetClocktowerDayFlow()
-                            }
-                        },
                         onSelectNightDeath = { selected ->
                             advanceClocktowerPlayerInputRevision()
                             val reducedCheckpoint = NightCheckpointReducer.reduce(
@@ -3284,42 +3136,26 @@ internal fun CampBoardGameHostApp() {
                                 }
                             }
                         },
-                        onSelectArtistClaimant = {
-                            clocktowerArtistClaimantName = it
-                            clocktowerArtistTruthfulAnswer = null
-                            clocktowerArtistShownAnswer = null
-                        },
-                        onSelectArtistTruthfulAnswer = {
-                            clocktowerArtistTruthfulAnswer = it
-                            clocktowerArtistShownAnswer = null
-                        },
-                        onSelectArtistShownAnswer = { clocktowerArtistShownAnswer = it },
-                        onConfirmArtistQuestion = {
-                            val claimantName = clocktowerArtistClaimantName
-                            if (claimantName != null) {
-                                if (claimantName !in clocktowerArtistClaimedNames) {
-                                    clocktowerArtistClaimedNames = clocktowerArtistClaimedNames + claimantName
-                                }
-                                val claimantCard = cards.firstOrNull { it.name == claimantName }
-                                if (claimantCard?.clocktowerRole?.enName == "Artist" && !clocktowerArtistUsed) {
-                                    clocktowerArtistUsed = true
-                                }
-                                records.add(EliminationRecord(round, claimantName, localizedText("艺术家提问已处理", "Artist question resolved")))
-                                addClocktowerEvent(
-                                    ClocktowerEventType.RoleAction,
-                                    localizedText("艺术家提问", "Artist question"),
-                                    localizedText(
-                                        "${playerSeatLabel(cards, claimantName)} · 真实答案：${if (clocktowerArtistTruthfulAnswer == true) "是" else "否"} · 展示：${if (clocktowerArtistShownAnswer == true) "是" else "否"}",
-                                        "${playerSeatLabel(cards, claimantName)} · truthful: ${if (clocktowerArtistTruthfulAnswer == true) "yes" else "no"} · shown: ${if (clocktowerArtistShownAnswer == true) "yes" else "no"}",
-                                    ),
-                                    listOf(claimantName),
-                                )
-                                clocktowerArtistClaimantName = null
-                                clocktowerArtistTruthfulAnswer = null
-                                clocktowerArtistShownAnswer = null
-                                clocktowerDayModeState.value = ClocktowerDayMode.Overview
-                                advanceClocktowerGameStateRevision()
+                        onConfirmArtistQuestion = { claimantName, truthfulAnswer, shownAnswer ->
+                            if (claimantName !in clocktowerArtistClaimedNames) {
+                                clocktowerArtistClaimedNames = clocktowerArtistClaimedNames + claimantName
                             }
+                            val claimantCard = cards.firstOrNull { it.name == claimantName }
+                            if (claimantCard?.clocktowerRole?.enName == "Artist" && !clocktowerArtistUsed) {
+                                clocktowerArtistUsed = true
+                            }
+                            records.add(EliminationRecord(round, claimantName, localizedText("艺术家提问已处理", "Artist question resolved")))
+                            addClocktowerEvent(
+                                ClocktowerEventType.RoleAction,
+                                localizedText("艺术家提问", "Artist question"),
+                                localizedText(
+                                    "${playerSeatLabel(cards, claimantName)} · 真实答案：${if (truthfulAnswer) "是" else "否"} · 展示：${if (shownAnswer) "是" else "否"}",
+                                    "${playerSeatLabel(cards, claimantName)} · truthful: ${if (truthfulAnswer) "yes" else "no"} · shown: ${if (shownAnswer) "yes" else "no"}",
+                                ),
+                                listOf(claimantName),
+                            )
+                            clocktowerDayModeState.value = ClocktowerDayMode.Overview
+                            advanceClocktowerGameStateRevision()
                         },
                         onSlayerShot = { claimantName, targetName, recluseRegistersAsDemon ->
                             val claimantCard = cards.firstOrNull { it.name == claimantName }
@@ -4103,15 +3939,6 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerDemonSuccessorTarget = null
                                 clearConfirmedDemonSuccessorTarget()
                             }
-                        },
-                        onShowResults = {
-                            gameOutcome = gameOutcome ?: GameOutcome(
-                                title = context.getString(R.string.outcome_manual_title),
-                                summary = context.getString(R.string.outcome_manual_summary),
-                                reason = context.getString(R.string.outcome_manual_reason),
-                            )
-                            showResults = true
-                            addOutcomeEvent(gameOutcome)
                         },
                     )
 

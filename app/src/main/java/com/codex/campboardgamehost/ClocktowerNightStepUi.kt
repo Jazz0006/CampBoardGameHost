@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,8 +35,6 @@ import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommi
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPoolDeviceBenchmark
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPoolDeviceBenchmarkReport
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
@@ -46,8 +43,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 @Composable
 internal fun ClocktowerNightStepCardLocalized(
@@ -60,7 +55,6 @@ internal fun ClocktowerNightStepCardLocalized(
     sequence: Int,
     gameStateRevision: Long,
     playerInputRevision: Long,
-    debugDiagnosticsExpanded: Boolean,
     selectionDistributionTelemetry: SelectionDistributionTelemetryRecorder,
     evilAdvantage: Int,
     informationDecisionKey: String,
@@ -148,45 +142,6 @@ internal fun ClocktowerNightStepCardLocalized(
             familyId = step.roleEnName ?: "first-night-information",
             automaticStyle = automaticStorytellerStyle,
         ) }
-    var firstNightPoolBenchmarkRuns by remember(
-        phase,
-        step.roleEnName,
-        projectedAutomaticFirstNightInformationCandidates,
-        automaticStorytellerStyle,
-    ) { mutableStateOf(0) }
-    var firstNightPoolBenchmarkReport by remember { mutableStateOf<UnifiedSelectionPoolDeviceBenchmarkReport?>(null) }
-    var firstNightPoolBenchmarkError by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(firstNightPoolBenchmarkRuns) {
-        if (firstNightPoolBenchmarkRuns == 0) return@LaunchedEffect
-        firstNightPoolBenchmarkReport = null
-        firstNightPoolBenchmarkError = null
-        runCatching {
-            val options = requireNotNull(projectedAutomaticFirstNightInformationCandidates.takeIf {
-                phase == ClocktowerPhase.FirstNight && it.isNotEmpty()
-            })
-            val family = step.roleEnName ?: "first-night-information"
-            withContext(Dispatchers.Default) {
-                UnifiedSelectionPoolDeviceBenchmark.run(
-                    poolFactory = {
-                        unifiedFirstNightInformationPool(options, family, automaticStorytellerStyle)
-                    },
-                    playerCount = cards.size,
-                    phase = StorytellerPhase.FIRST_NIGHT,
-                    style = automaticStorytellerStyle,
-                    styleOf = ClocktowerDisplayOption::recommendationStyle,
-                )
-            }
-        }.onSuccess { report ->
-            firstNightPoolBenchmarkReport = report
-            Log.i(
-                UNIFIED_FIRST_NIGHT_POOL_BENCHMARK_LOG_TAG,
-                report.toLogLine(step.roleEnName ?: "first-night-information"),
-            )
-        }.onFailure { error ->
-            firstNightPoolBenchmarkError = error.message ?: error.javaClass.simpleName
-            Log.e(UNIFIED_FIRST_NIGHT_POOL_BENCHMARK_LOG_TAG, "Unified first-night pool diagnostic failed", error)
-        }
-    }
     val automaticInformationOptions = firstNightAutomaticPool
         ?.candidatesFor(SelectionExecutionPolicy.AUTO)
         ?.map { it.payload }

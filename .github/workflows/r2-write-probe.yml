@@ -77,12 +77,7 @@ jobs:
           grep -q "HostTableShell(" "$day_overview"
           grep -q "private fun ClocktowerDayOverviewCenterContent" "$day_overview"
 
-          for name in \
-            ClocktowerDawnSummaryScreen \
-            ClocktowerNominationScreen \
-            ClocktowerVoteScreen \
-            ClocktowerExecutionConfirmScreen \
-            ClocktowerSpecialDayActionScreen
+          for name in ClocktowerDawnSummaryScreen ClocktowerExecutionConfirmScreen
           do
             if grep -q "fun ${name}(" "$root"; then
               echo "${name} still lives in CampBoardGameHostApp.kt" >&2
@@ -207,7 +202,7 @@ jobs:
           grep -q "internal fun SpyRegistrationPanel" "$registration_ui"
           grep -q "internal fun RecluseRegistrationPanel" "$registration_ui"
 
-          for name in ClocktowerGameRecordPanel ClocktowerPlayerStatusRow ClocktowerResultsDialog; do
+          for name in ClocktowerResultsDialog; do
             if grep -q "fun ${name}(" "$root"; then
               echo "${name} still lives in CampBoardGameHostApp.kt" >&2
               exit 1
@@ -215,7 +210,6 @@ jobs:
             grep -q "internal fun ${name}" "$history"
           done
           grep -q "internal fun clocktowerEventPhaseLabel" "$history"
-          grep -q "private fun ClocktowerTimelineRow" "$history"
           grep -q "private fun ClocktowerResultPlayerRow" "$history"
 
           main_lines="$(wc -l < "$main")"
