@@ -130,26 +130,23 @@ internal fun ClocktowerPairInformationSquareTableDialog(
 }
 
 /**
- * Recommended mode is read-only: only the recommended pair is accented. Manual mode exposes every
- * seat that participates in the currently selected role's legal pair domain; the selection model
- * remains the authority for how a tap replaces/collapses the current pair.
+ * Recommended mode is read-only: only the recommended pair is accented. Manual mode delegates
+ * selectable/selected/disabled projection to the same authority used by the existing pair Manual
+ * picker, so legal second-seat continuations remain visually authoritative.
  */
 internal fun clocktowerPairInformationSeatState(
     selection: ClocktowerPairManualSelectionModel,
     seatNumber: Int,
     editing: Boolean,
 ): ClocktowerSquareTableSeatState {
-    if (seatNumber == selection.selectedFirstSeat) return ClocktowerSquareTableSeatState.SelectedFirst
-    if (seatNumber == selection.selectedSecondSeat) return ClocktowerSquareTableSeatState.SelectedSecond
-    if (!editing) return ClocktowerSquareTableSeatState.Neutral
-    if (selection.isZeroCaseSelected) return ClocktowerSquareTableSeatState.Disabled
-
-    val roleId = selection.selectedRoleId ?: return ClocktowerSquareTableSeatState.Neutral
-    return if (seatNumber in selection.firstSeats(roleId)) {
-        ClocktowerSquareTableSeatState.Selectable
-    } else {
-        ClocktowerSquareTableSeatState.Disabled
+    if (!editing) {
+        return when (seatNumber) {
+            selection.selectedFirstSeat -> ClocktowerSquareTableSeatState.SelectedFirst
+            selection.selectedSecondSeat -> ClocktowerSquareTableSeatState.SelectedSecond
+            else -> ClocktowerSquareTableSeatState.Neutral
+        }
     }
+    return clocktowerPairManualSeatState(selection, seatNumber)
 }
 
 @Composable
