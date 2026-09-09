@@ -12,7 +12,7 @@ D6.1 Clocktower session authority                 COMPLETE / merged
 D6.2 UI Composition R0–R2                         COMPLETE / FULL accepted / merged
 R3 deep transaction-application viability audit   COMPLETE / NO-GO
 D6 decomposition campaign                         COMPLETE
-UI-R5 pair-information square-table slice         IMPLEMENTED / FAST+R2 green / T4+device pending
+UI-R5 pair-information square-table slice         IMPLEMENTED / T4 accepted / device pending
 ```
 
 D6.2 was merged through PR #115. The final production-equivalent code/test head was:
@@ -50,25 +50,32 @@ Active branch / PR:
 branch codex/ui-r5-square-table-stabilization
 Draft PR #117
 base main 60842381dcbc3709ad453209846f66e9b4a7a777
-latest validated production/test head before docs checkpoint:
-ecfacb7b11d39e65febef89fb3e058390f9eea5f
 ```
 
-At that head:
+Latest production-equivalent T4 checkpoint:
 
 ```text
-CI #2022 / run 34339511298       PASS
-- Android FAST unit tests         PASS / executed
-- full Android unit tests + APK   SKIPPED by ordinary PR policy
-- CI gate                         PASS
-R2 #1889 / run 34339511280        PASS
+b960be22d217ed2caa06b49c0319eace23470b42
 ```
 
-The pair-information flow for Washerwoman / Librarian / Investigator has been converged onto the square-table interaction language without changing domain, recommendation, persistence or player-display commit authority. A behavior-level exact-diff audit additionally found and fixed one presentation issue: Manual mode now delegates selectable/selected/disabled seat projection to the existing pair Manual helper, so an already-selected first seat exposes only legal second-seat continuations. A `[full-ci]` T4 checkpoint is still required for this logical slice, and real-device validation remains mandatory before UI-R5 can close.
+T4 evidence at that checkpoint:
+
+```text
+CI #2024 / run 34339861281             PASS
+- Android full unit tests + debug APK   PASS / executed
+- ASP contract tests                    PASS / executed
+- Real Clingo cross-validation          PASS / executed
+- CI gate                               PASS
+R2 #1891 / run 34339861261              PASS
+```
+
+The immediately preceding production/test head `ecfacb7b11d39e65febef89fb3e058390f9eea5f` also passed ordinary FAST CI #2022 and R2 #1889. The final T4 checkpoint contains no additional production/test changes beyond that validated code state; later roadmap/handoff synchronization is docs-only and does not invalidate the production-equivalent T4 evidence.
+
+The pair-information flow for Washerwoman / Librarian / Investigator has been converged onto the square-table interaction language without changing domain, recommendation, persistence or player-display commit authority. A behavior-level exact-diff audit additionally found and fixed one presentation issue before T4: Manual mode now delegates selectable/selected/disabled seat projection to the existing pair Manual helper, so an already-selected first seat exposes only legal second-seat continuations.
 
 ## 2. Current priority
 
-> **CURRENT: continue UI-R5 from the implemented pair-information square-table slice through T4 and real-device stabilization.**
+> **CURRENT: UI-R5.4 real-device stabilization of the T4-accepted square-table pair-information flow.**
 
 The global execution order remains frozen as:
 
@@ -175,7 +182,7 @@ It does **not** own recommendation ranking, legal-domain generation, durable obs
 
 ### UI-R5.3 — flow convergence
 
-**Status: pair-information slice COMPLETE in code; remaining UI-R5 flow audit/real-device work continues.**
+**Status: pair-information slice COMPLETE / T4 ACCEPTED; broader UI-R5 campaign remains ACTIVE.**
 
 Washerwoman / Librarian / Investigator now follow:
 
@@ -195,7 +202,7 @@ Keep the current legal semantic domain as the source of truth. Presentation must
 
 ### UI-R5.4 — real-device stabilization
 
-**Status: PENDING / REQUIRED.**
+**Status: NEXT / REQUIRED.**
 
 Portrait phone is the primary target. Validate at minimum:
 
@@ -210,11 +217,11 @@ Portrait phone is the primary target. Validate at minimum:
 - Washerwoman / Librarian / Investigator recommended and Manual paths work on device;
 - opening/closing player display returns to the correct night flow.
 
-Real-device defects found here are part of UI-R5, not deferred merely because JVM tests are green.
+Real-device defects found here are part of UI-R5, not deferred merely because JVM/T4 tests are green.
 
 ### UI-R5.5 — acceptance / closeout
 
-**Status: NOT READY.**
+**Status: NOT READY — blocked only on remaining UI-R5 audit/device acceptance, not on this pair-information slice's T4 gate.**
 
 UI-R5 is complete only when:
 
@@ -224,7 +231,7 @@ UI-R5 is complete only when:
 - real-device critical paths are executed and recorded;
 - roadmap and active handoff are updated before EPI-MQ begins.
 
-The current pair-information implementation has FAST/R2 evidence but has **not** yet satisfied the broader `[full-ci]` checkpoint or real-device acceptance.
+The pair-information implementation has satisfied focused/FAST and T4 validation. UI-R5 as a campaign is **not** complete until the required real-device critical paths and remaining active surface audit are recorded.
 
 ## 5. Frozen architecture after D6/R3
 
@@ -250,7 +257,7 @@ Read and follow:
 - root `AGENTS.md`;
 - `docs/TESTING_STRATEGY.md`.
 
-Documentation-only closeout changes require no Android regression. UI-R5 production work should use the risk-based T0–T4 model. Ordinary PR synchronization may stop at FAST; the pair-information logical checkpoint must be explicitly escalated with `[full-ci]` before it is treated as T4 accepted. The final UI-R5 gate must also include recorded real-device validation because the previous D6.2 waiver is now intentionally closed.
+Documentation-only closeout changes require no Android regression. UI-R5 production work should use the risk-based T0–T4 model. The pair-information logical checkpoint is now T4 accepted at `b960be22d217ed2caa06b49c0319eace23470b42`; subsequent status-document synchronization is docs-only. The final UI-R5 gate must also include recorded real-device validation because the previous D6.2 waiver is now intentionally closed.
 
 ## 7. Current authoritative reading order
 
