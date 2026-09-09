@@ -760,6 +760,10 @@ internal fun ClocktowerJudgeScreen(
             .mapTo(mutableSetOf()) { it.name },
     )
     val chambermaidResult = chambermaidResolution.wokeCount?.toString()
+    val chambermaidPresentation = clocktowerChambermaidSelectionPresentation(
+        cards = cards,
+        selection = chambermaidResolution.selection,
+    )
     fun recordNightStep(step: ClocktowerNightStepUi) {
         if (!step.isRealAction || step.action == ClocktowerNightAction.DemonKill) return
         // Information shown to a player is recorded by onShowPlayerDisplay with the
@@ -2820,26 +2824,11 @@ internal fun ClocktowerJudgeScreen(
                                 explanation = text("侍女选择两名玩家，得知其中有几人今晚因自己的能力醒来。", "The Chambermaid chooses two players and learns how many woke tonight because of their own ability."),
                                 action = ClocktowerNightAction.Chambermaid,
                                 displayProposition = chambermaidResult?.toIntOrNull()?.let { value ->
-                                    val firstTargetName = chambermaidResolution.selection.first
-                                    val secondTargetName = chambermaidResolution.selection.second
-                                    if (firstTargetName != null && secondTargetName != null) {
-                                        roleActor("Chambermaid")?.let { actor ->
-                                            clocktowerChambermaidDisplayProposition(
-                                                cards = cards,
-                                                actor = actor,
-                                                firstTargetName = firstTargetName,
-                                                secondTargetName = secondTargetName,
-                                                value = value,
-                                            )
-                                        }
-                                    } else {
-                                        null
+                                    roleActor("Chambermaid")?.let { actor ->
+                                        chambermaidPresentation.proposition(cards.indexOf(actor) + 1, value)
                                     }
                                 },
-                                displaySecondary = listOfNotNull(chambermaidResolution.selection.first, chambermaidResolution.selection.second)
-                                    .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                                    .joinToString("   ") { seatNumberText(it) }
-                                    .takeIf { it.isNotBlank() },
+                                displaySecondary = chambermaidPresentation.displaySecondary,
                                 displayFooter = text("查询这两名玩家", "Checking these two players"),
                                 hostInstruction = text("轻拍侍女，示意睁眼。让她依次指两名玩家，不能选自己；点查询后只展示数字。", "Tap the Chambermaid to wake them. Have them point to two players other than themself, then show only the number."),
                                 displayOptions = { actor ->
@@ -2851,18 +2840,9 @@ internal fun ClocktowerJudgeScreen(
                                             maxValue = 2,
                                             footer = text("查询这两名玩家", "Checking these two players"),
                                             pressureCostPerPoint = 1,
-                                            secondary = listOfNotNull(chambermaidResolution.selection.first, chambermaidResolution.selection.second)
-                                                .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                                                .joinToString("   ") { seatNumberText(it) }
-                                                .takeIf { it.isNotBlank() },
+                                            secondary = chambermaidPresentation.displaySecondary,
                                             propositionForValue = { value ->
-                                                clocktowerChambermaidDisplayProposition(
-                                                    cards = cards,
-                                                    actor = actor,
-                                                    firstTargetName = requireNotNull(chambermaidResolution.selection.first),
-                                                    secondTargetName = requireNotNull(chambermaidResolution.selection.second),
-                                                    value = value,
-                                                )
+                                                chambermaidPresentation.proposition(cards.indexOf(actor) + 1, value)
                                             },
                                         )
                                     }.orEmpty()
@@ -3056,26 +3036,11 @@ internal fun ClocktowerJudgeScreen(
                 explanation = text("侍女选择两名玩家，得知其中有几人今晚因自己的能力醒来。", "The Chambermaid chooses two players and learns how many woke tonight because of their own ability."),
                 action = ClocktowerNightAction.Chambermaid,
                 displayProposition = chambermaidResult?.toIntOrNull()?.let { value ->
-                    val firstTargetName = chambermaidResolution.selection.first
-                    val secondTargetName = chambermaidResolution.selection.second
-                    if (firstTargetName != null && secondTargetName != null) {
-                        roleActor("Chambermaid")?.let { actor ->
-                            clocktowerChambermaidDisplayProposition(
-                                cards = cards,
-                                actor = actor,
-                                firstTargetName = firstTargetName,
-                                secondTargetName = secondTargetName,
-                                value = value,
-                            )
-                        }
-                    } else {
-                        null
+                    roleActor("Chambermaid")?.let { actor ->
+                        chambermaidPresentation.proposition(cards.indexOf(actor) + 1, value)
                     }
                 },
-                displaySecondary = listOfNotNull(chambermaidResolution.selection.first, chambermaidResolution.selection.second)
-                    .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                    .joinToString("   ") { seatNumberText(it) }
-                    .takeIf { it.isNotBlank() },
+                displaySecondary = chambermaidPresentation.displaySecondary,
                 displayFooter = text("查询这两名玩家", "Checking these two players"),
                 hostInstruction = text("轻拍侍女，示意睁眼。让她依次指两名玩家，不能选自己；点查询后只展示数字。", "Tap the Chambermaid to wake them. Have them point to two players other than themself, then show only the number."),
                 displayOptions = { actor ->
@@ -3087,18 +3052,9 @@ internal fun ClocktowerJudgeScreen(
                             maxValue = 2,
                             footer = text("查询这两名玩家", "Checking these two players"),
                             pressureCostPerPoint = 1,
-                            secondary = listOfNotNull(chambermaidResolution.selection.first, chambermaidResolution.selection.second)
-                                .mapNotNull { name -> cards.firstOrNull { it.name == name } }
-                                .joinToString("   ") { seatNumberText(it) }
-                                .takeIf { it.isNotBlank() },
+                            secondary = chambermaidPresentation.displaySecondary,
                             propositionForValue = { value ->
-                                clocktowerChambermaidDisplayProposition(
-                                    cards = cards,
-                                    actor = actor,
-                                    firstTargetName = requireNotNull(chambermaidResolution.selection.first),
-                                    secondTargetName = requireNotNull(chambermaidResolution.selection.second),
-                                    value = value,
-                                )
+                                chambermaidPresentation.proposition(cards.indexOf(actor) + 1, value)
                             },
                         )
                     }.orEmpty()
