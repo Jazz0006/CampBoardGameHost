@@ -94,6 +94,12 @@ internal fun shouldAutoAdvanceRedHerring(
     isRedHerringStep &&
     (!isRealAction || hasSelectedRedHerring)
 
+/** Storyteller-only identity for rendering a role-reveal candidate on a table surface. */
+internal data class ClocktowerRoleRevealPresentation(
+    val targetSeat: Int,
+    val roleId: RoleId,
+)
+
 internal data class ClocktowerDisplayOption(
     val label: String,
     val displayKind: ClocktowerDisplayKind,
@@ -103,6 +109,11 @@ internal data class ClocktowerDisplayOption(
     val displayFooter: String?,
     /** Exact player-visible statement; never reconstruct it from localized display strings. */
     val proposition: InformationProposition? = null,
+    /**
+     * Storyteller-only role/seat identity used by presentation surfaces. It is intentionally not
+     * copied into player-visible propositions or observation history.
+     */
+    val roleRevealPresentation: ClocktowerRoleRevealPresentation? = null,
     val spyRegistersGood: Boolean? = null,
     val spyRegisteredRoleEnName: String? = null,
     val recluseRegistersEvil: Boolean? = null,
