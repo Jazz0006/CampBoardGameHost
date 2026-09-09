@@ -216,7 +216,7 @@ private fun ClocktowerPairManualCenterControls(
     }
 }
 
-private fun clocktowerPairManualSeatState(
+internal fun clocktowerPairManualSeatState(
     selection: ClocktowerPairManualSelectionModel,
     seatNumber: Int,
 ): ClocktowerSquareTableSeatState {
