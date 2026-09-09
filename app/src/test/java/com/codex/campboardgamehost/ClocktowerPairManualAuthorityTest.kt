@@ -80,7 +80,7 @@ class ClocktowerPairManualAuthorityTest {
 
     @Test
     fun `recommended presentation canonicalizes to the matching manual legal option by structured pair key`() {
-        val canonical = template(PairInformationOutcome(RoleId("Chef"), listOf(2, 5))).copy(
+        val canonical = template(PairInformationOutcome(RoleId("Chef"), 2, 5)).copy(
             label = "manual legal option",
             misinformationPressure = 2,
         )
@@ -89,7 +89,7 @@ class ClocktowerPairManualAuthorityTest {
             misinformationPressure = 0,
         )
         val presentation = ClocktowerPairManualAuthority.selectionPresentation(
-            listOf(canonical, template(PairInformationOutcome(RoleId("Chef"), listOf(3, 5)))),
+            listOf(canonical, template(PairInformationOutcome(RoleId("Chef"), 3, 5))),
         )
 
         assertEquals(
@@ -99,7 +99,7 @@ class ClocktowerPairManualAuthorityTest {
         assertNull(
             ClocktowerPairManualAuthority.canonicalManualOption(
                 presentation,
-                template(PairInformationOutcome(RoleId("Chef"), listOf(1, 4))),
+                template(PairInformationOutcome(RoleId("Chef"), 1, 4)),
             ),
         )
     }
