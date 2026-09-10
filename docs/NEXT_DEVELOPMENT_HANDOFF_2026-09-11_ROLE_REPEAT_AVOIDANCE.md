@@ -108,3 +108,7 @@ Then recommend GO / MODIFY / NO-GO for reusing the existing history mechanism. O
 ## 8. UI-NAV-1 inherited status
 
 UI-NAV-1 is closed for feature development. PR #118 received real-device acceptance after the identity-controller width and night-flow bottom-navigation follow-up fixes. Do not reopen that campaign while implementing ROLE-ROTATION-1 unless an actual regression is reproduced.
+
+## 9. Final merge gate
+
+The final documentation-only checkpoint for PR #118 intentionally requests the repository's full T4 CI tier. Merge only after that exact final head passes the required full Android / ASP / Real Clingo / aggregate gates and R2, or after an explicit repository-policy exception is documented.
