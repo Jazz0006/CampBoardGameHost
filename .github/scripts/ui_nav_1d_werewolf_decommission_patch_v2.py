@@ -33,4 +33,12 @@ if source.count(old_pending_state_check) != 1:
     )
 source = source.replace(old_pending_state_check, new_pending_state_check)
 
+old_recovery_contract = '''if "is WerewolfRecovery -> RecoveryPreparationResult.Invalid" not in recovery_source:\n    raise SystemExit("Werewolf legacy recovery rejection contract drifted")\n'''
+new_recovery_contract = '''werewolf_rejection = "is WerewolfRecovery -> throw IllegalArgumentException("\nif recovery_source.count(werewolf_rejection) != 2:\n    raise SystemExit(\n        f"Werewolf legacy recovery rejection contract drifted: expected 2 fail-closed sites, got {recovery_source.count(werewolf_rejection)}"\n    )\n'''
+if source.count(old_recovery_contract) != 1:
+    raise SystemExit(
+        f"base patch recovery contract anchor count {source.count(old_recovery_contract)}, expected 1"
+    )
+source = source.replace(old_recovery_contract, new_recovery_contract)
+
 exec(compile(source, str(base_script), "exec"), {"__name__": "__main__"})
