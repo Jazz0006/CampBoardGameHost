@@ -68,8 +68,58 @@ jobs:
           check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt" "a09052f10ab95897cb22eb858128689a12edd4a6"
           check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt" "d315f3b95843969a974b92b5c3c541e4d674598e"
 
+      - name: Split exact D6 HostScreen call anchors
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path(".github/scripts/ui_nav_1c_clocktower_patch.py")
+          s = p.read_text()
+          old = '''replace_exact(
+              "host",
+              ''' + "'''" + '''            onPrevious = onMovePreviousNightStep,
+              onNext = advanceNightStep,
+          ''' + "'''" + ''',
+              ''' + "'''" + '''            onPrevious = onMovePreviousNightStep,
+              onHostTools = onHostTools,
+              onNext = advanceNightStep,
+          ''' + "'''" + ''',
+              expected=2,
+          )'''
+          new = old.replace("expected=2", "expected=1")
+          if s.count(old) != 1:
+              raise SystemExit("expected one HostScreen batch-anchor block")
+          p.write_text(s.replace(old, new), encoding="utf-8", newline="\n")
+          PY
+
       - name: Apply D6-aware UI-NAV-1C.1 patch
         run: python3 "$SCRIPT"
+
+      - name: Wire exact NightStep Host Tools call
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt")
+          s = p.read_text()
+          old = '''                canGoPrevious = currentStepIndex > 0,
+              onPrevious = onMovePreviousNightStep,
+              onNext = advanceNightStep,
+              showNavigationActions = false,
+          '''
+          new = '''                canGoPrevious = currentStepIndex > 0,
+              onPrevious = onMovePreviousNightStep,
+              onHostTools = onHostTools,
+              onNext = advanceNightStep,
+              showNavigationActions = false,
+          '''
+          if s.count(old) != 1:
+              raise SystemExit(f"NightStep exact call anchor count {s.count(old)}, expected 1")
+          p.write_text(s.replace(old, new), encoding="utf-8", newline="\n")
+          PY
+          git checkout -- "$SCRIPT"
 
       - name: Audit exact production diff
         shell: bash
@@ -101,6 +151,7 @@ jobs:
           grep -q 'HostBottomActionBar(' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
           grep -q 'HostBottomActionBar(' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt
           grep -q 'onHostTools: () -> Unit' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          test "$(grep -c 'onHostTools = onHostTools' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt)" -ge 2
           grep -q 'screen == Screen.ClocktowerJudge ||' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
 
       - name: Run Android FAST validation
