@@ -3777,6 +3777,25 @@ internal fun CampBoardGameHostApp() {
                         events = clocktowerEvents,
                         history = gameHistory,
                         initialTab = hostToolTab,
+                        settingsContent = {
+                            SettingsContent(
+                                languageMode = languageMode,
+                                storytellerAutomationMode = storytellerAutomationMode,
+                                commonPlayers = commonPlayers,
+                                newCommonPlayerName = newCommonPlayerName,
+                                onLanguageModeChange = { nextMode ->
+                                    languageMode = nextMode
+                                    baseContext.saveLanguageMode(nextMode)
+                                },
+                                onStorytellerAutomationModeChange = { mode ->
+                                    storytellerAutomationMode = mode
+                                    baseContext.saveStorytellerAutomationMode(mode)
+                                },
+                                onNewCommonPlayerNameChange = { newCommonPlayerName = it },
+                                onAddCommonPlayer = ::addCommonPlayer,
+                                onRemoveCommonPlayer = ::removeCommonPlayer,
+                            )
+                        },
                         onDismiss = { showHostTools = false },
                         onNewGame = {
                             showHostTools = false

@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.Color
 import com.codex.campboardgamehost.clocktower.domain.StorytellerAutomationMode
 import com.codex.campboardgamehost.debug.DebugFlightRecorder
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun SettingsScreen(
     languageMode: LanguageMode,
@@ -42,10 +41,39 @@ internal fun SettingsScreen(
     onRemoveCommonPlayer: (String) -> Unit,
     onBack: () -> Unit,
 ) {
+    SettingsContent(
+        languageMode = languageMode,
+        storytellerAutomationMode = storytellerAutomationMode,
+        commonPlayers = commonPlayers,
+        newCommonPlayerName = newCommonPlayerName,
+        onLanguageModeChange = onLanguageModeChange,
+        onStorytellerAutomationModeChange = onStorytellerAutomationModeChange,
+        onNewCommonPlayerNameChange = onNewCommonPlayerNameChange,
+        onAddCommonPlayer = onAddCommonPlayer,
+        onRemoveCommonPlayer = onRemoveCommonPlayer,
+        onBack = onBack,
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun SettingsContent(
+    languageMode: LanguageMode,
+    storytellerAutomationMode: StorytellerAutomationMode,
+    commonPlayers: List<String>,
+    newCommonPlayerName: String,
+    onLanguageModeChange: (LanguageMode) -> Unit,
+    onStorytellerAutomationModeChange: (StorytellerAutomationMode) -> Unit,
+    onNewCommonPlayerNameChange: (String) -> Unit,
+    onAddCommonPlayer: () -> Unit,
+    onRemoveCommonPlayer: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
+) {
     val context = LocalContext.current
 
     LazyColumn(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -60,8 +88,10 @@ internal fun SettingsScreen(
                     Text(stringResource(R.string.settings), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                     Text(stringResource(R.string.settings_subtitle), color = Color(0xFF5C6A63))
                 }
-                TextButton(onClick = onBack) {
-                    Text(stringResource(R.string.back))
+                onBack?.let { back ->
+                    TextButton(onClick = back) {
+                        Text(stringResource(R.string.back))
+                    }
                 }
             }
         }
