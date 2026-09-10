@@ -1,9 +1,10 @@
 # NEXT DEVELOPMENT HANDOFF — UI-NAV-1 Global Navigation Visual Unification
 
 > Date: 2026-09-10 Australia/Sydney  
-> Status: **ACTIVE — VISUAL UNIFICATION BEFORE EPI-MQ**  
+> Status: **ACTIVE — UI-NAV-1B COMPLETE / UI-NAV-1C NEXT**  
 > Base main at campaign start: `9c19484c682044bb469d90fb7522810ca49ecac2`  
 > Branch: `codex/ui-nav-1-global-navigation-visual-unification`  
+> Draft PR: `#118 — UI: unify Storyteller navigation presentation`  
 > Audit: `docs/UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_AUDIT_2026-09-10.md`
 
 ## 1. Objective
@@ -187,30 +188,48 @@ Do not replace these seams merely to obtain prettier code.
 
 ## 7. Execution slices
 
-### UI-NAV-1B — shared bottom visual primitive
+### UI-NAV-1B — shared bottom visual primitive — COMPLETE
 
-Goal: establish the smallest stateless presentation primitive that can render the accepted three-slot language.
+Implemented:
 
-Candidate surface:
+`app/src/main/java/com/codex/campboardgamehost/HostBottomActionBar.kt`
+
+Contract:
 
 ```text
-HostBottomActionBar(...)
-NavigationActionButton(...)
+Previous slot = secondary / OutlinedButton
+Host Tools slot = utility / TextButton
+Next slot = primary / Button
+three equal-width stable slots
+independent enabled / visible flags
+48dp minimum slot height
+single-line labels with ellipsis protection
+no flow/domain knowledge
 ```
 
-Allowed inputs should stay presentation-level: label, enabled/visible state, callback, visual role, modifier/icon if needed.
+Code checkpoint:
 
-No domain `Screen`, phase, night-step, session, Planner or Reducer type may enter this primitive.
+`6ea4f9504e898d67941b3d2e75defe9b54e83c1d`
 
 Validation:
 
-- focused compile/static evidence;
-- focused Compose/presentation test only if it protects stable semantics and existing test infrastructure supports it;
-- exact diff audit proving no flow/domain state moved.
+```text
+Draft PR #118 opened
+CI #2150 / run 34444205127
+- Classify changes PASS
+- Android FAST unit tests PASS
+- full Android step correctly skipped for ordinary micro-commit cadence
+- ASP / Real Clingo correctly skipped for UI-only scope
+- CI gate PASS
 
-No production transition behavior changes in this slice.
+R2 #2013 / run 34444205141 PASS
+```
 
-### UI-NAV-1C — Clocktower Storyteller flow first
+No Compose UI-test framework was introduced merely to test layout mechanics; current repository search found no existing Compose UI-test surface, and the test strategy explicitly permits compile/static/diff evidence for presentation-only work.
+
+The primitive is intentionally not wired into existing navigation yet. Production callback plumbing begins in 1C.
+
+### UI-NAV-1C — Clocktower Storyteller flow first — NEXT
 
 Migrate:
 
@@ -333,8 +352,13 @@ UI-NAV-1 is complete when:
 
 ## 11. Immediate next action
 
-Start **UI-NAV-1B**.
+Start **UI-NAV-1C**.
 
-Before editing production code, re-query branch/main state and inspect the existing shared square-table navigation function plus ordinary night-step navigation row. Implement the smallest stateless three-slot visual primitive first; do not alter callbacks or flow state.
+Before editing, re-query live `main`, branch head, PR #118 and checks. Then inspect:
 
-After 1B, UI-NAV-1C should reuse that primitive for the Clocktower flow before the larger identity-controller migration in 1E.
+- `ClocktowerNightActionSquareTableUi.kt` / `ClocktowerSquareTableStepNavigation`;
+- ordinary navigation in `ClocktowerNightStepUi.kt`;
+- App-root Host Tools callback wiring;
+- the current end-of-night/broadcast transition path before attempting any boundary Previous behavior.
+
+First migrate the existing Clocktower navigation presentation to `HostBottomActionBar` while preserving callbacks and enabled rules exactly. Do not open the identity-controller migration until the common Clocktower navigation language is stable.
