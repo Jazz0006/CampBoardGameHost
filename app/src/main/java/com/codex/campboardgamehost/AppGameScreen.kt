@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -25,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,8 +40,12 @@ internal fun GameScreen(
     selectedElimination: String?,
     onSelectElimination: (String) -> Unit,
     onConfirmElimination: () -> Unit,
+    onHostTools: () -> Unit,
     onShowResults: () -> Unit,
 ) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -137,16 +141,15 @@ internal fun GameScreen(
         }
 
         item {
-            Button(
-                onClick = onShowResults,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-            ) {
-                Text(if (gameOutcome == null) stringResource(R.string.end_and_reveal) else stringResource(R.string.view_results))
-            }
+            HostBottomActionBar(
+                previousLabel = text("上一步", "Previous"),
+                hostToolsLabel = text("主持工具", "Host Tools"),
+                nextLabel = if (gameOutcome == null) stringResource(R.string.end_and_reveal) else stringResource(R.string.view_results),
+                onPrevious = {},
+                onHostTools = onHostTools,
+                onNext = onShowResults,
+                previousEnabled = false,
+            )
         }
     }
 }

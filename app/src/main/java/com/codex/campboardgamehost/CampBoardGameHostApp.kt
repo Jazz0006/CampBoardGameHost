@@ -2212,18 +2212,6 @@ internal fun CampBoardGameHostApp() {
                     modifier = Modifier
                         .fillMaxSize(),
                 ) {
-                    if (
-                        !showResults && (
-                            screen == Screen.Game
-                        )
-                    ) {
-                        HostToolsTopBar(
-                            onOpen = {
-                                hostToolTab = HostToolTab.Roles
-                                showHostTools = true
-                            },
-                        )
-                    }
                     Box(modifier = Modifier.weight(1f)) {
                         when (screen) {
                     Screen.Landing -> ClocktowerLandingScreen(
@@ -3686,6 +3674,10 @@ internal fun CampBoardGameHostApp() {
 
                     Screen.Game -> GameScreen(
                     gameKind = currentGameKind,
+                    onHostTools = {
+                        hostToolTab = HostToolTab.Roles
+                        showHostTools = true
+                    },
                     cards = cards,
                     records = records,
                     round = round,
