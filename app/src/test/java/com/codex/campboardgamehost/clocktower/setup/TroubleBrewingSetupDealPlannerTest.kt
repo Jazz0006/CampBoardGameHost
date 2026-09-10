@@ -171,4 +171,56 @@ class TroubleBrewingSetupDealPlannerTest {
         assertEquals(true, drunkAssignment.shownRoleId in preset.drunkAsOptions)
         assertFalse(drunkAssignment.shownRoleId in actualRoleIds)
     }
+
+    @Test
+    fun `exact shown identity repeat is avoided without changing the selected role multiset`() {
+        val preset = TroubleBrewingSetupPreset(
+            id = "tbsp-role-rotation-five",
+            playerCount = 5,
+            townsfolk = listOf("washerwoman", "investigator", "chef"),
+            outsiders = emptyList(),
+            minions = listOf("poisoner"),
+            demons = listOf("imp"),
+            source = "test",
+            complexity = "test",
+            styleTags = emptyList(),
+            drunkAsOptions = emptyList(),
+        )
+        val selection = TroubleBrewingSetupPresetSelection(
+            datasetId = "test-dataset",
+            schemaVersion = 2,
+            presetId = preset.id,
+            playerCount = preset.playerCount,
+            gameSeed = 3_301L,
+            preset = preset,
+            selectedDrunkShownRole = null,
+        )
+        val orderedPlayerNames = List(preset.playerCount) { index -> "Player ${index + 1}" }
+        val legacyPlan = TroubleBrewingSetupDealPlanner.plan(
+            selection = selection,
+            orderedPlayerNames = orderedPlayerNames,
+        )
+        val previousPlayerOne = legacyPlan.assignments.first()
+
+        val rotatedPlan = TroubleBrewingSetupDealPlanner.plan(
+            selection = selection,
+            orderedPlayerNames = orderedPlayerNames,
+            previousPlayerStartingIdentities = listOf(
+                TroubleBrewingPlayerStartingIdentity(
+                    playerKey = previousPlayerOne.playerName,
+                    actualRoleId = previousPlayerOne.actualRoleId,
+                    shownRoleId = previousPlayerOne.shownRoleId,
+                ),
+            ),
+        )
+
+        assertNotEquals(
+            previousPlayerOne.shownRoleId,
+            rotatedPlan.assignments.first().shownRoleId,
+        )
+        assertEquals(
+            legacyPlan.assignments.map { it.actualRoleId }.sorted(),
+            rotatedPlan.assignments.map { it.actualRoleId }.sorted(),
+        )
+    }
 }
