@@ -34,6 +34,7 @@ internal fun ClocktowerChambermaidSquareTableDialog(
     onShowDeterminedResult: () -> Unit,
     onResultSelected: (ClocktowerDisplayOption) -> Unit,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
     ClocktowerNightActionSquareTableDialog(
@@ -51,6 +52,8 @@ internal fun ClocktowerChambermaidSquareTableDialog(
         onSeatSelected = onSeatSelected,
         canGoPrevious = canGoPrevious,
         onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
     ) {
         ClocktowerChambermaidCenterControls(
             wakeInstruction = wakeInstruction,
@@ -61,6 +64,7 @@ internal fun ClocktowerChambermaidSquareTableDialog(
             onShowDeterminedResult = onShowDeterminedResult,
             onResultSelected = onResultSelected,
             onPrevious = onPrevious,
+            onHostTools = onHostTools,
             onNext = onNext,
         )
     }
@@ -76,6 +80,7 @@ private fun ClocktowerChambermaidCenterControls(
     onShowDeterminedResult: () -> Unit,
     onResultSelected: (ClocktowerDisplayOption) -> Unit,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
     val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
@@ -158,17 +163,5 @@ private fun ClocktowerChambermaidCenterControls(
         }
 
         Spacer(Modifier.height(6.dp))
-        Button(
-            onClick = onNext,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(if (language == "en") "Finish / Next" else "完成 / 下一步")
-        }
-
-        if (canGoPrevious) {
-            TextButton(onClick = onPrevious) {
-                Text(if (language == "en") "Previous step" else "上一步")
-            }
-        }
     }
 }

@@ -13,7 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -57,6 +56,7 @@ internal fun ClocktowerSpySquareTableDialog(
     language: String,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     onShowLegacyReveal: () -> Unit,
 ) {
@@ -73,6 +73,8 @@ internal fun ClocktowerSpySquareTableDialog(
         onSeatSelected = {},
         canGoPrevious = canGoPrevious,
         onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
     ) {
         Column(
             modifier = Modifier
@@ -108,7 +110,7 @@ internal fun ClocktowerSpySquareTableDialog(
                         onClick = onShowLegacyReveal,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(stringResource(R.string.clocktower_host_show_to_player))
+                        Text(if (language == "en") "Show grimoire" else "展示魔典")
                     }
                 } else {
                     Spacer(Modifier.height(8.dp))
@@ -125,13 +127,6 @@ internal fun ClocktowerSpySquareTableDialog(
                     )
                 }
             }
-
-            ClocktowerSquareTableStepNavigation(
-                language = language,
-                canGoPrevious = canGoPrevious,
-                onPrevious = onPrevious,
-                onNext = onNext,
-            )
         }
     }
 }

@@ -262,12 +262,10 @@ private enum class Screen {
     Setup,
     GameSelection,
     UndercoverSettings,
-    WerewolfSettings,
     ClocktowerSettings,
     Settings,
     PassPhone,
     RevealCard,
-    WerewolfJudge,
     ClocktowerJudge,
     Game,
 }
@@ -300,7 +298,6 @@ internal const val UNIFIED_SETUP_SELECTOR_BENCHMARK_LOG_TAG = "UnifiedSetupSelec
 internal const val UNIFIED_FIRST_NIGHT_POOL_BENCHMARK_LOG_TAG = "UnifiedFirstNightPoolBenchmark"
 private const val MAX_GAME_HISTORY = 20
 internal const val MIN_PLAYERS = 3
-internal const val MIN_WEREWOLF_PLAYERS = 4
 internal const val MIN_CLOCKTOWER_PLAYERS = 5
 internal const val MAX_PLAYERS = 15
 
@@ -378,14 +375,12 @@ private fun Context.saveCommonPlayers(players: List<String>) {
 private fun Screen.isActiveGameScreen(): Boolean = when (this) {
     Screen.PassPhone,
     Screen.RevealCard,
-    Screen.WerewolfJudge,
     Screen.ClocktowerJudge,
     Screen.Game -> true
     Screen.Landing,
     Screen.Setup,
     Screen.GameSelection,
     Screen.UndercoverSettings,
-    Screen.WerewolfSettings,
     Screen.ClocktowerSettings,
     Screen.Settings -> false
 }
@@ -641,9 +636,6 @@ internal fun CampBoardGameHostApp() {
     val activeGameClocktowerRulesetCatalog = remember(baseContext) {
         BuiltInClocktowerRulesetCatalog.fromContext(baseContext)
     }
-    val activeGameWerewolfSaveValidator = remember {
-        WerewolfActiveGameSaveValidator(WerewolfRoleRegistry.builtIn())
-    }
     val lifecycleOwner = LocalLifecycleOwner.current
     var languageMode by remember { mutableStateOf(baseContext.loadLanguageMode()) }
     var storytellerAutomationMode by remember { mutableStateOf(baseContext.loadStorytellerAutomationMode()) }
@@ -661,24 +653,10 @@ internal fun CampBoardGameHostApp() {
     var showNewGameConfirmation by remember { mutableStateOf(false) }
     var undercoverCount by remember { mutableStateOf(1) }
     var includeBlank by remember { mutableStateOf(false) }
-    var werewolfCount by remember { mutableStateOf(1) }
-    var includeSeer by remember { mutableStateOf(true) }
-    var includeWitch by remember { mutableStateOf(false) }
-    var includeHunter by remember { mutableStateOf(false) }
     var lastWordsMode by remember { mutableStateOf(LastWordsMode.FirstDay) }
-    var lastWordsPromptNames by remember { mutableStateOf<List<String>>(emptyList()) }
     var currentDealIndex by remember { mutableStateOf(0) }
     var round by remember { mutableStateOf(1) }
     var selectedElimination by remember { mutableStateOf<String?>(null) }
-    var werewolfJudgeStepIndex by remember { mutableStateOf(0) }
-    var pendingNightDeath by remember { mutableStateOf<String?>(null) }
-    var seerCheckTarget by remember { mutableStateOf<String?>(null) }
-    var witchSaveUsed by remember { mutableStateOf(false) }
-    var witchPoisonUsed by remember { mutableStateOf(false) }
-    var witchSavedTonight by remember { mutableStateOf(false) }
-    var witchPoisonTarget by remember { mutableStateOf<String?>(null) }
-    var hunterShotTarget by remember { mutableStateOf<String?>(null) }
-    var selectedDayExile by remember { mutableStateOf<String?>(null) }
     var clocktowerPhase by remember { mutableStateOf(ClocktowerPhase.FirstNight) }
     // The Demon may revise this while awake. Only the confirmed attack may
     // reach protection, Mayor redirection, death, or succession resolution.
@@ -1353,15 +1331,7 @@ internal fun CampBoardGameHostApp() {
                     },
                 )
             }
-            GameKind.Werewolf -> {
-                activeGameWerewolfSaveValidator.validate(
-                    assignedRoles = cards.map { card -> card.role },
-                    werewolfCount = werewolfCount,
-                    includeSeer = includeSeer,
-                    includeWitch = includeWitch,
-                    includeHunter = includeHunter,
-                )
-            }
+            GameKind.Werewolf -> error("Werewolf runtime has been removed.")
         }
         val entryPoint = when (screen) {
             Screen.PassPhone -> RecoveryEntryPoint.PassPhone
@@ -1382,27 +1352,7 @@ internal fun CampBoardGameHostApp() {
                 includeBlank = includeBlank,
                 lastWordsMode = lastWordsMode,
             )
-            GameKind.Werewolf -> WerewolfRecovery(
-                entryPoint = entryPoint,
-                currentDealIndex = currentDealIndex,
-                round = round,
-                cards = commonCards,
-                records = commonRecords,
-                outcome = gameOutcome,
-                werewolfCount = werewolfCount,
-                includeSeer = includeSeer,
-                includeWitch = includeWitch,
-                includeHunter = includeHunter,
-                lastWordsMode = lastWordsMode,
-                judgeStepIndex = werewolfJudgeStepIndex,
-                pendingNightDeath = pendingNightDeath,
-                seerCheckTarget = seerCheckTarget,
-                witchSaveUsed = witchSaveUsed,
-                witchPoisonUsed = witchPoisonUsed,
-                witchSavedTonight = witchSavedTonight,
-                witchPoisonTarget = witchPoisonTarget,
-                hunterShotTarget = hunterShotTarget,
-            )
+            GameKind.Werewolf -> error("Werewolf runtime has been removed.")
             GameKind.Clocktower -> ClocktowerRecovery(
                 entryPoint = entryPoint,
                 currentDealIndex = currentDealIndex,
@@ -1505,22 +1455,7 @@ internal fun CampBoardGameHostApp() {
         undercoverCount = 1
         includeBlank = false
         lastWordsMode = LastWordsMode.FirstDay
-        lastWordsPromptNames = emptyList()
         selectedElimination = null
-
-        werewolfCount = 1
-        includeSeer = true
-        includeWitch = false
-        includeHunter = false
-        werewolfJudgeStepIndex = 0
-        pendingNightDeath = null
-        seerCheckTarget = null
-        witchSaveUsed = false
-        witchPoisonUsed = false
-        witchSavedTonight = false
-        witchPoisonTarget = null
-        hunterShotTarget = null
-        selectedDayExile = null
 
         selectedClocktowerScript = null
         clocktowerGameSession = null
@@ -1696,31 +1631,11 @@ internal fun CampBoardGameHostApp() {
         undercoverCount = undercoverCount.coerceIn(1, maxUndercoverFor(playerNames.size))
     }
 
-    fun maxWerewolfFor(count: Int): Int {
-        return (count - 1).coerceAtLeast(1)
-    }
-
-    fun clampWerewolfSettings() {
-        werewolfCount = werewolfCount.coerceIn(1, maxWerewolfFor(playerNames.size))
-        val selectedSpecials = listOf(includeSeer, includeWitch, includeHunter).count { it }
-        if (werewolfCount + selectedSpecials > playerNames.size) {
-            werewolfCount = (playerNames.size - selectedSpecials).coerceAtLeast(1)
-        }
-    }
-
-    fun shouldPromptLastWords(): Boolean = when (lastWordsMode) {
-        LastWordsMode.None -> false
-        LastWordsMode.FirstDay -> round <= 1
-        LastWordsMode.FirstTwoDays -> round <= 2
-        LastWordsMode.Always -> true
-    }
-
     fun addCurrentPlayer(name: String) {
         val trimmedName = name.trim()
         if (trimmedName.isNotEmpty() && playerNames.size < MAX_PLAYERS && trimmedName !in playerNames) {
             playerNames.add(trimmedName)
             clampUndercoverCount()
-            clampWerewolfSettings()
         }
     }
 
@@ -1728,7 +1643,6 @@ internal fun CampBoardGameHostApp() {
         if (index in playerNames.indices) {
             playerNames.removeAt(index)
             clampUndercoverCount()
-            clampWerewolfSettings()
         }
     }
 
@@ -1778,16 +1692,6 @@ internal fun CampBoardGameHostApp() {
         showResults = false
         gameOutcome = null
         selectedElimination = null
-        werewolfJudgeStepIndex = 0
-        lastWordsPromptNames = emptyList()
-        pendingNightDeath = null
-        seerCheckTarget = null
-        witchSaveUsed = false
-        witchPoisonUsed = false
-        witchSavedTonight = false
-        witchPoisonTarget = null
-        hunterShotTarget = null
-        selectedDayExile = null
         clocktowerPhase = ClocktowerPhase.FirstNight
         if (nextGameKind == GameKind.Clocktower) {
             val gameId = UUID.randomUUID().toString()
@@ -1885,29 +1789,6 @@ internal fun CampBoardGameHostApp() {
             PlayerCard(name = name.ifBlank { context.playerName(index + 1) }, role = role, word = word)
         })
         resetDealState(GameKind.Undercover)
-    }
-
-    fun startWerewolfGame() {
-        val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Werewolf)
-        if (playerNames.size < MIN_WEREWOLF_PLAYERS) return
-        val roles = werewolfRolesFor(
-            playerCount = playerNames.size,
-            werewolfCount = werewolfCount,
-            includeSeer = includeSeer,
-            includeWitch = includeWitch,
-            includeHunter = includeHunter,
-        )
-        cards.clear()
-        cards.addAll(playerNames.mapIndexed { index, name ->
-            val role = roles[index]
-            PlayerCard(
-                name = name.ifBlank { context.playerName(index + 1) },
-                role = role,
-                roleLabel = context.getString(role.labelResId()),
-                word = role.werewolfDescription(context),
-            )
-        })
-        resetDealState(GameKind.Werewolf)
     }
 
     fun startTroubleBrewingGame() {
@@ -2155,7 +2036,6 @@ internal fun CampBoardGameHostApp() {
         clocktowerEventCounter = 0
         gameOutcome = null
         currentDealIndex = 0
-        lastWordsPromptNames = emptyList()
         resetClocktowerFlow()
         screen = Screen.Setup
     }
@@ -2164,7 +2044,7 @@ internal fun CampBoardGameHostApp() {
         if (!archiveCurrentGameForRestart()) return
         when (currentGameKind) {
             GameKind.Undercover -> startUndercoverGame()
-            GameKind.Werewolf -> startWerewolfGame()
+            GameKind.Werewolf -> error("Werewolf runtime has been removed.")
             GameKind.Clocktower -> startClocktowerGame()
         }
     }
@@ -2302,7 +2182,6 @@ internal fun CampBoardGameHostApp() {
     val hostSeatingBackOrigin = when (screen) {
         Screen.GameSelection -> HostSeatingBackOrigin.GameSelection
         Screen.UndercoverSettings,
-        Screen.WerewolfSettings,
         Screen.ClocktowerSettings -> HostSeatingBackOrigin.GameSettings
         else -> null
     }
@@ -2333,20 +2212,6 @@ internal fun CampBoardGameHostApp() {
                     modifier = Modifier
                         .fillMaxSize(),
                 ) {
-                    if (
-                        !showResults && (
-                            screen == Screen.WerewolfJudge ||
-                            screen == Screen.ClocktowerJudge ||
-                            screen == Screen.Game
-                        )
-                    ) {
-                        HostToolsTopBar(
-                            onOpen = {
-                                hostToolTab = HostToolTab.Roles
-                                showHostTools = true
-                            },
-                        )
-                    }
                     Box(modifier = Modifier.weight(1f)) {
                         when (screen) {
                     Screen.Landing -> ClocktowerLandingScreen(
@@ -2385,10 +2250,6 @@ internal fun CampBoardGameHostApp() {
                         hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Undercover)
                         screen = Screen.UndercoverSettings
                     },
-                    onOpenWerewolfSettings = {
-                        hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Werewolf)
-                        screen = Screen.WerewolfSettings
-                    },
                     onOpenClocktowerSettings = {
                         hostSeatingSetupFlow = hostSeatingSetupFlow.chooseGame(GameKind.Clocktower)
                         screen = Screen.ClocktowerSettings
@@ -2408,43 +2269,6 @@ internal fun CampBoardGameHostApp() {
                             applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
                         },
                         onStart = ::startUndercoverGame,
-                    )
-
-                    Screen.WerewolfSettings -> WerewolfSettingsScreen(
-                        playerCount = playerCount,
-                        werewolfCount = werewolfCount,
-                        includeSeer = includeSeer,
-                        includeWitch = includeWitch,
-                        includeHunter = includeHunter,
-                        lastWordsMode = lastWordsMode,
-                        onWerewolfCountChange = { next ->
-                            werewolfCount = next
-                            clampWerewolfSettings()
-                        },
-                        onIncludeSeerChange = {
-                            includeSeer = it
-                            clampWerewolfSettings()
-                        },
-                        onIncludeWitchChange = {
-                            includeWitch = it
-                            clampWerewolfSettings()
-                        },
-                        onIncludeHunterChange = {
-                            includeHunter = it
-                            clampWerewolfSettings()
-                        },
-                        onLastWordsModeChange = { lastWordsMode = it },
-                        onApplyTemplate = { template ->
-                            werewolfCount = template.werewolfCount
-                            includeSeer = template.includeSeer
-                            includeWitch = template.includeWitch
-                            includeHunter = template.includeHunter
-                            clampWerewolfSettings()
-                        },
-                        onBack = {
-                            applyHostSeatingBack(HostSeatingBackOrigin.GameSettings)
-                        },
-                        onStart = ::startWerewolfGame,
                     )
 
                     Screen.ClocktowerSettings -> ClocktowerSettingsScreen(
@@ -2480,127 +2304,52 @@ internal fun CampBoardGameHostApp() {
                     )
 
                     Screen.PassPhone -> PassPhoneScreen(
-                    playerName = cards[currentDealIndex].name,
-                    gameKind = currentGameKind,
-                    current = currentDealIndex + 1,
-                    total = cards.size,
-                    onReveal = { screen = Screen.RevealCard },
-                )
+                        playerName = cards[currentDealIndex].name,
+                        playerNames = cards.map { it.name },
+                        gameKind = currentGameKind,
+                        current = currentDealIndex + 1,
+                        total = cards.size,
+                        onReveal = { screen = Screen.RevealCard },
+                        onPrevious = {
+                            if (currentGameKind == GameKind.Clocktower && currentDealIndex > 0) {
+                                currentDealIndex -= 1
+                            }
+                        },
+                        onHostTools = {
+                            if (currentGameKind == GameKind.Clocktower) {
+                                hostToolTab = HostToolTab.Roles
+                                showHostTools = true
+                            }
+                        },
+                        onNext = {
+                            if (currentGameKind == GameKind.Clocktower) {
+                                if (currentDealIndex == cards.lastIndex) {
+                                    screen = Screen.ClocktowerJudge
+                                } else {
+                                    currentDealIndex += 1
+                                }
+                            }
+                        },
+                    )
 
                     Screen.RevealCard -> RevealCardScreen(
-                    card = cards[currentDealIndex],
-                    gameKind = currentGameKind,
-                    current = currentDealIndex + 1,
-                    total = cards.size,
-                    onHide = {
-                        if (currentDealIndex == cards.lastIndex) {
-                            screen = when (currentGameKind) {
-                                GameKind.Werewolf -> Screen.WerewolfJudge
-                                GameKind.Clocktower -> Screen.ClocktowerJudge
-                                GameKind.Undercover -> Screen.Game
-                            }
-                        } else {
-                            currentDealIndex += 1
-                            screen = Screen.PassPhone
-                        }
-                    },
-                )
-
-                    Screen.WerewolfJudge -> WerewolfJudgeScreen(
-                        cards = cards,
-                        records = records,
-                        nightNumber = round,
-                        stepIndex = werewolfJudgeStepIndex,
-                        pendingNightDeath = pendingNightDeath,
-                        seerCheckTarget = seerCheckTarget,
-                        witchSaveUsed = witchSaveUsed,
-                        witchPoisonUsed = witchPoisonUsed,
-                        witchSavedTonight = witchSavedTonight,
-                        witchPoisonTarget = witchPoisonTarget,
-                        hunterShotTarget = hunterShotTarget,
-                        selectedDayExile = selectedDayExile,
-                        gameOutcome = gameOutcome,
-                        lastWordsPromptNames = lastWordsPromptNames,
-                        onStepIndexChange = { werewolfJudgeStepIndex = it },
-                        onSelectNightDeath = { pendingNightDeath = it },
-                        onSelectSeerCheck = { seerCheckTarget = it },
-                        onToggleWitchSave = { witchSavedTonight = it },
-                        onSelectWitchPoison = { witchPoisonTarget = it },
-                        onSelectHunterShot = { hunterShotTarget = it },
-                        onConfirmDawn = { deathEvents ->
-                            lastWordsPromptNames = emptyList()
-                            val eliminatedNames = mutableListOf<String>()
-                            deathEvents.distinctBy { it.first }.forEach { (deathName, note) ->
-                                val index = cards.indexOfFirst { it.name == deathName }
-                                if (index >= 0 && cards[index].eliminatedRound == null) {
-                                    cards[index] = cards[index].copy(eliminatedRound = round)
-                                    records.add(EliminationRecord(round, deathName, note))
-                                    eliminatedNames.add(deathName)
-                                }
-                            }
-                            val dawnOutcome = evaluateGameOutcome(context, cards, currentGameKind)
-                            gameOutcome = dawnOutcome
-                            if (dawnOutcome != null) showResults = true
-                            if (dawnOutcome == null && eliminatedNames.isNotEmpty() && shouldPromptLastWords()) {
-                                lastWordsPromptNames = eliminatedNames
-                            }
-                            if (witchSavedTonight) witchSaveUsed = true
-                            if (witchPoisonTarget != null) witchPoisonUsed = true
-                            pendingNightDeath = null
-                            seerCheckTarget = null
-                            witchSavedTonight = false
-                            witchPoisonTarget = null
-                            hunterShotTarget = null
-                        },
-                        onSelectDayExile = { selectedDayExile = it },
-                        onConfirmDayExile = {
-                            lastWordsPromptNames = emptyList()
-                            val exileName = selectedDayExile
-                            val eliminatedNames = mutableListOf<String>()
-                            var dayOutcome: GameOutcome? = null
-                            if (exileName != null) {
-                                val index = cards.indexOfFirst { it.name == exileName }
-                                val exiledRole = cards.getOrNull(index)?.role
-                                if (index >= 0 && cards[index].eliminatedRound == null) {
-                                    cards[index] = cards[index].copy(eliminatedRound = round)
-                                    records.add(EliminationRecord(round, exileName, context.getString(R.string.werewolf_record_day_exile)))
-                                    eliminatedNames.add(exileName)
-                                }
-                                val shotName = hunterShotTarget?.takeIf { exiledRole == Role.Hunter && it != exileName }
-                                if (shotName != null) {
-                                    val shotIndex = cards.indexOfFirst { it.name == shotName }
-                                    if (shotIndex >= 0 && cards[shotIndex].eliminatedRound == null) {
-                                        cards[shotIndex] = cards[shotIndex].copy(eliminatedRound = round)
-                                        records.add(EliminationRecord(round, shotName, context.getString(R.string.werewolf_record_hunter_shot)))
-                                        eliminatedNames.add(shotName)
+                        card = cards[currentDealIndex],
+                        gameKind = currentGameKind,
+                        current = currentDealIndex + 1,
+                        total = cards.size,
+                        onHide = {
+                            when (currentGameKind) {
+                                GameKind.Werewolf -> error("Werewolf runtime has been removed.")
+                                GameKind.Clocktower -> screen = Screen.PassPhone
+                                GameKind.Undercover -> {
+                                    if (currentDealIndex == cards.lastIndex) {
+                                        screen = Screen.Game
+                                    } else {
+                                        currentDealIndex += 1
+                                        screen = Screen.PassPhone
                                     }
                                 }
-                                dayOutcome = evaluateGameOutcome(context, cards, currentGameKind)
-                                gameOutcome = dayOutcome
-                                if (dayOutcome != null) showResults = true
                             }
-                            selectedDayExile = null
-                            pendingNightDeath = null
-                            seerCheckTarget = null
-                            witchSavedTonight = false
-                            witchPoisonTarget = null
-                            hunterShotTarget = null
-                            if (dayOutcome == null) {
-                                if (eliminatedNames.isNotEmpty() && shouldPromptLastWords()) {
-                                    lastWordsPromptNames = eliminatedNames
-                                }
-                                werewolfJudgeStepIndex = 0
-                                round += 1
-                            }
-                        },
-                        onDismissLastWordsPrompt = { lastWordsPromptNames = emptyList() },
-                        onShowResults = {
-                            gameOutcome = gameOutcome ?: GameOutcome(
-                                title = context.getString(R.string.outcome_manual_title),
-                                summary = context.getString(R.string.outcome_manual_summary),
-                                reason = context.getString(R.string.outcome_manual_reason),
-                            )
-                            showResults = true
                         },
                     )
 
@@ -2692,6 +2441,14 @@ internal fun CampBoardGameHostApp() {
                             addClocktowerEvent(type, title, detail, names)
                         },
                         onRecordEpistemicObservation = ::recordEpistemicObservation,
+                        onHostTools = {
+                            hostToolTab = HostToolTab.Roles
+                            showHostTools = true
+                        },
+                        onPreviousFromFirstNightReady = {
+                            currentDealIndex = cards.lastIndex
+                            screen = Screen.PassPhone
+                        },
                         onSelectNightDeath = { selected ->
                             advanceClocktowerPlayerInputRevision()
                             val reducedCheckpoint = NightCheckpointReducer.reduce(
@@ -3944,6 +3701,10 @@ internal fun CampBoardGameHostApp() {
 
                     Screen.Game -> GameScreen(
                     gameKind = currentGameKind,
+                    onHostTools = {
+                        hostToolTab = HostToolTab.Roles
+                        showHostTools = true
+                    },
                     cards = cards,
                     records = records,
                     round = round,
@@ -4016,6 +3777,25 @@ internal fun CampBoardGameHostApp() {
                         events = clocktowerEvents,
                         history = gameHistory,
                         initialTab = hostToolTab,
+                        settingsContent = {
+                            SettingsContent(
+                                languageMode = languageMode,
+                                storytellerAutomationMode = storytellerAutomationMode,
+                                commonPlayers = commonPlayers,
+                                newCommonPlayerName = newCommonPlayerName,
+                                onLanguageModeChange = { nextMode ->
+                                    languageMode = nextMode
+                                    baseContext.saveLanguageMode(nextMode)
+                                },
+                                onStorytellerAutomationModeChange = { mode ->
+                                    storytellerAutomationMode = mode
+                                    baseContext.saveStorytellerAutomationMode(mode)
+                                },
+                                onNewCommonPlayerNameChange = { newCommonPlayerName = it },
+                                onAddCommonPlayer = ::addCommonPlayer,
+                                onRemoveCommonPlayer = ::removeCommonPlayer,
+                            )
+                        },
                         onDismiss = { showHostTools = false },
                         onNewGame = {
                             showHostTools = false

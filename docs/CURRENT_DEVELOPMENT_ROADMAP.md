@@ -1,154 +1,135 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-10 Australia/Sydney  
+> Updated: 2026-09-11 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
-## 1. Current project state
+## 1. Current state
 
 ```text
 Persistence Simplification                         COMPLETE / merged
 D6.1 Clocktower session authority                 COMPLETE / merged
-D6.2 UI Composition R0–R2                         COMPLETE / FULL accepted / merged
+D6.2 UI Composition R0–R2                         COMPLETE / merged
 R3 transaction-application viability audit        COMPLETE / NO-GO
 D6 decomposition campaign                         COMPLETE
+UI-R5 square-table convergence                    COMPLETE / merged via PR #117
+UI-NAV-1 global navigation visual unification     COMPLETE / accepted / merge via PR #118
 
-UI-R5 square-table convergence                    COMPLETE / merged in PR #117
-UI-R5 final logical T4                            PASS
-UI-R5 post-merge main CI                          PASS
-UI-R5 Field Test APK                              PASS
-UI-R5 real-device acceptance                      PARTIAL / follow-up remains
-
-EPI-MQ / Productive Uncertainty                   NEXT — EPI-MQ-0 baseline re-audit
+ROLE-ROTATION-1 consecutive role repeat avoidance CURRENT after PR #118 merge
+EPI-MQ / Productive Uncertainty                   QUEUED after ROLE-ROTATION-1 unless reprioritized
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
 
-Completed campaign evidence is historical and must not be treated as current execution authority.
+Completed campaign evidence is historical. Do not use an old handoff/checkpoint as current execution authority.
 
-## 2. Stable baseline after UI-R5 merge
+## 2. Immediate priority — ROLE-ROTATION-1
 
-```text
-UI-R5 merged production baseline: b47b00fd0c727e048dcb1b57260b8dd6fff466a1
-merged PR: #117 — UI: unify Storyteller night roles on square table
-final branch head: 99bb4e5323f68231eaa1e08e16520a4340f56faf
-final logical T4 checkpoint: 2958f334fc7cccd59ed2e75a3bdaa60684492292
-live main: always re-query before starting a new slice; docs-only commits may advance it
-```
+Real play has exposed a user-experience issue: the same human player can randomly receive the same starting identity again in the following game.
 
-Validation evidence:
+Target behavior:
 
 ```text
-T4 CI #2143 / run 34435295215             PASS
-- Android full unit tests + debug APK      PASS
-- ASP contract tests                       PASS
-- Real Clingo cross-validation             PASS
-- CI gate                                  PASS
-R2 #2010 / run 34435295217                PASS
-
-post-merge main CI #2146 / run 34437247431 PASS
-Field Test APK #34 / run 34437247434       PASS
+preserve the legal role set
+preserve setup legality and game balance
+preserve randomness
+prefer zero same-player / same-identity consecutive repeats
+if zero is impossible, minimize repeats
+randomize among equally optimal assignments
+never block setup merely to satisfy the preference
 ```
 
-PR #117 is closed and merged. Its former branch/handoff/audit documents are historical evidence only.
+This is a **soft assignment constraint**, not a new setup legality rule and not deterministic role rotation.
 
-## 3. Current priority — EPI-MQ-0 baseline re-audit
+The first slice is read-only. Before changing production code, audit:
 
-> **CURRENT: restart the Epistemic Misinformation Quality / Productive Uncertainty program from the merged live architecture, beginning with a read-only design/ownership audit and behavior corpus.**
+- the role-set selection owner;
+- the player-to-role assignment owner;
+- the randomness seam;
+- existing recent-setup / rotation history and its persisted shape;
+- stable human-player identity versus seat number;
+- roster reorder/add/remove behavior;
+- whether anti-repeat should compare actual starting role or player-visible starting identity, especially around Drunk semantics.
 
-The long-lived product objective remains:
+The active handoff is:
 
-> For Drunk/Poisoned information, choose misinformation that creates credible, interactive, sustainable, breakable and fair mistaken worlds rather than merely choosing an answer that is locally false.
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-11_ROLE_REPEAT_AVOIDANCE.md`
 
-The existing design plan is:
+Do not begin implementation until that ownership/history audit is complete and the smallest seam is identified.
 
-`docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`
+## 3. ROLE-ROTATION-1 architecture fence
 
-That document predates several later architecture/UI campaigns. Its PR #61 / MS-S6D wording is historical context, not a current implementation instruction. The first task is therefore **re-audit, not immediate production ranking changes**.
+Preserve existing setup/session/persistence ownership.
 
-## 4. EPI-MQ-0 execution contract
+Do not introduce:
 
-Read first:
+- a second setup coordinator;
+- deterministic round-robin dealing;
+- changes to legal role counts or script composition;
+- a broad player-account/profile system solely for anti-repeat;
+- UI-NAV changes;
+- EPI-MQ/ranking changes;
+- broad persistence/recovery redesign.
 
-1. root `AGENTS.md`;
-2. this roadmap;
-3. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_EPI_MQ_0_BASELINE_REAUDIT.md`;
-4. `docs/TESTING_STRATEGY.md`;
-5. `docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`;
-6. `docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`;
-7. `docs/epistemic_reference_matrix.md` and `docs/asp_oracle_cross_validation.md` only where relevant.
+Prefer reusing an existing durable recent-game history if it already contains sufficient player-to-identity information. If it does not, add only the smallest typed durable record necessary and characterize recovery/version behavior first.
 
-Immediate sequence:
+## 4. Tests-first acceptance target
+
+The first implementation slice should prove:
 
 ```text
-EPI-MQ-0A  confirm live main / architecture / existing epistemic owners
-EPI-MQ-0B  map legal misinformation candidate -> hypothetical visible observation -> world evaluation path
-EPI-MQ-0C  build a small Trouble Brewing behavior corpus: good / acceptable / poor misinformation
-EPI-MQ-0D  identify the narrow typed seam and test owner for BEFORE/AFTER hypothetical world evaluation
-EPI-MQ-0E  record GO / MODIFY / NO-GO for the old EPI-MQ-1 proposal
+avoidable repeat -> avoided
+selected role multiset -> unchanged
+unavoidable repeat -> setup still succeeds with minimum repeats
+equal-cost assignments -> remain randomized
+seat reorder -> does not defeat stable-player matching where supported
+roster change -> remains safe
+restart -> history persists only if that is the intended existing contract
 ```
 
-Do **not** change production recommendation ranking, weights or Storyteller-visible output during EPI-MQ-0 merely because the old plan names a desired pipeline.
+No fake gameplay/domain RED should be manufactured where only assignment preference changes. Follow `docs/TESTING_STRATEGY.md`.
 
-If EPI-MQ-0 concludes that a substantial production edit is appropriate, apply the root `AGENTS.md` recorded architecture pre-flight gate before editing protected/core or >1000 LOC handwritten source.
+## 5. UI-NAV-1 closeout
 
-## 5. Architectural constraints carried forward
+PR #118 standardizes the Storyteller navigation presentation without moving navigation/gameplay ownership:
 
-Preserve unless a new audit explicitly proves a better boundary:
+```text
+No persistent global top bar.
+Content owns title / instructions / table / local progress.
+Bottom visual language:
+[ Previous ]   [ Host Tools ]   [ Next ]
+```
 
-- `ClocktowerGameSession` remains the canonical writable session owner;
-- Planner/Reducer keep gameplay-rule authority;
-- role semantics / legal candidate generation remain separate from misinformation-quality ranking;
-- player-visible epistemic replay must not ingest Storyteller-hidden action targets merely to make scoring convenient;
-- `AbilityObservation`, historical timeline and world-set semantics remain typed; do not reconstruct semantics from localized UI strings;
-- timeouts/resource exhaustion in exact/compressed world evaluation must not be interpreted as false UNSAT;
-- UI composition must not become the owner of epistemic/ranking truth;
-- no broad Host/App-root rewrites or renewed D6 decomposition for file-size reasons;
-- no recommendation-provider replacement during EPI-MQ-0 unless the audit proves it is a prerequisite and the roadmap is explicitly updated.
+Identity delivery uses a Storyteller square-table controller while the player-facing reveal remains isolated. Settings is composed under the existing root-owned Host Tools. The later real-device findings around identity-controller center width and night-flow bottom placement were corrected and accepted in device testing.
 
-## 6. UI-R5 post-merge device follow-up
+UI-NAV-1 is closed for feature development. Its audit and closeout documents are historical evidence only and are not part of the default reading chain.
 
-UI-R5 implementation and automated validation are complete and merged. Real-device acceptance remains a **field-test follow-up**, not an excuse to keep the development campaign open indefinitely.
+## 6. Queued programs
 
-Already user-reported device PASS:
+### EPI-MQ / Productive Uncertainty
 
-- Washerwoman / Librarian / Investigator pair-information baseline;
-- Chef square-table.
+Still planned, but explicitly deferred behind ROLE-ROTATION-1 because the user reprioritized the next development target.
 
-Still worth exercising during normal field testing:
-
-- Empath;
-- Undertaker;
-- Ravenkeeper;
-- Spy;
-- Clockmaker;
-- Sage;
-- original dynamic-trigger regression path:
-  `Monk protects Ravenkeeper -> change Monk target -> Demon kills Ravenkeeper -> Ravenkeeper ability step appears`.
-
-Any concrete device defect should become a focused bugfix with its own reproduction/test evidence. Do not infer a device PASS from CI.
-
-## 7. Historical UI-R5 evidence
-
-UI-R5 handoffs have moved to:
-
-`docs/archive/handoffs/`
-
-UI-R5 audits/acceptance evidence and closeout index have moved to:
-
-`docs/archive/checkpoints/ui-r5/`
-
-The durable product design remains active at:
-
-`docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`
-
-Do not load the full UI-R5 archive in a normal EPI-MQ session.
-
-## 8. Next planned program after EPI-MQ
-
-`UX-R6 recommendation-provider replacement` remains queued after EPI-MQ, as previously recorded in the documentation index. It is **not authorized by the current EPI-MQ-0 audit** and may be reprioritized later by an explicit roadmap update.
-
-## 9. Current active handoff
+Queued handoff:
 
 `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_EPI_MQ_0_BASELINE_REAUDIT.md`
 
-Only this handoff is current. Any `NEXT_DEVELOPMENT_HANDOFF*` under `docs/archive/` is historical.
+When resumed, re-audit against then-live `main`; do not assume its historical baseline is still exact.
+
+### UX-R6 recommendation-provider replacement
+
+Remains after EPI-MQ unless the roadmap is explicitly reprioritized again.
+
+## 7. Default reading order for a new development conversation
+
+1. root `AGENTS.md`;
+2. `docs/TESTING_STRATEGY.md`;
+3. this roadmap;
+4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-11_ROLE_REPEAT_AVOIDANCE.md`;
+5. live GitHub `main` / branch / PR state;
+6. only the specialized domain/product documents required by the audited seam.
+
+Historical archives, prior campaign handoffs, and old checkpoint documents should not be loaded by default.
+
+## 8. Stable rule
+
+> **Current roadmap + one active handoff define what happens next. Historical campaign documents provide evidence, not execution authority.**

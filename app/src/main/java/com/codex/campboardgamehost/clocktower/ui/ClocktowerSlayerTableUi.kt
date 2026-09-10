@@ -29,6 +29,7 @@ internal fun ClocktowerSlayerTableScreen(
     round: Int,
     tableState: ClocktowerSlayerTableState,
     actionsEnabled: Boolean,
+    onHostTools: () -> Unit,
     onSeatClick: (ClocktowerSeatId) -> Unit,
     onResetClaimant: () -> Unit,
     onResolve: () -> Unit,
@@ -138,28 +139,17 @@ internal fun ClocktowerSlayerTableScreen(
                             specialContent()
                         }
 
-                        Button(
-                            onClick = onResolve,
-                            enabled = actionsEnabled &&
+                        HostBottomActionBar(
+                            previousLabel = text("返回白天", "Return to day"),
+                            hostToolsLabel = text("主持工具", "Host Tools"),
+                            nextLabel = text("结算杀手行动", "Resolve Slayer action"),
+                            onPrevious = onBack,
+                            onHostTools = onHostTools,
+                            onNext = onResolve,
+                            nextEnabled = actionsEnabled &&
                                 tableState.claimantSeatId != null &&
                                 tableState.targetSeatId != null,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 40.dp),
-                            shape = RoundedCornerShape(12.dp),
-                        ) {
-                            Text(text("结算杀手行动", "Resolve Slayer action"))
-                        }
-
-                        OutlinedButton(
-                            onClick = onBack,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 40.dp),
-                            shape = RoundedCornerShape(12.dp),
-                        ) {
-                            Text(text("返回白天", "Return to day"))
-                        }
+                        )
                     }
                 },
             )

@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -19,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -82,7 +81,10 @@ internal fun UndercoverSettingsScreen(
     onBack: () -> Unit,
     onStart: () -> Unit,
 ) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
     val maxUndercover = if (includeBlank) playerCount - 2 else playerCount - 1
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -90,11 +92,17 @@ internal fun UndercoverSettingsScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item {
-            GameSettingsHeader(
-                title = stringResource(R.string.game_who_is_undercover),
-                subtitle = stringResource(R.string.game_settings_subtitle, playerCount),
-                onBack = onBack,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = stringResource(R.string.game_who_is_undercover),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = stringResource(R.string.game_settings_subtitle, playerCount),
+                    color = Color(0xFF5C6A63),
+                )
+            }
         }
         item {
             SettingsPanel(
@@ -107,16 +115,16 @@ internal fun UndercoverSettingsScreen(
             )
         }
         item {
-            Button(
-                onClick = onStart,
-                enabled = playerCount >= MIN_PLAYERS,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(8.dp),
-            ) {
-                Text(stringResource(R.string.start_dealing))
-            }
+            HostBottomActionBar(
+                previousLabel = text("上一步", "Previous"),
+                hostToolsLabel = text("主持工具", "Host Tools"),
+                nextLabel = stringResource(R.string.start_dealing),
+                onPrevious = onBack,
+                onHostTools = {},
+                onNext = onStart,
+                hostToolsEnabled = false,
+                nextEnabled = playerCount >= MIN_PLAYERS,
+            )
         }
     }
 }

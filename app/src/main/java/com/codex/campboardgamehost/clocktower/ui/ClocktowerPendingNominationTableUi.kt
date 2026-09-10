@@ -36,6 +36,7 @@ internal fun ClocktowerPendingNominationTableScreen(
     specialNoticeIsDanger: Boolean,
     continueLabel: String,
     actionsEnabled: Boolean,
+    onHostTools: () -> Unit,
     onContinue: () -> Unit,
     onCancel: () -> Unit,
     specialContent: @Composable ColumnScope.() -> Unit = {},
@@ -131,22 +132,15 @@ internal fun ClocktowerPendingNominationTableScreen(
                                 }
                             }
                         }
-                        Button(
-                            onClick = onContinue,
-                            enabled = actionsEnabled && pendingLink != null,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 44.dp),
-                            shape = RoundedCornerShape(12.dp),
-                        ) {
-                            Text(continueLabel, fontWeight = FontWeight.Bold)
-                        }
-                        TextButton(
-                            onClick = onCancel,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(text("取消提名", "Cancel nomination"))
-                        }
+                        HostBottomActionBar(
+                            previousLabel = text("取消提名", "Cancel nomination"),
+                            hostToolsLabel = text("主持工具", "Host Tools"),
+                            nextLabel = continueLabel,
+                            onPrevious = onCancel,
+                            onHostTools = onHostTools,
+                            onNext = onContinue,
+                            nextEnabled = actionsEnabled && pendingLink != null,
+                        )
                     }
                 },
             )

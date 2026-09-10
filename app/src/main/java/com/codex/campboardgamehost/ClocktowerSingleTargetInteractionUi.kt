@@ -10,6 +10,7 @@ internal fun ClocktowerSingleTargetAbilitySection(
     presentation: ClocktowerSingleTargetAbilityPresentation,
     language: String,
     canGoPrevious: Boolean,
+    onHostTools: () -> Unit,
     onEvent: (ClocktowerSingleTargetEvent) -> Unit,
 ) {
     val action = presentation.action
@@ -44,6 +45,7 @@ internal fun ClocktowerSingleTargetAbilitySection(
         canGoPrevious = canGoPrevious,
         onSeatSelected = { onEvent(ClocktowerSingleTargetEvent.SelectSeat(it)) },
         onPrevious = { onEvent(ClocktowerSingleTargetEvent.Previous) },
+        onHostTools = onHostTools,
         onNext = { onEvent(ClocktowerSingleTargetEvent.Next) },
         secondaryActionLabel = if (action == ClocktowerNightAction.Ravenkeeper) {
             stringResource(R.string.clocktower_host_show_to_player)
@@ -60,6 +62,7 @@ internal fun ClocktowerNightRulingSection(
     presentation: ClocktowerNightRulingPresentation,
     language: String,
     canGoPrevious: Boolean,
+    onHostTools: () -> Unit,
     onEvent: (ClocktowerSingleTargetEvent) -> Unit,
 ) {
     val isMayor = presentation.action == ClocktowerNightAction.MayorRedirect
@@ -84,6 +87,7 @@ internal fun ClocktowerNightRulingSection(
         canGoPrevious = canGoPrevious,
         onSeatSelected = { onEvent(ClocktowerSingleTargetEvent.SelectSeat(it)) },
         onPrevious = { onEvent(ClocktowerSingleTargetEvent.Previous) },
+        onHostTools = onHostTools,
         onNext = { onEvent(ClocktowerSingleTargetEvent.Next) },
         secondaryActionLabel = if (isMayor) {
             if (language == "en") "Mayor dies" else "市长死亡"

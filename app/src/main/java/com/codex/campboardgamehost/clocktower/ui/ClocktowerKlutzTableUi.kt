@@ -27,6 +27,7 @@ internal fun ClocktowerKlutzTableScreen(
     round: Int,
     tableState: ClocktowerKlutzTableState,
     actionsEnabled: Boolean,
+    onHostTools: () -> Unit,
     onSeatClick: (ClocktowerSeatId) -> Unit,
     onConfirm: () -> Unit,
     specialContent: @Composable () -> Unit = {},
@@ -122,16 +123,16 @@ internal fun ClocktowerKlutzTableScreen(
                             specialContent()
                         }
 
-                        Button(
-                            onClick = onConfirm,
-                            enabled = actionsEnabled && tableState.choiceSeatId != null,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 40.dp),
-                            shape = RoundedCornerShape(12.dp),
-                        ) {
-                            Text(text("确认呆瓜选择", "Confirm Klutz choice"))
-                        }
+                        HostBottomActionBar(
+                            previousLabel = text("上一步", "Previous"),
+                            hostToolsLabel = text("主持工具", "Host Tools"),
+                            nextLabel = text("确认呆瓜选择", "Confirm Klutz choice"),
+                            onPrevious = {},
+                            onHostTools = onHostTools,
+                            onNext = onConfirm,
+                            previousEnabled = false,
+                            nextEnabled = actionsEnabled && tableState.choiceSeatId != null,
+                        )
                     }
                 },
             )

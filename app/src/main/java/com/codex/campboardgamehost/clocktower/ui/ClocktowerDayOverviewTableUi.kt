@@ -39,6 +39,7 @@ internal fun ClocktowerDayOverviewScreen(
     showArtistAction: Boolean,
     artistActionEnabled: Boolean,
     actionsEnabled: Boolean,
+    onHostTools: () -> Unit,
     diagnosticContent: (@Composable () -> Unit)? = null,
     onNominationGesture: (ClocktowerSeatId, ClocktowerSeatId) -> Unit,
     onOpenSlayer: () -> Unit,
@@ -74,6 +75,7 @@ internal fun ClocktowerDayOverviewScreen(
                         showArtistAction = showArtistAction,
                         artistActionEnabled = artistActionEnabled,
                         actionsEnabled = actionsEnabled,
+                        onHostTools = onHostTools,
                         diagnosticContent = diagnosticContent,
                         text = ::text,
                         onOpenSlayer = onOpenSlayer,
@@ -97,6 +99,7 @@ private fun ClocktowerDayOverviewCenterContent(
     showArtistAction: Boolean,
     artistActionEnabled: Boolean,
     actionsEnabled: Boolean,
+    onHostTools: () -> Unit,
     diagnosticContent: (@Composable () -> Unit)?,
     text: (String, String) -> String,
     onOpenSlayer: () -> Unit,
@@ -180,17 +183,17 @@ private fun ClocktowerDayOverviewCenterContent(
             }
         }
 
-        TextButton(
-            onClick = onEndDay,
-            enabled = actionsEnabled,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 38.dp),
-            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-        ) {
-            Text(text("结束白天", "End day"), fontWeight = FontWeight.Bold)
-        }
-
         diagnosticContent?.invoke()
+
+        HostBottomActionBar(
+            previousLabel = text("上一步", "Previous"),
+            hostToolsLabel = text("主持工具", "Host Tools"),
+            nextLabel = text("结束白天", "End day"),
+            onPrevious = {},
+            onHostTools = onHostTools,
+            onNext = onEndDay,
+            previousEnabled = false,
+            nextEnabled = actionsEnabled,
+        )
     }
 }

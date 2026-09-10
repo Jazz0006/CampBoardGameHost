@@ -274,6 +274,8 @@ internal fun ClocktowerJudgeScreen(
     onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,
     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
     onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
+    onHostTools: () -> Unit,
+    onPreviousFromFirstNightReady: () -> Unit,
     onMovePreviousNightStep: () -> Unit,
     onSelectNightDeath: (String?) -> Unit,
     onConfirmDemonAttack: () -> Unit,
@@ -3358,6 +3360,7 @@ internal fun ClocktowerJudgeScreen(
         ClocktowerNewDemonConfirmationScreen(
             newDemonLabel = newDemon?.seatLabel(cards).orEmpty(),
             hasNewDemon = newDemon != null,
+            onHostTools = onHostTools,
             onShowPlayerDisplay = { playerDisplayStep = newDemonStep },
             onConfirm = onConfirmNewDemon,
         )
@@ -3370,6 +3373,7 @@ internal fun ClocktowerJudgeScreen(
             cards = cards,
             events = events,
             pendingNightDeath = pendingNightDeath,
+            onHostTools = onHostTools,
             onEnterDay = onAdvanceFromFirstNight,
         )
         return
@@ -3407,6 +3411,7 @@ internal fun ClocktowerJudgeScreen(
             artistActionEnabled = artistClaimantCandidates.isNotEmpty(),
             actionsEnabled = gameOutcome == null,
             diagnosticContent = null,
+            onHostTools = onHostTools,
             onNominationGesture = { sourceSeatId, targetSeatId ->
                 val sourceName = dayTableState.seats
                     .firstOrNull { seat -> seat.seatId == sourceSeatId && seat.isAlive }
@@ -3485,6 +3490,7 @@ internal fun ClocktowerJudgeScreen(
                 else -> text("开始投票", "Start voting")
             },
             actionsEnabled = gameOutcome == null,
+            onHostTools = onHostTools,
             onContinue = {
                 val chosenNominator = nominatorName
                 val chosenNominee = nomineeName
@@ -3591,6 +3597,7 @@ internal fun ClocktowerJudgeScreen(
             nomineeName = nomineeName,
             highestVoteText = highestVoteText,
             actionsEnabled = gameOutcome == null,
+            onHostTools = onHostTools,
             onConfirm = { voteState ->
                 val voteTransaction = commitClocktowerVoteTransaction(
                     voteState = voteState,
@@ -3622,6 +3629,7 @@ internal fun ClocktowerJudgeScreen(
             selectedExecution = selectedExecution,
             highestVoteCount = highestVoteCount,
             actionsEnabled = gameOutcome == null,
+            onHostTools = onHostTools,
             onConfirm = onConfirmDay,
             onBack = { dayMode = ClocktowerDayMode.Overview },
         )
@@ -3668,6 +3676,7 @@ internal fun ClocktowerJudgeScreen(
             round = round,
             tableState = slayerTableState,
             actionsEnabled = gameOutcome == null,
+            onHostTools = onHostTools,
             onSeatClick = { seatId ->
                 val selectedName = slayerTableState.playerNameForSeat(seatId)
                 if (slayerClaimantName == null) {
@@ -3821,6 +3830,7 @@ internal fun ClocktowerJudgeScreen(
                 currentArtistTruthfulAnswer != null &&
                 artistShownAnswer != null &&
                 gameOutcome == null,
+            onHostTools = onHostTools,
             onSeatClick = { seatId ->
                 val claimant = artistTableState.playerNameForSeat(seatId)
                 selectArtistClaimant(if (artistClaimantName == claimant) null else claimant)
@@ -3925,6 +3935,7 @@ internal fun ClocktowerJudgeScreen(
             round = round,
             tableState = klutzTableState,
             actionsEnabled = gameOutcome == null,
+            onHostTools = onHostTools,
             onSeatClick = { seatId ->
                 val playerName = klutzTableState.playerNameForSeat(seatId)
                 onSelectKlutzChoice(if (klutzChoiceName == playerName) null else playerName)
@@ -3979,13 +3990,15 @@ internal fun ClocktowerJudgeScreen(
 
     if (phase == ClocktowerPhase.FirstNight && !nightStarted) {
         ClocktowerStorytellerRecommendationScreen(
-            title = text("说书人开局准备", "STORYTELLER SETUP"),
-            subtitle = text("首夜裁定推荐", "First-night recommendations"),
+            title = text("身份展示完成", "IDENTITY DISPLAY COMPLETE"),
+            subtitle = text("准备进入首夜", "Prepare for the first night"),
             description = text(
-                "这是说书人私密页面。确认推荐与裁定后，直接进入首夜流程。",
-                "This is a private Storyteller screen. Review the plan, then begin the first night.",
+                "这是说书人私密页面。可返回最后一位玩家重新展示身份，或确认首夜裁定后开始夜晚。",
+                "This is a private Storyteller screen. You may return to the final player to show the role again, or confirm the first-night rulings and begin the night.",
             ),
             buttonLabel = text("确认裁定，开始首夜", "Confirm plan and begin first night"),
+            onHostTools = onHostTools,
+            onPrevious = onPreviousFromFirstNightReady,
             onStartNight = {
                 if (firstNightNaturalPairPrecomputeReady) {
                     nightStarted = true
@@ -4034,6 +4047,7 @@ internal fun ClocktowerJudgeScreen(
                 "This is a private Storyteller screen. Begin the night flow when ready.",
             ),
             buttonLabel = text("开始第 $round 夜流程", "Begin night $round"),
+            onHostTools = onHostTools,
             onStartNight = { nightStarted = true },
         ) {
             ClocktowerNightReadyCard()
@@ -4216,6 +4230,7 @@ internal fun ClocktowerJudgeScreen(
                 ClocktowerNightAction.DemonSuccessor,
             ) || selectedNightName != null,
             onPrevious = onMovePreviousNightStep,
+            onHostTools = onHostTools,
             onNext = advanceNightStep,
         ) {
             ClocktowerNightStepCardLocalized(
@@ -4402,6 +4417,7 @@ internal fun ClocktowerJudgeScreen(
                 },
                 canGoPrevious = currentStepIndex > 0,
                 onPrevious = onMovePreviousNightStep,
+                onHostTools = onHostTools,
                 onNext = advanceNightStep,
                 showNavigationActions = false,
             )

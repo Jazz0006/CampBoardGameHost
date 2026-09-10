@@ -74,6 +74,8 @@ internal fun ClocktowerStorytellerRecommendationScreen(
     subtitle: String,
     description: String,
     buttonLabel: String,
+    onHostTools: () -> Unit,
+    onPrevious: (() -> Unit)? = null,
     onStartNight: () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -137,16 +139,16 @@ internal fun ClocktowerStorytellerRecommendationScreen(
                 item { content() }
             }
             Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
-                Button(
-                    onClick = onStartNight,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                        .height(54.dp),
-                    shape = RoundedCornerShape(14.dp),
-                ) {
-                    Text(buttonLabel, fontWeight = FontWeight.Bold)
-                }
+                HostBottomActionBar(
+                    previousLabel = text("上一步", "Previous"),
+                    hostToolsLabel = text("主持工具", "Host Tools"),
+                    nextLabel = buttonLabel,
+                    onPrevious = onPrevious ?: {},
+                    onHostTools = onHostTools,
+                    onNext = onStartNight,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    previousEnabled = onPrevious != null,
+                )
             }
         }
     }

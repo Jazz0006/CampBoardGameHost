@@ -29,6 +29,7 @@ internal fun ClocktowerArtistTableScreen(
     tableState: ClocktowerArtistTableState,
     actionsEnabled: Boolean,
     primaryEnabled: Boolean,
+    onHostTools: () -> Unit,
     onSeatClick: (ClocktowerSeatId) -> Unit,
     onPrimary: () -> Unit,
     onBack: () -> Unit,
@@ -89,21 +90,15 @@ internal fun ClocktowerArtistTableScreen(
 
                         detailContent()
 
-                        Button(
-                            onClick = onPrimary,
-                            enabled = actionsEnabled && primaryEnabled,
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
-                            shape = RoundedCornerShape(12.dp),
-                        ) {
-                            Text(text("记录艺术家提问", "Record Artist question"))
-                        }
-                        OutlinedButton(
-                            onClick = onBack,
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
-                            shape = RoundedCornerShape(12.dp),
-                        ) {
-                            Text(text("返回白天", "Return to day"))
-                        }
+                        HostBottomActionBar(
+                            previousLabel = text("返回白天", "Return to day"),
+                            hostToolsLabel = text("主持工具", "Host Tools"),
+                            nextLabel = text("记录艺术家提问", "Record Artist question"),
+                            onPrevious = onBack,
+                            onHostTools = onHostTools,
+                            onNext = onPrimary,
+                            nextEnabled = actionsEnabled && primaryEnabled,
+                        )
                     }
                 },
             )

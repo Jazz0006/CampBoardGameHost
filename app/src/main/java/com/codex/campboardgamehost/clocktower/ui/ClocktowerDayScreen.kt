@@ -216,6 +216,7 @@ internal fun ClocktowerDawnSummaryScreen(
     cards: List<PlayerCard>,
     events: List<ClocktowerEvent>,
     pendingNightDeath: String?,
+    onHostTools: () -> Unit,
     onEnterDay: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
@@ -420,16 +421,16 @@ internal fun ClocktowerDawnSummaryScreen(
             }
 
             Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
-                Button(
-                    onClick = onEnterDay,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                        .height(54.dp),
-                    shape = RoundedCornerShape(14.dp),
-                ) {
-                    Text(text("已完成播报，进入白天", "Announcement complete — enter day"), fontWeight = FontWeight.Bold)
-                }
+                HostBottomActionBar(
+                    previousLabel = text("上一步", "Previous"),
+                    hostToolsLabel = text("主持工具", "Host Tools"),
+                    nextLabel = text("已完成播报，进入白天", "Announcement complete — enter day"),
+                    onPrevious = {},
+                    onHostTools = onHostTools,
+                    onNext = onEnterDay,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    previousEnabled = false,
+                )
             }
         }
     }
@@ -443,6 +444,7 @@ internal fun ClocktowerExecutionConfirmScreen(
     selectedExecution: String?,
     highestVoteCount: Int,
     actionsEnabled: Boolean,
+    onHostTools: () -> Unit,
     onConfirm: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -519,44 +521,20 @@ internal fun ClocktowerExecutionConfirmScreen(
                 }
             }
             Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Button(
-                        onClick = onConfirm,
-                        enabled = actionsEnabled,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = if (targetLabel != null) {
-                            ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.error,
-                                contentColor = MaterialTheme.colorScheme.onError,
-                            )
-                        } else {
-                            ButtonDefaults.buttonColors()
-                        },
-                    ) {
-                        Text(
-                            text = if (targetLabel != null) text("确认处决 $targetLabel", "Confirm execution: $targetLabel")
-                            else text("确认无人被处决，进入夜晚", "Confirm no execution and continue"),
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                    OutlinedButton(
-                        onClick = onBack,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        shape = RoundedCornerShape(14.dp),
-                    ) {
-                        Text(text("返回白天检查", "Return to day"))
-                    }
-                }
+                HostBottomActionBar(
+                    previousLabel = text("返回白天检查", "Return to day"),
+                    hostToolsLabel = text("主持工具", "Host Tools"),
+                    nextLabel = if (targetLabel != null) {
+                        text("确认处决 $targetLabel", "Confirm execution: $targetLabel")
+                    } else {
+                        text("确认无人被处决，进入夜晚", "Confirm no execution and continue")
+                    },
+                    onPrevious = onBack,
+                    onHostTools = onHostTools,
+                    onNext = onConfirm,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    nextEnabled = actionsEnabled,
+                )
             }
         }
     }

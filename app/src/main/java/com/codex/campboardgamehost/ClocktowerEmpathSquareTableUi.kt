@@ -252,6 +252,7 @@ internal fun ClocktowerEmpathSquareTableDialog(
     language: String,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerEmpathResultChoice) -> Unit,
 ) {
@@ -269,129 +270,134 @@ internal fun ClocktowerEmpathSquareTableDialog(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background,
         ) {
-            ClocktowerSquareTableSeatSurface(
-                seats = seats.map { seat ->
-                    val content = hostSeatContentPresentation(seat, language)
-                    val visual = clocktowerEmpathSeatVisual(
-                        seatNumber = seat.seatId.number,
-                        actorSeat = actorSeat,
-                        scopeSeats = selectedChoice.scopeSeats,
-                        actualEvilSeats = actualEvilSeats,
-                        recluseSeat = recluseSeat,
-                        contributingSeats = displayedContributionSeats,
-                        language = language,
-                    )
-                    ClocktowerSquareTableSeatUiModel(
-                        seatId = seat.seatId.renderKey(),
-                        seatNumber = seat.seatId.number,
-                        label = content.primaryLabel,
-                        detailLabels = content.detailLabels,
-                        state = visual.state,
-                        isCurrentActor = visual.isCurrentActor,
-                        badge = visual.badge,
-                    )
-                },
-                modifier = Modifier.fillMaxSize(),
-                interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
-            ) {
-                Column(
+            Column(modifier = Modifier.fillMaxSize()) {
+                ClocktowerSquareTableSeatSurface(
+                    seats = seats.map { seat ->
+                        val content = hostSeatContentPresentation(seat, language)
+                        val visual = clocktowerEmpathSeatVisual(
+                            seatNumber = seat.seatId.number,
+                            actorSeat = actorSeat,
+                            scopeSeats = selectedChoice.scopeSeats,
+                            actualEvilSeats = actualEvilSeats,
+                            recluseSeat = recluseSeat,
+                            contributingSeats = displayedContributionSeats,
+                            language = language,
+                        )
+                        ClocktowerSquareTableSeatUiModel(
+                            seatId = seat.seatId.renderKey(),
+                            seatNumber = seat.seatId.number,
+                            label = content.primaryLabel,
+                            detailLabels = content.detailLabels,
+                            state = visual.state,
+                            isCurrentActor = visual.isCurrentActor,
+                            badge = visual.badge,
+                        )
+                    },
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(6.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
                 ) {
                     Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
+                            .fillMaxSize()
+                            .padding(6.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
                     ) {
-                        ClocktowerNightActionWakeInstruction(wakeInstruction)
-                        Text(
-                            text = if (language == "en") "Empath" else "共情者",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = if (choices.size > 1) {
-                                if (language == "en") {
-                                    "N neighbour scope · ★ evil · R Recluse · ✓★ counted in selected result"
-                                } else {
-                                    "邻 能力范围 · ★ 邪恶提示 · 隐 隐士 · ✓★ 当前结果计入"
-                                }
-                            } else {
-                                if (language == "en") {
-                                    "N neighbour scope · ★ evil · R Recluse"
-                                } else {
-                                    "邻 能力范围 · ★ 邪恶提示 · 隐 隐士"
-                                }
-                            },
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                        )
-                        Spacer(Modifier.height(8.dp))
-
-                        if (choices.size > 1) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            ClocktowerNightActionWakeInstruction(wakeInstruction)
                             Text(
-                                text = if (language == "en") "Choose the number to show" else "选择要展示的数字",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
+                                text = if (language == "en") "Empath" else "共情者",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
                             )
                             Spacer(Modifier.height(4.dp))
-                            choices.chunked(3).forEach { rowChoices ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                ) {
-                                    rowChoices.forEach { choice ->
-                                        if (choice.key == selectedChoice.key) {
-                                            Button(
-                                                onClick = { selectedKey = choice.key },
-                                                modifier = Modifier.weight(1f),
-                                            ) {
-                                                Text(choice.value.toString(), maxLines = 1)
-                                            }
-                                        } else {
-                                            OutlinedButton(
-                                                onClick = { selectedKey = choice.key },
-                                                modifier = Modifier.weight(1f),
-                                            ) {
-                                                Text(choice.value.toString(), maxLines = 1)
+                            Text(
+                                text = if (choices.size > 1) {
+                                    if (language == "en") {
+                                        "N neighbour scope · ★ evil · R Recluse · ✓★ counted in selected result"
+                                    } else {
+                                        "邻 能力范围 · ★ 邪恶提示 · 隐 隐士 · ✓★ 当前结果计入"
+                                    }
+                                } else {
+                                    if (language == "en") {
+                                        "N neighbour scope · ★ evil · R Recluse"
+                                    } else {
+                                        "邻 能力范围 · ★ 邪恶提示 · 隐 隐士"
+                                    }
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                            )
+                            Spacer(Modifier.height(8.dp))
+
+                            if (choices.size > 1) {
+                                Text(
+                                    text = if (language == "en") "Choose the number to show" else "选择要展示的数字",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                choices.chunked(3).forEach { rowChoices ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    ) {
+                                        rowChoices.forEach { choice ->
+                                            if (choice.key == selectedChoice.key) {
+                                                Button(
+                                                    onClick = { selectedKey = choice.key },
+                                                    modifier = Modifier.weight(1f),
+                                                ) {
+                                                    Text(choice.value.toString(), maxLines = 1)
+                                                }
+                                            } else {
+                                                OutlinedButton(
+                                                    onClick = { selectedKey = choice.key },
+                                                    modifier = Modifier.weight(1f),
+                                                ) {
+                                                    Text(choice.value.toString(), maxLines = 1)
+                                                }
                                             }
                                         }
+                                        repeat(3 - rowChoices.size) { Spacer(Modifier.weight(1f)) }
                                     }
-                                    repeat(3 - rowChoices.size) { Spacer(Modifier.weight(1f)) }
+                                    Spacer(Modifier.height(4.dp))
                                 }
-                                Spacer(Modifier.height(4.dp))
+                            }
+
+                            Button(
+                                onClick = { onConfirm(selectedChoice) },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(
+                                    if (language == "en") {
+                                        "Show information: ${selectedChoice.value}"
+                                    } else {
+                                        "展示信息：${selectedChoice.value}"
+                                    },
+                                    maxLines = 1,
+                                )
                             }
                         }
-
-                        Button(
-                            onClick = { onConfirm(selectedChoice) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(
-                                if (language == "en") {
-                                    "Show information: ${selectedChoice.value}"
-                                } else {
-                                    "展示信息：${selectedChoice.value}"
-                                },
-                                maxLines = 1,
-                            )
-                        }
                     }
-
-                    ClocktowerSquareTableStepNavigation(
-                        language = language,
-                        canGoPrevious = canGoPrevious,
-                        onPrevious = onPrevious,
-                        onNext = onNext,
-                    )
                 }
+
+                ClocktowerNightBottomActionBar(
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onPrevious = onPrevious,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
+                )
             }
         }
     }

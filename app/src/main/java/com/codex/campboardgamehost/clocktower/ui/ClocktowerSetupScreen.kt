@@ -16,13 +16,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -78,9 +76,6 @@ internal fun ClocktowerSettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        TextButton(onClick = { if (step == 0) onBack() else step -= 1 }) {
-                            Text(stringResource(R.string.back))
-                        }
                         Text(
                             text = text("配置游戏", "GAME SETUP"),
                             color = MaterialTheme.colorScheme.primary,
@@ -281,32 +276,22 @@ internal fun ClocktowerSettingsScreen(
             }
 
             item {
-                Button(
-                    onClick = {
-                        if (step < 2) step += 1 else onStart()
+                HostBottomActionBar(
+                    previousLabel = text("上一步", "Previous"),
+                    hostToolsLabel = text("主持工具", "Host Tools"),
+                    nextLabel = if (step < 2) {
+                        text("下一步", "Continue")
+                    } else if (canStart) {
+                        stringResource(R.string.start_dealing)
+                    } else {
+                        stringResource(R.string.need_clocktower_min_players, MIN_CLOCKTOWER_PLAYERS)
                     },
-                    enabled = if (step == 2) canStart else true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(14.dp),
-                ) {
-                    Text(
-                        text = if (step < 2) {
-                            text("下一步", "Continue")
-                        } else if (canStart) {
-                            stringResource(R.string.start_dealing)
-                        } else {
-                            stringResource(R.string.need_clocktower_min_players, MIN_CLOCKTOWER_PLAYERS)
-                        },
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-                if (step == 0) {
-                    TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                        Text(text("返回首页修改玩家", "Edit players on home screen"))
-                    }
-                }
+                    onPrevious = { if (step == 0) onBack() else step -= 1 },
+                    onHostTools = {},
+                    onNext = { if (step < 2) step += 1 else onStart() },
+                    hostToolsEnabled = false,
+                    nextEnabled = if (step == 2) canStart else true,
+                )
             }
         }
     }

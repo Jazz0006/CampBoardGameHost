@@ -36,17 +36,25 @@ import androidx.compose.ui.unit.sp
 @Composable
 internal fun PassPhoneScreen(
     playerName: String,
+    playerNames: List<String>,
     gameKind: GameKind,
     current: Int,
     total: Int,
     onReveal: () -> Unit,
+    onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
+    onNext: () -> Unit,
 ) {
     if (gameKind == GameKind.Clocktower) {
         ClocktowerDealHandoffScreen(
             playerName = playerName,
+            playerNames = playerNames,
             current = current,
             total = total,
             onReveal = onReveal,
+            onPrevious = onPrevious,
+            onHostTools = onHostTools,
+            onNext = onNext,
         )
         return
     }
@@ -78,8 +86,6 @@ internal fun RevealCardScreen(
     if (gameKind == GameKind.Clocktower) {
         ClocktowerPlayerRoleRevealScreen(
             card = card,
-            current = current,
-            total = total,
             onHide = onHide,
         )
         return
@@ -124,12 +130,27 @@ internal fun RevealCardScreen(
 @Composable
 private fun ClocktowerDealHandoffScreen(
     playerName: String,
+    playerNames: List<String>,
     current: Int,
     total: Int,
     onReveal: () -> Unit,
+    onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
+    onNext: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
+    require(total == playerNames.size) { "Identity controller total must match the physical seat count" }
+    require(current in 1..total) { "Identity controller current seat must be in range" }
+    require(playerNames[current - 1] == playerName) { "Identity controller target must match the current seat" }
+    val seats = playerNames.mapIndexed { index, name ->
+        HostSeatPresentation(
+            seatId = ClocktowerSeatId(index + 1),
+            playerName = name,
+            isAlive = true,
+        )
+    }
+    val currentSeatId = ClocktowerSeatId(current)
 
     ClocktowerDarkTheme {
         Column(
@@ -141,119 +162,88 @@ private fun ClocktowerDealHandoffScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 18.dp, vertical = 14.dp),
-                    verticalArrangement = Arrangement.spacedBy(9.dp),
+                        .padding(horizontal = 18.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
+                    Text(
+                        text("身份展示", "IDENTITY REVEAL"),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.2.sp,
+                    )
+                    Text(
+                        "$current / $total",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+
+            HostTableShell(
+                seats = seats,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                interaction = HostTableInteractionState(
+                    mode = HostTableInteractionMode.Sequential,
+                    currentSeatId = currentSeatId,
+                ),
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(18.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.34f)),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Text(
-                            text("秘密发牌", "PRIVATE DEAL"),
+                            "$current / $total",
                             color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Black,
-                            letterSpacing = 1.2.sp,
                         )
                         Text(
-                            "$current / $total",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            text(
+                                "给 ${current} 号 $playerName 展示身份",
+                                "Show the role to seat $current · $playerName",
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
                         )
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                        repeat(total) { index ->
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(4.dp)
-                                    .background(
-                                        if (index < current) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.surfaceVariant,
-                                        RoundedCornerShape(50),
-                                    ),
-                            )
+                        Button(
+                            onClick = onReveal,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            shape = RoundedCornerShape(14.dp),
+                        ) {
+                            Text(text("展示身份", "Show identity"), fontWeight = FontWeight.Bold)
                         }
                     }
                 }
             }
 
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(22.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(96.dp)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = current.toString(),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Black,
-                    )
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text("请把手机交给", "Pass the phone to"),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    playerName,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Black,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-                Surface(
-                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.12f),
-                    shape = RoundedCornerShape(18.dp),
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(5.dp),
-                    ) {
-                        Text(
-                            text("隐私确认", "PRIVACY CHECK"),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Black,
-                        )
-                        Text(
-                            text(
-                                "确认只有 $playerName 能看到屏幕后，再查看身份。",
-                                "Make sure only $playerName can see the screen before revealing.",
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
-            }
-
             Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
-                Button(
-                    onClick = onReveal,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                        .height(54.dp),
-                    shape = RoundedCornerShape(14.dp),
-                ) {
-                    Text(text("我是 $playerName，查看身份", "I am $playerName — reveal my role"), fontWeight = FontWeight.Bold)
-                }
+                HostBottomActionBar(
+                    previousLabel = text("上一步", "Previous"),
+                    hostToolsLabel = text("主持工具", "Host Tools"),
+                    nextLabel = text("下一步", "Next"),
+                    onPrevious = onPrevious,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                    previousEnabled = current > 1,
+                )
             }
         }
     }
@@ -261,8 +251,6 @@ private fun ClocktowerDealHandoffScreen(
 @Composable
 private fun ClocktowerPlayerRoleRevealScreen(
     card: PlayerCard,
-    current: Int,
-    total: Int,
     onHide: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -288,28 +276,20 @@ private fun ClocktowerPlayerRoleRevealScreen(
                 .background(MaterialTheme.colorScheme.background),
         ) {
             Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 18.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
-                    Column {
-                        Text(
-                            text("仅供你查看", "FOR YOUR EYES ONLY"),
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.2.sp,
-                        )
-                        Text(card.name, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
                     Text(
-                        "$current / $total",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Bold,
+                        text("仅供你查看", "FOR YOUR EYES ONLY"),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.2.sp,
                     )
+                    Text(card.name, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -371,8 +351,8 @@ private fun ClocktowerPlayerRoleRevealScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text(
-                        "记住角色和能力。不要讨论身份，隐藏页面后把手机交回说书人或下一位玩家。",
-                        "Remember your character and ability. Hide this screen before passing the phone back.",
+                        "记住角色和能力。隐藏页面后把手机交回说书人。",
+                        "Remember your character and ability. Hide this screen, then return the phone to the Storyteller.",
                     ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -390,11 +370,7 @@ private fun ClocktowerPlayerRoleRevealScreen(
                     shape = RoundedCornerShape(14.dp),
                 ) {
                     Text(
-                        text = if (current == total) {
-                            text("隐藏身份，交回说书人", "Hide role and return to host")
-                        } else {
-                            text("隐藏身份，交给下一位玩家", "Hide role and pass to next player")
-                        },
+                        text = text("隐藏身份，交回说书人", "Hide role and return to Storyteller"),
                         fontWeight = FontWeight.Bold,
                     )
                 }

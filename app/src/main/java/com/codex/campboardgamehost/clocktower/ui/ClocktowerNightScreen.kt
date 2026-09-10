@@ -216,6 +216,7 @@ import java.util.UUID
 internal fun ClocktowerNewDemonConfirmationScreen(
     newDemonLabel: String,
     hasNewDemon: Boolean,
+    onHostTools: () -> Unit,
     onShowPlayerDisplay: () -> Unit,
     onConfirm: () -> Unit,
 ) {
@@ -352,26 +353,23 @@ internal fun ClocktowerNewDemonConfirmationScreen(
                     ) {
                         Text(stringResource(R.string.clocktower_host_show_to_player))
                     }
-                    Button(
-                        onClick = onConfirm,
-                        enabled = hasNewDemon,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                    ) {
-                        Text(
-                            text("已告知，进入天亮", "Informed, continue to dawn"),
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
+                    HostBottomActionBar(
+                        previousLabel = text("上一步", "Previous"),
+                        hostToolsLabel = text("主持工具", "Host Tools"),
+                        nextLabel = text("已告知，进入天亮", "Informed, continue to dawn"),
+                        onPrevious = {},
+                        onHostTools = onHostTools,
+                        onNext = onConfirm,
+                        previousEnabled = false,
+                        nextEnabled = hasNewDemon,
+                    )
                 }
             }
         }
     }
 }
 
-/** Behavior-preserving R2 extraction for Clocktower night active UI. */
+/** Compact active-night shell: no independent top chrome; progress belongs inside the table. */
 @Composable
 internal fun ClocktowerNightActiveScreen(
     title: String,
@@ -380,97 +378,40 @@ internal fun ClocktowerNightActiveScreen(
     canGoPrevious: Boolean,
     nextEnabled: Boolean,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     content: @Composable () -> Unit,
 ) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
     ClocktowerDarkTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-        ) {
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 8.dp,
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 18.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(3.dp),
-                    ) {
-                        Text(
-                            title,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
-                        )
-                        Text(
-                            subtitle,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                    Text(
-                        progress,
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Black,
-                    )
-                }
-            }
-
-            LazyColumn(
+        CompositionLocalProvider(LocalClocktowerNightProgress provides progress) {
+            Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
             ) {
-                item { content() }
-            }
-
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 12.dp,
-            ) {
-                Row(
+                LazyColumn(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    OutlinedButton(
-                        onClick = onPrevious,
-                        enabled = canGoPrevious,
-                        modifier = Modifier
-                            .weight(0.78f)
-                            .height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                    ) {
-                        Text(stringResource(R.string.previous_step))
-                    }
-                    Button(
-                        onClick = onNext,
-                        enabled = nextEnabled,
-                        modifier = Modifier
-                            .weight(1.22f)
-                            .height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                    ) {
-                        Text(stringResource(R.string.clocktower_host_finish_next))
-                    }
+                    item { content() }
                 }
+
+                ClocktowerNightBottomActionBar(
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    nextEnabled = nextEnabled,
+                    onPrevious = onPrevious,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
+                )
             }
         }
     }
 }
-
 @Composable
 internal fun ClocktowerNightReadyCard() {
     val language = LocalContext.current.resources.configuration.locales[0].language

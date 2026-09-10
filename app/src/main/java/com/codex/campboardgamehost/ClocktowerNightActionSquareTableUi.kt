@@ -15,6 +15,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +33,8 @@ internal fun clocktowerSingleTargetSeatState(
     seatNumber in selectableSeats -> ClocktowerSquareTableSeatState.Selectable
     else -> ClocktowerSquareTableSeatState.Disabled
 }
+
+internal val LocalClocktowerNightProgress = compositionLocalOf<String?> { null }
 
 internal data class ClocktowerNightActionSeatPresentation(
     val targetState: ClocktowerSquareTableSeatState,
@@ -79,6 +82,16 @@ internal fun clocktowerTwoTargetSeatPresentation(
 
 @Composable
 internal fun ClocktowerNightActionWakeInstruction(instruction: String?) {
+    LocalClocktowerNightProgress.current?.takeIf { it.isNotBlank() }?.let { value ->
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(4.dp))
+    }
     instruction?.takeIf { it.isNotBlank() }?.let { value ->
         Text(
             text = value,
@@ -92,47 +105,36 @@ internal fun ClocktowerNightActionWakeInstruction(instruction: String?) {
 }
 
 /**
- * Compact shared navigation for square-table night actions.
+ * Shared screen-bottom navigation for square-table night actions.
  *
  * Labels are intentionally short and forced to one line: the current step/actor belongs in the
  * center instruction, not inside navigation buttons. This keeps narrow phone layouts stable.
  */
 @Composable
-internal fun ClocktowerSquareTableStepNavigation(
+internal fun ClocktowerNightBottomActionBar(
     language: String,
     canGoPrevious: Boolean,
     nextEnabled: Boolean = true,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
-    Row(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 10.dp,
     ) {
-        OutlinedButton(
-            onClick = onPrevious,
-            enabled = canGoPrevious,
-            modifier = Modifier.weight(1f),
-        ) {
-            Text(
-                text = if (language == "en") "← Previous" else "← 上一步",
-                maxLines = 1,
-                softWrap = false,
-                style = MaterialTheme.typography.labelMedium,
-            )
-        }
-        Button(
-            onClick = onNext,
-            enabled = nextEnabled,
-            modifier = Modifier.weight(1f),
-        ) {
-            Text(
-                text = if (language == "en") "Next →" else "下一步 →",
-                maxLines = 1,
-                softWrap = false,
-                style = MaterialTheme.typography.labelMedium,
-            )
-        }
+        HostBottomActionBar(
+            previousLabel = if (language == "en") "← Previous" else "← 上一步",
+            hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
+            nextLabel = if (language == "en") "Next →" else "下一步 →",
+            previousEnabled = canGoPrevious,
+            nextEnabled = nextEnabled,
+            onPrevious = onPrevious,
+            onHostTools = onHostTools,
+            onNext = onNext,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+        )
     }
 }
 
@@ -150,6 +152,7 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
     canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     nextEnabled: Boolean = true,
     secondaryActionLabel: String? = null,
@@ -171,6 +174,9 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
         onSeatSelected = onSeatSelected,
         canGoPrevious = canGoPrevious,
         onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
+        nextEnabled = nextEnabled,
     ) {
         Column(
             modifier = Modifier
@@ -216,19 +222,6 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
             }
 
             Spacer(Modifier.height(6.dp))
-            Button(
-                onClick = onNext,
-                enabled = nextEnabled,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(if (language == "en") "Finish / Next" else "完成 / 下一步")
-            }
-
-            if (canGoPrevious) {
-                TextButton(onClick = onPrevious) {
-                    Text(if (language == "en") "Previous step" else "上一步")
-                }
-            }
         }
     }
 }
@@ -242,6 +235,9 @@ internal fun ClocktowerNightActionSquareTableDialog(
     onSeatSelected: (Int) -> Unit,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
+    onNext: () -> Unit,
+    nextEnabled: Boolean = true,
     centerContent: @Composable () -> Unit,
 ) {
     Dialog(
@@ -254,33 +250,45 @@ internal fun ClocktowerNightActionSquareTableDialog(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background,
         ) {
-            ClocktowerSquareTableSeatSurface(
-                seats = seats.map { seat ->
-                    val content = hostSeatContentPresentation(seat, language)
-                    val presentation = seatPresentation(seat.seatId.number)
-                    ClocktowerSquareTableSeatUiModel(
-                        seatId = seat.seatId.renderKey(),
-                        seatNumber = seat.seatId.number,
-                        label = content.primaryLabel,
-                        detailLabels = content.detailLabels,
-                        state = presentation.targetState,
-                        isCurrentActor = presentation.isCurrentActor,
-                    )
-                },
-                modifier = Modifier.fillMaxSize(),
-                interactionMode = if (enabled) {
-                    ClocktowerSquareTableInteractionMode.Selectable
-                } else {
-                    ClocktowerSquareTableInteractionMode.ReadOnly
-                },
-                onSeatClick = { renderKey ->
-                    seats.firstOrNull { seat -> seat.seatId.renderKey() == renderKey }
-                        ?.seatId
-                        ?.number
-                        ?.let(onSeatSelected)
-                },
-            ) {
-                centerContent()
+            Column(modifier = Modifier.fillMaxSize()) {
+                ClocktowerSquareTableSeatSurface(
+                    seats = seats.map { seat ->
+                        val content = hostSeatContentPresentation(seat, language)
+                        val presentation = seatPresentation(seat.seatId.number)
+                        ClocktowerSquareTableSeatUiModel(
+                            seatId = seat.seatId.renderKey(),
+                            seatNumber = seat.seatId.number,
+                            label = content.primaryLabel,
+                            detailLabels = content.detailLabels,
+                            state = presentation.targetState,
+                            isCurrentActor = presentation.isCurrentActor,
+                        )
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    interactionMode = if (enabled) {
+                        ClocktowerSquareTableInteractionMode.Selectable
+                    } else {
+                        ClocktowerSquareTableInteractionMode.ReadOnly
+                    },
+                    onSeatClick = { renderKey ->
+                        seats.firstOrNull { seat -> seat.seatId.renderKey() == renderKey }
+                            ?.seatId
+                            ?.number
+                            ?.let(onSeatSelected)
+                    },
+                ) {
+                    centerContent()
+                }
+                ClocktowerNightBottomActionBar(
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onPrevious = onPrevious,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
+                    nextEnabled = nextEnabled,
+                )
             }
         }
     }

@@ -169,6 +169,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
     language: String,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerUndertakerResultChoice) -> Unit,
 ) {
@@ -186,115 +187,120 @@ internal fun ClocktowerUndertakerSquareTableDialog(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background,
         ) {
-            ClocktowerSquareTableSeatSurface(
-                seats = seats.map { seat ->
-                    val content = hostSeatContentPresentation(seat, language)
-                    val visual = clocktowerUndertakerSeatVisual(
-                        seatNumber = seat.seatId.number,
-                        actorSeat = actorSeat,
-                        executedSeat = selectedChoice.executedSeat,
-                        language = language,
-                    )
-                    ClocktowerSquareTableSeatUiModel(
-                        seatId = seat.seatId.renderKey(),
-                        seatNumber = seat.seatId.number,
-                        label = content.primaryLabel,
-                        detailLabels = content.detailLabels,
-                        state = visual.state,
-                        isCurrentActor = visual.isCurrentActor,
-                        badge = visual.badge,
-                    )
-                },
-                modifier = Modifier.fillMaxSize(),
-                interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
-            ) {
-                Column(
+            Column(modifier = Modifier.fillMaxSize()) {
+                ClocktowerSquareTableSeatSurface(
+                    seats = seats.map { seat ->
+                        val content = hostSeatContentPresentation(seat, language)
+                        val visual = clocktowerUndertakerSeatVisual(
+                            seatNumber = seat.seatId.number,
+                            actorSeat = actorSeat,
+                            executedSeat = selectedChoice.executedSeat,
+                            language = language,
+                        )
+                        ClocktowerSquareTableSeatUiModel(
+                            seatId = seat.seatId.renderKey(),
+                            seatNumber = seat.seatId.number,
+                            label = content.primaryLabel,
+                            detailLabels = content.detailLabels,
+                            state = visual.state,
+                            isCurrentActor = visual.isCurrentActor,
+                            badge = visual.badge,
+                        )
+                    },
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(6.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
                 ) {
                     Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
+                            .fillMaxSize()
+                            .padding(6.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
                     ) {
-                        ClocktowerNightActionWakeInstruction(wakeInstruction)
-                        Text(
-                            text = if (language == "en") "Undertaker" else "送葬者",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = if (language == "en") {
-                                "EX marks today's executed player · read-only context"
-                            } else {
-                                "处 标记今天被处决的玩家 · 仅作信息上下文"
-                            },
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                        )
-                        Spacer(Modifier.height(8.dp))
-
-                        if (choices.size > 1) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            ClocktowerNightActionWakeInstruction(wakeInstruction)
                             Text(
-                                text = if (language == "en") "Choose the character to show" else "选择要展示的角色",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
+                                text = if (language == "en") "Undertaker" else "送葬者",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
                             )
                             Spacer(Modifier.height(4.dp))
-                            Box(modifier = Modifier.fillMaxWidth()) {
-                                OutlinedButton(
-                                    onClick = { roleMenuExpanded = true },
-                                    modifier = Modifier.fillMaxWidth(),
-                                ) {
-                                    Text(selectedChoice.displayLabel, maxLines = 1)
-                                }
-                                DropdownMenu(
-                                    expanded = roleMenuExpanded,
-                                    onDismissRequest = { roleMenuExpanded = false },
-                                ) {
-                                    choices.forEach { choice ->
-                                        DropdownMenuItem(
-                                            text = { Text(choice.displayLabel) },
-                                            onClick = {
-                                                selectedKey = choice.key
-                                                roleMenuExpanded = false
-                                            },
-                                        )
+                            Text(
+                                text = if (language == "en") {
+                                    "EX marks today's executed player · read-only context"
+                                } else {
+                                    "处 标记今天被处决的玩家 · 仅作信息上下文"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                            )
+                            Spacer(Modifier.height(8.dp))
+
+                            if (choices.size > 1) {
+                                Text(
+                                    text = if (language == "en") "Choose the character to show" else "选择要展示的角色",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Box(modifier = Modifier.fillMaxWidth()) {
+                                    OutlinedButton(
+                                        onClick = { roleMenuExpanded = true },
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Text(selectedChoice.displayLabel, maxLines = 1)
+                                    }
+                                    DropdownMenu(
+                                        expanded = roleMenuExpanded,
+                                        onDismissRequest = { roleMenuExpanded = false },
+                                    ) {
+                                        choices.forEach { choice ->
+                                            DropdownMenuItem(
+                                                text = { Text(choice.displayLabel) },
+                                                onClick = {
+                                                    selectedKey = choice.key
+                                                    roleMenuExpanded = false
+                                                },
+                                            )
+                                        }
                                     }
                                 }
+                                Spacer(Modifier.height(6.dp))
                             }
-                            Spacer(Modifier.height(6.dp))
-                        }
 
-                        Button(
-                            onClick = { onConfirm(selectedChoice) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(
-                                if (language == "en") {
-                                    "Show information: ${selectedChoice.displayLabel}"
-                                } else {
-                                    "展示信息：${selectedChoice.displayLabel}"
-                                },
-                                maxLines = 1,
-                            )
+                            Button(
+                                onClick = { onConfirm(selectedChoice) },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(
+                                    if (language == "en") {
+                                        "Show information: ${selectedChoice.displayLabel}"
+                                    } else {
+                                        "展示信息：${selectedChoice.displayLabel}"
+                                    },
+                                    maxLines = 1,
+                                )
+                            }
                         }
                     }
-
-                    ClocktowerSquareTableStepNavigation(
-                        language = language,
-                        canGoPrevious = canGoPrevious,
-                        onPrevious = onPrevious,
-                        onNext = onNext,
-                    )
                 }
+
+                ClocktowerNightBottomActionBar(
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onPrevious = onPrevious,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
+                )
             }
         }
     }

@@ -68,6 +68,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     onResultSelected: (Boolean) -> Unit,
     onAutomaticResultSelected: (Boolean) -> Unit,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
     Dialog(
@@ -80,46 +81,55 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background,
         ) {
-            ClocktowerSquareTableSeatSurface(
-                seats = seats.map { seat ->
-                    val content = hostSeatContentPresentation(seat, language)
-                    ClocktowerSquareTableSeatUiModel(
-                        seatId = seat.seatId.renderKey(),
-                        seatNumber = seat.seatId.number,
-                        label = content.primaryLabel,
-                        detailLabels = content.detailLabels,
-                        state = clocktowerFortuneTellerSeatState(
+            Column(modifier = Modifier.fillMaxSize()) {
+                ClocktowerSquareTableSeatSurface(
+                    seats = seats.map { seat ->
+                        val content = hostSeatContentPresentation(seat, language)
+                        ClocktowerSquareTableSeatUiModel(
+                            seatId = seat.seatId.renderKey(),
                             seatNumber = seat.seatId.number,
-                            selectedSeats = selectedSeats,
-                            selectableSeats = if (enabled) selectableSeats else emptySet(),
-                        ),
-                        isCurrentActor = seat.seatId.number == actorSeat,
+                            label = content.primaryLabel,
+                            detailLabels = content.detailLabels,
+                            state = clocktowerFortuneTellerSeatState(
+                                seatNumber = seat.seatId.number,
+                                selectedSeats = selectedSeats,
+                                selectableSeats = if (enabled) selectableSeats else emptySet(),
+                            ),
+                            isCurrentActor = seat.seatId.number == actorSeat,
+                        )
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    interactionMode = if (enabled) {
+                        ClocktowerSquareTableInteractionMode.Selectable
+                    } else {
+                        ClocktowerSquareTableInteractionMode.ReadOnly
+                    },
+                    onSeatClick = { renderKey ->
+                        seats.firstOrNull { seat -> seat.seatId.renderKey() == renderKey }
+                            ?.seatId
+                            ?.number
+                            ?.let(onSeatSelected)
+                    },
+                ) {
+                    ClocktowerFortuneTellerCenterControls(
+                        wakeInstruction = wakeInstruction,
+                        selectedSeats = selectedSeats,
+                        legalResults = legalResults,
+                        recommendedResult = recommendedResult,
+                        automaticStorytellerInfo = automaticStorytellerInfo,
+                        language = language,
+                        onResultSelected = onResultSelected,
+                        onAutomaticResultSelected = onAutomaticResultSelected,
                     )
-                },
-                modifier = Modifier.fillMaxSize(),
-                interactionMode = if (enabled) {
-                    ClocktowerSquareTableInteractionMode.Selectable
-                } else {
-                    ClocktowerSquareTableInteractionMode.ReadOnly
-                },
-                onSeatClick = { renderKey ->
-                    seats.firstOrNull { seat -> seat.seatId.renderKey() == renderKey }
-                        ?.seatId
-                        ?.number
-                        ?.let(onSeatSelected)
-                },
-            ) {
-                ClocktowerFortuneTellerCenterControls(
-                    wakeInstruction = wakeInstruction,
-                    selectedSeats = selectedSeats,
-                    legalResults = legalResults,
-                    recommendedResult = recommendedResult,
-                    automaticStorytellerInfo = automaticStorytellerInfo,
+                }
+
+                ClocktowerNightBottomActionBar(
                     language = language,
                     canGoPrevious = canGoPrevious,
-                    onResultSelected = onResultSelected,
-                    onAutomaticResultSelected = onAutomaticResultSelected,
                     onPrevious = onPrevious,
+                    onHostTools = onHostTools,
                     onNext = onNext,
                 )
             }
@@ -135,11 +145,8 @@ private fun ClocktowerFortuneTellerCenterControls(
     recommendedResult: Boolean?,
     automaticStorytellerInfo: Boolean,
     language: String,
-    canGoPrevious: Boolean,
     onResultSelected: (Boolean) -> Unit,
     onAutomaticResultSelected: (Boolean) -> Unit,
-    onPrevious: () -> Unit,
-    onNext: () -> Unit,
 ) {
     val actions = clocktowerFortuneTellerResultActions(
         legalResults = legalResults,
@@ -280,19 +287,6 @@ private fun ClocktowerFortuneTellerCenterControls(
         }
 
         Spacer(Modifier.height(6.dp))
-        Button(
-            onClick = onNext,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(if (language == "en") "Finish / Next" else "完成 / 下一步")
-        }
-
-        if (canGoPrevious) {
-            Spacer(Modifier.height(6.dp))
-            TextButton(onClick = onPrevious) {
-                Text(if (language == "en") "Previous step" else "上一步")
-            }
-        }
     }
 }
 

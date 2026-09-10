@@ -113,6 +113,7 @@ internal fun ClocktowerClockmakerSquareTableDialog(
     language: String,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerClockmakerResultChoice) -> Unit,
 ) {
@@ -135,6 +136,8 @@ internal fun ClocktowerClockmakerSquareTableDialog(
         onSeatSelected = {},
         canGoPrevious = canGoPrevious,
         onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
     ) {
         Column(
             modifier = Modifier
@@ -214,13 +217,6 @@ internal fun ClocktowerClockmakerSquareTableDialog(
                     )
                 }
             }
-
-            ClocktowerSquareTableStepNavigation(
-                language = language,
-                canGoPrevious = canGoPrevious,
-                onPrevious = onPrevious,
-                onNext = onNext,
-            )
         }
     }
 }

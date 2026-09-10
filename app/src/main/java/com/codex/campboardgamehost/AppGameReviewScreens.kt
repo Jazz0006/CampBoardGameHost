@@ -44,6 +44,7 @@ internal enum class HostToolTab {
     Roles,
     Records,
     History,
+    Settings,
 }
 @Composable
 internal fun ResultsDialog(
@@ -220,6 +221,7 @@ internal fun HostGameToolsScreen(
     events: List<ClocktowerEvent>,
     history: List<ArchivedGameReview>,
     initialTab: HostToolTab,
+    settingsContent: @Composable () -> Unit,
     onDismiss: () -> Unit,
     onNewGame: () -> Unit,
 ) {
@@ -275,6 +277,7 @@ internal fun HostGameToolsScreen(
                             HostToolTab.Roles -> text("角色身份", "Roles")
                             HostToolTab.Records -> text("操作记录", "Game log")
                             HostToolTab.History -> text("历史复盘 ${history.size}", "History ${history.size}")
+                            HostToolTab.Settings -> text("设置", "Settings")
                         }
                         if (selectedTab == tab) {
                             Button(
@@ -347,6 +350,15 @@ internal fun HostGameToolsScreen(
                                 onBack = { selectedHistoryId = null },
                                 modifier = Modifier.weight(1f),
                             )
+                        }
+                    }
+                    HostToolTab.Settings -> {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                        ) {
+                            settingsContent()
                         }
                     }
                 }
