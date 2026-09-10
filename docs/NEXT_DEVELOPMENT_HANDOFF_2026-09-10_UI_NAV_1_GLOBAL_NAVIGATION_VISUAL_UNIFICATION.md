@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — UI-NAV-1 Global Navigation Visual Unification
 
 > Date: 2026-09-10 Australia/Sydney  
-> Status: **ACTIVE — UI-NAV-1B COMPLETE / UI-NAV-1C NEXT**  
+> Status: **ACTIVE — UI-NAV-1C COMPLETE / UI-NAV-1D NEXT**  
 > Base main at campaign start: `9c19484c682044bb469d90fb7522810ca49ecac2`  
 > Branch: `codex/ui-nav-1-global-navigation-visual-unification`  
 > Draft PR: `#118 — UI: unify Storyteller navigation presentation`  
@@ -227,24 +227,73 @@ R2 #2013 / run 34444205141 PASS
 
 No Compose UI-test framework was introduced merely to test layout mechanics; current repository search found no existing Compose UI-test surface, and the test strategy explicitly permits compile/static/diff evidence for presentation-only work.
 
-The primitive is intentionally not wired into existing navigation yet. Production callback plumbing begins in 1C.
+### UI-NAV-1C — Clocktower Storyteller flow first — COMPLETE / PASS
 
-### UI-NAV-1C — Clocktower Storyteller flow first — NEXT
+Completed in two implementation slices.
 
-Migrate:
+1C.1 migrated the ordinary night-step Previous/Next row, shared `ClocktowerSquareTableStepNavigation`, and remaining Clocktower night/square-table navigation consumers to `HostBottomActionBar` while preserving existing callbacks and enabled rules.
 
-1. ordinary night-step Previous/Next row;
-2. shared square-table `ClocktowerSquareTableStepNavigation` consumers;
-3. remaining local square-table navigation variants;
-4. Clocktower day flow;
-5. replace Clocktower judge's top Host Tools entry with the safe bottom entry;
-6. audit the current night-complete/broadcast boundary and add Previous there only if current ownership permits it without hidden rollback semantics.
+1C.2 migrated the remaining private Clocktower host surfaces:
 
-Preserve all existing enabled rules and callbacks exactly unless a separately characterized boundary-flow change is explicitly opened.
+```text
+first-night / night-ready Storyteller prompt
+Dawn private review
+New Demon private confirmation
+Day Overview
+Nomination
+Vote
+EndConfirm
+Slayer
+Artist
+Klutz
+```
 
-Real-device spot-check after this slice is strongly preferred because square-table vertical-space recovery is a main product reason for the campaign.
+Ownership decisions preserved:
 
-### UI-NAV-1D — remaining host/game flows
+```text
+Night-ready / Dawn / New Demon / Day Overview / Klutz:
+- Previous slot reserved but disabled because no existing safe back owner exists.
+
+Nomination / Vote:
+- Previous reuses existing onCancel.
+
+EndConfirm / Slayer / Artist:
+- Previous reuses existing onBack.
+```
+
+The persistent `ClocktowerJudge` top Host Tools entry was removed only after equivalent safe bottom access was established. The root diff for that removal deleted only the `Screen.ClocktowerJudge` condition; WerewolfJudge and generic Game remain for 1D.
+
+Privacy fences:
+
+- Dawn public announcement remains full-screen/public and contains no Host Tools bottom chrome.
+- player-facing identity display remains isolated and contains no Host Tools or cross-player navigation.
+
+Validation evidence:
+
+```text
+1C.2 production checkpoint:
+69b34fa3094abd820cdf18c4ff8770f2538699ea
+
+1C.2 one-shot run:
+34455026774 — PASS
+- exact head / 11 production blob preflight PASS
+- exact patch PASS
+- exact 11-file production diff PASS
+- privacy reverse assertions PASS
+- ./gradlew :app:testFast --no-daemon PASS
+- remote head recheck PASS
+- production commit/push PASS
+- one-shot cleanup PASS
+
+cleanup head:
+8b015914182c398f7d8a62bcb8ebd388209fec47
+```
+
+Regular CI/R2 attempts on that bot-authored cleanup head ended `action_required` with zero jobs. This is workflow-start gating, not a code/test failure. A normal user-authored documentation checkpoint follows and becomes the clean baseline for 1D.
+
+The requested night-complete Previous was **not** invented where current ownership lacked a safe rollback/navigation callback. Moving authoritative phase-transition commit timing remains outside this presentation slice and still requires dedicated characterization if pursued later.
+
+### UI-NAV-1D — remaining host/game flows — NEXT
 
 Migrate only where existing actions map cleanly:
 
@@ -253,6 +302,8 @@ Migrate only where existing actions map cleanly:
 - seating / game selection / game settings.
 
 Do not force Results/Review modal actions into Previous/Host Tools/Next if their semantics are different.
+
+Before removing the remaining root top Host Tools condition for `WerewolfJudge` or `Game`, prove equivalent safe bottom access on every host-facing surface that depended on it.
 
 ### UI-NAV-1E — square-table identity delivery
 
@@ -352,13 +403,12 @@ UI-NAV-1 is complete when:
 
 ## 11. Immediate next action
 
-Start **UI-NAV-1C**.
+Start **UI-NAV-1D** from the latest normal user-authored documentation checkpoint.
 
-Before editing, re-query live `main`, branch head, PR #118 and checks. Then inspect:
+Before editing, re-query live `main`, branch head, PR #118 and checks. Then audit the remaining top-chrome-dependent host surfaces:
 
-- `ClocktowerNightActionSquareTableUi.kt` / `ClocktowerSquareTableStepNavigation`;
-- ordinary navigation in `ClocktowerNightStepUi.kt`;
-- App-root Host Tools callback wiring;
-- the current end-of-night/broadcast transition path before attempting any boundary Previous behavior.
+- Werewolf judge;
+- generic `Game`;
+- seating / game selection / game settings screens whose existing actions map cleanly to the three-slot language.
 
-First migrate the existing Clocktower navigation presentation to `HostBottomActionBar` while preserving callbacks and enabled rules exactly. Do not open the identity-controller migration until the common Clocktower navigation language is stable.
+For each surface, identify the current Previous/Back owner, current primary action owner, whether Host Tools is safe, and whether any player-facing/private surface must remain chrome-free. Remove `Screen.WerewolfJudge` or `Screen.Game` from the root top-bar condition only after equivalent bottom access is complete across that route. Do not mix identity-controller work into 1D; UI-NAV-1E remains the dedicated identity slice.
