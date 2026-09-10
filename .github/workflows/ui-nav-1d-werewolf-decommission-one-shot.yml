@@ -18,6 +18,7 @@ jobs:
       BRANCH: codex/ui-nav-1-global-navigation-visual-unification
       SCRIPT: .github/scripts/ui_nav_1d_werewolf_decommission_patch.py
       WORKFLOW: .github/workflows/ui-nav-1d-werewolf-decommission-one-shot.yml
+      DIAGNOSTIC: .github/werewolf-decommission-diagnostic.txt
     steps:
       - name: Checkout exact branch head
         uses: actions/checkout@v4
@@ -39,7 +40,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "bc987fae4c90a2c0e3749c23372a053b0a3d034b"
+          test "$(git rev-parse HEAD^)" = "c83cbb57a916cf425fc1c66e46c7879c6a2356fd"
           git fetch --no-tags origin "$BRANCH"
           test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
           test "$(git hash-object "$SCRIPT")" = "43ff996f0824cea791fbec6c5ed72c822f477ecb"
@@ -58,7 +59,21 @@ jobs:
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/werewolf/WerewolfRegistryFlowPlannerTest.kt)" = "38de5bdd4b53a522957beaf4d01edcc3b1bd1cc7"
 
       - name: Apply exact Werewolf decommission patch
-        run: python3 "$SCRIPT"
+        shell: bash
+        run: |
+          set +e
+          python3 "$SCRIPT" > /tmp/werewolf-decommission.log 2>&1
+          status=$?
+          cat /tmp/werewolf-decommission.log
+          if [ "$status" -ne 0 ]; then
+            cp /tmp/werewolf-decommission.log "$DIAGNOSTIC"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add "$DIAGNOSTIC"
+            git commit -m "diag: capture Werewolf decommission patch failure"
+            git push origin "HEAD:$BRANCH"
+            exit "$status"
+          fi
 
       - name: Audit exact product diff and compatibility fence
         shell: bash
