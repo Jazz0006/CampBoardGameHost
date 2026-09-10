@@ -88,15 +88,6 @@ private fun NavigationActionButton(
         return
     }
 
-    val content: @Composable () -> Unit = {
-        Text(
-            text = label,
-            maxLines = 1,
-            softWrap = false,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.labelMedium,
-        )
-    }
     val buttonModifier = modifier.heightIn(min = 48.dp)
 
     when (emphasis) {
@@ -104,21 +95,35 @@ private fun NavigationActionButton(
             onClick = onClick,
             enabled = enabled,
             modifier = buttonModifier,
-            content = content,
-        )
+        ) {
+            NavigationActionLabel(label)
+        }
 
         NavigationActionEmphasis.Utility -> TextButton(
             onClick = onClick,
             enabled = enabled,
             modifier = buttonModifier,
-            content = content,
-        )
+        ) {
+            NavigationActionLabel(label)
+        }
 
         NavigationActionEmphasis.Primary -> Button(
             onClick = onClick,
             enabled = enabled,
             modifier = buttonModifier,
-            content = content,
-        )
+        ) {
+            NavigationActionLabel(label)
+        }
     }
+}
+
+@Composable
+private fun NavigationActionLabel(label: String) {
+    Text(
+        text = label,
+        maxLines = 1,
+        softWrap = false,
+        overflow = TextOverflow.Ellipsis,
+        style = MaterialTheme.typography.labelMedium,
+    )
 }
