@@ -16,7 +16,8 @@ jobs:
     timeout-minutes: 35
     env:
       BRANCH: codex/ui-nav-1-global-navigation-visual-unification
-      SCRIPT: .github/scripts/ui_nav_1d_werewolf_decommission_patch.py
+      BASE_SCRIPT: .github/scripts/ui_nav_1d_werewolf_decommission_patch.py
+      SCRIPT: .github/scripts/ui_nav_1d_werewolf_decommission_patch_v2.py
       WORKFLOW: .github/workflows/ui-nav-1d-werewolf-decommission-one-shot.yml
       DIAGNOSTIC: .github/werewolf-decommission-diagnostic.txt
     steps:
@@ -40,10 +41,11 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "c83cbb57a916cf425fc1c66e46c7879c6a2356fd"
+          test "$(git rev-parse HEAD^)" = "61e94f2191a831a8caa7ff414a0ad68b8e319bb9"
           git fetch --no-tags origin "$BRANCH"
           test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
-          test "$(git hash-object "$SCRIPT")" = "43ff996f0824cea791fbec6c5ed72c822f477ecb"
+          test "$(git hash-object "$BASE_SCRIPT")" = "43ff996f0824cea791fbec6c5ed72c822f477ecb"
+          test "$(git hash-object "$SCRIPT")" = "6cb291284a9a08adb0192d12b13624fcca4b4ff7"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = "6c4f5f5155aea12e88e7e18e431e034b7ca02dc3"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/SeatingFirstSetupUi.kt)" = "9226a196e7bb52a79429b2a957f7de887ec1cf64"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/AppPlayerSetupScreens.kt)" = "f4c2a3d967a3b0b0566a38fd9ce88b50e164c3e0"
@@ -66,7 +68,10 @@ jobs:
           status=$?
           cat /tmp/werewolf-decommission.log
           if [ "$status" -ne 0 ]; then
-            cp /tmp/werewolf-decommission.log "$DIAGNOSTIC"
+            {
+              printf 'trigger=%s\n' "$GITHUB_SHA"
+              cat /tmp/werewolf-decommission.log
+            } > "$DIAGNOSTIC"
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add "$DIAGNOSTIC"
@@ -132,6 +137,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git rm "$SCRIPT" "$WORKFLOW"
+          git rm "$BASE_SCRIPT" "$SCRIPT" "$WORKFLOW" "$DIAGNOSTIC"
           git commit -m "chore(ci): remove Werewolf decommission one-shot"
           git push origin "HEAD:$BRANCH"
