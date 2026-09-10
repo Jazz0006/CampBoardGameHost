@@ -31,8 +31,40 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m py_compile .github/scripts/ui-nav-1e-identity-reveal-patch.py
-          python .github/scripts/ui-nav-1e-identity-reveal-patch.py
+          python - <<'PY'
+          from pathlib import Path
+
+          source = Path('.github/scripts/ui-nav-1e-identity-reveal-patch.py').read_text()
+          source = source.replace('from textwrap import dedent', 'from textwrap import dedent, indent', 1)
+
+          def preserve_nested_indent(text: str, label: str) -> str:
+              label_pos = text.index(f'"{label}"')
+              start = text.rfind('deal = replace_once(', 0, label_pos)
+              block = text[start:label_pos]
+              output = []
+              inside = False
+              converted = 0
+              for line in block.splitlines(keepends=True):
+                  plain = line.rstrip('\n')
+                  newline = '\n' if line.endswith('\n') else ''
+                  if plain == '    dedent(':
+                      output.append('    indent(dedent(' + newline)
+                      inside = True
+                  elif inside and plain == '    ),':
+                      output.append('    ), "        "),' + newline)
+                      inside = False
+                      converted += 1
+                  else:
+                      output.append(line)
+              assert converted == 2, (label, converted)
+              return text[:start] + ''.join(output) + text[label_pos:]
+
+          source = preserve_nested_indent(source, 'Clocktower controller call')
+          source = preserve_nested_indent(source, 'Clocktower player reveal call')
+          Path('/tmp/ui-nav-1e-patch.py').write_text(source)
+          PY
+          python -m py_compile /tmp/ui-nav-1e-patch.py
+          python /tmp/ui-nav-1e-patch.py
           git diff --check
           actual="$(git diff --name-only | sort)"
           expected="$(printf '%s\n' \
