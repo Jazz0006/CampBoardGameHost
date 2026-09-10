@@ -17,4 +17,12 @@ if source.count(old_clamp) != 1:
     raise SystemExit(f"base patch clamp anchor count {source.count(old_clamp)}, expected 1")
 source = source.replace(old_clamp, new_clamp)
 
+old_last_words = 'root = replace_exact(root, "        lastWordsPromptNames = emptyList()\\n", "", label="archive Werewolf prompt reset")'
+new_last_words = 'root = replace_exact(root, "        lastWordsPromptNames = emptyList()\\n", "", label="Werewolf prompt reset sites", expected=4)'
+if source.count(old_last_words) != 1:
+    raise SystemExit(
+        f"base patch last-words anchor count {source.count(old_last_words)}, expected 1"
+    )
+source = source.replace(old_last_words, new_last_words)
+
 exec(compile(source, str(base_script), "exec"), {"__name__": "__main__"})
