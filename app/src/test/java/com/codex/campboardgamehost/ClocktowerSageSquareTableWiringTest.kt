@@ -2,16 +2,24 @@ package com.codex.campboardgamehost
 
 import java.nio.file.Files
 import java.nio.file.Path
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerSageSquareTableWiringTest {
     @Test
-    fun `Sage materializer supplies typed presentation seats without propositions`() {
-        val source = hostScreenSource()
+    fun `Sage materialization is owned outside protected Host`() {
+        val hostSource = sourceFile(
+            "src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt",
+        )
+        val sageSource = sourceFile(
+            "src/main/java/com/codex/campboardgamehost/ClocktowerSageStepMaterializer.kt",
+        )
 
-        assertTrue(source.contains("presentationSubjectSeats = listOf(cards.indexOf(sageDemon) + 1, cards.indexOf(resolvedSagePair.second) + 1)"))
-        assertTrue(source.contains("presentationSubjectSeats = listOf(cards.indexOf(pair.first) + 1, cards.indexOf(pair.second) + 1)"))
+        assertTrue(hostSource.contains("clocktowerSageStepMaterializer("))
+        assertFalse(hostSource.contains("fun recommendedSageOptions("))
+        assertTrue(sageSource.contains("internal fun clocktowerSageDisplayOptions("))
+        assertTrue(sageSource.contains("presentationSubjectSeats"))
     }
 
     @Test
@@ -24,10 +32,6 @@ class ClocktowerSageSquareTableWiringTest {
         assertTrue(source.contains("fun showSageChoice(choice: ClocktowerSageResultChoice)"))
         assertTrue(source.contains("!usesSageSquareTable &&"))
     }
-
-    private fun hostScreenSource(): String = sourceFile(
-        "src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt",
-    )
 
     private fun nightStepSource(): String = sourceFile(
         "src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt",
