@@ -1,7 +1,9 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingPlayerStartingIdentity
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecordFactory
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingStartingRoleCategory
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -13,7 +15,7 @@ import org.json.JSONObject
  */
 internal object TroubleBrewingSetupCompletionPersistence {
     const val ROOT_KEY = "troubleBrewingSetupCompletion"
-    const val SCHEMA_VERSION = 1
+    const val SCHEMA_VERSION = 2
 
     fun encode(record: TroubleBrewingSetupRotationRecord): JSONObject {
         TroubleBrewingSetupRotationRecordFactory.validate(record)
@@ -27,6 +29,7 @@ internal object TroubleBrewingSetupCompletionPersistence {
             put("minionRoleIds", record.minionRoleIds.sorted().toCompletionJsonArray())
             put("primaryStyleTag", record.primaryStyleTag ?: JSONObject.NULL)
             put("selectedDrunkShownRole", record.selectedDrunkShownRole ?: JSONObject.NULL)
+            put("playerStartingIdentities", record.playerStartingIdentities.toCompletionJsonArray())
         }
     }
 
@@ -36,7 +39,7 @@ internal object TroubleBrewingSetupCompletionPersistence {
         val json = root.optJSONObject(ROOT_KEY)
             ?: throw IllegalArgumentException("$ROOT_KEY must be an object.")
         val schemaVersion = json.requiredCompletionInt("schemaVersion")
-        require(schemaVersion == SCHEMA_VERSION) {
+        require(schemaVersion in LEGACY_SCHEMA_VERSION..SCHEMA_VERSION) {
             "Unsupported Trouble Brewing setup completion schema '$schemaVersion'."
         }
 
@@ -49,11 +52,29 @@ internal object TroubleBrewingSetupCompletionPersistence {
             minionRoleIds = json.requiredCompletionStringSet("minionRoleIds"),
             primaryStyleTag = json.requiredCompletionNullableString("primaryStyleTag"),
             selectedDrunkShownRole = json.requiredCompletionNullableString("selectedDrunkShownRole"),
+            playerStartingIdentities = if (schemaVersion == LEGACY_SCHEMA_VERSION) {
+                emptyList()
+            } else {
+                json.requiredCompletionStartingIdentities("playerStartingIdentities")
+            },
         ).also(TroubleBrewingSetupRotationRecordFactory::validate)
     }
+
+    private const val LEGACY_SCHEMA_VERSION = 1
 }
 
 private fun List<String>.toCompletionJsonArray(): JSONArray = JSONArray().apply { forEach(::put) }
+
+private fun List<TroubleBrewingPlayerStartingIdentity>.toCompletionJsonArray(): JSONArray = JSONArray().apply {
+    forEach { identity ->
+        put(JSONObject().apply {
+            put("playerKey", identity.playerKey)
+            put("actualRoleId", identity.actualRoleId)
+            put("shownRoleId", identity.shownRoleId)
+            put("actualRoleCategory", identity.actualRoleCategory.name)
+        })
+    }
+}
 
 private fun JSONObject.requiredCompletionString(key: String): String {
     require(has(key) && !isNull(key)) { "Missing required Trouble Brewing completion string '$key'." }
@@ -92,6 +113,37 @@ private fun JSONObject.requiredCompletionStringSet(key: String): Set<String> {
         "Trouble Brewing completion '$key' entries must be unique."
     }
     return values.toSet()
+}
+
+private fun JSONObject.requiredCompletionStartingIdentities(
+    key: String,
+): List<TroubleBrewingPlayerStartingIdentity> {
+    require(has(key) && !isNull(key)) { "Missing required Trouble Brewing completion array '$key'." }
+    val array = optJSONArray(key)
+        ?: throw IllegalArgumentException("Trouble Brewing completion '$key' must be an array.")
+    return buildList {
+        for (index in 0 until array.length()) {
+            val identity = array.optJSONObject(index)
+                ?: throw IllegalArgumentException(
+                    "Trouble Brewing completion '$key' entry $index must be an object.",
+                )
+            val categoryName = identity.requiredCompletionString("actualRoleCategory")
+            val category = runCatching { TroubleBrewingStartingRoleCategory.valueOf(categoryName) }
+                .getOrElse {
+                    throw IllegalArgumentException(
+                        "Trouble Brewing completion starting identity has unknown role category '$categoryName'.",
+                    )
+                }
+            add(
+                TroubleBrewingPlayerStartingIdentity(
+                    playerKey = identity.requiredCompletionString("playerKey"),
+                    actualRoleId = identity.requiredCompletionString("actualRoleId"),
+                    shownRoleId = identity.requiredCompletionString("shownRoleId"),
+                    actualRoleCategory = category,
+                ),
+            )
+        }
+    }
 }
 
 private fun JSONObject.requiredCompletionNullableString(key: String): String? {
