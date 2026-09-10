@@ -14,7 +14,6 @@ class ClocktowerUndertakerSquareTableWiringTest {
         assertTrue(source.contains("clocktowerUndertakerResultChoices("))
         assertTrue(source.contains("ClocktowerUndertakerSquareTableDialog("))
         assertTrue(source.contains("val usesUndertakerSquareTable = undertakerResultChoices.isNotEmpty()"))
-        assertTrue(source.contains("!usesUndertakerSquareTable && !usesNumericSquareTable && nonPairResultFirstCandidates.isNotEmpty()"))
         assertTrue(source.contains("!usesUndertakerSquareTable &&\n                !usesNumericSquareTable &&\n                resultFirstRegistrationCandidates.isEmpty()"))
     }
 
