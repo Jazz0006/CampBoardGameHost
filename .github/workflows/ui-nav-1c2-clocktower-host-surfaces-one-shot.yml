@@ -1,0 +1,155 @@
+name: UI-NAV-1C.2 Clocktower host surfaces one-shot
+
+on:
+  push:
+    branches:
+      - codex/ui-nav-1-global-navigation-visual-unification
+    paths:
+      - .github/workflows/ui-nav-1c2-clocktower-host-surfaces-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-clocktower-host-surfaces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BRANCH: codex/ui-nav-1-global-navigation-visual-unification
+      SCRIPT: .github/scripts/ui_nav_1c2_clocktower_host_surfaces_patch.py
+      WORKFLOW: .github/workflows/ui-nav-1c2-clocktower-host-surfaces-one-shot.yml
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Preflight exact head and production blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git fetch --no-tags origin "$BRANCH"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+
+          check_blob() {
+            local path="$1"
+            local expected="$2"
+            local actual
+            actual="$(git hash-object "$path")"
+            test "$actual" = "$expected" || { echo "::error::$path blob drifted: expected $expected, got $actual"; exit 1; }
+          }
+
+          check_blob "$SCRIPT" "d2ba61fd4935498ba687bb8947b5924765c847a6"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt" "2a126b7e0f7c8d46f56d19fe9eb70bbf3fe1a5c0"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerStorytellerRecommendationUi.kt" "8e8327f93f61dd6689c79eff19d0ae7b83140ea5"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt" "ae615048613ebf128cec341748db5ccfff42c97b"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt" "320dcb3f710041ce8658b4f6b33998f7720e62a2"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt" "deff5c404fdc950107e7d8f72371047222939cbd"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayOverviewTableUi.kt" "73a45c5bec75c6179d0b5bffb8df06912f4f915b"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerPendingNominationTableUi.kt" "9c9aef6cfbf0fd8512b029506611e8926aeb6928"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt" "17afd37c2b98b35beb86f512d704276948ef38c0"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerTableUi.kt" "acb5750fd6fd9293ebd1535e85ede74463f711b6"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerArtistTableUi.kt" "19eb044e1f6d3bea337f030c537a630fb7722a58"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerKlutzTableUi.kt" "86a40ab291a0a56219c6ce097b83a536f36fed12"
+
+      - name: Apply exact UI-NAV-1C.2 patch
+        run: python3 "$SCRIPT"
+
+      - name: Audit exact production diff and privacy fences
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          cat > /tmp/expected-files.txt <<'EOF'
+          app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerStorytellerRecommendationUi.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerArtistTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayOverviewTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerKlutzTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerPendingNominationTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt
+          EOF
+          sort -o /tmp/expected-files.txt /tmp/expected-files.txt
+          git diff --name-only | sort > /tmp/actual-files.txt
+          diff -u /tmp/expected-files.txt /tmp/actual-files.txt
+
+          ! grep -q 'screen == Screen.ClocktowerJudge ||' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          grep -q 'screen == Screen.WerewolfJudge ||' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          grep -q 'screen == Screen.Game' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          grep -q 'previousEnabled = false' app/src/main/java/com/codex/campboardgamehost/ClocktowerStorytellerRecommendationUi.kt
+          grep -q 'previousEnabled = false' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
+          grep -q 'previousEnabled = false' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
+          grep -q 'previousEnabled = false' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerKlutzTableUi.kt
+          grep -q 'onPrevious = onBack' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerTableUi.kt
+          grep -q 'onPrevious = onBack' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerArtistTableUi.kt
+          grep -q 'onPrevious = onCancel' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerPendingNominationTableUi.kt
+          grep -q 'onPrevious = onCancel' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt')
+          s = p.read_text()
+          a = s.index('if (showPublicAnnouncement) {')
+          b = s.index('return@ClocktowerDarkTheme', a)
+          public = s[a:b]
+          assert 'HostBottomActionBar(' not in public
+          assert 'onHostTools' not in public
+          player = Path('app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayUi.kt').read_text()
+          assert 'HostBottomActionBar(' not in player
+          assert 'onHostTools' not in player
+          PY
+
+      - name: Run Android FAST validation
+        run: ./gradlew :app:testFast --no-daemon
+
+      - name: Recheck remote head before production push
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$BRANCH"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+
+      - name: Commit and push production patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerStorytellerRecommendationUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayOverviewTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerPendingNominationTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerArtistTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerKlutzTableUi.kt
+          git diff --cached --check
+          git commit -m "ui: unify Clocktower host navigation surfaces"
+          git push origin "HEAD:$BRANCH"
+
+      - name: Remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm "$SCRIPT" "$WORKFLOW"
+          git commit -m "chore(ci): remove UI-NAV-1C.2 one-shot"
+          git push origin "HEAD:$BRANCH"
