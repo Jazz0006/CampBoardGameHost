@@ -100,6 +100,12 @@ jobs:
 
           '''
           text = text[:fortune_start] + fortune_new + text[fortune_end:]
+
+          old_assert = 'assert ".align(Alignment.Center)\\n            .fillMaxWidth()," in app_deal'
+          new_assert = 'assert ".align(Alignment.Center)\\n                        .fillMaxWidth()," in app_deal'
+          if text.count(old_assert) != 1:
+              raise SystemExit('identity final assertion source shape changed')
+          text = text.replace(old_assert, new_assert, 1)
           p.write_text(text)
           PY
           python -m py_compile .github/scripts/ui-nav-device-layout-fix.py
