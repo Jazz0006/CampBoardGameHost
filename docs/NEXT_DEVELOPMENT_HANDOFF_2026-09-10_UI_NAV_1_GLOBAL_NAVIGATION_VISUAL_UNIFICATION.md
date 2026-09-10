@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — UI-NAV-1 Global Navigation Visual Unification
 
 > Date: 2026-09-10 Australia/Sydney  
-> Status: **ACTIVE — UI-NAV-1D COMPLETE / UI-NAV-1E NEXT**  
+> Status: **ACTIVE — UI-NAV-1E + UI-NAV-1F COMPLETE / UI-NAV-1G VALIDATION**
 > Live main re-audited: `9c19484c0b6381c94440c2253079d5c2ba5f796f`  
 > Branch: `codex/ui-nav-1-global-navigation-visual-unification`  
 > Re-audited branch head before this docs update: `02342be73d0afbfe681e37c9df95b46812c7c846`  
@@ -259,80 +259,75 @@ Clocktower setup checkpoint: 412ab0b08c773767a065f1ca3a1a190b1712fadc
 
 No navigation owner, gameplay owner, persistence/recovery owner, or Settings owner changed. UI-NAV-1E is now the active production slice.
 
-### UI-NAV-1E — Identity Reveal square-table controller — QUEUED AFTER 1D
+### UI-NAV-1E — Identity Reveal square-table controller — COMPLETE / PASS
 
-The old progress-bar/pass-phone controller is not the final design.
+Production checkpoint:
 
-Storyteller-side target:
+`ba2bd1f934dc4f49519fea4f7fbeba309235004b`
 
-```text
-reuse square-table UI
-current target player highlighted
-center: N / total
-center: Show identity to seat N · player name
-explicit Show identity button
-bottom: Previous / Host Tools / Next
-```
+Cleanup head after one-shot scaffolding removal:
 
-Privacy-safe table controller may show only:
+`35cb178c3c85f0b21cbc57360e8979f49330b1d0`
 
-- seat number;
-- player name;
-- current highlight;
-- local N / total;
-- explicit Show identity action.
-
-It must not show role, alignment, poison/drunk state, hidden state or any Storyteller secret.
-
-Routing ownership stays narrow:
-
-- `Screen.PassPhone` is reinterpreted as the Storyteller square-table reveal controller;
-- `Screen.RevealCard` remains the player-facing isolated full-screen reveal;
-- do not churn route/enum names merely for aesthetics.
-
-`currentDealIndex` remains the single cursor. Do not add `selectedRevealSeat`, `furthestRevealedSeat`, or another completion authority unless a concrete correctness/recovery failure proves it necessary.
-
-Behavior:
-
-- first seat Previous disabled;
-- Previous/Next only move the current target cursor;
-- Previous/Next must never auto-reveal a role;
-- Storyteller may move backwards and explicitly reveal a prior player again;
-- v1 does not need arbitrary seat-tap navigation unless implementation is trivial and risk-free;
-- player-facing RevealCard shows only that player's role + ability text + safe hide/finished control;
-- RevealCard contains no square table, Previous, Next, Host Tools or other-player information;
-- hiding identity returns to the **same** Storyteller controller seat and does not auto-advance.
-
-Last-seat boundary:
+Validation:
 
 ```text
-last identity seat
-[ Previous ] [ Host Tools ] [ Next ]
-
-Next
--> identity-complete / first-night boundary
-
-boundary
-Identity display complete
-Prepare for first night
-[ Previous ] [ Host Tools ] [ Start Night ]
+one-shot run 34474761127 PASS
+- exact four-production-file diff audit PASS
+- identity privacy contract audit PASS
+- :app:testFast PASS
+- :app:assembleDebug PASS
+- production push PASS
+- one-shot cleanup PASS
 ```
 
-Boundary Previous returns to the final identity seat so the role can be shown again.
+Implemented behavior:
 
-### UI-NAV-1F — Settings composition under Host Tools — LATER / ISOLATED
+- `Screen.PassPhone` is now the privacy-safe Storyteller square-table identity controller for Clocktower;
+- the controller receives seat/name data only and does not receive role, alignment, drunk/poison state, hidden state, or other Storyteller secrets;
+- `currentDealIndex` remains the single identity cursor;
+- Previous/Next move only that cursor and never auto-reveal;
+- first-seat Previous is disabled;
+- explicit Show Identity opens the isolated player-facing `Screen.RevealCard`;
+- Clocktower RevealCard Hide returns to the same Storyteller seat and does not auto-advance;
+- Undercover reveal/pass behavior is unchanged;
+- final-seat Next enters the existing `ClocktowerJudge` first-night-ready boundary with `nightStarted == false`;
+- that first-night boundary exposes Previous back to the final identity seat;
+- later-night ready boundaries keep Previous disabled;
+- no second identity cursor, navigation owner, phase owner, or persistence/recovery owner was introduced.
 
-Preferred only if narrow:
+### UI-NAV-1F — Settings composition under Host Tools — COMPLETE / PASS
 
-- add Settings as a Host Tools tab/internal destination;
-- reuse existing Settings content;
-- keep all Settings state/mutation ownership at App root;
-- do not duplicate Settings state;
-- keep legacy `Screen.Settings` until equivalent behavior is characterized.
+Production checkpoint:
 
-If this requires broad route/state ownership changes, **STOP and defer 1F**.
+`6dbb0d5bccd9adca8487947fb7e66f60f64937dc`
 
-### UI-NAV-1G — validation / closeout
+Cleanup head after one-shot scaffolding removal:
+
+`1abba7b11052ff8d044eef71f115b4d61f4f5ec1`
+
+Validation:
+
+```text
+one-shot run 34475818260 PASS
+- exact three-production-file baseline/diff audit PASS
+- Settings ownership/composition audit PASS
+- :app:testFast PASS
+- :app:assembleDebug PASS
+- production push PASS
+- one-shot cleanup PASS
+```
+
+Implemented behavior:
+
+- `HostToolTab.Settings` is a fourth tab in the existing root-owned `HostGameToolsScreen`;
+- `AppSettingsScreen.kt` now exposes reusable `SettingsContent` while retaining `SettingsScreen` as the legacy route wrapper;
+- App-root remains the only owner of `languageMode`, `storytellerAutomationMode`, common-player state, persistence writes, and mutations;
+- Host Tools receives Settings as a composable content slot only; no duplicate Settings state exists inside Host Tools;
+- legacy `Screen.Settings` remains in place;
+- no route/state-machine redesign, no second Host Tools owner, and no Settings persistence migration was introduced.
+
+### UI-NAV-1G — validation / closeout — ACTIVE
 
 Run focused/full validation appropriate to changed presentation/ownership seams, exact diff audit, and real-device/emulator visual acceptance. Then close UI-NAV-1 and restore EPI-MQ-0 as current priority.
 
@@ -408,21 +403,17 @@ Stop and re-audit if a slice appears to require:
 
 ## 10. Immediate next action
 
-Start **UI-NAV-1E Identity Reveal square-table controller**.
+Execute **UI-NAV-1G final validation / closeout**.
 
-Current characterized behavior to replace:
+Required closeout evidence:
 
-- `Screen.PassPhone` is the old progress/pass-phone controller;
-- `Screen.RevealCard.onHide` currently auto-increments `currentDealIndex`;
-- the last reveal currently jumps directly to `Screen.ClocktowerJudge`.
-
-Required 1E behavior:
-
-- reinterpret `Screen.PassPhone` as the privacy-safe Storyteller square-table controller;
-- Previous/Next move only the single existing `currentDealIndex`;
-- explicit Show opens `Screen.RevealCard`;
-- RevealCard Hide returns to the same controller seat without auto-advance;
-- last-seat Next enters the existing `ClocktowerJudge` first-night ready/recommendation boundary while leaving `nightStarted=false`;
-- that boundary should expose Previous back to the final identity seat if this remains a narrow callback-only change;
-- do not expose table/Host Tools/cross-player information on RevealCard;
-- do not add a second identity cursor or persistence migration.
+1. re-confirm live `main`, PR #118 and branch head;
+2. run whole-PR `diff --check` / changed-path audit and confirm no transient one-shot workflow/script remains;
+3. preserve the explicit identity privacy and Settings ownership contracts from 1E/1F;
+4. create a user-authored `[full-ci]` logical checkpoint so CI selects T4 exactly as required by `docs/TESTING_STRATEGY.md`;
+5. require T4 PASS: Android `testFull` + debug APK, ASP contract tests, Real Clingo cross-validation, aggregate CI gate;
+6. require the R2 main-thread boundary check to pass for that checkpoint;
+7. keep PR #118 Draft until visual/device acceptance is explicitly decided;
+8. perform emulator/real-device visual acceptance for the unified bottom navigation, identity controller/reveal boundary, and the four-tab Host Tools layout. In particular, inspect the narrow-screen fit of the History tab label after Settings was added;
+9. after automated T4 PASS, update this handoff/roadmap/PR description with the final checkpoint and mark UI-NAV-1 implementation complete while recording any device-only follow-up separately;
+10. do not merge PR #118 without explicit user direction.

@@ -19,7 +19,7 @@ UI-R5 post-merge main CI                          PASS
 UI-R5 Field Test APK                              PASS
 UI-R5 real-device acceptance                      PARTIAL / follow-up remains
 
-UI-NAV-1 global navigation visual unification     CURRENT — 1D COMPLETE / 1E NEXT
+UI-NAV-1 global navigation visual unification     CURRENT — 1E + 1F COMPLETE / 1G VALIDATION
 EPI-MQ / Productive Uncertainty                   NEXT after UI-NAV-1 — EPI-MQ-0 baseline re-audit
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
@@ -72,7 +72,7 @@ PR #117 is closed and merged. Its former branch/handoff/audit documents are hist
 
 ## 3. Current priority — UI-NAV-1 Global Navigation Visual Unification
 
-> **CURRENT: UI-NAV-1D is complete. Proceed directly with UI-NAV-1E identity delivery before EPI-MQ-0.**
+> **CURRENT: UI-NAV-1E and UI-NAV-1F are complete. Execute UI-NAV-1G full acceptance and device/visual closeout before EPI-MQ-0.**
 
 Product decision:
 
@@ -142,7 +142,7 @@ final settings R2: 34472655199 PASS
 final settings CI: 34472655245 Android FAST + CI gate PASS
 ```
 
-The remaining persistent `Screen.Game` top Host Tools chrome is gone. Pre-game surfaces reserve/disable Host Tools rather than inventing a second owner. Settings relocation remains UI-NAV-1F.
+The remaining persistent `Screen.Game` top Host Tools chrome is gone. Pre-game surfaces reserve/disable Host Tools rather than inventing a second owner. Settings composition under Host Tools is now complete without moving Settings ownership out of App root.
 
 ### Identity-delivery product refinement
 
@@ -164,6 +164,30 @@ The actual role reveal remains a separate player-facing full-screen view with no
 Backwards identity navigation is intentionally supported so the Storyteller can re-show a role. It moves only the existing `currentDealIndex`; do not add a separate selected/furthest-completed cursor unless implementation evidence proves it necessary.
 
 The last identity seat keeps ordinary `Next`. It leads to a dedicated identity-complete / first-night boundary, where the Storyteller may go Previous to the last identity seat or explicitly start the night.
+
+### UI-NAV-1E / 1F completion evidence
+
+```text
+1E identity production: ba2bd1f934dc4f49519fea4f7fbeba309235004b
+1E cleanup head: 35cb178c3c85f0b21cbc57360e8979f49330b1d0
+1E one-shot: 34474761127 PASS
+- exact four-file diff PASS
+- privacy contract audit PASS
+- :app:testFast PASS
+- :app:assembleDebug PASS
+
+1F Settings production: 6dbb0d5bccd9adca8487947fb7e66f60f64937dc
+1F cleanup head: 1abba7b11052ff8d044eef71f115b4d61f4f5ec1
+1F one-shot: 34475818260 PASS
+- exact three-file diff PASS
+- Settings ownership/composition audit PASS
+- :app:testFast PASS
+- :app:assembleDebug PASS
+```
+
+Identity delivery now uses the Storyteller square-table controller with a single App-root cursor and an isolated player reveal surface. Settings now appears as a tab inside the existing Host Tools overlay through reusable `SettingsContent`; App root remains the only Settings state/persistence owner and legacy `Screen.Settings` remains available.
+
+UI-NAV-1G must use a user-authored `[full-ci]` checkpoint because `docs/TESTING_STRATEGY.md` defines T4 as the logical acceptance tier. Automated T4 is not replaced by the preceding 1E/1F FAST one-shots. Real-device visual acceptance remains a separate final product check.
 
 ### Phase-boundary product refinement
 
@@ -204,9 +228,9 @@ UI-NAV-1A  read-only visual / ownership audit                         COMPLETE /
 UI-NAV-1B  establish smallest stateless three-slot bottom primitive   COMPLETE / PASS
 UI-NAV-1C  migrate Clocktower night / square-table / day host flow    COMPLETE / PASS
 UI-NAV-1D  migrate remaining surviving game / safe setup flows        COMPLETE / PASS
-UI-NAV-1E  migrate identity delivery to privacy-safe square table      NEXT
-UI-NAV-1F  isolate Settings-under-Host-Tools composition if still narrow
-UI-NAV-1G  focused/full validation + real-device visual acceptance + closeout
+UI-NAV-1E  migrate identity delivery to privacy-safe square table      COMPLETE / PASS
+UI-NAV-1F  isolate Settings-under-Host-Tools composition                    COMPLETE / PASS
+UI-NAV-1G  T4 full validation + real-device visual acceptance + closeout   CURRENT
 ```
 
 UI-NAV-1B established `HostBottomActionBar` as a pure presentation component:
