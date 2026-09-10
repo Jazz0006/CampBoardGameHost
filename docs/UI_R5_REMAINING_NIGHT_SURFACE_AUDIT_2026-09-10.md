@@ -132,6 +132,44 @@ Required migration boundary:
 5. keep final player reveal/history behavior on existing paths;
 6. fail closed when presentation-seat identity is absent, duplicated, out of range, or malformed.
 
+### Sage architecture pre-flight — recorded before production edit
+
+```text
+Architecture pre-flight:
+- current owner:
+  ClocktowerHostScreen currently owns both prepared Sage lifecycle facts and Sage-specific
+  pair recommendation/materialization; ClocktowerInformationStepBuilder owns generic
+  information-step reliability/selection mechanics; ClocktowerSageSquareTableUi owns
+  Sage square-table projection/rendering.
+- proposed responsibility:
+  Sage-specific pair candidate/recommendation projection, typed presentationSubjectSeats,
+  localized Sage display metadata, and Sage NightStep materialization.
+- authoritative state owner(s):
+  Host/session/canonical night flow remain authoritative for current Demon identity,
+  whether Sage actually died to the Demon this night, effective death-trigger ability state,
+  cards/seat order, and interaction ordering. The extracted owner must not recreate these facts.
+- narrow typed input/output seam:
+  prepared immutable Sage trigger actor + current Demon + resolved direct pair + effective
+  ability state + card roster, together with narrow recommendation/localization inputs,
+  -> ClocktowerDisplayOption / ClocktowerNightStepUi. No Host/session object dependency.
+- keep in current owner / extract:
+  EXTRACT to a role-local ClocktowerSageStepMaterializer owner.
+- reason:
+  Sage candidate construction, pair presentation identity, and step metadata form one cohesive
+  role-specific change unit. Keeping them in the protected >1000 LOC Host increases change
+  context radius and violates the Host growth rule. This does not reopen D6 and does not create
+  a one-materializer-per-role policy; other roles still require their own ownership audit.
+```
+
+Boundary constraints:
+
+- Host keeps death-trigger/current-Demon/effective-ability authority and only passes prepared facts;
+- `ClocktowerInformationStepBuilder` keeps generic reliable/unreliable/manual/automatic mechanics;
+- Sage materializer must not depend on the whole Host, screen, session, or a broad context object;
+- impaired Sage options remain `proposition = null`; typed seats are presentation-only;
+- global `clocktowerInformationCandidateId(...)` remains unchanged; Sage-local pair identity may include typed seats where required;
+- the extraction itself is behavior-preserving and does not justify unrelated role cleanup.
+
 Existing `ClocktowerPairPlayerRevealPresentation` already establishes the correct architectural precedent: pair identity comes from typed data, never by parsing localized display text.
 
 ## 7. New Demon identity is not dead duplication
