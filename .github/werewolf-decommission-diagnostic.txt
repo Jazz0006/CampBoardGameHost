@@ -1,2 +1,2 @@
-trigger=a86d134c2260f2a73cd549af77f4187d000c1ae2
-App root Werewolf runtime state survived: pendingNightDeath
+trigger=8dae2a9ddf8433ced71a01da1f39225635376ef6
+Werewolf legacy recovery rejection contract drifted
