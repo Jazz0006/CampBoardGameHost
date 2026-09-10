@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — UI-R5 Remaining Night-role Square-table Convergence
 
 > Date: 2026-09-10 Australia/Sydney  
-> Status: **ACTIVE — SAGE IMPLEMENTED / LEGACY RETIREMENT NEXT**  
+> Status: **ACTIVE — ROLE MIGRATIONS + LEGACY RETIREMENT COMPLETE / FINAL T4 IN PROGRESS**  
 > Scope: Storyteller night-role square-table UI convergence, legacy-surface retirement, and real-device stabilization  
 > Branch: `codex/ui-r5-square-table-stabilization`  
 > Draft PR: #117
@@ -13,8 +13,7 @@
 3. this handoff;
 4. `docs/TESTING_STRATEGY.md`;
 5. `docs/UI_R5_REMAINING_NIGHT_SURFACE_AUDIT_2026-09-10.md`;
-6. `ClocktowerSageStepMaterializer.kt`;
-7. current pair-manual / generic NightStep presentation owners before legacy retirement.
+6. `docs/UI_R5_GENERIC_RESULT_REACHABILITY_AUDIT_2026-09-10.md`.
 
 D6/R3 are closed; do not reopen them by default.
 
@@ -24,20 +23,22 @@ D6/R3 are closed; do not reopen them by default.
 branch: codex/ui-r5-square-table-stabilization
 Draft PR: #117
 base main: 60842381dcbc3709ad453209846f66e9b4a7a777
-latest full-T4 verified head: c1ab5578a2fb64e6506d27b898df9f4bbb1388fc
+latest prior full-T4 verified head: c1ab5578a2fb64e6506d27b898df9f4bbb1388fc
 Ravenkeeper checkpoint: 06e01ec7c0410412b38d104f4a5f72bc72811ffe
 Spy checkpoint: d45f96ddcdb1142a422d64ee87cf61c5475121f9
 Clockmaker verified head: 9119ec83f036432ec9b5f0f3a920690ab9719e16
 Sage materializer owner: d82e1254bdb413445adb1fc2e66bb4401eea719e
 Sage Host delegation: b9a67a4dc7a336d1a8693f76aa383646e3c063d7
-Sage one-shot cleanup head: 053461b7d9868056593ca7a5e3ce2d8e68eb6330
+legacy pair-manual retirement: 9e67fd53b21089a84c897e73ca9abb4c0f4ce17d
+generic result cleanup production: 5cf762c81c333a52e7d744499ff1f1dd28e20c61
+post-cleanup production tree head: e84e01c2a8f5064814077d0583e684d2f42b09d7
 ```
 
 PR #117 remains open, Draft and unmerged. Do not merge without explicit user authorization.
 
 ## 3. Sage ownership extraction — implemented
 
-The Sage slice is now split by ownership rather than left inside the protected Host.
+The Sage slice is split by ownership rather than left inside the protected Host.
 
 Final dependency direction:
 
@@ -69,11 +70,9 @@ Preserved invariants:
 - global `clocktowerInformationCandidateId(...)` remains unchanged;
 - no other role materializer was extracted as part of this slice.
 
-The old Host-local `recommendedSageOptions(...)` function is removed. Host now contains one narrow call to `clocktowerSageStepMaterializer(...)` while keeping `sageNightDeath` and `sageDeathTriggerAbilityState` locally authoritative.
-
 ## 4. Sage validation evidence
 
-One-shot run:
+Sage one-shot run:
 
 ```text
 run: 34429902491
@@ -81,86 +80,123 @@ job: 102722989741
 result: PASS
 ```
 
-Executed evidence:
+It executed focused Sage tests, Android FAST, exact trigger/source checks, `git diff --check`, production changed-file allowlisting, Host delegation checks, and one-shot self-cleanup.
+
+## 5. Legacy pair-manual retirement — complete
+
+Production checkpoint:
 
 ```text
-focused Sage tests:
-./gradlew :app:testDebugUnitTest \
-  --tests 'com.codex.campboardgamehost.ClocktowerSageStepMaterializerTest' \
-  --tests 'com.codex.campboardgamehost.ClocktowerSageSquareTablePresentationTest' \
-  --tests 'com.codex.campboardgamehost.ClocktowerSageSquareTableWiringTest' \
-  --rerun-tasks
-BUILD SUCCESSFUL
-26 actionable tasks: 26 executed
-
-Android FAST:
-./gradlew :app:testFast --rerun-tasks
-BUILD SUCCESSFUL
-26 actionable tasks: 26 executed
+9e67fd53b21089a84c897e73ca9abb4c0f4ce17d
+refactor: retire legacy pair manual dialog
 ```
 
-The one-shot also passed:
-
-- exact trigger HEAD / source blob checks;
-- `git diff --check`;
-- exact production changed-file allowlist;
-- Host absence check for `recommendedSageOptions`;
-- exactly one `clocktowerSageStepMaterializer(` Host delegation;
-- preservation checks for `sageNightDeath` and `sageDeathTriggerAbilityState`;
-- automatic removal of the temporary workflow and patch script.
-
-Independent remote diff audit from the post-preflight clean head `7ca02b9c...` to `053461b7...` shows only the intended persistent Sage files:
-
-- added `ClocktowerSageStepMaterializer.kt`;
-- modified `ClocktowerHostScreen.kt`;
-- added `ClocktowerSageStepMaterializerTest.kt`;
-- modified `ClocktowerSageSquareTableWiringTest.kt`.
-
-No temporary workflow/script survives in the final tree.
-
-## 5. Checkpoint CI/R2 note
-
-The product and cleanup commits were authored by `github-actions[bot]`. Normal PR CI/R2 runs created for cleanup head `053461b7...` reported `action_required` with zero jobs, so those runs are **not** accepted as checkpoint validation and are not treated as test failures.
-
-This docs-only connector-authored checkpoint exists specifically to trigger the normal PR CI/R2 gate on the same production tree. Accept Sage as the per-role automated checkpoint only after those normal runs complete successfully.
-
-A new full T4 is still due only after Sage + legacy retirement / final reachability cleanup unless a concrete risk requires earlier escalation.
-
-## 6. Next implementation target — retire unreachable pair-manual UI
-
-The next slice is legacy retirement, not another role migration.
-
-`ClocktowerPairManualSelectionDialog` is no longer called by current NightStep UI, but the file still owns helpers used by the accepted pair-information square table.
-
-Retire only the unreachable UI:
+Removed only:
 
 - `ClocktowerPairManualSelectionDialog`;
-- `ClocktowerPairManualCenterControls`.
+- `ClocktowerPairManualCenterControls`;
+- their now-unused Compose imports.
 
-Retain or relocate as needed:
+Retained:
 
 - `clocktowerPairManualSquareTableSeat(...)`;
 - `clocktowerPairManualSeatState(...)`;
 - `ClocktowerPairManualSelectionModel`;
-- still-valid typed tests.
+- valid typed/ownership tests used by the accepted pair-information square table.
 
-Before production editing, apply the root `AGENTS.md` architecture pre-flight gate if the slice touches a protected/core or >1000 LOC handwritten production file and moves/adds responsibility.
-
-## 7. After pair-manual retirement
-
-Perform a fresh reachability audit of the generic recommendation/result-first/unreliable/direct result blocks in `ClocktowerNightStepUi`.
-
-Remove only branches proven unreachable or superseded after all specialized square-table owners are active. Do not use byte reduction as the justification.
-
-Then execute:
+Automated validation:
 
 ```text
-exact scope/diff audit
--> final logical UI-R5 T4
--> cross-role real-device acceptance
--> UI-R5 closeout
--> merge only with explicit user authorization
+CI #2133 / run 34433654157
+- Android FAST PASS
+- CI gate PASS
+R2 #2000 / run 34433654190 PASS
 ```
+
+No full T4 was required for that isolated UI dead-code retirement.
+
+## 6. Generic result reachability cleanup — complete
+
+Architecture pre-flight and reachability proof are recorded in:
+
+`docs/UI_R5_GENERIC_RESULT_REACHABILITY_AUDIT_2026-09-10.md`
+
+The pre-flight decision was **KEEP routing ownership in `ClocktowerNightStepUi`**. This slice removed duplicate/unreachable presentation routing; it did not add domain, registration, recommendation, or session authority.
+
+Production checkpoint:
+
+```text
+5cf762c81c333a52e7d744499ff1f1dd28e20c61
+refactor: retire superseded generic result surfaces
+```
+
+Persistent production changes are limited to `ClocktowerNightStepUi.kt`:
+
+1. remove `nonPairResultFirstCandidates` derivation;
+2. remove its superseded generic result-first render block;
+3. exclude Chambermaid from generic recommendation rendering;
+4. exclude Chambermaid from generic unreliable-result rendering;
+5. retain generic direct reveal and valid generic recommendation/unreliable fallbacks for remaining owners.
+
+The focused ownership RED was real and explicit:
+
+```text
+ClocktowerNightStepResultSurfaceOwnershipTest
+2 tests executed
+2 expected assertion failures before production cleanup
+```
+
+After the production patch, the same focused class passed.
+
+The first FAST run then exposed two obsolete source-shape assertions in Ravenkeeper/Undertaker wiring tests that simultaneously claimed specialized ownership while requiring the superseded generic result-first surface to exist. Only those obsolete assertions were retired; all specialized owner and suppression assertions remain.
+
+Final one-shot run:
+
+```text
+run: 34434862249
+job: 102737709222
+result: PASS
+```
+
+The run completed all of the following successfully:
+
+```text
+exact trigger/head/blob gate
+focused ownership RED proof
+exact production patch
+production diff audit
+focused ownership GREEN
+Android FAST --rerun-tasks
+production commit + push
+one-shot self-cleanup
+```
+
+The post-cleanup head is:
+
+```text
+e84e01c2a8f5064814077d0583e684d2f42b09d7
+```
+
+Its normal PR CI/R2 entries show `action_required` with zero jobs because that head was authored by `github-actions[bot]`; this is not accepted as validation and is not treated as a test failure.
+
+## 7. Final logical UI-R5 validation
+
+All planned role migrations and planned legacy/reachability cleanup are now implemented. The next required checkpoint is the final logical UI-R5 T4.
+
+This handoff update is intentionally committed by the normal connector identity with `[full-ci]` so CI runs against the same production tree plus documentation only.
+
+Required T4 evidence:
+
+```text
+Android full unit suite
+assemble/debug APK gate selected by full checkpoint
+ASP contract validation
+Real Clingo cross-validation
+aggregate CI gate
+R2 main-thread boundary
+```
+
+Do not downgrade a selected T4 component to FAST. If a T4 component fails, investigate the concrete failure before proceeding to device acceptance.
 
 ## 8. Scope fence
 
@@ -177,16 +213,15 @@ Preserve:
 - current dynamic Ravenkeeper-trigger correctness fix;
 - New Demon identity specialized confirmation surface.
 
-Do not broaden into EPI-MQ, recommendation-provider redesign, Persistence, unrelated gameplay changes, A4/ZDD, generalized App-root rewrite, or renewed D6 decomposition.
+Do not broaden into EPI-MQ, recommendation-provider redesign, Persistence, unrelated gameplay changes, A4/ZDD feature work, generalized App-root rewrite, or renewed D6 decomposition.
 
 ## 9. Remaining execution sequence
 
 ```text
-1. confirm normal CI/R2 on connector-authored Sage checkpoint
-2. retire unreachable pair-manual dialog / center controls
-3. re-audit generic result branches and remove only proven dead paths
-4. exact final scope audit
-5. final logical UI-R5 T4
-6. cross-role real-device acceptance
-7. UI-R5 closeout / merge only with explicit user authorization
+1. complete final logical UI-R5 T4
+2. perform exact final scope/diff audit if T4 is green
+3. cross-role real-device acceptance / pending device retests
+4. synchronize roadmap/handoff with final T4 evidence
+5. UI-R5 closeout
+6. merge only with explicit user authorization
 ```
