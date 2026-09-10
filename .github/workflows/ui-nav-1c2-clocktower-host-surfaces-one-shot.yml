@@ -67,37 +67,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt')
-          s = p.read_text()
-          old = '''                            screen == Screen.WerewolfJudge ||
-                            screen == Screen.ClocktowerJudge ||
-                            screen == Screen.Game
-'''
-          normalized = '''        screen == Screen.WerewolfJudge ||
-        screen == Screen.ClocktowerJudge ||
-        screen == Screen.Game
-'''
-          if s.count(old) != 1:
-              raise SystemExit(f'top-bar normalization anchor count {s.count(old)}, expected 1')
-          p.write_text(s.replace(old, normalized), encoding='utf-8', newline='\n')
-          PY
+          python3 -c 'from pathlib import Path; p=Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"); s=p.read_text(); old="                            screen == Screen.WerewolfJudge ||\n                            screen == Screen.ClocktowerJudge ||\n                            screen == Screen.Game\n"; new="        screen == Screen.WerewolfJudge ||\n        screen == Screen.ClocktowerJudge ||\n        screen == Screen.Game\n"; assert s.count(old) == 1, f"top-bar normalization count {s.count(old)}"; p.write_text(s.replace(old,new), encoding="utf-8", newline="\n")'
           python3 "$SCRIPT"
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt')
-          s = p.read_text()
-          normalized = '''        screen == Screen.WerewolfJudge ||
-        screen == Screen.Game
-'''
-          restored = '''                            screen == Screen.WerewolfJudge ||
-                            screen == Screen.Game
-'''
-          if s.count(normalized) != 1:
-              raise SystemExit(f'top-bar restore anchor count {s.count(normalized)}, expected 1')
-          p.write_text(s.replace(normalized, restored), encoding='utf-8', newline='\n')
-          PY
+          python3 -c 'from pathlib import Path; p=Path("app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"); s=p.read_text(); old="        screen == Screen.WerewolfJudge ||\n        screen == Screen.Game\n"; new="                            screen == Screen.WerewolfJudge ||\n                            screen == Screen.Game\n"; assert s.count(old) == 1, f"top-bar restore count {s.count(old)}"; p.write_text(s.replace(old,new), encoding="utf-8", newline="\n")'
 
       - name: Audit exact production diff and privacy fences
         shell: bash
