@@ -53,7 +53,7 @@ jobs:
           text = text.replace(old, new, 1).replace(old_replacement, new_replacement, 1)
 
           old_wrap = '    body = remove_nav_call(body, function_name)\n'
-          new_wrap = '''    if function_name != "ClocktowerPairInformationSquareTableDialog":\n        body = remove_nav_call(body, function_name)\n'''
+          new_wrap = '''    if function_name not in {"ClocktowerPairInformationSquareTableDialog", "ClocktowerFortuneTellerSquareTableDialog"}:\n        body = remove_nav_call(body, function_name)\n'''
           if text.count(old_wrap) != 1:
               raise SystemExit('raw square-table wrapper source shape changed')
           text = text.replace(old_wrap, new_wrap, 1)
@@ -66,6 +66,40 @@ jobs:
               pair_anchor + '        text = remove_nav_call(text, "pair center navigation")\n',
               1,
           )
+
+          fortune_start = text.index('# Fortune Teller already has a screen-level Column.')
+          fortune_end = text.index('# Final structural assertions.', fortune_start)
+          fortune_new = r'''# Fortune Teller is also a raw square-table dialog whose navigation lives in the center helper.
+          path = ROOT / "ClocktowerFortuneTellerSquareTableUi.kt"
+          text = path.read_text()
+          text = remove_nav_call(text, "Fortune Teller center navigation")
+          text = replace_once(
+              text,
+              "                    language = language,\n                    canGoPrevious = canGoPrevious,\n                    onResultSelected = onResultSelected,\n                    onAutomaticResultSelected = onAutomaticResultSelected,\n                    onPrevious = onPrevious,\n                    onHostTools = onHostTools,\n                    onNext = onNext,\n",
+              "                    language = language,\n                    onResultSelected = onResultSelected,\n                    onAutomaticResultSelected = onAutomaticResultSelected,\n",
+              "Fortune Teller center call navigation params",
+          )
+          text = replace_once(
+              text,
+              "    automaticStorytellerInfo: Boolean,\n    language: String,\n    canGoPrevious: Boolean,\n    onResultSelected: (Boolean) -> Unit,\n    onAutomaticResultSelected: (Boolean) -> Unit,\n    onPrevious: () -> Unit,\n    onHostTools: () -> Unit,\n    onNext: () -> Unit,\n",
+              "    automaticStorytellerInfo: Boolean,\n    language: String,\n    onResultSelected: (Boolean) -> Unit,\n    onAutomaticResultSelected: (Boolean) -> Unit,\n",
+              "Fortune Teller center signature navigation params",
+          )
+          text = wrap_raw_square_table_surface(
+              text,
+              "ClocktowerFortuneTellerSquareTableDialog",
+              [
+                  "language = language,",
+                  "canGoPrevious = canGoPrevious,",
+                  "onPrevious = onPrevious,",
+                  "onHostTools = onHostTools,",
+                  "onNext = onNext,",
+              ],
+          )
+          path.write_text(text)
+
+          '''
+          text = text[:fortune_start] + fortune_new + text[fortune_end:]
           p.write_text(text)
           PY
           python -m py_compile .github/scripts/ui-nav-device-layout-fix.py
