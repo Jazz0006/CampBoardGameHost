@@ -24,7 +24,7 @@ jobs:
           set -euo pipefail
           test "$GITHUB_REF_NAME" = "codex/ui-r5-square-table-stabilization"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "c34ae2b79a63de7d0f5051bf4fdcbfc86b750e82"
+          test "$(git rev-parse HEAD^)" = "b4f298de58ea74971da60f72b54e831aa0f06396"
           remote_head="$(git ls-remote origin refs/heads/codex/ui-r5-square-table-stabilization | cut -f1)"
           test "$remote_head" = "$GITHUB_SHA"
           test "$(git rev-parse HEAD:app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt)" = "5b0988816ad59c9523aaf365cd182232f72b290c"
