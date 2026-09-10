@@ -1,2 +1,2 @@
-trigger=38902bcdc7b826d4adb37bdaf8a6422dfe0d3560
-Werewolf prompt reset sites: expected 4 exact matches, got 3
+trigger=a86d134c2260f2a73cd549af77f4187d000c1ae2
+App root Werewolf runtime state survived: pendingNightDeath
