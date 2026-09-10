@@ -33,6 +33,7 @@ jobs:
           set -euo pipefail
           python -m py_compile .github/scripts/ui-nav-1-docs-closeout.py
           python .github/scripts/ui-nav-1-docs-closeout.py
+          sed -i '4s/  $//' docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_UNIFICATION.md
           git diff --check
           actual="$(git diff --name-only | sort)"
           expected="$(printf '%s\n' docs/CURRENT_DEVELOPMENT_ROADMAP.md docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_UNIFICATION.md | sort)"
