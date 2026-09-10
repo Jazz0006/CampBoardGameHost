@@ -15,6 +15,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +33,8 @@ internal fun clocktowerSingleTargetSeatState(
     seatNumber in selectableSeats -> ClocktowerSquareTableSeatState.Selectable
     else -> ClocktowerSquareTableSeatState.Disabled
 }
+
+internal val LocalClocktowerNightProgress = compositionLocalOf<String?> { null }
 
 internal data class ClocktowerNightActionSeatPresentation(
     val targetState: ClocktowerSquareTableSeatState,
@@ -79,6 +82,16 @@ internal fun clocktowerTwoTargetSeatPresentation(
 
 @Composable
 internal fun ClocktowerNightActionWakeInstruction(instruction: String?) {
+    LocalClocktowerNightProgress.current?.takeIf { it.isNotBlank() }?.let { value ->
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(4.dp))
+    }
     instruction?.takeIf { it.isNotBlank() }?.let { value ->
         Text(
             text = value,

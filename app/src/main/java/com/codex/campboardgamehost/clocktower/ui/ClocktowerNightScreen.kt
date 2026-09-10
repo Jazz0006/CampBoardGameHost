@@ -369,7 +369,7 @@ internal fun ClocktowerNewDemonConfirmationScreen(
     }
 }
 
-/** Behavior-preserving R2 extraction for Clocktower night active UI. */
+/** Compact active-night shell: no independent top chrome; progress belongs inside the table. */
 @Composable
 internal fun ClocktowerNightActiveScreen(
     title: String,
@@ -384,77 +384,34 @@ internal fun ClocktowerNightActiveScreen(
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     ClocktowerDarkTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-        ) {
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 8.dp,
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 18.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(3.dp),
-                    ) {
-                        Text(
-                            title,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
-                        )
-                        Text(
-                            subtitle,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                    Text(
-                        progress,
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Black,
-                    )
-                }
-            }
-
-            LazyColumn(
+        CompositionLocalProvider(LocalClocktowerNightProgress provides progress) {
+            Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
             ) {
-                item { content() }
-            }
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    item { content() }
+                }
 
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 12.dp,
-            ) {
-                HostBottomActionBar(
-                    previousLabel = if (language == "en") "← Previous" else "← 上一步",
-                    hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
-                    nextLabel = if (language == "en") "Next →" else "下一步 →",
-                    previousEnabled = canGoPrevious,
+                ClocktowerNightBottomActionBar(
+                    language = language,
+                    canGoPrevious = canGoPrevious,
                     nextEnabled = nextEnabled,
                     onPrevious = onPrevious,
                     onHostTools = onHostTools,
                     onNext = onNext,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 )
             }
         }
     }
 }
-
 @Composable
 internal fun ClocktowerNightReadyCard() {
     val language = LocalContext.current.resources.configuration.locales[0].language
