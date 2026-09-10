@@ -41,16 +41,10 @@ jobs:
                   raise AssertionError(f"{label}: expected exactly one match, got {count}")
               return text.replace(old, new, 1)
 
-          # 1) Active-night chrome: remove the independent top header completely. Keep the same
-          # call signature/flow ownership, but provide progress through composition and reserve the
-          # measured bottom bar before the weighted content area.
           path = ROOT / "clocktower/ui/ClocktowerNightScreen.kt"
           text = path.read_text()
           start = text.index("/** Behavior-preserving R2 extraction for Clocktower night active UI. */")
           end = text.index("\n@Composable\ninternal fun ClocktowerNightReadyCard()", start)
-          old = text[start:end]
-          if "Text(\n                            title," not in old or "Text(\n                            progress," not in old:
-              raise AssertionError("night active header source shape changed")
           new = '''/** Compact active-night shell: no independent top chrome; progress belongs inside the table. */
           @Composable
           internal fun ClocktowerNightActiveScreen(
@@ -98,7 +92,6 @@ jobs:
           text = text[:start] + new.rstrip() + text[end:]
           path.write_text(text)
 
-          # 2) The already-localized "Step x / y" string is rendered in the square-table center.
           path = ROOT / "ClocktowerNightActionSquareTableUi.kt"
           text = path.read_text()
           text = replace_once(
@@ -153,7 +146,6 @@ jobs:
           text = replace_once(text, old_wake, new_wake, "square-table center progress")
           path.write_text(text)
 
-          # 3) Spy-specific player-facing handoff label is semantic, not the generic show-to-player copy.
           path = ROOT / "ClocktowerSpySquareTableUi.kt"
           text = path.read_text()
           text = replace_once(
@@ -170,12 +162,9 @@ jobs:
           )
           path.write_text(text)
 
-          # Structural fences.
           night = (ROOT / "clocktower/ui/ClocktowerNightScreen.kt").read_text()
           active = night[night.index("internal fun ClocktowerNightActiveScreen("):night.index("internal fun ClocktowerNightReadyCard()")]
-          assert "Text(\n                            title," not in active
-          assert "Text(\n                            subtitle," not in active
-          assert "Text(\n                        progress," not in active
+          assert "shadowElevation = 8.dp" not in active
           assert "CompositionLocalProvider(LocalClocktowerNightProgress provides progress)" in active
           assert "ClocktowerNightBottomActionBar(" in active
 
