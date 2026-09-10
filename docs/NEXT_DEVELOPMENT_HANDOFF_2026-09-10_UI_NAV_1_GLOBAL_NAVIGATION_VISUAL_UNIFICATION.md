@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — UI-NAV-1 Global Navigation Visual Unification
 
 > Date: 2026-09-10 Australia/Sydney  
-> Status: **ACTIVE — UI-NAV-1D PARTIAL / LIVE RE-AUDIT COMPLETE**  
+> Status: **ACTIVE — UI-NAV-1D COMPLETE / UI-NAV-1E NEXT**  
 > Live main re-audited: `9c19484c0b6381c94440c2253079d5c2ba5f796f`  
 > Branch: `codex/ui-nav-1-global-navigation-visual-unification`  
 > Re-audited branch head before this docs update: `02342be73d0afbfe681e37c9df95b46812c7c846`  
@@ -195,44 +195,69 @@ One-shot run `34455026774` passed exact diff, privacy assertions, `:app:testFast
 
 The end-of-night phase transition was **not** moved merely to manufacture a Previous button. Current Dawn confirmation owns meaningful domain commit work; a pre-transition boundary must be separately characterized before any authoritative Night → Day commit timing is changed.
 
-### UI-NAV-1D — remaining host/game/safe-setup flows — PARTIAL / LIVE RE-AUDIT COMPLETE
+### UI-NAV-1D — remaining host/game/safe-setup flows — COMPLETE / PASS
 
-The earlier handoff was stale here.
+Live reconciliation and implementation are complete.
 
-Historical 1D work that really happened:
+Completed surviving surfaces:
 
 ```text
-1D.1 / 1D.1b
-- WerewolfJudge navigation was migrated to HostBottomActionBar
-- bottom placement was pinned to the viewport
+SeatingFirstSetupScreen
+- Next reuses onConfirmSeats
+- Previous disabled
+- Host Tools disabled before a hosted game exists
+- Settings gear retained for UI-NAV-1F
+
+SeatingFirstGameSelectionScreen
+- Previous reuses onBackToSeating
+- game choice remains a content action
+- no invented selected-game progression state
+
+Screen.Game / GameScreen
+- final persistent root Screen.Game HostToolsTopBar removed
+- root-owned showHostTools/hostToolTab callback is passed into GameScreen
+- Previous disabled
+- Host Tools opens the same root-owned overlay
+- Next reuses the existing End & Reveal / View Results callback
+
+UndercoverSettingsScreen
+- top Back retired
+- Previous reuses onBack
+- Next reuses onStart
+- exact player-count enable rule preserved
+- Host Tools disabled pre-game
+
+ClocktowerSettingsScreen
+- top Back and duplicate bottom return action retired
+- Previous preserves local step-back; step 0 reuses onBack
+- Next preserves local step-forward; final step reuses onStart
+- canStart rule unchanged
+- Host Tools disabled pre-game
 ```
 
-That work was later **superseded by product deletion**. Werewolf runtime was removed, with the real product-deletion commit at:
+Historical WerewolfJudge 1D work was superseded by deliberate Werewolf runtime deletion at `2c00d03b46a767d3fd38ff596d4f1371b7ee7403`; do not restore it.
 
-`2c00d03b46a767d3fd38ff596d4f1371b7ee7403`
+Validation evidence:
 
-Therefore:
+```text
+safe seating/setup checkpoint: e63250b0791d8905a796d85776be3817431cfbf2
+- R2 run 34471425850 PASS
 
-- WerewolfJudge is not a remaining UI-NAV surface;
-- do not count historical WerewolfJudge migration as proof that all of 1D is complete;
-- do not restore Werewolf runtime merely to preserve old 1D wording.
+generic Game production checkpoint: c9d6607c8c3dc3700ee9e4229252b52c74a8cded
+- exact one-shot run 34471666583 PASS
+- exact source/diff audit PASS
+- :app:testFast PASS
+- :app:assembleDebug PASS
 
-Current surviving-code audit shows 1D is **not yet complete**:
+live settings audit: run 34472496605 PASS
+Undercover checkpoint: 11955a254b71d234e820035b7d2a41dd3d608b69
+Clocktower setup checkpoint: 412ab0b08c773767a065f1ca3a1a190b1712fadc
+- exact two-production-file diff audit PASS
+- R2 run 34472655199 PASS
+- CI run 34472655245: Classify PASS / Android FAST PASS / CI gate PASS
+```
 
-1. `Screen.Game` still depends on the root persistent `HostToolsTopBar`.
-2. `GameScreen` itself does not yet own equivalent bottom Host Tools presentation.
-3. `SeatingFirstSetupScreen` still uses its existing full-width confirm action and top Settings gear rather than the common bottom geometry.
-4. `SeatingFirstGameSelectionScreen` still uses its local edit/back action inside content rather than the common bottom geometry.
-5. Game-specific setup/settings screens must be migrated only where their existing Back/Start/Confirm callbacks map directly and safely; do not introduce new selection/progression state merely to make the bar look uniform.
-6. Global Settings relocation is **not** 1D. It remains the isolated 1F slice.
-
-1D implementation rule:
-
-> Finish only the surviving surfaces that can reuse existing callbacks directly. Disabled/reserved slots are preferable to inventing navigation semantics.
-
-Do not force Results/Review modal actions into Previous/Host Tools/Next if their semantics are different.
-
-Only remove the remaining root `Screen.Game` top Host Tools condition after equivalent safe bottom access exists for the generic Game surface.
+No navigation owner, gameplay owner, persistence/recovery owner, or Settings owner changed. UI-NAV-1E is now the active production slice.
 
 ### UI-NAV-1E — Identity Reveal square-table controller — QUEUED AFTER 1D
 
@@ -383,13 +408,21 @@ Stop and re-audit if a slice appears to require:
 
 ## 10. Immediate next action
 
-Do **not** start UI-NAV-1E yet.
+Start **UI-NAV-1E Identity Reveal square-table controller**.
 
-The live audit proves 1D is only partial. Continue UI-NAV-1D from the reconciled documentation baseline:
+Current characterized behavior to replace:
 
-1. migrate surviving generic `Game` away from persistent root top Host Tools chrome using the existing root-owned Host Tools callback;
-2. migrate only safe setup/game-selection/game-specific setup surfaces whose existing callbacks map directly to the three-slot presentation;
-3. leave Settings relocation for 1F;
-4. preserve Results/Review semantics rather than forcing them into the visual language;
-5. validate exact diff / focused behavior / Android tests;
-6. only after 1D is closed, proceed directly to UI-NAV-1E Identity Reveal square-table controller.
+- `Screen.PassPhone` is the old progress/pass-phone controller;
+- `Screen.RevealCard.onHide` currently auto-increments `currentDealIndex`;
+- the last reveal currently jumps directly to `Screen.ClocktowerJudge`.
+
+Required 1E behavior:
+
+- reinterpret `Screen.PassPhone` as the privacy-safe Storyteller square-table controller;
+- Previous/Next move only the single existing `currentDealIndex`;
+- explicit Show opens `Screen.RevealCard`;
+- RevealCard Hide returns to the same controller seat without auto-advance;
+- last-seat Next enters the existing `ClocktowerJudge` first-night ready/recommendation boundary while leaving `nightStarted=false`;
+- that boundary should expose Previous back to the final identity seat if this remains a narrow callback-only change;
+- do not expose table/Host Tools/cross-player information on RevealCard;
+- do not add a second identity cursor or persistence migration.

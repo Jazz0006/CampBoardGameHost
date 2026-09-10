@@ -19,7 +19,7 @@ UI-R5 post-merge main CI                          PASS
 UI-R5 Field Test APK                              PASS
 UI-R5 real-device acceptance                      PARTIAL / follow-up remains
 
-UI-NAV-1 global navigation visual unification     CURRENT — 1D PARTIAL / LIVE RE-AUDIT COMPLETE
+UI-NAV-1 global navigation visual unification     CURRENT — 1D COMPLETE / 1E NEXT
 EPI-MQ / Productive Uncertainty                   NEXT after UI-NAV-1 — EPI-MQ-0 baseline re-audit
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
@@ -72,7 +72,7 @@ PR #117 is closed and merged. Its former branch/handoff/audit documents are hist
 
 ## 3. Current priority — UI-NAV-1 Global Navigation Visual Unification
 
-> **CURRENT: finish the surviving UI-NAV-1D presentation surfaces, then move directly to UI-NAV-1E identity delivery before EPI-MQ-0.**
+> **CURRENT: UI-NAV-1D is complete. Proceed directly with UI-NAV-1E identity delivery before EPI-MQ-0.**
 
 Product decision:
 
@@ -128,6 +128,21 @@ game-specific setup/settings surfaces
 ```
 
 Results/Review modal actions remain outside forced Previous/Host Tools/Next normalization where their semantics differ.
+
+### UI-NAV-1D completion evidence
+
+```text
+safe setup: e63250b0791d8905a796d85776be3817431cfbf2
+generic Game production: c9d6607c8c3dc3700ee9e4229252b52c74a8cded
+generic Game one-shot: 34471666583 PASS (:app:testFast + :app:assembleDebug)
+settings audit: 34472496605 PASS
+Undercover settings: 11955a254b71d234e820035b7d2a41dd3d608b69
+Clocktower settings: 412ab0b08c773767a065f1ca3a1a190b1712fadc
+final settings R2: 34472655199 PASS
+final settings CI: 34472655245 Android FAST + CI gate PASS
+```
+
+The remaining persistent `Screen.Game` top Host Tools chrome is gone. Pre-game surfaces reserve/disable Host Tools rather than inventing a second owner. Settings relocation remains UI-NAV-1F.
 
 ### Identity-delivery product refinement
 
@@ -188,8 +203,8 @@ Immediate sequence:
 UI-NAV-1A  read-only visual / ownership audit                         COMPLETE / GO
 UI-NAV-1B  establish smallest stateless three-slot bottom primitive   COMPLETE / PASS
 UI-NAV-1C  migrate Clocktower night / square-table / day host flow    COMPLETE / PASS
-UI-NAV-1D  migrate remaining surviving game / safe setup flows        PARTIAL / LIVE RE-AUDIT COMPLETE
-UI-NAV-1E  migrate identity delivery to privacy-safe square table      NEXT AFTER 1D
+UI-NAV-1D  migrate remaining surviving game / safe setup flows        COMPLETE / PASS
+UI-NAV-1E  migrate identity delivery to privacy-safe square table      NEXT
 UI-NAV-1F  isolate Settings-under-Host-Tools composition if still narrow
 UI-NAV-1G  focused/full validation + real-device visual acceptance + closeout
 ```
