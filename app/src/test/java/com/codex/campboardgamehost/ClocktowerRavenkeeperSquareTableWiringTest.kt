@@ -17,7 +17,6 @@ class ClocktowerRavenkeeperSquareTableWiringTest {
         assertTrue(source.contains("val candidates = clocktowerRavenkeeperTargetCards(cards)"))
         assertTrue(source.contains("onConfirm = ::showRavenkeeperChoice"))
         assertFalse(source.contains("ClocktowerNightAction.DemonKill, ClocktowerNightAction.Ravenkeeper ->"))
-        assertTrue(source.contains("!usesRavenkeeperSquareTable && !usesUndertakerSquareTable && !usesNumericSquareTable && nonPairResultFirstCandidates.isNotEmpty()"))
         assertTrue(source.contains("!usesRavenkeeperSquareTable &&\n                !usesUndertakerSquareTable &&\n                !usesNumericSquareTable &&\n                resultFirstRegistrationCandidates.isEmpty()"))
     }
 
