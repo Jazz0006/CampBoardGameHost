@@ -39,8 +39,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('.github/scripts/ui-nav-device-layout-fix.py')
+          text = p.read_text()
+          old = '"""        modifier = Modifier\n            .align(Alignment.Center)\n            .padding(horizontal = 68.dp),\n"""'
+          new = '"""                    modifier = Modifier\n                        .align(Alignment.Center)\n                        .padding(horizontal = 68.dp),\n"""'
+          old_replacement = '"""        modifier = Modifier\n            .align(Alignment.Center)\n            .fillMaxWidth(),\n"""'
+          new_replacement = '"""                    modifier = Modifier\n                        .align(Alignment.Center)\n                        .fillMaxWidth(),\n"""'
+          if text.count(old) != 1 or text.count(old_replacement) != 1:
+              raise SystemExit('identity patch source shape changed')
+          text = text.replace(old, new, 1).replace(old_replacement, new_replacement, 1)
+          p.write_text(text)
+          PY
           python -m py_compile .github/scripts/ui-nav-device-layout-fix.py
           python .github/scripts/ui-nav-device-layout-fix.py
+          git checkout -- .github/scripts/ui-nav-device-layout-fix.py
           git diff --check
           actual="$(git diff --name-only | sort)"
           expected="$(printf '%s\n' \
