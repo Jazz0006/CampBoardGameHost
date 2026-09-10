@@ -1,0 +1,76 @@
+name: UI-NAV-1F settings one-shot
+
+on:
+  push:
+    branches:
+      - codex/ui-nav-1-global-navigation-visual-unification
+    paths:
+      - .github/workflows/ui-nav-1f-settings-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact production baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/AppSettingsScreen.kt)" = "e4a689b84128757be66e64a2ba43fe0a1a109310"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/AppGameReviewScreens.kt)" = "80932397f2c7400d541ccc36fc05ba0cc18a536f"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = "62ff90f82cce302d6e020c519b7e61c156320852"
+
+      - name: Apply narrow Settings composition patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile .github/scripts/ui-nav-1f-settings-patch.py
+          python .github/scripts/ui-nav-1f-settings-patch.py
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            app/src/main/java/com/codex/campboardgamehost/AppGameReviewScreens.kt \
+            app/src/main/java/com/codex/campboardgamehost/AppSettingsScreen.kt \
+            app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt | sort)"
+          test "$actual" = "$expected"
+          echo 'UI-NAV-1F exact three-file diff PASS'
+
+      - name: Run Android validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew :app:testFast --no-daemon
+          ./gradlew :app:assembleDebug --no-daemon
+
+      - name: Commit and push production checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            app/src/main/java/com/codex/campboardgamehost/AppGameReviewScreens.kt \
+            app/src/main/java/com/codex/campboardgamehost/AppSettingsScreen.kt \
+            app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          git commit -m 'ui: compose Settings under Host Tools'
+          git fetch origin codex/ui-nav-1-global-navigation-visual-unification
+          test "$(git rev-parse origin/codex/ui-nav-1-global-navigation-visual-unification)" = "$GITHUB_SHA"
+          git push origin HEAD:codex/ui-nav-1-global-navigation-visual-unification
+
+      - name: Remove one-shot scaffolding
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/ui-nav-1f-settings-one-shot.yml
+          rm .github/scripts/ui-nav-1f-settings-patch.py
+          git add .github/workflows/ui-nav-1f-settings-one-shot.yml .github/scripts/ui-nav-1f-settings-patch.py
+          git commit -m 'chore: remove UI-NAV-1F one-shot scaffolding'
+          git push origin HEAD:codex/ui-nav-1-global-navigation-visual-unification
