@@ -53,7 +53,7 @@ jobs:
             fi
           }
 
-          check_blob "$SCRIPT" "f33c5cdcc988d0376adb8491fdf92b1bd7ae4217"
+          check_blob "$SCRIPT" "26b9c32730dc58d47a3a656b2e230216770f8592"
           check_blob "app/src/main/java/com/codex/campboardgamehost/HostBottomActionBar.kt" "824f173ebbd076136354335426c897fd3f79f26d"
           check_blob "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt" "0dea3ac3ced90cf92d40c1b5f78692e408d71566"
           check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt" "694d93d79f00f3f3995e33cd22f9c6d63fd6ee4e"
