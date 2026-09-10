@@ -1,0 +1,114 @@
+name: UI-NAV device layout fix
+
+on:
+  push:
+    branches:
+      - codex/ui-nav-1-global-navigation-visual-unification
+    paths:
+      - .github/workflows/ui-nav-device-layout-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact production baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/AppDealScreens.kt)" = "a89946ff5353c7d28a2130b479b77ed01a80a90e"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt)" = "3c2844210f41dc54f1b2a5744b5b6bf0900a59a5"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerSageSquareTableUi.kt)" = "8b3a8b76f57c55ccc7bbc49b6bfe12e794cdd62c"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerSpySquareTableUi.kt)" = "a199e0d093ba005842d2c68221697b795128db40"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerRavenkeeperSquareTableUi.kt)" = "975f37202cd559b9c3e04e68d3791a66fb46d815"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt)" = "584073862e893b223d864ee36554f119d190feaf"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerClockmakerSquareTableUi.kt)" = "d78c9076fd0596fe7c34021c21218152831860ed"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt)" = "922e3ac70d2298d5fa0f2d80342c26dd5fd500d3"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt)" = "3f27f16ee0520478d45606ef697c826b27a9863a"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt)" = "47ea4c233e26dce912c189886edb97062e159de8"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt)" = "ebd2b5a57d91128056f178e3b9b9e758ed8558b9"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt)" = "b38ee339946c80136e556b746dcf2bbd03898825"
+
+      - name: Apply device layout patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile .github/scripts/ui-nav-device-layout-fix.py
+          python .github/scripts/ui-nav-device-layout-fix.py
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            app/src/main/java/com/codex/campboardgamehost/AppDealScreens.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerClockmakerSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerRavenkeeperSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerSageSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerSpySquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt | sort)"
+          test "$actual" = "$expected"
+          ! grep -R -n --include='*.kt' 'ClocktowerSquareTableStepNavigation(' app/src/main/java/com/codex/campboardgamehost
+          test "$(grep -R --include='*.kt' -c 'ClocktowerNightBottomActionBar(' app/src/main/java/com/codex/campboardgamehost/*.kt | awk -F: '{s += $2} END {print s}')" = "7"
+          echo 'UI-NAV device layout exact diff/ownership audit PASS'
+
+      - name: Run Android validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew :app:testFast --no-daemon
+          ./gradlew :app:assembleDebug --no-daemon
+
+      - name: Upload device-test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-nav-device-layout-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Commit and push production fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/codex/campboardgamehost/AppDealScreens.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerClockmakerSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerRavenkeeperSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerSageSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerSpySquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt
+          git commit -m 'ui: fix identity and night bottom-bar device layout'
+          git fetch origin codex/ui-nav-1-global-navigation-visual-unification
+          test "$(git rev-parse origin/codex/ui-nav-1-global-navigation-visual-unification)" = "$GITHUB_SHA"
+          git push origin HEAD:codex/ui-nav-1-global-navigation-visual-unification
+
+      - name: Remove temporary audit and fix scaffolding
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/ui-nav-device-layout-audit.yml
+          rm .github/workflows/ui-nav-device-layout-fix.yml
+          rm .github/scripts/ui-nav-device-layout-fix.py
+          git add .github/workflows/ui-nav-device-layout-audit.yml \
+            .github/workflows/ui-nav-device-layout-fix.yml \
+            .github/scripts/ui-nav-device-layout-fix.py
+          git commit -m 'chore: remove UI-NAV device layout scaffolding'
+          git push origin HEAD:codex/ui-nav-1-global-navigation-visual-unification
