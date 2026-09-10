@@ -112,12 +112,12 @@ internal fun ClocktowerSquareTableStepNavigation(
 replace_exact("action", old_shared, new_shared)
 
 # 2. Add the presentation callback to dialog/center signatures.
-sig_old = '''    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
+# The exact adjacent callback pair is stable even where target/result callbacks sit between
+# canGoPrevious and onPrevious (for example Ravenkeeper and Fortune Teller).
+sig_old = '''    onPrevious: () -> Unit,
     onNext: () -> Unit,
 '''
-sig_new = '''    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
+sig_new = '''    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 '''
@@ -126,6 +126,8 @@ for key in ("chef", "empath", "undertaker", "clockmaker", "sage", "spy", "ravenk
 replace_exact("pair", sig_old, sig_new, expected=2)
 replace_exact("fortune", sig_old, sig_new, expected=2)
 replace_exact("chambermaid", sig_old, sig_new, expected=2)
+# Shared ClocktowerSquareTableStepNavigation was already replaced above, leaving only the
+# single-target dialog callback pair in this file.
 replace_exact("action", sig_old, sig_new, expected=1)
 replace_exact("night", sig_old, sig_new, expected=1)
 
