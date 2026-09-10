@@ -41,7 +41,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           git fetch --no-tags origin "$BRANCH"
           test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
-          test "$(git hash-object "$SCRIPT")" = "a30eac41e3525af85690da2150926f5fdacebad1"
+          test "$(git hash-object "$SCRIPT")" = "2ca2198077687175bbfed88c7d5e400b1d3543f6"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfHostScreen.kt)" = "aeb2dac480b76873dcffb083cdcd63531ead5046"
 
       - name: Apply exact UI-NAV-1D.1b patch
