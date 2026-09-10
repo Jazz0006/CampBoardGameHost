@@ -2,6 +2,7 @@ from pathlib import Path
 
 LEGACY = Path(".github/scripts/ui_nav_1c_clocktower_patch.py")
 HOST = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt")
+NIGHT_SCREEN = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt")
 
 source = LEGACY.read_text(encoding="utf-8")
 section_start_marker = "# D6 composition owner receives and distributes the root utility callback."
@@ -37,8 +38,28 @@ if count != 1:
     raise SystemExit(f"NightStep HostScreen call anchor count {count}, expected exactly 1")
 HOST.write_text(host_text.replace(old, new), encoding="utf-8", newline="\n")
 
+# NightActive owns presentation localization. Keep locale lookup local rather than threading
+# another argument through the D6 composition boundary just for button labels.
+night_text = NIGHT_SCREEN.read_text(encoding="utf-8")
+night_old = """    content: @Composable () -> Unit,
+) {
+    ClocktowerDarkTheme {
+"""
+night_new = """    content: @Composable () -> Unit,
+) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    ClocktowerDarkTheme {
+"""
+night_count = night_text.count(night_old)
+if night_count != 1:
+    raise SystemExit(f"NightActive locale anchor count {night_count}, expected exactly 1")
+NIGHT_SCREEN.write_text(night_text.replace(night_old, night_new), encoding="utf-8", newline="\n")
+
 final_host = HOST.read_text(encoding="utf-8")
 if final_host.count("onHostTools = onHostTools") < 2:
     raise SystemExit("ClocktowerHostScreen did not wire Host Tools to both night presentation seams")
+final_night = NIGHT_SCREEN.read_text(encoding="utf-8")
+if final_night.count("val language = LocalContext.current.resources.configuration.locales[0].language") < 1:
+    raise SystemExit("ClocktowerNightActiveScreen did not own local presentation language")
 
 print("UI-NAV-1C.1 D6-aware wrapper completed")
