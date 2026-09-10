@@ -1,0 +1,66 @@
+name: UI-NAV-1D closeout docs sync
+
+on:
+  push:
+    branches:
+      - codex/ui-nav-1-global-navigation-visual-unification
+    paths:
+      - .github/workflows/ui-nav-1d-closeout-doc-sync.yml
+
+permissions:
+  contents: write
+
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update handoff and roadmap to live 1D closeout
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          handoff = Path('docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_UNIFICATION.md')
+          text = handoff.read_text()
+          text = text.replace('Status: **ACTIVE — UI-NAV-1D PARTIAL / LIVE RE-AUDIT COMPLETE**', 'Status: **ACTIVE — UI-NAV-1D COMPLETE / UI-NAV-1E NEXT**')
+          start = text.index('### UI-NAV-1D — remaining host/game/safe-setup flows')
+          end = text.index('### UI-NAV-1E — Identity Reveal square-table controller', start)
+          replacement = '''### UI-NAV-1D — remaining host/game/safe-setup flows — COMPLETE / PASS\n\nLive reconciliation and implementation are complete.\n\nCompleted surviving surfaces:\n\n```text\nSeatingFirstSetupScreen\n- Next reuses onConfirmSeats\n- Previous disabled\n- Host Tools disabled before a hosted game exists\n- Settings gear retained for UI-NAV-1F\n\nSeatingFirstGameSelectionScreen\n- Previous reuses onBackToSeating\n- game choice remains a content action\n- no invented selected-game progression state\n\nScreen.Game / GameScreen\n- final persistent root Screen.Game HostToolsTopBar removed\n- root-owned showHostTools/hostToolTab callback is passed into GameScreen\n- Previous disabled\n- Host Tools opens the same root-owned overlay\n- Next reuses the existing End & Reveal / View Results callback\n\nUndercoverSettingsScreen\n- top Back retired\n- Previous reuses onBack\n- Next reuses onStart\n- exact player-count enable rule preserved\n- Host Tools disabled pre-game\n\nClocktowerSettingsScreen\n- top Back and duplicate bottom return action retired\n- Previous preserves local step-back; step 0 reuses onBack\n- Next preserves local step-forward; final step reuses onStart\n- canStart rule unchanged\n- Host Tools disabled pre-game\n```\n\nHistorical WerewolfJudge 1D work was superseded by deliberate Werewolf runtime deletion at `2c00d03b46a767d3fd38ff596d4f1371b7ee7403`; do not restore it.\n\nValidation evidence:\n\n```text\nsafe seating/setup checkpoint: e63250b0791d8905a796d85776be3817431cfbf2\n- R2 run 34471425850 PASS\n\ngeneric Game production checkpoint: c9d6607c8c3dc3700ee9e4229252b52c74a8cded\n- exact one-shot run 34471666583 PASS\n- exact source/diff audit PASS\n- :app:testFast PASS\n- :app:assembleDebug PASS\n\nlive settings audit: run 34472496605 PASS\nUndercover checkpoint: 11955a254b71d234e820035b7d2a41dd3d608b69\nClocktower setup checkpoint: 412ab0b08c773767a065f1ca3a1a190b1712fadc\n- exact two-production-file diff audit PASS\n- R2 run 34472655199 PASS\n- CI run 34472655245: Classify PASS / Android FAST PASS / CI gate PASS\n```\n\nNo navigation owner, gameplay owner, persistence/recovery owner, or Settings owner changed. UI-NAV-1E is now the active production slice.\n\n'''
+          text = text[:start] + replacement + text[end:]
+          old = '''## 10. Immediate next action\n\nDo **not** start UI-NAV-1E yet.\n\nThe live audit proves 1D is only partial. Continue UI-NAV-1D from the reconciled documentation baseline:\n\n1. migrate surviving generic `Game` away from persistent root top Host Tools chrome using the existing root-owned Host Tools callback;\n2. migrate only safe setup/game-selection/game-specific setup surfaces whose existing callbacks map directly to the three-slot presentation;\n3. leave Settings relocation for 1F;\n4. preserve Results/Review semantics rather than forcing them into the visual language;\n5. validate exact diff / focused behavior / Android tests;\n6. only after 1D is closed, proceed directly to UI-NAV-1E Identity Reveal square-table controller.\n'''
+          new = '''## 10. Immediate next action\n\nStart **UI-NAV-1E Identity Reveal square-table controller**.\n\nCurrent characterized behavior to replace:\n\n- `Screen.PassPhone` is the old progress/pass-phone controller;\n- `Screen.RevealCard.onHide` currently auto-increments `currentDealIndex`;\n- the last reveal currently jumps directly to `Screen.ClocktowerJudge`.\n\nRequired 1E behavior:\n\n- reinterpret `Screen.PassPhone` as the privacy-safe Storyteller square-table controller;\n- Previous/Next move only the single existing `currentDealIndex`;\n- explicit Show opens `Screen.RevealCard`;\n- RevealCard Hide returns to the same controller seat without auto-advance;\n- last-seat Next enters the existing `ClocktowerJudge` first-night ready/recommendation boundary while leaving `nightStarted=false`;\n- that boundary should expose Previous back to the final identity seat if this remains a narrow callback-only change;\n- do not expose table/Host Tools/cross-player information on RevealCard;\n- do not add a second identity cursor or persistence migration.\n'''
+          assert old in text
+          text = text.replace(old, new)
+          handoff.write_text(text)
+
+          roadmap = Path('docs/CURRENT_DEVELOPMENT_ROADMAP.md')
+          text = roadmap.read_text()
+          text = text.replace('UI-NAV-1 global navigation visual unification     CURRENT — 1D PARTIAL / LIVE RE-AUDIT COMPLETE', 'UI-NAV-1 global navigation visual unification     CURRENT — 1D COMPLETE / 1E NEXT')
+          text = text.replace('> **CURRENT: finish the surviving UI-NAV-1D presentation surfaces, then move directly to UI-NAV-1E identity delivery before EPI-MQ-0.**', '> **CURRENT: UI-NAV-1D is complete. Proceed directly with UI-NAV-1E identity delivery before EPI-MQ-0.**')
+          text = text.replace('UI-NAV-1D  migrate remaining surviving game / safe setup flows        PARTIAL / LIVE RE-AUDIT COMPLETE\nUI-NAV-1E  migrate identity delivery to privacy-safe square table      NEXT AFTER 1D', 'UI-NAV-1D  migrate remaining surviving game / safe setup flows        COMPLETE / PASS\nUI-NAV-1E  migrate identity delivery to privacy-safe square table      NEXT')
+          marker = '### Identity-delivery product refinement\n'
+          note = '''### UI-NAV-1D completion evidence\n\n```text\nsafe setup: e63250b0791d8905a796d85776be3817431cfbf2\ngeneric Game production: c9d6607c8c3dc3700ee9e4229252b52c74a8cded\ngeneric Game one-shot: 34471666583 PASS (:app:testFast + :app:assembleDebug)\nsettings audit: 34472496605 PASS\nUndercover settings: 11955a254b71d234e820035b7d2a41dd3d608b69\nClocktower settings: 412ab0b08c773767a065f1ca3a1a190b1712fadc\nfinal settings R2: 34472655199 PASS\nfinal settings CI: 34472655245 Android FAST + CI gate PASS\n```\n\nThe remaining persistent `Screen.Game` top Host Tools chrome is gone. Pre-game surfaces reserve/disable Host Tools rather than inventing a second owner. Settings relocation remains UI-NAV-1F.\n\n'''
+          assert marker in text
+          if '### UI-NAV-1D completion evidence' not in text:
+              text = text.replace(marker, note + marker, 1)
+          roadmap.write_text(text)
+          PY
+          git diff --check
+
+      - name: Commit docs and remove one-shot
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_UNIFICATION.md docs/CURRENT_DEVELOPMENT_ROADMAP.md
+          git commit -m 'docs: close UI-NAV-1D and open identity reveal slice'
+          git push origin HEAD:codex/ui-nav-1-global-navigation-visual-unification
+          rm .github/workflows/ui-nav-1d-closeout-doc-sync.yml
+          git add .github/workflows/ui-nav-1d-closeout-doc-sync.yml
+          git commit -m 'chore: remove UI-NAV-1D docs sync'
+          git push origin HEAD:codex/ui-nav-1-global-navigation-visual-unification
