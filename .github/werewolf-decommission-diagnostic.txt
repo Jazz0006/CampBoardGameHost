@@ -1,2 +1,2 @@
-trigger=cbc7f692a4af8fcea20c316ae2b8d6d7afaac586
-Werewolf clamp calls: expected 2 exact matches, got 7
+trigger=38902bcdc7b826d4adb37bdaf8a6422dfe0d3560
+Werewolf prompt reset sites: expected 4 exact matches, got 3
