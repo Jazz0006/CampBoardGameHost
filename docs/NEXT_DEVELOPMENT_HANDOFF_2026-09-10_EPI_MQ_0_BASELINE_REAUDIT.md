@@ -1,9 +1,13 @@
 # NEXT DEVELOPMENT HANDOFF — EPI-MQ-0 Baseline Re-audit
 
 > Date: 2026-09-10 Australia/Sydney  
-> Status: **ACTIVE — READ-ONLY BASELINE / OWNERSHIP RE-AUDIT FIRST**  
-> Base: live `main` after UI-R5 merge and docs closeout  
+> Status: **QUEUED — RESUME IMMEDIATELY AFTER UI-NAV-1 CLOSEOUT**  
+> Base: re-query live `main` after UI-NAV-1 merge/closeout before beginning EPI-MQ-0  
 > Program: Epistemic Misinformation Quality / Productive Uncertainty
+
+> Current execution priority is `UI-NAV-1 — Global Navigation Visual Unification`.  
+> Current active handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_UNIFICATION.md`.  
+> This EPI-MQ handoff is preserved as the next-program contract; it is queued, not historical.
 
 ## 1. Stable inherited baseline
 
@@ -17,9 +21,11 @@ post-merge main CI #2146 / run 34437247431 PASS
 Field Test APK #34 / run 34437247434 PASS
 ```
 
-**Always re-query live `main` before creating a branch or beginning the audit.** Docs-only closeout commits intentionally advance `main` beyond the production baseline above.
+**When EPI-MQ-0 becomes active again, always re-query live `main` before creating its branch or beginning the audit.** UI-NAV-1 and later docs-only closeout commits will intentionally advance `main` beyond the inherited UI-R5 production baseline above.
 
 ## 2. Read first
+
+When this handoff becomes active again:
 
 1. root `AGENTS.md`;
 2. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
@@ -34,7 +40,7 @@ UI-R5 / D6 archives are historical evidence only and should not be loaded by def
 
 ## 3. Why re-audit before implementation
 
-The EPI-MQ plan was written on 2026-09-01 and intentionally deferred. Since then the repository has gone through semantic hardening, decomposition, persistence simplification and UI-R5 convergence. Therefore old class names may still exist, but old ownership and integration assumptions must not be accepted without checking live code.
+The EPI-MQ plan was written on 2026-09-01 and intentionally deferred. Since then the repository has gone through semantic hardening, decomposition, persistence simplification, UI-R5 convergence and, before this handoff resumes, UI-NAV-1 presentation convergence. Therefore old class names may still exist, but old ownership and integration assumptions must not be accepted without checking live code.
 
 EPI-MQ-0 is a **re-baselining stage**. It does not authorize user-visible ranking changes.
 
@@ -120,7 +126,7 @@ During EPI-MQ-0 do not:
 - replace the recommendation provider;
 - activate A4/ZDD in production;
 - reopen D6 solely because a source file is large;
-- redesign UI-R5 surfaces;
+- redesign UI-R5 / UI-NAV surfaces;
 - change persistence/recovery ordering;
 - leak actual Storyteller-hidden action targets into player knowledge;
 - broaden to other scripts before Trouble Brewing behavior is understood.
