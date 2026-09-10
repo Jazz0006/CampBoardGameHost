@@ -2,6 +2,7 @@ package com.codex.campboardgamehost
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -87,6 +88,51 @@ internal fun ClocktowerNightActionWakeInstruction(instruction: String?) {
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(4.dp))
+    }
+}
+
+/**
+ * Compact shared navigation for square-table night actions.
+ *
+ * Labels are intentionally short and forced to one line: the current step/actor belongs in the
+ * center instruction, not inside navigation buttons. This keeps narrow phone layouts stable.
+ */
+@Composable
+internal fun ClocktowerSquareTableStepNavigation(
+    language: String,
+    canGoPrevious: Boolean,
+    nextEnabled: Boolean = true,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        OutlinedButton(
+            onClick = onPrevious,
+            enabled = canGoPrevious,
+            modifier = Modifier.weight(1f),
+        ) {
+            Text(
+                text = if (language == "en") "← Previous" else "← 上一步",
+                maxLines = 1,
+                softWrap = false,
+                style = MaterialTheme.typography.labelMedium,
+            )
+        }
+        Button(
+            onClick = onNext,
+            enabled = nextEnabled,
+            modifier = Modifier.weight(1f),
+        ) {
+            Text(
+                text = if (language == "en") "Next →" else "下一步 →",
+                maxLines = 1,
+                softWrap = false,
+                style = MaterialTheme.typography.labelMedium,
+            )
+        }
     }
 }
 

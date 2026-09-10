@@ -11,9 +11,10 @@ internal data class ClocktowerPairPlayerRevealSeat(
 /**
  * Sanitized presentation model for a Player Reveal that intentionally names exactly two seats.
  *
- * The model is source-agnostic: Manual and recommendation choices reach this projection only after
- * F4 has resolved them to the same player-visible payload. Seat identity comes exclusively from the
- * typed proposition and the canonical roster; localized display text is never parsed for identity.
+ * Seat identity comes exclusively from typed data and the canonical roster. For ordinary typed
+ * information this remains the epistemic proposition. Roles such as Sage may instead carry
+ * presentation-only subject seats so an unreliable visual pair does not become an epistemic claim.
+ * Localized display text is never parsed for identity.
  */
 internal data class ClocktowerPairPlayerRevealPresentation(
     val displayKind: ClocktowerDisplayKind,
@@ -46,6 +47,15 @@ internal fun clocktowerPairPlayerRevealPresentation(
 }
 
 private fun ClocktowerNightStepUi.typedPairRevealSeatNumbers(): List<Int>? {
+    presentationSubjectSeats
+        .takeIf { it.isNotEmpty() }
+        ?.let { presentationSeats ->
+            return presentationSeats
+                .distinct()
+                .takeIf { it.size == 2 && presentationSeats.size == 2 && it.all { seat -> seat > 0 } }
+                ?.sorted()
+        }
+
     val seats = when (displayKind) {
         ClocktowerDisplayKind.EitherOne -> {
             val anyOf = displayProposition as? InformationProposition.AnyOf ?: return null

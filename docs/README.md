@@ -1,13 +1,13 @@
 # CampBoardGameHost 文档入口
 
-> 最后整理：2026-09-09 Australia/Sydney  
+> 最后整理：2026-09-10 Australia/Sydney  
 > 目标：新开发会话只读取少量当前权威文档；历史 checkpoint / handoff 默认不加载。
 
 ## 当前默认阅读顺序
 
 1. root `AGENTS.md` — 项目执行、architecture、test、Git 规范；
 2. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态与优先级权威**；
-3. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-09_UI_R5_SQUARE_TABLE_STABILIZATION.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-09_UI_R5_SQUARE_TABLE_STABILIZATION.md) — **唯一 active handoff**；
+3. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_R5_REMAINING_NIGHT_ROLES.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_R5_REMAINING_NIGHT_ROLES.md) — **唯一 active handoff**；
 4. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)；
 5. [`BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`](BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md) — 当前 square-table / Manual / player-display 产品参考；
 6. 当前 slice 所需的 specialized semantic/product docs；
@@ -24,20 +24,40 @@ D6.2 R0–R2 — COMPLETE / FULL accepted / merged (#115)
 R3 transaction-application viability audit — COMPLETE / NO-GO
 D6 decomposition campaign — COMPLETE
 
+UI-R5 — ACTIVE
+- pair-information baseline — accepted / T4 + device
+- Chef square-table — complete / device PASS
+- Empath square-table — implemented / automated green / device pending
+- Ravenkeeper dynamic-night trigger bug — fixed / T4 + R2 green / device retest pending
+
 NEXT:
-square-table Storyteller UI consolidation / UI-R5 real-device stabilization
+Undertaker square-table
+-> Ravenkeeper square-table
+-> all remaining night-role surface audit / legacy retirement
+-> final UI-R5 T4 + cross-role real-device acceptance
 -> EPI-MQ / Productive Uncertainty
 -> UX-R6 legacy recommendation-provider replacement
 ```
 
-D6 结束后的架构结论是：不要再为了消灭 `CampBoardGameHostApp.kt` 的大文件尺寸而引入第二 coordinator、mega context 或 callback bag。只有未来真实产品需求自然形成新的 application seam 时，才重新审计。
+Current verified UI-R5 checkpoint:
+
+```text
+branch codex/ui-r5-square-table-stabilization
+Draft PR #117
+production fix 0f66b78bbdc9a50e9f1c94db530e3aaaaf488880
+verified head  c1ab5578a2fb64e6506d27b898df9f4bbb1388fc
+CI #2058 PASS — Android full + APK / ASP / Real Clingo / gate
+R2 #1925 PASS
+```
+
+D6 结束后的架构结论继续有效：不要为了消灭大文件尺寸而引入第二 coordinator、mega context 或 callback bag。只有真实产品需求自然形成新的 application seam 时才重新审计。
 
 ## 当前 active references
 
 Current status / execution:
 
 - [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)
-- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-09_UI_R5_SQUARE_TABLE_STABILIZATION.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-09_UI_R5_SQUARE_TABLE_STABILIZATION.md)
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_R5_REMAINING_NIGHT_ROLES.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_R5_REMAINING_NIGHT_ROLES.md)
 - [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
 
 UI / information design:
@@ -46,11 +66,13 @@ UI / information design:
 - [`CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md`](CLUE_RECOMMENDATION_AND_MANUAL_SELECTION_UX_DECISION_2026-09-01.md)
 - [`FIELD_TEST_APK_DISTRIBUTION.md`](FIELD_TEST_APK_DISTRIBUTION.md)
 
+The previous [`NEXT_DEVELOPMENT_HANDOFF_2026-09-09_UI_R5_SQUARE_TABLE_STABILIZATION.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-09_UI_R5_SQUARE_TABLE_STABILIZATION.md) is superseded and is historical context only.
+
 ## D6 / R3 historical evidence
 
 The completed D6 decomposition campaign has been removed from the active docs root.
 
-Historical audit/progress/acceptance files now live under:
+Historical audit/progress/acceptance files live under:
 
 - [`archive/checkpoints/d6/`](archive/checkpoints/d6/)
 - [`archive/checkpoints/d6/D6_DECOMPOSITION_CAMPAIGN_CLOSEOUT_INDEX_2026-09-09.md`](archive/checkpoints/d6/D6_DECOMPOSITION_CAMPAIGN_CLOSEOUT_INDEX_2026-09-09.md)
@@ -74,7 +96,7 @@ Same-night / rules architecture:
 - [`SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md`](SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md)
 - [`SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md`](SNE_7_AUTHORITATIVE_NIGHT_TRANSACTION_BOUNDARY_2026-08-27.md)
 
-Other long-lived architecture/reference docs remain in the docs root when they are still intentionally active or future-facing.
+Other long-lived architecture/reference docs remain in the docs root when intentionally active or future-facing.
 
 ## Normative engineering workflow
 

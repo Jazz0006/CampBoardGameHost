@@ -118,18 +118,18 @@ class StructuredEmpathInformationAdapterTest {
     @Test
     fun `structured Empath confirmation commits telemetry only when selector produced a preview`() {
         val source = nightStepUiSource()
-        val panelBlock = source
-            .substringAfter("StructuredNumberInformationDecisionPanel(")
-            .substringBefore("\n            if (\n                structuredEmpathUiModel == null")
-        val previewGuard = panelBlock.indexOf("if (automaticDisplayOption != null)")
-        val telemetryCommit = panelBlock.indexOf("recordCommittedSelection(")
-        val playerDisplay = panelBlock.indexOf("onShowPlayerDisplay(")
+        val empathConfirmationBlock = source
+            .substringAfter("fun showEmpathChoice(choice: ClocktowerEmpathResultChoice)")
+            .substringBefore("\n    fun showStructuredFortuneTellerResult")
+        val previewGuard = empathConfirmationBlock.indexOf("if (automaticDisplayOption != null)")
+        val telemetryCommit = empathConfirmationBlock.indexOf("recordCommittedSelection(")
+        val playerDisplay = empathConfirmationBlock.indexOf("onShowPlayerDisplay(")
 
         assertTrue(previewGuard >= 0)
         assertTrue(telemetryCommit > previewGuard)
         assertTrue(playerDisplay > telemetryCommit)
-        assertTrue(panelBlock.contains("if (automaticDisplayOption != null) {\n                            selectionAudit?.let { audit ->"))
-        assertTrue(panelBlock.contains("                            }\n                        }\n                        onShowPlayerDisplay("))
+        assertTrue(empathConfirmationBlock.contains("if (automaticDisplayOption != null) {\n                    selectionAudit?.let { audit ->"))
+        assertTrue(empathConfirmationBlock.contains("                    }\n                }\n                val template = structuredRecommendedOption"))
     }
 
     @Test

@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-09 Australia/Sydney  
+> Updated: 2026-09-10 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
@@ -12,193 +12,258 @@ D6.1 Clocktower session authority                 COMPLETE / merged
 D6.2 UI Composition R0–R2                         COMPLETE / FULL accepted / merged
 R3 deep transaction-application viability audit   COMPLETE / NO-GO
 D6 decomposition campaign                         COMPLETE
+
+UI-R5 pair-information baseline                   ACCEPTED / T4 + device
+UI-R5 wake-actor + compact navigation             IMPLEMENTED / automated green
+UI-R5 Chef square-table                           COMPLETE / user device PASS
+UI-R5 Empath square-table                         IMPLEMENTED / automated green / device pending
+UI-R5 Undertaker square-table                     IMPLEMENTED / automated green / device pending
+UI-R5 Ravenkeeper square-table                    IMPLEMENTED / automated green / device pending
+UI-R5 Spy square-table shell                      IMPLEMENTED / automated green / device pending
+UI-R5 Clockmaker square-table                     IMPLEMENTED / automated green / device pending
+UI-R5 Sage square-table + materializer ownership  IMPLEMENTED / automated green / device pending
+UI-R5 legacy pair-manual retirement               COMPLETE / automated green
+UI-R5 generic result reachability cleanup         COMPLETE / automated green
+Dynamic night-trigger navigation bug              FIXED / T4 + R2 green / device retest pending
+UI-R5 final logical T4                            PASS
+UI-R5 overall campaign                            ACTIVE — automated acceptance complete / device acceptance next
 ```
 
-D6.2 was merged through PR #115. The final production-equivalent code/test head was:
+Historical D6/R3 evidence lives under `docs/archive/checkpoints/d6/`. Do not reopen D6 merely because a remaining source file is large.
+
+## 2. Live UI-R5 branch / PR
 
 ```text
-b2263cd08bc2ce223598698324bf2b22243c91f2
+branch: codex/ui-r5-square-table-stabilization
+Draft PR: #117
+base main: 60842381dcbc3709ad453209846f66e9b4a7a777
+final logical T4 checkpoint: 2958f334fc7cccd59ed2e75a3bdaa60684492292
+production tree immediately below T4 docs checkpoint: e84e01c2a8f5064814077d0583e684d2f42b09d7
 ```
 
-Final D6.2 FULL acceptance was triggered at:
+PR #117 remains open, Draft and unmerged. Do not merge without explicit user authorization.
+
+Final logical T4 evidence:
 
 ```text
-9ec4ce2f9e0d4114f84ee7bde90ff7e409caac8e
-CI 34307304901 — PASS
-R2 34307304900 — PASS
+2958f334fc7cccd59ed2e75a3bdaa60684492292
+CI #2143 / run 34435295215             PASS
+- Classify changes                       PASS
+- Android full unit tests + debug APK    PASS
+- ASP contract tests                     PASS
+- Real Clingo cross-validation           PASS
+- CI gate                                PASS
+R2 #2010 / run 34435295217              PASS
 ```
 
-The D6.2 merge commit was:
+`[full-ci]` correctly selected the full Android branch. The FAST step was skipped intentionally because the full Android unit suite + debug APK gate replaced it at T4.
+
+## 3. Current priority
+
+> **CURRENT: cross-role real-device acceptance and UI-R5 closeout. No further role migration or generic result-surface implementation is planned.**
+
+Product target remains:
+
+> Storyteller night-role operations use one coherent square-table interaction language where that model adds clarity. Pure private reveal/confirmation pages may remain specialized.
+
+Stable UI-R5 rules now protected by implementation/tests:
+
+- NightStep/current actor seat is authoritative;
+- `isCurrentActor` is independent from target/information state;
+- typed upstream domains own legality and registration witnesses;
+- localized display text is never parsed back into semantic identity;
+- Storyteller-only truth/reliability information never leaks to player-facing reveal;
+- misleading/drunk/poisoned display choices do not gain epistemic propositions merely to support UI;
+- specialized thin center controls are preferred over one universal mega-picker;
+- existing player-facing reveal pages remain owners where UI-R5 only migrated the Storyteller shell;
+- presentation routing stays in `ClocktowerNightStepUi`; domain/session ownership does not move into UI composition.
+
+## 4. Completed UI-R5 implementation slices
+
+### Pair information — Washerwoman / Librarian / Investigator
+
+Accepted baseline:
 
 ```text
-c75e0f0bc4635ef42ffbece41470c3437a205910
+b960be22d217ed2caa06b49c0319eace23470b42
+CI #2024 full Android + APK / ASP / Real Clingo / gate PASS
+R2 #1891 PASS
+user-reported real-device PASS
 ```
 
-Real-device critical-path testing was explicitly waived for the D6.2 merge. That waiver does **not** carry forward to UI-R5.
+### Chef
 
-Detailed D6/R3 evidence is historical and now lives under:
+**COMPLETE / user-reported real-device PASS.**
 
-- `docs/archive/checkpoints/d6/`
-- `docs/archive/checkpoints/d6/D6_DECOMPOSITION_CAMPAIGN_CLOSEOUT_INDEX_2026-09-09.md`
+### Empath
 
-## 2. Current priority
+**IMPLEMENTED / automated green / device pending.** Uses typed `NumericResult.subjectSeats` for effective living neighbours; impaired arbitrary values do not fabricate contributor-seat witnesses.
 
-> **NEXT: square-table Storyteller UI consolidation / UI-R5 real-device stabilization.**
+### Undertaker
 
-The global execution order is now frozen as:
+**IMPLEMENTED / automated green / device pending.** Executed seat is anchored by typed `RoleAt`; impaired role choices remain opaque/null-proposition and use existing unreliable publication behavior.
+
+### Ravenkeeper
+
+**IMPLEMENTED / automated green / device pending.** Target selection and final role display share one square-table owner. Target legality remains upstream. Impaired choices remain opaque/null-proposition.
+
+### Spy
+
+**IMPLEMENTED / automated green / device pending.** Storyteller shell is read-only square table. Healthy Spy retains the existing Grimoire reveal handoff; poisoned Spy does not gain a true-Grimoire reveal action.
+
+### Clockmaker
+
+**IMPLEMENTED / automated green / device pending.** Read-only square-table Storyteller owner; healthy direct number and impaired opaque choices remain on existing semantic/publication paths.
+
+### Sage
+
+**IMPLEMENTED / automated green / device pending.** Final ownership is:
 
 ```text
-UI-R5 square-table Storyteller consolidation + real-device stabilization
--> EPI-MQ / Productive Uncertainty
--> UX-R6 legacy recommendation-provider replacement
+ClocktowerHostScreen
+  -> current Demon / death trigger / effective ability state / card order
+  -> prepared facts
+ClocktowerSageStepMaterializer
+  -> Sage candidate projection / display metadata / presentationSubjectSeats
+ClocktowerNightStepUi + ClocktowerSageSquareTableUi
+  -> result projection / rendering
 ```
 
-Do not start EPI-MQ implementation before UI-R5 acceptance. Do not reopen D6 merely because `CampBoardGameHostApp.kt` remains large.
+Unreliable Sage remains `proposition = null`; typed presentation seats are not epistemic truth.
 
-Current active handoff:
+## 5. Legacy retirement and reachability cleanup
 
-- `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-09_UI_R5_SQUARE_TABLE_STABILIZATION.md`
+Authoritative audits:
 
-Primary product/UI reference:
+- `docs/UI_R5_REMAINING_NIGHT_SURFACE_AUDIT_2026-09-10.md`
+- `docs/UI_R5_GENERIC_RESULT_REACHABILITY_AUDIT_2026-09-10.md`
 
-- `docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`
+### Pair-manual retirement
 
-## 3. UI-R5 mission
+```text
+9e67fd53b21089a84c897e73ca9abb4c0f4ce17d
+CI #2133 / run 34433654157 PASS
+R2 #2000 / run 34433654190 PASS
+```
 
-UI-R5 is a presentation/interaction stabilization campaign. Its purpose is to make the square-table Storyteller experience coherent and reliable on a real phone without changing domain authority.
+Removed only the unreachable `ClocktowerPairManualSelectionDialog` and `ClocktowerPairManualCenterControls`; retained shared seat helpers and `ClocktowerPairManualSelectionModel` still used by the accepted pair square table.
 
-Primary goals:
+### Generic result reachability cleanup
 
-1. audit every surviving square-table Storyteller surface and identify duplicated geometry, seat-state rendering and interaction ownership;
-2. establish one reusable square-table presentation vocabulary where a real shared boundary exists;
-3. converge Manual clue selection, target selection and player-facing information display on the same seat geometry and visual-state rules;
-4. stabilize portrait-phone behavior for real devices, especially dense 8–15 player layouts;
-5. verify readability, safe insets, no clipping/overlap, usable tap targets and stable seat identity;
-6. preserve hidden-information boundaries and the existing typed legal-domain / structured confirmation path;
-7. complete real-device acceptance before moving to EPI-MQ.
+Production checkpoint:
 
-### Explicit non-goals
+```text
+5cf762c81c333a52e7d744499ff1f1dd28e20c61
+```
 
-UI-R5 does **not** authorize:
+Final one-shot validation:
 
-- recommendation/scoring changes;
-- EPI-MQ / Productive Uncertainty implementation;
-- new gameplay/rules semantics;
-- Persistence/Recovery redesign;
-- a second game/session state owner;
-- broad ViewModel/controller/context bags merely to reduce Compose parameter counts;
-- renewed App-root decomposition based only on file size;
-- A4/ZDD production cutover.
+```text
+run 34434862249 / job 102737709222 PASS
+- exact head/blob gate PASS
+- focused ownership RED proof PASS
+- exact production patch PASS
+- diff audit PASS
+- focused ownership GREEN PASS
+- Android FAST --rerun-tasks PASS
+- production push PASS
+- temporary workflow/script self-cleanup PASS
+```
 
-## 4. UI-R5 execution order
+Persistent production changes:
 
-### UI-R5.0 — fresh read-only UI audit
+- retire unreachable `nonPairResultFirstCandidates` branch;
+- prevent Chambermaid specialized result owner from also exposing generic recommendation/unreliable result controls;
+- retain still-live generic direct/recommendation compatibility paths.
 
-Start from a fresh branch based on live `main` after this documentation closeout is merged.
+Two obsolete Ravenkeeper/Undertaker source-shape assertions requiring the retired generic branch were removed. Their remaining specialized-owner and suppression guards stay intact.
 
-Audit:
+## 6. Final scope audit
 
-- surviving square-table composables and call sites;
-- seat geometry / edge allocation logic;
-- selection/highlight state models;
-- Storyteller-only vs player-facing information boundaries;
-- Manual pair-selection flow;
-- Fortune Teller two-target/result flow;
-- final player information display;
-- dense 8–15 player portrait behavior and known real-device risks.
+Compared from Sage completion head `053461b7d9868056593ca7a5e3ce2d8e68eb6330` to post-cleanup production tree `e84e01c2a8f5064814077d0583e684d2f42b09d7`.
 
-The first output is an ownership/duplication map and a smallest-cohesive-boundary proposal. Do not begin by introducing a generic state/action bag.
+Persistent production files changed after Sage:
 
-### UI-R5.1 — characterization / layout contract
+```text
+ClocktowerPairManualSelectionUi.kt
+ClocktowerNightStepUi.kt
+```
 
-Before meaningful structural consolidation, establish the cheapest durable evidence for:
+Persistent test changes:
 
-- stable seat identity and ordering;
-- legal target/selectable/selected/highlighted/disabled presentation states;
-- no player-facing hidden-state leak;
-- existing typed Manual legality and Fortune Teller result legality;
-- existing confirmed observation/history boundary.
+```text
++ ClocktowerNightStepResultSurfaceOwnershipTest.kt
+~ ClocktowerRavenkeeperSquareTableWiringTest.kt   (-1 obsolete assertion)
+~ ClocktowerUndertakerSquareTableWiringTest.kt    (-1 obsolete assertion)
+```
 
-For purely visual geometry where unit tests would only lock implementation shape, prefer compile/static evidence plus real-device acceptance over artificial source-shape tests.
+Remaining changes are documentation only. Temporary one-shot workflow/script files are absent from the final tree.
 
-### UI-R5.2 — square-table consolidation
+The T4 checkpoint `2958f334...` differs from `e84e01c2...` only by the active handoff document, so the validated production tree is unchanged.
 
-Extract/reuse only boundaries that own real shared presentation behavior, for example geometry, seat placement, seat visual state or common interaction shell.
+## 7. Dynamic Ravenkeeper-trigger device retest
 
-Do not move domain semantics, recommendation invocation, durable observation commit or canonical GameState ownership into the shared UI layer.
+The previously reproduced sequence:
 
-### UI-R5.3 — flow convergence
+```text
+Monk initially protects Ravenkeeper
+-> go back
+-> reconfirm Monk protecting another player
+-> Demon kills Ravenkeeper
+-> Ravenkeeper dies but ability step is skipped
+```
 
-Bring the active Storyteller flows onto the shared square-table visual language where appropriate:
+was fixed in production at `0f66b78...`; automated full T4/R2 remains green. The original device reproduction still needs explicit user retest before device acceptance is claimed.
 
-- Manual clue/seat selection;
-- direct target selection;
-- Fortune Teller two-target/result interaction;
-- final player-facing information display.
+## 8. Remaining execution sequence
 
-Keep the current legal semantic domain as the source of truth. Presentation must not reconstruct semantics from localized labels.
+```text
+1. cross-role real-device acceptance / pending device retests
+2. record any concrete device defects as focused fixes only
+3. if no blocking defect, synchronize final closeout docs
+4. UI-R5 closeout
+5. merge PR #117 only with explicit user authorization
+```
 
-### UI-R5.4 — real-device stabilization
+Do not reopen generic migration/decomposition work solely because files remain large.
 
-Portrait phone is the primary target. Validate at minimum:
+## 9. Validation strategy
 
-- dense player counts up to 15;
-- player/seat text remains readable;
-- no status/navigation inset collision;
-- no seat/center-content overlap;
-- important buttons remain reachable;
-- selection/highlight does not rely on color alone;
-- orientation/recomposition does not corrupt draft selection;
-- player-facing display contains only intended visible information.
+Follow `docs/TESTING_STRATEGY.md`.
 
-Real-device defects found here are part of UI-R5, not deferred merely because JVM tests are green.
+The final logical UI-R5 T4 is complete. Further validation should now be driven by actual device defects or closeout requirements. Real-device acceptance remains separate from automation and cannot be inferred from CI.
 
-### UI-R5.5 — acceptance / closeout
-
-UI-R5 is complete only when:
-
-- focused/FAST affected validation is green;
-- broader Android validation is run at the logical acceptance checkpoint according to `TESTING_STRATEGY.md`;
-- exact diff/ownership audit confirms no domain/persistence scope creep;
-- real-device critical paths are executed and recorded;
-- roadmap and active handoff are updated before EPI-MQ begins.
-
-## 5. Frozen architecture after D6/R3
+## 10. Frozen architecture / scope fence
 
 Preserve:
 
 - `ClocktowerGameSession` canonical writable ownership;
-- pure planner/reducer ownership of rules/transaction semantics and exactly-once intent planning;
-- existing App ownership of remaining cross-boundary application choreography and Compose-facing projection;
-- exact revision cadence and semantic chronology;
-- action/observation idempotency and non-mutating preflight;
-- Recovery v2 current-version-only policy and existing trigger topology;
-- A4 durability/invalidation/prewarm ordering;
+- Planner/Reducer rule ownership;
+- typed legal/recommendation/registration domains;
+- exact revision/history/Recovery ordering;
 - no Compose dependency in session/domain;
-- no storyteller-hidden target leak;
-- Undercover/Werewolf isolation.
+- no Storyteller-hidden information leak;
+- Undercover/Werewolf isolation;
+- current Spy Grimoire reveal behavior;
+- current dynamic Ravenkeeper-trigger correctness fix;
+- New Demon identity specialized confirmation surface.
 
-A future product requirement may justify a new application seam, but file size alone does not.
+UI-R5 does **not** authorize EPI-MQ scoring, recommendation-provider replacement, generalized App-root rewrite, Persistence follow-up, unrelated game-rule changes, A4/ZDD activation, renewed D6 decomposition, or speculative redesign of specialized private reveal pages.
 
-## 6. Testing / validation authority
+## 11. Active handoff
 
-Read and follow:
+- `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_R5_REMAINING_NIGHT_ROLES.md`
+- `docs/UI_R5_REMAINING_NIGHT_SURFACE_AUDIT_2026-09-10.md`
+- `docs/UI_R5_GENERIC_RESULT_REACHABILITY_AUDIT_2026-09-10.md`
 
-- root `AGENTS.md`;
-- `docs/TESTING_STRATEGY.md`.
+## 12. UI-R5 completion condition
 
-Documentation-only closeout changes require no Android regression. UI-R5 production work should use the risk-based T0–T4 model; the final UI-R5 gate must include recorded real-device validation because the previous D6.2 waiver is now intentionally closed.
+Automated implementation/validation conditions are satisfied. UI-R5 can close after:
 
-## 7. Current authoritative reading order
-
-For a new development session read, in order:
-
-1. root `AGENTS.md`;
-2. `docs/README.md`;
-3. this roadmap;
-4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-09_UI_R5_SQUARE_TABLE_STABILIZATION.md`;
-5. `docs/TESTING_STRATEGY.md`;
-6. `docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`;
-7. specialized semantic/product docs only as required by the chosen slice.
-
-Do not load the D6 archive by default. Use `docs/archive/checkpoints/d6/D6_DECOMPOSITION_CAMPAIGN_CLOSEOUT_INDEX_2026-09-09.md` only when historical ownership evidence is needed.
+```text
+cross-role real-device critical paths recorded
++ dynamic Ravenkeeper-trigger original device scenario retested
++ no blocking device regression remains
++ roadmap/handoff synchronized
++ explicit user decision on PR merge
+```

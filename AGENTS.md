@@ -354,6 +354,22 @@ Before adding substantial production behavior, perform a short architecture pre-
 
 If the answers expose mixed ownership or a new responsibility, establish the boundary before expanding the feature implementation.
 
+#### Recorded architecture pre-flight gate
+
+For any substantial production edit that touches a protected/core handwritten file or a handwritten production source above roughly 1000 LOC, the architecture pre-flight **MUST be recorded before production editing begins**. The active implementation specification, audit, roadmap, or handoff must contain at least:
+
+```text
+Architecture pre-flight:
+- current owner:
+- proposed responsibility:
+- authoritative state owner(s):
+- narrow typed input/output seam:
+- keep in current owner / extract:
+- reason:
+```
+
+If this record is absent, substantial production editing is a stop condition until the pre-flight is completed. This is an execution gate, not a requirement to create a permanent standalone document for every micro-slice. Small bug fixes, mechanical edits, and already-approved implementation continuations do not require a new record unless they introduce or move responsibility.
+
 #### Soft complexity triggers
 
 These are **audit triggers, not automatic failure thresholds**:

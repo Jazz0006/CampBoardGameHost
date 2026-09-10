@@ -15,6 +15,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.PairInformationLega
 import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemantics
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -75,6 +76,32 @@ class ClocktowerPairManualAuthorityTest {
             }
             assertEquals(option, resolved)
         }
+    }
+
+    @Test
+    fun `recommended presentation canonicalizes to the matching manual legal option by structured pair key`() {
+        val canonical = template(PairInformationOutcome(RoleId("Chef"), 2, 5)).copy(
+            label = "manual legal option",
+            misinformationPressure = 2,
+        )
+        val recommendation = canonical.copy(
+            label = "localized recommended label",
+            misinformationPressure = 0,
+        )
+        val presentation = ClocktowerPairManualAuthority.selectionPresentation(
+            listOf(canonical, template(PairInformationOutcome(RoleId("Chef"), 3, 5))),
+        )
+
+        assertEquals(
+            canonical,
+            ClocktowerPairManualAuthority.canonicalManualOption(presentation, recommendation),
+        )
+        assertNull(
+            ClocktowerPairManualAuthority.canonicalManualOption(
+                presentation,
+                template(PairInformationOutcome(RoleId("Chef"), 1, 4)),
+            ),
+        )
     }
 
     @Test

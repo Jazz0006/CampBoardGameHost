@@ -38,6 +38,25 @@ internal object ClocktowerPairManualAuthority {
         return ClocktowerPairManualPresentation(options.toList(), pairs, zeroCase)
     }
 
+    /**
+     * Maps a recommendation projection back into the complete Manual legal presentation using only
+     * its structured pair proposition. Recommendation labels and ranking metadata are presentation
+     * concerns and are deliberately ignored here.
+     */
+    fun canonicalManualOption(
+        presentation: ClocktowerPairManualPresentation,
+        recommendedOption: ClocktowerDisplayOption?,
+    ): ClocktowerDisplayOption? {
+        val key = recommendedOption?.pairInformationKeyOrNull() ?: return null
+        return if (key.shownRole == null) {
+            presentation.zeroCaseOption
+        } else {
+            presentation.candidates.firstOrNull { candidate ->
+                candidate.roleId == key.shownRole.value && candidate.seats == key.candidateSeats
+            }?.option
+        }
+    }
+
     fun projectLegalOptions(
         game: GameState,
         roleDefinitions: List<RoleDefinition>,

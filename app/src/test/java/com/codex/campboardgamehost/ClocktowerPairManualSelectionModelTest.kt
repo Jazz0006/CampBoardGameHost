@@ -24,6 +24,41 @@ class ClocktowerPairManualSelectionModelTest {
     }
 
     @Test
+    fun `recommended pair seeds manual editing without reconstructing localized display text`() {
+        val recommended = option("Chef", 1, 7, label = "localized label is presentation only")
+        val presentation = ClocktowerPairManualAuthority.selectionPresentation(
+            listOf(option("Chef", 1, 4), recommended, option("Empath", 2, 6)),
+        )
+
+        val model = ClocktowerPairManualSelectionModel.from(
+            presentation = presentation,
+            initialOption = recommended,
+        )
+
+        assertEquals("Chef", model.selectedRoleId)
+        assertEquals(1, model.selectedFirstSeat)
+        assertEquals(7, model.selectedSecondSeat)
+        assertEquals(recommended, model.resolvedOption)
+    }
+
+    @Test
+    fun `manual seed fails closed when recommendation is outside supplied legal presentation`() {
+        val presentation = ClocktowerPairManualAuthority.selectionPresentation(
+            listOf(option("Chef", 1, 4)),
+        )
+
+        val model = ClocktowerPairManualSelectionModel.from(
+            presentation = presentation,
+            initialOption = option("Chef", 2, 8),
+        )
+
+        assertNull(model.selectedRoleId)
+        assertNull(model.selectedFirstSeat)
+        assertNull(model.selectedSecondSeat)
+        assertNull(model.resolvedOption)
+    }
+
+    @Test
     fun `first seat constrains legal second seats and changing it cannot retain stale second seat`() {
         val model = ClocktowerPairManualSelectionModel.from(ClocktowerPairManualAuthority.selectionPresentation(
             listOf(option("Chef", 1, 4), option("Chef", 1, 7), option("Chef", 2, 8)),

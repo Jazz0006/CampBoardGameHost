@@ -34,6 +34,7 @@ internal fun resolveClocktowerNumericPlayerDisplay(
     displayPrimary = value.toString(),
     displaySecondary = template?.displaySecondary ?: step.displaySecondary,
     displayFooter = template?.displayFooter ?: step.displayFooter ?: step.explanation,
+    presentationSubjectSeats = template?.presentationSubjectSeats ?: step.presentationSubjectSeats,
     selectedInformationTruthful = truthful,
 ).withConfirmedInformation(confirmed, expectedSnapshot)
 
@@ -56,6 +57,7 @@ private fun ClocktowerNightStepUi.withDisplayOption(
     displaySecondary = option.displaySecondary,
     displayFooter = option.displayFooter,
     displayProposition = option.proposition,
+    presentationSubjectSeats = option.presentationSubjectSeats,
     selectedInformationTruthful = option.isTruthful,
     displayOptions = emptyList(),
 )
