@@ -103,37 +103,19 @@ internal fun ClocktowerSquareTableStepNavigation(
     canGoPrevious: Boolean,
     nextEnabled: Boolean = true,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        OutlinedButton(
-            onClick = onPrevious,
-            enabled = canGoPrevious,
-            modifier = Modifier.weight(1f),
-        ) {
-            Text(
-                text = if (language == "en") "← Previous" else "← 上一步",
-                maxLines = 1,
-                softWrap = false,
-                style = MaterialTheme.typography.labelMedium,
-            )
-        }
-        Button(
-            onClick = onNext,
-            enabled = nextEnabled,
-            modifier = Modifier.weight(1f),
-        ) {
-            Text(
-                text = if (language == "en") "Next →" else "下一步 →",
-                maxLines = 1,
-                softWrap = false,
-                style = MaterialTheme.typography.labelMedium,
-            )
-        }
-    }
+    HostBottomActionBar(
+        previousLabel = if (language == "en") "← Previous" else "← 上一步",
+        hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
+        nextLabel = if (language == "en") "Next →" else "下一步 →",
+        previousEnabled = canGoPrevious,
+        nextEnabled = nextEnabled,
+        onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
+    )
 }
 
 @Composable
@@ -150,6 +132,7 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
     canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     nextEnabled: Boolean = true,
     secondaryActionLabel: String? = null,
@@ -216,19 +199,14 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
             }
 
             Spacer(Modifier.height(6.dp))
-            Button(
-                onClick = onNext,
-                enabled = nextEnabled,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(if (language == "en") "Finish / Next" else "完成 / 下一步")
-            }
-
-            if (canGoPrevious) {
-                TextButton(onClick = onPrevious) {
-                    Text(if (language == "en") "Previous step" else "上一步")
-                }
-            }
+            ClocktowerSquareTableStepNavigation(
+                language = language,
+                canGoPrevious = canGoPrevious,
+                nextEnabled = nextEnabled,
+                onPrevious = onPrevious,
+                onHostTools = onHostTools,
+                onNext = onNext,
+            )
         }
     }
 }

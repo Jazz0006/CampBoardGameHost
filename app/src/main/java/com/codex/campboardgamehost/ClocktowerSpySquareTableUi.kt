@@ -57,6 +57,7 @@ internal fun ClocktowerSpySquareTableDialog(
     language: String,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     onShowLegacyReveal: () -> Unit,
 ) {
@@ -130,6 +131,7 @@ internal fun ClocktowerSpySquareTableDialog(
                 language = language,
                 canGoPrevious = canGoPrevious,
                 onPrevious = onPrevious,
+                onHostTools = onHostTools,
                 onNext = onNext,
             )
         }

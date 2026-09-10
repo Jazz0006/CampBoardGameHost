@@ -252,6 +252,7 @@ internal fun ClocktowerEmpathSquareTableDialog(
     language: String,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerEmpathResultChoice) -> Unit,
 ) {
@@ -389,6 +390,7 @@ internal fun ClocktowerEmpathSquareTableDialog(
                         language = language,
                         canGoPrevious = canGoPrevious,
                         onPrevious = onPrevious,
+                        onHostTools = onHostTools,
                         onNext = onNext,
                     )
                 }

@@ -169,6 +169,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
     language: String,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerUndertakerResultChoice) -> Unit,
 ) {
@@ -292,6 +293,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                         language = language,
                         canGoPrevious = canGoPrevious,
                         onPrevious = onPrevious,
+                        onHostTools = onHostTools,
                         onNext = onNext,
                     )
                 }

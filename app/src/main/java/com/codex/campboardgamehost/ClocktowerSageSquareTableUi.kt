@@ -139,6 +139,7 @@ internal fun ClocktowerSageSquareTableDialog(
     language: String,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerSageResultChoice) -> Unit,
 ) {
@@ -239,6 +240,7 @@ internal fun ClocktowerSageSquareTableDialog(
                 language = language,
                 canGoPrevious = canGoPrevious,
                 onPrevious = onPrevious,
+                onHostTools = onHostTools,
                 onNext = onNext,
             )
         }

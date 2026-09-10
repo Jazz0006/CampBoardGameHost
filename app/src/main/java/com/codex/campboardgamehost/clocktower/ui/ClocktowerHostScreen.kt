@@ -274,6 +274,7 @@ internal fun ClocktowerJudgeScreen(
     onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,
     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
     onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
+    onHostTools: () -> Unit,
     onMovePreviousNightStep: () -> Unit,
     onSelectNightDeath: (String?) -> Unit,
     onConfirmDemonAttack: () -> Unit,
@@ -4216,6 +4217,7 @@ internal fun ClocktowerJudgeScreen(
                 ClocktowerNightAction.DemonSuccessor,
             ) || selectedNightName != null,
             onPrevious = onMovePreviousNightStep,
+            onHostTools = onHostTools,
             onNext = advanceNightStep,
         ) {
             ClocktowerNightStepCardLocalized(
@@ -4402,6 +4404,7 @@ internal fun ClocktowerJudgeScreen(
                 },
                 canGoPrevious = currentStepIndex > 0,
                 onPrevious = onMovePreviousNightStep,
+                onHostTools = onHostTools,
                 onNext = advanceNightStep,
                 showNavigationActions = false,
             )

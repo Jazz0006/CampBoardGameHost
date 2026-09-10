@@ -48,6 +48,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     language: String,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
 ) {
@@ -125,6 +126,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                     onStartEditing = { editing = true },
                     onRestoreRecommendation = ::restoreRecommendation,
                     onPrevious = onPrevious,
+                    onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = onConfirm,
                 )
@@ -186,6 +188,7 @@ private fun ClocktowerPairInformationCenterControls(
     onStartEditing: () -> Unit,
     onRestoreRecommendation: () -> Unit,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
 ) {
@@ -343,6 +346,7 @@ private fun ClocktowerPairInformationCenterControls(
             language = language,
             canGoPrevious = canGoPrevious,
             onPrevious = onPrevious,
+            onHostTools = onHostTools,
             onNext = onNext,
         )
     }

@@ -68,6 +68,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     onResultSelected: (Boolean) -> Unit,
     onAutomaticResultSelected: (Boolean) -> Unit,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
     Dialog(
@@ -120,6 +121,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
                     onResultSelected = onResultSelected,
                     onAutomaticResultSelected = onAutomaticResultSelected,
                     onPrevious = onPrevious,
+                    onHostTools = onHostTools,
                     onNext = onNext,
                 )
             }
@@ -139,6 +141,7 @@ private fun ClocktowerFortuneTellerCenterControls(
     onResultSelected: (Boolean) -> Unit,
     onAutomaticResultSelected: (Boolean) -> Unit,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
     val actions = clocktowerFortuneTellerResultActions(
@@ -280,19 +283,13 @@ private fun ClocktowerFortuneTellerCenterControls(
         }
 
         Spacer(Modifier.height(6.dp))
-        Button(
-            onClick = onNext,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(if (language == "en") "Finish / Next" else "完成 / 下一步")
-        }
-
-        if (canGoPrevious) {
-            Spacer(Modifier.height(6.dp))
-            TextButton(onClick = onPrevious) {
-                Text(if (language == "en") "Previous step" else "上一步")
-            }
-        }
+        ClocktowerSquareTableStepNavigation(
+            language = language,
+            canGoPrevious = canGoPrevious,
+            onPrevious = onPrevious,
+            onHostTools = onHostTools,
+            onNext = onNext,
+        )
     }
 }
 

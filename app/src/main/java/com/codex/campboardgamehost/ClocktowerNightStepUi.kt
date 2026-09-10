@@ -88,6 +88,7 @@ internal fun ClocktowerNightStepCardLocalized(
     onShowPlayerDisplay: (ClocktowerNightStepUi) -> Unit,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     showNavigationActions: Boolean = true,
 ) {
@@ -750,7 +751,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 )
                 presentation?.let {
                     key(step.action) {
-                        ClocktowerSingleTargetAbilitySection(nightActionSeats, it, language, canGoPrevious, onSingleTargetEvent)
+                        ClocktowerSingleTargetAbilitySection(nightActionSeats, it, language, canGoPrevious, onHostTools, onSingleTargetEvent)
                     }
                 }
             }
@@ -771,6 +772,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
                     },
                     onPrevious = onPrevious,
+                    onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showRavenkeeperChoice,
                 )
@@ -801,6 +803,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     onResultSelected = ::showStructuredFortuneTellerResult,
                     onAutomaticResultSelected = ::showStructuredFortuneTellerResult,
                     onPrevious = onPrevious,
+                    onHostTools = onHostTools,
                     onNext = onNext,
                 )
             }
@@ -842,6 +845,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     onShowDeterminedResult = { onShowPlayerDisplay(step) },
                     onResultSelected = ::showRecommendedDisplayOption,
                     onPrevious = onPrevious,
+                    onHostTools = onHostTools,
                     onNext = onNext,
                 )
             }
@@ -862,7 +866,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 )
                 presentation?.let {
                     key(step.action) {
-                        ClocktowerNightRulingSection(nightActionSeats, it, language, canGoPrevious, onSingleTargetEvent)
+                        ClocktowerNightRulingSection(nightActionSeats, it, language, canGoPrevious, onHostTools, onSingleTargetEvent)
                     }
                 }
             }
@@ -881,6 +885,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onPrevious = onPrevious,
+                    onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showChefChoice,
                 )
@@ -896,6 +901,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onPrevious = onPrevious,
+                    onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showEmpathChoice,
                 )
@@ -909,6 +915,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onPrevious = onPrevious,
+                    onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showUndertakerChoice,
                 )
@@ -922,6 +929,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onPrevious = onPrevious,
+                    onHostTools = onHostTools,
                     onNext = onNext,
                     onShowLegacyReveal = { onShowPlayerDisplay(step) },
                 )
@@ -935,6 +943,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onPrevious = onPrevious,
+                    onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showClockmakerChoice,
                 )
@@ -948,6 +957,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onPrevious = onPrevious,
+                    onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showSageChoice,
                 )
@@ -1018,6 +1028,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onPrevious = onPrevious,
+                    onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showRecommendedDisplayOption,
                 )
@@ -1132,27 +1143,19 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             if (showNavigationActions) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(
-                        onClick = onPrevious,
-                        enabled = canGoPrevious,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(14.dp),
-                    ) {
-                        Text(stringResource(R.string.previous_step))
-                    }
-                    Button(
-                        onClick = onNext,
-                        enabled = step.action !in setOf(
-                            ClocktowerNightAction.MayorRedirect,
-                            ClocktowerNightAction.DemonSuccessor,
-                        ) || selectedName != null,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(14.dp),
-                    ) {
-                        Text(stringResource(R.string.clocktower_host_finish_next))
-                    }
-                }
+                HostBottomActionBar(
+                    previousLabel = stringResource(R.string.previous_step),
+                    hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
+                    nextLabel = if (language == "en") "Next →" else "下一步 →",
+                    previousEnabled = canGoPrevious,
+                    nextEnabled = step.action !in setOf(
+                        ClocktowerNightAction.MayorRedirect,
+                        ClocktowerNightAction.DemonSuccessor,
+                    ) || selectedName != null,
+                    onPrevious = onPrevious,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
+                )
             }
 
             Surface(

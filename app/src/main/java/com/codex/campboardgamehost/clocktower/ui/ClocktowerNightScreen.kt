@@ -380,9 +380,11 @@ internal fun ClocktowerNightActiveScreen(
     canGoPrevious: Boolean,
     nextEnabled: Boolean,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     content: @Composable () -> Unit,
 ) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
     ClocktowerDarkTheme {
         Column(
             modifier = Modifier
@@ -439,33 +441,17 @@ internal fun ClocktowerNightActiveScreen(
                 color = MaterialTheme.colorScheme.surface,
                 shadowElevation = 12.dp,
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    OutlinedButton(
-                        onClick = onPrevious,
-                        enabled = canGoPrevious,
-                        modifier = Modifier
-                            .weight(0.78f)
-                            .height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                    ) {
-                        Text(stringResource(R.string.previous_step))
-                    }
-                    Button(
-                        onClick = onNext,
-                        enabled = nextEnabled,
-                        modifier = Modifier
-                            .weight(1.22f)
-                            .height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                    ) {
-                        Text(stringResource(R.string.clocktower_host_finish_next))
-                    }
-                }
+                HostBottomActionBar(
+                    previousLabel = if (language == "en") "← Previous" else "← 上一步",
+                    hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
+                    nextLabel = if (language == "en") "Next →" else "下一步 →",
+                    previousEnabled = canGoPrevious,
+                    nextEnabled = nextEnabled,
+                    onPrevious = onPrevious,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                )
             }
         }
     }

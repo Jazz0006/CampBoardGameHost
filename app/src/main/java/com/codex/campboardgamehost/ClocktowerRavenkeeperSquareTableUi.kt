@@ -160,6 +160,7 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
     canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerRavenkeeperResultChoice) -> Unit,
 ) {
@@ -287,6 +288,7 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                 language = language,
                 canGoPrevious = canGoPrevious,
                 onPrevious = onPrevious,
+                onHostTools = onHostTools,
                 onNext = onNext,
             )
         }

@@ -2692,6 +2692,10 @@ internal fun CampBoardGameHostApp() {
                             addClocktowerEvent(type, title, detail, names)
                         },
                         onRecordEpistemicObservation = ::recordEpistemicObservation,
+                        onHostTools = {
+                            hostToolTab = HostToolTab.Roles
+                            showHostTools = true
+                        },
                         onSelectNightDeath = { selected ->
                             advanceClocktowerPlayerInputRevision()
                             val reducedCheckpoint = NightCheckpointReducer.reduce(
