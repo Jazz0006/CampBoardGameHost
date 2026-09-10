@@ -1,0 +1,151 @@
+name: UI-NAV-1C Clocktower one-shot
+
+on:
+  push:
+    branches:
+      - codex/ui-nav-1-global-navigation-visual-unification
+    paths:
+      - .github/workflows/ui-nav-1c-clocktower-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-clocktower-navigation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BRANCH: codex/ui-nav-1-global-navigation-visual-unification
+      SCRIPT: .github/scripts/ui_nav_1c_clocktower_patch.py
+      WORKFLOW: .github/workflows/ui-nav-1c-clocktower-one-shot.yml
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Preflight exact head and blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git fetch --no-tags origin "$BRANCH"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+
+          check_blob() {
+            local path="$1"
+            local expected="$2"
+            local actual
+            actual="$(git hash-object "$path")"
+            if [[ "$actual" != "$expected" ]]; then
+              echo "::error::$path blob drifted: expected $expected, got $actual"
+              exit 1
+            fi
+          }
+
+          check_blob "$SCRIPT" "f33c5cdcc988d0376adb8491fdf92b1bd7ae4217"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/HostBottomActionBar.kt" "824f173ebbd076136354335426c897fd3f79f26d"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt" "0dea3ac3ced90cf92d40c1b5f78692e408d71566"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt" "694d93d79f00f3f3995e33cd22f9c6d63fd6ee4e"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt" "22a331a12622807f4550351a746677565bc87bce"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt" "947f39b3d4a9ab98ab4dbdd3481c53f48646b79d"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt" "cc62262bf2c57e615b18f442650ba8cd2dc6e8a8"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt" "c8c916c539e0a5f54ab00cba051e58cb4e7be273"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerClockmakerSquareTableUi.kt" "f90b51c0a808e2822fca7bdb16f5bc4456c24807"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerSageSquareTableUi.kt" "5f1b15fc7176577473011c351ae2c4a578c6a372"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerSpySquareTableUi.kt" "eb879d85b3c887ba82e27260d835c28b9afa97dd"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerRavenkeeperSquareTableUi.kt" "5b0acce3be1784e943ee64d5eaa23e6f76d29d01"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt" "e9fb091a5f9a477490e6fc880eacbdb795da4f19"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt" "dec3f19a71b4601ef4026c580677296fcfb2fc3c"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt" "a09052f10ab95897cb22eb858128689a12edd4a6"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt" "d315f3b95843969a974b92b5c3c541e4d674598e"
+
+      - name: Apply exact UI-NAV-1C patch
+        run: python3 "$SCRIPT"
+
+      - name: Audit exact production diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+
+          cat > /tmp/expected-files.txt <<'EOF'
+          app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerClockmakerSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerRavenkeeperSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerSageSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerSpySquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt
+          EOF
+          git diff --name-only | sort > /tmp/actual-files.txt
+          diff -u /tmp/expected-files.txt /tmp/actual-files.txt
+
+          grep -q 'HostBottomActionBar(' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          grep -q 'hostToolsLabel = if (language == "en") "Host Tools" else "主持工具"' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt
+          if grep -q 'screen == Screen.ClocktowerJudge ||' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt; then
+            echo "::error::legacy ClocktowerJudge HostToolsTopBar condition survived"
+            exit 1
+          fi
+
+      - name: Run Android FAST validation
+        run: ./gradlew :app:testFast --no-daemon
+
+      - name: Recheck remote head before push
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$BRANCH"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+
+      - name: Commit and push production patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add \
+            app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerClockmakerSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerRavenkeeperSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerSageSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerSpySquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt
+
+          git diff --cached --check
+          git commit -m "ui: wire Clocktower bottom navigation"
+          git push origin "HEAD:$BRANCH"
+
+      - name: Remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm "$SCRIPT" "$WORKFLOW"
+          git commit -m "chore(ci): remove UI-NAV-1C one-shot"
+          git push origin "HEAD:$BRANCH"
