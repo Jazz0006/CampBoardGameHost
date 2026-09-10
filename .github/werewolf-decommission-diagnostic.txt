@@ -1,1 +1,2 @@
-inactive screen WerewolfSettings: expected 1 exact matches, got 2
+trigger=cbc7f692a4af8fcea20c316ae2b8d6d7afaac586
+Werewolf clamp calls: expected 2 exact matches, got 7
