@@ -21,9 +21,12 @@ UI-R5 Undertaker square-table                     IMPLEMENTED / automated green 
 UI-R5 Ravenkeeper square-table                    IMPLEMENTED / automated green / device pending
 UI-R5 Spy square-table shell                      IMPLEMENTED / automated green / device pending
 UI-R5 Clockmaker square-table                     IMPLEMENTED / automated green / device pending
+UI-R5 Sage square-table + materializer ownership  IMPLEMENTED / automated green / device pending
+UI-R5 legacy pair-manual retirement               COMPLETE / automated green
+UI-R5 generic result reachability cleanup         COMPLETE / automated green
 Dynamic night-trigger navigation bug              FIXED / T4 + R2 green / device retest pending
-UI-R5 remaining-night surface audit               COMPLETE
-UI-R5 overall campaign                            ACTIVE — Sage next
+UI-R5 final logical T4                            PASS
+UI-R5 overall campaign                            ACTIVE — automated acceptance complete / device acceptance next
 ```
 
 Historical D6/R3 evidence lives under `docs/archive/checkpoints/d6/`. Do not reopen D6 merely because a remaining source file is large.
@@ -34,83 +37,50 @@ Historical D6/R3 evidence lives under `docs/archive/checkpoints/d6/`. Do not reo
 branch: codex/ui-r5-square-table-stabilization
 Draft PR: #117
 base main: 60842381dcbc3709ad453209846f66e9b4a7a777
-latest full-T4 verified head: c1ab5578a2fb64e6506d27b898df9f4bbb1388fc
-latest Ravenkeeper checkpoint: 06e01ec7c0410412b38d104f4a5f72bc72811ffe
-latest Spy checkpoint: d45f96ddcdb1142a422d64ee87cf61c5475121f9
-latest Clockmaker verified head: 9119ec83f036432ec9b5f0f3a920690ab9719e16
+final logical T4 checkpoint: 2958f334fc7cccd59ed2e75a3bdaa60684492292
+production tree immediately below T4 docs checkpoint: e84e01c2a8f5064814077d0583e684d2f42b09d7
 ```
 
 PR #117 remains open, Draft and unmerged. Do not merge without explicit user authorization.
 
-Latest full validation checkpoint remains:
+Final logical T4 evidence:
 
 ```text
-c1ab5578a2fb64e6506d27b898df9f4bbb1388fc
-CI #2058 / run 34408187526              PASS
-- Android full unit tests + debug APK     PASS
-- ASP contract tests                      PASS
-- Real Clingo cross-validation            PASS
-- CI gate                                 PASS
-R2 #1925 / run 34408187513                PASS
+2958f334fc7cccd59ed2e75a3bdaa60684492292
+CI #2143 / run 34435295215             PASS
+- Classify changes                       PASS
+- Android full unit tests + debug APK    PASS
+- ASP contract tests                     PASS
+- Real Clingo cross-validation           PASS
+- CI gate                                PASS
+R2 #2010 / run 34435295217              PASS
 ```
 
-This remains the latest full-T4 checkpoint. Per-role UI checkpoints below do not replace it.
-
-Latest per-role checkpoints:
-
-```text
-Ravenkeeper:
-06e01ec7c0410412b38d104f4a5f72bc72811ffe
-CI #2087 / run 34415179389  Android FAST + gate PASS
-R2 #1954 / run 34415179369   PASS
-
-Spy:
-d45f96ddcdb1142a422d64ee87cf61c5475121f9
-CI #2092 / run 34415625342  Android FAST + gate PASS
-R2 #1959 / run 34415625336   PASS
-
-Clockmaker:
-production implementation: ae48eecc6c0931ee608cc1402c6355cc807f8e81
-verified head:             9119ec83f036432ec9b5f0f3a920690ab9719e16
-CI #2106 / run 34417802131  Android FAST + gate PASS
-R2 #1973 / run 34417802113   PASS
-```
-
-CI #2105 for the initial Clockmaker head failed only because an old Spy source-wiring test required two generic guards to be textually adjacent. `9119ec83...` made that test ordering-independent; production code did not change.
+`[full-ci]` correctly selected the full Android branch. The FAST step was skipped intentionally because the full Android unit suite + debug APK gate replaced it at T4.
 
 ## 3. Current priority
 
-> **CURRENT: migrate Sage using typed presentation-only pair-seat identity, then retire superseded legacy UI and run final UI-R5 validation.**
+> **CURRENT: cross-role real-device acceptance and UI-R5 closeout. No further role migration or generic result-surface implementation is planned.**
 
-Product target:
+Product target remains:
 
-> Storyteller night-role operations should use one coherent square-table interaction language where that interaction model adds clarity. Pure private reveal/confirmation pages may remain specialized.
+> Storyteller night-role operations use one coherent square-table interaction language where that model adds clarity. Pure private reveal/confirmation pages may remain specialized.
 
-Shared presentation hierarchy:
-
-```text
-1. current actor / player to wake        highest priority
-2. role/action instruction
-3. related target / information players  visually distinct from actor
-4. result / recommendation
-5. action controls
-6. Previous / Next                       stable compact one-row navigation
-```
-
-Stable rules:
+Stable UI-R5 rules now protected by implementation/tests:
 
 - NightStep/current actor seat is authoritative;
 - `isCurrentActor` is independent from target/information state;
 - typed upstream domains own legality and registration witnesses;
 - localized display text is never parsed back into semantic identity;
 - Storyteller-only truth/reliability information never leaks to player-facing reveal;
-- misleading/drunk/poisoned display choices must not gain epistemic propositions merely to support UI;
+- misleading/drunk/poisoned display choices do not gain epistemic propositions merely to support UI;
 - specialized thin center controls are preferred over one universal mega-picker;
-- an existing player-facing reveal may remain the owner when UI-R5 only needs to migrate the Storyteller shell.
+- existing player-facing reveal pages remain owners where UI-R5 only migrated the Storyteller shell;
+- presentation routing stays in `ClocktowerNightStepUi`; domain/session ownership does not move into UI composition.
 
-## 4. Completed / implemented UI-R5 slices
+## 4. Completed UI-R5 implementation slices
 
-### Pair-information — Washerwoman / Librarian / Investigator
+### Pair information — Washerwoman / Librarian / Investigator
 
 Accepted baseline:
 
@@ -135,72 +105,103 @@ user-reported real-device PASS
 
 ### Ravenkeeper
 
-**IMPLEMENTED / automated green / device pending.** Target selection and final role display share one square-table owner. Target legality remains `clocktowerRavenkeeperTargetCards(cards)`. Impaired choices remain opaque/null-proposition.
+**IMPLEMENTED / automated green / device pending.** Target selection and final role display share one square-table owner. Target legality remains upstream. Impaired choices remain opaque/null-proposition.
 
 ### Spy
 
-**IMPLEMENTED / automated green / device pending.** Storyteller shell is read-only square table. Healthy Spy keeps the existing Show-to-player action and exact `onShowPlayerDisplay(step)` handoff to the existing Grimoire page. Poisoned Spy has no true-Grimoire reveal action. Grimoire generation/history were not redesigned.
+**IMPLEMENTED / automated green / device pending.** Storyteller shell is read-only square table. Healthy Spy retains the existing Grimoire reveal handoff; poisoned Spy does not gain a true-Grimoire reveal action.
 
 ### Clockmaker
 
-**IMPLEMENTED / automated green / device pending.** Clockmaker now uses a read-only square-table Storyteller owner:
+**IMPLEMENTED / automated green / device pending.** Read-only square-table Storyteller owner; healthy direct number and impaired opaque choices remain on existing semantic/publication paths.
 
-- current actor highlighted independently;
-- healthy direct number reveal preserved;
-- impaired manual mode preserves existing opaque `displayOptions`;
-- automatic mode uses only the already-selected `automaticDisplayOption`;
-- shown number text is never reverse-parsed into semantic state;
-- final reveal uses existing publication paths;
-- generic recommendation/result-first/unreliable/direct result surfaces are suppressed while Clockmaker owns the step;
-- no Host/session/rules/history/persistence behavior changed.
+### Sage
 
-## 5. Remaining-night surface audit
-
-Authoritative audit:
-
-`docs/UI_R5_REMAINING_NIGHT_SURFACE_AUDIT_2026-09-10.md`
-
-Final classification:
+**IMPLEMENTED / automated green / device pending.** Final ownership is:
 
 ```text
-MIGRATE:
-- Sage
-
-KEEP SPECIALIZED:
-- first-night Minion information
-- first-night Demon information
-- New Demon identity reveal/confirmation
-
-UNREACHABLE LEGACY — RETIRE AFTER SAGE:
-- ClocktowerPairManualSelectionDialog
-- ClocktowerPairManualCenterControls
-  (retain/rehome shared seat helpers and model still used by the accepted pair table)
+ClocktowerHostScreen
+  -> current Demon / death trigger / effective ability state / card order
+  -> prepared facts
+ClocktowerSageStepMaterializer
+  -> Sage candidate projection / display metadata / presentationSubjectSeats
+ClocktowerNightStepUi + ClocktowerSageSquareTableUi
+  -> result projection / rendering
 ```
 
-All other active supported night interactions are already accepted/implemented square-table owners.
+Unreliable Sage remains `proposition = null`; typed presentation seats are not epistemic truth.
 
-## 6. Sage migration contract
+## 5. Legacy retirement and reachability cleanup
 
-Sage is the final role migration before legacy retirement.
+Authoritative audits:
 
-The current Sage materializer knows the dead Sage actor, the actual Demon, and the second shown player, but current `ClocktowerDisplayOption`s expose those two seats only through display text. UI-R5 must not parse `displaySecondary`.
+- `docs/UI_R5_REMAINING_NIGHT_SURFACE_AUDIT_2026-09-10.md`
+- `docs/UI_R5_GENERIC_RESULT_REACHABILITY_AUDIT_2026-09-10.md`
 
-Required design:
+### Pair-manual retirement
 
 ```text
-typed presentation-only subject seats
--> no epistemic proposition invented for UI
--> reliable and impaired candidate pair identity remains available to presentation
--> impaired options remain proposition = null
--> dead Sage actor highlight independent from the two information seats
--> no arbitrary seat selection unless the existing legal domain explicitly supports it
--> final reveal/history stays on existing resolution/publication paths
--> malformed/missing/duplicate/out-of-range pair identity fails closed
+9e67fd53b21089a84c897e73ca9abb4c0f4ce17d
+CI #2133 / run 34433654157 PASS
+R2 #2000 / run 34433654190 PASS
 ```
 
-Existing `ClocktowerPairPlayerRevealPresentation` is the architectural precedent: pair identity comes from typed data, never display text.
+Removed only the unreachable `ClocktowerPairManualSelectionDialog` and `ClocktowerPairManualCenterControls`; retained shared seat helpers and `ClocktowerPairManualSelectionModel` still used by the accepted pair square table.
 
-## 7. Dynamic night-trigger navigation bug
+### Generic result reachability cleanup
+
+Production checkpoint:
+
+```text
+5cf762c81c333a52e7d744499ff1f1dd28e20c61
+```
+
+Final one-shot validation:
+
+```text
+run 34434862249 / job 102737709222 PASS
+- exact head/blob gate PASS
+- focused ownership RED proof PASS
+- exact production patch PASS
+- diff audit PASS
+- focused ownership GREEN PASS
+- Android FAST --rerun-tasks PASS
+- production push PASS
+- temporary workflow/script self-cleanup PASS
+```
+
+Persistent production changes:
+
+- retire unreachable `nonPairResultFirstCandidates` branch;
+- prevent Chambermaid specialized result owner from also exposing generic recommendation/unreliable result controls;
+- retain still-live generic direct/recommendation compatibility paths.
+
+Two obsolete Ravenkeeper/Undertaker source-shape assertions requiring the retired generic branch were removed. Their remaining specialized-owner and suppression guards stay intact.
+
+## 6. Final scope audit
+
+Compared from Sage completion head `053461b7d9868056593ca7a5e3ce2d8e68eb6330` to post-cleanup production tree `e84e01c2a8f5064814077d0583e684d2f42b09d7`.
+
+Persistent production files changed after Sage:
+
+```text
+ClocktowerPairManualSelectionUi.kt
+ClocktowerNightStepUi.kt
+```
+
+Persistent test changes:
+
+```text
++ ClocktowerNightStepResultSurfaceOwnershipTest.kt
+~ ClocktowerRavenkeeperSquareTableWiringTest.kt   (-1 obsolete assertion)
+~ ClocktowerUndertakerSquareTableWiringTest.kt    (-1 obsolete assertion)
+```
+
+Remaining changes are documentation only. Temporary one-shot workflow/script files are absent from the final tree.
+
+The T4 checkpoint `2958f334...` differs from `e84e01c2...` only by the active handoff document, so the validated production tree is unchanged.
+
+## 7. Dynamic Ravenkeeper-trigger device retest
 
 The previously reproduced sequence:
 
@@ -212,36 +213,25 @@ Monk initially protects Ravenkeeper
 -> Ravenkeeper dies but ability step is skipped
 ```
 
-was fixed in production at `0f66b78...`; full T4/R2 are green at `c1ab5578...`. The original device reproduction still needs explicit user retest before device acceptance is claimed.
+was fixed in production at `0f66b78...`; automated full T4/R2 remains green. The original device reproduction still needs explicit user retest before device acceptance is claimed.
 
-## 8. Immediate execution sequence
+## 8. Remaining execution sequence
 
 ```text
-1. Sage typed presentation-seat RED
-2. Sage square-table migration
-3. Sage exact diff + Android FAST + R2
-4. retire unreachable old pair-manual dialog/center controls
-5. re-audit generic recommendation/result-first/unreliable/direct branches
-6. exact scope audit
-7. final logical UI-R5 T4
-8. cross-role real-device acceptance
-9. UI-R5 closeout / merge only with explicit user authorization
+1. cross-role real-device acceptance / pending device retests
+2. record any concrete device defects as focused fixes only
+3. if no blocking defect, synchronize final closeout docs
+4. UI-R5 closeout
+5. merge PR #117 only with explicit user authorization
 ```
+
+Do not reopen generic migration/decomposition work solely because files remain large.
 
 ## 9. Validation strategy
 
 Follow `docs/TESTING_STRATEGY.md`.
 
-For Sage and retirement slices:
-
-- tests-first where a stable semantic/presentation contract is changing;
-- focused tests during implementation;
-- Android FAST at production checkpoints;
-- keep R2 green;
-- exact diff audit, especially for `ClocktowerHostScreen.kt` and `ClocktowerNightStepUi.kt`;
-- no full T4 until the final logical UI-R5 checkpoint unless risk requires escalation.
-
-Real-device acceptance remains separate from automation.
+The final logical UI-R5 T4 is complete. Further validation should now be driven by actual device defects or closeout requirements. Real-device acceptance remains separate from automation and cannot be inferred from CI.
 
 ## 10. Frozen architecture / scope fence
 
@@ -254,29 +244,26 @@ Preserve:
 - no Compose dependency in session/domain;
 - no Storyteller-hidden information leak;
 - Undercover/Werewolf isolation;
-- existing square-table geometry unless a concrete device defect requires a focused fix.
+- current Spy Grimoire reveal behavior;
+- current dynamic Ravenkeeper-trigger correctness fix;
+- New Demon identity specialized confirmation surface.
 
-UI-R5 does **not** authorize EPI-MQ scoring, recommendation-provider replacement, generalized App-root rewrite, Persistence follow-up, unrelated game-rule changes, A4/ZDD activation, renewed D6 decomposition, or speculative redesign of the Spy Grimoire page.
+UI-R5 does **not** authorize EPI-MQ scoring, recommendation-provider replacement, generalized App-root rewrite, Persistence follow-up, unrelated game-rule changes, A4/ZDD activation, renewed D6 decomposition, or speculative redesign of specialized private reveal pages.
 
 ## 11. Active handoff
 
 - `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_R5_REMAINING_NIGHT_ROLES.md`
 - `docs/UI_R5_REMAINING_NIGHT_SURFACE_AUDIT_2026-09-10.md`
-- `docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`
+- `docs/UI_R5_GENERIC_RESULT_REACHABILITY_AUDIT_2026-09-10.md`
 
 ## 12. UI-R5 completion condition
 
-UI-R5 can close only when:
+Automated implementation/validation conditions are satisfied. UI-R5 can close after:
 
 ```text
-Sage migrated or explicitly reclassified
-+ superseded reachable legacy UI retired
-+ affected focused/FAST/R2 green
-+ final logical T4 green
-+ exact diff/scope audit green
-+ cross-role real-device critical paths recorded
-+ no hidden-information/domain/persistence regression
+cross-role real-device critical paths recorded
++ dynamic Ravenkeeper-trigger original device scenario retested
++ no blocking device regression remains
 + roadmap/handoff synchronized
++ explicit user decision on PR merge
 ```
-
-The project is **not yet at this condition**.
