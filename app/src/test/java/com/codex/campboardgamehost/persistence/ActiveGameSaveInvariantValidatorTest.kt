@@ -19,7 +19,6 @@ class ActiveGameSaveInvariantValidatorTest {
         source = ClocktowerScriptSource.BUILTIN_OFFICIAL,
         contentHash = "11111111111111111111111111111111",
     )
-    private val roleRegistry = WerewolfRoleRegistry.builtIn()
 
     @Test
     fun `Clocktower session validation accepts an assigned subset from the selected script`() {
@@ -45,59 +44,6 @@ class ActiveGameSaveInvariantValidatorTest {
             ClocktowerActiveSessionValidator.validateForRecoverySave(
                 script = troubleBrewing,
                 assignedRoleIds = listOf(RoleId("Imp"), RoleId("Sage")),
-            )
-        }
-    }
-
-    @Test
-    fun `Werewolf save validation accepts a mechanically exact assigned deck`() {
-        WerewolfActiveGameSaveValidator(roleRegistry).validate(
-            assignedRoles = listOf(
-                Role.Werewolf, Role.Werewolf, Role.Seer, Role.Witch, Role.Hunter,
-                Role.Villager, Role.Villager, Role.Villager,
-            ),
-            werewolfCount = 2,
-            includeSeer = true,
-            includeWitch = true,
-            includeHunter = true,
-        )
-    }
-
-    @Test
-    fun `Werewolf save validation rejects zero werewolves`() {
-        assertFails {
-            WerewolfActiveGameSaveValidator(roleRegistry).validate(
-                assignedRoles = listOf(Role.Villager, Role.Villager, Role.Villager, Role.Villager),
-                werewolfCount = 0,
-                includeSeer = false,
-                includeWitch = false,
-                includeHunter = false,
-            )
-        }
-    }
-
-    @Test
-    fun `Werewolf save validation rejects an assigned deck that disagrees with mechanics`() {
-        assertFails {
-            WerewolfActiveGameSaveValidator(roleRegistry).validate(
-                assignedRoles = listOf(Role.Werewolf, Role.Seer, Role.Seer, Role.Villager),
-                werewolfCount = 1,
-                includeSeer = true,
-                includeWitch = false,
-                includeHunter = false,
-            )
-        }
-    }
-
-    @Test
-    fun `Werewolf save validation rejects roles outside the Werewolf registry`() {
-        assertFails {
-            WerewolfActiveGameSaveValidator(roleRegistry).validate(
-                assignedRoles = listOf(Role.Werewolf, Role.Civilian, Role.Villager, Role.Villager),
-                werewolfCount = 1,
-                includeSeer = false,
-                includeWitch = false,
-                includeHunter = false,
             )
         }
     }

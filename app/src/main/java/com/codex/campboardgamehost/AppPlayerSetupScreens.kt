@@ -95,11 +95,9 @@ internal fun SetupScreen(
     onDiscardSavedGame: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenUndercoverSettings: () -> Unit,
-    onOpenWerewolfSettings: () -> Unit,
     onOpenClocktowerSettings: () -> Unit,
 ) {
     val canStartUndercover = playerCount >= MIN_PLAYERS
-    val canStartWerewolf = playerCount >= MIN_WEREWOLF_PLAYERS
     val canStartClocktower = playerCount >= MIN_CLOCKTOWER_PLAYERS
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
@@ -234,22 +232,6 @@ internal fun SetupScreen(
                                 stringResource(R.string.game_who_is_undercover)
                             } else {
                                 stringResource(R.string.need_min_players, MIN_PLAYERS)
-                            }
-                        )
-                    }
-                    OutlinedButton(
-                        onClick = onOpenWerewolfSettings,
-                        enabled = canStartWerewolf,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                    ) {
-                        Text(
-                            if (canStartWerewolf) {
-                                stringResource(R.string.game_werewolf)
-                            } else {
-                                stringResource(R.string.need_werewolf_min_players, MIN_WEREWOLF_PLAYERS)
                             }
                         )
                     }

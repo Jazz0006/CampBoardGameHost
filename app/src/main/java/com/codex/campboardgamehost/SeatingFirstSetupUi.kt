@@ -246,7 +246,6 @@ internal fun SeatingFirstGameSelectionScreen(
     seating: ConfirmedHostSeating,
     onBackToSeating: () -> Unit,
     onOpenUndercoverSettings: () -> Unit,
-    onOpenWerewolfSettings: () -> Unit,
     onOpenClocktowerSettings: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
@@ -299,13 +298,6 @@ internal fun SeatingFirstGameSelectionScreen(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(text("谁是卧底", "Who is Undercover"))
-                    }
-                    OutlinedButton(
-                        onClick = onOpenWerewolfSettings,
-                        enabled = playerCount >= MIN_WEREWOLF_PLAYERS,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(text("狼人杀", "Werewolf"))
                     }
                     Surface(
                         modifier = Modifier
