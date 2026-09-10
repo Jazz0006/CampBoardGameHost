@@ -172,11 +172,6 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         emptyList()
     }
-    val nonPairResultFirstCandidates = resultFirstRegistrationCandidates.takeUnless {
-        step.roleEnName in setOf("Washerwoman", "Librarian", "Investigator") ||
-            step.action == ClocktowerNightAction.FortuneTeller
-    }.orEmpty()
-
     val dynamicDecisionFamily = when (step.action) {
         ClocktowerNightAction.MayorRedirect -> "mayor-redirect"
         ClocktowerNightAction.DemonSuccessor -> "demon-succession"
@@ -1048,7 +1043,8 @@ internal fun ClocktowerNightStepCardLocalized(
                 structuredFortuneTellerUiModel == null &&
                 resultFirstRegistrationCandidates.isEmpty() &&
                 displayedInformationOptions.isNotEmpty() &&
-                step.action != ClocktowerNightAction.FortuneTeller
+                step.action != ClocktowerNightAction.FortuneTeller &&
+                step.action != ClocktowerNightAction.Chambermaid
             ) {
                 Text(if (language == "en") "Recommended information" else "推荐给说书人的完整信息", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 Text(
@@ -1096,32 +1092,6 @@ internal fun ClocktowerNightStepCardLocalized(
                 }
             }
 
-            if (!usesSpySquareTable && !usesClockmakerSquareTable && !usesSageSquareTable && !usesRavenkeeperSquareTable && !usesUndertakerSquareTable && !usesNumericSquareTable && nonPairResultFirstCandidates.isNotEmpty()) {
-                Text(
-                    if (language == "en") "Choose the final information" else "选择最终展示信息",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    if (language == "en") {
-                        "Any Spy or Recluse registration needed for the chosen result is resolved automatically."
-                    } else {
-                        "选择结果即可；该结果所需的间谍或隐士登记会自动完成。"
-                    },
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                nonPairResultFirstCandidates.forEach { option ->
-                    OutlinedButton(
-                        onClick = { showRecommendedDisplayOption(option) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Text(option.label)
-                    }
-                }
-            }
-
             if (
                 !usesSpySquareTable &&
                 !usesClockmakerSquareTable &&
@@ -1133,7 +1103,8 @@ internal fun ClocktowerNightStepCardLocalized(
                 structuredNumberUiModel == null &&
                 structuredFortuneTellerUiModel == null &&
                 firstNightPool == null && step.displayOptions.isNotEmpty() &&
-                step.action != ClocktowerNightAction.FortuneTeller
+                step.action != ClocktowerNightAction.FortuneTeller &&
+                step.action != ClocktowerNightAction.Chambermaid
             ) {
                 Text(if (language == "en") "This ability is unreliable. Choose a result to show." else "能力不可靠：请选择一个结果展示。", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                 step.displayOptions.forEach { option ->
