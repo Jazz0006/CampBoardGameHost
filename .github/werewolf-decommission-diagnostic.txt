@@ -1,2 +1,0 @@
-trigger=8dae2a9ddf8433ced71a01da1f39225635376ef6
-Werewolf legacy recovery rejection contract drifted
