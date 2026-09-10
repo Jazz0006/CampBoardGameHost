@@ -64,7 +64,40 @@ jobs:
           check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerKlutzTableUi.kt" "86a40ab291a0a56219c6ce097b83a536f36fed12"
 
       - name: Apply exact UI-NAV-1C.2 patch
-        run: python3 "$SCRIPT"
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt')
+          s = p.read_text()
+          old = '''                            screen == Screen.WerewolfJudge ||
+                            screen == Screen.ClocktowerJudge ||
+                            screen == Screen.Game
+'''
+          normalized = '''        screen == Screen.WerewolfJudge ||
+        screen == Screen.ClocktowerJudge ||
+        screen == Screen.Game
+'''
+          if s.count(old) != 1:
+              raise SystemExit(f'top-bar normalization anchor count {s.count(old)}, expected 1')
+          p.write_text(s.replace(old, normalized), encoding='utf-8', newline='\n')
+          PY
+          python3 "$SCRIPT"
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt')
+          s = p.read_text()
+          normalized = '''        screen == Screen.WerewolfJudge ||
+        screen == Screen.Game
+'''
+          restored = '''                            screen == Screen.WerewolfJudge ||
+                            screen == Screen.Game
+'''
+          if s.count(normalized) != 1:
+              raise SystemExit(f'top-bar restore anchor count {s.count(normalized)}, expected 1')
+          p.write_text(s.replace(normalized, restored), encoding='utf-8', newline='\n')
+          PY
 
       - name: Audit exact production diff and privacy fences
         shell: bash
