@@ -17,4 +17,5 @@ internal data class TroubleBrewingSetupRotationRecord(
     val minionRoleIds: Set<String>,
     val primaryStyleTag: String?,
     val selectedDrunkShownRole: String?,
+    val playerStartingIdentities: List<TroubleBrewingPlayerStartingIdentity> = emptyList(),
 )
