@@ -43,6 +43,7 @@ jobs:
           from pathlib import Path
           p = Path('.github/scripts/ui-nav-device-layout-fix.py')
           text = p.read_text()
+
           old = '"""        modifier = Modifier\n            .align(Alignment.Center)\n            .padding(horizontal = 68.dp),\n"""'
           new = '"""                    modifier = Modifier\n                        .align(Alignment.Center)\n                        .padding(horizontal = 68.dp),\n"""'
           old_replacement = '"""        modifier = Modifier\n            .align(Alignment.Center)\n            .fillMaxWidth(),\n"""'
@@ -50,6 +51,21 @@ jobs:
           if text.count(old) != 1 or text.count(old_replacement) != 1:
               raise SystemExit('identity patch source shape changed')
           text = text.replace(old, new, 1).replace(old_replacement, new_replacement, 1)
+
+          old_wrap = '    body = remove_nav_call(body, function_name)\n'
+          new_wrap = '''    if function_name != "ClocktowerPairInformationSquareTableDialog":\n        body = remove_nav_call(body, function_name)\n'''
+          if text.count(old_wrap) != 1:
+              raise SystemExit('raw square-table wrapper source shape changed')
+          text = text.replace(old_wrap, new_wrap, 1)
+
+          pair_anchor = '''        text = replace_once(\n            text,\n            """    roleLabel: (String) -> String,\n    language: String,\n    canGoPrevious: Boolean,\n    onSelectionChange: (ClocktowerPairManualSelectionModel) -> Unit,\n    onStartEditing: () -> Unit,\n    onRestoreRecommendation: () -> Unit,\n    onPrevious: () -> Unit,\n    onHostTools: () -> Unit,\n    onNext: () -> Unit,\n    onConfirm: (ClocktowerDisplayOption) -> Unit,\n""",\n            """    roleLabel: (String) -> String,\n    language: String,\n    onSelectionChange: (ClocktowerPairManualSelectionModel) -> Unit,\n    onStartEditing: () -> Unit,\n    onRestoreRecommendation: () -> Unit,\n    onConfirm: (ClocktowerDisplayOption) -> Unit,\n""",\n            "pair center signature navigation params",\n        )\n'''
+          if text.count(pair_anchor) != 1:
+              raise SystemExit('pair helper source shape changed')
+          text = text.replace(
+              pair_anchor,
+              pair_anchor + '        text = remove_nav_call(text, "pair center navigation")\n',
+              1,
+          )
           p.write_text(text)
           PY
           python -m py_compile .github/scripts/ui-nav-device-layout-fix.py
