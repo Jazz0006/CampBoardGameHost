@@ -1,0 +1,122 @@
+name: UI-NAV-1D Werewolf runtime decommission one-shot
+
+on:
+  push:
+    branches:
+      - codex/ui-nav-1-global-navigation-visual-unification
+    paths:
+      - .github/workflows/ui-nav-1d-werewolf-decommission-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  decommission-werewolf-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      BRANCH: codex/ui-nav-1-global-navigation-visual-unification
+      SCRIPT: .github/scripts/ui_nav_1d_werewolf_decommission_patch.py
+      WORKFLOW: .github/workflows/ui-nav-1d-werewolf-decommission-one-shot.yml
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Preflight exact trigger ancestry and source blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "bc987fae4c90a2c0e3749c23372a053b0a3d034b"
+          git fetch --no-tags origin "$BRANCH"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+          test "$(git hash-object "$SCRIPT")" = "43ff996f0824cea791fbec6c5ed72c822f477ecb"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = "6c4f5f5155aea12e88e7e18e431e034b7ca02dc3"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/SeatingFirstSetupUi.kt)" = "9226a196e7bb52a79429b2a957f7de887ec1cf64"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/AppPlayerSetupScreens.kt)" = "f4c2a3d967a3b0b0566a38fd9ce88b50e164c3e0"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/persistence/ActiveGameSaveInvariantValidators.kt)" = "c08c29c58b98b920a056db9cfdd55e2687916075"
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/persistence/ActiveGameSaveInvariantValidatorTest.kt)" = "b13721e456c44c9d24f1cb2e037ea0b6072ac35f"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfBoardRegistry.kt)" = "2444cbe7999b529e317162d8fc331fa6a8f56ae3"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfFlowPlanner.kt)" = "291f0ccf6d92efc592cf5c156e8470031d4383ed"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfGameSupport.kt)" = "f2ee09fa161afd7fe7a83a55b0e4ffd4933e0679"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfHostScreen.kt)" = "cdc92ed9daa5133f266c13b993d9356c1bdbaa4d"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfRoleRegistry.kt)" = "a3a8c3da2f8f9c6ef6c04d21876b5dfb3772ee2e"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfRuleOptions.kt)" = "d6044eaca1c7a4e91aea210f339f4f91b8e6dafc"
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/werewolf/WerewolfLegacyPlannerDifferentialTest.kt)" = "c966fc386a05acb9f2a6168e182920968d7cda86"
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/werewolf/WerewolfRegistryFlowPlannerTest.kt)" = "38de5bdd4b53a522957beaf4d01edcc3b1bd1cc7"
+
+      - name: Apply exact Werewolf decommission patch
+        run: python3 "$SCRIPT"
+
+      - name: Audit exact product diff and compatibility fence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -N app/src/main/java/com/codex/campboardgamehost/LastWordsMode.kt
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            app/src/main/java/com/codex/campboardgamehost/AppPlayerSetupScreens.kt \
+            app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt \
+            app/src/main/java/com/codex/campboardgamehost/LastWordsMode.kt \
+            app/src/main/java/com/codex/campboardgamehost/SeatingFirstSetupUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/persistence/ActiveGameSaveInvariantValidators.kt \
+            app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfBoardRegistry.kt \
+            app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfFlowPlanner.kt \
+            app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfGameSupport.kt \
+            app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfHostScreen.kt \
+            app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfRoleRegistry.kt \
+            app/src/main/java/com/codex/campboardgamehost/werewolf/WerewolfRuleOptions.kt \
+            app/src/test/java/com/codex/campboardgamehost/persistence/ActiveGameSaveInvariantValidatorTest.kt \
+            app/src/test/java/com/codex/campboardgamehost/werewolf/WerewolfLegacyPlannerDifferentialTest.kt \
+            app/src/test/java/com/codex/campboardgamehost/werewolf/WerewolfRegistryFlowPlannerTest.kt | sort)"
+          test "$actual" = "$expected"
+          test ! -d app/src/main/java/com/codex/campboardgamehost/werewolf || test -z "$(find app/src/main/java/com/codex/campboardgamehost/werewolf -type f -print -quit)"
+          test ! -d app/src/test/java/com/codex/campboardgamehost/werewolf || test -z "$(find app/src/test/java/com/codex/campboardgamehost/werewolf -type f -print -quit)"
+          ! git grep -n -E 'WerewolfSettingsScreen|WerewolfJudgeScreen|WerewolfJudgeStep|WerewolfFlowPlanner|WerewolfBoardRegistry|WerewolfRoleRegistry|WerewolfRuleOptions|WerewolfActiveGameSaveValidator|werewolfRolesFor|startWerewolfGame|MIN_WEREWOLF_PLAYERS|onOpenWerewolfSettings' -- app/src/main app/src/test
+          git grep -n 'GameKind.Werewolf' -- app/src/main/java/com/codex/campboardgamehost/persistence app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt >/dev/null
+          git grep -n 'is WerewolfRecovery -> RecoveryPreparationResult.Invalid' -- app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryRestorePlanner.kt >/dev/null
+
+      - name: Run Android FAST validation
+        run: ./gradlew :app:testFast --no-daemon
+
+      - name: Assemble debug APK
+        run: ./gradlew :app:assembleDebug --no-daemon
+
+      - name: Recheck remote head before product push
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$BRANCH"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+
+      - name: Commit and push product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A app/src/main app/src/test
+          git diff --cached --check
+          git commit -m "cleanup: decommission Werewolf runtime"
+          git push origin "HEAD:$BRANCH"
+
+      - name: Remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm "$SCRIPT" "$WORKFLOW"
+          git commit -m "chore(ci): remove Werewolf decommission one-shot"
+          git push origin "HEAD:$BRANCH"
