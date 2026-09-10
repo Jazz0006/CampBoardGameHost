@@ -1,4 +1,4 @@
-name: UI-NAV-1C Clocktower one-shot
+name: UI-NAV-1C.1 Clocktower Night one-shot
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  patch-clocktower-navigation:
+  patch-clocktower-night-navigation:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -47,15 +47,13 @@ jobs:
             local expected="$2"
             local actual
             actual="$(git hash-object "$path")"
-            if [[ "$actual" != "$expected" ]]; then
-              echo "::error::$path blob drifted: expected $expected, got $actual"
-              exit 1
-            fi
+            test "$actual" = "$expected" || { echo "::error::$path blob drifted: expected $expected, got $actual"; exit 1; }
           }
 
-          check_blob "$SCRIPT" "26b9c32730dc58d47a3a656b2e230216770f8592"
-          check_blob "app/src/main/java/com/codex/campboardgamehost/HostBottomActionBar.kt" "824f173ebbd076136354335426c897fd3f79f26d"
+          check_blob "$SCRIPT" "2bfb3020824f6a448cf94516fbeef3163eb05f9f"
           check_blob "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt" "0dea3ac3ced90cf92d40c1b5f78692e408d71566"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt" "117faecafbe8b31832ef675d71b5cc411f3c4979"
+          check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt" "0e5cad2209f1c12cc8631a88bb4d5193f3e94aba"
           check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt" "694d93d79f00f3f3995e33cd22f9c6d63fd6ee4e"
           check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt" "22a331a12622807f4550351a746677565bc87bce"
           check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt" "947f39b3d4a9ab98ab4dbdd3481c53f48646b79d"
@@ -70,7 +68,7 @@ jobs:
           check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt" "a09052f10ab95897cb22eb858128689a12edd4a6"
           check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt" "d315f3b95843969a974b92b5c3c541e4d674598e"
 
-      - name: Apply exact UI-NAV-1C patch
+      - name: Apply D6-aware UI-NAV-1C.1 patch
         run: python3 "$SCRIPT"
 
       - name: Audit exact production diff
@@ -78,7 +76,6 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check
-
           cat > /tmp/expected-files.txt <<'EOF'
           app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
           app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt
@@ -94,16 +91,17 @@ jobs:
           app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt
           app/src/main/java/com/codex/campboardgamehost/ClocktowerSpySquareTableUi.kt
           app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
           EOF
+          sort -o /tmp/expected-files.txt /tmp/expected-files.txt
           git diff --name-only | sort > /tmp/actual-files.txt
           diff -u /tmp/expected-files.txt /tmp/actual-files.txt
 
-          grep -q 'HostBottomActionBar(' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
-          grep -q 'hostToolsLabel = if (language == "en") "Host Tools" else "主持工具"' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt
-          if grep -q 'screen == Screen.ClocktowerJudge ||' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt; then
-            echo "::error::legacy ClocktowerJudge HostToolsTopBar condition survived"
-            exit 1
-          fi
+          grep -q 'HostBottomActionBar(' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
+          grep -q 'HostBottomActionBar(' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt
+          grep -q 'onHostTools: () -> Unit' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          grep -q 'screen == Screen.ClocktowerJudge ||' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
 
       - name: Run Android FAST validation
         run: ./gradlew :app:testFast --no-daemon
@@ -121,9 +119,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add \
-            app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt \
+          git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt \
             app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt \
             app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt \
             app/src/main/java/com/codex/campboardgamehost/ClocktowerClockmakerSquareTableUi.kt \
@@ -136,10 +132,11 @@ jobs:
             app/src/main/java/com/codex/campboardgamehost/ClocktowerSageSquareTableUi.kt \
             app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt \
             app/src/main/java/com/codex/campboardgamehost/ClocktowerSpySquareTableUi.kt \
-            app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt
-
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
           git diff --cached --check
-          git commit -m "ui: wire Clocktower bottom navigation"
+          git commit -m "ui: wire Clocktower night bottom navigation"
           git push origin "HEAD:$BRANCH"
 
       - name: Remove one-shot files
@@ -147,5 +144,5 @@ jobs:
         run: |
           set -euo pipefail
           git rm "$SCRIPT" "$WORKFLOW"
-          git commit -m "chore(ci): remove UI-NAV-1C one-shot"
+          git commit -m "chore(ci): remove UI-NAV-1C.1 one-shot"
           git push origin "HEAD:$BRANCH"
