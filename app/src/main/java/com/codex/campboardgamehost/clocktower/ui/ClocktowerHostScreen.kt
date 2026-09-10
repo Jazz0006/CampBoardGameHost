@@ -1319,6 +1319,8 @@ internal fun ClocktowerJudgeScreen(
                 isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
                 reasonCodes = listOf("dynamic.pair-score"),
                 warningCodes = recommendation.warningIds,
+            ).copy(
+                presentationSubjectSeats = listOf(cards.indexOf(pair.first) + 1, cards.indexOf(pair.second) + 1),
             )
         }
     }
@@ -2063,7 +2065,7 @@ internal fun ClocktowerJudgeScreen(
     val chefAbilityUnreliable = chefActor?.let { actorIsUnreliable("Chef", it) } == true
     val chefRegistrationKey = chefActor?.let { registrationKey("Chef") }
     val chefRecluseRegistrationKey = chefActor?.let {
-        recluseCard?.let { recluse -> registrationKey("ChefRecluse", recluse.name) }
+        recluseCard?.let { recluse -> registrationKey("ChefRecluse", it.name) }
     }
     val chefValue = chefEvilPairs(cards) { card -> registeredIsEvil(card, "Chef", chefRegistrationKey, chefRecluseRegistrationKey) }
     val chefActualIdentityValue = chefEvilPairs(cards)
@@ -3287,6 +3289,7 @@ internal fun ClocktowerJudgeScreen(
                         displayTitle = text("贤者信息", "Sage information"),
                         displayPrimary = text("恶魔", "Demon"),
                         displaySecondary = twoSeatNumbers(sageDemon, resolvedSagePair.second),
+                        presentationSubjectSeats = listOf(cards.indexOf(sageDemon) + 1, cards.indexOf(resolvedSagePair.second) + 1),
                         displayFooter = text("在下面两位玩家之中", "One of these two players"),
                         hostInstruction = text("如果恶魔今晚杀死贤者，轻拍贤者，示意睁眼。把两名玩家只给他看；这两人之中有一名是恶魔。", "If the Demon killed the Sage tonight, wake the Sage and show only them two players, one of whom is the Demon."),
                         displayOptions = { actor -> recommendedSageOptions(actor, sageDemon) },
@@ -4072,7 +4075,7 @@ internal fun ClocktowerJudgeScreen(
                 onReevaluate = { nextLockedDecisions ->
                     lockedRecommendationDecisions = SetupRecommendationLockPolicy.replaceWith(nextLockedDecisions)
                     selectedRecommendationStyle = RecommendationStyle.BALANCED
-                    appliedRecommendationStyle = null
+                    appliedStyle = null
                 },
                 onClearLocks = {
                     lockedRecommendationDecisions = SetupRecommendationLockPolicy.clear()
