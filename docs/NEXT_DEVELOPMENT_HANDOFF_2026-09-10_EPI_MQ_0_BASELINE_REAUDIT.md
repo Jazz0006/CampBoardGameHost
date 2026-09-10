@@ -2,13 +2,13 @@
 
 > Date: 2026-09-10 Australia/Sydney  
 > Status: **ACTIVE — READ-ONLY BASELINE / OWNERSHIP RE-AUDIT FIRST**  
-> Base: `main` after UI-R5 merge  
+> Base: live `main` after UI-R5 merge and docs closeout  
 > Program: Epistemic Misinformation Quality / Productive Uncertainty
 
-## 1. Start from this live baseline
+## 1. Stable inherited baseline
 
 ```text
-main: b47b00fd0c727e048dcb1b57260b8dd6fff466a1
+UI-R5 merged production baseline: b47b00fd0c727e048dcb1b57260b8dd6fff466a1
 UI-R5 merge: PR #117
 final logical UI-R5 T4: 2958f334fc7cccd59ed2e75a3bdaa60684492292
 CI #2143 / run 34435295215 PASS
@@ -17,7 +17,7 @@ post-merge main CI #2146 / run 34437247431 PASS
 Field Test APK #34 / run 34437247434 PASS
 ```
 
-Before doing any new work, re-query live `main`; do not assume the SHA above is still current.
+**Always re-query live `main` before creating a branch or beginning the audit.** Docs-only closeout commits intentionally advance `main` beyond the production baseline above.
 
 ## 2. Read first
 

@@ -33,16 +33,18 @@ EPI-MQ-0 baseline / ownership re-audit + behavior corpus
 -> UX-R6 recommendation-provider replacement unless explicitly reprioritized
 ```
 
-Current merged baseline:
+Stable inherited UI-R5 baseline:
 
 ```text
-main b47b00fd0c727e048dcb1b57260b8dd6fff466a1
+UI-R5 merged production baseline b47b00fd0c727e048dcb1b57260b8dd6fff466a1
 UI-R5 final T4 2958f334fc7cccd59ed2e75a3bdaa60684492292
 CI #2143 PASS — Android full + APK / ASP / Real Clingo / gate
 R2 #2010 PASS
 post-merge main CI #2146 PASS
 Field Test APK #34 PASS
 ```
+
+Always query live `main` for the current head; docs-only cleanup commits may be newer than the production baseline above.
 
 UI-R5 implementation is closed as a development campaign. Some role/device paths remain field-test follow-up; CI is not treated as proof of real-device acceptance.
 

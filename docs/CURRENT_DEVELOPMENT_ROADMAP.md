@@ -25,13 +25,14 @@ UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless rep
 
 Completed campaign evidence is historical and must not be treated as current execution authority.
 
-## 2. Live baseline after UI-R5 merge
+## 2. Stable baseline after UI-R5 merge
 
 ```text
-main: b47b00fd0c727e048dcb1b57260b8dd6fff466a1
+UI-R5 merged production baseline: b47b00fd0c727e048dcb1b57260b8dd6fff466a1
 merged PR: #117 — UI: unify Storyteller night roles on square table
 final branch head: 99bb4e5323f68231eaa1e08e16520a4340f56faf
 final logical T4 checkpoint: 2958f334fc7cccd59ed2e75a3bdaa60684492292
+live main: always re-query before starting a new slice; docs-only commits may advance it
 ```
 
 Validation evidence:
