@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -295,8 +296,11 @@ internal fun WerewolfJudgeScreen(
     onSelectDayExile: (String?) -> Unit,
     onConfirmDayExile: () -> Unit,
     onDismissLastWordsPrompt: () -> Unit,
+    onHostTools: () -> Unit,
     onShowResults: () -> Unit,
 ) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String): String = if (language == "en") en else zh
     val roleRegistry = WerewolfRoleRegistry.builtIn()
     val productionRoleDeck = cards
         .groupingBy { card ->
@@ -573,24 +577,16 @@ internal fun WerewolfJudgeScreen(
                         }
                     }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = { onStepIndexChange((currentIndex - 1).coerceAtLeast(0)) },
-                            enabled = currentIndex > 0,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(8.dp),
-                        ) {
-                            Text(stringResource(R.string.previous_step))
-                        }
-                        Button(
-                            onClick = { onStepIndexChange((currentIndex + 1).coerceAtMost(steps.lastIndex)) },
-                            enabled = currentIndex < steps.lastIndex,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(8.dp),
-                        ) {
-                            Text(stringResource(R.string.next_step))
-                        }
-                    }
+                    HostBottomActionBar(
+                        previousLabel = stringResource(R.string.previous_step),
+                        hostToolsLabel = text("主持工具", "Host Tools"),
+                        nextLabel = stringResource(R.string.next_step),
+                        onPrevious = { onStepIndexChange((currentIndex - 1).coerceAtLeast(0)) },
+                        onHostTools = onHostTools,
+                        onNext = { onStepIndexChange((currentIndex + 1).coerceAtMost(steps.lastIndex)) },
+                        previousEnabled = currentIndex > 0,
+                        nextEnabled = currentIndex < steps.lastIndex,
+                    )
             }
         }
 

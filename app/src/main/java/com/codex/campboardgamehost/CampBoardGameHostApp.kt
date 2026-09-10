@@ -2335,7 +2335,6 @@ internal fun CampBoardGameHostApp() {
                 ) {
                     if (
                         !showResults && (
-                            screen == Screen.WerewolfJudge ||
                             screen == Screen.Game
                         )
                     ) {
@@ -2593,6 +2592,10 @@ internal fun CampBoardGameHostApp() {
                             }
                         },
                         onDismissLastWordsPrompt = { lastWordsPromptNames = emptyList() },
+                        onHostTools = {
+                            hostToolTab = HostToolTab.Roles
+                            showHostTools = true
+                        },
                         onShowResults = {
                             gameOutcome = gameOutcome ?: GameOutcome(
                                 title = context.getString(R.string.outcome_manual_title),
