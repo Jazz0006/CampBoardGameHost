@@ -19,7 +19,7 @@ UI-R5 post-merge main CI                          PASS
 UI-R5 Field Test APK                              PASS
 UI-R5 real-device acceptance                      PARTIAL / follow-up remains
 
-UI-NAV-1 global navigation visual unification     CURRENT — 1A complete / 1B IN PROGRESS
+UI-NAV-1 global navigation visual unification     CURRENT — 1B COMPLETE / 1C NEXT
 EPI-MQ / Productive Uncertainty                   NEXT after UI-NAV-1 — EPI-MQ-0 baseline re-audit
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
@@ -36,6 +36,10 @@ final logical T4 checkpoint: 2958f334fc7cccd59ed2e75a3bdaa60684492292
 
 UI-NAV-1 campaign-start main: 9c19484c682044bb469d90fb7522810ca49ecac2
 UI-NAV-1 branch: codex/ui-nav-1-global-navigation-visual-unification
+UI-NAV-1 draft PR: #118 — UI: unify Storyteller navigation presentation
+UI-NAV-1B code checkpoint: 6ea4f9504e898d67941b3d2e75defe9b54e83c1d
+UI-NAV-1B CI: run 34444205127 / CI #2150 — Android FAST + CI gate PASS
+UI-NAV-1B R2: run 34444205141 / R2 #2013 — PASS
 live main: always re-query before starting a new slice; docs-only commits may advance it
 ```
 
@@ -139,13 +143,28 @@ Immediate sequence:
 
 ```text
 UI-NAV-1A  read-only visual / ownership audit                         COMPLETE / GO
-UI-NAV-1B  establish smallest stateless three-slot bottom primitive   IN PROGRESS
-UI-NAV-1C  migrate Clocktower night / square-table / day host flow
+UI-NAV-1B  establish smallest stateless three-slot bottom primitive   COMPLETE / PASS
+UI-NAV-1C  migrate Clocktower night / square-table / day host flow    NEXT
 UI-NAV-1D  migrate remaining judge / game / safe setup flows
 UI-NAV-1E  migrate identity delivery to privacy-safe square table
 UI-NAV-1F  isolate Settings-under-Host-Tools composition if still narrow
 UI-NAV-1G  focused/full validation + real-device visual acceptance + closeout
 ```
+
+UI-NAV-1B established `HostBottomActionBar` as a pure presentation component:
+
+```text
+Previous = secondary OutlinedButton slot
+Host Tools = tertiary TextButton slot
+Next = primary Button slot
+all slots equal width
+independent enabled/visible controls
+48dp minimum slot height
+single-line labels with overflow protection
+no Screen/session/domain/Planner/Reducer inputs
+```
+
+UI-NAV-1B intentionally did not wire this component to production flow callbacks; that callback plumbing belongs to 1C.
 
 UI-NAV-1 is primarily presentation work. Do not manufacture a gameplay/domain RED when behavior is intentionally unchanged; follow `docs/TESTING_STRATEGY.md` for focused characterization, compile/static validation and exact diff audit appropriate to UI-only work.
 
