@@ -2336,7 +2336,6 @@ internal fun CampBoardGameHostApp() {
                     if (
                         !showResults && (
                             screen == Screen.WerewolfJudge ||
-                            screen == Screen.ClocktowerJudge ||
                             screen == Screen.Game
                         )
                     ) {

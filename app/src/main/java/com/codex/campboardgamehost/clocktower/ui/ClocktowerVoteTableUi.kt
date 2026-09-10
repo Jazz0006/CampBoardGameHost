@@ -38,6 +38,7 @@ internal fun ClocktowerVoteTableScreen(
     nomineeName: String?,
     highestVoteText: String,
     actionsEnabled: Boolean,
+    onHostTools: () -> Unit,
     onConfirm: (ClocktowerTableVoteState) -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -64,9 +65,15 @@ internal fun ClocktowerVoteTableScreen(
                         text("投票目标无效，请返回提名。", "Invalid vote target; return to nomination."),
                         textAlign = TextAlign.Center,
                     )
-                    TextButton(onClick = onCancel) {
-                        Text(text("返回提名", "Return to nomination"))
-                    }
+                    HostBottomActionBar(
+                        previousLabel = text("返回提名", "Return to nomination"),
+                        hostToolsLabel = text("主持工具", "Host Tools"),
+                        nextLabel = text("确认投票", "Confirm vote"),
+                        onPrevious = onCancel,
+                        onHostTools = onHostTools,
+                        onNext = {},
+                        nextEnabled = false,
+                    )
                 }
                 return@Surface
             }
@@ -153,22 +160,15 @@ internal fun ClocktowerVoteTableScreen(
                             style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
                         )
-                        Button(
-                            onClick = { onConfirm(voteState) },
-                            enabled = actionsEnabled,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 44.dp),
-                            shape = RoundedCornerShape(12.dp),
-                        ) {
-                            Text(text("确认投票", "Confirm vote"), fontWeight = FontWeight.Bold)
-                        }
-                        TextButton(
-                            onClick = onCancel,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(text("取消投票", "Cancel vote"))
-                        }
+                        HostBottomActionBar(
+                            previousLabel = text("取消投票", "Cancel vote"),
+                            hostToolsLabel = text("主持工具", "Host Tools"),
+                            nextLabel = text("确认投票", "Confirm vote"),
+                            onPrevious = onCancel,
+                            onHostTools = onHostTools,
+                            onNext = { onConfirm(voteState) },
+                            nextEnabled = actionsEnabled,
+                        )
                     }
                 },
             )

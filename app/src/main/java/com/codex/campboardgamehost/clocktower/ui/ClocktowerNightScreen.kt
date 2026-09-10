@@ -216,6 +216,7 @@ import java.util.UUID
 internal fun ClocktowerNewDemonConfirmationScreen(
     newDemonLabel: String,
     hasNewDemon: Boolean,
+    onHostTools: () -> Unit,
     onShowPlayerDisplay: () -> Unit,
     onConfirm: () -> Unit,
 ) {
@@ -352,19 +353,16 @@ internal fun ClocktowerNewDemonConfirmationScreen(
                     ) {
                         Text(stringResource(R.string.clocktower_host_show_to_player))
                     }
-                    Button(
-                        onClick = onConfirm,
-                        enabled = hasNewDemon,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                    ) {
-                        Text(
-                            text("已告知，进入天亮", "Informed, continue to dawn"),
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
+                    HostBottomActionBar(
+                        previousLabel = text("上一步", "Previous"),
+                        hostToolsLabel = text("主持工具", "Host Tools"),
+                        nextLabel = text("已告知，进入天亮", "Informed, continue to dawn"),
+                        onPrevious = {},
+                        onHostTools = onHostTools,
+                        onNext = onConfirm,
+                        previousEnabled = false,
+                        nextEnabled = hasNewDemon,
+                    )
                 }
             }
         }
