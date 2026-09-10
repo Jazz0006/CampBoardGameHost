@@ -52,7 +52,7 @@ jobs:
           }
 
           check_blob "$SCRIPT" "2bfb3020824f6a448cf94516fbeef3163eb05f9f"
-          check_blob "$WRAPPER" "19a621a37985cb3523cf150114b17ef10a049083"
+          check_blob "$WRAPPER" "8839646e8af65c20bb4d75067c8fd69aca61e023"
           check_blob "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt" "0dea3ac3ced90cf92d40c1b5f78692e408d71566"
           check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt" "117faecafbe8b31832ef675d71b5cc411f3c4979"
           check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt" "0e5cad2209f1c12cc8631a88bb4d5193f3e94aba"
@@ -104,6 +104,7 @@ jobs:
           grep -q 'HostBottomActionBar(' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt
           grep -q 'onHostTools: () -> Unit' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
           test "$(grep -c 'onHostTools = onHostTools' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt)" -ge 2
+          grep -q 'val language = LocalContext.current.resources.configuration.locales\[0\].language' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
           grep -q 'screen == Screen.ClocktowerJudge ||' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
 
       - name: Run Android FAST validation
