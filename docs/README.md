@@ -7,12 +7,11 @@
 
 1. root `AGENTS.md` — 项目执行、architecture、test、Git 规范；
 2. [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md) — **唯一当前状态与优先级权威**；
-3. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-10_EPI_MQ_0_BASELINE_REAUDIT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-10_EPI_MQ_0_BASELINE_REAUDIT.md) — **唯一 active handoff**；
-4. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)；
-5. [`EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`](EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md)；
-6. [`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`](CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md)；
-7. 当前 slice 所需的 specialized semantic/product docs；
-8. 查询 live GitHub state 后再实施。
+3. [`NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_UNIFICATION.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_UNIFICATION.md) — **唯一 active handoff**；
+4. [`UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_AUDIT_2026-09-10.md`](UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_AUDIT_2026-09-10.md) — UI-NAV-1 accepted visual/ownership baseline；
+5. [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)；
+6. 当前 slice 所需的 specialized semantic/product docs；
+7. 查询 live GitHub state 后再实施。
 
 不要从 archive、旧 branch、旧 PR 或历史文档中的 `PASS / COMPLETE / READY / NEXT` 推断当前状态。
 
@@ -26,12 +25,28 @@ R3 transaction viability — COMPLETE / NO-GO
 D6 decomposition campaign — COMPLETE
 UI-R5 square-table convergence — COMPLETE / merged (#117)
 
-NEXT:
+CURRENT:
+UI-NAV-1 Global Navigation Visual Unification
+  1A read-only audit — COMPLETE / GO
+  1B shared stateless three-slot bottom primitive — NEXT
+
+THEN:
 EPI-MQ-0 baseline / ownership re-audit + behavior corpus
 -> EPI-MQ-1 hypothetical observation evaluation seam (only if EPI-MQ-0 GO/MODIFY)
 -> later EPI-MQ quality metrics/ranking
 -> UX-R6 recommendation-provider replacement unless explicitly reprioritized
 ```
+
+UI-NAV-1 accepted visual direction:
+
+```text
+No persistent global top bar.
+Content owns title / instructions / square table / optional local progress.
+Bottom action geometry:
+[ Previous ]   [ Host Tools ]   [ Next ]
+```
+
+Progress remains screen-owned/optional. Identity reveal keeps its current useful progress; UI-NAV-1 does not impose one shared identity/night progress model.
 
 Stable inherited UI-R5 baseline:
 
@@ -44,7 +59,14 @@ post-merge main CI #2146 PASS
 Field Test APK #34 PASS
 ```
 
-Always query live `main` for the current head; docs-only cleanup commits may be newer than the production baseline above.
+UI-NAV-1 campaign-start main:
+
+```text
+9c19484c682044bb469d90fb7522810ca49ecac2
+branch codex/ui-nav-1-global-navigation-visual-unification
+```
+
+Always query live `main` and the active branch before starting a new slice.
 
 UI-R5 implementation is closed as a development campaign. Some role/device paths remain field-test follow-up; CI is not treated as proof of real-device acceptance.
 
@@ -53,11 +75,13 @@ UI-R5 implementation is closed as a development campaign. Some role/device paths
 Current status / execution:
 
 - [`CURRENT_DEVELOPMENT_ROADMAP.md`](CURRENT_DEVELOPMENT_ROADMAP.md)
-- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-10_EPI_MQ_0_BASELINE_REAUDIT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-10_EPI_MQ_0_BASELINE_REAUDIT.md)
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_UNIFICATION.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_UNIFICATION.md)
+- [`UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_AUDIT_2026-09-10.md`](UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_AUDIT_2026-09-10.md)
 - [`TESTING_STRATEGY.md`](TESTING_STRATEGY.md)
 
-EPI-MQ / cognitive-consistency:
+Queued next program — EPI-MQ / cognitive consistency:
 
+- [`NEXT_DEVELOPMENT_HANDOFF_2026-09-10_EPI_MQ_0_BASELINE_REAUDIT.md`](NEXT_DEVELOPMENT_HANDOFF_2026-09-10_EPI_MQ_0_BASELINE_REAUDIT.md) — queued, not historical; resumes after UI-NAV-1 closeout
 - [`EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`](EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md)
 - [`CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`](CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md)
 - [`epistemic_reference_matrix.md`](epistemic_reference_matrix.md)
@@ -80,7 +104,7 @@ Completed UI-R5 audits / acceptance / closeout evidence is grouped under:
 - [`archive/checkpoints/ui-r5/`](archive/checkpoints/ui-r5/)
 - [`archive/checkpoints/ui-r5/UI_R5_CLOSEOUT_INDEX_2026-09-10.md`](archive/checkpoints/ui-r5/UI_R5_CLOSEOUT_INDEX_2026-09-10.md)
 
-Do not read the full UI-R5 archive in a normal EPI-MQ session. Load a specific historical file only when a current ownership question requires its evidence.
+Do not read the full UI-R5 archive in a normal UI-NAV/EPI-MQ session. Load a specific historical file only when a current ownership question requires its evidence.
 
 ## D6 / R3 historical evidence
 
