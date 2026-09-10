@@ -19,7 +19,7 @@ UI-R5 post-merge main CI                          PASS
 UI-R5 Field Test APK                              PASS
 UI-R5 real-device acceptance                      PARTIAL / follow-up remains
 
-UI-NAV-1 global navigation visual unification     CURRENT — 1C COMPLETE / 1D NEXT
+UI-NAV-1 global navigation visual unification     CURRENT — 1D PARTIAL / LIVE RE-AUDIT COMPLETE
 EPI-MQ / Productive Uncertainty                   NEXT after UI-NAV-1 — EPI-MQ-0 baseline re-audit
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
@@ -35,6 +35,7 @@ final branch head: 99bb4e5323f68231eaa1e08e16520a4340f56faf
 final logical T4 checkpoint: 2958f334fc7cccd59ed2e75a3bdaa60684492292
 
 UI-NAV-1 campaign-start main: 9c19484c682044bb469d90fb7522810ca49ecac2
+UI-NAV-1 live-main re-audit: 9c19484c0b6381c94440c2253079d5c2ba5f796f
 UI-NAV-1 branch: codex/ui-nav-1-global-navigation-visual-unification
 UI-NAV-1 draft PR: #118 — UI: unify Storyteller navigation presentation
 UI-NAV-1B code checkpoint: 6ea4f9504e898d67941b3d2e75defe9b54e83c1d
@@ -43,10 +44,15 @@ UI-NAV-1B R2: run 34444205141 / R2 #2013 — PASS
 UI-NAV-1C.2 production checkpoint: 69b34fa3094abd820cdf18c4ff8770f2538699ea
 UI-NAV-1C.2 cleanup head: 8b015914182c398f7d8a62bcb8ebd388209fec47
 UI-NAV-1C.2 one-shot: run 34455026774 — exact diff + privacy fences + Android FAST + push + cleanup PASS
-live main: always re-query before starting a new slice; docs-only commits may advance it
+Werewolf real product deletion: 2c00d03b46a767d3fd38ff596d4f1371b7ee7403
+pre-reconciliation branch head: 02342be73d0afbfe681e37c9df95b46812c7c846
+UI-NAV-1D live-reconciliation docs checkpoint: 9b3e4474087db150a9ffc0fbeb9412a399ef5cfb
+live main / branch head: always re-query before starting a new production slice
 ```
 
-The regular CI/R2 attempts on the bot-authored `8b015914...` cleanup head ended `action_required` with zero jobs. That is workflow-start gating, not a code/test failure; the 1C production change itself passed its exact one-shot Android FAST gate before push.
+The exact `02342be...` cleanup head has no ordinary check-runs. Its PR Scope Guard and R2 Actions entries ended `action_required`; this is workflow/start gating and must not be reported as a code/test failure. The user-verified cleanup baseline passed exact diff audit, `:app:testFast`, and `:app:assembleDebug`.
+
+`GameKind.Werewolf` / `WerewolfRecovery` that remain in production are compatibility-only. Recovery remains fail-closed. Werewolf runtime must not be reintroduced and persistence migration must not be expanded as part of UI-NAV.
 
 Inherited validation evidence:
 
@@ -66,7 +72,7 @@ PR #117 is closed and merged. Its former branch/handoff/audit documents are hist
 
 ## 3. Current priority — UI-NAV-1 Global Navigation Visual Unification
 
-> **CURRENT: perform a short presentation-first navigation convergence campaign before EPI-MQ-0.**
+> **CURRENT: finish the surviving UI-NAV-1D presentation surfaces, then move directly to UI-NAV-1E identity delivery before EPI-MQ-0.**
 
 Product decision:
 
@@ -95,6 +101,34 @@ The three positions are a stable visual language, not a new source of navigation
 
 Progress is **screen-owned and optional**. UI-NAV-1 does not impose a shared identity/night progress model and does not make progress part of this campaign's acceptance gate.
 
+### UI-NAV-1D live-code reconciliation
+
+The earlier roadmap wording `1D NEXT` was stale.
+
+Historical work really completed `1D.1 / 1D.1b` for WerewolfJudge, including unified bottom navigation and viewport-bottom placement. That work was subsequently superseded by the deliberate removal of Werewolf runtime. It is therefore neither a remaining surface nor evidence that all of 1D is finished.
+
+The current surviving-code audit proves 1D is still partial:
+
+```text
+surviving generic Screen.Game
+- still uses root persistent HostToolsTopBar
+- GameScreen has no equivalent bottom Host Tools owner yet
+
+SeatingFirstSetupScreen
+- still uses existing full-width confirm action
+- top Settings gear remains; Settings relocation belongs to 1F
+
+SeatingFirstGameSelectionScreen
+- still has local edit/back action inside content
+- no reason to invent extra selection/progression state merely for visual uniformity
+
+game-specific setup/settings surfaces
+- migrate only where existing Back/Start/Confirm callbacks map directly
+- otherwise reserve/disable a slot or defer rather than changing ownership
+```
+
+Results/Review modal actions remain outside forced Previous/Host Tools/Next normalization where their semantics differ.
+
 ### Identity-delivery product refinement
 
 Clocktower identity delivery should use the square-table visual language rather than retain the old progress-bar/pass-phone controller.
@@ -110,38 +144,42 @@ Storyteller square-table controller
 - bottom Previous / Host Tools / Next
 ```
 
-The actual role reveal remains a separate player-facing full-screen view with no Host Tools, Previous/Next, or other-player information.
+The actual role reveal remains a separate player-facing full-screen view with no Host Tools, Previous/Next, square table, or other-player information.
 
-Backwards identity navigation is intentionally supported so the Storyteller can re-show a role. It moves only the existing identity-delivery cursor; do not add a separate furthest-completed cursor unless implementation evidence proves it necessary.
+Backwards identity navigation is intentionally supported so the Storyteller can re-show a role. It moves only the existing `currentDealIndex`; do not add a separate selected/furthest-completed cursor unless implementation evidence proves it necessary.
 
-The last identity seat keeps ordinary `Next`. It leads to the first-night boundary/prompt, where the Storyteller may go Previous or explicitly start the night.
+The last identity seat keeps ordinary `Next`. It leads to a dedicated identity-complete / first-night boundary, where the Storyteller may go Previous to the last identity seat or explicitly start the night.
 
 ### Phase-boundary product refinement
 
-The same interaction language applies after the last night action:
+The same interaction language is preferred after the last night action:
 
 ```text
 last ordinary night action
 -> Next
--> existing dawn/broadcast/night-complete prompt
+-> dawn/broadcast/night-complete boundary
 -> Previous / Host Tools / Start Day or Continue
 ```
 
-Reuse current transition/broadcast ownership. If a safe Previous requires moving the authoritative gameplay phase commit, that is a real flow behavior change and must be characterized before implementation rather than hidden inside UI work.
+However, current Dawn confirmation includes meaningful domain commit work. Reuse current transition/broadcast ownership. If a safe Previous requires moving authoritative gameplay phase commit timing, that is a real flow behavior change and must be characterized before implementation rather than hidden inside UI work. A night boundary may therefore be deferred while the identity boundary proceeds.
 
-The accepted read-only audit/product refinement is:
+The accepted original read-only audit/product refinement is:
 
 `docs/UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_AUDIT_2026-09-10.md`
+
+The current live reconciliation is recorded in:
+
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_UNIFICATION.md`
 
 ## 4. UI-NAV-1 execution contract
 
 Read first:
 
 1. root `AGENTS.md`;
-2. this roadmap;
-3. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_UNIFICATION.md`;
-4. `docs/UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_AUDIT_2026-09-10.md`;
-5. `docs/TESTING_STRATEGY.md`;
+2. `docs/TESTING_STRATEGY.md`;
+3. this roadmap;
+4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_UNIFICATION.md`;
+5. `docs/UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_AUDIT_2026-09-10.md`;
 6. `docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md` only where a square-table product detail is relevant.
 
 Immediate sequence:
@@ -150,8 +188,8 @@ Immediate sequence:
 UI-NAV-1A  read-only visual / ownership audit                         COMPLETE / GO
 UI-NAV-1B  establish smallest stateless three-slot bottom primitive   COMPLETE / PASS
 UI-NAV-1C  migrate Clocktower night / square-table / day host flow    COMPLETE / PASS
-UI-NAV-1D  migrate remaining judge / game / safe setup flows          NEXT
-UI-NAV-1E  migrate identity delivery to privacy-safe square table
+UI-NAV-1D  migrate remaining surviving game / safe setup flows        PARTIAL / LIVE RE-AUDIT COMPLETE
+UI-NAV-1E  migrate identity delivery to privacy-safe square table      NEXT AFTER 1D
 UI-NAV-1F  isolate Settings-under-Host-Tools composition if still narrow
 UI-NAV-1G  focused/full validation + real-device visual acceptance + closeout
 ```
@@ -183,23 +221,27 @@ Preserve throughout the campaign:
 
 - `Screen` and App-root routing ownership remain unchanged;
 - existing `showHostTools` / `hostToolTab` remain the Host Tools overlay owner;
+- reuse `HostGameToolsScreen`; do not create a second Host Tools owner;
 - no Navigation Compose, navigation coordinator, second state owner or callback mega-bag;
 - Clocktower night-step `canGoPrevious` / `onPrevious` / `onNext` seams remain presentation callbacks, not a new flow model;
 - `ClocktowerGameSession`, Planner and Reducer keep gameplay/session authority;
 - persistence/recovery behavior is outside UI-NAV-1 scope;
 - special Next enabled/disabled and commit semantics must remain unchanged unless a separately characterized boundary-flow change is opened;
 - `Previous` on ordinary gameplay steps must not be reinterpreted as gameplay undo;
-- identity delivery may use Previous/Next under Storyteller control to move the current deal/reveal cursor;
-- identity Previous must never automatically reveal the previous player's role;
-- the identity square table may show only privacy-safe seat/name information;
+- identity delivery may use Previous/Next under Storyteller control to move `currentDealIndex`;
+- identity Previous/Next must never automatically reveal a role;
+- the identity square table may show only privacy-safe seat/name/highlight information;
 - Host Tools may be available on the Storyteller identity controller but must not appear on the player-facing role display;
-- player-facing identity reveal remains isolated and contains only the selected player's role information;
+- player-facing identity reveal remains isolated and contains only the selected player's role information and safe hide/finished action;
+- hiding identity returns to the same Storyteller seat and does not auto-advance;
 - the three-slot geometry may reserve disabled positions where capability is intentionally unavailable;
 - phase-boundary/broadcast Previous may be added only through the current flow owner; do not introduce a second phase owner or hidden rollback system;
 - moving authoritative phase-transition commit timing requires dedicated behavior characterization before production change;
-- Settings-under-Host-Tools is allowed only as an isolated composition slice while all Settings state/mutation ownership remains at App root;
+- Settings-under-Host-Tools is allowed only as an isolated 1F composition slice while all Settings state/mutation ownership remains at App root;
+- do not immediately delete legacy `Screen.Settings` during 1F;
 - no EPI-MQ ranking/recommendation changes during UI-NAV-1;
-- no renewed D6 decomposition for file-size reasons.
+- no renewed D6 decomposition for file-size reasons;
+- no Werewolf runtime restoration or persistence migration expansion.
 
 The core rule is:
 
