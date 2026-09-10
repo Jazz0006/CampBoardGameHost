@@ -2,10 +2,18 @@ package com.codex.campboardgamehost.clocktower.setup
 
 import com.codex.campboardgamehost.clocktower.domain.MurmurHash3
 
+internal enum class TroubleBrewingStartingRoleCategory {
+    TOWNSFOLK,
+    OUTSIDER,
+    MINION,
+    DEMON,
+}
+
 internal data class TroubleBrewingPlayerStartingIdentity(
     val playerKey: String,
     val actualRoleId: String,
     val shownRoleId: String,
+    val actualRoleCategory: TroubleBrewingStartingRoleCategory,
 )
 
 internal data class TroubleBrewingSetupDealAssignment(
@@ -70,12 +78,13 @@ internal object TroubleBrewingSetupDealPlanner {
                 } else {
                     actualRoleId
                 },
+                actualRoleCategory = categoryOf(selection.preset, actualRoleId),
             )
         }
         val previousByPlayer = previousPlayerStartingIdentities.associateBy { it.playerKey }
         val hasUsableRotationHistory = orderedPlayerNames.any(previousByPlayer::containsKey)
         val seatOrderedRoleTokens = if (hasUsableRotationHistory) {
-            minimumExactRepeatAssignment(
+            minimumRotationCostAssignment(
                 selection = selection,
                 orderedPlayerNames = orderedPlayerNames,
                 roleTokens = roleTokens,
@@ -123,7 +132,7 @@ internal object TroubleBrewingSetupDealPlanner {
         },
     )
 
-    private fun minimumExactRepeatAssignment(
+    private fun minimumRotationCostAssignment(
         selection: TroubleBrewingSetupPresetSelection,
         orderedPlayerNames: List<String>,
         roleTokens: List<RoleToken>,
@@ -134,28 +143,27 @@ internal object TroubleBrewingSetupDealPlanner {
             "Trouble Brewing role-rotation optimizer supports at most $MAX_OPTIMIZED_PLAYER_COUNT players."
         }
         val stateCount = 1 shl playerCount
-        val unknown = -1
-        val bestExactRepeats = IntArray(stateCount) { unknown }
-        bestExactRepeats[stateCount - 1] = 0
+        val bestCosts = arrayOfNulls<RotationCost>(stateCount)
+        bestCosts[stateCount - 1] = RotationCost.ZERO
 
-        fun solve(usedMask: Int): Int {
-            val cached = bestExactRepeats[usedMask]
-            if (cached != unknown) return cached
+        fun solve(usedMask: Int): RotationCost {
+            bestCosts[usedMask]?.let { return it }
 
             val playerIndex = Integer.bitCount(usedMask)
             val playerName = orderedPlayerNames[playerIndex]
             val previous = previousByPlayer[playerName]
-            var best = Int.MAX_VALUE
+            var best: RotationCost? = null
             roleTokens.indices.forEach { tokenIndex ->
                 val bit = 1 shl tokenIndex
                 if (usedMask and bit == 0) {
                     val token = roleTokens[tokenIndex]
-                    val repeatCost = if (previous?.shownRoleId == token.shownRoleId) 1 else 0
-                    best = minOf(best, repeatCost + solve(usedMask or bit))
+                    val candidate = edgeCost(previous, token) + solve(usedMask or bit)
+                    if (best == null || candidate < requireNotNull(best)) {
+                        best = candidate
+                    }
                 }
             }
-            bestExactRepeats[usedMask] = best
-            return best
+            return requireNotNull(best).also { bestCosts[usedMask] = it }
         }
 
         solve(0)
@@ -169,9 +177,7 @@ internal object TroubleBrewingSetupDealPlanner {
                     if (usedMask and bit != 0) {
                         false
                     } else {
-                        val token = roleTokens[tokenIndex]
-                        val repeatCost = if (previous?.shownRoleId == token.shownRoleId) 1 else 0
-                        repeatCost + solve(usedMask or bit) == targetCost
+                        edgeCost(previous, roleTokens[tokenIndex]) + solve(usedMask or bit) == targetCost
                     }
                 }
                 val chosenTokenIndex = candidates.minWithOrNull(
@@ -194,6 +200,33 @@ internal object TroubleBrewingSetupDealPlanner {
                 usedMask = usedMask or (1 shl chosenTokenIndex)
             }
         }
+    }
+
+    private fun edgeCost(
+        previous: TroubleBrewingPlayerStartingIdentity?,
+        token: RoleToken,
+    ): RotationCost = RotationCost(
+        exactRepeats = if (previous?.shownRoleId == token.shownRoleId) 1 else 0,
+        specialCategoryRepeats = if (
+            previous != null &&
+            token.actualRoleCategory != TroubleBrewingStartingRoleCategory.TOWNSFOLK &&
+            previous.actualRoleCategory == token.actualRoleCategory
+        ) {
+            1
+        } else {
+            0
+        },
+    )
+
+    private fun categoryOf(
+        preset: TroubleBrewingSetupPreset,
+        roleId: String,
+    ): TroubleBrewingStartingRoleCategory = when (roleId) {
+        in preset.townsfolk -> TroubleBrewingStartingRoleCategory.TOWNSFOLK
+        in preset.outsiders -> TroubleBrewingStartingRoleCategory.OUTSIDER
+        in preset.minions -> TroubleBrewingStartingRoleCategory.MINION
+        in preset.demons -> TroubleBrewingStartingRoleCategory.DEMON
+        else -> error("Trouble Brewing role $roleId is not part of the selected preset.")
     }
 
     private fun validatedDrunkShownRole(
@@ -240,7 +273,27 @@ internal object TroubleBrewingSetupDealPlanner {
     private data class RoleToken(
         val actualRoleId: String,
         val shownRoleId: String,
+        val actualRoleCategory: TroubleBrewingStartingRoleCategory,
     )
+
+    private data class RotationCost(
+        val exactRepeats: Int,
+        val specialCategoryRepeats: Int,
+    ) : Comparable<RotationCost> {
+        override fun compareTo(other: RotationCost): Int = when {
+            exactRepeats != other.exactRepeats -> exactRepeats.compareTo(other.exactRepeats)
+            else -> specialCategoryRepeats.compareTo(other.specialCategoryRepeats)
+        }
+
+        operator fun plus(other: RotationCost): RotationCost = RotationCost(
+            exactRepeats = exactRepeats + other.exactRepeats,
+            specialCategoryRepeats = specialCategoryRepeats + other.specialCategoryRepeats,
+        )
+
+        companion object {
+            val ZERO = RotationCost(exactRepeats = 0, specialCategoryRepeats = 0)
+        }
+    }
 
     private const val DRUNK_ROLE_ID = "drunk"
     private const val ROTATION_NAMESPACE = "tb-role-rotation-v1"
