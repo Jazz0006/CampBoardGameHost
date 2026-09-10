@@ -19,7 +19,7 @@ UI-R5 post-merge main CI                          PASS
 UI-R5 Field Test APK                              PASS
 UI-R5 real-device acceptance                      PARTIAL / follow-up remains
 
-UI-NAV-1 global navigation visual unification     CURRENT — 1A audit complete / 1B next
+UI-NAV-1 global navigation visual unification     CURRENT — 1A complete / 1B IN PROGRESS
 EPI-MQ / Productive Uncertainty                   NEXT after UI-NAV-1 — EPI-MQ-0 baseline re-audit
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
@@ -57,7 +57,7 @@ PR #117 is closed and merged. Its former branch/handoff/audit documents are hist
 
 ## 3. Current priority — UI-NAV-1 Global Navigation Visual Unification
 
-> **CURRENT: perform a short presentation-only navigation convergence campaign before EPI-MQ-0.**
+> **CURRENT: perform a short presentation-first navigation convergence campaign before EPI-MQ-0.**
 
 Product decision:
 
@@ -84,9 +84,43 @@ Next       = primary
 
 The three positions are a stable visual language, not a new source of navigation truth. Existing screen/root owners continue to decide capability, callbacks and enabled state.
 
-Progress is **screen-owned and optional**. Identity reveal keeps its current useful progress presentation. Night progress may be designed later per concrete screen, but UI-NAV-1 does not impose a shared identity/night progress model and does not make progress part of this campaign's acceptance gate.
+Progress is **screen-owned and optional**. UI-NAV-1 does not impose a shared identity/night progress model and does not make progress part of this campaign's acceptance gate.
 
-The accepted read-only audit is:
+### Identity-delivery product refinement
+
+Clocktower identity delivery should use the square-table visual language rather than retain the old progress-bar/pass-phone controller.
+
+Target:
+
+```text
+Storyteller square-table controller
+- highlight current player
+- center `N / total`
+- center `Show identity to seat N · player name`
+- explicit `Show identity`
+- bottom Previous / Host Tools / Next
+```
+
+The actual role reveal remains a separate player-facing full-screen view with no Host Tools, Previous/Next, or other-player information.
+
+Backwards identity navigation is intentionally supported so the Storyteller can re-show a role. It moves only the existing identity-delivery cursor; do not add a separate furthest-completed cursor unless implementation evidence proves it necessary.
+
+The last identity seat keeps ordinary `Next`. It leads to the first-night boundary/prompt, where the Storyteller may go Previous or explicitly start the night.
+
+### Phase-boundary product refinement
+
+The same interaction language applies after the last night action:
+
+```text
+last ordinary night action
+-> Next
+-> existing dawn/broadcast/night-complete prompt
+-> Previous / Host Tools / Start Day or Continue
+```
+
+Reuse current transition/broadcast ownership. If a safe Previous requires moving the authoritative gameplay phase commit, that is a real flow behavior change and must be characterized before implementation rather than hidden inside UI work.
+
+The accepted read-only audit/product refinement is:
 
 `docs/UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_AUDIT_2026-09-10.md`
 
@@ -105,15 +139,17 @@ Immediate sequence:
 
 ```text
 UI-NAV-1A  read-only visual / ownership audit                         COMPLETE / GO
-UI-NAV-1B  establish smallest stateless three-slot bottom primitive   NEXT
+UI-NAV-1B  establish smallest stateless three-slot bottom primitive   IN PROGRESS
 UI-NAV-1C  migrate Clocktower night / square-table / day host flow
 UI-NAV-1D  migrate remaining judge / game / safe setup flows
-UI-NAV-1E  align identity reveal presentation without new capability
+UI-NAV-1E  migrate identity delivery to privacy-safe square table
 UI-NAV-1F  isolate Settings-under-Host-Tools composition if still narrow
 UI-NAV-1G  focused/full validation + real-device visual acceptance + closeout
 ```
 
 UI-NAV-1 is primarily presentation work. Do not manufacture a gameplay/domain RED when behavior is intentionally unchanged; follow `docs/TESTING_STRATEGY.md` for focused characterization, compile/static validation and exact diff audit appropriate to UI-only work.
+
+The accepted identity-delivery backwards cursor behavior is a narrow product change, not gameplay undo. Any deeper phase-transition timing change remains separately gated by characterization.
 
 ## 5. UI-NAV-1 architecture and privacy constraints
 
@@ -125,11 +161,16 @@ Preserve throughout the campaign:
 - Clocktower night-step `canGoPrevious` / `onPrevious` / `onNext` seams remain presentation callbacks, not a new flow model;
 - `ClocktowerGameSession`, Planner and Reducer keep gameplay/session authority;
 - persistence/recovery behavior is outside UI-NAV-1 scope;
-- special Next enabled/disabled and commit semantics must remain unchanged;
-- `Previous` must not be reinterpreted as gameplay undo;
-- identity PassPhone / RevealCard must not gain backwards identity exposure merely to fill the left slot;
-- identity PassPhone / RevealCard must not expose all-role Host Tools while the phone is in a player's hands;
+- special Next enabled/disabled and commit semantics must remain unchanged unless a separately characterized boundary-flow change is opened;
+- `Previous` on ordinary gameplay steps must not be reinterpreted as gameplay undo;
+- identity delivery may use Previous/Next under Storyteller control to move the current deal/reveal cursor;
+- identity Previous must never automatically reveal the previous player's role;
+- the identity square table may show only privacy-safe seat/name information;
+- Host Tools may be available on the Storyteller identity controller but must not appear on the player-facing role display;
+- player-facing identity reveal remains isolated and contains only the selected player's role information;
 - the three-slot geometry may reserve disabled positions where capability is intentionally unavailable;
+- phase-boundary/broadcast Previous may be added only through the current flow owner; do not introduce a second phase owner or hidden rollback system;
+- moving authoritative phase-transition commit timing requires dedicated behavior characterization before production change;
 - Settings-under-Host-Tools is allowed only as an isolated composition slice while all Settings state/mutation ownership remains at App root;
 - no EPI-MQ ranking/recommendation changes during UI-NAV-1;
 - no renewed D6 decomposition for file-size reasons.
