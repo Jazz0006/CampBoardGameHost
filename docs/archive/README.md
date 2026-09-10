@@ -17,6 +17,18 @@ workflows/    superseded workflow instructions
 
 Files directly under `archive/` are older consolidated closeouts, superseded design versions, or historical reports retained for traceability.
 
+### 2026-09-10 UI-R5 closeout
+
+The completed UI-R5 square-table convergence evidence is grouped under:
+
+```text
+checkpoints/ui-r5/
+```
+
+Use `checkpoints/ui-r5/UI_R5_CLOSEOUT_INDEX_2026-09-10.md` as the historical entry point. Closed UI-R5 handoffs live under `handoffs/`.
+
+UI-R5 implementation was merged in PR #117 at main commit `b47b00fd0c727e048dcb1b57260b8dd6fff466a1`. Remaining real-device exercises are field-test follow-up, not an active broad UI-R5 migration campaign.
+
 ### 2026-09-09 D6 closeout
 
 The completed D6.0 / D6.1 / D6.2 / R3 decomposition evidence is grouped under:
@@ -25,7 +37,7 @@ The completed D6.0 / D6.1 / D6.2 / R3 decomposition evidence is grouped under:
 checkpoints/d6/
 ```
 
-Use `checkpoints/d6/D6_DECOMPOSITION_CAMPAIGN_CLOSEOUT_INDEX_2026-09-09.md` as the historical entry point. The individual D6 audit/progress files should not be loaded by default in new UI-R5 sessions.
+Use `checkpoints/d6/D6_DECOMPOSITION_CAMPAIGN_CLOSEOUT_INDEX_2026-09-09.md` as the historical entry point. The individual D6 audit/progress files should not be loaded by default in new sessions.
 
 ## 2. Handoffs
 
