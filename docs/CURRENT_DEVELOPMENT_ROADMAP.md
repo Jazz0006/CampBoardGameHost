@@ -19,7 +19,7 @@ UI-R5 post-merge main CI                          PASS
 UI-R5 Field Test APK                              PASS
 UI-R5 real-device acceptance                      PARTIAL / follow-up remains
 
-UI-NAV-1 global navigation visual unification     CURRENT — 1B COMPLETE / 1C NEXT
+UI-NAV-1 global navigation visual unification     CURRENT — 1C COMPLETE / 1D NEXT
 EPI-MQ / Productive Uncertainty                   NEXT after UI-NAV-1 — EPI-MQ-0 baseline re-audit
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
@@ -40,8 +40,13 @@ UI-NAV-1 draft PR: #118 — UI: unify Storyteller navigation presentation
 UI-NAV-1B code checkpoint: 6ea4f9504e898d67941b3d2e75defe9b54e83c1d
 UI-NAV-1B CI: run 34444205127 / CI #2150 — Android FAST + CI gate PASS
 UI-NAV-1B R2: run 34444205141 / R2 #2013 — PASS
+UI-NAV-1C.2 production checkpoint: 69b34fa3094abd820cdf18c4ff8770f2538699ea
+UI-NAV-1C.2 cleanup head: 8b015914182c398f7d8a62bcb8ebd388209fec47
+UI-NAV-1C.2 one-shot: run 34455026774 — exact diff + privacy fences + Android FAST + push + cleanup PASS
 live main: always re-query before starting a new slice; docs-only commits may advance it
 ```
+
+The regular CI/R2 attempts on the bot-authored `8b015914...` cleanup head ended `action_required` with zero jobs. That is workflow-start gating, not a code/test failure; the 1C production change itself passed its exact one-shot Android FAST gate before push.
 
 Inherited validation evidence:
 
@@ -144,8 +149,8 @@ Immediate sequence:
 ```text
 UI-NAV-1A  read-only visual / ownership audit                         COMPLETE / GO
 UI-NAV-1B  establish smallest stateless three-slot bottom primitive   COMPLETE / PASS
-UI-NAV-1C  migrate Clocktower night / square-table / day host flow    NEXT
-UI-NAV-1D  migrate remaining judge / game / safe setup flows
+UI-NAV-1C  migrate Clocktower night / square-table / day host flow    COMPLETE / PASS
+UI-NAV-1D  migrate remaining judge / game / safe setup flows          NEXT
 UI-NAV-1E  migrate identity delivery to privacy-safe square table
 UI-NAV-1F  isolate Settings-under-Host-Tools composition if still narrow
 UI-NAV-1G  focused/full validation + real-device visual acceptance + closeout
@@ -164,7 +169,9 @@ single-line labels with overflow protection
 no Screen/session/domain/Planner/Reducer inputs
 ```
 
-UI-NAV-1B intentionally did not wire this component to production flow callbacks; that callback plumbing belongs to 1C.
+UI-NAV-1C reused that presentation seam without creating a new flow owner. Ordinary Clocktower night and square-table navigation, night-ready prompts, private Dawn review, New Demon confirmation, Day Overview, Nomination, Vote, EndConfirm, Slayer, Artist and Klutz now expose the unified bottom language where safe. Existing `onBack`/`onCancel` callbacks were reused where they already existed; otherwise the Previous slot remains visibly reserved but disabled. The persistent ClocktowerJudge top Host Tools entry was removed only after equivalent safe bottom access existed.
+
+Privacy fences from 1C remain explicit: the Dawn public announcement surface and player-facing identity display contain no Host Tools navigation chrome. No gameplay phase owner, persistence/recovery owner, Planner/Reducer authority, or EPI-MQ behavior changed.
 
 UI-NAV-1 is primarily presentation work. Do not manufacture a gameplay/domain RED when behavior is intentionally unchanged; follow `docs/TESTING_STRATEGY.md` for focused characterization, compile/static validation and exact diff audit appropriate to UI-only work.
 
