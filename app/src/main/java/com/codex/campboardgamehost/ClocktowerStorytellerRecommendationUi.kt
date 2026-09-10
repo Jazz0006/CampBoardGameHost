@@ -75,6 +75,7 @@ internal fun ClocktowerStorytellerRecommendationScreen(
     description: String,
     buttonLabel: String,
     onHostTools: () -> Unit,
+    onPrevious: (() -> Unit)? = null,
     onStartNight: () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -142,11 +143,11 @@ internal fun ClocktowerStorytellerRecommendationScreen(
                     previousLabel = text("上一步", "Previous"),
                     hostToolsLabel = text("主持工具", "Host Tools"),
                     nextLabel = buttonLabel,
-                    onPrevious = {},
+                    onPrevious = onPrevious ?: {},
                     onHostTools = onHostTools,
                     onNext = onStartNight,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                    previousEnabled = false,
+                    previousEnabled = onPrevious != null,
                 )
             }
         }

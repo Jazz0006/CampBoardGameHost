@@ -275,6 +275,7 @@ internal fun ClocktowerJudgeScreen(
     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
     onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
     onHostTools: () -> Unit,
+    onPreviousFromFirstNightReady: () -> Unit,
     onMovePreviousNightStep: () -> Unit,
     onSelectNightDeath: (String?) -> Unit,
     onConfirmDemonAttack: () -> Unit,
@@ -3989,14 +3990,15 @@ internal fun ClocktowerJudgeScreen(
 
     if (phase == ClocktowerPhase.FirstNight && !nightStarted) {
         ClocktowerStorytellerRecommendationScreen(
-            title = text("说书人开局准备", "STORYTELLER SETUP"),
-            subtitle = text("首夜裁定推荐", "First-night recommendations"),
+            title = text("身份展示完成", "IDENTITY DISPLAY COMPLETE"),
+            subtitle = text("准备进入首夜", "Prepare for the first night"),
             description = text(
-                "这是说书人私密页面。确认推荐与裁定后，直接进入首夜流程。",
-                "This is a private Storyteller screen. Review the plan, then begin the first night.",
+                "这是说书人私密页面。可返回最后一位玩家重新展示身份，或确认首夜裁定后开始夜晚。",
+                "This is a private Storyteller screen. You may return to the final player to show the role again, or confirm the first-night rulings and begin the night.",
             ),
             buttonLabel = text("确认裁定，开始首夜", "Confirm plan and begin first night"),
             onHostTools = onHostTools,
+            onPrevious = onPreviousFromFirstNightReady,
             onStartNight = {
                 if (firstNightNaturalPairPrecomputeReady) {
                     nightStarted = true

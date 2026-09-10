@@ -2304,31 +2304,54 @@ internal fun CampBoardGameHostApp() {
                     )
 
                     Screen.PassPhone -> PassPhoneScreen(
-                    playerName = cards[currentDealIndex].name,
-                    gameKind = currentGameKind,
-                    current = currentDealIndex + 1,
-                    total = cards.size,
-                    onReveal = { screen = Screen.RevealCard },
-                )
+                        playerName = cards[currentDealIndex].name,
+                        playerNames = cards.map { it.name },
+                        gameKind = currentGameKind,
+                        current = currentDealIndex + 1,
+                        total = cards.size,
+                        onReveal = { screen = Screen.RevealCard },
+                        onPrevious = {
+                            if (currentGameKind == GameKind.Clocktower && currentDealIndex > 0) {
+                                currentDealIndex -= 1
+                            }
+                        },
+                        onHostTools = {
+                            if (currentGameKind == GameKind.Clocktower) {
+                                hostToolTab = HostToolTab.Roles
+                                showHostTools = true
+                            }
+                        },
+                        onNext = {
+                            if (currentGameKind == GameKind.Clocktower) {
+                                if (currentDealIndex == cards.lastIndex) {
+                                    screen = Screen.ClocktowerJudge
+                                } else {
+                                    currentDealIndex += 1
+                                }
+                            }
+                        },
+                    )
 
                     Screen.RevealCard -> RevealCardScreen(
-                    card = cards[currentDealIndex],
-                    gameKind = currentGameKind,
-                    current = currentDealIndex + 1,
-                    total = cards.size,
-                    onHide = {
-                        if (currentDealIndex == cards.lastIndex) {
-                            screen = when (currentGameKind) {
+                        card = cards[currentDealIndex],
+                        gameKind = currentGameKind,
+                        current = currentDealIndex + 1,
+                        total = cards.size,
+                        onHide = {
+                            when (currentGameKind) {
                                 GameKind.Werewolf -> error("Werewolf runtime has been removed.")
-                                GameKind.Clocktower -> Screen.ClocktowerJudge
-                                GameKind.Undercover -> Screen.Game
+                                GameKind.Clocktower -> screen = Screen.PassPhone
+                                GameKind.Undercover -> {
+                                    if (currentDealIndex == cards.lastIndex) {
+                                        screen = Screen.Game
+                                    } else {
+                                        currentDealIndex += 1
+                                        screen = Screen.PassPhone
+                                    }
+                                }
                             }
-                        } else {
-                            currentDealIndex += 1
-                            screen = Screen.PassPhone
-                        }
-                    },
-                )
+                        },
+                    )
 
                     Screen.ClocktowerJudge -> ClocktowerJudgeScreen(
                         automaticStorytellerInfo = automaticStorytellerInfo,
@@ -2421,6 +2444,10 @@ internal fun CampBoardGameHostApp() {
                         onHostTools = {
                             hostToolTab = HostToolTab.Roles
                             showHostTools = true
+                        },
+                        onPreviousFromFirstNightReady = {
+                            currentDealIndex = cards.lastIndex
+                            screen = Screen.PassPhone
                         },
                         onSelectNightDeath = { selected ->
                             advanceClocktowerPlayerInputRevision()
