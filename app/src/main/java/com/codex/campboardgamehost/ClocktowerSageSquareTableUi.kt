@@ -71,7 +71,7 @@ internal fun clocktowerSageResultChoices(
             val seats = validSageSubjectSeats(option.presentationSubjectSeats, seatCount) ?: return emptyList()
             val primary = option.displayPrimary?.takeIf { it.isNotBlank() } ?: return emptyList()
             ClocktowerSageResultChoice(
-                key = clocktowerInformationCandidateId(option),
+                key = "${clocktowerInformationCandidateId(option)}|presentation:${seats.joinToString(":")}",
                 subjectSeats = seats,
                 displayPrimary = primary,
                 selectionLabel = option.label.takeIf { it.isNotBlank() }
