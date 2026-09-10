@@ -25,4 +25,12 @@ if source.count(old_last_words) != 1:
     )
 source = source.replace(old_last_words, new_last_words)
 
+old_pending_state_check = '    "pendingNightDeath",\n'
+new_pending_state_check = '    "var pendingNightDeath by remember",\n'
+if source.count(old_pending_state_check) != 1:
+    raise SystemExit(
+        f"base patch pending-night state audit anchor count {source.count(old_pending_state_check)}, expected 1"
+    )
+source = source.replace(old_pending_state_check, new_pending_state_check)
+
 exec(compile(source, str(base_script), "exec"), {"__name__": "__main__"})
