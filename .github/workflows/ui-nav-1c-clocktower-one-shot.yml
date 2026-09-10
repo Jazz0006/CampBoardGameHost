@@ -17,6 +17,7 @@ jobs:
     env:
       BRANCH: codex/ui-nav-1-global-navigation-visual-unification
       SCRIPT: .github/scripts/ui_nav_1c_clocktower_patch.py
+      WRAPPER: .github/scripts/ui_nav_1c_clocktower_patch_v2.py
       WORKFLOW: .github/workflows/ui-nav-1c-clocktower-one-shot.yml
     steps:
       - name: Checkout exact branch head
@@ -51,6 +52,7 @@ jobs:
           }
 
           check_blob "$SCRIPT" "2bfb3020824f6a448cf94516fbeef3163eb05f9f"
+          check_blob "$WRAPPER" "19a621a37985cb3523cf150114b17ef10a049083"
           check_blob "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt" "0dea3ac3ced90cf92d40c1b5f78692e408d71566"
           check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt" "117faecafbe8b31832ef675d71b5cc411f3c4979"
           check_blob "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt" "0e5cad2209f1c12cc8631a88bb4d5193f3e94aba"
@@ -68,58 +70,8 @@ jobs:
           check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt" "a09052f10ab95897cb22eb858128689a12edd4a6"
           check_blob "app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt" "d315f3b95843969a974b92b5c3c541e4d674598e"
 
-      - name: Split exact D6 HostScreen call anchors
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path(".github/scripts/ui_nav_1c_clocktower_patch.py")
-          s = p.read_text()
-          old = '''replace_exact(
-              "host",
-              ''' + "'''" + '''            onPrevious = onMovePreviousNightStep,
-              onNext = advanceNightStep,
-          ''' + "'''" + ''',
-              ''' + "'''" + '''            onPrevious = onMovePreviousNightStep,
-              onHostTools = onHostTools,
-              onNext = advanceNightStep,
-          ''' + "'''" + ''',
-              expected=2,
-          )'''
-          new = old.replace("expected=2", "expected=1")
-          if s.count(old) != 1:
-              raise SystemExit("expected one HostScreen batch-anchor block")
-          p.write_text(s.replace(old, new), encoding="utf-8", newline="\n")
-          PY
-
-      - name: Apply D6-aware UI-NAV-1C.1 patch
-        run: python3 "$SCRIPT"
-
-      - name: Wire exact NightStep Host Tools call
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt")
-          s = p.read_text()
-          old = '''                canGoPrevious = currentStepIndex > 0,
-              onPrevious = onMovePreviousNightStep,
-              onNext = advanceNightStep,
-              showNavigationActions = false,
-          '''
-          new = '''                canGoPrevious = currentStepIndex > 0,
-              onPrevious = onMovePreviousNightStep,
-              onHostTools = onHostTools,
-              onNext = advanceNightStep,
-              showNavigationActions = false,
-          '''
-          if s.count(old) != 1:
-              raise SystemExit(f"NightStep exact call anchor count {s.count(old)}, expected 1")
-          p.write_text(s.replace(old, new), encoding="utf-8", newline="\n")
-          PY
-          git checkout -- "$SCRIPT"
+      - name: Apply exact D6-aware UI-NAV-1C.1 patch
+        run: python3 "$WRAPPER"
 
       - name: Audit exact production diff
         shell: bash
@@ -194,6 +146,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git rm "$SCRIPT" "$WORKFLOW"
+          git rm "$SCRIPT" "$WRAPPER" "$WORKFLOW"
           git commit -m "chore(ci): remove UI-NAV-1C.1 one-shot"
           git push origin "HEAD:$BRANCH"
