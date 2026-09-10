@@ -337,12 +337,14 @@ internal fun WerewolfJudgeScreen(
 
     fun roleCards(role: Role): List<PlayerCard> = cards.filter { it.role == role }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -577,16 +579,6 @@ internal fun WerewolfJudgeScreen(
                         }
                     }
 
-                    HostBottomActionBar(
-                        previousLabel = stringResource(R.string.previous_step),
-                        hostToolsLabel = text("主持工具", "Host Tools"),
-                        nextLabel = stringResource(R.string.next_step),
-                        onPrevious = { onStepIndexChange((currentIndex - 1).coerceAtLeast(0)) },
-                        onHostTools = onHostTools,
-                        onNext = { onStepIndexChange((currentIndex + 1).coerceAtMost(steps.lastIndex)) },
-                        previousEnabled = currentIndex > 0,
-                        nextEnabled = currentIndex < steps.lastIndex,
-                    )
             }
         }
 
@@ -623,5 +615,18 @@ internal fun WerewolfJudgeScreen(
                 Text(if (gameOutcome == null) stringResource(R.string.end_and_reveal) else stringResource(R.string.view_results))
             }
         }
+    }
+
+        HostBottomActionBar(
+            previousLabel = stringResource(R.string.previous_step),
+            hostToolsLabel = text("主持工具", "Host Tools"),
+            nextLabel = stringResource(R.string.next_step),
+            onPrevious = { onStepIndexChange((currentIndex - 1).coerceAtLeast(0)) },
+            onHostTools = onHostTools,
+            onNext = { onStepIndexChange((currentIndex + 1).coerceAtMost(steps.lastIndex)) },
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+            previousEnabled = currentIndex > 0,
+            nextEnabled = currentIndex < steps.lastIndex,
+        )
     }
 }
