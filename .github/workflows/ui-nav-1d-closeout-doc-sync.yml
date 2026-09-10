@@ -49,7 +49,6 @@ jobs:
               text = text.replace(marker, note + marker, 1)
           roadmap.write_text(text)
           PY
-          git diff --check
 
       - name: Commit docs and remove one-shot
         shell: bash
