@@ -1,0 +1,27 @@
+name: UI-NAV device layout audit
+
+on:
+  push:
+    branches:
+      - codex/ui-nav-1-global-navigation-visual-unification
+    paths:
+      - .github/workflows/ui-nav-device-layout-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit night navigation call sites
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== ClocktowerSquareTableStepNavigation ==='
+          grep -R -n --include='*.kt' 'ClocktowerSquareTableStepNavigation(' app/src/main/java/com/codex/campboardgamehost || true
+          echo '=== HostBottomActionBar in Clocktower night-related sources ==='
+          grep -R -n --include='*Night*.kt' --include='Clocktower*SquareTableUi.kt' 'HostBottomActionBar(' app/src/main/java/com/codex/campboardgamehost app/src/main/java/com/codex/campboardgamehost/clocktower || true
+          echo '=== ClocktowerNightActionSquareTableDialog callers ==='
+          grep -R -n --include='*.kt' 'ClocktowerNightActionSquareTableDialog(' app/src/main/java/com/codex/campboardgamehost || true
