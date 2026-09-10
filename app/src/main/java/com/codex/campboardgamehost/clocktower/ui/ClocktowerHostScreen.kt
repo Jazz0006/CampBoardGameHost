@@ -1272,57 +1272,6 @@ internal fun ClocktowerJudgeScreen(
         }
     }
 
-    fun recommendedSageOptions(
-        actor: PlayerCard,
-        demon: PlayerCard,
-        truthfulOnly: Boolean = false,
-    ): List<ClocktowerDisplayOption> {
-        val pool = cards.filter { it.name != actor.name }
-        val pairs = buildList {
-            for (firstIndex in 0 until pool.lastIndex) {
-                for (secondIndex in firstIndex + 1 until pool.size) {
-                    add(pool[firstIndex] to pool[secondIndex])
-                }
-            }
-        }
-        if (pairs.isEmpty()) return emptyList()
-        fun pairId(pair: Pair<PlayerCard, PlayerCard>): String = listOf(cards.indexOf(pair.first), cards.indexOf(pair.second)).sorted().joinToString(":")
-        val byId = pairs.associateBy(::pairId)
-        val candidates = pairs.map { pair ->
-            val isTruthful = pair.first.name == demon.name || pair.second.name == demon.name
-            val evilCount = listOf(pair.first, pair.second).count(::isClocktowerEvil)
-            UnreliableCategoricalCandidate(
-                id = pairId(pair),
-                isTruthful = isTruthful,
-                misinformationPressure = if (isTruthful) 0 else when (evilCount) {
-                    1 -> 2
-                    2 -> 3
-                    else -> 4
-                },
-            )
-        }.filter { !truthfulOnly || it.isTruthful }
-        return recommendationCoordinator.recommendCategory(candidates).mapNotNull { recommendation ->
-            val candidate = candidates.first { it.id == recommendation.candidateId }
-            val pair = byId[recommendation.candidateId] ?: return@mapNotNull null
-            val seats = "${seatNumberFor(pair.first)}   ${seatNumberFor(pair.second)}"
-            val warning = if (recommendation.warningIds.isNotEmpty()) text(" ⚠ 高压", " ⚠ high pressure") else ""
-            displayOption(
-                label = "${recommendationStyleLabel(recommendation.style)}：$seats$warning",
-                kind = ClocktowerDisplayKind.EitherOne,
-                title = text("贤者信息", "Sage information"),
-                primary = text("恶魔", "Demon"),
-                secondary = seats,
-                footer = text("在下面两位玩家之中", "One of these two players"),
-                recommendationStyle = recommendation.style,
-                isTruthful = candidate.isTruthful,
-                misinformationPressure = candidate.misinformationPressure,
-                isDefaultRecommendation = recommendation.style == RecommendationStyle.BALANCED,
-                reasonCodes = listOf("dynamic.pair-score"),
-                warningCodes = recommendation.warningIds,
-            )
-        }
-    }
-
     data class PairInformationEffect(
         val id: String,
         val shownRole: ClocktowerRole?,
@@ -3270,31 +3219,24 @@ internal fun ClocktowerJudgeScreen(
                     )
             },
         ),
-        ClocktowerNightStepMaterializerRegistry.Entry(
-            identity = ClocktowerProductionNightStepIdentity.role(RoleId("Sage")),
-            build = {
-            val sageDemon = requireNotNull(demonCard)
-            val resolvedSagePair = requireNotNull(sagePair)
-            val trigger = requireNotNull(sageNightDeath)
-                    informationStepBuilder.build(
-                        roleName = "贤者",
-                        enName = "Sage",
-                        actorOverride = trigger,
-                        abilityStateOverride = sageDeathTriggerAbilityState,
-                        tellPlayer = "${sageDemon.seatLabel(cards)} / ${resolvedSagePair.second.seatLabel(cards)}",
-                        explanation = text("贤者被恶魔杀死时，得知恶魔是两名玩家之一。", "When killed by the Demon, the Sage learns that the Demon is one of two players."),
-                        displayKind = ClocktowerDisplayKind.EitherOne,
-                        displayTitle = text("贤者信息", "Sage information"),
-                        displayPrimary = text("恶魔", "Demon"),
-                        displaySecondary = twoSeatNumbers(sageDemon, resolvedSagePair.second),
-                        displayFooter = text("在下面两位玩家之中", "One of these two players"),
-                        hostInstruction = text("如果恶魔今晚杀死贤者，轻拍贤者，示意睁眼。把两名玩家只给他看；这两人之中有一名是恶魔。", "If the Demon killed the Sage tonight, wake the Sage and show only them two players, one of whom is the Demon."),
-                        displayOptions = { actor -> recommendedSageOptions(actor, sageDemon) },
-                        reliableDisplayOptions = { actor ->
-                            recommendedSageOptions(actor, sageDemon, truthfulOnly = true)
-                        },
-                    )
-            },
+        clocktowerSageStepMaterializer(
+            builder = informationStepBuilder,
+            cards = cards,
+            triggerActor = sageNightDeath,
+            demon = demonCard,
+            directPair = sagePair,
+            abilityState = sageDeathTriggerAbilityState,
+            content = ClocktowerSageStepContent(
+                explanation = text("贤者被恶魔杀死时，得知恶魔是两名玩家之一。", "When killed by the Demon, the Sage learns that the Demon is one of two players."),
+                displayTitle = text("贤者信息", "Sage information"),
+                displayPrimary = text("恶魔", "Demon"),
+                displayFooter = text("在下面两位玩家之中", "One of these two players"),
+                hostInstruction = text("如果恶魔今晚杀死贤者，轻拍贤者，示意睁眼。把两名玩家只给他看；这两人之中有一名是恶魔。", "If the Demon killed the Sage tonight, wake the Sage and show only them two players, one of whom is the Demon."),
+                highPressureSuffix = text(" ⚠ 高压", " ⚠ high pressure"),
+            ),
+            recommendCategory = recommendationCoordinator::recommendCategory,
+            isEvil = ::isClocktowerEvil,
+            recommendationStyleLabel = ::recommendationStyleLabel,
         ),
         ClocktowerNightStepMaterializerRegistry.Entry(
             identity = ClocktowerProductionNightStepIdentity.role(RoleId("Ravenkeeper")),
