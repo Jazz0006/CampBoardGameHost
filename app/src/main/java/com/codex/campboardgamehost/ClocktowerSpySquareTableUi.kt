@@ -74,6 +74,8 @@ internal fun ClocktowerSpySquareTableDialog(
         onSeatSelected = {},
         canGoPrevious = canGoPrevious,
         onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
     ) {
         Column(
             modifier = Modifier
@@ -126,14 +128,6 @@ internal fun ClocktowerSpySquareTableDialog(
                     )
                 }
             }
-
-            ClocktowerSquareTableStepNavigation(
-                language = language,
-                canGoPrevious = canGoPrevious,
-                onPrevious = onPrevious,
-                onHostTools = onHostTools,
-                onNext = onNext,
-            )
         }
     }
 }

@@ -92,13 +92,13 @@ internal fun ClocktowerNightActionWakeInstruction(instruction: String?) {
 }
 
 /**
- * Compact shared navigation for square-table night actions.
+ * Shared screen-bottom navigation for square-table night actions.
  *
  * Labels are intentionally short and forced to one line: the current step/actor belongs in the
  * center instruction, not inside navigation buttons. This keeps narrow phone layouts stable.
  */
 @Composable
-internal fun ClocktowerSquareTableStepNavigation(
+internal fun ClocktowerNightBottomActionBar(
     language: String,
     canGoPrevious: Boolean,
     nextEnabled: Boolean = true,
@@ -106,16 +106,23 @@ internal fun ClocktowerSquareTableStepNavigation(
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
-    HostBottomActionBar(
-        previousLabel = if (language == "en") "← Previous" else "← 上一步",
-        hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
-        nextLabel = if (language == "en") "Next →" else "下一步 →",
-        previousEnabled = canGoPrevious,
-        nextEnabled = nextEnabled,
-        onPrevious = onPrevious,
-        onHostTools = onHostTools,
-        onNext = onNext,
-    )
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 10.dp,
+    ) {
+        HostBottomActionBar(
+            previousLabel = if (language == "en") "← Previous" else "← 上一步",
+            hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
+            nextLabel = if (language == "en") "Next →" else "下一步 →",
+            previousEnabled = canGoPrevious,
+            nextEnabled = nextEnabled,
+            onPrevious = onPrevious,
+            onHostTools = onHostTools,
+            onNext = onNext,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+        )
+    }
 }
 
 @Composable
@@ -154,6 +161,9 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
         onSeatSelected = onSeatSelected,
         canGoPrevious = canGoPrevious,
         onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
+        nextEnabled = nextEnabled,
     ) {
         Column(
             modifier = Modifier
@@ -199,14 +209,6 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
             }
 
             Spacer(Modifier.height(6.dp))
-            ClocktowerSquareTableStepNavigation(
-                language = language,
-                canGoPrevious = canGoPrevious,
-                nextEnabled = nextEnabled,
-                onPrevious = onPrevious,
-                onHostTools = onHostTools,
-                onNext = onNext,
-            )
         }
     }
 }
@@ -220,6 +222,9 @@ internal fun ClocktowerNightActionSquareTableDialog(
     onSeatSelected: (Int) -> Unit,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
+    onNext: () -> Unit,
+    nextEnabled: Boolean = true,
     centerContent: @Composable () -> Unit,
 ) {
     Dialog(
@@ -232,33 +237,45 @@ internal fun ClocktowerNightActionSquareTableDialog(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background,
         ) {
-            ClocktowerSquareTableSeatSurface(
-                seats = seats.map { seat ->
-                    val content = hostSeatContentPresentation(seat, language)
-                    val presentation = seatPresentation(seat.seatId.number)
-                    ClocktowerSquareTableSeatUiModel(
-                        seatId = seat.seatId.renderKey(),
-                        seatNumber = seat.seatId.number,
-                        label = content.primaryLabel,
-                        detailLabels = content.detailLabels,
-                        state = presentation.targetState,
-                        isCurrentActor = presentation.isCurrentActor,
-                    )
-                },
-                modifier = Modifier.fillMaxSize(),
-                interactionMode = if (enabled) {
-                    ClocktowerSquareTableInteractionMode.Selectable
-                } else {
-                    ClocktowerSquareTableInteractionMode.ReadOnly
-                },
-                onSeatClick = { renderKey ->
-                    seats.firstOrNull { seat -> seat.seatId.renderKey() == renderKey }
-                        ?.seatId
-                        ?.number
-                        ?.let(onSeatSelected)
-                },
-            ) {
-                centerContent()
+            Column(modifier = Modifier.fillMaxSize()) {
+                ClocktowerSquareTableSeatSurface(
+                    seats = seats.map { seat ->
+                        val content = hostSeatContentPresentation(seat, language)
+                        val presentation = seatPresentation(seat.seatId.number)
+                        ClocktowerSquareTableSeatUiModel(
+                            seatId = seat.seatId.renderKey(),
+                            seatNumber = seat.seatId.number,
+                            label = content.primaryLabel,
+                            detailLabels = content.detailLabels,
+                            state = presentation.targetState,
+                            isCurrentActor = presentation.isCurrentActor,
+                        )
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    interactionMode = if (enabled) {
+                        ClocktowerSquareTableInteractionMode.Selectable
+                    } else {
+                        ClocktowerSquareTableInteractionMode.ReadOnly
+                    },
+                    onSeatClick = { renderKey ->
+                        seats.firstOrNull { seat -> seat.seatId.renderKey() == renderKey }
+                            ?.seatId
+                            ?.number
+                            ?.let(onSeatSelected)
+                    },
+                ) {
+                    centerContent()
+                }
+                ClocktowerNightBottomActionBar(
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onPrevious = onPrevious,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
+                    nextEnabled = nextEnabled,
+                )
             }
         }
     }

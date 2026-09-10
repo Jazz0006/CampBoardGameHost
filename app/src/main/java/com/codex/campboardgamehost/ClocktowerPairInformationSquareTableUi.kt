@@ -84,51 +84,59 @@ internal fun ClocktowerPairInformationSquareTableDialog(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background,
         ) {
-            ClocktowerSquareTableSeatSurface(
-                seats = seats.map { seat ->
-                    val seatPresentation = clocktowerPairInformationSeatPresentation(
+            Column(modifier = Modifier.fillMaxSize()) {
+                ClocktowerSquareTableSeatSurface(
+                    seats = seats.map { seat ->
+                        val seatPresentation = clocktowerPairInformationSeatPresentation(
+                            selection = selection,
+                            seatNumber = seat.seatId.number,
+                            editing = editing,
+                            actorSeat = actorSeat,
+                        )
+                        clocktowerPairManualSquareTableSeat(
+                            seat = seat,
+                            language = language,
+                            state = seatPresentation.targetState,
+                        ).copy(isCurrentActor = seatPresentation.isCurrentActor)
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    interactionMode = if (editing) {
+                        ClocktowerSquareTableInteractionMode.Selectable
+                    } else {
+                        ClocktowerSquareTableInteractionMode.ReadOnly
+                    },
+                    onSeatClick = { seatKey ->
+                        if (editing) {
+                            seats.firstOrNull { seat -> seat.seatId.renderKey() == seatKey }
+                                ?.seatId
+                                ?.number
+                                ?.let { seatNumber -> selection = selection.selectSeat(seatNumber) }
+                        }
+                    },
+                ) {
+                    ClocktowerPairInformationCenterControls(
+                        wakeInstruction = wakeInstruction,
+                        abilityLabel = abilityLabel,
                         selection = selection,
-                        seatNumber = seat.seatId.number,
+                        recommendedSelection = recommendedSelection,
                         editing = editing,
-                        actorSeat = actorSeat,
-                    )
-                    clocktowerPairManualSquareTableSeat(
-                        seat = seat,
+                        roleLabel = roleLabel,
                         language = language,
-                        state = seatPresentation.targetState,
-                    ).copy(isCurrentActor = seatPresentation.isCurrentActor)
-                },
-                modifier = Modifier.fillMaxSize(),
-                interactionMode = if (editing) {
-                    ClocktowerSquareTableInteractionMode.Selectable
-                } else {
-                    ClocktowerSquareTableInteractionMode.ReadOnly
-                },
-                onSeatClick = { seatKey ->
-                    if (editing) {
-                        seats.firstOrNull { seat -> seat.seatId.renderKey() == seatKey }
-                            ?.seatId
-                            ?.number
-                            ?.let { seatNumber -> selection = selection.selectSeat(seatNumber) }
-                    }
-                },
-            ) {
-                ClocktowerPairInformationCenterControls(
-                    wakeInstruction = wakeInstruction,
-                    abilityLabel = abilityLabel,
-                    selection = selection,
-                    recommendedSelection = recommendedSelection,
-                    editing = editing,
-                    roleLabel = roleLabel,
+                        onSelectionChange = { selection = it },
+                        onStartEditing = { editing = true },
+                        onRestoreRecommendation = ::restoreRecommendation,
+                        onConfirm = onConfirm,
+                    )
+                }
+
+                ClocktowerNightBottomActionBar(
                     language = language,
                     canGoPrevious = canGoPrevious,
-                    onSelectionChange = { selection = it },
-                    onStartEditing = { editing = true },
-                    onRestoreRecommendation = ::restoreRecommendation,
                     onPrevious = onPrevious,
                     onHostTools = onHostTools,
                     onNext = onNext,
-                    onConfirm = onConfirm,
                 )
             }
         }
@@ -183,13 +191,9 @@ private fun ClocktowerPairInformationCenterControls(
     editing: Boolean,
     roleLabel: (String) -> String,
     language: String,
-    canGoPrevious: Boolean,
     onSelectionChange: (ClocktowerPairManualSelectionModel) -> Unit,
     onStartEditing: () -> Unit,
     onRestoreRecommendation: () -> Unit,
-    onPrevious: () -> Unit,
-    onHostTools: () -> Unit,
-    onNext: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
 ) {
     var roleMenuExpanded by remember { mutableStateOf(false) }
@@ -341,13 +345,5 @@ private fun ClocktowerPairInformationCenterControls(
                 }
             }
         }
-
-        ClocktowerSquareTableStepNavigation(
-            language = language,
-            canGoPrevious = canGoPrevious,
-            onPrevious = onPrevious,
-            onHostTools = onHostTools,
-            onNext = onNext,
-        )
     }
 }

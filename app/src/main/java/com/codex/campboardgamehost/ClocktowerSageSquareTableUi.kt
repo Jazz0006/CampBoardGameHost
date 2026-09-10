@@ -163,6 +163,8 @@ internal fun ClocktowerSageSquareTableDialog(
         onSeatSelected = {},
         canGoPrevious = canGoPrevious,
         onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
     ) {
         Column(
             modifier = Modifier
@@ -235,14 +237,6 @@ internal fun ClocktowerSageSquareTableDialog(
                     Text(if (language == "en") "Show this information" else "展示此信息")
                 }
             }
-
-            ClocktowerSquareTableStepNavigation(
-                language = language,
-                canGoPrevious = canGoPrevious,
-                onPrevious = onPrevious,
-                onHostTools = onHostTools,
-                onNext = onNext,
-            )
         }
     }
 }

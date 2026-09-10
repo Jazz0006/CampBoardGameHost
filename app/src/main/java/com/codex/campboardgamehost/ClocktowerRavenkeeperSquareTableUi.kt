@@ -184,6 +184,8 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
         onSeatSelected = onSeatSelected,
         canGoPrevious = canGoPrevious,
         onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
     ) {
         Column(
             modifier = Modifier
@@ -283,14 +285,6 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                     }
                 }
             }
-
-            ClocktowerSquareTableStepNavigation(
-                language = language,
-                canGoPrevious = canGoPrevious,
-                onPrevious = onPrevious,
-                onHostTools = onHostTools,
-                onNext = onNext,
-            )
         }
     }
 }

@@ -194,7 +194,7 @@ private fun ClocktowerDealHandoffScreen(
                 Surface(
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .padding(horizontal = 68.dp),
+                        .fillMaxWidth(),
                     color = MaterialTheme.colorScheme.surfaceVariant,
                     shape = RoundedCornerShape(18.dp),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.34f)),

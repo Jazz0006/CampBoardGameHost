@@ -136,6 +136,8 @@ internal fun ClocktowerClockmakerSquareTableDialog(
         onSeatSelected = {},
         canGoPrevious = canGoPrevious,
         onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
     ) {
         Column(
             modifier = Modifier
@@ -215,14 +217,6 @@ internal fun ClocktowerClockmakerSquareTableDialog(
                     )
                 }
             }
-
-            ClocktowerSquareTableStepNavigation(
-                language = language,
-                canGoPrevious = canGoPrevious,
-                onPrevious = onPrevious,
-                onHostTools = onHostTools,
-                onNext = onNext,
-            )
         }
     }
 }

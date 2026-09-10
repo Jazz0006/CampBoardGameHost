@@ -52,6 +52,8 @@ internal fun ClocktowerChambermaidSquareTableDialog(
         onSeatSelected = onSeatSelected,
         canGoPrevious = canGoPrevious,
         onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
     ) {
         ClocktowerChambermaidCenterControls(
             wakeInstruction = wakeInstruction,
@@ -161,12 +163,5 @@ private fun ClocktowerChambermaidCenterControls(
         }
 
         Spacer(Modifier.height(6.dp))
-        ClocktowerSquareTableStepNavigation(
-            language = language,
-            canGoPrevious = canGoPrevious,
-            onPrevious = onPrevious,
-            onHostTools = onHostTools,
-            onNext = onNext,
-        )
     }
 }
