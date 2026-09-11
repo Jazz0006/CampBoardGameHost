@@ -1,0 +1,111 @@
+name: ROLE-ROTATION-1 app wiring one-shot
+
+on:
+  push:
+    branches:
+      - codex/role-rotation-1-consecutive-role-repeat-avoidance
+    paths:
+      - .github/workflows/role-rotation-1-app-wiring-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/role-rotation-1-consecutive-role-repeat-avoidance
+          fetch-depth: 0
+
+      - name: Verify bootstrap head and target blob
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "0ab3c4660eb59458c346eba059f0686e59fd8a18"
+          test "$(git ls-remote origin refs/heads/codex/role-rotation-1-consecutive-role-repeat-avoidance | cut -f1)" = "$GITHUB_SHA"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt)" = "b12a58f5d3d499e5070c90bdf6f185ac7ad9278d"
+          test -z "$(git status --porcelain)"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Apply exact production patch
+        run: python3 .github/scripts/role_rotation_1_app_wiring_patch.py
+
+      - name: Run focused setup wiring tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.clocktower.setup.TroubleBrewingProductionSetupPreparerTest' \
+            --tests 'com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecordFactoryTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Run FAST checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Exact diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
+          grep -F 'val playerRotationHistory = rotationHistoryStore.recentPlayerStartingIdentityHistoryFor(' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          grep -F 'recentPlayerStartingIdentityHistory = playerRotationHistory,' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          grep -F 'TroubleBrewingSetupRotationRecordFactory.fromPreparedSetup(preparedSetup)' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          if grep -Fq 'TroubleBrewingSetupRotationRecordFactory.fromSelection(' app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt; then
+            echo 'Legacy fromSelection completion wiring remains in App root' >&2
+            exit 1
+          fi
+          git diff -- app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+
+      - name: Reconfirm remote head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/role-rotation-1-consecutive-role-repeat-avoidance | cut -f1)" = "$GITHUB_SHA"
+
+      - name: Commit and push product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+          mapfile -t staged < <(git diff --cached --name-only)
+          test "${#staged[@]}" -eq 1
+          test "${staged[0]}" = "app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt"
+          git commit -m 'feat: wire recent player role rotation into app setup'
+          git push origin HEAD:codex/role-rotation-1-consecutive-role-repeat-avoidance
+          echo "PRODUCT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/codex/role-rotation-1-consecutive-role-repeat-avoidance | cut -f1)" = "$(git rev-parse HEAD)"
+          git rm .github/workflows/role-rotation-1-app-wiring-one-shot.yml .github/scripts/role_rotation_1_app_wiring_patch.py
+          git commit -m 'chore(ci): remove role rotation app wiring one-shot'
+          git push origin HEAD:codex/role-rotation-1-consecutive-role-repeat-avoidance
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Report checkpoints
+        run: |
+          echo "Product checkpoint: $PRODUCT_SHA"
+          echo "Cleanup checkpoint: $CLEANUP_SHA"
