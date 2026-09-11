@@ -7,23 +7,33 @@ if b"\r\n" in raw or b"\r" in raw:
 text = raw.decode("utf-8")
 
 
-def replace_exact(label: str, old: str, new: str, expected_count: int = 1) -> None:
-    global text
-    count = text.count(old)
+def replace_exact(source: str, label: str, old: str, new: str, expected_count: int = 1) -> str:
+    count = source.count(old)
     if count != expected_count:
         raise SystemExit(f"{label}: expected {expected_count} anchor(s), found {count}")
-    text = text.replace(old, new)
+    return source.replace(old, new)
 
 
-replace_exact(
+text = replace_exact(
+    text,
     "remove legacy style selector import",
     "import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector\n",
     "",
 )
 
-replace_exact(
-    "spy automatic registration selection",
-    """    val automaticRecommendation = WeightedStableSelector.selectStyle(
+spy_marker = "internal fun SpyRegistrationPanel("
+recluse_marker = "internal fun RecluseRegistrationPanel("
+if text.count(spy_marker) != 1 or text.count(recluse_marker) != 1:
+    raise SystemExit("Expected exactly one Spy and one Recluse registration panel")
+spy_start = text.index(spy_marker)
+recluse_start = text.index(recluse_marker)
+if spy_start >= recluse_start:
+    raise SystemExit("Unexpected registration panel order")
+prefix = text[:spy_start]
+spy = text[spy_start:recluse_start]
+recluse = text[recluse_start:]
+
+common_old_selection = """    val automaticRecommendation = WeightedStableSelector.selectStyle(
         registrationPool?.candidatesFor(SelectionExecutionPolicy.AUTO)?.map { it.payload }.orEmpty(),
         automaticStorytellerStyle,
         ClocktowerRegistrationRecommendationOption::style,
@@ -35,7 +45,12 @@ replace_exact(
     }
     LaunchedEffect(automaticStorytellerInfo, enabled, automaticRecommendation, selectionAudit?.selectionId) {
         if (automaticStorytellerInfo && enabled && automaticRecommendation != null) {
-""",
+"""
+
+spy = replace_exact(
+    spy,
+    "spy automatic registration selection",
+    common_old_selection,
     """    val automaticRuling = if (automaticStorytellerInfo && enabled) {
         val decisionKey = selectionAudit?.selectionId
             ?: \"spy-registration-fallback:${spy.name}:${roles.map { it.enName }.sorted().joinToString(\",\")}\"
@@ -51,7 +66,8 @@ replace_exact(
 """,
 )
 
-replace_exact(
+spy = replace_exact(
+    spy,
     "spy automatic registration application",
     """                        selectedFamilyId = if (automaticRecommendation.usesSpecialRegistration) \"special-registration\" else \"actual-registration\",
                     ),
@@ -73,7 +89,8 @@ replace_exact(
 """,
 )
 
-replace_exact(
+spy = replace_exact(
+    spy,
     "spy automatic registration presentation",
     """            if (automaticStorytellerInfo && automaticRecommendation != null) {
                 Text(
@@ -110,21 +127,10 @@ replace_exact(
 """,
 )
 
-replace_exact(
+recluse = replace_exact(
+    recluse,
     "recluse automatic registration selection",
-    """    val automaticRecommendation = WeightedStableSelector.selectStyle(
-        registrationPool?.candidatesFor(SelectionExecutionPolicy.AUTO)?.map { it.payload }.orEmpty(),
-        automaticStorytellerStyle,
-        ClocktowerRegistrationRecommendationOption::style,
-    )
-    val automaticStyleLabel = when (automaticStorytellerStyle) {
-        RecommendationStyle.GENTLE -> if (language == \"en\") \"gentle\" else \"稳健\"
-        RecommendationStyle.BALANCED -> if (language == \"en\") \"balanced\" else \"均衡\"
-        RecommendationStyle.AGGRESSIVE -> if (language == \"en\") \"aggressive\" else \"激进\"
-    }
-    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRecommendation, selectionAudit?.selectionId) {
-        if (automaticStorytellerInfo && enabled && automaticRecommendation != null) {
-""",
+    common_old_selection,
     """    val automaticRuling = if (automaticStorytellerInfo && enabled) {
         val decisionKey = selectionAudit?.selectionId
             ?: \"recluse-registration-fallback:${recluse.name}:${roles.map { it.enName }.sorted().joinToString(\",\")}\"
@@ -140,7 +146,8 @@ replace_exact(
 """,
 )
 
-replace_exact(
+recluse = replace_exact(
+    recluse,
     "recluse automatic registration application",
     """                        selectedFamilyId = if (automaticRecommendation.usesSpecialRegistration) \"special-registration\" else \"actual-registration\",
                     ),
@@ -162,7 +169,8 @@ replace_exact(
 """,
 )
 
-replace_exact(
+recluse = replace_exact(
+    recluse,
     "recluse automatic registration presentation",
     """            if (automaticStorytellerInfo && automaticRecommendation != null) {
                 Text(
@@ -199,6 +207,7 @@ replace_exact(
 """,
 )
 
+text = prefix + spy + recluse
 if "WeightedStableSelector" in text:
     raise SystemExit("legacy style selector remains in registration UI")
 if "automaticStyleLabel" in text or "Automatic $automaticStyleLabel ruling" in text:
