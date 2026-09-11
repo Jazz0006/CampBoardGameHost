@@ -17,261 +17,354 @@ UI-NAV-1 global navigation visual unification     COMPLETE / merged via PR #118
 ROLE-ROTATION-1 recent role rotation              COMPLETE / merged via PR #119
 EPI-MQ-0 baseline / ownership re-audit            COMPLETE — old EPI-MQ-1 = MODIFY
 
-UX-MODE-1 Beginner / Experienced Storyteller Mode CURRENT — product design finalized; implementation planning active
+UX-MODE-1 Beginner / Experienced Storyteller Mode CURRENT — implementation substantially advanced; device regressions block acceptance
 EPI-MQ / Productive Uncertainty                   QUEUED immediately after UX-MODE-1
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
 
 Completed campaign documents are historical evidence, not default execution authority.
 
-## 2. Immediate priority — UX-MODE-1
-
-The current development task is **UX-MODE-1 Beginner / Experienced Storyteller Mode**.
+## 2. Immediate priority — UX-MODE-1 stabilization
 
 Active implementation branch:
 
 `codex/ux-mode-1`
 
-The finalized product design uses one user-facing **Experienced mode** switch rather than several automation/style controls.
+Draft PR:
 
-```text
-Experienced mode OFF (default / Beginner experience)
-- new installs default here
-- host does not make ordinary Storyteller strategic decisions
-- app automatically uses the current Top-1 recommendation
-- pure Storyteller choice pages such as red herring are skipped where possible
-- player-owned choices are still entered by the host and are never invented by the app
-- ordinary result flow should reduce toward physical action -> Show -> Next
+`#120 UX-MODE-1 Beginner / Experienced Storyteller mode`
 
-Experienced mode ON
-- same rules, legal candidates and recommendation provider
-- primary recommendation remains dominant
-- normally expose Top 2–3 recommendations where meaningful
-- provide manual access to remaining legal alternatives
-- optimize for fast expert operation
-```
+Current active handoff:
 
-User-facing settings copy:
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-11_UX_MODE_1_DEVICE_REGRESSIONS.md`
+
+The previous UX-MODE design handoff remains a historical/product-design record:
+
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-11_UX_MODE_1_BEGINNER_EXPERIENCED.md`
+
+The finalized product design still uses one user-facing switch:
 
 ```text
 熟练模式
 允许说书人手动调整系统推荐的线索
 ```
 
-Settings should also replace the current large language section with compact upper-right `中 / EN` controls.
+Fresh installs default to Beginner / Experienced OFF.
 
 Critical invariant:
 
-> **The two experiences share one rules/candidate/recommendation pipeline. Experience mode changes interaction authority and presentation only.**
+> **Beginner and Experienced share one rules / legal-candidate / recommendation pipeline. Experience mode changes interaction authority and presentation only.**
 
-For identical semantic inputs both modes must receive the same legal candidate domain and the same ranked recommendation set before presentation/automatic-execution policy is applied.
+Temporary recommendation policy until EPI-MQ:
 
-### Temporary recommendation policy
+- both modes consume the same internal `RecommendationStyle.AGGRESSIVE` provider;
+- Beginner auto-uses Top-1 for Storyteller-owned strategic choices;
+- Experienced exposes recommended/manual legal alternatives;
+- player-owned choices remain manual;
+- probabilistic automatic rulings use stable semantic decision identity and must not re-roll on recomposition/navigation/restore.
 
-Until EPI-MQ replaces the current recommendation behavior, the app uses the existing **Aggressive** recommendation behavior as the single internal policy for both experiences. Gentle/Balanced/Aggressive are no longer user-facing product settings.
-
-This is intentionally temporary because recent real-game experience showed evil to be too difficult for the current group. EPI-MQ should later replace this temporary policy without changing the experience-mode architecture.
-
-Additional temporary automatic Storyteller policies are finalized as follows:
+Temporary automatic policies remain:
 
 ```text
-Spy/Recluse special registration, when legally available:
-90% special/false registration
+Spy/Recluse registration:
+90% legal special / false registration
 10% actual registration
 
-Mayor, when an eligible living Townsfolk target exists:
-90% redirect to an eligible living Townsfolk
+Mayor:
+90% redirect to eligible living Townsfolk when one exists
 10% Mayor dies
 otherwise Mayor dies
 
-Imp self-kill succession:
-mandatory healthy Scarlet Woman rule first
-otherwise legal Minion weights:
+non-forced Demon succession:
 Baron 4 > Scarlet Woman 3 > Spy 2 > Poisoner 1
 ```
 
-All probabilistic choices must be deterministic for the same semantic decision identity. Navigation, recomposition or restore of the same decision must not re-roll.
+Rules legality remains authoritative upstream.
 
-Beginner/default mode must **not** introduce a semantic rule such as `Drunk/Poisoned => always false`. It automatically consumes the common recommendation provider.
+## 3. UX-MODE-1 progress already completed
 
-Active handoff:
+### UX-MODE-1A — product/ownership audit
 
-`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-11_UX_MODE_1_BEGINNER_EXPERIENCED.md`
+Complete.
 
-UX-MODE-1A product/ownership audit is now recorded in the handoff. Implementation should proceed from the typed mode/persistence policy slice, then temporary automatic-strategy selection, then UI convergence/settings acceptance.
+Product semantics, Beginner/Experienced authority split, deterministic-random requirements and temporary aggressive policy are finalized.
 
-## 3. EPI-MQ-0 closeout and resumed direction
+### UX-MODE-1B — typed mode / persistence / settings
 
-EPI-MQ-0 is complete as an architecture/ownership audit. The old EPI-MQ-1 proposal remains directionally correct but must be modified to reuse current typed owners rather than create parallel infrastructure.
+Complete.
 
-Authoritative audit/design record:
+Implemented:
+
+- `StorytellerExperienceMode`;
+- unknown/fresh preference defaults to `BEGINNER`;
+- typed `StorytellerRecommendationUxPolicy`;
+- Beginner automatic execution / Experienced manual alternatives;
+- both modes use internal AGGRESSIVE recommendation style;
+- compact `中 / EN` language controls;
+- Experienced-mode switch;
+- app-root persistence/wiring moved away from legacy global automation settings.
+
+Relevant product checkpoint:
+
+`a75b54e771907b5bc54f36e6a51d522b2f1f2087`
+
+cleanup:
+
+`d1afdf526368e672d13488ae7405fe4107dd10cb`
+
+### UX-MODE-1C — temporary automatic Storyteller policy
+
+Core policy complete.
+
+Typed selector contracts cover:
+
+- Spy/Recluse 90/10 registration;
+- Mayor 90/10 redirect/death;
+- Demon successor 4:3:2:1;
+- fixed-point probability mass;
+- deterministic semantic decision keys.
+
+RED:
+
+`ed6ed125cae7a0991a8e694784ce64c95be7d1ef`
+
+GREEN:
+
+`e9feafc6a0e0e1d5a771c5c53e3d93b6fb88c03d`
+
+Integration checkpoints:
+
+- Spy/Recluse: `208ce67719d5938d2b7a2578fb5169b4177cb962`
+- Mayor + Demon succession: `47e8ddd5c1fe4efaad7d704e1ce9b0b0ac50a4ba`
+
+### UX-MODE-1D — setup recommendation UI cleanup
+
+Complete for the setup recommendation card.
+
+Removed user-facing Gentle/Balanced/Aggressive selection controls/copy from that surface.
+
+RED:
+
+`9b41bbc963f46b3fdbf0c621e4273c3dc46b568f`
+
+product GREEN:
+
+`55c5b0160de504963fc2516aed0ac37f61c6c8c2`
+
+cleanup:
+
+`388334621095a685ecf2137ecb04d56ccaa2af03`
+
+### Red Herring duplicate auto-advance owner
+
+A regression was found during UX-MODE audit: HostScreen and NightStep both attempted to auto-advance Red Herring, risking double navigation / skipped steps.
+
+Tests were changed first to enforce one owner, then NightStep's duplicate effect was removed.
+
+Product fix:
+
+`ad91a3b73f8598ba6219524a3bcfee76694d9c6a`
+
+## 4. Current acceptance blockers from real-device testing
+
+### Blocker A — first-night Minion/Demon/bluff falls back to legacy text Card
+
+Real-device testing shows a remaining UI island in the first-night evil-team flow: Minion/Demon wake and Demon bluff presentation can fall back to the old generic text/Card surface instead of the unified square-table night surface.
+
+The user subsequently restored/tested `main` and reported that the problem appears to remain there as well. Historical blame is no longer the priority; fix the present product behavior.
+
+Current structural risk:
+
+```text
+first-night EvilInfo
+roleEnName = null
+no explicit role-specific NightAction
+-> may miss square-table routing
+-> generic legacy Card
+```
+
+Target:
+
+- existing full-screen square-table shell;
+- current actor/wake cue where applicable;
+- central wake/bluff instruction;
+- existing Previous / Host Tools / Next navigation;
+- no normal first-night evil-team fallback to legacy Card.
+
+Create a durable routing/presentation regression contract before production fix. Prefer a typed presentation seam over brittle giant-source tests.
+
+### Blocker B — hard crash after Demon bluff / Next
+
+User-supplied debug bundle:
+
+`storyteller-debug-1789125312141.zip`
+
+Exact exception:
+
+```text
+java.lang.IllegalArgumentException:
+Selection audit requires the complete candidate pool.
+```
+
+Stack:
+
+```text
+SelectionAuditRecord.<init>(SelectionDistributionTelemetry.kt:48)
+ClocktowerRegistrationUiKt$SpyRegistrationPanel$1$1.invokeSuspend(ClocktowerRegistrationUi.kt:71)
+```
+
+The crash is on Android main thread via Compose `LaunchedEffect`.
+
+The bundle records app `0.1.4-fieldtest`, versionCode 5, debug, Android 16 / SDK 36, Xiaomi `2511FPC34G`, but **does not contain a Git SHA**. Do not assert the exact binary came from main or PR #120 solely from the ZIP.
+
+Confirmed architecture bug on `codex/ux-mode-1`:
+
+```text
+new automatic selector source:
+legal registration domain
+-> clocktowerTemporaryRegistrationSelection(...)
+-> automaticRuling
+
+old audit source:
+recommendations.map { ... }
+```
+
+The new automatic selector can produce a valid ruling even when the legacy `recommendations` list is empty, while `SelectionAuditRecord` rejects an empty candidate pool.
+
+`RecluseRegistrationPanel` has the same ownership shape and should be treated as the same bug family.
+
+Correct fix rule:
+
+> **Automatic selection and audit preview must describe the same complete legal candidate domain. Do not merely guard `recommendations.isNotEmpty()` or swallow the exception.**
+
+Required tests-first coverage:
+
+- automatic Spy path is safe with empty legacy recommendations;
+- automatic Recluse path is safe with empty legacy recommendations;
+- audit receives a non-empty complete candidate representation from the authoritative selector domain;
+- committed family matches selected automatic ruling;
+- legality and deterministic selection identity remain intact.
+
+This hard crash is the highest-priority next production fix.
+
+## 5. Remaining UX-MODE semantic debt after the blockers
+
+Keep these separate from the crash fix.
+
+### Hidden BALANCED setup default
+
+`ClocktowerHostScreen.kt` still initializes/resets selected setup recommendation style to `RecommendationStyle.BALANCED` in places.
+
+Both modes should use the current policy style (`automaticStorytellerStyle`, temporarily AGGRESSIVE).
+
+### Demon bluff fallback still defaults to BALANCED
+
+`ClocktowerDemonBluffPresentation.kt` still contains a manual/default BALANCED fallback and corresponding tests.
+
+Experienced mode must use the same current provider as Beginner, not a separate hidden Balanced recommendation source.
+
+### Beginner first-night Ready simplification
+
+Automatic setup recommendation application is owned outside the setup recommendation card.
+
+Beginner may hide the recommendation card only after:
+
+```text
+recommendation state == Ready
+AND
+automatic recommendation has actually been applied
+```
+
+Do not hide it merely on Ready; loading/error/invalid states remain visible.
+
+Experienced keeps the recommendation/manual surface.
+
+### Remaining public legacy style terminology
+
+Some NightStep/presentation copy still mentions concepts such as automatic mode, balanced option, current style or different pressure.
+
+Neutralize these after behavior stabilizes. Do not mechanically delete internal `RecommendationStyle` enum usage.
+
+### Legacy automation ownership cleanup
+
+Later UX-MODE-1F should remove obsolete `StorytellerAutomationMode` / `fromLegacyMode` ownership once live references are gone.
+
+Do not mix that cleanup into the crash fix.
+
+## 6. Required next execution order
+
+```text
+1. Re-query live main, codex/ux-mode-1, PR #120 head/state/checks.
+
+2. Fix Spy/Recluse audit hard crash tests-first.
+   - establish smallest pure typed RED
+   - make audit consume authoritative complete registration candidate domain
+   - focused GREEN
+   - exact diff/ownership audit
+   - :app:testFast
+
+3. Fix first-night EvilInfo square-table routing tests-first.
+   - no normal Minion/Demon/bluff legacy Card island
+   - reuse existing square-table shell/navigation
+
+4. Replace hidden BALANCED setup/bluff defaults with current unified policy style.
+
+5. Finish Beginner Ready zero-decision presentation.
+
+6. Neutralize remaining old style terminology and perform legacy mode cleanup.
+
+7. Run acceptance validation / PR CI / R2 / real-device first-night flow.
+
+8. Only after UX-MODE-1 acceptance resume EPI-MQ.
+```
+
+PR #120 remains draft and must not be merged without explicit user authorization.
+
+## 7. EPI-MQ direction after UX-MODE-1
+
+EPI-MQ-0 is complete as an architecture/ownership audit.
+
+Authoritative design record:
 
 `docs/EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md`
 
-Key findings:
-
-```text
-- InformationDecisionContext already owns validated legal candidate -> EpistemicObservationDraft.
-- EpistemicObservationDraft already represents unbound player-visible information.
-- ClocktowerGameSession already has non-mutating global observation preflight.
-- EnumeratedHistoricalExactBaseline is the current exact multi-night recipient-world authority.
-- B4DynamicPlayerWorldSetShadow already proves exact historical BEFORE -> AFTER candidate cardinality.
-- B4 is intentionally shadow-only; recommendation must not directly depend on B4.
-```
-
-Therefore the next epistemic work after UX-MODE-1 is:
+Resume sequence after UX-MODE acceptance:
 
 ```text
 EPI-MQ-0.5  dynamic-script extensibility guard
-            - generic epistemic evaluation seam
-            - explicit capability / DEFERRED contract
-            - no EPI-MQ dependency on TroubleBrewing concrete classes
-
 EPI-MQ-1    neutral hypothetical observation evaluator
-            - exact
-            - recipient-knowledge-safe
-            - mutation-free
-            - BEFORE / AFTER diagnostics
-            - B4 shadow becomes a consumer of the neutral owner
-
-EPI-MQ-2    credibility / immediate contradiction / impairment-exposure gates
-
+EPI-MQ-2    credibility / contradiction / impairment-exposure gates
 EPI-MQ-3+   productive-uncertainty metrics and ranking
 ```
 
-No recommendation weights or user-visible recommendation behavior should change in EPI-MQ-0.5 or the initial evaluator extraction.
+Do not activate A4/ZDD or replace the recommendation provider as part of the initial evaluator extraction.
 
-## 4. Dynamic/custom script extensibility rule
+## 8. Architecture / scope continuity
 
-Future custom scripts, including combinations such as a Trouble Brewing base with Butler replaced by Moonchild and Pukka added, must not force EPI-MQ to be rewritten as a Trouble-Brewing-specific ranking system.
+For current UX-MODE stabilization:
 
-Game-execution support and epistemic support may land at different times.
+- preserve one rules/legal/recommendation pipeline;
+- keep player-owned choices manual;
+- keep probability/scoring out of Compose;
+- preserve deterministic semantic selection identity;
+- repair selector/audit ownership instead of hiding telemetry failures;
+- reuse existing square-table UI primitives rather than starting another UI redesign;
+- follow `AGENTS.md` architecture pre-flight before substantial protected/core edits;
+- follow `docs/TESTING_STRATEGY.md` T0–T4 escalation;
+- do not reopen D6 solely because a source file is large;
+- do not resume EPI-MQ before UX-MODE acceptance.
 
-Required principle:
-
-```text
-role can be playable in game flow/UI
-while
-advanced epistemic/EPI-MQ support explicitly reports DEFERRED / UNSUPPORTED
-```
-
-Unknown epistemic semantics must never be silently treated as absent mechanics or fake exact `UNSAT`.
-
-Future world/evaluation APIs should expose capability coverage, conceptually:
-
-```text
-READY + exact diagnostics
-```
-
-or:
-
-```text
-DEFERRED / UNSUPPORTED_SEMANTICS + missing capability identifiers
-```
-
-This preserves the established rule:
-
-> **DEFERRED != UNSAT.**
-
-Pukka is a particularly valuable future architecture stress test because it combines hidden target selection, temporary poisoned information, delayed death, recovery and cross-night causal state.
-
-New role support should move toward composable role semantics rather than accumulating role-specific branches in the large Host/UI source.
-
-## 5. Architecture / scope continuity
-
-Do not reopen completed D6, UI-R5, UI-NAV-1, or ROLE-ROTATION work unless a concrete regression requires it.
-
-For UX-MODE-1:
-
-- use one authoritative typed experience mode; the UI exposes it as an Experienced-mode switch;
-- fresh/default state is Beginner / Experienced OFF;
-- replace rather than layer over legacy `StorytellerAutomationMode` / automatic booleans;
-- remove old global Gentle/Balanced/Aggressive product semantics;
-- preserve rules legality, session authority and history semantics;
-- distinguish Storyteller strategic decisions from player-owned choices;
-- keep probability/scoring/selection logic out of Compose;
-- reuse deterministic selector/seed infrastructure rather than ad-hoc randomness;
-- use current Aggressive behavior only as a temporary single recommendation provider choice;
-- preserve the same legal/ranked candidates before mode presentation policy;
-- do not perform unsafe whole-file replacement of large Host/App source;
-- follow `AGENTS.md` architecture pre-flight requirements before substantial edits to protected/core or >1000 LOC handwritten source;
-- follow `docs/TESTING_STRATEGY.md` for risk-based RED/GREEN and T0–T4 escalation.
-
-For EPI-MQ when it resumes:
-
-- preserve current setup/session/persistence owners;
-- do not leak Storyteller-hidden action facts into recipient knowledge;
-- do not mutate live session/history merely to evaluate a hypothetical observation;
-- consume a generic epistemic world/evaluation contract rather than Trouble Brewing concrete classes;
-- make unsupported script/role semantics explicit;
-- do not activate A4/ZDD or replace the recommendation provider as part of the initial evaluator work.
-
-## 6. ROLE-ROTATION-1 closeout
-
-ROLE-ROTATION-1 is complete and no longer an active development stream.
-
-The shipped policy preserves setup legality, role multiset, Drunk semantics and seeded randomness while applying a strict lexicographic recent-history preference:
-
-```text
-1. minimize exact shown-identity repeats from the immediately previous completed game
-2. among those optima, minimize DEMON/MINION/OUTSIDER category repeats from that game
-3. among those optima, minimize exact repeats from two and three games ago with weights 2:1
-4. among those optima, minimize special-category repeats from those games with weights 2:1
-5. break remaining ties deterministically from the game seed
-```
-
-TOWNSFOLK category repetition is neutral. History is keyed by exact trimmed confirmed player name, works across seat and roster-size changes, and never makes setup fail merely to satisfy rotation preference.
-
-Durable starting identity/category facts are frozen from the final prepared setup and persisted through the existing Trouble Brewing completion/history lifecycle with backward-compatible legacy decoding.
-
-Acceptance evidence:
-
-```text
-App wiring product checkpoint:
-e2ab42f6159166e56520e13a790c5af3caad124a
-
-T4 acceptance checkpoint:
-4d75ed4a147304e3a01c2bc233dbdc33c802ea6f
-CI #2274 / run 34556109636 — SUCCESS
-Android full unit tests + debug APK — PASS
-ASP contract tests — PASS
-Real Clingo cross-validation — PASS
-R2 main-thread boundary #2136 / run 34556109649 — PASS
-
-PR #119 cleanup head:
-732bad2d2da92c1035700bd9d683f966a56f9ed7
-CI #2279 — SUCCESS
-R2 #2141 — SUCCESS
-
-merge commit:
-72775b63f2b98322f2ceb8972fd1cea8f7a46007
-```
-
-The completed ROLE-ROTATION handoff has been removed from the active documentation chain.
-
-## 7. Queued program — UX-R6
-
-`UX-R6 recommendation-provider replacement` remains queued after EPI-MQ unless the roadmap is explicitly reprioritized.
-
-Do not pull UX-R6 into UX-MODE-1 or early EPI-MQ merely because all three touch recommendation presentation/behavior.
-
-## 8. Default reading order for the next development conversation
+## 9. Default reading order for the next development conversation
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
 3. this roadmap;
-4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-11_UX_MODE_1_BEGINNER_EXPERIENCED.md`;
-5. live GitHub `main`, `codex/ux-mode-1`, and current PR state;
-6. only the source/tests needed for the current UX-MODE-1 slice.
+4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-11_UX_MODE_1_DEVICE_REGRESSIONS.md`;
+5. live GitHub `main`, `codex/ux-mode-1`, PR #120;
+6. current registration selector/audit source and tests.
 
-Do not load the full EPI-MQ reference stack until UX-MODE-1 is complete unless a narrow semantic dependency must be checked.
+The older UX-MODE design handoff is background evidence only; do not use it instead of the current device-regression handoff.
 
-After UX-MODE-1 is accepted, the active reading chain should switch to:
-
-`docs/EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md`
-
-and the new EPI-MQ implementation handoff created from that audit.
-
-## 9. Stable rule
+## 10. Stable rule
 
 > **Current roadmap + one active handoff define what happens next. Historical campaign documents provide evidence, not execution authority.**
