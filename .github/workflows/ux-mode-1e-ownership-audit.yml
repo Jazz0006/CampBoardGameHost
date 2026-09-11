@@ -1,4 +1,4 @@
-name: UX-MODE-1E ownership audit
+name: UX-MODE-1E Red Herring single owner
 
 on:
   push:
@@ -8,47 +8,100 @@ on:
       - .github/scripts/ux_mode_1e_ownership_audit_trigger.txt
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  audit:
+  fix-single-owner:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout exact branch head
+        uses: actions/checkout@v6
         with:
           ref: codex/ux-mode-1
-          fetch-depth: 1
-      - name: Locate UX-MODE-1 ownership
+          fetch-depth: 2
+
+      - name: Validate locked ownership inputs
         shell: bash
         run: |
           set -euo pipefail
+          NIGHT=app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          HOST=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          TEST=app/src/test/java/com/codex/campboardgamehost/ClocktowerRedHerringAutoAdvanceWiringTest.kt
+          test "$(git rev-parse HEAD:$NIGHT)" = "045874456edaa30c87475eb50a1884388b390a7b"
+          test "$(git rev-parse HEAD:$HOST)" = "d898d4db93427bb222e6a68661d80f38bba36d4d"
+          test "$(git rev-parse HEAD:$TEST)" = "c90c63b2f417b28bc9879cef23f0b52c92cf1616"
+          grep -Fq 'hasSelectedRedHerring = redHerring != null' "$HOST"
+          grep -Fq 'hasSelectedRedHerring = selectedName != null' "$NIGHT"
+
+      - name: Remove duplicate NightStep auto-advance owner
+        shell: bash
+        run: |
           python3 - <<'PY'
           from pathlib import Path
-          root = Path('app/src/main/java/com/codex/campboardgamehost')
-          needles = [
-              'ClocktowerJudgeScreen',
-              'StorytellerRecommendationCard',
-              'onApplyRecommendation',
-              'automaticStorytellerInfo',
-              'RecommendationStyle.AGGRESSIVE',
-              'RecommendationStyle.BALANCED',
-              'RecommendationStyle.GENTLE',
-          ]
-          for needle in needles:
-              print(f'=== {needle} ===')
-              for path in sorted(root.rglob('*.kt')):
-                  lines = path.read_text(errors='replace').splitlines()
-                  for i, line in enumerate(lines):
-                      if needle in line:
-                          lo = max(0, i - 5)
-                          hi = min(len(lines), i + 6)
-                          print(f'--- {path}:{i+1} ---')
-                          for j in range(lo, hi):
-                              print(f'{j+1:5}: {lines[j]}')
-          print('=== LEGACY PUBLIC STYLE COPY ===')
-          legacy = ['平衡', '稳健', '激进', '全自动', 'Balanced', 'Gentle', 'Aggressive', 'automatic style', 'selected style']
-          for path in sorted(root.rglob('*.kt')):
-              for i, line in enumerate(path.read_text(errors='replace').splitlines(), start=1):
-                  if any(token in line for token in legacy):
-                      print(f'{path}:{i}: {line}')
+          path = Path('app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt')
+          s = path.read_text()
+          old = '''    LaunchedEffect(
+              automaticStorytellerInfo,
+              step.action,
+              step.isRealAction,
+              selectedName,
+          ) {
+              if (
+                  shouldAutoAdvanceRedHerring(
+                      automaticStorytellerInfo = automaticStorytellerInfo,
+                      isRedHerringStep = step.action == ClocktowerNightAction.RedHerring,
+                      isRealAction = step.isRealAction,
+                      hasSelectedRedHerring = selectedName != null,
+                  )
+              ) {
+                  onNext()
+              }
+          }
+          '''
+          if s.count(old) != 1:
+              raise SystemExit(f'expected exactly one duplicate Red Herring effect, found {s.count(old)}')
+          path.write_text(s.replace(old, '', 1))
           PY
+
+      - name: Exact diff ownership audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          NIGHT=app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          HOST=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          test "$(git diff --name-only)" = "$NIGHT"
+          ! grep -Fq 'shouldAutoAdvanceRedHerring(' "$NIGHT"
+          grep -Fq 'shouldAutoAdvanceRedHerring(' "$HOST"
+          grep -Fq 'hasSelectedRedHerring = redHerring != null' "$HOST"
+          grep -Fq 'advanceNightStep()' "$HOST"
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Focused Red Herring owner validation
+        shell: bash
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:testFast --no-daemon --tests 'com.codex.campboardgamehost.ClocktowerRedHerringAutoAdvanceWiringTest'
+
+      - name: Commit product fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          git commit -m 'fix: keep one Red Herring auto-advance owner'
+          git push origin HEAD:codex/ux-mode-1
+
+      - name: Remove audit one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/ux-mode-1e-ownership-audit.yml
+          git rm .github/scripts/ux_mode_1e_ownership_audit_trigger.txt
+          git commit -m 'chore: remove UX-MODE-1E audit files'
+          git push origin HEAD:codex/ux-mode-1
