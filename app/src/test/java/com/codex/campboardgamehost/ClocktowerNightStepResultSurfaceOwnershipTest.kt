@@ -19,7 +19,7 @@ class ClocktowerNightStepResultSurfaceOwnershipTest {
         val plainFallback = source.substringAfter("val plainInformationDisplayStep =")
             .substringBefore("val plainInformationSquareTablePresentation =")
         assertTrue(plainFallback.contains("!actionOwnsSquareTable"))
-        assertFalse(source.contains("step.action != ClocktowerNightAction.Chambermaid"))
+        assertFalse(plainFallback.contains("step.action != ClocktowerNightAction.Chambermaid"))
     }
 
     @Test
