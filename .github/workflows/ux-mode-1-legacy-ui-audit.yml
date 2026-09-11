@@ -1,0 +1,84 @@
+name: UX-MODE-1 legacy UI ownership audit
+
+on:
+  push:
+    branches:
+      - codex/ux-mode-1
+    paths:
+      - '.github/workflows/ux-mode-1-legacy-ui-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+
+      - name: Verify audit parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "2f85b815f2d41e7265e0d5354918b0283cd5ca18"
+          command -v grep
+
+      - name: Inventory legacy night presentation paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          audit() {
+            local title="$1"
+            local pattern="$2"
+            shift 2
+            echo
+            echo "===== ${title} ====="
+            set +e
+            grep -RInE --exclude-dir=build --include='*.kt' "$pattern" "$@"
+            local status=$?
+            set -e
+            if [ "$status" -gt 1 ]; then
+              echo "grep failed with status $status" >&2
+              exit "$status"
+            fi
+            echo "[grep-status=$status]"
+          }
+
+          audit "LEGACY USER-VISIBLE COPY / PANELS" \
+            'Recommended information|推荐给说书人的完整信息|Show to player|给玩家看|StructuredNumberInformationDecisionPanel|ClocktowerPairRecommendationPresentationSection' \
+            app/src/main app/src/test
+
+          audit "GENERIC INFORMATION COLLECTIONS" \
+            'displayedInformationOptions|step\.displayOptions|recommendedDisplayOptions|legacyInformationCandidates|manualInformationCandidates|automaticInformationCandidates' \
+            app/src/main app/src/test
+
+          audit "PLAYER DISPLAY HANDOFF CALLS" \
+            'onShowPlayerDisplay\(|resolveClocktowerPlayerDisplay\(|resolveClocktowerNumericPlayerDisplay\(' \
+            app/src/main app/src/test
+
+          audit "SQUARE TABLE ROUTE FLAGS" \
+            'uses[A-Za-z0-9]*SquareTable|SquareTableDialog\(' \
+            app/src/main app/src/test
+
+          audit "NIGHT CARD OWNERSHIP / GENERIC CONTROLS" \
+            'ClocktowerNightStepCardLocalized|HostActionSection\(|OutlinedButton\(|Button\(' \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt \
+            app/src/test
+
+          audit "LEGACY IDENTIFIERS (CLASSIFY, DO NOT AUTO-DELETE)" \
+            'legacy|Legacy' \
+            app/src/main/java/com/codex/campboardgamehost \
+            app/src/test/java/com/codex/campboardgamehost
+
+      - name: Inventory night surface source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '===== NIGHT/SQUARE/PRESENTATION FILES ====='
+          find app/src/main/java/com/codex/campboardgamehost -maxdepth 1 -type f \
+            \( -name '*Night*Ui.kt' -o -name '*SquareTable*Ui.kt' -o -name '*Presentation*Ui.kt' -o -name '*PlayerDisplay*Ui.kt' \) \
+            -print | sort
