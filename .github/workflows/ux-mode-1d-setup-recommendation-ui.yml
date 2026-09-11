@@ -6,6 +6,7 @@ on:
       - codex/ux-mode-1
     paths:
       - .github/workflows/ux-mode-1d-setup-recommendation-ui.yml
+      - .github/scripts/ux_mode_1d_setup_recommendation_ui_patch.py
 
 permissions:
   contents: write
