@@ -13,168 +13,59 @@ D6.2 UI Composition R0–R2                         COMPLETE / merged
 R3 transaction-application viability audit        COMPLETE / NO-GO
 D6 decomposition campaign                         COMPLETE
 UI-R5 square-table convergence                    COMPLETE / merged via PR #117
-UI-NAV-1 global navigation visual unification     COMPLETE / accepted / merge via PR #118
+UI-NAV-1 global navigation visual unification     COMPLETE / merged via PR #118
+ROLE-ROTATION-1 recent role rotation              COMPLETE / T4 validated / merge-ready in PR #119
 
-ROLE-ROTATION-1 recent role rotation               COMPLETE / T4 validated in draft PR #119; not merged
-EPI-MQ / Productive Uncertainty                   NEXT after ROLE-ROTATION-1 merge unless reprioritized
+EPI-MQ / Productive Uncertainty                   NEXT EXECUTION TARGET after PR #119 merge
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
 
-Completed campaign evidence is historical. Do not use an old handoff/checkpoint as current execution authority.
+Completed campaign documents are historical evidence, not default execution authority.
 
-## 2. ROLE-ROTATION-1 completed product behavior
+## 2. Immediate next priority — EPI-MQ-0
 
-Real play exposed a user-experience issue: across several games in one session, the same human player can receive the same starting identity or a high-impact special category too often. Examples include one player receiving Demon three times in five games or repeatedly receiving Butler.
+After PR #119 merges, the next development task is **EPI-MQ-0 baseline / ownership re-audit**.
 
-Implemented behavior:
+Before implementation:
 
 ```text
-preserve the legal role set
-preserve setup legality and game balance
-preserve randomness
-strongly avoid same-player repeats from the immediately previous game
-weakly avoid repeats from the two earlier completed games
-if zero is impossible, minimize repeats according to the strict priority order
-never block setup merely to satisfy the preference
+re-query live main after PR #119 merge
+trace the current misinformation-candidate / visible-observation / epistemic-world path
+identify the current typed hypothetical-evaluation seam
+record mutation and hidden-information boundaries
+define the small deterministic Trouble Brewing behavior corpus
+make a GO / MODIFY / NO-GO decision for the older EPI-MQ-1 proposal
 ```
 
-This is a **soft assignment constraint**, not a new setup legality rule and not deterministic role rotation.
+EPI-MQ-0 is an audit/spec stage. It does **not** authorize production recommendation-ranking changes.
 
-The implementation seam is the existing player-to-role deal planner, after legal role-set selection and shown-identity commitment. Existing Trouble Brewing setup-composition diversity history remains authoritative for setup diversity and is not repurposed as player rotation policy.
+Active next handoff:
 
-## 3. ROLE-ROTATION-1 product semantics
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_EPI_MQ_0_BASELINE_REAUDIT.md`
 
-### 3.1 Lexicographic assignment objective
+## 3. ROLE-ROTATION-1 closeout
 
-The assignment policy optimizes in this strict order:
+ROLE-ROTATION-1 is complete and no longer an active development stream.
+
+The shipped policy preserves setup legality, role multiset, Drunk semantics and seeded randomness while applying a strict lexicographic recent-history preference:
 
 ```text
-Priority 1 — immediately previous game exact starting identity repeat
-minimize same-player / same-shownRoleId repeats
-
-Priority 2 — immediately previous game special character-category repeat
-among Priority-1-optimal assignments, minimize:
-DEMON    -> DEMON
-MINION   -> MINION
-OUTSIDER -> OUTSIDER
-
-TOWNSFOLK -> TOWNSFOLK carries no category-repeat penalty.
-
-Priority 3 — exact starting identity repeats from the two earlier games
-among Priorities-1/2-optimal assignments, minimize weighted repeats:
-two games ago   weight 2
-three games ago weight 1
-
-Priority 4 — special-category repeats from the same two earlier games
-among Priorities-1/2/3-optimal assignments, minimize weighted DEMON/MINION/OUTSIDER repeats:
-two games ago   weight 2
-three games ago weight 1
-
-Priority 5 — randomness
-among assignments tied on Priorities 1–4, use seeded independent tie-breaking.
+1. minimize exact shown-identity repeats from the immediately previous completed game
+2. among those optima, minimize DEMON/MINION/OUTSIDER category repeats from that game
+3. among those optima, minimize exact repeats from two and three games ago with weights 2:1
+4. among those optima, minimize special-category repeats from those games with weights 2:1
+5. break remaining ties deterministically from the game seed
 ```
 
-The four behavioral costs are a lexicographic tuple, not one arbitrary weighted total. Older-history accumulation therefore cannot outweigh an avoidable repeat from the immediately previous game.
+TOWNSFOLK category repetition is neutral. History is keyed by exact trimmed confirmed player name, works across seat and roster-size changes, and never makes setup fail merely to satisfy rotation preference.
 
-### 3.2 Actual-role versus shown-identity semantics
+Durable starting identity/category facts are frozen from the final prepared setup and persisted through the existing Trouble Brewing completion/history lifecycle with backward-compatible legacy decoding.
 
-Exact identity repeat follows the player's starting experience and therefore compares **shown identity**.
-
-Special category repeat follows the role's real setup type and therefore compares **actual character category**.
-
-Example: a Drunk shown Investigator followed by a real Investigator is an exact shown-identity repeat, but OUTSIDER -> TOWNSFOLK is not a category repeat.
-
-### 3.3 History horizon
-
-ROLE-ROTATION-1 uses the **three most recent completed games**, newest first, across roster-size changes:
-
-- immediately previous game = strong exact/category priorities;
-- two games ago = weak weight 2;
-- three games ago = weak weight 1;
-- no wall-clock expiry in v1;
-- an old/legacy game with no player-identity facts still occupies its chronological slot and is not silently skipped so that an older game becomes “last game”.
-
-This is recent-session fairness, not permanent lifetime exclusion. A future wall-clock window may be added only if real play demonstrates a need.
-
-### 3.4 Human-player key
-
-The current minimal stable-player seam is the exact trimmed confirmed player name, independent of seat number. Do not add a broad player-account/profile system for this feature.
-
-Known limitation: rename/case changes or reusing the same placeholder name for a different human cannot be recognized as identity continuity. A future stable player ID migration, if needed, is a separate product task.
-
-## 4. ROLE-ROTATION-1 architecture fence
-
-Preserve existing setup/session/persistence ownership.
-
-Do not introduce:
-
-- a second setup coordinator;
-- deterministic round-robin dealing;
-- changes to legal role counts or script composition;
-- a broad player-account/profile system solely for anti-repeat;
-- UI-NAV changes;
-- EPI-MQ/ranking changes;
-- broad persistence/recovery redesign;
-- wall-clock expiry in this implementation.
-
-Use the existing Trouble Brewing completion/rotation-history lifecycle. The durable player-starting-identity fact is frozen from the final prepared deal before gameplay can mutate identities.
-
-Keep the existing setup-diversity projection filtered by player count. Player-role rotation uses a separate newest-first three-game projection across player-count changes and matches current players by stable player key.
-
-## 5. Acceptance contracts
-
-The implementation proves:
+Acceptance evidence:
 
 ```text
-avoidable exact repeat -> avoided
-selected role multiset -> unchanged
-unavoidable exact repeat -> setup succeeds with the minimum exact repeats
-same DEMON category -> avoided when exact-repeat optimum is unchanged and an alternative exists
-same MINION category -> avoided under the same rule
-same OUTSIDER category -> avoided under the same rule
-TOWNSFOLK category repeat -> not penalized
-exact shown identity outranks special-category avoidance
-immediately previous game outranks accumulated older-game preferences
-two-games-ago weak repeat weight 2 outranks three-games-ago weight 1
-Drunk exact-repeat semantics -> compare shown identity, category semantics -> compare actual type
-equal-optimal assignments -> remain seeded/randomized
-seat reorder -> stable-player matching follows player key, not seat
-roster add/remove/player-count change -> safe and does not defeat matching for retained players
-no usable rotation history -> legacy seeded assignment behavior remains unchanged
-restart -> starting identity/category history survives through the existing completion lifecycle
-legacy persisted history -> decodes safely with no player-rotation facts
-```
-
-Typed RED/GREEN evidence was used at the deal-planner, persistence/history, and production-preparer seams. Large-file App wiring used the repository-approved guarded one-shot workflow rather than an unsafe whole-file connector rewrite.
-
-## 6. Implementation and validation closeout
-
-```text
-R1  DealPlanner typed RED/GREEN for exact shown-identity avoidance              COMPLETE
-R2  DEMON/MINION/OUTSIDER category avoidance                                   COMPLETE
-R3  Freeze final starting player identity/category facts                        COMPLETE
-R4  Version/migrate Trouble Brewing completion + rotation persistence           COMPLETE
-R5  Three-game recent player-history projection + production setup wiring       COMPLETE
-R6  T2/T4 validation, exact diff audit, roadmap/handoff closeout                COMPLETE
-```
-
-Key checkpoints/evidence:
-
-```text
-pre-App-wiring GREEN checkpoint:
-50254b45f73b4985e62ff3da78177b869f56204d
-
-App-wiring product checkpoint:
+App wiring product checkpoint:
 e2ab42f6159166e56520e13a790c5af3caad124a
-
-large-file one-shot cleanup checkpoint:
-df50b64d7087ee7a82efc5288fab67e3a018a212
-
-one-shot run:
-34555558005 — SUCCESS
-focused setup/factory tests — PASS
-forced :app:testFast — PASS
-exact diff audit — PASS
 
 T4 acceptance checkpoint:
 4d75ed4a147304e3a01c2bc233dbdc33c802ea6f
@@ -183,54 +74,45 @@ Android full unit tests + debug APK — PASS
 ASP contract tests — PASS
 Real Clingo cross-validation — PASS
 R2 main-thread boundary #2136 / run 34556109649 — PASS
+
+final docs-only head before merge cleanup:
+7b355a82a942e0ad8c59fe04cec92dfd75af1773
+CI #2276 — SUCCESS
+R2 #2138 — SUCCESS
 ```
 
-Net diff from `50254b45...` through the Path-B cleanup contains only the intended `CampBoardGameHostApp.kt` wiring change; temporary workflow/script files do not remain in the branch.
+The completed ROLE-ROTATION handoff is intentionally removed from the active documentation chain once this cleanup lands.
 
-PR #119 remains draft and must not be merged without explicit user authorization.
+## 4. Architecture / scope continuity
 
-## 7. UI-NAV-1 closeout
+Do not reopen completed D6, UI-R5, UI-NAV-1, or ROLE-ROTATION work unless a concrete regression requires it.
 
-PR #118 standardizes the Storyteller navigation presentation without moving navigation/gameplay ownership:
+For EPI-MQ:
 
-```text
-No persistent global top bar.
-Content owns title / instructions / table / local progress.
-Bottom visual language:
-[ Previous ]   [ Host Tools ]   [ Next ]
-```
+- preserve current setup/session/persistence owners;
+- do not leak Storyteller-hidden action facts into recipient knowledge;
+- do not mutate live session/history merely to evaluate a hypothetical observation;
+- do not activate A4/ZDD or replace the recommendation provider as part of the baseline audit;
+- follow `AGENTS.md` architecture pre-flight requirements before substantial edits to protected/core or >1000 LOC handwritten source;
+- follow `docs/TESTING_STRATEGY.md` for risk-based RED/GREEN and T0–T4 escalation.
 
-Identity delivery uses a Storyteller square-table controller while the player-facing reveal remains isolated. Settings is composed under the existing root-owned Host Tools. The later real-device findings around identity-controller center width and night-flow bottom placement were corrected and accepted in device testing.
+## 5. Queued program — UX-R6
 
-UI-NAV-1 is closed for feature development. Its audit and closeout documents are historical evidence only and are not part of the default reading chain.
+`UX-R6 recommendation-provider replacement` remains queued after EPI-MQ unless the roadmap is explicitly reprioritized.
 
-## 8. Queued programs
+Do not pull UX-R6 into EPI-MQ-0 merely because both touch recommendation behavior.
 
-### EPI-MQ / Productive Uncertainty
-
-This is the next queued program after ROLE-ROTATION-1 is merged, unless the roadmap is explicitly reprioritized.
-
-Queued handoff:
-
-`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_EPI_MQ_0_BASELINE_REAUDIT.md`
-
-When resumed, re-audit against then-live `main`; do not assume its historical baseline is still exact.
-
-### UX-R6 recommendation-provider replacement
-
-Remains after EPI-MQ unless the roadmap is explicitly reprioritized again.
-
-## 9. Default reading order for a new development conversation
+## 6. Default reading order for the next development conversation
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
 3. this roadmap;
-4. live GitHub `main` / branch / PR state;
-5. if PR #119 is still open, `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-11_ROLE_REPEAT_AVOIDANCE.md` for closeout evidence;
-6. after ROLE-ROTATION-1 merge, use the handoff for whichever program the roadmap marks current/next.
+4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_EPI_MQ_0_BASELINE_REAUDIT.md`;
+5. live GitHub `main` and current PR/branch state;
+6. only the specialized EPI-MQ/reference documents named by the active handoff.
 
-Historical archives, prior campaign handoffs, and old checkpoint documents should not be loaded by default.
+Do not load completed ROLE-ROTATION, UI-NAV, UI-R5, D6, or persistence handoffs by default.
 
-## 10. Stable rule
+## 7. Stable rule
 
 > **Current roadmap + one active handoff define what happens next. Historical campaign documents provide evidence, not execution authority.**
