@@ -26,7 +26,6 @@ import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommi
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditRecord
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
-import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -54,18 +53,18 @@ internal fun SpyRegistrationPanel(
         ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
         ?.map { it.payload }
         ?: recommendations
-    val automaticRecommendation = WeightedStableSelector.selectStyle(
-        registrationPool?.candidatesFor(SelectionExecutionPolicy.AUTO)?.map { it.payload }.orEmpty(),
-        automaticStorytellerStyle,
-        ClocktowerRegistrationRecommendationOption::style,
-    )
-    val automaticStyleLabel = when (automaticStorytellerStyle) {
-        RecommendationStyle.GENTLE -> if (language == "en") "gentle" else "稳健"
-        RecommendationStyle.BALANCED -> if (language == "en") "balanced" else "均衡"
-        RecommendationStyle.AGGRESSIVE -> if (language == "en") "aggressive" else "激进"
+    val automaticRuling = if (automaticStorytellerInfo && enabled) {
+        val decisionKey = selectionAudit?.selectionId
+            ?: "spy-registration-fallback:${spy.name}:${roles.map { it.enName }.sorted().joinToString(",")}"
+        clocktowerTemporaryRegistrationSelection(
+            legalSpecialRoleEnNames = roles.map { it.enName },
+            decisionKey = decisionKey,
+        ).selected.payload
+    } else {
+        null
     }
-    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRecommendation, selectionAudit?.selectionId) {
-        if (automaticStorytellerInfo && enabled && automaticRecommendation != null) {
+    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRuling, selectionAudit?.selectionId) {
+        if (automaticStorytellerInfo && enabled && automaticRuling != null) {
             selectionAudit?.let { audit ->
                 audit.recorder.recordPreview(
                     SelectionAuditRecord(
@@ -83,13 +82,13 @@ internal fun SpyRegistrationPanel(
                     SelectionAuditCommit(
                         selectionId = audit.selectionId,
                         dimensions = audit.dimensions,
-                        selectedFamilyId = if (automaticRecommendation.usesSpecialRegistration) "special-registration" else "actual-registration",
+                        selectedFamilyId = if (automaticRuling.usesSpecialRegistration) "special-registration" else "actual-registration",
                     ),
                 )
             }
-            onRegistersGoodChange(automaticRecommendation.usesSpecialRegistration)
-            if (automaticRecommendation.usesSpecialRegistration && detail == ClocktowerRegistrationDetail.Role) {
-                automaticRecommendation.registeredRoleEnName?.let(onRoleChange)
+            onRegistersGoodChange(automaticRuling.usesSpecialRegistration)
+            if (automaticRuling.usesSpecialRegistration && detail == ClocktowerRegistrationDetail.Role) {
+                automaticRuling.registeredRoleEnName?.let(onRoleChange)
             }
         }
     }
@@ -119,17 +118,24 @@ internal fun SpyRegistrationPanel(
                 color = MaterialTheme.colorScheme.error,
             )
         } else {
-            if (automaticStorytellerInfo && automaticRecommendation != null) {
+            if (automaticStorytellerInfo && automaticRuling != null) {
                 Text(
-                    if (language == "en") "Automatic $automaticStyleLabel ruling" else "已自动采用${automaticStyleLabel}裁定",
+                    if (language == "en") "System ruling applied" else "系统已自动裁定",
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                 )
-                Text(automaticRecommendation.label, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                RecommendationReasonSummary(
-                    automaticRecommendation.reasonCodes,
-                    automaticRecommendation.warningCodes,
-                    language,
+                val registeredRoleLabel = automaticRuling.registeredRoleEnName?.let { selectedRole ->
+                    roles.firstOrNull { it.enName == selectedRole }?.nameFor(language) ?: selectedRole
+                }
+                Text(
+                    when {
+                        !automaticRuling.usesSpecialRegistration -> if (language == "en") "Use actual identity" else "按真实身份登记"
+                        detail == ClocktowerRegistrationDetail.Role && registeredRoleLabel != null -> {
+                            if (language == "en") "Register as $registeredRoleLabel" else "登记为 $registeredRoleLabel"
+                        }
+                        else -> if (language == "en") "Register as good" else "登记为善良"
+                    },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else if (assistedRecommendations.isNotEmpty()) {
                 Text(
@@ -217,18 +223,18 @@ internal fun RecluseRegistrationPanel(
         ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
         ?.map { it.payload }
         ?: recommendations
-    val automaticRecommendation = WeightedStableSelector.selectStyle(
-        registrationPool?.candidatesFor(SelectionExecutionPolicy.AUTO)?.map { it.payload }.orEmpty(),
-        automaticStorytellerStyle,
-        ClocktowerRegistrationRecommendationOption::style,
-    )
-    val automaticStyleLabel = when (automaticStorytellerStyle) {
-        RecommendationStyle.GENTLE -> if (language == "en") "gentle" else "稳健"
-        RecommendationStyle.BALANCED -> if (language == "en") "balanced" else "均衡"
-        RecommendationStyle.AGGRESSIVE -> if (language == "en") "aggressive" else "激进"
+    val automaticRuling = if (automaticStorytellerInfo && enabled) {
+        val decisionKey = selectionAudit?.selectionId
+            ?: "recluse-registration-fallback:${recluse.name}:${roles.map { it.enName }.sorted().joinToString(",")}"
+        clocktowerTemporaryRegistrationSelection(
+            legalSpecialRoleEnNames = roles.map { it.enName },
+            decisionKey = decisionKey,
+        ).selected.payload
+    } else {
+        null
     }
-    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRecommendation, selectionAudit?.selectionId) {
-        if (automaticStorytellerInfo && enabled && automaticRecommendation != null) {
+    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRuling, selectionAudit?.selectionId) {
+        if (automaticStorytellerInfo && enabled && automaticRuling != null) {
             selectionAudit?.let { audit ->
                 audit.recorder.recordPreview(
                     SelectionAuditRecord(
@@ -246,13 +252,13 @@ internal fun RecluseRegistrationPanel(
                     SelectionAuditCommit(
                         selectionId = audit.selectionId,
                         dimensions = audit.dimensions,
-                        selectedFamilyId = if (automaticRecommendation.usesSpecialRegistration) "special-registration" else "actual-registration",
+                        selectedFamilyId = if (automaticRuling.usesSpecialRegistration) "special-registration" else "actual-registration",
                     ),
                 )
             }
-            onRegistersEvilChange(automaticRecommendation.usesSpecialRegistration)
-            if (automaticRecommendation.usesSpecialRegistration) {
-                automaticRecommendation.registeredRoleEnName?.let(onRoleChange)
+            onRegistersEvilChange(automaticRuling.usesSpecialRegistration)
+            if (automaticRuling.usesSpecialRegistration) {
+                automaticRuling.registeredRoleEnName?.let(onRoleChange)
             }
         }
     }
@@ -281,17 +287,24 @@ internal fun RecluseRegistrationPanel(
                 color = MaterialTheme.colorScheme.error,
             )
         } else {
-            if (automaticStorytellerInfo && automaticRecommendation != null) {
+            if (automaticStorytellerInfo && automaticRuling != null) {
                 Text(
-                    if (language == "en") "Automatic $automaticStyleLabel ruling" else "已自动采用${automaticStyleLabel}裁定",
+                    if (language == "en") "System ruling applied" else "系统已自动裁定",
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                 )
-                Text(automaticRecommendation.label, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                RecommendationReasonSummary(
-                    automaticRecommendation.reasonCodes,
-                    automaticRecommendation.warningCodes,
-                    language,
+                val registeredRoleLabel = automaticRuling.registeredRoleEnName?.let { selectedRole ->
+                    roles.firstOrNull { it.enName == selectedRole }?.nameFor(language) ?: selectedRole
+                }
+                Text(
+                    if (!automaticRuling.usesSpecialRegistration) {
+                        if (language == "en") "Use actual identity" else "按真实身份登记"
+                    } else if (registeredRoleLabel != null) {
+                        if (language == "en") "Register as $registeredRoleLabel" else "登记为 $registeredRoleLabel"
+                    } else {
+                        if (language == "en") "Register as evil" else "登记为邪恶"
+                    },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else if (assistedRecommendations.isNotEmpty()) {
                 Text(
