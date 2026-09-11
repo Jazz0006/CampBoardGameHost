@@ -1,10 +1,12 @@
 package com.codex.campboardgamehost
 
 import android.content.Context
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingPlayerStartingIdentity
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetSelection
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationHistory
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecordFactory
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingStartingRoleCategory
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -91,6 +93,10 @@ internal class TroubleBrewingSetupRotationHistoryStore(
                     put("minionRoleIds", entry.record.minionRoleIds.sorted().toJsonArray())
                     put("primaryStyleTag", entry.record.primaryStyleTag ?: JSONObject.NULL)
                     put("selectedDrunkShownRole", entry.record.selectedDrunkShownRole ?: JSONObject.NULL)
+                    put(
+                        "playerStartingIdentities",
+                        entry.record.playerStartingIdentities.toStartingIdentitiesJsonArray(),
+                    )
                 })
             }
         })
@@ -103,7 +109,8 @@ internal class TroubleBrewingSetupRotationHistoryStore(
 
     private fun decode(raw: String): List<PersistedRotationEntry> {
         val root = JSONObject(raw)
-        require(root.requiredInt("version") == CURRENT_VERSION) {
+        val version = root.requiredInt("version")
+        require(version in LEGACY_VERSION..CURRENT_VERSION) {
             "Unsupported Trouble Brewing rotation-history version."
         }
         val entriesJson = root.optJSONArray("entries")
@@ -121,6 +128,11 @@ internal class TroubleBrewingSetupRotationHistoryStore(
                     minionRoleIds = entry.requiredStringSet("minionRoleIds"),
                     primaryStyleTag = entry.nullableString("primaryStyleTag"),
                     selectedDrunkShownRole = entry.nullableString("selectedDrunkShownRole"),
+                    playerStartingIdentities = if (version == LEGACY_VERSION) {
+                        emptyList()
+                    } else {
+                        entry.requiredStartingIdentities("playerStartingIdentities")
+                    },
                 ).also(TroubleBrewingSetupRotationRecordFactory::validate)
                 add(
                     PersistedRotationEntry(
@@ -144,8 +156,9 @@ internal class TroubleBrewingSetupRotationHistoryStore(
     )
 
     companion object {
-        const val CURRENT_VERSION = 1
+        const val CURRENT_VERSION = 2
         const val MAX_GAMES_PER_PLAYER_COUNT = 5
+        private const val LEGACY_VERSION = 1
         private const val PREFS_NAME = "camp_board_game_host"
         private const val STORAGE_KEY = "tb_setup_rotation_history_v1"
 
@@ -160,6 +173,18 @@ internal class TroubleBrewingSetupRotationHistoryStore(
 }
 
 private fun List<String>.toJsonArray(): JSONArray = JSONArray().apply { forEach(::put) }
+
+private fun List<TroubleBrewingPlayerStartingIdentity>.toStartingIdentitiesJsonArray(): JSONArray =
+    JSONArray().apply {
+        forEach { identity ->
+            put(JSONObject().apply {
+                put("playerKey", identity.playerKey)
+                put("actualRoleId", identity.actualRoleId)
+                put("shownRoleId", identity.shownRoleId)
+                put("actualRoleCategory", identity.actualRoleCategory.name)
+            })
+        }
+    }
 
 private fun JSONObject.requiredString(key: String): String {
     require(has(key) && !isNull(key)) { "Missing required persisted string '$key'." }
@@ -190,6 +215,32 @@ private fun JSONObject.requiredStringSet(key: String): Set<String> {
     }.also { values ->
         require(values.distinct().size == values.size) { "Persisted '$key' entries must be unique." }
     }.toSet()
+}
+
+private fun JSONObject.requiredStartingIdentities(key: String): List<TroubleBrewingPlayerStartingIdentity> {
+    val array = optJSONArray(key)
+        ?: throw IllegalArgumentException("Persisted '$key' must be an array.")
+    return buildList {
+        for (index in 0 until array.length()) {
+            val identity = array.optJSONObject(index)
+                ?: throw IllegalArgumentException("Persisted '$key' entry $index must be an object.")
+            val categoryName = identity.requiredString("actualRoleCategory")
+            val category = runCatching { TroubleBrewingStartingRoleCategory.valueOf(categoryName) }
+                .getOrElse {
+                    throw IllegalArgumentException(
+                        "Persisted starting identity has unknown role category '$categoryName'.",
+                    )
+                }
+            add(
+                TroubleBrewingPlayerStartingIdentity(
+                    playerKey = identity.requiredString("playerKey"),
+                    actualRoleId = identity.requiredString("actualRoleId"),
+                    shownRoleId = identity.requiredString("shownRoleId"),
+                    actualRoleCategory = category,
+                ),
+            )
+        }
+    }
 }
 
 private fun JSONObject.nullableString(key: String): String? {
