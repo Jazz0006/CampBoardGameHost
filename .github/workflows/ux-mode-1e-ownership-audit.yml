@@ -33,34 +33,41 @@ jobs:
           grep -Fq 'hasSelectedRedHerring = redHerring != null' "$HOST"
           grep -Fq 'hasSelectedRedHerring = selectedName != null' "$NIGHT"
 
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prove focused RED before product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          set +e
+          ./gradlew :app:testFast --no-daemon --tests 'com.codex.campboardgamehost.ClocktowerRedHerringAutoAdvanceWiringTest'
+          rc=$?
+          set -e
+          test "$rc" -ne 0
+          grep -R -Fq 'ClocktowerRedHerringAutoAdvanceWiringTest' app/build/test-results/testFast
+
       - name: Remove duplicate NightStep auto-advance owner
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
+
           path = Path('app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt')
           s = path.read_text()
-          old = '''    LaunchedEffect(
-              automaticStorytellerInfo,
-              step.action,
-              step.isRealAction,
-              selectedName,
-          ) {
-              if (
-                  shouldAutoAdvanceRedHerring(
-                      automaticStorytellerInfo = automaticStorytellerInfo,
-                      isRedHerringStep = step.action == ClocktowerNightAction.RedHerring,
-                      isRealAction = step.isRealAction,
-                      hasSelectedRedHerring = selectedName != null,
-                  )
-              ) {
-                  onNext()
-              }
-          }
-          '''
-          if s.count(old) != 1:
-              raise SystemExit(f'expected exactly one duplicate Red Herring effect, found {s.count(old)}')
-          path.write_text(s.replace(old, '', 1))
+          pattern = re.compile(
+              r'''\n    LaunchedEffect\(\n\s+automaticStorytellerInfo,\n\s+step\.action,\n\s+step\.isRealAction,\n\s+selectedName,\n\s+\) \{\n\s+if \(\n\s+shouldAutoAdvanceRedHerring\(\n\s+automaticStorytellerInfo = automaticStorytellerInfo,\n\s+isRedHerringStep = step\.action == ClocktowerNightAction\.RedHerring,\n\s+isRealAction = step\.isRealAction,\n\s+hasSelectedRedHerring = selectedName != null,\n\s+\)\n\s+\) \{\n\s+onNext\(\)\n\s+\}\n\s+\}\n(?=    val command = when)''',
+              re.S,
+          )
+          s, count = pattern.subn('\n', s, count=1)
+          if count != 1:
+              raise SystemExit(f'expected exactly one duplicate Red Herring effect, found {count}')
+          path.write_text(s)
           PY
 
       - name: Exact diff ownership audit
@@ -75,16 +82,9 @@ jobs:
           grep -Fq 'hasSelectedRedHerring = redHerring != null' "$HOST"
           grep -Fq 'advanceNightStep()' "$HOST"
 
-      - name: Set up JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Focused Red Herring owner validation
+      - name: Prove focused GREEN after product patch
         shell: bash
         run: |
-          chmod +x ./gradlew
           ./gradlew :app:testFast --no-daemon --tests 'com.codex.campboardgamehost.ClocktowerRedHerringAutoAdvanceWiringTest'
 
       - name: Commit product fix
