@@ -15,18 +15,18 @@ D6 decomposition campaign                         COMPLETE
 UI-R5 square-table convergence                    COMPLETE / merged via PR #117
 UI-NAV-1 global navigation visual unification     COMPLETE / accepted / merge via PR #118
 
-ROLE-ROTATION-1 recent role rotation               CURRENT / implementation complete; final R6/T4 acceptance pending
-EPI-MQ / Productive Uncertainty                   QUEUED after ROLE-ROTATION-1 unless reprioritized
+ROLE-ROTATION-1 recent role rotation               COMPLETE / T4 validated in draft PR #119; not merged
+EPI-MQ / Productive Uncertainty                   NEXT after ROLE-ROTATION-1 merge unless reprioritized
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
 
 Completed campaign evidence is historical. Do not use an old handoff/checkpoint as current execution authority.
 
-## 2. Immediate priority — ROLE-ROTATION-1
+## 2. ROLE-ROTATION-1 completed product behavior
 
 Real play exposed a user-experience issue: across several games in one session, the same human player can receive the same starting identity or a high-impact special category too often. Examples include one player receiving Demon three times in five games or repeatedly receiving Butler.
 
-Target behavior:
+Implemented behavior:
 
 ```text
 preserve the legal role set
@@ -40,13 +40,13 @@ never block setup merely to satisfy the preference
 
 This is a **soft assignment constraint**, not a new setup legality rule and not deterministic role rotation.
 
-The ownership/history audit is complete. The implementation seam is the existing player-to-role deal planner, after legal role-set selection and shown-identity commitment. Existing Trouble Brewing setup-composition diversity history remains authoritative for setup diversity and is not repurposed as player rotation policy.
+The implementation seam is the existing player-to-role deal planner, after legal role-set selection and shown-identity commitment. Existing Trouble Brewing setup-composition diversity history remains authoritative for setup diversity and is not repurposed as player rotation policy.
 
-## 3. ROLE-ROTATION-1 agreed product semantics
+## 3. ROLE-ROTATION-1 product semantics
 
 ### 3.1 Lexicographic assignment objective
 
-The assignment policy must optimize in this strict order:
+The assignment policy optimizes in this strict order:
 
 ```text
 Priority 1 — immediately previous game exact starting identity repeat
@@ -121,9 +121,9 @@ Use the existing Trouble Brewing completion/rotation-history lifecycle. The dura
 
 Keep the existing setup-diversity projection filtered by player count. Player-role rotation uses a separate newest-first three-game projection across player-count changes and matches current players by stable player key.
 
-## 5. Tests-first acceptance target
+## 5. Acceptance contracts
 
-The implementation must prove:
+The implementation proves:
 
 ```text
 avoidable exact repeat -> avoided
@@ -145,9 +145,9 @@ restart -> starting identity/category history survives through the existing comp
 legacy persisted history -> decodes safely with no player-rotation facts
 ```
 
-Use genuine typed REDs at the deal-planner and persistence seams. Do not manufacture source-string REDs. Follow `docs/TESTING_STRATEGY.md`.
+Typed RED/GREEN evidence was used at the deal-planner, persistence/history, and production-preparer seams. Large-file App wiring used the repository-approved guarded one-shot workflow rather than an unsafe whole-file connector rewrite.
 
-## 6. Implementation status and order
+## 6. Implementation and validation closeout
 
 ```text
 R1  DealPlanner typed RED/GREEN for exact shown-identity avoidance              COMPLETE
@@ -155,12 +155,39 @@ R2  DEMON/MINION/OUTSIDER category avoidance                                   C
 R3  Freeze final starting player identity/category facts                        COMPLETE
 R4  Version/migrate Trouble Brewing completion + rotation persistence           COMPLETE
 R5  Three-game recent player-history projection + production setup wiring       COMPLETE
-R6  T2/T4 validation, exact diff audit, roadmap/handoff closeout                CURRENT
+R6  T2/T4 validation, exact diff audit, roadmap/handoff closeout                COMPLETE
 ```
 
-Current production App wiring was applied through the repository-approved large-file one-shot workflow. Product checkpoint `e2ab42f6159166e56520e13a790c5af3caad124a` changes only the intended `CampBoardGameHostApp.kt` setup/completion wiring; cleanup head `df50b64d7087ee7a82efc5288fab67e3a018a212` removes the temporary workflow/script. The one-shot focused tests, forced `:app:testFast`, and exact diff audit passed. Final T4 acceptance remains pending until the explicit `[full-ci]` checkpoint succeeds.
+Key checkpoints/evidence:
 
-At every stage, keep role-set selection, setup legality, Drunk shown-identity selection, and setup-diversity scoring unchanged.
+```text
+pre-App-wiring GREEN checkpoint:
+50254b45f73b4985e62ff3da78177b869f56204d
+
+App-wiring product checkpoint:
+e2ab42f6159166e56520e13a790c5af3caad124a
+
+large-file one-shot cleanup checkpoint:
+df50b64d7087ee7a82efc5288fab67e3a018a212
+
+one-shot run:
+34555558005 — SUCCESS
+focused setup/factory tests — PASS
+forced :app:testFast — PASS
+exact diff audit — PASS
+
+T4 acceptance checkpoint:
+4d75ed4a147304e3a01c2bc233dbdc33c802ea6f
+CI #2274 / run 34556109636 — SUCCESS
+Android full unit tests + debug APK — PASS
+ASP contract tests — PASS
+Real Clingo cross-validation — PASS
+R2 main-thread boundary #2136 / run 34556109649 — PASS
+```
+
+Net diff from `50254b45...` through the Path-B cleanup contains only the intended `CampBoardGameHostApp.kt` wiring change; temporary workflow/script files do not remain in the branch.
+
+PR #119 remains draft and must not be merged without explicit user authorization.
 
 ## 7. UI-NAV-1 closeout
 
@@ -181,7 +208,7 @@ UI-NAV-1 is closed for feature development. Its audit and closeout documents are
 
 ### EPI-MQ / Productive Uncertainty
 
-Still planned, but explicitly deferred behind ROLE-ROTATION-1 because the user reprioritized the next development target.
+This is the next queued program after ROLE-ROTATION-1 is merged, unless the roadmap is explicitly reprioritized.
 
 Queued handoff:
 
@@ -198,9 +225,9 @@ Remains after EPI-MQ unless the roadmap is explicitly reprioritized again.
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
 3. this roadmap;
-4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-11_ROLE_REPEAT_AVOIDANCE.md`;
-5. live GitHub `main` / branch / PR state;
-6. only the specialized domain/product documents required by the audited seam.
+4. live GitHub `main` / branch / PR state;
+5. if PR #119 is still open, `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-11_ROLE_REPEAT_AVOIDANCE.md` for closeout evidence;
+6. after ROLE-ROTATION-1 merge, use the handoff for whichever program the roadmap marks current/next.
 
 Historical archives, prior campaign handoffs, and old checkpoint documents should not be loaded by default.
 
