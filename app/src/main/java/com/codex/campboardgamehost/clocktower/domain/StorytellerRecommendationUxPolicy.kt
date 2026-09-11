@@ -33,17 +33,5 @@ data class StorytellerRecommendationUxPolicy(
                 recommendedOptionLimit = 3,
             )
         }
-
-        /**
-         * Transitional compatibility path until App-root persistence is migrated in UX-MODE-1B.
-         * Keep current live behavior unchanged while the typed experience-mode contract lands.
-         */
-        fun fromLegacyMode(@Suppress("UNUSED_PARAMETER") legacyMode: StorytellerAutomationMode): StorytellerRecommendationUxPolicy =
-            StorytellerRecommendationUxPolicy(
-                automaticExecution = false,
-                recommendationStyle = RecommendationStyle.BALANCED,
-                showManualAlternatives = true,
-                recommendedOptionLimit = 3,
-            )
     }
 }
