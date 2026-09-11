@@ -6,17 +6,21 @@ import org.junit.Test
 
 class ClocktowerTemporaryAutomaticRulingsTest {
     @Test
-    fun `mayor automatic redirect candidates keep only living townsfolk`() {
+    fun `mayor automatic redirect candidates keep only other living townsfolk`() {
         val candidates = listOf(
             ClocktowerTemporaryMayorCandidate(seat = 1, team = ClocktowerTeam.Townsfolk, alive = true),
             ClocktowerTemporaryMayorCandidate(seat = 2, team = ClocktowerTeam.Townsfolk, alive = false),
             ClocktowerTemporaryMayorCandidate(seat = 3, team = ClocktowerTeam.Outsider, alive = true),
             ClocktowerTemporaryMayorCandidate(seat = 4, team = ClocktowerTeam.Minion, alive = true),
+            ClocktowerTemporaryMayorCandidate(seat = 9, team = ClocktowerTeam.Townsfolk, alive = true),
         )
 
         assertEquals(
             listOf(1),
-            clocktowerTemporaryMayorEligibleTownsfolkSeats(candidates),
+            clocktowerTemporaryMayorEligibleTownsfolkSeats(
+                candidates = candidates,
+                mayorSeat = 9,
+            ),
         )
     }
 
@@ -30,7 +34,10 @@ class ClocktowerTemporaryAutomaticRulingsTest {
 
         assertEquals(
             listOf(2, 7),
-            clocktowerTemporaryMayorEligibleTownsfolkSeats(candidates.reversed()),
+            clocktowerTemporaryMayorEligibleTownsfolkSeats(
+                candidates = candidates.reversed(),
+                mayorSeat = 4,
+            ),
         )
     }
 
