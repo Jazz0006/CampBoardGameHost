@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   patch-app-root:
-    if: github.event.head_commit.message == 'chore: stage UX-MODE-1B one-shot workflow'
+    if: "${{ github.event.head_commit.message == 'chore: stage UX-MODE-1B one-shot workflow v2' }}"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exact branch head
