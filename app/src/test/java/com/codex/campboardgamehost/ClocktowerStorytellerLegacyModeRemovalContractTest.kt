@@ -23,7 +23,7 @@ class ClocktowerStorytellerLegacyModeRemovalContractTest {
             "com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt",
         )
         productionFiles.forEach { relative ->
-            val source = Files.readString(sourceRoot.resolve(relative))
+            val source = String(Files.readAllBytes(sourceRoot.resolve(relative)), Charsets.UTF_8)
             assertFalse("$relative still references StorytellerAutomationMode", source.contains("StorytellerAutomationMode"))
             assertFalse("$relative still exposes fromLegacyMode", source.contains("fromLegacyMode"))
         }
