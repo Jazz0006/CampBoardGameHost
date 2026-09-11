@@ -15,42 +15,153 @@ D6 decomposition campaign                         COMPLETE
 UI-R5 square-table convergence                    COMPLETE / merged via PR #117
 UI-NAV-1 global navigation visual unification     COMPLETE / merged via PR #118
 ROLE-ROTATION-1 recent role rotation              COMPLETE / merged via PR #119
+EPI-MQ-0 baseline / ownership re-audit            COMPLETE — old EPI-MQ-1 = MODIFY
 
-EPI-MQ / Productive Uncertainty                   CURRENT — EPI-MQ-0 baseline re-audit
+UX-MODE-1 Beginner / Experienced Storyteller Mode CURRENT — next independent task
+EPI-MQ / Productive Uncertainty                   QUEUED immediately after UX-MODE-1
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
 
 Completed campaign documents are historical evidence, not default execution authority.
 
-## 2. Immediate priority — EPI-MQ-0
+## 2. Immediate priority — UX-MODE-1
 
-The current development task is **EPI-MQ-0 baseline / ownership re-audit**.
+The current development task is **UX-MODE-1 Beginner / Experienced Storyteller Mode**.
 
-Live baseline transition:
-
-```text
-ROLE-ROTATION-1 merged via PR #119
-merge commit: 72775b63f2b98322f2ceb8972fd1cea8f7a46007
-```
-
-Before implementation:
+Product intent:
 
 ```text
-re-query live main from the merge baseline
-trace the current misinformation-candidate / visible-observation / epistemic-world path
-identify the current typed hypothetical-evaluation seam
-record mutation and hidden-information boundaries
-define the small deterministic Trouble Brewing behavior corpus
-make a GO / MODIFY / NO-GO decision for the older EPI-MQ-1 proposal
+BEGINNER
+- for new app users and inexperienced Storytellers
+- no ordinary clue-selection burden
+- current recommended clue/result is used automatically
+- fewer buttons
+- clearer / somewhat richer instructions
+- host mainly performs wake/show/confirm/continue actions
+
+EXPERIENCED
+- for experienced Storytellers and users familiar with the app
+- recommended clue/result remains primary
+- rule-valid manual alternatives remain available
+- shorter instructions
+- fast, low-friction operation
 ```
 
-EPI-MQ-0 is an audit/spec stage. It does **not** authorize production recommendation-ranking changes.
+Critical invariant:
+
+> **The two modes share one rules/candidate/recommendation pipeline. They differ in presentation and interaction policy only.**
+
+For identical semantic inputs, both modes must receive the same legal candidate set and the same recommended candidate before presentation policy is applied.
+
+Beginner mode must not introduce a separate rule such as `Drunk/Poisoned => always false`. It automatically consumes the existing recommendation policy; future EPI-MQ can improve that recommendation without requiring a second beginner-specific algorithm.
 
 Active handoff:
 
-`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_EPI_MQ_0_BASELINE_REAUDIT.md`
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-11_UX_MODE_1_BEGINNER_EXPERIENCED.md`
 
-## 3. ROLE-ROTATION-1 closeout
+First execution step is a read-only ownership/migration audit of existing automatic/manual information settings and affected information UI surfaces before production edits.
+
+## 3. EPI-MQ-0 closeout and resumed direction
+
+EPI-MQ-0 is complete as an architecture/ownership audit. The old EPI-MQ-1 proposal remains directionally correct but must be modified to reuse current typed owners rather than create parallel infrastructure.
+
+Authoritative audit/design record:
+
+`docs/EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md`
+
+Key findings:
+
+```text
+- InformationDecisionContext already owns validated legal candidate -> EpistemicObservationDraft.
+- EpistemicObservationDraft already represents unbound player-visible information.
+- ClocktowerGameSession already has non-mutating global observation preflight.
+- EnumeratedHistoricalExactBaseline is the current exact multi-night recipient-world authority.
+- B4DynamicPlayerWorldSetShadow already proves exact historical BEFORE -> AFTER candidate cardinality.
+- B4 is intentionally shadow-only; recommendation must not directly depend on B4.
+```
+
+Therefore the next epistemic work after UX-MODE-1 is:
+
+```text
+EPI-MQ-0.5  dynamic-script extensibility guard
+            - generic epistemic evaluation seam
+            - explicit capability / DEFERRED contract
+            - no EPI-MQ dependency on TroubleBrewing concrete classes
+
+EPI-MQ-1    neutral hypothetical observation evaluator
+            - exact
+            - recipient-knowledge-safe
+            - mutation-free
+            - BEFORE / AFTER diagnostics
+            - B4 shadow becomes a consumer of the neutral owner
+
+EPI-MQ-2    credibility / immediate contradiction / impairment-exposure gates
+
+EPI-MQ-3+   productive-uncertainty metrics and ranking
+```
+
+No recommendation weights or user-visible recommendation behavior should change in EPI-MQ-0.5 or the initial evaluator extraction.
+
+## 4. Dynamic/custom script extensibility rule
+
+Future custom scripts, including combinations such as a Trouble Brewing base with Butler replaced by Moonchild and Pukka added, must not force EPI-MQ to be rewritten as a Trouble-Brewing-specific ranking system.
+
+Game-execution support and epistemic support may land at different times.
+
+Required principle:
+
+```text
+role can be playable in game flow/UI
+while
+advanced epistemic/EPI-MQ support explicitly reports DEFERRED / UNSUPPORTED
+```
+
+Unknown epistemic semantics must never be silently treated as absent mechanics or fake exact `UNSAT`.
+
+Future world/evaluation APIs should expose capability coverage, conceptually:
+
+```text
+READY + exact diagnostics
+```
+
+or:
+
+```text
+DEFERRED / UNSUPPORTED_SEMANTICS + missing capability identifiers
+```
+
+This preserves the established rule:
+
+> **DEFERRED != UNSAT.**
+
+Pukka is a particularly valuable future architecture stress test because it combines hidden target selection, temporary poisoned information, delayed death, recovery and cross-night causal state.
+
+New role support should move toward composable role semantics rather than accumulating role-specific branches in the large Host/UI source.
+
+## 5. Architecture / scope continuity
+
+Do not reopen completed D6, UI-R5, UI-NAV-1, or ROLE-ROTATION work unless a concrete regression requires it.
+
+For UX-MODE-1:
+
+- treat Beginner / Experienced as one typed product mode, not several overlapping booleans;
+- audit existing automatic/manual setting ownership before choosing migration behavior;
+- preserve rules legality, recommendation semantics, session authority and history semantics;
+- do not move recommendation or rule logic into presentation policy;
+- do not perform unsafe whole-file replacement of large Host source;
+- follow `AGENTS.md` architecture pre-flight requirements before substantial edits to protected/core or >1000 LOC handwritten source;
+- follow `docs/TESTING_STRATEGY.md` for risk-based RED/GREEN and T0–T4 escalation.
+
+For EPI-MQ when it resumes:
+
+- preserve current setup/session/persistence owners;
+- do not leak Storyteller-hidden action facts into recipient knowledge;
+- do not mutate live session/history merely to evaluate a hypothetical observation;
+- consume a generic epistemic world/evaluation contract rather than Trouble Brewing concrete classes;
+- make unsupported script/role semantics explicit;
+- do not activate A4/ZDD or replace the recommendation provider as part of the initial evaluator work.
+
+## 6. ROLE-ROTATION-1 closeout
 
 ROLE-ROTATION-1 is complete and no longer an active development stream.
 
@@ -93,36 +204,29 @@ merge commit:
 
 The completed ROLE-ROTATION handoff has been removed from the active documentation chain.
 
-## 4. Architecture / scope continuity
-
-Do not reopen completed D6, UI-R5, UI-NAV-1, or ROLE-ROTATION work unless a concrete regression requires it.
-
-For EPI-MQ:
-
-- preserve current setup/session/persistence owners;
-- do not leak Storyteller-hidden action facts into recipient knowledge;
-- do not mutate live session/history merely to evaluate a hypothetical observation;
-- do not activate A4/ZDD or replace the recommendation provider as part of the baseline audit;
-- follow `AGENTS.md` architecture pre-flight requirements before substantial edits to protected/core or >1000 LOC handwritten source;
-- follow `docs/TESTING_STRATEGY.md` for risk-based RED/GREEN and T0–T4 escalation.
-
-## 5. Queued program — UX-R6
+## 7. Queued program — UX-R6
 
 `UX-R6 recommendation-provider replacement` remains queued after EPI-MQ unless the roadmap is explicitly reprioritized.
 
-Do not pull UX-R6 into EPI-MQ-0 merely because both touch recommendation behavior.
+Do not pull UX-R6 into UX-MODE-1 or early EPI-MQ merely because all three touch recommendation presentation/behavior.
 
-## 6. Default reading order for the next development conversation
+## 8. Default reading order for the next development conversation
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
 3. this roadmap;
-4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_EPI_MQ_0_BASELINE_REAUDIT.md`;
+4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-11_UX_MODE_1_BEGINNER_EXPERIENCED.md`;
 5. live GitHub `main` and current PR/branch state;
-6. only the specialized EPI-MQ/reference documents named by the active handoff.
+6. only the source/tests needed for UX-MODE-1 ownership/migration audit.
 
-Do not load completed ROLE-ROTATION, UI-NAV, UI-R5, D6, or persistence handoffs by default.
+Do not load the full EPI-MQ reference stack until UX-MODE-1 is complete unless a narrow semantic dependency must be checked.
 
-## 7. Stable rule
+After UX-MODE-1 is accepted, the active reading chain should switch to:
+
+`docs/EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md`
+
+and the new EPI-MQ implementation handoff created from that audit.
+
+## 9. Stable rule
 
 > **Current roadmap + one active handoff define what happens next. Historical campaign documents provide evidence, not execution authority.**
