@@ -42,16 +42,38 @@ class ClocktowerTemporaryAutomaticRulingsTest {
     }
 
     @Test
-    fun `temporary automatic decision key is stable but decision families remain independent`() {
-        val base = "game-1|Night|2|11|5|3"
+    fun `night ruling decision key excludes mutable revision and separates decision families`() {
+        val mayorKey = clocktowerTemporaryNightDecisionKey(
+            gameId = "game-1",
+            phase = ClocktowerPhase.Night,
+            round = 2,
+            sequence = 11,
+            family = "mayor-redirect",
+        )
+        val sameMayorKey = clocktowerTemporaryNightDecisionKey(
+            gameId = "game-1",
+            phase = ClocktowerPhase.Night,
+            round = 2,
+            sequence = 11,
+            family = "mayor-redirect",
+        )
+        val successionKey = clocktowerTemporaryNightDecisionKey(
+            gameId = "game-1",
+            phase = ClocktowerPhase.Night,
+            round = 2,
+            sequence = 11,
+            family = "demon-succession",
+        )
 
+        assertEquals(mayorKey, sameMayorKey)
+        assertNotEquals(mayorKey, successionKey)
         assertEquals(
-            clocktowerTemporaryAutomaticDecisionSeed("$base|mayor-redirect"),
-            clocktowerTemporaryAutomaticDecisionSeed("$base|mayor-redirect"),
+            clocktowerTemporaryAutomaticDecisionSeed(mayorKey),
+            clocktowerTemporaryAutomaticDecisionSeed(sameMayorKey),
         )
         assertNotEquals(
-            clocktowerTemporaryAutomaticDecisionSeed("$base|mayor-redirect"),
-            clocktowerTemporaryAutomaticDecisionSeed("$base|demon-succession"),
+            clocktowerTemporaryAutomaticDecisionSeed(mayorKey),
+            clocktowerTemporaryAutomaticDecisionSeed(successionKey),
         )
     }
 }
