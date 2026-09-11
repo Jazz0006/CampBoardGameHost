@@ -1,52 +1,56 @@
 # NEXT DEVELOPMENT HANDOFF — EPI-MQ-0 Baseline Re-audit
 
-> Date: 2026-09-10 Australia/Sydney  
-> Status: **QUEUED — RESUME IMMEDIATELY AFTER UI-NAV-1 CLOSEOUT**  
-> Base: re-query live `main` after UI-NAV-1 merge/closeout before beginning EPI-MQ-0  
-> Program: Epistemic Misinformation Quality / Productive Uncertainty
+> Date: 2026-09-11 Australia/Sydney  
+> Status: **NEXT EXECUTION TARGET — begin immediately after PR #119 merges**  
+> Program: Epistemic Misinformation Quality / Productive Uncertainty  
+> Base rule: **re-query live `main` after PR #119 merge before creating the EPI-MQ branch or accepting any historical ownership assumption**
 
-> Current execution priority is `UI-NAV-1 — Global Navigation Visual Unification`.  
-> Current active handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_UI_NAV_1_GLOBAL_NAVIGATION_VISUAL_UNIFICATION.md`.  
-> This EPI-MQ handoff is preserved as the next-program contract; it is queued, not historical.
+## 1. Transition state
 
-## 1. Stable inherited baseline
+ROLE-ROTATION-1 is complete, T4 validated, and merge-ready in PR #119. Once that PR is merged, EPI-MQ-0 becomes the active development task.
+
+Known pre-merge anchors are evidence only:
 
 ```text
-UI-R5 merged production baseline: b47b00fd0c727e048dcb1b57260b8dd6fff466a1
-UI-R5 merge: PR #117
-final logical UI-R5 T4: 2958f334fc7cccd59ed2e75a3bdaa60684492292
-CI #2143 / run 34435295215 PASS
-R2 #2010 / run 34435295217 PASS
-post-merge main CI #2146 / run 34437247431 PASS
-Field Test APK #34 / run 34437247434 PASS
+PR #119 base main:
+3cc3d64d303236ae84b7fb14eaf066cc10aec95e
+
+ROLE-ROTATION-1 T4 acceptance checkpoint:
+4d75ed4a147304e3a01c2bc233dbdc33c802ea6f
+CI #2274 / run 34556109636 — SUCCESS
+Android full + debug APK — PASS
+ASP contracts — PASS
+Real Clingo — PASS
+R2 #2136 — PASS
 ```
 
-**When EPI-MQ-0 becomes active again, always re-query live `main` before creating its branch or beginning the audit.** UI-NAV-1 and later docs-only closeout commits will intentionally advance `main` beyond the inherited UI-R5 production baseline above.
+Do not use either SHA as the EPI-MQ implementation baseline after merge. Resolve the actual live `main` and merged PR #119 commit first.
 
 ## 2. Read first
 
-When this handoff becomes active again:
+When EPI-MQ-0 starts:
 
 1. root `AGENTS.md`;
-2. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
-3. this handoff;
-4. `docs/TESTING_STRATEGY.md`;
-5. `docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`;
-6. `docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`;
-7. `docs/epistemic_reference_matrix.md`;
-8. `docs/asp_oracle_cross_validation.md` only where exact-world oracle evidence is needed.
+2. `docs/TESTING_STRATEGY.md`;
+3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
+4. this handoff;
+5. live `main` / current branches / PR state;
+6. `docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`;
+7. `docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`;
+8. `docs/epistemic_reference_matrix.md`;
+9. `docs/asp_oracle_cross_validation.md` only where exact-world oracle evidence is needed.
 
-UI-R5 / D6 archives are historical evidence only and should not be loaded by default.
+Completed ROLE-ROTATION, UI-NAV, UI-R5, D6 and persistence handoffs are historical evidence only and should not be loaded by default.
 
 ## 3. Why re-audit before implementation
 
-The EPI-MQ plan was written on 2026-09-01 and intentionally deferred. Since then the repository has gone through semantic hardening, decomposition, persistence simplification, UI-R5 convergence and, before this handoff resumes, UI-NAV-1 presentation convergence. Therefore old class names may still exist, but old ownership and integration assumptions must not be accepted without checking live code.
+The EPI-MQ plan was written on 2026-09-01 and intentionally deferred. Since then the repository has gone through semantic hardening, decomposition, persistence simplification, UI convergence, navigation convergence, and recent-role-rotation persistence/setup wiring.
 
-EPI-MQ-0 is a **re-baselining stage**. It does not authorize user-visible ranking changes.
+Therefore old class names may still exist while old ownership and integration assumptions may no longer be exact. EPI-MQ-0 is a **re-baselining stage**. It does not authorize user-visible ranking changes.
 
 ## 4. Audit target
 
-Trace the current live path for misinformation candidates and recipient-visible epistemic evaluation, specifically the ownership chain around concepts such as:
+Trace the current live path for misinformation candidates and recipient-visible epistemic evaluation, specifically the ownership chain around:
 
 ```text
 legal semantic candidate
@@ -68,6 +72,7 @@ At minimum answer:
 5. Which world-set/replay implementation is the correctness oracle for small Trouble Brewing scenarios today?
 6. What hidden Storyteller facts are available in production but must be excluded from recipient knowledge?
 7. Is there already a narrow typed seam sufficient for EPI-MQ-1, or must one be established first?
+8. Did any post-2026-09-01 persistence/setup ownership change invalidate assumptions in the old EPI-MQ plan?
 
 ## 5. EPI-MQ-0 behavior corpus
 
@@ -89,6 +94,7 @@ The first corpus should express comparative/invariant expectations, not a giant 
 Produce an audit/spec document that records:
 
 ```text
+- live main / branch baseline used for the audit
 - live owners and dependency graph
 - exact candidate/observation/world-evaluation seams
 - mutable state and mutation hazards
@@ -117,6 +123,8 @@ Architecture pre-flight:
 
 Absence of this record is a stop condition for such production edits.
 
+For large-file edits, follow the repository's `AGENTS.md` large-file SOP rather than unsafe whole-file connector replacement.
+
 ## 8. Scope fence
 
 During EPI-MQ-0 do not:
@@ -127,7 +135,8 @@ During EPI-MQ-0 do not:
 - activate A4/ZDD in production;
 - reopen D6 solely because a source file is large;
 - redesign UI-R5 / UI-NAV surfaces;
-- change persistence/recovery ordering;
+- change persistence/recovery ordering unless the audit proves it is required;
+- alter ROLE-ROTATION policy;
 - leak actual Storyteller-hidden action targets into player knowledge;
 - broaden to other scripts before Trouble Brewing behavior is understood.
 
