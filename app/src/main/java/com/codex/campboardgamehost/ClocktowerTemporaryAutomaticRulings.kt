@@ -1,11 +1,16 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.MurmurHash3
+import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.TemporaryAutomaticChoice
 import com.codex.campboardgamehost.clocktower.recommendation.TemporaryAutomaticSelection
 import com.codex.campboardgamehost.clocktower.recommendation.TemporaryAutomaticStorytellerPolicy
 import com.codex.campboardgamehost.clocktower.recommendation.TemporaryDemonSuccessorChoice
+
+private const val ACTUAL_REGISTRATION_FAMILY = "actual-registration"
+private const val SPECIAL_REGISTRATION_FAMILY = "special-registration"
 
 internal data class ClocktowerAutomaticRegistrationRuling(
     val usesSpecialRegistration: Boolean,
@@ -41,31 +46,58 @@ internal fun clocktowerTemporaryAutomaticDecisionSeed(decisionKey: String): Long
     return MurmurHash3.low64Utf8("ux-mode-1-temporary-auto-v1|$decisionKey")
 }
 
-internal fun clocktowerTemporaryRegistrationSelection(
+private fun clocktowerTemporaryRegistrationChoices(
     legalSpecialRoleEnNames: List<String>,
-    decisionKey: String,
-): TemporaryAutomaticSelection<ClocktowerAutomaticRegistrationRuling> {
+): List<TemporaryAutomaticChoice<ClocktowerAutomaticRegistrationRuling>> {
     val specialRoles = legalSpecialRoleEnNames
         .onEach { require(it.isNotBlank()) { "Registration role cannot be blank." } }
         .distinct()
         .sorted()
-    return TemporaryAutomaticStorytellerPolicy.selectRegistration(
-        actual = TemporaryAutomaticChoice(
-            candidateId = "actual-registration",
-            payload = ClocktowerAutomaticRegistrationRuling(
-                usesSpecialRegistration = false,
-                registeredRoleEnName = null,
-            ),
-        ),
-        special = specialRoles.map { roleEnName ->
+    return buildList {
+        add(
             TemporaryAutomaticChoice(
-                candidateId = "special-registration:$roleEnName",
+                candidateId = ACTUAL_REGISTRATION_FAMILY,
                 payload = ClocktowerAutomaticRegistrationRuling(
-                    usesSpecialRegistration = true,
-                    registeredRoleEnName = roleEnName,
+                    usesSpecialRegistration = false,
+                    registeredRoleEnName = null,
+                ),
+            ),
+        )
+        specialRoles.forEach { roleEnName ->
+            add(
+                TemporaryAutomaticChoice(
+                    candidateId = "$SPECIAL_REGISTRATION_FAMILY:$roleEnName",
+                    payload = ClocktowerAutomaticRegistrationRuling(
+                        usesSpecialRegistration = true,
+                        registeredRoleEnName = roleEnName,
+                    ),
                 ),
             )
-        },
+        }
+    }
+}
+
+internal fun clocktowerTemporaryRegistrationAuditCandidates(
+    legalSpecialRoleEnNames: List<String>,
+): List<SelectionAuditCandidate> = clocktowerTemporaryRegistrationChoices(legalSpecialRoleEnNames).map { choice ->
+    SelectionAuditCandidate(
+        familyId = clocktowerTemporaryRegistrationAuditFamilyId(choice.payload),
+        qualityTier = QualityTier.RECOMMENDED,
+    )
+}
+
+internal fun clocktowerTemporaryRegistrationAuditFamilyId(
+    ruling: ClocktowerAutomaticRegistrationRuling,
+): String = if (ruling.usesSpecialRegistration) SPECIAL_REGISTRATION_FAMILY else ACTUAL_REGISTRATION_FAMILY
+
+internal fun clocktowerTemporaryRegistrationSelection(
+    legalSpecialRoleEnNames: List<String>,
+    decisionKey: String,
+): TemporaryAutomaticSelection<ClocktowerAutomaticRegistrationRuling> {
+    val choices = clocktowerTemporaryRegistrationChoices(legalSpecialRoleEnNames)
+    return TemporaryAutomaticStorytellerPolicy.selectRegistration(
+        actual = choices.first(),
+        special = choices.drop(1),
         decisionSeed = clocktowerTemporaryAutomaticDecisionSeed(decisionKey),
     )
 }
