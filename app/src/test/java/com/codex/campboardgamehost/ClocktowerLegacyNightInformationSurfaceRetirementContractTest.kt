@@ -27,6 +27,16 @@ class ClocktowerLegacyNightInformationSurfaceRetirementContractTest {
     }
 
     @Test
+    fun `day square table flows do not call legacy registration panels`() {
+        val source = sourceFile("src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt")
+
+        assertFalse(source.contains("SpyRegistrationPanel("))
+        assertFalse(source.contains("RecluseRegistrationPanel("))
+        assertTrue(source.contains("ClocktowerSpyRegistrationDecisionControls("))
+        assertTrue(source.contains("ClocktowerRecluseRegistrationDecisionControls("))
+    }
+
+    @Test
     fun `first night pair square table is not disabled by automatic mode`() {
         val source = sourceFile("src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt")
         val pairRouting = source.substringAfter("val pairRecommendationPresentation =")
