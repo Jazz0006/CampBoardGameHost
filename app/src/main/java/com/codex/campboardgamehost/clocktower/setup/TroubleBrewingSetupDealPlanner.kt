@@ -38,6 +38,32 @@ internal object TroubleBrewingSetupDealPlanner {
         selection: TroubleBrewingSetupPresetSelection,
         orderedPlayerNames: List<String>,
         previousPlayerStartingIdentities: List<TroubleBrewingPlayerStartingIdentity> = emptyList(),
+    ): TroubleBrewingSetupDealPlan = planWithRecentHistory(
+        selection = selection,
+        orderedPlayerNames = orderedPlayerNames,
+        recentPlayerStartingIdentityHistory = if (previousPlayerStartingIdentities.isEmpty()) {
+            TroubleBrewingPlayerStartingIdentityHistory.EMPTY
+        } else {
+            TroubleBrewingPlayerStartingIdentityHistory(
+                recentGames = listOf(previousPlayerStartingIdentities),
+            )
+        },
+    )
+
+    fun plan(
+        selection: TroubleBrewingSetupPresetSelection,
+        orderedPlayerNames: List<String>,
+        recentPlayerStartingIdentityHistory: TroubleBrewingPlayerStartingIdentityHistory,
+    ): TroubleBrewingSetupDealPlan = planWithRecentHistory(
+        selection = selection,
+        orderedPlayerNames = orderedPlayerNames,
+        recentPlayerStartingIdentityHistory = recentPlayerStartingIdentityHistory,
+    )
+
+    private fun planWithRecentHistory(
+        selection: TroubleBrewingSetupPresetSelection,
+        orderedPlayerNames: List<String>,
+        recentPlayerStartingIdentityHistory: TroubleBrewingPlayerStartingIdentityHistory,
     ): TroubleBrewingSetupDealPlan {
         require(selection.playerCount == selection.preset.playerCount) {
             "Selected Trouble Brewing preset player count does not match selection provenance."
@@ -45,15 +71,17 @@ internal object TroubleBrewingSetupDealPlanner {
         require(orderedPlayerNames.size == selection.playerCount) {
             "Ordered Trouble Brewing player identities must match selected preset player count."
         }
-        require(previousPlayerStartingIdentities.map { it.playerKey }.distinct().size == previousPlayerStartingIdentities.size) {
-            "Previous Trouble Brewing player starting identities must contain unique player keys."
-        }
-        previousPlayerStartingIdentities.forEach { identity ->
-            require(identity.playerKey.isNotBlank()) {
-                "Previous Trouble Brewing player key must not be blank."
+        recentPlayerStartingIdentityHistory.recentGames.forEachIndexed { gameIndex, identities ->
+            require(identities.map { it.playerKey }.distinct().size == identities.size) {
+                "Trouble Brewing player starting identities for recent game $gameIndex must contain unique player keys."
             }
-            require(identity.actualRoleId.isNotBlank() && identity.shownRoleId.isNotBlank()) {
-                "Previous Trouble Brewing starting identity roles must not be blank."
+            identities.forEach { identity ->
+                require(identity.playerKey.isNotBlank()) {
+                    "Previous Trouble Brewing player key must not be blank."
+                }
+                require(identity.actualRoleId.isNotBlank() && identity.shownRoleId.isNotBlank()) {
+                    "Previous Trouble Brewing starting identity roles must not be blank."
+                }
             }
         }
 
@@ -81,14 +109,19 @@ internal object TroubleBrewingSetupDealPlanner {
                 actualRoleCategory = categoryOf(selection.preset, actualRoleId),
             )
         }
-        val previousByPlayer = previousPlayerStartingIdentities.associateBy { it.playerKey }
-        val hasUsableRotationHistory = orderedPlayerNames.any(previousByPlayer::containsKey)
+        val recentByPlayer = recentPlayerStartingIdentityHistory.recentGames.map { identities ->
+            identities.associateBy { it.playerKey }
+        }
+        val currentPlayerKeys = orderedPlayerNames.toSet()
+        val hasUsableRotationHistory = recentByPlayer.any { game ->
+            game.keys.any(currentPlayerKeys::contains)
+        }
         val seatOrderedRoleTokens = if (hasUsableRotationHistory) {
             minimumRotationCostAssignment(
                 selection = selection,
                 orderedPlayerNames = orderedPlayerNames,
                 roleTokens = roleTokens,
-                previousByPlayer = previousByPlayer,
+                recentByPlayer = recentByPlayer,
             )
         } else {
             legacySeatOrderedRoleTokens(
@@ -136,7 +169,7 @@ internal object TroubleBrewingSetupDealPlanner {
         selection: TroubleBrewingSetupPresetSelection,
         orderedPlayerNames: List<String>,
         roleTokens: List<RoleToken>,
-        previousByPlayer: Map<String, TroubleBrewingPlayerStartingIdentity>,
+        recentByPlayer: List<Map<String, TroubleBrewingPlayerStartingIdentity>>,
     ): List<RoleToken> {
         val playerCount = orderedPlayerNames.size
         require(playerCount <= MAX_OPTIMIZED_PLAYER_COUNT) {
@@ -151,13 +184,12 @@ internal object TroubleBrewingSetupDealPlanner {
 
             val playerIndex = Integer.bitCount(usedMask)
             val playerName = orderedPlayerNames[playerIndex]
-            val previous = previousByPlayer[playerName]
             var best: RotationCost? = null
             roleTokens.indices.forEach { tokenIndex ->
                 val bit = 1 shl tokenIndex
                 if (usedMask and bit == 0) {
                     val token = roleTokens[tokenIndex]
-                    val candidate = edgeCost(previous, token) + solve(usedMask or bit)
+                    val candidate = edgeCost(playerName, recentByPlayer, token) + solve(usedMask or bit)
                     if (best == null || candidate < requireNotNull(best)) {
                         best = candidate
                     }
@@ -170,14 +202,13 @@ internal object TroubleBrewingSetupDealPlanner {
         var usedMask = 0
         return buildList(playerCount) {
             orderedPlayerNames.forEachIndexed { playerIndex, playerName ->
-                val previous = previousByPlayer[playerName]
                 val targetCost = solve(usedMask)
                 val candidates = roleTokens.indices.filter { tokenIndex ->
                     val bit = 1 shl tokenIndex
                     if (usedMask and bit != 0) {
                         false
                     } else {
-                        edgeCost(previous, roleTokens[tokenIndex]) + solve(usedMask or bit) == targetCost
+                        edgeCost(playerName, recentByPlayer, roleTokens[tokenIndex]) + solve(usedMask or bit) == targetCost
                     }
                 }
                 val chosenTokenIndex = candidates.minWithOrNull(
@@ -203,20 +234,42 @@ internal object TroubleBrewingSetupDealPlanner {
     }
 
     private fun edgeCost(
+        playerName: String,
+        recentByPlayer: List<Map<String, TroubleBrewingPlayerStartingIdentity>>,
+        token: RoleToken,
+    ): RotationCost {
+        val last = recentByPlayer.getOrNull(0)?.get(playerName)
+        val twoGamesAgo = recentByPlayer.getOrNull(1)?.get(playerName)
+        val threeGamesAgo = recentByPlayer.getOrNull(2)?.get(playerName)
+        return RotationCost(
+            lastExactRepeats = exactRepeat(last, token),
+            lastSpecialCategoryRepeats = specialCategoryRepeat(last, token),
+            olderWeightedExactRepeats =
+                TWO_GAMES_AGO_WEIGHT * exactRepeat(twoGamesAgo, token) +
+                    THREE_GAMES_AGO_WEIGHT * exactRepeat(threeGamesAgo, token),
+            olderWeightedSpecialCategoryRepeats =
+                TWO_GAMES_AGO_WEIGHT * specialCategoryRepeat(twoGamesAgo, token) +
+                    THREE_GAMES_AGO_WEIGHT * specialCategoryRepeat(threeGamesAgo, token),
+        )
+    }
+
+    private fun exactRepeat(
         previous: TroubleBrewingPlayerStartingIdentity?,
         token: RoleToken,
-    ): RotationCost = RotationCost(
-        exactRepeats = if (previous?.shownRoleId == token.shownRoleId) 1 else 0,
-        specialCategoryRepeats = if (
-            previous != null &&
-            token.actualRoleCategory != TroubleBrewingStartingRoleCategory.TOWNSFOLK &&
-            previous.actualRoleCategory == token.actualRoleCategory
-        ) {
-            1
-        } else {
-            0
-        },
-    )
+    ): Int = if (previous?.shownRoleId == token.shownRoleId) 1 else 0
+
+    private fun specialCategoryRepeat(
+        previous: TroubleBrewingPlayerStartingIdentity?,
+        token: RoleToken,
+    ): Int = if (
+        previous != null &&
+        token.actualRoleCategory != TroubleBrewingStartingRoleCategory.TOWNSFOLK &&
+        previous.actualRoleCategory == token.actualRoleCategory
+    ) {
+        1
+    } else {
+        0
+    }
 
     private fun categoryOf(
         preset: TroubleBrewingSetupPreset,
@@ -277,25 +330,42 @@ internal object TroubleBrewingSetupDealPlanner {
     )
 
     private data class RotationCost(
-        val exactRepeats: Int,
-        val specialCategoryRepeats: Int,
+        val lastExactRepeats: Int,
+        val lastSpecialCategoryRepeats: Int,
+        val olderWeightedExactRepeats: Int,
+        val olderWeightedSpecialCategoryRepeats: Int,
     ) : Comparable<RotationCost> {
         override fun compareTo(other: RotationCost): Int = when {
-            exactRepeats != other.exactRepeats -> exactRepeats.compareTo(other.exactRepeats)
-            else -> specialCategoryRepeats.compareTo(other.specialCategoryRepeats)
+            lastExactRepeats != other.lastExactRepeats ->
+                lastExactRepeats.compareTo(other.lastExactRepeats)
+            lastSpecialCategoryRepeats != other.lastSpecialCategoryRepeats ->
+                lastSpecialCategoryRepeats.compareTo(other.lastSpecialCategoryRepeats)
+            olderWeightedExactRepeats != other.olderWeightedExactRepeats ->
+                olderWeightedExactRepeats.compareTo(other.olderWeightedExactRepeats)
+            else -> olderWeightedSpecialCategoryRepeats.compareTo(other.olderWeightedSpecialCategoryRepeats)
         }
 
         operator fun plus(other: RotationCost): RotationCost = RotationCost(
-            exactRepeats = exactRepeats + other.exactRepeats,
-            specialCategoryRepeats = specialCategoryRepeats + other.specialCategoryRepeats,
+            lastExactRepeats = lastExactRepeats + other.lastExactRepeats,
+            lastSpecialCategoryRepeats = lastSpecialCategoryRepeats + other.lastSpecialCategoryRepeats,
+            olderWeightedExactRepeats = olderWeightedExactRepeats + other.olderWeightedExactRepeats,
+            olderWeightedSpecialCategoryRepeats =
+                olderWeightedSpecialCategoryRepeats + other.olderWeightedSpecialCategoryRepeats,
         )
 
         companion object {
-            val ZERO = RotationCost(exactRepeats = 0, specialCategoryRepeats = 0)
+            val ZERO = RotationCost(
+                lastExactRepeats = 0,
+                lastSpecialCategoryRepeats = 0,
+                olderWeightedExactRepeats = 0,
+                olderWeightedSpecialCategoryRepeats = 0,
+            )
         }
     }
 
     private const val DRUNK_ROLE_ID = "drunk"
     private const val ROTATION_NAMESPACE = "tb-role-rotation-v1"
     private const val MAX_OPTIMIZED_PLAYER_COUNT = 15
+    private const val TWO_GAMES_AGO_WEIGHT = 2
+    private const val THREE_GAMES_AGO_WEIGHT = 1
 }
