@@ -20,10 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit
-import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditRecord
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
@@ -71,19 +69,16 @@ internal fun SpyRegistrationPanel(
                     SelectionAuditRecord(
                         selectionId = audit.selectionId,
                         dimensions = audit.dimensions,
-                        candidates = recommendations.map { option ->
-                            SelectionAuditCandidate(
-                                familyId = if (option.usesSpecialRegistration) "special-registration" else "actual-registration",
-                                qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
-                            )
-                        },
+                        candidates = clocktowerTemporaryRegistrationAuditCandidates(
+                            legalSpecialRoleEnNames = roles.map { it.enName },
+                        ),
                     ),
                 )
                 audit.recorder.recordCommittedSelection(
                     SelectionAuditCommit(
                         selectionId = audit.selectionId,
                         dimensions = audit.dimensions,
-                        selectedFamilyId = if (automaticRuling.usesSpecialRegistration) "special-registration" else "actual-registration",
+                        selectedFamilyId = clocktowerTemporaryRegistrationAuditFamilyId(automaticRuling),
                     ),
                 )
             }
@@ -242,19 +237,16 @@ internal fun RecluseRegistrationPanel(
                     SelectionAuditRecord(
                         selectionId = audit.selectionId,
                         dimensions = audit.dimensions,
-                        candidates = recommendations.map { option ->
-                            SelectionAuditCandidate(
-                                familyId = if (option.usesSpecialRegistration) "special-registration" else "actual-registration",
-                                qualityTier = if (option.isDefaultRecommendation) QualityTier.RECOMMENDED else QualityTier.ACCEPTABLE_WITH_WARNING,
-                            )
-                        },
+                        candidates = clocktowerTemporaryRegistrationAuditCandidates(
+                            legalSpecialRoleEnNames = roles.map { it.enName },
+                        ),
                     ),
                 )
                 audit.recorder.recordCommittedSelection(
                     SelectionAuditCommit(
                         selectionId = audit.selectionId,
                         dimensions = audit.dimensions,
-                        selectedFamilyId = if (automaticRuling.usesSpecialRegistration) "special-registration" else "actual-registration",
+                        selectedFamilyId = clocktowerTemporaryRegistrationAuditFamilyId(automaticRuling),
                     ),
                 )
             }
