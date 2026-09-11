@@ -173,10 +173,10 @@ internal fun clocktowerEmpathResultChoices(
     }
 
     if (automaticStorytellerInfo) {
-        return listOfNotNull(automaticDisplayOption?.let { choiceFor(it, recommended = true) })
-    }
-
-    if (resultFirstRegistrationCandidates.isNotEmpty()) {
+        automaticDisplayOption
+            ?.let { choiceFor(it, recommended = true) }
+            ?.let { return listOf(it) }
+    } else if (resultFirstRegistrationCandidates.isNotEmpty()) {
         return resultFirstRegistrationCandidates.mapNotNull { option ->
             choiceFor(option, recommended = option.isDefaultRecommendation)
         }
@@ -191,7 +191,16 @@ internal fun clocktowerEmpathResultChoices(
             .firstOrNull { it.isNotEmpty() }
             .orEmpty()
         if (scope.isEmpty()) return emptyList()
-        return model.choices.map { choice ->
+        val visibleChoices = if (automaticStorytellerInfo) {
+            listOfNotNull(
+                model.choices.firstOrNull { it.recommended }
+                    ?: model.choices.singleOrNull(),
+            )
+        } else {
+            model.choices
+        }
+        if (automaticStorytellerInfo && model.choices.isNotEmpty() && visibleChoices.isEmpty()) return emptyList()
+        if (visibleChoices.isNotEmpty()) return visibleChoices.map { choice ->
             ClocktowerEmpathResultChoice(
                 key = choice.candidateId,
                 value = choice.value,
