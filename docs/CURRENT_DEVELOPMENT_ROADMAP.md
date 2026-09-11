@@ -14,22 +14,29 @@ R3 transaction-application viability audit        COMPLETE / NO-GO
 D6 decomposition campaign                         COMPLETE
 UI-R5 square-table convergence                    COMPLETE / merged via PR #117
 UI-NAV-1 global navigation visual unification     COMPLETE / merged via PR #118
-ROLE-ROTATION-1 recent role rotation              COMPLETE / T4 validated / merge-ready in PR #119
+ROLE-ROTATION-1 recent role rotation              COMPLETE / merged via PR #119
 
-EPI-MQ / Productive Uncertainty                   NEXT EXECUTION TARGET after PR #119 merge
+EPI-MQ / Productive Uncertainty                   CURRENT — EPI-MQ-0 baseline re-audit
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
 
 Completed campaign documents are historical evidence, not default execution authority.
 
-## 2. Immediate next priority — EPI-MQ-0
+## 2. Immediate priority — EPI-MQ-0
 
-After PR #119 merges, the next development task is **EPI-MQ-0 baseline / ownership re-audit**.
+The current development task is **EPI-MQ-0 baseline / ownership re-audit**.
+
+Live baseline transition:
+
+```text
+ROLE-ROTATION-1 merged via PR #119
+merge commit: 72775b63f2b98322f2ceb8972fd1cea8f7a46007
+```
 
 Before implementation:
 
 ```text
-re-query live main after PR #119 merge
+re-query live main from the merge baseline
 trace the current misinformation-candidate / visible-observation / epistemic-world path
 identify the current typed hypothetical-evaluation seam
 record mutation and hidden-information boundaries
@@ -39,7 +46,7 @@ make a GO / MODIFY / NO-GO decision for the older EPI-MQ-1 proposal
 
 EPI-MQ-0 is an audit/spec stage. It does **not** authorize production recommendation-ranking changes.
 
-Active next handoff:
+Active handoff:
 
 `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-10_EPI_MQ_0_BASELINE_REAUDIT.md`
 
@@ -75,13 +82,16 @@ ASP contract tests — PASS
 Real Clingo cross-validation — PASS
 R2 main-thread boundary #2136 / run 34556109649 — PASS
 
-final docs-only head before merge cleanup:
-7b355a82a942e0ad8c59fe04cec92dfd75af1773
-CI #2276 — SUCCESS
-R2 #2138 — SUCCESS
+PR #119 cleanup head:
+732bad2d2da92c1035700bd9d683f966a56f9ed7
+CI #2279 — SUCCESS
+R2 #2141 — SUCCESS
+
+merge commit:
+72775b63f2b98322f2ceb8972fd1cea8f7a46007
 ```
 
-The completed ROLE-ROTATION handoff is intentionally removed from the active documentation chain once this cleanup lands.
+The completed ROLE-ROTATION handoff has been removed from the active documentation chain.
 
 ## 4. Architecture / scope continuity
 
