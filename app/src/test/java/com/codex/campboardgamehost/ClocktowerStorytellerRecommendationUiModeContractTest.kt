@@ -35,8 +35,20 @@ class ClocktowerStorytellerRecommendationUiModeContractTest {
 
         assertTrue(source.contains("RecommendationUiState.Loading"))
         assertTrue(source.contains("RecommendationUiState.Empty"))
+        assertTrue(source.contains("is RecommendationUiState.InvalidLocks"))
         assertTrue(source.contains("is RecommendationUiState.Error"))
         assertTrue(source.contains("if (!automaticStorytellerInfo)"))
+    }
+
+    @Test
+    fun `beginner hides setup recommendation only after automatic recommendation is applied`() {
+        val source = recommendationUiSource()
+
+        assertTrue(
+            source.contains(
+                "if (automaticStorytellerInfo && appliedStyle == selectedStyle) return",
+            ),
+        )
     }
 
     private fun recommendationUiSource(): String {
