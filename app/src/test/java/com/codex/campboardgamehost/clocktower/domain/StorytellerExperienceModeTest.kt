@@ -29,4 +29,19 @@ class StorytellerExperienceModeTest {
         assertTrue(policy.showManualAlternatives)
         assertEquals(3, policy.recommendedOptionLimit)
     }
+
+    @Test
+    fun `missing or unknown persisted value defaults to beginner`() {
+        assertEquals(StorytellerExperienceMode.BEGINNER, StorytellerExperienceMode.fromPrefsValue(null))
+        assertEquals(StorytellerExperienceMode.BEGINNER, StorytellerExperienceMode.fromPrefsValue(""))
+        assertEquals(StorytellerExperienceMode.BEGINNER, StorytellerExperienceMode.fromPrefsValue("legacy-auto"))
+    }
+
+    @Test
+    fun `persisted experienced value explicitly enables experienced mode`() {
+        assertEquals(
+            StorytellerExperienceMode.EXPERIENCED,
+            StorytellerExperienceMode.fromPrefsValue(StorytellerExperienceMode.EXPERIENCED.prefsValue),
+        )
+    }
 }
