@@ -22,6 +22,20 @@ internal data class ClocktowerTemporaryMayorCandidate(
     }
 }
 
+internal fun clocktowerTemporaryNightDecisionKey(
+    gameId: String,
+    phase: ClocktowerPhase,
+    round: Int,
+    sequence: Int,
+    family: String,
+): String {
+    require(gameId.isNotBlank()) { "Temporary automatic game ID cannot be blank." }
+    require(round > 0) { "Temporary automatic round must be positive." }
+    require(sequence >= 0) { "Temporary automatic sequence cannot be negative." }
+    require(family.isNotBlank()) { "Temporary automatic decision family cannot be blank." }
+    return listOf(gameId, phase.name, round.toString(), sequence.toString(), family).joinToString("|")
+}
+
 internal fun clocktowerTemporaryAutomaticDecisionSeed(decisionKey: String): Long {
     require(decisionKey.isNotBlank()) { "Temporary automatic decision key cannot be blank." }
     return MurmurHash3.low64Utf8("ux-mode-1-temporary-auto-v1|$decisionKey")
