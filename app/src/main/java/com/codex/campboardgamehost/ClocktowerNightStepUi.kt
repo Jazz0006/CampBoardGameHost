@@ -31,7 +31,6 @@ import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommi
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
-import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
@@ -173,30 +172,73 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         emptyList()
     }
-    val dynamicDecisionFamily = when (step.action) {
-        ClocktowerNightAction.MayorRedirect -> "mayor-redirect"
-        ClocktowerNightAction.DemonSuccessor -> "demon-succession"
+    fun seatNumberForAutomaticCandidate(card: PlayerCard): Int? = cards
+        .indexOfFirst { candidate -> candidate.name == card.name }
+        .takeIf { index -> index >= 0 }
+        ?.plus(1)
+    val automaticMayorTargetName = if (
+        automaticStorytellerInfo &&
+        step.isRealAction &&
+        step.action == ClocktowerNightAction.MayorRedirect
+    ) {
+        val mayor = aliveCards.firstOrNull { card -> card.clocktowerRole?.enName == "Mayor" }
+        val mayorSeat = mayor?.let(::seatNumberForAutomaticCandidate)
+        mayorSeat?.let { resolvedMayorSeat ->
+            val livingTownsfolkSeats = clocktowerTemporaryMayorEligibleTownsfolkSeats(
+                candidates = mayorRedirectTargetCards.mapNotNull { candidate ->
+                    val candidateSeat = seatNumberForAutomaticCandidate(candidate) ?: return@mapNotNull null
+                    val candidateTeam = candidate.clocktowerTeam ?: return@mapNotNull null
+                    ClocktowerTemporaryMayorCandidate(
+                        seat = candidateSeat,
+                        team = candidateTeam,
+                        alive = candidate.eliminatedRound == null,
+                    )
+                },
+                mayorSeat = resolvedMayorSeat,
+            )
+            val selectedSeat = clocktowerTemporaryMayorSelection(
+                mayorSeat = resolvedMayorSeat,
+                livingTownsfolkSeats = livingTownsfolkSeats,
+                decisionKey = clocktowerTemporaryNightDecisionKey(
+                    gameId = gameId,
+                    phase = phase,
+                    round = round,
+                    sequence = sequence,
+                    family = "mayor-redirect",
+                ),
+            ).selected.payload
+            cards.getOrNull(selectedSeat - 1)?.name
+        }
+    } else {
+        null
+    }
+    val automaticDemonSuccessorTargetName = if (
+        automaticStorytellerInfo &&
+        step.isRealAction &&
+        step.action == ClocktowerNightAction.DemonSuccessor
+    ) {
+        clocktowerTemporaryDemonSuccessorSelection(
+            eligible = demonSuccessorTargetCards.mapNotNull { candidate ->
+                val candidateSeat = seatNumberForAutomaticCandidate(candidate) ?: return@mapNotNull null
+                val roleEnName = candidate.clocktowerRole?.enName ?: return@mapNotNull null
+                temporaryDemonSuccessorChoice(candidateSeat, roleEnName)
+            },
+            decisionKey = clocktowerTemporaryNightDecisionKey(
+                gameId = gameId,
+                phase = phase,
+                round = round,
+                sequence = sequence,
+                family = "demon-succession",
+            ),
+        )?.selected?.payload?.seat?.let { seat -> cards.getOrNull(seat - 1)?.name }
+    } else {
+        null
+    }
+    val automaticDecisionTargetName = when (step.action) {
+        ClocktowerNightAction.MayorRedirect -> automaticMayorTargetName
+        ClocktowerNightAction.DemonSuccessor -> automaticDemonSuccessorTargetName
         else -> null
     }
-    val dynamicDecisionPool = dynamicDecisionFamily
-        ?.let { family -> unifiedDecisionPool(step.decisionOptions, family) }
-    val automaticDecisionOptions = dynamicDecisionPool
-        ?.candidatesFor(SelectionExecutionPolicy.AUTO)
-        ?.map { it.payload }
-        ?: step.decisionOptions
-    val assistedDecisionOptions = dynamicDecisionPool
-        ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
-        ?.map { it.payload }
-        ?: step.decisionOptions
-    val automaticDecision = WeightedStableSelector.selectStyle(
-        automaticDecisionOptions,
-        automaticStorytellerStyle,
-        ClocktowerDecisionOption::recommendationStyle,
-    )
-    val automaticDecisionTargetName = automaticDecision?.targetName
-        ?: demonSuccessorTargetCards.singleOrNull()?.takeIf {
-            step.action == ClocktowerNightAction.DemonSuccessor
-        }?.name
     val selectionAudit = if (automaticStorytellerInfo) {
         SelectionAuditContext(
             selectionId = informationDecisionKey,
@@ -648,6 +690,13 @@ internal fun ClocktowerNightStepCardLocalized(
                     recommendations = spyRegistrationRecommendations,
                     enabled = spyCanRegister,
                     selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|spy-registration"),
+                    automaticDecisionKey = clocktowerTemporaryNightDecisionKey(
+                        gameId = gameId,
+                        phase = phase,
+                        round = round,
+                        sequence = sequence,
+                        family = "spy-registration:${step.spyRegistrationKey}",
+                    ),
                     onRegistersGoodChange = onSpyRegistrationGoodChange,
                     onRoleChange = onSpyRegistrationRoleChange,
                 )
@@ -664,28 +713,28 @@ internal fun ClocktowerNightStepCardLocalized(
                     recommendations = recluseRegistrationRecommendations,
                     enabled = recluseCanRegister,
                     selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|recluse-registration"),
+                    automaticDecisionKey = clocktowerTemporaryNightDecisionKey(
+                        gameId = gameId,
+                        phase = phase,
+                        round = round,
+                        sequence = sequence,
+                        family = "recluse-registration:${step.recluseRegistrationKey}",
+                    ),
                     onRegistersEvilChange = onRecluseRegistrationEvilChange,
                     onRoleChange = onRecluseRegistrationRoleChange,
                 )
             }
-            if (step.decisionOptions.isNotEmpty()) {
+            if (step.decisionOptions.isNotEmpty() && !automaticStorytellerInfo) {
                 HostActionSection(
                     title = if (language == "en") "Recommended ruling" else "推荐裁定",
-                    helper = if (automaticStorytellerInfo) {
-                        if (language == "en") "The selected automatic ruling has been applied." else "已采用当前自动模式的裁定。"
-                    } else if (language == "en") {
-                        "The balanced option is the beginner default. You can still choose manually below."
+                    helper = if (language == "en") {
+                        "Choose a recommendation below, or adjust the ruling manually on the table."
                     } else {
-                        if (language == "en") "The balanced option is the beginner default; you can still choose manually below." else "平衡方案是新手默认建议；仍可在下方手动裁定。"
+                        "可采用下方推荐，也可在方桌中手动调整裁定。"
                     },
                 ) {
-                    step.decisionOptions
-                        .filter { !automaticStorytellerInfo || it == automaticDecision }
-                        .forEach { option ->
-                        if (automaticStorytellerInfo) {
-                            Text(option.label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                        } else
-                        if (automaticStorytellerInfo || option.isDefaultRecommendation) {
+                    step.decisionOptions.forEach { option ->
+                        if (option.isDefaultRecommendation) {
                             Button(
                                 onClick = { onSelectName(option.targetName) },
                                 modifier = Modifier.fillMaxWidth(),

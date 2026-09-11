@@ -42,6 +42,7 @@ internal fun SpyRegistrationPanel(
     automaticStorytellerInfo: Boolean = false,
     automaticStorytellerStyle: RecommendationStyle = RecommendationStyle.BALANCED,
     selectionAudit: SelectionAuditContext? = null,
+    automaticDecisionKey: String? = null,
     enabled: Boolean,
     onRegistersGoodChange: (Boolean) -> Unit,
     onRoleChange: (String) -> Unit,
@@ -54,7 +55,7 @@ internal fun SpyRegistrationPanel(
         ?.map { it.payload }
         ?: recommendations
     val automaticRuling = if (automaticStorytellerInfo && enabled) {
-        val decisionKey = selectionAudit?.selectionId
+        val decisionKey = automaticDecisionKey
             ?: "spy-registration-fallback:${spy.name}:${roles.map { it.enName }.sorted().joinToString(",")}"
         clocktowerTemporaryRegistrationSelection(
             legalSpecialRoleEnNames = roles.map { it.enName },
@@ -63,7 +64,7 @@ internal fun SpyRegistrationPanel(
     } else {
         null
     }
-    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRuling, selectionAudit?.selectionId) {
+    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRuling, automaticDecisionKey, selectionAudit?.selectionId) {
         if (automaticStorytellerInfo && enabled && automaticRuling != null) {
             selectionAudit?.let { audit ->
                 audit.recorder.recordPreview(
@@ -212,6 +213,7 @@ internal fun RecluseRegistrationPanel(
     automaticStorytellerInfo: Boolean = false,
     automaticStorytellerStyle: RecommendationStyle = RecommendationStyle.BALANCED,
     selectionAudit: SelectionAuditContext? = null,
+    automaticDecisionKey: String? = null,
     enabled: Boolean,
     onRegistersEvilChange: (Boolean) -> Unit,
     onRoleChange: (String) -> Unit,
@@ -224,7 +226,7 @@ internal fun RecluseRegistrationPanel(
         ?.map { it.payload }
         ?: recommendations
     val automaticRuling = if (automaticStorytellerInfo && enabled) {
-        val decisionKey = selectionAudit?.selectionId
+        val decisionKey = automaticDecisionKey
             ?: "recluse-registration-fallback:${recluse.name}:${roles.map { it.enName }.sorted().joinToString(",")}"
         clocktowerTemporaryRegistrationSelection(
             legalSpecialRoleEnNames = roles.map { it.enName },
@@ -233,7 +235,7 @@ internal fun RecluseRegistrationPanel(
     } else {
         null
     }
-    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRuling, selectionAudit?.selectionId) {
+    LaunchedEffect(automaticStorytellerInfo, enabled, automaticRuling, automaticDecisionKey, selectionAudit?.selectionId) {
         if (automaticStorytellerInfo && enabled && automaticRuling != null) {
             selectionAudit?.let { audit ->
                 audit.recorder.recordPreview(
