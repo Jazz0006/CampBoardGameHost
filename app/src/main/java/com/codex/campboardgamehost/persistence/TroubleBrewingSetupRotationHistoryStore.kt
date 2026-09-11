@@ -2,6 +2,7 @@ package com.codex.campboardgamehost
 
 import android.content.Context
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingPlayerStartingIdentity
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingPlayerStartingIdentityHistory
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetSelection
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationHistory
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
@@ -65,23 +66,34 @@ internal class TroubleBrewingSetupRotationHistoryStore(
         return TroubleBrewingSetupRotationHistory(recentGames = records)
     }
 
-    fun latestPlayerStartingIdentitiesFor(
+    fun recentPlayerStartingIdentityHistoryFor(
         datasetId: String,
         schemaVersion: Int,
-    ): List<TroubleBrewingPlayerStartingIdentity> {
+    ): TroubleBrewingPlayerStartingIdentityHistory {
         require(datasetId.isNotBlank()) { "Trouble Brewing rotation-history dataset ID cannot be blank." }
         require(schemaVersion > 0) { "Trouble Brewing rotation-history schema version must be positive." }
 
-        return decodeOrEmpty(readRaw())
+        val recentGames = decodeOrEmpty(readRaw())
             .asSequence()
             .map { it.record }
-            .firstOrNull {
+            .filter {
                 it.datasetId == datasetId &&
                     it.schemaVersion == schemaVersion
             }
-            ?.playerStartingIdentities
-            .orEmpty()
+            .take(TroubleBrewingPlayerStartingIdentityHistory.MAX_RECENT_GAMES)
+            .map { it.playerStartingIdentities }
+            .toList()
+        return TroubleBrewingPlayerStartingIdentityHistory(recentGames = recentGames)
     }
+
+    fun latestPlayerStartingIdentitiesFor(
+        datasetId: String,
+        schemaVersion: Int,
+    ): List<TroubleBrewingPlayerStartingIdentity> =
+        recentPlayerStartingIdentityHistoryFor(
+            datasetId = datasetId,
+            schemaVersion = schemaVersion,
+        ).recentGames.firstOrNull().orEmpty()
 
     private fun trimPerPlayerCount(entries: List<PersistedRotationEntry>): List<PersistedRotationEntry> {
         val retainedCounts = mutableMapOf<Int, Int>()
