@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCharacterRegistry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -48,6 +49,52 @@ class TroubleBrewingProductionSetupPreparerTest {
         val drunk = prepared.dealPlan.assignments.single { it.actualRoleId == "drunk" }
         assertEquals(prepared.selection.selectedDrunkShownRole, drunk.shownRoleId)
         assertTrue(drunk.shownRoleId in prepared.selection.preset.drunkAsOptions)
+    }
+
+    @Test
+    fun `production preparation feeds recent player rotation history into the deal planner`() {
+        val dataset = dataset(validPreset())
+        val players = (1..8).map { "Player $it" }
+        val registry = canonicalRegistry()
+        val seed = 6_004L
+        val baseline = TroubleBrewingProductionSetupPreparer.prepare(
+            dataset = dataset,
+            characterRegistry = registry,
+            orderedPlayerNames = players,
+            gameSeed = seed,
+            recentSetupRotationHistory = TroubleBrewingSetupRotationHistory.EMPTY,
+        )
+        val baselineDemonHolder = baseline.dealPlan.assignments.single { it.actualRoleId == "imp" }.playerName
+        val twoGamesAgoDemon = TroubleBrewingPlayerStartingIdentity(
+            playerKey = baselineDemonHolder,
+            actualRoleId = "pukka",
+            shownRoleId = "pukka",
+            actualRoleCategory = TroubleBrewingStartingRoleCategory.DEMON,
+        )
+
+        val rotated = TroubleBrewingProductionSetupPreparer.prepare(
+            dataset = dataset,
+            characterRegistry = registry,
+            orderedPlayerNames = players,
+            gameSeed = seed,
+            recentSetupRotationHistory = TroubleBrewingSetupRotationHistory.EMPTY,
+            recentPlayerStartingIdentityHistory = TroubleBrewingPlayerStartingIdentityHistory(
+                recentGames = listOf(
+                    emptyList(),
+                    listOf(twoGamesAgoDemon),
+                ),
+            ),
+        )
+
+        assertNotEquals(
+            baselineDemonHolder,
+            rotated.dealPlan.assignments.single { it.actualRoleId == "imp" }.playerName,
+        )
+        assertEquals(
+            baseline.dealPlan.assignments.map { it.actualRoleId }.sorted(),
+            rotated.dealPlan.assignments.map { it.actualRoleId }.sorted(),
+        )
+        assertEquals(baseline.selection, rotated.selection)
     }
 
     @Test

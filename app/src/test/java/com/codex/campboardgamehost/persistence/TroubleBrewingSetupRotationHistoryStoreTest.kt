@@ -1,8 +1,12 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingPlayerStartingIdentity
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPreset
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetSelection
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationRecord
+import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingStartingRoleCategory
+import org.json.JSONArray
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -65,6 +69,114 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
                 ),
             ),
             restored.recentGames,
+        )
+    }
+
+    @Test
+    fun `completed setup starting identities survive store recreation`() {
+        var raw: String? = null
+        val writeRaw: (String) -> Boolean = { encoded ->
+            raw = encoded
+            true
+        }
+        val record = recordWithStartingIdentities()
+
+        TroubleBrewingSetupRotationHistoryStore(
+            readRaw = { raw },
+            writeRaw = writeRaw,
+        ).recordCompletedGame(
+            gameId = "identity-game",
+            record = record,
+        )
+
+        val restored = TroubleBrewingSetupRotationHistoryStore(
+            readRaw = { raw },
+            writeRaw = writeRaw,
+        ).historyFor(
+            datasetId = record.datasetId,
+            schemaVersion = record.schemaVersion,
+            playerCount = record.playerCount,
+        )
+
+        assertEquals(listOf(record), restored.recentGames)
+    }
+
+    @Test
+    fun `version one history remains readable with empty starting identities`() {
+        val raw = JSONObject().apply {
+            put("version", 1)
+            put(
+                "entries",
+                JSONArray().put(
+                    JSONObject().apply {
+                        put("gameId", "legacy-game")
+                        put("datasetId", "test-dataset")
+                        put("schemaVersion", 2)
+                        put("presetId", "legacy-five")
+                        put("playerCount", 5)
+                        put("realNonDemonRoleIds", JSONArray(listOf("chef", "empath", "butler", "poisoner")))
+                        put("minionRoleIds", JSONArray(listOf("poisoner")))
+                        put("primaryStyleTag", "legacy")
+                        put("selectedDrunkShownRole", JSONObject.NULL)
+                    },
+                ),
+            )
+        }.toString()
+        val store = TroubleBrewingSetupRotationHistoryStore(
+            readRaw = { raw },
+            writeRaw = { true },
+        )
+
+        val restored = store.historyFor("test-dataset", 2, 5).recentGames.single()
+
+        assertEquals("legacy-five", restored.presetId)
+        assertTrue(restored.playerStartingIdentities.isEmpty())
+    }
+
+    @Test
+    fun `latest starting identities follow the immediately previous game across player counts`() {
+        var raw: String? = null
+        val store = TroubleBrewingSetupRotationHistoryStore(
+            readRaw = { raw },
+            writeRaw = { encoded -> raw = encoded; true },
+        )
+        val olderFive = recordWithStartingIdentities().copy(presetId = "older-five")
+        val newerSix = sixPlayerRecordWithStartingIdentities()
+
+        store.recordCompletedGame("older-five-game", olderFive)
+        store.recordCompletedGame("newer-six-game", newerSix)
+
+        assertEquals(
+            newerSix.playerStartingIdentities,
+            store.latestPlayerStartingIdentitiesFor(
+                datasetId = "test-dataset",
+                schemaVersion = 2,
+            ),
+        )
+    }
+
+    @Test
+    fun `latest starting identities do not skip an intervening completion without identity history`() {
+        var raw: String? = null
+        val store = TroubleBrewingSetupRotationHistoryStore(
+            readRaw = { raw },
+            writeRaw = { encoded -> raw = encoded; true },
+        )
+        store.recordCompletedGame("older-identity-game", recordWithStartingIdentities())
+        store.recordCompletedGame(
+            "newer-legacy-style-game",
+            simpleSelection(
+                gameSeed = 7_777L,
+                presetId = "newer-no-identities",
+                playerCount = 6,
+            ),
+        )
+
+        assertTrue(
+            store.latestPlayerStartingIdentitiesFor(
+                datasetId = "test-dataset",
+                schemaVersion = 2,
+            ).isEmpty(),
         )
     }
 
@@ -203,6 +315,56 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
             store.historyFor("test-dataset", 2, 8).recentGames.map { it.presetId },
         )
     }
+
+    private fun recordWithStartingIdentities(): TroubleBrewingSetupRotationRecord =
+        TroubleBrewingSetupRotationRecord(
+            datasetId = "test-dataset",
+            schemaVersion = 2,
+            presetId = "identity-five",
+            playerCount = 5,
+            realNonDemonRoleIds = setOf("chef", "empath", "butler", "poisoner"),
+            minionRoleIds = setOf("poisoner"),
+            primaryStyleTag = "identity-test",
+            selectedDrunkShownRole = null,
+            playerStartingIdentities = listOf(
+                startingIdentity("Alice", "chef", TroubleBrewingStartingRoleCategory.TOWNSFOLK),
+                startingIdentity("Bob", "empath", TroubleBrewingStartingRoleCategory.TOWNSFOLK),
+                startingIdentity("Carol", "butler", TroubleBrewingStartingRoleCategory.OUTSIDER),
+                startingIdentity("David", "poisoner", TroubleBrewingStartingRoleCategory.MINION),
+                startingIdentity("Emma", "imp", TroubleBrewingStartingRoleCategory.DEMON),
+            ),
+        )
+
+    private fun sixPlayerRecordWithStartingIdentities(): TroubleBrewingSetupRotationRecord =
+        TroubleBrewingSetupRotationRecord(
+            datasetId = "test-dataset",
+            schemaVersion = 2,
+            presetId = "identity-six",
+            playerCount = 6,
+            realNonDemonRoleIds = setOf("chef", "empath", "washerwoman", "butler", "poisoner"),
+            minionRoleIds = setOf("poisoner"),
+            primaryStyleTag = "identity-test",
+            selectedDrunkShownRole = null,
+            playerStartingIdentities = listOf(
+                startingIdentity("Alice", "chef", TroubleBrewingStartingRoleCategory.TOWNSFOLK),
+                startingIdentity("Bob", "empath", TroubleBrewingStartingRoleCategory.TOWNSFOLK),
+                startingIdentity("Carol", "washerwoman", TroubleBrewingStartingRoleCategory.TOWNSFOLK),
+                startingIdentity("David", "butler", TroubleBrewingStartingRoleCategory.OUTSIDER),
+                startingIdentity("Emma", "poisoner", TroubleBrewingStartingRoleCategory.MINION),
+                startingIdentity("Frank", "imp", TroubleBrewingStartingRoleCategory.DEMON),
+            ),
+        )
+
+    private fun startingIdentity(
+        playerKey: String,
+        roleId: String,
+        category: TroubleBrewingStartingRoleCategory,
+    ): TroubleBrewingPlayerStartingIdentity = TroubleBrewingPlayerStartingIdentity(
+        playerKey = playerKey,
+        actualRoleId = roleId,
+        shownRoleId = roleId,
+        actualRoleCategory = category,
+    )
 
     private fun simpleSelection(
         gameSeed: Long,

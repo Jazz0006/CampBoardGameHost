@@ -171,4 +171,162 @@ class TroubleBrewingSetupDealPlannerTest {
         assertEquals(true, drunkAssignment.shownRoleId in preset.drunkAsOptions)
         assertFalse(drunkAssignment.shownRoleId in actualRoleIds)
     }
+
+    @Test
+    fun `exact shown identity repeat is avoided without changing the selected role multiset`() {
+        val preset = TroubleBrewingSetupPreset(
+            id = "tbsp-role-rotation-five",
+            playerCount = 5,
+            townsfolk = listOf("washerwoman", "investigator", "chef"),
+            outsiders = emptyList(),
+            minions = listOf("poisoner"),
+            demons = listOf("imp"),
+            source = "test",
+            complexity = "test",
+            styleTags = emptyList(),
+            drunkAsOptions = emptyList(),
+        )
+        val selection = TroubleBrewingSetupPresetSelection(
+            datasetId = "test-dataset",
+            schemaVersion = 2,
+            presetId = preset.id,
+            playerCount = preset.playerCount,
+            gameSeed = 3_301L,
+            preset = preset,
+            selectedDrunkShownRole = null,
+        )
+        val orderedPlayerNames = List(preset.playerCount) { index -> "Player ${index + 1}" }
+        val legacyPlan = TroubleBrewingSetupDealPlanner.plan(
+            selection = selection,
+            orderedPlayerNames = orderedPlayerNames,
+        )
+        val previousPlayerOne = legacyPlan.assignments.first()
+
+        val rotatedPlan = TroubleBrewingSetupDealPlanner.plan(
+            selection = selection,
+            orderedPlayerNames = orderedPlayerNames,
+            previousPlayerStartingIdentities = listOf(
+                TroubleBrewingPlayerStartingIdentity(
+                    playerKey = previousPlayerOne.playerName,
+                    actualRoleId = previousPlayerOne.actualRoleId,
+                    shownRoleId = previousPlayerOne.shownRoleId,
+                    actualRoleCategory = categoryOf(preset, previousPlayerOne.actualRoleId),
+                ),
+            ),
+        )
+
+        assertNotEquals(
+            previousPlayerOne.shownRoleId,
+            rotatedPlan.assignments.first().shownRoleId,
+        )
+        assertEquals(
+            legacyPlan.assignments.map { it.actualRoleId }.sorted(),
+            rotatedPlan.assignments.map { it.actualRoleId }.sorted(),
+        )
+    }
+
+    @Test
+    fun `special category repeats move demon minion and outsider while townsfolk stays neutral`() {
+        val preset = TroubleBrewingSetupPreset(
+            id = "tbsp-category-rotation-five",
+            playerCount = 5,
+            townsfolk = listOf("washerwoman", "chef"),
+            outsiders = listOf("butler"),
+            minions = listOf("poisoner"),
+            demons = listOf("imp"),
+            source = "test",
+            complexity = "test",
+            styleTags = emptyList(),
+            drunkAsOptions = emptyList(),
+        )
+        val selection = TroubleBrewingSetupPresetSelection(
+            datasetId = "test-dataset",
+            schemaVersion = 2,
+            presetId = preset.id,
+            playerCount = preset.playerCount,
+            gameSeed = 3_401L,
+            preset = preset,
+            selectedDrunkShownRole = null,
+        )
+        val orderedPlayerNames = List(preset.playerCount) { index -> "Player ${index + 1}" }
+        val neutralHistory = orderedPlayerNames.mapIndexed { index, playerName ->
+            TroubleBrewingPlayerStartingIdentity(
+                playerKey = playerName,
+                actualRoleId = "old_townsfolk_${index + 1}",
+                shownRoleId = "old_identity_${index + 1}",
+                actualRoleCategory = TroubleBrewingStartingRoleCategory.TOWNSFOLK,
+            )
+        }
+        val neutralPlan = TroubleBrewingSetupDealPlanner.plan(
+            selection = selection,
+            orderedPlayerNames = orderedPlayerNames,
+            previousPlayerStartingIdentities = neutralHistory,
+        )
+
+        data class CategoryCase(
+            val currentRoleId: String,
+            val previousRoleId: String,
+            val category: TroubleBrewingStartingRoleCategory,
+        )
+
+        listOf(
+            CategoryCase("imp", "pukka", TroubleBrewingStartingRoleCategory.DEMON),
+            CategoryCase("poisoner", "spy", TroubleBrewingStartingRoleCategory.MINION),
+            CategoryCase("butler", "recluse", TroubleBrewingStartingRoleCategory.OUTSIDER),
+        ).forEach { case ->
+            val baselineHolder = neutralPlan.assignments.single { it.actualRoleId == case.currentRoleId }.playerName
+            val categoryHistory = neutralHistory.map { identity ->
+                if (identity.playerKey == baselineHolder) {
+                    identity.copy(
+                        actualRoleId = case.previousRoleId,
+                        actualRoleCategory = case.category,
+                    )
+                } else {
+                    identity
+                }
+            }
+
+            val rotatedPlan = TroubleBrewingSetupDealPlanner.plan(
+                selection = selection,
+                orderedPlayerNames = orderedPlayerNames,
+                previousPlayerStartingIdentities = categoryHistory,
+            )
+
+            assertNotEquals(
+                "$case should move away from the previous same-category player",
+                baselineHolder,
+                rotatedPlan.assignments.single { it.actualRoleId == case.currentRoleId }.playerName,
+            )
+        }
+
+        val townsfolkHolder = neutralPlan.assignments.single { it.actualRoleId == "washerwoman" }.playerName
+        val stillTownsfolkHistory = neutralHistory.map { identity ->
+            if (identity.playerKey == townsfolkHolder) {
+                identity.copy(actualRoleId = "old_other_townsfolk")
+            } else {
+                identity
+            }
+        }
+        val townsfolkNeutralPlan = TroubleBrewingSetupDealPlanner.plan(
+            selection = selection,
+            orderedPlayerNames = orderedPlayerNames,
+            previousPlayerStartingIdentities = stillTownsfolkHistory,
+        )
+
+        assertEquals(
+            neutralPlan.assignments.map { it.playerName to it.actualRoleId },
+            townsfolkNeutralPlan.assignments.map { it.playerName to it.actualRoleId },
+        )
+    }
+
+    private fun categoryOf(
+        preset: TroubleBrewingSetupPreset,
+        roleId: String,
+    ): TroubleBrewingStartingRoleCategory = when (roleId) {
+        in preset.townsfolk -> TroubleBrewingStartingRoleCategory.TOWNSFOLK
+        in preset.outsiders -> TroubleBrewingStartingRoleCategory.OUTSIDER
+        in preset.minions -> TroubleBrewingStartingRoleCategory.MINION
+        in preset.demons -> TroubleBrewingStartingRoleCategory.DEMON
+        else -> error("Unknown role $roleId")
+    }
 }

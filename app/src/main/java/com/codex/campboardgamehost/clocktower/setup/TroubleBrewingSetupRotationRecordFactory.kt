@@ -57,6 +57,72 @@ internal object TroubleBrewingSetupRotationRecordFactory {
         ).also(::validate)
     }
 
+    fun fromPreparedSetup(preparedSetup: TroubleBrewingPreparedSetup): TroubleBrewingSetupRotationRecord {
+        val selection = preparedSetup.selection
+        val dealPlan = preparedSetup.dealPlan
+        require(dealPlan.datasetId == selection.datasetId) {
+            "Trouble Brewing prepared setup dataset provenance is inconsistent."
+        }
+        require(dealPlan.schemaVersion == selection.schemaVersion) {
+            "Trouble Brewing prepared setup schema provenance is inconsistent."
+        }
+        require(dealPlan.presetId == selection.presetId) {
+            "Trouble Brewing prepared setup preset provenance is inconsistent."
+        }
+        require(dealPlan.playerCount == selection.playerCount) {
+            "Trouble Brewing prepared setup player count is inconsistent."
+        }
+        require(dealPlan.gameSeed == selection.gameSeed) {
+            "Trouble Brewing prepared setup seed provenance is inconsistent."
+        }
+        require(dealPlan.selectedDrunkShownRole == selection.selectedDrunkShownRole) {
+            "Trouble Brewing prepared setup shown-identity provenance is inconsistent."
+        }
+        require(dealPlan.assignments.size == selection.playerCount) {
+            "Trouble Brewing prepared setup assignment count is inconsistent."
+        }
+        require(dealPlan.assignments.map { it.seat } == (1..selection.playerCount).toList()) {
+            "Trouble Brewing prepared setup assignments must remain in contiguous seat order."
+        }
+        require(dealPlan.assignments.map { it.playerName }.distinct().size == selection.playerCount) {
+            "Trouble Brewing prepared setup player identities must be unique."
+        }
+        require(dealPlan.assignments.none { it.playerName.isBlank() }) {
+            "Trouble Brewing prepared setup player identities cannot be blank."
+        }
+
+        val expectedActualRoleIds = (
+            selection.preset.townsfolk +
+                selection.preset.outsiders +
+                selection.preset.minions +
+                selection.preset.demons
+            ).sorted()
+        require(dealPlan.assignments.map { it.actualRoleId }.sorted() == expectedActualRoleIds) {
+            "Trouble Brewing prepared setup assignments must preserve the selected role multiset."
+        }
+
+        val playerStartingIdentities = dealPlan.assignments.map { assignment ->
+            val expectedShownRoleId = if (assignment.actualRoleId == DRUNK_EXTERNAL_ID) {
+                requireNotNull(selection.selectedDrunkShownRole)
+            } else {
+                assignment.actualRoleId
+            }
+            require(assignment.shownRoleId == expectedShownRoleId) {
+                "Trouble Brewing prepared setup shown identity is inconsistent for '${assignment.playerName}'."
+            }
+            TroubleBrewingPlayerStartingIdentity(
+                playerKey = assignment.playerName,
+                actualRoleId = assignment.actualRoleId,
+                shownRoleId = assignment.shownRoleId,
+                actualRoleCategory = categoryOf(selection.preset, assignment.actualRoleId),
+            )
+        }
+
+        return fromSelection(selection)
+            .copy(playerStartingIdentities = playerStartingIdentities)
+            .also(::validate)
+    }
+
     fun validate(record: TroubleBrewingSetupRotationRecord) {
         require(record.datasetId.isNotBlank()) { "Trouble Brewing completion dataset ID cannot be blank." }
         require(record.schemaVersion > 0) { "Trouble Brewing completion schema version must be positive." }
@@ -94,7 +160,53 @@ internal object TroubleBrewingSetupRotationRecordFactory {
                 "Trouble Brewing completion without Drunk cannot carry a Drunk shown role."
             }
         }
+
+        if (record.playerStartingIdentities.isNotEmpty()) {
+            require(record.playerStartingIdentities.size == record.playerCount) {
+                "Trouble Brewing completion starting identities must cover every player."
+            }
+            require(
+                record.playerStartingIdentities.map { it.playerKey }.distinct().size == record.playerCount,
+            ) {
+                "Trouble Brewing completion starting identities must contain unique player keys."
+            }
+            record.playerStartingIdentities.forEach { identity ->
+                require(identity.playerKey.isNotBlank()) {
+                    "Trouble Brewing completion player key cannot be blank."
+                }
+                require(identity.actualRoleId.isNotBlank() && identity.shownRoleId.isNotBlank()) {
+                    "Trouble Brewing completion starting identity roles cannot be blank."
+                }
+                if (identity.actualRoleId == DRUNK_EXTERNAL_ID) {
+                    require(identity.shownRoleId == record.selectedDrunkShownRole) {
+                        "Trouble Brewing completion Drunk starting identity must use the committed shown role."
+                    }
+                } else {
+                    require(identity.shownRoleId == identity.actualRoleId) {
+                        "Trouble Brewing completion non-Drunk starting identities must show their actual role."
+                    }
+                }
+            }
+            require(
+                record.playerStartingIdentities.map { it.actualRoleId }.toSet() ==
+                    record.realNonDemonRoleIds + IMP_EXTERNAL_ID,
+            ) {
+                "Trouble Brewing completion starting identities must preserve the completed role set."
+            }
+        }
+    }
+
+    private fun categoryOf(
+        preset: TroubleBrewingSetupPreset,
+        roleId: String,
+    ): TroubleBrewingStartingRoleCategory = when (roleId) {
+        in preset.townsfolk -> TroubleBrewingStartingRoleCategory.TOWNSFOLK
+        in preset.outsiders -> TroubleBrewingStartingRoleCategory.OUTSIDER
+        in preset.minions -> TroubleBrewingStartingRoleCategory.MINION
+        in preset.demons -> TroubleBrewingStartingRoleCategory.DEMON
+        else -> error("Trouble Brewing role '$roleId' is not part of the selected preset.")
     }
 
     private const val DRUNK_EXTERNAL_ID = "drunk"
+    private const val IMP_EXTERNAL_ID = "imp"
 }

@@ -1802,12 +1802,16 @@ internal fun CampBoardGameHostApp() {
 
         val dataset = TroubleBrewingSetupPresetJson.parse(datasetJson)
 
-        val rotationHistory = TroubleBrewingSetupRotationHistoryStore.fromContext(baseContext)
-            .historyFor(
-                datasetId = dataset.datasetId,
-                schemaVersion = dataset.schemaVersion,
-                playerCount = playerNames.size,
-            )
+        val rotationHistoryStore = TroubleBrewingSetupRotationHistoryStore.fromContext(baseContext)
+        val rotationHistory = rotationHistoryStore.historyFor(
+            datasetId = dataset.datasetId,
+            schemaVersion = dataset.schemaVersion,
+            playerCount = playerNames.size,
+        )
+        val playerRotationHistory = rotationHistoryStore.recentPlayerStartingIdentityHistoryFor(
+            datasetId = dataset.datasetId,
+            schemaVersion = dataset.schemaVersion,
+        )
 
         val characterRegistry = BuiltInClocktowerRulesetCatalog
             .fromContext(baseContext)
@@ -1820,6 +1824,7 @@ internal fun CampBoardGameHostApp() {
             orderedPlayerNames = playerNames.toList(),
             gameSeed = preparedSeed,
             recentSetupRotationHistory = rotationHistory,
+            recentPlayerStartingIdentityHistory = playerRotationHistory,
         )
 
         val resolvedAssignments = TroubleBrewingDealRoleResolver.resolve(
@@ -1881,9 +1886,8 @@ internal fun CampBoardGameHostApp() {
                     clocktowerScript = ClocktowerScript.TroubleBrewing,
                     preparedClocktowerSeed = preparedSeed,
                 )
-                committedTroubleBrewingSetupRotationRecord = TroubleBrewingSetupRotationRecordFactory.fromSelection(
-                    preparedSetup.selection,
-                )
+                committedTroubleBrewingSetupRotationRecord =
+                    TroubleBrewingSetupRotationRecordFactory.fromPreparedSetup(preparedSetup)
                 committedClocktowerSetup = TroubleBrewingCommittedSetupAdapter.fromDealPlan(
                     dealPlan = preparedSetup.dealPlan,
                     resolvedAssignments = resolvedAssignments,
