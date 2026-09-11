@@ -26,7 +26,7 @@ class ClocktowerDemonBluffPresentationTest {
             automaticStorytellerInfo = false,
             appliedRoleNames = emptyList(),
             setupPlans = plans,
-            preferredManualStyle = RecommendationStyle.AGGRESSIVE,
+            storytellerStyle = RecommendationStyle.AGGRESSIVE,
         )
 
         assertEquals(listOf("Virgin", "Slayer", "Soldier"), result)

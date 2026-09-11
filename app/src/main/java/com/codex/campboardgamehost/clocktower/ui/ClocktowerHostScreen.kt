@@ -2193,6 +2193,7 @@ internal fun ClocktowerJudgeScreen(
         automaticStorytellerInfo = automaticStorytellerInfo,
         appliedRoleNames = recommendedDemonBluffRoleNames,
         setupPlans = setupPlansForDemonBluffs,
+        storytellerStyle = automaticStorytellerStyle,
     )
     val demonBluffPresentation = resolveDemonBluffPresentation(
         recommendedRoleNames = demonBluffRoleNames,
