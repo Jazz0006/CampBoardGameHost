@@ -1,0 +1,87 @@
+name: UX-MODE-1C registration one-shot
+
+on:
+  push:
+    branches:
+      - codex/ux-mode-1
+
+permissions:
+  contents: write
+
+jobs:
+  patch-registration-ui:
+    if: "${{ github.event.head_commit.message == 'chore: stage UX-MODE-1C registration workflow' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate exact head and locked blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          remote_head="$(git ls-remote origin refs/heads/codex/ux-mode-1 | cut -f1)"
+          test "$remote_head" = "$GITHUB_SHA"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationUi.kt)" = 'c6739e3ec6037ac0a55580528a46a1be252ad9e2'
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerTemporaryAutomaticRulings.kt)" = '93c3e0bcdaf49190dfca2d1b53e14b26a76c7fb7'
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/recommendation/TemporaryAutomaticStorytellerPolicy.kt)" = 'a7b7cc75dc8e66809c51e2e9c1cf3e99d7a02af2'
+          test -z "$(git status --porcelain)"
+
+      - name: Apply exact registration UI patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/ux_mode_1c_registration_patch.py
+
+      - name: Exact diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only)"
+          test "$changed" = 'app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationUi.kt'
+          ! grep -q 'WeightedStableSelector' app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationUi.kt
+          ! grep -q 'automaticStyleLabel' app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationUi.kt
+          test "$(grep -c 'clocktowerTemporaryRegistrationSelection(' app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationUi.kt)" = '2'
+          grep -q 'System ruling applied' app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationUi.kt
+          grep -q '系统已自动裁定' app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationUi.kt
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Focused registration policy validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.clocktower.recommendation.TemporaryAutomaticStorytellerPolicyTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Commit and push registration product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_head="$(git ls-remote origin refs/heads/codex/ux-mode-1 | cut -f1)"
+          test "$remote_head" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationUi.kt
+          git commit -m 'feat: automate Spy and Recluse registration rulings'
+          git push origin HEAD:codex/ux-mode-1
+
+      - name: Remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/scripts/ux_mode_1c_registration_patch.py
+          rm .github/workflows/ux-mode-1c-registration-one-shot.yml
+          git add -A
+          git commit -m 'chore: remove UX-MODE-1C registration one-shot files'
+          git push origin HEAD:codex/ux-mode-1
