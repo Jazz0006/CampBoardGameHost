@@ -153,7 +153,6 @@ for forbidden in (
     "StorytellerAutomationMode",
     "AUTOMATIC_STORYTELLER_INFO_KEY",
     "STORYTELLER_AUTOMATION_MODE_KEY",
-    "storytellerAutomationMode",
     "loadStorytellerAutomationMode",
     "saveStorytellerAutomationMode",
 ):
