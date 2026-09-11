@@ -23,6 +23,8 @@ internal object TroubleBrewingProductionSetupPreparer {
         orderedPlayerNames: List<String>,
         gameSeed: Long,
         recentSetupRotationHistory: TroubleBrewingSetupRotationHistory,
+        recentPlayerStartingIdentityHistory: TroubleBrewingPlayerStartingIdentityHistory =
+            TroubleBrewingPlayerStartingIdentityHistory.EMPTY,
     ): TroubleBrewingPreparedSetup {
         TroubleBrewingSetupPresetValidator.validate(dataset, characterRegistry)
 
@@ -110,6 +112,7 @@ internal object TroubleBrewingProductionSetupPreparer {
         val dealPlan = TroubleBrewingSetupDealPlanner.plan(
             selection = selection,
             orderedPlayerNames = orderedPlayerNames,
+            recentPlayerStartingIdentityHistory = recentPlayerStartingIdentityHistory,
         )
 
         return TroubleBrewingPreparedSetup(
