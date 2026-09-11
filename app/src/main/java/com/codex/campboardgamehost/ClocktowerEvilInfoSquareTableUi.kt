@@ -35,11 +35,12 @@ internal data class ClocktowerEvilInfoSquareTablePresentation(
 internal fun clocktowerEvilInfoSquareTablePresentation(
     step: ClocktowerNightStepUi,
     actorSeat: Int?,
+    wakeInstruction: String?,
 ): ClocktowerEvilInfoSquareTablePresentation? {
     if (!step.isRealAction || step.displayKind != ClocktowerDisplayKind.EvilInfo) return null
     return ClocktowerEvilInfoSquareTablePresentation(
         actorSeat = actorSeat,
-        wakeInstruction = step.wakeText,
+        wakeInstruction = wakeInstruction,
         title = step.displayTitle,
         primary = step.displayPrimary,
         secondary = step.displaySecondary,
