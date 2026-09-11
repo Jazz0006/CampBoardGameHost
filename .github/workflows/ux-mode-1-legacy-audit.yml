@@ -25,23 +25,30 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "6d5c22ba07df8ba707593ddeb44446180b04b335"
+          test "$(git rev-parse HEAD^)" = "0f0528ba0c58dd4612f540de9f46d5fca01c4483"
 
       - name: Inventory legacy storyteller references
         shell: bash
         run: |
           set -euo pipefail
+          command -v grep >/dev/null
+
           echo '=== StorytellerAutomationMode / fromLegacyMode / legacy enum values ==='
-          rg -n --hidden \
-            --glob '!/.git/**' \
-            --glob '!build/**' \
-            --glob '!app/build/**' \
+          status=0
+          grep -RInE \
+            --exclude-dir=.git \
+            --exclude-dir=build \
+            --include='*.kt' \
+            --include='*.kts' \
             'StorytellerAutomationMode|fromLegacyMode|AUTO_BALANCED|AUTO_AGGRESSIVE|AUTO_GENTLE' \
-            . || true
+            . || status=$?
+          if [ "$status" -gt 1 ]; then exit "$status"; fi
+
           echo '=== StorytellerRecommendationUxPolicy automationMode field references ==='
-          rg -n --hidden \
-            --glob '!/.git/**' \
-            --glob '!build/**' \
-            --glob '!app/build/**' \
+          status=0
+          grep -RInE \
+            --exclude-dir=build \
+            --include='*.kt' \
             '\.automationMode|automationMode[[:space:]]*[:=]' \
-            app/src || true
+            app/src || status=$?
+          if [ "$status" -gt 1 ]; then exit "$status"; fi
