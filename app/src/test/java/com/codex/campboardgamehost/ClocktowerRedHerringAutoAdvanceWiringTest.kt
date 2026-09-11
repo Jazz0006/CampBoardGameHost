@@ -52,23 +52,33 @@ class ClocktowerRedHerringAutoAdvanceWiringTest {
     }
 
     @Test
-    fun `night step wires automatic red herring policy to next navigation`() {
-        val source = nightStepSource()
+    fun `host screen is the only automatic red herring navigation owner`() {
+        val hostSource = hostScreenSource()
+        val nightStepSource = nightStepSource()
 
-        assertTrue(source.contains("shouldAutoAdvanceRedHerring("))
-        assertTrue(source.contains("isRedHerringStep = step.action == ClocktowerNightAction.RedHerring"))
-        assertTrue(source.contains("isRealAction = step.isRealAction"))
-        assertTrue(source.contains("hasSelectedRedHerring = selectedName != null"))
-        assertTrue(source.contains("onNext()"))
+        assertTrue(hostSource.contains("shouldAutoAdvanceRedHerring("))
+        assertTrue(hostSource.contains("isRedHerringStep = currentStep.action == ClocktowerNightAction.RedHerring"))
+        assertTrue(hostSource.contains("isRealAction = currentStep.isRealAction"))
+        assertTrue(hostSource.contains("hasSelectedRedHerring = redHerring != null"))
+        assertTrue(hostSource.contains("advanceNightStep()"))
+
+        assertFalse(nightStepSource.contains("shouldAutoAdvanceRedHerring("))
     }
 
-    private fun nightStepSource(): String {
-        val relative = Path.of("src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt")
+    private fun hostScreenSource(): String = sourceAt(
+        Path.of("src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt"),
+    )
+
+    private fun nightStepSource(): String = sourceAt(
+        Path.of("src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt"),
+    )
+
+    private fun sourceAt(relative: Path): String {
         val fromRoot = Path.of("app").resolve(relative)
         val path = when {
             Files.exists(relative) -> relative
             Files.exists(fromRoot) -> fromRoot
-            else -> error("ClocktowerNightStepUi.kt source not found from ${Path.of("").toAbsolutePath()}")
+            else -> error("Source not found from ${Path.of("").toAbsolutePath()}: $relative")
         }
         return String(Files.readAllBytes(path), Charsets.UTF_8)
     }
