@@ -1,34 +1,40 @@
 # NEXT DEVELOPMENT HANDOFF — EPI-MQ-0 Baseline Re-audit
 
 > Date: 2026-09-11 Australia/Sydney  
-> Status: **NEXT EXECUTION TARGET — begin immediately after PR #119 merges**  
+> Status: **CURRENT — baseline / ownership re-audit**  
 > Program: Epistemic Misinformation Quality / Productive Uncertainty  
-> Base rule: **re-query live `main` after PR #119 merge before creating the EPI-MQ branch or accepting any historical ownership assumption**
+> Merged predecessor: ROLE-ROTATION-1 via PR #119  
+> Merge commit: `72775b63f2b98322f2ceb8972fd1cea8f7a46007`
 
-## 1. Transition state
+## 1. Current baseline rule
 
-ROLE-ROTATION-1 is complete, T4 validated, and merge-ready in PR #119. Once that PR is merged, EPI-MQ-0 becomes the active development task.
+Start EPI-MQ-0 from live `main` after the ROLE-ROTATION-1 merge. Do not reuse an older UI-R5/UI-NAV or pre-merge SHA as the implementation baseline.
 
-Known pre-merge anchors are evidence only:
+At the start of the next execution conversation:
 
 ```text
-PR #119 base main:
-3cc3d64d303236ae84b7fb14eaf066cc10aec95e
+re-query live main
+confirm no newer merge has advanced the baseline
+confirm current roadmap and this handoff still agree
+then begin the ownership/behavior audit
+```
 
-ROLE-ROTATION-1 T4 acceptance checkpoint:
+ROLE-ROTATION-1 acceptance evidence remains historical context only:
+
+```text
+T4 acceptance checkpoint:
 4d75ed4a147304e3a01c2bc233dbdc33c802ea6f
 CI #2274 / run 34556109636 — SUCCESS
 Android full + debug APK — PASS
 ASP contracts — PASS
 Real Clingo — PASS
 R2 #2136 — PASS
+
+PR #119 merged at:
+72775b63f2b98322f2ceb8972fd1cea8f7a46007
 ```
 
-Do not use either SHA as the EPI-MQ implementation baseline after merge. Resolve the actual live `main` and merged PR #119 commit first.
-
 ## 2. Read first
-
-When EPI-MQ-0 starts:
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
