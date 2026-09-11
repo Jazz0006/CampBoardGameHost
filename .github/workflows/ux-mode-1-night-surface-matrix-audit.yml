@@ -1,0 +1,48 @@
+name: UX-MODE-1 night surface matrix audit
+
+on:
+  push:
+    branches:
+      - codex/ux-mode-1
+    paths:
+      - '.github/workflows/ux-mode-1-night-surface-matrix-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+      - name: Verify audit parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "a7cb5bef581174b00f7272d80ee7e9a8a14dbbbf"
+          command -v grep
+      - name: Inventory every night step producer and surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          audit() {
+            local title="$1"; local pattern="$2"; shift 2
+            echo; echo "===== ${title} ====="
+            set +e
+            grep -RInE --exclude-dir=build --include='*.kt' "$pattern" "$@"
+            local status=$?
+            set -e
+            if [ "$status" -gt 1 ]; then exit "$status"; fi
+            echo "[grep-status=$status]"
+          }
+          audit "NIGHT STEP CONSTRUCTORS" 'ClocktowerNightStepUi\(' app/src/main/java
+          audit "INFORMATION BUILDER CALLS" 'informationStepBuilder\.build\(' app/src/main/java
+          audit "ROLE MATERIALIZER IDENTITIES" 'ClocktowerProductionNightStepIdentity\.role\(RoleId\(' app/src/main/java
+          audit "DISPLAY/DECISION PRODUCER FIELDS" 'displayKind[[:space:]]*=|displayOptions[[:space:]]*=|legalSelectionOptions[[:space:]]*=|automaticSelectionOptions[[:space:]]*=|decisionOptions[[:space:]]*=|tellPlayer[[:space:]]*=' app/src/main/java/com/codex/campboardgamehost app/src/main/java/com/codex/campboardgamehost/clocktower
+          audit "STRUCTURED PANEL CALLS" 'Structured(Number|Boolean)InformationDecisionPanel\(' app/src/main app/src/test
+          audit "PAIR RECOMMENDATION SECTION CALLS" 'ClocktowerPairRecommendationPresentationSection\(' app/src/main app/src/test
+          audit "LEGACY PLAYER REVEAL HANDOFFS" 'resolveClocktowerLegacyUnreliablePlayerDisplay|onShowLegacyReveal|LegacyUnreliable' app/src/main app/src/test
+          audit "DEDICATED SURFACE DIALOG CALLS" 'Clocktower[A-Za-z0-9]+SquareTableDialog\(' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt
