@@ -134,6 +134,53 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
     }
 
     @Test
+    fun `latest starting identities follow the immediately previous game across player counts`() {
+        var raw: String? = null
+        val store = TroubleBrewingSetupRotationHistoryStore(
+            readRaw = { raw },
+            writeRaw = { encoded -> raw = encoded; true },
+        )
+        val olderFive = recordWithStartingIdentities().copy(presetId = "older-five")
+        val newerSix = sixPlayerRecordWithStartingIdentities()
+
+        store.recordCompletedGame("older-five-game", olderFive)
+        store.recordCompletedGame("newer-six-game", newerSix)
+
+        assertEquals(
+            newerSix.playerStartingIdentities,
+            store.latestPlayerStartingIdentitiesFor(
+                datasetId = "test-dataset",
+                schemaVersion = 2,
+            ),
+        )
+    }
+
+    @Test
+    fun `latest starting identities do not skip an intervening completion without identity history`() {
+        var raw: String? = null
+        val store = TroubleBrewingSetupRotationHistoryStore(
+            readRaw = { raw },
+            writeRaw = { encoded -> raw = encoded; true },
+        )
+        store.recordCompletedGame("older-identity-game", recordWithStartingIdentities())
+        store.recordCompletedGame(
+            "newer-legacy-style-game",
+            simpleSelection(
+                gameSeed = 7_777L,
+                presetId = "newer-no-identities",
+                playerCount = 6,
+            ),
+        )
+
+        assertTrue(
+            store.latestPlayerStartingIdentitiesFor(
+                datasetId = "test-dataset",
+                schemaVersion = 2,
+            ).isEmpty(),
+        )
+    }
+
+    @Test
     fun `completion retry is idempotent and conflicting reuse of game id is rejected`() {
         var raw: String? = null
         var writeCount = 0
@@ -285,6 +332,26 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
                 startingIdentity("Carol", "butler", TroubleBrewingStartingRoleCategory.OUTSIDER),
                 startingIdentity("David", "poisoner", TroubleBrewingStartingRoleCategory.MINION),
                 startingIdentity("Emma", "imp", TroubleBrewingStartingRoleCategory.DEMON),
+            ),
+        )
+
+    private fun sixPlayerRecordWithStartingIdentities(): TroubleBrewingSetupRotationRecord =
+        TroubleBrewingSetupRotationRecord(
+            datasetId = "test-dataset",
+            schemaVersion = 2,
+            presetId = "identity-six",
+            playerCount = 6,
+            realNonDemonRoleIds = setOf("chef", "empath", "washerwoman", "butler", "poisoner"),
+            minionRoleIds = setOf("poisoner"),
+            primaryStyleTag = "identity-test",
+            selectedDrunkShownRole = null,
+            playerStartingIdentities = listOf(
+                startingIdentity("Alice", "chef", TroubleBrewingStartingRoleCategory.TOWNSFOLK),
+                startingIdentity("Bob", "empath", TroubleBrewingStartingRoleCategory.TOWNSFOLK),
+                startingIdentity("Carol", "washerwoman", TroubleBrewingStartingRoleCategory.TOWNSFOLK),
+                startingIdentity("David", "butler", TroubleBrewingStartingRoleCategory.OUTSIDER),
+                startingIdentity("Emma", "poisoner", TroubleBrewingStartingRoleCategory.MINION),
+                startingIdentity("Frank", "imp", TroubleBrewingStartingRoleCategory.DEMON),
             ),
         )
 
