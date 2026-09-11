@@ -29,7 +29,10 @@ internal object TroubleBrewingSetupCompletionPersistence {
             put("minionRoleIds", record.minionRoleIds.sorted().toCompletionJsonArray())
             put("primaryStyleTag", record.primaryStyleTag ?: JSONObject.NULL)
             put("selectedDrunkShownRole", record.selectedDrunkShownRole ?: JSONObject.NULL)
-            put("playerStartingIdentities", record.playerStartingIdentities.toCompletionJsonArray())
+            put(
+                "playerStartingIdentities",
+                record.playerStartingIdentities.toCompletionStartingIdentitiesJsonArray(),
+            )
         }
     }
 
@@ -65,16 +68,17 @@ internal object TroubleBrewingSetupCompletionPersistence {
 
 private fun List<String>.toCompletionJsonArray(): JSONArray = JSONArray().apply { forEach(::put) }
 
-private fun List<TroubleBrewingPlayerStartingIdentity>.toCompletionJsonArray(): JSONArray = JSONArray().apply {
-    forEach { identity ->
-        put(JSONObject().apply {
-            put("playerKey", identity.playerKey)
-            put("actualRoleId", identity.actualRoleId)
-            put("shownRoleId", identity.shownRoleId)
-            put("actualRoleCategory", identity.actualRoleCategory.name)
-        })
+private fun List<TroubleBrewingPlayerStartingIdentity>.toCompletionStartingIdentitiesJsonArray(): JSONArray =
+    JSONArray().apply {
+        forEach { identity ->
+            put(JSONObject().apply {
+                put("playerKey", identity.playerKey)
+                put("actualRoleId", identity.actualRoleId)
+                put("shownRoleId", identity.shownRoleId)
+                put("actualRoleCategory", identity.actualRoleCategory.name)
+            })
+        }
     }
-}
 
 private fun JSONObject.requiredCompletionString(key: String): String {
     require(has(key) && !isNull(key)) { "Missing required Trouble Brewing completion string '$key'." }
