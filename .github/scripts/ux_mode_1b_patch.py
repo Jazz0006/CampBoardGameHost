@@ -86,6 +86,14 @@ replace_exact(
 )
 
 replace_exact(
+    "setup recommendation style",
+    """                        style = storytellerAutomationMode.style ?: RecommendationStyle.BALANCED,
+""",
+    """                        style = storytellerRecommendationUxPolicy.recommendationStyle,
+""",
+)
+
+replace_exact(
     "standalone settings wiring",
     """                    Screen.Settings -> SettingsScreen(
                         languageMode = languageMode,
@@ -153,6 +161,7 @@ for forbidden in (
     "StorytellerAutomationMode",
     "AUTOMATIC_STORYTELLER_INFO_KEY",
     "STORYTELLER_AUTOMATION_MODE_KEY",
+    "storytellerAutomationMode",
     "loadStorytellerAutomationMode",
     "saveStorytellerAutomationMode",
 ):
@@ -163,6 +172,7 @@ required = (
     "StorytellerExperienceMode",
     "STORYTELLER_EXPERIENCE_MODE_KEY",
     "StorytellerRecommendationUxPolicy.fromExperienceMode(storytellerExperienceMode)",
+    "style = storytellerRecommendationUxPolicy.recommendationStyle",
     "storytellerExperienceMode = storytellerExperienceMode",
     "onStorytellerExperienceModeChange = { mode ->",
 )
