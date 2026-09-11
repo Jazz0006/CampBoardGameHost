@@ -1,0 +1,180 @@
+name: UX-MODE-1 legacy UI retirement v4
+
+on:
+  push:
+    branches:
+      - codex/ux-mode-1
+    paths:
+      - '.github/workflows/ux-mode-1-legacy-ui-retirement-v4.yml'
+
+permissions:
+  contents: write
+
+env:
+  GRADLE_USER_HOME: ${{ github.workspace }}/.gradle-codex
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Lock branch and production blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "d095dd2b9c6d4e981645c69e03f51dd7680924b4"
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          python3 -m py_compile .github/scripts/ux_mode_1_legacy_night_ui_retirement_patch.py
+          python3 -m py_compile .github/scripts/ux_mode_1_legacy_night_ui_retirement_patch_v2.py
+          python3 -m py_compile .github/scripts/ux_mode_1_legacy_night_ui_retirement_patch_v3.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          expected = {
+              'app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt': '9cfd7aa59ee5887fa4da2e7a3858f489462aa85e',
+              'app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt': 'f5e08e1486344784cc59531cb0bdf17f17f9d18b',
+              'app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt': '9c6c7c33cc862ad2b92d1dc2f201de639f43cdea',
+              'app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt': 'daa862dcf2d07d1a909f63d848de891719cc06fd',
+              'app/src/main/java/com/codex/campboardgamehost/clocktower/ui/StructuredStorytellerInformationUi.kt': '0ea954af16e9ecdce81b8dd310333b94aa8d86a4',
+              'app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationUi.kt': 'e89e747216722095362b774834119b1c20210f80',
+              'app/src/main/java/com/codex/campboardgamehost/ClocktowerPairRecommendationPresentationUi.kt': '8770a63a0ffe88175c79e56a9aa6ba15fa10696a',
+              'app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt': 'd53e14992608fbd3a74702fb18d423e27615b040',
+          }
+          def blob(path):
+              data = Path(path).read_bytes()
+              return hashlib.sha1(f'blob {len(data)}\0'.encode() + data).hexdigest()
+          for path, wanted in expected.items():
+              got = blob(path)
+              assert got == wanted, (path, got, wanted)
+          for path in [
+              'app/src/main/java/com/codex/campboardgamehost/ClocktowerAutomaticRegistrationEffect.kt',
+              'app/src/main/java/com/codex/campboardgamehost/ClocktowerPlainInformationSquareTableUi.kt',
+              'app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationDecisionControls.kt',
+          ]:
+              assert not Path(path).exists(), path
+          PY
+
+      - name: Re-prove focused RED
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          set +e
+          ./gradlew :app:testFast \
+            --tests com.codex.campboardgamehost.ClocktowerLegacyNightInformationSurfaceRetirementContractTest \
+            --tests com.codex.campboardgamehost.ClocktowerAutomaticSquareTableFallbackTest \
+            > /tmp/focused-red.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/focused-red.log
+          test "$status" -ne 0
+          grep -q 'ClocktowerLegacyNightInformationSurfaceRetirementContractTest' /tmp/focused-red.log
+          grep -q 'ClocktowerAutomaticSquareTableFallbackTest' /tmp/focused-red.log
+          if grep -qE 'Compilation error|Compilation failed|FAILURE: Build failed with an exception.*compile' /tmp/focused-red.log; then
+            echo 'RED failed before intended assertions' >&2
+            exit 1
+          fi
+
+      - name: Apply exact anchored patch
+        run: python3 .github/scripts/ux_mode_1_legacy_night_ui_retirement_patch_v3.py
+
+      - name: Focused GREEN
+        run: |
+          ./gradlew :app:testFast \
+            --tests com.codex.campboardgamehost.ClocktowerLegacyNightInformationSurfaceRetirementContractTest \
+            --tests com.codex.campboardgamehost.ClocktowerAutomaticSquareTableFallbackTest
+
+      - name: Android FAST
+        run: ./gradlew :app:testFast
+
+      - name: Prove legacy production UI references are zero
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationUi.kt
+          test ! -e app/src/main/java/com/codex/campboardgamehost/ClocktowerPairRecommendationPresentationUi.kt
+          patterns='StructuredNumberInformationDecisionPanel\(|StructuredBooleanInformationDecisionPanel\(|ClocktowerPairRecommendationPresentationSection\(|SpyRegistrationPanel\(|RecluseRegistrationPanel\(|推荐给说书人的完整信息|This ability is unreliable\. Choose a result to show\.|stringResource\(R\.string\.clocktower_host_show_to_player\)|HostActionSection\('
+          set +e
+          grep -RInE --exclude-dir=build --include='*.kt' "$patterns" app/src/main
+          status=$?
+          set -e
+          test "$status" -eq 1
+          grep -RIn 'ClocktowerPlainInformationSquareTableDialog(' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          grep -RIn 'allowManualEditing = !automaticStorytellerInfo' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          grep -RIn 'ClocktowerAutomaticRegistrationEffect(' app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          grep -RIn 'ClocktowerSpyRegistrationDecisionControls(' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          grep -RIn 'ClocktowerRecluseRegistrationDecisionControls(' app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+
+      - name: Exact working-tree diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff --numstat
+          git diff --name-status
+          mapfile -t changed < <(git diff --name-only | sort)
+          expected=(
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerAutomaticRegistrationEffect.kt
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerPairRecommendationPresentationUi.kt
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerPlainInformationSquareTableUi.kt
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationDecisionControls.kt
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationUi.kt
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui/StructuredStorytellerInformationUi.kt
+          )
+          mapfile -t wanted < <(printf '%s\n' "${expected[@]}" | sort)
+          diff -u <(printf '%s\n' "${wanted[@]}") <(printf '%s\n' "${changed[@]}")
+
+      - name: Recheck remote head before product push
+        shell: bash
+        env:
+          BRANCH: codex/ux-mode-1
+        run: |
+          set -euo pipefail
+          git fetch origin "$BRANCH"
+          test "$(git rev-parse origin/$BRANCH)" = "${GITHUB_SHA}"
+
+      - name: Commit and push product patch
+        shell: bash
+        env:
+          BRANCH: codex/ux-mode-1
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A app/src/main
+          git commit -m 'fix: retire legacy storyteller UI surfaces'
+          echo "PRODUCT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          git push origin "HEAD:$BRANCH"
+
+      - name: Remove temporary patch artifacts
+        shell: bash
+        env:
+          BRANCH: codex/ux-mode-1
+        run: |
+          set -euo pipefail
+          rm .github/scripts/ux_mode_1_legacy_night_ui_retirement_patch.py
+          rm .github/scripts/ux_mode_1_legacy_night_ui_retirement_patch_v2.py
+          rm .github/scripts/ux_mode_1_legacy_night_ui_retirement_patch_v3.py
+          rm .github/workflows/ux-mode-1-legacy-night-ui-retirement.yml
+          rm .github/workflows/ux-mode-1-legacy-night-ui-retirement-v2.yml
+          rm .github/workflows/ux-mode-1-legacy-night-ui-retirement-v3.yml
+          rm .github/workflows/ux-mode-1-legacy-ui-retirement-v4.yml
+          git add -A .github
+          git commit -m 'chore: remove legacy UI retirement patch artifacts'
+          echo "CLEANUP_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          git push origin "HEAD:$BRANCH"
+
+      - name: Report checkpoints
+        run: |
+          echo "product=${PRODUCT_SHA}"
+          echo "cleanup=${CLEANUP_SHA}"
