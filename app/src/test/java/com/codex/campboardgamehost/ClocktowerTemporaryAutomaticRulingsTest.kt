@@ -1,10 +1,35 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditRecord
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerTemporaryAutomaticRulingsTest {
+    @Test
+    fun `spy automatic registration audit uses complete selector domain when legacy recommendations are empty`() {
+        assertRegistrationAuditUsesSelectorDomain(
+            legalSpecialRoleEnNames = listOf("Washerwoman", "Chef", "Chef"),
+            decisionKey = "spy-registration-audit",
+            expectedFamilies = listOf("actual-registration", "special-registration", "special-registration"),
+        )
+    }
+
+    @Test
+    fun `recluse automatic registration audit uses complete selector domain when legacy recommendations are empty`() {
+        assertRegistrationAuditUsesSelectorDomain(
+            legalSpecialRoleEnNames = listOf("Poisoner", "Imp"),
+            decisionKey = "recluse-registration-audit",
+            expectedFamilies = listOf("actual-registration", "special-registration", "special-registration"),
+        )
+    }
+
     @Test
     fun `mayor automatic redirect candidates keep only other living townsfolk`() {
         val candidates = listOf(
@@ -75,5 +100,46 @@ class ClocktowerTemporaryAutomaticRulingsTest {
             clocktowerTemporaryAutomaticDecisionSeed(mayorKey),
             clocktowerTemporaryAutomaticDecisionSeed(successionKey),
         )
+    }
+
+    private fun assertRegistrationAuditUsesSelectorDomain(
+        legalSpecialRoleEnNames: List<String>,
+        decisionKey: String,
+        expectedFamilies: List<String>,
+    ) {
+        val legacyRecommendations = emptyList<ClocktowerRegistrationRecommendationOption>()
+        assertTrue(legacyRecommendations.isEmpty())
+
+        val selection = clocktowerTemporaryRegistrationSelection(
+            legalSpecialRoleEnNames = legalSpecialRoleEnNames,
+            decisionKey = decisionKey,
+        )
+        val auditCandidates = clocktowerTemporaryRegistrationAuditCandidates(legalSpecialRoleEnNames)
+        val selectedFamily = clocktowerTemporaryRegistrationAuditFamilyId(selection.selected.payload)
+
+        assertEquals(expectedFamilies, auditCandidates.map { it.familyId })
+        assertTrue(auditCandidates.any { it.familyId == selectedFamily })
+
+        val dimensions = SelectionAuditDimensions(
+            playerCount = 5,
+            phase = StorytellerPhase.FIRST_NIGHT,
+            style = RecommendationStyle.BALANCED,
+        )
+        val record = SelectionAuditRecord(
+            selectionId = decisionKey,
+            dimensions = dimensions,
+            candidates = auditCandidates,
+        )
+        val recorder = SelectionDistributionTelemetryRecorder()
+        recorder.recordPreview(record)
+        recorder.recordCommittedSelection(
+            SelectionAuditCommit(
+                selectionId = decisionKey,
+                dimensions = dimensions,
+                selectedFamilyId = selectedFamily,
+            ),
+        )
+
+        assertEquals(1, recorder.snapshot().values.sumOf { it.familySelectedCount })
     }
 }
