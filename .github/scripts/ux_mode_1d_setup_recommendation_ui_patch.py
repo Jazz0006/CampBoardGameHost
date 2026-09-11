@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 
+# Triggered only after the fail-closed UX-MODE-1D RED contract is established.
 path = Path('app/src/main/java/com/codex/campboardgamehost/ClocktowerStorytellerRecommendationUi.kt')
 s = path.read_text()
 
