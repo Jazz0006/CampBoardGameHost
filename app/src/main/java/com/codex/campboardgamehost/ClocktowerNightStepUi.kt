@@ -772,6 +772,7 @@ internal fun ClocktowerNightStepCardLocalized(
         val evilInfoSquareTablePresentation = clocktowerEvilInfoSquareTablePresentation(
             step = step,
             actorSeat = actionActorSeat,
+            wakeInstruction = command,
         )
         val usesEvilInfoSquareTable = evilInfoSquareTablePresentation != null
         val onSingleTargetEvent: (ClocktowerSingleTargetEvent) -> Unit = { event ->
