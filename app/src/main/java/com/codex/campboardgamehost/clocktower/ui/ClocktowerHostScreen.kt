@@ -962,7 +962,7 @@ internal fun ClocktowerJudgeScreen(
         mutableStateOf<RecommendationUiState>(RecommendationUiState.Loading)
     }
     var selectedRecommendationStyle by remember(recommendationKey) {
-        mutableStateOf(RecommendationStyle.BALANCED)
+        mutableStateOf(automaticStorytellerStyle)
     }
     var appliedRecommendationStyle by remember(recommendationKey) {
         mutableStateOf<RecommendationStyle?>(null)
@@ -4026,12 +4026,12 @@ internal fun ClocktowerJudgeScreen(
                 },
                 onReevaluate = { nextLockedDecisions ->
                     lockedRecommendationDecisions = SetupRecommendationLockPolicy.replaceWith(nextLockedDecisions)
-                    selectedRecommendationStyle = RecommendationStyle.BALANCED
+                    selectedRecommendationStyle = automaticStorytellerStyle
                     appliedRecommendationStyle = null
                 },
                 onClearLocks = {
                     lockedRecommendationDecisions = SetupRecommendationLockPolicy.clear()
-                    selectedRecommendationStyle = RecommendationStyle.BALANCED
+                    selectedRecommendationStyle = automaticStorytellerStyle
                 },
             )
         }
