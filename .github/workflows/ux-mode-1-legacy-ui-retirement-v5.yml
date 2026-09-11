@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "7123cfe17ddc17f41cfa6f259edc743ce7bfb18a"
+          test "$(git rev-parse HEAD^)" = "d87f56df793b531317f4ebd5bffe274b83837792"
           test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
           python3 -m py_compile .github/scripts/ux_mode_1_legacy_night_ui_retirement_patch.py
           python3 -m py_compile .github/scripts/ux_mode_1_legacy_night_ui_retirement_patch_v2.py
@@ -114,6 +114,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git add -N \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerAutomaticRegistrationEffect.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerPlainInformationSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationDecisionControls.kt
           git diff --check
           git diff --numstat
           git diff --name-status
