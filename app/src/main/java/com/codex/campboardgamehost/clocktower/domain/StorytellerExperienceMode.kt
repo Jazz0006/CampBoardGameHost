@@ -5,4 +5,10 @@ enum class StorytellerExperienceMode(
 ) {
     BEGINNER("beginner"),
     EXPERIENCED("experienced"),
+    ;
+
+    companion object {
+        fun fromPrefsValue(value: String?): StorytellerExperienceMode =
+            entries.firstOrNull { it.prefsValue == value } ?: BEGINNER
+    }
 }
