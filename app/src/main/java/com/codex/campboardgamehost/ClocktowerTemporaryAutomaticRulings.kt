@@ -12,6 +12,16 @@ internal data class ClocktowerAutomaticRegistrationRuling(
     val registeredRoleEnName: String?,
 )
 
+internal data class ClocktowerTemporaryMayorCandidate(
+    val seat: Int,
+    val team: ClocktowerTeam,
+    val alive: Boolean,
+) {
+    init {
+        require(seat > 0) { "Mayor automatic candidate seat must be positive." }
+    }
+}
+
 internal fun clocktowerTemporaryAutomaticDecisionSeed(decisionKey: String): Long {
     require(decisionKey.isNotBlank()) { "Temporary automatic decision key cannot be blank." }
     return MurmurHash3.low64Utf8("ux-mode-1-temporary-auto-v1|$decisionKey")
@@ -44,6 +54,24 @@ internal fun clocktowerTemporaryRegistrationSelection(
         },
         decisionSeed = clocktowerTemporaryAutomaticDecisionSeed(decisionKey),
     )
+}
+
+internal fun clocktowerTemporaryMayorEligibleTownsfolkSeats(
+    candidates: List<ClocktowerTemporaryMayorCandidate>,
+    mayorSeat: Int,
+): List<Int> {
+    require(mayorSeat > 0) { "Mayor seat must be positive." }
+    return candidates
+        .asSequence()
+        .filter { candidate ->
+            candidate.alive &&
+                candidate.team == ClocktowerTeam.Townsfolk &&
+                candidate.seat != mayorSeat
+        }
+        .map(ClocktowerTemporaryMayorCandidate::seat)
+        .distinct()
+        .sorted()
+        .toList()
 }
 
 internal fun clocktowerTemporaryMayorSelection(
