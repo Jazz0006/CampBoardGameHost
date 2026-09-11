@@ -1,0 +1,30 @@
+name: UX-MODE-1E ownership audit
+
+on:
+  push:
+    branches:
+      - codex/ux-mode-1
+    paths:
+      - .github/scripts/ux_mode_1e_ownership_audit_trigger.txt
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/ux-mode-1
+          fetch-depth: 1
+      - name: Locate UX-MODE-1 ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== SYMBOL LOCATIONS ==='
+          rg -n 'ClocktowerJudgeScreen|StorytellerRecommendationCard|onApplyRecommendation|automaticStorytellerInfo' app/src/main/java/com/codex/campboardgamehost || true
+          echo '=== LEGACY PUBLIC STYLE COPY ==='
+          rg -n '平衡|稳健|激进|全自动|Balanced|Gentle|Aggressive|automatic style|selected style' app/src/main/java/com/codex/campboardgamehost || true
+          echo '=== RECOMMENDATION AUTO APPLY / EFFECTS ==='
+          rg -n -C 5 'onApplyRecommendation|onApply\(|LaunchedEffect.*Recommendation|automaticStorytellerInfo.*onApply|appliedStyle' app/src/main/java/com/codex/campboardgamehost || true
