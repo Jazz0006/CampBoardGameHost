@@ -17,7 +17,7 @@ UI-NAV-1 global navigation visual unification     COMPLETE / merged via PR #118
 ROLE-ROTATION-1 recent role rotation              COMPLETE / merged via PR #119
 EPI-MQ-0 baseline / ownership re-audit            COMPLETE — old EPI-MQ-1 = MODIFY
 
-UX-MODE-1 Beginner / Experienced Storyteller Mode CURRENT — next independent task
+UX-MODE-1 Beginner / Experienced Storyteller Mode CURRENT — product design finalized; implementation planning active
 EPI-MQ / Productive Uncertainty                   QUEUED immediately after UX-MODE-1
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
@@ -28,38 +28,77 @@ Completed campaign documents are historical evidence, not default execution auth
 
 The current development task is **UX-MODE-1 Beginner / Experienced Storyteller Mode**.
 
-Product intent:
+Active implementation branch:
+
+`codex/ux-mode-1`
+
+The finalized product design uses one user-facing **Experienced mode** switch rather than several automation/style controls.
 
 ```text
-BEGINNER
-- for new app users and inexperienced Storytellers
-- no ordinary clue-selection burden
-- current recommended clue/result is used automatically
-- fewer buttons
-- clearer / somewhat richer instructions
-- host mainly performs wake/show/confirm/continue actions
+Experienced mode OFF (default / Beginner experience)
+- new installs default here
+- host does not make ordinary Storyteller strategic decisions
+- app automatically uses the current Top-1 recommendation
+- pure Storyteller choice pages such as red herring are skipped where possible
+- player-owned choices are still entered by the host and are never invented by the app
+- ordinary result flow should reduce toward physical action -> Show -> Next
 
-EXPERIENCED
-- for experienced Storytellers and users familiar with the app
-- recommended clue/result remains primary
-- rule-valid manual alternatives remain available
-- shorter instructions
-- fast, low-friction operation
+Experienced mode ON
+- same rules, legal candidates and recommendation provider
+- primary recommendation remains dominant
+- normally expose Top 2–3 recommendations where meaningful
+- provide manual access to remaining legal alternatives
+- optimize for fast expert operation
 ```
+
+User-facing settings copy:
+
+```text
+熟练模式
+允许说书人手动调整系统推荐的线索
+```
+
+Settings should also replace the current large language section with compact upper-right `中 / EN` controls.
 
 Critical invariant:
 
-> **The two modes share one rules/candidate/recommendation pipeline. They differ in presentation and interaction policy only.**
+> **The two experiences share one rules/candidate/recommendation pipeline. Experience mode changes interaction authority and presentation only.**
 
-For identical semantic inputs, both modes must receive the same legal candidate set and the same recommended candidate before presentation policy is applied.
+For identical semantic inputs both modes must receive the same legal candidate domain and the same ranked recommendation set before presentation/automatic-execution policy is applied.
 
-Beginner mode must not introduce a separate rule such as `Drunk/Poisoned => always false`. It automatically consumes the existing recommendation policy; future EPI-MQ can improve that recommendation without requiring a second beginner-specific algorithm.
+### Temporary recommendation policy
+
+Until EPI-MQ replaces the current recommendation behavior, the app uses the existing **Aggressive** recommendation behavior as the single internal policy for both experiences. Gentle/Balanced/Aggressive are no longer user-facing product settings.
+
+This is intentionally temporary because recent real-game experience showed evil to be too difficult for the current group. EPI-MQ should later replace this temporary policy without changing the experience-mode architecture.
+
+Additional temporary automatic Storyteller policies are finalized as follows:
+
+```text
+Spy/Recluse special registration, when legally available:
+90% special/false registration
+10% actual registration
+
+Mayor, when an eligible living Townsfolk target exists:
+90% redirect to an eligible living Townsfolk
+10% Mayor dies
+otherwise Mayor dies
+
+Imp self-kill succession:
+mandatory healthy Scarlet Woman rule first
+otherwise legal Minion weights:
+Baron 4 > Scarlet Woman 3 > Spy 2 > Poisoner 1
+```
+
+All probabilistic choices must be deterministic for the same semantic decision identity. Navigation, recomposition or restore of the same decision must not re-roll.
+
+Beginner/default mode must **not** introduce a semantic rule such as `Drunk/Poisoned => always false`. It automatically consumes the common recommendation provider.
 
 Active handoff:
 
 `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-11_UX_MODE_1_BEGINNER_EXPERIENCED.md`
 
-First execution step is a read-only ownership/migration audit of existing automatic/manual information settings and affected information UI surfaces before production edits.
+UX-MODE-1A product/ownership audit is now recorded in the handoff. Implementation should proceed from the typed mode/persistence policy slice, then temporary automatic-strategy selection, then UI convergence/settings acceptance.
 
 ## 3. EPI-MQ-0 closeout and resumed direction
 
@@ -144,11 +183,17 @@ Do not reopen completed D6, UI-R5, UI-NAV-1, or ROLE-ROTATION work unless a conc
 
 For UX-MODE-1:
 
-- treat Beginner / Experienced as one typed product mode, not several overlapping booleans;
-- audit existing automatic/manual setting ownership before choosing migration behavior;
-- preserve rules legality, recommendation semantics, session authority and history semantics;
-- do not move recommendation or rule logic into presentation policy;
-- do not perform unsafe whole-file replacement of large Host source;
+- use one authoritative typed experience mode; the UI exposes it as an Experienced-mode switch;
+- fresh/default state is Beginner / Experienced OFF;
+- replace rather than layer over legacy `StorytellerAutomationMode` / automatic booleans;
+- remove old global Gentle/Balanced/Aggressive product semantics;
+- preserve rules legality, session authority and history semantics;
+- distinguish Storyteller strategic decisions from player-owned choices;
+- keep probability/scoring/selection logic out of Compose;
+- reuse deterministic selector/seed infrastructure rather than ad-hoc randomness;
+- use current Aggressive behavior only as a temporary single recommendation provider choice;
+- preserve the same legal/ranked candidates before mode presentation policy;
+- do not perform unsafe whole-file replacement of large Host/App source;
 - follow `AGENTS.md` architecture pre-flight requirements before substantial edits to protected/core or >1000 LOC handwritten source;
 - follow `docs/TESTING_STRATEGY.md` for risk-based RED/GREEN and T0–T4 escalation.
 
@@ -216,8 +261,8 @@ Do not pull UX-R6 into UX-MODE-1 or early EPI-MQ merely because all three touch 
 2. `docs/TESTING_STRATEGY.md`;
 3. this roadmap;
 4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-11_UX_MODE_1_BEGINNER_EXPERIENCED.md`;
-5. live GitHub `main` and current PR/branch state;
-6. only the source/tests needed for UX-MODE-1 ownership/migration audit.
+5. live GitHub `main`, `codex/ux-mode-1`, and current PR state;
+6. only the source/tests needed for the current UX-MODE-1 slice.
 
 Do not load the full EPI-MQ reference stack until UX-MODE-1 is complete unless a narrow semantic dependency must be checked.
 
