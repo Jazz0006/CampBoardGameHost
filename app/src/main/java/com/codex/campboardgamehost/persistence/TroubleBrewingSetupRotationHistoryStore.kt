@@ -65,6 +65,24 @@ internal class TroubleBrewingSetupRotationHistoryStore(
         return TroubleBrewingSetupRotationHistory(recentGames = records)
     }
 
+    fun latestPlayerStartingIdentitiesFor(
+        datasetId: String,
+        schemaVersion: Int,
+    ): List<TroubleBrewingPlayerStartingIdentity> {
+        require(datasetId.isNotBlank()) { "Trouble Brewing rotation-history dataset ID cannot be blank." }
+        require(schemaVersion > 0) { "Trouble Brewing rotation-history schema version must be positive." }
+
+        return decodeOrEmpty(readRaw())
+            .asSequence()
+            .map { it.record }
+            .firstOrNull {
+                it.datasetId == datasetId &&
+                    it.schemaVersion == schemaVersion
+            }
+            ?.playerStartingIdentities
+            .orEmpty()
+    }
+
     private fun trimPerPlayerCount(entries: List<PersistedRotationEntry>): List<PersistedRotationEntry> {
         val retainedCounts = mutableMapOf<Int, Int>()
         return entries.filter { entry ->
