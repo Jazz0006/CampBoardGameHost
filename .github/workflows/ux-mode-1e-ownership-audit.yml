@@ -22,9 +22,33 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== SYMBOL LOCATIONS ==='
-          rg -n 'ClocktowerJudgeScreen|StorytellerRecommendationCard|onApplyRecommendation|automaticStorytellerInfo' app/src/main/java/com/codex/campboardgamehost || true
-          echo '=== LEGACY PUBLIC STYLE COPY ==='
-          rg -n '平衡|稳健|激进|全自动|Balanced|Gentle|Aggressive|automatic style|selected style' app/src/main/java/com/codex/campboardgamehost || true
-          echo '=== RECOMMENDATION AUTO APPLY / EFFECTS ==='
-          rg -n -C 5 'onApplyRecommendation|onApply\(|LaunchedEffect.*Recommendation|automaticStorytellerInfo.*onApply|appliedStyle' app/src/main/java/com/codex/campboardgamehost || true
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path('app/src/main/java/com/codex/campboardgamehost')
+          needles = [
+              'ClocktowerJudgeScreen',
+              'StorytellerRecommendationCard',
+              'onApplyRecommendation',
+              'automaticStorytellerInfo',
+              'RecommendationStyle.AGGRESSIVE',
+              'RecommendationStyle.BALANCED',
+              'RecommendationStyle.GENTLE',
+          ]
+          for needle in needles:
+              print(f'=== {needle} ===')
+              for path in sorted(root.rglob('*.kt')):
+                  lines = path.read_text(errors='replace').splitlines()
+                  for i, line in enumerate(lines):
+                      if needle in line:
+                          lo = max(0, i - 5)
+                          hi = min(len(lines), i + 6)
+                          print(f'--- {path}:{i+1} ---')
+                          for j in range(lo, hi):
+                              print(f'{j+1:5}: {lines[j]}')
+          print('=== LEGACY PUBLIC STYLE COPY ===')
+          legacy = ['平衡', '稳健', '激进', '全自动', 'Balanced', 'Gentle', 'Aggressive', 'automatic style', 'selected style']
+          for path in sorted(root.rglob('*.kt')):
+              for i, line in enumerate(path.read_text(errors='replace').splitlines(), start=1):
+                  if any(token in line for token in legacy):
+                      print(f'{path}:{i}: {line}')
+          PY
