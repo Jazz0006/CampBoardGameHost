@@ -1128,9 +1128,9 @@ internal fun ClocktowerNightStepCardLocalized(
                 Text(if (language == "en") "Recommended information" else "推荐给说书人的完整信息", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                 Text(
                     if (automaticStorytellerInfo) {
-                        if (language == "en") "The automatic mode selected this information. Use the button below to show it." else "已按当前自动模式选定信息；点击下方按钮即可向玩家展示。"
+                        if (language == "en") "The recommended information has been selected automatically. Use the button below to show it." else "推荐信息已自动选定；点击下方按钮即可向玩家展示。"
                     } else {
-                        if (language == "en") "The balanced option is the default; other options apply different pressure. Choosing one also updates this interaction's Spy or Recluse registration." else "平衡方案适合直接采用；其他方案提供不同压力。选择后会同步本次间谍或隐士登记。"
+                        if (language == "en") "The recommended information is ready. Choose another legal option only if you want to intervene manually. Choosing one also updates this interaction's Spy or Recluse registration." else "推荐信息已就绪；仅在需要手动干预时选择其他合法信息。选择后会同步本次间谍或隐士登记。"
                     },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall,
