@@ -25,7 +25,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "cf19396e13b97dee3a6f57aa364356bba7b03c2c"
+          test "$(git rev-parse HEAD^)" = "a60343535587aca2bba84043b087e63a9ba04a73"
           test "$(git ls-remote origin refs/heads/codex/ux-mode-1 | cut -f1)" = "$GITHUB_SHA"
           test "$(git rev-parse HEAD:app/src/main/java/com/codex/campboardgamehost/clocktower/domain/StorytellerAutomationMode.kt)" = "4aea6327f49cc5080131aecc5b9b1636ef814dd4"
           test "$(git rev-parse HEAD:app/src/main/java/com/codex/campboardgamehost/clocktower/domain/StorytellerRecommendationUxPolicy.kt)" = "e0134fbde0160eeb32ceea5b695a97c0416e9d93"
@@ -104,7 +104,7 @@ jobs:
               "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt": (0, 1),
               "app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt": (0, 1),
               "app/src/test/java/com/codex/campboardgamehost/clocktower/domain/StorytellerRecommendationUxPolicyTest.kt": (0, 30),
-              "app/src/test/java/com/codex/campboardgamehost/clocktower/recommendation/UnifiedSelectionPoolTest.kt": (0, 8),
+              "app/src/test/java/com/codex/campboardgamehost/clocktower/recommendation/UnifiedSelectionPoolTest.kt": (0, 7),
           }
 
           status = {}
