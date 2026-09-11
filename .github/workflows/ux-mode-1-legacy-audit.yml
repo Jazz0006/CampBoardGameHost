@@ -1,0 +1,47 @@
+name: UX-MODE-1 legacy reference audit
+
+on:
+  push:
+    branches:
+      - codex/ux-mode-1
+    paths:
+      - .github/workflows/ux-mode-1-legacy-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/ux-mode-1
+          fetch-depth: 0
+
+      - name: Verify audited parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = "6d5c22ba07df8ba707593ddeb44446180b04b335"
+
+      - name: Inventory legacy storyteller references
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== StorytellerAutomationMode / fromLegacyMode / legacy enum values ==='
+          rg -n --hidden \
+            --glob '!/.git/**' \
+            --glob '!build/**' \
+            --glob '!app/build/**' \
+            'StorytellerAutomationMode|fromLegacyMode|AUTO_BALANCED|AUTO_AGGRESSIVE|AUTO_GENTLE' \
+            . || true
+          echo '=== StorytellerRecommendationUxPolicy automationMode field references ==='
+          rg -n --hidden \
+            --glob '!/.git/**' \
+            --glob '!build/**' \
+            --glob '!app/build/**' \
+            '\.automationMode|automationMode[[:space:]]*[:=]' \
+            app/src || true
