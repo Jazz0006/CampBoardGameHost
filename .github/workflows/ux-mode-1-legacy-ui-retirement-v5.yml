@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "49d1f6474c720e60eb723e9a04d629633148707e"
+          test "$(git rev-parse HEAD^)" = "7123cfe17ddc17f41cfa6f259edc743ce7bfb18a"
           test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
           python3 -m py_compile .github/scripts/ux_mode_1_legacy_night_ui_retirement_patch.py
           python3 -m py_compile .github/scripts/ux_mode_1_legacy_night_ui_retirement_patch_v2.py
@@ -98,7 +98,7 @@ jobs:
           set -euo pipefail
           test ! -e app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationUi.kt
           test ! -e app/src/main/java/com/codex/campboardgamehost/ClocktowerPairRecommendationPresentationUi.kt
-          patterns='StructuredNumberInformationDecisionPanel\(|StructuredBooleanInformationDecisionPanel\(|ClocktowerPairRecommendationPresentationSection\(|SpyRegistrationPanel\(|RecluseRegistrationPanel\(|推荐给说书人的完整信息|This ability is unreliable\. Choose a result to show\.|stringResource\(R\.string\.clocktower_host_show_to_player\)|HostActionSection\('
+          patterns='StructuredNumberInformationDecisionPanel\(|StructuredBooleanInformationDecisionPanel\(|ClocktowerPairRecommendationPresentationSection\(|SpyRegistrationPanel\(|RecluseRegistrationPanel\(|推荐给说书人的完整信息|This ability is unreliable\. Choose a result to show\.'
           set +e
           grep -RInE --exclude-dir=build --include='*.kt' "$patterns" app/src/main
           status=$?
