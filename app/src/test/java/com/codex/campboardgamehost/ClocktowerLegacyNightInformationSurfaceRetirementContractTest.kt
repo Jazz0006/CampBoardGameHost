@@ -14,9 +14,13 @@ class ClocktowerLegacyNightInformationSurfaceRetirementContractTest {
         assertTrue(source.contains("ClocktowerPairInformationSquareTableDialog("))
         assertTrue(source.contains("ClocktowerEmpathSquareTableDialog("))
         assertTrue(source.contains("ClocktowerChefSquareTableDialog("))
+        assertTrue(source.contains("ClocktowerNewDemonIdentitySquareTableDialog("))
 
         assertFalse(source.contains("StructuredNumberInformationDecisionPanel("))
         assertFalse(source.contains("ClocktowerPairRecommendationPresentationSection("))
+        assertFalse(source.contains("SpyRegistrationPanel("))
+        assertFalse(source.contains("RecluseRegistrationPanel("))
+        assertFalse(source.contains("HostActionSection("))
         assertFalse(source.contains("推荐给说书人的完整信息"))
         assertFalse(source.contains("This ability is unreliable. Choose a result to show."))
         assertFalse(source.contains("stringResource(R.string.clocktower_host_show_to_player)"))
