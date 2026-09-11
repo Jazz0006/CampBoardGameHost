@@ -769,6 +769,11 @@ internal fun ClocktowerNightStepCardLocalized(
             .mapNotNull { candidate -> seatNumberForName(candidate.name) }
             .toSet()
         val actionActorSeat = seatNumberForName(step.actor?.name)
+        val evilInfoSquareTablePresentation = clocktowerEvilInfoSquareTablePresentation(
+            step = step,
+            actorSeat = actionActorSeat,
+        )
+        val usesEvilInfoSquareTable = evilInfoSquareTablePresentation != null
         val onSingleTargetEvent: (ClocktowerSingleTargetEvent) -> Unit = { event ->
             when (event) {
                 is ClocktowerSingleTargetEvent.SelectSeat -> cards.getOrNull(event.seat - 1)?.name?.let(onSelectName)
@@ -923,6 +928,18 @@ internal fun ClocktowerNightStepCardLocalized(
             else -> Unit
         }
 
+            evilInfoSquareTablePresentation?.let { presentation ->
+                ClocktowerEvilInfoSquareTableDialog(
+                    seats = nightActionSeats,
+                    presentation = presentation,
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onPrevious = onPrevious,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
+                    onShowPlayerDisplay = { onShowPlayerDisplay(step) },
+                )
+            }
             if (usesChefSquareTable) {
                 ClocktowerChefSquareTableDialog(
                     seats = nightActionSeats,
@@ -1093,6 +1110,7 @@ internal fun ClocktowerNightStepCardLocalized(
 
             if (
                 !usesSpySquareTable &&
+                !usesEvilInfoSquareTable &&
                 !usesClockmakerSquareTable &&
                 !usesSageSquareTable &&
                 !usesRavenkeeperSquareTable &&
@@ -1154,6 +1172,7 @@ internal fun ClocktowerNightStepCardLocalized(
 
             if (
                 !usesSpySquareTable &&
+                !usesEvilInfoSquareTable &&
                 !usesClockmakerSquareTable &&
                 !usesSageSquareTable &&
                 !usesRavenkeeperSquareTable &&
@@ -1181,7 +1200,22 @@ internal fun ClocktowerNightStepCardLocalized(
                     }
                     RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
                 }
-            } else if (!usesSpySquareTable && !usesClockmakerSquareTable && !usesSageSquareTable && !usesRavenkeeperSquareTable && !usesUndertakerSquareTable && !usesNumericSquareTable && resultFirstRegistrationCandidates.isEmpty() && structuredNumberUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
+            } else if (
+                !usesSpySquareTable &&
+                !usesEvilInfoSquareTable &&
+                !usesClockmakerSquareTable &&
+                !usesSageSquareTable &&
+                !usesRavenkeeperSquareTable &&
+                !usesUndertakerSquareTable &&
+                !usesNumericSquareTable &&
+                resultFirstRegistrationCandidates.isEmpty() &&
+                structuredNumberUiModel == null &&
+                step.recommendedDisplayOptions.isEmpty() &&
+                step.tellPlayer?.isNotBlank() == true &&
+                step.displayKind != ClocktowerDisplayKind.None &&
+                step.action != ClocktowerNightAction.FortuneTeller &&
+                step.action != ClocktowerNightAction.Chambermaid
+            ) {
                 OutlinedButton(
                     onClick = { onShowPlayerDisplay(step) },
                     modifier = Modifier.fillMaxWidth(),
