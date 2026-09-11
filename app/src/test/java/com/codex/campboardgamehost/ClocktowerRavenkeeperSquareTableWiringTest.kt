@@ -17,7 +17,11 @@ class ClocktowerRavenkeeperSquareTableWiringTest {
         assertTrue(source.contains("val candidates = clocktowerRavenkeeperTargetCards(cards)"))
         assertTrue(source.contains("onConfirm = ::showRavenkeeperChoice"))
         assertFalse(source.contains("ClocktowerNightAction.DemonKill, ClocktowerNightAction.Ravenkeeper ->"))
-        assertTrue(source.contains("!usesRavenkeeperSquareTable &&\n                !usesUndertakerSquareTable &&\n                !usesNumericSquareTable &&\n                resultFirstRegistrationCandidates.isEmpty()"))
+
+        val plainFallback = source.substringAfter("val plainInformationDisplayStep =")
+            .substringBefore("val plainInformationSquareTablePresentation =")
+        assertTrue(plainFallback.contains("!usesRavenkeeperSquareTable"))
+        assertFalse(source.contains("stringResource(R.string.clocktower_host_show_to_player)"))
     }
 
     private fun nightStepSource(): String {
