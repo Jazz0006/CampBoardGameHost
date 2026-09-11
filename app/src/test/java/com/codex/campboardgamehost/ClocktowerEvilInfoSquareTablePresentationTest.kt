@@ -14,7 +14,11 @@ class ClocktowerEvilInfoSquareTablePresentationTest {
             secondary = "Bluffs\nMayor · Monk · Undertaker",
         )
 
-        val presentation = clocktowerEvilInfoSquareTablePresentation(step, actorSeat = 7)!!
+        val presentation = clocktowerEvilInfoSquareTablePresentation(
+            step = step,
+            actorSeat = 7,
+            wakeInstruction = "Wake P7",
+        )!!
 
         assertEquals(7, presentation.actorSeat)
         assertEquals("Wake P7", presentation.wakeInstruction)
@@ -28,8 +32,9 @@ class ClocktowerEvilInfoSquareTablePresentationTest {
     @Test
     fun `EvilInfo keeps square table while reveal remains disabled until player text is ready`() {
         val presentation = clocktowerEvilInfoSquareTablePresentation(
-            evilInfoStep(tellPlayer = null, secondary = null),
+            step = evilInfoStep(tellPlayer = null, secondary = null),
             actorSeat = 7,
+            wakeInstruction = "Wake P7",
         )!!
 
         assertFalse(presentation.showPlayerDisplayAction)
@@ -39,16 +44,18 @@ class ClocktowerEvilInfoSquareTablePresentationTest {
     fun `non-real or non-EvilInfo steps do not claim the EvilInfo square-table owner`() {
         assertNull(
             clocktowerEvilInfoSquareTablePresentation(
-                evilInfoStep(tellPlayer = "ready", secondary = null).copy(isRealAction = false),
+                step = evilInfoStep(tellPlayer = "ready", secondary = null).copy(isRealAction = false),
                 actorSeat = 7,
+                wakeInstruction = "Wake P7",
             ),
         )
         assertNull(
             clocktowerEvilInfoSquareTablePresentation(
-                evilInfoStep(tellPlayer = "ready", secondary = null).copy(
+                step = evilInfoStep(tellPlayer = "ready", secondary = null).copy(
                     displayKind = ClocktowerDisplayKind.Plain,
                 ),
                 actorSeat = 7,
+                wakeInstruction = "Wake P7",
             ),
         )
     }
@@ -80,6 +87,6 @@ class ClocktowerEvilInfoSquareTablePresentationTest {
         displayPrimary = "Minions\nP2 · P5",
         displaySecondary = secondary,
         displayFooter = "Keep this private",
-        wakeText = "Wake P7",
+        wakeText = null,
     )
 }
