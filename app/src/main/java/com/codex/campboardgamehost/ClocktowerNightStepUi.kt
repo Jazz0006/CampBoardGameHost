@@ -622,6 +622,23 @@ internal fun ClocktowerNightStepCardLocalized(
             onSelectName(automaticDecisionTargetName)
         }
     }
+    LaunchedEffect(
+        automaticStorytellerInfo,
+        step.action,
+        step.isRealAction,
+        selectedName,
+    ) {
+        if (
+            shouldAutoAdvanceRedHerring(
+                automaticStorytellerInfo = automaticStorytellerInfo,
+                isRedHerringStep = step.action == ClocktowerNightAction.RedHerring,
+                isRealAction = step.isRealAction,
+                hasSelectedRedHerring = selectedName != null,
+            )
+        ) {
+            onNext()
+        }
+    }
     val command = when {
         step.action == ClocktowerNightAction.FortuneTeller && step.actor != null -> {
             if (language == "en") {
