@@ -14,7 +14,7 @@ class ClocktowerLegacyNightInformationSurfaceRetirementContractTest {
         assertTrue(source.contains("ClocktowerPairInformationSquareTableDialog("))
         assertTrue(source.contains("ClocktowerEmpathSquareTableDialog("))
         assertTrue(source.contains("ClocktowerChefSquareTableDialog("))
-        assertTrue(source.contains("ClocktowerNewDemonIdentitySquareTableDialog("))
+        assertTrue(source.contains("ClocktowerPlainInformationSquareTableDialog("))
 
         assertFalse(source.contains("StructuredNumberInformationDecisionPanel("))
         assertFalse(source.contains("ClocktowerPairRecommendationPresentationSection("))
