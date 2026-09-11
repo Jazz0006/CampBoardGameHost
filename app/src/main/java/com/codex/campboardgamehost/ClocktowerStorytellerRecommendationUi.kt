@@ -169,6 +169,8 @@ internal fun StorytellerRecommendationCard(
     onReevaluate: (List<StorytellerDecision>) -> Unit,
     onClearLocks: () -> Unit,
 ) {
+    if (automaticStorytellerInfo && appliedStyle == selectedStyle) return
+
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     fun roleName(roleId: RoleId): String = clocktowerRolesForScript(script)
         .firstOrNull { it.enName == roleId.value }
