@@ -1,0 +1,55 @@
+name: UI-INFO-1.3 beginner compact one-shot
+
+on:
+  push:
+    branches:
+      - codex/ui-info-1-beginner-night-guidance
+    paths:
+      - .github/workflows/ui-info-1-3-beginner-compact-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/ui-info-1-beginner-night-guidance
+          fetch-depth: 0
+
+      - name: Create RED contracts
+        run: python3 .github/scripts/ui_info_1_3_patch.py test
+
+      - name: Verify RED
+        shell: bash
+        run: |
+          set +e
+          ./gradlew :app:testFast --tests '*ClocktowerBeginnerCompactNightPresentationTest' > /tmp/ui-info-red.log 2>&1
+          status=$?
+          set -e
+          test "$status" -ne 0
+          grep -E 'unresolved reference|Unresolved reference' /tmp/ui-info-red.log
+
+      - name: Apply compact presentation patch
+        run: python3 .github/scripts/ui_info_1_3_patch.py patch
+
+      - name: Focused contracts
+        run: ./gradlew :app:testFast --tests '*ClocktowerBeginnerCompactNightPresentationTest' --tests '*ClocktowerBeginnerNightGuidanceTest' --tests '*ClocktowerEvilInfoSquareTablePresentationTest'
+
+      - name: FAST checkpoint
+        run: ./gradlew :app:testFast
+
+      - name: Commit production patch and self-clean
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/ui-info-1-3-beginner-compact-one-shot.yml .github/scripts/ui_info_1_3_patch.py
+          git add app/src/main/java/com/codex/campboardgamehost/ClocktowerBeginnerCompactNightUi.kt
+          git add app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt
+          git add app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt
+          git add app/src/test/java/com/codex/campboardgamehost/ClocktowerBeginnerCompactNightPresentationTest.kt
+          git commit -m 'feat: compact Beginner night action surfaces'
+          git push origin HEAD:codex/ui-info-1-beginner-night-guidance
