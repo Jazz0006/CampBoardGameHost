@@ -29,7 +29,7 @@ class ClocktowerDayTableBottomNavigationContractTest {
     }
 
     @Test
-    fun `shared day scaffold reserves table space then renders visibility aware safe bottom navigation`() {
+    fun `shared day scaffold reserves table space then uses shared safe bottom inset policy`() {
         val source = source(
             "src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayTableScaffoldUi.kt",
         )
@@ -39,7 +39,8 @@ class ClocktowerDayTableBottomNavigationContractTest {
         assertTrue("table content must be rendered", tableIndex >= 0)
         assertTrue("bottom navigation must follow the table content", navigationIndex > tableIndex)
         assertTrue(source.contains(".weight(1f)"))
-        assertTrue(source.contains("WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)"))
+        assertTrue(source.contains(".clocktowerHostBottomNavigationBarPadding()"))
+        assertFalse(source.contains("WindowInsets.navigationBars"))
         assertFalse(source.contains("navigationBarsIgnoringVisibility"))
         assertEquals(1, Regex("HostBottomActionBar\\(").findAll(source).count())
     }
