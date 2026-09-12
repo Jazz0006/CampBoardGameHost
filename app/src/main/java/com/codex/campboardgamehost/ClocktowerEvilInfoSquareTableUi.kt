@@ -25,17 +25,22 @@ internal data class ClocktowerEvilInfoSquareTablePresentation(
     val secondary: String?,
     val footer: String?,
     val showPlayerDisplayAction: Boolean,
+    val showHostDetails: Boolean = true,
 )
 
 /**
  * First-night evil-team information owns a read-only square-table host surface even though it has
  * no role-specific [ClocktowerNightAction]. The player-facing reveal remains owned by the existing
  * display handoff; this model only routes/presents the Storyteller step.
+ *
+ * Beginner mode keeps private reveal payload off the host surface until the Storyteller explicitly
+ * opens the player display. Experienced mode retains the existing host preview.
  */
 internal fun clocktowerEvilInfoSquareTablePresentation(
     step: ClocktowerNightStepUi,
     actorSeat: Int?,
     wakeInstruction: String?,
+    beginnerMode: Boolean = false,
 ): ClocktowerEvilInfoSquareTablePresentation? {
     if (!step.isRealAction || step.displayKind != ClocktowerDisplayKind.EvilInfo) return null
     return ClocktowerEvilInfoSquareTablePresentation(
@@ -46,6 +51,7 @@ internal fun clocktowerEvilInfoSquareTablePresentation(
         secondary = step.displaySecondary,
         footer = step.displayFooter,
         showPlayerDisplayAction = step.tellPlayer?.isNotBlank() == true,
+        showHostDetails = !beginnerMode,
     )
 }
 
@@ -98,37 +104,39 @@ internal fun ClocktowerEvilInfoSquareTableDialog(
                 verticalArrangement = Arrangement.Center,
             ) {
                 ClocktowerNightActionWakeInstruction(presentation.wakeInstruction)
-                Text(
-                    text = presentation.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-                presentation.primary?.takeIf { it.isNotBlank() }?.let { primary ->
-                    Spacer(Modifier.height(8.dp))
+                if (presentation.showHostDetails) {
                     Text(
-                        text = primary,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
+                        text = presentation.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                     )
-                }
-                presentation.secondary?.takeIf { it.isNotBlank() }?.let { secondary ->
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = secondary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-                presentation.footer?.takeIf { it.isNotBlank() }?.let { footer ->
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = footer,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
+                    presentation.primary?.takeIf { it.isNotBlank() }?.let { primary ->
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = primary,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                    presentation.secondary?.takeIf { it.isNotBlank() }?.let { secondary ->
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = secondary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                    presentation.footer?.takeIf { it.isNotBlank() }?.let { footer ->
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            text = footer,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
                 if (presentation.showPlayerDisplayAction) {
                     Spacer(Modifier.height(10.dp))
