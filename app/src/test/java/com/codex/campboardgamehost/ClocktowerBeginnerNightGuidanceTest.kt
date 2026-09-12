@@ -66,6 +66,52 @@ class ClocktowerBeginnerNightGuidanceTest {
     }
 
     @Test
+    fun `structured Minion group wake lists every Minion in seat order`() {
+        val washerwoman = role(ClocktowerTeam.Townsfolk, "洗衣妇", "Washerwoman")
+        val poisoner = role(ClocktowerTeam.Minion, "投毒者", "Poisoner")
+        val spy = role(ClocktowerTeam.Minion, "间谍", "Spy")
+        val imp = role(ClocktowerTeam.Demon, "小恶魔", "Imp")
+        val cards = listOf(
+            player("张三", washerwoman),
+            player("李四", poisoner),
+            player("王五", washerwoman),
+            player("赵六", spy),
+            player("钱七", imp),
+        )
+
+        val guidance = clocktowerBeginnerNightGuidance(
+            action = ClocktowerNightAction.None,
+            actor = cards[1],
+            cards = cards,
+            language = "zh",
+            groupTeam = ClocktowerTeam.Minion,
+        )
+
+        assertEquals("唤醒 爪牙", guidance?.wakeLine)
+        assertEquals("2号 李四 · 4号 赵六", guidance?.actorLine)
+        assertNull(guidance?.instruction)
+    }
+
+    @Test
+    fun `structured Demon group wake uses Demon identity without parsing prose`() {
+        val townsfolk = role(ClocktowerTeam.Townsfolk, "洗衣妇", "Washerwoman")
+        val imp = role(ClocktowerTeam.Demon, "小恶魔", "Imp")
+        val cards = listOf(player("Alice", townsfolk), player("Eve", imp))
+
+        val guidance = clocktowerBeginnerNightGuidance(
+            action = ClocktowerNightAction.None,
+            actor = cards[1],
+            cards = cards,
+            language = "en",
+            groupTeam = ClocktowerTeam.Demon,
+        )
+
+        assertEquals("Wake Demon", guidance?.wakeLine)
+        assertEquals("P2 Eve", guidance?.actorLine)
+        assertNull(guidance?.instruction)
+    }
+
+    @Test
     fun `actorless group step stays on legacy presentation`() {
         assertNull(
             clocktowerBeginnerNightGuidance(
@@ -73,6 +119,7 @@ class ClocktowerBeginnerNightGuidanceTest {
                 actor = null,
                 cards = emptyList(),
                 language = "zh",
+                groupTeam = ClocktowerTeam.Minion,
             ),
         )
     }
