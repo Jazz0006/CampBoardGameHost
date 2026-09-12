@@ -13,8 +13,8 @@ replacements = [
         "recovery Dawn visibility",
     ),
     (
-        """    fun recordEpistemicObservation(draft: EpistemicObservationDraft) {\n""",
-        """    fun enterClocktowerDayAfterDawn() {\n        check(clocktowerPhase == ClocktowerPhase.Dawn) {\n            \"Dawn-to-Day host transition requires the semantic Dawn boundary first.\"\n        }\n        recordClocktowerPhaseAdvance(ClocktowerPhase.Day)\n        clocktowerPhase = clocktowerVisibleHostPhase(ClocktowerPhase.Dawn)\n        resetClocktowerDayFlow()\n    }\n\n    fun recordEpistemicObservation(draft: EpistemicObservationDraft) {\n""",
+        """    fun resetClocktowerDayFlow() {\n        clocktowerDayModeState.value = ClocktowerDayMode.Overview\n        clocktowerHighestVoteNameState.value = null\n        clocktowerHighestVoteCountState.value = 0\n    }\n\n    fun resetClocktowerFlow() {\n""",
+        """    fun resetClocktowerDayFlow() {\n        clocktowerDayModeState.value = ClocktowerDayMode.Overview\n        clocktowerHighestVoteNameState.value = null\n        clocktowerHighestVoteCountState.value = 0\n    }\n\n    fun enterClocktowerDayAfterDawn() {\n        check(clocktowerPhase == ClocktowerPhase.Dawn) {\n            \"Dawn-to-Day host transition requires the semantic Dawn boundary first.\"\n        }\n        recordClocktowerPhaseAdvance(ClocktowerPhase.Day)\n        clocktowerPhase = clocktowerVisibleHostPhase(ClocktowerPhase.Dawn)\n        resetClocktowerDayFlow()\n    }\n\n    fun resetClocktowerFlow() {\n""",
         "Dawn-to-Day host transition helper",
     ),
     (
