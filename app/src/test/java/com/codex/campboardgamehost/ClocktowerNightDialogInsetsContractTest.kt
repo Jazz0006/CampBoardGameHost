@@ -17,7 +17,7 @@ class ClocktowerNightDialogInsetsContractTest {
             paths
                 .filter { path -> path.isRegularFile() && path.toString().endsWith(".kt") }
                 .forEach { path ->
-                    val source = Files.readString(path)
+                    val source = String(Files.readAllBytes(path), Charsets.UTF_8)
                     dialogProperties.findAll(source).forEach { match ->
                         val call = match.value
                         if (
@@ -38,8 +38,11 @@ class ClocktowerNightDialogInsetsContractTest {
 
     @Test
     fun `night bottom navigation reserves hidden navigation bar inset`() {
-        val source = Files.readString(
-            sourcePath("src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt"),
+        val source = String(
+            Files.readAllBytes(
+                sourcePath("src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt"),
+            ),
+            Charsets.UTF_8,
         )
         val bottomBar = source
             .substringAfter("internal fun ClocktowerNightBottomActionBar(")
