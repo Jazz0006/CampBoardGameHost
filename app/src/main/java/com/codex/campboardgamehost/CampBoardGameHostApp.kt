@@ -1287,6 +1287,15 @@ internal fun CampBoardGameHostApp() {
         clocktowerHighestVoteCountState.value = 0
     }
 
+    fun enterClocktowerDayAfterDawn() {
+        check(clocktowerPhase == ClocktowerPhase.Dawn) {
+            "Dawn-to-Day host transition requires the semantic Dawn boundary first."
+        }
+        recordClocktowerPhaseAdvance(ClocktowerPhase.Day)
+        clocktowerPhase = clocktowerVisibleHostPhase(ClocktowerPhase.Dawn)
+        resetClocktowerDayFlow()
+    }
+
     fun resetClocktowerFlow() {
         resetClocktowerNightFlow()
         resetClocktowerDayFlow()
@@ -1541,7 +1550,7 @@ internal fun CampBoardGameHostApp() {
                     emptySet()
                 }
                 clocktowerRulesetRef = runtime?.rulesetRef
-                clocktowerPhase = safeClocktower?.phase ?: game.position.phase
+                clocktowerPhase = clocktowerVisibleHostPhase(safeClocktower?.phase ?: game.position.phase)
                 clocktowerNightStartedState.value = game.position.nightStarted
                 clocktowerNightStepIndexState.value =
                     safeClocktower?.nightStepIndex ?: game.position.nightStepIndex
@@ -2843,6 +2852,7 @@ internal fun CampBoardGameHostApp() {
                                 }
                                 if (dawnPhaseStateMutationRequired) {
                                     clocktowerPhase = ClocktowerPhase.Dawn
+                                    enterClocktowerDayAfterDawn()
                                     advanceClocktowerGameStateRevision()
                                 }
                                 resetClocktowerNightFlow()
@@ -2876,6 +2886,7 @@ internal fun CampBoardGameHostApp() {
                                     if (clocktowerKlutzReturnToDawn) {
                                         recordClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
                                         clocktowerPhase = ClocktowerPhase.Dawn
+                                        enterClocktowerDayAfterDawn()
                                         clocktowerKlutzReturnToDawn = false
                                     } else {
                                         val nextRound = round + 1
@@ -3677,6 +3688,7 @@ internal fun CampBoardGameHostApp() {
                                 }
                                 if (phaseAdvance.stateMutationRequired) {
                                     clocktowerPhase = ClocktowerPhase.Dawn
+                                    enterClocktowerDayAfterDawn()
                                 }
                                 resetClocktowerNightFlow()
                             }
