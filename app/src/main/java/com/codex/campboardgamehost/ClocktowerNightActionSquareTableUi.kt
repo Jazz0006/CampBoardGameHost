@@ -107,16 +107,16 @@ internal fun ClocktowerNightActionWakeInstruction(instruction: String?) {
         if (isStructuredGuidance) {
             Text(
                 text = guidanceLines[0],
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Black,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(4.dp))
             Text(
                 text = guidanceLines[1],
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
             )
