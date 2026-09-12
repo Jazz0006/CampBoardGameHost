@@ -5,6 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+// UI-INFO-1.4 regression coverage: Beginner surfaces show only immediate required actions.
 class ClocktowerBeginnerMinimalSurfaceTest {
     @Test
     fun `beginner reveal-only seats never expose information highlights`() {
