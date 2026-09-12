@@ -664,6 +664,24 @@ internal fun ClocktowerNightStepCardLocalized(
             onSelectName(automaticDecisionTargetName)
         }
     }
+    LaunchedEffect(
+        automaticStorytellerInfo,
+        step.title,
+        step.action,
+        selectedName,
+        automaticDecisionTargetName,
+    ) {
+        if (
+            clocktowerAutomaticMayorRulingShouldAdvance(
+                automaticStorytellerInfo = automaticStorytellerInfo,
+                action = step.action,
+                selectedName = selectedName,
+                automaticTargetName = automaticDecisionTargetName,
+            )
+        ) {
+            onNext()
+        }
+    }
     val beginnerGuidance = if (automaticStorytellerInfo) {
         clocktowerBeginnerNightGuidance(
             action = step.action,
