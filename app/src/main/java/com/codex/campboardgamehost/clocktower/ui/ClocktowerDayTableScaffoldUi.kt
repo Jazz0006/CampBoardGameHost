@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -66,7 +66,7 @@ internal fun ClocktowerDayTableScaffold(
                         onNext = onNext,
                         modifier = Modifier
                             .windowInsetsPadding(
-                                WindowInsets.navigationBarsIgnoringVisibility.only(WindowInsetsSides.Bottom),
+                                WindowInsets.navigationBars.only(WindowInsetsSides.Bottom),
                             )
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                     )
