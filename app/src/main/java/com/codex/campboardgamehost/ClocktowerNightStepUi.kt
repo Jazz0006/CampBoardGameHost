@@ -664,7 +664,17 @@ internal fun ClocktowerNightStepCardLocalized(
             onSelectName(automaticDecisionTargetName)
         }
     }
-    val command = when {
+    val beginnerGuidance = if (automaticStorytellerInfo) {
+        clocktowerBeginnerNightGuidance(
+            action = step.action,
+            actor = step.actor,
+            cards = cards,
+            language = language,
+        )
+    } else {
+        null
+    }
+    val command = beginnerGuidance?.asWakeInstruction() ?: when {
         step.action == ClocktowerNightAction.FortuneTeller && step.actor != null -> {
             if (language == "en") {
                 "Wake ${step.actor.seatLabel(cards)} and ask them to choose two players to check"
