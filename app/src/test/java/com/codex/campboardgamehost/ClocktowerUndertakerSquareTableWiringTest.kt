@@ -2,19 +2,25 @@ package com.codex.campboardgamehost
 
 import java.nio.file.Files
 import java.nio.file.Path
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerUndertakerSquareTableWiringTest {
     @Test
-    fun `undertaker uses specialized square table and suppresses generic result surfaces`() {
+    fun `undertaker uses specialized square table and excludes plain fallback`() {
         val source = nightStepSource()
 
         assertTrue(source.contains("step.roleEnName == \"Undertaker\" && step.actor != null"))
         assertTrue(source.contains("clocktowerUndertakerResultChoices("))
         assertTrue(source.contains("ClocktowerUndertakerSquareTableDialog("))
         assertTrue(source.contains("val usesUndertakerSquareTable = undertakerResultChoices.isNotEmpty()"))
-        assertTrue(source.contains("!usesUndertakerSquareTable &&\n                !usesNumericSquareTable &&\n                resultFirstRegistrationCandidates.isEmpty()"))
+
+        val plainFallback = source.substringAfter("val plainInformationDisplayStep =")
+            .substringBefore("val plainInformationSquareTablePresentation =")
+        assertTrue(plainFallback.contains("!usesUndertakerSquareTable"))
+        assertFalse(source.contains("推荐给说书人的完整信息"))
+        assertFalse(source.contains("This ability is unreliable. Choose a result to show."))
     }
 
     private fun nightStepSource(): String {

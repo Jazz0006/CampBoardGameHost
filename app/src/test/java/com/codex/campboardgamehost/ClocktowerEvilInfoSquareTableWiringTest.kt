@@ -6,22 +6,25 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class ClocktowerRavenkeeperSquareTableWiringTest {
+class ClocktowerEvilInfoSquareTableWiringTest {
     @Test
-    fun `ravenkeeper owns target and result flow on one specialized square table`() {
+    fun `first-night EvilInfo exclusively owns its square-table routing`() {
         val source = nightStepSource()
 
-        assertTrue(source.contains("val usesRavenkeeperSquareTable = step.action == ClocktowerNightAction.Ravenkeeper && step.actor != null"))
-        assertTrue(source.contains("clocktowerRavenkeeperResultChoices("))
-        assertTrue(source.contains("ClocktowerRavenkeeperSquareTableDialog("))
-        assertTrue(source.contains("val candidates = clocktowerRavenkeeperTargetCards(cards)"))
-        assertTrue(source.contains("onConfirm = ::showRavenkeeperChoice"))
-        assertFalse(source.contains("ClocktowerNightAction.DemonKill, ClocktowerNightAction.Ravenkeeper ->"))
+        assertTrue(
+            source.contains(
+                "val evilInfoSquareTablePresentation = clocktowerEvilInfoSquareTablePresentation(",
+            ),
+        )
+        assertTrue(source.contains("val usesEvilInfoSquareTable = evilInfoSquareTablePresentation != null"))
+        assertTrue(source.contains("ClocktowerEvilInfoSquareTableDialog("))
+        assertTrue(source.contains("onShowPlayerDisplay = { onShowPlayerDisplay(step) }"))
 
         val plainFallback = source.substringAfter("val plainInformationDisplayStep =")
             .substringBefore("val plainInformationSquareTablePresentation =")
-        assertTrue(plainFallback.contains("!usesRavenkeeperSquareTable"))
-        assertFalse(source.contains("stringResource(R.string.clocktower_host_show_to_player)"))
+        assertTrue(plainFallback.contains("!usesEvilInfoSquareTable"))
+        assertFalse(source.contains("推荐给说书人的完整信息"))
+        assertFalse(source.contains("This ability is unreliable. Choose a result to show."))
     }
 
     private fun nightStepSource(): String {

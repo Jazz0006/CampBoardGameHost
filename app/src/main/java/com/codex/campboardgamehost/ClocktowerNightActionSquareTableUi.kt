@@ -2,8 +2,14 @@ package com.codex.campboardgamehost
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -110,6 +116,7 @@ internal fun ClocktowerNightActionWakeInstruction(instruction: String?) {
  * Labels are intentionally short and forced to one line: the current step/actor belongs in the
  * center instruction, not inside navigation buttons. This keeps narrow phone layouts stable.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ClocktowerNightBottomActionBar(
     language: String,
@@ -133,7 +140,11 @@ internal fun ClocktowerNightBottomActionBar(
             onPrevious = onPrevious,
             onHostTools = onHostTools,
             onNext = onNext,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            modifier = Modifier
+                .windowInsetsPadding(
+                    WindowInsets.navigationBarsIgnoringVisibility.only(WindowInsetsSides.Bottom),
+                )
+                .padding(horizontal = 16.dp, vertical = 10.dp),
         )
     }
 }
@@ -244,7 +255,10 @@ internal fun ClocktowerNightActionSquareTableDialog(
         onDismissRequest = {
             if (canGoPrevious) onPrevious()
         },
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(
+                         usePlatformDefaultWidth = false,
+                         decorFitsSystemWindows = false,
+                     ),
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),

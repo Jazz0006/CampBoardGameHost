@@ -10,13 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -52,39 +48,40 @@ internal fun ClocktowerDayOverviewScreen(
         clocktowerDayNominationGesturePolicy(tableState)
     }
 
-    ClocktowerDarkTheme {
-        Surface(
+    ClocktowerDayTableScaffold(
+        previousLabel = text("上一步", "Previous"),
+        hostToolsLabel = text("主持工具", "Host Tools"),
+        nextLabel = text("结束白天", "End day"),
+        onPrevious = {},
+        onHostTools = onHostTools,
+        onNext = onEndDay,
+        previousEnabled = false,
+        nextEnabled = actionsEnabled,
+    ) {
+        HostTableShell(
+            seats = tableState.seats,
             modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background,
-            contentColor = MaterialTheme.colorScheme.onBackground,
-        ) {
-            HostTableShell(
-                seats = tableState.seats,
-                modifier = Modifier.fillMaxSize(),
-                interaction = tableState.interaction,
-                directionalGesture = nominationGesture.takeIf { actionsEnabled },
-                onDirectionalGestureCommit = onNominationGesture,
-                centerContent = {
-                    ClocktowerDayOverviewCenterContent(
-                        round = round,
-                        aliveCount = aliveCount,
-                        executionThreshold = executionThreshold,
-                        highestVoteText = highestVoteText,
-                        showSlayerAction = showSlayerAction,
-                        slayerActionEnabled = slayerActionEnabled,
-                        showArtistAction = showArtistAction,
-                        artistActionEnabled = artistActionEnabled,
-                        actionsEnabled = actionsEnabled,
-                        onHostTools = onHostTools,
-                        diagnosticContent = diagnosticContent,
-                        text = ::text,
-                        onOpenSlayer = onOpenSlayer,
-                        onOpenArtist = onOpenArtist,
-                        onEndDay = onEndDay,
-                    )
-                },
-            )
-        }
+            interaction = tableState.interaction,
+            directionalGesture = nominationGesture.takeIf { actionsEnabled },
+            onDirectionalGestureCommit = onNominationGesture,
+            centerContent = {
+                ClocktowerDayOverviewCenterContent(
+                    round = round,
+                    aliveCount = aliveCount,
+                    executionThreshold = executionThreshold,
+                    highestVoteText = highestVoteText,
+                    showSlayerAction = showSlayerAction,
+                    slayerActionEnabled = slayerActionEnabled,
+                    showArtistAction = showArtistAction,
+                    artistActionEnabled = artistActionEnabled,
+                    actionsEnabled = actionsEnabled,
+                    diagnosticContent = diagnosticContent,
+                    text = ::text,
+                    onOpenSlayer = onOpenSlayer,
+                    onOpenArtist = onOpenArtist,
+                )
+            },
+        )
     }
 }
 
@@ -99,12 +96,10 @@ private fun ClocktowerDayOverviewCenterContent(
     showArtistAction: Boolean,
     artistActionEnabled: Boolean,
     actionsEnabled: Boolean,
-    onHostTools: () -> Unit,
     diagnosticContent: (@Composable () -> Unit)?,
     text: (String, String) -> String,
     onOpenSlayer: () -> Unit,
     onOpenArtist: () -> Unit,
-    onEndDay: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -184,16 +179,5 @@ private fun ClocktowerDayOverviewCenterContent(
         }
 
         diagnosticContent?.invoke()
-
-        HostBottomActionBar(
-            previousLabel = text("上一步", "Previous"),
-            hostToolsLabel = text("主持工具", "Host Tools"),
-            nextLabel = text("结束白天", "End day"),
-            onPrevious = {},
-            onHostTools = onHostTools,
-            onNext = onEndDay,
-            previousEnabled = false,
-            nextEnabled = actionsEnabled,
-        )
     }
 }

@@ -45,6 +45,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     wakeInstruction: String? = null,
     abilityLabel: String,
     roleLabel: (String) -> String,
+    allowManualEditing: Boolean,
     language: String,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
@@ -61,13 +62,13 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     var selection by remember(interactionKey, presentation, canonicalRecommendedOption) {
         mutableStateOf(recommendedSelection)
     }
-    var editing by remember(interactionKey, presentation, canonicalRecommendedOption) {
-        mutableStateOf(recommendedSelection.resolvedOption == null)
+    var editing by remember(interactionKey, presentation, canonicalRecommendedOption, allowManualEditing) {
+        mutableStateOf(allowManualEditing && recommendedSelection.resolvedOption == null)
     }
 
     fun restoreRecommendation() {
         selection = recommendedSelection
-        editing = recommendedSelection.resolvedOption == null
+        editing = allowManualEditing && recommendedSelection.resolvedOption == null
     }
 
     Dialog(
@@ -78,7 +79,10 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                 onPrevious()
             }
         },
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(
+                         usePlatformDefaultWidth = false,
+                         decorFitsSystemWindows = false,
+                     ),
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -123,9 +127,10 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                         recommendedSelection = recommendedSelection,
                         editing = editing,
                         roleLabel = roleLabel,
+                        allowManualEditing = allowManualEditing,
                         language = language,
                         onSelectionChange = { selection = it },
-                        onStartEditing = { editing = true },
+                        onStartEditing = { if (allowManualEditing) editing = true },
                         onRestoreRecommendation = ::restoreRecommendation,
                         onConfirm = onConfirm,
                     )
@@ -190,6 +195,7 @@ private fun ClocktowerPairInformationCenterControls(
     recommendedSelection: ClocktowerPairManualSelectionModel,
     editing: Boolean,
     roleLabel: (String) -> String,
+    allowManualEditing: Boolean,
     language: String,
     onSelectionChange: (ClocktowerPairManualSelectionModel) -> Unit,
     onStartEditing: () -> Unit,
@@ -332,14 +338,14 @@ private fun ClocktowerPairInformationCenterControls(
                 }
             }
 
-            if (!editing && (selection.roleIds.isNotEmpty() || selection.hasZeroCase)) {
+            if (allowManualEditing && !editing && (selection.roleIds.isNotEmpty() || selection.hasZeroCase)) {
                 OutlinedButton(
                     onClick = onStartEditing,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(if (language == "en") "Choose manually" else "手动选择")
                 }
-            } else if (editing && hasRecommendation) {
+            } else if (allowManualEditing && editing && hasRecommendation) {
                 TextButton(onClick = onRestoreRecommendation) {
                     Text(if (language == "en") "Restore recommendation" else "恢复推荐")
                 }

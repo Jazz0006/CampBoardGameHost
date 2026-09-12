@@ -8,34 +8,35 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.Color
-import com.codex.campboardgamehost.clocktower.domain.StorytellerAutomationMode
+import com.codex.campboardgamehost.clocktower.domain.StorytellerExperienceMode
 import com.codex.campboardgamehost.debug.DebugFlightRecorder
 
 @Composable
 internal fun SettingsScreen(
     languageMode: LanguageMode,
-    storytellerAutomationMode: StorytellerAutomationMode,
+    storytellerExperienceMode: StorytellerExperienceMode,
     commonPlayers: List<String>,
     newCommonPlayerName: String,
     onLanguageModeChange: (LanguageMode) -> Unit,
-    onStorytellerAutomationModeChange: (StorytellerAutomationMode) -> Unit,
+    onStorytellerExperienceModeChange: (StorytellerExperienceMode) -> Unit,
     onNewCommonPlayerNameChange: (String) -> Unit,
     onAddCommonPlayer: () -> Unit,
     onRemoveCommonPlayer: (String) -> Unit,
@@ -43,11 +44,11 @@ internal fun SettingsScreen(
 ) {
     SettingsContent(
         languageMode = languageMode,
-        storytellerAutomationMode = storytellerAutomationMode,
+        storytellerExperienceMode = storytellerExperienceMode,
         commonPlayers = commonPlayers,
         newCommonPlayerName = newCommonPlayerName,
         onLanguageModeChange = onLanguageModeChange,
-        onStorytellerAutomationModeChange = onStorytellerAutomationModeChange,
+        onStorytellerExperienceModeChange = onStorytellerExperienceModeChange,
         onNewCommonPlayerNameChange = onNewCommonPlayerNameChange,
         onAddCommonPlayer = onAddCommonPlayer,
         onRemoveCommonPlayer = onRemoveCommonPlayer,
@@ -59,11 +60,11 @@ internal fun SettingsScreen(
 @Composable
 internal fun SettingsContent(
     languageMode: LanguageMode,
-    storytellerAutomationMode: StorytellerAutomationMode,
+    storytellerExperienceMode: StorytellerExperienceMode,
     commonPlayers: List<String>,
     newCommonPlayerName: String,
     onLanguageModeChange: (LanguageMode) -> Unit,
-    onStorytellerAutomationModeChange: (StorytellerAutomationMode) -> Unit,
+    onStorytellerExperienceModeChange: (StorytellerExperienceMode) -> Unit,
     onNewCommonPlayerNameChange: (String) -> Unit,
     onAddCommonPlayer: () -> Unit,
     onRemoveCommonPlayer: (String) -> Unit,
@@ -71,6 +72,11 @@ internal fun SettingsContent(
     onBack: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
+    val isEnglish = context.resources.configuration.locales[0].language == "en"
+    val chineseSelected = languageMode == LanguageMode.Chinese ||
+        (languageMode == LanguageMode.System && !isEnglish)
+    val englishSelected = languageMode == LanguageMode.English ||
+        (languageMode == LanguageMode.System && isEnglish)
 
     LazyColumn(
         modifier = modifier
@@ -88,9 +94,25 @@ internal fun SettingsContent(
                     Text(stringResource(R.string.settings), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                     Text(stringResource(R.string.settings_subtitle), color = Color(0xFF5C6A63))
                 }
-                onBack?.let { back ->
-                    TextButton(onClick = back) {
-                        Text(stringResource(R.string.back))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { onLanguageModeChange(LanguageMode.Chinese) }) {
+                        Text(
+                            "中",
+                            color = if (chineseSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = if (chineseSelected) FontWeight.Bold else FontWeight.Normal,
+                        )
+                    }
+                    TextButton(onClick = { onLanguageModeChange(LanguageMode.English) }) {
+                        Text(
+                            "EN",
+                            color = if (englishSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = if (englishSelected) FontWeight.Bold else FontWeight.Normal,
+                        )
+                    }
+                    onBack?.let { back ->
+                        TextButton(onClick = back) {
+                            Text(stringResource(R.string.back))
+                        }
                     }
                 }
             }
@@ -102,31 +124,39 @@ internal fun SettingsContent(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(stringResource(R.string.language_settings), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                    LanguageMode.entries.forEach { mode ->
-                        val selected = mode == languageMode
-                        if (selected) {
-                            Button(
-                                onClick = { onLanguageModeChange(mode) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(stringResource(mode.labelResId()))
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = { onLanguageModeChange(mode) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(stringResource(mode.labelResId()))
-                            }
-                        }
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Text(
+                            if (isEnglish) "Experienced mode" else "熟练模式",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            if (isEnglish) {
+                                "Allow the Storyteller to manually adjust system-recommended information."
+                            } else {
+                                "允许说书人手动调整系统推荐的线索"
+                            },
+                            color = Color(0xFF5C6A63),
+                        )
                     }
+                    Switch(
+                        checked = storytellerExperienceMode == StorytellerExperienceMode.EXPERIENCED,
+                        onCheckedChange = { enabled ->
+                            onStorytellerExperienceModeChange(
+                                if (enabled) StorytellerExperienceMode.EXPERIENCED else StorytellerExperienceMode.BEGINNER,
+                            )
+                        },
+                    )
                 }
             }
         }

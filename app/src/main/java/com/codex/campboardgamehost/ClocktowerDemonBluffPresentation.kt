@@ -20,22 +20,22 @@ internal sealed interface DemonBluffPresentationResolution {
  * Returns the exact Demon bluff recommendation that presentation is allowed to consume.
  *
  * AUTO uses the already-applied setup decision so presentation never outruns the state commit.
- * MANUAL has no setup-plan apply step, so it consumes the default BALANCED setup recommendation
- * directly once that recommendation is ready. Other setup decisions remain manual Storyteller
+ * MANUAL has no setup-plan apply step, so it consumes the setup recommendation for the same
+ * current Storyteller style supplied by the host. Other setup decisions remain manual Storyteller
  * authority and are not applied by this projection.
  */
 internal fun demonBluffRoleNamesForPresentation(
     automaticStorytellerInfo: Boolean,
     appliedRoleNames: List<String>,
     setupPlans: List<RecommendationPlan>,
-    preferredManualStyle: RecommendationStyle = RecommendationStyle.BALANCED,
+    storytellerStyle: RecommendationStyle,
 ): List<String>? {
     appliedRoleNames.takeIf { it.isNotEmpty() }?.let { return it }
     if (automaticStorytellerInfo) return null
 
     val selectedPlan = WeightedStableSelector.selectStyle(
         options = setupPlans,
-        style = preferredManualStyle,
+        style = storytellerStyle,
         styleOf = RecommendationPlan::style,
     ) ?: return null
 

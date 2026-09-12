@@ -169,12 +169,9 @@ internal fun StorytellerRecommendationCard(
     onReevaluate: (List<StorytellerDecision>) -> Unit,
     onClearLocks: () -> Unit,
 ) {
+    if (automaticStorytellerInfo && appliedStyle == selectedStyle) return
+
     fun text(zh: String, en: String): String = if (language == "en") en else zh
-    fun styleName(style: RecommendationStyle): String = when (style) {
-        RecommendationStyle.GENTLE -> text("稳健", "Gentle")
-        RecommendationStyle.BALANCED -> text("平衡", "Balanced")
-        RecommendationStyle.AGGRESSIVE -> text("激进", "Aggressive")
-    }
     fun roleName(roleId: RoleId): String = clocktowerRolesForScript(script)
         .firstOrNull { it.enName == roleId.value }
         ?.nameFor(language)
@@ -195,12 +192,11 @@ internal fun StorytellerRecommendationCard(
         "drunk-points-to-self" -> text("避免让酒鬼自己的信息指向自己", "Avoids having the Drunk's information point to themself")
         "candidate-critical-exposure" -> text("控制关键角色被集中怀疑的风险", "Controls the risk of exposing a critical role")
         "candidate-discussion-value" -> text("候选组合能产生有价值的桌面讨论", "The candidate pair should generate useful discussion")
-        "candidate-seat-spacing" -> text("候选座位距离符合当前风格", "Candidate spacing fits this recommendation style")
+        "candidate-seat-spacing" -> text("候选座位距离符合推荐目标", "Candidate spacing fits the recommendation")
         "demon-bluff-ease" -> text("恶魔伪装较容易解释和维持", "The Demon bluffs are practical to maintain")
         else -> ruleId
     }
 
-    var showOtherPlans by remember { mutableStateOf(false) }
     var showDetails by remember(selectedStyle) { mutableStateOf(false) }
     var editingDecisions by remember { mutableStateOf(false) }
     val plans = (state as? RecommendationUiState.Ready)?.plans.orEmpty()
@@ -224,9 +220,9 @@ internal fun StorytellerRecommendationCard(
             )
             Text(
                 if (automaticStorytellerInfo) {
-                    text("全自动模式已采用平衡方案，不显示其他候选裁定。", "Automatic mode has applied the balanced plan; alternative rulings are hidden.")
+                    text("系统推荐已自动采用，无需选择。", "The system recommendation is applied automatically; no choice is required.")
                 } else {
-                    text("默认选择平衡方案；熟练说书人可比较三种风格。", "Balanced is the default; experienced Storytellers can compare all three styles.")
+                    text("系统推荐已就绪；如有需要，可手动调整具体裁定。", "The system recommendation is ready; adjust individual rulings only when needed.")
                 },
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
@@ -246,40 +242,17 @@ internal fun StorytellerRecommendationCard(
                 }
             }
 
-            if (!automaticStorytellerInfo && plans.isNotEmpty() && showOtherPlans) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    RecommendationStyle.entries.forEach { style ->
-                        val enabled = plans.any { it.style == style }
-                        if (style == selectedStyle) {
-                            Button(
-                                onClick = { onSelectStyle(style) },
-                                enabled = enabled,
-                                shape = RoundedCornerShape(18.dp),
-                            ) { Text(styleName(style)) }
-                        } else {
-                            OutlinedButton(
-                                onClick = { onSelectStyle(style) },
-                                enabled = enabled,
-                                shape = RoundedCornerShape(18.dp),
-                            ) { Text(styleName(style)) }
-                        }
-                    }
-                }
-            }
-            if (!automaticStorytellerInfo && plans.size > 1) {
-                TextButton(
-                    onClick = {
-                        showOtherPlans = !showOtherPlans
-                        if (!showOtherPlans) onSelectStyle(RecommendationStyle.BALANCED)
-                    },
-                ) {
-                    Text(if (showOtherPlans) text("只看默认方案", "Show default only") else text("查看其他方案", "View other plans"))
-                }
-            }
 
             when (state) {
                 RecommendationUiState.Loading -> Text(text("正在计算高质量线索…", "Calculating high-quality information…"), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                RecommendationUiState.Empty -> Text(text("当前配置没有找到合法推荐，请使用首夜手动流程。", "No legal recommendation was found; use the manual first-night flow."), color = MaterialTheme.colorScheme.secondary)
+                RecommendationUiState.Empty -> Text(
+                    if (automaticStorytellerInfo) {
+                        text("当前配置没有找到合法推荐，请检查当前配置。", "No legal recommendation was found; check the current setup.")
+                    } else {
+                        text("当前配置没有找到合法推荐，可检查配置或手动调整。", "No legal recommendation was found; check the setup or adjust it manually.")
+                    },
+                    color = MaterialTheme.colorScheme.secondary,
+                )
                 is RecommendationUiState.InvalidLocks -> {
                     Text(text("锁定的裁定不合法或互相冲突，请解除锁定后重试。", "The locked decisions are illegal or incompatible. Clear the locks and try again."), color = MaterialTheme.colorScheme.error)
                     Button(onClick = onClearLocks, modifier = Modifier.fillMaxWidth()) {
@@ -350,8 +323,10 @@ internal fun StorytellerRecommendationCard(
                     }
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(onClick = { showDetails = !showDetails }, modifier = Modifier.weight(1f)) {
-                            Text(if (showDetails) text("收起理由", "Hide reasons") else text("查看推荐理由", "Why this plan"))
+                        if (!automaticStorytellerInfo) {
+                            TextButton(onClick = { showDetails = !showDetails }, modifier = Modifier.weight(1f)) {
+                                Text(if (showDetails) text("收起理由", "Hide reasons") else text("查看推荐理由", "Why this plan"))
+                            }
                         }
                         if (!automaticStorytellerInfo) {
                             Button(
@@ -365,9 +340,9 @@ internal fun StorytellerRecommendationCard(
                     }
                     Text(
                         if (automaticStorytellerInfo) {
-                            text("以下首夜步骤将直接使用当前自动模式的信息。", "The first-night steps below will use the selected automatic style.")
+                            text("系统推荐将在首夜流程中自动使用。", "The system recommendation will be used automatically during the first night.")
                         } else {
-                            text("采用后仍可在下方首夜步骤中手动修改具体裁定。", "After applying, you can still edit individual decisions in the first-night steps below.")
+                            text("需要时可修改具体裁定；所有调整仍使用相同的合法性校验。", "Adjust individual rulings when needed; all changes use the same legality checks.")
                         },
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall,

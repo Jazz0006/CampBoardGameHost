@@ -12,9 +12,14 @@ class ClocktowerNightStepResultSurfaceOwnershipTest {
         val source = nightStepSource()
 
         assertTrue(source.contains("ClocktowerChambermaidSquareTableDialog("))
-        assertTrue(
-            source.countOccurrences("step.action != ClocktowerNightAction.Chambermaid") >= 3,
-        )
+        val actionOwnership = source.substringAfter("val actionOwnsSquareTable = step.action in setOf(")
+            .substringBefore(")")
+        assertTrue(actionOwnership.contains("ClocktowerNightAction.Chambermaid"))
+
+        val plainFallback = source.substringAfter("val plainInformationDisplayStep =")
+            .substringBefore("val plainInformationSquareTablePresentation =")
+        assertTrue(plainFallback.contains("!actionOwnsSquareTable"))
+        assertFalse(plainFallback.contains("step.action != ClocktowerNightAction.Chambermaid"))
     }
 
     @Test
@@ -23,14 +28,12 @@ class ClocktowerNightStepResultSurfaceOwnershipTest {
 
         assertFalse(source.contains("val nonPairResultFirstCandidates ="))
         assertFalse(source.contains("nonPairResultFirstCandidates.isNotEmpty()"))
+        assertFalse(source.contains("This ability is unreliable. Choose a result to show."))
     }
 
     private fun nightStepSource(): String = sourceFile(
         "src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt",
     )
-
-    private fun String.countOccurrences(needle: String): Int =
-        windowed(size = needle.length, step = 1, partialWindows = false).count { it == needle }
 
     private fun sourceFile(relativeText: String): String {
         val relative = Path.of(relativeText)

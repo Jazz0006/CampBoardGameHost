@@ -31,7 +31,6 @@ import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommi
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
-import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
@@ -149,7 +148,6 @@ internal fun ClocktowerNightStepCardLocalized(
         ?: step.recommendedDisplayOptions
     val displayedInformationOptions = if (automaticStorytellerInfo) automaticInformationOptions else assistedInformationOptions
     val pairRecommendationPresentation = if (
-        !automaticStorytellerInfo &&
         phase == ClocktowerPhase.FirstNight &&
         step.roleEnName in setOf("Washerwoman", "Librarian", "Investigator")
     ) {
@@ -157,8 +155,7 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         null
     }
-    val manualPairCandidates = if (
-        !automaticStorytellerInfo &&
+    val pairInformationCandidates = if (
         phase == ClocktowerPhase.FirstNight &&
         step.roleEnName in setOf("Washerwoman", "Librarian", "Investigator")
     ) {
@@ -173,30 +170,73 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         emptyList()
     }
-    val dynamicDecisionFamily = when (step.action) {
-        ClocktowerNightAction.MayorRedirect -> "mayor-redirect"
-        ClocktowerNightAction.DemonSuccessor -> "demon-succession"
+    fun seatNumberForAutomaticCandidate(card: PlayerCard): Int? = cards
+        .indexOfFirst { candidate -> candidate.name == card.name }
+        .takeIf { index -> index >= 0 }
+        ?.plus(1)
+    val automaticMayorTargetName = if (
+        automaticStorytellerInfo &&
+        step.isRealAction &&
+        step.action == ClocktowerNightAction.MayorRedirect
+    ) {
+        val mayor = aliveCards.firstOrNull { card -> card.clocktowerRole?.enName == "Mayor" }
+        val mayorSeat = mayor?.let(::seatNumberForAutomaticCandidate)
+        mayorSeat?.let { resolvedMayorSeat ->
+            val livingTownsfolkSeats = clocktowerTemporaryMayorEligibleTownsfolkSeats(
+                candidates = mayorRedirectTargetCards.mapNotNull { candidate ->
+                    val candidateSeat = seatNumberForAutomaticCandidate(candidate) ?: return@mapNotNull null
+                    val candidateTeam = candidate.clocktowerTeam ?: return@mapNotNull null
+                    ClocktowerTemporaryMayorCandidate(
+                        seat = candidateSeat,
+                        team = candidateTeam,
+                        alive = candidate.eliminatedRound == null,
+                    )
+                },
+                mayorSeat = resolvedMayorSeat,
+            )
+            val selectedSeat = clocktowerTemporaryMayorSelection(
+                mayorSeat = resolvedMayorSeat,
+                livingTownsfolkSeats = livingTownsfolkSeats,
+                decisionKey = clocktowerTemporaryNightDecisionKey(
+                    gameId = gameId,
+                    phase = phase,
+                    round = round,
+                    sequence = sequence,
+                    family = "mayor-redirect",
+                ),
+            ).selected.payload
+            cards.getOrNull(selectedSeat - 1)?.name
+        }
+    } else {
+        null
+    }
+    val automaticDemonSuccessorTargetName = if (
+        automaticStorytellerInfo &&
+        step.isRealAction &&
+        step.action == ClocktowerNightAction.DemonSuccessor
+    ) {
+        clocktowerTemporaryDemonSuccessorSelection(
+            eligible = demonSuccessorTargetCards.mapNotNull { candidate ->
+                val candidateSeat = seatNumberForAutomaticCandidate(candidate) ?: return@mapNotNull null
+                val roleEnName = candidate.clocktowerRole?.enName ?: return@mapNotNull null
+                temporaryDemonSuccessorChoice(candidateSeat, roleEnName)
+            },
+            decisionKey = clocktowerTemporaryNightDecisionKey(
+                gameId = gameId,
+                phase = phase,
+                round = round,
+                sequence = sequence,
+                family = "demon-succession",
+            ),
+        )?.selected?.payload?.seat?.let { seat -> cards.getOrNull(seat - 1)?.name }
+    } else {
+        null
+    }
+    val automaticDecisionTargetName = when (step.action) {
+        ClocktowerNightAction.MayorRedirect -> automaticMayorTargetName
+        ClocktowerNightAction.DemonSuccessor -> automaticDemonSuccessorTargetName
         else -> null
     }
-    val dynamicDecisionPool = dynamicDecisionFamily
-        ?.let { family -> unifiedDecisionPool(step.decisionOptions, family) }
-    val automaticDecisionOptions = dynamicDecisionPool
-        ?.candidatesFor(SelectionExecutionPolicy.AUTO)
-        ?.map { it.payload }
-        ?: step.decisionOptions
-    val assistedDecisionOptions = dynamicDecisionPool
-        ?.candidatesFor(SelectionExecutionPolicy.ASSISTED)
-        ?.map { it.payload }
-        ?: step.decisionOptions
-    val automaticDecision = WeightedStableSelector.selectStyle(
-        automaticDecisionOptions,
-        automaticStorytellerStyle,
-        ClocktowerDecisionOption::recommendationStyle,
-    )
-    val automaticDecisionTargetName = automaticDecision?.targetName
-        ?: demonSuccessorTargetCards.singleOrNull()?.takeIf {
-            step.action == ClocktowerNightAction.DemonSuccessor
-        }?.name
     val selectionAudit = if (automaticStorytellerInfo) {
         SelectionAuditContext(
             selectionId = informationDecisionKey,
@@ -209,6 +249,50 @@ internal fun ClocktowerNightStepCardLocalized(
         )
     } else {
         null
+    }
+    if (!usesResultFirstRegistration && step.spyRegistrationKey != null && spyCard != null && spyCanRegister) {
+        ClocktowerAutomaticRegistrationEffect(
+            automaticStorytellerInfo = automaticStorytellerInfo,
+            subjectName = spyCard.name,
+            legalSpecialRoleEnNames = completeTroubleBrewingRoles
+                .filter { it.team in step.spyRegistrationTeams && it.enName != "Spy" }
+                .map { it.enName },
+            applyRegisteredRole = step.spyRegistrationDetail == ClocktowerRegistrationDetail.Role,
+            enabled = spyCanRegister,
+            selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|spy-registration"),
+            automaticDecisionKey = clocktowerTemporaryNightDecisionKey(
+                gameId = gameId,
+                phase = phase,
+                round = round,
+                sequence = sequence,
+                family = "spy-registration:${step.spyRegistrationKey}",
+            ),
+            fallbackFamily = "spy-registration-fallback",
+            onUsesSpecialRegistrationChange = onSpyRegistrationGoodChange,
+            onRoleChange = onSpyRegistrationRoleChange,
+        )
+    }
+    if (!usesResultFirstRegistration && step.recluseRegistrationKey != null && recluseCard != null && recluseCanRegister) {
+        ClocktowerAutomaticRegistrationEffect(
+            automaticStorytellerInfo = automaticStorytellerInfo,
+            subjectName = recluseCard.name,
+            legalSpecialRoleEnNames = completeTroubleBrewingRoles
+                .filter { it.team in step.recluseRegistrationTeams }
+                .map { it.enName },
+            applyRegisteredRole = true,
+            enabled = recluseCanRegister,
+            selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|recluse-registration"),
+            automaticDecisionKey = clocktowerTemporaryNightDecisionKey(
+                gameId = gameId,
+                phase = phase,
+                round = round,
+                sequence = sequence,
+                family = "recluse-registration:${step.recluseRegistrationKey}",
+            ),
+            fallbackFamily = "recluse-registration-fallback",
+            onUsesSpecialRegistrationChange = onRecluseRegistrationEvilChange,
+            onRoleChange = onRecluseRegistrationRoleChange,
+        )
     }
     val automaticDisplayOption = recommendationCoordinator.selectInformation(
         options = automaticInformationOptions,
@@ -635,77 +719,6 @@ internal fun ClocktowerNightStepCardLocalized(
                 fontWeight = FontWeight.Black,
             )
 
-            if (!usesResultFirstRegistration && step.spyRegistrationKey != null && spyCard != null && spyCanRegister) {
-                SpyRegistrationPanel(
-                    automaticStorytellerInfo = automaticStorytellerInfo,
-                    cards = cards,
-                    spy = spyCard,
-                    teams = step.spyRegistrationTeams,
-                    registersGood = spyRegistrationGood,
-                    registeredRoleEnName = spyRegisteredRoleEnName,
-                    detail = step.spyRegistrationDetail,
-                    hint = step.spyRegistrationHint,
-                    recommendations = spyRegistrationRecommendations,
-                    enabled = spyCanRegister,
-                    selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|spy-registration"),
-                    onRegistersGoodChange = onSpyRegistrationGoodChange,
-                    onRoleChange = onSpyRegistrationRoleChange,
-                )
-            }
-            if (!usesResultFirstRegistration && step.recluseRegistrationKey != null && recluseCard != null && recluseCanRegister) {
-                RecluseRegistrationPanel(
-                    automaticStorytellerInfo = automaticStorytellerInfo,
-                    automaticStorytellerStyle = automaticStorytellerStyle,
-                    cards = cards,
-                    recluse = recluseCard,
-                    teams = step.recluseRegistrationTeams,
-                    registersEvil = recluseRegistrationEvil,
-                    registeredRoleEnName = recluseRegisteredRoleEnName,
-                    recommendations = recluseRegistrationRecommendations,
-                    enabled = recluseCanRegister,
-                    selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|recluse-registration"),
-                    onRegistersEvilChange = onRecluseRegistrationEvilChange,
-                    onRoleChange = onRecluseRegistrationRoleChange,
-                )
-            }
-            if (step.decisionOptions.isNotEmpty()) {
-                HostActionSection(
-                    title = if (language == "en") "Recommended ruling" else "推荐裁定",
-                    helper = if (automaticStorytellerInfo) {
-                        if (language == "en") "The selected automatic ruling has been applied." else "已采用当前自动模式的裁定。"
-                    } else if (language == "en") {
-                        "The balanced option is the beginner default. You can still choose manually below."
-                    } else {
-                        if (language == "en") "The balanced option is the beginner default; you can still choose manually below." else "平衡方案是新手默认建议；仍可在下方手动裁定。"
-                    },
-                ) {
-                    step.decisionOptions
-                        .filter { !automaticStorytellerInfo || it == automaticDecision }
-                        .forEach { option ->
-                        if (automaticStorytellerInfo) {
-                            Text(option.label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                        } else
-                        if (automaticStorytellerInfo || option.isDefaultRecommendation) {
-                            Button(
-                                onClick = { onSelectName(option.targetName) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(option.label)
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = { onSelectName(option.targetName) },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(option.label)
-                            }
-                        }
-                    }
-                }
-            }
-
         val nightActionSeats = cards.mapIndexed { index, card ->
             card.toStorytellerHostSeatPresentation(
                 seatNumber = index + 1,
@@ -720,6 +733,51 @@ internal fun ClocktowerNightStepCardLocalized(
             .mapNotNull { candidate -> seatNumberForName(candidate.name) }
             .toSet()
         val actionActorSeat = seatNumberForName(step.actor?.name)
+        val pairSquareTablePresentation = pairInformationCandidates
+            .takeIf { it.isNotEmpty() }
+            ?.let(ClocktowerPairManualAuthority::selectionPresentation)
+        val usesPairSquareTable = pairSquareTablePresentation != null
+        val evilInfoSquareTablePresentation = clocktowerEvilInfoSquareTablePresentation(
+            step = step,
+            actorSeat = actionActorSeat,
+            wakeInstruction = command,
+        )
+        val usesEvilInfoSquareTable = evilInfoSquareTablePresentation != null
+        val actionOwnsSquareTable = step.action in setOf(
+            ClocktowerNightAction.RedHerring,
+            ClocktowerNightAction.Poison,
+            ClocktowerNightAction.ButlerMaster,
+            ClocktowerNightAction.MonkProtect,
+            ClocktowerNightAction.DemonKill,
+            ClocktowerNightAction.Ravenkeeper,
+            ClocktowerNightAction.FortuneTeller,
+            ClocktowerNightAction.Chambermaid,
+            ClocktowerNightAction.MayorRedirect,
+            ClocktowerNightAction.DemonSuccessor,
+        )
+        val plainInformationDisplayStep = (automaticDisplayOption
+            ?.let { option -> resolveClocktowerPlayerDisplay(step, option) }
+            ?: step)
+            .takeIf { displayStep ->
+                displayStep.isRealAction &&
+                    displayStep.displayKind != ClocktowerDisplayKind.None &&
+                    !actionOwnsSquareTable &&
+                    !usesPairSquareTable &&
+                    !usesSpySquareTable &&
+                    !usesEvilInfoSquareTable &&
+                    !usesClockmakerSquareTable &&
+                    !usesSageSquareTable &&
+                    !usesRavenkeeperSquareTable &&
+                    !usesUndertakerSquareTable &&
+                    !usesNumericSquareTable
+            }
+        val plainInformationSquareTablePresentation = plainInformationDisplayStep?.let { displayStep ->
+            clocktowerPlainInformationSquareTablePresentation(
+                step = displayStep,
+                actorSeat = actionActorSeat,
+                wakeInstruction = command,
+            )
+        }
         val onSingleTargetEvent: (ClocktowerSingleTargetEvent) -> Unit = { event ->
             when (event) {
                 is ClocktowerSingleTargetEvent.SelectSeat -> cards.getOrNull(event.seat - 1)?.name?.let(onSelectName)
@@ -874,6 +932,30 @@ internal fun ClocktowerNightStepCardLocalized(
             else -> Unit
         }
 
+            evilInfoSquareTablePresentation?.let { presentation ->
+                ClocktowerEvilInfoSquareTableDialog(
+                    seats = nightActionSeats,
+                    presentation = presentation,
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onPrevious = onPrevious,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
+                    onShowPlayerDisplay = { onShowPlayerDisplay(step) },
+                )
+            }
+            plainInformationSquareTablePresentation?.let { presentation ->
+                ClocktowerPlainInformationSquareTableDialog(
+                    seats = nightActionSeats,
+                    presentation = presentation,
+                    language = language,
+                    canGoPrevious = canGoPrevious,
+                    onPrevious = onPrevious,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
+                    onShowPlayerDisplay = { onShowPlayerDisplay(presentation.displayStep) },
+                )
+            }
             if (usesChefSquareTable) {
                 ClocktowerChefSquareTableDialog(
                     seats = nightActionSeats,
@@ -969,53 +1051,15 @@ internal fun ClocktowerNightStepCardLocalized(
                     Text(it, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                 }
 
-            if (!usesNumericSquareTable) {
-                structuredNumberUiModel?.let { model ->
-                    val template = structuredRecommendedOption
-                        ?: displayedInformationOptions.firstOrNull()
-                        ?: step.displayOptions.firstOrNull()
-                    StructuredNumberInformationDecisionPanel(
-                        model = model,
-                        currentRevision = InformationDecisionRevision(gameStateRevision, playerInputRevision),
-                        automaticStorytellerInfo = automaticStorytellerInfo,
-                        language = language,
-                        roleLabel = step.title,
-                        onConfirmed = { confirmed, value ->
-                            if (automaticDisplayOption != null) {
-                                selectionAudit?.let { audit ->
-                                    audit.recorder.recordCommittedSelection(
-                                        SelectionAuditCommit(
-                                            selectionId = audit.selectionId,
-                                            dimensions = audit.dimensions,
-                                            selectedFamilyId = DynamicCandidateGenerator.selectionAuditFamilyId(
-                                                reliability = step.informationReliability,
-                                                truthful = structuredEmpathSelectionIsTruthful(value),
-                                            ),
-                                        ),
-                                    )
-                                }
-                            }
-                            onShowPlayerDisplay(
-                                resolveClocktowerNumericPlayerDisplay(
-                                    step = step,
-                                    template = template,
-                                    value = value,
-                                    truthful = structuredEmpathSelectionIsTruthful(value),
-                                    confirmed = confirmed,
-                                    expectedSnapshot = model.contextSnapshot,
-                                ),
-                            )
-                        },
-                    )
-                }
-            }
-
-            if (manualPairCandidates.isNotEmpty()) {
-                val pairManualPresentation = ClocktowerPairManualAuthority.selectionPresentation(manualPairCandidates)
+            pairSquareTablePresentation?.let { presentation ->
                 ClocktowerPairInformationSquareTableDialog(
                     interactionKey = informationDecisionKey,
-                    presentation = pairManualPresentation,
-                    recommendedOption = pairRecommendationPresentation?.primary,
+                    presentation = presentation,
+                    recommendedOption = if (automaticStorytellerInfo) {
+                        automaticDisplayOption
+                    } else {
+                        pairRecommendationPresentation?.primary
+                    },
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
@@ -1025,6 +1069,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     roleLabel = { roleId ->
                         clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
                     },
+                    allowManualEditing = !automaticStorytellerInfo,
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onPrevious = onPrevious,
@@ -1032,114 +1077,6 @@ internal fun ClocktowerNightStepCardLocalized(
                     onNext = onNext,
                     onConfirm = ::showRecommendedDisplayOption,
                 )
-            } else {
-                pairRecommendationPresentation?.let { presentation ->
-                    ClocktowerPairRecommendationPresentationSection(
-                        presentation = presentation,
-                        language = language,
-                        onSelect = ::showRecommendedDisplayOption,
-                    )
-                }
-            }
-
-            if (
-                !usesSpySquareTable &&
-                !usesClockmakerSquareTable &&
-                !usesSageSquareTable &&
-                !usesRavenkeeperSquareTable &&
-                !usesUndertakerSquareTable &&
-                !usesNumericSquareTable &&
-                pairRecommendationPresentation == null &&
-                structuredNumberUiModel == null &&
-                structuredFortuneTellerUiModel == null &&
-                resultFirstRegistrationCandidates.isEmpty() &&
-                displayedInformationOptions.isNotEmpty() &&
-                step.action != ClocktowerNightAction.FortuneTeller &&
-                step.action != ClocktowerNightAction.Chambermaid
-            ) {
-                Text(if (language == "en") "Recommended information" else "推荐给说书人的完整信息", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                Text(
-                    if (automaticStorytellerInfo) {
-                        if (language == "en") "The automatic mode selected this information. Use the button below to show it." else "已按当前自动模式选定信息；点击下方按钮即可向玩家展示。"
-                    } else {
-                        if (language == "en") "The balanced option is the default; other options apply different pressure. Choosing one also updates this interaction's Spy or Recluse registration." else "平衡方案适合直接采用；其他方案提供不同压力。选择后会同步本次间谍或隐士登记。"
-                    },
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                displayedInformationOptions
-                    .filter { !automaticStorytellerInfo || it == automaticDisplayOption }
-                    .sortedBy { if (it.isDefaultRecommendation) 0 else 1 }
-                    .forEach { option ->
-                        val onClick = {
-                            showRecommendedDisplayOption(option)
-                        }
-                        if (option.isDefaultRecommendation) {
-                            Button(
-                                onClick = onClick,
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text("${if (automaticStorytellerInfo) { if (language == "en") "Auto" else "自动" } else { if (language == "en") "Default" else "默认" }} · ${option.label}")
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = onClick,
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                            ) {
-                                Text(option.label)
-                            }
-                        }
-                    }
-                if (!automaticStorytellerInfo && firstNightPool == null) {
-                    OutlinedButton(
-                        onClick = { onShowPlayerDisplay(step.copy(recommendedDisplayOptions = emptyList())) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Text(if (language == "en") "Use the manual ruling above" else "使用上方手动裁定")
-                    }
-                }
-            }
-
-            if (
-                !usesSpySquareTable &&
-                !usesClockmakerSquareTable &&
-                !usesSageSquareTable &&
-                !usesRavenkeeperSquareTable &&
-                !usesUndertakerSquareTable &&
-                !usesNumericSquareTable &&
-                resultFirstRegistrationCandidates.isEmpty() &&
-                structuredNumberUiModel == null &&
-                structuredFortuneTellerUiModel == null &&
-                firstNightPool == null && step.displayOptions.isNotEmpty() &&
-                step.action != ClocktowerNightAction.FortuneTeller &&
-                step.action != ClocktowerNightAction.Chambermaid
-            ) {
-                Text(if (language == "en") "This ability is unreliable. Choose a result to show." else "能力不可靠：请选择一个结果展示。", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
-                step.displayOptions.forEach { option ->
-                    OutlinedButton(
-                        onClick = {
-                            onShowPlayerDisplay(
-                                resolveClocktowerLegacyUnreliablePlayerDisplay(step, option),
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Text(option.label)
-                    }
-                    RecommendationReasonSummary(option.reasonCodes, option.warningCodes, language)
-                }
-            } else if (!usesSpySquareTable && !usesClockmakerSquareTable && !usesSageSquareTable && !usesRavenkeeperSquareTable && !usesUndertakerSquareTable && !usesNumericSquareTable && resultFirstRegistrationCandidates.isEmpty() && structuredNumberUiModel == null && step.recommendedDisplayOptions.isEmpty() && step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid) {
-                OutlinedButton(
-                    onClick = { onShowPlayerDisplay(step) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                ) {
-                    Text(stringResource(R.string.clocktower_host_show_to_player))
-                }
             }
 
             if (showNavigationActions) {

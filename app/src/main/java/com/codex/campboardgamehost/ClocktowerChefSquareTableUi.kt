@@ -151,20 +151,22 @@ internal fun clocktowerChefResultChoices(
         (option.proposition as? InformationProposition.NumericResult)?.value
 
     if (automaticStorytellerInfo) {
-        return listOfNotNull(automaticDisplayOption?.let { option ->
-            val value = numericValue(option) ?: return@let null
-            ClocktowerChefResultChoice(
-                key = clocktowerInformationCandidateId(option),
-                value = value,
-                sourceKind = ClocktowerChefResultSourceKind.DisplayOption,
-                displayOption = option,
-                recommended = true,
-                effectivePairSeats = clocktowerChefEffectivePairSeats(players, option, value),
-            )
-        })
-    }
-
-    if (resultFirstRegistrationCandidates.isNotEmpty()) {
+        automaticDisplayOption?.let { option ->
+            val value = numericValue(option)
+            if (value != null) {
+                return listOf(
+                    ClocktowerChefResultChoice(
+                        key = clocktowerInformationCandidateId(option),
+                        value = value,
+                        sourceKind = ClocktowerChefResultSourceKind.DisplayOption,
+                        displayOption = option,
+                        recommended = true,
+                        effectivePairSeats = clocktowerChefEffectivePairSeats(players, option, value),
+                    ),
+                )
+            }
+        }
+    } else if (resultFirstRegistrationCandidates.isNotEmpty()) {
         return resultFirstRegistrationCandidates.mapNotNull { option ->
             val value = numericValue(option) ?: return@mapNotNull null
             ClocktowerChefResultChoice(
@@ -179,7 +181,16 @@ internal fun clocktowerChefResultChoices(
     }
 
     structuredNumberUiModel?.let { model ->
-        return model.choices.map { choice ->
+        val visibleChoices = if (automaticStorytellerInfo) {
+            listOfNotNull(
+                model.choices.firstOrNull { it.recommended }
+                    ?: model.choices.singleOrNull(),
+            )
+        } else {
+            model.choices
+        }
+        if (automaticStorytellerInfo && model.choices.isNotEmpty() && visibleChoices.isEmpty()) return emptyList()
+        if (visibleChoices.isNotEmpty()) return visibleChoices.map { choice ->
             ClocktowerChefResultChoice(
                 key = choice.candidateId,
                 value = choice.value,
@@ -236,7 +247,10 @@ internal fun ClocktowerChefSquareTableDialog(
 
     Dialog(
         onDismissRequest = { if (canGoPrevious) onPrevious() },
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(
+                         usePlatformDefaultWidth = false,
+                         decorFitsSystemWindows = false,
+                     ),
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),

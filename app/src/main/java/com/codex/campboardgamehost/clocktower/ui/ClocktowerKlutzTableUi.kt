@@ -4,12 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,107 +33,99 @@ internal fun ClocktowerKlutzTableScreen(
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
 
-    ClocktowerDarkTheme {
-        Surface(
+    ClocktowerDayTableScaffold(
+        previousLabel = text("上一步", "Previous"),
+        hostToolsLabel = text("主持工具", "Host Tools"),
+        nextLabel = text("确认呆瓜选择", "Confirm Klutz choice"),
+        onPrevious = {},
+        onHostTools = onHostTools,
+        onNext = onConfirm,
+        previousEnabled = false,
+        nextEnabled = actionsEnabled && tableState.choiceSeatId != null,
+    ) {
+        HostTableShell(
+            seats = tableState.seats,
             modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background,
-            contentColor = MaterialTheme.colorScheme.onBackground,
-        ) {
-            HostTableShell(
-                seats = tableState.seats,
-                modifier = Modifier.fillMaxSize(),
-                interaction = tableState.interaction,
-                onSeatClick = { seatId ->
-                    if (actionsEnabled) onSeatClick(seatId)
-                },
-                seatBadge = { seat ->
-                    when (seat.seatId) {
-                        tableState.klutzSeatId -> text("呆瓜", "Klutz")
-                        tableState.choiceSeatId -> text("选择", "Choice")
-                        else -> null
-                    }
-                },
-                centerContent = {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(vertical = 2.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
+            interaction = tableState.interaction,
+            onSeatClick = { seatId ->
+                if (actionsEnabled) onSeatClick(seatId)
+            },
+            seatBadge = { seat ->
+                when (seat.seatId) {
+                    tableState.klutzSeatId -> text("呆瓜", "Klutz")
+                    tableState.choiceSeatId -> text("选择", "Choice")
+                    else -> null
+                }
+            },
+            centerContent = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(vertical = 2.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = text("第 $round 天 · 呆瓜选择", "Day $round · Klutz choice"),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Black,
+                        textAlign = TextAlign.Center,
+                    )
+
+                    val klutzName = tableState.klutzName
+                    if (klutzName == null) {
                         Text(
-                            text = text("第 $round 天 · 呆瓜选择", "Day $round · Klutz choice"),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
+                            text = text(
+                                "没有待处理的呆瓜玩家。",
+                                "No pending Klutz player is available.",
+                            ),
+                            color = MaterialTheme.colorScheme.error,
                             textAlign = TextAlign.Center,
                         )
+                    } else {
+                        Text(
+                            text = text(
+                                "$klutzName 是呆瓜，得知自己死亡后必须公开选择一名存活玩家。",
+                                "$klutzName is the Klutz and must publicly choose a living player after learning of their death.",
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
 
-                        val klutzName = tableState.klutzName
-                        if (klutzName == null) {
+                    if (tableState.choiceName == null) {
+                        Text(
+                            text = text(
+                                "点选呆瓜公开指定的存活玩家",
+                                "Tap the living player publicly named by the Klutz",
+                            ),
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                        )
+                    } else {
+                        Surface(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            shape = RoundedCornerShape(12.dp),
+                        ) {
                             Text(
-                                text = text(
-                                    "没有待处理的呆瓜玩家。",
-                                    "No pending Klutz player is available.",
-                                ),
-                                color = MaterialTheme.colorScheme.error,
-                                textAlign = TextAlign.Center,
-                            )
-                        } else {
-                            Text(
-                                text = text(
-                                    "$klutzName 是呆瓜，得知自己死亡后必须公开选择一名存活玩家。",
-                                    "$klutzName is the Klutz and must publicly choose a living player after learning of their death.",
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-
-                        if (tableState.choiceName == null) {
-                            Text(
-                                text = text(
-                                    "点选呆瓜公开指定的存活玩家",
-                                    "Tap the living player publicly named by the Klutz",
-                                ),
-                                color = MaterialTheme.colorScheme.primary,
+                                text = "${tableState.klutzName} → ${tableState.choiceName}",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(10.dp),
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
                             )
-                        } else {
-                            Surface(
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-                                contentColor = MaterialTheme.colorScheme.onSurface,
-                                shape = RoundedCornerShape(12.dp),
-                            ) {
-                                Text(
-                                    text = "${tableState.klutzName} → ${tableState.choiceName}",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(10.dp),
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center,
-                                )
-                            }
                         }
-
-                        if (tableState.choiceSeatId != null) {
-                            specialContent()
-                        }
-
-                        HostBottomActionBar(
-                            previousLabel = text("上一步", "Previous"),
-                            hostToolsLabel = text("主持工具", "Host Tools"),
-                            nextLabel = text("确认呆瓜选择", "Confirm Klutz choice"),
-                            onPrevious = {},
-                            onHostTools = onHostTools,
-                            onNext = onConfirm,
-                            previousEnabled = false,
-                            nextEnabled = actionsEnabled && tableState.choiceSeatId != null,
-                        )
                     }
-                },
-            )
-        }
+
+                    if (tableState.choiceSeatId != null) {
+                        specialContent()
+                    }
+                }
+            },
+        )
     }
 }

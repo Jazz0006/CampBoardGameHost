@@ -116,7 +116,7 @@ import com.codex.campboardgamehost.clocktower.domain.PredictedDecisionOutcome
 import com.codex.campboardgamehost.clocktower.domain.RegistrationLedger
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionType
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import com.codex.campboardgamehost.clocktower.domain.StorytellerAutomationMode
+import com.codex.campboardgamehost.clocktower.domain.StorytellerExperienceMode
 import com.codex.campboardgamehost.clocktower.domain.StorytellerRecommendationUxPolicy
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionKind
@@ -288,8 +288,7 @@ private fun Context.playerName(number: Int): String = getString(R.string.default
 private const val PREFS_NAME = "camp_board_game_host"
 private const val COMMON_PLAYERS_KEY = "common_players"
 private const val LANGUAGE_MODE_KEY = "language_mode"
-private const val AUTOMATIC_STORYTELLER_INFO_KEY = "automatic_storyteller_info"
-private const val STORYTELLER_AUTOMATION_MODE_KEY = "storyteller_automation_mode"
+private const val STORYTELLER_EXPERIENCE_MODE_KEY = "storyteller_experience_mode"
 private const val ACTIVE_GAME_STATE_KEY = "active_game_state"
 private const val GAME_HISTORY_KEY = "game_history"
 internal const val A4_IDENTITY_PREWARM_LOG_TAG = "A4IdentityPrewarm"
@@ -322,22 +321,16 @@ private fun Context.saveLanguageMode(languageMode: LanguageMode) {
         .apply()
 }
 
-private fun Context.loadStorytellerAutomationMode(): StorytellerAutomationMode {
-    val preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    val stored = preferences.getString(STORYTELLER_AUTOMATION_MODE_KEY, null)
-    return StorytellerAutomationMode.entries.firstOrNull { it.prefsValue == stored }
-        ?: if (preferences.getBoolean(AUTOMATIC_STORYTELLER_INFO_KEY, false)) {
-            StorytellerAutomationMode.AUTO_BALANCED
-        } else {
-            StorytellerAutomationMode.MANUAL
-        }
-}
+private fun Context.loadStorytellerExperienceMode(): StorytellerExperienceMode =
+    StorytellerExperienceMode.fromPrefsValue(
+        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(STORYTELLER_EXPERIENCE_MODE_KEY, null),
+    )
 
-private fun Context.saveStorytellerAutomationMode(mode: StorytellerAutomationMode) {
+private fun Context.saveStorytellerExperienceMode(mode: StorytellerExperienceMode) {
     getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         .edit()
-        .putString(STORYTELLER_AUTOMATION_MODE_KEY, mode.prefsValue)
-        .remove(AUTOMATIC_STORYTELLER_INFO_KEY)
+        .putString(STORYTELLER_EXPERIENCE_MODE_KEY, mode.prefsValue)
         .apply()
 }
 
@@ -638,9 +631,9 @@ internal fun CampBoardGameHostApp() {
     }
     val lifecycleOwner = LocalLifecycleOwner.current
     var languageMode by remember { mutableStateOf(baseContext.loadLanguageMode()) }
-    var storytellerAutomationMode by remember { mutableStateOf(baseContext.loadStorytellerAutomationMode()) }
+    var storytellerExperienceMode by remember { mutableStateOf(baseContext.loadStorytellerExperienceMode()) }
     val storytellerRecommendationUxPolicy =
-        StorytellerRecommendationUxPolicy.fromLegacyMode(storytellerAutomationMode)
+        StorytellerRecommendationUxPolicy.fromExperienceMode(storytellerExperienceMode)
     val automaticStorytellerInfo = storytellerRecommendationUxPolicy.automaticExecution
     val context = remember(languageMode) { baseContext.localized(languageMode) }
     val language = context.resources.configuration.locales[0].language
@@ -1956,7 +1949,7 @@ internal fun CampBoardGameHostApp() {
                             roles = clocktowerRoleDefinitionsForScript(script),
                             history = gameHistory.toClocktowerSetupHistory(),
                         ),
-                        style = storytellerAutomationMode.style ?: RecommendationStyle.BALANCED,
+                        style = storytellerRecommendationUxPolicy.recommendationStyle,
                     )
             }.getOrNull()
         } else {
@@ -2290,16 +2283,16 @@ internal fun CampBoardGameHostApp() {
 
                     Screen.Settings -> SettingsScreen(
                         languageMode = languageMode,
-                        storytellerAutomationMode = storytellerAutomationMode,
+                        storytellerExperienceMode = storytellerExperienceMode,
                         commonPlayers = commonPlayers,
                         newCommonPlayerName = newCommonPlayerName,
                         onLanguageModeChange = { nextMode ->
                             languageMode = nextMode
                             baseContext.saveLanguageMode(nextMode)
                         },
-                        onStorytellerAutomationModeChange = { mode ->
-                            storytellerAutomationMode = mode
-                            baseContext.saveStorytellerAutomationMode(mode)
+                        onStorytellerExperienceModeChange = { mode ->
+                            storytellerExperienceMode = mode
+                            baseContext.saveStorytellerExperienceMode(mode)
                         },
                         onNewCommonPlayerNameChange = { newCommonPlayerName = it },
                         onAddCommonPlayer = ::addCommonPlayer,
@@ -3784,16 +3777,16 @@ internal fun CampBoardGameHostApp() {
                         settingsContent = {
                             SettingsContent(
                                 languageMode = languageMode,
-                                storytellerAutomationMode = storytellerAutomationMode,
+                                storytellerExperienceMode = storytellerExperienceMode,
                                 commonPlayers = commonPlayers,
                                 newCommonPlayerName = newCommonPlayerName,
                                 onLanguageModeChange = { nextMode ->
                                     languageMode = nextMode
                                     baseContext.saveLanguageMode(nextMode)
                                 },
-                                onStorytellerAutomationModeChange = { mode ->
-                                    storytellerAutomationMode = mode
-                                    baseContext.saveStorytellerAutomationMode(mode)
+                                onStorytellerExperienceModeChange = { mode ->
+                                    storytellerExperienceMode = mode
+                                    baseContext.saveStorytellerExperienceMode(mode)
                                 },
                                 onNewCommonPlayerNameChange = { newCommonPlayerName = it },
                                 onAddCommonPlayer = ::addCommonPlayer,

@@ -181,7 +181,10 @@ internal fun ClocktowerUndertakerSquareTableDialog(
 
     Dialog(
         onDismissRequest = { if (canGoPrevious) onPrevious() },
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(
+                         usePlatformDefaultWidth = false,
+                         decorFitsSystemWindows = false,
+                     ),
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),

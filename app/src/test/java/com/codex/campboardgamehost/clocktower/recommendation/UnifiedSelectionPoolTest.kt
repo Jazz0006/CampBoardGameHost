@@ -1,7 +1,6 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
-import com.codex.campboardgamehost.clocktower.domain.StorytellerAutomationMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -30,12 +29,6 @@ class UnifiedSelectionPoolTest {
 
         assertEquals(listOf("legal"), pool.candidatesFor(SelectionExecutionPolicy.AUTO).map { it.candidateId })
         assertEquals(listOf("legal"), pool.candidatesFor(SelectionExecutionPolicy.ASSISTED).map { it.candidateId })
-    }
-
-    @Test fun `manual preference maps to assisted without changing its persisted value`() {
-        assertEquals("manual", StorytellerAutomationMode.MANUAL.prefsValue)
-        assertEquals(SelectionExecutionPolicy.ASSISTED, StorytellerAutomationMode.MANUAL.executionPolicy())
-        assertEquals(SelectionExecutionPolicy.AUTO, StorytellerAutomationMode.AUTO_BALANCED.executionPolicy())
     }
 
     @Test fun `parity recorder retains aggregate match information only`() {

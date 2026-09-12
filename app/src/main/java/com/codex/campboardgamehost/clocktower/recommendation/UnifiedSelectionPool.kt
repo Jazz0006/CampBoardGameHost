@@ -1,16 +1,12 @@
 package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
-import com.codex.campboardgamehost.clocktower.domain.StorytellerAutomationMode
 
-/** The domain execution policy; persisted [StorytellerAutomationMode] values remain unchanged. */
+/** The domain execution policy shared by Beginner automatic and Experienced assisted flows. */
 enum class SelectionExecutionPolicy {
     AUTO,
     ASSISTED,
 }
-
-fun StorytellerAutomationMode.executionPolicy(): SelectionExecutionPolicy =
-    if (isAutomatic) SelectionExecutionPolicy.AUTO else SelectionExecutionPolicy.ASSISTED
 
 enum class UnifiedCandidateLegality { LEGAL, INELIGIBLE }
 
