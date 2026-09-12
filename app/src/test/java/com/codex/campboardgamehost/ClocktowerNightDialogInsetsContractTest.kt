@@ -3,6 +3,7 @@ package com.codex.campboardgamehost
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -38,7 +39,7 @@ class ClocktowerNightDialogInsetsContractTest {
     }
 
     @Test
-    fun `night bottom navigation reserves hidden navigation bar inset`() {
+    fun `night bottom navigation uses shared visibility aware inset policy`() {
         val source = String(
             Files.readAllBytes(
                 sourcePath("src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt"),
@@ -49,9 +50,9 @@ class ClocktowerNightDialogInsetsContractTest {
             .substringAfter("internal fun ClocktowerNightBottomActionBar(")
             .substringBefore("@Composable\ninternal fun ClocktowerSingleTargetSquareTableDialog(")
 
-        assertTrue(bottomBar.contains("windowInsetsPadding"))
-        assertTrue(bottomBar.contains("WindowInsets.navigationBarsIgnoringVisibility"))
-        assertTrue(bottomBar.contains("WindowInsetsSides.Bottom"))
+        assertTrue(bottomBar.contains("clocktowerHostBottomNavigationBarPadding()"))
+        assertFalse(bottomBar.contains("windowInsetsPadding"))
+        assertFalse(bottomBar.contains("navigationBarsIgnoringVisibility"))
     }
 
     private fun sourcePath(relativeText: String): Path {
