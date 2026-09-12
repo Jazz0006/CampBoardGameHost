@@ -1,0 +1,78 @@
+name: UI-INFO-1.4 minimal Beginner one-shot
+
+on:
+  push:
+    branches:
+      - codex/ui-info-1-beginner-night-guidance
+    paths:
+      - .github/workflows/ui-info-1-4-minimal-beginner-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/ui-info-1-beginner-night-guidance
+          fetch-depth: 0
+
+      - name: Create RED contract
+        run: python3 .github/ui-info-1-4-minimal-beginner-patch.py --red
+
+      - name: Verify RED
+        run: |
+          set +e
+          ./gradlew :app:testFast --tests '*ClocktowerBeginnerMinimalSurfaceTest' >/tmp/ui-info-red.log 2>&1
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo 'Expected new minimal-surface contract to fail before production patch.'
+            cat /tmp/ui-info-red.log
+            exit 1
+          fi
+          grep -Ei 'unresolved reference|Unresolved reference' /tmp/ui-info-red.log >/dev/null || { cat /tmp/ui-info-red.log; exit 1; }
+
+      - name: Apply all-role Beginner minimal patch
+        run: python3 .github/ui-info-1-4-minimal-beginner-patch.py
+
+      - name: Focused contracts
+        run: ./gradlew :app:testFast --tests '*ClocktowerBeginnerMinimalSurfaceTest' --tests '*ClocktowerBeginnerCompactNightPresentationTest' --tests '*ClocktowerBeginnerNightGuidanceTest'
+
+      - name: FAST checkpoint
+        run: ./gradlew :app:testFast
+
+      - name: Exact surface audit
+        run: |
+          grep -q 'ClocktowerBeginnerReadOnlyRevealDialog' app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt
+          grep -q 'ClocktowerBeginnerReadOnlyRevealDialog' app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt
+          grep -q 'ClocktowerBeginnerReadOnlyRevealDialog' app/src/main/java/com/codex/campboardgamehost/ClocktowerClockmakerSquareTableUi.kt
+          grep -q 'ClocktowerBeginnerReadOnlyRevealDialog' app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt
+          grep -q 'ClocktowerBeginnerReadOnlyRevealDialog' app/src/main/java/com/codex/campboardgamehost/ClocktowerSageSquareTableUi.kt
+          grep -q 'ClocktowerBeginnerReadOnlyRevealDialog' app/src/main/java/com/codex/campboardgamehost/ClocktowerSpySquareTableUi.kt
+          grep -q 'ClocktowerBeginnerReadOnlyRevealDialog' app/src/main/java/com/codex/campboardgamehost/ClocktowerPlainInformationSquareTableUi.kt
+          grep -q 'ClocktowerBeginnerSingleTargetRevealDialog' app/src/main/java/com/codex/campboardgamehost/ClocktowerRavenkeeperSquareTableUi.kt
+          grep -q 'ClocktowerBeginnerTwoTargetRevealDialog' app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt
+          grep -q 'ClocktowerBeginnerTwoTargetRevealDialog' app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt
+
+      - name: Commit production patch and self-clean
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/ui-info-1-4-minimal-beginner-one-shot.yml .github/ui-info-1-4-minimal-beginner-patch.py
+          git add app/src/main/java/com/codex/campboardgamehost/ClocktowerBeginnerCompactNightUi.kt \
+                  app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt \
+                  app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt \
+                  app/src/main/java/com/codex/campboardgamehost/ClocktowerClockmakerSquareTableUi.kt \
+                  app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt \
+                  app/src/main/java/com/codex/campboardgamehost/ClocktowerSageSquareTableUi.kt \
+                  app/src/main/java/com/codex/campboardgamehost/ClocktowerSpySquareTableUi.kt \
+                  app/src/main/java/com/codex/campboardgamehost/ClocktowerPlainInformationSquareTableUi.kt \
+                  app/src/main/java/com/codex/campboardgamehost/ClocktowerRavenkeeperSquareTableUi.kt \
+                  app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt \
+                  app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt \
+                  app/src/test/java/com/codex/campboardgamehost/ClocktowerBeginnerMinimalSurfaceTest.kt
+          git commit -m 'feat: minimize all Beginner night role surfaces'
+          git push origin HEAD:codex/ui-info-1-beginner-night-guidance
