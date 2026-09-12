@@ -6,6 +6,7 @@ import kotlin.io.path.isRegularFile
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/** Regression guard for immersive full-screen night surfaces on devices with gesture navigation. */
 class ClocktowerNightDialogInsetsContractTest {
     @Test
     fun `full screen compose dialogs opt into edge to edge window ownership`() {
