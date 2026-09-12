@@ -7,6 +7,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimen
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditRecord
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -62,6 +63,50 @@ class ClocktowerTemporaryAutomaticRulingsTest {
             clocktowerTemporaryMayorEligibleTownsfolkSeats(
                 candidates = candidates.reversed(),
                 mayorSeat = 4,
+            ),
+        )
+    }
+
+    @Test
+    fun `beginner Mayor ruling advances only after automatic target is applied`() {
+        assertFalse(
+            clocktowerAutomaticMayorRulingShouldAdvance(
+                automaticStorytellerInfo = true,
+                action = ClocktowerNightAction.MayorRedirect,
+                selectedName = null,
+                automaticTargetName = "Alice",
+            ),
+        )
+        assertFalse(
+            clocktowerAutomaticMayorRulingShouldAdvance(
+                automaticStorytellerInfo = true,
+                action = ClocktowerNightAction.MayorRedirect,
+                selectedName = "Bob",
+                automaticTargetName = "Alice",
+            ),
+        )
+        assertTrue(
+            clocktowerAutomaticMayorRulingShouldAdvance(
+                automaticStorytellerInfo = true,
+                action = ClocktowerNightAction.MayorRedirect,
+                selectedName = "Alice",
+                automaticTargetName = "Alice",
+            ),
+        )
+        assertFalse(
+            clocktowerAutomaticMayorRulingShouldAdvance(
+                automaticStorytellerInfo = false,
+                action = ClocktowerNightAction.MayorRedirect,
+                selectedName = "Alice",
+                automaticTargetName = "Alice",
+            ),
+        )
+        assertFalse(
+            clocktowerAutomaticMayorRulingShouldAdvance(
+                automaticStorytellerInfo = true,
+                action = ClocktowerNightAction.DemonSuccessor,
+                selectedName = "Alice",
+                automaticTargetName = "Alice",
             ),
         )
     }
