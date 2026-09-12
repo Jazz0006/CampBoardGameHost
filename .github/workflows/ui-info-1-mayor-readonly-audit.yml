@@ -1,0 +1,29 @@
+name: UI-INFO-1 Mayor read-only audit
+
+on:
+  push:
+    branches:
+      - codex/ui-info-1-beginner-night-guidance
+    paths:
+      - .github/workflows/ui-info-1-mayor-readonly-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  grep-mayor-ownership:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/ui-info-1-beginner-night-guidance
+          fetch-depth: 0
+      - name: Locate Mayor redirect ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== Mayor redirect symbols ==='
+          grep -RInE 'MAYOR_REDIRECT_ELIGIBLE|requiresMayorRedirect|MayorRedirectRequired|resolvedFacts' app/src/main app/src/test || true
+          echo '=== Insets symbols ==='
+          grep -RInE 'navigationBarsPadding|safeDrawingPadding|WindowInsets\.navigationBars|windowInsetsPadding|imePadding|contentWindowInsets|enableEdgeToEdge|WindowInsetsCompat|WindowInsetsControllerCompat' app/src/main || true
