@@ -670,6 +670,13 @@ internal fun ClocktowerNightStepCardLocalized(
             actor = step.actor,
             cards = cards,
             language = language,
+            groupTeam = step.actor
+                ?.clocktowerRole
+                ?.team
+                ?.takeIf { team ->
+                    step.displayKind == ClocktowerDisplayKind.EvilInfo &&
+                        team in setOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon)
+                },
         )
     } else {
         null
@@ -751,6 +758,7 @@ internal fun ClocktowerNightStepCardLocalized(
             step = step,
             actorSeat = actionActorSeat,
             wakeInstruction = command,
+            beginnerMode = automaticStorytellerInfo,
         )
         val usesEvilInfoSquareTable = evilInfoSquareTablePresentation != null
         val actionOwnsSquareTable = step.action in setOf(
