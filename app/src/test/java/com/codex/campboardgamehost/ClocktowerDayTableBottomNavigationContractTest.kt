@@ -3,6 +3,7 @@ package com.codex.campboardgamehost
 import java.nio.file.Files
 import java.nio.file.Path
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -28,7 +29,7 @@ class ClocktowerDayTableBottomNavigationContractTest {
     }
 
     @Test
-    fun `shared day scaffold reserves table space then renders safe bottom navigation`() {
+    fun `shared day scaffold reserves table space then renders visibility aware safe bottom navigation`() {
         val source = source(
             "src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayTableScaffoldUi.kt",
         )
@@ -38,8 +39,8 @@ class ClocktowerDayTableBottomNavigationContractTest {
         assertTrue("table content must be rendered", tableIndex >= 0)
         assertTrue("bottom navigation must follow the table content", navigationIndex > tableIndex)
         assertTrue(source.contains(".weight(1f)"))
-        assertTrue(source.contains("WindowInsets.navigationBarsIgnoringVisibility"))
-        assertTrue(source.contains("WindowInsetsSides.Bottom"))
+        assertTrue(source.contains("WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)"))
+        assertFalse(source.contains("navigationBarsIgnoringVisibility"))
         assertEquals(1, Regex("HostBottomActionBar\\(").findAll(source).count())
     }
 
