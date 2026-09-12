@@ -20,7 +20,7 @@
 UI-R5 square-table convergence                    COMPLETE / PR #117
 UI-NAV-1 global navigation visual unification     COMPLETE / PR #118
 ROLE-ROTATION-1 consecutive-role avoidance        COMPLETE / PR #119
-UX-MODE-1 Beginner / Experienced mode             COMPLETE / accepted / PR #120 closeout
+UX-MODE-1 Beginner / Experienced mode             COMPLETE / merged via PR #120
 
 CURRENT:
 UI-INFO-1 information filtering & layout
