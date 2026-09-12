@@ -1,0 +1,79 @@
+name: UI-INFO-1.2 evil beginner one-shot
+
+on:
+  push:
+    branches:
+      - codex/ui-info-1-beginner-night-guidance
+    paths:
+      - .github/workflows/ui-info-1-2-evil-beginner-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          ref: codex/ui-info-1-beginner-night-guidance
+          fetch-depth: 0
+
+      - name: Lock branch and source blob
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote origin refs/heads/codex/ui-info-1-beginner-night-guidance | cut -f1)" = "$GITHUB_SHA"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt)" = "2f2a4c002f66749826fc0389e2813f64dd62091b"
+
+      - name: Focused presentation contracts before wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerBeginnerNightGuidanceTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerEvilInfoSquareTablePresentationTest' \
+            --rerun-tasks --no-daemon
+
+      - name: Apply exact production patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/ui_info_1_2_evil_beginner_patch.py
+
+      - name: Focused presentation contracts after wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerBeginnerNightGuidanceTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerEvilInfoSquareTablePresentationTest' \
+            --rerun-tasks --no-daemon
+
+      - name: FAST checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Exact diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          test "$(git diff --name-only | wc -l | tr -d ' ')" = "1"
+          test "$(git diff --name-only)" = "app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt"
+          git diff -- app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+
+      - name: Commit production patch and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          git rm .github/workflows/ui-info-1-2-evil-beginner-one-shot.yml .github/scripts/ui_info_1_2_evil_beginner_patch.py
+          git commit -m 'feat: simplify Beginner evil-team wake guidance'
+          git push origin HEAD:codex/ui-info-1-beginner-night-guidance
