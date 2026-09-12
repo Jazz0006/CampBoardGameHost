@@ -15,7 +15,7 @@ UI-R5 square-table convergence                    COMPLETE / merged via PR #117
 UI-NAV-1 global navigation visual unification     COMPLETE / merged via PR #118
 ROLE-ROTATION-1 recent role rotation              COMPLETE / merged via PR #119
 EPI-MQ-0 baseline / ownership re-audit            COMPLETE — old EPI-MQ-1 = MODIFY
-UX-MODE-1 Beginner / Experienced mode             COMPLETE / accepted / merge via PR #120
+UX-MODE-1 Beginner / Experienced mode             COMPLETE / merged via PR #120
 
 UI-INFO-1 information filtering & layout          CURRENT — next focused UI campaign
 EPI-MQ / Productive Uncertainty                   QUEUED after UI-INFO-1 unless reprioritized
@@ -65,18 +65,27 @@ UI-INFO-1 must not change:
 
 ## 4. UX-MODE-1 closeout
 
-UX-MODE-1 is accepted from the product/device perspective and PR #120 is authorized for merge after documentation closeout and passing merge gates.
+UX-MODE-1 is accepted from the product/device perspective and merged through PR #120.
 
-Final branch checkpoint before docs closeout:
+Final PR head before merge:
+
+`969f8bd1cb71f34fce6a835ca5848cb77bd4b346`
+
+Merge commit on `main`:
+
+`fa08d475ffb79c1eef494fff87578d6b7b3449b6`
+
+Validated production/device checkpoint before the docs-only closeout commits:
 
 `57a0905153b06a0cfe809d36af4b0e0403fe8e3b`
 
 At that checkpoint:
 
-- PR #120 was open, Draft and mergeable;
 - CI run `34664124993` PASS;
 - R2 run `34664124978` PASS;
 - real-device POCO X8 Pro acceptance reported no remaining issue for the final safe-area fix.
+
+The final docs-only PR head also passed R2 before merge; no production code changed after the validated checkpoint.
 
 ### Stable UX-MODE product contract
 
