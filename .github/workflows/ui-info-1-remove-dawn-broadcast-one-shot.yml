@@ -10,6 +10,7 @@ on:
 permissions:
   contents: write
 
+# Retry 2: helper is anchored after resetClocktowerDayFlow so Kotlin local-function ownership compiles.
 jobs:
   patch-test-audit:
     runs-on: ubuntu-latest
