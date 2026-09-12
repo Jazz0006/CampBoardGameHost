@@ -5,6 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+// UI-INFO-1.3 regression coverage for Beginner compact night surfaces.
 class ClocktowerBeginnerCompactNightPresentationTest {
     @Test
     fun `structured beginner wake guidance uses compact surface`() {
