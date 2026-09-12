@@ -16,14 +16,15 @@ internal data class ClocktowerBeginnerNightGuidance(
  * Projects the minimum actionable context needed by a Beginner Storyteller night step.
  *
  * This is presentation-only: role truth, shown-role identity, legal targets and recommendation
- * ownership stay upstream. Multi-player wake steps intentionally keep their existing presentation
- * until their actor group is represented explicitly rather than inferred from prose.
+ * ownership stay upstream. Evil-team group wake steps use structured team membership rather than
+ * parsing localized wake prose.
  */
 internal fun clocktowerBeginnerNightGuidance(
     action: ClocktowerNightAction,
     actor: PlayerCard?,
     cards: List<PlayerCard>,
     language: String,
+    groupTeam: ClocktowerTeam? = null,
 ): ClocktowerBeginnerNightGuidance? {
     val resolvedActor = actor ?: return null
     val seat = cards.indexOfFirst { card -> card.name == resolvedActor.name }
@@ -33,6 +34,25 @@ internal fun clocktowerBeginnerNightGuidance(
     val actualRole = resolvedActor.clocktowerRole ?: return null
     val shownRole = resolvedActor.clocktowerShownRole
     fun roleLabel(role: ClocktowerRole): String = if (language == "en") role.enName else role.zhName
+    fun seatAndName(card: PlayerCard): String? {
+        val cardSeat = cards.indexOf(card).takeIf { it >= 0 }?.plus(1) ?: return null
+        return if (language == "en") "P$cardSeat ${card.name}" else "${cardSeat}号 ${card.name}"
+    }
+
+    if (groupTeam == ClocktowerTeam.Minion || groupTeam == ClocktowerTeam.Demon) {
+        val group = cards.filter { card -> card.clocktowerRole?.team == groupTeam }
+        if (group.isEmpty()) return null
+        val groupLabel = when (groupTeam) {
+            ClocktowerTeam.Minion -> if (language == "en") "Minions" else "爪牙"
+            ClocktowerTeam.Demon -> if (language == "en") "Demon" else "恶魔"
+            else -> error("unreachable")
+        }
+        return ClocktowerBeginnerNightGuidance(
+            wakeLine = if (language == "en") "Wake $groupLabel" else "唤醒 $groupLabel",
+            actorLine = group.mapNotNull(::seatAndName).joinToString(" · "),
+            instruction = null,
+        )
+    }
 
     val roleContext = if (
         actualRole.enName == "Drunk" &&
