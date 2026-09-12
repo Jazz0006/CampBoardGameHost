@@ -65,3 +65,151 @@ internal fun ClocktowerBeginnerSingleTargetAbilityDialog(
         }
     }
 }
+
+
+internal fun clocktowerBeginnerNeutralSeatPresentation(
+    seatNumber: Int,
+    actorSeat: Int?,
+): ClocktowerNightActionSeatPresentation = ClocktowerNightActionSeatPresentation(
+    targetState = ClocktowerSquareTableSeatState.Neutral,
+    isCurrentActor = seatNumber == actorSeat,
+)
+
+@Composable
+internal fun ClocktowerBeginnerReadOnlyRevealDialog(
+    seats: List<HostSeatPresentation>,
+    actorSeat: Int?,
+    wakeInstruction: String?,
+    language: String,
+    canGoPrevious: Boolean,
+    onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
+    onNext: () -> Unit,
+    onShow: () -> Unit,
+    buttonLabel: String? = null,
+) {
+    ClocktowerNightActionSquareTableDialog(
+        seats = seats,
+        enabled = false,
+        language = language,
+        seatPresentation = { seatNumber ->
+            clocktowerBeginnerNeutralSeatPresentation(seatNumber, actorSeat)
+        },
+        onSeatSelected = {},
+        canGoPrevious = canGoPrevious,
+        onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            ClocktowerNightActionWakeInstruction(wakeInstruction)
+            androidx.compose.material3.Button(onClick = onShow) {
+                androidx.compose.material3.Text(
+                    buttonLabel ?: if (language == "en") "Show to player" else "展示给玩家",
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun ClocktowerBeginnerSingleTargetRevealDialog(
+    seats: List<HostSeatPresentation>,
+    actorSeat: Int?,
+    selectedSeat: Int?,
+    selectableSeats: Set<Int>,
+    enabled: Boolean,
+    wakeInstruction: String?,
+    language: String,
+    canGoPrevious: Boolean,
+    onSeatSelected: (Int) -> Unit,
+    onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
+    onNext: () -> Unit,
+    onShow: (() -> Unit)?,
+) {
+    ClocktowerNightActionSquareTableDialog(
+        seats = seats,
+        enabled = enabled,
+        language = language,
+        seatPresentation = { seatNumber ->
+            clocktowerSingleTargetSeatPresentation(
+                seatNumber = seatNumber,
+                actorSeat = actorSeat,
+                selectedSeat = selectedSeat,
+                selectableSeats = if (enabled) selectableSeats else emptySet(),
+            )
+        },
+        onSeatSelected = onSeatSelected,
+        canGoPrevious = canGoPrevious,
+        onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            ClocktowerNightActionWakeInstruction(wakeInstruction)
+            onShow?.let { reveal ->
+                androidx.compose.material3.Button(onClick = reveal) {
+                    androidx.compose.material3.Text(if (language == "en") "Show to player" else "展示给玩家")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun ClocktowerBeginnerTwoTargetRevealDialog(
+    seats: List<HostSeatPresentation>,
+    actorSeat: Int?,
+    selectedSeats: List<Int>,
+    selectableSeats: Set<Int>,
+    enabled: Boolean,
+    wakeInstruction: String?,
+    language: String,
+    canGoPrevious: Boolean,
+    onSeatSelected: (Int) -> Unit,
+    onPrevious: () -> Unit,
+    onHostTools: () -> Unit,
+    onNext: () -> Unit,
+    onShow: (() -> Unit)?,
+) {
+    ClocktowerNightActionSquareTableDialog(
+        seats = seats,
+        enabled = enabled,
+        language = language,
+        seatPresentation = { seatNumber ->
+            clocktowerTwoTargetSeatPresentation(
+                seatNumber = seatNumber,
+                actorSeat = actorSeat,
+                selectedSeats = selectedSeats,
+                selectableSeats = if (enabled) selectableSeats else emptySet(),
+            )
+        },
+        onSeatSelected = onSeatSelected,
+        canGoPrevious = canGoPrevious,
+        onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            ClocktowerNightActionWakeInstruction(wakeInstruction)
+            onShow?.let { reveal ->
+                androidx.compose.material3.Button(onClick = reveal) {
+                    androidx.compose.material3.Text(if (language == "en") "Show to player" else "展示给玩家")
+                }
+            }
+        }
+    }
+}
