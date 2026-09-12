@@ -29,7 +29,7 @@ jobs:
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt)" = "712597cf26fac42c4e857bc7f3e0f5cb88689794"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayTableScaffoldUi.kt)" = "d5663e004e44cfd451bc14a9a48c467688e90316"
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerHostBottomInsetPolicyTest.kt)" = "0753980101c7d1fd1be1eaf94528ad378419143a"
-          test "$(git hash-object .github/scripts/ui_info_1_host_bottom_inset_patch.py)" = "4fa48c3ec9d6dcbc528fe8baa71411f070a9c4b5"
+          test "$(git hash-object .github/scripts/ui_info_1_host_bottom_inset_patch.py)" = "f81cbbf471b16003a7f89ec40992785f6363ba36"
           test ! -e app/src/main/java/com/codex/campboardgamehost/ClocktowerHostBottomInsetPolicy.kt
 
       - name: Focused RED
