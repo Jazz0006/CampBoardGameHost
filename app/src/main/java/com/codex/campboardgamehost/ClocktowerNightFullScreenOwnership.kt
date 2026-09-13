@@ -23,4 +23,8 @@ internal fun clocktowerNightUsesFullScreenHostSurface(
     displayKind: ClocktowerDisplayKind,
 ): Boolean =
     isRealAction &&
-        (clocktowerNightActionOwnsSquareTable(action) || displayKind != ClocktowerDisplayKind.None)
+        (
+            clocktowerNightActionOwnsSquareTable(action) ||
+                displayKind != ClocktowerDisplayKind.None ||
+                action == ClocktowerNightAction.None
+            )
