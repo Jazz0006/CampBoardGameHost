@@ -23,7 +23,7 @@ class ClocktowerPairManualSeatPresentationTest {
 
         assertEquals("seat-4", ui.seatId)
         assertEquals(4, ui.seatNumber)
-        assertEquals("Dana ☠", ui.label)
+        assertEquals("Dana", ui.label)
         assertEquals(listOf("Actual: Drunk", "Shown: Empath"), ui.detailLabels)
         assertEquals(ClocktowerSquareTableSeatState.Selectable, ui.state)
     }
