@@ -5,9 +5,9 @@ import org.junit.Test
 
 class ClocktowerDawnPresentationPolicyTest {
     @Test
-    fun `completed dawn is not exposed as a standalone host screen`() {
+    fun `dawn remains a standalone host screen until announcement is complete`() {
         assertEquals(
-            ClocktowerPhase.Day,
+            ClocktowerPhase.Dawn,
             clocktowerVisibleHostPhase(ClocktowerPhase.Dawn),
         )
     }
