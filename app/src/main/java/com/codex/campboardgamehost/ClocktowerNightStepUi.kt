@@ -54,6 +54,7 @@ internal fun ClocktowerNightStepCardLocalized(
     evilAdvantage: Int,
     informationDecisionKey: String,
     cards: List<PlayerCard>,
+    ghostVoteAuthority: ClocktowerGhostVoteAuthority,
     aliveCards: List<PlayerCard>,
     chambermaidTargetCards: List<PlayerCard>,
     mayorRedirectTargetCards: List<PlayerCard>,
@@ -773,6 +774,7 @@ internal fun ClocktowerNightStepCardLocalized(
             card.toStorytellerHostSeatPresentation(
                 seatNumber = index + 1,
                 language = language,
+                ghostVoteAuthority = ghostVoteAuthority,
             )
         }
         fun seatNumberForName(name: String?): Int? = name

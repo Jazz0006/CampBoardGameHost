@@ -22,7 +22,7 @@ internal fun hostSeatContentPresentation(
     seat: HostSeatPresentation,
     language: String,
 ): HostSeatContentPresentation {
-    val primaryLabel = if (seat.isAlive) seat.playerName else "${seat.playerName} ☠"
+    val primaryLabel = seat.playerName
     val actualRole = seat.actualRole
         ?: return HostSeatContentPresentation(primaryLabel = primaryLabel)
     val shownRole = seat.shownRole
@@ -47,10 +47,16 @@ internal fun hostSeatContentPresentation(
 internal fun PlayerCard.toStorytellerHostSeatPresentation(
     seatNumber: Int,
     language: String,
+    ghostVoteAuthority: ClocktowerGhostVoteAuthority? = null,
 ): HostSeatPresentation = HostSeatPresentation(
     seatId = ClocktowerSeatId(seatNumber),
     playerName = name,
     isAlive = eliminatedRound == null,
+    hasUnspentGhostVote = hostSeatHasUnspentGhostVote(
+        seatId = ClocktowerSeatId(seatNumber),
+        isAlive = eliminatedRound == null,
+        ghostVoteAuthority = ghostVoteAuthority,
+    ),
     actualRole = clocktowerRole?.toHostRolePresentation(language),
     shownRole = clocktowerShownRole?.toHostRolePresentation(language),
     contentMode = HostSeatContentMode.StorytellerRoleDetail,

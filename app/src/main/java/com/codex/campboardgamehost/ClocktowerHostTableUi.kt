@@ -23,6 +23,7 @@ internal fun HostTableShell(
     dragEnabled: Boolean = false,
     neutralSelectionChrome: Boolean = false,
     seatBadge: (HostSeatPresentation) -> String? = { null },
+    seatHasUnspentGhostVote: (HostSeatPresentation) -> Boolean = { seat -> seat.hasUnspentGhostVote },
     seatMotionKey: (HostSeatPresentation) -> String = { seat -> seat.seatId.renderKey() },
     onSeatDragCommit: (ClocktowerSeatId, Int) -> Unit = { _, _ -> },
     directionalGesture: HostTableDirectionalGesturePolicy? = null,
@@ -61,6 +62,7 @@ internal fun HostTableShell(
                 neutralSelectionChrome = neutralSelectionChrome,
                 interactionMode = interaction.mode,
                 badge = seatBadge(frame.seat),
+                hasUnspentGhostVote = seatHasUnspentGhostVote(frame.seat),
                 language = language,
             )
         }
@@ -122,6 +124,7 @@ private fun HostTableSeatFrame.toSquareTableSeatUiModel(
     neutralSelectionChrome: Boolean,
     interactionMode: HostTableInteractionMode,
     badge: String?,
+    hasUnspentGhostVote: Boolean,
     language: String,
 ): ClocktowerSquareTableSeatUiModel {
     val content = hostSeatContentPresentation(seat, language)
@@ -135,6 +138,8 @@ private fun HostTableSeatFrame.toSquareTableSeatUiModel(
         } else {
             squareTableSeatState(interactionMode)
         },
+        isAlive = seat.isAlive,
+        hasUnspentGhostVote = hasUnspentGhostVote,
         isInteractionEnabled = isSelectable && !isLocked,
         motionKey = motionKey,
         badge = badge,

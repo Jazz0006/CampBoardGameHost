@@ -84,6 +84,8 @@ internal data class ClocktowerSquareTableSeatUiModel(
     ),
     val motionKey: String = seatId,
     val badge: String? = null,
+    val isAlive: Boolean = true,
+    val hasUnspentGhostVote: Boolean = false,
 )
 
 internal data class ClocktowerSquareTableSeatPlacement(
@@ -542,6 +544,12 @@ private fun ClocktowerSquareTableSeat(
     val canSelect = interactionMode == ClocktowerSquareTableInteractionMode.Selectable &&
         seat.isInteractionEnabled
     val palette = clocktowerSquareTableSeatPalette(seat.state)
+    val lifeMarkers = clocktowerSquareTableLifeMarkers(
+        isAlive = seat.isAlive,
+        hasUnspentGhostVote = seat.hasUnspentGhostVote,
+    )
+    val deathMarkerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.72f)
+    val ghostVoteMarkerColor = MaterialTheme.colorScheme.error
     val clickModifier = if (canSelect) {
         Modifier.clickable { onSeatClick(seat.seatId) }
     } else {
@@ -569,6 +577,39 @@ private fun ClocktowerSquareTableSeat(
         Box(
             modifier = Modifier.fillMaxSize(),
         ) {
+            if (lifeMarkers.showDeathCross) {
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(5.dp),
+                ) {
+                    val strokeWidth = 4.dp.toPx()
+                    drawLine(
+                        color = deathMarkerColor,
+                        start = Offset.Zero,
+                        end = Offset(size.width, size.height),
+                        strokeWidth = strokeWidth,
+                    )
+                    drawLine(
+                        color = deathMarkerColor,
+                        start = Offset(size.width, 0f),
+                        end = Offset(0f, size.height),
+                        strokeWidth = strokeWidth,
+                    )
+                }
+            }
+
+            if (lifeMarkers.showUnspentGhostVote) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val markerInset = 7.dp.toPx()
+                    drawCircle(
+                        color = ghostVoteMarkerColor,
+                        radius = 4.dp.toPx(),
+                        center = Offset(size.width / 2f, markerInset),
+                    )
+                }
+            }
+
             Text(
                 text = seat.seatNumber.toString(),
                 color = palette.content,

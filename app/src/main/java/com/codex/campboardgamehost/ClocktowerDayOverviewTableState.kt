@@ -17,7 +17,16 @@ internal data class ClocktowerDayOverviewTableState(
 internal fun clocktowerDayOverviewTableState(
     gameState: GameState,
     roleDisplayName: (RoleId) -> String = { roleId -> roleId.value },
+    ghostVoteAuthority: ClocktowerGhostVoteAuthority? = null,
 ): ClocktowerDayOverviewTableState = ClocktowerDayOverviewTableState(
-    seats = gameState.toHostSeatPresentations(roleDisplayName),
+    seats = gameState.toHostSeatPresentations(roleDisplayName).map { seat ->
+        seat.copy(
+            hasUnspentGhostVote = hostSeatHasUnspentGhostVote(
+                seatId = seat.seatId,
+                isAlive = seat.isAlive,
+                ghostVoteAuthority = ghostVoteAuthority,
+            ),
+        )
+    },
     interaction = HostTableInteractionState(mode = HostTableInteractionMode.ReadOnly),
 )

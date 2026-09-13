@@ -30,6 +30,7 @@ internal data class HostSeatPresentation(
     val seatId: ClocktowerSeatId,
     val playerName: String,
     val isAlive: Boolean,
+    val hasUnspentGhostVote: Boolean = false,
     val actualRole: HostRolePresentation? = null,
     val shownRole: HostRolePresentation? = null,
     val contentMode: HostSeatContentMode = HostSeatContentMode.IdentityOnly,

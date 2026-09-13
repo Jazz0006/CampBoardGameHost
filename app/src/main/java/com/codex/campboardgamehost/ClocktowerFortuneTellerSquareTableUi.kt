@@ -110,6 +110,8 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
                     seatNumber = seat.seatId.number,
                     label = content.primaryLabel,
                     detailLabels = content.detailLabels,
+                    isAlive = seat.isAlive,
+                    hasUnspentGhostVote = seat.hasUnspentGhostVote,
                     state = clocktowerFortuneTellerSeatState(
                         seatNumber = seat.seatId.number,
                         selectedSeats = selectedSeats,
