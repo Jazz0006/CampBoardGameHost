@@ -29,20 +29,20 @@ class ClocktowerDayTableBottomNavigationContractTest {
     }
 
     @Test
-    fun `shared day scaffold reserves table space then uses shared safe bottom inset policy`() {
-        val source = source(
+    fun `day scaffold delegates window and bottom navigation ownership to shared host scaffold`() {
+        val daySource = source(
             "src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayTableScaffoldUi.kt",
         )
-        val tableIndex = source.indexOf("tableContent()")
-        val navigationIndex = source.indexOf("HostBottomActionBar(")
+        val sharedSource = source(
+            "src/main/java/com/codex/campboardgamehost/ClocktowerHostFullScreenScaffold.kt",
+        )
 
-        assertTrue("table content must be rendered", tableIndex >= 0)
-        assertTrue("bottom navigation must follow the table content", navigationIndex > tableIndex)
-        assertTrue(source.contains(".weight(1f)"))
-        assertTrue(source.contains(".clocktowerHostBottomNavigationBarPadding()"))
-        assertFalse(source.contains("WindowInsets.navigationBars"))
-        assertFalse(source.contains("navigationBarsIgnoringVisibility"))
-        assertEquals(1, Regex("HostBottomActionBar\\(").findAll(source).count())
+        assertTrue(daySource.contains("ClocktowerHostFullScreenScaffold("))
+        assertFalse(daySource.contains("HostBottomActionBar("))
+        assertTrue(sharedSource.contains(".weight(1f)"))
+        assertTrue(sharedSource.contains(".clocktowerHostBottomNavigationBarPadding()"))
+        assertFalse(sharedSource.contains("navigationBarsIgnoringVisibility"))
+        assertEquals(1, Regex("HostBottomActionBar\\(").findAll(sharedSource).count())
     }
 
     private fun source(relativeText: String): String {
