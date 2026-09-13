@@ -1,6 +1,8 @@
 package com.codex.campboardgamehost
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerPairManualSeatPresentationTest {
@@ -10,6 +12,7 @@ class ClocktowerPairManualSeatPresentationTest {
             seatId = ClocktowerSeatId(4),
             playerName = "Dana",
             isAlive = false,
+            hasUnspentGhostVote = true,
             actualRole = HostRolePresentation(roleId = "Drunk", displayName = "Drunk"),
             shownRole = HostRolePresentation(roleId = "Empath", displayName = "Empath"),
             contentMode = HostSeatContentMode.StorytellerRoleDetail,
@@ -26,5 +29,7 @@ class ClocktowerPairManualSeatPresentationTest {
         assertEquals("Dana", ui.label)
         assertEquals(listOf("Actual: Drunk", "Shown: Empath"), ui.detailLabels)
         assertEquals(ClocktowerSquareTableSeatState.Selectable, ui.state)
+        assertFalse(ui.isAlive)
+        assertTrue(ui.hasUnspentGhostVote)
     }
 }

@@ -605,7 +605,7 @@ private fun ClocktowerSquareTableSeat(
                     drawCircle(
                         color = ghostVoteMarkerColor,
                         radius = 4.dp.toPx(),
-                        center = Offset(size.width - markerInset, markerInset),
+                        center = Offset(size.width / 2f, markerInset),
                     )
                 }
             }
@@ -629,10 +629,7 @@ private fun ClocktowerSquareTableSeat(
                     fontWeight = FontWeight.Black,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(
-                            end = if (lifeMarkers.showUnspentGhostVote) 14.dp else 3.dp,
-                            top = 2.dp,
-                        ),
+                        .padding(end = 3.dp, top = 2.dp),
                 )
             }
 

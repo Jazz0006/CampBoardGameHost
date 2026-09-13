@@ -23,7 +23,7 @@ internal fun HostTableShell(
     dragEnabled: Boolean = false,
     neutralSelectionChrome: Boolean = false,
     seatBadge: (HostSeatPresentation) -> String? = { null },
-    seatHasUnspentGhostVote: (HostSeatPresentation) -> Boolean = { false },
+    seatHasUnspentGhostVote: (HostSeatPresentation) -> Boolean = { seat -> seat.hasUnspentGhostVote },
     seatMotionKey: (HostSeatPresentation) -> String = { seat -> seat.seatId.renderKey() },
     onSeatDragCommit: (ClocktowerSeatId, Int) -> Unit = { _, _ -> },
     directionalGesture: HostTableDirectionalGesturePolicy? = null,

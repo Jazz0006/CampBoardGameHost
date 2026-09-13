@@ -259,6 +259,8 @@ internal fun ClocktowerNightActionSquareTableDialog(
                     seatNumber = seat.seatId.number,
                     label = content.primaryLabel,
                     detailLabels = content.detailLabels,
+                    isAlive = seat.isAlive,
+                    hasUnspentGhostVote = seat.hasUnspentGhostVote,
                     state = presentation.targetState,
                     isCurrentActor = presentation.isCurrentActor,
                 )
