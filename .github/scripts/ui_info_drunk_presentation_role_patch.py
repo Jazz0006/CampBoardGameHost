@@ -12,8 +12,8 @@ text = raw.decode("utf-8")
 # first-night UI projection/family identity, dedicated square-table ownership,
 # and the visible ability label. Domain/rules state remains on the original step.
 role_read_count = text.count("step.roleEnName")
-if role_read_count != 7:
-    raise SystemExit(f"Expected exactly 7 presentation-local step.roleEnName reads, found {role_read_count}")
+if role_read_count != 9:
+    raise SystemExit(f"Expected exactly 9 presentation-local step.roleEnName reads, found {role_read_count}")
 text = text.replace("step.roleEnName", "presentationRoleEnName")
 
 old_anchor = """    val language = LocalContext.current.resources.configuration.locales[0].language
