@@ -22,7 +22,7 @@ internal fun hostSeatContentPresentation(
     seat: HostSeatPresentation,
     language: String,
 ): HostSeatContentPresentation {
-    val primaryLabel = if (seat.isAlive) seat.playerName else "${seat.playerName} ☠"
+    val primaryLabel = seat.playerName
     val actualRole = seat.actualRole
         ?: return HostSeatContentPresentation(primaryLabel = primaryLabel)
     val shownRole = seat.shownRole
