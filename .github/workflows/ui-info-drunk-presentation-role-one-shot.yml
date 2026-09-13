@@ -30,7 +30,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "0f543815a653b56144ef777383a80082cc8759b1"
+          test "$(git rev-parse HEAD^)" = "28202eed8389bc2e4035c97c880a079a2b4dfffa"
           test "$(git ls-remote origin refs/heads/codex/ui-info-1-beginner-night-guidance | cut -f1)" = "$GITHUB_SHA"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt)" = "c23ea456910a050dd3ad7c44ab38a59a2c694772"
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerNightPresentationRoleTest.kt)" = "1ccb04f956bb995786ddbdec99c8fa6648190f04"
