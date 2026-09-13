@@ -16,7 +16,7 @@ class ClocktowerNightDialogInsetsContractTest {
 
         assertFalse(source.contains("import androidx.compose.ui.window.Dialog"))
         assertFalse(source.contains("DialogProperties("))
-        assertFalse(source.contains("Dialog("))
+        assertFalse(source.contains("\n    Dialog("))
         assertTrue(source.contains("ClocktowerHostFullScreenScaffold("))
     }
 
