@@ -30,7 +30,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git rev-parse HEAD^)" = "3a507ee8e92a58685876911f1632f33b54b4c3a9"
+          test "$(git rev-parse HEAD^)" = "3c8e4773741d89f4818388314021968f88ec10a4"
           test "$(git ls-remote origin refs/heads/codex/ui-info-1-beginner-night-guidance | cut -f1)" = "$GITHUB_SHA"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt)" = "c23ea456910a050dd3ad7c44ab38a59a2c694772"
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerNightPresentationRoleTest.kt)" = "1ccb04f956bb995786ddbdec99c8fa6648190f04"
@@ -79,7 +79,7 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check
-          actual="$(git diff --name-only | sort)"
+          actual="$( { git diff --name-only; git ls-files --others --exclude-standard; } | sort)"
           expected="$(printf '%s\n' \
             'app/src/main/java/com/codex/campboardgamehost/ClocktowerNightPresentationRole.kt' \
             'app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt' | sort)"
