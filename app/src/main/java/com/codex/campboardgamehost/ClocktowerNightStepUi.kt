@@ -91,6 +91,10 @@ internal fun ClocktowerNightStepCardLocalized(
     onNext: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
+    val presentationRoleEnName = clocktowerNightPresentationRoleEnName(
+        stepRoleEnName = step.roleEnName,
+        actor = step.actor,
+    )
     fun optionId(option: ClocktowerDisplayOption): String = clocktowerInformationCandidateId(option)
     // B7.3's first production slice: a single complete first-night pool is
     // projected differently by execution policy. Later-night families retain
@@ -109,7 +113,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 ?.takeIf { step.informationReliability == InformationReliability.POISONED }
             projectFirstNightNumericInformationOptions(
                 phase = phase,
-                roleEnName = step.roleEnName.orEmpty(),
+                roleEnName = presentationRoleEnName.orEmpty(),
                 sourceSeat = sourceSeat,
                 players = cards.toClocktowerPlayerStates(poisonedPlayerName = poisonedPlayerName),
                 options = source,
@@ -125,7 +129,7 @@ internal fun ClocktowerNightStepCardLocalized(
         .takeIf { phase == ClocktowerPhase.FirstNight && it.isNotEmpty() }
         ?.let { options -> unifiedFirstNightInformationPool(
             options = options,
-            familyId = step.roleEnName ?: "first-night-information",
+            familyId = presentationRoleEnName ?: "first-night-information",
             automaticStyle = automaticStorytellerStyle,
         ) }
     // The legacy assisted recommendation surface keeps the curated compatibility pool.
@@ -134,7 +138,7 @@ internal fun ClocktowerNightStepCardLocalized(
         .takeIf { phase == ClocktowerPhase.FirstNight && it.isNotEmpty() }
         ?.let { options -> unifiedFirstNightInformationPool(
             options = options,
-            familyId = step.roleEnName ?: "first-night-information",
+            familyId = presentationRoleEnName ?: "first-night-information",
             automaticStyle = automaticStorytellerStyle,
         ) }
     val automaticInformationOptions = firstNightAutomaticPool
@@ -148,7 +152,7 @@ internal fun ClocktowerNightStepCardLocalized(
     val displayedInformationOptions = if (automaticStorytellerInfo) automaticInformationOptions else assistedInformationOptions
     val pairRecommendationPresentation = if (
         phase == ClocktowerPhase.FirstNight &&
-        step.roleEnName in setOf("Washerwoman", "Librarian", "Investigator")
+        presentationRoleEnName in setOf("Washerwoman", "Librarian", "Investigator")
     ) {
         clocktowerRecommendationPresentation(displayedInformationOptions)
     } else {
@@ -156,7 +160,7 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val pairInformationCandidates = if (
         phase == ClocktowerPhase.FirstNight &&
-        step.roleEnName in setOf("Washerwoman", "Librarian", "Investigator")
+        presentationRoleEnName in setOf("Washerwoman", "Librarian", "Investigator")
     ) {
         step.manualInformationCandidates
     } else {
@@ -323,7 +327,7 @@ internal fun ClocktowerNightStepCardLocalized(
     fun structuredEmpathSelectionIsTruthful(value: Int): Boolean =
         numericPreparation?.isTruthful(value, projectedFirstNightInformationCandidates) ?: false
     val chefPlayers = cards.toClocktowerPlayerStates(poisonedPlayerName = null)
-    val chefResultChoices = if (step.roleEnName == "Chef" && step.actor != null) {
+    val chefResultChoices = if (presentationRoleEnName == "Chef" && step.actor != null) {
         clocktowerChefResultChoices(
             step = step,
             players = chefPlayers,
@@ -337,7 +341,7 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val usesChefSquareTable = chefResultChoices.isNotEmpty()
     val empathPlayers = chefPlayers
-    val empathResultChoices = if (step.roleEnName == "Empath" && step.actor != null) {
+    val empathResultChoices = if (presentationRoleEnName == "Empath" && step.actor != null) {
         clocktowerEmpathResultChoices(
             step = step,
             players = empathPlayers,
@@ -351,7 +355,7 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val usesEmpathSquareTable = empathResultChoices.isNotEmpty()
     val usesNumericSquareTable = usesChefSquareTable || usesEmpathSquareTable
-    val undertakerResultChoices = if (step.roleEnName == "Undertaker" && step.actor != null) {
+    val undertakerResultChoices = if (presentationRoleEnName == "Undertaker" && step.actor != null) {
         clocktowerUndertakerResultChoices(
             step = step,
             seatCount = cards.size,
@@ -1099,7 +1103,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
-                    abilityLabel = step.roleEnName
+                    abilityLabel = presentationRoleEnName
                         ?.let { roleId -> clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language) }
                         ?: step.title,
                     roleLabel = { roleId ->
