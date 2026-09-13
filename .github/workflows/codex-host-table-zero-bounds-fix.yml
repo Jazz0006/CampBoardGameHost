@@ -23,7 +23,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          expected_parent="49d4bea321592914acdf8b3f2ce2ea4f0aba2a13"
+          expected_parent="26a9f2e5f72e1e815934619302d66df0c745a531"
           actual_parent="$(git rev-parse HEAD^)"
           test "$actual_parent" = "$expected_parent"
           test "$(git rev-parse HEAD^:app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt)" = "570ad88f146d3f408573e9963b8fde184dfd0f41"
@@ -50,39 +50,30 @@ jobs:
 
           path = Path("app/src/test/java/com/codex/campboardgamehost/ClocktowerHostTableSurfaceLayoutTest.kt")
           text = path.read_text()
-          anchor = '''        assertTrue(
-              failure?.message?.contains("capacity is insufficient for 13 players") == true,
-          )
-              }
-          }
-          '''
-          replacement = '''        assertTrue(
-              failure?.message?.contains("capacity is insufficient for 13 players") == true,
-          )
-              }
+          suffix = "\n}\n"
+          if not text.endswith(suffix):
+              raise SystemExit("unexpected test class suffix")
+          test_case = r'''
 
-              @Test
-              fun `surface rendering waits for finite positive compose bounds`() {
-                  assertTrue(canRenderHostTableSurface(360f, 520f))
-                  assertTrue(!canRenderHostTableSurface(0f, 520f))
-                  assertTrue(!canRenderHostTableSurface(360f, 0f))
-                  assertTrue(!canRenderHostTableSurface(-1f, 520f))
-                  assertTrue(!canRenderHostTableSurface(360f, Float.NaN))
-                  assertTrue(!canRenderHostTableSurface(Float.POSITIVE_INFINITY, 520f))
+    @Test
+    fun `surface rendering waits for finite positive compose bounds`() {
+        assertTrue(canRenderHostTableSurface(360f, 520f))
+        assertTrue(!canRenderHostTableSurface(0f, 520f))
+        assertTrue(!canRenderHostTableSurface(360f, 0f))
+        assertTrue(!canRenderHostTableSurface(-1f, 520f))
+        assertTrue(!canRenderHostTableSurface(360f, Float.NaN))
+        assertTrue(!canRenderHostTableSurface(Float.POSITIVE_INFINITY, 520f))
 
-                  val geometryFailure = runCatching {
-                      hostTableSurfaceLayoutConstraints(
-                          availableWidth = 360f,
-                          availableHeight = 0f,
-                      )
-                  }.exceptionOrNull()
-                  assertTrue(geometryFailure is IllegalArgumentException)
-              }
-          }
-          '''
-          if text.count(anchor) != 1:
-              raise SystemExit(f"test anchor count={text.count(anchor)}")
-          path.write_text(text.replace(anchor, replacement, 1))
+        val geometryFailure = runCatching {
+            hostTableSurfaceLayoutConstraints(
+                availableWidth = 360f,
+                availableHeight = 0f,
+            )
+        }.exceptionOrNull()
+        assertTrue(geometryFailure is IllegalArgumentException)
+    }
+'''
+          path.write_text(text[:-len(suffix)] + test_case + suffix)
           PY
 
       - name: RED - guard policy is missing
@@ -108,54 +99,34 @@ jobs:
 
           surface_path = Path("app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableSurfaceLayout.kt")
           surface = surface_path.read_text()
-          surface_anchor = '''internal data class ResolvedHostTableSurfaceLayout(
-              val layout: HostTableLayout,
-              val seatDensity: ClocktowerSquareTableSeatDensity,
-          )
+          marker = "\nprivate val HOST_TABLE_COMPACT_FALLBACK_SCALES = listOf(0.96f, 0.92f, 0.88f, 0.84f, 0.80f)\n"
+          if surface.count(marker) != 1:
+              raise SystemExit(f"surface marker count={surface.count(marker)}")
+          helper = r'''
 
-          private val HOST_TABLE_COMPACT_FALLBACK_SCALES = listOf(0.96f, 0.92f, 0.88f, 0.84f, 0.80f)
-          '''
-          surface_replacement = '''internal data class ResolvedHostTableSurfaceLayout(
-              val layout: HostTableLayout,
-              val seatDensity: ClocktowerSquareTableSeatDensity,
-          )
-
-          /**
-           * Compose can transiently report zero-sized bounds while host chrome or routes recompose.
-           * Those frames are not renderable; strict layout constraints remain fail-closed once a
-           * real geometry calculation is requested.
-           */
-          internal fun canRenderHostTableSurface(
-              availableWidth: Float,
-              availableHeight: Float,
-          ): Boolean =
-              availableWidth.isFinite() &&
-                  availableWidth > 0f &&
-                  availableHeight.isFinite() &&
-                  availableHeight > 0f
-
-          private val HOST_TABLE_COMPACT_FALLBACK_SCALES = listOf(0.96f, 0.92f, 0.88f, 0.84f, 0.80f)
-          '''
-          if surface.count(surface_anchor) != 1:
-              raise SystemExit(f"surface anchor count={surface.count(surface_anchor)}")
-          surface_path.write_text(surface.replace(surface_anchor, surface_replacement, 1))
+/**
+ * Compose can transiently report zero-sized bounds while host chrome or routes recompose.
+ * Those frames are not renderable; strict layout constraints remain fail-closed once a
+ * real geometry calculation is requested.
+ */
+internal fun canRenderHostTableSurface(
+    availableWidth: Float,
+    availableHeight: Float,
+): Boolean =
+    availableWidth.isFinite() &&
+        availableWidth > 0f &&
+        availableHeight.isFinite() &&
+        availableHeight > 0f
+'''
+          surface_path.write_text(surface.replace(marker, helper + marker, 1))
 
           ui_path = Path("app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt")
           ui = ui_path.read_text()
-          ui_anchor = '''        val availableWidth = maxWidth.value
-                  val availableHeight = maxHeight.value
-                  val density = LocalDensity.current
-          '''
-          ui_replacement = '''        val availableWidth = maxWidth.value
-                  val availableHeight = maxHeight.value
-                  if (!canRenderHostTableSurface(availableWidth, availableHeight)) {
-                      return@BoxWithConstraints
-                  }
-                  val density = LocalDensity.current
-          '''
-          if ui.count(ui_anchor) != 1:
-              raise SystemExit(f"ui anchor count={ui.count(ui_anchor)}")
-          ui_path.write_text(ui.replace(ui_anchor, ui_replacement, 1))
+          ui_marker = "        val availableHeight = maxHeight.value\n"
+          if ui.count(ui_marker) != 1:
+              raise SystemExit(f"ui marker count={ui.count(ui_marker)}")
+          guard = "        if (!canRenderHostTableSurface(availableWidth, availableHeight)) {\n            return@BoxWithConstraints\n        }\n"
+          ui_path.write_text(ui.replace(ui_marker, ui_marker + guard, 1))
           PY
 
       - name: GREEN - focused regression
