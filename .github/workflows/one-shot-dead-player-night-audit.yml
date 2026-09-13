@@ -19,7 +19,7 @@ jobs:
           ref: codex/dead-player-square-table
           fetch-depth: 0
 
-      - name: Persist focused ownership report
+      - name: Persist final wiring report
         shell: bash
         run: |
           set -euo pipefail
@@ -31,26 +31,28 @@ jobs:
           root = Path('app/src/main/java/com/codex/campboardgamehost')
           files = sorted(root.rglob('*.kt'))
           patterns = [
-              re.compile(r'data class HostSeatPresentation'),
-              re.compile(r'toStorytellerHostSeatPresentation'),
-              re.compile(r'HostSeatPresentation\('),
-              re.compile(r'ghostVoteAuthority'),
+              re.compile(r'ClocktowerNightStepCardLocalized\('),
+              re.compile(r'ClocktowerDayOverviewScreen\('),
+              re.compile(r'ClocktowerVoteTableScreen\('),
+              re.compile(r'clocktowerDayOverviewTableState\('),
+              re.compile(r'ClocktowerPendingNominationTableScreen\('),
+              re.compile(r'ClocktowerSlayerTableScreen\('),
+              re.compile(r'ClocktowerArtistTableScreen\('),
+              re.compile(r'ClocktowerKlutzTableScreen\('),
           ]
           for path in files:
               lines = path.read_text(encoding='utf-8').splitlines()
-              hit_indices = sorted({
-                  idx
-                  for idx, line in enumerate(lines)
-                  for pattern in patterns
-                  if pattern.search(line)
-              })
-              if not hit_indices:
+              hits = []
+              for idx, line in enumerate(lines):
+                  if any(p.search(line) for p in patterns):
+                      hits.append(idx)
+              if not hits:
                   continue
               print(f'## {path}')
-              for idx in hit_indices:
+              for idx in hits:
                   print(f'### line {idx + 1}')
-                  lo = max(0, idx - 8)
-                  hi = min(len(lines), idx + 9)
+                  lo = max(0, idx - 14)
+                  hi = min(len(lines), idx + 24)
                   for j in range(lo, hi):
                       print(f'{j + 1:05d}: {lines[j]}')
                   print()
@@ -58,5 +60,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add tmp/night-seat-audit.txt
-          git commit -m 'chore: refresh night seat audit report'
+          git commit -m 'chore: capture ghost vote presentation wiring'
           git push origin HEAD:codex/dead-player-square-table
