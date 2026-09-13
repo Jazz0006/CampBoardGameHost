@@ -48,7 +48,7 @@ class ClocktowerNightFullScreenOwnershipTest {
     }
 
     @Test
-    fun `new demon identity owns square table and projects a role reveal`() {
+    fun `new demon identity owns full screen host surface`() {
         assertTrue(
             clocktowerNightUsesFullScreenHostSurface(
                 isRealAction = true,
@@ -56,29 +56,29 @@ class ClocktowerNightFullScreenOwnershipTest {
                 displayKind = ClocktowerDisplayKind.None,
             ),
         )
+    }
 
-        val step = ClocktowerNightStepUi(
-            title = "New Demon",
-            actor = null,
-            isRealAction = true,
-            reason = "",
-            storytellerAction = "Wake the new Demon",
-            tellPlayer = "You are now the Imp",
-            explanation = "",
-            action = ClocktowerNightAction.NewDemonIdentity,
-            displayKind = ClocktowerDisplayKind.None,
-            displayTitle = "New Demon Identity",
-        )
-        val presentation = clocktowerPlainInformationSquareTablePresentation(
-            step = step,
+    @Test
+    fun `new demon identity uses private read only square table in beginner mode`() {
+        val presentation = clocktowerEvilInfoSquareTablePresentation(
+            step = newDemonIdentityStep(),
             actorSeat = 3,
             wakeInstruction = "Wake player 3",
+            beginnerMode = true,
         )
 
         assertNotNull(presentation)
         assertEquals(3, presentation?.actorSeat)
-        assertEquals(ClocktowerDisplayKind.RoleReveal, presentation?.displayStep?.displayKind)
-        assertEquals("You are now the Imp", presentation?.displayStep?.displayPrimary)
+        assertTrue(presentation?.showPlayerDisplayAction == true)
+        assertFalse(presentation?.showHostDetails ?: true)
+    }
+
+    @Test
+    fun `new demon identity player handoff projects role reveal`() {
+        val displayStep = clocktowerPlayerDisplayStep(newDemonIdentityStep())
+
+        assertEquals(ClocktowerDisplayKind.RoleReveal, displayStep.displayKind)
+        assertEquals("You are now the Imp", displayStep.displayPrimary)
     }
 
     @Test
@@ -98,4 +98,17 @@ class ClocktowerNightFullScreenOwnershipTest {
             ),
         )
     }
+
+    private fun newDemonIdentityStep(): ClocktowerNightStepUi = ClocktowerNightStepUi(
+        title = "New Demon",
+        actor = null,
+        isRealAction = true,
+        reason = "",
+        storytellerAction = "Wake the new Demon",
+        tellPlayer = "You are now the Imp",
+        explanation = "",
+        action = ClocktowerNightAction.NewDemonIdentity,
+        displayKind = ClocktowerDisplayKind.None,
+        displayTitle = "New Demon Identity",
+    )
 }
