@@ -11,7 +11,7 @@ class ClocktowerUndertakerSquareTableWiringTest {
     fun `undertaker uses specialized square table and excludes plain fallback`() {
         val source = nightStepSource()
 
-        assertTrue(source.contains("step.roleEnName == \"Undertaker\" && step.actor != null"))
+        assertTrue(source.contains("presentationRoleEnName == \"Undertaker\" && step.actor != null"))
         assertTrue(source.contains("clocktowerUndertakerResultChoices("))
         assertTrue(source.contains("ClocktowerUndertakerSquareTableDialog("))
         assertTrue(source.contains("val usesUndertakerSquareTable = undertakerResultChoices.isNotEmpty()"))
