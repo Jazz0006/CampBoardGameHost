@@ -1,389 +1,321 @@
-## app/src/main/java/com/codex/campboardgamehost/AppDealScreens.kt
-### line 147
-00139:     onNext: () -> Unit,
-00140: ) {
-00141:     val language = LocalContext.current.resources.configuration.locales[0].language
-00142:     fun text(zh: String, en: String): String = if (language == "en") en else zh
-00143:     require(total == playerNames.size) { "Identity controller total must match the physical seat count" }
-00144:     require(current in 1..total) { "Identity controller current seat must be in range" }
-00145:     require(playerNames[current - 1] == playerName) { "Identity controller target must match the current seat" }
-00146:     val seats = playerNames.mapIndexed { index, name ->
-00147:         HostSeatPresentation(
-00148:             seatId = ClocktowerSeatId(index + 1),
-00149:             playerName = name,
-00150:             isAlive = true,
-00151:         )
-00152:     }
-00153:     val currentSeatId = ClocktowerSeatId(current)
-00154: 
-00155:     ClocktowerDarkTheme {
-
-## app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
-### line 1387
-01379:                     slayerUsed = clocktowerSlayerUsed,
-01380:                     slayerClaimedNames = clocktowerSlayerClaimedNames.toList(),
-01381:                     artistUsed = clocktowerArtistUsed,
-01382:                     artistClaimedNames = clocktowerArtistClaimedNames.toList(),
-01383:                     lastExecutedName = clocktowerLastExecutedName,
-01384:                     pendingKlutzName = clocktowerPendingKlutzName,
-01385:                     klutzChoiceName = clocktowerKlutzChoiceName,
-01386:                     klutzReturnToDawn = clocktowerKlutzReturnToDawn,
-01387:                     ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,
-01388:                     highestVoteName = clocktowerHighestVoteNameState.value,
-01389:                     highestVoteCount = clocktowerHighestVoteCountState.value,
-01390:                 ),
-01391:                 history = ClocktowerRecoveryHistory(
-01392:                     gameStateRevision = clocktowerGameStateRevision,
-01393:                     playerInputRevision = clocktowerPlayerInputRevision,
-01394:                     semanticHistoryMode = clocktowerSemanticHistoryMode,
-01395:                     actionTimeline = clocktowerActionTimeline,
-
-### line 1570
-01562:                 clocktowerVirginUsed = mechanics.virginUsed
-01563:                 clocktowerSlayerUsed = mechanics.slayerUsed
-01564:                 clocktowerSlayerClaimedNames = mechanics.slayerClaimedNames
-01565:                 clocktowerArtistUsed = mechanics.artistUsed
-01566:                 clocktowerArtistClaimedNames = mechanics.artistClaimedNames
-01567:                 clocktowerLastExecutedName = mechanics.lastExecutedName
-01568:                 clocktowerPendingKlutzName = mechanics.pendingKlutzName
-01569:                 clocktowerKlutzReturnToDawn = mechanics.klutzReturnToDawn
-01570:                 clocktowerGhostVoteAuthorityState.value = mechanics.ghostVoteAuthority
-01571:                 clocktowerHighestVoteNameState.value = mechanics.highestVoteName
-01572:                 clocktowerHighestVoteCountState.value = mechanics.highestVoteCount
-01573:                 clocktowerDayModeState.value =
-01574:                     if (safeClocktower?.continuation == ClocktowerRecoveryContinuation.Klutz) {
-01575:                         ClocktowerDayMode.Klutz
-01576:                     } else {
-01577:                         ClocktowerDayMode.Overview
-01578:                     }
-
-### line 2432
-02424:                             when (transaction.revisionIntent) {
-02425:                                 NightCheckpointRevisionIntent.NONE -> Unit
-02426:                                 NightCheckpointRevisionIntent.PLAYER_INPUT -> advanceClocktowerPlayerInputRevision()
-02427:                                 NightCheckpointRevisionIntent.GAME_STATE -> advanceClocktowerGameStateRevision()
-02428:                             }
-02429:                             clocktowerNightStepIndexState.value = transaction.checkpoint.nightStepIndex
-02430:                         },
-02431:                         dayModeState = clocktowerDayModeState,
-02432:                         ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,
-02433:                         onGhostVoteAuthorityChange = { clocktowerGhostVoteAuthorityState.value = it },
-02434:                         highestVoteNameState = clocktowerHighestVoteNameState,
-02435:                         highestVoteCountState = clocktowerHighestVoteCountState,
-02436:                         gameOutcome = gameOutcome,
-02437:                         onRecordEvent = { type, title, detail, names ->
-02438:                             addClocktowerEvent(type, title, detail, names)
-02439:                         },
-02440:                         onRecordEpistemicObservation = ::recordEpistemicObservation,
-
-## app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSeatContentPresentation.kt
-### line 47
-00039:     }
-00040:     return HostSeatContentPresentation(
-00041:         primaryLabel = primaryLabel,
-00042:         detailLabels = detailLabels,
-00043:     )
-00044: }
-00045: 
-00046: /** Converts the runtime night card into the same typed Storyteller seat used by Day. */
-00047: internal fun PlayerCard.toStorytellerHostSeatPresentation(
-00048:     seatNumber: Int,
-00049:     language: String,
-00050: ): HostSeatPresentation = HostSeatPresentation(
-00051:     seatId = ClocktowerSeatId(seatNumber),
-00052:     playerName = name,
-00053:     isAlive = eliminatedRound == null,
-00054:     actualRole = clocktowerRole?.toHostRolePresentation(language),
-00055:     shownRole = clocktowerShownRole?.toHostRolePresentation(language),
-
-### line 50
-00042:         detailLabels = detailLabels,
-00043:     )
-00044: }
-00045: 
-00046: /** Converts the runtime night card into the same typed Storyteller seat used by Day. */
-00047: internal fun PlayerCard.toStorytellerHostSeatPresentation(
-00048:     seatNumber: Int,
-00049:     language: String,
-00050: ): HostSeatPresentation = HostSeatPresentation(
-00051:     seatId = ClocktowerSeatId(seatNumber),
-00052:     playerName = name,
-00053:     isAlive = eliminatedRound == null,
-00054:     actualRole = clocktowerRole?.toHostRolePresentation(language),
-00055:     shownRole = clocktowerShownRole?.toHostRolePresentation(language),
-00056:     contentMode = HostSeatContentMode.StorytellerRoleDetail,
-00057: )
-00058: 
-
-## app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableContract.kt
-### line 29
-00021: )
-00022: 
-00023: /**
-00024:  * Stable seat-owned information available to the Storyteller table.
-00025:  *
-00026:  * Actual role and shown/perceived role remain separate semantic fields. Public claim history will
-00027:  * be introduced by its own durable R4D slice rather than being folded into either role field.
-00028:  */
-00029: internal data class HostSeatPresentation(
-00030:     val seatId: ClocktowerSeatId,
-00031:     val playerName: String,
-00032:     val isAlive: Boolean,
-00033:     val actualRole: HostRolePresentation? = null,
-00034:     val shownRole: HostRolePresentation? = null,
-00035:     val contentMode: HostSeatContentMode = HostSeatContentMode.IdentityOnly,
-00036: )
-00037: 
-
-## app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableGameStateProjection.kt
-### line 26
-00018: ): List<HostSeatPresentation> {
-00019:     val orderedPlayers = players.sortedBy { player -> player.seat }
-00020:     val expectedSeats = (1..orderedPlayers.size).toList()
-00021:     require(orderedPlayers.map { player -> player.seat } == expectedSeats) {
-00022:         "Clocktower host table requires unique contiguous domain seats from seat 1"
-00023:     }
-00024: 
-00025:     return orderedPlayers.map { player ->
-00026:         HostSeatPresentation(
-00027:             seatId = ClocktowerSeatId(player.seat),
-00028:             playerName = player.name,
-00029:             isAlive = player.alive,
-00030:             actualRole = HostRolePresentation(
-00031:                 roleId = player.actualRole.value,
-00032:                 displayName = roleDisplayName(player.actualRole),
-00033:             ),
-00034:             shownRole = player.shownRole?.let { shownRole ->
+## app/src/main/java/com/codex/campboardgamehost/ClocktowerDayOverviewTableState.kt
+### line 17
+00003: import com.codex.campboardgamehost.clocktower.domain.GameState
+00004: import com.codex.campboardgamehost.clocktower.domain.RoleId
+00005: 
+00006: /**
+00007:  * Day Overview presentation boundary for the persistent Storyteller table.
+00008:  *
+00009:  * Physical identity is projected from the durable domain seat authority. Day Overview is read-only;
+00010:  * later R4D slices may add bounded seat interactions without changing this physical topology.
+00011:  */
+00012: internal data class ClocktowerDayOverviewTableState(
+00013:     val seats: List<HostSeatPresentation>,
+00014:     val interaction: HostTableInteractionState,
+00015: )
+00016: 
+00017: internal fun clocktowerDayOverviewTableState(
+00018:     gameState: GameState,
+00019:     roleDisplayName: (RoleId) -> String = { roleId -> roleId.value },
+00020: ): ClocktowerDayOverviewTableState = ClocktowerDayOverviewTableState(
+00021:     seats = gameState.toHostSeatPresentations(roleDisplayName),
+00022:     interaction = HostTableInteractionState(mode = HostTableInteractionMode.ReadOnly),
+00023: )
 
 ## app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
-### line 773
-00765:                     color = MaterialTheme.colorScheme.onSurface,
-00766:                     fontSize = 30.sp,
-00767:                     lineHeight = 36.sp,
-00768:                     fontWeight = FontWeight.Black,
-00769:                 )
-00770:             }
-00771: 
-00772:         val nightActionSeats = cards.mapIndexed { index, card ->
-00773:             card.toStorytellerHostSeatPresentation(
-00774:                 seatNumber = index + 1,
-00775:                 language = language,
-00776:             )
-00777:         }
-00778:         fun seatNumberForName(name: String?): Int? = name
-00779:             ?.let { selected -> cards.indexOfFirst { card -> card.name == selected } }
-00780:             ?.takeIf { index -> index >= 0 }
-00781:             ?.plus(1)
+### line 43
+00029: import com.codex.campboardgamehost.clocktower.domain.toClocktowerPlayerStates
+00030: import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit
+00031: import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
+00032: import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
+00033: import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
+00034: import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
+00035: import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
+00036: import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
+00037: import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
+00038: import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+00039: import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
+00040: import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
+00041: 
+00042: @Composable
+00043: internal fun ClocktowerNightStepCardLocalized(
+00044:     recommendationCoordinator: ClocktowerRecommendationCoordinator,
+00045:     automaticStorytellerInfo: Boolean,
+00046:     automaticStorytellerStyle: RecommendationStyle,
+00047:     phase: ClocktowerPhase,
+00048:     gameId: String,
+00049:     round: Int,
+00050:     sequence: Int,
+00051:     gameStateRevision: Long,
+00052:     playerInputRevision: Long,
+00053:     selectionDistributionTelemetry: SelectionDistributionTelemetryRecorder,
+00054:     evilAdvantage: Int,
+00055:     informationDecisionKey: String,
+00056:     cards: List<PlayerCard>,
+00057:     aliveCards: List<PlayerCard>,
+00058:     chambermaidTargetCards: List<PlayerCard>,
+00059:     mayorRedirectTargetCards: List<PlayerCard>,
+00060:     demonSuccessorTargetCards: List<PlayerCard>,
+00061:     step: ClocktowerNightStepUi,
+00062:     spyCard: PlayerCard?,
+00063:     spyRegistrationGood: Boolean,
+00064:     spyRegisteredRoleEnName: String?,
+00065:     spyRegistrationRecommendations: List<ClocktowerRegistrationRecommendationOption>,
+00066:     spyCanRegister: Boolean,
 
-## app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt
-### line 9
-00001: package com.codex.campboardgamehost
-00002: 
-00003: internal data class ClocktowerTableVoteState(
-00004:     val seats: List<HostSeatPresentation>,
-00005:     val nomineeSeatId: ClocktowerSeatId,
-00006:     val orderedSeatIds: List<ClocktowerSeatId>,
-00007:     val selectableSeatIds: Set<ClocktowerSeatId>,
-00008:     val selectedVoterSeatIds: Set<ClocktowerSeatId>,
-00009:     val ghostVoteAuthority: ClocktowerGhostVoteAuthority,
-00010:     val interaction: HostTableInteractionState,
-00011: ) {
-00012:     val voteCount: Int
-00013:         get() = selectedVoterSeatIds.size
-00014: 
-00015:     fun togglePendingVoter(seatId: ClocktowerSeatId): ClocktowerTableVoteState {
-00016:         if (seatId !in selectableSeatIds) return this
-00017:         val nextSelected = if (seatId in selectedVoterSeatIds) {
-
-### line 26
-00018:             selectedVoterSeatIds - seatId
-00019:         } else {
-00020:             selectedVoterSeatIds + seatId
-00021:         }
-00022:         return clocktowerTableVoteState(
-00023:             seats = seats,
-00024:             nomineeSeatId = nomineeSeatId,
-00025:             selectedVoterSeatIds = nextSelected,
-00026:             ghostVoteAuthority = ghostVoteAuthority,
-00027:         )
-00028:     }
-00029: }
-00030: 
-00031: internal fun clocktowerTableVoteState(
-00032:     seats: List<HostSeatPresentation>,
-00033:     nomineeSeatId: ClocktowerSeatId,
-00034:     selectedVoterSeatIds: Set<ClocktowerSeatId> = emptySet(),
-
-### line 35
-00027:         )
-00028:     }
-00029: }
-00030: 
-00031: internal fun clocktowerTableVoteState(
-00032:     seats: List<HostSeatPresentation>,
-00033:     nomineeSeatId: ClocktowerSeatId,
-00034:     selectedVoterSeatIds: Set<ClocktowerSeatId> = emptySet(),
-00035:     ghostVoteAuthority: ClocktowerGhostVoteAuthority = ClocktowerGhostVoteAuthority(),
-00036: ): ClocktowerTableVoteState {
-00037:     require(seats.isNotEmpty()) { "Table vote requires at least one physical seat" }
-00038:     val canonicalSeats = seats.sortedBy { seat -> seat.seatId.number }
-00039:     val expectedSeatIds = (1..canonicalSeats.size).map(::ClocktowerSeatId)
-00040:     require(canonicalSeats.map(HostSeatPresentation::seatId) == expectedSeatIds) {
-00041:         "Table vote requires unique contiguous physical seats from seat 1"
-00042:     }
-00043:     require(nomineeSeatId in expectedSeatIds) {
-
-### line 52
-00044:         "Table vote nominee must belong to the physical table"
-00045:     }
-00046: 
-00047:     val nomineeIndex = expectedSeatIds.indexOf(nomineeSeatId)
-00048:     val orderedSeatIds = expectedSeatIds.drop(nomineeIndex + 1) +
-00049:         expectedSeatIds.take(nomineeIndex + 1)
-00050:     val selectableSeatIds = canonicalSeats
-00051:         .asSequence()
-00052:         .filter { seat -> ghostVoteAuthority.canVote(seat.seatId, canonicalSeats) }
-00053:         .map(HostSeatPresentation::seatId)
-00054:         .toSet()
-00055:     require(selectedVoterSeatIds.all { seatId -> seatId in selectableSeatIds }) {
-00056:         "Pending voter selection must contain only currently selectable seats"
-00057:     }
-00058:     val orderedSelected = orderedSeatIds.filter { seatId -> seatId in selectedVoterSeatIds }
-00059: 
-00060:     return ClocktowerTableVoteState(
-
-### line 66
-00058:     val orderedSelected = orderedSeatIds.filter { seatId -> seatId in selectedVoterSeatIds }
-00059: 
-00060:     return ClocktowerTableVoteState(
-00061:         seats = canonicalSeats,
-00062:         nomineeSeatId = nomineeSeatId,
-00063:         orderedSeatIds = orderedSeatIds,
-00064:         selectableSeatIds = selectableSeatIds,
-00065:         selectedVoterSeatIds = selectedVoterSeatIds,
-00066:         ghostVoteAuthority = ghostVoteAuthority,
-00067:         interaction = HostTableInteractionState(
-00068:             mode = HostTableInteractionMode.MultiSelection,
-00069:             selectableSeatIds = selectableSeatIds,
-00070:             selectedSeatIds = orderedSelected,
-00071:             highlightedSeatIds = setOf(nomineeSeatId),
-00072:             lockedSeatIds = expectedSeatIds.toSet() - selectableSeatIds,
-00073:         ),
-00074:     )
-
-## app/src/main/java/com/codex/campboardgamehost/ClocktowerVoteTransaction.kt
-### line 12
-00004:  * Atomic semantic result for one confirmed nomination vote.
-00005:  *
-00006:  * The transaction commits the durable voter snapshot, ghost-vote consumption,
-00007:  * current high/tie standing, and execution candidate from the same immutable
-00008:  * pending table state. UI remains responsible only for collecting pending taps.
-00009:  */
-00010: internal data class ClocktowerVoteTransactionResult(
-00011:     val voteRecord: ClocktowerConfirmedVoteRecord,
-00012:     val ghostVoteAuthority: ClocktowerGhostVoteAuthority,
-00013:     val highestVoteName: String?,
-00014:     val highestVoteCount: Int,
-00015:     val executionCandidateName: String?,
-00016: )
-00017: 
-00018: internal fun commitClocktowerVoteTransaction(
-00019:     voteState: ClocktowerTableVoteState,
-00020:     nomineeName: String,
-
-### line 30
-00022:     highestVoteName: String?,
-00023:     highestVoteCount: Int,
-00024: ): ClocktowerVoteTransactionResult {
-00025:     require(nomineeName.isNotBlank()) { "Confirmed vote requires a nominee" }
-00026:     require(executionThreshold > 0) { "Execution threshold must be positive" }
-00027:     require(highestVoteCount >= 0) { "Highest vote count cannot be negative" }
-00028: 
-00029:     val voteRecord = voteState.confirmedVoteRecord()
-00030:     val confirmedGhostVoteAuthority = voteState.ghostVoteAuthority.confirmVote(
-00031:         selectedVoterSeatIds = voteState.selectedVoterSeatIds,
-00032:         seats = voteState.seats,
-00033:     )
+## app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerArtistTableUi.kt
+### line 21
+00007: import androidx.compose.foundation.rememberScrollState
+00008: import androidx.compose.foundation.verticalScroll
+00009: import androidx.compose.material3.MaterialTheme
+00010: import androidx.compose.material3.Text
+00011: import androidx.compose.runtime.Composable
+00012: import androidx.compose.ui.Alignment
+00013: import androidx.compose.ui.Modifier
+00014: import androidx.compose.ui.platform.LocalContext
+00015: import androidx.compose.ui.text.font.FontWeight
+00016: import androidx.compose.ui.text.style.TextAlign
+00017: import androidx.compose.ui.unit.dp
+00018: 
+00019: /** Artist claimant selection hosted on the persistent Storyteller table. */
+00020: @Composable
+00021: internal fun ClocktowerArtistTableScreen(
+00022:     round: Int,
+00023:     tableState: ClocktowerArtistTableState,
+00024:     actionsEnabled: Boolean,
+00025:     primaryEnabled: Boolean,
+00026:     onHostTools: () -> Unit,
+00027:     onSeatClick: (ClocktowerSeatId) -> Unit,
+00028:     onPrimary: () -> Unit,
+00029:     onBack: () -> Unit,
+00030:     detailContent: @Composable () -> Unit = {},
+00031: ) {
+00032:     val language = LocalContext.current.resources.configuration.locales[0].language
+00033:     fun text(zh: String, en: String): String = if (language == "en") en else zh
 00034: 
-00035:     var nextHighestVoteName = highestVoteName
-00036:     var nextHighestVoteCount = highestVoteCount
-00037:     if (voteRecord.voteCount >= executionThreshold) {
-00038:         when {
+00035:     ClocktowerDayTableScaffold(
+00036:         previousLabel = text("返回白天", "Return to day"),
+00037:         hostToolsLabel = text("主持工具", "Host Tools"),
+00038:         nextLabel = text("记录艺术家提问", "Record Artist question"),
+00039:         onPrevious = onBack,
+00040:         onHostTools = onHostTools,
+00041:         onNext = onPrimary,
+00042:         nextEnabled = actionsEnabled && primaryEnabled,
+00043:     ) {
+00044:         HostTableShell(
 
-### line 55
-00047:         }
-00048:     }
-00049: 
-00050:     val executionCandidateName = nextHighestVoteName
-00051:         ?.takeIf { nextHighestVoteCount >= executionThreshold }
-00052: 
-00053:     return ClocktowerVoteTransactionResult(
-00054:         voteRecord = voteRecord,
-00055:         ghostVoteAuthority = confirmedGhostVoteAuthority,
-00056:         highestVoteName = nextHighestVoteName,
-00057:         highestVoteCount = nextHighestVoteCount,
-00058:         executionCandidateName = executionCandidateName,
-00059:     )
-00060: }
-
-## app/src/main/java/com/codex/campboardgamehost/HostSeatingRoster.kt
-### line 51
-00043:             )
-00044:         },
-00045:     )
-00046: }
-00047: 
-00048: /** Role-free presentation used while arranging or reviewing confirmed seats before game choice. */
-00049: internal fun ConfirmedHostSeating.toHostSeatPresentations(): List<HostSeatPresentation> =
-00050:     seats.map { assignment ->
-00051:         HostSeatPresentation(
-00052:             seatId = assignment.seatId,
-00053:             playerName = assignment.playerName,
-00054:             isAlive = true,
-00055:         )
-00056:     }
-
-## app/src/main/java/com/codex/campboardgamehost/SeatingFirstSetupUi.kt
-### line 59
-00051: ) {
-00052:     val language = LocalContext.current.resources.configuration.locales[0].language
-00053:     fun text(zh: String, en: String): String = if (language == "en") en else zh
-00054: 
-00055:     var selectedPlayerName by remember { mutableStateOf<String?>(null) }
-00056:     var newPlayerName by remember { mutableStateOf("") }
-00057: 
-00058:     val seats = playerNames.mapIndexed { index, playerName ->
-00059:         HostSeatPresentation(
-00060:             seatId = ClocktowerSeatId(index + 1),
-00061:             playerName = playerName,
-00062:             isAlive = true,
-00063:         )
-00064:     }
-00065:     val selectedIndex = selectedPlayerName?.let(playerNames::indexOf)?.takeIf { it >= 0 }
-00066:     val interaction = HostTableInteractionState(
-00067:         mode = if (seats.isEmpty()) HostTableInteractionMode.ReadOnly else HostTableInteractionMode.Selection,
+## app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayOverviewTableUi.kt
+### line 27
+00013: import androidx.compose.material3.MaterialTheme
+00014: import androidx.compose.material3.OutlinedButton
+00015: import androidx.compose.material3.Text
+00016: import androidx.compose.runtime.Composable
+00017: import androidx.compose.runtime.remember
+00018: import androidx.compose.ui.Alignment
+00019: import androidx.compose.ui.Modifier
+00020: import androidx.compose.ui.platform.LocalContext
+00021: import androidx.compose.ui.text.font.FontWeight
+00022: import androidx.compose.ui.text.style.TextAlign
+00023: import androidx.compose.ui.unit.dp
+00024: 
+00025: /** Day Overview center controls hosted by the shared persistent Storyteller table. */
+00026: @Composable
+00027: internal fun ClocktowerDayOverviewScreen(
+00028:     round: Int,
+00029:     tableState: ClocktowerDayOverviewTableState,
+00030:     aliveCount: Int,
+00031:     executionThreshold: Int,
+00032:     highestVoteText: String,
+00033:     showSlayerAction: Boolean,
+00034:     slayerActionEnabled: Boolean,
+00035:     showArtistAction: Boolean,
+00036:     artistActionEnabled: Boolean,
+00037:     actionsEnabled: Boolean,
+00038:     onHostTools: () -> Unit,
+00039:     diagnosticContent: (@Composable () -> Unit)? = null,
+00040:     onNominationGesture: (ClocktowerSeatId, ClocktowerSeatId) -> Unit,
+00041:     onOpenSlayer: () -> Unit,
+00042:     onOpenArtist: () -> Unit,
+00043:     onEndDay: () -> Unit,
+00044: ) {
+00045:     val language = LocalContext.current.resources.configuration.locales[0].language
+00046:     fun text(zh: String, en: String): String = if (language == "en") en else zh
+00047:     val nominationGesture = remember(tableState) {
+00048:         clocktowerDayNominationGesturePolicy(tableState)
+00049:     }
+00050: 
 
 ## app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
-### line 269
-00261:     artistUsed: Boolean,
-00262:     artistClaimedNames: List<String>,
-00263:     lastExecutedName: String?,
-00264:     pendingKlutzName: String?,
-00265:     klutzChoiceName: String?,
-00266:     nightStartedState: MutableState<Boolean>,
-00267:     nightStepIndexState: MutableState<Int>,
-00268:     dayModeState: MutableState<ClocktowerDayMode>,
-00269:     ghostVoteAuthority: ClocktowerGhostVoteAuthority,
-00270:     highestVoteNameState: MutableState<String?>,
-00271:     highestVoteCountState: MutableState<Int>,
-00272:     gameOutcome: GameOutcome?,
-00273:     onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,
-00274:     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
-00275:     onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
-00276:     onHostTools: () -> Unit,
-00277:     onPreviousFromFirstNightReady: () -> Unit,
+### line 3394
+03380:     }
+03381: 
+03382:     if (phase == ClocktowerPhase.Day && dayMode == ClocktowerDayMode.Overview) {
+03383:         val highestVoteText = when {
+03384:             highestVoteName != null -> text(
+03385:                 "最高票 · ${playerSeatLabel(cards, highestVoteName)} · $highestVoteCount 票",
+03386:                 "Highest · ${playerSeatLabel(cards, highestVoteName)} · $highestVoteCount",
+03387:             )
+03388:             highestVoteCount >= executionThreshold -> text(
+03389:                 "最高票 · 平票 $highestVoteCount 票",
+03390:                 "Highest · tie at $highestVoteCount",
+03391:             )
+03392:             else -> text("最高票 · 无", "Highest · none")
+03393:         }
+03394:         val dayTableState = clocktowerDayOverviewTableState(
+03395:             cards.toClocktowerGameState(
+03396:                 script = script,
+03397:                 seed = gameSeed,
+03398:                 poisonedPlayerName = poisonTarget,
+03399:             ),
+03400:             roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
+03401:         )
+03402:         ClocktowerDayOverviewScreen(
+03403:             round = round,
+03404:             tableState = dayTableState,
+03405:             aliveCount = publicAliveCards.size,
+03406:             executionThreshold = executionThreshold,
+03407:             highestVoteText = highestVoteText,
+03408:             showSlayerAction = scriptHasSlayer,
+03409:             slayerActionEnabled = slayerClaimantCandidates.isNotEmpty(),
+03410:             showArtistAction = scriptHasArtist,
+03411:             artistActionEnabled = artistClaimantCandidates.isNotEmpty(),
+03412:             actionsEnabled = gameOutcome == null,
+03413:             diagnosticContent = null,
+03414:             onHostTools = onHostTools,
+03415:             onNominationGesture = { sourceSeatId, targetSeatId ->
+03416:                 val sourceName = dayTableState.seats
+03417:                     .firstOrNull { seat -> seat.seatId == sourceSeatId && seat.isAlive }
 
-### line 3618
+### line 3402
+03388:             highestVoteCount >= executionThreshold -> text(
+03389:                 "最高票 · 平票 $highestVoteCount 票",
+03390:                 "Highest · tie at $highestVoteCount",
+03391:             )
+03392:             else -> text("最高票 · 无", "Highest · none")
+03393:         }
+03394:         val dayTableState = clocktowerDayOverviewTableState(
+03395:             cards.toClocktowerGameState(
+03396:                 script = script,
+03397:                 seed = gameSeed,
+03398:                 poisonedPlayerName = poisonTarget,
+03399:             ),
+03400:             roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
+03401:         )
+03402:         ClocktowerDayOverviewScreen(
+03403:             round = round,
+03404:             tableState = dayTableState,
+03405:             aliveCount = publicAliveCards.size,
+03406:             executionThreshold = executionThreshold,
+03407:             highestVoteText = highestVoteText,
+03408:             showSlayerAction = scriptHasSlayer,
+03409:             slayerActionEnabled = slayerClaimantCandidates.isNotEmpty(),
+03410:             showArtistAction = scriptHasArtist,
+03411:             artistActionEnabled = artistClaimantCandidates.isNotEmpty(),
+03412:             actionsEnabled = gameOutcome == null,
+03413:             diagnosticContent = null,
+03414:             onHostTools = onHostTools,
+03415:             onNominationGesture = { sourceSeatId, targetSeatId ->
+03416:                 val sourceName = dayTableState.seats
+03417:                     .firstOrNull { seat -> seat.seatId == sourceSeatId && seat.isAlive }
+03418:                     ?.playerName
+03419:                 val targetName = dayTableState.seats
+03420:                     .firstOrNull { seat -> seat.seatId == targetSeatId && seat.isAlive }
+03421:                     ?.playerName
+03422:                 if (sourceName != null && targetName != null && sourceName != targetName) {
+03423:                     nominatorName = sourceName
+03424:                     nomineeName = targetName
+03425:                     dayMode = ClocktowerDayMode.Nomination
+
+### line 3501
+03487:             ?: spyRegistersGood(virginRegistrationKey, "Virgin")
+03488:         val virginExecutes = virginAbilityWorks &&
+03489:             (nominatorCard?.clocktowerTeam == ClocktowerTeam.Townsfolk || virginSpyRegistersGood)
+03490:         val specialNotice = when {
+03491:             virginExecutes -> text(
+03492:                 "${playerSeatLabel(cards, nomineeName)} 首次被真实镇民提名：不进行投票，提名者将立即被处决。",
+03493:                 "${playerSeatLabel(cards, nomineeName)} was first nominated by a Townsfolk: skip voting and execute the nominator.",
+03494:             )
+03495:             virginFirstNomination -> text(
+03496:                 "这是圣女第一次被提名，但能力不会处决提名者；记录能力已用过后继续投票。",
+03497:                 "This is the Virgin's first nomination, but the ability does not execute the nominator. Mark it spent and continue.",
+03498:             )
+03499:             else -> null
+03500:         }
+03501:         ClocktowerPendingNominationTableScreen(
+03502:             round = round,
+03503:             cards = cards,
+03504:             tableState = clocktowerDayOverviewTableState(
+03505:                 cards.toClocktowerGameState(
+03506:                     script = script,
+03507:                     seed = gameSeed,
+03508:                     poisonedPlayerName = poisonTarget,
+03509:                 ),
+03510:                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
+03511:             ),
+03512:             executionThreshold = executionThreshold,
+03513:             nominatorName = nominatorName,
+03514:             nomineeName = nomineeName,
+03515:             specialNotice = specialNotice,
+03516:             specialNoticeIsDanger = virginExecutes,
+03517:             continueLabel = when {
+03518:                 virginExecutes -> text("确认并处决提名者", "Confirm and execute nominator")
+03519:                 virginFirstNomination -> text("记录能力，进入投票", "Record ability and continue")
+03520:                 else -> text("开始投票", "Start voting")
+03521:             },
+03522:             actionsEnabled = gameOutcome == null,
+03523:             onHostTools = onHostTools,
+03524:             onContinue = {
+
+### line 3504
+03490:         val specialNotice = when {
+03491:             virginExecutes -> text(
+03492:                 "${playerSeatLabel(cards, nomineeName)} 首次被真实镇民提名：不进行投票，提名者将立即被处决。",
+03493:                 "${playerSeatLabel(cards, nomineeName)} was first nominated by a Townsfolk: skip voting and execute the nominator.",
+03494:             )
+03495:             virginFirstNomination -> text(
+03496:                 "这是圣女第一次被提名，但能力不会处决提名者；记录能力已用过后继续投票。",
+03497:                 "This is the Virgin's first nomination, but the ability does not execute the nominator. Mark it spent and continue.",
+03498:             )
+03499:             else -> null
+03500:         }
+03501:         ClocktowerPendingNominationTableScreen(
+03502:             round = round,
+03503:             cards = cards,
+03504:             tableState = clocktowerDayOverviewTableState(
+03505:                 cards.toClocktowerGameState(
+03506:                     script = script,
+03507:                     seed = gameSeed,
+03508:                     poisonedPlayerName = poisonTarget,
+03509:                 ),
+03510:                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
+03511:             ),
+03512:             executionThreshold = executionThreshold,
+03513:             nominatorName = nominatorName,
+03514:             nomineeName = nomineeName,
+03515:             specialNotice = specialNotice,
+03516:             specialNoticeIsDanger = virginExecutes,
+03517:             continueLabel = when {
+03518:                 virginExecutes -> text("确认并处决提名者", "Confirm and execute nominator")
+03519:                 virginFirstNomination -> text("记录能力，进入投票", "Record ability and continue")
+03520:                 else -> text("开始投票", "Start voting")
+03521:             },
+03522:             actionsEnabled = gameOutcome == null,
+03523:             onHostTools = onHostTools,
+03524:             onContinue = {
+03525:                 val chosenNominator = nominatorName
+03526:                 val chosenNominee = nomineeName
+03527:                 if (chosenNominator != null && chosenNominee != null && virginFirstNomination && virginExecutes) {
+
+### line 3615
+03601:         }
+03602:         val recordVoteEvent: (ClocktowerConfirmedVoteRecord) -> Unit = { voteRecord ->
+03603:             val voterDetail = voteRecord.voterDetail(
+03604:                 playerLabel = { playerName -> playerSeatLabel(cards, playerName) },
+03605:                 ghostVoteSuffix = text("（幽灵票）", " (ghost vote)"),
+03606:                 noVotesLabel = text("无人投票", "No votes"),
+03607:             )
+03608:             onRecordEvent(
+03609:                 ClocktowerEventType.Vote,
 03610:                 text("提名与投票", "Nomination and vote"),
 03611:                 "${playerSeatLabel(cards, nominatorName)} → ${playerSeatLabel(cards, nomineeName)} · ${voteRecord.voteCount}/$executionThreshold · ${text("投票人：", "Voters: ")}$voterDetail",
 03612:                 listOfNotNull(nominatorName, nomineeName) + voteRecord.voters.map { voter -> voter.playerName },
@@ -401,8 +333,48 @@
 03624:                 ),
 03625:                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
 03626:             ),
+03627:             executionThreshold = executionThreshold,
+03628:             nominatorName = nominatorName,
+03629:             nomineeName = nomineeName,
+03630:             highestVoteText = highestVoteText,
+03631:             actionsEnabled = gameOutcome == null,
+03632:             onHostTools = onHostTools,
+03633:             onConfirm = { voteState ->
+03634:                 val voteTransaction = commitClocktowerVoteTransaction(
+03635:                     voteState = voteState,
+03636:                     nomineeName = requireNotNull(nomineeName) { "Confirmed vote requires nominee" },
+03637:                     executionThreshold = executionThreshold,
+03638:                     highestVoteName = highestVoteName,
 
-### line 3641
+### line 3619
+03605:                 ghostVoteSuffix = text("（幽灵票）", " (ghost vote)"),
+03606:                 noVotesLabel = text("无人投票", "No votes"),
+03607:             )
+03608:             onRecordEvent(
+03609:                 ClocktowerEventType.Vote,
+03610:                 text("提名与投票", "Nomination and vote"),
+03611:                 "${playerSeatLabel(cards, nominatorName)} → ${playerSeatLabel(cards, nomineeName)} · ${voteRecord.voteCount}/$executionThreshold · ${text("投票人：", "Voters: ")}$voterDetail",
+03612:                 listOfNotNull(nominatorName, nomineeName) + voteRecord.voters.map { voter -> voter.playerName },
+03613:             )
+03614:         }
+03615:         ClocktowerVoteTableScreen(
+03616:             round = round,
+03617:             cards = cards,
+03618:             ghostVoteAuthority = ghostVoteAuthority,
+03619:             tableState = clocktowerDayOverviewTableState(
+03620:                 cards.toClocktowerGameState(
+03621:                     script = script,
+03622:                     seed = gameSeed,
+03623:                     poisonedPlayerName = poisonTarget,
+03624:                 ),
+03625:                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
+03626:             ),
+03627:             executionThreshold = executionThreshold,
+03628:             nominatorName = nominatorName,
+03629:             nomineeName = nomineeName,
+03630:             highestVoteText = highestVoteText,
+03631:             actionsEnabled = gameOutcome == null,
+03632:             onHostTools = onHostTools,
 03633:             onConfirm = { voteState ->
 03634:                 val voteTransaction = commitClocktowerVoteTransaction(
 03635:                     voteState = voteState,
@@ -413,16 +385,422 @@
 03640:                 )
 03641:                 onGhostVoteAuthorityChange(voteTransaction.ghostVoteAuthority)
 03642:                 highestVoteName = voteTransaction.highestVoteName
-03643:                 highestVoteCount = voteTransaction.highestVoteCount
-03644:                 recordVoteEvent(voteTransaction.voteRecord)
-03645:                 nominatorName = null
-03646:                 nomineeName = null
-03647:                 dayMode = ClocktowerDayMode.Overview
-03648:             },
-03649:             onCancel = {
+
+### line 3694
+03680:                     detail = ClocktowerRegistrationDetail.Role,
+03681:                     subject = recluse,
+03682:                     isSpy = false,
+03683:                     outcomeMisinformationPressure = 4,
+03684:                     specialRegistrationBalanceImpact = 1,
+03685:                 )
+03686:             }
+03687:             .orEmpty()
+03688:         val automaticSlayerRecluseRegistration = WeightedStableSelector.selectStyle(
+03689:             slayerRecluseRecommendations,
+03690:             automaticStorytellerStyle,
+03691:             ClocktowerRegistrationRecommendationOption::style,
+03692:         )
+03693:         val slayerTableState = clocktowerSlayerTableState(
+03694:             seats = clocktowerDayOverviewTableState(
+03695:                 cards.toClocktowerGameState(
+03696:                     script = script,
+03697:                     seed = gameSeed,
+03698:                     poisonedPlayerName = poisonTarget,
+03699:                 ),
+03700:                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
+03701:             ).seats,
+03702:             claimantCandidateNames = slayerClaimantCandidates.mapTo(mutableSetOf()) { it.name },
+03703:             alivePlayerNames = publicAliveCards.mapTo(mutableSetOf()) { it.name },
+03704:             claimantName = slayerClaimantName,
+03705:             targetName = slayerTargetName,
+03706:         )
+03707:         ClocktowerSlayerTableScreen(
+03708:             round = round,
+03709:             tableState = slayerTableState,
+03710:             actionsEnabled = gameOutcome == null,
+03711:             onHostTools = onHostTools,
+03712:             onSeatClick = { seatId ->
+03713:                 val selectedName = slayerTableState.playerNameForSeat(seatId)
+03714:                 if (slayerClaimantName == null) {
+03715:                     slayerClaimantName = selectedName
+03716:                     slayerTargetName = null
+03717:                     slayerRecluseRegistersDemon = false
+
+### line 3707
+03693:         val slayerTableState = clocktowerSlayerTableState(
+03694:             seats = clocktowerDayOverviewTableState(
+03695:                 cards.toClocktowerGameState(
+03696:                     script = script,
+03697:                     seed = gameSeed,
+03698:                     poisonedPlayerName = poisonTarget,
+03699:                 ),
+03700:                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
+03701:             ).seats,
+03702:             claimantCandidateNames = slayerClaimantCandidates.mapTo(mutableSetOf()) { it.name },
+03703:             alivePlayerNames = publicAliveCards.mapTo(mutableSetOf()) { it.name },
+03704:             claimantName = slayerClaimantName,
+03705:             targetName = slayerTargetName,
+03706:         )
+03707:         ClocktowerSlayerTableScreen(
+03708:             round = round,
+03709:             tableState = slayerTableState,
+03710:             actionsEnabled = gameOutcome == null,
+03711:             onHostTools = onHostTools,
+03712:             onSeatClick = { seatId ->
+03713:                 val selectedName = slayerTableState.playerNameForSeat(seatId)
+03714:                 if (slayerClaimantName == null) {
+03715:                     slayerClaimantName = selectedName
+03716:                     slayerTargetName = null
+03717:                     slayerRecluseRegistersDemon = false
+03718:                 } else {
+03719:                     slayerTargetName = if (slayerTargetName == selectedName) null else selectedName
+03720:                     slayerRecluseRegistersDemon = false
+03721:                 }
+03722:             },
+03723:             onResetClaimant = {
+03724:                 slayerClaimantName = null
+03725:                 slayerTargetName = null
+03726:                 slayerRecluseRegistersDemon = false
+03727:             },
+03728:             onResolve = {
+03729:                 val claimantName = slayerClaimantName
+03730:                 val targetName = slayerTargetName
+
+### line 3844
+03830:             )
+03831:         } else {
+03832:             WeightedStableSelector.selectStyle(
+03833:                 answerRecommendations,
+03834:                 automaticInformationStyle,
+03835:             ) { it.first }
+03836:         }
+03837:         val automaticArtistAnswer = automaticArtistRecommendation?.second
+03838:         LaunchedEffect(automaticStorytellerInfo, artistClaimantName, currentArtistTruthfulAnswer, automaticArtistAnswer) {
+03839:             if (automaticStorytellerInfo && automaticArtistAnswer != null && artistShownAnswer != automaticArtistAnswer) {
+03840:                 selectArtistShownAnswer(automaticArtistAnswer)
+03841:             }
+03842:         }
+03843:         val artistTableState = clocktowerArtistTableState(
+03844:             seats = clocktowerDayOverviewTableState(
+03845:                 cards.toClocktowerGameState(
+03846:                     script = script,
+03847:                     seed = gameSeed,
+03848:                     poisonedPlayerName = poisonTarget,
+03849:                 ),
+03850:                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
+03851:             ).seats,
+03852:             claimantCandidateNames = artistClaimantCandidates.mapTo(mutableSetOf()) { it.name },
+03853:             claimantName = artistClaimantName,
+03854:         )
+03855:         ClocktowerArtistTableScreen(
+03856:             round = round,
+03857:             tableState = artistTableState,
+03858:             actionsEnabled = gameOutcome == null,
+03859:             primaryEnabled = artistClaimantName != null &&
+03860:                 currentArtistTruthfulAnswer != null &&
+03861:                 artistShownAnswer != null &&
+03862:                 gameOutcome == null,
+03863:             onHostTools = onHostTools,
+03864:             onSeatClick = { seatId ->
+03865:                 val claimant = artistTableState.playerNameForSeat(seatId)
+03866:                 selectArtistClaimant(if (artistClaimantName == claimant) null else claimant)
+03867:             },
+
+### line 3855
+03841:             }
+03842:         }
+03843:         val artistTableState = clocktowerArtistTableState(
+03844:             seats = clocktowerDayOverviewTableState(
+03845:                 cards.toClocktowerGameState(
+03846:                     script = script,
+03847:                     seed = gameSeed,
+03848:                     poisonedPlayerName = poisonTarget,
+03849:                 ),
+03850:                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
+03851:             ).seats,
+03852:             claimantCandidateNames = artistClaimantCandidates.mapTo(mutableSetOf()) { it.name },
+03853:             claimantName = artistClaimantName,
+03854:         )
+03855:         ClocktowerArtistTableScreen(
+03856:             round = round,
+03857:             tableState = artistTableState,
+03858:             actionsEnabled = gameOutcome == null,
+03859:             primaryEnabled = artistClaimantName != null &&
+03860:                 currentArtistTruthfulAnswer != null &&
+03861:                 artistShownAnswer != null &&
+03862:                 gameOutcome == null,
+03863:             onHostTools = onHostTools,
+03864:             onSeatClick = { seatId ->
+03865:                 val claimant = artistTableState.playerNameForSeat(seatId)
+03866:                 selectArtistClaimant(if (artistClaimantName == claimant) null else claimant)
+03867:             },
+03868:             onPrimary = confirmArtistQuestion,
+03869:             onBack = {
+03870:                 selectArtistClaimant(null)
+03871:                 dayMode = ClocktowerDayMode.Overview
+03872:             },
+03873:         ) {
+03874:             if (artistClaimant != null) {
+03875:                 HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
+03876:                 HostActionSection(title = text("问题的真实答案", "Truthful answer")) {
+03877:                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+03878:                         listOf(true, false).forEach { answer ->
+
+### line 3952
+03938:                 subject = spyCard,
+03939:                 isSpy = true,
+03940:                 outcomeMisinformationPressure = 5,
+03941:                 specialRegistrationBalanceImpact = -1,
+03942:             )
+03943:         } else {
+03944:             emptyList()
+03945:         }
+03946:         val automaticKlutzSpyRegistration = WeightedStableSelector.selectStyle(
+03947:             klutzSpyRecommendations,
+03948:             automaticStorytellerStyle,
+03949:             ClocktowerRegistrationRecommendationOption::style,
+03950:         )
+03951:         val klutzTableState = clocktowerKlutzTableState(
+03952:             seats = clocktowerDayOverviewTableState(
+03953:                 cards.toClocktowerGameState(
+03954:                     script = script,
+03955:                     seed = gameSeed,
+03956:                     poisonedPlayerName = poisonTarget,
+03957:                 ),
+03958:                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
+03959:             ).seats,
+03960:             klutzName = pendingKlutzName,
+03961:             alivePlayerNames = publicAliveCards.mapTo(mutableSetOf()) { it.name },
+03962:             choiceName = klutzChoiceName,
+03963:         )
+03964:         ClocktowerKlutzTableScreen(
+03965:             round = round,
+03966:             tableState = klutzTableState,
+03967:             actionsEnabled = gameOutcome == null,
+03968:             onHostTools = onHostTools,
+03969:             onSeatClick = { seatId ->
+03970:                 val playerName = klutzTableState.playerNameForSeat(seatId)
+03971:                 onSelectKlutzChoice(if (klutzChoiceName == playerName) null else playerName)
+03972:             },
+03973:             onConfirm = {
+03974:                 if (
+03975:                     automaticStorytellerInfo &&
+
+### line 3964
+03950:         )
+03951:         val klutzTableState = clocktowerKlutzTableState(
+03952:             seats = clocktowerDayOverviewTableState(
+03953:                 cards.toClocktowerGameState(
+03954:                     script = script,
+03955:                     seed = gameSeed,
+03956:                     poisonedPlayerName = poisonTarget,
+03957:                 ),
+03958:                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
+03959:             ).seats,
+03960:             klutzName = pendingKlutzName,
+03961:             alivePlayerNames = publicAliveCards.mapTo(mutableSetOf()) { it.name },
+03962:             choiceName = klutzChoiceName,
+03963:         )
+03964:         ClocktowerKlutzTableScreen(
+03965:             round = round,
+03966:             tableState = klutzTableState,
+03967:             actionsEnabled = gameOutcome == null,
+03968:             onHostTools = onHostTools,
+03969:             onSeatClick = { seatId ->
+03970:                 val playerName = klutzTableState.playerNameForSeat(seatId)
+03971:                 onSelectKlutzChoice(if (klutzChoiceName == playerName) null else playerName)
+03972:             },
+03973:             onConfirm = {
+03974:                 if (
+03975:                     automaticStorytellerInfo &&
+03976:                     spyCanRegister("Klutz") &&
+03977:                     klutzRegistrationKey != null &&
+03978:                     automaticKlutzSpyRegistration != null
+03979:                 ) {
+03980:                     spyRegistrationGood[klutzRegistrationKey] =
+03981:                         automaticKlutzSpyRegistration.usesSpecialRegistration
+03982:                     if (automaticKlutzSpyRegistration.usesSpecialRegistration) {
+03983:                         automaticKlutzSpyRegistration.registeredRoleEnName?.let {
+03984:                             spyRegistrationRole[klutzRegistrationKey] = it
+03985:                         }
+03986:                     }
+03987:                 }
+
+### line 4270
+04256:             canGoPrevious = currentStepIndex > 0,
+04257:             nextEnabled = currentStep.action !in setOf(
+04258:                 ClocktowerNightAction.MayorRedirect,
+04259:                 ClocktowerNightAction.DemonSuccessor,
+04260:             ) || selectedNightName != null,
+04261:             onPrevious = onMovePreviousNightStep,
+04262:             onHostTools = onHostTools,
+04263:             onNext = advanceNightStep,
+04264:             contentOwnsFullScreen = clocktowerNightUsesFullScreenHostSurface(
+04265:                 isRealAction = currentStep.isRealAction,
+04266:                 action = currentStep.action,
+04267:                 displayKind = currentStep.displayKind,
+04268:             ),
+04269:         ) {
+04270:             ClocktowerNightStepCardLocalized(
+04271:                 recommendationCoordinator = recommendationCoordinator,
+04272:                 automaticStorytellerInfo = automaticStorytellerInfo,
+04273:                 automaticStorytellerStyle = automaticStorytellerStyle,
+04274:                 phase = phase,
+04275:                 gameId = gameId,
+04276:                 round = round,
+04277:                 sequence = currentStepIndex,
+04278:                 gameStateRevision = gameStateRevision,
+04279:                 playerInputRevision = playerInputRevision,
+04280:                 selectionDistributionTelemetry = selectionDistributionTelemetry,
+04281:                 evilAdvantage = currentDynamicStorytellerState.evilAdvantage,
+04282:                 informationDecisionKey = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}",
+04283:                 cards = cards,
+04284:                 aliveCards = publicAliveCards,
+04285:                 chambermaidTargetCards = chambermaidTargetCards,
+04286:                 mayorRedirectTargetCards = mayorRedirectTargetCards,
+04287:                 demonSuccessorTargetCards = demonSuccessorTargetCards,
+04288:                 step = currentStep,
+04289:                 spyCard = spyCard,
+04290:                 spyRegistrationGood = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null) {
+04291:                     spyRegistersGood(currentStep.spyRegistrationKey, currentStep.roleEnName)
+04292:                 } else false,
+04293:                 spyRegisteredRoleEnName = currentStep.spyRegistrationKey?.let { spyRegistrationRole[it] },
+
+## app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerKlutzTableUi.kt
+### line 24
+00010: import androidx.compose.foundation.verticalScroll
+00011: import androidx.compose.material3.MaterialTheme
+00012: import androidx.compose.material3.Surface
+00013: import androidx.compose.material3.Text
+00014: import androidx.compose.runtime.Composable
+00015: import androidx.compose.ui.Alignment
+00016: import androidx.compose.ui.Modifier
+00017: import androidx.compose.ui.platform.LocalContext
+00018: import androidx.compose.ui.text.font.FontWeight
+00019: import androidx.compose.ui.text.style.TextAlign
+00020: import androidx.compose.ui.unit.dp
+00021: 
+00022: /** Klutz public choice hosted on the persistent Storyteller table. */
+00023: @Composable
+00024: internal fun ClocktowerKlutzTableScreen(
+00025:     round: Int,
+00026:     tableState: ClocktowerKlutzTableState,
+00027:     actionsEnabled: Boolean,
+00028:     onHostTools: () -> Unit,
+00029:     onSeatClick: (ClocktowerSeatId) -> Unit,
+00030:     onConfirm: () -> Unit,
+00031:     specialContent: @Composable () -> Unit = {},
+00032: ) {
+00033:     val language = LocalContext.current.resources.configuration.locales[0].language
+00034:     fun text(zh: String, en: String): String = if (language == "en") en else zh
+00035: 
+00036:     ClocktowerDayTableScaffold(
+00037:         previousLabel = text("上一步", "Previous"),
+00038:         hostToolsLabel = text("主持工具", "Host Tools"),
+00039:         nextLabel = text("确认呆瓜选择", "Confirm Klutz choice"),
+00040:         onPrevious = {},
+00041:         onHostTools = onHostTools,
+00042:         onNext = onConfirm,
+00043:         previousEnabled = false,
+00044:         nextEnabled = actionsEnabled && tableState.choiceSeatId != null,
+00045:     ) {
+00046:         HostTableShell(
+00047:             seats = tableState.seats,
+
+## app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerPendingNominationTableUi.kt
+### line 25
+00011: import androidx.compose.foundation.verticalScroll
+00012: import androidx.compose.material3.MaterialTheme
+00013: import androidx.compose.material3.Surface
+00014: import androidx.compose.material3.Text
+00015: import androidx.compose.runtime.Composable
+00016: import androidx.compose.ui.Alignment
+00017: import androidx.compose.ui.Modifier
+00018: import androidx.compose.ui.platform.LocalContext
+00019: import androidx.compose.ui.text.font.FontWeight
+00020: import androidx.compose.ui.text.style.TextAlign
+00021: import androidx.compose.ui.unit.dp
+00022: 
+00023: /** Persistent-table confirmation surface for a nomination already chosen by directional gesture. */
+00024: @Composable
+00025: internal fun ClocktowerPendingNominationTableScreen(
+00026:     round: Int,
+00027:     cards: List<PlayerCard>,
+00028:     tableState: ClocktowerDayOverviewTableState,
+00029:     executionThreshold: Int,
+00030:     nominatorName: String?,
+00031:     nomineeName: String?,
+00032:     specialNotice: String?,
+00033:     specialNoticeIsDanger: Boolean,
+00034:     continueLabel: String,
+00035:     actionsEnabled: Boolean,
+00036:     onHostTools: () -> Unit,
+00037:     onContinue: () -> Unit,
+00038:     onCancel: () -> Unit,
+00039:     specialContent: @Composable ColumnScope.() -> Unit = {},
+00040: ) {
+00041:     val language = LocalContext.current.resources.configuration.locales[0].language
+00042:     fun text(zh: String, en: String): String = if (language == "en") en else zh
+00043:     val nominatorSeat = tableState.seats.firstOrNull { seat -> seat.playerName == nominatorName }
+00044:     val nomineeSeat = tableState.seats.firstOrNull { seat -> seat.playerName == nomineeName }
+00045:     val pendingLink = if (
+00046:         nominatorSeat != null && nomineeSeat != null && nominatorSeat.seatId != nomineeSeat.seatId
+00047:     ) {
+00048:         HostTableDirectionalLink(nominatorSeat.seatId, nomineeSeat.seatId)
+
+## app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerTableUi.kt
+### line 25
+00011: import androidx.compose.material3.MaterialTheme
+00012: import androidx.compose.material3.Surface
+00013: import androidx.compose.material3.Text
+00014: import androidx.compose.material3.TextButton
+00015: import androidx.compose.runtime.Composable
+00016: import androidx.compose.ui.Alignment
+00017: import androidx.compose.ui.Modifier
+00018: import androidx.compose.ui.platform.LocalContext
+00019: import androidx.compose.ui.text.font.FontWeight
+00020: import androidx.compose.ui.text.style.TextAlign
+00021: import androidx.compose.ui.unit.dp
+00022: 
+00023: /** Slayer claimant/target selection hosted on the persistent Storyteller table. */
+00024: @Composable
+00025: internal fun ClocktowerSlayerTableScreen(
+00026:     round: Int,
+00027:     tableState: ClocktowerSlayerTableState,
+00028:     actionsEnabled: Boolean,
+00029:     onHostTools: () -> Unit,
+00030:     onSeatClick: (ClocktowerSeatId) -> Unit,
+00031:     onResetClaimant: () -> Unit,
+00032:     onResolve: () -> Unit,
+00033:     onBack: () -> Unit,
+00034:     specialContent: @Composable () -> Unit = {},
+00035: ) {
+00036:     val language = LocalContext.current.resources.configuration.locales[0].language
+00037:     fun text(zh: String, en: String): String = if (language == "en") en else zh
+00038: 
+00039:     ClocktowerDayTableScaffold(
+00040:         previousLabel = text("返回白天", "Return to day"),
+00041:         hostToolsLabel = text("主持工具", "Host Tools"),
+00042:         nextLabel = text("结算杀手行动", "Resolve Slayer action"),
+00043:         onPrevious = onBack,
+00044:         onHostTools = onHostTools,
+00045:         onNext = onResolve,
+00046:         nextEnabled = actionsEnabled &&
+00047:             tableState.claimantSeatId != null &&
+00048:             tableState.targetSeatId != null,
 
 ## app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt
-### line 29
+### line 25
+00011: import androidx.compose.runtime.Composable
+00012: import androidx.compose.runtime.getValue
+00013: import androidx.compose.runtime.mutableStateOf
+00014: import androidx.compose.runtime.remember
+00015: import androidx.compose.runtime.setValue
+00016: import androidx.compose.ui.Alignment
+00017: import androidx.compose.ui.Modifier
+00018: import androidx.compose.ui.platform.LocalContext
+00019: import androidx.compose.ui.text.font.FontWeight
+00020: import androidx.compose.ui.text.style.TextAlign
 00021: import androidx.compose.ui.unit.dp
 00022: 
 00023: /** In-place Day voting workspace. Seat taps remain pending until the Storyteller confirms. */
@@ -440,141 +818,15 @@
 00035:     onHostTools: () -> Unit,
 00036:     onConfirm: (ClocktowerTableVoteState) -> Unit,
 00037:     onCancel: () -> Unit,
-
-### line 70
-00062:                     text("投票目标无效，请返回提名。", "Invalid vote target; return to nomination."),
-00063:                     textAlign = TextAlign.Center,
-00064:                 )
-00065:             }
-00066:         }
-00067:         return
-00068:     }
-00069: 
-00070:     var voteState by remember(tableState.seats, nomineeSeat.seatId, ghostVoteAuthority) {
-00071:         mutableStateOf(
-00072:             clocktowerTableVoteState(
-00073:                 seats = tableState.seats,
-00074:                 nomineeSeatId = nomineeSeat.seatId,
-00075:                 ghostVoteAuthority = ghostVoteAuthority,
-00076:             ),
-00077:         )
-00078:     }
-
-### line 75
-00067:         return
-00068:     }
-00069: 
-00070:     var voteState by remember(tableState.seats, nomineeSeat.seatId, ghostVoteAuthority) {
-00071:         mutableStateOf(
-00072:             clocktowerTableVoteState(
-00073:                 seats = tableState.seats,
-00074:                 nomineeSeatId = nomineeSeat.seatId,
-00075:                 ghostVoteAuthority = ghostVoteAuthority,
-00076:             ),
-00077:         )
-00078:     }
-00079:     val nominationLink = nominatorSeat
-00080:         ?.takeIf { seat -> seat.seatId != nomineeSeat.seatId }
-00081:         ?.let { seat -> HostTableDirectionalLink(seat.seatId, nomineeSeat.seatId) }
-00082:     val firstVoterSeat = voteState.orderedSeatIds.firstOrNull()
-00083:         ?.let { seatId -> voteState.seats.firstOrNull { seat -> seat.seatId == seatId } }
-
-### line 101
-00093:     ) {
-00094:         HostTableShell(
-00095:             seats = voteState.seats,
-00096:             modifier = Modifier.fillMaxSize(),
-00097:             interaction = voteState.interaction,
-00098:             onSeatClick = { seatId -> voteState = voteState.togglePendingVoter(seatId) },
-00099:             directionalLink = nominationLink,
-00100:             seatHasUnspentGhostVote = { seat ->
-00101:                 !seat.isAlive && seat.seatId !in ghostVoteAuthority.spentSeatIds
-00102:             },
-00103:             seatBadge = { seat ->
-00104:                 if (seat.seatId == nomineeSeat.seatId) {
-00105:                     text("${voteState.voteCount}票", "${voteState.voteCount}v")
-00106:                 } else {
-00107:                     null
-00108:                 }
-00109:             },
-
-## app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryRestorePlanner.kt
-### line 259
-00251:         require(mechanics.artistClaimedNames.distinct().size == mechanics.artistClaimedNames.size) {
-00252:             "Artist claim history cannot contain duplicates."
-00253:         }
-00254:         require(mechanics.demonBluffRoleNames.distinct().size == mechanics.demonBluffRoleNames.size) {
-00255:             "Demon bluffs cannot contain duplicates."
-00256:         }
-00257:         require(mechanics.highestVoteCount >= 0) { "Highest vote count cannot be negative." }
-00258: 
-00259:         mechanics.ghostVoteAuthority.spentSeatIds.forEach { seatId ->
-00260:             require(seatId.number in 1..game.cards.size) { "Ghost-vote authority references an unknown seat." }
-00261:         }
-00262: 
-00263:         require(mechanics.klutzChoiceName == null) {
-00264:             "Unconfirmed Klutz choice is draft UI state and is not durable recovery state."
-00265:         }
-00266:         if (mechanics.pendingKlutzName == null) {
-00267:             require(!mechanics.klutzReturnToDawn) { "Klutz return-to-Dawn flag requires a pending Klutz." }
-
-## app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshot.kt
-### line 150
-00142:     val slayerUsed: Boolean,
-00143:     val slayerClaimedNames: List<String>,
-00144:     val artistUsed: Boolean,
-00145:     val artistClaimedNames: List<String>,
-00146:     val lastExecutedName: String?,
-00147:     val pendingKlutzName: String?,
-00148:     val klutzChoiceName: String?,
-00149:     val klutzReturnToDawn: Boolean,
-00150:     val ghostVoteAuthority: ClocktowerGhostVoteAuthority,
-00151:     val highestVoteName: String?,
-00152:     val highestVoteCount: Int,
-00153: )
-00154: 
-00155: /** Published/history authority used by recommendation and epistemic replay after recovery. */
-00156: internal data class ClocktowerRecoveryHistory(
-00157:     val gameStateRevision: Long,
-00158:     val playerInputRevision: Long,
-
-## app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt
-### line 131
-00123:         putNullableString("clocktowerLastExecutedName", game.mechanics.lastExecutedName)
-00124:         putNullableString("clocktowerPendingKlutzName", game.mechanics.pendingKlutzName)
-00125:         // A selected Klutz target is ordinary unconfirmed UI input. Recovery preserves the pending
-00126:         // Klutz obligation and safely re-enters the choice, but never promotes this draft to fact.
-00127:         putNullableString("clocktowerKlutzChoiceName", null)
-00128:         put("clocktowerKlutzReturnToDawn", game.mechanics.klutzReturnToDawn)
-00129:         put(
-00130:             ClocktowerGhostVoteAuthorityPersistence.ROOT_KEY,
-00131:             ClocktowerGhostVoteAuthorityPersistence.encode(game.mechanics.ghostVoteAuthority),
-00132:         )
-00133:         putNullableString("clocktowerHighestVoteName", game.mechanics.highestVoteName)
-00134:         put("clocktowerHighestVoteCount", game.mechanics.highestVoteCount.coerceAtLeast(0))
-00135:         put("clocktowerEvents", AppGameStateJsonCodec.encodeEvents(game.history.events))
-00136:         put("clocktowerEpistemicObservations", encodeObservations(game.history.epistemicObservations))
-00137:     }
-00138: 
-00139:     private fun encodeObservations(
-
-## app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotStrictDecoder.kt
-### line 135
-00127:                 slayerUsed = json.requiredBoolean("clocktowerSlayerUsed"),
-00128:                 slayerClaimedNames = json.requiredArray("clocktowerSlayerClaimedNames").strictStringList(),
-00129:                 artistUsed = json.requiredBoolean("clocktowerArtistUsed"),
-00130:                 artistClaimedNames = json.requiredArray("clocktowerArtistClaimedNames").strictStringList(),
-00131:                 lastExecutedName = json.requiredNullableString("clocktowerLastExecutedName"),
-00132:                 pendingKlutzName = json.requiredNullableString("clocktowerPendingKlutzName"),
-00133:                 klutzChoiceName = json.requiredNullableString("clocktowerKlutzChoiceName"),
-00134:                 klutzReturnToDawn = json.requiredBoolean("clocktowerKlutzReturnToDawn"),
-00135:                 ghostVoteAuthority = json.decodeGhostVoteAuthorityStrict(),
-00136:                 highestVoteName = json.requiredNullableString("clocktowerHighestVoteName"),
-00137:                 highestVoteCount = json.requiredInt("clocktowerHighestVoteCount"),
-00138:             ),
-00139:             history = ClocktowerRecoveryHistory(
-00140:                 gameStateRevision = gameStateRevision,
-00141:                 playerInputRevision = playerInputRevision,
-00142:                 semanticHistoryMode = semanticHistoryMode,
-00143:                 actionTimeline = actionTimeline,
+00038: ) {
+00039:     val language = LocalContext.current.resources.configuration.locales[0].language
+00040:     fun text(zh: String, en: String): String = if (language == "en") en else zh
+00041:     val nominatorSeat = tableState.seats.firstOrNull { seat -> seat.playerName == nominatorName }
+00042:     val nomineeSeat = tableState.seats.firstOrNull { seat -> seat.playerName == nomineeName }
+00043: 
+00044:     if (nomineeSeat == null) {
+00045:         ClocktowerDayTableScaffold(
+00046:             previousLabel = text("返回提名", "Return to nomination"),
+00047:             hostToolsLabel = text("主持工具", "Host Tools"),
+00048:             nextLabel = text("确认投票", "Confirm vote"),
 
