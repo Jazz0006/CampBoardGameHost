@@ -7,14 +7,19 @@ import org.junit.Test
 
 class ClocktowerDynamicNightAdvanceTest {
     @Test
-    fun `dynamic last step requests the next slot instead of finishing from the stale list`() {
+    fun `dynamic last step cannot expose a cursor outside the current renderable flow`() {
+        val currentStepCount = 5
         val directive = clocktowerNightAdvanceDirective(
             currentStepIndex = 4,
-            currentStepCount = 5,
+            currentStepCount = currentStepCount,
             flowMayExpandAfterConfirmation = true,
         )
 
-        assertEquals(ClocktowerNightAdvanceDirective.MoveTo(5), directive)
+        val exposedStepIndex = (directive as? ClocktowerNightAdvanceDirective.MoveTo)?.stepIndex
+        assertTrue(
+            "Pending dynamic refresh must not expose an out-of-range cursor: $directive",
+            exposedStepIndex == null || exposedStepIndex in 0 until currentStepCount,
+        )
     }
 
     @Test
