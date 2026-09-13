@@ -27,6 +27,25 @@ class ClocktowerEvilInfoSquareTablePresentationTest {
         assertEquals("Bluffs\nMayor · Monk · Undertaker", presentation.secondary)
         assertEquals("Keep this private", presentation.footer)
         assertTrue(presentation.showPlayerDisplayAction)
+        assertTrue(presentation.showHostDetails)
+    }
+
+    @Test
+    fun `Beginner keeps private evil payload off host surface until player reveal`() {
+        val presentation = clocktowerEvilInfoSquareTablePresentation(
+            step = evilInfoStep(
+                tellPlayer = "Show the Demon their Minions and bluffs.",
+                secondary = "Bluffs\nMayor · Monk · Undertaker",
+            ),
+            actorSeat = 7,
+            wakeInstruction = "Wake Demon\nP7 Eve",
+            beginnerMode = true,
+        )!!
+
+        assertEquals("Minions\nP2 · P5", presentation.primary)
+        assertEquals("Bluffs\nMayor · Monk · Undertaker", presentation.secondary)
+        assertFalse(presentation.showHostDetails)
+        assertTrue(presentation.showPlayerDisplayAction)
     }
 
     @Test

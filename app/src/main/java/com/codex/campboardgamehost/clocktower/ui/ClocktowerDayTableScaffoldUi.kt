@@ -3,14 +3,9 @@ package com.codex.campboardgamehost
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -65,9 +60,7 @@ internal fun ClocktowerDayTableScaffold(
                         onHostTools = onHostTools,
                         onNext = onNext,
                         modifier = Modifier
-                            .windowInsetsPadding(
-                                WindowInsets.navigationBars.only(WindowInsetsSides.Bottom),
-                            )
+                            .clocktowerHostBottomNavigationBarPadding()
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                     )
                 }

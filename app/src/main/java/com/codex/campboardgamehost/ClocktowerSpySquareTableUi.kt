@@ -60,6 +60,21 @@ internal fun ClocktowerSpySquareTableDialog(
     onNext: () -> Unit,
     onShowLegacyReveal: () -> Unit,
 ) {
+    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) && presentation.showLegacyRevealAction) {
+        ClocktowerBeginnerReadOnlyRevealDialog(
+            seats = seats,
+            actorSeat = actorSeat,
+            wakeInstruction = wakeInstruction,
+            language = language,
+            canGoPrevious = canGoPrevious,
+            onPrevious = onPrevious,
+            onHostTools = onHostTools,
+            onNext = onNext,
+            onShow = onShowLegacyReveal,
+            buttonLabel = if (language == "en") "Show grimoire" else "展示魔典",
+        )
+        return
+    }
     ClocktowerNightActionSquareTableDialog(
         seats = seats,
         enabled = false,

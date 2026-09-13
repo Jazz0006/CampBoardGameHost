@@ -35,32 +35,34 @@ private fun EvilInfoDisplay(
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         listOfNotNull(primary, secondary?.takeIf { it.isNotBlank() }).forEach { section ->
-            val lines = section.lines()
+            val lines = section.lines().filter(String::isNotBlank)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF2B3833), RoundedCornerShape(12.dp))
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                    .background(Color(0xFF1B1F25), RoundedCornerShape(18.dp))
+                    .padding(horizontal = 18.dp, vertical = 18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
                     lines.firstOrNull().orEmpty(),
-                    color = Color(0xFFAFC7BC),
-                    style = MaterialTheme.typography.titleSmall,
+                    color = Color(0xFFC5A56A),
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                 )
-                Text(
-                    lines.drop(1).joinToString("\n"),
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Black,
-                    textAlign = TextAlign.Center,
-                )
+                lines.drop(1).takeIf { it.isNotEmpty() }?.let { detailLines ->
+                    Text(
+                        detailLines.joinToString("\n"),
+                        color = Color(0xFFF7F1E6),
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Black,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
         }
     }
@@ -249,7 +251,7 @@ private fun ClocktowerPlayerDisplayCenterContent(
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         when (step.displayKind) {
             ClocktowerDisplayKind.Number, ClocktowerDisplayKind.YesNo -> {
@@ -283,7 +285,7 @@ private fun ClocktowerPlayerDisplayCenterContent(
                 Text(
                     primary,
                     color = Color(0xFFF7F1E6),
-                    style = MaterialTheme.typography.headlineMedium,
+                    fontSize = 38.sp,
                     fontWeight = FontWeight.Black,
                     textAlign = TextAlign.Center,
                 )
@@ -309,20 +311,29 @@ private fun ClocktowerPlayerDisplayCenterContent(
             ClocktowerDisplayKind.EvilInfo -> EvilInfoDisplay(primary, secondary)
 
             ClocktowerDisplayKind.RoleReveal, ClocktowerDisplayKind.Plain -> {
-                Text(
-                    primary,
-                    color = Color(0xFFF7F1E6),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Black,
-                    textAlign = TextAlign.Center,
-                )
-                if (footer.isNotBlank()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF1B1F25), RoundedCornerShape(18.dp))
+                        .padding(horizontal = 18.dp, vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
                     Text(
-                        footer,
-                        color = Color(0xFFAAA397),
-                        style = MaterialTheme.typography.bodyLarge,
+                        primary,
+                        color = Color(0xFFC5A56A),
+                        fontSize = 42.sp,
+                        fontWeight = FontWeight.Black,
                         textAlign = TextAlign.Center,
                     )
+                    if (footer.isNotBlank()) {
+                        Text(
+                            footer,
+                            color = Color(0xFFAAA397),
+                            style = MaterialTheme.typography.bodyLarge,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
             }
 

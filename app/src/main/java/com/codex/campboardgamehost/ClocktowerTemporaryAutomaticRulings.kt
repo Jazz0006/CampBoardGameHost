@@ -130,6 +130,17 @@ internal fun clocktowerTemporaryMayorSelection(
     decisionSeed = clocktowerTemporaryAutomaticDecisionSeed(decisionKey),
 )
 
+internal fun clocktowerAutomaticMayorRulingShouldAdvance(
+    automaticStorytellerInfo: Boolean,
+    action: ClocktowerNightAction,
+    selectedName: String?,
+    automaticTargetName: String?,
+): Boolean =
+    automaticStorytellerInfo &&
+        action == ClocktowerNightAction.MayorRedirect &&
+        automaticTargetName != null &&
+        selectedName == automaticTargetName
+
 internal fun clocktowerTemporaryDemonSuccessorSelection(
     eligible: List<TemporaryDemonSuccessorChoice>,
     decisionKey: String,

@@ -53,6 +53,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     onNext: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
 ) {
+    val beginnerMode = !allowManualEditing
     val canonicalRecommendedOption = remember(interactionKey, presentation, recommendedOption) {
         ClocktowerPairManualAuthority.canonicalManualOption(presentation, recommendedOption)
     }
@@ -91,12 +92,19 @@ internal fun ClocktowerPairInformationSquareTableDialog(
             Column(modifier = Modifier.fillMaxSize()) {
                 ClocktowerSquareTableSeatSurface(
                     seats = seats.map { seat ->
-                        val seatPresentation = clocktowerPairInformationSeatPresentation(
-                            selection = selection,
-                            seatNumber = seat.seatId.number,
-                            editing = editing,
-                            actorSeat = actorSeat,
-                        )
+                        val seatPresentation = if (beginnerMode) {
+                            clocktowerBeginnerPairSeatPresentation(
+                                seatNumber = seat.seatId.number,
+                                actorSeat = actorSeat,
+                            )
+                        } else {
+                            clocktowerPairInformationSeatPresentation(
+                                selection = selection,
+                                seatNumber = seat.seatId.number,
+                                editing = editing,
+                                actorSeat = actorSeat,
+                            )
+                        }
                         clocktowerPairManualSquareTableSeat(
                             seat = seat,
                             language = language,
@@ -122,6 +130,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                 ) {
                     ClocktowerPairInformationCenterControls(
                         wakeInstruction = wakeInstruction,
+                        beginnerMode = beginnerMode,
                         abilityLabel = abilityLabel,
                         selection = selection,
                         recommendedSelection = recommendedSelection,
@@ -190,6 +199,7 @@ internal fun clocktowerPairInformationSeatPresentation(
 @Composable
 private fun ClocktowerPairInformationCenterControls(
     wakeInstruction: String?,
+    beginnerMode: Boolean,
     abilityLabel: String,
     selection: ClocktowerPairManualSelectionModel,
     recommendedSelection: ClocktowerPairManualSelectionModel,
@@ -204,6 +214,28 @@ private fun ClocktowerPairInformationCenterControls(
 ) {
     var roleMenuExpanded by remember { mutableStateOf(false) }
     val hasRecommendation = recommendedSelection.resolvedOption != null
+
+    if (beginnerMode) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            ClocktowerNightActionWakeInstruction(wakeInstruction)
+            Spacer(Modifier.height(8.dp))
+            recommendedSelection.resolvedOption?.let { resolved ->
+                Button(
+                    onClick = { onConfirm(resolved) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (language == "en") "Show to player" else "展示给玩家")
+                }
+            }
+        }
+        return
+    }
 
     Column(
         modifier = Modifier

@@ -71,6 +71,29 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
+    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction)) {
+        val actions = clocktowerFortuneTellerResultActions(legalResults, recommendedResult)
+        val result = recommendedResult?.takeIf { it in legalResults } ?: actions.firstOrNull()
+        val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
+        ClocktowerBeginnerTwoTargetRevealDialog(
+            seats = seats,
+            actorSeat = actorSeat,
+            selectedSeats = selectedSeats,
+            selectableSeats = selectableSeats,
+            enabled = enabled,
+            wakeInstruction = wakeInstruction,
+            language = language,
+            canGoPrevious = canGoPrevious,
+            onSeatSelected = onSeatSelected,
+            onPrevious = onPrevious,
+            onHostTools = onHostTools,
+            onNext = onNext,
+            onShow = if (completePair && result != null) ({
+                if (automaticStorytellerInfo) onAutomaticResultSelected(result) else onResultSelected(result)
+            }) else null,
+        )
+        return
+    }
     Dialog(
         onDismissRequest = {
             if (canGoPrevious) onPrevious()

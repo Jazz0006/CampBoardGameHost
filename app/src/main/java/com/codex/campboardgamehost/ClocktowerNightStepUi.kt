@@ -664,7 +664,42 @@ internal fun ClocktowerNightStepCardLocalized(
             onSelectName(automaticDecisionTargetName)
         }
     }
-    val command = when {
+    LaunchedEffect(
+        automaticStorytellerInfo,
+        step.title,
+        step.action,
+        selectedName,
+        automaticDecisionTargetName,
+    ) {
+        if (
+            clocktowerAutomaticMayorRulingShouldAdvance(
+                automaticStorytellerInfo = automaticStorytellerInfo,
+                action = step.action,
+                selectedName = selectedName,
+                automaticTargetName = automaticDecisionTargetName,
+            )
+        ) {
+            onNext()
+        }
+    }
+    val beginnerGuidance = if (automaticStorytellerInfo) {
+        clocktowerBeginnerNightGuidance(
+            action = step.action,
+            actor = step.actor,
+            cards = cards,
+            language = language,
+            groupTeam = step.actor
+                ?.clocktowerRole
+                ?.team
+                ?.takeIf { team ->
+                    step.displayKind == ClocktowerDisplayKind.EvilInfo &&
+                        team in setOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon)
+                },
+        )
+    } else {
+        null
+    }
+    val command = beginnerGuidance?.asWakeInstruction() ?: when {
         step.action == ClocktowerNightAction.FortuneTeller && step.actor != null -> {
             if (language == "en") {
                 "Wake ${step.actor.seatLabel(cards)} and ask them to choose two players to check"
@@ -741,6 +776,7 @@ internal fun ClocktowerNightStepCardLocalized(
             step = step,
             actorSeat = actionActorSeat,
             wakeInstruction = command,
+            beginnerMode = automaticStorytellerInfo,
         )
         val usesEvilInfoSquareTable = evilInfoSquareTablePresentation != null
         val actionOwnsSquareTable = step.action in setOf(

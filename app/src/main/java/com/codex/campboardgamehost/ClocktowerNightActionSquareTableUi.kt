@@ -5,11 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -91,22 +86,56 @@ internal fun ClocktowerNightActionWakeInstruction(instruction: String?) {
     LocalClocktowerNightProgress.current?.takeIf { it.isNotBlank() }?.let { value ->
         Text(
             text = value,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Black,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(6.dp))
     }
     instruction?.takeIf { it.isNotBlank() }?.let { value ->
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(4.dp))
+        val guidanceLines = value.lines()
+            .map(String::trim)
+            .filter(String::isNotBlank)
+        val isStructuredGuidance = guidanceLines.size in 2..3 &&
+            (guidanceLines.first().startsWith("唤醒 ") || guidanceLines.first().startsWith("Wake "))
+        if (isStructuredGuidance) {
+            Text(
+                text = guidanceLines[0],
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = guidanceLines[1],
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+            )
+            guidanceLines.getOrNull(2)?.let { action ->
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = action,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+        } else {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(4.dp))
+        }
     }
 }
 
@@ -141,9 +170,7 @@ internal fun ClocktowerNightBottomActionBar(
             onHostTools = onHostTools,
             onNext = onNext,
             modifier = Modifier
-                .windowInsetsPadding(
-                    WindowInsets.navigationBarsIgnoringVisibility.only(WindowInsetsSides.Bottom),
-                )
+                .clocktowerHostBottomNavigationBarPadding()
                 .padding(horizontal = 16.dp, vertical = 10.dp),
         )
     }
