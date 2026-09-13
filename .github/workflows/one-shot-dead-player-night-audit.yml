@@ -23,17 +23,35 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== files with direct square-table model construction ==='
-          rg -l 'ClocktowerSquareTableSeatUiModel\(' app/src/main/java/com/codex/campboardgamehost || true
-          echo '=== direct square-table model contexts ==='
-          rg -n -C 8 'ClocktowerSquareTableSeatUiModel\(' app/src/main/java/com/codex/campboardgamehost || true
-          echo '=== HostTableShell contexts ==='
-          rg -n -C 5 'HostTableShell\(' app/src/main/java/com/codex/campboardgamehost || true
-          echo '=== ghost vote authority contexts ==='
-          rg -n -C 8 'ghostVoteAuthority|ClocktowerGhostVoteAuthority|spentSeatIds' app/src/main/java/com/codex/campboardgamehost || true
-          echo '=== night life/dead/eligibility contexts ==='
-          rg -n -C 8 'eliminatedRound|isAlive|alive|dead|死亡|阵亡|淘汰|Poisoner|投毒者|Imp|小恶魔' \
-            app/src/main/java/com/codex/campboardgamehost/clocktower/ui \
-            app/src/main/java/com/codex/campboardgamehost/Clocktower*Table*.kt \
-            app/src/main/java/com/codex/campboardgamehost/Clocktower*Selection*.kt \
-            app/src/main/java/com/codex/campboardgamehost/Clocktower*Night*.kt 2>/dev/null | head -n 1400 || true
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('app/src/main/java/com/codex/campboardgamehost')
+          files = sorted(root.rglob('*.kt'))
+
+          def emit(title, pattern, context=6, max_matches=120):
+              rx = re.compile(pattern, re.I)
+              print(f'=== {title} ===')
+              count = 0
+              for path in files:
+                  lines = path.read_text(encoding='utf-8').splitlines()
+                  for idx, line in enumerate(lines):
+                      if not rx.search(line):
+                          continue
+                      count += 1
+                      if count > max_matches:
+                          print(f'... truncated after {max_matches} matches')
+                          return
+                      print(f'--- {path}:{idx + 1} ---')
+                      lo = max(0, idx - context)
+                      hi = min(len(lines), idx + context + 1)
+                      for j in range(lo, hi):
+                          print(f'{j + 1:05d}: {lines[j]}')
+              print(f'=== matches: {count} ===')
+
+          emit('direct square-table model construction', r'ClocktowerSquareTableSeatUiModel\(', 10, 80)
+          emit('HostTableShell calls', r'HostTableShell\(', 8, 100)
+          emit('ghost vote authority', r'ghostVoteAuthority|ClocktowerGhostVoteAuthority|spentSeatIds', 10, 100)
+          emit('night life/dead eligibility', r'eliminatedRound|isAlive|dead|死亡|阵亡|淘汰|Poisoner|投毒者|Imp|小恶魔', 8, 180)
+          PY
