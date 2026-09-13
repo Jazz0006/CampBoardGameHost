@@ -15,7 +15,7 @@ UI-R5 square-table convergence                    COMPLETE / merged via PR #117
 UI-NAV-1 global navigation visual unification     COMPLETE / merged via PR #118
 ROLE-ROTATION-1 recent role rotation              COMPLETE / merged via PR #119
 UX-MODE-1 Beginner / Experienced mode             COMPLETE / merged via PR #120
-UI-INFO-1 information filtering & layout          COMPLETE / PR #121 merge-ready
+UI-INFO-1 information filtering & layout          COMPLETE / merged via PR #121
 
 EPI-MQ / Productive Uncertainty                   CURRENT — resume at EPI-MQ-0.5
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
@@ -72,9 +72,17 @@ Stable rule:
 
 ## 4. UI-INFO-1 closeout
 
-UI-INFO-1 is accepted from the product/device perspective and is ready to merge through PR #121.
+UI-INFO-1 is accepted from the product/device perspective and merged through PR #121.
 
-Final pre-closeout verification head:
+Final PR head before merge:
+
+`56b7137bb5f21e88b058295deb809d1d7608d5c5`
+
+Merge commit on `main`:
+
+`0cdcf14e39c1c16accf540382427e1264ef36b2a`
+
+Final production verification head before docs-only closeout:
 
 `99a141b54e1a4d274dbc354427bd49f3f11c9edc`
 
@@ -83,12 +91,17 @@ Latest production fix checkpoint:
 `962ed3830d42fe4c6cdab711e9e0559ef82491bc`
 `fix: restore Dawn announcement host surface`
 
-At the final verification head:
+At the final production verification head:
 
 - CI run `34752163421` PASS;
 - R2 run `34752163454` PASS;
 - the Dawn restoration one-shot completed RED -> focused GREEN -> `:app:testFast` -> exact diff audit successfully;
 - real-device acceptance was reported PASS after the Dawn-page restoration.
+
+The final docs-only PR head also passed:
+
+- CI run `34756727412` PASS;
+- R2 run `34756727420` PASS.
 
 ### Stable UI-INFO-1 outcomes
 
@@ -105,7 +118,7 @@ The campaign established or repaired the following product behavior without chan
 - the obsolete Dawn "full-screen announcement" button and secondary player-facing full-screen display page are removed;
 - Day starts only after the Storyteller explicitly confirms the Dawn announcement.
 
-The former active UI-INFO-1 handoff is historical and belongs under `docs/archive/` after closeout.
+The former active UI-INFO-1 handoff is historical and now lives under `docs/archive/`.
 
 ## 5. EPI-MQ architecture continuity
 
