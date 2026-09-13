@@ -19,7 +19,7 @@ jobs:
           ref: codex/dead-player-square-table
           fetch-depth: 0
 
-      - name: Persist compact ownership report
+      - name: Persist focused ownership report
         shell: bash
         run: |
           set -euo pipefail
@@ -30,66 +30,33 @@ jobs:
 
           root = Path('app/src/main/java/com/codex/campboardgamehost')
           files = sorted(root.rglob('*.kt'))
-
-          def matches(pattern):
-              rx = re.compile(pattern, re.I)
-              out = []
-              for path in files:
-                  lines = path.read_text(encoding='utf-8').splitlines()
-                  for idx, line in enumerate(lines):
-                      if rx.search(line):
-                          out.append((path, idx, lines))
-              return out
-
-          def list_locations(title, pattern, limit=80):
-              print(f'## {title}')
-              found = matches(pattern)
-              for path, idx, lines in found[:limit]:
-                  print(f'{path}:{idx + 1}: {lines[idx].strip()}')
-              print(f'count={len(found)}')
-              print()
-
-          def contexts(title, pattern, include_path_pattern=None, radius=12, limit=24):
-              print(f'## {title}')
-              found = matches(pattern)
-              if include_path_pattern:
-                  path_rx = re.compile(include_path_pattern, re.I)
-                  found = [item for item in found if path_rx.search(str(item[0]))]
-              for path, idx, lines in found[:limit]:
-                  print(f'### {path}:{idx + 1}')
-                  lo = max(0, idx - radius)
-                  hi = min(len(lines), idx + radius + 1)
+          patterns = [
+              re.compile(r'data class HostSeatPresentation'),
+              re.compile(r'toStorytellerHostSeatPresentation'),
+              re.compile(r'HostSeatPresentation\('),
+              re.compile(r'ghostVoteAuthority'),
+          ]
+          for path in files:
+              lines = path.read_text(encoding='utf-8').splitlines()
+              hit_indices = sorted({
+                  idx
+                  for idx, line in enumerate(lines)
+                  for pattern in patterns
+                  if pattern.search(line)
+              })
+              if not hit_indices:
+                  continue
+              print(f'## {path}')
+              for idx in hit_indices:
+                  print(f'### line {idx + 1}')
+                  lo = max(0, idx - 8)
+                  hi = min(len(lines), idx + 9)
                   for j in range(lo, hi):
                       print(f'{j + 1:05d}: {lines[j]}')
                   print()
-              print(f'count={len(found)}')
-              print()
-
-          list_locations('Direct square-table model constructors', r'ClocktowerSquareTableSeatUiModel\(')
-          contexts(
-              'Night/action direct square-table constructors',
-              r'ClocktowerSquareTableSeatUiModel\(',
-              include_path_pattern=r'Night|Selection|Poison|Host|Pair|Registration|Fortune|Monk|Demon|Imp',
-              radius=14,
-          )
-          list_locations('HostTableShell calls', r'HostTableShell\(')
-          list_locations('Ghost vote authority references', r'ghostVoteAuthority|ClocktowerGhostVoteAuthority|spentSeatIds')
-          contexts(
-              'Ghost vote owner contexts',
-              r'ghostVoteAuthority|ClocktowerGhostVoteAuthority',
-              radius=10,
-              limit=30,
-          )
-          contexts(
-              'Night eliminated/isAlive contexts',
-              r'eliminatedRound|isAlive',
-              include_path_pattern=r'Night|Selection|Poison|Host|Pair|Registration|Fortune|Monk|Demon|Imp|Table',
-              radius=10,
-              limit=36,
-          )
           PY
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add tmp/night-seat-audit.txt
-          git commit -m 'chore: persist night seat audit report'
+          git commit -m 'chore: refresh night seat audit report'
           git push origin HEAD:codex/dead-player-square-table
