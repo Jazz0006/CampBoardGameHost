@@ -8,16 +8,39 @@ import org.junit.Test
 
 /** Regression guard for immersive full-screen night surfaces on devices with gesture navigation. */
 class ClocktowerNightDialogInsetsContractTest {
-    @Test
-    fun `night square table stays on the Activity window instead of opening a full screen dialog`() {
-        val source = source(
-            "src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt",
-        )
+    private val nightSquareTableSources = listOf(
+        "src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt",
+        "src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt",
+        "src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt",
+        "src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt",
+        "src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt",
+        "src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt",
+    )
 
-        assertFalse(source.contains("import androidx.compose.ui.window.Dialog"))
-        assertFalse(source.contains("DialogProperties("))
-        assertFalse(source.contains("\n    Dialog("))
-        assertTrue(source.contains("ClocktowerHostFullScreenScaffold("))
+    @Test
+    fun `night square tables stay on the Activity window instead of opening full screen dialogs`() {
+        nightSquareTableSources.forEach { relativeText ->
+            val source = source(relativeText)
+            assertFalse(
+                "$relativeText must not import platform Dialog",
+                source.contains("import androidx.compose.ui.window.Dialog"),
+            )
+            assertFalse(
+                "$relativeText must not configure a platform Dialog window",
+                source.contains("DialogProperties("),
+            )
+            assertFalse(
+                "$relativeText must not open a platform Dialog window",
+                source.contains("\n    Dialog("),
+            )
+            assertFalse(
+                "$relativeText must not own the retired Night bottom bar",
+                source.contains("ClocktowerNightBottomActionBar("),
+            )
+        }
+        assertTrue(
+            source(nightSquareTableSources.first()).contains("ClocktowerHostFullScreenScaffold("),
+        )
     }
 
     @Test
