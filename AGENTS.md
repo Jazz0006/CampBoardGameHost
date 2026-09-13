@@ -143,6 +143,22 @@ Use this implementation pre-flight:
 5. If no durable callable seam exists, is that because the architecture genuinely lacks one, or only because the current implementation is coupled?
 6. What is the cheapest reliable evidence for this slice: RED/GREEN, existing baseline, typed characterization, integration test, compile/static check, architecture guard, or exact diff audit?
 
+### 3.1.1 Shared-contract / fan-out gate
+
+Before changing a shared model, presentation contract, renderer, projector, persistence DTO, domain result, or any other fan-out seam, the implementation pre-flight **MUST** also map the full production fan-out:
+
+1. Find every production producer, constructor, adapter, mapper, and direct builder of the changed contract.
+2. Find every production consumer of the changed field or behavior.
+3. Classify each path as **must inherit** or **intentionally exempt**; every exemption needs an explicit reason.
+4. Prefer fixing the common semantic / projection / ownership boundary over caller-specific patches.
+5. If callers bypass the intended common projection, migrate them to it or explicitly document and test why separate construction remains necessary.
+6. Verify every relevant product phase or mode (for example Setup / Day / Night, beginner / expert, restored / fresh) rather than only the screen that exposed the issue.
+7. Re-run the producer/consumer search after implementation so no direct path silently relies on a default value, stale adapter, or incomplete projection.
+
+A shared renderer does **not** imply shared ownership. **"Shared renderer without shared projection" is an architecture smell** when callers independently assemble incomplete semantic state. Move the derivation toward the authoritative shared projection/owner instead of teaching each screen how to reconstruct it.
+
+For cross-cutting UI state, visual state and interaction eligibility are separate contracts unless the domain explicitly couples them. A shared visual marker must not silently become a rule-level disabled/selectable decision.
+
 The default evidence mapping is:
 
 ```text
