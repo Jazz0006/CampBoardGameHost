@@ -68,7 +68,7 @@ class ClocktowerTemporaryAutomaticRulingsTest {
     }
 
     @Test
-    fun `beginner Mayor ruling advances only after automatic target is applied`() {
+    fun `beginner automatic rulings advance only after automatic target is applied`() {
         assertFalse(
             clocktowerAutomaticMayorRulingShouldAdvance(
                 automaticStorytellerInfo = true,
@@ -101,7 +101,7 @@ class ClocktowerTemporaryAutomaticRulingsTest {
                 automaticTargetName = "Alice",
             ),
         )
-        assertFalse(
+        assertTrue(
             clocktowerAutomaticMayorRulingShouldAdvance(
                 automaticStorytellerInfo = true,
                 action = ClocktowerNightAction.DemonSuccessor,
