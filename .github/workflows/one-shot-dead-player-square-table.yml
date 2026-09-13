@@ -6,6 +6,13 @@ on:
       - codex/dead-player-square-table
     paths:
       - .github/workflows/one-shot-dead-player-square-table.yml
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+    paths:
+      - .github/workflows/one-shot-dead-player-square-table.yml
 
 permissions:
   contents: write
