@@ -26,8 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 
 /**
  * Square-table composition for first-night pair information (Washerwoman/Librarian/Investigator).
@@ -53,6 +51,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     onNext: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
 ) {
+    val beginnerMode = !allowManualEditing
     val canonicalRecommendedOption = remember(interactionKey, presentation, recommendedOption) {
         ClocktowerPairManualAuthority.canonicalManualOption(presentation, recommendedOption)
     }
@@ -71,79 +70,73 @@ internal fun ClocktowerPairInformationSquareTableDialog(
         editing = allowManualEditing && recommendedSelection.resolvedOption == null
     }
 
-    Dialog(
-        onDismissRequest = {
+    ClocktowerHostFullScreenScaffold(
+        previousLabel = if (language == "en") "← Previous" else "← 上一步",
+        hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
+        nextLabel = if (language == "en") "Next →" else "下一步 →",
+        previousEnabled = canGoPrevious,
+        onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
+        onBack = {
             if (editing && recommendedSelection.resolvedOption != null) {
                 restoreRecommendation()
             } else if (canGoPrevious) {
                 onPrevious()
             }
         },
-        properties = DialogProperties(
-                         usePlatformDefaultWidth = false,
-                         decorFitsSystemWindows = false,
-                     ),
     ) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background,
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                ClocktowerSquareTableSeatSurface(
-                    seats = seats.map { seat ->
-                        val seatPresentation = clocktowerPairInformationSeatPresentation(
-                            selection = selection,
-                            seatNumber = seat.seatId.number,
-                            editing = editing,
-                            actorSeat = actorSeat,
-                        )
-                        clocktowerPairManualSquareTableSeat(
-                            seat = seat,
-                            language = language,
-                            state = seatPresentation.targetState,
-                        ).copy(isCurrentActor = seatPresentation.isCurrentActor)
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    interactionMode = if (editing) {
-                        ClocktowerSquareTableInteractionMode.Selectable
-                    } else {
-                        ClocktowerSquareTableInteractionMode.ReadOnly
-                    },
-                    onSeatClick = { seatKey ->
-                        if (editing) {
-                            seats.firstOrNull { seat -> seat.seatId.renderKey() == seatKey }
-                                ?.seatId
-                                ?.number
-                                ?.let { seatNumber -> selection = selection.selectSeat(seatNumber) }
-                        }
-                    },
-                ) {
-                    ClocktowerPairInformationCenterControls(
-                        wakeInstruction = wakeInstruction,
-                        abilityLabel = abilityLabel,
+        ClocktowerSquareTableSeatSurface(
+            seats = seats.map { seat ->
+                val seatPresentation = if (beginnerMode) {
+                    clocktowerBeginnerPairSeatPresentation(
+                        seatNumber = seat.seatId.number,
+                        actorSeat = actorSeat,
+                    )
+                } else {
+                    clocktowerPairInformationSeatPresentation(
                         selection = selection,
-                        recommendedSelection = recommendedSelection,
+                        seatNumber = seat.seatId.number,
                         editing = editing,
-                        roleLabel = roleLabel,
-                        allowManualEditing = allowManualEditing,
-                        language = language,
-                        onSelectionChange = { selection = it },
-                        onStartEditing = { if (allowManualEditing) editing = true },
-                        onRestoreRecommendation = ::restoreRecommendation,
-                        onConfirm = onConfirm,
+                        actorSeat = actorSeat,
                     )
                 }
-
-                ClocktowerNightBottomActionBar(
+                clocktowerPairManualSquareTableSeat(
+                    seat = seat,
                     language = language,
-                    canGoPrevious = canGoPrevious,
-                    onPrevious = onPrevious,
-                    onHostTools = onHostTools,
-                    onNext = onNext,
-                )
-            }
+                    state = seatPresentation.targetState,
+                ).copy(isCurrentActor = seatPresentation.isCurrentActor)
+            },
+            modifier = Modifier.fillMaxSize(),
+            interactionMode = if (editing) {
+                ClocktowerSquareTableInteractionMode.Selectable
+            } else {
+                ClocktowerSquareTableInteractionMode.ReadOnly
+            },
+            onSeatClick = { seatKey ->
+                if (editing) {
+                    seats.firstOrNull { seat -> seat.seatId.renderKey() == seatKey }
+                        ?.seatId
+                        ?.number
+                        ?.let { seatNumber -> selection = selection.selectSeat(seatNumber) }
+                }
+            },
+        ) {
+            ClocktowerPairInformationCenterControls(
+                wakeInstruction = wakeInstruction,
+                beginnerMode = beginnerMode,
+                abilityLabel = abilityLabel,
+                selection = selection,
+                recommendedSelection = recommendedSelection,
+                editing = editing,
+                roleLabel = roleLabel,
+                allowManualEditing = allowManualEditing,
+                language = language,
+                onSelectionChange = { selection = it },
+                onStartEditing = { if (allowManualEditing) editing = true },
+                onRestoreRecommendation = ::restoreRecommendation,
+                onConfirm = onConfirm,
+            )
         }
     }
 }
@@ -190,6 +183,7 @@ internal fun clocktowerPairInformationSeatPresentation(
 @Composable
 private fun ClocktowerPairInformationCenterControls(
     wakeInstruction: String?,
+    beginnerMode: Boolean,
     abilityLabel: String,
     selection: ClocktowerPairManualSelectionModel,
     recommendedSelection: ClocktowerPairManualSelectionModel,
@@ -204,6 +198,28 @@ private fun ClocktowerPairInformationCenterControls(
 ) {
     var roleMenuExpanded by remember { mutableStateOf(false) }
     val hasRecommendation = recommendedSelection.resolvedOption != null
+
+    if (beginnerMode) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            ClocktowerNightActionWakeInstruction(wakeInstruction)
+            Spacer(Modifier.height(8.dp))
+            recommendedSelection.resolvedOption?.let { resolved ->
+                Button(
+                    onClick = { onConfirm(resolved) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (language == "en") "Show to player" else "展示给玩家")
+                }
+            }
+        }
+        return
+    }
 
     Column(
         modifier = Modifier

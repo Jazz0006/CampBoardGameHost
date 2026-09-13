@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-12 Australia/Sydney  
+> Updated: 2026-09-13 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
@@ -14,168 +14,159 @@ D6 decomposition campaign                         COMPLETE
 UI-R5 square-table convergence                    COMPLETE / merged via PR #117
 UI-NAV-1 global navigation visual unification     COMPLETE / merged via PR #118
 ROLE-ROTATION-1 recent role rotation              COMPLETE / merged via PR #119
-EPI-MQ-0 baseline / ownership re-audit            COMPLETE — old EPI-MQ-1 = MODIFY
 UX-MODE-1 Beginner / Experienced mode             COMPLETE / merged via PR #120
+UI-INFO-1 information filtering & layout          COMPLETE / PR #121 merge-ready
 
-UI-INFO-1 information filtering & layout          CURRENT — next focused UI campaign
-EPI-MQ / Productive Uncertainty                   QUEUED after UI-INFO-1 unless reprioritized
+EPI-MQ / Productive Uncertainty                   CURRENT — resume at EPI-MQ-0.5
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
 
 Completed campaign documents are historical evidence, not default execution authority.
 
-## 2. Immediate priority — UI-INFO-1
+## 2. Immediate priority — EPI-MQ-0.5
 
 Active handoff:
 
-`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-12_UI_INFO_FILTERING_AND_LAYOUT.md`
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-13_EPI_MQ_0_5.md`
 
-Primary product reference:
-
-`docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`
-
-Immediate first step:
-
-> **Read-only audit of information filtering, hierarchy, typography, spacing and overflow across the live Storyteller UI before changing production Compose.**
-
-The audit should classify visible information by operational value and identify reusable layout seams. Prefer removing/reducing low-value information over shrinking fonts.
-
-Primary phone portrait remains the target, including dense 12–15 player layouts.
-
-## 3. UI-INFO-1 scope fences
-
-UI-INFO-1 may change:
-
-- which already-available information is shown on a given Storyteller surface;
-- information hierarchy and grouping;
-- headings, badges and redundant explanatory copy;
-- typography, wrapping, spacing and center-content composition;
-- reusable presentation/layout primitives when the audit proves common ownership.
-
-UI-INFO-1 must not change:
-
-- gameplay rules;
-- legal candidate domains;
-- recommendation ranking semantics;
-- deterministic automatic-ruling identity;
-- player-owned vs Storyteller-owned choice authority;
-- global Previous / Host Tools / Next navigation placement;
-- Android system-bar/inset behavior without a newly reproduced regression;
-- EPI-MQ / Productive Uncertainty algorithms.
-
-## 4. UX-MODE-1 closeout
-
-UX-MODE-1 is accepted from the product/device perspective and merged through PR #120.
-
-Final PR head before merge:
-
-`969f8bd1cb71f34fce6a835ca5848cb77bd4b346`
-
-Merge commit on `main`:
-
-`fa08d475ffb79c1eef494fff87578d6b7b3449b6`
-
-Validated production/device checkpoint before the docs-only closeout commits:
-
-`57a0905153b06a0cfe809d36af4b0e0403fe8e3b`
-
-At that checkpoint:
-
-- CI run `34664124993` PASS;
-- R2 run `34664124978` PASS;
-- real-device POCO X8 Pro acceptance reported no remaining issue for the final safe-area fix.
-
-The final docs-only PR head also passed R2 before merge; no production code changed after the validated checkpoint.
-
-### Stable UX-MODE product contract
-
-There is one user-facing Experienced-mode switch. Fresh/default state is Beginner.
-
-Critical invariant:
-
-> **Beginner and Experienced share one rules / legal-candidate / recommendation pipeline. Mode changes interaction authority and presentation only.**
-
-Until EPI-MQ replaces the temporary provider behavior:
-
-- both modes consume the same internal `RecommendationStyle.AGGRESSIVE` provider;
-- Beginner auto-uses Top-1 for Storyteller-owned strategic decisions;
-- Experienced exposes legal manual alternatives;
-- player-owned choices remain manual;
-- automatic probabilistic decisions use stable semantic identity and do not re-roll on recomposition/navigation/restore.
-
-Temporary policies remain:
-
-```text
-Spy/Recluse registration:
-90% legal special / false registration
-10% actual registration
-
-Mayor:
-90% redirect to eligible living Townsfolk when one exists
-10% Mayor dies
-otherwise Mayor dies
-
-non-forced Demon succession:
-Baron 4 > Scarlet Woman 3 > Spy 2 > Poisoner 1
-```
-
-Rules legality remains authoritative upstream.
-
-### Acceptance fixes completed inside PR #120
-
-The campaign also closed real-device/UI regressions discovered during acceptance, including:
-
-- first-night evil-team / bluff square-table presentation convergence;
-- Spy/Recluse automatic-selection audit ownership crash family;
-- removal/retirement of old generic Storyteller UI islands where normal production flow had moved to square-table ownership;
-- Day Overview / Nomination / Vote / Slayer / Artist / Klutz navigation moved below the square table into a shared Day scaffold;
-- full-screen night Compose dialogs explicitly own edge-to-edge window fitting;
-- night bottom controls protected from device navigation-bar overlap;
-- Day bottom navigation changed from `navigationBarsIgnoringVisibility` to visibility-aware `navigationBars`, preventing permanent dead space on immersive/auto-hide devices while still respecting visible navigation bars.
-
-Real-device testing on POCO X8 Pro reported the final Day/navigation safe-area behavior as normal.
-
-## 5. EPI-MQ direction after UI-INFO-1
-
-EPI-MQ-0 remains complete as an architecture/ownership audit.
-
-Authoritative design/audit record:
+Primary architecture/audit reference:
 
 `docs/EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md`
 
-When resumed, re-audit against then-live `main` and continue approximately:
+Primary product/algorithm references:
+
+- `docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`;
+- `docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`;
+- `docs/epistemic_reference_matrix.md`;
+- `docs/asp_oracle_cross_validation.md`.
+
+Immediate first step:
+
+> **Reconfirm live `main` after PR #121 merges, then perform a read-only delta audit of the EPI-MQ ownership chain before editing production code.**
+
+The first implementation target is the EPI-MQ-0.5 dynamic-script extensibility guard: a generic epistemic capability/evaluation boundary that preserves current Trouble Brewing exact behavior while representing unsupported future role/script semantics as explicit DEFERRED/UNSUPPORTED results.
+
+## 3. EPI-MQ scope fences
+
+EPI-MQ-0.5 may:
+
+- define/refine a generic epistemic capability contract;
+- expose READY / DEFERRED / missing-capability diagnostics;
+- adapt current exact Trouble Brewing world reasoning behind that contract;
+- add typed tests at the epistemic ownership boundary;
+- perform only the ownership extraction required to establish that seam.
+
+EPI-MQ-0.5 must not:
+
+- change recommendation ranking or weights;
+- change gameplay rules or legal candidates;
+- activate A4/ZDD as production correctness authority;
+- directly couple recommendation code to `B4DynamicPlayerWorldSetShadow`;
+- leak Storyteller-hidden targets into recipient knowledge;
+- implement Moonchild/Pukka mechanics merely to prove extensibility;
+- reopen UI-INFO-1 without a new independently reproduced UI regression.
+
+Stable rule:
+
+> **`DEFERRED != UNSAT`. Unknown or unsupported script semantics must never be presented as exact contradiction or exact world count.**
+
+## 4. UI-INFO-1 closeout
+
+UI-INFO-1 is accepted from the product/device perspective and is ready to merge through PR #121.
+
+Final pre-closeout verification head:
+
+`99a141b54e1a4d274dbc354427bd49f3f11c9edc`
+
+Latest production fix checkpoint:
+
+`962ed3830d42fe4c6cdab711e9e0559ef82491bc`
+`fix: restore Dawn announcement host surface`
+
+At the final verification head:
+
+- CI run `34752163421` PASS;
+- R2 run `34752163454` PASS;
+- the Dawn restoration one-shot completed RED -> focused GREEN -> `:app:testFast` -> exact diff audit successfully;
+- real-device acceptance was reported PASS after the Dawn-page restoration.
+
+### Stable UI-INFO-1 outcomes
+
+The campaign established or repaired the following product behavior without changing gameplay semantics or legal-candidate authority:
+
+- Beginner night guidance emphasizes wake role/player and immediate action rather than low-value explanatory text;
+- Drunk presentation can route through the shown role's square-table surface while retaining actual Drunk truth/state ownership;
+- Night and Day square-table flows share Activity-root fullscreen/navigation ownership rather than Night-specific platform Dialog ownership;
+- real unreliable-information steps retain square-table host-surface ownership;
+- transient zero/non-finite host-table geometry is rejected at the Compose renderability boundary rather than crashing strict geometry code;
+- Beginner automatic Demon succession advances after the deterministic successor is applied instead of exposing a blank/manual ruling shell;
+- unnecessary standalone Beginner Mayor redirect presentation was removed while Mayor semantics remain intact;
+- Dawn remains a real host-facing announcement/review surface;
+- the obsolete Dawn "full-screen announcement" button and secondary player-facing full-screen display page are removed;
+- Day starts only after the Storyteller explicitly confirms the Dawn announcement.
+
+The former active UI-INFO-1 handoff is historical and belongs under `docs/archive/` after closeout.
+
+## 5. EPI-MQ architecture continuity
+
+The 2026-09-11 EPI-MQ audit remains the design basis, but its old live baseline must not be assumed current.
+
+Current intended sequence:
 
 ```text
 EPI-MQ-0.5  dynamic-script extensibility guard
+            - generic epistemic world-engine/capability seam
+            - explicit READY vs DEFERRED/UNSUPPORTED result
+            - no EPI-MQ dependency on Trouble Brewing concrete classes
+
 EPI-MQ-1    neutral hypothetical observation evaluator
-EPI-MQ-2    credibility / contradiction / impairment-exposure gates
+            - exact
+            - recipient-knowledge-safe
+            - mutation-free
+            - BEFORE / AFTER diagnostics
+            - B4 shadow reuses the neutral owner
+
+EPI-MQ-2    credibility / immediate contradiction / impairment-exposure gates
+
 EPI-MQ-3+   productive-uncertainty metrics and ranking
 ```
 
-Do not activate A4/ZDD or replace the recommendation provider as part of the initial evaluator extraction.
+No recommendation weights or production selections change during EPI-MQ-0.5 or the first neutral evaluator extraction.
+
+Current exact correctness authority remains:
+
+```text
+Static/setup exact correctness:
+TroubleBrewingWorldEnumerator + EnumeratedWorldSet
+
+Historical/multi-night exact correctness:
+EnumeratedHistoricalExactBaseline + EnumeratedHistoricalWorldReplay
+```
+
+A4/ZDD remains shadow/representation work until an explicit later cutover.
 
 ## 6. Testing continuity
 
 Follow `docs/TESTING_STRATEGY.md`.
 
-For UI-INFO-1:
+For EPI-MQ-0.5:
 
-- T0 focused contracts during each slice;
-- T1 `:app:testFast` after meaningful production checkpoints;
-- broader Android/build validation for shared/high-fanout UI primitives as risk requires;
-- real-device validation for visual readability/density claims that unit tests cannot prove.
-
-Do not weaken rules/semantic tests merely to simplify presentation.
+- use typed T0 tests at the epistemic ownership boundary;
+- T1 `:app:testFast` at the logical checkpoint;
+- run affected history/enumeration validation when ownership or exact behavior changes;
+- Real Clingo/T4 remains an acceptance gate when exact/oracle semantics change, not for a purely mechanical interface extraction;
+- do not create Host/UI source-string tests for EPI-MQ capability behavior.
 
 ## 7. Default reading order for the next development conversation
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
 3. this roadmap;
-4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-12_UI_INFO_FILTERING_AND_LAYOUT.md`;
-5. `docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`;
-6. query live `main`;
-7. inspect only the live UI owners required for the read-only audit.
+4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-13_EPI_MQ_0_5.md`;
+5. `docs/EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md`;
+6. `docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`;
+7. query live `main`;
+8. inspect only the live ownership surfaces required for the EPI-MQ-0.5 delta audit.
 
 ## 8. Stable rule
 

@@ -19,6 +19,24 @@ internal fun resolveClocktowerLegacyUnreliablePlayerDisplay(
     option: ClocktowerDisplayOption,
 ): ClocktowerNightStepUi = step.withDisplayOption(option)
 
+/**
+ * Presentation-only normalization for player display. New-Demon identity is a private role reveal
+ * even though the host-flow step intentionally carries displayKind=None.
+ */
+internal fun clocktowerPlayerDisplayStep(step: ClocktowerNightStepUi): ClocktowerNightStepUi =
+    if (
+        step.action == ClocktowerNightAction.NewDemonIdentity &&
+        step.displayKind == ClocktowerDisplayKind.None &&
+        !step.tellPlayer.isNullOrBlank()
+    ) {
+        step.copy(
+            displayKind = ClocktowerDisplayKind.RoleReveal,
+            displayPrimary = step.displayPrimary ?: step.tellPlayer,
+        )
+    } else {
+        step
+    }
+
 /** Numeric presentation falls back per field; the confirmed draft remains semantic authority. */
 internal fun resolveClocktowerNumericPlayerDisplay(
     step: ClocktowerNightStepUi,

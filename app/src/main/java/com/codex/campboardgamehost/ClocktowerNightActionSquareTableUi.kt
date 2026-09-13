@@ -5,11 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.navigationBarsIgnoringVisibility
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,8 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 
 internal fun clocktowerSingleTargetSeatState(
     seatNumber: Int,
@@ -91,61 +84,56 @@ internal fun ClocktowerNightActionWakeInstruction(instruction: String?) {
     LocalClocktowerNightProgress.current?.takeIf { it.isNotBlank() }?.let { value ->
         Text(
             text = value,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Black,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(6.dp))
     }
     instruction?.takeIf { it.isNotBlank() }?.let { value ->
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(4.dp))
-    }
-}
-
-/**
- * Shared screen-bottom navigation for square-table night actions.
- *
- * Labels are intentionally short and forced to one line: the current step/actor belongs in the
- * center instruction, not inside navigation buttons. This keeps narrow phone layouts stable.
- */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-internal fun ClocktowerNightBottomActionBar(
-    language: String,
-    canGoPrevious: Boolean,
-    nextEnabled: Boolean = true,
-    onPrevious: () -> Unit,
-    onHostTools: () -> Unit,
-    onNext: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 10.dp,
-    ) {
-        HostBottomActionBar(
-            previousLabel = if (language == "en") "← Previous" else "← 上一步",
-            hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
-            nextLabel = if (language == "en") "Next →" else "下一步 →",
-            previousEnabled = canGoPrevious,
-            nextEnabled = nextEnabled,
-            onPrevious = onPrevious,
-            onHostTools = onHostTools,
-            onNext = onNext,
-            modifier = Modifier
-                .windowInsetsPadding(
-                    WindowInsets.navigationBarsIgnoringVisibility.only(WindowInsetsSides.Bottom),
+        val guidanceLines = value.lines()
+            .map(String::trim)
+            .filter(String::isNotBlank)
+        val isStructuredGuidance = guidanceLines.size in 2..3 &&
+            (guidanceLines.first().startsWith("唤醒 ") || guidanceLines.first().startsWith("Wake "))
+        if (isStructuredGuidance) {
+            Text(
+                text = guidanceLines[0],
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = guidanceLines[1],
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+            )
+            guidanceLines.getOrNull(2)?.let { action ->
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = action,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
                 )
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-        )
+            }
+            Spacer(Modifier.height(4.dp))
+        } else {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(4.dp))
+        }
     }
 }
 
@@ -251,59 +239,44 @@ internal fun ClocktowerNightActionSquareTableDialog(
     nextEnabled: Boolean = true,
     centerContent: @Composable () -> Unit,
 ) {
-    Dialog(
-        onDismissRequest = {
-            if (canGoPrevious) onPrevious()
-        },
-        properties = DialogProperties(
-                         usePlatformDefaultWidth = false,
-                         decorFitsSystemWindows = false,
-                     ),
+    ClocktowerHostFullScreenScaffold(
+        previousLabel = if (language == "en") "← Previous" else "← 上一步",
+        hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
+        nextLabel = if (language == "en") "Next →" else "下一步 →",
+        previousEnabled = canGoPrevious,
+        nextEnabled = nextEnabled,
+        onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
+        onBack = { if (canGoPrevious) onPrevious() },
     ) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background,
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                ClocktowerSquareTableSeatSurface(
-                    seats = seats.map { seat ->
-                        val content = hostSeatContentPresentation(seat, language)
-                        val presentation = seatPresentation(seat.seatId.number)
-                        ClocktowerSquareTableSeatUiModel(
-                            seatId = seat.seatId.renderKey(),
-                            seatNumber = seat.seatId.number,
-                            label = content.primaryLabel,
-                            detailLabels = content.detailLabels,
-                            state = presentation.targetState,
-                            isCurrentActor = presentation.isCurrentActor,
-                        )
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    interactionMode = if (enabled) {
-                        ClocktowerSquareTableInteractionMode.Selectable
-                    } else {
-                        ClocktowerSquareTableInteractionMode.ReadOnly
-                    },
-                    onSeatClick = { renderKey ->
-                        seats.firstOrNull { seat -> seat.seatId.renderKey() == renderKey }
-                            ?.seatId
-                            ?.number
-                            ?.let(onSeatSelected)
-                    },
-                ) {
-                    centerContent()
-                }
-                ClocktowerNightBottomActionBar(
-                    language = language,
-                    canGoPrevious = canGoPrevious,
-                    onPrevious = onPrevious,
-                    onHostTools = onHostTools,
-                    onNext = onNext,
-                    nextEnabled = nextEnabled,
+        ClocktowerSquareTableSeatSurface(
+            seats = seats.map { seat ->
+                val content = hostSeatContentPresentation(seat, language)
+                val presentation = seatPresentation(seat.seatId.number)
+                ClocktowerSquareTableSeatUiModel(
+                    seatId = seat.seatId.renderKey(),
+                    seatNumber = seat.seatId.number,
+                    label = content.primaryLabel,
+                    detailLabels = content.detailLabels,
+                    state = presentation.targetState,
+                    isCurrentActor = presentation.isCurrentActor,
                 )
-            }
+            },
+            modifier = Modifier.fillMaxSize(),
+            interactionMode = if (enabled) {
+                ClocktowerSquareTableInteractionMode.Selectable
+            } else {
+                ClocktowerSquareTableInteractionMode.ReadOnly
+            },
+            onSeatClick = { renderKey ->
+                seats.firstOrNull { seat -> seat.seatId.renderKey() == renderKey }
+                    ?.seatId
+                    ?.number
+                    ?.let(onSeatSelected)
+            },
+        ) {
+            centerContent()
         }
     }
 }

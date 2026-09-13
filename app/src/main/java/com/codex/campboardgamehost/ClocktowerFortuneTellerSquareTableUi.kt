@@ -19,8 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 
 internal fun clocktowerFortuneTellerSeatState(
     seatNumber: Int,
@@ -71,71 +69,78 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
-    Dialog(
-        onDismissRequest = {
-            if (canGoPrevious) onPrevious()
-        },
-        properties = DialogProperties(
-                         usePlatformDefaultWidth = false,
-                         decorFitsSystemWindows = false,
-                     ),
+    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction)) {
+        val actions = clocktowerFortuneTellerResultActions(legalResults, recommendedResult)
+        val result = recommendedResult?.takeIf { it in legalResults } ?: actions.firstOrNull()
+        val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
+        ClocktowerBeginnerTwoTargetRevealDialog(
+            seats = seats,
+            actorSeat = actorSeat,
+            selectedSeats = selectedSeats,
+            selectableSeats = selectableSeats,
+            enabled = enabled,
+            wakeInstruction = wakeInstruction,
+            language = language,
+            canGoPrevious = canGoPrevious,
+            onSeatSelected = onSeatSelected,
+            onPrevious = onPrevious,
+            onHostTools = onHostTools,
+            onNext = onNext,
+            onShow = if (completePair && result != null) ({
+                if (automaticStorytellerInfo) onAutomaticResultSelected(result) else onResultSelected(result)
+            }) else null,
+        )
+        return
+    }
+    ClocktowerHostFullScreenScaffold(
+        previousLabel = if (language == "en") "← Previous" else "← 上一步",
+        hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
+        nextLabel = if (language == "en") "Next →" else "下一步 →",
+        previousEnabled = canGoPrevious,
+        onPrevious = onPrevious,
+        onHostTools = onHostTools,
+        onNext = onNext,
+        onBack = { if (canGoPrevious) onPrevious() },
     ) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background,
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                ClocktowerSquareTableSeatSurface(
-                    seats = seats.map { seat ->
-                        val content = hostSeatContentPresentation(seat, language)
-                        ClocktowerSquareTableSeatUiModel(
-                            seatId = seat.seatId.renderKey(),
-                            seatNumber = seat.seatId.number,
-                            label = content.primaryLabel,
-                            detailLabels = content.detailLabels,
-                            state = clocktowerFortuneTellerSeatState(
-                                seatNumber = seat.seatId.number,
-                                selectedSeats = selectedSeats,
-                                selectableSeats = if (enabled) selectableSeats else emptySet(),
-                            ),
-                            isCurrentActor = seat.seatId.number == actorSeat,
-                        )
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    interactionMode = if (enabled) {
-                        ClocktowerSquareTableInteractionMode.Selectable
-                    } else {
-                        ClocktowerSquareTableInteractionMode.ReadOnly
-                    },
-                    onSeatClick = { renderKey ->
-                        seats.firstOrNull { seat -> seat.seatId.renderKey() == renderKey }
-                            ?.seatId
-                            ?.number
-                            ?.let(onSeatSelected)
-                    },
-                ) {
-                    ClocktowerFortuneTellerCenterControls(
-                        wakeInstruction = wakeInstruction,
+        ClocktowerSquareTableSeatSurface(
+            seats = seats.map { seat ->
+                val content = hostSeatContentPresentation(seat, language)
+                ClocktowerSquareTableSeatUiModel(
+                    seatId = seat.seatId.renderKey(),
+                    seatNumber = seat.seatId.number,
+                    label = content.primaryLabel,
+                    detailLabels = content.detailLabels,
+                    state = clocktowerFortuneTellerSeatState(
+                        seatNumber = seat.seatId.number,
                         selectedSeats = selectedSeats,
-                        legalResults = legalResults,
-                        recommendedResult = recommendedResult,
-                        automaticStorytellerInfo = automaticStorytellerInfo,
-                        language = language,
-                        onResultSelected = onResultSelected,
-                        onAutomaticResultSelected = onAutomaticResultSelected,
-                    )
-                }
-
-                ClocktowerNightBottomActionBar(
-                    language = language,
-                    canGoPrevious = canGoPrevious,
-                    onPrevious = onPrevious,
-                    onHostTools = onHostTools,
-                    onNext = onNext,
+                        selectableSeats = if (enabled) selectableSeats else emptySet(),
+                    ),
+                    isCurrentActor = seat.seatId.number == actorSeat,
                 )
-            }
+            },
+            modifier = Modifier.fillMaxSize(),
+            interactionMode = if (enabled) {
+                ClocktowerSquareTableInteractionMode.Selectable
+            } else {
+                ClocktowerSquareTableInteractionMode.ReadOnly
+            },
+            onSeatClick = { renderKey ->
+                seats.firstOrNull { seat -> seat.seatId.renderKey() == renderKey }
+                    ?.seatId
+                    ?.number
+                    ?.let(onSeatSelected)
+            },
+        ) {
+            ClocktowerFortuneTellerCenterControls(
+                wakeInstruction = wakeInstruction,
+                selectedSeats = selectedSeats,
+                legalResults = legalResults,
+                recommendedResult = recommendedResult,
+                automaticStorytellerInfo = automaticStorytellerInfo,
+                language = language,
+                onResultSelected = onResultSelected,
+                onAutomaticResultSelected = onAutomaticResultSelected,
+            )
         }
     }
 }

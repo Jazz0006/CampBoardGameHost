@@ -220,7 +220,6 @@ internal fun ClocktowerDawnSummaryScreen(
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
-    var showPublicAnnouncement by remember(round, pendingNightDeath) { mutableStateOf(false) }
     val deathLabel = pendingNightDeath?.let { playerSeatLabel(cards, it) }
     val privateEvents = events
         .filter { event ->
@@ -235,46 +234,6 @@ internal fun ClocktowerDawnSummaryScreen(
         .takeLast(8)
 
     ClocktowerDarkTheme {
-        if (showPublicAnnouncement) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    text("天亮了", "DAWN"),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = 2.sp,
-                )
-                Spacer(modifier = Modifier.height(28.dp))
-                Text(
-                    text = deathLabel?.let {
-                        text("昨晚，$it 死亡。", "$it died last night.")
-                    } ?: text("昨晚，没有人死亡。", "Nobody died last night."),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Black,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(modifier = Modifier.height(36.dp))
-                OutlinedButton(
-                    onClick = { showPublicAnnouncement = false },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(14.dp),
-                ) {
-                    Text(text("收回手机", "Return to host"))
-                }
-            }
-            return@ClocktowerDarkTheme
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -405,15 +364,6 @@ internal fun ClocktowerDawnSummaryScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall,
                             )
-                            OutlinedButton(
-                                onClick = { showPublicAnnouncement = true },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(50.dp),
-                                shape = RoundedCornerShape(14.dp),
-                            ) {
-                                Text(text("全屏展示播报内容", "Show announcement full screen"))
-                            }
                         }
                     }
                 }

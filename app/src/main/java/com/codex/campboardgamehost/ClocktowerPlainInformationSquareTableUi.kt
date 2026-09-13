@@ -48,6 +48,20 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
     onShowPlayerDisplay: () -> Unit,
 ) {
     val step = presentation.displayStep
+    if (clocktowerUsesBeginnerCompactNightGuidance(presentation.wakeInstruction)) {
+        ClocktowerBeginnerReadOnlyRevealDialog(
+            seats = seats,
+            actorSeat = presentation.actorSeat,
+            wakeInstruction = presentation.wakeInstruction,
+            language = language,
+            canGoPrevious = canGoPrevious,
+            onPrevious = onPrevious,
+            onHostTools = onHostTools,
+            onNext = onNext,
+            onShow = onShowPlayerDisplay,
+        )
+        return
+    }
     ClocktowerNightActionSquareTableDialog(
         seats = seats,
         enabled = false,

@@ -119,6 +119,20 @@ internal fun ClocktowerClockmakerSquareTableDialog(
 ) {
     if (choices.isEmpty()) return
     val initialChoice = choices.firstOrNull { it.recommended } ?: choices.first()
+    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction)) {
+        ClocktowerBeginnerReadOnlyRevealDialog(
+            seats = seats,
+            actorSeat = actorSeat,
+            wakeInstruction = wakeInstruction,
+            language = language,
+            canGoPrevious = canGoPrevious,
+            onPrevious = onPrevious,
+            onHostTools = onHostTools,
+            onNext = onNext,
+            onShow = { onConfirm(initialChoice) },
+        )
+        return
+    }
     var selectedKey by remember(choices.map { it.key }) { mutableStateOf(initialChoice.key) }
     var menuExpanded by remember(choices.map { it.key }) { mutableStateOf(false) }
     val selectedChoice = choices.firstOrNull { it.key == selectedKey } ?: initialChoice

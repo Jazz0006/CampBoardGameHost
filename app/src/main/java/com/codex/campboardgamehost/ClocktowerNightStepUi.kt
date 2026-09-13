@@ -3,6 +3,7 @@ package com.codex.campboardgamehost
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,7 +21,6 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -89,9 +89,12 @@ internal fun ClocktowerNightStepCardLocalized(
     onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
-    showNavigationActions: Boolean = true,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
+    val presentationRoleEnName = clocktowerNightPresentationRoleEnName(
+        stepRoleEnName = step.roleEnName,
+        actor = step.actor,
+    )
     fun optionId(option: ClocktowerDisplayOption): String = clocktowerInformationCandidateId(option)
     // B7.3's first production slice: a single complete first-night pool is
     // projected differently by execution policy. Later-night families retain
@@ -110,7 +113,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 ?.takeIf { step.informationReliability == InformationReliability.POISONED }
             projectFirstNightNumericInformationOptions(
                 phase = phase,
-                roleEnName = step.roleEnName.orEmpty(),
+                roleEnName = presentationRoleEnName.orEmpty(),
                 sourceSeat = sourceSeat,
                 players = cards.toClocktowerPlayerStates(poisonedPlayerName = poisonedPlayerName),
                 options = source,
@@ -126,7 +129,7 @@ internal fun ClocktowerNightStepCardLocalized(
         .takeIf { phase == ClocktowerPhase.FirstNight && it.isNotEmpty() }
         ?.let { options -> unifiedFirstNightInformationPool(
             options = options,
-            familyId = step.roleEnName ?: "first-night-information",
+            familyId = presentationRoleEnName ?: "first-night-information",
             automaticStyle = automaticStorytellerStyle,
         ) }
     // The legacy assisted recommendation surface keeps the curated compatibility pool.
@@ -135,7 +138,7 @@ internal fun ClocktowerNightStepCardLocalized(
         .takeIf { phase == ClocktowerPhase.FirstNight && it.isNotEmpty() }
         ?.let { options -> unifiedFirstNightInformationPool(
             options = options,
-            familyId = step.roleEnName ?: "first-night-information",
+            familyId = presentationRoleEnName ?: "first-night-information",
             automaticStyle = automaticStorytellerStyle,
         ) }
     val automaticInformationOptions = firstNightAutomaticPool
@@ -149,7 +152,7 @@ internal fun ClocktowerNightStepCardLocalized(
     val displayedInformationOptions = if (automaticStorytellerInfo) automaticInformationOptions else assistedInformationOptions
     val pairRecommendationPresentation = if (
         phase == ClocktowerPhase.FirstNight &&
-        step.roleEnName in setOf("Washerwoman", "Librarian", "Investigator")
+        presentationRoleEnName in setOf("Washerwoman", "Librarian", "Investigator")
     ) {
         clocktowerRecommendationPresentation(displayedInformationOptions)
     } else {
@@ -157,7 +160,7 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val pairInformationCandidates = if (
         phase == ClocktowerPhase.FirstNight &&
-        step.roleEnName in setOf("Washerwoman", "Librarian", "Investigator")
+        presentationRoleEnName in setOf("Washerwoman", "Librarian", "Investigator")
     ) {
         step.manualInformationCandidates
     } else {
@@ -324,7 +327,7 @@ internal fun ClocktowerNightStepCardLocalized(
     fun structuredEmpathSelectionIsTruthful(value: Int): Boolean =
         numericPreparation?.isTruthful(value, projectedFirstNightInformationCandidates) ?: false
     val chefPlayers = cards.toClocktowerPlayerStates(poisonedPlayerName = null)
-    val chefResultChoices = if (step.roleEnName == "Chef" && step.actor != null) {
+    val chefResultChoices = if (presentationRoleEnName == "Chef" && step.actor != null) {
         clocktowerChefResultChoices(
             step = step,
             players = chefPlayers,
@@ -338,7 +341,7 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val usesChefSquareTable = chefResultChoices.isNotEmpty()
     val empathPlayers = chefPlayers
-    val empathResultChoices = if (step.roleEnName == "Empath" && step.actor != null) {
+    val empathResultChoices = if (presentationRoleEnName == "Empath" && step.actor != null) {
         clocktowerEmpathResultChoices(
             step = step,
             players = empathPlayers,
@@ -352,7 +355,7 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val usesEmpathSquareTable = empathResultChoices.isNotEmpty()
     val usesNumericSquareTable = usesChefSquareTable || usesEmpathSquareTable
-    val undertakerResultChoices = if (step.roleEnName == "Undertaker" && step.actor != null) {
+    val undertakerResultChoices = if (presentationRoleEnName == "Undertaker" && step.actor != null) {
         clocktowerUndertakerResultChoices(
             step = step,
             seatCount = cards.size,
@@ -664,7 +667,42 @@ internal fun ClocktowerNightStepCardLocalized(
             onSelectName(automaticDecisionTargetName)
         }
     }
-    val command = when {
+    LaunchedEffect(
+        automaticStorytellerInfo,
+        step.title,
+        step.action,
+        selectedName,
+        automaticDecisionTargetName,
+    ) {
+        if (
+            clocktowerAutomaticMayorRulingShouldAdvance(
+                automaticStorytellerInfo = automaticStorytellerInfo,
+                action = step.action,
+                selectedName = selectedName,
+                automaticTargetName = automaticDecisionTargetName,
+            )
+        ) {
+            onNext()
+        }
+    }
+    val beginnerGuidance = if (automaticStorytellerInfo) {
+        clocktowerBeginnerNightGuidance(
+            action = step.action,
+            actor = step.actor,
+            cards = cards,
+            language = language,
+            groupTeam = step.actor
+                ?.clocktowerRole
+                ?.team
+                ?.takeIf { team ->
+                    step.displayKind == ClocktowerDisplayKind.EvilInfo &&
+                        team in setOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon)
+                },
+        )
+    } else {
+        null
+    }
+    val command = beginnerGuidance?.asWakeInstruction() ?: when {
         step.action == ClocktowerNightAction.FortuneTeller && step.actor != null -> {
             if (language == "en") {
                 "Wake ${step.actor.seatLabel(cards)} and ask them to choose two players to check"
@@ -690,34 +728,46 @@ internal fun ClocktowerNightStepCardLocalized(
         step.displayKind != ClocktowerDisplayKind.None -> if (language == "en") "Show the information to the player." else "展示信息给玩家。"
         else -> step.explanation
     }
+    val ownsFullScreenSurface = clocktowerNightUsesFullScreenHostSurface(
+        isRealAction = step.isRealAction,
+        action = step.action,
+        displayKind = step.displayKind,
+    )
     Card(
-        shape = RoundedCornerShape(20.dp),
+        modifier = if (ownsFullScreenSurface) Modifier.fillMaxSize() else Modifier,
+        shape = RoundedCornerShape(if (ownsFullScreenSurface) 0.dp else 20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            modifier = if (ownsFullScreenSurface) {
+                Modifier.fillMaxSize()
+            } else {
+                Modifier
+                    .fillMaxWidth()
+                    .padding(18.dp)
+            },
+            verticalArrangement = if (ownsFullScreenSurface) Arrangement.Top else Arrangement.spacedBy(14.dp),
         ) {
-            Text(
-                if (step.actor != null) {
-                    if (language == "en") "CURRENT PLAYER" else "当前玩家"
-                } else {
-                    if (language == "en") "CURRENT STEP" else "当前步骤"
-                },
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Black,
-            )
-            Text(
-                command.orEmpty(),
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 30.sp,
-                lineHeight = 36.sp,
-                fontWeight = FontWeight.Black,
-            )
+            if (!ownsFullScreenSurface) {
+                Text(
+                    if (step.actor != null) {
+                        if (language == "en") "CURRENT PLAYER" else "当前玩家"
+                    } else {
+                        if (language == "en") "CURRENT STEP" else "当前步骤"
+                    },
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Black,
+                )
+                Text(
+                    command.orEmpty(),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 30.sp,
+                    lineHeight = 36.sp,
+                    fontWeight = FontWeight.Black,
+                )
+            }
 
         val nightActionSeats = cards.mapIndexed { index, card ->
             card.toStorytellerHostSeatPresentation(
@@ -741,20 +791,10 @@ internal fun ClocktowerNightStepCardLocalized(
             step = step,
             actorSeat = actionActorSeat,
             wakeInstruction = command,
+            beginnerMode = automaticStorytellerInfo,
         )
         val usesEvilInfoSquareTable = evilInfoSquareTablePresentation != null
-        val actionOwnsSquareTable = step.action in setOf(
-            ClocktowerNightAction.RedHerring,
-            ClocktowerNightAction.Poison,
-            ClocktowerNightAction.ButlerMaster,
-            ClocktowerNightAction.MonkProtect,
-            ClocktowerNightAction.DemonKill,
-            ClocktowerNightAction.Ravenkeeper,
-            ClocktowerNightAction.FortuneTeller,
-            ClocktowerNightAction.Chambermaid,
-            ClocktowerNightAction.MayorRedirect,
-            ClocktowerNightAction.DemonSuccessor,
-        )
+        val actionOwnsSquareTable = clocktowerNightActionOwnsSquareTable(step.action)
         val plainInformationDisplayStep = (automaticDisplayOption
             ?.let { option -> resolveClocktowerPlayerDisplay(step, option) }
             ?: step)
@@ -1063,7 +1103,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
-                    abilityLabel = step.roleEnName
+                    abilityLabel = presentationRoleEnName
                         ?.let { roleId -> clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language) }
                         ?: step.title,
                     roleLabel = { roleId ->
@@ -1079,43 +1119,29 @@ internal fun ClocktowerNightStepCardLocalized(
                 )
             }
 
-            if (showNavigationActions) {
-                HostBottomActionBar(
-                    previousLabel = stringResource(R.string.previous_step),
-                    hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
-                    nextLabel = if (language == "en") "Next →" else "下一步 →",
-                    previousEnabled = canGoPrevious,
-                    nextEnabled = step.action !in setOf(
-                        ClocktowerNightAction.MayorRedirect,
-                        ClocktowerNightAction.DemonSuccessor,
-                    ) || selectedName != null,
-                    onPrevious = onPrevious,
-                    onHostTools = onHostTools,
-                    onNext = onNext,
-                )
-            }
-
-            Surface(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(14.dp),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+            if (!ownsFullScreenSurface) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                    shape = RoundedCornerShape(14.dp),
                 ) {
-                    Text(
-                        if (language == "en") "STEP NOTE" else "步骤提示",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        helper,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Text(
+                            if (language == "en") "STEP NOTE" else "步骤提示",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            helper,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
             }
         }

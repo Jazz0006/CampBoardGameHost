@@ -4,7 +4,7 @@
 > Program: Epistemic Misinformation Quality / Productive Uncertainty  
 > Audit baseline: live `main` at `42820353f5ea311f10b6e198ba34f6927edfd4ac`  
 > Decision: **EPI-MQ direction remains valid; old EPI-MQ-1 implementation proposal is MODIFY**  
-> Execution status: **PAUSED until UX-MODE-1 Beginner / Experienced Storyteller Mode is complete**
+> Execution status: **CURRENT — resume at EPI-MQ-0.5 after UI-INFO-1 closeout / PR #121 merge**
 
 ## 1. Why this document exists
 
@@ -340,10 +340,10 @@ At logical checkpoints follow `docs/TESTING_STRATEGY.md` escalation for epistemi
 
 ## 10. Immediate roadmap consequence
 
-EPI-MQ-0 audit is complete enough to make the architecture decision above, but EPI-MQ implementation is intentionally paused.
+EPI-MQ-0 audit is complete enough to make the architecture decision above. UX-MODE-1 and UI-INFO-1 are now complete from the product/acceptance perspective.
 
-The next independent task is:
+The next task is:
 
-**UX-MODE-1 — Beginner / Experienced Storyteller Mode**
+**EPI-MQ-0.5 — dynamic-script extensibility guard**
 
-After UX-MODE-1 is complete and merged, return to EPI-MQ beginning with the dynamic-script extensibility guard and neutral hypothetical evaluator described above.
+Before production changes, re-query live `main` after PR #121 merges and re-audit the ownership chain against that current code. Then establish the generic capability/deferred boundary described above before starting EPI-MQ-1.

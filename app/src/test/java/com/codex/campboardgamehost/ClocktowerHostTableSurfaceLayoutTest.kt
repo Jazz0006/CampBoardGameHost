@@ -92,4 +92,23 @@ class ClocktowerHostTableSurfaceLayoutTest {
             failure?.message?.contains("capacity is insufficient for 13 players") == true,
         )
     }
+
+    @Test
+    fun `surface rendering waits for finite positive compose bounds`() {
+        assertTrue(canRenderHostTableSurface(360f, 520f))
+        assertTrue(!canRenderHostTableSurface(0f, 520f))
+        assertTrue(!canRenderHostTableSurface(360f, 0f))
+        assertTrue(!canRenderHostTableSurface(-1f, 520f))
+        assertTrue(!canRenderHostTableSurface(360f, -1f))
+        assertTrue(!canRenderHostTableSurface(360f, Float.NaN))
+        assertTrue(!canRenderHostTableSurface(Float.POSITIVE_INFINITY, 520f))
+
+        val geometryFailure = runCatching {
+            hostTableSurfaceLayoutConstraints(
+                availableWidth = 360f,
+                availableHeight = 0f,
+            )
+        }.exceptionOrNull()
+        assertTrue(geometryFailure is IllegalArgumentException)
+    }
 }

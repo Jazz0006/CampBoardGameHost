@@ -169,6 +169,25 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
     var roleMenuExpanded by remember(choices.map { it.key }) { mutableStateOf(false) }
     val selectedChoice = choices.firstOrNull { it.key == selectedKey } ?: initialChoice
 
+    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction)) {
+        ClocktowerBeginnerSingleTargetRevealDialog(
+            seats = seats,
+            actorSeat = actorSeat,
+            selectedSeat = selectedSeat,
+            selectableSeats = selectableSeats,
+            enabled = enabled,
+            wakeInstruction = wakeInstruction,
+            language = language,
+            canGoPrevious = canGoPrevious,
+            onSeatSelected = onSeatSelected,
+            onPrevious = onPrevious,
+            onHostTools = onHostTools,
+            onNext = onNext,
+            onShow = if (selectedChoice != null) ({ onConfirm(selectedChoice) }) else null,
+        )
+        return
+    }
+
     ClocktowerNightActionSquareTableDialog(
         seats = seats,
         enabled = enabled,

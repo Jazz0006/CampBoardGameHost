@@ -37,6 +37,31 @@ internal fun ClocktowerChambermaidSquareTableDialog(
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
+    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction)) {
+        val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
+        val orderedOptions = resultOptions.sortedBy { option -> if (option.isDefaultRecommendation) 0 else 1 }
+        val reveal: (() -> Unit)? = when {
+            !completePair -> null
+            orderedOptions.isEmpty() -> onShowDeterminedResult
+            else -> ({ onResultSelected(orderedOptions.first()) })
+        }
+        ClocktowerBeginnerTwoTargetRevealDialog(
+            seats = seats,
+            actorSeat = actorSeat,
+            selectedSeats = selectedSeats,
+            selectableSeats = selectableSeats,
+            enabled = enabled,
+            wakeInstruction = wakeInstruction,
+            language = language,
+            canGoPrevious = canGoPrevious,
+            onSeatSelected = onSeatSelected,
+            onPrevious = onPrevious,
+            onHostTools = onHostTools,
+            onNext = onNext,
+            onShow = reveal,
+        )
+        return
+    }
     ClocktowerNightActionSquareTableDialog(
         seats = seats,
         enabled = enabled,

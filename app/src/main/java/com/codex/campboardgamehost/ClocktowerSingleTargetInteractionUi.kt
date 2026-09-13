@@ -14,6 +14,17 @@ internal fun ClocktowerSingleTargetAbilitySection(
     onEvent: (ClocktowerSingleTargetEvent) -> Unit,
 ) {
     val action = presentation.action
+    if (clocktowerUsesBeginnerCompactNightGuidance(presentation.wakeInstruction)) {
+        ClocktowerBeginnerSingleTargetAbilityDialog(
+            seats = seats,
+            presentation = presentation,
+            language = language,
+            canGoPrevious = canGoPrevious,
+            onHostTools = onHostTools,
+            onEvent = onEvent,
+        )
+        return
+    }
     val title = when (action) {
         ClocktowerNightAction.RedHerring -> stringResource(R.string.clocktower_host_choose_red_herring)
         ClocktowerNightAction.Poison -> stringResource(R.string.clocktower_host_choose_poison_target)

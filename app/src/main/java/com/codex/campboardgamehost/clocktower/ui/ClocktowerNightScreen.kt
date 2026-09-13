@@ -368,7 +368,7 @@ internal fun ClocktowerNewDemonConfirmationScreen(
     }
 }
 
-/** Compact active-night shell: no independent top chrome; progress belongs inside the table. */
+/** Compact active-night shell: full-screen steps own the Activity-root workspace directly. */
 @Composable
 internal fun ClocktowerNightActiveScreen(
     title: String,
@@ -379,34 +379,35 @@ internal fun ClocktowerNightActiveScreen(
     onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
+    contentOwnsFullScreen: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     ClocktowerDarkTheme {
         CompositionLocalProvider(LocalClocktowerNightProgress provides progress) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
-            ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    item { content() }
+            if (contentOwnsFullScreen) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    content()
                 }
-
-                ClocktowerNightBottomActionBar(
-                    language = language,
-                    canGoPrevious = canGoPrevious,
+            } else {
+                ClocktowerHostFullScreenScaffold(
+                    previousLabel = if (language == "en") "← Previous" else "← 上一步",
+                    hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
+                    nextLabel = if (language == "en") "Next →" else "下一步 →",
+                    previousEnabled = canGoPrevious,
                     nextEnabled = nextEnabled,
                     onPrevious = onPrevious,
                     onHostTools = onHostTools,
                     onNext = onNext,
-                )
+                ) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        item { content() }
+                    }
+                }
             }
         }
     }
