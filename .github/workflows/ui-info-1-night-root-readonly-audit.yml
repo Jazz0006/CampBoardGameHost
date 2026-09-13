@@ -1,0 +1,29 @@
+name: UI-INFO-1 night root read-only audit
+
+on:
+  push:
+    branches:
+      - codex/ui-info-1-beginner-night-guidance
+    paths:
+      - .github/workflows/ui-info-1-night-root-readonly-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit-night-root:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/ui-info-1-beginner-night-guidance
+          fetch-depth: 0
+      - shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== NightActive ownership ==='
+          grep -RIn -C 30 'fun ClocktowerNightActiveScreen\|ClocktowerNightActiveScreen(' app/src/main/java app/src/test/java || true
+          echo '=== Night square table/dialog ownership ==='
+          grep -RIn -C 2 'ClocktowerNightActionSquareTableDialog\|Clocktower.*SquareTableDialog' app/src/main/java app/src/test/java || true
+          echo '=== HostBottomActionBar in night-related files ==='
+          grep -RIn -C 2 'HostBottomActionBar(' app/src/main/java/com/codex/campboardgamehost | grep -E 'Night|ClocktowerHostScreen|ClocktowerNightStep|ClocktowerNightAction|HostBottomActionBar' || true
