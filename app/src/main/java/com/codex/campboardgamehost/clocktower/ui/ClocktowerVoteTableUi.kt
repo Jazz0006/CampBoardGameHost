@@ -97,6 +97,9 @@ internal fun ClocktowerVoteTableScreen(
             interaction = voteState.interaction,
             onSeatClick = { seatId -> voteState = voteState.togglePendingVoter(seatId) },
             directionalLink = nominationLink,
+            seatHasUnspentGhostVote = { seat ->
+                !seat.isAlive && seat.seatId !in ghostVoteAuthority.spentSeatIds
+            },
             seatBadge = { seat ->
                 if (seat.seatId == nomineeSeat.seatId) {
                     text("${voteState.voteCount}票", "${voteState.voteCount}v")
