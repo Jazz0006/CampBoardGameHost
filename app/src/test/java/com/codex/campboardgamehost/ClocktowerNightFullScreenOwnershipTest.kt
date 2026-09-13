@@ -56,6 +56,13 @@ class ClocktowerNightFullScreenOwnershipTest {
         )
         assertFalse(
             clocktowerNightUsesFullScreenHostSurface(
+                isRealAction = false,
+                action = ClocktowerNightAction.None,
+                displayKind = ClocktowerDisplayKind.None,
+            ),
+        )
+        assertFalse(
+            clocktowerNightUsesFullScreenHostSurface(
                 isRealAction = true,
                 action = ClocktowerNightAction.NewDemonIdentity,
                 displayKind = ClocktowerDisplayKind.None,
