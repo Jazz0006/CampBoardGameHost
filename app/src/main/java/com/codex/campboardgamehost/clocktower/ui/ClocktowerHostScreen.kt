@@ -4261,6 +4261,11 @@ internal fun ClocktowerJudgeScreen(
             onPrevious = onMovePreviousNightStep,
             onHostTools = onHostTools,
             onNext = advanceNightStep,
+            contentOwnsFullScreen = clocktowerNightUsesFullScreenHostSurface(
+                isRealAction = currentStep.isRealAction,
+                action = currentStep.action,
+                displayKind = currentStep.displayKind,
+            ),
         ) {
             ClocktowerNightStepCardLocalized(
                 recommendationCoordinator = recommendationCoordinator,

@@ -3,6 +3,7 @@ package com.codex.campboardgamehost
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -725,34 +726,46 @@ internal fun ClocktowerNightStepCardLocalized(
         step.displayKind != ClocktowerDisplayKind.None -> if (language == "en") "Show the information to the player." else "展示信息给玩家。"
         else -> step.explanation
     }
+    val ownsFullScreenSurface = clocktowerNightUsesFullScreenHostSurface(
+        isRealAction = step.isRealAction,
+        action = step.action,
+        displayKind = step.displayKind,
+    )
     Card(
-        shape = RoundedCornerShape(20.dp),
+        modifier = if (ownsFullScreenSurface) Modifier.fillMaxSize() else Modifier,
+        shape = RoundedCornerShape(if (ownsFullScreenSurface) 0.dp else 20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            modifier = if (ownsFullScreenSurface) {
+                Modifier.fillMaxSize()
+            } else {
+                Modifier
+                    .fillMaxWidth()
+                    .padding(18.dp)
+            },
+            verticalArrangement = if (ownsFullScreenSurface) Arrangement.Top else Arrangement.spacedBy(14.dp),
         ) {
-            Text(
-                if (step.actor != null) {
-                    if (language == "en") "CURRENT PLAYER" else "当前玩家"
-                } else {
-                    if (language == "en") "CURRENT STEP" else "当前步骤"
-                },
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Black,
-            )
-            Text(
-                command.orEmpty(),
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 30.sp,
-                lineHeight = 36.sp,
-                fontWeight = FontWeight.Black,
-            )
+            if (!ownsFullScreenSurface) {
+                Text(
+                    if (step.actor != null) {
+                        if (language == "en") "CURRENT PLAYER" else "当前玩家"
+                    } else {
+                        if (language == "en") "CURRENT STEP" else "当前步骤"
+                    },
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Black,
+                )
+                Text(
+                    command.orEmpty(),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 30.sp,
+                    lineHeight = 36.sp,
+                    fontWeight = FontWeight.Black,
+                )
+            }
 
         val nightActionSeats = cards.mapIndexed { index, card ->
             card.toStorytellerHostSeatPresentation(
@@ -779,18 +792,7 @@ internal fun ClocktowerNightStepCardLocalized(
             beginnerMode = automaticStorytellerInfo,
         )
         val usesEvilInfoSquareTable = evilInfoSquareTablePresentation != null
-        val actionOwnsSquareTable = step.action in setOf(
-            ClocktowerNightAction.RedHerring,
-            ClocktowerNightAction.Poison,
-            ClocktowerNightAction.ButlerMaster,
-            ClocktowerNightAction.MonkProtect,
-            ClocktowerNightAction.DemonKill,
-            ClocktowerNightAction.Ravenkeeper,
-            ClocktowerNightAction.FortuneTeller,
-            ClocktowerNightAction.Chambermaid,
-            ClocktowerNightAction.MayorRedirect,
-            ClocktowerNightAction.DemonSuccessor,
-        )
+        val actionOwnsSquareTable = clocktowerNightActionOwnsSquareTable(step.action)
         val plainInformationDisplayStep = (automaticDisplayOption
             ?.let { option -> resolveClocktowerPlayerDisplay(step, option) }
             ?: step)
@@ -1115,7 +1117,8 @@ internal fun ClocktowerNightStepCardLocalized(
                 )
             }
 
-            if (showNavigationActions) {
+            if (!ownsFullScreenSurface) {
+                if (showNavigationActions) {
                 HostBottomActionBar(
                     previousLabel = stringResource(R.string.previous_step),
                     hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
@@ -1129,29 +1132,30 @@ internal fun ClocktowerNightStepCardLocalized(
                     onHostTools = onHostTools,
                     onNext = onNext,
                 )
-            }
+                }
 
-            Surface(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(14.dp),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    Surface(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                    shape = RoundedCornerShape(14.dp),
                 ) {
-                    Text(
-                        if (language == "en") "STEP NOTE" else "步骤提示",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        helper,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Text(
+                            if (language == "en") "STEP NOTE" else "步骤提示",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            helper,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
             }
         }
