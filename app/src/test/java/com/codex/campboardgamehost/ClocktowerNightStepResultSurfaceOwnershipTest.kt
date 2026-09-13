@@ -10,11 +10,17 @@ class ClocktowerNightStepResultSurfaceOwnershipTest {
     @Test
     fun `dedicated Chambermaid surface exclusively owns Chambermaid results`() {
         val source = nightStepSource()
+        val ownership = sourceFile(
+            "src/main/java/com/codex/campboardgamehost/ClocktowerNightFullScreenOwnership.kt",
+        )
 
         assertTrue(source.contains("ClocktowerChambermaidSquareTableDialog("))
-        val actionOwnership = source.substringAfter("val actionOwnsSquareTable = step.action in setOf(")
-            .substringBefore(")")
-        assertTrue(actionOwnership.contains("ClocktowerNightAction.Chambermaid"))
+        assertTrue(ownership.contains("ClocktowerNightAction.Chambermaid"))
+        assertTrue(
+            source.contains(
+                "val actionOwnsSquareTable = clocktowerNightActionOwnsSquareTable(step.action)",
+            ),
+        )
 
         val plainFallback = source.substringAfter("val plainInformationDisplayStep =")
             .substringBefore("val plainInformationSquareTablePresentation =")
