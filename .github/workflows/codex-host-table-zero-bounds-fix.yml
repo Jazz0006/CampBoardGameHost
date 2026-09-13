@@ -1,0 +1,193 @@
+name: Codex host-table zero-bounds crash fix
+
+on:
+  push:
+    branches:
+      - codex/ui-info-1-beginner-night-guidance
+    paths:
+      - .github/workflows/codex-host-table-zero-bounds-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  red-patch-green:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Lock expected baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_parent="49d4bea321592914acdf8b3f2ce2ea4f0aba2a13"
+          actual_parent="$(git rev-parse HEAD^)"
+          test "$actual_parent" = "$expected_parent"
+          test "$(git rev-parse HEAD^:app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt)" = "570ad88f146d3f408573e9963b8fde184dfd0f41"
+          test "$(git rev-parse HEAD^:app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableSurfaceLayout.kt)" = "cb10caa29f628d2a03bc857e9a51a2f87ab63309"
+          test "$(git rev-parse HEAD^:app/src/test/java/com/codex/campboardgamehost/ClocktowerHostTableSurfaceLayoutTest.kt)" = "41e28311996804c66d7dadebc5ba1d33b4145789"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Add focused regression test
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("app/src/test/java/com/codex/campboardgamehost/ClocktowerHostTableSurfaceLayoutTest.kt")
+          text = path.read_text()
+          anchor = '''        assertTrue(
+              failure?.message?.contains("capacity is insufficient for 13 players") == true,
+          )
+              }
+          }
+          '''
+          replacement = '''        assertTrue(
+              failure?.message?.contains("capacity is insufficient for 13 players") == true,
+          )
+              }
+
+              @Test
+              fun `surface rendering waits for finite positive compose bounds`() {
+                  assertTrue(canRenderHostTableSurface(360f, 520f))
+                  assertTrue(!canRenderHostTableSurface(0f, 520f))
+                  assertTrue(!canRenderHostTableSurface(360f, 0f))
+                  assertTrue(!canRenderHostTableSurface(-1f, 520f))
+                  assertTrue(!canRenderHostTableSurface(360f, Float.NaN))
+                  assertTrue(!canRenderHostTableSurface(Float.POSITIVE_INFINITY, 520f))
+
+                  val geometryFailure = runCatching {
+                      hostTableSurfaceLayoutConstraints(
+                          availableWidth = 360f,
+                          availableHeight = 0f,
+                      )
+                  }.exceptionOrNull()
+                  assertTrue(geometryFailure is IllegalArgumentException)
+              }
+          }
+          '''
+          if text.count(anchor) != 1:
+              raise SystemExit(f"test anchor count={text.count(anchor)}")
+          path.write_text(text.replace(anchor, replacement, 1))
+          PY
+
+      - name: RED - guard policy is missing
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          ./gradlew :app:testDebugUnitTest --tests 'com.codex.campboardgamehost.ClocktowerHostTableSurfaceLayoutTest' --no-daemon > "$RUNNER_TEMP/red.log" 2>&1
+          status=$?
+          set -e
+          cat "$RUNNER_TEMP/red.log"
+          if [[ "$status" -eq 0 ]]; then
+            echo "Expected regression test to be RED before the guard exists."
+            exit 1
+          fi
+          grep -F "canRenderHostTableSurface" "$RUNNER_TEMP/red.log"
+
+      - name: Patch renderability policy and shared Compose boundary
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          surface_path = Path("app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableSurfaceLayout.kt")
+          surface = surface_path.read_text()
+          surface_anchor = '''internal data class ResolvedHostTableSurfaceLayout(
+              val layout: HostTableLayout,
+              val seatDensity: ClocktowerSquareTableSeatDensity,
+          )
+
+          private val HOST_TABLE_COMPACT_FALLBACK_SCALES = listOf(0.96f, 0.92f, 0.88f, 0.84f, 0.80f)
+          '''
+          surface_replacement = '''internal data class ResolvedHostTableSurfaceLayout(
+              val layout: HostTableLayout,
+              val seatDensity: ClocktowerSquareTableSeatDensity,
+          )
+
+          /**
+           * Compose can transiently report zero-sized bounds while host chrome or routes recompose.
+           * Those frames are not renderable; strict layout constraints remain fail-closed once a
+           * real geometry calculation is requested.
+           */
+          internal fun canRenderHostTableSurface(
+              availableWidth: Float,
+              availableHeight: Float,
+          ): Boolean =
+              availableWidth.isFinite() &&
+                  availableWidth > 0f &&
+                  availableHeight.isFinite() &&
+                  availableHeight > 0f
+
+          private val HOST_TABLE_COMPACT_FALLBACK_SCALES = listOf(0.96f, 0.92f, 0.88f, 0.84f, 0.80f)
+          '''
+          if surface.count(surface_anchor) != 1:
+              raise SystemExit(f"surface anchor count={surface.count(surface_anchor)}")
+          surface_path.write_text(surface.replace(surface_anchor, surface_replacement, 1))
+
+          ui_path = Path("app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt")
+          ui = ui_path.read_text()
+          ui_anchor = '''        val availableWidth = maxWidth.value
+                  val availableHeight = maxHeight.value
+                  val density = LocalDensity.current
+          '''
+          ui_replacement = '''        val availableWidth = maxWidth.value
+                  val availableHeight = maxHeight.value
+                  if (!canRenderHostTableSurface(availableWidth, availableHeight)) {
+                      return@BoxWithConstraints
+                  }
+                  val density = LocalDensity.current
+          '''
+          if ui.count(ui_anchor) != 1:
+              raise SystemExit(f"ui anchor count={ui.count(ui_anchor)}")
+          ui_path.write_text(ui.replace(ui_anchor, ui_replacement, 1))
+          PY
+
+      - name: GREEN - focused regression
+        run: ./gradlew :app:testDebugUnitTest --tests 'com.codex.campboardgamehost.ClocktowerHostTableSurfaceLayoutTest' --no-daemon
+
+      - name: T1 Android FAST
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Exact diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableSurfaceLayout.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt \
+            app/src/test/java/com/codex/campboardgamehost/ClocktowerHostTableSurfaceLayoutTest.kt | sort)"
+          test "$changed" = "$expected"
+          grep -F "return@BoxWithConstraints" app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt
+          grep -F "Host-table available height must be finite and positive" app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableLayout.kt
+
+      - name: Commit fix and retire one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/codex-host-table-zero-bounds-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableSurfaceLayout.kt \
+                  app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt \
+                  app/src/test/java/com/codex/campboardgamehost/ClocktowerHostTableSurfaceLayoutTest.kt \
+                  .github/workflows/codex-host-table-zero-bounds-fix.yml
+          git commit -m "fix: tolerate transient zero host-table bounds [full-ci]"
+          git push origin HEAD:codex/ui-info-1-beginner-night-guidance
