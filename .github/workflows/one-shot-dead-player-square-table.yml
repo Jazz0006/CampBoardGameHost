@@ -1,0 +1,67 @@
+name: One-shot dead player square table patch
+
+on:
+  push:
+    branches:
+      - codex/dead-player-square-table
+    paths:
+      - .github/workflows/one-shot-dead-player-square-table.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/dead-player-square-table
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Apply exact-anchor large-file patch
+        run: python scripts/patch_dead_player_square_table.py
+
+      - name: Audit large-file diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          printf 'Changed working-tree paths:\n%s\n' "${changed[*]}"
+          [[ ${#changed[@]} -eq 1 ]]
+          [[ "${changed[0]}" == "app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt" ]]
+
+      - name: Run focused presentation tests
+        run: |
+          ./gradlew :app:testDebugUnitTest \
+            --tests 'com.codex.campboardgamehost.ClocktowerSquareTableLifeMarkersTest' \
+            --tests 'com.codex.campboardgamehost.ClocktowerHostSeatContentPresentationTest' \
+            --no-daemon --build-cache
+
+      - name: Run Android FAST tests
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Commit patched large file
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt
+          git diff --cached --check
+          git commit -m 'feat: mark dead players across square table'
+          git push origin HEAD:codex/dead-player-square-table
