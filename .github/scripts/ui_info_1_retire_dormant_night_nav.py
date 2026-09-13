@@ -43,6 +43,13 @@ night = replace_exact(
     "                Surface(\n",
     "NightStep dormant bottom navigation",
 )
+if "stringResource(" not in night:
+    night = replace_exact(
+        night,
+        "import androidx.compose.ui.res.stringResource\n",
+        "",
+        "unused stringResource import",
+    )
 if "showNavigationActions" in night:
     raise SystemExit("showNavigationActions survived NightStep cleanup")
 if "HostBottomActionBar(" in night:
