@@ -2,7 +2,6 @@ package com.codex.campboardgamehost
 
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.isRegularFile
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -10,32 +9,18 @@ import org.junit.Test
 /** Regression guard for immersive full-screen night surfaces on devices with gesture navigation. */
 class ClocktowerNightDialogInsetsContractTest {
     @Test
-    fun `full screen compose dialogs opt into edge to edge window ownership`() {
-        val sourceRoot = sourcePath("src/main/java/com/codex/campboardgamehost")
-        val unsafe = mutableListOf<String>()
-        val dialogProperties = Regex("""DialogProperties\([\s\S]*?\)""")
-
-        Files.walk(sourceRoot).use { paths ->
-            paths
-                .filter { path -> path.isRegularFile() && path.toString().endsWith(".kt") }
-                .forEach { path ->
-                    val source = String(Files.readAllBytes(path), Charsets.UTF_8)
-                    dialogProperties.findAll(source).forEach { match ->
-                        val call = match.value
-                        if (
-                            call.contains("usePlatformDefaultWidth = false") &&
-                            !call.contains("decorFitsSystemWindows = false")
-                        ) {
-                            unsafe += sourceRoot.relativize(path).toString()
-                        }
-                    }
-                }
-        }
-
-        assertTrue(
-            "Full-screen DialogProperties must set decorFitsSystemWindows=false: ${unsafe.distinct()}",
-            unsafe.isEmpty(),
+    fun `night square table stays on the Activity window instead of opening a full screen dialog`() {
+        val source = String(
+            Files.readAllBytes(
+                sourcePath("src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt"),
+            ),
+            Charsets.UTF_8,
         )
+
+        assertFalse(source.contains("import androidx.compose.ui.window.Dialog"))
+        assertFalse(source.contains("DialogProperties("))
+        assertFalse(source.contains("Dialog("))
+        assertTrue(source.contains("modifier = Modifier.fillMaxSize()"))
     }
 
     @Test
