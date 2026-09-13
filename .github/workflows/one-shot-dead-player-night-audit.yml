@@ -1,0 +1,39 @@
+name: One-shot night seat life audit
+
+on:
+  push:
+    branches:
+      - codex/dead-player-square-table
+    paths:
+      - .github/workflows/one-shot-dead-player-night-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/dead-player-square-table
+          fetch-depth: 0
+
+      - name: Locate night seat and ghost-vote ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== files with direct square-table model construction ==='
+          rg -l 'ClocktowerSquareTableSeatUiModel\(' app/src/main/java/com/codex/campboardgamehost || true
+          echo '=== direct square-table model contexts ==='
+          rg -n -C 8 'ClocktowerSquareTableSeatUiModel\(' app/src/main/java/com/codex/campboardgamehost || true
+          echo '=== HostTableShell contexts ==='
+          rg -n -C 5 'HostTableShell\(' app/src/main/java/com/codex/campboardgamehost || true
+          echo '=== ghost vote authority contexts ==='
+          rg -n -C 8 'ghostVoteAuthority|ClocktowerGhostVoteAuthority|spentSeatIds' app/src/main/java/com/codex/campboardgamehost || true
+          echo '=== night life/dead/eligibility contexts ==='
+          rg -n -C 8 'eliminatedRound|isAlive|alive|dead|死亡|阵亡|淘汰|Poisoner|投毒者|Imp|小恶魔' \
+            app/src/main/java/com/codex/campboardgamehost/clocktower/ui \
+            app/src/main/java/com/codex/campboardgamehost/Clocktower*Table*.kt \
+            app/src/main/java/com/codex/campboardgamehost/Clocktower*Selection*.kt \
+            app/src/main/java/com/codex/campboardgamehost/Clocktower*Night*.kt 2>/dev/null | head -n 1400 || true
