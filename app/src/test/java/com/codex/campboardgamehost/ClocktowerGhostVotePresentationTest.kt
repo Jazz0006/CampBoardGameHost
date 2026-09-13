@@ -34,4 +34,23 @@ class ClocktowerGhostVotePresentationTest {
         assertFalse(seat.isAlive)
         assertTrue(seat.hasUnspentGhostVote)
     }
+
+    @Test
+    fun `night storyteller seat hides ghost vote after durable authority spends it`() {
+        val seatId = ClocktowerSeatId(3)
+        val deadCard = PlayerCard(
+            name = "Dana",
+            role = Role.Civilian,
+            word = "",
+            eliminatedRound = 2,
+        )
+        val seat = deadCard.toStorytellerHostSeatPresentation(
+            seatNumber = seatId.number,
+            language = "en",
+            ghostVoteAuthority = ClocktowerGhostVoteAuthority(spentSeatIds = setOf(seatId)),
+        )
+
+        assertFalse(seat.isAlive)
+        assertFalse(seat.hasUnspentGhostVote)
+    }
 }
