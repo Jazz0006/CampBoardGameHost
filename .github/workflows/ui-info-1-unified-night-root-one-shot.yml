@@ -27,15 +27,21 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test "$(git ls-remote origin refs/heads/codex/ui-info-1-beginner-night-guidance | cut -f1)" = "$GITHUB_SHA"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt)" = "27971dab598f82f841446ff67206fec4cc8ffb78"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt)" = "1de0b58e13e145bfff975b6aac18e19eb80615bd"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt)" = "83bacaaec7d6390ca0b623d749962fc70ab1fa4e"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt)" = "f728b3501670602257e0fd6aaa1f3918017781dd"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt)" = "6c414edcde9ceb248b2a79c863ca6607ea04670e"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt)" = "ecc1e73c5f166c17a0f0159abcaeacbd9714c8a0"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayTableScaffoldUi.kt)" = "ddc247916d21aada65601aa3bccc52a9d22f3996"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt)" = "886f8df361c1a07e13e8978ae9b3b3ed9b6829db"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt)" = "113383f5e6dd990df0e2180f8b9614e12314c81e"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt)" = "0c13e87a53ce05eff0adeeb0f1b129a2c363a0d4"
-          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerNightDialogInsetsContractTest.kt)" = "6c46f1abedb0c00c2da79217ce0204b2da8d9aa5"
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerNightDialogInsetsContractTest.kt)" = "2dd116b78f20e026678a786f66cf70bf5d3dd0c1"
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerDayTableBottomNavigationContractTest.kt)" = "f0e3da76d6504160924374eb35cd7c6759a808b3"
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerNightFullScreenOwnershipTest.kt)" = "470bc1106f2d87cfced248672779e398c160dd35"
           test "$(git hash-object .github/workflows/ui-info-1-night-root-readonly-audit.yml)" = "96c1279221bedb74e8d3a4a4cb168cde84169661"
           test "$(git hash-object .github/scripts/ui_info_1_unified_night_root_patch.py)" = "d448b8f2ab7b36b3a2336bbd8e87272feba6a055"
+          test "$(git hash-object .github/scripts/ui_info_1_residual_night_square_table_patch.py)" = "0282e81602539ce8fc03de7bc11a530effd5282a"
           test ! -e app/src/main/java/com/codex/campboardgamehost/ClocktowerHostFullScreenScaffold.kt
           test ! -e app/src/main/java/com/codex/campboardgamehost/ClocktowerNightFullScreenOwnership.kt
 
@@ -52,10 +58,10 @@ jobs:
           status=$?
           set -e
           test "$status" -ne 0
-          grep -Eq 'clocktowerNightUsesFullScreenHostSurface|ClocktowerHostFullScreenScaffold|Source not found' unified-night-red.log
-          echo 'RED confirmed: Night still owns a Dialog/duplicate shell before production patch.'
+          grep -Eq 'clocktowerNightUsesFullScreenHostSurface|ClocktowerHostFullScreenScaffold|platform Dialog|Source not found' unified-night-red.log
+          echo 'RED confirmed: Night still owns Dialog windows / duplicate host surfaces before production patch.'
 
-      - name: Apply fail-closed ownership patch
+      - name: Apply fail-closed ownership patches
         shell: bash
         run: |
           set -euo pipefail
@@ -91,7 +97,10 @@ jobs:
 
           path.write_text(text, encoding='utf-8', newline='\n')
           PY
+          python3 -m py_compile .github/scripts/ui_info_1_unified_night_root_patch.py
+          python3 -m py_compile .github/scripts/ui_info_1_residual_night_square_table_patch.py
           python3 .github/scripts/ui_info_1_unified_night_root_patch.py
+          python3 .github/scripts/ui_info_1_residual_night_square_table_patch.py
 
       - name: Focused GREEN
         shell: bash
@@ -114,24 +123,37 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          night_action='app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt'
-          day='app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayTableScaffoldUi.kt'
-          night_screen='app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt'
-          host='app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt'
-          night_step='app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt'
-          shared='app/src/main/java/com/codex/campboardgamehost/ClocktowerHostFullScreenScaffold.kt'
+          root='app/src/main/java/com/codex/campboardgamehost'
+          night_action="$root/ClocktowerNightActionSquareTableUi.kt"
+          day="$root/clocktower/ui/ClocktowerDayTableScaffoldUi.kt"
+          night_screen="$root/clocktower/ui/ClocktowerNightScreen.kt"
+          host="$root/clocktower/ui/ClocktowerHostScreen.kt"
+          night_step="$root/ClocktowerNightStepUi.kt"
+          shared="$root/ClocktowerHostFullScreenScaffold.kt"
 
-          ! grep -q 'androidx.compose.ui.window.Dialog' "$night_action"
-          ! grep -q 'DialogProperties(' "$night_action"
-          ! grep -q '^[[:space:]]*Dialog(' "$night_action"
+          while IFS= read -r file; do
+            ! grep -q 'import androidx.compose.ui.window.Dialog' "$file"
+            ! grep -q 'DialogProperties(' "$file"
+            ! grep -q '^[[:space:]]*Dialog(' "$file"
+          done < <(find "$root" -maxdepth 1 -name 'Clocktower*SquareTableUi.kt' -type f | sort)
+
           ! grep -RIn 'ClocktowerNightBottomActionBar(' app/src/main/java
           grep -q 'ClocktowerHostFullScreenScaffold(' "$night_action"
+          for file in \
+            "$root/ClocktowerChefSquareTableUi.kt" \
+            "$root/ClocktowerEmpathSquareTableUi.kt" \
+            "$root/ClocktowerFortuneTellerSquareTableUi.kt" \
+            "$root/ClocktowerPairInformationSquareTableUi.kt" \
+            "$root/ClocktowerUndertakerSquareTableUi.kt"; do
+            grep -q 'ClocktowerHostFullScreenScaffold(' "$file"
+          done
           grep -q 'ClocktowerHostFullScreenScaffold(' "$day"
           grep -q 'ClocktowerHostFullScreenScaffold(' "$night_screen"
           grep -q 'contentOwnsFullScreen = clocktowerNightUsesFullScreenHostSurface(' "$host"
-          grep -q 'clocktowerNightActionOwnsSquareTable(step.action)' "$night_step"
+          grep -q 'clocktowerNightUsesFullScreenHostSurface(' "$night_step"
           test "$(grep -c 'HostBottomActionBar(' "$shared")" = "1"
           grep -q 'clocktowerHostBottomNavigationBarPadding()' "$shared"
+          grep -q 'BackHandler(onBack = onBack)' "$shared"
           ! grep -RIn 'navigationBarsIgnoringVisibility' app/src/main
           test "$(grep -RIl 'hide(WindowInsetsCompat.Type.systemBars())' app/src/main/java | wc -l)" = "1"
           grep -q 'hide(WindowInsetsCompat.Type.systemBars())' app/src/main/java/com/codex/campboardgamehost/MainActivity.kt
@@ -143,6 +165,7 @@ jobs:
           rm .github/workflows/ui-info-1-night-root-readonly-audit.yml
           rm .github/workflows/ui-info-1-unified-night-root-one-shot.yml
           rm .github/scripts/ui_info_1_unified_night_root_patch.py
+          rm .github/scripts/ui_info_1_residual_night_square_table_patch.py
           rm -f unified-night-red.log
 
       - name: Exact diff audit
@@ -154,13 +177,19 @@ jobs:
           git diff --check
           actual="$(git diff --name-only | sort)"
           expected="$(printf '%s\n' \
+            '.github/scripts/ui_info_1_residual_night_square_table_patch.py' \
             '.github/scripts/ui_info_1_unified_night_root_patch.py' \
             '.github/workflows/ui-info-1-night-root-readonly-audit.yml' \
             '.github/workflows/ui-info-1-unified-night-root-one-shot.yml' \
+            'app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt' \
+            'app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt' \
+            'app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt' \
             'app/src/main/java/com/codex/campboardgamehost/ClocktowerHostFullScreenScaffold.kt' \
             'app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt' \
             'app/src/main/java/com/codex/campboardgamehost/ClocktowerNightFullScreenOwnership.kt' \
             'app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt' \
+            'app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt' \
+            'app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt' \
             'app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayTableScaffoldUi.kt' \
             'app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt' \
             'app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt' | sort)"
@@ -168,6 +197,11 @@ jobs:
           git diff --stat
           git diff -- app/src/main/java/com/codex/campboardgamehost/ClocktowerHostFullScreenScaffold.kt
           git diff -- app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt
+          git diff -- app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt
+          git diff -- app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt
+          git diff -- app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt
+          git diff -- app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt
+          git diff -- app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt
           git diff -- app/src/main/java/com/codex/campboardgamehost/ClocktowerNightFullScreenOwnership.kt
           git diff -- app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
           git diff -- app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayTableScaffoldUi.kt
