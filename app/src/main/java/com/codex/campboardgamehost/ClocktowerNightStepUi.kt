@@ -21,7 +21,6 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -90,7 +89,6 @@ internal fun ClocktowerNightStepCardLocalized(
     onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
-    showNavigationActions: Boolean = true,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun optionId(option: ClocktowerDisplayOption): String = clocktowerInformationCandidateId(option)
@@ -1118,23 +1116,7 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             if (!ownsFullScreenSurface) {
-                if (showNavigationActions) {
-                HostBottomActionBar(
-                    previousLabel = stringResource(R.string.previous_step),
-                    hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
-                    nextLabel = if (language == "en") "Next →" else "下一步 →",
-                    previousEnabled = canGoPrevious,
-                    nextEnabled = step.action !in setOf(
-                        ClocktowerNightAction.MayorRedirect,
-                        ClocktowerNightAction.DemonSuccessor,
-                    ) || selectedName != null,
-                    onPrevious = onPrevious,
-                    onHostTools = onHostTools,
-                    onNext = onNext,
-                )
-                }
-
-                    Surface(
+                Surface(
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
                     shape = RoundedCornerShape(14.dp),
                 ) {

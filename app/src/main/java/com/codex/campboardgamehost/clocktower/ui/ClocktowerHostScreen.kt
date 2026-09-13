@@ -4453,7 +4453,6 @@ internal fun ClocktowerJudgeScreen(
                 onPrevious = onMovePreviousNightStep,
                 onHostTools = onHostTools,
                 onNext = advanceNightStep,
-                showNavigationActions = false,
             )
         }
         return
