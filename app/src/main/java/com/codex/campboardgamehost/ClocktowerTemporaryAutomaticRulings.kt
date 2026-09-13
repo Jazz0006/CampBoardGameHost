@@ -137,7 +137,7 @@ internal fun clocktowerAutomaticMayorRulingShouldAdvance(
     automaticTargetName: String?,
 ): Boolean =
     automaticStorytellerInfo &&
-        action == ClocktowerNightAction.MayorRedirect &&
+        action in setOf(ClocktowerNightAction.MayorRedirect, ClocktowerNightAction.DemonSuccessor) &&
         automaticTargetName != null &&
         selectedName == automaticTargetName
 
