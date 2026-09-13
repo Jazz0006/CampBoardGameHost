@@ -54,6 +54,20 @@ class ClocktowerNightDialogInsetsContractTest {
         assertFalse(source.contains("ClocktowerNightBottomActionBar("))
     }
 
+    @Test
+    fun `night step cannot retain a dormant second bottom navigation owner`() {
+        val nightStep = source(
+            "src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt",
+        )
+        val hostScreen = source(
+            "src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt",
+        )
+
+        assertFalse(nightStep.contains("showNavigationActions"))
+        assertFalse(nightStep.contains("HostBottomActionBar("))
+        assertFalse(hostScreen.contains("showNavigationActions = false"))
+    }
+
     private fun source(relativeText: String): String {
         val relative = Path.of(relativeText)
         val fromRoot = Path.of("app").resolve(relative)
