@@ -29,9 +29,10 @@ internal data class ClocktowerEvilInfoSquareTablePresentation(
 )
 
 /**
- * First-night evil-team information owns a read-only square-table host surface even though it has
- * no role-specific [ClocktowerNightAction]. The player-facing reveal remains owned by the existing
- * display handoff; this model only routes/presents the Storyteller step.
+ * Private read-only night information owns a square-table host surface even when it has no
+ * role-specific target interaction. This covers first-night evil-team information and the later
+ * new-Demon identity handoff. The player-facing reveal remains owned by the existing display
+ * handoff; this model only routes/presents the Storyteller step.
  *
  * Beginner mode keeps private reveal payload off the host surface until the Storyteller explicitly
  * opens the player display. Experienced mode retains the existing host preview.
@@ -42,7 +43,10 @@ internal fun clocktowerEvilInfoSquareTablePresentation(
     wakeInstruction: String?,
     beginnerMode: Boolean = false,
 ): ClocktowerEvilInfoSquareTablePresentation? {
-    if (!step.isRealAction || step.displayKind != ClocktowerDisplayKind.EvilInfo) return null
+    val ownsReadOnlyPrivateSurface =
+        step.displayKind == ClocktowerDisplayKind.EvilInfo ||
+            step.action == ClocktowerNightAction.NewDemonIdentity
+    if (!step.isRealAction || !ownsReadOnlyPrivateSurface) return null
     return ClocktowerEvilInfoSquareTablePresentation(
         actorSeat = actorSeat,
         wakeInstruction = wakeInstruction,

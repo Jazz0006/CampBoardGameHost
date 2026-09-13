@@ -74,12 +74,13 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
     cards: List<PlayerCard>,
     onDismiss: () -> Unit,
 ) {
-    if (step.displayKind == ClocktowerDisplayKind.Grimoire) {
-        ClocktowerPlayerGrimoireDisplay(step = step, onDismiss = onDismiss)
+    val displayStep = clocktowerPlayerDisplayStep(step)
+    if (displayStep.displayKind == ClocktowerDisplayKind.Grimoire) {
+        ClocktowerPlayerGrimoireDisplay(step = displayStep, onDismiss = onDismiss)
         return
     }
 
-    val pairPresentation = clocktowerPairPlayerRevealPresentation(step, cards)
+    val pairPresentation = clocktowerPairPlayerRevealPresentation(displayStep, cards)
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -93,7 +94,7 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                pairPresentation?.title ?: step.displayTitle,
+                pairPresentation?.title ?: displayStep.displayTitle,
                 color = Color(0xFFF1EADC),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
@@ -108,7 +109,7 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
                 if (pairPresentation != null) {
                     ClocktowerPairPlayerRevealContent(pairPresentation)
                 } else {
-                    ClocktowerPlayerDisplayCenterContent(step)
+                    ClocktowerPlayerDisplayCenterContent(displayStep)
                 }
             }
             OutlinedButton(

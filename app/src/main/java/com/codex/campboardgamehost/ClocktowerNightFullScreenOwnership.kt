@@ -26,5 +26,6 @@ internal fun clocktowerNightUsesFullScreenHostSurface(
         (
             clocktowerNightActionOwnsSquareTable(action) ||
                 displayKind != ClocktowerDisplayKind.None ||
-                action == ClocktowerNightAction.None
+                action == ClocktowerNightAction.None ||
+                action == ClocktowerNightAction.NewDemonIdentity
             )
