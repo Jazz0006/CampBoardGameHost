@@ -74,7 +74,7 @@ class ClocktowerHostSeatContentPresentationTest {
             hostSeatContentPresentation(englishSeat, language = "en").detailLabels,
         )
         val chinese = hostSeatContentPresentation(chineseSeat, language = "zh")
-        assertEquals("Casey ☠", chinese.primaryLabel)
+        assertEquals("Casey", chinese.primaryLabel)
         assertEquals(listOf("实际：酒鬼", "认为：共情者"), chinese.detailLabels)
     }
 
