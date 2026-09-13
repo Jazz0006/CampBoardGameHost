@@ -85,6 +85,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          rm -f dormant-night-nav-red.log
           rm .github/scripts/ui_info_1_retire_dormant_night_nav.py
           rm .github/workflows/ui-info-1-retire-dormant-night-nav.yml
 
