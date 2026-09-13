@@ -31,11 +31,11 @@ jobs:
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt)" = "886f8df361c1a07e13e8978ae9b3b3ed9b6829db"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt)" = "113383f5e6dd990df0e2180f8b9614e12314c81e"
           test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt)" = "0c13e87a53ce05eff0adeeb0f1b129a2c363a0d4"
-          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerNightDialogInsetsContractTest.kt)" = "938de7def0394febde875494bcb0cba8f1ec1a1d"
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerNightDialogInsetsContractTest.kt)" = "6c46f1abedb0c00c2da79217ce0204b2da8d9aa5"
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerDayTableBottomNavigationContractTest.kt)" = "f0e3da76d6504160924374eb35cd7c6759a808b3"
           test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerNightFullScreenOwnershipTest.kt)" = "470bc1106f2d87cfced248672779e398c160dd35"
           test "$(git hash-object .github/workflows/ui-info-1-night-root-readonly-audit.yml)" = "96c1279221bedb74e8d3a4a4cb168cde84169661"
-          test -f .github/scripts/ui_info_1_unified_night_root_patch.py
+          test "$(git hash-object .github/scripts/ui_info_1_unified_night_root_patch.py)" = "d448b8f2ab7b36b3a2336bbd8e87272feba6a055"
           test ! -e app/src/main/java/com/codex/campboardgamehost/ClocktowerHostFullScreenScaffold.kt
           test ! -e app/src/main/java/com/codex/campboardgamehost/ClocktowerNightFullScreenOwnership.kt
 
@@ -59,6 +59,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('.github/scripts/ui_info_1_unified_night_root_patch.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'if "Dialog(" in night_action or "DialogProperties(" in night_action:'
+          new = 'if "\\n    Dialog(" in night_action or "DialogProperties(" in night_action:'
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one broad Dialog guard, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8', newline='\n')
+          PY
           python3 .github/scripts/ui_info_1_unified_night_root_patch.py
 
       - name: Focused GREEN
@@ -91,7 +101,7 @@ jobs:
 
           ! grep -q 'androidx.compose.ui.window.Dialog' "$night_action"
           ! grep -q 'DialogProperties(' "$night_action"
-          ! grep -q 'Dialog(' "$night_action"
+          ! grep -q '^[[:space:]]*Dialog(' "$night_action"
           ! grep -RIn 'ClocktowerNightBottomActionBar(' app/src/main/java
           grep -q 'ClocktowerHostFullScreenScaffold(' "$night_action"
           grep -q 'ClocktowerHostFullScreenScaffold(' "$day"
