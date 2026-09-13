@@ -21,7 +21,7 @@ UI-R5 square-table convergence                    COMPLETE / PR #117
 UI-NAV-1 global navigation visual unification     COMPLETE / PR #118
 ROLE-ROTATION-1 consecutive-role avoidance        COMPLETE / PR #119
 UX-MODE-1 Beginner / Experienced mode             COMPLETE / PR #120
-UI-INFO-1 information filtering & layout          COMPLETE / PR #121 merge-ready
+UI-INFO-1 information filtering & layout          COMPLETE / merged via PR #121
 
 CURRENT:
 EPI-MQ-0.5 dynamic-script extensibility guard
@@ -31,7 +31,7 @@ EPI-MQ-1+ neutral evaluator / productive uncertainty
 UX-R6 recommendation-provider replacement
 ```
 
-UI-INFO-1 已完成产品/真机验收。旧 UI-INFO-1 handoff 不再具有执行权，收口后移入 `archive/`。
+UI-INFO-1 已完成产品/真机验收并通过 PR #121 合并。旧 UI-INFO-1 handoff 已移入 `archive/`，不再具有执行权。
 
 ## 当前 active references
 
