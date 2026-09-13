@@ -165,3 +165,38 @@ Do not treat those as open blockers when starting UI-INFO-1.
 ## 10. Stable rule
 
 > **UI-INFO-1 changes information selection and visual hierarchy, not semantic truth, legality or recommendation ownership. Simplify what the Storyteller sees before shrinking it.**
+
+## 11. UI-INFO-1 implementation checkpoint — unified Night/Day host surface
+
+A real-device regression on OPPO Reno2Z showed that Night kept the Android navigation bar visible while Day remained immersive. The ownership audit found a structural difference rather than an inset-value problem: Night square-table flows opened full-screen Compose `Dialog` windows, while Day stayed on the Activity window. Several Night role-specific square-table implementations also owned their own bottom navigation.
+
+Production checkpoint:
+
+- branch: `codex/ui-info-1-beginner-night-guidance`;
+- production commit: `bfa24c1b7c3909ca3f08bd9d7d605ac552b239b5` — `refactor: unify night and day host surfaces`;
+- Day and Night now share one Activity-root `ClocktowerHostFullScreenScaffold` for persistent Previous / Host Tools / Next navigation and bottom inset ownership;
+- Night square-table production surfaces no longer open their own platform `Dialog` window;
+- the retired `ClocktowerNightBottomActionBar` ownership is removed;
+- Back behavior formerly provided by Dialog dismissal is preserved by the shared Activity-root scaffold;
+- square-table action ownership is centralized instead of repeating role sets in presentation code.
+
+Validation completed before the production commit was pushed:
+
+- focused ownership/inset GREEN suite: PASS;
+- `:app:testFast`: PASS;
+- structural ownership audit: PASS;
+- exact diff audit: PASS;
+- temporary migration scripts/workflows were removed before the production commit.
+
+Real-device acceptance still required for the original regression:
+
+- OPPO Reno2Z, portrait Night flow: Android navigation bar should remain hidden like Day and appear only when the user explicitly reveals system bars;
+- verify several Night role transitions, including opening/closing target-selection and information surfaces;
+- verify Day transition and POCO X8 Pro remain unchanged.
+
+## 12. Queued UI follow-ups
+
+Keep these separate from the unified host-surface refactor unless their ownership audit proves the same seam:
+
+- **Beginner Mayor redirect:** when the Mayor is attacked/killed, Beginner mode still exposes a separate Mayor kill-redirect page that is considered unnecessary. Preserve Mayor redirect game semantics and Experienced-mode authority, but audit whether Beginner can resolve/present this without a standalone page.
+- **Dawn broadcast cleanup:** remove the obsolete pre-Day full-screen broadcast/display button and its UI-only display state, while preserving Dawn/death resolution and the actual transition into Day.
