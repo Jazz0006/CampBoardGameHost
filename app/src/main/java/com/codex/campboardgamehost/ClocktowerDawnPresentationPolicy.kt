@@ -1,8 +1,7 @@
 package com.codex.campboardgamehost
 
 /**
- * Dawn remains a semantic/history boundary, but it is no longer a standalone host-facing screen.
- * Once Dawn settlement is complete, the visible host surface continues directly into Day.
+ * Dawn remains a standalone host-facing announcement surface until the Storyteller confirms the
+ * public announcement and explicitly enters Day.
  */
-internal fun clocktowerVisibleHostPhase(phase: ClocktowerPhase): ClocktowerPhase =
-    if (phase == ClocktowerPhase.Dawn) ClocktowerPhase.Day else phase
+internal fun clocktowerVisibleHostPhase(phase: ClocktowerPhase): ClocktowerPhase = phase
