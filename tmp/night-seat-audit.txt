@@ -1,345 +1,25 @@
-## Direct square-table model constructors
-app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt:281: ClocktowerSquareTableSeatUiModel(
-app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt:308: ClocktowerSquareTableSeatUiModel(
-app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt:108: ClocktowerSquareTableSeatUiModel(
-app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableUi.kt:131: return ClocktowerSquareTableSeatUiModel(
-app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt:257: ClocktowerSquareTableSeatUiModel(
-app/src/main/java/com/codex/campboardgamehost/ClocktowerPairManualSelectionUi.kt:9: return ClocktowerSquareTableSeatUiModel(
-app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt:71: internal data class ClocktowerSquareTableSeatUiModel(
-app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt:213: ClocktowerSquareTableSeatUiModel(
-count=8
+## app/src/main/java/com/codex/campboardgamehost/AppDealScreens.kt
+### line 147
+00139:     onNext: () -> Unit,
+00140: ) {
+00141:     val language = LocalContext.current.resources.configuration.locales[0].language
+00142:     fun text(zh: String, en: String): String = if (language == "en") en else zh
+00143:     require(total == playerNames.size) { "Identity controller total must match the physical seat count" }
+00144:     require(current in 1..total) { "Identity controller current seat must be in range" }
+00145:     require(playerNames[current - 1] == playerName) { "Identity controller target must match the current seat" }
+00146:     val seats = playerNames.mapIndexed { index, name ->
+00147:         HostSeatPresentation(
+00148:             seatId = ClocktowerSeatId(index + 1),
+00149:             playerName = name,
+00150:             isAlive = true,
+00151:         )
+00152:     }
+00153:     val currentSeatId = ClocktowerSeatId(current)
+00154: 
+00155:     ClocktowerDarkTheme {
 
-## Night/action direct square-table constructors
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt:281
-00267:         onNext = onNext,
-00268:         onBack = { if (canGoPrevious) onPrevious() },
-00269:     ) {
-00270:         ClocktowerSquareTableSeatSurface(
-00271:             seats = seats.map { seat ->
-00272:                 val content = hostSeatContentPresentation(seat, language)
-00273:                 val visual = clocktowerChefSeatVisual(
-00274:                     seatNumber = seat.seatId.number,
-00275:                     actorSeat = actorSeat,
-00276:                     actualEvilSeats = actualEvilSeats,
-00277:                     recluseSeat = recluseSeat,
-00278:                     effectivePairSeats = displayedPairSeats,
-00279:                     language = language,
-00280:                 )
-00281:                 ClocktowerSquareTableSeatUiModel(
-00282:                     seatId = seat.seatId.renderKey(),
-00283:                     seatNumber = seat.seatId.number,
-00284:                     label = content.primaryLabel,
-00285:                     detailLabels = content.detailLabels,
-00286:                     state = visual.state,
-00287:                     isCurrentActor = visual.isCurrentActor,
-00288:                     badge = visual.badge,
-00289:                 )
-00290:             },
-00291:             modifier = Modifier.fillMaxSize(),
-00292:             interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
-00293:         ) {
-00294:             Column(
-00295:                 modifier = Modifier
-
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt:308
-00294:         onBack = { if (canGoPrevious) onPrevious() },
-00295:     ) {
-00296:         ClocktowerSquareTableSeatSurface(
-00297:             seats = seats.map { seat ->
-00298:                 val content = hostSeatContentPresentation(seat, language)
-00299:                 val visual = clocktowerEmpathSeatVisual(
-00300:                     seatNumber = seat.seatId.number,
-00301:                     actorSeat = actorSeat,
-00302:                     scopeSeats = selectedChoice.scopeSeats,
-00303:                     actualEvilSeats = actualEvilSeats,
-00304:                     recluseSeat = recluseSeat,
-00305:                     contributingSeats = displayedContributionSeats,
-00306:                     language = language,
-00307:                 )
-00308:                 ClocktowerSquareTableSeatUiModel(
-00309:                     seatId = seat.seatId.renderKey(),
-00310:                     seatNumber = seat.seatId.number,
-00311:                     label = content.primaryLabel,
-00312:                     detailLabels = content.detailLabels,
-00313:                     state = visual.state,
-00314:                     isCurrentActor = visual.isCurrentActor,
-00315:                     badge = visual.badge,
-00316:                 )
-00317:             },
-00318:             modifier = Modifier.fillMaxSize(),
-00319:             interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
-00320:         ) {
-00321:             Column(
-00322:                 modifier = Modifier
-
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt:108
-00094:     }
-00095:     ClocktowerHostFullScreenScaffold(
-00096:         previousLabel = if (language == "en") "← Previous" else "← 上一步",
-00097:         hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
-00098:         nextLabel = if (language == "en") "Next →" else "下一步 →",
-00099:         previousEnabled = canGoPrevious,
-00100:         onPrevious = onPrevious,
-00101:         onHostTools = onHostTools,
-00102:         onNext = onNext,
-00103:         onBack = { if (canGoPrevious) onPrevious() },
-00104:     ) {
-00105:         ClocktowerSquareTableSeatSurface(
-00106:             seats = seats.map { seat ->
-00107:                 val content = hostSeatContentPresentation(seat, language)
-00108:                 ClocktowerSquareTableSeatUiModel(
-00109:                     seatId = seat.seatId.renderKey(),
-00110:                     seatNumber = seat.seatId.number,
-00111:                     label = content.primaryLabel,
-00112:                     detailLabels = content.detailLabels,
-00113:                     state = clocktowerFortuneTellerSeatState(
-00114:                         seatNumber = seat.seatId.number,
-00115:                         selectedSeats = selectedSeats,
-00116:                         selectableSeats = if (enabled) selectableSeats else emptySet(),
-00117:                     ),
-00118:                     isCurrentActor = seat.seatId.number == actorSeat,
-00119:                 )
-00120:             },
-00121:             modifier = Modifier.fillMaxSize(),
-00122:             interactionMode = if (enabled) {
-
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableUi.kt:131
-00117:             centerContent = centerContent,
-00118:         )
-00119:     }
-00120: }
-00121: 
-00122: private fun HostTableSeatFrame.toSquareTableSeatUiModel(
-00123:     motionKey: String,
-00124:     neutralSelectionChrome: Boolean,
-00125:     interactionMode: HostTableInteractionMode,
-00126:     badge: String?,
-00127:     hasUnspentGhostVote: Boolean,
-00128:     language: String,
-00129: ): ClocktowerSquareTableSeatUiModel {
-00130:     val content = hostSeatContentPresentation(seat, language)
-00131:     return ClocktowerSquareTableSeatUiModel(
-00132:         seatId = seat.seatId.renderKey(),
-00133:         seatNumber = seat.seatId.number,
-00134:         label = content.primaryLabel,
-00135:         detailLabels = content.detailLabels,
-00136:         state = if (neutralSelectionChrome) {
-00137:             ClocktowerSquareTableSeatState.Neutral
-00138:         } else {
-00139:             squareTableSeatState(interactionMode)
-00140:         },
-00141:         isAlive = seat.isAlive,
-00142:         hasUnspentGhostVote = hasUnspentGhostVote,
-00143:         isInteractionEnabled = isSelectable && !isLocked,
-00144:         motionKey = motionKey,
-00145:         badge = badge,
-
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt:257
-00243:         previousLabel = if (language == "en") "← Previous" else "← 上一步",
-00244:         hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
-00245:         nextLabel = if (language == "en") "Next →" else "下一步 →",
-00246:         previousEnabled = canGoPrevious,
-00247:         nextEnabled = nextEnabled,
-00248:         onPrevious = onPrevious,
-00249:         onHostTools = onHostTools,
-00250:         onNext = onNext,
-00251:         onBack = { if (canGoPrevious) onPrevious() },
-00252:     ) {
-00253:         ClocktowerSquareTableSeatSurface(
-00254:             seats = seats.map { seat ->
-00255:                 val content = hostSeatContentPresentation(seat, language)
-00256:                 val presentation = seatPresentation(seat.seatId.number)
-00257:                 ClocktowerSquareTableSeatUiModel(
-00258:                     seatId = seat.seatId.renderKey(),
-00259:                     seatNumber = seat.seatId.number,
-00260:                     label = content.primaryLabel,
-00261:                     detailLabels = content.detailLabels,
-00262:                     state = presentation.targetState,
-00263:                     isCurrentActor = presentation.isCurrentActor,
-00264:                 )
-00265:             },
-00266:             modifier = Modifier.fillMaxSize(),
-00267:             interactionMode = if (enabled) {
-00268:                 ClocktowerSquareTableInteractionMode.Selectable
-00269:             } else {
-00270:                 ClocktowerSquareTableInteractionMode.ReadOnly
-00271:             },
-
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerPairManualSelectionUi.kt:9
-00001: package com.codex.campboardgamehost
-00002: 
-00003: internal fun clocktowerPairManualSquareTableSeat(
-00004:     seat: HostSeatPresentation,
-00005:     language: String,
-00006:     state: ClocktowerSquareTableSeatState,
-00007: ): ClocktowerSquareTableSeatUiModel {
-00008:     val content = hostSeatContentPresentation(seat, language)
-00009:     return ClocktowerSquareTableSeatUiModel(
-00010:         seatId = seat.seatId.renderKey(),
-00011:         seatNumber = seat.seatId.number,
-00012:         label = content.primaryLabel,
-00013:         detailLabels = content.detailLabels,
-00014:         state = state,
-00015:     )
-00016: }
-00017: 
-00018: internal fun clocktowerPairManualSeatState(
-00019:     selection: ClocktowerPairManualSelectionModel,
-00020:     seatNumber: Int,
-00021: ): ClocktowerSquareTableSeatState {
-00022:     if (selection.isZeroCaseSelected) return ClocktowerSquareTableSeatState.Disabled
-00023: 
-
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt:71
-00057: }
-00058: 
-00059: internal enum class ClocktowerSquareTableEdge {
-00060:     Top,
-00061:     Right,
-00062:     Bottom,
-00063:     Left,
-00064: }
-00065: 
-00066: internal enum class ClocktowerSquareTableInteractionMode {
-00067:     ReadOnly,
-00068:     Selectable,
-00069: }
-00070: 
-00071: internal data class ClocktowerSquareTableSeatUiModel(
-00072:     val seatId: String,
-00073:     val seatNumber: Int,
-00074:     val label: String,
-00075:     val detailLabels: List<String> = emptyList(),
-00076:     val state: ClocktowerSquareTableSeatState = ClocktowerSquareTableSeatState.Neutral,
-00077:     val isCurrentActor: Boolean = false,
-00078:     val isInteractionEnabled: Boolean = state in setOf(
-00079:         ClocktowerSquareTableSeatState.Selectable,
-00080:         ClocktowerSquareTableSeatState.SelectedFirst,
-00081:         ClocktowerSquareTableSeatState.SelectedSecond,
-00082:         ClocktowerSquareTableSeatState.Selected,
-00083:         ClocktowerSquareTableSeatState.SelectedHighlighted,
-00084:     ),
-00085:     val motionKey: String = seatId,
-
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt:213
-00199:         onPrevious = onPrevious,
-00200:         onHostTools = onHostTools,
-00201:         onNext = onNext,
-00202:         onBack = { if (canGoPrevious) onPrevious() },
-00203:     ) {
-00204:         ClocktowerSquareTableSeatSurface(
-00205:             seats = seats.map { seat ->
-00206:                 val content = hostSeatContentPresentation(seat, language)
-00207:                 val visual = clocktowerUndertakerSeatVisual(
-00208:                     seatNumber = seat.seatId.number,
-00209:                     actorSeat = actorSeat,
-00210:                     executedSeat = selectedChoice.executedSeat,
-00211:                     language = language,
-00212:                 )
-00213:                 ClocktowerSquareTableSeatUiModel(
-00214:                     seatId = seat.seatId.renderKey(),
-00215:                     seatNumber = seat.seatId.number,
-00216:                     label = content.primaryLabel,
-00217:                     detailLabels = content.detailLabels,
-00218:                     state = visual.state,
-00219:                     isCurrentActor = visual.isCurrentActor,
-00220:                     badge = visual.badge,
-00221:                 )
-00222:             },
-00223:             modifier = Modifier.fillMaxSize(),
-00224:             interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
-00225:         ) {
-00226:             Column(
-00227:                 modifier = Modifier
-
-count=8
-
-## HostTableShell calls
-app/src/main/java/com/codex/campboardgamehost/AppDealScreens.kt:184: HostTableShell(
-app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableUi.kt:18: internal fun HostTableShell(
-app/src/main/java/com/codex/campboardgamehost/SeatingFirstSetupUi.kt:140: HostTableShell(
-app/src/main/java/com/codex/campboardgamehost/SeatingFirstSetupUi.kt:265: HostTableShell(
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerArtistTableUi.kt:44: HostTableShell(
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayOverviewTableUi.kt:61: HostTableShell(
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerKlutzTableUi.kt:46: HostTableShell(
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerPendingNominationTableUi.kt:62: HostTableShell(
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerTableUi.kt:50: HostTableShell(
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt:94: HostTableShell(
-count=10
-
-## Ghost vote authority references
-app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:732: val clocktowerGhostVoteAuthorityState = remember { mutableStateOf(ClocktowerGhostVoteAuthority()) }
-app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:1387: ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,
-app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:1501: clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
-app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:1570: clocktowerGhostVoteAuthorityState.value = mechanics.ghostVoteAuthority
-app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:1756: clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
-app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:2432: ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,
-app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:2433: onGhostVoteAuthorityChange = { clocktowerGhostVoteAuthorityState.value = it },
-app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:7: internal data class ClocktowerGhostVoteAuthority(
-app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:8: val spentSeatIds: Set<ClocktowerSeatId> = emptySet(),
-app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:15: return seat.isAlive || seatId !in spentSeatIds
-app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:25: ): ClocktowerGhostVoteAuthority {
-app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:34: return copy(spentSeatIds = spentSeatIds + newlySpent)
-app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:39: internal object ClocktowerGhostVoteAuthorityPersistence {
-app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:42: fun encode(authority: ClocktowerGhostVoteAuthority): JSONArray = JSONArray().apply {
-app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:43: authority.spentSeatIds
-app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:48: fun decode(json: JSONObject): ClocktowerGhostVoteAuthority {
-app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:49: val payload = json.optJSONArray(ROOT_KEY) ?: return ClocktowerGhostVoteAuthority()
-app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:50: val spentSeatIds = buildSet {
-app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:56: return ClocktowerGhostVoteAuthority(spentSeatIds)
-app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt:9: val ghostVoteAuthority: ClocktowerGhostVoteAuthority,
-app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt:26: ghostVoteAuthority = ghostVoteAuthority,
-app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt:35: ghostVoteAuthority: ClocktowerGhostVoteAuthority = ClocktowerGhostVoteAuthority(),
-app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt:52: .filter { seat -> ghostVoteAuthority.canVote(seat.seatId, canonicalSeats) }
-app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt:66: ghostVoteAuthority = ghostVoteAuthority,
-app/src/main/java/com/codex/campboardgamehost/ClocktowerVoteTransaction.kt:12: val ghostVoteAuthority: ClocktowerGhostVoteAuthority,
-app/src/main/java/com/codex/campboardgamehost/ClocktowerVoteTransaction.kt:30: val confirmedGhostVoteAuthority = voteState.ghostVoteAuthority.confirmVote(
-app/src/main/java/com/codex/campboardgamehost/ClocktowerVoteTransaction.kt:55: ghostVoteAuthority = confirmedGhostVoteAuthority,
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt:269: ghostVoteAuthority: ClocktowerGhostVoteAuthority,
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt:273: onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt:3618: ghostVoteAuthority = ghostVoteAuthority,
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt:3641: onGhostVoteAuthorityChange(voteTransaction.ghostVoteAuthority)
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt:29: ghostVoteAuthority: ClocktowerGhostVoteAuthority,
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt:70: var voteState by remember(tableState.seats, nomineeSeat.seatId, ghostVoteAuthority) {
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt:75: ghostVoteAuthority = ghostVoteAuthority,
-app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt:101: !seat.isAlive && seat.seatId !in ghostVoteAuthority.spentSeatIds
-app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryRestorePlanner.kt:259: mechanics.ghostVoteAuthority.spentSeatIds.forEach { seatId ->
-app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshot.kt:150: val ghostVoteAuthority: ClocktowerGhostVoteAuthority,
-app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt:130: ClocktowerGhostVoteAuthorityPersistence.ROOT_KEY,
-app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt:131: ClocktowerGhostVoteAuthorityPersistence.encode(game.mechanics.ghostVoteAuthority),
-app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotStrictDecoder.kt:135: ghostVoteAuthority = json.decodeGhostVoteAuthorityStrict(),
-app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotStrictDecoder.kt:242: private fun JSONObject.decodeGhostVoteAuthorityStrict(): ClocktowerGhostVoteAuthority {
-app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotStrictDecoder.kt:243: val values = requiredArray(ClocktowerGhostVoteAuthorityPersistence.ROOT_KEY)
-app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotStrictDecoder.kt:256: return ClocktowerGhostVoteAuthority(seatNumbers.map(::ClocktowerSeatId).toSet())
-count=43
-
-## Ghost vote owner contexts
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:732
-00722:     val playerNames = remember { mutableStateListOf<String>() }
-00723:     var hostSeatingSetupFlow by remember { mutableStateOf(HostSeatingSetupFlow()) }
-00724:     val cards = remember { mutableStateListOf<PlayerCard>() }
-00725:     val records = remember { mutableStateListOf<EliminationRecord>() }
-00726:     val recoveryWriteGate = remember { RecoveryWriteGate() }
-00727:     val clocktowerEvents = remember { mutableStateListOf<ClocktowerEvent>() }
-00728:     var clocktowerEventCounter by remember { mutableStateOf(0) }
-00729:     val clocktowerNightStartedState = remember { mutableStateOf(false) }
-00730:     val clocktowerNightStepIndexState = remember { mutableStateOf(0) }
-00731:     val clocktowerDayModeState = remember { mutableStateOf(ClocktowerDayMode.Overview) }
-00732:     val clocktowerGhostVoteAuthorityState = remember { mutableStateOf(ClocktowerGhostVoteAuthority()) }
-00733:     val clocktowerHighestVoteNameState = remember { mutableStateOf<String?>(null) }
-00734:     val clocktowerHighestVoteCountState = remember { mutableStateOf(0) }
-00735:     val troubleBrewingSetupRecommendationScope = rememberCoroutineScope()
-00736:     val troubleBrewingSetupRecommendationPrewarmer = remember {
-00737:         val recommendationCoordinator = ClocktowerRecommendationCoordinator()
-00738:         TroubleBrewingSetupRecommendationPrewarmCoordinator { request ->
-00739:             recommendationCoordinator.recommendSetup(request)
-00740:         }
-00741:     }
-00742:     val troubleBrewingSetupRecommendationRevealCoordinator =
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:1387
-01377:                     butlerMaster = clocktowerButlerMaster,
-01378:                     virginUsed = clocktowerVirginUsed,
+## app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
+### line 1387
 01379:                     slayerUsed = clocktowerSlayerUsed,
 01380:                     slayerClaimedNames = clocktowerSlayerClaimedNames.toList(),
 01381:                     artistUsed = clocktowerArtistUsed,
@@ -357,35 +37,8 @@ count=43
 01393:                     playerInputRevision = clocktowerPlayerInputRevision,
 01394:                     semanticHistoryMode = clocktowerSemanticHistoryMode,
 01395:                     actionTimeline = clocktowerActionTimeline,
-01396:                     nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
-01397:                     events = clocktowerEvents.toList(),
 
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:1501
-01491:         clocktowerSlayerUsed = false
-01492:         clocktowerSlayerClaimedNames = emptyList()
-01493:         clocktowerArtistUsed = false
-01494:         clocktowerArtistClaimedNames = emptyList()
-01495:         clocktowerLastExecutedName = null
-01496:         clocktowerPendingKlutzName = null
-01497:         clocktowerKlutzChoiceName = null
-01498:         clocktowerKlutzReturnToDawn = false
-01499: 
-01500:         clocktowerDayModeState.value = ClocktowerDayMode.Overview
-01501:         clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
-01502:         clocktowerHighestVoteNameState.value = null
-01503:         clocktowerHighestVoteCountState.value = 0
-01504: 
-01505:         when (game) {
-01506:             is UndercoverRecovery -> {
-01507:                 undercoverCount = game.undercoverCount
-01508:                 includeBlank = game.includeBlank
-01509:                 lastWordsMode = game.lastWordsMode
-01510:             }
-01511:             is ClocktowerRecovery -> {
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:1570
-01560:                 clocktowerRecommendedDemonBluffRoleNames = mechanics.demonBluffRoleNames
-01561:                 clocktowerButlerMaster = mechanics.butlerMaster
+### line 1570
 01562:                 clocktowerVirginUsed = mechanics.virginUsed
 01563:                 clocktowerSlayerUsed = mechanics.slayerUsed
 01564:                 clocktowerSlayerClaimedNames = mechanics.slayerClaimedNames
@@ -403,35 +56,8 @@ count=43
 01576:                     } else {
 01577:                         ClocktowerDayMode.Overview
 01578:                     }
-01579:             }
-01580:             is WerewolfRecovery -> Unit
 
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:1756
-01746:         clearConfirmedDemonSuccessorTarget()
-01747:         clocktowerVirginUsed = false
-01748:         clocktowerSlayerUsed = false
-01749:         clocktowerSlayerClaimedNames = emptyList()
-01750:         clocktowerArtistUsed = false
-01751:         clocktowerArtistClaimedNames = emptyList()
-01752:         clocktowerLastExecutedName = null
-01753:         clocktowerPendingKlutzName = null
-01754:         clocktowerKlutzChoiceName = null
-01755:         clocktowerKlutzReturnToDawn = false
-01756:         clocktowerGhostVoteAuthorityState.value = ClocktowerGhostVoteAuthority()
-01757:         resetClocktowerFlow()
-01758:         screen = Screen.PassPhone
-01759:         persistActiveGameStateIfNeeded()
-01760:     }
-01761: 
-01762:     fun startUndercoverGame() {
-01763:         val playerNames = hostSeatingSetupFlow.playerNamesFor(GameKind.Undercover)
-01764:         if (playerNames.size < MIN_PLAYERS) return
-01765:         val pair = wordPairsFor(language).random()
-01766:         val blankCount = if (includeBlank) 1 else 0
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:2432
-02422:                                 checkpoint = currentClocktowerNightCheckpoint(),
-02423:                             )
+### line 2432
 02424:                             when (transaction.revisionIntent) {
 02425:                                 NightCheckpointRevisionIntent.NONE -> Unit
 02426:                                 NightCheckpointRevisionIntent.PLAYER_INPUT -> advanceClocktowerPlayerInputRevision()
@@ -449,181 +75,108 @@ count=43
 02438:                             addClocktowerEvent(type, title, detail, names)
 02439:                         },
 02440:                         onRecordEpistemicObservation = ::recordEpistemicObservation,
-02441:                         onHostTools = {
-02442:                             hostToolTab = HostToolTab.Roles
 
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:2433
-02423:                             )
-02424:                             when (transaction.revisionIntent) {
-02425:                                 NightCheckpointRevisionIntent.NONE -> Unit
-02426:                                 NightCheckpointRevisionIntent.PLAYER_INPUT -> advanceClocktowerPlayerInputRevision()
-02427:                                 NightCheckpointRevisionIntent.GAME_STATE -> advanceClocktowerGameStateRevision()
-02428:                             }
-02429:                             clocktowerNightStepIndexState.value = transaction.checkpoint.nightStepIndex
-02430:                         },
-02431:                         dayModeState = clocktowerDayModeState,
-02432:                         ghostVoteAuthority = clocktowerGhostVoteAuthorityState.value,
-02433:                         onGhostVoteAuthorityChange = { clocktowerGhostVoteAuthorityState.value = it },
-02434:                         highestVoteNameState = clocktowerHighestVoteNameState,
-02435:                         highestVoteCountState = clocktowerHighestVoteCountState,
-02436:                         gameOutcome = gameOutcome,
-02437:                         onRecordEvent = { type, title, detail, names ->
-02438:                             addClocktowerEvent(type, title, detail, names)
-02439:                         },
-02440:                         onRecordEpistemicObservation = ::recordEpistemicObservation,
-02441:                         onHostTools = {
-02442:                             hostToolTab = HostToolTab.Roles
-02443:                             showHostTools = true
+## app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSeatContentPresentation.kt
+### line 47
+00039:     }
+00040:     return HostSeatContentPresentation(
+00041:         primaryLabel = primaryLabel,
+00042:         detailLabels = detailLabels,
+00043:     )
+00044: }
+00045: 
+00046: /** Converts the runtime night card into the same typed Storyteller seat used by Day. */
+00047: internal fun PlayerCard.toStorytellerHostSeatPresentation(
+00048:     seatNumber: Int,
+00049:     language: String,
+00050: ): HostSeatPresentation = HostSeatPresentation(
+00051:     seatId = ClocktowerSeatId(seatNumber),
+00052:     playerName = name,
+00053:     isAlive = eliminatedRound == null,
+00054:     actualRole = clocktowerRole?.toHostRolePresentation(language),
+00055:     shownRole = clocktowerShownRole?.toHostRolePresentation(language),
 
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:7
-00001: package com.codex.campboardgamehost
-00002: 
-00003: import org.json.JSONArray
-00004: import org.json.JSONObject
-00005: 
-00006: /** Durable Storyteller authority for the one post-death vote owned by each physical seat. */
-00007: internal data class ClocktowerGhostVoteAuthority(
-00008:     val spentSeatIds: Set<ClocktowerSeatId> = emptySet(),
-00009: ) {
-00010:     fun canVote(
-00011:         seatId: ClocktowerSeatId,
-00012:         seats: List<HostSeatPresentation>,
-00013:     ): Boolean {
-00014:         val seat = seats.firstOrNull { candidate -> candidate.seatId == seatId } ?: return false
-00015:         return seat.isAlive || seatId !in spentSeatIds
-00016:     }
-00017: 
+### line 50
+00042:         detailLabels = detailLabels,
+00043:     )
+00044: }
+00045: 
+00046: /** Converts the runtime night card into the same typed Storyteller seat used by Day. */
+00047: internal fun PlayerCard.toStorytellerHostSeatPresentation(
+00048:     seatNumber: Int,
+00049:     language: String,
+00050: ): HostSeatPresentation = HostSeatPresentation(
+00051:     seatId = ClocktowerSeatId(seatNumber),
+00052:     playerName = name,
+00053:     isAlive = eliminatedRound == null,
+00054:     actualRole = clocktowerRole?.toHostRolePresentation(language),
+00055:     shownRole = clocktowerShownRole?.toHostRolePresentation(language),
+00056:     contentMode = HostSeatContentMode.StorytellerRoleDetail,
+00057: )
+00058: 
 
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:25
-00015:         return seat.isAlive || seatId !in spentSeatIds
-00016:     }
-00017: 
-00018:     /**
-00019:      * Commits ghost-vote consumption only for dead seats in one confirmed vote.
-00020:      * Pending selection never calls this boundary, and confirming twice is idempotent.
-00021:      */
-00022:     fun confirmVote(
-00023:         selectedVoterSeatIds: Set<ClocktowerSeatId>,
-00024:         seats: List<HostSeatPresentation>,
-00025:     ): ClocktowerGhostVoteAuthority {
-00026:         val seatsById = seats.associateBy(HostSeatPresentation::seatId)
-00027:         require(selectedVoterSeatIds.all(seatsById::containsKey)) {
-00028:             "Confirmed voters must belong to the physical table"
-00029:         }
-00030:         val newlySpent = selectedVoterSeatIds.filterTo(mutableSetOf()) { seatId ->
-00031:             seatsById.getValue(seatId).isAlive.not()
-00032:         }
-00033:         if (newlySpent.isEmpty()) return this
-00034:         return copy(spentSeatIds = spentSeatIds + newlySpent)
-00035:     }
-
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:39
-00029:         }
-00030:         val newlySpent = selectedVoterSeatIds.filterTo(mutableSetOf()) { seatId ->
-00031:             seatsById.getValue(seatId).isAlive.not()
-00032:         }
-00033:         if (newlySpent.isEmpty()) return this
-00034:         return copy(spentSeatIds = spentSeatIds + newlySpent)
-00035:     }
-00036: }
+## app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableContract.kt
+### line 29
+00021: )
+00022: 
+00023: /**
+00024:  * Stable seat-owned information available to the Storyteller table.
+00025:  *
+00026:  * Actual role and shown/perceived role remain separate semantic fields. Public claim history will
+00027:  * be introduced by its own durable R4D slice rather than being folded into either role field.
+00028:  */
+00029: internal data class HostSeatPresentation(
+00030:     val seatId: ClocktowerSeatId,
+00031:     val playerName: String,
+00032:     val isAlive: Boolean,
+00033:     val actualRole: HostRolePresentation? = null,
+00034:     val shownRole: HostRolePresentation? = null,
+00035:     val contentMode: HostSeatContentMode = HostSeatContentMode.IdentityOnly,
+00036: )
 00037: 
-00038: /** Additive active-game field; missing legacy payloads deliberately restore as unspent. */
-00039: internal object ClocktowerGhostVoteAuthorityPersistence {
-00040:     const val ROOT_KEY: String = "clocktowerSpentGhostVoteSeatIds"
-00041: 
-00042:     fun encode(authority: ClocktowerGhostVoteAuthority): JSONArray = JSONArray().apply {
-00043:         authority.spentSeatIds
-00044:             .sortedBy(ClocktowerSeatId::number)
-00045:             .forEach { seatId -> put(seatId.number) }
-00046:     }
-00047: 
-00048:     fun decode(json: JSONObject): ClocktowerGhostVoteAuthority {
-00049:         val payload = json.optJSONArray(ROOT_KEY) ?: return ClocktowerGhostVoteAuthority()
 
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:42
-00032:         }
-00033:         if (newlySpent.isEmpty()) return this
-00034:         return copy(spentSeatIds = spentSeatIds + newlySpent)
-00035:     }
-00036: }
-00037: 
-00038: /** Additive active-game field; missing legacy payloads deliberately restore as unspent. */
-00039: internal object ClocktowerGhostVoteAuthorityPersistence {
-00040:     const val ROOT_KEY: String = "clocktowerSpentGhostVoteSeatIds"
-00041: 
-00042:     fun encode(authority: ClocktowerGhostVoteAuthority): JSONArray = JSONArray().apply {
-00043:         authority.spentSeatIds
-00044:             .sortedBy(ClocktowerSeatId::number)
-00045:             .forEach { seatId -> put(seatId.number) }
-00046:     }
-00047: 
-00048:     fun decode(json: JSONObject): ClocktowerGhostVoteAuthority {
-00049:         val payload = json.optJSONArray(ROOT_KEY) ?: return ClocktowerGhostVoteAuthority()
-00050:         val spentSeatIds = buildSet {
-00051:             for (index in 0 until payload.length()) {
-00052:                 val number = payload.optInt(index, 0)
+## app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableGameStateProjection.kt
+### line 26
+00018: ): List<HostSeatPresentation> {
+00019:     val orderedPlayers = players.sortedBy { player -> player.seat }
+00020:     val expectedSeats = (1..orderedPlayers.size).toList()
+00021:     require(orderedPlayers.map { player -> player.seat } == expectedSeats) {
+00022:         "Clocktower host table requires unique contiguous domain seats from seat 1"
+00023:     }
+00024: 
+00025:     return orderedPlayers.map { player ->
+00026:         HostSeatPresentation(
+00027:             seatId = ClocktowerSeatId(player.seat),
+00028:             playerName = player.name,
+00029:             isAlive = player.alive,
+00030:             actualRole = HostRolePresentation(
+00031:                 roleId = player.actualRole.value,
+00032:                 displayName = roleDisplayName(player.actualRole),
+00033:             ),
+00034:             shownRole = player.shownRole?.let { shownRole ->
 
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:48
-00038: /** Additive active-game field; missing legacy payloads deliberately restore as unspent. */
-00039: internal object ClocktowerGhostVoteAuthorityPersistence {
-00040:     const val ROOT_KEY: String = "clocktowerSpentGhostVoteSeatIds"
-00041: 
-00042:     fun encode(authority: ClocktowerGhostVoteAuthority): JSONArray = JSONArray().apply {
-00043:         authority.spentSeatIds
-00044:             .sortedBy(ClocktowerSeatId::number)
-00045:             .forEach { seatId -> put(seatId.number) }
-00046:     }
-00047: 
-00048:     fun decode(json: JSONObject): ClocktowerGhostVoteAuthority {
-00049:         val payload = json.optJSONArray(ROOT_KEY) ?: return ClocktowerGhostVoteAuthority()
-00050:         val spentSeatIds = buildSet {
-00051:             for (index in 0 until payload.length()) {
-00052:                 val number = payload.optInt(index, 0)
-00053:                 if (number > 0) add(ClocktowerSeatId(number))
-00054:             }
-00055:         }
-00056:         return ClocktowerGhostVoteAuthority(spentSeatIds)
-00057:     }
-00058: }
+## app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+### line 773
+00765:                     color = MaterialTheme.colorScheme.onSurface,
+00766:                     fontSize = 30.sp,
+00767:                     lineHeight = 36.sp,
+00768:                     fontWeight = FontWeight.Black,
+00769:                 )
+00770:             }
+00771: 
+00772:         val nightActionSeats = cards.mapIndexed { index, card ->
+00773:             card.toStorytellerHostSeatPresentation(
+00774:                 seatNumber = index + 1,
+00775:                 language = language,
+00776:             )
+00777:         }
+00778:         fun seatNumberForName(name: String?): Int? = name
+00779:             ?.let { selected -> cards.indexOfFirst { card -> card.name == selected } }
+00780:             ?.takeIf { index -> index >= 0 }
+00781:             ?.plus(1)
 
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:49
-00039: internal object ClocktowerGhostVoteAuthorityPersistence {
-00040:     const val ROOT_KEY: String = "clocktowerSpentGhostVoteSeatIds"
-00041: 
-00042:     fun encode(authority: ClocktowerGhostVoteAuthority): JSONArray = JSONArray().apply {
-00043:         authority.spentSeatIds
-00044:             .sortedBy(ClocktowerSeatId::number)
-00045:             .forEach { seatId -> put(seatId.number) }
-00046:     }
-00047: 
-00048:     fun decode(json: JSONObject): ClocktowerGhostVoteAuthority {
-00049:         val payload = json.optJSONArray(ROOT_KEY) ?: return ClocktowerGhostVoteAuthority()
-00050:         val spentSeatIds = buildSet {
-00051:             for (index in 0 until payload.length()) {
-00052:                 val number = payload.optInt(index, 0)
-00053:                 if (number > 0) add(ClocktowerSeatId(number))
-00054:             }
-00055:         }
-00056:         return ClocktowerGhostVoteAuthority(spentSeatIds)
-00057:     }
-00058: }
-
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt:56
-00046:     }
-00047: 
-00048:     fun decode(json: JSONObject): ClocktowerGhostVoteAuthority {
-00049:         val payload = json.optJSONArray(ROOT_KEY) ?: return ClocktowerGhostVoteAuthority()
-00050:         val spentSeatIds = buildSet {
-00051:             for (index in 0 until payload.length()) {
-00052:                 val number = payload.optInt(index, 0)
-00053:                 if (number > 0) add(ClocktowerSeatId(number))
-00054:             }
-00055:         }
-00056:         return ClocktowerGhostVoteAuthority(spentSeatIds)
-00057:     }
-00058: }
-
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt:9
+## app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt
+### line 9
 00001: package com.codex.campboardgamehost
 00002: 
 00003: internal data class ClocktowerTableVoteState(
@@ -641,12 +194,8 @@ count=43
 00015:     fun togglePendingVoter(seatId: ClocktowerSeatId): ClocktowerTableVoteState {
 00016:         if (seatId !in selectableSeatIds) return this
 00017:         val nextSelected = if (seatId in selectedVoterSeatIds) {
-00018:             selectedVoterSeatIds - seatId
-00019:         } else {
 
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt:26
-00016:         if (seatId !in selectableSeatIds) return this
-00017:         val nextSelected = if (seatId in selectedVoterSeatIds) {
+### line 26
 00018:             selectedVoterSeatIds - seatId
 00019:         } else {
 00020:             selectedVoterSeatIds + seatId
@@ -664,12 +213,8 @@ count=43
 00032:     seats: List<HostSeatPresentation>,
 00033:     nomineeSeatId: ClocktowerSeatId,
 00034:     selectedVoterSeatIds: Set<ClocktowerSeatId> = emptySet(),
-00035:     ghostVoteAuthority: ClocktowerGhostVoteAuthority = ClocktowerGhostVoteAuthority(),
-00036: ): ClocktowerTableVoteState {
 
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt:35
-00025:             selectedVoterSeatIds = nextSelected,
-00026:             ghostVoteAuthority = ghostVoteAuthority,
+### line 35
 00027:         )
 00028:     }
 00029: }
@@ -687,12 +232,8 @@ count=43
 00041:         "Table vote requires unique contiguous physical seats from seat 1"
 00042:     }
 00043:     require(nomineeSeatId in expectedSeatIds) {
-00044:         "Table vote nominee must belong to the physical table"
-00045:     }
 
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt:52
-00042:     }
-00043:     require(nomineeSeatId in expectedSeatIds) {
+### line 52
 00044:         "Table vote nominee must belong to the physical table"
 00045:     }
 00046: 
@@ -710,12 +251,8 @@ count=43
 00058:     val orderedSelected = orderedSeatIds.filter { seatId -> seatId in selectedVoterSeatIds }
 00059: 
 00060:     return ClocktowerTableVoteState(
-00061:         seats = canonicalSeats,
-00062:         nomineeSeatId = nomineeSeatId,
 
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt:66
-00056:         "Pending voter selection must contain only currently selectable seats"
-00057:     }
+### line 66
 00058:     val orderedSelected = orderedSeatIds.filter { seatId -> seatId in selectedVoterSeatIds }
 00059: 
 00060:     return ClocktowerTableVoteState(
@@ -733,11 +270,9 @@ count=43
 00072:             lockedSeatIds = expectedSeatIds.toSet() - selectableSeatIds,
 00073:         ),
 00074:     )
-00075: }
 
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerVoteTransaction.kt:12
-00002: 
-00003: /**
+## app/src/main/java/com/codex/campboardgamehost/ClocktowerVoteTransaction.kt
+### line 12
 00004:  * Atomic semantic result for one confirmed nomination vote.
 00005:  *
 00006:  * The transaction commits the durable voter snapshot, ghost-vote consumption,
@@ -755,12 +290,8 @@ count=43
 00018: internal fun commitClocktowerVoteTransaction(
 00019:     voteState: ClocktowerTableVoteState,
 00020:     nomineeName: String,
-00021:     executionThreshold: Int,
-00022:     highestVoteName: String?,
 
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerVoteTransaction.kt:30
-00020:     nomineeName: String,
-00021:     executionThreshold: Int,
+### line 30
 00022:     highestVoteName: String?,
 00023:     highestVoteCount: Int,
 00024: ): ClocktowerVoteTransactionResult {
@@ -778,12 +309,8 @@ count=43
 00036:     var nextHighestVoteCount = highestVoteCount
 00037:     if (voteRecord.voteCount >= executionThreshold) {
 00038:         when {
-00039:             voteRecord.voteCount > highestVoteCount -> {
-00040:                 nextHighestVoteName = nomineeName
 
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerVoteTransaction.kt:55
-00045:                 nextHighestVoteName = null
-00046:             }
+### line 55
 00047:         }
 00048:     }
 00049: 
@@ -799,9 +326,45 @@ count=43
 00059:     )
 00060: }
 
-### app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt:269
-00259:     slayerUsed: Boolean,
-00260:     slayerClaimedNames: List<String>,
+## app/src/main/java/com/codex/campboardgamehost/HostSeatingRoster.kt
+### line 51
+00043:             )
+00044:         },
+00045:     )
+00046: }
+00047: 
+00048: /** Role-free presentation used while arranging or reviewing confirmed seats before game choice. */
+00049: internal fun ConfirmedHostSeating.toHostSeatPresentations(): List<HostSeatPresentation> =
+00050:     seats.map { assignment ->
+00051:         HostSeatPresentation(
+00052:             seatId = assignment.seatId,
+00053:             playerName = assignment.playerName,
+00054:             isAlive = true,
+00055:         )
+00056:     }
+
+## app/src/main/java/com/codex/campboardgamehost/SeatingFirstSetupUi.kt
+### line 59
+00051: ) {
+00052:     val language = LocalContext.current.resources.configuration.locales[0].language
+00053:     fun text(zh: String, en: String): String = if (language == "en") en else zh
+00054: 
+00055:     var selectedPlayerName by remember { mutableStateOf<String?>(null) }
+00056:     var newPlayerName by remember { mutableStateOf("") }
+00057: 
+00058:     val seats = playerNames.mapIndexed { index, playerName ->
+00059:         HostSeatPresentation(
+00060:             seatId = ClocktowerSeatId(index + 1),
+00061:             playerName = playerName,
+00062:             isAlive = true,
+00063:         )
+00064:     }
+00065:     val selectedIndex = selectedPlayerName?.let(playerNames::indexOf)?.takeIf { it >= 0 }
+00066:     val interaction = HostTableInteractionState(
+00067:         mode = if (seats.isEmpty()) HostTableInteractionMode.ReadOnly else HostTableInteractionMode.Selection,
+
+## app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+### line 269
 00261:     artistUsed: Boolean,
 00262:     artistClaimedNames: List<String>,
 00263:     lastExecutedName: String?,
@@ -819,35 +382,8 @@ count=43
 00275:     onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
 00276:     onHostTools: () -> Unit,
 00277:     onPreviousFromFirstNightReady: () -> Unit,
-00278:     onMovePreviousNightStep: () -> Unit,
-00279:     onSelectNightDeath: (String?) -> Unit,
 
-### app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt:273
-00263:     lastExecutedName: String?,
-00264:     pendingKlutzName: String?,
-00265:     klutzChoiceName: String?,
-00266:     nightStartedState: MutableState<Boolean>,
-00267:     nightStepIndexState: MutableState<Int>,
-00268:     dayModeState: MutableState<ClocktowerDayMode>,
-00269:     ghostVoteAuthority: ClocktowerGhostVoteAuthority,
-00270:     highestVoteNameState: MutableState<String?>,
-00271:     highestVoteCountState: MutableState<Int>,
-00272:     gameOutcome: GameOutcome?,
-00273:     onGhostVoteAuthorityChange: (ClocktowerGhostVoteAuthority) -> Unit,
-00274:     onRecordEvent: (ClocktowerEventType, String, String, List<String>) -> Unit,
-00275:     onRecordEpistemicObservation: (EpistemicObservationDraft) -> Unit,
-00276:     onHostTools: () -> Unit,
-00277:     onPreviousFromFirstNightReady: () -> Unit,
-00278:     onMovePreviousNightStep: () -> Unit,
-00279:     onSelectNightDeath: (String?) -> Unit,
-00280:     onConfirmDemonAttack: () -> Unit,
-00281:     onSelectExecution: (String?) -> Unit,
-00282:     onSelectPoisonTarget: (String?) -> Unit,
-00283:     onConfirmPoisonTarget: () -> Unit,
-
-### app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt:3618
-03608:             onRecordEvent(
-03609:                 ClocktowerEventType.Vote,
+### line 3618
 03610:                 text("提名与投票", "Nomination and vote"),
 03611:                 "${playerSeatLabel(cards, nominatorName)} → ${playerSeatLabel(cards, nomineeName)} · ${voteRecord.voteCount}/$executionThreshold · ${text("投票人：", "Voters: ")}$voterDetail",
 03612:                 listOfNotNull(nominatorName, nomineeName) + voteRecord.voters.map { voter -> voter.playerName },
@@ -865,12 +401,8 @@ count=43
 03624:                 ),
 03625:                 roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
 03626:             ),
-03627:             executionThreshold = executionThreshold,
-03628:             nominatorName = nominatorName,
 
-### app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt:3641
-03631:             actionsEnabled = gameOutcome == null,
-03632:             onHostTools = onHostTools,
+### line 3641
 03633:             onConfirm = { voteState ->
 03634:                 val voteTransaction = commitClocktowerVoteTransaction(
 03635:                     voteState = voteState,
@@ -888,12 +420,9 @@ count=43
 03647:                 dayMode = ClocktowerDayMode.Overview
 03648:             },
 03649:             onCancel = {
-03650:                 dayMode = ClocktowerDayMode.Nomination
-03651:             },
 
-### app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt:29
-00019: import androidx.compose.ui.text.font.FontWeight
-00020: import androidx.compose.ui.text.style.TextAlign
+## app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt
+### line 29
 00021: import androidx.compose.ui.unit.dp
 00022: 
 00023: /** In-place Day voting workspace. Seat taps remain pending until the Storyteller confirms. */
@@ -911,12 +440,8 @@ count=43
 00035:     onHostTools: () -> Unit,
 00036:     onConfirm: (ClocktowerTableVoteState) -> Unit,
 00037:     onCancel: () -> Unit,
-00038: ) {
-00039:     val language = LocalContext.current.resources.configuration.locales[0].language
 
-### app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt:70
-00060:             ) {
-00061:                 Text(
+### line 70
 00062:                     text("投票目标无效，请返回提名。", "Invalid vote target; return to nomination."),
 00063:                     textAlign = TextAlign.Center,
 00064:                 )
@@ -934,12 +459,8 @@ count=43
 00076:             ),
 00077:         )
 00078:     }
-00079:     val nominationLink = nominatorSeat
-00080:         ?.takeIf { seat -> seat.seatId != nomineeSeat.seatId }
 
-### app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt:75
-00065:             }
-00066:         }
+### line 75
 00067:         return
 00068:     }
 00069: 
@@ -957,12 +478,8 @@ count=43
 00081:         ?.let { seat -> HostTableDirectionalLink(seat.seatId, nomineeSeat.seatId) }
 00082:     val firstVoterSeat = voteState.orderedSeatIds.firstOrNull()
 00083:         ?.let { seatId -> voteState.seats.firstOrNull { seat -> seat.seatId == seatId } }
-00084: 
-00085:     ClocktowerDayTableScaffold(
 
-### app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt:101
-00091:         onNext = { onConfirm(voteState) },
-00092:         nextEnabled = actionsEnabled,
+### line 101
 00093:     ) {
 00094:         HostTableShell(
 00095:             seats = voteState.seats,
@@ -980,827 +497,84 @@ count=43
 00107:                     null
 00108:                 }
 00109:             },
-00110:             centerContent = {
-00111:                 Column(
 
-count=38
+## app/src/main/java/com/codex/campboardgamehost/persistence/RecoveryRestorePlanner.kt
+### line 259
+00251:         require(mechanics.artistClaimedNames.distinct().size == mechanics.artistClaimedNames.size) {
+00252:             "Artist claim history cannot contain duplicates."
+00253:         }
+00254:         require(mechanics.demonBluffRoleNames.distinct().size == mechanics.demonBluffRoleNames.size) {
+00255:             "Demon bluffs cannot contain duplicates."
+00256:         }
+00257:         require(mechanics.highestVoteCount >= 0) { "Highest vote count cannot be negative." }
+00258: 
+00259:         mechanics.ghostVoteAuthority.spentSeatIds.forEach { seatId ->
+00260:             require(seatId.number in 1..game.cards.size) { "Ghost-vote authority references an unknown seat." }
+00261:         }
+00262: 
+00263:         require(mechanics.klutzChoiceName == null) {
+00264:             "Unconfirmed Klutz choice is draft UI state and is not durable recovery state."
+00265:         }
+00266:         if (mechanics.pendingKlutzName == null) {
+00267:             require(!mechanics.klutzReturnToDawn) { "Klutz return-to-Dawn flag requires a pending Klutz." }
 
-## Night eliminated/isAlive contexts
-### app/src/main/java/com/codex/campboardgamehost/AppDealScreens.kt:150
-00140: ) {
-00141:     val language = LocalContext.current.resources.configuration.locales[0].language
-00142:     fun text(zh: String, en: String): String = if (language == "en") en else zh
-00143:     require(total == playerNames.size) { "Identity controller total must match the physical seat count" }
-00144:     require(current in 1..total) { "Identity controller current seat must be in range" }
-00145:     require(playerNames[current - 1] == playerName) { "Identity controller target must match the current seat" }
-00146:     val seats = playerNames.mapIndexed { index, name ->
-00147:         HostSeatPresentation(
-00148:             seatId = ClocktowerSeatId(index + 1),
-00149:             playerName = name,
-00150:             isAlive = true,
-00151:         )
-00152:     }
-00153:     val currentSeatId = ClocktowerSeatId(current)
+## app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshot.kt
+### line 150
+00142:     val slayerUsed: Boolean,
+00143:     val slayerClaimedNames: List<String>,
+00144:     val artistUsed: Boolean,
+00145:     val artistClaimedNames: List<String>,
+00146:     val lastExecutedName: String?,
+00147:     val pendingKlutzName: String?,
+00148:     val klutzChoiceName: String?,
+00149:     val klutzReturnToDawn: Boolean,
+00150:     val ghostVoteAuthority: ClocktowerGhostVoteAuthority,
+00151:     val highestVoteName: String?,
+00152:     val highestVoteCount: Int,
+00153: )
 00154: 
-00155:     ClocktowerDarkTheme {
-00156:         Column(
-00157:             modifier = Modifier
-00158:                 .fillMaxSize()
-00159:                 .background(MaterialTheme.colorScheme.background),
-00160:         ) {
+00155: /** Published/history authority used by recommendation and epistemic replay after recovery. */
+00156: internal data class ClocktowerRecoveryHistory(
+00157:     val gameStateRevision: Long,
+00158:     val playerInputRevision: Long,
 
-### app/src/main/java/com/codex/campboardgamehost/AppGameModels.kt:29
-00019: 
-00020: internal data class PlayerCard(
-00021:     val name: String,
-00022:     val role: Role,
-00023:     val word: String,
-00024:     val roleLabel: String? = null,
-00025:     val actualRoleLabel: String? = null,
-00026:     val clocktowerTeam: ClocktowerTeam? = null,
-00027:     val clocktowerRole: ClocktowerRole? = null,
-00028:     val clocktowerShownRole: ClocktowerRole? = null,
-00029:     val eliminatedRound: Int? = null,
-00030: )
-00031: 
-00032: internal data class EliminationRecord(
-00033:     val round: Int,
-00034:     val playerName: String,
-00035:     val note: String? = null,
-00036: )
-00037: 
-00038: internal data class GameOutcome(
-00039:     val title: String,
+## app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotJsonCodec.kt
+### line 131
+00123:         putNullableString("clocktowerLastExecutedName", game.mechanics.lastExecutedName)
+00124:         putNullableString("clocktowerPendingKlutzName", game.mechanics.pendingKlutzName)
+00125:         // A selected Klutz target is ordinary unconfirmed UI input. Recovery preserves the pending
+00126:         // Klutz obligation and safely re-enters the choice, but never promotes this draft to fact.
+00127:         putNullableString("clocktowerKlutzChoiceName", null)
+00128:         put("clocktowerKlutzReturnToDawn", game.mechanics.klutzReturnToDawn)
+00129:         put(
+00130:             ClocktowerGhostVoteAuthorityPersistence.ROOT_KEY,
+00131:             ClocktowerGhostVoteAuthorityPersistence.encode(game.mechanics.ghostVoteAuthority),
+00132:         )
+00133:         putNullableString("clocktowerHighestVoteName", game.mechanics.highestVoteName)
+00134:         put("clocktowerHighestVoteCount", game.mechanics.highestVoteCount.coerceAtLeast(0))
+00135:         put("clocktowerEvents", AppGameStateJsonCodec.encodeEvents(game.history.events))
+00136:         put("clocktowerEpistemicObservations", encodeObservations(game.history.epistemicObservations))
+00137:     }
+00138: 
+00139:     private fun encodeObservations(
 
-### app/src/main/java/com/codex/campboardgamehost/AppGameReviewScreens.kt:453
-00443:                                 color = MaterialTheme.colorScheme.primary,
-00444:                                 fontWeight = FontWeight.Black,
-00445:                             )
-00446:                         }
-00447:                     }
-00448:                     Column(modifier = Modifier.weight(1f)) {
-00449:                         Text(card.name, fontWeight = FontWeight.Bold)
-00450:                         Text(role + shown, color = MaterialTheme.colorScheme.onSurfaceVariant)
-00451:                     }
-00452:                     Text(
-00453:                         card.eliminatedRound?.let { text("死亡", "Dead") } ?: text("存活", "Alive"),
-00454:                         color = if (card.eliminatedRound == null) Color(0xFF2F7A57) else MaterialTheme.colorScheme.onSurfaceVariant,
-00455:                         style = MaterialTheme.typography.labelMedium,
-00456:                         fontWeight = FontWeight.Bold,
-00457:                     )
-00458:                 }
-00459:             }
-00460:         }
-00461:     }
-00462: }
-00463: 
-
-### app/src/main/java/com/codex/campboardgamehost/AppGameReviewScreens.kt:454
-00444:                                 fontWeight = FontWeight.Black,
-00445:                             )
-00446:                         }
-00447:                     }
-00448:                     Column(modifier = Modifier.weight(1f)) {
-00449:                         Text(card.name, fontWeight = FontWeight.Bold)
-00450:                         Text(role + shown, color = MaterialTheme.colorScheme.onSurfaceVariant)
-00451:                     }
-00452:                     Text(
-00453:                         card.eliminatedRound?.let { text("死亡", "Dead") } ?: text("存活", "Alive"),
-00454:                         color = if (card.eliminatedRound == null) Color(0xFF2F7A57) else MaterialTheme.colorScheme.onSurfaceVariant,
-00455:                         style = MaterialTheme.typography.labelMedium,
-00456:                         fontWeight = FontWeight.Bold,
-00457:                     )
-00458:                 }
-00459:             }
-00460:         }
-00461:     }
-00462: }
-00463: 
-00464: @Composable
-
-### app/src/main/java/com/codex/campboardgamehost/AppGameReviewScreens.kt:625
-00615:                     }
-00616:                 }
-00617:             }
-00618:         }
-00619:         item { Text(text("角色身份", "Roles"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) }
-00620:         items(review.cards) { card ->
-00621:             val role = card.hostRoleLabel(context, review.gameKind)
-00622:             GameRecordRow(
-00623:                 title = "#${review.cards.indexOf(card) + 1} ${card.name}",
-00624:                 detail = role,
-00625:                 phase = card.eliminatedRound?.let { text("死亡", "Dead") } ?: text("存活", "Alive"),
-00626:             )
-00627:         }
-00628:         item { Text(text("操作记录", "Game log"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black) }
-00629:         if (review.gameKind == GameKind.Clocktower) {
-00630:             items(review.events.filterNot { it.type == ClocktowerEventType.System }) { event ->
-00631:                 GameRecordRow(event.title, event.detail, text("第 ${event.round} 轮", "Round ${event.round}"))
-00632:             }
-00633:         } else {
-00634:             items(review.records) { record ->
-00635:                 GameRecordRow(record.playerName, record.note.orEmpty(), text("第 ${record.round} 轮", "Round ${record.round}"))
-
-### app/src/main/java/com/codex/campboardgamehost/AppGameScreen.kt:98
-00088:                         Text(gameOutcome.reason, color = Color(0xFF5C6A63))
-00089:                     }
-00090:                 }
-00091:             }
-00092:         }
-00093: 
-00094:         item {
-00095:             Text(stringResource(R.string.select_elimination), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-00096:             Spacer(Modifier.height(8.dp))
-00097:             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-00098:                 cards.filter { it.eliminatedRound == null }.forEach { card ->
-00099:                     val selected = selectedElimination == card.name
-00100:                     if (selected) {
-00101:                         Button(onClick = { onSelectElimination(card.name) }, shape = RoundedCornerShape(8.dp)) {
-00102:                             Text(card.name)
-00103:                         }
-00104:                     } else {
-00105:                         OutlinedButton(onClick = { onSelectElimination(card.name) }, shape = RoundedCornerShape(8.dp)) {
-00106:                             Text(card.name)
-00107:                         }
-00108:                     }
-
-### app/src/main/java/com/codex/campboardgamehost/AppGameScreen.kt:172
-00162:         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-00163:     ) {
-00164:         Row(
-00165:             modifier = Modifier
-00166:                 .fillMaxWidth()
-00167:                 .padding(14.dp),
-00168:             verticalAlignment = Alignment.CenterVertically,
-00169:             horizontalArrangement = Arrangement.SpaceBetween,
-00170:         ) {
-00171:             Text(card.name, fontWeight = FontWeight.SemiBold)
-00172:             val status = card.eliminatedRound?.let { stringResource(R.string.eliminated_round_format, it) }
-00173:                 ?: stringResource(R.string.active_status)
-00174:             Text(status, color = if (card.eliminatedRound == null) Color(0xFF2F5D50) else Color(0xFF9A4B36))
-00175:         }
-00176:     }
-00177: }
-
-### app/src/main/java/com/codex/campboardgamehost/AppGameScreen.kt:174
-00164:         Row(
-00165:             modifier = Modifier
-00166:                 .fillMaxWidth()
-00167:                 .padding(14.dp),
-00168:             verticalAlignment = Alignment.CenterVertically,
-00169:             horizontalArrangement = Arrangement.SpaceBetween,
-00170:         ) {
-00171:             Text(card.name, fontWeight = FontWeight.SemiBold)
-00172:             val status = card.eliminatedRound?.let { stringResource(R.string.eliminated_round_format, it) }
-00173:                 ?: stringResource(R.string.active_status)
-00174:             Text(status, color = if (card.eliminatedRound == null) Color(0xFF2F5D50) else Color(0xFF9A4B36))
-00175:         }
-00176:     }
-00177: }
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:282
-00272: 
-00273: internal enum class LanguageMode(val prefsValue: String) {
-00274:     System("system"),
-00275:     Chinese("zh"),
-00276:     English("en"),
-00277: }
-00278: 
-00279: internal fun PlayerCard.abilitySubject(poisonTarget: String?): AbilitySubject = AbilitySubject(
-00280:     actualRole = clocktowerRole?.enName,
-00281:     shownRole = clocktowerShownRole?.enName,
-00282:     isPoisoned = poisonTarget == name && eliminatedRound == null,
-00283:     isAlive = eliminatedRound == null,
-00284: )
-00285: 
-00286: private fun Context.playerName(number: Int): String = getString(R.string.default_player_name_format, number)
-00287: 
-00288: private const val PREFS_NAME = "camp_board_game_host"
-00289: private const val COMMON_PLAYERS_KEY = "common_players"
-00290: private const val LANGUAGE_MODE_KEY = "language_mode"
-00291: private const val STORYTELLER_EXPERIENCE_MODE_KEY = "storyteller_experience_mode"
-00292: private const val ACTIVE_GAME_STATE_KEY = "active_game_state"
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:283
-00273: internal enum class LanguageMode(val prefsValue: String) {
-00274:     System("system"),
-00275:     Chinese("zh"),
-00276:     English("en"),
-00277: }
-00278: 
-00279: internal fun PlayerCard.abilitySubject(poisonTarget: String?): AbilitySubject = AbilitySubject(
-00280:     actualRole = clocktowerRole?.enName,
-00281:     shownRole = clocktowerShownRole?.enName,
-00282:     isPoisoned = poisonTarget == name && eliminatedRound == null,
-00283:     isAlive = eliminatedRound == null,
-00284: )
-00285: 
-00286: private fun Context.playerName(number: Int): String = getString(R.string.default_player_name_format, number)
-00287: 
-00288: private const val PREFS_NAME = "camp_board_game_host"
-00289: private const val COMMON_PLAYERS_KEY = "common_players"
-00290: private const val LANGUAGE_MODE_KEY = "language_mode"
-00291: private const val STORYTELLER_EXPERIENCE_MODE_KEY = "storyteller_experience_mode"
-00292: private const val ACTIVE_GAME_STATE_KEY = "active_game_state"
-00293: private const val GAME_HISTORY_KEY = "game_history"
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:1152
-01142:             poisonedPlayerName = clocktowerConfirmedPoisonTarget,
-01143:             monkProtectedTargetName = clocktowerConfirmedMonkProtectedTarget,
-01144:         )
-01145:         val baseGameState = cards.toClocktowerGameState(
-01146:             currentClocktowerScript,
-01147:             clocktowerGameSeed,
-01148:             poisonedPlayerName = clocktowerConfirmedPoisonTarget,
-01149:         )
-01150:         val effectiveNightState = ClocktowerEffectiveNightState(
-01151:             effectiveAliveSeats = cards.mapIndexedNotNull { index, card ->
-01152:                 (index + 1).takeIf { card.eliminatedRound == null }
-01153:             }.toSet(),
-01154:             effectiveRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-01155:                 card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-01156:             }.toMap(),
-01157:         )
-01158:         val demonRoleIds = cards.mapNotNull { card ->
-01159:             card.clocktowerRole
-01160:                 ?.takeIf { card.clocktowerTeam == ClocktowerTeam.Demon }
-01161:                 ?.let { role -> RoleId(role.enName) }
-01162:         }.toSet()
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:1217
-01207:                 detail = detail,
-01208:                 playerNames = playerNames.distinct(),
-01209:                 phase = eventPhase,
-01210:                 round = eventRound,
-01211:             ),
-01212:         )
-01213:         if (!projectSemanticHistory) return
-01214:         if (type !in setOf(ClocktowerEventType.Death, ClocktowerEventType.Execution)) return
-01215:         val eliminatedSeats = playerNames.mapNotNull { playerName ->
-01216:             cards.indexOfFirst { it.name == playerName }
-01217:                 .takeIf { index -> index >= 0 && cards[index].eliminatedRound != null }
-01218:                 ?.plus(1)
-01219:         }.distinct()
-01220:         if (eliminatedSeats.isEmpty()) return
-01221:         val epistemicPhase = storytellerPhaseFor(eventPhase)
-01222:         eliminatedSeats.forEach { seat ->
-01223:             when (type) {
-01224:                 ClocktowerEventType.Execution -> recordClocktowerAction(ActionFactDraft.Execution(
-01225:                     actionId = clocktowerActionId(
-01226:                         kind = "execution",
-01227:                         actionRound = eventRound,
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:2141
-02131:                 word = context.getString(
-02132:                     R.string.clocktower_card_desc_format,
-02133:                     nextRole.team.label(context),
-02134:                     nextRole.descriptionFor(language),
-02135:                 ),
-02136:             )
-02137:         }
-02138:     }
-02139: 
-02140:     fun promoteScarletWomanIfNeeded(): String? {
-02141:         val alivePlayers = cards.filter { it.eliminatedRound == null }
-02142:         // The Demon is already marked dead when this runs: four alive now means
-02143:         // there were five alive immediately before the Demon died.
-02144:         if (alivePlayers.size < 4) return null
-02145:         val scarletWoman = alivePlayers.firstOrNull {
-02146:             it.clocktowerRole?.enName == "Scarlet Woman" && it.name != clocktowerConfirmedPoisonTarget
-02147:         } ?: return null
-02148:         val imp = completeTroubleBrewingRoles.first { it.enName == "Imp" }
-02149:         setClocktowerActualRole(scarletWoman.name, imp)
-02150:         records.add(EliminationRecord(round, scarletWoman.name, context.getString(R.string.clocktower_record_scarlet_woman_promoted)))
-02151:         addClocktowerEvent(
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:2696
-02686:                             val canEnterDawn =
-02687:                                 if (pendingName != null) {
-02688:                                     val baseGameState = cards.toClocktowerGameState(
-02689:                                         currentClocktowerScript,
-02690:                                         clocktowerGameSeed,
-02691:                                         poisonedPlayerName = clocktowerConfirmedPoisonTarget,
-02692:                                     )
-02693:                                     val checkpoint = currentClocktowerNightCheckpoint()
-02694:                                     val effectiveNightState = ClocktowerEffectiveNightState(
-02695:                                         effectiveAliveSeats = cards.mapIndexedNotNull { index, card ->
-02696:                                             (index + 1).takeIf { card.eliminatedRound == null }
-02697:                                         }.toSet(),
-02698:                                         effectiveRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-02699:                                             card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-02700:                                         }.toMap(),
-02701:                                     )
-02702:                                     val poisoner = cards.mapIndexedNotNull { index, card ->
-02703:                                         card.clocktowerRole
-02704:                                             ?.takeIf { role -> card.eliminatedRound == null && role.enName == "Poisoner" }
-02705:                                             ?.let { role -> index + 1 to role }
-02706:                                     }.firstOrNull()
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:2704
-02694:                                     val effectiveNightState = ClocktowerEffectiveNightState(
-02695:                                         effectiveAliveSeats = cards.mapIndexedNotNull { index, card ->
-02696:                                             (index + 1).takeIf { card.eliminatedRound == null }
-02697:                                         }.toSet(),
-02698:                                         effectiveRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-02699:                                             card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-02700:                                         }.toMap(),
-02701:                                     )
-02702:                                     val poisoner = cards.mapIndexedNotNull { index, card ->
-02703:                                         card.clocktowerRole
-02704:                                             ?.takeIf { role -> card.eliminatedRound == null && role.enName == "Poisoner" }
-02705:                                             ?.let { role -> index + 1 to role }
-02706:                                     }.firstOrNull()
-02707:                                     val demonRole = requireNotNull(cards.firstOrNull {
-02708:                                         it.clocktowerTeam == ClocktowerTeam.Demon
-02709:                                     }?.clocktowerRole)
-02710:                                     val transition = NightDawnResolutionPlanner.confirmNewDemonIdentity(
-02711:                                         baseGameState = baseGameState,
-02712:                                         checkpoint = checkpoint,
-02713:                                         demonRoleId = RoleId(demonRole.enName),
-02714:                                         poisonResolutionInput = poisoner?.let { (poisonerSeat, poisonerRole) ->
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:2735
-02725:                                             ),
-02726:                                     )
-02727:                                     val dawnCommitIntent = transition.dawnCommitIntent
-02728:                                     if (transition.continuation == NightResolutionContinuation.DAWN && dawnCommitIntent != null) {
-02729:                                         val durableMaterializationPlan = NightDawnDurableMaterializationPlanner.plan(
-02730:                                             gameId = clocktowerGameId,
-02731:                                             round = round,
-02732:                                             intent = dawnCommitIntent,
-02733:                                             state = DawnDurableMaterializationState(
-02734:                                                 aliveSeats = cards.mapIndexedNotNull { index, card ->
-02735:                                                     (index + 1).takeIf { card.eliminatedRound == null }
-02736:                                                 }.toSet(),
-02737:                                                 roleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-02738:                                                     card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-02739:                                                 }.toMap(),
-02740:                                                 currentPhase = storytellerPhaseFor(),
-02741:                                                 currentPoisonTargetSeat =
-02742:                                                     clocktowerConfirmedPoisonTarget?.let(::clocktowerSeatFor),
-02743:                                                 committedActionIds = clocktowerActionTimeline.entries
-02744:                                                     .map { it.fact.actionId }
-02745:                                                     .toSet(),
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:2944
-02934:                                         "${playerSeatLabel(cards, targetName)} registered as the Imp for the Slayer.",
-02935:                                     ),
-02936:                                     listOf(targetName),
-02937:                                 )
-02938:                             }
-02939:                             var shotOutcome: GameOutcome? = null
-02940:                             if (slayerDecision.consumesUse) {
-02941:                                 clocktowerSlayerUsed = true
-02942:                                 advanceClocktowerGameStateRevision()
-02943:                             }
-02944:                             if (slayerDecision.effectApplies && targetIndex >= 0 && targetCard != null && targetCard.eliminatedRound == null && targetRegistersAsDemon) {
-02945:                                 val targetSeat = targetIndex + 1
-02946:                                 val localSequence = clocktowerEventCounter + 1
-02947:                                 preflightClocktowerPublicAliveObservation(
-02948:                                     playerName = targetName,
-02949:                                     eventSequence = localSequence,
-02950:                                 )
-02951:                                 recordClocktowerAction(ActionFactDraft.Death(
-02952:                                     actionId = clocktowerActionId(
-02953:                                         kind = "slayer-death",
-02954:                                         localSequence = localSequence,
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:2966
-02956:                                     ),
-02957:                                     phase = storytellerPhaseFor(),
-02958:                                     round = round,
-02959:                                     sequence = localSequence,
-02960:                                     targetSeat = targetSeat,
-02961:                                 ))
-02962:                                 requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
-02963:                                     targetSeat = targetSeat,
-02964:                                 )
-02965:                                 publishClocktowerSessionView()
-02966:                                 cards[targetIndex] = targetCard.copy(eliminatedRound = round)
-02967:                                 recordEpistemicObservation(EpistemicObservationDraft(
-02968:                                     recordId = "public-alive-${clocktowerGameId}-${localSequence}-$targetSeat",
-02969:                                     phase = storytellerPhaseFor(),
-02970:                                     round = round,
-02971:                                     sequence = localSequence,
-02972:                                     sourceSeat = null,
-02973:                                     sourceAbility = null,
-02974:                                     visibility = ObservationVisibility.PUBLIC,
-02975:                                     recipientSeats = emptySet(),
-02976:                                     reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3030
-03020:                             }
-03021:                             gameOutcome = shotOutcome
-03022:                             if (shotOutcome != null) {
-03023:                                 showResults = true
-03024:                                 addOutcomeEvent(shotOutcome)
-03025:                             }
-03026:                         },
-03027:                         onPreflightVirginExecution = { nominatorName, spyRegistrationWillRecord ->
-03028:                             val preflightIndex = cards.indexOfFirst { it.name == nominatorName }
-03029:                             val preflightCard = cards.getOrNull(preflightIndex)
-03030:                             if (preflightIndex >= 0 && preflightCard != null && preflightCard.eliminatedRound == null) {
-03031:                                 preflightClocktowerPublicAliveObservation(
-03032:                                     playerName = nominatorName,
-03033:                                     eventSequence = clocktowerEventCounter + if (spyRegistrationWillRecord) 2 else 1,
-03034:                                 )
-03035:                             }
-03036:                         },
-03037:                         onVirginNomination = { nominatorName, nomineeName, executeNominator ->
-03038:                             clocktowerVirginUsed = true
-03039:                             advanceClocktowerGameStateRevision()
-03040:                             if (executeNominator) {
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3043
-03033:                                     eventSequence = clocktowerEventCounter + if (spyRegistrationWillRecord) 2 else 1,
-03034:                                 )
-03035:                             }
-03036:                         },
-03037:                         onVirginNomination = { nominatorName, nomineeName, executeNominator ->
-03038:                             clocktowerVirginUsed = true
-03039:                             advanceClocktowerGameStateRevision()
-03040:                             if (executeNominator) {
-03041:                                 val index = cards.indexOfFirst { it.name == nominatorName }
-03042:                                 val nominatorCard = cards.getOrNull(index)
-03043:                                 if (index >= 0 && nominatorCard != null && nominatorCard.eliminatedRound == null) {
-03044:                                     requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
-03045:                                         targetSeat = index + 1,
-03046:                                     )
-03047:                                     publishClocktowerSessionView()
-03048:                                     cards[index] = nominatorCard.copy(eliminatedRound = round)
-03049:                                     records.add(
-03050:                                         EliminationRecord(
-03051:                                             round,
-03052:                                             nominatorName,
-03053:                                             context.getString(
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3048
-03038:                             clocktowerVirginUsed = true
-03039:                             advanceClocktowerGameStateRevision()
-03040:                             if (executeNominator) {
-03041:                                 val index = cards.indexOfFirst { it.name == nominatorName }
-03042:                                 val nominatorCard = cards.getOrNull(index)
-03043:                                 if (index >= 0 && nominatorCard != null && nominatorCard.eliminatedRound == null) {
-03044:                                     requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
-03045:                                         targetSeat = index + 1,
-03046:                                     )
-03047:                                     publishClocktowerSessionView()
-03048:                                     cards[index] = nominatorCard.copy(eliminatedRound = round)
-03049:                                     records.add(
-03050:                                         EliminationRecord(
-03051:                                             round,
-03052:                                             nominatorName,
-03053:                                             context.getString(
-03054:                                                 R.string.clocktower_record_virgin_execution,
-03055:                                                 playerSeatLabel(cards, nomineeName),
-03056:                                             ),
-03057:                                         ),
-03058:                                     )
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3131
-03121:                             }
-03122:                             val observationAlreadyExists = proposedObservationId.isNotEmpty() &&
-03123:                                 clocktowerEpistemicObservations.any { observation ->
-03124:                                     observation.recordId == proposedObservationId
-03125:                                 }
-03126:                             val executionDebugFields = mapOf(
-03127:                                 "lastCriticalAction" to "CONFIRM_EXECUTION_CLICKED",
-03128:                                 "phaseAtAction" to clocktowerPhase.name,
-03129:                                 "roundAtAction" to round.toString(),
-03130:                                 "selectedSeat" to if (preflightIndex >= 0) (preflightIndex + 1).toString() else "",
-03131:                                 "targetAlive" to (preflightCard?.eliminatedRound == null).toString(),
-03132:                                 "eventCounter" to clocktowerEventCounter.toString(),
-03133:                                 "gameStateRevision" to clocktowerGameStateRevision.toString(),
-03134:                                 "playerInputRevision" to clocktowerPlayerInputRevision.toString(),
-03135:                                 "eventCount" to clocktowerEvents.size.toString(),
-03136:                                 "observationCount" to clocktowerEpistemicObservations.size.toString(),
-03137:                                 "proposedObservationId" to proposedObservationId,
-03138:                                 "observationAlreadyExists" to observationAlreadyExists.toString(),
-03139:                             )
-03140:                             DebugFlightRecorder.updateState(executionDebugFields)
-03141:                             DebugFlightRecorder.record(
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3148
-03138:                                 "observationAlreadyExists" to observationAlreadyExists.toString(),
-03139:                             )
-03140:                             DebugFlightRecorder.updateState(executionDebugFields)
-03141:                             DebugFlightRecorder.record(
-03142:                                 event = "CONFIRM_EXECUTION_CLICKED",
-03143:                                 fields = executionDebugFields,
-03144:                             )
-03145:                             if (preflightExecutionName != null &&
-03146:                                 preflightIndex >= 0 &&
-03147:                                 preflightCard != null &&
-03148:                                 preflightCard.eliminatedRound == null
-03149:                             ) {
-03150:                                 DebugFlightRecorder.record(
-03151:                                     event = "EXECUTION_PREFLIGHT",
-03152:                                     fields = executionDebugFields + mapOf(
-03153:                                         "proposedSequence" to proposedSequence.toString(),
-03154:                                     ),
-03155:                                 )
-03156:                                 preflightClocktowerPublicAliveObservation(
-03157:                                     playerName = preflightExecutionName,
-03158:                                     eventSequence = proposedSequence,
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3164
-03154:                                     ),
-03155:                                 )
-03156:                                 preflightClocktowerPublicAliveObservation(
-03157:                                     playerName = preflightExecutionName,
-03158:                                     eventSequence = proposedSequence,
-03159:                                 )
-03160:                             }
-03161:                             // Confirming the day commits its execution/no-execution result and
-03162:                             // closes the day decision window, including when no one dies.
-03163:                             advanceClocktowerGameStateRevision()
-03164:                             val aliveBeforeExecution = cards.filter { it.eliminatedRound == null }
-03165:                             val executionName = clocktowerSelectedExecution
-03166:                             var executionOutcome: GameOutcome? = null
-03167:                             if (executionName != null) {
-03168:                                 val index = cards.indexOfFirst { it.name == executionName }
-03169:                                 val executedCard = cards.getOrNull(index)
-03170:                                 if (index >= 0 && executedCard != null && executedCard.eliminatedRound == null) {
-03171:                                     requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
-03172:                                         targetSeat = index + 1,
-03173:                                     )
-03174:                                     publishClocktowerSessionView()
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3170
-03160:                             }
-03161:                             // Confirming the day commits its execution/no-execution result and
-03162:                             // closes the day decision window, including when no one dies.
-03163:                             advanceClocktowerGameStateRevision()
-03164:                             val aliveBeforeExecution = cards.filter { it.eliminatedRound == null }
-03165:                             val executionName = clocktowerSelectedExecution
-03166:                             var executionOutcome: GameOutcome? = null
-03167:                             if (executionName != null) {
-03168:                                 val index = cards.indexOfFirst { it.name == executionName }
-03169:                                 val executedCard = cards.getOrNull(index)
-03170:                                 if (index >= 0 && executedCard != null && executedCard.eliminatedRound == null) {
-03171:                                     requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
-03172:                                         targetSeat = index + 1,
-03173:                                     )
-03174:                                     publishClocktowerSessionView()
-03175:                                     cards[index] = executedCard.copy(eliminatedRound = round)
-03176:                                     records.add(EliminationRecord(round, executionName, context.getString(R.string.clocktower_record_execution)))
-03177:                                     addClocktowerEvent(
-03178:                                         ClocktowerEventType.Execution,
-03179:                                         localizedText("处决", "Execution"),
-03180:                                     playerSeatLabel(cards, executionName),
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3175
-03165:                             val executionName = clocktowerSelectedExecution
-03166:                             var executionOutcome: GameOutcome? = null
-03167:                             if (executionName != null) {
-03168:                                 val index = cards.indexOfFirst { it.name == executionName }
-03169:                                 val executedCard = cards.getOrNull(index)
-03170:                                 if (index >= 0 && executedCard != null && executedCard.eliminatedRound == null) {
-03171:                                     requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
-03172:                                         targetSeat = index + 1,
-03173:                                     )
-03174:                                     publishClocktowerSessionView()
-03175:                                     cards[index] = executedCard.copy(eliminatedRound = round)
-03176:                                     records.add(EliminationRecord(round, executionName, context.getString(R.string.clocktower_record_execution)))
-03177:                                     addClocktowerEvent(
-03178:                                         ClocktowerEventType.Execution,
-03179:                                         localizedText("处决", "Execution"),
-03180:                                     playerSeatLabel(cards, executionName),
-03181:                                         listOf(executionName),
-03182:                                     )
-03183:                                     clocktowerLastExecutedName = executionName
-03184:                                     if (executedCard.clocktowerRole?.enName == "Saint") {
-03185:                                         executionOutcome = GameOutcome(
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3251
-03241:                             }
-03242:                             clocktowerSelectedExecution = null
-03243:                         },
-03244:                         onConfirmNight = {
-03245:                             // Dawn resolution commits deaths, role changes and the next phase as
-03246:                             // one timeline boundary. Earlier action confirmations have already
-03247:                             // revisioned their own facts; this closes the night as a whole.
-03248:                             advanceClocktowerGameStateRevision()
-03249:                             clocktowerPendingNightNewDemonIdentityName = null
-03250:                             val demonPoisonedTonight = clocktowerConfirmedPoisonTarget?.let { name ->
-03251:                                 cards.firstOrNull { it.name == name && it.eliminatedRound == null }?.clocktowerTeam == ClocktowerTeam.Demon
-03252:                             } == true
-03253:                             var nightKlutzName: String? = null
-03254:                             var newDemonName: String? = null
-03255:                             var unresolvedDemonSuccessor = false
-03256:                             val originalDeathName = clocktowerPendingNightDeath
-03257:                             val dawnDeathFacts = resolveTroubleBrewingDawnDeathFacts(
-03258:                                 cards = cards,
-03259:                                 targetName = originalDeathName,
-03260:                                 poisonedPlayerName = clocktowerConfirmedPoisonTarget,
-03261:                                 monkProtectedTargetName = clocktowerConfirmedMonkProtectedTarget,
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3271
-03261:                                 monkProtectedTargetName = clocktowerConfirmedMonkProtectedTarget,
-03262:                             )
-03263:                             val mayorCanRedirect = dawnDeathFacts.mayorSeat != null
-03264:                             val baseGameState = cards.toClocktowerGameState(
-03265:                                 currentClocktowerScript,
-03266:                                 clocktowerGameSeed,
-03267:                                 poisonedPlayerName = clocktowerConfirmedPoisonTarget,
-03268:                             )
-03269:                             val effectiveNightState = ClocktowerEffectiveNightState(
-03270:                                 effectiveAliveSeats = cards.mapIndexedNotNull { index, card ->
-03271:                                     (index + 1).takeIf { card.eliminatedRound == null }
-03272:                                 }.toSet(),
-03273:                                 effectiveRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-03274:                                     card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-03275:                                 }.toMap(),
-03276:                             )
-03277:                             val demonRoleIds = cards.mapNotNull { card ->
-03278:                                 card.clocktowerRole
-03279:                                     ?.takeIf { card.clocktowerTeam == ClocktowerTeam.Demon }
-03280:                                     ?.let { role -> RoleId(role.enName) }
-03281:                             }.toSet()
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3319
-03309:                                 mayorCanRedirect && resolvedDeathName != null && resolvedDeathName != originalDeathName -> resolvedDeathName
-03310:                                 safeMayorRedirectName != null -> safeMayorRedirectName
-03311:                                 else -> null
-03312:                             }
-03313:                             val dawnDeathMaterialization = NightDawnDurableMaterializationPlanner.plan(
-03314:                                 gameId = clocktowerGameId,
-03315:                                 round = round,
-03316:                                 intent = DawnCommitIntent(death = deathTransition.dawnCommitIntent?.death),
-03317:                                 state = DawnDurableMaterializationState(
-03318:                                     aliveSeats = cards.mapIndexedNotNull { index, card ->
-03319:                                         (index + 1).takeIf { card.eliminatedRound == null }
-03320:                                     }.toSet(),
-03321:                                     roleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-03322:                                         card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-03323:                                     }.toMap(),
-03324:                                     currentPhase = storytellerPhaseFor(),
-03325:                                     committedActionIds = clocktowerActionTimeline.entries
-03326:                                         .map { it.fact.actionId }
-03327:                                         .toSet(),
-03328:                                     committedObservationRecordIds = clocktowerEpistemicObservations
-03329:                                         .map { it.recordId }
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3439
-03429:                                             round = round,
-03430:                                             sequence = deathLocalSequence,
-03431:                                             targetSeat = dawnDeathMaterialization.intent.targetSeat,
-03432:                                         ))
-03433:                                     }
-03434:                                     if (dawnDeathMaterialization.stateMutationRequired) {
-03435:                                         requireClocktowerGameSession().synchronizePlayerDeathWithinCurrentRevision(
-03436:                                             targetSeat = dawnDeathMaterialization.intent.targetSeat,
-03437:                                         )
-03438:                                         publishClocktowerSessionView()
-03439:                                         cards[index] = nightDeathCard.copy(eliminatedRound = round)
-03440:                                         records.add(EliminationRecord(round, deathName, context.getString(R.string.clocktower_record_night_death)))
-03441:                                         addClocktowerEvent(
-03442:                                             ClocktowerEventType.Death,
-03443:                                             localizedText("恶魔击杀", "Demon kill"),
-03444:                                             localizedText(
-03445:                                                 "${playerSeatLabel(cards, deathName)} · 死亡",
-03446:                                                 "${playerSeatLabel(cards, deathName)} · killed",
-03447:                                             ),
-03448:                                             listOf(deathName),
-03449:                                             projectSemanticHistory = false,
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3542
-03532:                                 )
-03533:                             }
-03534:                             val dawnPoisoner = cards.mapIndexedNotNull { index, card ->
-03535:                                 card.clocktowerRole
-03536:                                     ?.takeIf { role -> role.enName == "Poisoner" }
-03537:                                     ?.let { role -> index + 1 to role }
-03538:                             }.firstOrNull()
-03539: 
-03540:                             val postDeathEffectiveNightState = ClocktowerEffectiveNightState(
-03541:                                 effectiveAliveSeats = cards.mapIndexedNotNull { index, card ->
-03542:                                     (index + 1).takeIf { card.eliminatedRound == null }
-03543:                                 }.toSet(),
-03544:                                 effectiveRoleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-03545:                                     card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-03546:                                 }.toMap(),
-03547:                             )
-03548: 
-03549:                             val durablePreviousPoisonTargetSeat =
-03550:                                 NightDawnPoisonRecoveryAuthority.latestTargetSeatForRound(
-03551:                                     actionTimeline = clocktowerActionTimeline,
-03552:                                     round = round,
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3576
-03566:                             }
-03567: 
-03568:                             ordinaryDawnPoisonIntent?.let { poisonIntent ->
-03569:                                 val poisonMaterialization = requireNotNull(
-03570:                                     NightDawnDurableMaterializationPlanner.plan(
-03571:                                         gameId = clocktowerGameId,
-03572:                                         round = round,
-03573:                                         intent = DawnCommitIntent(poisonCarry = poisonIntent),
-03574:                                         state = DawnDurableMaterializationState(
-03575:                                             aliveSeats = cards.mapIndexedNotNull { index, card ->
-03576:                                                 (index + 1).takeIf { card.eliminatedRound == null }
-03577:                                             }.toSet(),
-03578:                                             roleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-03579:                                                 card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-03580:                                             }.toMap(),
-03581:                                             currentPhase = storytellerPhaseFor(),
-03582:                                             currentPoisonTargetSeat =
-03583:                                                 clocktowerConfirmedPoisonTarget?.let(::clocktowerSeatFor),
-03584:                                             committedActionIds = clocktowerActionTimeline.entries
-03585:                                                 .map { it.fact.actionId }
-03586:                                                 .toSet(),
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3651
-03641:                                 addOutcomeEvent(nightOutcome)
-03642:                             } else if (nightKlutzName == null && newDemonName != null) {
-03643:                                 clocktowerPendingNewDemonName = newDemonName
-03644:                             } else if (nightKlutzName == null && !unresolvedDemonSuccessor) {
-03645:                                 val dawnPhasePlan = NightDawnDurableMaterializationPlanner.plan(
-03646:                                     gameId = clocktowerGameId,
-03647:                                     round = round,
-03648:                                     intent = DawnCommitIntent(),
-03649:                                     state = DawnDurableMaterializationState(
-03650:                                         aliveSeats = cards.mapIndexedNotNull { index, card ->
-03651:                                             (index + 1).takeIf { card.eliminatedRound == null }
-03652:                                         }.toSet(),
-03653:                                         roleIdsBySeat = cards.mapIndexedNotNull { index, card ->
-03654:                                             card.clocktowerRole?.let { role -> index + 1 to RoleId(role.enName) }
-03655:                                         }.toMap(),
-03656:                                         currentPhase = storytellerPhaseFor(),
-03657:                                         committedActionIds = clocktowerActionTimeline.entries
-03658:                                             .map { it.fact.actionId }
-03659:                                             .toSet(),
-03660:                                         committedObservationRecordIds = clocktowerEpistemicObservations
-03661:                                             .map { it.recordId }
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3716
-03706:                     records = records,
-03707:                     round = round,
-03708:                     gameOutcome = gameOutcome,
-03709:                     selectedElimination = selectedElimination,
-03710:                     onSelectElimination = { selectedElimination = it },
-03711:                     onConfirmElimination = {
-03712:                         val name = selectedElimination
-03713:                         if (name != null) {
-03714:                             val index = cards.indexOfFirst { it.name == name }
-03715:                             if (index >= 0) {
-03716:                                 cards[index] = cards[index].copy(eliminatedRound = round)
-03717:                                 records.add(EliminationRecord(round, name))
-03718:                                 selectedElimination = null
-03719:                                 gameOutcome = evaluateGameOutcome(context, cards, currentGameKind)
-03720:                                 if (gameOutcome != null) {
-03721:                                     showResults = true
-03722:                                 }
-03723:                                 round += 1
-03724:                             }
-03725:                         }
-03726:                     },
-
-### app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt:3818
-03808:                         onManagePlayers = ::archiveAndReturnToPlayerManagement,
-03809:                         onQuickRestart = ::archiveAndStartNewGame,
-03810:                     )
-03811:                 }
-03812:             }
-03813:         }
-03814:     }
-03815: }
-03816: 
-03817: private fun evaluateGameOutcome(context: Context, cards: List<PlayerCard>, gameKind: GameKind): GameOutcome? {
-03818:     val activeCards = cards.filter { it.eliminatedRound == null }
-03819:     if (gameKind == GameKind.Clocktower) {
-03820:         val activeDemons = activeCards.count { it.clocktowerTeam == ClocktowerTeam.Demon }
-03821:         return when {
-03822:             activeDemons == 0 -> GameOutcome(
-03823:                 title = context.getString(R.string.outcome_clocktower_good_title),
-03824:                 summary = context.getString(R.string.outcome_clocktower_good_summary),
-03825:                 reason = context.getString(R.string.outcome_clocktower_good_reason),
-03826:             )
-03827: 
-03828:             activeCards.size <= 2 -> GameOutcome(
-
-### app/src/main/java/com/codex/campboardgamehost/ClocktowerCurrentDemonAuthority.kt:18
-00008: import com.codex.campboardgamehost.clocktower.session.resolveTroubleBrewingImpSelfKillSuccession
-00009: 
-00010: internal data class CurrentDemonHostContext(
-00011:     val actor: PlayerCard,
-00012:     val isPoisoned: Boolean,
-00013: )
-00014: 
-00015: internal fun resolveCurrentDemonCard(cards: List<PlayerCard>): PlayerCard? =
-00016:     CurrentDemonAuthority.resolveLive(
-00017:         candidates = cards,
-00018:         isAlive = { card -> card.eliminatedRound == null },
-00019:         isDemon = { card -> card.clocktowerTeam == ClocktowerTeam.Demon },
-00020:     )
-00021: 
-00022: internal fun resolveCurrentDemonHostContext(
-00023:     cards: List<PlayerCard>,
-00024:     poisonedPlayerName: String?,
-00025: ): CurrentDemonHostContext? = resolveCurrentDemonCard(cards)?.let { actor ->
-00026:     CurrentDemonHostContext(
-00027:         actor = actor,
-00028:         isPoisoned = actor.name == poisonedPlayerName,
-
-count=92
+## app/src/main/java/com/codex/campboardgamehost/persistence/RecoverySnapshotStrictDecoder.kt
+### line 135
+00127:                 slayerUsed = json.requiredBoolean("clocktowerSlayerUsed"),
+00128:                 slayerClaimedNames = json.requiredArray("clocktowerSlayerClaimedNames").strictStringList(),
+00129:                 artistUsed = json.requiredBoolean("clocktowerArtistUsed"),
+00130:                 artistClaimedNames = json.requiredArray("clocktowerArtistClaimedNames").strictStringList(),
+00131:                 lastExecutedName = json.requiredNullableString("clocktowerLastExecutedName"),
+00132:                 pendingKlutzName = json.requiredNullableString("clocktowerPendingKlutzName"),
+00133:                 klutzChoiceName = json.requiredNullableString("clocktowerKlutzChoiceName"),
+00134:                 klutzReturnToDawn = json.requiredBoolean("clocktowerKlutzReturnToDawn"),
+00135:                 ghostVoteAuthority = json.decodeGhostVoteAuthorityStrict(),
+00136:                 highestVoteName = json.requiredNullableString("clocktowerHighestVoteName"),
+00137:                 highestVoteCount = json.requiredInt("clocktowerHighestVoteCount"),
+00138:             ),
+00139:             history = ClocktowerRecoveryHistory(
+00140:                 gameStateRevision = gameStateRevision,
+00141:                 playerInputRevision = playerInputRevision,
+00142:                 semanticHistoryMode = semanticHistoryMode,
+00143:                 actionTimeline = actionTimeline,
 
