@@ -1,6 +1,8 @@
 package com.codex.campboardgamehost
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -46,6 +48,40 @@ class ClocktowerNightFullScreenOwnershipTest {
     }
 
     @Test
+    fun `new demon identity owns square table and projects a role reveal`() {
+        assertTrue(
+            clocktowerNightUsesFullScreenHostSurface(
+                isRealAction = true,
+                action = ClocktowerNightAction.NewDemonIdentity,
+                displayKind = ClocktowerDisplayKind.None,
+            ),
+        )
+
+        val step = ClocktowerNightStepUi(
+            title = "New Demon",
+            actor = null,
+            isRealAction = true,
+            reason = "",
+            storytellerAction = "Wake the new Demon",
+            tellPlayer = "You are now the Imp",
+            explanation = "",
+            action = ClocktowerNightAction.NewDemonIdentity,
+            displayKind = ClocktowerDisplayKind.None,
+            displayTitle = "New Demon Identity",
+        )
+        val presentation = clocktowerPlainInformationSquareTablePresentation(
+            step = step,
+            actorSeat = 3,
+            wakeInstruction = "Wake player 3",
+        )
+
+        assertNotNull(presentation)
+        assertEquals(3, presentation?.actorSeat)
+        assertEquals(ClocktowerDisplayKind.RoleReveal, presentation?.displayStep?.displayKind)
+        assertEquals("You are now the Imp", presentation?.displayStep?.displayPrimary)
+    }
+
+    @Test
     fun `non real or empty legacy step stays in the regular night shell`() {
         assertFalse(
             clocktowerNightUsesFullScreenHostSurface(
@@ -58,13 +94,6 @@ class ClocktowerNightFullScreenOwnershipTest {
             clocktowerNightUsesFullScreenHostSurface(
                 isRealAction = false,
                 action = ClocktowerNightAction.None,
-                displayKind = ClocktowerDisplayKind.None,
-            ),
-        )
-        assertFalse(
-            clocktowerNightUsesFullScreenHostSurface(
-                isRealAction = true,
-                action = ClocktowerNightAction.NewDemonIdentity,
                 displayKind = ClocktowerDisplayKind.None,
             ),
         )
