@@ -11,6 +11,20 @@ internal data class ResolvedHostTableSurfaceLayout(
     val seatDensity: ClocktowerSquareTableSeatDensity,
 )
 
+/**
+ * Compose can transiently report zero-sized bounds while host chrome or routes recompose.
+ * Those frames are not renderable; strict layout constraints remain fail-closed once a
+ * real geometry calculation is requested.
+ */
+internal fun canRenderHostTableSurface(
+    availableWidth: Float,
+    availableHeight: Float,
+): Boolean =
+    availableWidth.isFinite() &&
+        availableWidth > 0f &&
+        availableHeight.isFinite() &&
+        availableHeight > 0f
+
 private val HOST_TABLE_COMPACT_FALLBACK_SCALES = listOf(0.96f, 0.92f, 0.88f, 0.84f, 0.80f)
 
 /**

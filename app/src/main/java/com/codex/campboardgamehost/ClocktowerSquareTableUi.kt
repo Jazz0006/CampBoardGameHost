@@ -184,6 +184,9 @@ internal fun ClocktowerSquareTableSeatSurface(
     ) {
         val availableWidth = maxWidth.value
         val availableHeight = maxHeight.value
+        if (!canRenderHostTableSurface(availableWidth, availableHeight)) {
+            return@BoxWithConstraints
+        }
         val density = LocalDensity.current
         val detailedSeatCards = seats.any { seat -> seat.detailLabels.isNotEmpty() }
         val resolvedLayout = layout ?: remember(
