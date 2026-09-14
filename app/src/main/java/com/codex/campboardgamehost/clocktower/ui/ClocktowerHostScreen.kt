@@ -94,7 +94,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableN
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
-import com.codex.campboardgamehost.clocktower.session.NightTransactionReconstructor
+import com.codex.campboardgamehost.clocktower.session.NightTransactionRestoreComposition
 import com.codex.campboardgamehost.clocktower.session.DynamicResolutionRequest
 import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
@@ -478,7 +478,7 @@ internal fun ClocktowerJudgeScreen(
     val demonSuccessorInteractionId = ClocktowerProductionNightStepIdentity.demonSuccessor()
         .interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT)
     val canonicalNightReconstruction = if (phase == ClocktowerPhase.Night) {
-        NightTransactionReconstructor.reconstruct(
+        NightTransactionRestoreComposition.compose(
             baseGameState = nightBaseGameState,
             checkpoint = nightCheckpoint,
             canonicalInteractionIds = otherNightCanonicalInteractionIds,

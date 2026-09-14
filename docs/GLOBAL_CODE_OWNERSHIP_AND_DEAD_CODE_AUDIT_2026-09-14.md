@@ -1,9 +1,9 @@
 # GLOBAL CODE OWNERSHIP AND DEAD-CODE AUDIT
 
 > Date: 2026-09-14 Australia/Sydney
-> Status: **IMPLEMENTATION IN PROGRESS — steps 1 and 2 complete; step 3 remote gates pass and awaits user acceptance; steps 4-6 remain**
+> Status: **IMPLEMENTATION IN PROGRESS — steps 1-3 complete; step 4 audit/implementation in progress; steps 5-6 remain**
 > Baseline: PR #123 campaign head `486473bac8ab0c717ca84a54a32db035e9413901`
-> Current implementation heads: step 1 `8f5d7668`; step 2 `590cac55`; step 3 PR #126 code head `eb0873bd`
+> Current implementation heads: step 1 `8f5d7668`; step 2 `590cac55`; step 3 merged as `b7756062`; step 4 branch `codex/global-ownership-cleanup-4`
 
 ## 1. Scope and method
 
@@ -224,9 +224,10 @@ compatibility boundary.
    - removes 790 lexically confirmed unused imports (the original 781 plus 9 orphaned by cleanup);
    - leaves both locale key sets and format placeholders aligned, with zero missing static string
      references and zero remaining statically unreferenced main-string definitions.
-3. **NEXT — unify registration domain and automatic-selection ownership.** Candidate legality,
-   registration facts and automatic selection must converge behind one domain/session boundary.
-4. Make production restore and restore tests consume the same composition boundary.
+3. **COMPLETE — unify registration domain and automatic-selection ownership.** PR #126 merged as
+   `b7756062`; candidate legality, registration facts and automatic selection now converge behind one
+   domain/session boundary.
+4. **IN PROGRESS — make production restore and restore tests consume the same composition boundary.**
 5. Cut No Greater Joy setup over to the generic provider/source/shown-identity pipeline.
 6. Finally reduce Host/App gameplay ownership and converge square-table presentation. This includes
    centralizing the duplicated phase conversion, moving mechanical projection out of Compose, and
@@ -334,10 +335,82 @@ new conversation after re-querying live `main` and repository state.
   forced `:app:testFast`; forced ZDD, enumerated-world and A3 golden tests; forced
   `:app:testFull :app:assembleDebug` (1,352 JVM tests, zero failures); ASP corpus validation (52
   scenarios) and 14 ASP harness tests.
-- PR #126 code head `eb0873bdeb3ca00feaa83d113ec29083bd81c75c` is based exactly on merged
+- PR #126 code head `eb0873bdeb3ca00feaa83d113ec29083bd81c75c` was based exactly on merged
   `main` `d6773a2e14ea5242c9fa432893d40f3a566ec625`. Remote Android Full, ASP contracts,
-  Real Clingo, aggregate CI and R2 boundary checks all passed; the PR remains Draft and unmerged
-  pending explicit user acceptance.
+  Real Clingo, aggregate CI and R2 boundary checks all passed; the PR merged as
+  `b77560628054dee90c78a91d4bab8cb4185fda59` after explicit user authorization.
 - Final producer/consumer search found no remaining `canMisregister` input or UI role/team legality
   reconstruction. Remaining direct `RegistrationFact` constructors are persistence/semantic-world
   decoding/projection adapters, not competing registration legality owners.
+
+## 11. Step 4 live fan-out audit and architecture pre-flight
+
+> Recorded before production editing on branch `codex/global-ownership-cleanup-4` from merged
+> `main` `b77560628054dee90c78a91d4bab8cb4185fda59`.
+
+### 11.1 Production and test entry-point classification
+
+- Production has one direct reconstruction caller: `ClocktowerHostScreen` invokes
+  `NightTransactionReconstructor.reconstruct` for an active other night, using the current typed
+  `ClocktowerNightCheckpoint`, base `GameState` and canonical interaction plan.
+- `NightTransactionRestoreComposition.restore` is production code but has no production caller. It
+  decodes persisted checkpoint values and delegates to the same reconstructor; its callers are
+  `NightTransactionRestoreCompositionTest` and
+  `NightDawnRestoreRetryConvergenceAcceptanceTest`.
+- `NightTransactionReconstructionContractTest`,
+  `NightTransactionReconstructorSuccessionLegalityTest` and
+  `NightTransactionHostIntegrationSmokeTest` call the lower reconstructor directly. They protect
+  durable reconstruction, succession legality and Host-facing derived state, so they must consume
+  the same composition entry as production rather than remain parallel entry points.
+- App recovery decodes saved-game fields into App-owned state and reconstructs the current typed
+  checkpoint before rendering Host. That is an intentional persistence/state adapter; Step 4 does
+  not move App state ownership or add a second saved-game decoder.
+- `ClocktowerNightCheckpoint.fromPersistedValues` remains the compatibility codec for persisted
+  checkpoint maps. Missing-field behavior and all persisted key meanings are intentionally exempt
+  from structural change.
+
+### 11.2 Architecture pre-flight
+
+- current owner: reconstruction logic is implemented by `NightTransactionReconstructor`, while a
+  test-only `NightTransactionRestoreComposition` facade owns persisted-map decoding and delegates to
+  it; production and restore acceptance therefore enter through different boundaries.
+- proposed responsibility: `NightTransactionRestoreComposition` becomes the single callable
+  composition owner for both a typed current checkpoint and persisted checkpoint values. The
+  reconstruction algorithm becomes private implementation inside that owner.
+- authoritative state owner(s): `ClocktowerNightCheckpoint` plus base `GameState` remain durable
+  inputs; the canonical flow owns interaction ordering; `ClocktowerGameSession`/App retain session,
+  revision, timeline and persistence authority.
+- narrow typed input/output seam: typed checkpoint + base game + canonical interaction IDs + Demon
+  successor identity -> immutable `NightTransactionReconstruction`; persisted values first decode to
+  the typed checkpoint and return that checkpoint beside the same reconstruction.
+- keep in current owner / extract: keep checkpoint decoding in `fromPersistedValues`, canonical
+  mechanics in the existing pure reconstruction algorithm and Host rendering downstream; fold the
+  algorithm behind the composition object and remove the separately callable reconstructor entry.
+- reason: this lets production, focused contracts and restore acceptance execute the same seam
+  without a redundant serialize/decode round trip, changing persisted schema or moving mutable
+  state into presentation.
+
+### 11.3 Evidence plan
+
+- This is a behavior-preserving ownership refactor with strong existing typed coverage; no new RED
+  is required.
+- Establish a GREEN baseline for the five reconstruction/restore/Host-integration test classes.
+- Migrate production and those tests to the composition seam, then rerun the focused tests,
+  `:app:testFast`, `:app:testFull :app:assembleDebug`, persistence/restore-triggered T2 evidence,
+  `git diff --check` and a final direct-caller search.
+
+### 11.4 Implemented ownership convergence and local evidence
+
+- `NightTransactionRestoreComposition.compose` is now the single typed composition entry used by
+  production Host and the focused reconstruction, succession and Host-integration contracts.
+- `NightTransactionRestoreComposition.restore` decodes persisted checkpoint values and delegates to
+  that same typed entry; restore-composition and retry-convergence acceptance tests continue to
+  exercise the persisted path.
+- The reconstruction algorithm and `NightTransactionReconstruction` result moved unchanged behind
+  the composition owner. The separately callable `NightTransactionReconstructor` file/entry was
+  deleted, and the final production search finds no direct reconstructor caller.
+- No persisted fields, defaults, missing-field compatibility, transaction ordering, session state,
+  canonical interaction ordering or mechanics were changed.
+- Local GREEN evidence: the five focused restore/reconstruction/Host-integration classes before and
+  after the move; forced `:app:testFast` (1,335 tests, zero failures); forced
+  `:app:testFull :app:assembleDebug` (1,352 JVM tests, zero failures); `git diff --check`.

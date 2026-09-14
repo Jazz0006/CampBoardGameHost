@@ -44,7 +44,7 @@ class NightTransactionHostIntegrationSmokeTest {
         assertEquals("Poisoner", previous.checkpoint.confirmedDemonSuccessorTarget)
 
         val restored = ClocktowerNightCheckpoint.fromPersistedValues(previous.checkpoint.persistedValues())
-        val reconstruction = NightTransactionReconstructor.reconstruct(
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = baseGameState,
             checkpoint = restored,
             canonicalInteractionIds = canonicalPlan,
@@ -70,7 +70,7 @@ class NightTransactionHostIntegrationSmokeTest {
             NightCheckpointHostTransaction.editDemonSuccessor(initial, "Poisoner").checkpoint,
         )
         val restored = ClocktowerNightCheckpoint.fromPersistedValues(confirmed.checkpoint.persistedValues())
-        val reconstruction = NightTransactionReconstructor.reconstruct(
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = baseGameState,
             checkpoint = restored,
             canonicalInteractionIds = canonicalPlan,
