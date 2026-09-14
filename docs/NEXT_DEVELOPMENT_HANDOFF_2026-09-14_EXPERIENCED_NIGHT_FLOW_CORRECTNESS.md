@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — Experienced Night Flow Correctness
 
 > Date: 2026-09-14 Australia/Sydney  
-> Status: **CURRENT — immediate development priority**  
+> Status: **CURRENT — S1 COMPLETE; S2 read-only audit next**  
 > Program: Clocktower Storyteller mobile flow correctness  
 > Branch: `codex/experienced-night-flow-correctness`  
 > Starting `main`: `940ba1df68365974ba366985d66d1cb583682ba7`
@@ -46,28 +46,19 @@ Do not introduce a second persisted navigation coordinator, a second gameplay st
 
 ## 3. Audit findings that must guide implementation
 
-### 3.1 P0 — post-confirmation night navigation can enter a non-canonical cursor state
+### 3.1 P0 — post-confirmation night navigation can enter a non-canonical cursor state — S1 FIXED
 
-The current dynamic-advance path can temporarily write a step index equal to the current `nightSteps.size` when a confirmation may cause the flow to expand dynamically.
+The former dynamic-advance path could temporarily write a step index equal to the current `nightSteps.size` when a confirmation might expand the flow dynamically. That value was outside the currently renderable step domain, while rendering depended on coercion and a later Compose effect.
 
-That value is outside the currently renderable step domain. Rendering then relies on coercion and a later Compose effect to decide whether a new step appeared or the night should complete.
+S1 removed the out-of-range navigation sentinel. A dynamic final-step confirmation now keeps the current renderable cursor and returns transient `AwaitRefreshedFlow(currentStepIndex)` state. The refreshed flow then resolves through a typed result to either `MoveTo(actualValidIndex)` or `CompleteNight`.
 
-This creates multiple simultaneous interpretations of "current step":
+The durable checkpoint/session/history/Dawn ownership remains unchanged.
 
-```text
-stored checkpoint cursor
-render-coerced cursor
-Compose-local deferred advance state
-post-refresh dynamic flow result
-```
+### 3.2 P0 — Previous and Next/post-confirm advance ownership — S1 narrowed
 
-The next implementation must remove the requirement for an out-of-range stored navigation cursor.
+Previous remains owned by the existing typed checkpoint/Host transaction boundary. S1 established a typed post-confirm forward-resolution seam without moving mechanics/history/Dawn ownership and without introducing a second persisted navigation coordinator.
 
-### 3.2 P0 — Previous and Next/post-confirm advance do not share one typed ownership boundary
-
-Previous already has typed transaction/reducer ownership. Dynamic forward movement is still substantially orchestrated through Host/Compose state and `LaunchedEffect`.
-
-This is the central ownership defect to correct. Do not solve the reproduced bug by adding a DemonKill-only conditional.
+The remaining campaign work is not to widen this abstraction unnecessarily; continue only where executable evidence identifies a missing invariant.
 
 ### 3.3 P0 — full-screen ownership is not currently proven total
 
@@ -77,7 +68,7 @@ Required invariant:
 
 > every actual night step classified as full-screen must deterministically resolve to a renderable host surface for the active mode, or explicitly fall back to a valid legacy surface; it must never resolve to "nothing".
 
-The black-screen report plus loss of navigation is consistent with a violation of this invariant, although the exact field root cause still needs to be proven by executable evidence.
+S1 corrected the invalid cursor path, but it did not prove full-screen surface totality. This is now the immediate S2 target.
 
 ### 3.4 P1 — required single-target actions do not have one shared confirmation-eligibility contract
 
@@ -91,49 +82,56 @@ Experienced mode reaches manual branches such as Mayor redirect, Demon successio
 
 ## 4. Required target invariant
 
-The first campaign-level invariant is:
+The campaign-level invariant remains:
 
 > **After every legal night confirmation, the application must resolve to exactly one of two states: a valid renderable next night step, or an explicit night-completion/Dawn transition. There is no third out-of-range, blank, or ownerless UI state.**
 
-A related cursor invariant:
+The S1 cursor invariant is now executable:
 
-> When a renderable night step list is non-empty, the stored UI navigation cursor must identify an actual step in that list. Dynamic expansion must not require persisting an out-of-range sentinel cursor.
+> When a renderable night step list is non-empty, the stored UI navigation cursor identifies an actual step in that list. Dynamic expansion does not persist an out-of-range sentinel cursor.
 
 ## 5. Implementation sequence
 
-### S1 — Night navigation ownership / reproduced black-screen regression
+### S1 — Night navigation ownership / reproduced black-screen regression — COMPLETE
 
-First perform a narrow live delta audit of:
+Completed evidence:
 
-- `ClocktowerDynamicNightAdvance`;
-- `ClocktowerNightCheckpoint`;
-- `NightCheckpointReducer`;
-- `NightCheckpointHostTransaction`;
-- the Host callbacks that confirm Demon attack / Mayor redirect / Demon successor;
-- the Compose effect/state currently used for deferred night advance;
-- Dawn transition ownership.
+- typed RED commit: `52299383dfe9d2f2f6eef9718179a73234248a45`;
+- RED proved the dynamic final-step path exposed an invalid cursor under the old implementation;
+- production checkpoint: `7796ba13012ec12801abba3c75a7a61b8706cd28` — `fix: keep dynamic night cursor renderable`;
+- cleanup head after removing the temporary one-shot writer: `99c47bed6180839c0756b286540933cea90cc3b9`;
+- focused GREEN passed;
+- `:app:testFast --rerun-tasks` passed;
+- `git diff HEAD --check` and exact four-file production/test allowlist passed;
+- obsolete `ClocktowerDynamicNightAdvanceWiringTest` was retired because it protected only the defective source/implementation shape.
 
-Then establish the smallest durable typed RED that reproduces the invalid post-confirmation state or proves the missing invariant.
+Stable S1 contract:
 
-Preferred direction:
+```text
+current valid step
++ confirmation may expand flow
+-> AwaitRefreshedFlow(current valid index)
 
-- keep the stored cursor at a currently valid step while dynamic flow refresh is pending;
-- represent pending forward resolution as transient command/state only if genuinely required;
-- after recomputing the flow, resolve through one typed result such as valid `MoveTo(actualIndex)` or `CompleteNight`;
-- route forward navigation through the same authoritative typed boundary as the rest of night navigation where architecturally appropriate;
-- preserve existing checkpoint/session/history ownership and commit timing.
+refreshed flow contains a real next step
+-> MoveTo(actual valid next index)
 
-Do not encode an out-of-range step as a navigation sentinel.
+refreshed flow contains no next step
+-> CompleteNight
+```
 
-### S2 — Full-screen surface totality
+Do not reintroduce an out-of-range step as a navigation sentinel.
 
-Audit `ClocktowerNightFullScreenOwnership` and every production producer/consumer of the full-screen classification.
+### S2 — Full-screen surface totality — CURRENT NEXT STEP
+
+Begin with a read-only ownership/fan-out audit of `ClocktowerNightFullScreenOwnership` and every production producer/consumer of the full-screen classification.
 
 Establish a durable contract that every claimed full-screen night step resolves to a concrete render surface in both Beginner and Experienced modes.
 
 Prefer a typed render-plan/presentation boundary if the existing architecture naturally supports it. Do not create an abstraction solely to satisfy test ceremony.
 
 The shared Activity-root host scaffold remains the navigation-shell owner.
+
+Do not modify production until the classification → render-surface ownership boundary, must-inherit fan-out, intentional exemptions, and smallest typed evidence are identified.
 
 ### S3 — Skilled interaction eligibility
 
@@ -170,22 +168,21 @@ Real-device validation is required after the logical checkpoint because the orig
 
 Follow `AGENTS.md` and `docs/TESTING_STRATEGY.md`.
 
-For S1, this is a genuine regression/behavior gap. Prefer:
+S1 evidence order was completed as required:
 
 ```text
 stable invariant
--> smallest typed T0 RED
+-> smallest durable typed T0 RED
 -> minimal production fix
--> exact T0 GREEN --rerun-tasks where required
+-> exact T0 GREEN
+-> T1 testFast
 -> git diff --check
 -> remote exact diff/scope audit
 ```
 
-At logical checkpoints run T1 `:app:testFast` plus triggered T2/T3 evidence.
+For S2, begin read-only. Do not create a source-string test merely to assert local variable names, callback spelling, branch spelling, or render-function names. First identify whether a typed presentation/render-plan contract already exists or whether a minimal new typed contract is genuinely required.
 
-Do not add a source-string test merely to assert local variable names, callback spelling, or `LaunchedEffect` implementation shape.
-
-Existing source-wiring tests that encode the out-of-range/deferred implementation must be reclassified after the typed contract is established. If they protect only the old implementation shape, narrow or retire them in the same campaign rather than preserving the defective design to keep them green.
+Existing source-wiring tests that protect only implementation shape may be narrowed or retired only after durable typed evidence protects the actual invariant.
 
 ## 7. Scope fences
 
@@ -220,9 +217,9 @@ The likely production consumers include very large Host/App files. Apply `AGENTS
 
 Do not patch large files by guessed line number or by partial whole-file replacement.
 
-## 9. Live-state notes at handoff creation
+## 9. Live-state notes
 
-Recorded baseline:
+Recorded baseline remains:
 
 ```text
 main:
@@ -231,9 +228,20 @@ Merge PR #122 — UI: mark dead players clearly on square table
 
 working branch:
 codex/experienced-night-flow-correctness
+
+S1 production checkpoint:
+7796ba13012ec12801abba3c75a7a61b8706cd28
+
+S1 cleanup head before this docs update:
+99c47bed6180839c0756b286540933cea90cc3b9
+
+campaign PR:
+#123 — draft / do not merge yet
 ```
 
-Open draft PR #109 (`codex/execution-restore-crash-repro`) is unrelated diagnostic work. Do not modify, merge, or stack this campaign on PR #109.
+The bot-authored cleanup head can cause GitHub PR CI/R2 to report `action_required` with zero jobs because it removes the temporary workflow. Treat that as workflow approval state, not a failing test. The production checkpoint itself was validated inside the successful one-shot run before push.
+
+Open draft PR #109 (`codex/execution-restore-crash-repro`) remains unrelated diagnostic work. Do not modify, merge, or stack this campaign on PR #109.
 
 Reconfirm all live refs/checks in the next conversation.
 
@@ -245,9 +253,18 @@ Its existing handoff remains the resume point after this flow-correctness campai
 
 ## 11. First action in the next conversation
 
-After live-state confirmation, begin **S1 read-only delta audit + typed RED design**.
+After live-state confirmation, begin **S2 read-only full-screen surface totality audit**.
 
-Do not edit production code until the RED/owning contract and exact file scope are identified.
+Map:
+
+```text
+full-screen classification producer
+-> every production consumer
+-> mode-specific branching
+-> concrete rendered host surface / explicit legacy fallback
+```
+
+Classify every fan-out path as must-inherit or intentional exemption. Do not modify production until the smallest durable typed evidence and exact file scope are identified.
 
 ## 12. Stable rule
 
