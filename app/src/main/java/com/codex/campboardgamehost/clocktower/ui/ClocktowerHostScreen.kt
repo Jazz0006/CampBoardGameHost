@@ -3481,7 +3481,12 @@ internal fun ClocktowerJudgeScreen(
         ) {
             clocktowerTemporaryRegistrationSelection(
                 legalSpecialRoleEnNames = virginSpyLegalRoles.map { it.enName },
-                decisionKey = "spy-registration-fallback:${spyCard.name}:${virginSpyLegalRoles.map { it.enName }.sorted().joinToString(",")}",
+                decisionKey = clocktowerTemporaryRegistrationDecisionKey(
+                    gameId = gameId,
+                    phase = phase,
+                    round = round,
+                    registrationKey = virginRegistrationKey,
+                ),
             ).selected.payload
         } else {
             null
