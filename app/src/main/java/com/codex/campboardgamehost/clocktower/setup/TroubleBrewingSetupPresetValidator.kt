@@ -1,9 +1,7 @@
 package com.codex.campboardgamehost.clocktower.setup
 
-import com.codex.campboardgamehost.ClocktowerTeam
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCatalogTeam
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCharacterRegistry
-import com.codex.campboardgamehost.clocktowerDistribution
 
 internal enum class TroubleBrewingSetupPresetValidationCode {
     DUPLICATE_PRESET_ID,
@@ -151,12 +149,12 @@ internal object TroubleBrewingSetupPresetValidator {
             }
         }
 
-        val standard = clocktowerDistribution(preset.playerCount)
+        val standard = clocktowerSetupDistribution(preset.playerCount)
         val baronShift = if (includesBaron) 2 else 0
-        val expectedTownsfolk = standard.getValue(ClocktowerTeam.Townsfolk) - baronShift
-        val expectedOutsiders = standard.getValue(ClocktowerTeam.Outsider) + baronShift
-        val expectedMinions = standard.getValue(ClocktowerTeam.Minion)
-        val expectedDemons = standard.getValue(ClocktowerTeam.Demon)
+        val expectedTownsfolk = standard.townsfolk - baronShift
+        val expectedOutsiders = standard.outsiders + baronShift
+        val expectedMinions = standard.minions
+        val expectedDemons = standard.demons
 
         val compositionMatches =
             preset.townsfolk.size == expectedTownsfolk &&

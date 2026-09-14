@@ -91,6 +91,7 @@ import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecomme
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationPrewarmCoordinator
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingSetupRecommendationRevealCoordinator
 import com.codex.campboardgamehost.clocktower.session.TroubleBrewingFirstNightPrecomputeCoordinator
+import com.codex.campboardgamehost.clocktower.setup.NoGreaterJoyProductionSetupPreparer
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingCommittedSetupAdapter
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDealRoleResolver
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingProductionSetupPreparer
@@ -434,67 +435,6 @@ private fun defaultClocktowerScriptFor(playerCount: Int): ClocktowerScript =
 
 internal fun canStartClocktowerScript(script: ClocktowerScript): Boolean =
     script == ClocktowerScript.TroubleBrewing || script == ClocktowerScript.NoGreaterJoy
-
-internal fun clocktowerDistribution(playerCount: Int): Map<ClocktowerTeam, Int> {
-    return when (playerCount) {
-        5 -> mapOf(ClocktowerTeam.Townsfolk to 3, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
-        6 -> mapOf(ClocktowerTeam.Townsfolk to 3, ClocktowerTeam.Outsider to 1, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
-        7 -> mapOf(ClocktowerTeam.Townsfolk to 5, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
-        8 -> mapOf(ClocktowerTeam.Townsfolk to 5, ClocktowerTeam.Outsider to 1, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
-        9 -> mapOf(ClocktowerTeam.Townsfolk to 5, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 1, ClocktowerTeam.Demon to 1)
-        10 -> mapOf(ClocktowerTeam.Townsfolk to 7, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 2, ClocktowerTeam.Demon to 1)
-        11 -> mapOf(ClocktowerTeam.Townsfolk to 7, ClocktowerTeam.Outsider to 1, ClocktowerTeam.Minion to 2, ClocktowerTeam.Demon to 1)
-        12 -> mapOf(ClocktowerTeam.Townsfolk to 7, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 2, ClocktowerTeam.Demon to 1)
-        13 -> mapOf(ClocktowerTeam.Townsfolk to 9, ClocktowerTeam.Outsider to 0, ClocktowerTeam.Minion to 3, ClocktowerTeam.Demon to 1)
-        14 -> mapOf(ClocktowerTeam.Townsfolk to 9, ClocktowerTeam.Outsider to 1, ClocktowerTeam.Minion to 3, ClocktowerTeam.Demon to 1)
-        else -> mapOf(ClocktowerTeam.Townsfolk to 9, ClocktowerTeam.Outsider to 2, ClocktowerTeam.Minion to 3, ClocktowerTeam.Demon to 1)
-    }
-}
-
-private data class ClocktowerAssignment(
-    val actualRole: ClocktowerRole,
-    val shownRole: ClocktowerRole,
-)
-
-private fun generateClocktowerAssignments(playerCount: Int, script: ClocktowerScript): List<ClocktowerAssignment> {
-    val roles = clocktowerRolesForScript(script)
-    val baseDistribution = clocktowerDistribution(playerCount)
-    val demon = roles.filter { it.team == ClocktowerTeam.Demon }.random()
-    val baseOutsiderCount = baseDistribution.getValue(ClocktowerTeam.Outsider)
-    val minions = roles
-        .filter { it.team == ClocktowerTeam.Minion }
-        .shuffled()
-        .take(baseDistribution.getValue(ClocktowerTeam.Minion))
-    val includesBaron = minions.any { it.enName == "Baron" }
-    val baronOutsiderIncrease = if (includesBaron) {
-        if (script == ClocktowerScript.NoGreaterJoy) (2 - baseOutsiderCount).coerceIn(0, 2) else 2
-    } else {
-        0
-    }
-    val outsiderCount = baseOutsiderCount + baronOutsiderIncrease
-    val townsfolkCount = (baseDistribution.getValue(ClocktowerTeam.Townsfolk) - baronOutsiderIncrease).coerceAtLeast(0)
-    val outsiders = roles
-        .filter { it.team == ClocktowerTeam.Outsider }
-        .shuffled()
-        .take(outsiderCount)
-    val townsfolk = roles
-        .filter { it.team == ClocktowerTeam.Townsfolk }
-        .shuffled()
-        .take(townsfolkCount)
-    val actualRoles = (listOf(demon) + minions + outsiders + townsfolk).shuffled()
-    val townsfolkPool = roles.filter { it.team == ClocktowerTeam.Townsfolk }
-    return actualRoles.map { role ->
-        if (role.enName == "Drunk") {
-            val fakeRole = townsfolkPool
-                .filterNot { candidate -> candidate in actualRoles }
-                .randomOrNull()
-                ?: townsfolkPool.random()
-            ClocktowerAssignment(actualRole = role, shownRole = fakeRole)
-        } else {
-            ClocktowerAssignment(actualRole = role, shownRole = role)
-        }
-    }
-}
 
 @Composable
 internal fun CampBoardGameHostApp() {
@@ -1791,15 +1731,23 @@ internal fun CampBoardGameHostApp() {
             return
         }
 
-        val assignments = generateClocktowerAssignments(playerNames.size, script)
-        if (assignments.size != playerNames.size) return
         val preparedSeed = newClocktowerSeed()
-        val preparedCards = playerNames.mapIndexed { index, name ->
-            val assignment = assignments[index]
-            val role = assignment.actualRole
-            val shownRole = assignment.shownRole
+        val preparedSetup = NoGreaterJoyProductionSetupPreparer.prepare(
+            ruleset = activeGameClocktowerRulesetCatalog.ruleset(ClocktowerScript.NoGreaterJoy),
+            playerCount = playerNames.size,
+            gameSeed = preparedSeed,
+        )
+        val availableRolesById = clocktowerRolesForScript(script).associateBy { role -> RoleId(role.enName) }
+        val committedCards = preparedSetup.assignments.map { assignment ->
+            val name = playerNames[assignment.seat - 1]
+            val role = requireNotNull(availableRolesById[assignment.actualRole]) {
+                "Committed No Greater Joy actual role '${assignment.actualRole.value}' is unavailable."
+            }
+            val shownRole = requireNotNull(availableRolesById[assignment.shownRole]) {
+                "Committed No Greater Joy shown role '${assignment.shownRole.value}' is unavailable."
+            }
             PlayerCard(
-                name = name.ifBlank { context.playerName(index + 1) },
+                name = name.ifBlank { context.playerName(assignment.seat) },
                 role = Role.Civilian,
                 roleLabel = shownRole.nameFor(language),
                 actualRoleLabel = role.nameFor(language),
@@ -1813,54 +1761,11 @@ internal fun CampBoardGameHostApp() {
                 ),
             )
         }
-        val preparedSetupPlan = if (assignments.any { it.actualRole.enName == "Drunk" }) {
-            runCatching {
-                ClocktowerRecommendationCoordinator()
-                    .selectSetupPlan(
-                        request = SetupCoordinationRequest(
-                            game = preparedCards.toClocktowerGameState(script, preparedSeed),
-                            roles = clocktowerRoleDefinitionsForScript(script),
-                            history = gameHistory.toClocktowerSetupHistory(),
-                        ),
-                        style = storytellerRecommendationUxPolicy.recommendationStyle,
-                    )
-            }.getOrNull()
-        } else {
-            null
-        }
-        val recommendedDrunkShownRole = preparedSetupPlan
-            ?.decisions
-            ?.filterIsInstance<StorytellerDecision.DrunkShownRole>()
-            ?.singleOrNull()
-            ?.role
-            ?.value
-            ?.let { roleName ->
-                clocktowerRolesForScript(script).firstOrNull { role ->
-                    role.enName == roleName && role.team == ClocktowerTeam.Townsfolk
-                }
-            }
-        val committedCards = if (recommendedDrunkShownRole == null) {
-            preparedCards
-        } else {
-            preparedCards.map { card ->
-                if (card.clocktowerRole?.enName != "Drunk") {
-                    card
-                } else {
-                    card.copy(
-                        roleLabel = recommendedDrunkShownRole.nameFor(language),
-                        clocktowerShownRole = recommendedDrunkShownRole,
-                        word = context.getString(
-                            R.string.clocktower_card_desc_format,
-                            recommendedDrunkShownRole.team.label(context),
-                            recommendedDrunkShownRole.descriptionFor(language),
-                        ),
-                    )
-                }
-            }
-        }
         cards.clear()
         cards.addAll(committedCards)
         resetDealState(GameKind.Clocktower, script, preparedSeed)
+        committedClocktowerSetup = preparedSetup
+        persistActiveGameStateIfNeeded()
     }
 
     fun persistCompletedTroubleBrewingSetupIfNeeded(): Boolean {

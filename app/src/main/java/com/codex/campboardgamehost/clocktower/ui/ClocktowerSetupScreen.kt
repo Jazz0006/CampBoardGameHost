@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.codex.campboardgamehost.clocktower.setup.clocktowerSetupDistribution
 
 /** Behavior-preserving R2 extraction for Clocktower pre-game setup UI. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -49,7 +50,13 @@ internal fun ClocktowerSettingsScreen(
     val language = LocalContext.current.resources.configuration.locales[0].language
     val context = LocalContext.current
     var step by remember(playerCount) { mutableStateOf(0) }
-    val distribution = clocktowerDistribution(playerCount)
+    val setupDistribution = clocktowerSetupDistribution(playerCount)
+    val distribution = mapOf(
+        ClocktowerTeam.Townsfolk to setupDistribution.townsfolk,
+        ClocktowerTeam.Outsider to setupDistribution.outsiders,
+        ClocktowerTeam.Minion to setupDistribution.minions,
+        ClocktowerTeam.Demon to setupDistribution.demons,
+    )
     val showScriptChoice = playerCount in 5..6
     val effectiveScript = if (showScriptChoice) selectedScript else ClocktowerScript.TroubleBrewing
     val canStart = playerCount >= MIN_CLOCKTOWER_PLAYERS && canStartClocktowerScript(effectiveScript)

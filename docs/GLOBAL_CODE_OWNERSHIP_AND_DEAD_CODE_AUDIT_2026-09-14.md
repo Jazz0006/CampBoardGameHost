@@ -227,9 +227,11 @@ compatibility boundary.
 3. **COMPLETE — unify registration domain and automatic-selection ownership.** PR #126 merged as
    `b7756062`; candidate legality, registration facts and automatic selection now converge behind one
    domain/session boundary.
-4. **READY FOR ACCEPTANCE — make production restore and restore tests consume the same composition
-   boundary.** PR #127 code head `fec12982` passed full remote gates.
-5. Cut No Greater Joy setup over to the generic provider/source/shown-identity pipeline.
+4. **COMPLETE — make production restore and restore tests consume the same composition boundary.**
+   PR #127 merged as `092ca62f`; production and tests now consume one restore composition owner.
+5. **READY FOR ACCEPTANCE — cut No Greater Joy setup over to the generic provider/source/shown-
+   identity pipeline.** PR #128 code head `02b8a7d7` passed full remote gates; user acceptance and
+   merge authorization remain.
 6. Finally reduce Host/App gameplay ownership and converge square-table presentation. This includes
    centralizing the duplicated phase conversion, moving mechanical projection out of Compose, and
    extracting only small shared presentation seams rather than a universal configurable screen.
@@ -417,5 +419,95 @@ new conversation after re-querying live `main` and repository state.
   `:app:testFull :app:assembleDebug` (1,352 JVM tests, zero failures); `git diff --check`.
 - PR #127 code head `fec12982d370fe1b0bdcde0dd313fb5366a3ad40` is based exactly on merged
   `main` `b77560628054dee90c78a91d4bab8cb4185fda59`. Remote Android Full, ASP contracts,
-  Real Clingo, aggregate CI and R2 boundary checks all passed; the PR remains Draft and unmerged
+  Real Clingo, aggregate CI and R2 boundary checks all passed; PR #127 merged as
+  `092ca62f7806bd353e683c2dee1c7a134e4304f5` after explicit user authorization.
+
+## 12. Step 5 live fan-out audit and architecture pre-flight
+
+> Recorded before production editing on branch `codex/global-ownership-cleanup-5` from merged
+> `main` `092ca62f7806bd353e683c2dee1c7a134e4304f5`.
+
+### 12.1 Production and test fan-out classification
+
+- `CampBoardGameHostApp.startClocktowerGame` routes Trouble Brewing to its production preparer but
+  keeps No Greater Joy on App-root `generateClocktowerAssignments`. That path owns unseeded role
+  selection, Baron distribution adjustment, seat shuffling and Drunk shown-role selection.
+- `ClocktowerAssignment` and `generateClocktowerAssignments` are therefore the parallel NGJ
+  production implementation. App-root `clocktowerDistribution` is additionally consumed by the TB
+  preset validator, setup-screen presentation and `NoGreaterJoySetupRegressionTest`; its duplicated
+  data must move to one setup-layer distribution owner rather than simply be deleted. The NGJ 5/6
+  expectations move to the typed production setup boundary.
+- `GeneratedSetupCandidateSource` already owns deterministic legal composition generation and the
+  capped Baron outsider adjustment used by NGJ. Its direct callers are tests only before Step 5.
+- `ClocktowerSetupProvider` and `ClocktowerSetupProviderRegistry` already own script/provider
+  attribution and cross-script rejection. The registry is test-only before Step 5 and must become
+  part of the NGJ production preparation path.
+- `SetupShownIdentityPolicyResolver` owns legal generated Drunk shown-role options, and
+  `SetupShownIdentityCommitter` owns the deterministic selection. Both are test-only for NGJ before
+  Step 5 and are must-inherit production consumers.
+- `CommittedClocktowerSetup` is the exact post-commit actual/shown identity fact already retained by
+  App state and recovery. NGJ currently leaves that state unset; the new production preparation
+  boundary must materialize it directly.
+- Trouble Brewing templates, rotation history, deal planner and recommendation precompute remain
+  intentionally exempt. Step 5 must not change their provider, selection, persistence or reveal
+  transaction.
+- NGJ role-card localization is an intentional App presentation adapter: committed role IDs are
+  resolved to the existing localized `ClocktowerRole` values after the setup transaction returns.
+
+### 12.2 Architecture pre-flight
+
+- current owner: NGJ setup semantics are split between App-root random generation and the test-only
+  generic provider/source/shown-identity pipeline.
+- proposed responsibility: one pure `NoGreaterJoyProductionSetupPreparer` resolves the registered
+  generated provider, selects its single deterministic candidate, resolves and commits shown
+  identity, deterministically assigns roles to canonical seats, and returns
+  `CommittedClocktowerSetup`.
+- authoritative state owner(s): the validated NGJ ruleset owns available characters and teams; the
+  generic source owns actual-role composition; shown-identity policy/commitment own Drunk identity;
+  the new preparer owns only composition of those immutable results; App/session retain game state,
+  lifecycle, recovery and persistence authority.
+- narrow typed input/output seam: validated NGJ ruleset + player count + setup seed -> immutable
+  `CommittedClocktowerSetup` with generated provenance and canonical seat assignments.
+- keep in current owner / extract: keep localization/card materialization and game lifecycle wiring
+  in App; connect the existing generic setup owners behind the new typed preparer, centralize base
+  distribution in the setup layer for source/validator/UI consumption, and delete the App-root
+  generation implementation after all callers migrate.
+- reason: this completes the already-designed production cutover without moving lifecycle state or
+  introducing a generic App context, while making actual/shown identity reproducible from the one
+  prepared seed and independently testable outside Compose.
+
+### 12.3 Evidence plan
+
+- Add a typed RED at the new production preparation boundary proving stable generated provenance,
+  exact 5/6-player team distributions, deterministic seat/identity commitment and legal distinct
+  Drunk shown identity.
+- Preserve the existing generated-source, provider-registry, shown-policy/commitment and NGJ
+  downstream semantic acceptance tests as owning baseline evidence.
+- After cutover, rerun focused setup tests, `:app:testFast`, `:app:testFull :app:assembleDebug`,
+  `git diff --check`, and final production producer/consumer searches.
+
+### 12.4 Implemented production cutover and local evidence
+
+- `NoGreaterJoyProductionSetupPreparer` is the production composition owner. It resolves the NGJ
+  provider through `ClocktowerSetupProviderRegistry`, obtains the deterministic generated candidate,
+  resolves and commits shown identity, deterministically assigns the canonical role multiset to
+  seats, and returns the exact `CommittedClocktowerSetup` fact.
+- `CampBoardGameHostApp.startClocktowerGame` now creates the seed before NGJ preparation, consumes
+  that committed fact to materialize localized cards, and retains the fact after resetting the game
+  lifecycle. App no longer selects NGJ roles, shuffles seats, or chooses a second Drunk shown role.
+- `clocktowerSetupDistribution` is the single setup-layer base-distribution owner consumed by the
+  generated source, TB preset validator and setup-screen presentation adapter. The duplicated
+  App-root distribution and `generateClocktowerAssignments` implementation were deleted.
+- The typed RED failed only because `NoGreaterJoyProductionSetupPreparer` did not yet exist. It is
+  GREEN after implementation and proves deterministic committed identities, generated provenance,
+  canonical seats, legal distinct Drunk shown identity, and every legal 5/6-player Baron/non-Baron
+  distribution across a seed matrix.
+- Existing generated-source, provider-registry, shown-policy/commitment, NGJ semantic acceptance,
+  NGJ product-surface and TB preset-validation focused tests pass. Forced `:app:testFast` passes.
+  Forced `:app:testFull :app:assembleDebug` passes with 1,353 JVM tests and zero failures.
+- `git diff --check` passes. Final production search finds no `generateClocktowerAssignments`,
+  `ClocktowerAssignment`, App-root `clocktowerDistribution`, or second NGJ random setup path.
+- PR #128 code head `02b8a7d79ebc369fbabcfa82d259078bf22dd18b` is based exactly on merged
+  `main` `092ca62f7806bd353e683c2dee1c7a134e4304f5`. Remote Android Full, ASP contracts,
+  Real Clingo, aggregate CI and R2 boundary checks all passed. The PR remains Draft and unmerged
   pending explicit user acceptance.

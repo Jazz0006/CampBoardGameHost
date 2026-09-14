@@ -25,7 +25,7 @@ internal class GeneratedSetupCandidateSource(
             "Generated setup source for '${ruleset.script.id.value}' cannot serve '${request.script.value}'."
         }
 
-        val base = generatedClocktowerDistribution(request.playerCount)
+        val base = clocktowerSetupDistribution(request.playerCount)
         val minions = selectRoles(
             team = ClocktowerCatalogTeam.MINION,
             count = base.minions,
@@ -136,27 +136,3 @@ internal class GeneratedSetupCandidateSource(
         const val MIX_MULTIPLIER_2 = -7723592293110705685L
     }
 }
-
-private data class GeneratedClocktowerDistribution(
-    val townsfolk: Int,
-    val outsiders: Int,
-    val minions: Int,
-    val demons: Int,
-)
-
-/** Parity with the current Clocktower 5-15 player base distribution. */
-private fun generatedClocktowerDistribution(playerCount: Int): GeneratedClocktowerDistribution =
-    when (playerCount) {
-        5 -> GeneratedClocktowerDistribution(3, 0, 1, 1)
-        6 -> GeneratedClocktowerDistribution(3, 1, 1, 1)
-        7 -> GeneratedClocktowerDistribution(5, 0, 1, 1)
-        8 -> GeneratedClocktowerDistribution(5, 1, 1, 1)
-        9 -> GeneratedClocktowerDistribution(5, 2, 1, 1)
-        10 -> GeneratedClocktowerDistribution(7, 0, 2, 1)
-        11 -> GeneratedClocktowerDistribution(7, 1, 2, 1)
-        12 -> GeneratedClocktowerDistribution(7, 2, 2, 1)
-        13 -> GeneratedClocktowerDistribution(9, 0, 3, 1)
-        14 -> GeneratedClocktowerDistribution(9, 1, 3, 1)
-        15 -> GeneratedClocktowerDistribution(9, 2, 3, 1)
-        else -> error("Unsupported Clocktower player count: $playerCount")
-    }
