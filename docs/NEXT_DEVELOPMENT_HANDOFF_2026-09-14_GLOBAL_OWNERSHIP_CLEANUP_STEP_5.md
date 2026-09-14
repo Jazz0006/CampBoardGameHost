@@ -1,7 +1,7 @@
 # Global Ownership Cleanup — Step 5 Handoff
 
 > Updated: 2026-09-14 Australia/Sydney
-> Status: local gates pass; remote validation and user acceptance pending
+> Status: PR #128 remote gates pass; user acceptance pending
 
 ## 1. Baseline and scope
 
@@ -35,6 +35,8 @@ square-table presentation ownership.
 - Forced `:app:testFull :app:assembleDebug`: pass; 1,353 JVM tests, zero failures.
 - `git diff --check`: pass.
 - Final legacy-owner and producer/consumer search: pass.
+- PR #128 code head `02b8a7d79ebc369fbabcfa82d259078bf22dd18b`: remote Android Full, ASP,
+  Real Clingo, aggregate CI and R2 boundary checks pass.
 
 ## 4. Acceptance gate
 

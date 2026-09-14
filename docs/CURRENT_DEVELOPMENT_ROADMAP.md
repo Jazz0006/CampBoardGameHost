@@ -22,7 +22,7 @@ EXPERIENCED-NIGHT-FLOW-1 navigation correctness   COMPLETE / merged via PR #123;
 GLOBAL-OWNERSHIP-CLEANUP steps 1-2                COMPLETE / merged via PRs #124/#125
 GLOBAL-OWNERSHIP-CLEANUP step 3                   COMPLETE / merged via PR #126
 GLOBAL-OWNERSHIP-CLEANUP step 4                   COMPLETE / merged via PR #127
-GLOBAL-OWNERSHIP-CLEANUP step 5                   LOCAL GATES PASS — remote validation pending
+GLOBAL-OWNERSHIP-CLEANUP step 5                   READY FOR ACCEPTANCE — PR #128 remote gates pass
 EPI-MQ / Productive Uncertainty                   PAUSED / queued after flow correctness
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
@@ -39,7 +39,9 @@ Steps 1-4 are merged. Step 5 runs on `codex/global-ownership-cleanup-5` from mer
 `092ca62f`. No Greater Joy production now consumes the generic provider/source/shown-identity
 pipeline through one typed preparer, and base Clocktower distribution has one setup-layer owner.
 The typed RED/GREEN, focused setup matrix, forced T1 and full Android/assemble gates pass locally.
-Push, exact remote diff audit and GitHub CI/R2 remain. Do not begin Step 6 in the Step 5 PR.
+PR #128 code head `02b8a7d7` has passed remote Android Full, ASP contracts, Real Clingo, aggregate
+CI and R2 boundary validation. The PR remains Draft. Do not begin Step 6 or merge Step 5 without
+explicit user authorization.
 
 Historical starting `main` for EXPERIENCED-NIGHT-FLOW-1:
 

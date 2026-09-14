@@ -229,9 +229,9 @@ compatibility boundary.
    domain/session boundary.
 4. **COMPLETE — make production restore and restore tests consume the same composition boundary.**
    PR #127 merged as `092ca62f`; production and tests now consume one restore composition owner.
-5. **LOCAL GATES PASS — cut No Greater Joy setup over to the generic provider/source/shown-identity
-   pipeline.** The live fan-out, implementation and evidence are recorded in section 12; remote
-   validation and user acceptance remain.
+5. **READY FOR ACCEPTANCE — cut No Greater Joy setup over to the generic provider/source/shown-
+   identity pipeline.** PR #128 code head `02b8a7d7` passed full remote gates; user acceptance and
+   merge authorization remain.
 6. Finally reduce Host/App gameplay ownership and converge square-table presentation. This includes
    centralizing the duplicated phase conversion, moving mechanical projection out of Compose, and
    extracting only small shared presentation seams rather than a universal configurable screen.
@@ -507,3 +507,7 @@ new conversation after re-querying live `main` and repository state.
   Forced `:app:testFull :app:assembleDebug` passes with 1,353 JVM tests and zero failures.
 - `git diff --check` passes. Final production search finds no `generateClocktowerAssignments`,
   `ClocktowerAssignment`, App-root `clocktowerDistribution`, or second NGJ random setup path.
+- PR #128 code head `02b8a7d79ebc369fbabcfa82d259078bf22dd18b` is based exactly on merged
+  `main` `092ca62f7806bd353e683c2dee1c7a134e4304f5`. Remote Android Full, ASP contracts,
+  Real Clingo, aggregate CI and R2 boundary checks all passed. The PR remains Draft and unmerged
+  pending explicit user acceptance.
