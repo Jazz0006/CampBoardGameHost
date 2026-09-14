@@ -8,53 +8,81 @@ import org.junit.Test
 
 class ClocktowerNightFullScreenOwnershipTest {
     @Test
-    fun `real target actions own the full screen host surface`() {
-        assertTrue(
-            clocktowerNightUsesFullScreenHostSurface(
-                isRealAction = true,
-                action = ClocktowerNightAction.Poison,
-                displayKind = ClocktowerDisplayKind.None,
+    fun `every real action resolves to one typed full screen surface`() {
+        val expectedByAction = mapOf(
+            ClocktowerNightAction.RedHerring to ClocktowerNightFullScreenSurface.SingleTarget,
+            ClocktowerNightAction.Poison to ClocktowerNightFullScreenSurface.SingleTarget,
+            ClocktowerNightAction.ButlerMaster to ClocktowerNightFullScreenSurface.SingleTarget,
+            ClocktowerNightAction.MonkProtect to ClocktowerNightFullScreenSurface.SingleTarget,
+            ClocktowerNightAction.DemonKill to ClocktowerNightFullScreenSurface.SingleTarget,
+            ClocktowerNightAction.FortuneTeller to ClocktowerNightFullScreenSurface.FortuneTeller,
+            ClocktowerNightAction.Chambermaid to ClocktowerNightFullScreenSurface.Chambermaid,
+            ClocktowerNightAction.Ravenkeeper to ClocktowerNightFullScreenSurface.Ravenkeeper,
+            ClocktowerNightAction.MayorRedirect to ClocktowerNightFullScreenSurface.Ruling,
+            ClocktowerNightAction.DemonSuccessor to ClocktowerNightFullScreenSurface.Ruling,
+            ClocktowerNightAction.NewDemonIdentity to ClocktowerNightFullScreenSurface.EvilInformation,
+        )
+
+        expectedByAction.forEach { (action, surface) ->
+            assertEquals(
+                ClocktowerNightSurfacePlan.FullScreen(surface),
+                clocktowerNightSurfacePlan(step(action = action), ClocktowerPhase.Night),
+            )
+        }
+    }
+
+    @Test
+    fun `real information families resolve through one exhaustive typed plan`() {
+        val expectedByRole = mapOf(
+            "Clockmaker" to ClocktowerNightFullScreenSurface.Clockmaker,
+            "Chef" to ClocktowerNightFullScreenSurface.Chef,
+            "Empath" to ClocktowerNightFullScreenSurface.Empath,
+            "Undertaker" to ClocktowerNightFullScreenSurface.Undertaker,
+            "Spy" to ClocktowerNightFullScreenSurface.Spy,
+            "Sage" to ClocktowerNightFullScreenSurface.Sage,
+        )
+
+        expectedByRole.forEach { (role, surface) ->
+            assertEquals(
+                ClocktowerNightSurfacePlan.FullScreen(surface),
+                clocktowerNightSurfacePlan(step(roleEnName = role), ClocktowerPhase.FirstNight),
+            )
+        }
+    }
+
+    @Test
+    fun `pair information requires a real first night manual domain and otherwise has plain fallback`() {
+        val candidate = ClocktowerDisplayOption(
+            label = "pair",
+            displayKind = ClocktowerDisplayKind.EitherOne,
+            displayTitle = "Investigator information",
+            displayPrimary = "Poisoner",
+            displaySecondary = "2 3",
+            displayFooter = null,
+        )
+
+        assertEquals(
+            ClocktowerNightSurfacePlan.FullScreen(ClocktowerNightFullScreenSurface.PairInformation),
+            clocktowerNightSurfacePlan(
+                step(roleEnName = "Investigator", manualInformationCandidates = listOf(candidate)),
+                ClocktowerPhase.FirstNight,
             ),
         )
-        assertTrue(
-            clocktowerNightUsesFullScreenHostSurface(
-                isRealAction = true,
-                action = ClocktowerNightAction.FortuneTeller,
-                displayKind = ClocktowerDisplayKind.YesNo,
-            ),
+        assertEquals(
+            ClocktowerNightSurfacePlan.FullScreen(ClocktowerNightFullScreenSurface.PlainInformation),
+            clocktowerNightSurfacePlan(step(roleEnName = "Investigator"), ClocktowerPhase.FirstNight),
         )
     }
 
     @Test
-    fun `real information display owns the full screen host surface`() {
-        assertTrue(
-            clocktowerNightUsesFullScreenHostSurface(
-                isRealAction = true,
-                action = ClocktowerNightAction.NewDemonIdentity,
-                displayKind = ClocktowerDisplayKind.Number,
-            ),
+    fun `residual real information has an explicit plain surface while non-real step stays legacy`() {
+        assertEquals(
+            ClocktowerNightSurfacePlan.FullScreen(ClocktowerNightFullScreenSurface.PlainInformation),
+            clocktowerNightSurfacePlan(step(), ClocktowerPhase.Night),
         )
-    }
-
-    @Test
-    fun `real unreliable information step still owns the full screen host surface`() {
-        assertTrue(
-            clocktowerNightUsesFullScreenHostSurface(
-                isRealAction = true,
-                action = ClocktowerNightAction.None,
-                displayKind = ClocktowerDisplayKind.None,
-            ),
-        )
-    }
-
-    @Test
-    fun `new demon identity owns full screen host surface`() {
-        assertTrue(
-            clocktowerNightUsesFullScreenHostSurface(
-                isRealAction = true,
-                action = ClocktowerNightAction.NewDemonIdentity,
-                displayKind = ClocktowerDisplayKind.None,
-            ),
+        assertEquals(
+            ClocktowerNightSurfacePlan.LegacyInline,
+            clocktowerNightSurfacePlan(step(isRealAction = false), ClocktowerPhase.Night),
         )
     }
 
@@ -82,33 +110,32 @@ class ClocktowerNightFullScreenOwnershipTest {
     }
 
     @Test
-    fun `non real or empty legacy step stays in the regular night shell`() {
-        assertFalse(
-            clocktowerNightUsesFullScreenHostSurface(
-                isRealAction = false,
-                action = ClocktowerNightAction.Poison,
-                displayKind = ClocktowerDisplayKind.None,
-            ),
-        )
-        assertFalse(
-            clocktowerNightUsesFullScreenHostSurface(
-                isRealAction = false,
-                action = ClocktowerNightAction.None,
-                displayKind = ClocktowerDisplayKind.None,
-            ),
-        )
-    }
-
-    private fun newDemonIdentityStep(): ClocktowerNightStepUi = ClocktowerNightStepUi(
-        title = "New Demon",
+    private fun step(
+        isRealAction: Boolean = true,
+        action: ClocktowerNightAction = ClocktowerNightAction.None,
+        displayKind: ClocktowerDisplayKind = ClocktowerDisplayKind.None,
+        roleEnName: String? = null,
+        manualInformationCandidates: List<ClocktowerDisplayOption> = emptyList(),
+    ): ClocktowerNightStepUi = ClocktowerNightStepUi(
+        title = roleEnName ?: action.name,
         actor = null,
-        isRealAction = true,
+        isRealAction = isRealAction,
         reason = "",
+        storytellerAction = "",
+        tellPlayer = null,
+        explanation = "",
+        action = action,
+        displayKind = displayKind,
+        roleEnName = roleEnName,
+        manualInformationCandidates = manualInformationCandidates,
+    )
+
+    private fun newDemonIdentityStep(): ClocktowerNightStepUi = step(
+        action = ClocktowerNightAction.NewDemonIdentity,
+    ).copy(
+        title = "New Demon",
         storytellerAction = "Wake the new Demon",
         tellPlayer = "You are now the Imp",
-        explanation = "",
-        action = ClocktowerNightAction.NewDemonIdentity,
-        displayKind = ClocktowerDisplayKind.None,
         displayTitle = "New Demon Identity",
     )
 }
