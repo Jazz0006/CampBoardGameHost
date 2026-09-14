@@ -603,3 +603,7 @@ new conversation after re-querying live `main` and repository state.
 - Forced `:app:testFast` passes. Forced `:app:testFull :app:assembleDebug` passes. `git diff --check`
   passes, the final direct-caller search leaves only the shared scaffold plus the intentional Host
   overview, and no unrelated `.DS_Store` artifacts remain in the worktree.
+- PR #129 code head `ceca17cb30a9ea0ca6a2c13c80f8c20da1a1e742` is based exactly on merged
+  `main` `0aad20e341af912338f9fae7ea11aca5d71c539f`. Remote Android Full, ASP contracts,
+  real-Clingo, aggregate CI and R2 boundary checks all passed. The PR remains Draft and unmerged
+  pending explicit user authorization.

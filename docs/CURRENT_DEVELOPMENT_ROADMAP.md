@@ -23,7 +23,7 @@ GLOBAL-OWNERSHIP-CLEANUP steps 1-2                COMPLETE / merged via PRs #124
 GLOBAL-OWNERSHIP-CLEANUP step 3                   COMPLETE / merged via PR #126
 GLOBAL-OWNERSHIP-CLEANUP step 4                   COMPLETE / merged via PR #127
 GLOBAL-OWNERSHIP-CLEANUP step 5                   COMPLETE / merged via PR #128
-GLOBAL-OWNERSHIP-CLEANUP step 6                   IMPLEMENTED — local gates pass; remote acceptance pending
+GLOBAL-OWNERSHIP-CLEANUP step 6                   PR #129 remote gates pass; user acceptance pending
 EPI-MQ / Productive Uncertainty                   PAUSED / queued after flow correctness
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
@@ -37,12 +37,13 @@ Campaign authority:
 `docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`
 
 Steps 1-5 are merged. Step 6 is implemented on `codex/global-ownership-cleanup-6` from merged `main`
-`0aad20e3`; local focused, `testFast`, `testFull`, Debug assembly and diff gates pass. Its bounded
-seams are the shared phase conversion, immutable night-host mechanical projection outside Compose,
-and the common square-table scaffold/seat bridge. Role-specific UI, mutable lifecycle state, rules
-algorithms and persistence remain with their current owners. The live fan-out, architecture
-pre-flight, implementation result and evidence are recorded in section 13 of the campaign audit.
-The remaining work is remote PR/CI/R2 acceptance and explicit user merge authorization.
+`0aad20e3`; local focused, `testFast`, `testFull`, Debug assembly and diff gates pass. PR #129 code
+head `ceca17cb` passed Android Full, ASP contracts, real-Clingo, aggregate CI and R2 boundary checks.
+Its bounded seams are the shared phase conversion, immutable night-host mechanical projection
+outside Compose, and the common square-table scaffold/seat bridge. Role-specific UI, mutable
+lifecycle state, rules algorithms and persistence remain with their current owners. The live
+fan-out, architecture pre-flight, implementation result and evidence are recorded in section 13 of
+the campaign audit. The remaining gate is explicit user merge authorization.
 
 Historical starting `main` for EXPERIENCED-NIGHT-FLOW-1:
 

@@ -1,7 +1,7 @@
 # Global Ownership Cleanup — Step 6 Handoff
 
 > Updated: 2026-09-14 Australia/Sydney
-> Status: implementation and local gates pass; remote acceptance pending
+> Status: PR #129 remote gates pass; user acceptance pending
 
 ## 1. Baseline and scope
 
@@ -38,6 +38,8 @@ role-specific interaction state.
 - Final production search: the complete phase mapping has one owner; all six night square-table
   callers use the shared scaffold; direct seat-surface ownership remains only in the shared scaffold
   and the intentional Host overview.
+- PR #129 code head `ceca17cb30a9ea0ca6a2c13c80f8c20da1a1e742`: remote Android Full, ASP
+  contracts, real-Clingo, aggregate CI and R2 boundary checks pass.
 
 ## 4. Remote acceptance gate
 
