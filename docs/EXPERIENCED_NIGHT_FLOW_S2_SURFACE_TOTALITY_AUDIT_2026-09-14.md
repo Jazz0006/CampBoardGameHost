@@ -830,3 +830,189 @@ If stopping, state the exact blocker and preserve an exact continuation checkpoi
 ## 19. Root principle
 
 > **Do not fix the screen that happened to go black. Fix the ownership model that allowed a full-screen night step to have zero or competing concrete owners.**
+
+## 20. Work live-state confirmation
+
+Work reconfirmed the campaign before production editing:
+
+```text
+main
+940ba1df68365974ba366985d66d1cb583682ba7
+
+codex/experienced-night-flow-correctness
+0e8609409deb772e1245a2bbb4e53bb9bfaf0eb7
+docs: record S2 surface totality audit progress
+
+local worktree
+clean
+```
+
+The remote branch matches the local branch. `gh` is not installed in the Work image, so PR #123
+metadata was not re-read through the CLI; no merge/readiness operation is in scope.
+
+## 21. Completed producer-to-surface matrix
+
+The local audit traced every production night materializer rather than constructing arbitrary
+`ClocktowerNightStepUi` values. `ClocktowerNightStepUi` itself is not persisted: fresh and restored
+flows both reconstruct canonical interactions and lazily materialize the current step from the
+checkpoint, current cards, resolved flow facts and current mode policy.
+
+| Family | Canonical producer / legal shape | Beginner / Experienced result | Current concrete owner or fallback | Restore / reachability classification |
+|---|---|---|---|---|
+| Red Herring / Poison / Butler / Monk / Demon attack | role/event interaction -> direct action materializer; a real action carries the matching action enum | same action surface; Beginner may auto-advance Red Herring | single-target square-table | fresh + restored; **proven total** |
+| Fortune Teller | waking role interaction -> `ClocktowerInformationStepBuilder`, action `FortuneTeller` | same two-target surface; mode changes result authority only | Fortune Teller square-table renders even before a result exists | fresh + restored; **proven total** |
+| Chambermaid | role interaction -> `ClocktowerChambermaidStepMaterializer`, action `Chambermaid` | same two-target surface; mode changes result authority only | Chambermaid square-table renders even with an empty result list | fresh + restored; **proven total** |
+| Ravenkeeper | `RAVENKEEPER_DIED_AT_NIGHT` -> trigger materializer, action `Ravenkeeper` | same target/result surface | Ravenkeeper square-table has an explicit no-result/unavailable state | fresh + restored; **proven total** |
+| Mayor redirect | canonical Dawn-death resolution -> `MAYOR_REDIRECT_ELIGIBLE` -> event interaction | Experienced manual ruling; Beginner deterministic automatic selection | manual ruling surface, or current effect-owned automatic transition | fresh + restored; automatic target is total; **intentional automatic non-rendering transition**, but ownership is implicit and should be made explicit |
+| Demon succession | `resolveNightDemonSuccessionForHost` returns non-empty forced/choice seats -> `DEMON_SUCCESSION_REQUIRED` | Experienced manual ruling; Beginner deterministic automatic selection | manual ruling surface, or current effect-owned automatic transition | fresh + restored; fact is emitted only for a non-empty legal domain; **intentional automatic non-rendering transition**, but ownership is implicit and should be made explicit |
+| New Demon identity / evil information | canonical evil-info or new-Demon interaction | shared private read-only surface; Beginner hides host details | evil-information square-table | fresh + restored; **proven total** |
+| Spy | live Spy role interaction, `Grimoire` display kind | same shell; poisoned Spy deliberately withholds real grimoire data | Spy square-table | fresh + restored; **proven total** |
+| Washerwoman / Librarian / Investigator | first-night role interaction -> pair legal domain -> information builder | Beginner read-only recommendation; Experienced complete manual domain | pair square-table when legal manual domain is non-empty; plain information otherwise | fresh + restored; **proven total** |
+| Clockmaker | first-night role interaction -> Number/direct or unreliable option domain | mode changes selected option only | Clockmaker square-table; direct plain fallback remains possible | fresh + restored; **proven total** |
+| Chef | first-night role interaction -> structured/direct numeric result | mode changes selected option only | Chef square-table; direct plain fallback remains possible | fresh + restored; **proven total** |
+| Empath | first/other-night role interaction -> structured/direct numeric result with neighbour scope | mode changes selected option only | Empath square-table; direct plain fallback remains possible | fresh + restored; **proven total** |
+| Undertaker | `EXECUTION_OCCURRED_TODAY` -> role interaction with canonical executed target | mode changes result selection only | Undertaker square-table; well-formed direct display has plain fallback | fresh + restored; malformed stale execution identity fails upstream or is a **defensive gap**, not a production RED |
+| Sage | `SAGE_KILLED_BY_DEMON` -> dedicated trigger materializer | mode changes pair selection only | Sage square-table; well-formed direct display has plain fallback | fresh + restored; **proven total** |
+| Residual real information | any remaining real `action == None` information materializer | same information shell | plain-information square-table when display payload exists | fresh + restored; current Boolean can still claim full-screen before a concrete fallback is proven; **architectural defensive gap** |
+| Non-real padding/missing-role step | projected role interaction with no actor | both modes preserve timing camouflage | legacy inline card | fresh + restored; **proven intentional legacy fallback** |
+
+### 21.1 Pair-information reachability result
+
+The previously unresolved pair candidate is **not** a production-reachable zero-surface defect:
+
+1. the production actor is resolved from `cards`, so `sourceSeat` is valid;
+2. `legalPairInformationOptions` delegates to `PairInformationLegalDomain.generate`;
+3. `PairInformationDisplaySemantics.legalOutcomes` constructs all role/pair statements from the
+   canonical script definitions and all non-source seats;
+4. an impaired actor may use the complete well-formed outcome space, which is non-empty for the
+   supported player counts and scripts;
+5. a reliable edge with no truthful pair can yield an empty manual domain, but its direct
+   `tellPlayer` payload keeps `displayKind != None`, so the existing plain-information fallback is
+   concrete. The 5-player no-Minion Investigator shape is the important example.
+
+Therefore the proposed shape
+
+```text
+real + action None + displayKind None + empty legalSelectionOptions
+```
+
+is not emitted for an impaired production pair step. It remains representable by the bag-of-fields
+type, but must not be used as a fabricated RED.
+
+### 21.2 Automatic-ruling totality result
+
+Mayor automatic selection is total because `selectMayorRedirect` always includes the Mayor-dies
+choice; an empty living-Townsfolk redirect list still has that candidate. `MAYOR_REDIRECT_ELIGIBLE`
+comes from the canonical Dawn-death resolution and the Mayor materializer requires the resolved
+Mayor target.
+
+Demon automatic succession is total for production facts because
+`DEMON_SUCCESSION_REQUIRED` is emitted only when `resolveNightDemonSuccessionForHost` returns a
+non-empty target-seat set. The target cards are projected from those canonical seats before the
+temporary selector runs. Invalid restored succession state is rejected by the existing SNE-7
+reconstruction/legality boundaries rather than promoted to a legal interaction.
+
+The remaining defect is architectural: automatic rulings currently own navigation through
+`LaunchedEffect` while `clocktowerNightRulingPresentation` returns `null`. Totality depends on a
+cross-layer implication rather than one typed production plan.
+
+### 21.3 Exhaustive overlap result
+
+No production-reachable multi-surface render was found. Action identities are mutually exclusive;
+role-specific result identities are mutually exclusive; and the generic plain predicate explicitly
+excludes every currently derived specialist predicate. Restore reconstructs a new step rather than
+merging fields from two persisted step objects.
+
+This is not a sufficient long-term guarantee. The current exclusivity is distributed across action
+sets, role-name checks, candidate-list checks and plain-fallback exclusions. The wide UI model still
+permits contradictory synthetic combinations and a future producer can silently create overlap.
+The production fix must replace this distributed proof with one exhaustive plan value.
+
+## 22. Historical root cause — evidence vs inference
+
+### Proven historical evidence
+
+- `921b817a3ddbd8626a98408c78c82ddf301831f9` added a Boolean full-screen contract test before
+  production ownership was unified.
+- `bfa24c1b7c3909ca3f08bd9d7d605ac552b239b5` introduced
+  `ClocktowerNightFullScreenOwnership.kt` while retaining independent renderer predicates in
+  `ClocktowerNightStepUi.kt`.
+- Role surfaces were then migrated incrementally: Chef `16cbc702`, Empath `33dcfec3`, Undertaker
+  `565fee7e`, Ravenkeeper `b8984590`, Spy `d45f96dd`, Clockmaker `ae48eecc`, Sage `279b1947`, and
+  evil information `2692acc4`.
+- `47e8ddd5c1fe4efaad7d704e1ce9b0b0ac50a4ba` made Beginner Mayor/succession selection
+  effect-owned while manual ruling presentation remained nullable.
+- `4fc513d0e08387a121ea444e69753d1d33e0539e` added a second effect to skip the resolved Beginner
+  Mayor ruling step.
+- `c6f8d9b24ca5ef66ab53b196096601ffa85b49f0` later had to add New Demon to Boolean ownership and
+  restore its concrete evil-information surface.
+- Red Herring moved to square-table in `124aa251e7526772bc4ddfa6186d28196fb2eca3`, gained a second
+  auto-advance owner in `6a7cf68cc6f2f8998eed20074caefe90f4509a4f`, and removed that duplicate
+  owner in `ad91a3b73f8598ba6219524a3bcfee76694d9c6a`.
+
+### Plausible architectural inference
+
+Incremental migrations created parallel tables for existence, full-screen ownership, specialist
+readiness, rendering and automatic advancement. Source-string tests protected individual tokens and
+branch exclusions, but no callable production contract proved one materialized step -> one surface.
+This allowed local migrations to remain green while ownership drift accumulated.
+
+## 23. Frozen S2 ownership design and architecture pre-flight
+
+Architecture pre-flight:
+
+```text
+current owner:
+  Boolean ownership in ClocktowerNightFullScreenOwnership plus independent renderer predicates in
+  ClocktowerNightStepUi; automatic ruling navigation is effect-owned.
+
+proposed responsibility:
+  one typed ClocktowerNightSurfacePlan classifies every materialized step into LegacyInline or one
+  exhaustive full-screen surface family; Host shell and renderer consume the same plan value.
+
+authoritative state owner(s):
+  canonical interaction/materializer remains semantic step owner; SNE-7 checkpoint/session/App
+  boundaries remain navigation, history, Dawn and persistence owners; the new plan owns only
+  presentation dispatch.
+
+narrow typed input/output seam:
+  ClocktowerNightStepUi + phase + experience execution policy -> ClocktowerNightSurfacePlan.
+
+keep in current owner / extract:
+  extract the small pure planner into the existing ownership file; keep concrete Compose rendering
+  in its current cohesive UI owners and pass the plan into ClocktowerNightStepCardLocalized.
+
+reason:
+  the Host shell must know whether content owns the workspace, and the renderer must know the sole
+  concrete family. Sharing one exhaustive value removes the current Boolean information loss
+  without moving gameplay legality, persisted navigation or transaction authority.
+```
+
+The planned full-screen variants are:
+
+```text
+SingleTarget
+FortuneTeller
+Chambermaid
+Ravenkeeper
+Ruling
+EvilInformation
+PairInformation
+Chef
+Empath
+Undertaker
+Spy
+Clockmaker
+Sage
+PlainInformation
+```
+
+Action identity takes precedence over information identity. Non-real steps are `LegacyInline`.
+Residual real information is explicitly `PlainInformation`, so `FullScreen + no owner` is no longer
+representable. Mayor and succession use the concrete `Ruling` plan in both modes; Beginner keeps
+automatic selection/advance but no longer depends on a null renderer while effects settle.
+
+The planner is a production owner, not a test-only seam. The Host computes it once, uses it for
+Activity-root ownership, and passes the same value to the exhaustive renderer. Specialist content
+may retain an explicit generic fallback when optional prepared results are unavailable, but it may
+not activate a second independent full-screen branch.
