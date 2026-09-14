@@ -35,6 +35,30 @@ class ClocktowerHostSelectionSemanticsCharacterizationTest {
     )
 
     @Test
+    fun `single target edit toggles against the visible draft selection`() {
+        assertNull(
+            clocktowerToggledSingleTargetSelection(
+                currentSelection = "Draft B",
+                tappedSelection = "Draft B",
+            ),
+        )
+        assertEquals(
+            "Draft B",
+            clocktowerToggledSingleTargetSelection(
+                currentSelection = "Confirmed A",
+                tappedSelection = "Draft B",
+            ),
+        )
+        assertEquals(
+            "Draft B",
+            clocktowerToggledSingleTargetSelection(
+                currentSelection = null,
+                tappedSelection = "Draft B",
+            ),
+        )
+    }
+
+    @Test
     fun `information candidate id ignores label but remains semantic and truth sensitive`() {
         val baseline = displayOption(label = "first")
         val relabeled = displayOption(label = "second")
