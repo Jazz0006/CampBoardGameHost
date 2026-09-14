@@ -7,6 +7,43 @@ class ClocktowerSingleTargetInteractionPresentationTest {
     private val selection = ClocktowerSingleTargetSelection(2, setOf(1, 3, 7), true)
 
     @Test
+    fun `confirmation requires an enabled interaction and a selected candidate`() {
+        assertFalse(
+            clocktowerSingleTargetConfirmationEnabled(
+                ClocktowerSingleTargetSelection(null, setOf(1, 3, 7), true),
+            ),
+        )
+        assertTrue(
+            clocktowerSingleTargetConfirmationEnabled(
+                ClocktowerSingleTargetSelection(3, setOf(1, 3, 7), true),
+            ),
+        )
+        assertFalse(
+            clocktowerSingleTargetConfirmationEnabled(
+                ClocktowerSingleTargetSelection(2, setOf(1, 3, 7), true),
+            ),
+        )
+        assertFalse(
+            clocktowerSingleTargetConfirmationEnabled(
+                ClocktowerSingleTargetSelection(3, setOf(1, 3, 7), false),
+            ),
+        )
+    }
+
+    @Test
+    fun `confirmation accepts an explicitly supplied alternate legal seat`() {
+        val mayorOutcome = ClocktowerSingleTargetSelection(2, setOf(1, 3, 7), true)
+
+        assertFalse(clocktowerSingleTargetConfirmationEnabled(mayorOutcome))
+        assertTrue(
+            clocktowerSingleTargetConfirmationEnabled(
+                selection = mayorOutcome,
+                additionalSelectableSeats = setOf(2),
+            ),
+        )
+    }
+
+    @Test
     fun `red herring omits non-real steps and never adds an actor cue`() {
         assertNull(clocktowerSingleTargetAbilityPresentation(ClocktowerNightAction.RedHerring, selection.copy(enabled = false), 2, "wake", true))
         val model = requireNotNull(clocktowerSingleTargetAbilityPresentation(ClocktowerNightAction.RedHerring, selection, 2, "wake", true))
