@@ -1,7 +1,7 @@
 # EXPERIENCED NIGHT FLOW — S4 Regression Matrix Audit
 
 > Date: 2026-09-14 Australia/Sydney  
-> Status: **S4 AUDIT COMPLETE — one proven edit/reconfirm defect; automation and field acceptance next**  
+> Status: **S4 AUTOMATED ACCEPTANCE COMPLETE — field acceptance pending**
 > Program: `EXPERIENCED-NIGHT-FLOW-1`  
 > Branch: `codex/experienced-night-flow-correctness`  
 > PR: `#123` — open / draft / do not merge yet  
@@ -121,3 +121,21 @@ Use the field-test APK produced from the final immutable S4 checkpoint and verif
 
 Automated acceptance can prove structure and state semantics. S4 remains open until this device
 check is explicitly reported complete.
+
+## 8. Implementation and automated acceptance result
+
+The correction was accepted through the repository's fail-closed large-file workflow:
+
+```text
+66a9f2b9  docs: audit S4 night regression matrix
+cd35607e  test: define S4 draft-toggle RED
+4d340c57  fix: route night target edits through visible draft
+52c0aa41  chore(ci): remove S4 night target one-shot workflow
+```
+
+GitHub Actions run `34808912975` passed the exact HEAD/blob locks, focused baseline, unique-anchor
+patch, focused GREEN, `:app:testFast`, exact diff/hash audit, full Android unit tests plus debug APK,
+ASP contracts, real Clingo and the aggregate CI gate. R2 run `34808912927` also passed.
+
+The final `[full-ci]` carrier and field-test APK must be produced from the resulting immutable head.
+S4 remains open and PR #123 remains Draft until the checklist in section 7 is completed on device.

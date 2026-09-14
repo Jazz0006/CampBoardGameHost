@@ -18,7 +18,7 @@ UX-MODE-1 Beginner / Experienced mode             COMPLETE / merged via PR #120
 UI-INFO-1 information filtering & layout          COMPLETE / merged via PR #121
 Dead-player square-table marking                  COMPLETE / merged via PR #122
 
-EXPERIENCED-NIGHT-FLOW-1 navigation correctness   CURRENT — S3 complete; S4 regression matrix next
+EXPERIENCED-NIGHT-FLOW-1 navigation correctness   CURRENT — S4 automated acceptance complete; device pass pending
 EPI-MQ / Productive Uncertainty                   PAUSED / queued after flow correctness
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
@@ -79,6 +79,8 @@ S4  Experienced night-flow regression matrix
     - representative target/pair/numeric/manual-information steps
     - Beginner regression over the same shared owners
     - real-device acceptance
+    - automated matrix and draft-toggle correction accepted at 4d340c57
+    - full Android/ASP/Clingo/CI and R2 passed; field-test APK/device checklist pending
 ```
 
 ## 4. Ownership findings that are now roadmap constraints

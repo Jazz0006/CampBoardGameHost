@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — Experienced Night Flow Correctness
 
 > Date: 2026-09-14 Australia/Sydney  
-> Status: **CURRENT — S1/S2/S3 COMPLETE; S4 regression matrix next**
+> Status: **CURRENT — S1/S2/S3 COMPLETE; S4 automated acceptance complete, device pass pending**
 > Program: Clocktower Storyteller mobile flow correctness  
 > Branch: `codex/experienced-night-flow-correctness`  
 > Starting `main`: `940ba1df68365974ba366985d66d1cb583682ba7`
@@ -14,7 +14,7 @@ Read, in order:
 2. `docs/TESTING_STRATEGY.md`;
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. this handoff;
-5. `docs/EXPERIENCED_NIGHT_FLOW_S3_TARGET_ELIGIBILITY_AUDIT_2026-09-14.md`;
+5. `docs/EXPERIENCED_NIGHT_FLOW_S4_REGRESSION_MATRIX_AUDIT_2026-09-14.md`;
 6. `docs/SNE7_ARCHITECTURE_HARDENING_2026-08-27.md` if present under its current live/archive path, or the current SNE-7 authoritative night-transaction document;
 7. `docs/UI_NAV_1_CLOSEOUT_2026-09-10.md` if present under its current live/archive path;
 8. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md`;
@@ -199,6 +199,13 @@ expected S3 paths. PR #123 remains Draft.
 
 ### S4 — Experienced night-flow regression matrix
 
+The existing typed owner matrix was audited and found sufficient except for one Host interaction
+projection defect: Poison and Monk deselection compared a visible edited draft against the prior
+confirmed target. The correction now derives one toggle result from `selectedNightName` and routes
+it to every single-target callback. Product checkpoint `4d340c57` passed focused baseline/GREEN,
+`:app:testFast`, exact diff/hash audit and the repository's full Android/ASP/real-Clingo gate in CI
+run `34808912975`; R2 `34808912927` passed. Field-device acceptance remains required.
+
 Before campaign closeout, exercise at least:
 
 - ordinary Demon attack -> Dawn;
@@ -303,7 +310,9 @@ Its existing handoff remains the resume point after this flow-correctness campai
 
 ## 11. First action in the next conversation
 
-After live-state confirmation, begin **S4 Experienced night-flow regression matrix**.
+After live-state confirmation, dispatch the field-test APK from the immutable S4 `[full-ci]` head
+and complete the real-device checklist in the S4 audit. Keep PR #123 Draft and do not merge before
+the device result is recorded.
 
 Map:
 
