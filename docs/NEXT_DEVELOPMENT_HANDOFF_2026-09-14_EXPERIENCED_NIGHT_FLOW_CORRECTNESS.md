@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — Experienced Night Flow Correctness
 
 > Date: 2026-09-14 Australia/Sydney  
-> Status: **CURRENT — S1 COMPLETE; S2 read-only audit next**  
+> Status: **CURRENT — S1 COMPLETE; S2 implemented locally, remote validation pending**
 > Program: Clocktower Storyteller mobile flow correctness  
 > Branch: `codex/experienced-night-flow-correctness`  
 > Starting `main`: `940ba1df68365974ba366985d66d1cb583682ba7`
@@ -121,7 +121,7 @@ refreshed flow contains no next step
 
 Do not reintroduce an out-of-range step as a navigation sentinel.
 
-### S2 — Full-screen surface totality — CURRENT NEXT STEP
+### S2 — Full-screen surface totality — IMPLEMENTED LOCALLY / VALIDATION PENDING
 
 Begin with a read-only ownership/fan-out audit of `ClocktowerNightFullScreenOwnership` and every production producer/consumer of the full-screen classification.
 
@@ -132,6 +132,27 @@ Prefer a typed render-plan/presentation boundary if the existing architecture na
 The shared Activity-root host scaffold remains the navigation-shell owner.
 
 Do not modify production until the classification → render-surface ownership boundary, must-inherit fan-out, intentional exemptions, and smallest typed evidence are identified.
+
+That audit and implementation are now recorded in
+`docs/EXPERIENCED_NIGHT_FLOW_S2_SURFACE_TOTALITY_AUDIT_2026-09-14.md`.
+
+Local checkpoints:
+
+```text
+54b98f9e docs: complete S2 surface reachability audit
+67234528 test: define typed night surface ownership RED
+19ecaf37 fix: make night surface ownership total
+```
+
+The Host now computes one typed `ClocktowerNightSurfacePlan` and passes it to an exhaustive renderer.
+Automatic Mayor/succession paths retain a concrete disabled ruling surface while their existing
+deterministic effect settles. Superseded renderer-shape source tests were retired only after typed
+planner/presentation evidence replaced them.
+
+Local Gradle execution is blocked before compilation because the Work image has no cached Gradle
+distribution and cannot reach `services.gradle.org`. Do not mark S2 complete until the branch is
+pushed with explicit authorization, normal CI and `:app:testFast --rerun-tasks` pass, and the exact
+remote diff/scope is audited. Do not begin S3 production edits before that acceptance checkpoint.
 
 ### S3 — Skilled interaction eligibility
 

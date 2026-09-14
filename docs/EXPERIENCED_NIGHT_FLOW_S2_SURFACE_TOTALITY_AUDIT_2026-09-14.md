@@ -1,7 +1,7 @@
 # EXPERIENCED NIGHT FLOW — S2 Full-Screen Surface Totality Audit
 
 > Date: 2026-09-14 Australia/Sydney  
-> Status: **CURRENT — read-only audit substantially advanced; production S2 not yet modified**  
+> Status: **CURRENT — typed ownership implementation complete locally; remote validation pending**
 > Program: `EXPERIENCED-NIGHT-FLOW-1`  
 > Branch: `codex/experienced-night-flow-correctness`  
 > PR: `#123` — draft / do not merge yet  
@@ -976,7 +976,8 @@ authoritative state owner(s):
   presentation dispatch.
 
 narrow typed input/output seam:
-  ClocktowerNightStepUi + phase + experience execution policy -> ClocktowerNightSurfacePlan.
+  ClocktowerNightStepUi + phase -> ClocktowerNightSurfacePlan. Execution policy remains inside the
+  selected concrete presentation and does not change surface identity.
 
 keep in current owner / extract:
   extract the small pure planner into the existing ownership file; keep concrete Compose rendering
@@ -1016,3 +1017,85 @@ The planner is a production owner, not a test-only seam. The Host computes it on
 Activity-root ownership, and passes the same value to the exhaustive renderer. Specialist content
 may retain an explicit generic fallback when optional prepared results are unavailable, but it may
 not activate a second independent full-screen branch.
+
+## 24. S2 implementation checkpoint
+
+Typed RED:
+
+```text
+67234528 test: define typed night surface ownership RED
+```
+
+Production and replacement-evidence checkpoint:
+
+```text
+19ecaf37 fix: make night surface ownership total
+```
+
+The implementation now enforces one dispatch value across the full-screen boundary:
+
+- `ClocktowerNightSurfacePlan` is either `LegacyInline` or one concrete `FullScreen` family;
+- `ClocktowerHostScreen` computes that plan once and uses it for Activity-root workspace ownership;
+- `ClocktowerNightStepCardLocalized` consumes the same plan through one exhaustive render `when`;
+- action identity wins over information identity, preventing multiple simultaneous owners;
+- residual real information and unavailable optional specialist preparation use one explicit plain
+  information surface rather than an empty branch;
+- non-real timing/padding steps remain intentional legacy inline content;
+- the planner uses the perceived presentation role, preserving Drunk shown-role behavior;
+- automatic Mayor and Demon-succession rulings retain their existing deterministic effects but now
+  render a disabled concrete ruling surface until the effect advances.
+
+No gameplay legality, recommendation ranking, checkpoint, history, Dawn or persistence authority
+moved in S2. Beginner and Experienced consume the same plan; mode only changes interaction authority
+inside the selected presentation.
+
+## 25. Replacement evidence and implementation-shaped test retirement
+
+`ClocktowerNightFullScreenOwnershipTest` now directly exercises the typed planner across every
+non-`None` action, specialist information families, evil information, pair first-night eligibility,
+residual plain fallback and non-real legacy fallback. `ClocktowerSingleTargetInteractionPresentationTest`
+now proves that automatic rulings have a concrete disabled presentation.
+
+The following source-string tests were retired because they asserted local variable names, negative
+branch conjunctions or exact Compose call placement superseded by the typed planner:
+
+```text
+ClocktowerClockmakerSquareTableWiringTest
+ClocktowerEvilInfoSquareTableWiringTest
+ClocktowerNightStepResultSurfaceOwnershipTest
+ClocktowerRavenkeeperSquareTableWiringTest
+ClocktowerSpySquareTableWiringTest
+ClocktowerUndertakerSquareTableWiringTest
+```
+
+The renderer-shaped method in `ClocktowerSageSquareTableWiringTest` was removed while its separate
+coarse production materialization boundary remains. Existing typed family presentation/materializer
+tests remain the behavioral evidence for their individual payload semantics.
+
+## 26. Validation status and exact continuation point
+
+Static evidence completed locally:
+
+```text
+git diff --check                                                    PASS
+retired Boolean/helper and distributed-owner symbol scan            PASS (no matches)
+exact production/test change review                                 PASS
+```
+
+The focused Gradle command could not reach test compilation because this clean Work image has no
+cached Gradle distribution and network access to `services.gradle.org` is unavailable:
+
+```text
+GRADLE_USER_HOME="$PWD/.gradle-codex" ./gradlew \
+  :app:testDebugUnitTest \
+  --tests com.codex.campboardgamehost.ClocktowerNightFullScreenOwnershipTest \
+  --rerun-tasks
+```
+
+No `gradle` or `kotlinc` executable and no reusable Gradle distribution were found locally. The
+partial wrapper download was moved out of the worktree. Therefore S2 is implemented but must not be
+declared remotely green until the branch is pushed with explicit authorization and normal CI runs.
+
+After CI is green, run the broader `:app:testFast --rerun-tasks` gate, perform the exact remote
+diff/scope audit, then mark S2 complete and begin the read-only S3 skilled-interaction eligibility
+fan-out audit. Do not begin S3 production edits before that checkpoint.

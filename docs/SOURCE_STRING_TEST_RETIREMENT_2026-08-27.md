@@ -263,3 +263,27 @@ For future work:
 4. keep source inspection only for a coarse architecture invariant or the last non-callable production-consumer gap;
 5. record a retirement trigger for every temporary source guard when practical;
 6. do not introduce production abstractions solely to make tests more aesthetically pure.
+
+## EXPERIENCED-NIGHT-FLOW S2 surface-ownership retirement
+
+S2 replaced the distributed Boolean/full-screen and per-renderer exclusion scheme with the callable
+typed `ClocktowerNightSurfacePlan` contract. `ClocktowerNightFullScreenOwnershipTest` now covers the
+action and information-family dispatch matrix directly, and existing typed presentation tests retain
+payload/interaction semantics for the individual surfaces.
+
+The following tests were therefore retired because they protected exact local-variable names,
+negative branch conjunctions, or Compose call placement rather than a remaining architecture seam:
+
+```text
+ClocktowerClockmakerSquareTableWiringTest
+ClocktowerEvilInfoSquareTableWiringTest
+ClocktowerNightStepResultSurfaceOwnershipTest
+ClocktowerRavenkeeperSquareTableWiringTest
+ClocktowerSpySquareTableWiringTest
+ClocktowerUndertakerSquareTableWiringTest
+```
+
+`ClocktowerSageSquareTableWiringTest` was narrowed by removing its renderer-shape method. Its coarse
+production materialization-owner assertion remains because that final Host boundary is not directly
+callable. The replacement typed contract was introduced at `67234528` and consumed by production at
+`19ecaf37`.
