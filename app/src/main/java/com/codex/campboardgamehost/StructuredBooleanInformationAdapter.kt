@@ -2,7 +2,6 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
@@ -83,12 +82,7 @@ internal fun prepareBooleanInformationUiModel(
             .filter { it.candidate.outcome.id == outcomeId }
             .mapTo(linkedSetOf()) { it.candidate.candidateId }
     }.orEmpty()
-    val storytellerPhase = when (phase) {
-        ClocktowerPhase.FirstNight -> StorytellerPhase.FIRST_NIGHT
-        ClocktowerPhase.Dawn -> StorytellerPhase.DAWN
-        ClocktowerPhase.Day -> StorytellerPhase.DAY
-        ClocktowerPhase.Night -> StorytellerPhase.NIGHT
-    }
+    val storytellerPhase = phase.toStorytellerPhase()
 
     val context = coordinator.informationDecisionContext(
         evaluations = evaluations,

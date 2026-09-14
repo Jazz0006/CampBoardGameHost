@@ -90,58 +90,47 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
         )
         return
     }
-    ClocktowerHostFullScreenScaffold(
-        previousLabel = if (language == "en") "← Previous" else "← 上一步",
-        hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
-        nextLabel = if (language == "en") "Next →" else "下一步 →",
+    ClocktowerHostSquareTableScaffold(
+        seats = seats,
+        language = language,
         previousEnabled = canGoPrevious,
         onPrevious = onPrevious,
         onHostTools = onHostTools,
         onNext = onNext,
-        onBack = { if (canGoPrevious) onPrevious() },
-    ) {
-        ClocktowerSquareTableSeatSurface(
-            seats = seats.map { seat ->
-                val content = hostSeatContentPresentation(seat, language)
-                ClocktowerSquareTableSeatUiModel(
-                    seatId = seat.seatId.renderKey(),
+        interactionMode = if (enabled) {
+            ClocktowerSquareTableInteractionMode.Selectable
+        } else {
+            ClocktowerSquareTableInteractionMode.ReadOnly
+        },
+        onSeatSelected = onSeatSelected,
+        seatUiModel = { seat ->
+            val content = hostSeatContentPresentation(seat, language)
+            ClocktowerSquareTableSeatUiModel(
+                seatId = seat.seatId.renderKey(),
+                seatNumber = seat.seatId.number,
+                label = content.primaryLabel,
+                detailLabels = content.detailLabels,
+                isAlive = seat.isAlive,
+                hasUnspentGhostVote = seat.hasUnspentGhostVote,
+                state = clocktowerFortuneTellerSeatState(
                     seatNumber = seat.seatId.number,
-                    label = content.primaryLabel,
-                    detailLabels = content.detailLabels,
-                    isAlive = seat.isAlive,
-                    hasUnspentGhostVote = seat.hasUnspentGhostVote,
-                    state = clocktowerFortuneTellerSeatState(
-                        seatNumber = seat.seatId.number,
-                        selectedSeats = selectedSeats,
-                        selectableSeats = if (enabled) selectableSeats else emptySet(),
-                    ),
-                    isCurrentActor = seat.seatId.number == actorSeat,
-                )
-            },
-            modifier = Modifier.fillMaxSize(),
-            interactionMode = if (enabled) {
-                ClocktowerSquareTableInteractionMode.Selectable
-            } else {
-                ClocktowerSquareTableInteractionMode.ReadOnly
-            },
-            onSeatClick = { renderKey ->
-                seats.firstOrNull { seat -> seat.seatId.renderKey() == renderKey }
-                    ?.seatId
-                    ?.number
-                    ?.let(onSeatSelected)
-            },
-        ) {
-            ClocktowerFortuneTellerCenterControls(
-                wakeInstruction = wakeInstruction,
-                selectedSeats = selectedSeats,
-                legalResults = legalResults,
-                recommendedResult = recommendedResult,
-                automaticStorytellerInfo = automaticStorytellerInfo,
-                language = language,
-                onResultSelected = onResultSelected,
-                onAutomaticResultSelected = onAutomaticResultSelected,
+                    selectedSeats = selectedSeats,
+                    selectableSeats = if (enabled) selectableSeats else emptySet(),
+                ),
+                isCurrentActor = seat.seatId.number == actorSeat,
             )
-        }
+        },
+    ) {
+        ClocktowerFortuneTellerCenterControls(
+            wakeInstruction = wakeInstruction,
+            selectedSeats = selectedSeats,
+            legalResults = legalResults,
+            recommendedResult = recommendedResult,
+            automaticStorytellerInfo = automaticStorytellerInfo,
+            language = language,
+            onResultSelected = onResultSelected,
+            onAutomaticResultSelected = onAutomaticResultSelected,
+        )
     }
 }
 

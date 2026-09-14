@@ -234,46 +234,35 @@ internal fun ClocktowerNightActionSquareTableDialog(
     nextEnabled: Boolean = true,
     centerContent: @Composable () -> Unit,
 ) {
-    ClocktowerHostFullScreenScaffold(
-        previousLabel = if (language == "en") "← Previous" else "← 上一步",
-        hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
-        nextLabel = if (language == "en") "Next →" else "下一步 →",
+    ClocktowerHostSquareTableScaffold(
+        seats = seats,
+        language = language,
         previousEnabled = canGoPrevious,
-        nextEnabled = nextEnabled,
         onPrevious = onPrevious,
         onHostTools = onHostTools,
         onNext = onNext,
-        onBack = { if (canGoPrevious) onPrevious() },
+        nextEnabled = nextEnabled,
+        interactionMode = if (enabled) {
+            ClocktowerSquareTableInteractionMode.Selectable
+        } else {
+            ClocktowerSquareTableInteractionMode.ReadOnly
+        },
+        onSeatSelected = onSeatSelected,
+        seatUiModel = { seat ->
+            val content = hostSeatContentPresentation(seat, language)
+            val presentation = seatPresentation(seat.seatId.number)
+            ClocktowerSquareTableSeatUiModel(
+                seatId = seat.seatId.renderKey(),
+                seatNumber = seat.seatId.number,
+                label = content.primaryLabel,
+                detailLabels = content.detailLabels,
+                isAlive = seat.isAlive,
+                hasUnspentGhostVote = seat.hasUnspentGhostVote,
+                state = presentation.targetState,
+                isCurrentActor = presentation.isCurrentActor,
+            )
+        },
     ) {
-        ClocktowerSquareTableSeatSurface(
-            seats = seats.map { seat ->
-                val content = hostSeatContentPresentation(seat, language)
-                val presentation = seatPresentation(seat.seatId.number)
-                ClocktowerSquareTableSeatUiModel(
-                    seatId = seat.seatId.renderKey(),
-                    seatNumber = seat.seatId.number,
-                    label = content.primaryLabel,
-                    detailLabels = content.detailLabels,
-                    isAlive = seat.isAlive,
-                    hasUnspentGhostVote = seat.hasUnspentGhostVote,
-                    state = presentation.targetState,
-                    isCurrentActor = presentation.isCurrentActor,
-                )
-            },
-            modifier = Modifier.fillMaxSize(),
-            interactionMode = if (enabled) {
-                ClocktowerSquareTableInteractionMode.Selectable
-            } else {
-                ClocktowerSquareTableInteractionMode.ReadOnly
-            },
-            onSeatClick = { renderKey ->
-                seats.firstOrNull { seat -> seat.seatId.renderKey() == renderKey }
-                    ?.seatId
-                    ?.number
-                    ?.let(onSeatSelected)
-            },
-        ) {
-            centerContent()
-        }
+        centerContent()
     }
 }

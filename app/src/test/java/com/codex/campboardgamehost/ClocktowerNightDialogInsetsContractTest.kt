@@ -38,8 +38,16 @@ class ClocktowerNightDialogInsetsContractTest {
                 source.contains("ClocktowerNightBottomActionBar("),
             )
         }
+        nightSquareTableSources.forEach { relativeText ->
+            assertTrue(
+                "$relativeText must delegate to the shared square-table scaffold",
+                source(relativeText).contains("ClocktowerHostSquareTableScaffold("),
+            )
+        }
         assertTrue(
-            source(nightSquareTableSources.first()).contains("ClocktowerHostFullScreenScaffold("),
+            source(
+                "src/main/java/com/codex/campboardgamehost/ClocktowerHostSquareTableScaffold.kt",
+            ).contains("ClocktowerHostFullScreenScaffold("),
         )
     }
 
