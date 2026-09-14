@@ -1,25 +1,18 @@
 package com.codex.campboardgamehost
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerDynamicNightAdvanceTest {
     @Test
-    fun `dynamic last step cannot expose a cursor outside the current renderable flow`() {
-        val currentStepCount = 5
+    fun `dynamic last step keeps the current renderable cursor while awaiting refreshed flow`() {
         val directive = clocktowerNightAdvanceDirective(
             currentStepIndex = 4,
-            currentStepCount = currentStepCount,
+            currentStepCount = 5,
             flowMayExpandAfterConfirmation = true,
         )
 
-        val exposedStepIndex = (directive as? ClocktowerNightAdvanceDirective.MoveTo)?.stepIndex
-        assertTrue(
-            "Pending dynamic refresh must not expose an out-of-range cursor: $directive",
-            exposedStepIndex == null || exposedStepIndex in 0 until currentStepCount,
-        )
+        assertEquals(ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(4), directive)
     }
 
     @Test
@@ -45,22 +38,22 @@ class ClocktowerDynamicNightAdvanceTest {
     }
 
     @Test
-    fun `deferred advance keeps newly inserted trigger step`() {
-        assertFalse(
-            clocktowerDeferredNightAdvanceShouldComplete(
-                requestedStepIndex = 5,
-                refreshedStepCount = 6,
-            ),
+    fun `refreshed dynamic flow moves only to a newly renderable next step`() {
+        val directive = clocktowerRefreshedNightAdvanceDirective(
+            pending = ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(4),
+            refreshedStepCount = 6,
         )
+
+        assertEquals(ClocktowerNightAdvanceDirective.MoveTo(5), directive)
     }
 
     @Test
-    fun `deferred advance completes only after refreshed flow proves no step was inserted`() {
-        assertTrue(
-            clocktowerDeferredNightAdvanceShouldComplete(
-                requestedStepIndex = 5,
-                refreshedStepCount = 5,
-            ),
+    fun `refreshed dynamic flow completes when no next step was inserted`() {
+        val directive = clocktowerRefreshedNightAdvanceDirective(
+            pending = ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(4),
+            refreshedStepCount = 5,
         )
+
+        assertEquals(ClocktowerNightAdvanceDirective.CompleteNight, directive)
     }
 }

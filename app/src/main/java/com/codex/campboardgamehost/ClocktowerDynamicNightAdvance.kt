@@ -2,12 +2,14 @@ package com.codex.campboardgamehost
 
 internal sealed interface ClocktowerNightAdvanceDirective {
     data class MoveTo(val stepIndex: Int) : ClocktowerNightAdvanceDirective
+    data class AwaitRefreshedFlow(val currentStepIndex: Int) : ClocktowerNightAdvanceDirective
     data object CompleteNight : ClocktowerNightAdvanceDirective
 }
 
 /**
  * Decides navigation from the list visible before the current step's confirmation mutates
- * checkpoint-derived flow. Dynamic flow mutations must not complete the night from that stale list.
+ * checkpoint-derived flow. Dynamic flow mutations keep the durable cursor on the current renderable
+ * step until the refreshed flow can prove either a real next step or explicit night completion.
  */
 internal fun clocktowerNightAdvanceDirective(
     currentStepIndex: Int,
@@ -20,20 +22,24 @@ internal fun clocktowerNightAdvanceDirective(
         currentStepIndex < currentStepCount - 1 ->
             ClocktowerNightAdvanceDirective.MoveTo(currentStepIndex + 1)
         flowMayExpandAfterConfirmation ->
-            ClocktowerNightAdvanceDirective.MoveTo(currentStepIndex + 1)
+            ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(currentStepIndex)
         else -> ClocktowerNightAdvanceDirective.CompleteNight
     }
 }
 
-/**
- * A requested index at or past the refreshed list size proves that the confirmation did not insert
- * any new work at that slot. Otherwise the refreshed list owns the newly inserted trigger step.
- */
-internal fun clocktowerDeferredNightAdvanceShouldComplete(
-    requestedStepIndex: Int,
+/** Resolves a pending dynamic advance only against a refreshed, renderable night-step list. */
+internal fun clocktowerRefreshedNightAdvanceDirective(
+    pending: ClocktowerNightAdvanceDirective.AwaitRefreshedFlow,
     refreshedStepCount: Int,
-): Boolean {
-    require(requestedStepIndex >= 0) { "Requested night step index must be non-negative." }
+): ClocktowerNightAdvanceDirective {
     require(refreshedStepCount > 0) { "Night advance reconciliation requires at least one step." }
-    return requestedStepIndex >= refreshedStepCount
+    require(pending.currentStepIndex in 0 until refreshedStepCount) {
+        "Pending night cursor must remain renderable while flow refresh is pending."
+    }
+    val nextStepIndex = pending.currentStepIndex + 1
+    return if (nextStepIndex < refreshedStepCount) {
+        ClocktowerNightAdvanceDirective.MoveTo(nextStepIndex)
+    } else {
+        ClocktowerNightAdvanceDirective.CompleteNight
+    }
 }

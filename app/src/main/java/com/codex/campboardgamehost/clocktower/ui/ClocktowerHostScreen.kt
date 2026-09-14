@@ -847,7 +847,9 @@ internal fun ClocktowerJudgeScreen(
     var nightStarted by nightStartedState
     var nightStepIndex by nightStepIndexState
     var dayMode by dayModeState
-    var deferredNightAdvanceIndex by remember(gameId, round, phase) { mutableStateOf<Int?>(null) }
+    var pendingNightAdvance by remember(gameId, round, phase) {
+        mutableStateOf<ClocktowerNightAdvanceDirective.AwaitRefreshedFlow?>(null)
+    }
     var nominatorName by remember(gameId, round) { mutableStateOf<String?>(null) }
     var nomineeName by remember(gameId, round) { mutableStateOf<String?>(null) }
     var highestVoteName by highestVoteNameState
@@ -4207,28 +4209,30 @@ internal fun ClocktowerJudgeScreen(
                     flowMayExpandAfterConfirmation = flowMayExpandAfterConfirmation,
                 )
             ) {
-                is ClocktowerNightAdvanceDirective.MoveTo -> {
-                    if (directive.stepIndex >= nightSteps.size) {
-                        deferredNightAdvanceIndex = directive.stepIndex
-                    }
-                    nightStepIndex = directive.stepIndex
-                }
+                is ClocktowerNightAdvanceDirective.MoveTo -> nightStepIndex = directive.stepIndex
+                is ClocktowerNightAdvanceDirective.AwaitRefreshedFlow -> pendingNightAdvance = directive
                 ClocktowerNightAdvanceDirective.CompleteNight -> onConfirmNight()
             }
         }
 
-        LaunchedEffect(nightSteps.size, deferredNightAdvanceIndex) {
-            val requestedIndex = deferredNightAdvanceIndex ?: return@LaunchedEffect
-            if (
-                clocktowerDeferredNightAdvanceShouldComplete(
-                    requestedStepIndex = requestedIndex,
+        LaunchedEffect(nightSteps.size, pendingNightAdvance) {
+            val pending = pendingNightAdvance ?: return@LaunchedEffect
+            when (
+                val directive = clocktowerRefreshedNightAdvanceDirective(
+                    pending = pending,
                     refreshedStepCount = nightSteps.size,
                 )
             ) {
-                deferredNightAdvanceIndex = null
-                onConfirmNight()
-            } else {
-                deferredNightAdvanceIndex = null
+                is ClocktowerNightAdvanceDirective.MoveTo -> {
+                    pendingNightAdvance = null
+                    nightStepIndex = directive.stepIndex
+                }
+                is ClocktowerNightAdvanceDirective.AwaitRefreshedFlow ->
+                    error("Refreshed night advance cannot remain pending.")
+                ClocktowerNightAdvanceDirective.CompleteNight -> {
+                    pendingNightAdvance = null
+                    onConfirmNight()
+                }
             }
         }
 
