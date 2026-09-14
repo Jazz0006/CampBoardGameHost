@@ -6,111 +6,36 @@ import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.rules.MayorRedirectLegality
 
-import android.content.Context
-import android.content.res.Configuration
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateOffsetAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.zIndex
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
-import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
-import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRequest
 import com.codex.campboardgamehost.clocktower.domain.DynamicGameState
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
@@ -122,13 +47,9 @@ import com.codex.campboardgamehost.clocktower.domain.RegistrationLedger
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionType
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
-import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionKind
-import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
-import com.codex.campboardgamehost.clocktower.domain.YesNoAnswer
 import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.domain.kind
 import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
-import com.codex.campboardgamehost.clocktower.domain.toClocktowerPlayerStates
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNightFlow
@@ -145,7 +66,6 @@ import com.codex.campboardgamehost.clocktower.rules.ResolvedNightMechanicalEvent
 import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
 import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
-import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
 import com.codex.campboardgamehost.clocktower.recommendation.RecommendationUiState
 import com.codex.campboardgamehost.clocktower.recommendation.SetupRecommendationLockPolicy
 import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
@@ -158,16 +78,12 @@ import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditRecor
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionPoolParityRecorder
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPoolDeviceBenchmark
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPoolDeviceBenchmarkReport
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.DynamicCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationRegistration
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.RegistrationDetail
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SpecialRegistrationContext
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
@@ -179,10 +95,6 @@ import com.codex.campboardgamehost.clocktower.session.SetupCoordinationRequest
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
 import com.codex.campboardgamehost.clocktower.session.FirstNightShadowResult
 import com.codex.campboardgamehost.clocktower.session.FirstNightPublicationResolution
-import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationCacheRebuildExecutor
-import com.codex.campboardgamehost.clocktower.epistemic.A4ObservationCacheRebuildRequest
-import com.codex.campboardgamehost.clocktower.epistemic.A4ShadowWorldSetCache
-import com.codex.campboardgamehost.clocktower.epistemic.A4WorldEngineRollout
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.GrimoireSeatView
@@ -190,28 +102,10 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
-import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
-import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
-import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightChronology
-import com.codex.campboardgamehost.clocktower.rules.RegistrationInteractionRules
-import com.codex.campboardgamehost.clocktower.rules.RulesetContentHasher
-import com.codex.campboardgamehost.clocktower.rules.RulesetJsonLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import org.json.JSONObject
-import kotlin.math.PI
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.min
-import kotlin.math.roundToInt
-import kotlin.math.sin
-import java.security.MessageDigest
-import java.util.Locale
-import java.util.UUID
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -4301,11 +4195,6 @@ internal fun ClocktowerJudgeScreen(
                 step = currentStep,
                 surfacePlan = currentSurfacePlan,
                 spyCard = spyCard,
-                spyRegistrationGood = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null) {
-                    spyRegistersGood(currentStep.spyRegistrationKey, currentStep.roleEnName)
-                } else false,
-                spyRegisteredRoleEnName = currentStep.spyRegistrationKey?.let { spyRegistrationRole[it] },
-                spyRegistrationRecommendations = registrationRecommendationOptions(currentStep, spyCard, isSpy = true),
                 spyCanRegister = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null) {
                     spyCanRegister(currentStep.roleEnName)
                 } else false,
@@ -4327,11 +4216,6 @@ internal fun ClocktowerJudgeScreen(
                     currentStep.spyRegistrationKey?.let { spyRegistrationRole[it] = roleName }
                 },
                 recluseCard = recluseCard,
-                recluseRegistrationEvil = if (currentStep.recluseRegistrationKey != null && currentStep.roleEnName != null) {
-                    recluseRegistersEvil(currentStep.recluseRegistrationKey, currentStep.roleEnName)
-                } else false,
-                recluseRegisteredRoleEnName = currentStep.recluseRegistrationKey?.let { recluseRegistrationRole[it] },
-                recluseRegistrationRecommendations = registrationRecommendationOptions(currentStep, recluseCard, isSpy = false),
                 recluseCanRegister = if (currentStep.recluseRegistrationKey != null && currentStep.roleEnName != null) {
                     recluseCanRegister(currentStep.roleEnName)
                 } else false,

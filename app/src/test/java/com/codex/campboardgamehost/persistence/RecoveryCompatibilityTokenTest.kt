@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

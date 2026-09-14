@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyColumn
@@ -42,31 +41,6 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionKind
 import com.codex.campboardgamehost.clocktower.domain.kind
 import com.codex.campboardgamehost.clocktower.recommendation.RecommendationUiState
-
-@Composable
-internal fun RecommendationReasonSummary(
-    reasonCodes: List<String>,
-    warningCodes: List<String>,
-    language: String,
-) {
-    if (reasonCodes.isEmpty() && warningCodes.isEmpty()) return
-    val reasons = reasonCodes.distinct().take(2).joinToString(" · ") { recommendationReasonLabel(it, language) }
-    if (reasons.isNotBlank()) {
-        Text(
-            (if (language == "en") "Why: " else "理由：") + reasons,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodySmall,
-        )
-    }
-    if (warningCodes.isNotEmpty()) {
-        Text(
-            (if (language == "en") "Review: " else "注意：") +
-                warningCodes.distinct().take(2).joinToString(" · ") { recommendationReasonLabel(it, language) },
-            color = MaterialTheme.colorScheme.secondary,
-            style = MaterialTheme.typography.bodySmall,
-        )
-    }
-}
 
 @Composable
 internal fun ClocktowerStorytellerRecommendationScreen(

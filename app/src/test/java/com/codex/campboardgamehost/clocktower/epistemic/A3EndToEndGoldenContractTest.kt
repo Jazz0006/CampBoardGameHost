@@ -1,7 +1,6 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
-import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId

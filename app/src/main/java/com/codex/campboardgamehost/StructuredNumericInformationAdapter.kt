@@ -1,6 +1,5 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase

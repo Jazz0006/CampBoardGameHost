@@ -2,7 +2,6 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
-import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue

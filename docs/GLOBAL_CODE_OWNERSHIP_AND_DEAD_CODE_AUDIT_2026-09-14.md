@@ -1,9 +1,9 @@
 # GLOBAL CODE OWNERSHIP AND DEAD-CODE AUDIT
 
 > Date: 2026-09-14 Australia/Sydney
-> Status: **AUDIT COMPLETE — implementation not started**
+> Status: **IMPLEMENTATION IN PROGRESS — steps 1 and 2 complete; steps 3-6 remain**
 > Baseline: PR #123 campaign head `486473bac8ab0c717ca84a54a32db035e9413901`
-> Implementation rule: **open a new PR only after explicit user confirmation**
+> Current implementation heads: step 1 `8f5d7668`; step 2 `590cac55`
 
 ## 1. Scope and method
 
@@ -20,7 +20,7 @@ Local Gradle verification was unavailable because the Gradle 9.5 distribution wa
 the execution environment could not reach the wrapper download endpoint. This is an audit result,
 not a new test-acceptance claim.
 
-## 2. Inventory
+## 2. Pre-cleanup inventory baseline
 
 | Metric | Result |
 |---|---:|
@@ -39,6 +39,12 @@ not a new test-acceptance claim.
 
 The clone-window total is a search signal, not 330 independent defects. Large overlapping runs and
 mechanically similar Compose shells account for many windows.
+
+These numbers describe the audit baseline before implementation. They are retained as historical
+evidence and must not be presented as the post-cleanup repository inventory. Step 2 subsequently
+removed 2,268 lines across its two commits; a fresh global inventory should be generated only after
+the ownership campaign is complete, so intermediate structural moves are not mistaken for final
+progress.
 
 ## 3. Confirmed dead production code
 
@@ -108,15 +114,17 @@ uses the abstraction.
 
 ## 5. Priority ownership findings
 
-### P0 — Virgin Spy automatic decision identity is not game-scoped
+### P0 — Virgin Spy automatic decision identity was not game-scoped — FIXED IN STEP 1
 
 The Virgin/Spy fallback in `ClocktowerHostScreen.kt` builds a deterministic key from Spy name and
 legal roles only. It omits game ID, phase, round and sequence. Different games with the same name
 and legal-role set therefore reuse the same pseudo-random ruling. Other night registration paths
 already use `clocktowerTemporaryNightDecisionKey`.
 
-The first repair should route this path through the canonical game-scoped identity and add a typed
-cross-game identity regression test.
+Step 1 introduced one game/phase/round/registration-scoped identity owner and routed the Virgin Spy
+fallback through it. The typed regression proves stability for the same identity and isolation
+across game, phase, round and registration identity. The accepted implementation head is
+`8f5d7668` on PR #124; its Android, ASP, real-Clingo, aggregate CI and R2 checks passed.
 
 ### P1 — No Greater Joy setup remains a parallel App-root implementation
 
@@ -203,23 +211,39 @@ compatibility boundary.
   UI reconstruction/projection around shared resolvers, not a second full rule engine.
 - No writerless App/Host remembered state was proven by the static use scan.
 
-## 8. New-PR implementation sequence
+## 8. User-confirmed implementation sequence and progress
 
-Do not implement this sequence on PR #123.
+1. **Fix Virgin decision identity — COMPLETE.** PR #124 head `8f5d7668` scopes automatic
+   registration decisions to game, phase, round and registration identity.
+2. **Independent behavior-neutral cleanup — COMPLETE.** PR #125 head `590cac55`:
+   - deletes the obsolete 770-line Setup UI subgraph and confirmed dead UI/helpers;
+   - removes the six unread registration value parameters while retaining live callbacks/state;
+   - removes both unused benchmark constants;
+   - removes all 168 originally identified unreferenced strings plus 13 strings orphaned by the
+     dead-UI deletion from both locales (181 per locale);
+   - removes 790 lexically confirmed unused imports (the original 781 plus 9 orphaned by cleanup);
+   - leaves both locale key sets and format placeholders aligned, with zero missing static string
+     references and zero remaining statically unreferenced main-string definitions.
+3. **NEXT — unify registration domain and automatic-selection ownership.** Candidate legality,
+   registration facts and automatic selection must converge behind one domain/session boundary.
+4. Make production restore and restore tests consume the same composition boundary.
+5. Cut No Greater Joy setup over to the generic provider/source/shown-identity pipeline.
+6. Finally reduce Host/App gameplay ownership and converge square-table presentation. This includes
+   centralizing the duplicated phase conversion, moving mechanical projection out of Compose, and
+   extracting only small shared presentation seams rather than a universal configurable screen.
 
-1. Fix the game-scoped Virgin Spy decision identity with the smallest typed RED/GREEN change.
-2. Submit a behavior-neutral cleanup slice: confirmed dead UI, obsolete parameters, constants,
-   resources and compiler-confirmed unused imports.
-3. Converge registration legality/candidate/automatic-selection ownership.
-4. Make production restore and restore tests consume the same entry point.
-5. Cut No Greater Joy setup over to the generic deterministic setup pipeline.
-6. Centralize phase conversion and then reduce Host/App mechanical projection ownership.
-7. Consolidate square-table presentation only after gameplay-owner changes are stable.
+The six numbered items above are the authoritative sequence. Each behavior-changing ownership
+cutover should remain independently reviewable; do not combine dead-code deletion, registration,
+setup migration and broad Host/App decomposition in one PR.
 
-Steps 2-7 may require separate PRs after the first repair. Do not combine dead-code deletion,
-behavioral cutover and broad Host decomposition into one review unit.
+Step 2 verification at `590cac55` includes full Android `testFull + assembleDebug`, ASP contracts,
+real Clingo cross-validation, aggregate CI and R2 boundary checks. The obsolete R2 positive
+existence guard for `RecommendationReasonSummary` was replaced with a production-wide absence
+guard in `590cac55`.
 
-## 9. Gate for continuation
+## 9. Continuation gate
 
-After PR #123 merges, stop and report the merge result. The next PR must not be opened until the
-user confirms the audit repair campaign and its first slice.
+The user authorized merging steps 1 and 2 after this document, the roadmap and the new-conversation
+handoff are updated. Merge PR #124 first, retarget PR #125 to `main`, revalidate its exact final
+head, then merge PR #125. Do not open the step 3 PR in this closeout conversation; begin it from the
+new conversation after re-querying live `main` and repository state.
