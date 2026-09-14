@@ -63,6 +63,7 @@ class ClocktowerSingleTargetInteractionPresentationTest {
             assertEquals(2, model.actorSeat)
             assertEquals("wake", model.wakeInstruction)
             assertFalse(model.canShowResult)
+            assertFalse(model.confirmationEnabled)
         }
     }
 
@@ -71,6 +72,7 @@ class ClocktowerSingleTargetInteractionPresentationTest {
         val allowed = requireNotNull(clocktowerSingleTargetAbilityPresentation(ClocktowerNightAction.Ravenkeeper, selection, 4, "wake", true))
         val blocked = requireNotNull(clocktowerSingleTargetAbilityPresentation(ClocktowerNightAction.Ravenkeeper, selection, 4, "wake", false))
         assertTrue(allowed.canShowResult)
+        assertFalse(allowed.confirmationEnabled)
         assertFalse(blocked.canShowResult)
         assertEquals(allowed.copy(canShowResult = false), blocked)
         assertNull(clocktowerSingleTargetAbilityPresentation(ClocktowerNightAction.FortuneTeller, selection, 4, "wake", true))
@@ -85,6 +87,7 @@ class ClocktowerSingleTargetInteractionPresentationTest {
             assertTrue(presentation.automatic)
             assertFalse(presentation.selection.enabled)
             assertTrue(presentation.selection.selectableSeats.isEmpty())
+            assertFalse(presentation.confirmationEnabled)
         }
     }
 
@@ -95,9 +98,11 @@ class ClocktowerSingleTargetInteractionPresentationTest {
         assertTrue(missing.selection.selectableSeats.isEmpty())
         assertEquals(selection.selectedSeat, missing.selection.selectedSeat)
         assertNull(missing.mayorSeat)
+        assertFalse(missing.confirmationEnabled)
         val present = requireNotNull(clocktowerNightRulingPresentation(ClocktowerNightAction.MayorRedirect, selection, false, 2, ""))
         assertEquals(selection, present.selection)
         assertEquals(2, present.mayorSeat)
+        assertTrue(present.confirmationEnabled)
     }
 
     @Test
@@ -106,6 +111,7 @@ class ClocktowerSingleTargetInteractionPresentationTest {
         assertEquals(selection, model.selection)
         assertEquals("Choose eligible minion", model.explanation)
         assertNull(model.mayorSeat)
+        assertFalse(model.confirmationEnabled)
         assertNull(clocktowerNightRulingPresentation(ClocktowerNightAction.Poison, selection, false, null, ""))
     }
 }

@@ -7,6 +7,15 @@ internal data class ClocktowerSingleTargetSelection(
     val enabled: Boolean,
 )
 
+/** Derived interaction eligibility over an upstream-owned legal target domain. */
+internal fun clocktowerSingleTargetConfirmationEnabled(
+    selection: ClocktowerSingleTargetSelection,
+    additionalSelectableSeats: Set<Int> = emptySet(),
+): Boolean = selection.enabled &&
+    selection.selectedSeat != null &&
+    (selection.selectedSeat in selection.selectableSeats ||
+        selection.selectedSeat in additionalSelectableSeats)
+
 internal sealed interface ClocktowerSingleTargetEvent {
     data class SelectSeat(val seat: Int) : ClocktowerSingleTargetEvent
     data object ShowResult : ClocktowerSingleTargetEvent
@@ -20,7 +29,10 @@ internal data class ClocktowerSingleTargetAbilityPresentation(
     val actorSeat: Int?,
     val wakeInstruction: String?,
     val canShowResult: Boolean,
-)
+) {
+    val confirmationEnabled: Boolean
+        get() = clocktowerSingleTargetConfirmationEnabled(selection)
+}
 
 internal fun clocktowerSingleTargetAbilityPresentation(
     action: ClocktowerNightAction,
@@ -48,7 +60,15 @@ internal data class ClocktowerNightRulingPresentation(
     val mayorSeat: Int?,
     val explanation: String,
     val automatic: Boolean,
-)
+) {
+    val confirmationEnabled: Boolean
+        get() = clocktowerSingleTargetConfirmationEnabled(
+            selection = selection,
+            additionalSelectableSeats = if (
+                action == ClocktowerNightAction.MayorRedirect && mayorSeat != null
+            ) setOf(mayorSeat) else emptySet(),
+        )
+}
 
 internal fun clocktowerNightRulingPresentation(
     action: ClocktowerNightAction,
