@@ -24,6 +24,11 @@ internal enum class TwoPlayerSelectionAction {
     RejectLimit,
 }
 
+internal fun clocktowerToggledSingleTargetSelection(
+    currentSelection: String?,
+    tappedSelection: String,
+): String? = tappedSelection.takeUnless { it == currentSelection }
+
 internal fun twoPlayerSelectionAction(
     first: String?,
     second: String?,
