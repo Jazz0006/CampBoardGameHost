@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — Global Ownership Cleanup Step 4
 
 > Date: 2026-09-14 Australia/Sydney
-> Status: **IMPLEMENTED on `codex/global-ownership-cleanup-4`; remote acceptance pending**
+> Status: **PR #127 code head `fec12982`; remote gates pass; user acceptance/merge pending**
 > Goal: **production and restore tests consume one unfinished-night composition boundary**
 
 ## 1. Baseline and scope

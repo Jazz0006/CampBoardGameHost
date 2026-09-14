@@ -1,9 +1,9 @@
 # GLOBAL CODE OWNERSHIP AND DEAD-CODE AUDIT
 
 > Date: 2026-09-14 Australia/Sydney
-> Status: **IMPLEMENTATION IN PROGRESS — steps 1-3 complete; step 4 audit/implementation in progress; steps 5-6 remain**
+> Status: **IMPLEMENTATION IN PROGRESS — steps 1-3 complete; step 4 remote gates pass and awaits user acceptance; steps 5-6 remain**
 > Baseline: PR #123 campaign head `486473bac8ab0c717ca84a54a32db035e9413901`
-> Current implementation heads: step 1 `8f5d7668`; step 2 `590cac55`; step 3 merged as `b7756062`; step 4 branch `codex/global-ownership-cleanup-4`
+> Current implementation heads: step 1 `8f5d7668`; step 2 `590cac55`; step 3 merged as `b7756062`; step 4 PR #127 code head `fec12982`
 
 ## 1. Scope and method
 
@@ -227,7 +227,8 @@ compatibility boundary.
 3. **COMPLETE — unify registration domain and automatic-selection ownership.** PR #126 merged as
    `b7756062`; candidate legality, registration facts and automatic selection now converge behind one
    domain/session boundary.
-4. **IN PROGRESS — make production restore and restore tests consume the same composition boundary.**
+4. **READY FOR ACCEPTANCE — make production restore and restore tests consume the same composition
+   boundary.** PR #127 code head `fec12982` passed full remote gates.
 5. Cut No Greater Joy setup over to the generic provider/source/shown-identity pipeline.
 6. Finally reduce Host/App gameplay ownership and converge square-table presentation. This includes
    centralizing the duplicated phase conversion, moving mechanical projection out of Compose, and
@@ -414,3 +415,7 @@ new conversation after re-querying live `main` and repository state.
 - Local GREEN evidence: the five focused restore/reconstruction/Host-integration classes before and
   after the move; forced `:app:testFast` (1,335 tests, zero failures); forced
   `:app:testFull :app:assembleDebug` (1,352 JVM tests, zero failures); `git diff --check`.
+- PR #127 code head `fec12982d370fe1b0bdcde0dd313fb5366a3ad40` is based exactly on merged
+  `main` `b77560628054dee90c78a91d4bab8cb4185fda59`. Remote Android Full, ASP contracts,
+  Real Clingo, aggregate CI and R2 boundary checks all passed; the PR remains Draft and unmerged
+  pending explicit user acceptance.
