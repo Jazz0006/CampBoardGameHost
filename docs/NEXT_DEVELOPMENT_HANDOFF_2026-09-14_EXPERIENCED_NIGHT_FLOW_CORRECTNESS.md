@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — Experienced Night Flow Correctness
 
 > Date: 2026-09-14 Australia/Sydney  
-> Status: **CURRENT — S1/S2/S3 COMPLETE; S4 automated acceptance complete, device pass pending**
+> Status: **CLOSEOUT — S1/S2/S3/S4 automated acceptance complete; PR #123 merge authorized**
 > Program: Clocktower Storyteller mobile flow correctness  
 > Branch: `codex/experienced-night-flow-correctness`  
 > Starting `main`: `940ba1df68365974ba366985d66d1cb583682ba7`
@@ -154,7 +154,7 @@ Local Gradle execution was blocked before compilation because the Work image had
 distribution and could not reach `services.gradle.org`. Remote R2 run `34806543877` and CI run
 `34806543889` passed at `6088af21`; CI's Android FAST unit-test step was green. The exact remote
 comparison from `0e860940` was four commits ahead, zero behind, and contained only the expected 19
-S2 production/test/documentation paths. PR #123 remains Draft.
+S2 production/test/documentation paths. At the S2 checkpoint, PR #123 remained Draft.
 
 S2 is accepted. Begin S3 with a read-only fan-out audit; do not edit production until the shared
 derived target-eligibility seam and durable evidence are identified.
@@ -195,7 +195,7 @@ that contract. Mayor's explicitly modeled `Mayor dies` seat is the only suppleme
 Local Gradle could not download its uncached distribution. Remote R2 run `34807533943` passed, and
 CI run `34807533986` passed the full Android unit-test/debug-APK checkpoint plus the repository's
 other gates. The exact S2-head comparison was three commits ahead, zero behind, with exactly eight
-expected S3 paths. PR #123 remains Draft.
+expected S3 paths. At the S3 checkpoint, PR #123 remained Draft.
 
 ### S4 — Experienced night-flow regression matrix
 
@@ -216,7 +216,9 @@ Before campaign closeout, exercise at least:
 - representative single-target, pair-information, numeric-information and manual-information steps;
 - Beginner regression for the same shared owners so this fix does not create a second mode pipeline.
 
-Real-device validation is required after the logical checkpoint because the original report is a device-visible navigation/render failure.
+Real-device validation remains required follow-up because the original report is a device-visible
+navigation/render failure. The user explicitly authorized merge before that follow-up; any newly
+proven defect belongs in a new focused PR.
 
 ## 6. Test strategy
 
@@ -290,7 +292,7 @@ S1 cleanup head before this docs update:
 99c47bed6180839c0756b286540933cea90cc3b9
 
 campaign PR:
-#123 — draft / do not merge yet
+#123 — user-authorized for merge after documentation closeout
 
 S3 production checkpoint:
 c9faee03540048d6f94c12c159d277ef65e0c92b
@@ -310,9 +312,12 @@ Its existing handoff remains the resume point after this flow-correctness campai
 
 ## 11. First action in the next conversation
 
-After live-state confirmation, dispatch the field-test APK from the immutable S4 `[full-ci]` head
-and complete the real-device checklist in the S4 audit. Keep PR #123 Draft and do not merge before
-the device result is recorded.
+After PR #123 merges, stop. Do not open the next repair PR until the user confirms. The next
+implementation authority is
+`docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`.
+
+The real-device checklist in the S4 audit remains a separate follow-up against the immutable merged
+campaign result. Do not combine field findings with speculative ownership cleanup.
 
 Map:
 

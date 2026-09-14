@@ -1,10 +1,10 @@
 # EXPERIENCED NIGHT FLOW — S4 Regression Matrix Audit
 
 > Date: 2026-09-14 Australia/Sydney  
-> Status: **S4 AUTOMATED ACCEPTANCE COMPLETE — field acceptance pending**
+> Status: **S4 AUTOMATED ACCEPTANCE COMPLETE — merge authorized; field acceptance is follow-up**
 > Program: `EXPERIENCED-NIGHT-FLOW-1`  
 > Branch: `codex/experienced-night-flow-correctness`  
-> PR: `#123` — open / draft / do not merge yet  
+> PR: `#123` — user-authorized for merge after documentation closeout
 > Parent handoff: `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-14_EXPERIENCED_NIGHT_FLOW_CORRECTNESS.md`
 
 ## 1. Acceptance invariant
@@ -119,16 +119,17 @@ Use the field-test APK produced from the final immutable S4 checkpoint and verif
 6. Resume a saved intermediate night and confirm the visible draft/confirmed state remains coherent.
 7. Repeat representative ordinary target and automatic ruling paths in Beginner mode.
 
-Automated acceptance can prove structure and state semantics. S4 remains open until this device
-check is explicitly reported complete.
+Automated acceptance proves the corrected structure and state semantics. The checklist remains
+required field evidence, but the user explicitly authorized PR #123 to merge before that follow-up.
+Any defect found on device must be handled in a new focused PR rather than reopening this branch.
 
 ## 8. Implementation and automated acceptance result
 
 The correction was accepted through the repository's fail-closed large-file workflow:
 
 ```text
-66a9f2b9  docs: audit S4 night regression matrix
-cd35607e  test: define S4 draft-toggle RED
+2a452aa7  docs: audit S4 night regression matrix
+ba56efcd  test: define S4 draft-toggle RED
 4d340c57  fix: route night target edits through visible draft
 52c0aa41  chore(ci): remove S4 night target one-shot workflow
 ```
@@ -137,5 +138,6 @@ GitHub Actions run `34808912975` passed the exact HEAD/blob locks, focused basel
 patch, focused GREEN, `:app:testFast`, exact diff/hash audit, full Android unit tests plus debug APK,
 ASP contracts, real Clingo and the aggregate CI gate. R2 run `34808912927` also passed.
 
-The final `[full-ci]` carrier and field-test APK must be produced from the resulting immutable head.
-S4 remains open and PR #123 remains Draft until the checklist in section 7 is completed on device.
+Final immutable campaign head `486473ba` records the automated acceptance. On 2026-09-14 the user
+authorized PR #123 to merge after this documentation closeout. The section 7 field-test checklist
+remains a post-merge follow-up and is not permission to add unrelated cleanup to PR #123.

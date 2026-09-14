@@ -18,14 +18,15 @@ UX-MODE-1 Beginner / Experienced mode             COMPLETE / merged via PR #120
 UI-INFO-1 information filtering & layout          COMPLETE / merged via PR #121
 Dead-player square-table marking                  COMPLETE / merged via PR #122
 
-EXPERIENCED-NIGHT-FLOW-1 navigation correctness   CURRENT — S4 automated acceptance complete; device pass pending
+EXPERIENCED-NIGHT-FLOW-1 navigation correctness   COMPLETE — PR #123 merge authorized; device pass is follow-up
+GLOBAL-OWNERSHIP-CLEANUP-1                        AUDITED — implementation requires a new PR after user confirmation
 EPI-MQ / Productive Uncertainty                   PAUSED / queued after flow correctness
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
 
 Completed campaign documents are historical evidence, not default execution authority.
 
-## 2. Immediate priority — EXPERIENCED-NIGHT-FLOW-1
+## 2. Immediate priority — close PR #123, then hold
 
 Active handoff:
 
@@ -34,6 +35,16 @@ Active handoff:
 Working branch:
 
 `codex/experienced-night-flow-correctness`
+
+The user authorized PR #123 to merge after the global ownership/dead-code audit was recorded. The
+remaining real-device S4 checklist is a post-merge field-validation follow-up, not a reason to mix
+new cleanup work into the completed campaign branch.
+
+The next implementation authority is:
+
+`docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`
+
+Do not open or implement its repair PR until the user explicitly confirms after PR #123 has merged.
 
 Recorded starting `main`:
 
