@@ -18,35 +18,35 @@ UX-MODE-1 Beginner / Experienced mode             COMPLETE / merged via PR #120
 UI-INFO-1 information filtering & layout          COMPLETE / merged via PR #121
 Dead-player square-table marking                  COMPLETE / merged via PR #122
 
-EXPERIENCED-NIGHT-FLOW-1 navigation correctness   COMPLETE — PR #123 merge authorized; device pass is follow-up
-GLOBAL-OWNERSHIP-CLEANUP-1                        AUDITED — implementation requires a new PR after user confirmation
+EXPERIENCED-NIGHT-FLOW-1 navigation correctness   COMPLETE / merged via PR #123; device pass is follow-up
+GLOBAL-OWNERSHIP-CLEANUP steps 1-2                COMPLETE — PRs #124/#125 authorized for ordered merge
+GLOBAL-OWNERSHIP-CLEANUP step 3                   NEXT — registration ownership convergence
 EPI-MQ / Productive Uncertainty                   PAUSED / queued after flow correctness
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
 
 Completed campaign documents are historical evidence, not default execution authority.
 
-## 2. Immediate priority — close PR #123, then hold
+## 2. Immediate priority — merge cleanup steps 1 and 2, then hand off step 3
 
 Active handoff:
 
-`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-14_EXPERIENCED_NIGHT_FLOW_CORRECTNESS.md`
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-14_GLOBAL_OWNERSHIP_CLEANUP_STEP_3.md`
 
-Working branch:
-
-`codex/experienced-night-flow-correctness`
-
-The user authorized PR #123 to merge after the global ownership/dead-code audit was recorded. The
-remaining real-device S4 checklist is a post-merge field-validation follow-up, not a reason to mix
-new cleanup work into the completed campaign branch.
-
-The next implementation authority is:
+Campaign authority:
 
 `docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`
 
-Do not open or implement its repair PR until the user explicitly confirms after PR #123 has merged.
+Step 1 is complete at PR #124 head `8f5d7668`. Step 2 is complete at stacked PR #125 head
+`590cac55`, with 2,268 deletions and only a two-line R2 guard replacement added. The user authorized
+both merges after documentation closeout. Merge #124 first, retarget #125 to `main`, revalidate the
+exact final head and then merge #125.
 
-Recorded starting `main`:
+After both merges, stop this conversation. The next conversation starts step 3 with a read-only
+live delta/ownership audit; it must not silently expand into restore, No Greater Joy, broad Host/App
+decomposition or square-table work.
+
+Historical starting `main` for EXPERIENCED-NIGHT-FLOW-1:
 
 `940ba1df68365974ba366985d66d1cb583682ba7`
 
@@ -153,22 +153,12 @@ Do not create source-string tests for callback spelling, local variables, `Launc
 
 Shared-contract changes must follow the AGENTS fan-out gate: map all production producers/consumers, classify must-inherit vs intentional exemption, and verify both Beginner/Experienced plus fresh/restored paths where applicable.
 
-## 7. Large-file writer rule
+## 7. Repository writing rule for the current Work environment
 
-Likely production consumers include large/truncated Host/App files. Apply `AGENTS.md` exactly:
-
-```text
-small/medium docs/tests/helpers
--> GitHub connector direct write
-
-localized large-file edit with stable unique anchors
--> GitHub Actions one-shot workflow + separate Python patch script
-
-broad/mechanical/local-only edit or unsafe remote patch
--> Codex/Luna only when the remote one-shot path cannot safely perform it
-```
-
-Do not patch large files by guessed line number or partial whole-file replacement.
+Use local file edits, normal Git commits and authenticated terminal `git push`. The user explicitly
+directed this campaign not to use Connector writes or a one-shot GitHub workflow for large files.
+Verify exact diff and full-file integrity before every push; never replace a large source file from
+a truncated read or partial representation.
 
 ## 8. EPI-MQ status — paused, not cancelled
 
@@ -211,11 +201,12 @@ The newly reproduced Experienced-mode black-screen regression is an independentl
 
 ## 10. Live-state notes
 
-Recorded `main` at roadmap update:
+Recorded live state before cleanup merge closeout:
 
 ```text
-940ba1df68365974ba366985d66d1cb583682ba7
-Merge PR #122 — UI: mark dead players clearly on square table
+main: 84e84d37b6ef3078fd10566e0d9d2e92e25def7c (PR #123 merged)
+PR #124: Draft / mergeable / head 8f5d7668 / all required checks passed
+PR #125: stacked Draft / mergeable / code head 590cac55 / full CI and R2 passed
 ```
 
 Unrelated open draft PR:
@@ -225,7 +216,7 @@ Unrelated open draft PR:
 branch: codex/execution-restore-crash-repro
 ```
 
-Do not modify, merge, or stack EXPERIENCED-NIGHT-FLOW-1 on PR #109.
+Do not modify or merge PR #109 as part of the ownership-cleanup campaign.
 
 Always re-query live refs/checks at the start of the next conversation.
 
@@ -234,13 +225,15 @@ Always re-query live refs/checks at the start of the next conversation.
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
 3. this roadmap;
-4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-14_EXPERIENCED_NIGHT_FLOW_CORRECTNESS.md`;
-5. current SNE-7 authoritative night-transaction document;
-6. current UI-NAV-1 closeout/reference document;
-7. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md`;
-8. query live `main`, working branch, relevant PR/check status;
-9. begin S1 read-only delta audit and typed RED design before production edits.
+4. `docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`;
+5. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-14_GLOBAL_OWNERSHIP_CLEANUP_STEP_3.md`;
+6. current registration semantics, automatic-selection and persistence/recovery owners identified by
+   the handoff;
+7. query live `main`, working branch and PR/check status;
+8. begin step 3 with a read-only producer/consumer fan-out audit.
 
 ## 12. Stable rule
 
-> **Current roadmap + one active handoff define what happens next. For this campaign, fix the shared ownership boundary that permits an invalid/blank night state; do not patch the DemonKill screen as a special case.**
+> **Current roadmap + one active handoff define what happens next. Registration legality and
+> candidate construction must have one domain/session owner; presentation must consume, not
+> recreate, that authority.**
