@@ -4096,6 +4096,7 @@ internal fun ClocktowerJudgeScreen(
         require(nightSteps.isNotEmpty()) { "A started night must contain an actionable step." }
         val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
         val currentStep = nightSteps[currentStepIndex]
+        val currentSurfacePlan = clocktowerNightSurfacePlan(currentStep, phase)
         val selectedNightName = when (currentStep.action) {
             ClocktowerNightAction.RedHerring -> redHerring
             ClocktowerNightAction.Poison -> poisonDraftTarget
@@ -4271,11 +4272,7 @@ internal fun ClocktowerJudgeScreen(
             onPrevious = onMovePreviousNightStep,
             onHostTools = onHostTools,
             onNext = advanceNightStep,
-            contentOwnsFullScreen = clocktowerNightUsesFullScreenHostSurface(
-                isRealAction = currentStep.isRealAction,
-                action = currentStep.action,
-                displayKind = currentStep.displayKind,
-            ),
+            contentOwnsFullScreen = currentSurfacePlan.ownsFullScreenHostSurface,
         ) {
             ClocktowerNightStepCardLocalized(
                 recommendationCoordinator = recommendationCoordinator,
@@ -4297,6 +4294,7 @@ internal fun ClocktowerJudgeScreen(
                 mayorRedirectTargetCards = mayorRedirectTargetCards,
                 demonSuccessorTargetCards = demonSuccessorTargetCards,
                 step = currentStep,
+                surfacePlan = currentSurfacePlan,
                 spyCard = spyCard,
                 spyRegistrationGood = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null) {
                     spyRegistersGood(currentStep.spyRegistrationKey, currentStep.roleEnName)

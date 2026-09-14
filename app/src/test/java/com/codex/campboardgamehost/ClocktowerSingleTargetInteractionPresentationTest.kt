@@ -40,9 +40,14 @@ class ClocktowerSingleTargetInteractionPresentationTest {
     }
 
     @Test
-    fun `automatic rulings do not show a manual target dialog`() {
+    fun `automatic rulings keep a concrete read only surface while effects settle`() {
         for (action in listOf(ClocktowerNightAction.MayorRedirect, ClocktowerNightAction.DemonSuccessor)) {
-            assertNull(clocktowerNightRulingPresentation(action, selection, true, 2, "explanation"))
+            val presentation = requireNotNull(
+                clocktowerNightRulingPresentation(action, selection, true, 2, "explanation"),
+            )
+            assertTrue(presentation.automatic)
+            assertFalse(presentation.selection.enabled)
+            assertTrue(presentation.selection.selectableSeats.isEmpty())
         }
     }
 

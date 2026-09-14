@@ -100,6 +100,7 @@ internal fun ClocktowerNightRulingSection(
         onPrevious = { onEvent(ClocktowerSingleTargetEvent.Previous) },
         onHostTools = onHostTools,
         onNext = { onEvent(ClocktowerSingleTargetEvent.Next) },
+        nextEnabled = !presentation.automatic,
         secondaryActionLabel = if (isMayor) {
             if (language == "en") "Mayor dies" else "市长死亡"
         } else null,

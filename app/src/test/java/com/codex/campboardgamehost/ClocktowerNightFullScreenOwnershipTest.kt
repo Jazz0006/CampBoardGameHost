@@ -22,6 +22,10 @@ class ClocktowerNightFullScreenOwnershipTest {
             ClocktowerNightAction.DemonSuccessor to ClocktowerNightFullScreenSurface.Ruling,
             ClocktowerNightAction.NewDemonIdentity to ClocktowerNightFullScreenSurface.EvilInformation,
         )
+        assertEquals(
+            ClocktowerNightAction.entries.filterNotTo(linkedSetOf()) { it == ClocktowerNightAction.None },
+            expectedByAction.keys,
+        )
 
         expectedByAction.forEach { (action, surface) ->
             assertEquals(
@@ -48,6 +52,13 @@ class ClocktowerNightFullScreenOwnershipTest {
                 clocktowerNightSurfacePlan(step(roleEnName = role), ClocktowerPhase.FirstNight),
             )
         }
+        assertEquals(
+            ClocktowerNightSurfacePlan.FullScreen(ClocktowerNightFullScreenSurface.EvilInformation),
+            clocktowerNightSurfacePlan(
+                step(displayKind = ClocktowerDisplayKind.EvilInfo),
+                ClocktowerPhase.FirstNight,
+            ),
+        )
     }
 
     @Test
@@ -71,6 +82,13 @@ class ClocktowerNightFullScreenOwnershipTest {
         assertEquals(
             ClocktowerNightSurfacePlan.FullScreen(ClocktowerNightFullScreenSurface.PlainInformation),
             clocktowerNightSurfacePlan(step(roleEnName = "Investigator"), ClocktowerPhase.FirstNight),
+        )
+        assertEquals(
+            ClocktowerNightSurfacePlan.FullScreen(ClocktowerNightFullScreenSurface.PlainInformation),
+            clocktowerNightSurfacePlan(
+                step(roleEnName = "Investigator", manualInformationCandidates = listOf(candidate)),
+                ClocktowerPhase.Night,
+            ),
         )
     }
 
@@ -109,7 +127,6 @@ class ClocktowerNightFullScreenOwnershipTest {
         assertEquals("You are now the Imp", displayStep.displayPrimary)
     }
 
-    @Test
     private fun step(
         isRealAction: Boolean = true,
         action: ClocktowerNightAction = ClocktowerNightAction.None,

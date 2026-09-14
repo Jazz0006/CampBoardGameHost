@@ -21,6 +21,7 @@ internal data class ClocktowerPlainInformationSquareTablePresentation(
     val actorSeat: Int?,
     val wakeInstruction: String?,
     val displayStep: ClocktowerNightStepUi,
+    val showPlayerDisplayAction: Boolean,
 )
 
 /**
@@ -33,7 +34,12 @@ internal fun clocktowerPlainInformationSquareTablePresentation(
     wakeInstruction: String?,
 ): ClocktowerPlainInformationSquareTablePresentation? {
     if (!step.isRealAction || step.displayKind == ClocktowerDisplayKind.None) return null
-    return ClocktowerPlainInformationSquareTablePresentation(actorSeat, wakeInstruction, step)
+    return ClocktowerPlainInformationSquareTablePresentation(
+        actorSeat = actorSeat,
+        wakeInstruction = wakeInstruction,
+        displayStep = step,
+        showPlayerDisplayAction = true,
+    )
 }
 
 @Composable
@@ -116,9 +122,11 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
                         textAlign = TextAlign.Center,
                     )
                 }
-                Spacer(Modifier.height(10.dp))
-                OutlinedButton(onClick = onShowPlayerDisplay, modifier = Modifier.fillMaxWidth()) {
-                    Text(if (language == "en") "Show to player" else "展示给玩家")
+                if (presentation.showPlayerDisplayAction) {
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedButton(onClick = onShowPlayerDisplay, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (language == "en") "Show to player" else "展示给玩家")
+                    }
                 }
             }
         }

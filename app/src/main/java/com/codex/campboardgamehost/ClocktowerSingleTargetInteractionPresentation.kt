@@ -47,6 +47,7 @@ internal data class ClocktowerNightRulingPresentation(
     val selection: ClocktowerSingleTargetSelection,
     val mayorSeat: Int?,
     val explanation: String,
+    val automatic: Boolean,
 )
 
 internal fun clocktowerNightRulingPresentation(
@@ -56,17 +57,27 @@ internal fun clocktowerNightRulingPresentation(
     mayorSeat: Int?,
     explanation: String,
 ): ClocktowerNightRulingPresentation? {
-    if (automatic) return null
     return when (action) {
         ClocktowerNightAction.MayorRedirect -> ClocktowerNightRulingPresentation(
             action,
             selection.copy(
-                selectableSeats = if (mayorSeat != null) selection.selectableSeats else emptySet(),
-                enabled = selection.enabled && mayorSeat != null,
+                selectableSeats = if (!automatic && mayorSeat != null) selection.selectableSeats else emptySet(),
+                enabled = !automatic && selection.enabled && mayorSeat != null,
             ),
-            mayorSeat, explanation,
+            mayorSeat,
+            explanation,
+            automatic,
         )
-        ClocktowerNightAction.DemonSuccessor -> ClocktowerNightRulingPresentation(action, selection, null, explanation)
+        ClocktowerNightAction.DemonSuccessor -> ClocktowerNightRulingPresentation(
+            action,
+            selection.copy(
+                selectableSeats = if (automatic) emptySet() else selection.selectableSeats,
+                enabled = !automatic && selection.enabled,
+            ),
+            null,
+            explanation,
+            automatic,
+        )
         else -> null
     }
 }
