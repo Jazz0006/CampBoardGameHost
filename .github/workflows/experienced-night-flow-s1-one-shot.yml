@@ -107,8 +107,7 @@ jobs:
           git add \
             app/src/main/java/com/codex/campboardgamehost/ClocktowerDynamicNightAdvance.kt \
             app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt \
-            app/src/test/java/com/codex/campboardgamehost/ClocktowerDynamicNightAdvanceTest.kt \
-            app/src/test/java/com/codex/campboardgamehost/ClocktowerDynamicNightAdvanceWiringTest.kt
+            app/src/test/java/com/codex/campboardgamehost/ClocktowerDynamicNightAdvanceTest.kt
           staged="$(git diff --cached --name-only | sort)"
           expected="$(printf '%s\n' \
             'app/src/main/java/com/codex/campboardgamehost/ClocktowerDynamicNightAdvance.kt' \
