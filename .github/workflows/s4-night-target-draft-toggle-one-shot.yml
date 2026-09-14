@@ -1,4 +1,5 @@
 name: S4 night target draft toggle one-shot
+# Bootstrap revision 2: trigger after the workflow exists on the branch.
 
 on:
   push:
