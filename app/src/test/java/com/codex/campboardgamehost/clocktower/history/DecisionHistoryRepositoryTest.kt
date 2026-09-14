@@ -12,7 +12,6 @@ import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
 import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
-import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.ScriptId

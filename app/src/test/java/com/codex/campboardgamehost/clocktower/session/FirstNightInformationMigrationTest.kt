@@ -2,7 +2,6 @@ package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.clocktower.domain.AbilityObservation
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
-import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
 import org.junit.Assert.assertEquals

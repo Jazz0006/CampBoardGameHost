@@ -6,7 +6,6 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 

@@ -1,10 +1,8 @@
 package com.codex.campboardgamehost.clocktower.recommendation.dynamic
 
 import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
-import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.CandidateMetadata
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.DecisionEvaluation
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionCandidate

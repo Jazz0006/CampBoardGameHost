@@ -1,8 +1,6 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
-import com.codex.campboardgamehost.clocktower.domain.Alignment
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase

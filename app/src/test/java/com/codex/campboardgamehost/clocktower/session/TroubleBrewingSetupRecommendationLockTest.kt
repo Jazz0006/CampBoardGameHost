@@ -6,7 +6,6 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupDealAssignment
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupDealPlan
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 

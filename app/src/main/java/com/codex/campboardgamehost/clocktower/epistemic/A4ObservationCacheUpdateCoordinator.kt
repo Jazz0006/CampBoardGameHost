@@ -35,11 +35,3 @@ object A4ObservationCacheUpdateCoordinator {
 enum class A4ObservationCacheUpdateStrategy { NATIVE_FILTER, REPLAY_REQUIRED }
 enum class A4ObservationCacheUpdateOutcome { UPDATED, REBUILT, MISSING, STALE }
 data class A4ObservationCacheUpdateEntry(val recipientSeat: Int, val outcome: A4ObservationCacheUpdateOutcome)
-
-data class A4ObservationCacheUpdateReport(
-    val entries: List<A4ObservationCacheUpdateEntry>,
-) {
-    fun toLogLine(): String = "A4_OBSERVATION_CACHE_UPDATE " + entries.joinToString(" ") {
-        "seat=${it.recipientSeat}:${it.outcome}"
-    }
-}

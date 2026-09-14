@@ -1,13 +1,11 @@
 package com.codex.campboardgamehost
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -106,54 +104,6 @@ internal fun ResultsDialog(
             }
         },
     )
-}
-
-@Composable
-internal fun HostToolsTopBar(onOpen: () -> Unit) {
-    val language = LocalContext.current.resources.configuration.locales[0].language
-    fun text(zh: String, en: String): String = if (language == "en") en else zh
-    ClocktowerDarkTheme {
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = Color(0xFF14171C),
-            shadowElevation = 5.dp,
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 7.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                    Text(
-                        text("主持模式", "HOST MODE"),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp,
-                    )
-                    Text(
-                        text("私密操作入口", "Private controls"),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                }
-                OutlinedButton(
-                    onClick = onOpen,
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.72f)),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                ) {
-                    Text(
-                        text("主持工具", "Host tools"),
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Black,
-                    )
-                }
-            }
-        }
-    }
 }
 
 @Composable
