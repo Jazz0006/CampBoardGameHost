@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — Global Ownership Cleanup Step 3
 
 > Date: 2026-09-14 Australia/Sydney
-> Status: **NEXT after ordered merge of PRs #124 and #125**
+> Status: **IMPLEMENTED on `codex/global-ownership-cleanup-3`; remote acceptance pending**
 > Goal: **one production owner for registration legality, candidate construction and automatic selection**
 
 ## 0. Start here in the next conversation

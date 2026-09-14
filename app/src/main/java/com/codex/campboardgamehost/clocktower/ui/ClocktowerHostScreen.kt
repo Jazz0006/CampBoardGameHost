@@ -44,6 +44,8 @@ import com.codex.campboardgamehost.clocktower.domain.DynamicStorytellerChoice
 import com.codex.campboardgamehost.clocktower.domain.PlayerInformationPressure
 import com.codex.campboardgamehost.clocktower.domain.PredictedDecisionOutcome
 import com.codex.campboardgamehost.clocktower.domain.RegistrationLedger
+import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
+import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionType
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
@@ -63,6 +65,9 @@ import com.codex.campboardgamehost.clocktower.rules.ClocktowerEffectiveNightStat
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerOptionalNightSourceChronology
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundary
 import com.codex.campboardgamehost.clocktower.rules.ResolvedNightMechanicalEvent
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationDomain
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSubject
 import com.codex.campboardgamehost.clocktower.config.TroubleBrewingRecommendationMetadata
 import com.codex.campboardgamehost.clocktower.history.DecisionHistoryRepository
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
@@ -258,14 +263,79 @@ internal fun ClocktowerJudgeScreen(
         card.clocktowerRole?.enName?.let(::RoleId)
     }
     fun registrationKey(ability: String, subject: String = "spy") = "${phase.name}:$round:$ability:$subject"
-    fun spyCanRegister(queryingRoleEnName: String): Boolean =
-        spyCard != null &&
-            effectiveRoleForRegistration(queryingRoleEnName, spyCard) == RoleId("Spy") &&
-            effectivePoisonForRole(queryingRoleEnName) != spyCard.name
+    fun registrationSubject(
+        queryingRoleEnName: String,
+        card: PlayerCard,
+    ): TroubleBrewingRegistrationSubject? {
+        val actualRole = card.clocktowerRole ?: return null
+        val seat = cards.indexOf(card).plus(1).takeIf { it > 0 } ?: return null
+        val actualType = when (actualRole.team) {
+            ClocktowerTeam.Townsfolk -> CharacterType.TOWNSFOLK
+            ClocktowerTeam.Outsider -> CharacterType.OUTSIDER
+            ClocktowerTeam.Minion -> CharacterType.MINION
+            ClocktowerTeam.Demon -> CharacterType.DEMON
+        }
+        val actualAlignment = when (actualRole.team) {
+            ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider -> com.codex.campboardgamehost.clocktower.domain.Alignment.GOOD
+            ClocktowerTeam.Minion, ClocktowerTeam.Demon -> com.codex.campboardgamehost.clocktower.domain.Alignment.EVIL
+        }
+        return TroubleBrewingRegistrationSubject(
+            seat = seat,
+            actualRole = RoleId(actualRole.enName),
+            actualAlignment = actualAlignment,
+            actualType = actualType,
+            effectiveRole = effectiveRoleForRegistration(queryingRoleEnName, card),
+            poisoned = effectivePoisonForRole(queryingRoleEnName) == card.name,
+        )
+    }
+    fun registrationResolution(
+        key: String?,
+        queryingRoleEnName: String,
+        card: PlayerCard?,
+        teams: List<ClocktowerTeam>,
+        detail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,
+        question: RegistrationQuestion = if (detail == ClocktowerRegistrationDetail.AlignmentOnly) {
+            RegistrationQuestion.ALIGNMENT
+        } else {
+            RegistrationQuestion.ROLE
+        },
+    ): TroubleBrewingRegistrationResolution? {
+        if (key == null || card == null || teams.isEmpty()) return null
+        val subject = registrationSubject(queryingRoleEnName, card) ?: return null
+        val allowedTypes = teams.mapTo(mutableSetOf()) { team ->
+            when (team) {
+                ClocktowerTeam.Townsfolk -> CharacterType.TOWNSFOLK
+                ClocktowerTeam.Outsider -> CharacterType.OUTSIDER
+                ClocktowerTeam.Minion -> CharacterType.MINION
+                ClocktowerTeam.Demon -> CharacterType.DEMON
+            }
+        }
+        return TroubleBrewingRegistrationDomain.resolve(
+            subject = subject,
+            allowedRoles = clocktowerRoleDefinitionsForScript(script).filter { it.type in allowedTypes },
+            question = question,
+        )
+    }
+    fun spyCanRegister(queryingRoleEnName: String): Boolean = spyCard
+        ?.let { registrationSubject(queryingRoleEnName, it) }
+        ?.let(TroubleBrewingRegistrationDomain::specialReason) == RegistrationReason.SPY_ABILITY
+    fun legalRegistrationRoles(
+        key: String?,
+        queryingRoleEnName: String,
+        card: PlayerCard?,
+        teams: List<ClocktowerTeam>,
+        detail: ClocktowerRegistrationDetail = ClocktowerRegistrationDetail.Role,
+    ): List<ClocktowerRole> {
+        val legalRoleIds = registrationResolution(key, queryingRoleEnName, card, teams, detail)
+            ?.special
+            ?.mapTo(mutableSetOf()) { it.registeredRole }
+            .orEmpty()
+        return completeTroubleBrewingRoles.filter { RoleId(it.enName) in legalRoleIds }
+    }
     fun spyRegistersGood(key: String?, queryingRoleEnName: String): Boolean = key != null && spyCanRegister(queryingRoleEnName) && spyRegistrationGood[key] == true
     fun registeredRole(key: String?, teams: List<ClocktowerTeam>, queryingRoleEnName: String): ClocktowerRole? {
         if (!spyRegistersGood(key, queryingRoleEnName)) return spyCard?.clocktowerRole
-        val allowed = completeTroubleBrewingRoles.filter { it.team in teams && it.enName != "Spy" }
+        val allowed = legalRegistrationRoles(key, queryingRoleEnName, spyCard, teams)
         return allowed.firstOrNull { it.enName == spyRegistrationRole[key] } ?: allowed.firstOrNull()
     }
     fun spyRegistrationWillRecord(key: String?): Boolean =
@@ -294,15 +364,14 @@ internal fun ClocktowerJudgeScreen(
             listOf(spyCard.name),
         )
     }
-    fun recluseCanRegister(queryingRoleEnName: String): Boolean =
-        recluseCard != null &&
-            effectiveRoleForRegistration(queryingRoleEnName, recluseCard) == RoleId("Recluse") &&
-            effectivePoisonForRole(queryingRoleEnName) != recluseCard.name
+    fun recluseCanRegister(queryingRoleEnName: String): Boolean = recluseCard
+        ?.let { registrationSubject(queryingRoleEnName, it) }
+        ?.let(TroubleBrewingRegistrationDomain::specialReason) == RegistrationReason.RECLUSE_ABILITY
     fun recluseRegistersEvil(key: String?, queryingRoleEnName: String): Boolean =
         key != null && recluseCanRegister(queryingRoleEnName) && recluseRegistrationEvil[key] == true
     fun recluseRegisteredRole(key: String?, teams: List<ClocktowerTeam>, queryingRoleEnName: String): ClocktowerRole? {
         if (!recluseRegistersEvil(key, queryingRoleEnName)) return recluseCard?.clocktowerRole
-        val allowed = completeTroubleBrewingRoles.filter { it.team in teams }
+        val allowed = legalRegistrationRoles(key, queryingRoleEnName, recluseCard, teams)
         return allowed.firstOrNull { it.enName == recluseRegistrationRole[key] } ?: allowed.firstOrNull()
     }
     fun recordRecluseRegistration(key: String?, teams: List<ClocktowerTeam>, queryingRoleEnName: String) {
@@ -1274,18 +1343,21 @@ internal fun ClocktowerJudgeScreen(
     ): List<ClocktowerRegistrationRecommendationOption> {
         if (subject == null || suppressForJointRecommendation) return emptyList()
         if (key == null || teams.isEmpty()) return emptyList()
-        val allowedRoleNames = completeTroubleBrewingRoles
-            .filter { it.team in teams && (!isSpy || it.enName != "Spy") }
-            .map { it.enName }
-            .toSet()
-        val allowedRoles = clocktowerRoleDefinitionsForScript(script).filter { it.id.value in allowedRoleNames }
-        if (allowedRoles.isEmpty()) return emptyList()
         val subjectSeat = cards.indexOfFirst { it.name == subject.name } + 1
         if (subjectSeat <= 0) return emptyList()
+        val domainResolution = registrationResolution(
+            key = key,
+            queryingRoleEnName = roleEnName ?: return emptyList(),
+            card = subject,
+            teams = teams,
+            detail = detail,
+        ) ?: return emptyList()
+        val legalSpecialRoleIds = domainResolution.special.mapTo(mutableSetOf()) { it.registeredRole }
+        val allowedRoles = clocktowerRoleDefinitionsForScript(script).filter { it.id in legalSpecialRoleIds }
         val request = DynamicDecisionRequest(
             id = key,
             type = StorytellerDecisionType.SPECIAL_REGISTRATION,
-            sourceAbility = RoleId(roleEnName ?: return emptyList()),
+            sourceAbility = RoleId(roleEnName),
             state = dynamicStorytellerState(),
         )
         return recommendationCoordinator.recommendRegistration(
@@ -1298,7 +1370,7 @@ internal fun ClocktowerJudgeScreen(
                 } else {
                     RegistrationDetail.ROLE
                 },
-                canMisregister = subject.name != poisonTarget,
+                effectiveSubject = registrationSubject(roleEnName, subject),
                 outcomeMisinformationPressure = outcomeMisinformationPressure,
                 specialRegistrationBalanceImpact = specialRegistrationBalanceImpact,
             ),
@@ -1491,8 +1563,13 @@ internal fun ClocktowerJudgeScreen(
                         targets = cards.filter { it.name != actor.name && it.clocktowerTeam == ClocktowerTeam.Townsfolk },
                         roleForTarget = { it.clocktowerRole },
                     )
-                    if (spyCanRegister(ability.name) && spyCard != null) {
-                        scriptRoles.filter { it.team == ClocktowerTeam.Townsfolk }.forEach { role ->
+                    if (spyCard != null) {
+                        legalRegistrationRoles(
+                            registrationKey(ability.name, spyCard.name),
+                            ability.name,
+                            spyCard,
+                            listOf(ClocktowerTeam.Townsfolk),
+                        ).forEach { role ->
                             addTargets(
                                 targets = listOf(spyCard),
                                 roleForTarget = { role },
@@ -1504,8 +1581,13 @@ internal fun ClocktowerJudgeScreen(
 
                 ClocktowerPairInformationAbility.Librarian -> {
                     addNaturalCandidates(RoleId("Librarian"))
-                    if (spyCanRegister(ability.name) && spyCard != null) {
-                        scriptRoles.filter { it.team == ClocktowerTeam.Outsider }.forEach { role ->
+                    if (spyCard != null) {
+                        legalRegistrationRoles(
+                            registrationKey(ability.name, spyCard.name),
+                            ability.name,
+                            spyCard,
+                            listOf(ClocktowerTeam.Outsider),
+                        ).forEach { role ->
                             addTargets(
                                 targets = listOf(spyCard),
                                 roleForTarget = { role },
@@ -1517,8 +1599,13 @@ internal fun ClocktowerJudgeScreen(
 
                 ClocktowerPairInformationAbility.Investigator -> {
                     addNaturalCandidates(RoleId("Investigator"))
-                    if (recluseCanRegister(ability.name) && recluseCard != null) {
-                        scriptRoles.filter { it.team == ClocktowerTeam.Minion }.forEach { role ->
+                    if (recluseCard != null) {
+                        legalRegistrationRoles(
+                            registrationKey(ability.name, recluseCard.name),
+                            ability.name,
+                            recluseCard,
+                            listOf(ClocktowerTeam.Minion),
+                        ).forEach { role ->
                             addTargets(
                                 targets = listOf(recluseCard),
                                 roleForTarget = { role },
@@ -2246,7 +2333,12 @@ internal fun ClocktowerJudgeScreen(
         }
         if (sourceSeat <= 0 || subjectSeats.size != 2 || subjectSeats.distinct().size != 2) return emptyList()
         val current = recluseRegistersEvil(key, "Fortune Teller")
-        val demonRole = completeTroubleBrewingRoles.firstOrNull { it.team == ClocktowerTeam.Demon }
+        val demonRole = legalRegistrationRoles(
+            key,
+            "Fortune Teller",
+            recluseCard,
+            listOf(ClocktowerTeam.Demon),
+        ).firstOrNull()
         return distinctClocktowerFinalInformationResults(
             listOf(current, !current).mapNotNull { recluseEvil ->
                 val value = fortuneTellerMatches(recluseEvil) ?: return@mapNotNull null
@@ -2314,7 +2406,7 @@ internal fun ClocktowerJudgeScreen(
         }
 
         if (resolvedTarget.name == spyCard?.name && spyKey != null && spyCanRegister(roleEnName)) {
-            val allowed = completeTroubleBrewingRoles.filter { it.team in spyTeams && it.enName != "Spy" }
+            val allowed = legalRegistrationRoles(spyKey, roleEnName, spyCard, spyTeams)
             val currentGood = spyRegistersGood(spyKey, roleEnName)
             if (currentGood) {
                 registeredRole(spyKey, spyTeams, roleEnName)?.let { add(it, true, it.enName) }
@@ -2326,7 +2418,7 @@ internal fun ClocktowerJudgeScreen(
             recluseKey != null &&
             recluseCanRegister(roleEnName)
         ) {
-            val allowed = completeTroubleBrewingRoles.filter { it.team in recluseTeams }
+            val allowed = legalRegistrationRoles(recluseKey, roleEnName, recluseCard, recluseTeams)
             val currentEvil = recluseRegistersEvil(recluseKey, roleEnName)
             if (currentEvil) {
                 recluseRegisteredRole(recluseKey, recluseTeams, roleEnName)?.let { add(it, recluseEvil = true, recluseRole = it.enName) }
@@ -3352,8 +3444,18 @@ internal fun ClocktowerJudgeScreen(
         val virginRegistrationKey = nominatorCard
             ?.takeIf { it.name == spyCard?.name && virginFirstNomination }
             ?.let { registrationKey("Virgin", it.name) }
-        val virginSpyLegalRoles = completeTroubleBrewingRoles
-            .filter { it.team == ClocktowerTeam.Townsfolk && it.enName != "Spy" }
+        val virginSpyRegistrationResolution = registrationResolution(
+            virginRegistrationKey,
+            "Virgin",
+            spyCard,
+            listOf(ClocktowerTeam.Townsfolk),
+        )
+        val virginSpyLegalRoles = virginSpyRegistrationResolution
+            ?.special
+            ?.mapNotNull { candidate ->
+                completeTroubleBrewingRoles.firstOrNull { it.enName == candidate.registeredRole.value }
+            }
+            .orEmpty()
         val virginSpyRecommendations = if (virginRegistrationKey != null && spyCard != null) {
             registrationRecommendationOptions(
                 key = virginRegistrationKey,
@@ -3370,11 +3472,10 @@ internal fun ClocktowerJudgeScreen(
         val automaticVirginSpyRegistration = if (
             automaticStorytellerInfo &&
             virginRegistrationKey != null &&
-            spyCard != null &&
-            spyCanRegister("Virgin")
+            virginSpyRegistrationResolution?.canUseSpecialAbility == true
         ) {
             clocktowerTemporaryRegistrationSelection(
-                legalSpecialRoleEnNames = virginSpyLegalRoles.map { it.enName },
+                registration = virginSpyRegistrationResolution,
                 decisionKey = clocktowerTemporaryRegistrationDecisionKey(
                     gameId = gameId,
                     phase = phase,
@@ -3589,10 +3690,9 @@ internal fun ClocktowerJudgeScreen(
                 )
             }
             .orEmpty()
-        val automaticSlayerRecluseRegistration = WeightedStableSelector.selectStyle(
+        val automaticSlayerRecluseRegistration = selectAutomaticRegistrationRecommendation(
             slayerRecluseRecommendations,
             automaticStorytellerStyle,
-            ClocktowerRegistrationRecommendationOption::style,
         )
         val slayerTableState = clocktowerSlayerTableState(
             seats = clocktowerDayOverviewTableState(
@@ -3663,12 +3763,16 @@ internal fun ClocktowerJudgeScreen(
                 if (!automaticStorytellerInfo && slayerTargetCard?.clocktowerRole?.enName == "Recluse") {
                     ClocktowerRecluseRegistrationDecisionControls(
                         recommendations = slayerRecluseRecommendations,
-                        legalRoles = completeTroubleBrewingRoles
-                            .filter { it.team == ClocktowerTeam.Demon }
+                        legalRoles = legalRegistrationRoles(
+                            registrationKey("SlayerRecluse", requireNotNull(slayerTargetCard).name),
+                            "Slayer",
+                            slayerTargetCard,
+                            listOf(ClocktowerTeam.Demon),
+                        )
                             .map { it.enName to it.nameFor(language) },
                         registersEvil = slayerRecluseRegistersDemon,
                         registeredRoleEnName = if (slayerRecluseRegistersDemon) "Imp" else null,
-                        enabled = poisonTarget != slayerTargetName,
+                        enabled = recluseCanRegister("Slayer"),
                         language = language,
                         onRegistersEvilChange = { slayerRecluseRegistersDemon = it },
                         onRoleChange = {},
@@ -3849,10 +3953,9 @@ internal fun ClocktowerJudgeScreen(
         } else {
             emptyList()
         }
-        val automaticKlutzSpyRegistration = WeightedStableSelector.selectStyle(
+        val automaticKlutzSpyRegistration = selectAutomaticRegistrationRecommendation(
             klutzSpyRecommendations,
             automaticStorytellerStyle,
-            ClocktowerRegistrationRecommendationOption::style,
         )
         val klutzTableState = clocktowerKlutzTableState(
             seats = clocktowerDayOverviewTableState(
@@ -3903,8 +4006,12 @@ internal fun ClocktowerJudgeScreen(
                 if (!automaticStorytellerInfo && klutzRegistrationKey != null && spyCard != null) {
                     ClocktowerSpyRegistrationDecisionControls(
                         recommendations = klutzSpyRecommendations,
-                        legalRoles = completeTroubleBrewingRoles
-                            .filter { it.team in listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider) && it.enName != "Spy" }
+                        legalRoles = legalRegistrationRoles(
+                            klutzRegistrationKey,
+                            "Klutz",
+                            spyCard,
+                            listOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider),
+                        )
                             .map { it.enName to it.nameFor(language) },
                         registersGood = spyRegistersGood(klutzRegistrationKey, "Klutz"),
                         registeredRoleEnName = spyRegistrationRole[klutzRegistrationKey],
@@ -3996,6 +4103,31 @@ internal fun ClocktowerJudgeScreen(
         val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
         val currentStep = nightSteps[currentStepIndex]
         val currentSurfacePlan = clocktowerNightSurfacePlan(currentStep, phase)
+        val currentSpyRegistrationResolution = currentStep.roleEnName?.let { roleEnName ->
+            registrationResolution(
+                currentStep.spyRegistrationKey,
+                roleEnName,
+                spyCard,
+                currentStep.spyRegistrationTeams,
+                currentStep.spyRegistrationDetail,
+            )
+        }
+        val currentSpyLegalSpecialRoleEnNames = currentSpyRegistrationResolution
+            ?.special
+            ?.map { it.registeredRole.value }
+            .orEmpty()
+        val currentRecluseRegistrationResolution = currentStep.roleEnName?.let { roleEnName ->
+            registrationResolution(
+                currentStep.recluseRegistrationKey,
+                roleEnName,
+                recluseCard,
+                currentStep.recluseRegistrationTeams,
+            )
+        }
+        val currentRecluseLegalSpecialRoleEnNames = currentRecluseRegistrationResolution
+            ?.special
+            ?.map { it.registeredRole.value }
+            .orEmpty()
         val selectedNightName = when (currentStep.action) {
             ClocktowerNightAction.RedHerring -> redHerring
             ClocktowerNightAction.Poison -> poisonDraftTarget
@@ -4195,17 +4327,12 @@ internal fun ClocktowerJudgeScreen(
                 step = currentStep,
                 surfacePlan = currentSurfacePlan,
                 spyCard = spyCard,
-                spyCanRegister = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null) {
-                    spyCanRegister(currentStep.roleEnName)
-                } else false,
+                spyRegistrationResolution = currentSpyRegistrationResolution,
                 onSpyRegistrationGoodChange = { good ->
                     currentStep.spyRegistrationKey?.let { key ->
                         spyRegistrationGood[key] = good
                         if (good && currentStep.spyRegistrationDetail == ClocktowerRegistrationDetail.Role && spyRegistrationRole[key] == null) {
-                            spyRegistrationRole[key] = completeTroubleBrewingRoles
-                                .firstOrNull { it.team in currentStep.spyRegistrationTeams && it.enName != "Spy" }
-                                ?.enName
-                                .orEmpty()
+                            spyRegistrationRole[key] = currentSpyLegalSpecialRoleEnNames.firstOrNull().orEmpty()
                         }
                         if (!good && redHerring == spyCard?.name && currentStep.action == ClocktowerNightAction.RedHerring) {
                             onSelectRedHerring(null)
@@ -4216,17 +4343,12 @@ internal fun ClocktowerJudgeScreen(
                     currentStep.spyRegistrationKey?.let { spyRegistrationRole[it] = roleName }
                 },
                 recluseCard = recluseCard,
-                recluseCanRegister = if (currentStep.recluseRegistrationKey != null && currentStep.roleEnName != null) {
-                    recluseCanRegister(currentStep.roleEnName)
-                } else false,
+                recluseRegistrationResolution = currentRecluseRegistrationResolution,
                 onRecluseRegistrationEvilChange = { evil ->
                     currentStep.recluseRegistrationKey?.let { key ->
                         recluseRegistrationEvil[key] = evil
                         if (evil && currentStep.recluseRegistrationTeams.isNotEmpty() && recluseRegistrationRole[key] == null) {
-                            recluseRegistrationRole[key] = completeTroubleBrewingRoles
-                                .firstOrNull { it.team in currentStep.recluseRegistrationTeams }
-                                ?.enName
-                                .orEmpty()
+                            recluseRegistrationRole[key] = currentRecluseLegalSpecialRoleEnNames.firstOrNull().orEmpty()
                         }
                     }
                 },

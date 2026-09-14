@@ -4,9 +4,13 @@ import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
+import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationDomain
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSubject
 import java.math.BigInteger
 
 enum class EpistemicHypothesis { MECHANICALLY_CREDIBLE, FUNCTIONING_ONLY, MALFUNCTION_ALLOWED }
@@ -100,25 +104,46 @@ object TroubleBrewingRegistrationSemantics : RegistrationSemantics {
         val results = linkedSetOf(
             RegistrationProfile(player.actualRole, player.actualType, player.actualAlignment, RegistrationBasis.ACTUAL_STATE),
         )
-        when (player.actualRole.value.lowercase()) {
-            "spy" -> if ((query.queriedAlignment == null || query.queriedAlignment == Alignment.GOOD) &&
-                (query.queriedType == null || query.queriedType == CharacterType.TOWNSFOLK || query.queriedType == CharacterType.OUTSIDER)
-            ) {
-                results += RegistrationProfile(
-                    query.queriedRole,
-                    query.queriedType,
-                    query.queriedAlignment ?: Alignment.GOOD,
-                    RegistrationBasis.SPY_ABILITY,
-                )
+        val subject = TroubleBrewingRegistrationSubject(
+            seat = player.seat,
+            actualRole = player.actualRole,
+            actualAlignment = player.actualAlignment,
+            actualType = player.actualType,
+            poisoned = player.poisoned,
+        )
+        val specialReason = TroubleBrewingRegistrationDomain.specialReason(subject)
+        if (specialReason != null) {
+            val inferredAlignment = query.queriedAlignment ?: when (specialReason) {
+                RegistrationReason.SPY_ABILITY -> Alignment.GOOD
+                RegistrationReason.RECLUSE_ABILITY -> Alignment.EVIL
+                RegistrationReason.OTHER -> error("OTHER is not a special registration reason.")
             }
-            "recluse" -> if ((query.queriedAlignment == null || query.queriedAlignment == Alignment.EVIL) &&
-                (query.queriedType == null || query.queriedType == CharacterType.MINION || query.queriedType == CharacterType.DEMON)
-            ) {
+            val inferredType = query.queriedType ?: when (specialReason) {
+                RegistrationReason.SPY_ABILITY -> CharacterType.TOWNSFOLK
+                RegistrationReason.RECLUSE_ABILITY -> CharacterType.MINION
+                RegistrationReason.OTHER -> error("OTHER is not a special registration reason.")
+            }
+            val queriedRole = RoleDefinition(
+                id = query.queriedRole ?: RoleId("registration-query-placeholder"),
+                alignment = inferredAlignment,
+                type = inferredType,
+                scriptIds = setOf(state.rulesetRef.scriptId),
+            )
+            val special = TroubleBrewingRegistrationDomain.resolve(
+                subject = subject,
+                allowedRoles = listOf(queriedRole),
+                question = query.question,
+            ).special.singleOrNull()
+            if (special != null) {
                 results += RegistrationProfile(
                     query.queriedRole,
                     query.queriedType,
-                    query.queriedAlignment ?: Alignment.EVIL,
-                    RegistrationBasis.RECLUSE_ABILITY,
+                    query.queriedAlignment ?: special.registeredAlignment,
+                    when (specialReason) {
+                        RegistrationReason.SPY_ABILITY -> RegistrationBasis.SPY_ABILITY
+                        RegistrationReason.RECLUSE_ABILITY -> RegistrationBasis.RECLUSE_ABILITY
+                        RegistrationReason.OTHER -> error("OTHER is not a special registration reason.")
+                    },
                 )
             }
         }

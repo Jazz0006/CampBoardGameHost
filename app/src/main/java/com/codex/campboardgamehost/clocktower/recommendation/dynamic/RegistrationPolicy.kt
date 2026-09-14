@@ -14,7 +14,6 @@ import com.codex.campboardgamehost.clocktower.domain.MurmurHash3
 import com.codex.campboardgamehost.clocktower.domain.PlanWarning
 import com.codex.campboardgamehost.clocktower.domain.PredictedDecisionOutcome
 import com.codex.campboardgamehost.clocktower.domain.QualityTier
-import com.codex.campboardgamehost.clocktower.domain.RegistrationFact
 import com.codex.campboardgamehost.clocktower.domain.RegistrationOutcome
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
 import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
@@ -24,6 +23,9 @@ import com.codex.campboardgamehost.clocktower.domain.ScoreCategory
 import com.codex.campboardgamehost.clocktower.domain.ScoreItem
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionType
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationDomain
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSubject
 
 internal enum class RegistrationDetail {
     ALIGNMENT_ONLY,
@@ -34,7 +36,8 @@ internal data class SpecialRegistrationContext(
     val subjectSeat: Int,
     val allowedRoles: List<RoleDefinition>,
     val detail: RegistrationDetail,
-    val canMisregister: Boolean,
+    /** Effective interaction-time role/poison projection; defaults to the request game state. */
+    val effectiveSubject: TroubleBrewingRegistrationSubject? = null,
     val outcomeDiscussionValue: Int = 0,
     val outcomeMisinformationPressure: Int = 0,
     /** +1 when the special registration helps evil, -1 when it helps good. */
@@ -56,46 +59,24 @@ internal object RegistrationPolicy {
         style: RecommendationStyle,
     ): List<DecisionEvaluation<RegistrationOutcome>> {
         require(request.type == StorytellerDecisionType.SPECIAL_REGISTRATION)
-        val subject = requireNotNull(request.state.game.playerAt(context.subjectSeat))
-        val possible = buildList {
-            add(
-                RegistrationOutcome(
-                    subject.seat,
-                    subject.actualAlignment,
-                    subject.actualType,
-                    subject.actualRole,
-                    usesSpecialAbility = false,
-                ),
+        val resolution = resolveRegistration(request, context)
+        return resolution.candidates.map { domainCandidate ->
+            val outcome = RegistrationOutcome(
+                subjectSeat = domainCandidate.subjectSeat,
+                registeredAlignment = domainCandidate.registeredAlignment,
+                registeredType = domainCandidate.registeredType,
+                registeredRole = domainCandidate.registeredRole,
+                usesSpecialAbility = domainCandidate.usesSpecialAbility,
             )
-            if (context.canMisregister) {
-                val roles = when (context.detail) {
-                    RegistrationDetail.ALIGNMENT_ONLY -> context.allowedRoles.distinctBy { it.alignment }
-                    RegistrationDetail.ROLE -> context.allowedRoles.distinctBy { it.id }
-                }
-                roles.forEach { role ->
-                    add(RegistrationOutcome(subject.seat, role.alignment, role.type, role.id, usesSpecialAbility = true))
-                }
-            }
-        }
-        return possible.map { outcome ->
-            val registration = if (outcome.usesSpecialAbility) {
-                RegistrationFact(
-                    interactionId = "${request.id}:${subject.seat}:${outcome.registeredRole.value}:${context.registrationQuestion.name}",
-                    subjectSeat = subject.seat,
-                    registeredRole = outcome.registeredRole,
-                    registeredType = outcome.registeredType,
-                    registeredAlignment = outcome.registeredAlignment,
-                    registrationQuestion = context.registrationQuestion,
-                    reason = if (subject.actualRole.value == "Spy") RegistrationReason.SPY_ABILITY else RegistrationReason.RECLUSE_ABILITY,
-                )
-            } else {
-                null
-            }
+            val registration = domainCandidate.registrationFact(
+                interactionId = "${request.id}:${domainCandidate.subjectSeat}:${domainCandidate.registeredRole.value}:${context.registrationQuestion.name}",
+                question = context.registrationQuestion,
+            )
             val candidate = DecisionCandidate(
                 candidateId = stableRegistrationId(request, outcome, context.registrationQuestion),
                 candidateFamilyId = when {
                     !outcome.usesSpecialAbility -> "natural-truth"
-                    subject.actualRole.value == "Spy" -> "registration-spy"
+                    domainCandidate.specialReason == RegistrationReason.SPY_ABILITY -> "registration-spy"
                     else -> "registration-recluse"
                 },
                 outcome = outcome,
@@ -106,7 +87,7 @@ internal object RegistrationPolicy {
                     TruthRelation.TRUE_TO_ACTUAL_STATE
                 },
                 registrations = listOfNotNull(registration),
-                effects = listOf(EffectDraft.Reminder(subject.seat, "registration:${outcome.registeredRole.value}")),
+                effects = listOf(EffectDraft.Reminder(domainCandidate.subjectSeat, "registration:${outcome.registeredRole.value}")),
                 metadata = CandidateMetadata(
                     candidateSchemaVersion = CANDIDATE_SCHEMA_VERSION,
                     decisionType = "special-registration",
@@ -135,7 +116,7 @@ internal object RegistrationPolicy {
                 withinFamilyWeightFixedPoint = (100L + evaluated.totalScore * 5L).coerceAtLeast(1L),
                 finalProbabilityFixedPoint = 0,
                 pressureDelta = if (outcome.usesSpecialAbility) {
-                    mapOf(subject.seat to context.outcomeMisinformationPressure)
+                    mapOf(domainCandidate.subjectSeat to context.outcomeMisinformationPressure)
                 } else {
                     emptyMap()
                 },
@@ -162,7 +143,7 @@ internal object RegistrationPolicy {
         request: DynamicDecisionRequest,
         context: SpecialRegistrationContext,
     ): List<DynamicDecisionRecommendation> {
-        val styles = if (context.canMisregister) {
+        val styles = if (resolveRegistration(request, context).canUseSpecialAbility) {
             listOf(RecommendationStyle.BALANCED, RecommendationStyle.GENTLE, RecommendationStyle.AGGRESSIVE)
         } else {
             listOf(RecommendationStyle.BALANCED)
@@ -198,6 +179,23 @@ internal object RegistrationPolicy {
                 style,
             )
         }
+    }
+
+    fun resolveRegistration(
+        request: DynamicDecisionRequest,
+        context: SpecialRegistrationContext,
+    ): TroubleBrewingRegistrationResolution {
+        require(request.type == StorytellerDecisionType.SPECIAL_REGISTRATION)
+        val player = requireNotNull(request.state.game.playerAt(context.subjectSeat))
+        val subject = context.effectiveSubject ?: TroubleBrewingRegistrationSubject.from(player)
+        require(subject.seat == player.seat) {
+            "Effective registration subject must match the request subject seat."
+        }
+        return TroubleBrewingRegistrationDomain.resolve(
+            subject = subject,
+            allowedRoles = context.allowedRoles,
+            question = context.registrationQuestion,
+        )
     }
 
     private fun evaluate(
