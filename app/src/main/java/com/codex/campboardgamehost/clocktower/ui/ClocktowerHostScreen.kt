@@ -4350,15 +4350,19 @@ internal fun ClocktowerJudgeScreen(
                 chambermaidFirst = chambermaidResolution.selection.first,
                 chambermaidSecond = chambermaidResolution.selection.second,
                 onSelectName = { name ->
+                    val nextSelection = clocktowerToggledSingleTargetSelection(
+                        currentSelection = selectedNightName,
+                        tappedSelection = name,
+                    )
                     when (currentStep.action) {
-                        ClocktowerNightAction.RedHerring -> onSelectRedHerring(if (redHerring == name) null else name)
-                        ClocktowerNightAction.Poison -> onSelectPoisonTarget(if (poisonTarget == name) null else name)
-                        ClocktowerNightAction.ButlerMaster -> onSelectButlerMaster(if (butlerMaster == name) null else name)
-                        ClocktowerNightAction.MonkProtect -> onSelectMonkProtectedTarget(if (monkProtectedTarget == name) null else name)
-                        ClocktowerNightAction.DemonKill -> onSelectNightDeath(if (demonAttackDraftTarget == name) null else name)
-                        ClocktowerNightAction.MayorRedirect -> onSelectMayorRedirectTarget(if (mayorRedirectDraftTarget == name) null else name)
-                        ClocktowerNightAction.DemonSuccessor -> onSelectDemonSuccessor(if (demonSuccessorTarget == name) null else name)
-                        ClocktowerNightAction.Ravenkeeper -> onSelectRavenkeeperTarget(if (ravenkeeperTarget == name) null else name)
+                        ClocktowerNightAction.RedHerring -> onSelectRedHerring(nextSelection)
+                        ClocktowerNightAction.Poison -> onSelectPoisonTarget(nextSelection)
+                        ClocktowerNightAction.ButlerMaster -> onSelectButlerMaster(nextSelection)
+                        ClocktowerNightAction.MonkProtect -> onSelectMonkProtectedTarget(nextSelection)
+                        ClocktowerNightAction.DemonKill -> onSelectNightDeath(nextSelection)
+                        ClocktowerNightAction.MayorRedirect -> onSelectMayorRedirectTarget(nextSelection)
+                        ClocktowerNightAction.DemonSuccessor -> onSelectDemonSuccessor(nextSelection)
+                        ClocktowerNightAction.Ravenkeeper -> onSelectRavenkeeperTarget(nextSelection)
                         else -> Unit
                     }
                 },
