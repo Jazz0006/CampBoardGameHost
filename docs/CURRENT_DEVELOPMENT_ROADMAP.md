@@ -22,26 +22,28 @@ EXPERIENCED-NIGHT-FLOW-1 navigation correctness   COMPLETE / merged via PR #123;
 GLOBAL-OWNERSHIP-CLEANUP steps 1-2                COMPLETE / merged via PRs #124/#125
 GLOBAL-OWNERSHIP-CLEANUP step 3                   COMPLETE / merged via PR #126
 GLOBAL-OWNERSHIP-CLEANUP step 4                   COMPLETE / merged via PR #127
-GLOBAL-OWNERSHIP-CLEANUP step 5                   READY FOR ACCEPTANCE — PR #128 remote gates pass
+GLOBAL-OWNERSHIP-CLEANUP step 5                   COMPLETE / merged via PR #128
+GLOBAL-OWNERSHIP-CLEANUP step 6                   PR #129 remote gates pass; user acceptance pending
 EPI-MQ / Productive Uncertainty                   PAUSED / queued after flow correctness
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
 
 Completed campaign documents are historical evidence, not default execution authority.
 
-## 2. Immediate priority — cleanup step 5
+## 2. Immediate priority — cleanup step 6
 
 Campaign authority:
 
 `docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`
 
-Steps 1-4 are merged. Step 5 runs on `codex/global-ownership-cleanup-5` from merged `main`
-`092ca62f`. No Greater Joy production now consumes the generic provider/source/shown-identity
-pipeline through one typed preparer, and base Clocktower distribution has one setup-layer owner.
-The typed RED/GREEN, focused setup matrix, forced T1 and full Android/assemble gates pass locally.
-PR #128 code head `02b8a7d7` has passed remote Android Full, ASP contracts, Real Clingo, aggregate
-CI and R2 boundary validation. The PR remains Draft. Do not begin Step 6 or merge Step 5 without
-explicit user authorization.
+Steps 1-5 are merged. Step 6 is implemented on `codex/global-ownership-cleanup-6` from merged `main`
+`0aad20e3`; local focused, `testFast`, `testFull`, Debug assembly and diff gates pass. PR #129 code
+head `ceca17cb` passed Android Full, ASP contracts, real-Clingo, aggregate CI and R2 boundary checks.
+Its bounded seams are the shared phase conversion, immutable night-host mechanical projection
+outside Compose, and the common square-table scaffold/seat bridge. Role-specific UI, mutable
+lifecycle state, rules algorithms and persistence remain with their current owners. The live
+fan-out, architecture pre-flight, implementation result and evidence are recorded in section 13 of
+the campaign audit. The remaining gate is explicit user merge authorization.
 
 Historical starting `main` for EXPERIENCED-NIGHT-FLOW-1:
 
@@ -226,13 +228,13 @@ Always re-query live refs/checks at the start of the next conversation.
 2. `docs/TESTING_STRATEGY.md`;
 3. this roadmap;
 4. `docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`;
-5. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-14_GLOBAL_OWNERSHIP_CLEANUP_STEP_4.md`;
-6. the Step 4 restore-composition owner, production caller and restore/reconstruction tests;
+5. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-14_GLOBAL_OWNERSHIP_CLEANUP_STEP_6.md`;
+6. the Step 6 phase adapter, night-host projection, square-table scaffold and owning tests;
 7. query live `main`, working branch and PR/check status;
-8. complete the exact remote diff, CI and R2 acceptance audit; do not start step 5 before Step 4 is
-   accepted and the user authorizes the next slice.
+8. complete the exact remote diff, CI and R2 acceptance audit; do not merge without explicit user
+   authorization and do not begin EPI-MQ in the Step 6 PR.
 
 ## 12. Stable rule
 
-> **Current roadmap + one active handoff define what happens next. Production and restore tests
-> must derive unfinished-night mechanics through the same composition boundary.**
+> **Current roadmap + one active handoff define what happens next. Host presentation consumes one
+> immutable mechanical projection and must not reconstruct unfinished-night mechanics in Compose.**

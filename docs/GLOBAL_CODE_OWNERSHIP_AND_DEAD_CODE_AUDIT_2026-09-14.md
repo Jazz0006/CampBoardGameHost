@@ -229,12 +229,13 @@ compatibility boundary.
    domain/session boundary.
 4. **COMPLETE — make production restore and restore tests consume the same composition boundary.**
    PR #127 merged as `092ca62f`; production and tests now consume one restore composition owner.
-5. **READY FOR ACCEPTANCE — cut No Greater Joy setup over to the generic provider/source/shown-
-   identity pipeline.** PR #128 code head `02b8a7d7` passed full remote gates; user acceptance and
-   merge authorization remain.
-6. Finally reduce Host/App gameplay ownership and converge square-table presentation. This includes
+5. **COMPLETE — cut No Greater Joy setup over to the generic provider/source/shown-identity
+   pipeline.** PR #128 merged as `0aad20e3`; seeded composition, seating and shown identity now have
+   one production owner.
+6. **IN PROGRESS — reduce Host/App gameplay ownership and converge square-table presentation.** This includes
    centralizing the duplicated phase conversion, moving mechanical projection out of Compose, and
-   extracting only small shared presentation seams rather than a universal configurable screen.
+   extracting only small shared presentation seams rather than a universal configurable screen. The
+   live fan-out and architecture pre-flight are recorded in section 13.
 
 The six numbered items above are the authoritative sequence. Each behavior-changing ownership
 cutover should remain independently reviewable; do not combine dead-code deletion, registration,
@@ -509,5 +510,100 @@ new conversation after re-querying live `main` and repository state.
   `ClocktowerAssignment`, App-root `clocktowerDistribution`, or second NGJ random setup path.
 - PR #128 code head `02b8a7d79ebc369fbabcfa82d259078bf22dd18b` is based exactly on merged
   `main` `092ca62f7806bd353e683c2dee1c7a134e4304f5`. Remote Android Full, ASP contracts,
-  Real Clingo, aggregate CI and R2 boundary checks all passed. The PR remains Draft and unmerged
-  pending explicit user acceptance.
+  Real Clingo, aggregate CI and R2 boundary checks all passed. PR #128 merged as
+  `0aad20e341af912338f9fae7ea11aca5d71c539f` after explicit user authorization.
+
+## 13. Step 6 live fan-out audit and architecture pre-flight
+
+> Recorded before production editing on branch `codex/global-ownership-cleanup-6` from merged
+> `main` `0aad20e341af912338f9fae7ea11aca5d71c539f`.
+
+### 13.1 Phase-conversion fan-out
+
+- The complete `ClocktowerPhase -> StorytellerPhase` mapping is repeated in
+  `StructuredNumericInformationAdapter`, `StructuredBooleanInformationAdapter`, two App-root
+  paths, and two Host paths. Every caller must inherit one exhaustive pure conversion.
+- These paths cover structured numeric/boolean recommendation requests, semantic event publication,
+  dynamic recommendation state and observation drafts. None is intentionally exempt.
+
+### 13.2 Night mechanical-projection fan-out
+
+- `ClocktowerHostScreen` currently composes canonical dawn-death resolution, Mayor redirect
+  eligibility/candidates, current Demon authority, succession legality, Ravenkeeper/Sage triggers,
+  other-night waking facts, canonical interactions, reconstruction events and effective night state
+  inside the composable.
+- Downstream consumers are role-specific materializers, Chambermaid eligibility, Fortune Teller
+  current-role authority, registration subject projection, callback validation and the final Judge
+  surface. They must inherit one immutable projection; presentation must not reconstruct mechanics.
+- Existing rules/session owners remain authoritative for death, succession, interaction ordering,
+  checkpoint reconstruction, poison lifecycle and ability functioning. The new projection composes
+  those owners; it does not replace their algorithms or own mutable state.
+- First-night behavior, non-Night fallback behavior and all callback/commit/persistence ordering are
+  intentionally exempt from semantic change.
+
+### 13.3 Square-table presentation fan-out
+
+- Six production files directly repeat `ClocktowerHostFullScreenScaffold` plus
+  `ClocktowerSquareTableSeatSurface` and the same `HostSeatPresentation -> seat content -> UI model`
+  bridge: Fortune Teller, Chef, Empath, Undertaker, pair information and the existing generic night
+  action surface.
+- Existing role-specific selection state, badges, manual-edit back behavior, center controls and
+  interaction eligibility remain with their cohesive UI owners.
+- The shared seam must own only navigation labels/scaffold, stable seat-content mapping, interaction
+  mode and render-key-to-seat routing. It must allow callers to supply their role-specific visual
+  state and center content; it must not become a universal role configuration object.
+
+### 13.4 Architecture pre-flight
+
+- current owner: phase translation is duplicated across adapters/App/Host; Host Compose assembles
+  immutable night mechanics from canonical lower owners; six square-table screens repeat the same
+  outer presentation bridge.
+- proposed responsibility: a pure phase extension owns phase translation; a typed
+  `ClocktowerNightHostProjection` composes existing rules/session results outside Compose; a small
+  `ClocktowerHostSquareTableScaffold` owns only the repeated presentation shell and seat bridge.
+- authoritative state owner(s): App/`ClocktowerGameSession` retain lifecycle, checkpoint, timeline,
+  recovery and persistence state; existing rules/session algorithms retain mechanics; role UI owns
+  transient selection/edit state; the new seams own only immutable conversion/composition.
+- narrow typed input/output seam: phase -> storyteller phase; cards + ruleset + seed + checkpoint +
+  resolved prior-night facts -> immutable host projection with typed queries; seats + navigation +
+  caller-supplied seat visual -> rendered square-table shell.
+- keep in current owner / extract: retain callbacks, mutable registration maps, recommendation
+  invocation and role materializers in Host; extract only mechanical fact composition and effective
+  state queries. Retain role-specific center content and event handling in each square-table file.
+- reason: this removes duplicated interpretation and presentation plumbing while preserving clear
+  dependency direction and avoiding a broad Host context, screen state bag or universal UI.
+
+### 13.5 Evidence plan
+
+- Add a typed phase-conversion contract and a typed night-host projection contract at their true
+  ownership boundaries; establish meaningful RED before implementing each new seam.
+- Use existing square-table state/presentation tests and full compilation as behavior-preserving
+  refactor evidence; do not manufacture a UI source-string RED.
+- Run focused phase, night transaction/effective-state/Host integration and square-table tests,
+  forced `:app:testFast`, forced `:app:testFull :app:assembleDebug`, `git diff --check`, and final
+  duplicate/direct-caller searches.
+
+### 13.6 Implemented boundary and local evidence
+
+- `ClocktowerPhase.toStorytellerPhase()` is now the sole complete four-value production conversion.
+  Structured numeric/boolean adapters, both App paths and both Host paths consume it; the final
+  production search finds the four-value mapping only in the adapter.
+- `ClocktowerNightHostProjectionFactory` now composes the existing death, Mayor redirect, current
+  Demon, succession, other-night flow, checkpoint reconstruction, poison chronology and ability
+  functioning owners outside Compose. `ClocktowerHostScreen` consumes the immutable projection and
+  retains only orchestration aliases, materialization and callback wiring.
+- `ClocktowerHostSquareTableScaffold` now owns the common navigation labels, full-screen scaffold,
+  square-table seat surface and render-key-to-stable-seat routing. The generic night-action surface
+  plus Fortune Teller, Chef, Empath, Undertaker and pair-information screens all delegate to it.
+  Role-specific state, badges, center controls and pair-edit back behavior remain local. The ordinary
+  Host table remains an intentional overview-surface exemption.
+- Meaningful typed REDs failed only because the new phase adapter and night-host projection factory
+  did not yet exist. Both are GREEN after implementation. Focused phase, mechanical chronology,
+  Host integration, Demon authority, square-table presentation and ownership tests pass.
+- Forced `:app:testFast` passes. Forced `:app:testFull :app:assembleDebug` passes. `git diff --check`
+  passes, the final direct-caller search leaves only the shared scaffold plus the intentional Host
+  overview, and no unrelated `.DS_Store` artifacts remain in the worktree.
+- PR #129 code head `ceca17cb30a9ea0ca6a2c13c80f8c20da1a1e742` is based exactly on merged
+  `main` `0aad20e341af912338f9fae7ea11aca5d71c539f`. Remote Android Full, ASP contracts,
+  real-Clingo, aggregate CI and R2 boundary checks all passed. The PR remains Draft and unmerged
+  pending explicit user authorization.

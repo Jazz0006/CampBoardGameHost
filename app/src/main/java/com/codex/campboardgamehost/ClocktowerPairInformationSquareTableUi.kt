@@ -69,14 +69,21 @@ internal fun ClocktowerPairInformationSquareTableDialog(
         editing = allowManualEditing && recommendedSelection.resolvedOption == null
     }
 
-    ClocktowerHostFullScreenScaffold(
-        previousLabel = if (language == "en") "← Previous" else "← 上一步",
-        hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
-        nextLabel = if (language == "en") "Next →" else "下一步 →",
+    ClocktowerHostSquareTableScaffold(
+        seats = seats,
+        language = language,
         previousEnabled = canGoPrevious,
         onPrevious = onPrevious,
         onHostTools = onHostTools,
         onNext = onNext,
+        interactionMode = if (editing) {
+            ClocktowerSquareTableInteractionMode.Selectable
+        } else {
+            ClocktowerSquareTableInteractionMode.ReadOnly
+        },
+        onSeatSelected = { seatNumber ->
+            if (editing) selection = selection.selectSeat(seatNumber)
+        },
         onBack = {
             if (editing && recommendedSelection.resolvedOption != null) {
                 restoreRecommendation()
@@ -84,59 +91,42 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                 onPrevious()
             }
         },
-    ) {
-        ClocktowerSquareTableSeatSurface(
-            seats = seats.map { seat ->
-                val seatPresentation = if (beginnerMode) {
-                    clocktowerBeginnerPairSeatPresentation(
-                        seatNumber = seat.seatId.number,
-                        actorSeat = actorSeat,
-                    )
-                } else {
-                    clocktowerPairInformationSeatPresentation(
-                        selection = selection,
-                        seatNumber = seat.seatId.number,
-                        editing = editing,
-                        actorSeat = actorSeat,
-                    )
-                }
-                clocktowerPairManualSquareTableSeat(
-                    seat = seat,
-                    language = language,
-                    state = seatPresentation.targetState,
-                ).copy(isCurrentActor = seatPresentation.isCurrentActor)
-            },
-            modifier = Modifier.fillMaxSize(),
-            interactionMode = if (editing) {
-                ClocktowerSquareTableInteractionMode.Selectable
+        seatUiModel = { seat ->
+            val seatPresentation = if (beginnerMode) {
+                clocktowerBeginnerPairSeatPresentation(
+                    seatNumber = seat.seatId.number,
+                    actorSeat = actorSeat,
+                )
             } else {
-                ClocktowerSquareTableInteractionMode.ReadOnly
-            },
-            onSeatClick = { seatKey ->
-                if (editing) {
-                    seats.firstOrNull { seat -> seat.seatId.renderKey() == seatKey }
-                        ?.seatId
-                        ?.number
-                        ?.let { seatNumber -> selection = selection.selectSeat(seatNumber) }
-                }
-            },
-        ) {
-            ClocktowerPairInformationCenterControls(
-                wakeInstruction = wakeInstruction,
-                beginnerMode = beginnerMode,
-                abilityLabel = abilityLabel,
-                selection = selection,
-                recommendedSelection = recommendedSelection,
-                editing = editing,
-                roleLabel = roleLabel,
-                allowManualEditing = allowManualEditing,
+                clocktowerPairInformationSeatPresentation(
+                    selection = selection,
+                    seatNumber = seat.seatId.number,
+                    editing = editing,
+                    actorSeat = actorSeat,
+                )
+            }
+            clocktowerPairManualSquareTableSeat(
+                seat = seat,
                 language = language,
-                onSelectionChange = { selection = it },
-                onStartEditing = { if (allowManualEditing) editing = true },
-                onRestoreRecommendation = ::restoreRecommendation,
-                onConfirm = onConfirm,
-            )
-        }
+                state = seatPresentation.targetState,
+            ).copy(isCurrentActor = seatPresentation.isCurrentActor)
+        },
+    ) {
+        ClocktowerPairInformationCenterControls(
+            wakeInstruction = wakeInstruction,
+            beginnerMode = beginnerMode,
+            abilityLabel = abilityLabel,
+            selection = selection,
+            recommendedSelection = recommendedSelection,
+            editing = editing,
+            roleLabel = roleLabel,
+            allowManualEditing = allowManualEditing,
+            language = language,
+            onSelectionChange = { selection = it },
+            onStartEditing = { if (allowManualEditing) editing = true },
+            onRestoreRecommendation = ::restoreRecommendation,
+            onConfirm = onConfirm,
+        )
     }
 }
 

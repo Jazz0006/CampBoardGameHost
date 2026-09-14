@@ -766,12 +766,8 @@ internal fun CampBoardGameHostApp() {
         a4InitialRecommendationDemandRecorded = true
     }
 
-    fun storytellerPhaseFor(phase: ClocktowerPhase = clocktowerPhase): StorytellerPhase = when (phase) {
-        ClocktowerPhase.FirstNight -> StorytellerPhase.FIRST_NIGHT
-        ClocktowerPhase.Dawn -> StorytellerPhase.DAWN
-        ClocktowerPhase.Day -> StorytellerPhase.DAY
-        ClocktowerPhase.Night -> StorytellerPhase.NIGHT
-    }
+    fun storytellerPhaseFor(phase: ClocktowerPhase = clocktowerPhase): StorytellerPhase =
+        phase.toStorytellerPhase()
 
     fun clocktowerSeatFor(playerName: String): Int =
         cards.indexOfFirst { it.name == playerName }
@@ -922,12 +918,7 @@ internal fun CampBoardGameHostApp() {
             .takeIf { index -> index >= 0 }
             ?.plus(1)
             ?: return
-        val epistemicPhase = when (eventPhase) {
-            ClocktowerPhase.FirstNight -> StorytellerPhase.FIRST_NIGHT
-            ClocktowerPhase.Dawn -> StorytellerPhase.DAWN
-            ClocktowerPhase.Day -> StorytellerPhase.DAY
-            ClocktowerPhase.Night -> StorytellerPhase.NIGHT
-        }
+        val epistemicPhase = eventPhase.toStorytellerPhase()
         val committed = requireClocktowerGameSession().preflightGlobalEpistemicObservation(
             EpistemicObservationDraft(
                 recordId = recordId ?: "public-alive-${clocktowerGameId}-${eventSequence}-$seat",

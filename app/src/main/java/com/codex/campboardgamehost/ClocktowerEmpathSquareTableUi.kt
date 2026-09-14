@@ -282,43 +282,38 @@ internal fun ClocktowerEmpathSquareTableDialog(
     val selectedChoice = choices.firstOrNull { it.key == selectedKey } ?: initialChoice
     val displayedContributionSeats = clocktowerEmpathDisplayedContributionSeats(choices, selectedChoice.key)
 
-    ClocktowerHostFullScreenScaffold(
-        previousLabel = if (language == "en") "← Previous" else "← 上一步",
-        hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
-        nextLabel = if (language == "en") "Next →" else "下一步 →",
+    ClocktowerHostSquareTableScaffold(
+        seats = seats,
+        language = language,
         previousEnabled = canGoPrevious,
         onPrevious = onPrevious,
         onHostTools = onHostTools,
         onNext = onNext,
-        onBack = { if (canGoPrevious) onPrevious() },
+        interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
+        seatUiModel = { seat ->
+            val content = hostSeatContentPresentation(seat, language)
+            val visual = clocktowerEmpathSeatVisual(
+                seatNumber = seat.seatId.number,
+                actorSeat = actorSeat,
+                scopeSeats = selectedChoice.scopeSeats,
+                actualEvilSeats = actualEvilSeats,
+                recluseSeat = recluseSeat,
+                contributingSeats = displayedContributionSeats,
+                language = language,
+            )
+            ClocktowerSquareTableSeatUiModel(
+                seatId = seat.seatId.renderKey(),
+                seatNumber = seat.seatId.number,
+                label = content.primaryLabel,
+                detailLabels = content.detailLabels,
+                isAlive = seat.isAlive,
+                hasUnspentGhostVote = seat.hasUnspentGhostVote,
+                state = visual.state,
+                isCurrentActor = visual.isCurrentActor,
+                badge = visual.badge,
+            )
+        },
     ) {
-        ClocktowerSquareTableSeatSurface(
-            seats = seats.map { seat ->
-                val content = hostSeatContentPresentation(seat, language)
-                val visual = clocktowerEmpathSeatVisual(
-                    seatNumber = seat.seatId.number,
-                    actorSeat = actorSeat,
-                    scopeSeats = selectedChoice.scopeSeats,
-                    actualEvilSeats = actualEvilSeats,
-                    recluseSeat = recluseSeat,
-                    contributingSeats = displayedContributionSeats,
-                    language = language,
-                )
-                ClocktowerSquareTableSeatUiModel(
-                    seatId = seat.seatId.renderKey(),
-                    seatNumber = seat.seatId.number,
-                    label = content.primaryLabel,
-                    detailLabels = content.detailLabels,
-                    isAlive = seat.isAlive,
-                    hasUnspentGhostVote = seat.hasUnspentGhostVote,
-                    state = visual.state,
-                    isCurrentActor = visual.isCurrentActor,
-                    badge = visual.badge,
-                )
-            },
-            modifier = Modifier.fillMaxSize(),
-            interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
-        ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -410,6 +405,5 @@ internal fun ClocktowerEmpathSquareTableDialog(
                     }
                 }
             }
-        }
     }
 }
