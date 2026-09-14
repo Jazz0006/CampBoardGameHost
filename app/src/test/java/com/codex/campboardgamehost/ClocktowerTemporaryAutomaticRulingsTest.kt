@@ -1,11 +1,19 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
+import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
+import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditDimensions
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditRecord
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionDistributionTelemetryRecorder
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationDomain
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSubject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -17,6 +25,7 @@ class ClocktowerTemporaryAutomaticRulingsTest {
     fun `spy automatic registration audit uses complete selector domain when legacy recommendations are empty`() {
         assertRegistrationAuditUsesSelectorDomain(
             legalSpecialRoleEnNames = listOf("Washerwoman", "Chef", "Chef"),
+            subjectRole = "Spy",
             decisionKey = "spy-registration-audit",
             expectedFamilies = listOf("actual-registration", "special-registration", "special-registration"),
         )
@@ -26,6 +35,7 @@ class ClocktowerTemporaryAutomaticRulingsTest {
     fun `recluse automatic registration audit uses complete selector domain when legacy recommendations are empty`() {
         assertRegistrationAuditUsesSelectorDomain(
             legalSpecialRoleEnNames = listOf("Poisoner", "Imp"),
+            subjectRole = "Recluse",
             decisionKey = "recluse-registration-audit",
             expectedFamilies = listOf("actual-registration", "special-registration", "special-registration"),
         )
@@ -205,17 +215,41 @@ class ClocktowerTemporaryAutomaticRulingsTest {
 
     private fun assertRegistrationAuditUsesSelectorDomain(
         legalSpecialRoleEnNames: List<String>,
+        subjectRole: String,
         decisionKey: String,
         expectedFamilies: List<String>,
     ) {
         val legacyRecommendations = emptyList<ClocktowerRegistrationRecommendationOption>()
         assertTrue(legacyRecommendations.isEmpty())
+        val isSpy = subjectRole == "Spy"
+        val registration = TroubleBrewingRegistrationDomain.resolve(
+            subject = TroubleBrewingRegistrationSubject(
+                seat = 1,
+                actualRole = RoleId(subjectRole),
+                actualAlignment = if (isSpy) Alignment.EVIL else Alignment.GOOD,
+                actualType = if (isSpy) CharacterType.MINION else CharacterType.OUTSIDER,
+            ),
+            allowedRoles = legalSpecialRoleEnNames.map { roleName ->
+                val type = when {
+                    isSpy -> CharacterType.TOWNSFOLK
+                    roleName == "Imp" -> CharacterType.DEMON
+                    else -> CharacterType.MINION
+                }
+                RoleDefinition(
+                    id = RoleId(roleName),
+                    alignment = if (isSpy) Alignment.GOOD else Alignment.EVIL,
+                    type = type,
+                    scriptIds = setOf(ScriptId("trouble_brewing")),
+                )
+            },
+            question = RegistrationQuestion.ROLE,
+        )
 
         val selection = clocktowerTemporaryRegistrationSelection(
-            legalSpecialRoleEnNames = legalSpecialRoleEnNames,
+            registration = registration,
             decisionKey = decisionKey,
         )
-        val auditCandidates = clocktowerTemporaryRegistrationAuditCandidates(legalSpecialRoleEnNames)
+        val auditCandidates = clocktowerTemporaryRegistrationAuditCandidates(registration)
         val selectedFamily = clocktowerTemporaryRegistrationAuditFamilyId(selection.selected.payload)
 
         assertEquals(expectedFamilies, auditCandidates.map { it.familyId })

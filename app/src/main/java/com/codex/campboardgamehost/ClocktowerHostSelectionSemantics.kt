@@ -14,6 +14,8 @@ import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLeg
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicStatus
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
 import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
+import com.codex.campboardgamehost.clocktower.recommendation.SelectionExecutionPolicy
+import com.codex.campboardgamehost.clocktower.recommendation.WeightedStableSelector
 import com.codex.campboardgamehost.clocktower.rules.FirstNightNumericInformationSemantics
 import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemantics
 import kotlin.math.abs
@@ -380,4 +382,19 @@ internal fun unifiedRegistrationPool(
                 payload = option,
             )
         })
+    }
+
+/** Automatic registration recommendation selection is owned beside the shared registration pool. */
+internal fun selectAutomaticRegistrationRecommendation(
+    options: List<ClocktowerRegistrationRecommendationOption>,
+    style: RecommendationStyle,
+): ClocktowerRegistrationRecommendationOption? = unifiedRegistrationPool(options)
+    ?.candidatesFor(SelectionExecutionPolicy.AUTO)
+    ?.map { it.payload }
+    ?.let { candidates ->
+        WeightedStableSelector.selectStyle(
+            candidates,
+            style,
+            ClocktowerRegistrationRecommendationOption::style,
+        )
     }

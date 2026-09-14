@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditCommit
 import com.codex.campboardgamehost.clocktower.recommendation.SelectionAuditRecord
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAuditContext
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
 
 /**
  * Non-visual owner for Beginner automatic Spy/Recluse registration. Registration side effects used
@@ -15,20 +16,20 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.SelectionAu
 internal fun ClocktowerAutomaticRegistrationEffect(
     automaticStorytellerInfo: Boolean,
     subjectName: String,
-    legalSpecialRoleEnNames: List<String>,
+    registration: TroubleBrewingRegistrationResolution,
     applyRegisteredRole: Boolean,
-    enabled: Boolean,
     selectionAudit: SelectionAuditContext?,
     automaticDecisionKey: String?,
     fallbackFamily: String,
     onUsesSpecialRegistrationChange: (Boolean) -> Unit,
     onRoleChange: (String) -> Unit,
 ) {
-    val automaticRuling = if (automaticStorytellerInfo && enabled) {
+    val legalSpecialRoleEnNames = registration.special.map { it.registeredRole.value }
+    val automaticRuling = if (automaticStorytellerInfo) {
         val decisionKey = automaticDecisionKey
             ?: "$fallbackFamily:$subjectName:${legalSpecialRoleEnNames.sorted().joinToString(",")}"
         clocktowerTemporaryRegistrationSelection(
-            legalSpecialRoleEnNames = legalSpecialRoleEnNames,
+            registration = registration,
             decisionKey = decisionKey,
         ).selected.payload
     } else {
@@ -37,19 +38,18 @@ internal fun ClocktowerAutomaticRegistrationEffect(
 
     LaunchedEffect(
         automaticStorytellerInfo,
-        enabled,
         automaticRuling,
         automaticDecisionKey,
         selectionAudit?.selectionId,
     ) {
-        if (automaticStorytellerInfo && enabled && automaticRuling != null) {
+        if (automaticStorytellerInfo && automaticRuling != null) {
             selectionAudit?.let { audit ->
                 audit.recorder.recordPreview(
                     SelectionAuditRecord(
                         selectionId = audit.selectionId,
                         dimensions = audit.dimensions,
                         candidates = clocktowerTemporaryRegistrationAuditCandidates(
-                            legalSpecialRoleEnNames = legalSpecialRoleEnNames,
+                            registration = registration,
                         ),
                     ),
                 )

@@ -1,9 +1,9 @@
 # GLOBAL CODE OWNERSHIP AND DEAD-CODE AUDIT
 
 > Date: 2026-09-14 Australia/Sydney
-> Status: **IMPLEMENTATION IN PROGRESS — steps 1 and 2 complete; steps 3-6 remain**
+> Status: **IMPLEMENTATION IN PROGRESS — steps 1 and 2 complete; step 3 remote gates pass and awaits user acceptance; steps 4-6 remain**
 > Baseline: PR #123 campaign head `486473bac8ab0c717ca84a54a32db035e9413901`
-> Current implementation heads: step 1 `8f5d7668`; step 2 `590cac55`
+> Current implementation heads: step 1 `8f5d7668`; step 2 `590cac55`; step 3 PR #126 code head `eb0873bd`
 
 ## 1. Scope and method
 
@@ -247,3 +247,97 @@ The user authorized merging steps 1 and 2 after this document, the roadmap and t
 handoff are updated. Merge PR #124 first, retarget PR #125 to `main`, revalidate its exact final
 head, then merge PR #125. Do not open the step 3 PR in this closeout conversation; begin it from the
 new conversation after re-querying live `main` and repository state.
+
+## 10. Step 3 live fan-out audit and architecture pre-flight
+
+> Recorded before production editing on branch `codex/global-ownership-cleanup-3` from merged
+> `main` `d6773a2e14ea5242c9fa432893d40f3a566ec625`.
+
+### 10.1 Production fan-out classification
+
+- `TroubleBrewingRegistrationSemantics` is the formal legality model, but before step 3 it has no
+  production caller. Its only direct caller is `EpistemicSemanticModelTest`.
+- `RegistrationPolicy` is the production candidate/fact generator reached through
+  `NightRecommendationModule` and `ClocktowerRecommendationCoordinator`. Before step 3 it trusts
+  Host-supplied `allowedRoles` and `canMisregister`, so it is not the legality owner.
+- `NaturalPairInformationCandidateGenerator` independently constructs Spy/Recluse registration
+  facts for Washerwoman, Librarian and Investigator. This path must inherit the common legality and
+  fact projection; its pair-outcome construction remains an intentional pair-information adapter.
+- `ClocktowerAutomaticRegistrationEffect` and the Virgin automatic path independently turn
+  Host-filtered role names into temporary-policy candidates. These are must-inherit automatic
+  consumers; the temporary 90/10 policy remains the intentional selection-policy adapter.
+- Virgin, Slayer and Klutz day flows call selection helpers inside Host. They are must-inherit
+  consumers. Their existing selection probabilities/style behavior must remain unchanged.
+- Host-local `spyCanRegister`, `recluseCanRegister`, role/team filtering, registered-role fallback,
+  result-first numeric/role-reveal witnesses and legacy pair candidate construction are parallel
+  legality/projection paths and must inherit the common domain result.
+- Registration controls and localized labels are intentional presentation adapters. They may render
+  domain-provided legal roles and submit a selected ruling, but must not filter teams/roles.
+
+### 10.2 Mode, recovery and persistence classification
+
+- Beginner and Experienced night flows share the same Host and night-step models. Beginner applies
+  the temporary automatic policy; Experienced renders manual controls. Both must consume the same
+  legal special-role set.
+- Fresh and restored games reconstruct `PlayerCard`, confirmed poison state, phase/round and the
+  effective other-night role/poison projection before Host registration decisions. This projection
+  remains an intentional state adapter for step 3 and must feed the common registration domain.
+- The in-progress Spy/Recluse ruling maps and their recorded flags are Compose-local draft state and
+  are not fields in `ClocktowerRecoveryMechanics`. Recovery re-enters from durable cards/mechanics
+  and deterministically recomputes any uncommitted automatic ruling.
+- Committed Virgin/Slayer/Klutz consequences, event history and semantic decision-event
+  `RegistrationFact` values are durable consumers. Step 3 must not change the recovery JSON schema,
+  saved field meanings, event ordering, or established automatic decision keys.
+
+### 10.3 Architecture pre-flight
+
+- current owner: split between formal epistemic semantics, dynamic recommendation policy,
+  Natural Pair generation, Host-local legality/filtering and temporary automatic selection.
+- proposed responsibility: one pure Trouble Brewing registration domain resolves special-ability
+  eligibility, complete legal candidates and their typed registration facts for a supplied
+  interaction; recommendation, pair-information and automatic/manual adapters consume that result.
+- authoritative state owner(s): `ClocktowerGameSession`/App remain authoritative for durable game
+  and timeline state; effective-night projectors remain authoritative for interaction-time role and
+  poison facts; the registration domain is authoritative only for interpreting those facts.
+- narrow typed input/output seam: effective subject facts + interaction identity/question + script
+  role definitions -> ordered legal registration candidates carrying `RegistrationFact` witnesses.
+- keep in current owner / extract: extract legality and fact construction to the rules/domain layer;
+  retain recommendation scoring in `RegistrationPolicy`, temporary probabilities in
+  `TemporaryAutomaticStorytellerPolicy`, state projection in existing session/Host adapters and UI
+  labels/selection intent in presentation.
+- reason: this removes parallel rule interpretation without moving mutable state, persistence,
+  scoring, or presentation ownership and keeps the step independently reviewable from steps 4-6.
+
+### 10.4 Evidence plan
+
+- Add one typed RED for the uncovered stable rule that a poisoned Spy/Recluse has no special
+  registration profile.
+- Establish the existing `EpistemicSemanticModelTest`, `RegistrationPolicyTest`, Natural Pair tests,
+  temporary-ruling tests and Host selection characterization as the T0 baseline.
+- After cutover, rerun those focused tests, `:app:testFast`, the registration-triggered ZDD/golden
+  evidence, `git diff --check`, and the final producer/consumer search.
+
+### 10.5 Implemented ownership convergence and local evidence
+
+- `TroubleBrewingRegistrationDomain` now owns Spy/Recluse special eligibility, impairment handling,
+  allowed-role normalization and typed `RegistrationFact` construction.
+- Formal epistemic semantics, dynamic recommendations and Natural Pair generation consume that
+  domain. A caller-supplied role set cannot broaden the subject character's registration ability.
+- Beginner temporary automatic rulings and Experienced manual controls consume the same typed
+  resolution. Virgin, Slayer and Klutz retain their existing decision keys, style selection and
+  probability policy; registration selection now enters through the shared registration pool.
+- Host retains only effective interaction-time state projection and presentation wiring. Recovery
+  fields, JSON schema, timeline/event ownership and commit ordering are unchanged.
+- The meaningful RED was the previously uncovered poisoned Spy/Recluse semantic contract; it failed
+  before the production cutover and passed afterward.
+- Local GREEN evidence: focused registration/epistemic/Natural Pair/temporary/Host-selection tests;
+  forced `:app:testFast`; forced ZDD, enumerated-world and A3 golden tests; forced
+  `:app:testFull :app:assembleDebug` (1,352 JVM tests, zero failures); ASP corpus validation (52
+  scenarios) and 14 ASP harness tests.
+- PR #126 code head `eb0873bdeb3ca00feaa83d113ec29083bd81c75c` is based exactly on merged
+  `main` `d6773a2e14ea5242c9fa432893d40f3a566ec625`. Remote Android Full, ASP contracts,
+  Real Clingo, aggregate CI and R2 boundary checks all passed; the PR remains Draft and unmerged
+  pending explicit user acceptance.
+- Final producer/consumer search found no remaining `canMisregister` input or UI role/team legality
+  reconstruction. Remaining direct `RegistrationFact` constructors are persistence/semantic-world
+  decoding/projection adapters, not competing registration legality owners.

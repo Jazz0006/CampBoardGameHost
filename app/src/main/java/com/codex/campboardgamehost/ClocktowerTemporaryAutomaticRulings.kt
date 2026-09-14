@@ -8,6 +8,7 @@ import com.codex.campboardgamehost.clocktower.recommendation.TemporaryAutomaticC
 import com.codex.campboardgamehost.clocktower.recommendation.TemporaryAutomaticSelection
 import com.codex.campboardgamehost.clocktower.recommendation.TemporaryAutomaticStorytellerPolicy
 import com.codex.campboardgamehost.clocktower.recommendation.TemporaryDemonSuccessorChoice
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
 
 private const val ACTUAL_REGISTRATION_FAMILY = "actual-registration"
 private const val SPECIAL_REGISTRATION_FAMILY = "special-registration"
@@ -63,10 +64,10 @@ internal fun clocktowerTemporaryAutomaticDecisionSeed(decisionKey: String): Long
 }
 
 private fun clocktowerTemporaryRegistrationChoices(
-    legalSpecialRoleEnNames: List<String>,
+    registration: TroubleBrewingRegistrationResolution,
 ): List<TemporaryAutomaticChoice<ClocktowerAutomaticRegistrationRuling>> {
-    val specialRoles = legalSpecialRoleEnNames
-        .onEach { require(it.isNotBlank()) { "Registration role cannot be blank." } }
+    val specialRoles = registration.special
+        .map { it.registeredRole.value }
         .distinct()
         .sorted()
     return buildList {
@@ -94,8 +95,8 @@ private fun clocktowerTemporaryRegistrationChoices(
 }
 
 internal fun clocktowerTemporaryRegistrationAuditCandidates(
-    legalSpecialRoleEnNames: List<String>,
-): List<SelectionAuditCandidate> = clocktowerTemporaryRegistrationChoices(legalSpecialRoleEnNames).map { choice ->
+    registration: TroubleBrewingRegistrationResolution,
+): List<SelectionAuditCandidate> = clocktowerTemporaryRegistrationChoices(registration).map { choice ->
     SelectionAuditCandidate(
         familyId = clocktowerTemporaryRegistrationAuditFamilyId(choice.payload),
         qualityTier = QualityTier.RECOMMENDED,
@@ -107,10 +108,10 @@ internal fun clocktowerTemporaryRegistrationAuditFamilyId(
 ): String = if (ruling.usesSpecialRegistration) SPECIAL_REGISTRATION_FAMILY else ACTUAL_REGISTRATION_FAMILY
 
 internal fun clocktowerTemporaryRegistrationSelection(
-    legalSpecialRoleEnNames: List<String>,
+    registration: TroubleBrewingRegistrationResolution,
     decisionKey: String,
 ): TemporaryAutomaticSelection<ClocktowerAutomaticRegistrationRuling> {
-    val choices = clocktowerTemporaryRegistrationChoices(legalSpecialRoleEnNames)
+    val choices = clocktowerTemporaryRegistrationChoices(registration)
     return TemporaryAutomaticStorytellerPolicy.selectRegistration(
         actual = choices.first(),
         special = choices.drop(1),

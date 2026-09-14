@@ -36,7 +36,6 @@ class RegistrationPolicyTest {
                     role("Butler", CharacterType.OUTSIDER),
                 ),
                 detail = RegistrationDetail.ROLE,
-                canMisregister = true,
                 registrationQuestion = RegistrationQuestion.ROLE,
             ),
             style = RecommendationStyle.BALANCED,
@@ -75,7 +74,6 @@ class RegistrationPolicyTest {
                 subjectSeat = 1,
                 allowedRoles = listOf(role("Imp", CharacterType.DEMON)),
                 detail = RegistrationDetail.ROLE,
-                canMisregister = true,
                 registrationQuestion = RegistrationQuestion.DEMON,
             ),
             style = RecommendationStyle.BALANCED,
@@ -97,7 +95,6 @@ class RegistrationPolicyTest {
                     role("Virgin", CharacterType.TOWNSFOLK),
                 ),
                 detail = RegistrationDetail.ROLE,
-                canMisregister = true,
                 outcomeDiscussionValue = 4,
                 outcomeMisinformationPressure = 2,
             ),
@@ -112,18 +109,42 @@ class RegistrationPolicyTest {
     @Test
     fun `poisoned special character only returns actual registration`() {
         val recommendations = RegistrationPolicy.recommendRegistration(
-            request = request(),
+            request = request(poisoned = true),
             context = SpecialRegistrationContext(
                 subjectSeat = 1,
                 allowedRoles = listOf(role("Washerwoman", CharacterType.TOWNSFOLK)),
                 detail = RegistrationDetail.ROLE,
-                canMisregister = false,
             ),
         )
 
         assertEquals(1, recommendations.size)
         assertFalse(recommendations.single().choice().usesSpecialAbility)
         assertEquals(RoleId("Spy"), recommendations.single().choice().registeredRole)
+    }
+
+    @Test
+    fun `caller supplied roles cannot broaden the subject registration ability`() {
+        val spyCandidates = RegistrationPolicy.generateCandidates(
+            request = request(),
+            context = SpecialRegistrationContext(
+                subjectSeat = 1,
+                allowedRoles = listOf(role("Imp", CharacterType.DEMON)),
+                detail = RegistrationDetail.ROLE,
+            ),
+            style = RecommendationStyle.BALANCED,
+        )
+        val recluseCandidates = RegistrationPolicy.generateCandidates(
+            request = request(subjectRole = "Recluse"),
+            context = SpecialRegistrationContext(
+                subjectSeat = 1,
+                allowedRoles = listOf(role("Washerwoman", CharacterType.TOWNSFOLK)),
+                detail = RegistrationDetail.ROLE,
+            ),
+            style = RecommendationStyle.BALANCED,
+        )
+
+        assertTrue(spyCandidates.none { it.candidate.truthRelation == TruthRelation.TRUE_TO_REGISTERED_STATE })
+        assertTrue(recluseCandidates.none { it.candidate.truthRelation == TruthRelation.TRUE_TO_REGISTERED_STATE })
     }
 
     @Test
@@ -137,7 +158,6 @@ class RegistrationPolicyTest {
                     role("Butler", CharacterType.OUTSIDER),
                 ),
                 detail = RegistrationDetail.ALIGNMENT_ONLY,
-                canMisregister = true,
             ),
         )
 
@@ -148,12 +168,11 @@ class RegistrationPolicyTest {
     @Test
     fun `global balance discourages killing Recluse when evil is ahead`() {
         val recommendations = RegistrationPolicy.recommendRegistration(
-            request = request(evilAdvantage = 70),
+            request = request(evilAdvantage = 70, subjectRole = "Recluse"),
             context = SpecialRegistrationContext(
                 subjectSeat = 1,
                 allowedRoles = listOf(role("Imp", CharacterType.DEMON)),
                 detail = RegistrationDetail.ROLE,
-                canMisregister = true,
                 outcomeMisinformationPressure = 4,
                 specialRegistrationBalanceImpact = 1,
             ),
@@ -165,12 +184,11 @@ class RegistrationPolicyTest {
     @Test
     fun `global balance can register Recluse as demon when good is well ahead`() {
         val recommendations = RegistrationPolicy.recommendRegistration(
-            request = request(evilAdvantage = -70),
+            request = request(evilAdvantage = -70, subjectRole = "Recluse"),
             context = SpecialRegistrationContext(
                 subjectSeat = 1,
                 allowedRoles = listOf(role("Imp", CharacterType.DEMON)),
                 detail = RegistrationDetail.ROLE,
-                canMisregister = true,
                 outcomeMisinformationPressure = 4,
                 specialRegistrationBalanceImpact = 1,
             ),
@@ -182,12 +200,11 @@ class RegistrationPolicyTest {
     @Test
     fun `configured styles remain distinct in a neutral high impact ruling`() {
         val recommendations = RegistrationPolicy.recommendRegistration(
-            request = request(),
+            request = request(subjectRole = "Recluse"),
             context = SpecialRegistrationContext(
                 subjectSeat = 1,
                 allowedRoles = listOf(role("Imp", CharacterType.DEMON)),
                 detail = RegistrationDetail.ROLE,
-                canMisregister = true,
                 outcomeMisinformationPressure = 4,
                 specialRegistrationBalanceImpact = 1,
             ),
@@ -207,7 +224,6 @@ class RegistrationPolicyTest {
                 role("Virgin", CharacterType.TOWNSFOLK),
             ),
             detail = RegistrationDetail.ROLE,
-            canMisregister = true,
             outcomeMisinformationPressure = 2,
         )
 
@@ -220,12 +236,11 @@ class RegistrationPolicyTest {
     @Test
     fun `one shot final day registration receives unified consequence penalties`() {
         val special = RegistrationPolicy.generateCandidates(
-            request = request(alivePlayers = 3),
+            request = request(alivePlayers = 3, subjectRole = "Recluse"),
             context = SpecialRegistrationContext(
                 subjectSeat = 1,
                 allowedRoles = listOf(role("Imp", CharacterType.DEMON)),
                 detail = RegistrationDetail.ROLE,
-                canMisregister = true,
                 outcomeMisinformationPressure = 4,
                 isOneShotAbility = true,
                 playerSelectedTarget = true,
@@ -238,7 +253,12 @@ class RegistrationPolicyTest {
         assertTrue("consequence.final-day-impact-penalty" in special.explanationCodes)
     }
 
-    private fun request(evilAdvantage: Int = 0, alivePlayers: Int = 4) = DynamicDecisionRequest(
+    private fun request(
+        evilAdvantage: Int = 0,
+        alivePlayers: Int = 4,
+        poisoned: Boolean = false,
+        subjectRole: String = "Spy",
+    ) = DynamicDecisionRequest(
         id = "night-1-empath-spy",
         type = StorytellerDecisionType.SPECIAL_REGISTRATION,
         sourceAbility = RoleId("Empath"),
@@ -248,10 +268,11 @@ class RegistrationPolicyTest {
                 players = listOf(
                     PlayerState(
                         seat = 1,
-                        name = "Spy",
-                        actualRole = RoleId("Spy"),
-                        actualAlignment = Alignment.EVIL,
-                        actualType = CharacterType.MINION,
+                        name = subjectRole,
+                        actualRole = RoleId(subjectRole),
+                        actualAlignment = if (subjectRole == "Spy") Alignment.EVIL else Alignment.GOOD,
+                        actualType = if (subjectRole == "Spy") CharacterType.MINION else CharacterType.OUTSIDER,
+                        poisoned = poisoned,
                     ),
                     PlayerState(2, "Empath", RoleId("Empath"), Alignment.GOOD, CharacterType.TOWNSFOLK),
                     PlayerState(3, "Chef", RoleId("Chef"), Alignment.GOOD, CharacterType.TOWNSFOLK),

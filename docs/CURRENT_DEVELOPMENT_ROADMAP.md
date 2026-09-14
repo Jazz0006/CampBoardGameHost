@@ -19,15 +19,15 @@ UI-INFO-1 information filtering & layout          COMPLETE / merged via PR #121
 Dead-player square-table marking                  COMPLETE / merged via PR #122
 
 EXPERIENCED-NIGHT-FLOW-1 navigation correctness   COMPLETE / merged via PR #123; device pass is follow-up
-GLOBAL-OWNERSHIP-CLEANUP steps 1-2                COMPLETE — PRs #124/#125 authorized for ordered merge
-GLOBAL-OWNERSHIP-CLEANUP step 3                   NEXT — registration ownership convergence
+GLOBAL-OWNERSHIP-CLEANUP steps 1-2                COMPLETE / merged via PRs #124/#125
+GLOBAL-OWNERSHIP-CLEANUP step 3                   READY FOR ACCEPTANCE — PR #126 remote gates pass
 EPI-MQ / Productive Uncertainty                   PAUSED / queued after flow correctness
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
 
 Completed campaign documents are historical evidence, not default execution authority.
 
-## 2. Immediate priority — merge cleanup steps 1 and 2, then hand off step 3
+## 2. Immediate priority — user acceptance of cleanup step 3
 
 Active handoff:
 
@@ -37,14 +37,12 @@ Campaign authority:
 
 `docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`
 
-Step 1 is complete at PR #124 head `8f5d7668`. Step 2 is complete at stacked PR #125 head
-`590cac55`, with 2,268 deletions and only a two-line R2 guard replacement added. The user authorized
-both merges after documentation closeout. Merge #124 first, retarget #125 to `main`, revalidate the
-exact final head and then merge #125.
-
-After both merges, stop this conversation. The next conversation starts step 3 with a read-only
-live delta/ownership audit; it must not silently expand into restore, No Greater Joy, broad Host/App
-decomposition or square-table work.
+Steps 1 and 2 are merged. Step 3 was implemented from merged `main` on
+`codex/global-ownership-cleanup-3` after the required live fan-out and persistence/recovery audit.
+Local focused, T1, affected T2, full Android, assemble and ASP contract gates pass. PR #126 code
+head `eb0873bd` has also passed remote Android Full, ASP contracts, Real Clingo, aggregate CI and R2
+boundary validation. The PR remains Draft. Do not start steps 4-6 or merge step 3 without explicit
+user authorization.
 
 Historical starting `main` for EXPERIENCED-NIGHT-FLOW-1:
 
@@ -201,12 +199,14 @@ The newly reproduced Experienced-mode black-screen regression is an independentl
 
 ## 10. Live-state notes
 
-Recorded live state before cleanup merge closeout:
+Recorded live state at the Step 3 implementation checkpoint:
 
 ```text
-main: 84e84d37b6ef3078fd10566e0d9d2e92e25def7c (PR #123 merged)
-PR #124: Draft / mergeable / head 8f5d7668 / all required checks passed
-PR #125: stacked Draft / mergeable / code head 590cac55 / full CI and R2 passed
+main: d6773a2e14ea5242c9fa432893d40f3a566ec625 (PR #125 merged)
+PR #124: MERGED as 4cd49d4279a176b9e32a51db4606f0e801e57ceb
+PR #125: MERGED as d6773a2e14ea5242c9fa432893d40f3a566ec625
+Step 3: codex/global-ownership-cleanup-3, based exactly on current origin/main
+PR #126: Draft / mergeable / code head eb0873bd / full CI, Real Clingo and R2 boundary passed
 ```
 
 Unrelated open draft PR:
@@ -227,10 +227,10 @@ Always re-query live refs/checks at the start of the next conversation.
 3. this roadmap;
 4. `docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`;
 5. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-14_GLOBAL_OWNERSHIP_CLEANUP_STEP_3.md`;
-6. current registration semantics, automatic-selection and persistence/recovery owners identified by
-   the handoff;
+6. the Step 3 registration domain, automatic-selection consumers and persistence/recovery audit;
 7. query live `main`, working branch and PR/check status;
-8. begin step 3 with a read-only producer/consumer fan-out audit.
+8. complete the exact remote diff, CI/Real-Clingo and R2 acceptance audit; do not start step 4 before
+   Step 3 is accepted and the user authorizes the next slice.
 
 ## 12. Stable rule
 

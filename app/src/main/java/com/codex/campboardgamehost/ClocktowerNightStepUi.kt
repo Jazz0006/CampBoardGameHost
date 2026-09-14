@@ -33,6 +33,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.session.ClocktowerRecommendationCoordinator
 import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
+import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationResolution
 
 @Composable
 internal fun ClocktowerNightStepCardLocalized(
@@ -57,11 +58,11 @@ internal fun ClocktowerNightStepCardLocalized(
     step: ClocktowerNightStepUi,
     surfacePlan: ClocktowerNightSurfacePlan,
     spyCard: PlayerCard?,
-    spyCanRegister: Boolean,
+    spyRegistrationResolution: TroubleBrewingRegistrationResolution?,
     onSpyRegistrationGoodChange: (Boolean) -> Unit,
     onSpyRegistrationRoleChange: (String) -> Unit,
     recluseCard: PlayerCard?,
-    recluseCanRegister: Boolean,
+    recluseRegistrationResolution: TroubleBrewingRegistrationResolution?,
     onRecluseRegistrationEvilChange: (Boolean) -> Unit,
     onRecluseRegistrationRoleChange: (String) -> Unit,
     selectedName: String?,
@@ -246,15 +247,12 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         null
     }
-    if (!usesResultFirstRegistration && step.spyRegistrationKey != null && spyCard != null && spyCanRegister) {
+    if (!usesResultFirstRegistration && step.spyRegistrationKey != null && spyCard != null && spyRegistrationResolution?.canUseSpecialAbility == true) {
         ClocktowerAutomaticRegistrationEffect(
             automaticStorytellerInfo = automaticStorytellerInfo,
             subjectName = spyCard.name,
-            legalSpecialRoleEnNames = completeTroubleBrewingRoles
-                .filter { it.team in step.spyRegistrationTeams && it.enName != "Spy" }
-                .map { it.enName },
+            registration = spyRegistrationResolution,
             applyRegisteredRole = step.spyRegistrationDetail == ClocktowerRegistrationDetail.Role,
-            enabled = spyCanRegister,
             selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|spy-registration"),
             automaticDecisionKey = clocktowerTemporaryNightDecisionKey(
                 gameId = gameId,
@@ -268,15 +266,12 @@ internal fun ClocktowerNightStepCardLocalized(
             onRoleChange = onSpyRegistrationRoleChange,
         )
     }
-    if (!usesResultFirstRegistration && step.recluseRegistrationKey != null && recluseCard != null && recluseCanRegister) {
+    if (!usesResultFirstRegistration && step.recluseRegistrationKey != null && recluseCard != null && recluseRegistrationResolution?.canUseSpecialAbility == true) {
         ClocktowerAutomaticRegistrationEffect(
             automaticStorytellerInfo = automaticStorytellerInfo,
             subjectName = recluseCard.name,
-            legalSpecialRoleEnNames = completeTroubleBrewingRoles
-                .filter { it.team in step.recluseRegistrationTeams }
-                .map { it.enName },
+            registration = recluseRegistrationResolution,
             applyRegisteredRole = true,
-            enabled = recluseCanRegister,
             selectionAudit = selectionAudit?.copy(selectionId = "$informationDecisionKey|recluse-registration"),
             automaticDecisionKey = clocktowerTemporaryNightDecisionKey(
                 gameId = gameId,

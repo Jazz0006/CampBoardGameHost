@@ -133,6 +133,35 @@ class EpistemicSemanticModelTest {
         assertNotEquals(EpistemicSemanticJson.encode(query), EpistemicSemanticJson.encode(otherInteraction))
     }
 
+    @Test fun `poisoned Spy and Recluse have no special registration profile`() {
+        val poisonedState = state.copy(
+            players = state.players.map { player ->
+                if (player.actualRole in setOf(RoleId("Spy"), RoleId("Recluse"))) {
+                    player.copy(poisoned = true)
+                } else {
+                    player
+                }
+            },
+        )
+        val spyQuery = RegistrationQuery(
+            2, "ww-night-1-seat-2", TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 4, 4), RoleId("Washerwoman"),
+            RegistrationQuestion.ROLE, RoleId("Empath"), CharacterType.TOWNSFOLK, Alignment.GOOD,
+        )
+        val recluseQuery = RegistrationQuery(
+            4, "ft-night-1-seat-4", TimelinePoint(StorytellerPhase.FIRST_NIGHT, 1, 8, 8), RoleId("Fortune Teller"),
+            RegistrationQuestion.DEMON, RoleId("Imp"), CharacterType.DEMON, Alignment.EVIL,
+        )
+
+        assertEquals(
+            setOf(RegistrationBasis.ACTUAL_STATE),
+            TroubleBrewingRegistrationSemantics.possibleRegistrations(poisonedState, spyQuery).mapTo(mutableSetOf()) { it.basis },
+        )
+        assertEquals(
+            setOf(RegistrationBasis.ACTUAL_STATE),
+            TroubleBrewingRegistrationSemantics.possibleRegistrations(poisonedState, recluseQuery).mapTo(mutableSetOf()) { it.basis },
+        )
+    }
+
     @Test fun `timeline identity and ordering use the global monotonic sequence`() {
         val earlier = TimelinePoint(
             phase = StorytellerPhase.DAY,

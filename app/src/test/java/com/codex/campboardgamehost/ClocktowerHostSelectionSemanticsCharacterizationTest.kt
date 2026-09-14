@@ -194,6 +194,28 @@ class ClocktowerHostSelectionSemanticsCharacterizationTest {
         assertEquals(listOf("special", "actual"), ranked.map { it.payload.label })
     }
 
+    @Test
+    fun `automatic registration selection consumes the shared registration pool`() {
+        val gentle = ClocktowerRegistrationRecommendationOption(
+            label = "gentle actual",
+            usesSpecialRegistration = false,
+            registeredRoleEnName = null,
+            style = RecommendationStyle.GENTLE,
+        )
+        val aggressive = ClocktowerRegistrationRecommendationOption(
+            label = "aggressive special",
+            usesSpecialRegistration = true,
+            registeredRoleEnName = "Imp",
+            style = RecommendationStyle.AGGRESSIVE,
+        )
+
+        assertNull(selectAutomaticRegistrationRecommendation(emptyList(), RecommendationStyle.BALANCED))
+        assertEquals(
+            aggressive,
+            selectAutomaticRegistrationRecommendation(listOf(gentle, aggressive), RecommendationStyle.AGGRESSIVE),
+        )
+    }
+
     private fun player(
         seat: Int,
         role: String,
