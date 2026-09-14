@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — Experienced Night Flow Correctness
 
 > Date: 2026-09-14 Australia/Sydney  
-> Status: **CURRENT — S1 COMPLETE; S2 implemented locally, remote validation pending**
+> Status: **CURRENT — S1/S2 COMPLETE; S3 read-only eligibility audit next**
 > Program: Clocktower Storyteller mobile flow correctness  
 > Branch: `codex/experienced-night-flow-correctness`  
 > Starting `main`: `940ba1df68365974ba366985d66d1cb583682ba7`
@@ -121,7 +121,7 @@ refreshed flow contains no next step
 
 Do not reintroduce an out-of-range step as a navigation sentinel.
 
-### S2 — Full-screen surface totality — IMPLEMENTED LOCALLY / VALIDATION PENDING
+### S2 — Full-screen surface totality — COMPLETE
 
 Begin with a read-only ownership/fan-out audit of `ClocktowerNightFullScreenOwnership` and every production producer/consumer of the full-screen classification.
 
@@ -149,10 +149,14 @@ Automatic Mayor/succession paths retain a concrete disabled ruling surface while
 deterministic effect settles. Superseded renderer-shape source tests were retired only after typed
 planner/presentation evidence replaced them.
 
-Local Gradle execution is blocked before compilation because the Work image has no cached Gradle
-distribution and cannot reach `services.gradle.org`. Do not mark S2 complete until the branch is
-pushed with explicit authorization, normal CI and `:app:testFast --rerun-tasks` pass, and the exact
-remote diff/scope is audited. Do not begin S3 production edits before that acceptance checkpoint.
+Local Gradle execution was blocked before compilation because the Work image had no cached Gradle
+distribution and could not reach `services.gradle.org`. Remote R2 run `34806543877` and CI run
+`34806543889` passed at `6088af21`; CI's Android FAST unit-test step was green. The exact remote
+comparison from `0e860940` was four commits ahead, zero behind, and contained only the expected 19
+S2 production/test/documentation paths. PR #123 remains Draft.
+
+S2 is accepted. Begin S3 with a read-only fan-out audit; do not edit production until the shared
+derived target-eligibility seam and durable evidence are identified.
 
 ### S3 — Skilled interaction eligibility
 

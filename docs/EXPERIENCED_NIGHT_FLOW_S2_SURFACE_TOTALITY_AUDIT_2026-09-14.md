@@ -1,7 +1,7 @@
 # EXPERIENCED NIGHT FLOW — S2 Full-Screen Surface Totality Audit
 
 > Date: 2026-09-14 Australia/Sydney  
-> Status: **CURRENT — typed ownership implementation complete locally; remote validation pending**
+> Status: **S2 COMPLETE — typed ownership implemented and remote automated validation green**
 > Program: `EXPERIENCED-NIGHT-FLOW-1`  
 > Branch: `codex/experienced-night-flow-correctness`  
 > PR: `#123` — draft / do not merge yet  
@@ -1072,7 +1072,7 @@ The renderer-shaped method in `ClocktowerSageSquareTableWiringTest` was removed 
 coarse production materialization boundary remains. Existing typed family presentation/materializer
 tests remain the behavioral evidence for their individual payload semantics.
 
-## 26. Validation status and exact continuation point
+## 26. Validation result and exact continuation point
 
 Static evidence completed locally:
 
@@ -1082,7 +1082,7 @@ retired Boolean/helper and distributed-owner symbol scan            PASS (no mat
 exact production/test change review                                 PASS
 ```
 
-The focused Gradle command could not reach test compilation because this clean Work image has no
+The focused local Gradle command could not reach test compilation because this clean Work image has no
 cached Gradle distribution and network access to `services.gradle.org` is unavailable:
 
 ```text
@@ -1093,9 +1093,19 @@ GRADLE_USER_HOME="$PWD/.gradle-codex" ./gradlew \
 ```
 
 No `gradle` or `kotlinc` executable and no reusable Gradle distribution were found locally. The
-partial wrapper download was moved out of the worktree. Therefore S2 is implemented but must not be
-declared remotely green until the branch is pushed with explicit authorization and normal CI runs.
+partial wrapper download was moved out of the worktree. The branch was therefore pushed through the
+authorized GitHub connection for remote evidence.
 
-After CI is green, run the broader `:app:testFast --rerun-tasks` gate, perform the exact remote
-diff/scope audit, then mark S2 complete and begin the read-only S3 skilled-interaction eligibility
-fan-out audit. Do not begin S3 production edits before that checkpoint.
+Remote acceptance evidence at `6088af21280183e0db1bc59866125abc988102d0`:
+
+```text
+R2 main-thread boundary run 34806543877                         PASS
+CI run 34806543889 / Run Android FAST unit tests               PASS
+0e860940...6088af21 exact remote compare                       PASS
+remote commit count                                             4 ahead / 0 behind
+changed-file scope                                              exact expected 19 files
+```
+
+PR #123 remains Draft and was not merged or marked ready. S2 is complete. The next authorized work
+is the read-only S3 skilled-interaction eligibility fan-out audit; do not begin S3 production edits
+until that audit identifies the shared derived eligibility seam and smallest durable evidence.

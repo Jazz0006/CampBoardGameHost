@@ -18,7 +18,7 @@ UX-MODE-1 Beginner / Experienced mode             COMPLETE / merged via PR #120
 UI-INFO-1 information filtering & layout          COMPLETE / merged via PR #121
 Dead-player square-table marking                  COMPLETE / merged via PR #122
 
-EXPERIENCED-NIGHT-FLOW-1 navigation correctness   CURRENT — S2 implemented; CI validation pending
+EXPERIENCED-NIGHT-FLOW-1 navigation correctness   CURRENT — S2 complete; S3 audit next
 EPI-MQ / Productive Uncertainty                   PAUSED / queued after flow correctness
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
@@ -61,8 +61,8 @@ S2  Full-screen surface totality
     - every claimed full-screen night step must resolve to a concrete surface
     - cover both Beginner and Experienced modes
     - preserve shared Activity-root navigation scaffold ownership
-    - typed ownership implementation is complete locally at 19ecaf37
-    - remote CI/testFast and exact scope audit remain before S2 acceptance
+    - typed ownership implementation accepted at 19ecaf37
+    - remote CI/testFast and exact scope audit passed at 6088af21
 
 S3  Skilled interaction eligibility
     - required single-target actions enable confirmation only for a valid current selection
