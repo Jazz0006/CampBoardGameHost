@@ -1,7 +1,7 @@
 # EXPERIENCED NIGHT FLOW — S3 Target Confirmation Eligibility Audit
 
 > Date: 2026-09-14 Australia/Sydney  
-> Status: **S3 AUDIT COMPLETE — implementation evidence next**  
+> Status: **S3 COMPLETE — shared eligibility implemented and remote validation green**
 > Program: `EXPERIENCED-NIGHT-FLOW-1`  
 > Branch: `codex/experienced-night-flow-correctness`  
 > PR: `#123` — draft / do not merge yet  
@@ -99,3 +99,37 @@ Poison and Monk seat-toggle handlers compare a tap with the confirmed target rat
 draft target. That can affect deselection after editing a previously confirmed choice. It does not
 change the S3 confirmation invariant or candidate domain, so it is deferred to the S4 edit/reconfirm
 regression matrix rather than widening this change.
+
+## 8. Implementation and validation result
+
+Remote checkpoints:
+
+```text
+49b1c3e5 docs: audit S3 target confirmation eligibility
+f7c6d4d6 test: define S3 target eligibility RED
+c9faee03 fix: require legal single target before advance [full-ci]
+```
+
+The implementation added one pure `clocktowerSingleTargetConfirmationEnabled` contract and exposed
+derived presentation properties for ordinary abilities and rulings. Every must-inherit surface now
+passes that value to the existing navigation scaffold. The generic square-table default was left
+unchanged for intentional non-target exemptions. The impossible/defensive Red Herring empty-domain
+copy now directs the Host to go back and inspect player state instead of contradicting the disabled
+Next action.
+
+Validation evidence:
+
+```text
+local git diff --check and XML parse                              PASS
+must-inherit call-site and nextEnabled scan                       PASS
+local focused Gradle execution                                    BLOCKED before compilation
+reason                                                            uncached Gradle 9.5 distribution; services.gradle.org unreachable
+R2 main-thread boundary run 34807533943                            PASS
+CI run 34807533986 / full Android unit tests + debug APK           PASS
+3da6ac62...c9faee03 exact remote compare                          PASS
+remote commit count                                                3 ahead / 0 behind
+changed-file scope                                                 exact expected 8 paths
+```
+
+S3 is accepted. Continue with S4's Experienced/Beginner regression matrix, including the deferred
+Poison/Monk edit-and-reconfirm behavior and required real-device acceptance. PR #123 remains Draft.

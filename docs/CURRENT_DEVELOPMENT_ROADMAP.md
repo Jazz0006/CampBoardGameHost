@@ -18,7 +18,7 @@ UX-MODE-1 Beginner / Experienced mode             COMPLETE / merged via PR #120
 UI-INFO-1 information filtering & layout          COMPLETE / merged via PR #121
 Dead-player square-table marking                  COMPLETE / merged via PR #122
 
-EXPERIENCED-NIGHT-FLOW-1 navigation correctness   CURRENT — S2 complete; S3 audit next
+EXPERIENCED-NIGHT-FLOW-1 navigation correctness   CURRENT — S3 complete; S4 regression matrix next
 EPI-MQ / Productive Uncertainty                   PAUSED / queued after flow correctness
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
@@ -67,7 +67,8 @@ S2  Full-screen surface totality
 S3  Skilled interaction eligibility
     - required single-target actions enable confirmation only for a valid current selection
     - consume upstream legality; do not reimplement legality in presentation
-    - map full producer/consumer fan-out before changing shared contracts
+    - producer/consumer fan-out audited and shared derived contract accepted at c9faee03
+    - remote full Android CI and R2 passed
 
 S4  Experienced night-flow regression matrix
     - ordinary Demon attack -> Dawn

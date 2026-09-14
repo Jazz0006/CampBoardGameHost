@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — Experienced Night Flow Correctness
 
 > Date: 2026-09-14 Australia/Sydney  
-> Status: **CURRENT — S1/S2 COMPLETE; S3 read-only eligibility audit next**
+> Status: **CURRENT — S1/S2/S3 COMPLETE; S4 regression matrix next**
 > Program: Clocktower Storyteller mobile flow correctness  
 > Branch: `codex/experienced-night-flow-correctness`  
 > Starting `main`: `940ba1df68365974ba366985d66d1cb583682ba7`
@@ -14,10 +14,11 @@ Read, in order:
 2. `docs/TESTING_STRATEGY.md`;
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. this handoff;
-5. `docs/SNE7_ARCHITECTURE_HARDENING_2026-08-27.md` if present under its current live/archive path, or the current SNE-7 authoritative night-transaction document;
-6. `docs/UI_NAV_1_CLOSEOUT_2026-09-10.md` if present under its current live/archive path;
-7. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md`;
-8. query live `main`, this branch, and relevant PR/check status before production edits.
+5. `docs/EXPERIENCED_NIGHT_FLOW_S3_TARGET_ELIGIBILITY_AUDIT_2026-09-14.md`;
+6. `docs/SNE7_ARCHITECTURE_HARDENING_2026-08-27.md` if present under its current live/archive path, or the current SNE-7 authoritative night-transaction document;
+7. `docs/UI_NAV_1_CLOSEOUT_2026-09-10.md` if present under its current live/archive path;
+8. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md`;
+9. query live `main`, this branch, and relevant PR/check status before production edits.
 
 Do not assume the recorded starting SHA remains current if development has advanced.
 
@@ -158,7 +159,7 @@ S2 production/test/documentation paths. PR #123 remains Draft.
 S2 is accepted. Begin S3 with a read-only fan-out audit; do not edit production until the shared
 derived target-eligibility seam and durable evidence are identified.
 
-### S3 — Skilled interaction eligibility
+### S3 — Skilled interaction eligibility — COMPLETE
 
 Audit shared single-target presentation and all target-selection consumers.
 
@@ -174,6 +175,27 @@ required target action
 Presentation must consume upstream legality, not reimplement it.
 
 Cover at least Demon attack, Poisoner and Monk, then map the remaining single-target fan-out and classify must-inherit vs intentional exemption.
+
+The read-only producer/consumer, restore-state and mode audit is recorded in
+`docs/EXPERIENCED_NIGHT_FLOW_S3_TARGET_ELIGIBILITY_AUDIT_2026-09-14.md`.
+
+Remote checkpoints:
+
+```text
+49b1c3e5 docs: audit S3 target confirmation eligibility
+f7c6d4d6 test: define S3 target eligibility RED
+c9faee03 fix: require legal single target before advance [full-ci]
+```
+
+`clocktowerSingleTargetConfirmationEnabled` now derives confirmation availability only from the
+supplied interaction-enabled flag, current selection and upstream candidate set. The ordinary,
+Beginner-compact, Ravenkeeper, Mayor-redirect and Demon-successor single-target surfaces all consume
+that contract. Mayor's explicitly modeled `Mayor dies` seat is the only supplemental legal outcome.
+
+Local Gradle could not download its uncached distribution. Remote R2 run `34807533943` passed, and
+CI run `34807533986` passed the full Android unit-test/debug-APK checkpoint plus the repository's
+other gates. The exact S2-head comparison was three commits ahead, zero behind, with exactly eight
+expected S3 paths. PR #123 remains Draft.
 
 ### S4 — Experienced night-flow regression matrix
 
@@ -205,7 +227,7 @@ stable invariant
 -> remote exact diff/scope audit
 ```
 
-For S2, begin read-only. Do not create a source-string test merely to assert local variable names, callback spelling, branch spelling, or render-function names. First identify whether a typed presentation/render-plan contract already exists or whether a minimal new typed contract is genuinely required.
+For S4, begin with a typed regression matrix over existing owners. Do not create source-string tests merely to assert local variable names, callback spelling, branch spelling, or render-function names. Prefer callable reducer, transaction, materializer and presentation evidence, then complete the required real-device pass.
 
 Existing source-wiring tests that protect only implementation shape may be narrowed or retired only after durable typed evidence protects the actual invariant.
 
@@ -262,6 +284,9 @@ S1 cleanup head before this docs update:
 
 campaign PR:
 #123 — draft / do not merge yet
+
+S3 production checkpoint:
+c9faee03540048d6f94c12c159d277ef65e0c92b
 ```
 
 The bot-authored cleanup head can cause GitHub PR CI/R2 to report `action_required` with zero jobs because it removes the temporary workflow. Treat that as workflow approval state, not a failing test. The production checkpoint itself was validated inside the successful one-shot run before push.
@@ -278,18 +303,18 @@ Its existing handoff remains the resume point after this flow-correctness campai
 
 ## 11. First action in the next conversation
 
-After live-state confirmation, begin **S2 read-only full-screen surface totality audit**.
+After live-state confirmation, begin **S4 Experienced night-flow regression matrix**.
 
 Map:
 
 ```text
-full-screen classification producer
--> every production consumer
--> mode-specific branching
--> concrete rendered host surface / explicit legacy fallback
+scenario and starting checkpoint
+-> legal confirmation / Previous-edit-reconfirm
+-> refreshed materialized flow
+-> exactly one renderable next step or explicit Dawn
 ```
 
-Classify every fan-out path as must-inherit or intentional exemption. Do not modify production until the smallest durable typed evidence and exact file scope are identified.
+Cover ordinary Demon attack, Mayor redirect, Imp self-kill/successor, restore, representative information families and the shared Beginner owners. Include the deferred Poison/Monk draft-toggle behavior. Do not change production unless the matrix first proves a concrete defect and identifies its smallest ownership seam.
 
 ## 12. Stable rule
 
