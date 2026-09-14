@@ -295,7 +295,7 @@
     <string name="clocktower_host_show_to_player">Show full screen to player</string>
     <string name="clocktower_host_choose_red_herring">Choose red herring</string>
     <string name="clocktower_host_choose_red_herring_hint">Choose a player whose actual alignment is good. The Fortune Teller may be the red herring.</string>
-    <string name="clocktower_host_no_red_herring_candidates">There is no suitable red herring candidate right now. Continue to the next step.</string>
+    <string name="clocktower_host_no_red_herring_candidates">There is no suitable red herring candidate right now. Go back and check the player state.</string>
     <string name="clocktower_host_choose_poison_target">Choose poison target</string>
     <string name="clocktower_host_fortune_choose_two">Fortune Teller chooses two players</string>
     <string name="clocktower_host_fortune_choose_two_hint">Show DEMON if either target is the Demon or red herring; otherwise show NO DEMON.</string>

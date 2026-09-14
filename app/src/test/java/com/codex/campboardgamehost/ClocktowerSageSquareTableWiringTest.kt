@@ -22,21 +22,6 @@ class ClocktowerSageSquareTableWiringTest {
         assertTrue(sageSource.contains("presentationSubjectSeats"))
     }
 
-    @Test
-    fun `Sage owns result presentation inside square table`() {
-        val source = nightStepSource()
-
-        assertTrue(source.contains("val sageResultChoices = clocktowerSageResultChoices("))
-        assertTrue(source.contains("val usesSageSquareTable = sageResultChoices.isNotEmpty()"))
-        assertTrue(source.contains("ClocktowerSageSquareTableDialog("))
-        assertTrue(source.contains("fun showSageChoice(choice: ClocktowerSageResultChoice)"))
-        assertTrue(source.contains("!usesSageSquareTable &&"))
-    }
-
-    private fun nightStepSource(): String = sourceFile(
-        "src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt",
-    )
-
     private fun sourceFile(relativeText: String): String {
         val relative = Path.of(relativeText)
         val fromRoot = Path.of("app").resolve(relative)

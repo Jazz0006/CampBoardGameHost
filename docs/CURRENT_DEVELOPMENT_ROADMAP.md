@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-13 Australia/Sydney  
+> Updated: 2026-09-14 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
@@ -16,16 +16,165 @@ UI-NAV-1 global navigation visual unification     COMPLETE / merged via PR #118
 ROLE-ROTATION-1 recent role rotation              COMPLETE / merged via PR #119
 UX-MODE-1 Beginner / Experienced mode             COMPLETE / merged via PR #120
 UI-INFO-1 information filtering & layout          COMPLETE / merged via PR #121
+Dead-player square-table marking                  COMPLETE / merged via PR #122
 
-EPI-MQ / Productive Uncertainty                   CURRENT — resume at EPI-MQ-0.5
+EXPERIENCED-NIGHT-FLOW-1 navigation correctness   COMPLETE — PR #123 merge authorized; device pass is follow-up
+GLOBAL-OWNERSHIP-CLEANUP-1                        AUDITED — implementation requires a new PR after user confirmation
+EPI-MQ / Productive Uncertainty                   PAUSED / queued after flow correctness
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
 
 Completed campaign documents are historical evidence, not default execution authority.
 
-## 2. Immediate priority — EPI-MQ-0.5
+## 2. Immediate priority — close PR #123, then hold
 
 Active handoff:
+
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-14_EXPERIENCED_NIGHT_FLOW_CORRECTNESS.md`
+
+Working branch:
+
+`codex/experienced-night-flow-correctness`
+
+The user authorized PR #123 to merge after the global ownership/dead-code audit was recorded. The
+remaining real-device S4 checklist is a post-merge field-validation follow-up, not a reason to mix
+new cleanup work into the completed campaign branch.
+
+The next implementation authority is:
+
+`docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`
+
+Do not open or implement its repair PR until the user explicitly confirms after PR #123 has merged.
+
+Recorded starting `main`:
+
+`940ba1df68365974ba366985d66d1cb583682ba7`
+
+Real-device Experienced-mode testing exposed a severe regression:
+
+> after the Demon selects/confirms a night kill target, the app can enter a black screen with no usable Previous or Next navigation.
+
+The read-only audit indicates this should be treated as a night-navigation / rendering ownership defect, not as a DemonKill-screen-only bug.
+
+The campaign-level invariant is:
+
+> **After every legal night confirmation, the app must resolve to exactly one of two states: a valid renderable next night step, or an explicit night-completion/Dawn transition. There is no third out-of-range, blank, or ownerless UI state.**
+
+## 3. EXPERIENCED-NIGHT-FLOW-1 implementation sequence
+
+```text
+S1  Night navigation ownership / reproduced black-screen regression
+    - remove dependence on out-of-range stored night-step cursor
+    - unify post-confirm forward resolution around typed ownership
+    - establish smallest durable typed RED before production fix
+
+S2  Full-screen surface totality
+    - every claimed full-screen night step must resolve to a concrete surface
+    - cover both Beginner and Experienced modes
+    - preserve shared Activity-root navigation scaffold ownership
+    - typed ownership implementation accepted at 19ecaf37
+    - remote CI/testFast and exact scope audit passed at 6088af21
+
+S3  Skilled interaction eligibility
+    - required single-target actions enable confirmation only for a valid current selection
+    - consume upstream legality; do not reimplement legality in presentation
+    - producer/consumer fan-out audited and shared derived contract accepted at c9faee03
+    - remote full Android CI and R2 passed
+
+S4  Experienced night-flow regression matrix
+    - ordinary Demon attack -> Dawn
+    - Mayor redirect manual branch
+    - Imp self-kill -> Demon successor continuation
+    - Previous/edit/reconfirm
+    - restore/reconstruction
+    - representative target/pair/numeric/manual-information steps
+    - Beginner regression over the same shared owners
+    - real-device acceptance
+    - automated matrix and draft-toggle correction accepted at 4d340c57
+    - full Android/ASP/Clingo/CI and R2 passed; field-test APK/device checklist pending
+```
+
+## 4. Ownership findings that are now roadmap constraints
+
+Existing SNE/UI contracts remain authoritative:
+
+- `ClocktowerNightCheckpoint.nightStepIndex` remains the sole stored night navigation position;
+- `NightCheckpointReducer` / `NightCheckpointHostTransaction` remain the typed checkpoint/Host transition boundary;
+- durable mechanics/history/persistence remain owned by the existing checkpoint/session/App transaction boundaries;
+- global navigation/scaffold code remains presentation, not a second gameplay owner;
+- Beginner and Experienced share rules, legality and recommendation pipelines.
+
+The current implementation has a high-risk split in which dynamic forward advance can depend on Host/Compose deferred state while Previous already consumes the typed transaction boundary. It can also temporarily represent a next position outside the currently renderable step list and rely on later recomposition/effect resolution.
+
+Do not preserve this implementation shape merely because an older source-string/wiring test expects it.
+
+## 5. Scope fences
+
+EXPERIENCED-NIGHT-FLOW-1 may:
+
+- correct night navigation ownership;
+- correct dynamic post-confirmation resolution;
+- establish full-screen render totality;
+- correct shared confirmation eligibility for required target actions;
+- add typed regression/integration evidence;
+- make the smallest Host/App wiring changes required to consume corrected typed seams;
+- narrow/retire superseded implementation-shaped tests.
+
+It must not:
+
+- create a DemonKill-only special-case fix when the defect belongs to shared night navigation;
+- create separate Beginner/Experienced gameplay pipelines;
+- change gameplay rules or legal candidate semantics without an independently proven rule bug;
+- redesign recommendation ranking;
+- resume EPI-MQ in the same branch;
+- perform broad UI visual redesign;
+- perform another general Host/App decomposition campaign;
+- move durable ActionFact/history/Dawn materialization/persistence authority for navigation convenience;
+- introduce Navigation Compose or another phase coordinator.
+
+## 6. Testing and implementation policy
+
+Follow root `AGENTS.md` and `docs/TESTING_STRATEGY.md`.
+
+S1 is a genuine reproduced regression gap, so the default evidence order is:
+
+```text
+stable invariant
+-> smallest durable typed T0 RED
+-> minimal production fix
+-> exact T0 GREEN
+-> git diff --check
+-> remote exact diff/scope audit
+```
+
+At logical checkpoints run T1 `:app:testFast` plus triggered T2/T3 evidence. Final campaign acceptance requires real-device validation because the original defect is a device-visible navigation/rendering failure.
+
+Do not create source-string tests for callback spelling, local variables, `LaunchedEffect` structure, or other implementation shape. Existing source tests that encode the defective deferred/out-of-range design must be reclassified after durable typed coverage exists; narrow or retire them when they no longer protect a unique architecture invariant.
+
+Shared-contract changes must follow the AGENTS fan-out gate: map all production producers/consumers, classify must-inherit vs intentional exemption, and verify both Beginner/Experienced plus fresh/restored paths where applicable.
+
+## 7. Large-file writer rule
+
+Likely production consumers include large/truncated Host/App files. Apply `AGENTS.md` exactly:
+
+```text
+small/medium docs/tests/helpers
+-> GitHub connector direct write
+
+localized large-file edit with stable unique anchors
+-> GitHub Actions one-shot workflow + separate Python patch script
+
+broad/mechanical/local-only edit or unsafe remote patch
+-> Codex/Luna only when the remote one-shot path cannot safely perform it
+```
+
+Do not patch large files by guessed line number or partial whole-file replacement.
+
+## 8. EPI-MQ status — paused, not cancelled
+
+EPI-MQ-0.5 remains the next algorithm/architecture program after the live-game flow regression is closed.
+
+Existing resume handoff:
 
 `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-13_EPI_MQ_0_5.md`
 
@@ -33,154 +182,65 @@ Primary architecture/audit reference:
 
 `docs/EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md`
 
-Primary product/algorithm references:
+Its prior design remains valid unless the later live delta audit proves otherwise. Do not mix epistemic capability work into the current navigation-correctness branch.
 
-- `docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`;
-- `docs/CampBoardGameHost_自动说书人玩家认知一致性算法改进方案_v2_2.md`;
-- `docs/epistemic_reference_matrix.md`;
-- `docs/asp_oracle_cross_validation.md`.
-
-Immediate first step:
-
-> **Reconfirm live `main` after PR #121 merges, then perform a read-only delta audit of the EPI-MQ ownership chain before editing production code.**
-
-The first implementation target is the EPI-MQ-0.5 dynamic-script extensibility guard: a generic epistemic capability/evaluation boundary that preserves current Trouble Brewing exact behavior while representing unsupported future role/script semantics as explicit DEFERRED/UNSUPPORTED results.
-
-## 3. EPI-MQ scope fences
-
-EPI-MQ-0.5 may:
-
-- define/refine a generic epistemic capability contract;
-- expose READY / DEFERRED / missing-capability diagnostics;
-- adapt current exact Trouble Brewing world reasoning behind that contract;
-- add typed tests at the epistemic ownership boundary;
-- perform only the ownership extraction required to establish that seam.
-
-EPI-MQ-0.5 must not:
-
-- change recommendation ranking or weights;
-- change gameplay rules or legal candidates;
-- activate A4/ZDD as production correctness authority;
-- directly couple recommendation code to `B4DynamicPlayerWorldSetShadow`;
-- leak Storyteller-hidden targets into recipient knowledge;
-- implement Moonchild/Pukka mechanics merely to prove extensibility;
-- reopen UI-INFO-1 without a new independently reproduced UI regression.
-
-Stable rule:
-
-> **`DEFERRED != UNSAT`. Unknown or unsupported script semantics must never be presented as exact contradiction or exact world count.**
-
-## 4. UI-INFO-1 closeout
-
-UI-INFO-1 is accepted from the product/device perspective and merged through PR #121.
-
-Final PR head before merge:
-
-`56b7137bb5f21e88b058295deb809d1d7608d5c5`
-
-Merge commit on `main`:
-
-`0cdcf14e39c1c16accf540382427e1264ef36b2a`
-
-Final production verification head before docs-only closeout:
-
-`99a141b54e1a4d274dbc354427bd49f3f11c9edc`
-
-Latest production fix checkpoint:
-
-`962ed3830d42fe4c6cdab711e9e0559ef82491bc`
-`fix: restore Dawn announcement host surface`
-
-At the final production verification head:
-
-- CI run `34752163421` PASS;
-- R2 run `34752163454` PASS;
-- the Dawn restoration one-shot completed RED -> focused GREEN -> `:app:testFast` -> exact diff audit successfully;
-- real-device acceptance was reported PASS after the Dawn-page restoration.
-
-The final docs-only PR head also passed:
-
-- CI run `34756727412` PASS;
-- R2 run `34756727420` PASS.
-
-### Stable UI-INFO-1 outcomes
-
-The campaign established or repaired the following product behavior without changing gameplay semantics or legal-candidate authority:
-
-- Beginner night guidance emphasizes wake role/player and immediate action rather than low-value explanatory text;
-- Drunk presentation can route through the shown role's square-table surface while retaining actual Drunk truth/state ownership;
-- Night and Day square-table flows share Activity-root fullscreen/navigation ownership rather than Night-specific platform Dialog ownership;
-- real unreliable-information steps retain square-table host-surface ownership;
-- transient zero/non-finite host-table geometry is rejected at the Compose renderability boundary rather than crashing strict geometry code;
-- Beginner automatic Demon succession advances after the deterministic successor is applied instead of exposing a blank/manual ruling shell;
-- unnecessary standalone Beginner Mayor redirect presentation was removed while Mayor semantics remain intact;
-- Dawn remains a real host-facing announcement/review surface;
-- the obsolete Dawn "full-screen announcement" button and secondary player-facing full-screen display page are removed;
-- Day starts only after the Storyteller explicitly confirms the Dawn announcement.
-
-The former active UI-INFO-1 handoff is historical and now lives under `docs/archive/`.
-
-## 5. EPI-MQ architecture continuity
-
-The 2026-09-11 EPI-MQ audit remains the design basis, but its old live baseline must not be assumed current.
-
-Current intended sequence:
+Intended EPI-MQ sequence remains:
 
 ```text
 EPI-MQ-0.5  dynamic-script extensibility guard
-            - generic epistemic world-engine/capability seam
-            - explicit READY vs DEFERRED/UNSUPPORTED result
-            - no EPI-MQ dependency on Trouble Brewing concrete classes
-
 EPI-MQ-1    neutral hypothetical observation evaluator
-            - exact
-            - recipient-knowledge-safe
-            - mutation-free
-            - BEFORE / AFTER diagnostics
-            - B4 shadow reuses the neutral owner
-
 EPI-MQ-2    credibility / immediate contradiction / impairment-exposure gates
-
 EPI-MQ-3+   productive-uncertainty metrics and ranking
 ```
 
-No recommendation weights or production selections change during EPI-MQ-0.5 or the first neutral evaluator extraction.
+## 9. UI campaign continuity
 
-Current exact correctness authority remains:
+UI-INFO-1 remains accepted and closed. Its stable outcomes still include:
+
+- Beginner guidance hierarchy;
+- Drunk shown-role square-table routing without changing actual-role truth ownership;
+- shared Activity-root Night/Day fullscreen/navigation ownership;
+- square-table ownership for real unreliable-information steps;
+- renderability guards for transient invalid table geometry;
+- automatic Beginner Demon succession continuation;
+- removal of unnecessary standalone Beginner Mayor redirect presentation while preserving Mayor semantics;
+- restored Dawn host-facing announcement/review surface;
+- explicit Storyteller confirmation before entering Day.
+
+The newly reproduced Experienced-mode black-screen regression is an independently reproduced defect, so reopening the affected night-flow ownership boundary is permitted without reopening the completed UI-INFO-1 campaign as a whole.
+
+## 10. Live-state notes
+
+Recorded `main` at roadmap update:
 
 ```text
-Static/setup exact correctness:
-TroubleBrewingWorldEnumerator + EnumeratedWorldSet
-
-Historical/multi-night exact correctness:
-EnumeratedHistoricalExactBaseline + EnumeratedHistoricalWorldReplay
+940ba1df68365974ba366985d66d1cb583682ba7
+Merge PR #122 — UI: mark dead players clearly on square table
 ```
 
-A4/ZDD remains shadow/representation work until an explicit later cutover.
+Unrelated open draft PR:
 
-## 6. Testing continuity
+```text
+#109 — Reproduce restored execution preflight crash
+branch: codex/execution-restore-crash-repro
+```
 
-Follow `docs/TESTING_STRATEGY.md`.
+Do not modify, merge, or stack EXPERIENCED-NIGHT-FLOW-1 on PR #109.
 
-For EPI-MQ-0.5:
+Always re-query live refs/checks at the start of the next conversation.
 
-- use typed T0 tests at the epistemic ownership boundary;
-- T1 `:app:testFast` at the logical checkpoint;
-- run affected history/enumeration validation when ownership or exact behavior changes;
-- Real Clingo/T4 remains an acceptance gate when exact/oracle semantics change, not for a purely mechanical interface extraction;
-- do not create Host/UI source-string tests for EPI-MQ capability behavior.
-
-## 7. Default reading order for the next development conversation
+## 11. Default reading order for the next development conversation
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
 3. this roadmap;
-4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-13_EPI_MQ_0_5.md`;
-5. `docs/EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md`;
-6. `docs/EPISTEMIC_MISINFORMATION_QUALITY_AND_PRODUCTIVE_UNCERTAINTY_PLAN_2026-09-01.md`;
-7. query live `main`;
-8. inspect only the live ownership surfaces required for the EPI-MQ-0.5 delta audit.
+4. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-14_EXPERIENCED_NIGHT_FLOW_CORRECTNESS.md`;
+5. current SNE-7 authoritative night-transaction document;
+6. current UI-NAV-1 closeout/reference document;
+7. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md`;
+8. query live `main`, working branch, relevant PR/check status;
+9. begin S1 read-only delta audit and typed RED design before production edits.
 
-## 8. Stable rule
+## 12. Stable rule
 
-> **Current roadmap + one active handoff define what happens next. Historical campaign documents provide evidence, not execution authority.**
+> **Current roadmap + one active handoff define what happens next. For this campaign, fix the shared ownership boundary that permits an invalid/blank night state; do not patch the DemonKill screen as a special case.**

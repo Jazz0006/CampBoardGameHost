@@ -58,6 +58,7 @@ internal fun ClocktowerSingleTargetAbilitySection(
         onPrevious = { onEvent(ClocktowerSingleTargetEvent.Previous) },
         onHostTools = onHostTools,
         onNext = { onEvent(ClocktowerSingleTargetEvent.Next) },
+        nextEnabled = presentation.confirmationEnabled,
         secondaryActionLabel = if (action == ClocktowerNightAction.Ravenkeeper) {
             stringResource(R.string.clocktower_host_show_to_player)
         } else null,
@@ -100,6 +101,7 @@ internal fun ClocktowerNightRulingSection(
         onPrevious = { onEvent(ClocktowerSingleTargetEvent.Previous) },
         onHostTools = onHostTools,
         onNext = { onEvent(ClocktowerSingleTargetEvent.Next) },
+        nextEnabled = presentation.confirmationEnabled,
         secondaryActionLabel = if (isMayor) {
             if (language == "en") "Mayor dies" else "市长死亡"
         } else null,

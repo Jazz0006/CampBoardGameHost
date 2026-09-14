@@ -53,6 +53,7 @@ internal fun ClocktowerBeginnerSingleTargetAbilityDialog(
         onPrevious = { onEvent(ClocktowerSingleTargetEvent.Previous) },
         onHostTools = onHostTools,
         onNext = { onEvent(ClocktowerSingleTargetEvent.Next) },
+        nextEnabled = presentation.confirmationEnabled,
     ) {
         Column(
             modifier = Modifier
@@ -130,6 +131,7 @@ internal fun ClocktowerBeginnerSingleTargetRevealDialog(
     onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
+    nextEnabled: Boolean,
     onShow: (() -> Unit)?,
 ) {
     ClocktowerNightActionSquareTableDialog(
@@ -149,6 +151,7 @@ internal fun ClocktowerBeginnerSingleTargetRevealDialog(
         onPrevious = onPrevious,
         onHostTools = onHostTools,
         onNext = onNext,
+        nextEnabled = nextEnabled,
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(6.dp),

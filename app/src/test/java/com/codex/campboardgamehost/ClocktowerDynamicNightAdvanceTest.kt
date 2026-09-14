@@ -1,20 +1,18 @@
 package com.codex.campboardgamehost
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerDynamicNightAdvanceTest {
     @Test
-    fun `dynamic last step requests the next slot instead of finishing from the stale list`() {
+    fun `dynamic last step keeps the current renderable cursor while awaiting refreshed flow`() {
         val directive = clocktowerNightAdvanceDirective(
             currentStepIndex = 4,
             currentStepCount = 5,
             flowMayExpandAfterConfirmation = true,
         )
 
-        assertEquals(ClocktowerNightAdvanceDirective.MoveTo(5), directive)
+        assertEquals(ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(4), directive)
     }
 
     @Test
@@ -40,22 +38,22 @@ class ClocktowerDynamicNightAdvanceTest {
     }
 
     @Test
-    fun `deferred advance keeps newly inserted trigger step`() {
-        assertFalse(
-            clocktowerDeferredNightAdvanceShouldComplete(
-                requestedStepIndex = 5,
-                refreshedStepCount = 6,
-            ),
+    fun `refreshed dynamic flow moves only to a newly renderable next step`() {
+        val directive = clocktowerRefreshedNightAdvanceDirective(
+            pending = ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(4),
+            refreshedStepCount = 6,
         )
+
+        assertEquals(ClocktowerNightAdvanceDirective.MoveTo(5), directive)
     }
 
     @Test
-    fun `deferred advance completes only after refreshed flow proves no step was inserted`() {
-        assertTrue(
-            clocktowerDeferredNightAdvanceShouldComplete(
-                requestedStepIndex = 5,
-                refreshedStepCount = 5,
-            ),
+    fun `refreshed dynamic flow completes when no next step was inserted`() {
+        val directive = clocktowerRefreshedNightAdvanceDirective(
+            pending = ClocktowerNightAdvanceDirective.AwaitRefreshedFlow(4),
+            refreshedStepCount = 5,
         )
+
+        assertEquals(ClocktowerNightAdvanceDirective.CompleteNight, directive)
     }
 }

@@ -164,6 +164,13 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
     onNext: () -> Unit,
     onConfirm: (ClocktowerRavenkeeperResultChoice) -> Unit,
 ) {
+    val confirmationEnabled = clocktowerSingleTargetConfirmationEnabled(
+        ClocktowerSingleTargetSelection(
+            selectedSeat = selectedSeat,
+            selectableSeats = selectableSeats,
+            enabled = enabled,
+        ),
+    )
     val initialChoice = choices.firstOrNull { it.recommended } ?: choices.firstOrNull()
     var selectedKey by remember(choices.map { it.key }) { mutableStateOf(initialChoice?.key) }
     var roleMenuExpanded by remember(choices.map { it.key }) { mutableStateOf(false) }
@@ -183,6 +190,7 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
             onPrevious = onPrevious,
             onHostTools = onHostTools,
             onNext = onNext,
+            nextEnabled = confirmationEnabled,
             onShow = if (selectedChoice != null) ({ onConfirm(selectedChoice) }) else null,
         )
         return
@@ -205,6 +213,7 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
         onPrevious = onPrevious,
         onHostTools = onHostTools,
         onNext = onNext,
+        nextEnabled = confirmationEnabled,
     ) {
         Column(
             modifier = Modifier

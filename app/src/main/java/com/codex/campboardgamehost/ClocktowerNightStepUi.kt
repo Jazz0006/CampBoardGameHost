@@ -2,24 +2,19 @@ package com.codex.campboardgamehost
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -60,6 +55,7 @@ internal fun ClocktowerNightStepCardLocalized(
     mayorRedirectTargetCards: List<PlayerCard>,
     demonSuccessorTargetCards: List<PlayerCard>,
     step: ClocktowerNightStepUi,
+    surfacePlan: ClocktowerNightSurfacePlan,
     spyCard: PlayerCard?,
     spyRegistrationGood: Boolean,
     spyRegisteredRoleEnName: String?,
@@ -92,6 +88,8 @@ internal fun ClocktowerNightStepCardLocalized(
     onNext: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
+    val plannedFullScreenSurface =
+        (surfacePlan as? ClocktowerNightSurfacePlan.FullScreen)?.surface
     val presentationRoleEnName = clocktowerNightPresentationRoleEnName(
         stepRoleEnName = step.roleEnName,
         actor = step.actor,
@@ -340,7 +338,8 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         emptyList()
     }
-    val usesChefSquareTable = chefResultChoices.isNotEmpty()
+    val usesChefSquareTable =
+        plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Chef && chefResultChoices.isNotEmpty()
     val empathPlayers = chefPlayers
     val empathResultChoices = if (presentationRoleEnName == "Empath" && step.actor != null) {
         clocktowerEmpathResultChoices(
@@ -354,8 +353,8 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         emptyList()
     }
-    val usesEmpathSquareTable = empathResultChoices.isNotEmpty()
-    val usesNumericSquareTable = usesChefSquareTable || usesEmpathSquareTable
+    val usesEmpathSquareTable =
+        plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Empath && empathResultChoices.isNotEmpty()
     val undertakerResultChoices = if (presentationRoleEnName == "Undertaker" && step.actor != null) {
         clocktowerUndertakerResultChoices(
             step = step,
@@ -367,23 +366,29 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         emptyList()
     }
-    val usesUndertakerSquareTable = undertakerResultChoices.isNotEmpty()
-    val spySquareTablePresentation = clocktowerSpySquareTablePresentation(step)
-    val usesSpySquareTable = spySquareTablePresentation != null
+    val usesUndertakerSquareTable =
+        plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Undertaker && undertakerResultChoices.isNotEmpty()
+    val spySquareTablePresentation = if (plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Spy) {
+        clocktowerSpySquareTablePresentation(step)
+    } else {
+        null
+    }
     val clockmakerResultChoices = clocktowerClockmakerResultChoices(
         step = step,
         automaticStorytellerInfo = automaticStorytellerInfo,
         automaticDisplayOption = automaticDisplayOption,
     )
-    val usesClockmakerSquareTable = clockmakerResultChoices.isNotEmpty()
+    val usesClockmakerSquareTable =
+        plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Clockmaker && clockmakerResultChoices.isNotEmpty()
     val sageResultChoices = clocktowerSageResultChoices(
         step = step,
         seatCount = cards.size,
         automaticStorytellerInfo = automaticStorytellerInfo,
         automaticDisplayOption = automaticDisplayOption,
     )
-    val usesSageSquareTable = sageResultChoices.isNotEmpty()
-    val usesRavenkeeperSquareTable = step.action == ClocktowerNightAction.Ravenkeeper && step.actor != null
+    val usesSageSquareTable =
+        plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Sage && sageResultChoices.isNotEmpty()
+    val usesRavenkeeperSquareTable = plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Ravenkeeper
     val ravenkeeperSelectedSeat = if (usesRavenkeeperSquareTable) {
         selectedName
             ?.let { selected -> cards.indexOfFirst { card -> card.name == selected } }
@@ -729,11 +734,7 @@ internal fun ClocktowerNightStepCardLocalized(
         step.displayKind != ClocktowerDisplayKind.None -> if (language == "en") "Show the information to the player." else "展示信息给玩家。"
         else -> step.explanation
     }
-    val ownsFullScreenSurface = clocktowerNightUsesFullScreenHostSurface(
-        isRealAction = step.isRealAction,
-        action = step.action,
-        displayKind = step.displayKind,
-    )
+    val ownsFullScreenSurface = surfacePlan.ownsFullScreenHostSurface
     Card(
         modifier = if (ownsFullScreenSurface) Modifier.fillMaxSize() else Modifier,
         shape = RoundedCornerShape(if (ownsFullScreenSurface) 0.dp else 20.dp),
@@ -785,40 +786,55 @@ internal fun ClocktowerNightStepCardLocalized(
             .mapNotNull { candidate -> seatNumberForName(candidate.name) }
             .toSet()
         val actionActorSeat = seatNumberForName(step.actor?.name)
-        val pairSquareTablePresentation = pairInformationCandidates
-            .takeIf { it.isNotEmpty() }
-            ?.let(ClocktowerPairManualAuthority::selectionPresentation)
-        val usesPairSquareTable = pairSquareTablePresentation != null
-        val evilInfoSquareTablePresentation = clocktowerEvilInfoSquareTablePresentation(
-            step = step,
-            actorSeat = actionActorSeat,
-            wakeInstruction = command,
-            beginnerMode = automaticStorytellerInfo,
-        )
-        val usesEvilInfoSquareTable = evilInfoSquareTablePresentation != null
-        val actionOwnsSquareTable = clocktowerNightActionOwnsSquareTable(step.action)
-        val plainInformationDisplayStep = (automaticDisplayOption
-            ?.let { option -> resolveClocktowerPlayerDisplay(step, option) }
-            ?: step)
-            .takeIf { displayStep ->
-                displayStep.isRealAction &&
-                    displayStep.displayKind != ClocktowerDisplayKind.None &&
-                    !actionOwnsSquareTable &&
-                    !usesPairSquareTable &&
-                    !usesSpySquareTable &&
-                    !usesEvilInfoSquareTable &&
-                    !usesClockmakerSquareTable &&
-                    !usesSageSquareTable &&
-                    !usesRavenkeeperSquareTable &&
-                    !usesUndertakerSquareTable &&
-                    !usesNumericSquareTable
-            }
-        val plainInformationSquareTablePresentation = plainInformationDisplayStep?.let { displayStep ->
-            clocktowerPlainInformationSquareTablePresentation(
-                step = displayStep,
+        val pairSquareTablePresentation = if (
+            plannedFullScreenSurface == ClocktowerNightFullScreenSurface.PairInformation
+        ) {
+            ClocktowerPairManualAuthority.selectionPresentation(pairInformationCandidates)
+        } else {
+            null
+        }
+        val evilInfoSquareTablePresentation = if (
+            plannedFullScreenSurface == ClocktowerNightFullScreenSurface.EvilInformation
+        ) {
+            clocktowerEvilInfoSquareTablePresentation(
+                step = step,
                 actorSeat = actionActorSeat,
                 wakeInstruction = command,
+                beginnerMode = automaticStorytellerInfo,
             )
+        } else {
+            null
+        }
+        val plannedSpecialistUnavailable = when (plannedFullScreenSurface) {
+            ClocktowerNightFullScreenSurface.EvilInformation -> evilInfoSquareTablePresentation == null
+            ClocktowerNightFullScreenSurface.PairInformation -> pairSquareTablePresentation == null
+            ClocktowerNightFullScreenSurface.Chef -> !usesChefSquareTable
+            ClocktowerNightFullScreenSurface.Empath -> !usesEmpathSquareTable
+            ClocktowerNightFullScreenSurface.Undertaker -> !usesUndertakerSquareTable
+            ClocktowerNightFullScreenSurface.Spy -> spySquareTablePresentation == null
+            ClocktowerNightFullScreenSurface.Clockmaker -> !usesClockmakerSquareTable
+            ClocktowerNightFullScreenSurface.Sage -> !usesSageSquareTable
+            else -> false
+        }
+        val plainInformationDisplayStep = automaticDisplayOption
+            ?.let { option -> resolveClocktowerPlayerDisplay(step, option) }
+            ?: step
+        val plainInformationSquareTablePresentation = if (
+            plannedFullScreenSurface == ClocktowerNightFullScreenSurface.PlainInformation ||
+            plannedSpecialistUnavailable
+        ) {
+            clocktowerPlainInformationSquareTablePresentation(
+                step = plainInformationDisplayStep,
+                actorSeat = actionActorSeat,
+                wakeInstruction = command,
+            ) ?: ClocktowerPlainInformationSquareTablePresentation(
+                actorSeat = actionActorSeat,
+                wakeInstruction = command,
+                displayStep = plainInformationDisplayStep,
+                showPlayerDisplayAction = false,
+            )
+        } else {
+            null
         }
         val onSingleTargetEvent: (ClocktowerSingleTargetEvent) -> Unit = { event ->
             when (event) {
@@ -828,35 +844,49 @@ internal fun ClocktowerNightStepCardLocalized(
                 ClocktowerSingleTargetEvent.Next -> onNext()
             }
         }
+        @Composable
+        fun renderPlainInformationFallback() {
+            val presentation = checkNotNull(plainInformationSquareTablePresentation) {
+                "A planned plain/fallback night surface requires a concrete presentation."
+            }
+            ClocktowerPlainInformationSquareTableDialog(
+                seats = nightActionSeats,
+                presentation = presentation,
+                language = language,
+                canGoPrevious = canGoPrevious,
+                onPrevious = onPrevious,
+                onHostTools = onHostTools,
+                onNext = onNext,
+                onShowPlayerDisplay = { onShowPlayerDisplay(presentation.displayStep) },
+            )
+        }
 
-        when (step.action) {
-            ClocktowerNightAction.RedHerring, ClocktowerNightAction.Poison,
-            ClocktowerNightAction.ButlerMaster, ClocktowerNightAction.MonkProtect,
-            ClocktowerNightAction.DemonKill -> {
+        when (plannedFullScreenSurface) {
+            ClocktowerNightFullScreenSurface.SingleTarget -> {
                 val candidates = when (step.action) {
                     ClocktowerNightAction.RedHerring -> clocktowerRedHerringCandidates(aliveCards)
                     ClocktowerNightAction.ButlerMaster -> cards.filter { it.name != step.actor?.name }
                     ClocktowerNightAction.MonkProtect -> clocktowerMonkTargetCards(cards, step.actor?.name)
                     else -> aliveCards
                 }
-                val presentation = clocktowerSingleTargetAbilityPresentation(
-                    action = step.action,
-                    selection = ClocktowerSingleTargetSelection(
-                        seatNumberForName(selectedName), selectableSeatNumbers(candidates), step.isRealAction,
+                val presentation = checkNotNull(
+                    clocktowerSingleTargetAbilityPresentation(
+                        action = step.action,
+                        selection = ClocktowerSingleTargetSelection(
+                            seatNumberForName(selectedName), selectableSeatNumbers(candidates), step.isRealAction,
+                        ),
+                        actorSeat = actionActorSeat,
+                        wakeInstruction = command,
+                        canShowResult = resultFirstRegistrationCandidates.isEmpty() &&
+                            step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None,
                     ),
-                    actorSeat = actionActorSeat,
-                    wakeInstruction = command,
-                    canShowResult = resultFirstRegistrationCandidates.isEmpty() &&
-                        step.tellPlayer?.isNotBlank() == true && step.displayKind != ClocktowerDisplayKind.None,
-                )
-                presentation?.let {
-                    key(step.action) {
-                        ClocktowerSingleTargetAbilitySection(nightActionSeats, it, language, canGoPrevious, onHostTools, onSingleTargetEvent)
-                    }
+                ) { "SingleTarget surface plan requires a supported real target action." }
+                key(step.action) {
+                    ClocktowerSingleTargetAbilitySection(nightActionSeats, presentation, language, canGoPrevious, onHostTools, onSingleTargetEvent)
                 }
             }
 
-            ClocktowerNightAction.Ravenkeeper -> {
+            ClocktowerNightFullScreenSurface.Ravenkeeper -> {
                 val candidates = clocktowerRavenkeeperTargetCards(cards)
                 ClocktowerRavenkeeperSquareTableDialog(
                     seats = nightActionSeats,
@@ -878,7 +908,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 )
             }
 
-            ClocktowerNightAction.FortuneTeller -> {
+            ClocktowerNightFullScreenSurface.FortuneTeller -> {
                 ClocktowerFortuneTellerSquareTableDialog(
                     seats = nightActionSeats,
                     selectedSeats = fortuneTellerSelectedSeats,
@@ -908,7 +938,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 )
             }
 
-            ClocktowerNightAction.Chambermaid -> {
+            ClocktowerNightFullScreenSurface.Chambermaid -> {
                 val candidates = chambermaidTargetCards.filter { it.name != step.actor?.name }
                 val selectedSeats = listOfNotNull(chambermaidFirst, chambermaidSecond)
                     .mapNotNull(::seatNumberForName)
@@ -950,56 +980,82 @@ internal fun ClocktowerNightStepCardLocalized(
                 )
             }
 
-            ClocktowerNightAction.MayorRedirect, ClocktowerNightAction.DemonSuccessor -> {
+            ClocktowerNightFullScreenSurface.Ruling -> {
                 val candidates = if (step.action == ClocktowerNightAction.MayorRedirect) {
                     mayorRedirectTargetCards
                 } else demonSuccessorTargetCards
                 val mayor = aliveCards.firstOrNull { it.clocktowerRole?.enName == "Mayor" }
-                val presentation = clocktowerNightRulingPresentation(
-                    action = step.action,
-                    selection = ClocktowerSingleTargetSelection(
-                        seatNumberForName(selectedName), selectableSeatNumbers(candidates), step.isRealAction,
+                val presentation = checkNotNull(
+                    clocktowerNightRulingPresentation(
+                        action = step.action,
+                        selection = ClocktowerSingleTargetSelection(
+                            seatNumberForName(selectedName), selectableSeatNumbers(candidates), step.isRealAction,
+                        ),
+                        automatic = automaticStorytellerInfo,
+                        mayorSeat = seatNumberForName(mayor?.name),
+                        explanation = step.explanation,
                     ),
-                    automatic = automaticStorytellerInfo,
-                    mayorSeat = seatNumberForName(mayor?.name),
-                    explanation = step.explanation,
-                )
-                presentation?.let {
-                    key(step.action) {
-                        ClocktowerNightRulingSection(nightActionSeats, it, language, canGoPrevious, onHostTools, onSingleTargetEvent)
-                    }
+                ) { "Ruling surface plan requires Mayor redirect or Demon succession." }
+                key(step.action) {
+                    ClocktowerNightRulingSection(nightActionSeats, presentation, language, canGoPrevious, onHostTools, onSingleTargetEvent)
                 }
             }
 
-            else -> Unit
-        }
+            ClocktowerNightFullScreenSurface.EvilInformation -> {
+                val presentation = evilInfoSquareTablePresentation
+                if (presentation == null) {
+                    renderPlainInformationFallback()
+                } else {
+                    ClocktowerEvilInfoSquareTableDialog(
+                        seats = nightActionSeats,
+                        presentation = presentation,
+                        language = language,
+                        canGoPrevious = canGoPrevious,
+                        onPrevious = onPrevious,
+                        onHostTools = onHostTools,
+                        onNext = onNext,
+                        onShowPlayerDisplay = { onShowPlayerDisplay(step) },
+                    )
+                }
+            }
 
-            evilInfoSquareTablePresentation?.let { presentation ->
-                ClocktowerEvilInfoSquareTableDialog(
-                    seats = nightActionSeats,
-                    presentation = presentation,
-                    language = language,
-                    canGoPrevious = canGoPrevious,
-                    onPrevious = onPrevious,
-                    onHostTools = onHostTools,
-                    onNext = onNext,
-                    onShowPlayerDisplay = { onShowPlayerDisplay(step) },
-                )
+            ClocktowerNightFullScreenSurface.PairInformation -> {
+                val presentation = pairSquareTablePresentation
+                if (presentation == null) {
+                    renderPlainInformationFallback()
+                } else {
+                    ClocktowerPairInformationSquareTableDialog(
+                        interactionKey = informationDecisionKey,
+                        presentation = presentation,
+                        recommendedOption = if (automaticStorytellerInfo) {
+                            automaticDisplayOption
+                        } else {
+                            pairRecommendationPresentation?.primary
+                        },
+                        seats = nightActionSeats,
+                        actorSeat = actionActorSeat,
+                        wakeInstruction = command,
+                        abilityLabel = presentationRoleEnName
+                            ?.let { roleId -> clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language) }
+                            ?: step.title,
+                        roleLabel = { roleId ->
+                            clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
+                        },
+                        allowManualEditing = !automaticStorytellerInfo,
+                        language = language,
+                        canGoPrevious = canGoPrevious,
+                        onPrevious = onPrevious,
+                        onHostTools = onHostTools,
+                        onNext = onNext,
+                        onConfirm = ::showRecommendedDisplayOption,
+                    )
+                }
             }
-            plainInformationSquareTablePresentation?.let { presentation ->
-                ClocktowerPlainInformationSquareTableDialog(
-                    seats = nightActionSeats,
-                    presentation = presentation,
-                    language = language,
-                    canGoPrevious = canGoPrevious,
-                    onPrevious = onPrevious,
-                    onHostTools = onHostTools,
-                    onNext = onNext,
-                    onShowPlayerDisplay = { onShowPlayerDisplay(presentation.displayStep) },
-                )
-            }
-            if (usesChefSquareTable) {
-                ClocktowerChefSquareTableDialog(
+
+            ClocktowerNightFullScreenSurface.Chef -> {
+                if (!usesChefSquareTable) {
+                    renderPlainInformationFallback()
+                } else ClocktowerChefSquareTableDialog(
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
@@ -1014,8 +1070,11 @@ internal fun ClocktowerNightStepCardLocalized(
                     onConfirm = ::showChefChoice,
                 )
             }
-            if (usesEmpathSquareTable) {
-                ClocktowerEmpathSquareTableDialog(
+
+            ClocktowerNightFullScreenSurface.Empath -> {
+                if (!usesEmpathSquareTable) {
+                    renderPlainInformationFallback()
+                } else ClocktowerEmpathSquareTableDialog(
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
@@ -1030,8 +1089,11 @@ internal fun ClocktowerNightStepCardLocalized(
                     onConfirm = ::showEmpathChoice,
                 )
             }
-            if (usesUndertakerSquareTable) {
-                ClocktowerUndertakerSquareTableDialog(
+
+            ClocktowerNightFullScreenSurface.Undertaker -> {
+                if (!usesUndertakerSquareTable) {
+                    renderPlainInformationFallback()
+                } else ClocktowerUndertakerSquareTableDialog(
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
@@ -1044,8 +1106,12 @@ internal fun ClocktowerNightStepCardLocalized(
                     onConfirm = ::showUndertakerChoice,
                 )
             }
-            spySquareTablePresentation?.let { presentation ->
-                ClocktowerSpySquareTableDialog(
+
+            ClocktowerNightFullScreenSurface.Spy -> {
+                val presentation = spySquareTablePresentation
+                if (presentation == null) {
+                    renderPlainInformationFallback()
+                } else ClocktowerSpySquareTableDialog(
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
@@ -1058,8 +1124,11 @@ internal fun ClocktowerNightStepCardLocalized(
                     onShowLegacyReveal = { onShowPlayerDisplay(step) },
                 )
             }
-            if (usesClockmakerSquareTable) {
-                ClocktowerClockmakerSquareTableDialog(
+
+            ClocktowerNightFullScreenSurface.Clockmaker -> {
+                if (!usesClockmakerSquareTable) {
+                    renderPlainInformationFallback()
+                } else ClocktowerClockmakerSquareTableDialog(
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
@@ -1072,8 +1141,11 @@ internal fun ClocktowerNightStepCardLocalized(
                     onConfirm = ::showClockmakerChoice,
                 )
             }
-            if (usesSageSquareTable) {
-                ClocktowerSageSquareTableDialog(
+
+            ClocktowerNightFullScreenSurface.Sage -> {
+                if (!usesSageSquareTable) {
+                    renderPlainInformationFallback()
+                } else ClocktowerSageSquareTableDialog(
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
@@ -1087,39 +1159,9 @@ internal fun ClocktowerNightStepCardLocalized(
                 )
             }
 
-            step.tellPlayer
-                ?.takeIf { step.isRealAction && it.isNotBlank() && step.displayKind == ClocktowerDisplayKind.None && step.action != ClocktowerNightAction.FortuneTeller && step.action != ClocktowerNightAction.Chambermaid }
-                ?.let {
-                    Text(it, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
-                }
-
-            pairSquareTablePresentation?.let { presentation ->
-                ClocktowerPairInformationSquareTableDialog(
-                    interactionKey = informationDecisionKey,
-                    presentation = presentation,
-                    recommendedOption = if (automaticStorytellerInfo) {
-                        automaticDisplayOption
-                    } else {
-                        pairRecommendationPresentation?.primary
-                    },
-                    seats = nightActionSeats,
-                    actorSeat = actionActorSeat,
-                    wakeInstruction = command,
-                    abilityLabel = presentationRoleEnName
-                        ?.let { roleId -> clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language) }
-                        ?: step.title,
-                    roleLabel = { roleId ->
-                        clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
-                    },
-                    allowManualEditing = !automaticStorytellerInfo,
-                    language = language,
-                    canGoPrevious = canGoPrevious,
-                    onPrevious = onPrevious,
-                    onHostTools = onHostTools,
-                    onNext = onNext,
-                    onConfirm = ::showRecommendedDisplayOption,
-                )
-            }
+            ClocktowerNightFullScreenSurface.PlainInformation -> renderPlainInformationFallback()
+            null -> Unit
+        }
 
             if (!ownsFullScreenSurface) {
                 Surface(

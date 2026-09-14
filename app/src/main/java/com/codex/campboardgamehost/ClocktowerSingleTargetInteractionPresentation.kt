@@ -7,6 +7,15 @@ internal data class ClocktowerSingleTargetSelection(
     val enabled: Boolean,
 )
 
+/** Derived interaction eligibility over an upstream-owned legal target domain. */
+internal fun clocktowerSingleTargetConfirmationEnabled(
+    selection: ClocktowerSingleTargetSelection,
+    additionalSelectableSeats: Set<Int> = emptySet(),
+): Boolean = selection.enabled &&
+    selection.selectedSeat != null &&
+    (selection.selectedSeat in selection.selectableSeats ||
+        selection.selectedSeat in additionalSelectableSeats)
+
 internal sealed interface ClocktowerSingleTargetEvent {
     data class SelectSeat(val seat: Int) : ClocktowerSingleTargetEvent
     data object ShowResult : ClocktowerSingleTargetEvent
@@ -20,7 +29,10 @@ internal data class ClocktowerSingleTargetAbilityPresentation(
     val actorSeat: Int?,
     val wakeInstruction: String?,
     val canShowResult: Boolean,
-)
+) {
+    val confirmationEnabled: Boolean
+        get() = clocktowerSingleTargetConfirmationEnabled(selection)
+}
 
 internal fun clocktowerSingleTargetAbilityPresentation(
     action: ClocktowerNightAction,
@@ -47,7 +59,16 @@ internal data class ClocktowerNightRulingPresentation(
     val selection: ClocktowerSingleTargetSelection,
     val mayorSeat: Int?,
     val explanation: String,
-)
+    val automatic: Boolean,
+) {
+    val confirmationEnabled: Boolean
+        get() = clocktowerSingleTargetConfirmationEnabled(
+            selection = selection,
+            additionalSelectableSeats = if (
+                action == ClocktowerNightAction.MayorRedirect && mayorSeat != null
+            ) setOf(mayorSeat) else emptySet(),
+        )
+}
 
 internal fun clocktowerNightRulingPresentation(
     action: ClocktowerNightAction,
@@ -56,17 +77,27 @@ internal fun clocktowerNightRulingPresentation(
     mayorSeat: Int?,
     explanation: String,
 ): ClocktowerNightRulingPresentation? {
-    if (automatic) return null
     return when (action) {
         ClocktowerNightAction.MayorRedirect -> ClocktowerNightRulingPresentation(
             action,
             selection.copy(
-                selectableSeats = if (mayorSeat != null) selection.selectableSeats else emptySet(),
-                enabled = selection.enabled && mayorSeat != null,
+                selectableSeats = if (!automatic && mayorSeat != null) selection.selectableSeats else emptySet(),
+                enabled = !automatic && selection.enabled && mayorSeat != null,
             ),
-            mayorSeat, explanation,
+            mayorSeat,
+            explanation,
+            automatic,
         )
-        ClocktowerNightAction.DemonSuccessor -> ClocktowerNightRulingPresentation(action, selection, null, explanation)
+        ClocktowerNightAction.DemonSuccessor -> ClocktowerNightRulingPresentation(
+            action,
+            selection.copy(
+                selectableSeats = if (automatic) emptySet() else selection.selectableSeats,
+                enabled = !automatic && selection.enabled,
+            ),
+            null,
+            explanation,
+            automatic,
+        )
         else -> null
     }
 }

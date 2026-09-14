@@ -847,7 +847,9 @@ internal fun ClocktowerJudgeScreen(
     var nightStarted by nightStartedState
     var nightStepIndex by nightStepIndexState
     var dayMode by dayModeState
-    var deferredNightAdvanceIndex by remember(gameId, round, phase) { mutableStateOf<Int?>(null) }
+    var pendingNightAdvance by remember(gameId, round, phase) {
+        mutableStateOf<ClocktowerNightAdvanceDirective.AwaitRefreshedFlow?>(null)
+    }
     var nominatorName by remember(gameId, round) { mutableStateOf<String?>(null) }
     var nomineeName by remember(gameId, round) { mutableStateOf<String?>(null) }
     var highestVoteName by highestVoteNameState
@@ -4094,6 +4096,7 @@ internal fun ClocktowerJudgeScreen(
         require(nightSteps.isNotEmpty()) { "A started night must contain an actionable step." }
         val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
         val currentStep = nightSteps[currentStepIndex]
+        val currentSurfacePlan = clocktowerNightSurfacePlan(currentStep, phase)
         val selectedNightName = when (currentStep.action) {
             ClocktowerNightAction.RedHerring -> redHerring
             ClocktowerNightAction.Poison -> poisonDraftTarget
@@ -4207,28 +4210,30 @@ internal fun ClocktowerJudgeScreen(
                     flowMayExpandAfterConfirmation = flowMayExpandAfterConfirmation,
                 )
             ) {
-                is ClocktowerNightAdvanceDirective.MoveTo -> {
-                    if (directive.stepIndex >= nightSteps.size) {
-                        deferredNightAdvanceIndex = directive.stepIndex
-                    }
-                    nightStepIndex = directive.stepIndex
-                }
+                is ClocktowerNightAdvanceDirective.MoveTo -> nightStepIndex = directive.stepIndex
+                is ClocktowerNightAdvanceDirective.AwaitRefreshedFlow -> pendingNightAdvance = directive
                 ClocktowerNightAdvanceDirective.CompleteNight -> onConfirmNight()
             }
         }
 
-        LaunchedEffect(nightSteps.size, deferredNightAdvanceIndex) {
-            val requestedIndex = deferredNightAdvanceIndex ?: return@LaunchedEffect
-            if (
-                clocktowerDeferredNightAdvanceShouldComplete(
-                    requestedStepIndex = requestedIndex,
+        LaunchedEffect(nightSteps.size, pendingNightAdvance) {
+            val pending = pendingNightAdvance ?: return@LaunchedEffect
+            when (
+                val directive = clocktowerRefreshedNightAdvanceDirective(
+                    pending = pending,
                     refreshedStepCount = nightSteps.size,
                 )
             ) {
-                deferredNightAdvanceIndex = null
-                onConfirmNight()
-            } else {
-                deferredNightAdvanceIndex = null
+                is ClocktowerNightAdvanceDirective.MoveTo -> {
+                    pendingNightAdvance = null
+                    nightStepIndex = directive.stepIndex
+                }
+                is ClocktowerNightAdvanceDirective.AwaitRefreshedFlow ->
+                    error("Refreshed night advance cannot remain pending.")
+                ClocktowerNightAdvanceDirective.CompleteNight -> {
+                    pendingNightAdvance = null
+                    onConfirmNight()
+                }
             }
         }
 
@@ -4267,11 +4272,7 @@ internal fun ClocktowerJudgeScreen(
             onPrevious = onMovePreviousNightStep,
             onHostTools = onHostTools,
             onNext = advanceNightStep,
-            contentOwnsFullScreen = clocktowerNightUsesFullScreenHostSurface(
-                isRealAction = currentStep.isRealAction,
-                action = currentStep.action,
-                displayKind = currentStep.displayKind,
-            ),
+            contentOwnsFullScreen = currentSurfacePlan.ownsFullScreenHostSurface,
         ) {
             ClocktowerNightStepCardLocalized(
                 recommendationCoordinator = recommendationCoordinator,
@@ -4293,6 +4294,7 @@ internal fun ClocktowerJudgeScreen(
                 mayorRedirectTargetCards = mayorRedirectTargetCards,
                 demonSuccessorTargetCards = demonSuccessorTargetCards,
                 step = currentStep,
+                surfacePlan = currentSurfacePlan,
                 spyCard = spyCard,
                 spyRegistrationGood = if (currentStep.spyRegistrationKey != null && currentStep.roleEnName != null) {
                     spyRegistersGood(currentStep.spyRegistrationKey, currentStep.roleEnName)
@@ -4348,15 +4350,19 @@ internal fun ClocktowerJudgeScreen(
                 chambermaidFirst = chambermaidResolution.selection.first,
                 chambermaidSecond = chambermaidResolution.selection.second,
                 onSelectName = { name ->
+                    val nextSelection = clocktowerToggledSingleTargetSelection(
+                        currentSelection = selectedNightName,
+                        tappedSelection = name,
+                    )
                     when (currentStep.action) {
-                        ClocktowerNightAction.RedHerring -> onSelectRedHerring(if (redHerring == name) null else name)
-                        ClocktowerNightAction.Poison -> onSelectPoisonTarget(if (poisonTarget == name) null else name)
-                        ClocktowerNightAction.ButlerMaster -> onSelectButlerMaster(if (butlerMaster == name) null else name)
-                        ClocktowerNightAction.MonkProtect -> onSelectMonkProtectedTarget(if (monkProtectedTarget == name) null else name)
-                        ClocktowerNightAction.DemonKill -> onSelectNightDeath(if (demonAttackDraftTarget == name) null else name)
-                        ClocktowerNightAction.MayorRedirect -> onSelectMayorRedirectTarget(if (mayorRedirectDraftTarget == name) null else name)
-                        ClocktowerNightAction.DemonSuccessor -> onSelectDemonSuccessor(if (demonSuccessorTarget == name) null else name)
-                        ClocktowerNightAction.Ravenkeeper -> onSelectRavenkeeperTarget(if (ravenkeeperTarget == name) null else name)
+                        ClocktowerNightAction.RedHerring -> onSelectRedHerring(nextSelection)
+                        ClocktowerNightAction.Poison -> onSelectPoisonTarget(nextSelection)
+                        ClocktowerNightAction.ButlerMaster -> onSelectButlerMaster(nextSelection)
+                        ClocktowerNightAction.MonkProtect -> onSelectMonkProtectedTarget(nextSelection)
+                        ClocktowerNightAction.DemonKill -> onSelectNightDeath(nextSelection)
+                        ClocktowerNightAction.MayorRedirect -> onSelectMayorRedirectTarget(nextSelection)
+                        ClocktowerNightAction.DemonSuccessor -> onSelectDemonSuccessor(nextSelection)
+                        ClocktowerNightAction.Ravenkeeper -> onSelectRavenkeeperTarget(nextSelection)
                         else -> Unit
                     }
                 },
