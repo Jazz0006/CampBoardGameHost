@@ -20,14 +20,14 @@ Dead-player square-table marking                  COMPLETE / merged via PR #122
 
 EXPERIENCED-NIGHT-FLOW-1 navigation correctness   COMPLETE / merged via PR #123; device pass is follow-up
 GLOBAL-OWNERSHIP-CLEANUP steps 1-2                COMPLETE / merged via PRs #124/#125
-GLOBAL-OWNERSHIP-CLEANUP step 3                   IMPLEMENTED — local gates pass; remote review pending
+GLOBAL-OWNERSHIP-CLEANUP step 3                   READY FOR ACCEPTANCE — PR #126 remote gates pass
 EPI-MQ / Productive Uncertainty                   PAUSED / queued after flow correctness
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
 
 Completed campaign documents are historical evidence, not default execution authority.
 
-## 2. Immediate priority — remotely validate and review cleanup step 3
+## 2. Immediate priority — user acceptance of cleanup step 3
 
 Active handoff:
 
@@ -39,9 +39,10 @@ Campaign authority:
 
 Steps 1 and 2 are merged. Step 3 was implemented from merged `main` on
 `codex/global-ownership-cleanup-3` after the required live fan-out and persistence/recovery audit.
-Local focused, T1, affected T2, full Android, assemble and ASP contract gates pass. The next gate is
-the exact remote diff, `[full-ci]`/Real Clingo and R2 review. Do not start steps 4-6 or merge step 3
-without explicit user authorization.
+Local focused, T1, affected T2, full Android, assemble and ASP contract gates pass. PR #126 code
+head `eb0873bd` has also passed remote Android Full, ASP contracts, Real Clingo, aggregate CI and R2
+boundary validation. The PR remains Draft. Do not start steps 4-6 or merge step 3 without explicit
+user authorization.
 
 Historical starting `main` for EXPERIENCED-NIGHT-FLOW-1:
 
@@ -205,6 +206,7 @@ main: d6773a2e14ea5242c9fa432893d40f3a566ec625 (PR #125 merged)
 PR #124: MERGED as 4cd49d4279a176b9e32a51db4606f0e801e57ceb
 PR #125: MERGED as d6773a2e14ea5242c9fa432893d40f3a566ec625
 Step 3: codex/global-ownership-cleanup-3, based exactly on current origin/main
+PR #126: Draft / mergeable / code head eb0873bd / full CI, Real Clingo and R2 boundary passed
 ```
 
 Unrelated open draft PR:

@@ -1,9 +1,9 @@
 # GLOBAL CODE OWNERSHIP AND DEAD-CODE AUDIT
 
 > Date: 2026-09-14 Australia/Sydney
-> Status: **IMPLEMENTATION IN PROGRESS — steps 1 and 2 complete; step 3 implemented and awaiting remote validation; steps 4-6 remain**
+> Status: **IMPLEMENTATION IN PROGRESS — steps 1 and 2 complete; step 3 remote gates pass and awaits user acceptance; steps 4-6 remain**
 > Baseline: PR #123 campaign head `486473bac8ab0c717ca84a54a32db035e9413901`
-> Current implementation heads: step 1 `8f5d7668`; step 2 `590cac55`; step 3 branch `codex/global-ownership-cleanup-3`
+> Current implementation heads: step 1 `8f5d7668`; step 2 `590cac55`; step 3 PR #126 code head `eb0873bd`
 
 ## 1. Scope and method
 
@@ -333,7 +333,11 @@ new conversation after re-querying live `main` and repository state.
 - Local GREEN evidence: focused registration/epistemic/Natural Pair/temporary/Host-selection tests;
   forced `:app:testFast`; forced ZDD, enumerated-world and A3 golden tests; forced
   `:app:testFull :app:assembleDebug` (1,352 JVM tests, zero failures); ASP corpus validation (52
-  scenarios) and 14 ASP harness tests. Remote `[full-ci]`, Real Clingo and R2 remain acceptance gates.
+  scenarios) and 14 ASP harness tests.
+- PR #126 code head `eb0873bdeb3ca00feaa83d113ec29083bd81c75c` is based exactly on merged
+  `main` `d6773a2e14ea5242c9fa432893d40f3a566ec625`. Remote Android Full, ASP contracts,
+  Real Clingo, aggregate CI and R2 boundary checks all passed; the PR remains Draft and unmerged
+  pending explicit user acceptance.
 - Final producer/consumer search found no remaining `canMisregister` input or UI role/team legality
   reconstruction. Remaining direct `RegistrationFact` constructors are persistence/semantic-world
   decoding/projection adapters, not competing registration legality owners.

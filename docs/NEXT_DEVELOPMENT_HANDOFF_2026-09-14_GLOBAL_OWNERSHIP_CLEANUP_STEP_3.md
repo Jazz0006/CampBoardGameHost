@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — Global Ownership Cleanup Step 3
 
 > Date: 2026-09-14 Australia/Sydney
-> Status: **IMPLEMENTED on `codex/global-ownership-cleanup-3`; remote acceptance pending**
+> Status: **PR #126 code head `eb0873bd`; remote gates pass; user acceptance/merge pending**
 > Goal: **one production owner for registration legality, candidate construction and automatic selection**
 
 ## 0. Start here in the next conversation
