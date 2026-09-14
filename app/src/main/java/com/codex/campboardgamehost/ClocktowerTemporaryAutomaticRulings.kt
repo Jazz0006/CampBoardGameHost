@@ -41,6 +41,22 @@ internal fun clocktowerTemporaryNightDecisionKey(
     return listOf(gameId, phase.name, round.toString(), sequence.toString(), family).joinToString("|")
 }
 
+internal fun clocktowerTemporaryRegistrationDecisionKey(
+    gameId: String,
+    phase: ClocktowerPhase,
+    round: Int,
+    registrationKey: String,
+): String {
+    require(registrationKey.isNotBlank()) { "Temporary automatic registration key cannot be blank." }
+    return clocktowerTemporaryNightDecisionKey(
+        gameId = gameId,
+        phase = phase,
+        round = round,
+        sequence = 0,
+        family = "registration:$registrationKey",
+    )
+}
+
 internal fun clocktowerTemporaryAutomaticDecisionSeed(decisionKey: String): Long {
     require(decisionKey.isNotBlank()) { "Temporary automatic decision key cannot be blank." }
     return MurmurHash3.low64Utf8("ux-mode-1-temporary-auto-v1|$decisionKey")

@@ -147,6 +147,62 @@ class ClocktowerTemporaryAutomaticRulingsTest {
         )
     }
 
+    @Test
+    fun `registration decision identity is stable and scoped to one game interaction`() {
+        val key = clocktowerTemporaryRegistrationDecisionKey(
+            gameId = "game-1",
+            phase = ClocktowerPhase.Day,
+            round = 2,
+            registrationKey = "Day:2:Virgin:Spy",
+        )
+
+        assertEquals(
+            key,
+            clocktowerTemporaryRegistrationDecisionKey(
+                gameId = "game-1",
+                phase = ClocktowerPhase.Day,
+                round = 2,
+                registrationKey = "Day:2:Virgin:Spy",
+            ),
+        )
+        assertNotEquals(
+            key,
+            clocktowerTemporaryRegistrationDecisionKey(
+                gameId = "game-2",
+                phase = ClocktowerPhase.Day,
+                round = 2,
+                registrationKey = "Day:2:Virgin:Spy",
+            ),
+        )
+        assertNotEquals(
+            key,
+            clocktowerTemporaryRegistrationDecisionKey(
+                gameId = "game-1",
+                phase = ClocktowerPhase.Night,
+                round = 2,
+                registrationKey = "Night:2:Virgin:Spy",
+            ),
+        )
+        assertNotEquals(
+            key,
+            clocktowerTemporaryRegistrationDecisionKey(
+                gameId = "game-1",
+                phase = ClocktowerPhase.Day,
+                round = 3,
+                registrationKey = "Day:3:Virgin:Spy",
+            ),
+        )
+        assertNotEquals(
+            key,
+            clocktowerTemporaryRegistrationDecisionKey(
+                gameId = "game-1",
+                phase = ClocktowerPhase.Day,
+                round = 2,
+                registrationKey = "Day:2:Slayer:Recluse",
+            ),
+        )
+    }
+
     private fun assertRegistrationAuditUsesSelectorDomain(
         legalSpecialRoleEnNames: List<String>,
         decisionKey: String,
