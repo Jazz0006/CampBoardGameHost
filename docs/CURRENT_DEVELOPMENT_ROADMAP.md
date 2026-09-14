@@ -20,29 +20,29 @@ Dead-player square-table marking                  COMPLETE / merged via PR #122
 
 EXPERIENCED-NIGHT-FLOW-1 navigation correctness   COMPLETE / merged via PR #123; device pass is follow-up
 GLOBAL-OWNERSHIP-CLEANUP steps 1-2                COMPLETE / merged via PRs #124/#125
-GLOBAL-OWNERSHIP-CLEANUP step 3                   READY FOR ACCEPTANCE — PR #126 remote gates pass
+GLOBAL-OWNERSHIP-CLEANUP step 3                   COMPLETE / merged via PR #126
+GLOBAL-OWNERSHIP-CLEANUP step 4                   READY FOR ACCEPTANCE — PR #127 remote gates pass
 EPI-MQ / Productive Uncertainty                   PAUSED / queued after flow correctness
 UX-R6 recommendation-provider replacement         QUEUED after EPI-MQ unless reprioritized
 ```
 
 Completed campaign documents are historical evidence, not default execution authority.
 
-## 2. Immediate priority — user acceptance of cleanup step 3
+## 2. Immediate priority — user acceptance of cleanup step 4
 
 Active handoff:
 
-`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-14_GLOBAL_OWNERSHIP_CLEANUP_STEP_3.md`
+`docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-14_GLOBAL_OWNERSHIP_CLEANUP_STEP_4.md`
 
 Campaign authority:
 
 `docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`
 
-Steps 1 and 2 are merged. Step 3 was implemented from merged `main` on
-`codex/global-ownership-cleanup-3` after the required live fan-out and persistence/recovery audit.
-Local focused, T1, affected T2, full Android, assemble and ASP contract gates pass. PR #126 code
-head `eb0873bd` has also passed remote Android Full, ASP contracts, Real Clingo, aggregate CI and R2
-boundary validation. The PR remains Draft. Do not start steps 4-6 or merge step 3 without explicit
-user authorization.
+Steps 1-3 are merged. Step 4 was implemented from merged `main` on
+`codex/global-ownership-cleanup-4` after the required reconstruction/restore fan-out audit. Local
+focused, T1, full Android and assemble gates pass. PR #127 code head `fec12982` has also passed
+remote Android Full, ASP contracts, Real Clingo, aggregate CI and R2 boundary validation. The PR
+remains Draft. Do not start steps 5-6 or merge step 4 without explicit user authorization.
 
 Historical starting `main` for EXPERIENCED-NIGHT-FLOW-1:
 
@@ -199,14 +199,15 @@ The newly reproduced Experienced-mode black-screen regression is an independentl
 
 ## 10. Live-state notes
 
-Recorded live state at the Step 3 implementation checkpoint:
+Recorded live state at the Step 4 implementation checkpoint:
 
 ```text
-main: d6773a2e14ea5242c9fa432893d40f3a566ec625 (PR #125 merged)
+main: b77560628054dee90c78a91d4bab8cb4185fda59 (PR #126 merged)
 PR #124: MERGED as 4cd49d4279a176b9e32a51db4606f0e801e57ceb
 PR #125: MERGED as d6773a2e14ea5242c9fa432893d40f3a566ec625
-Step 3: codex/global-ownership-cleanup-3, based exactly on current origin/main
-PR #126: Draft / mergeable / code head eb0873bd / full CI, Real Clingo and R2 boundary passed
+PR #126: MERGED as b77560628054dee90c78a91d4bab8cb4185fda59
+Step 4: codex/global-ownership-cleanup-4, based exactly on current origin/main
+PR #127: Draft / mergeable / code head fec12982 / full CI, Real Clingo and R2 boundary passed
 ```
 
 Unrelated open draft PR:
@@ -226,14 +227,13 @@ Always re-query live refs/checks at the start of the next conversation.
 2. `docs/TESTING_STRATEGY.md`;
 3. this roadmap;
 4. `docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`;
-5. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-14_GLOBAL_OWNERSHIP_CLEANUP_STEP_3.md`;
-6. the Step 3 registration domain, automatic-selection consumers and persistence/recovery audit;
+5. `docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-14_GLOBAL_OWNERSHIP_CLEANUP_STEP_4.md`;
+6. the Step 4 restore-composition owner, production caller and restore/reconstruction tests;
 7. query live `main`, working branch and PR/check status;
-8. complete the exact remote diff, CI/Real-Clingo and R2 acceptance audit; do not start step 4 before
-   Step 3 is accepted and the user authorizes the next slice.
+8. complete the exact remote diff, CI and R2 acceptance audit; do not start step 5 before Step 4 is
+   accepted and the user authorizes the next slice.
 
 ## 12. Stable rule
 
-> **Current roadmap + one active handoff define what happens next. Registration legality and
-> candidate construction must have one domain/session owner; presentation must consume, not
-> recreate, that authority.**
+> **Current roadmap + one active handoff define what happens next. Production and restore tests
+> must derive unfinished-night mechanics through the same composition boundary.**

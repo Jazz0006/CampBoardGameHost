@@ -18,7 +18,7 @@ class NightTransactionReconstructorSuccessionLegalityTest {
 
     @Test
     fun `restored forced Scarlet Woman succession overrides stale ordinary Minion confirmation`() {
-        val reconstruction = NightTransactionReconstructor.reconstruct(
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = gameState(),
             checkpoint = checkpoint(),
             canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
@@ -33,7 +33,7 @@ class NightTransactionReconstructorSuccessionLegalityTest {
 
     @Test
     fun `restored confirmed Imp self kill remains mechanically dead when canonical succession is None`() {
-        val reconstruction = NightTransactionReconstructor.reconstruct(
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = gameStateWithoutLivingSuccessor(),
             checkpoint = checkpoint(
                 demonSuccessorDraftTarget = null,
@@ -51,7 +51,7 @@ class NightTransactionReconstructorSuccessionLegalityTest {
 
     @Test
     fun `restored Monk protected Imp self attack does not project death or succession`() {
-        val reconstruction = NightTransactionReconstructor.reconstruct(
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = gameState(),
             checkpoint = checkpoint(confirmedMonkTarget = "Imp"),
             canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),

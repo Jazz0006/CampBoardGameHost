@@ -25,7 +25,7 @@ class NightTransactionReconstructionContractTest {
 
     @Test
     fun `out of range restored nightStepIndex fails closed without stale role effect`() {
-        val reconstruction = NightTransactionReconstructor.reconstruct(
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = gameState(),
             checkpoint = checkpoint(
                 nightStepIndex = 99,
@@ -43,7 +43,7 @@ class NightTransactionReconstructionContractTest {
 
     @Test
     fun `missing successor interaction ignores stale confirmed role effect instead of crashing`() {
-        val reconstruction = NightTransactionReconstructor.reconstruct(
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = gameState(),
             checkpoint = checkpoint(
                 nightStepIndex = 1,
@@ -61,7 +61,7 @@ class NightTransactionReconstructionContractTest {
 
     @Test
     fun `draft only restored successor never becomes effective Demon`() {
-        val reconstruction = NightTransactionReconstructor.reconstruct(
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = gameState(),
             checkpoint = checkpoint(
                 nightStepIndex = 2,
@@ -79,7 +79,7 @@ class NightTransactionReconstructionContractTest {
 
     @Test
     fun `stale confirmed non Minion successor fails closed without role effect`() {
-        val reconstruction = NightTransactionReconstructor.reconstruct(
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = gameState(),
             checkpoint = checkpoint(
                 nightStepIndex = 2,
@@ -97,7 +97,7 @@ class NightTransactionReconstructionContractTest {
 
     @Test
     fun `confirmed successor remains effective after Previous navigation back to successor interaction`() {
-        val reconstruction = NightTransactionReconstructor.reconstruct(
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = gameState(),
             checkpoint = checkpoint(
                 nightStepIndex = 1,
@@ -116,7 +116,7 @@ class NightTransactionReconstructionContractTest {
     @Test
     fun `restored successor draft edit leaves prior confirmed successor authoritative`() {
         val baseGameState = gameState()
-        val reconstruction = NightTransactionReconstructor.reconstruct(
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = baseGameState,
             checkpoint = checkpoint(
                 nightStepIndex = 2,
@@ -136,7 +136,7 @@ class NightTransactionReconstructionContractTest {
 
     @Test
     fun `stale confirmed successor without confirmed Demon self attack fails closed`() {
-        val reconstruction = NightTransactionReconstructor.reconstruct(
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = gameState(),
             checkpoint = checkpoint(
                 nightStepIndex = 2,
@@ -156,7 +156,7 @@ class NightTransactionReconstructionContractTest {
     @Test
     fun `confirmed successor reconstructs old Demon mechanical death without mutating public alive`() {
         val baseGameState = gameState(demonAlive = true)
-        val reconstruction = NightTransactionReconstructor.reconstruct(
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = baseGameState,
             checkpoint = checkpoint(
                 nightStepIndex = 2,
@@ -184,7 +184,7 @@ class NightTransactionReconstructionContractTest {
                 confirmedDemonSuccessorTarget = "Poisoner",
             ).persistedValues(),
         )
-        val reconstruction = NightTransactionReconstructor.reconstruct(
+        val reconstruction = NightTransactionRestoreComposition.compose(
             baseGameState = baseGameState,
             checkpoint = restored,
             canonicalInteractionIds = listOf(impInteraction, successorInteraction, empathInteraction),
@@ -220,14 +220,14 @@ class NightTransactionReconstructionContractTest {
         val restoredSecond = ClocktowerNightCheckpoint.fromPersistedValues(persisted)
         val canonicalPlan = listOf(impInteraction, successorInteraction, empathInteraction)
 
-        val first = NightTransactionReconstructor.reconstruct(
+        val first = NightTransactionRestoreComposition.compose(
             baseGameState = gameState(),
             checkpoint = restoredFirst,
             canonicalInteractionIds = canonicalPlan,
             demonSuccessorInteractionId = successorInteraction,
             demonRoleId = RoleId("Imp"),
         )
-        val second = NightTransactionReconstructor.reconstruct(
+        val second = NightTransactionRestoreComposition.compose(
             baseGameState = gameState(),
             checkpoint = restoredSecond,
             canonicalInteractionIds = canonicalPlan,
