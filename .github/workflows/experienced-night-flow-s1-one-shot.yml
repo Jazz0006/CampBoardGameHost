@@ -79,17 +79,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git diff --check
-          actual="$(git diff --name-only | sort)"
+          git diff HEAD --check
+          actual="$(git diff HEAD --name-only | sort)"
           expected="$(printf '%s\n' \
             'app/src/main/java/com/codex/campboardgamehost/ClocktowerDynamicNightAdvance.kt' \
             'app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt' \
             'app/src/test/java/com/codex/campboardgamehost/ClocktowerDynamicNightAdvanceTest.kt' \
             'app/src/test/java/com/codex/campboardgamehost/ClocktowerDynamicNightAdvanceWiringTest.kt' | sort)"
           test "$actual" = "$expected"
-          git diff -- app/src/main/java/com/codex/campboardgamehost/ClocktowerDynamicNightAdvance.kt
-          git diff -- app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
-          git diff -- app/src/test/java/com/codex/campboardgamehost/ClocktowerDynamicNightAdvanceTest.kt
+          git diff HEAD -- app/src/main/java/com/codex/campboardgamehost/ClocktowerDynamicNightAdvance.kt
+          git diff HEAD -- app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
+          git diff HEAD -- app/src/test/java/com/codex/campboardgamehost/ClocktowerDynamicNightAdvanceTest.kt
+          git diff HEAD -- app/src/test/java/com/codex/campboardgamehost/ClocktowerDynamicNightAdvanceWiringTest.kt
 
       - name: Reconfirm remote head
         shell: bash
