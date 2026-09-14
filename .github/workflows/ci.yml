@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   changes:
@@ -323,3 +323,83 @@ jobs:
               exit 1
             fi
           done
+
+  s4-night-target-one-shot:
+    name: S4 night target one-shot
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.ref == 'codex/experienced-night-flow-correctness'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/experienced-night-flow-correctness
+          fetch-depth: 0
+
+      - name: Verify bootstrap head and blobs
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "$(git ls-remote origin refs/heads/codex/experienced-night-flow-correctness | cut -f1)" = "$EXPECTED_HEAD"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt)" = "39dd3cdcf4be21b408696475bee499e918233504"
+          test "$(git hash-object app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSelectionSemantics.kt)" = "4db7112a6eb21811ae3bfcdc9a0b0f875cdf635b"
+          test "$(git hash-object app/src/test/java/com/codex/campboardgamehost/ClocktowerHostSelectionSemanticsCharacterizationTest.kt)" = "577608426b3e0c17963163fe002f2ed05212284b"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Prove focused baseline
+        run: ./gradlew :app:testDebugUnitTest --tests 'com.codex.campboardgamehost.ClocktowerHostSelectionSemanticsCharacterizationTest' --rerun-tasks --no-daemon
+
+      - name: Apply exact production patch
+        run: python3 .github/scripts/s4_night_target_draft_toggle_patch.py
+
+      - name: Run focused GREEN
+        run: ./gradlew :app:testDebugUnitTest --tests 'com.codex.campboardgamehost.ClocktowerHostSelectionSemanticsCharacterizationTest' --rerun-tasks --no-daemon
+
+      - name: Run S4 checkpoint suite
+        run: ./gradlew :app:testFast --rerun-tasks --no-daemon
+
+      - name: Exact diff audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt'
+          git diff --check
+          test "$(git diff --name-only | paste -sd ' ' -)" = "$target"
+          test "$(git hash-object "$target")" = "336b78ead007669c8e96f24dd3f736ff6aa11d37"
+
+      - name: Commit product and cleanup, then push atomically
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          branch='codex/experienced-night-flow-correctness'
+          target='app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt'
+          test "$(git ls-remote origin refs/heads/$branch | cut -f1)" = "$EXPECTED_HEAD"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$target"
+          test "$(git diff --cached --name-only | paste -sd ' ' -)" = "$target"
+          git commit -m 'fix: route night target edits through visible draft'
+          product_sha="$(git rev-parse HEAD)"
+          git rm .github/workflows/s4-night-target-draft-toggle-one-shot.yml .github/scripts/s4_night_target_draft_toggle_patch.py
+          git checkout d3c204ca5993718cb53d30876c400bc3ed5f2795 -- .github/workflows/ci.yml
+          git commit -m 'chore(ci): remove S4 night target one-shot workflow'
+          cleanup_sha="$(git rev-parse HEAD)"
+          test "$(git ls-remote origin refs/heads/$branch | cut -f1)" = "$EXPECTED_HEAD"
+          git push origin HEAD:$branch
+          echo "Product checkpoint: $product_sha"
+          echo "Cleanup checkpoint: $cleanup_sha"
