@@ -166,15 +166,14 @@ jobs:
             grep -q "$symbol" "$presentation"
           done
 
-          if grep -q "fun RecommendationReasonSummary(" "$host"; then
-            echo "RecommendationReasonSummary still lives in ClocktowerHostScreen.kt" >&2
+          if grep -R -q "fun RecommendationReasonSummary(" app/src/main/java/com/codex/campboardgamehost; then
+            echo "Dead RecommendationReasonSummary returned to production" >&2
             exit 1
           fi
           if grep -q "fun ClocktowerStorytellerRecommendationScreen(" "$host"; then
             echo "ClocktowerStorytellerRecommendationScreen still lives in ClocktowerHostScreen.kt" >&2
             exit 1
           fi
-          grep -q "internal fun RecommendationReasonSummary" "$recommendation_ui"
           grep -q "internal fun ClocktowerStorytellerRecommendationScreen" "$recommendation_ui"
           if grep -q "fun StorytellerRecommendationCard(" "$host"; then
             echo "StorytellerRecommendationCard still lives in ClocktowerHostScreen.kt" >&2
