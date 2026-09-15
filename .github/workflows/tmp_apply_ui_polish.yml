@@ -1,0 +1,61 @@
+name: tmp-apply-ui-polish
+
+on:
+  push:
+    branches:
+      - ui-polish-poison-top3-2026-09-15
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Apply guarded patch
+        run: |
+          set -euxo pipefail
+          python3 .github/scripts/tmp_patch_ui_polish.py
+
+      - name: Verify production allowlist
+        run: |
+          set -euxo pipefail
+          git diff --name-only > /tmp/changed.txt
+          cat /tmp/changed.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          allowed = {
+              'app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt',
+              'app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt',
+              'app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt',
+              'app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt',
+          }
+          changed = {line.strip() for line in Path('/tmp/changed.txt').read_text().splitlines() if line.strip()}
+          if changed != allowed:
+              raise SystemExit(f'changed-file allowlist mismatch: {sorted(changed)}')
+          PY
+
+      - name: Run fast Android tests
+        run: ./gradlew :app:testFast --no-daemon --build-cache
+
+      - name: Commit patch and self-clean
+        run: |
+          set -euxo pipefail
+          git rm .github/scripts/tmp_patch_ui_polish.py .github/workflows/tmp_apply_ui_polish.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt \
+                  app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt \
+                  app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt \
+                  app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt
+          git commit -m 'feat: finish storyteller poison and top-three recommendation wiring'
+          git push origin HEAD:ui-polish-poison-top3-2026-09-15
