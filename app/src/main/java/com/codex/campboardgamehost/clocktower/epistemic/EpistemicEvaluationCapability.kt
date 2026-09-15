@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
-import com.codex.campboardgamehost.clocktower.domain.RulesetRef
+import com.codex.campboardgamehost.clocktower.catalog.ClocktowerScriptSource
+import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
 
 /**
@@ -35,10 +36,10 @@ internal sealed interface EpistemicEvaluationAvailability {
 /**
  * Current semantic coverage boundary for exact historical hypothetical evaluation.
  *
- * Trouble Brewing is the only script whose current exact historical replay and hypothetical
- * observation semantics are both established. Other scripts must defer until their role/script
- * semantics are explicitly added; unknown semantics must never silently fall through to Trouble
- * Brewing reasoning.
+ * Only the validated built-in official Trouble Brewing ruleset is currently backed by both the
+ * exact historical replay and hypothetical-observation semantics used below this boundary.
+ * Checking the validated ruleset (rather than only a ScriptId) is deliberate: imported/homebrew
+ * content must not inherit exact support merely by reusing `trouble_brewing` as an identifier.
  */
 internal object EpistemicEvaluationCapabilityBoundary {
     val HISTORICAL_HYPOTHETICAL_REQUIREMENTS: Set<EpistemicEvaluationCapability> = setOf(
@@ -47,18 +48,22 @@ internal object EpistemicEvaluationCapabilityBoundary {
     )
 
     private val troubleBrewing = ScriptId("trouble_brewing")
-    private val supportedCapabilitiesByScript: Map<ScriptId, Set<EpistemicEvaluationCapability>> = mapOf(
-        troubleBrewing to HISTORICAL_HYPOTHETICAL_REQUIREMENTS,
-    )
 
     fun assess(
-        rulesetRef: RulesetRef,
+        validatedRuleset: ValidatedClocktowerRuleset,
         requiredCapabilities: Set<EpistemicEvaluationCapability>,
     ): EpistemicEvaluationAvailability {
         require(requiredCapabilities.isNotEmpty()) {
             "Epistemic capability assessment requires at least one requested capability."
         }
-        val supported = supportedCapabilitiesByScript[rulesetRef.scriptId].orEmpty()
+        val supported = if (
+            validatedRuleset.script.id == troubleBrewing &&
+            validatedRuleset.script.source == ClocktowerScriptSource.BUILTIN_OFFICIAL
+        ) {
+            HISTORICAL_HYPOTHETICAL_REQUIREMENTS
+        } else {
+            emptySet()
+        }
         val missing = requiredCapabilities - supported
         return if (missing.isEmpty()) {
             EpistemicEvaluationAvailability.Ready
