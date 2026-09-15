@@ -36,6 +36,7 @@ internal fun ClocktowerPendingNominationTableScreen(
     onHostTools: () -> Unit,
     onContinue: () -> Unit,
     onCancel: () -> Unit,
+    compact: Boolean = false,
     specialContent: @Composable ColumnScope.() -> Unit = {},
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
@@ -71,12 +72,16 @@ internal fun ClocktowerPendingNominationTableScreen(
                         .verticalScroll(rememberScrollState())
                         .padding(vertical = 2.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp),
                 ) {
                     Text(
-                        text = text("第 $round 天 · 提名", "Day $round · Nomination"),
+                        text = if (compact) {
+                            text("提名 · 第 $round 天", "Nomination · Day $round")
+                        } else {
+                            text("第 $round 天 · 提名", "Day $round · Nomination")
+                        },
                         color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge,
+                        style = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Black,
                         textAlign = TextAlign.Center,
                     )
@@ -91,10 +96,14 @@ internal fun ClocktowerPendingNominationTableScreen(
                         textAlign = TextAlign.Center,
                     )
                     Text(
-                        text = text(
-                            "处决门槛：$executionThreshold 票",
-                            "Execution threshold: $executionThreshold",
-                        ),
+                        text = if (compact) {
+                            text("$executionThreshold 票处决", "$executionThreshold votes to execute")
+                        } else {
+                            text(
+                                "处决门槛：$executionThreshold 票",
+                                "Execution threshold: $executionThreshold",
+                            )
+                        },
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall,
                     )
@@ -111,19 +120,21 @@ internal fun ClocktowerPendingNominationTableScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(10.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                                    .padding(if (compact) 8.dp else 10.dp),
+                                verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp),
                             ) {
-                                Text(
-                                    text("角色能力检查", "ABILITY CHECK"),
-                                    color = if (specialNoticeIsDanger) {
-                                        MaterialTheme.colorScheme.error
-                                    } else {
-                                        MaterialTheme.colorScheme.primary
-                                    },
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Black,
-                                )
+                                if (!compact) {
+                                    Text(
+                                        text("角色能力检查", "ABILITY CHECK"),
+                                        color = if (specialNoticeIsDanger) {
+                                            MaterialTheme.colorScheme.error
+                                        } else {
+                                            MaterialTheme.colorScheme.primary
+                                        },
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Black,
+                                    )
+                                }
                                 Text(
                                     specialNotice,
                                     style = MaterialTheme.typography.bodySmall,
