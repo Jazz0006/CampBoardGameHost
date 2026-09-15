@@ -13,6 +13,7 @@ internal fun ClocktowerDayTableScaffold(
     onNext: () -> Unit,
     previousEnabled: Boolean = true,
     nextEnabled: Boolean = true,
+    nextVisible: Boolean = true,
     tableContent: @Composable () -> Unit,
 ) {
     ClocktowerDarkTheme {
@@ -22,6 +23,7 @@ internal fun ClocktowerDayTableScaffold(
             nextLabel = nextLabel,
             previousEnabled = previousEnabled,
             nextEnabled = nextEnabled,
+            nextVisible = nextVisible,
             onPrevious = onPrevious,
             onHostTools = onHostTools,
             onNext = onNext,
