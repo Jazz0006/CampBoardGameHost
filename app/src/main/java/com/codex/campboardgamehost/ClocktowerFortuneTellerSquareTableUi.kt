@@ -23,8 +23,7 @@ internal fun clocktowerFortuneTellerSeatState(
     selectedSeats: List<Int>,
     selectableSeats: Set<Int>,
 ): ClocktowerSquareTableSeatState = when {
-    selectedSeats.getOrNull(0) == seatNumber -> ClocktowerSquareTableSeatState.SelectedFirst
-    selectedSeats.getOrNull(1) == seatNumber -> ClocktowerSquareTableSeatState.SelectedSecond
+    seatNumber in selectedSeats -> ClocktowerSquareTableSeatState.SelectedHighlighted
     seatNumber in selectableSeats -> ClocktowerSquareTableSeatState.Selectable
     else -> ClocktowerSquareTableSeatState.Disabled
 }
@@ -55,6 +54,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     enabled: Boolean,
     actorSeat: Int? = null,
     wakeInstruction: String? = null,
+    redHerringSeat: Int? = null,
     legalResults: Set<Boolean>,
     recommendedResult: Boolean?,
     automaticStorytellerInfo: Boolean,
@@ -67,29 +67,6 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
-    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction)) {
-        val actions = clocktowerFortuneTellerResultActions(legalResults, recommendedResult)
-        val result = recommendedResult?.takeIf { it in legalResults } ?: actions.firstOrNull()
-        val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
-        ClocktowerBeginnerTwoTargetRevealDialog(
-            seats = seats,
-            actorSeat = actorSeat,
-            selectedSeats = selectedSeats,
-            selectableSeats = selectableSeats,
-            enabled = enabled,
-            wakeInstruction = wakeInstruction,
-            language = language,
-            canGoPrevious = canGoPrevious,
-            onSeatSelected = onSeatSelected,
-            onPrevious = onPrevious,
-            onHostTools = onHostTools,
-            onNext = onNext,
-            onShow = if (completePair && result != null) ({
-                if (automaticStorytellerInfo) onAutomaticResultSelected(result) else onResultSelected(result)
-            }) else null,
-        )
-        return
-    }
     ClocktowerHostSquareTableScaffold(
         seats = seats,
         language = language,
@@ -105,6 +82,8 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
         onSeatSelected = onSeatSelected,
         seatUiModel = { seat ->
             val content = hostSeatContentPresentation(seat, language)
+            val isSelected = seat.seatId.number in selectedSeats
+            val isRedHerring = seat.seatId.number == redHerringSeat
             ClocktowerSquareTableSeatUiModel(
                 seatId = seat.seatId.renderKey(),
                 seatNumber = seat.seatId.number,
@@ -118,6 +97,17 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
                     selectableSeats = if (enabled) selectableSeats else emptySet(),
                 ),
                 isCurrentActor = seat.seatId.number == actorSeat,
+                suppressDefaultStateMarker = isSelected,
+                badge = if (isRedHerring) {
+                    if (language == "en") "RH" else "鲱"
+                } else {
+                    null
+                },
+                badgeTone = if (isRedHerring) {
+                    ClocktowerSquareTableBadgeTone.Warning
+                } else {
+                    ClocktowerSquareTableBadgeTone.Default
+                },
             )
         },
     ) {
@@ -159,48 +149,11 @@ private fun ClocktowerFortuneTellerCenterControls(
         verticalArrangement = Arrangement.Center,
     ) {
         ClocktowerNightActionWakeInstruction(wakeInstruction)
-        Text(
-            text = if (language == "en") "Fortune Teller" else "占卜师",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(4.dp))
-
-        if (!completePair) {
-            Text(
-                text = if (language == "en") "Select two players" else "选择两名玩家",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-            )
-            if (selectedSeats.size == 1) {
-                Text(
-                    text = if (language == "en") {
-                        "First: P${selectedSeats.first()}"
-                    } else {
-                        "第一名：P${selectedSeats.first()}"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        } else {
-            Text(
-                text = if (language == "en") {
-                    "Selected: P${selectedSeats[0]} + P${selectedSeats[1]}"
-                } else {
-                    "已选择：P${selectedSeats[0]} + P${selectedSeats[1]}"
-                },
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(4.dp))
-
+        if (completePair) {
             when {
                 actions.isEmpty() -> {
                     Text(
-                        text = if (language == "en") "No legal result is available." else "当前没有可用的合法结果。",
+                        text = if (language == "en") "No legal result" else "无可用结果",
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center,
@@ -208,34 +161,16 @@ private fun ClocktowerFortuneTellerCenterControls(
                 }
 
                 automaticStorytellerInfo -> {
-                    val automaticResult = recommendedResult
-                        ?.takeIf { it in legalResults }
-                        ?: actions.first()
-                    Text(
-                        text = if (actions.size == 1) {
-                            if (language == "en") "Result determined" else "结果已确定"
-                        } else {
-                            if (language == "en") "Automatic recommendation" else "自动推荐"
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(4.dp))
+                    val result = recommendedResult?.takeIf { it in legalResults } ?: actions.first()
                     Button(
-                        onClick = { onAutomaticResultSelected(automaticResult) },
+                        onClick = { onAutomaticResultSelected(result) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(clocktowerFortuneTellerResultLabel(automaticResult, language))
+                        Text(clocktowerFortuneTellerResultLabel(result, language))
                     }
                 }
 
                 actions.size == 1 -> {
-                    Text(
-                        text = if (language == "en") "Result determined" else "结果已确定",
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(4.dp))
                     Button(
                         onClick = { onResultSelected(actions.single()) },
                         modifier = Modifier.fillMaxWidth(),
@@ -244,45 +179,35 @@ private fun ClocktowerFortuneTellerCenterControls(
                     }
                 }
 
-                else -> {
+                else -> actions.forEachIndexed { index, value ->
                     Text(
-                        text = if (language == "en") "Storyteller choice" else "说书人可裁定",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
+                        text = if (index == 0 && value == recommendedResult) {
+                            if (language == "en") "Recommended" else "推荐"
+                        } else {
+                            if (language == "en") "Other option" else "另一个选项"
+                        },
+                        style = MaterialTheme.typography.labelSmall,
                         textAlign = TextAlign.Center,
                     )
-                    Spacer(Modifier.height(4.dp))
-                    actions.forEachIndexed { index, value ->
-                        Text(
-                            text = if (index == 0 && value == recommendedResult) {
-                                if (language == "en") "Recommended" else "推荐"
-                            } else {
-                                if (language == "en") "Other legal result" else "另一个合法结果"
-                            },
-                            style = MaterialTheme.typography.labelSmall,
-                            textAlign = TextAlign.Center,
-                        )
-                        if (index == 0 && value == recommendedResult) {
-                            Button(
-                                onClick = { onResultSelected(value) },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text(clocktowerFortuneTellerResultLabel(value, language))
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = { onResultSelected(value) },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text(clocktowerFortuneTellerResultLabel(value, language))
-                            }
+                    if (index == 0 && value == recommendedResult) {
+                        Button(
+                            onClick = { onResultSelected(value) },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(clocktowerFortuneTellerResultLabel(value, language))
                         }
-                        if (index != actions.lastIndex) Spacer(Modifier.height(4.dp))
+                    } else {
+                        OutlinedButton(
+                            onClick = { onResultSelected(value) },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(clocktowerFortuneTellerResultLabel(value, language))
+                        }
                     }
+                    if (index != actions.lastIndex) Spacer(Modifier.height(4.dp))
                 }
             }
         }
-
         Spacer(Modifier.height(6.dp))
     }
 }

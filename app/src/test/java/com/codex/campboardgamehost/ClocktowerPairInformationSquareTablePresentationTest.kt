@@ -4,12 +4,13 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerPairInformationSquareTablePresentationTest {
     @Test
-    fun `recommended preview highlights pair while leaving other seats visually neutral`() {
+    fun `recommended preview gives both candidates the same highlight while leaving other seats neutral`() {
         val recommended = option("Chef", 1, 4)
         val presentation = ClocktowerPairManualAuthority.selectionPresentation(
             listOf(recommended, option("Chef", 2, 4)),
@@ -17,11 +18,11 @@ class ClocktowerPairInformationSquareTablePresentationTest {
         val selection = ClocktowerPairManualSelectionModel.from(presentation, recommended)
 
         assertEquals(
-            ClocktowerSquareTableSeatState.SelectedFirst,
+            ClocktowerSquareTableSeatState.SelectedHighlighted,
             clocktowerPairInformationSeatState(selection, seatNumber = 1, editing = false),
         )
         assertEquals(
-            ClocktowerSquareTableSeatState.SelectedSecond,
+            ClocktowerSquareTableSeatState.SelectedHighlighted,
             clocktowerPairInformationSeatState(selection, seatNumber = 4, editing = false),
         )
         assertEquals(
@@ -31,7 +32,40 @@ class ClocktowerPairInformationSquareTablePresentationTest {
     }
 
     @Test
-    fun `current actor highlight is independent from information pair state`() {
+    fun `truth marker is driven only by selected candidate actual-role match`() {
+        assertEquals(
+            "✓",
+            clocktowerPairInformationTruthMarker(
+                isSelectedCandidate = true,
+                selectedRoleId = "Chef",
+                actualRoleId = "Chef",
+            ),
+        )
+        assertNull(
+            clocktowerPairInformationTruthMarker(
+                isSelectedCandidate = true,
+                selectedRoleId = "Chef",
+                actualRoleId = "Empath",
+            ),
+        )
+        assertNull(
+            clocktowerPairInformationTruthMarker(
+                isSelectedCandidate = false,
+                selectedRoleId = "Chef",
+                actualRoleId = "Chef",
+            ),
+        )
+        assertNull(
+            clocktowerPairInformationTruthMarker(
+                isSelectedCandidate = true,
+                selectedRoleId = null,
+                actualRoleId = "Chef",
+            ),
+        )
+    }
+
+    @Test
+    fun `current actor highlight is independent from common information pair state`() {
         val recommended = option("Chef", 1, 4)
         val presentation = ClocktowerPairManualAuthority.selectionPresentation(listOf(recommended))
         val selection = ClocktowerPairManualSelectionModel.from(presentation, recommended)
@@ -57,14 +91,14 @@ class ClocktowerPairInformationSquareTablePresentationTest {
 
         assertEquals(ClocktowerSquareTableSeatState.Neutral, actor.targetState)
         assertTrue(actor.isCurrentActor)
-        assertEquals(ClocktowerSquareTableSeatState.SelectedFirst, firstInformationSeat.targetState)
+        assertEquals(ClocktowerSquareTableSeatState.SelectedHighlighted, firstInformationSeat.targetState)
         assertFalse(firstInformationSeat.isCurrentActor)
-        assertEquals(ClocktowerSquareTableSeatState.SelectedSecond, secondInformationSeat.targetState)
+        assertEquals(ClocktowerSquareTableSeatState.SelectedHighlighted, secondInformationSeat.targetState)
         assertFalse(secondInformationSeat.isCurrentActor)
     }
 
     @Test
-    fun `manual edit reuses legal second-seat projection from the existing pair picker`() {
+    fun `manual edit preserves legal continuation projection while selected candidates share one style`() {
         val recommended = option("Chef", 1, 4)
         val presentation = ClocktowerPairManualAuthority.selectionPresentation(
             listOf(recommended, option("Chef", 2, 4), option("Chef", 2, 8)),
@@ -72,11 +106,11 @@ class ClocktowerPairInformationSquareTablePresentationTest {
         val selection = ClocktowerPairManualSelectionModel.from(presentation, recommended)
 
         assertEquals(
-            ClocktowerSquareTableSeatState.SelectedFirst,
+            ClocktowerSquareTableSeatState.SelectedHighlighted,
             clocktowerPairInformationSeatState(selection, seatNumber = 1, editing = true),
         )
         assertEquals(
-            ClocktowerSquareTableSeatState.SelectedSecond,
+            ClocktowerSquareTableSeatState.SelectedHighlighted,
             clocktowerPairInformationSeatState(selection, seatNumber = 4, editing = true),
         )
         assertEquals(
@@ -90,7 +124,7 @@ class ClocktowerPairInformationSquareTablePresentationTest {
 
         val awaitingSecondSeat = selection.selectSeat(4)
         assertEquals(
-            ClocktowerSquareTableSeatState.SelectedFirst,
+            ClocktowerSquareTableSeatState.SelectedHighlighted,
             clocktowerPairInformationSeatState(awaitingSecondSeat, seatNumber = 1, editing = true),
         )
         assertEquals(

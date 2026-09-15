@@ -334,25 +334,6 @@ internal fun ClocktowerEmpathSquareTableDialog(
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                     )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = if (choices.size > 1) {
-                            if (language == "en") {
-                                "N neighbour scope · ★ evil · R Recluse · ✓★ counted in selected result"
-                            } else {
-                                "邻 能力范围 · ★ 邪恶提示 · 隐 隐士 · ✓★ 当前结果计入"
-                            }
-                        } else {
-                            if (language == "en") {
-                                "N neighbour scope · ★ evil · R Recluse"
-                            } else {
-                                "邻 能力范围 · ★ 邪恶提示 · 隐 隐士"
-                            }
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
                     Spacer(Modifier.height(8.dp))
 
                     if (choices.size > 1) {

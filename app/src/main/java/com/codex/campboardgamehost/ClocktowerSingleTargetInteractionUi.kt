@@ -14,7 +14,13 @@ internal fun ClocktowerSingleTargetAbilitySection(
     onEvent: (ClocktowerSingleTargetEvent) -> Unit,
 ) {
     val action = presentation.action
-    if (clocktowerUsesBeginnerCompactNightGuidance(presentation.wakeInstruction)) {
+    val usesCompactActionSurface = action in setOf(
+        ClocktowerNightAction.Poison,
+        ClocktowerNightAction.ButlerMaster,
+        ClocktowerNightAction.MonkProtect,
+        ClocktowerNightAction.DemonKill,
+    )
+    if (clocktowerUsesBeginnerCompactNightGuidance(presentation.wakeInstruction) || usesCompactActionSurface) {
         ClocktowerBeginnerSingleTargetAbilityDialog(
             seats = seats,
             presentation = presentation,

@@ -7,14 +7,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 internal data class ClocktowerSpySquareTablePresentation(
@@ -96,50 +93,16 @@ internal fun ClocktowerSpySquareTableDialog(
                 .fillMaxSize()
                 .padding(6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                ClocktowerNightActionWakeInstruction(wakeInstruction)
-                Text(
-                    text = if (language == "en") "Spy" else "间谍",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-                presentation.helper.takeIf { it.isNotBlank() }?.let { helper ->
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = helper,
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-                if (presentation.showLegacyRevealAction) {
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = onShowLegacyReveal,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(if (language == "en") "Show grimoire" else "展示魔典")
-                    }
-                } else {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = if (language == "en") {
-                            "Do not show the true Grimoire this step."
-                        } else {
-                            "本步骤不要展示真实魔典。"
-                        },
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center,
-                    )
+            ClocktowerNightActionWakeInstruction(wakeInstruction)
+            if (presentation.showLegacyRevealAction) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = onShowLegacyReveal,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (language == "en") "Show grimoire" else "展示魔典")
                 }
             }
         }

@@ -229,28 +229,6 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                 verticalArrangement = Arrangement.Center,
             ) {
                 ClocktowerNightActionWakeInstruction(wakeInstruction)
-                Text(
-                    text = if (language == "en") "Ravenkeeper" else "守鸦人",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = if (selectedSeat == null) {
-                        if (language == "en") {
-                            "Select the player chosen by the Ravenkeeper"
-                        } else {
-                            "选择守鸦人要查验的玩家"
-                        }
-                    } else {
-                        if (language == "en") "Selected target: P$selectedSeat" else "查验目标：P$selectedSeat"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = if (selectedSeat != null) FontWeight.SemiBold else FontWeight.Normal,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(8.dp))
 
                 if (selectedSeat != null && choices.isEmpty()) {
                     Text(
@@ -303,11 +281,7 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(
-                            if (language == "en") {
-                                "Show information: ${choice.displayLabel}"
-                            } else {
-                                "展示信息：${choice.displayLabel}"
-                            },
+                            if (language == "en") "Show to player" else "展示给玩家",
                             maxLines = 1,
                         )
                     }

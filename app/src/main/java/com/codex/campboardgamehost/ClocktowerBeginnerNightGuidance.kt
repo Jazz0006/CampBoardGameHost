@@ -5,19 +5,26 @@ internal data class ClocktowerBeginnerNightGuidance(
     val actorLine: String,
     val instruction: String?,
 ) {
-    fun asWakeInstruction(): String = listOfNotNull(
-        wakeLine,
+    fun asWakeInstruction(experiencedFormat: Boolean = false): String = listOfNotNull(
+        if (experiencedFormat) wakeLine.asExperiencedWakeLine() else wakeLine,
         actorLine,
         instruction?.takeIf { it.isNotBlank() },
     ).joinToString("\n")
+
+    private fun String.asExperiencedWakeLine(): String = when {
+        startsWith("唤醒 ") -> "唤醒：${removePrefix("唤醒 ")}"
+        startsWith("Wake ") -> "Wake: ${removePrefix("Wake ")}"
+        else -> this
+    }
 }
 
 /**
- * Projects the minimum actionable context needed by a Beginner Storyteller night step.
+ * Projects the minimum actionable context needed by a compact Storyteller night step.
  *
  * This is presentation-only: role truth, shown-role identity, legal targets and recommendation
  * ownership stay upstream. Evil-team group wake steps use structured team membership rather than
- * parsing localized wake prose.
+ * parsing localized wake prose. Beginner and Experienced may render the same projection with
+ * different wake-line markers so display formatting never doubles as experience-mode authority.
  */
 internal fun clocktowerBeginnerNightGuidance(
     action: ClocktowerNightAction,
