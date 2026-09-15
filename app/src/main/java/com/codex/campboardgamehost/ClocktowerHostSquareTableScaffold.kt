@@ -32,7 +32,9 @@ internal fun ClocktowerHostSquareTableScaffold(
         onBack = onBack,
     ) {
         ClocktowerSquareTableSeatSurface(
-            seats = seats.map(seatUiModel),
+            seats = seats.map { seat ->
+                seatUiModel(seat).copy(isPoisoned = seat.isPoisoned)
+            },
             modifier = Modifier.fillMaxSize(),
             interactionMode = interactionMode,
             onSeatClick = { renderKey ->
