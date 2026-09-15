@@ -1,6 +1,6 @@
 package com.codex.campboardgamehost
 
-// Durable UI-R4 contract: the square-table surface renders supplied target legality and Boolean choices only.
+// Durable UI contract: the square-table surface renders supplied target legality and Boolean choices only.
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -26,9 +26,9 @@ class ClocktowerFortuneTellerSquareTablePresentationTest {
     }
 
     @Test
-    fun `selected first seat stays selected while only supplied continuations remain selectable`() {
+    fun `selected first seat uses the common selected highlight while supplied continuations remain selectable`() {
         assertEquals(
-            ClocktowerSquareTableSeatState.SelectedFirst,
+            ClocktowerSquareTableSeatState.SelectedHighlighted,
             clocktowerFortuneTellerSeatState(
                 seatNumber = 2,
                 selectedSeats = listOf(2),
@@ -54,9 +54,9 @@ class ClocktowerFortuneTellerSquareTablePresentationTest {
     }
 
     @Test
-    fun `completed pair keeps ordered first and second visual states`() {
+    fun `completed pair uses the same visual state for both selected players`() {
         assertEquals(
-            ClocktowerSquareTableSeatState.SelectedFirst,
+            ClocktowerSquareTableSeatState.SelectedHighlighted,
             clocktowerFortuneTellerSeatState(
                 seatNumber = 2,
                 selectedSeats = listOf(2, 5),
@@ -64,7 +64,7 @@ class ClocktowerFortuneTellerSquareTablePresentationTest {
             ),
         )
         assertEquals(
-            ClocktowerSquareTableSeatState.SelectedSecond,
+            ClocktowerSquareTableSeatState.SelectedHighlighted,
             clocktowerFortuneTellerSeatState(
                 seatNumber = 5,
                 selectedSeats = listOf(2, 5),
