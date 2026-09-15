@@ -26,6 +26,8 @@ internal data class ClocktowerEvilInfoSquareTablePresentation(
     val footer: String?,
     val showPlayerDisplayAction: Boolean,
     val showHostDetails: Boolean = true,
+    val highlightedSeats: Set<Int> = emptySet(),
+    val groupLines: List<String> = emptyList(),
 )
 
 /**
@@ -35,13 +37,18 @@ internal data class ClocktowerEvilInfoSquareTablePresentation(
  * handoff; this model only routes/presents the Storyteller step.
  *
  * Beginner mode keeps private reveal payload off the host surface until the Storyteller explicitly
- * opens the player display. Experienced mode retains the existing host preview.
+ * opens the player display. Experienced evil-team wake steps use the same compact host surface;
+ * Minion membership is projected separately so every Minion can be highlighted without exposing
+ * the legacy Demon-information preview in the center.
  */
 internal fun clocktowerEvilInfoSquareTablePresentation(
     step: ClocktowerNightStepUi,
     actorSeat: Int?,
     wakeInstruction: String?,
     beginnerMode: Boolean = false,
+    compactTeamWake: Boolean = false,
+    highlightedSeats: Set<Int> = emptySet(),
+    groupLines: List<String> = emptyList(),
 ): ClocktowerEvilInfoSquareTablePresentation? {
     val ownsReadOnlyPrivateSurface =
         step.displayKind == ClocktowerDisplayKind.EvilInfo ||
@@ -55,15 +62,22 @@ internal fun clocktowerEvilInfoSquareTablePresentation(
         secondary = step.displaySecondary,
         footer = step.displayFooter,
         showPlayerDisplayAction = step.tellPlayer?.isNotBlank() == true,
-        showHostDetails = !beginnerMode,
+        showHostDetails = !beginnerMode && !compactTeamWake,
+        highlightedSeats = highlightedSeats,
+        groupLines = groupLines,
     )
 }
 
 internal fun clocktowerEvilInfoSeatPresentation(
     seatNumber: Int,
     actorSeat: Int?,
+    highlightedSeats: Set<Int> = emptySet(),
 ): ClocktowerNightActionSeatPresentation = ClocktowerNightActionSeatPresentation(
-    targetState = ClocktowerSquareTableSeatState.Neutral,
+    targetState = if (seatNumber in highlightedSeats) {
+        ClocktowerSquareTableSeatState.HighlightedInformation
+    } else {
+        ClocktowerSquareTableSeatState.Neutral
+    },
     isCurrentActor = seatNumber == actorSeat,
 )
 
@@ -86,6 +100,7 @@ internal fun ClocktowerEvilInfoSquareTableDialog(
             clocktowerEvilInfoSeatPresentation(
                 seatNumber = seatNumber,
                 actorSeat = presentation.actorSeat,
+                highlightedSeats = presentation.highlightedSeats,
             )
         },
         onSeatSelected = {},
@@ -107,7 +122,34 @@ internal fun ClocktowerEvilInfoSquareTableDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                ClocktowerNightActionWakeInstruction(presentation.wakeInstruction)
+                if (presentation.groupLines.isNotEmpty()) {
+                    presentation.wakeInstruction
+                        ?.lineSequence()
+                        ?.map(String::trim)
+                        ?.firstOrNull(String::isNotBlank)
+                        ?.let { wakeLine ->
+                            Text(
+                                text = wakeLine,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                        }
+                    presentation.groupLines.forEach { actorLine ->
+                        Text(
+                            text = actorLine,
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                } else {
+                    ClocktowerNightActionWakeInstruction(presentation.wakeInstruction)
+                }
                 if (presentation.showHostDetails) {
                     Text(
                         text = presentation.title,
