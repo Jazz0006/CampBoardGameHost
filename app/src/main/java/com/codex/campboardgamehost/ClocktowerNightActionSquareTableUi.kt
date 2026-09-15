@@ -149,6 +149,7 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     nextEnabled: Boolean = true,
+    showSelectionSummary: Boolean = true,
     secondaryActionLabel: String? = null,
     secondaryActionEnabled: Boolean = false,
     onSecondaryAction: () -> Unit = {},
@@ -194,15 +195,17 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
                     textAlign = TextAlign.Center,
                 )
             }
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = selectedSeat?.let { seat ->
-                    if (language == "en") "Selected: P$seat" else "已选择：P$seat"
-                } ?: if (language == "en") "Select a player" else "选择一名玩家",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (selectedSeat != null) FontWeight.SemiBold else FontWeight.Normal,
-                textAlign = TextAlign.Center,
-            )
+            if (showSelectionSummary) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = selectedSeat?.let { seat ->
+                        if (language == "en") "Selected: P$seat" else "已选择：P$seat"
+                    } ?: if (language == "en") "Select a player" else "选择一名玩家",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (selectedSeat != null) FontWeight.SemiBold else FontWeight.Normal,
+                    textAlign = TextAlign.Center,
+                )
+            }
 
             secondaryActionLabel?.let { label ->
                 Spacer(Modifier.height(6.dp))
