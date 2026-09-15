@@ -51,6 +51,7 @@ internal fun ClocktowerNightStepCardLocalized(
     informationDecisionKey: String,
     cards: List<PlayerCard>,
     ghostVoteAuthority: ClocktowerGhostVoteAuthority,
+    poisonedPlayerName: String?,
     aliveCards: List<PlayerCard>,
     chambermaidTargetCards: List<PlayerCard>,
     mayorRedirectTargetCards: List<PlayerCard>,
@@ -145,14 +146,15 @@ internal fun ClocktowerNightStepCardLocalized(
         ?.map { it.payload }
         ?: step.recommendedDisplayOptions
     val displayedInformationOptions = if (automaticStorytellerInfo) automaticInformationOptions else assistedInformationOptions
-    val pairRecommendationPresentation = if (
-        phase == ClocktowerPhase.FirstNight &&
-        presentationRoleEnName in setOf("Washerwoman", "Librarian", "Investigator")
-    ) {
-        clocktowerRecommendationPresentation(displayedInformationOptions)
-    } else {
-        null
-    }
+    val recommendationPresentation = clocktowerRecommendationPresentation(displayedInformationOptions)
+    val recommendedOptionIds = recommendationPresentation.recommendations
+        .mapTo(linkedSetOf(), ::optionId)
+    val recommendedNumericValues = recommendationPresentation.recommendations
+        .mapNotNull { option ->
+            (option.proposition as? InformationProposition.NumericResult)?.value
+                ?: option.displayPrimary?.toIntOrNull()
+        }
+        .toSet()
     val pairInformationCandidates = if (
         phase == ClocktowerPhase.FirstNight &&
         presentationRoleEnName in setOf("Washerwoman", "Librarian", "Investigator")
@@ -324,6 +326,8 @@ internal fun ClocktowerNightStepCardLocalized(
             automaticDisplayOption = automaticDisplayOption,
             resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,
             structuredNumberUiModel = structuredNumberUiModel,
+            recommendedOptionIds = recommendedOptionIds,
+            recommendedValues = recommendedNumericValues,
         )
     } else {
         emptyList()
@@ -339,6 +343,8 @@ internal fun ClocktowerNightStepCardLocalized(
             automaticDisplayOption = automaticDisplayOption,
             resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,
             structuredNumberUiModel = structuredNumberUiModel,
+            recommendedOptionIds = recommendedOptionIds,
+            recommendedValues = recommendedNumericValues,
         )
     } else {
         emptyList()
@@ -352,6 +358,7 @@ internal fun ClocktowerNightStepCardLocalized(
             automaticStorytellerInfo = automaticStorytellerInfo,
             automaticDisplayOption = automaticDisplayOption,
             resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,
+            recommendedOptionIds = recommendedOptionIds,
         )
     } else {
         emptyList()
@@ -367,6 +374,7 @@ internal fun ClocktowerNightStepCardLocalized(
         step = step,
         automaticStorytellerInfo = automaticStorytellerInfo,
         automaticDisplayOption = automaticDisplayOption,
+        recommendedOptionIds = recommendedOptionIds,
     )
     val usesClockmakerSquareTable =
         plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Clockmaker && clockmakerResultChoices.isNotEmpty()
@@ -375,6 +383,7 @@ internal fun ClocktowerNightStepCardLocalized(
         seatCount = cards.size,
         automaticStorytellerInfo = automaticStorytellerInfo,
         automaticDisplayOption = automaticDisplayOption,
+        recommendedOptionIds = recommendedOptionIds,
     )
     val usesSageSquareTable =
         plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Sage && sageResultChoices.isNotEmpty()
@@ -395,6 +404,7 @@ internal fun ClocktowerNightStepCardLocalized(
             automaticStorytellerInfo = automaticStorytellerInfo,
             automaticDisplayOption = automaticDisplayOption,
             resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,
+            recommendedOptionIds = recommendedOptionIds,
         )
     } else {
         emptyList()
@@ -772,6 +782,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 seatNumber = index + 1,
                 language = language,
                 ghostVoteAuthority = ghostVoteAuthority,
+                isPoisoned = card.name == poisonedPlayerName,
             )
         }
         fun seatNumberForName(name: String?): Int? = name
@@ -978,6 +989,11 @@ internal fun ClocktowerNightStepCardLocalized(
                     automaticStorytellerInfo -> listOfNotNull(automaticDisplayOption)
                     else -> step.displayOptions
                 }
+                val recommendedResultOptions = if (automaticStorytellerInfo) {
+                    listOfNotNull(automaticDisplayOption)
+                } else {
+                    recommendationPresentation.recommendations
+                }
                 ClocktowerChambermaidSquareTableDialog(
                     seats = nightActionSeats,
                     selectedSeats = selectedSeats,
@@ -985,6 +1001,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     enabled = step.isRealAction,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
+                    recommendedResultOptions = recommendedResultOptions,
                     resultOptions = resultOptions,
                     language = language,
                     canGoPrevious = canGoPrevious,
@@ -1052,10 +1069,10 @@ internal fun ClocktowerNightStepCardLocalized(
                     ClocktowerPairInformationSquareTableDialog(
                         interactionKey = informationDecisionKey,
                         presentation = presentation,
-                        recommendedOption = if (automaticStorytellerInfo) {
-                            automaticDisplayOption
+                        recommendedOptions = if (automaticStorytellerInfo) {
+                            listOfNotNull(automaticDisplayOption)
                         } else {
-                            pairRecommendationPresentation?.primary
+                            recommendationPresentation.recommendations
                         },
                         seats = nightActionSeats,
                         actorSeat = actionActorSeat,

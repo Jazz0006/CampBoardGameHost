@@ -32,7 +32,7 @@ class ClocktowerHostTableGameStateProjectionTest {
     }
 
     @Test
-    fun `actual shown and life state remain separate through host projection`() {
+    fun `actual shown life and poison state remain separate through host projection`() {
         val state = gameState(
             players = listOf(
                 player(
@@ -41,6 +41,7 @@ class ClocktowerHostTableGameStateProjectionTest {
                     actualRole = "Drunk",
                     shownRole = "Empath",
                     alive = false,
+                    poisoned = true,
                 ),
             ),
         )
@@ -51,6 +52,18 @@ class ClocktowerHostTableGameStateProjectionTest {
         assertEquals("Drunk", presentation.actualRole?.roleId)
         assertEquals("Empath", presentation.shownRole?.roleId)
         assertFalse(presentation.isAlive)
+        assertTrue(presentation.isPoisoned)
+    }
+
+    @Test
+    fun `non poisoned domain player remains visually unmarked`() {
+        val state = gameState(
+            players = listOf(player(seat = 1, name = "Alice", actualRole = "Monk")),
+        )
+
+        val presentation = state.toHostSeatPresentations().single()
+
+        assertFalse(presentation.isPoisoned)
     }
 
     @Test
@@ -121,6 +134,7 @@ class ClocktowerHostTableGameStateProjectionTest {
         actualRole: String,
         shownRole: String? = actualRole,
         alive: Boolean = true,
+        poisoned: Boolean = false,
     ): PlayerState = PlayerState(
         seat = seat,
         name = name,
@@ -129,7 +143,7 @@ class ClocktowerHostTableGameStateProjectionTest {
         actualType = if (actualRole == "Imp") CharacterType.DEMON else CharacterType.TOWNSFOLK,
         shownRole = shownRole?.let(::RoleId),
         alive = alive,
-        poisoned = false,
+        poisoned = poisoned,
     )
 
     private fun layoutFor(playerCount: Int): HostTableLayout = hostTableLayout(

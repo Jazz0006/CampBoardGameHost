@@ -2,25 +2,12 @@ package com.codex.campboardgamehost
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.clocktower.domain.Alignment as ClocktowerAlignment
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
@@ -161,6 +148,8 @@ internal fun clocktowerEmpathResultChoices(
     automaticDisplayOption: ClocktowerDisplayOption?,
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
     structuredNumberUiModel: StructuredNumberInformationUiModel?,
+    recommendedOptionIds: Set<String> = emptySet(),
+    recommendedValues: Set<Int> = emptySet(),
 ): List<ClocktowerEmpathResultChoice> {
     fun numeric(option: ClocktowerDisplayOption): InformationProposition.NumericResult? =
         (option.proposition as? InformationProposition.NumericResult)
@@ -175,7 +164,8 @@ internal fun clocktowerEmpathResultChoices(
             value = proposition.value,
             sourceKind = ClocktowerEmpathResultSourceKind.DisplayOption,
             displayOption = option,
-            recommended = recommended,
+            recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds ||
+                (recommendedOptionIds.isEmpty() && recommended),
             scopeSeats = scope,
             contributingSeats = clocktowerEmpathContributingSeats(players, option, proposition.value),
         )
@@ -215,7 +205,8 @@ internal fun clocktowerEmpathResultChoices(
                 value = choice.value,
                 sourceKind = ClocktowerEmpathResultSourceKind.Structured,
                 structuredCandidateId = choice.candidateId,
-                recommended = choice.recommended,
+                recommended = choice.value in recommendedValues ||
+                    (recommendedValues.isEmpty() && choice.recommended),
                 scopeSeats = scope,
                 // An unreliable Empath may legally receive an arbitrary result. No truthful
                 // Spy/Recluse seat witness exists for that arbitrary number, so do not fabricate one.
@@ -292,6 +283,8 @@ internal fun ClocktowerEmpathSquareTableDialog(
         return
     }
     val displayedContributionSeats = clocktowerEmpathDisplayedContributionSeats(choices, initialChoice.key)
+    val recommendedChoices = choices.filter { it.recommended }.take(3)
+        .ifEmpty { listOf(initialChoice) }
 
     ClocktowerHostSquareTableScaffold(
         seats = seats,
@@ -327,36 +320,28 @@ internal fun ClocktowerEmpathSquareTableDialog(
             )
         },
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(6.dp),
+                    .fillMaxWidth()
+                    .weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    ClocktowerNightActionWakeInstruction(wakeInstruction)
-                    Text(
-                        text = if (language == "en") "Empath" else "共情者",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(8.dp))
-
-                    ClocktowerExperiencedNumericChoiceRows(
-                        choices = choices,
-                        recommendedChoice = initialChoice,
-                        language = language,
-                        valueOf = ClocktowerEmpathResultChoice::value,
-                        onConfirm = onConfirm,
-                    )
-                }
+                ClocktowerNightActionWakeInstruction(wakeInstruction)
+                ClocktowerExperiencedNumericChoiceRows(
+                    choices = choices,
+                    recommendedChoices = recommendedChoices,
+                    language = language,
+                    valueOf = ClocktowerEmpathResultChoice::value,
+                    onConfirm = onConfirm,
+                )
             }
+        }
     }
 }

@@ -26,6 +26,7 @@ internal fun ClocktowerChambermaidSquareTableDialog(
     enabled: Boolean,
     actorSeat: Int? = null,
     wakeInstruction: String? = null,
+    recommendedResultOptions: List<ClocktowerDisplayOption>,
     resultOptions: List<ClocktowerDisplayOption>,
     language: String,
     canGoPrevious: Boolean,
@@ -82,14 +83,11 @@ internal fun ClocktowerChambermaidSquareTableDialog(
         ClocktowerChambermaidCenterControls(
             wakeInstruction = wakeInstruction,
             selectedSeats = selectedSeats,
+            recommendedResultOptions = recommendedResultOptions,
             resultOptions = resultOptions,
             language = language,
-            canGoPrevious = canGoPrevious,
             onShowDeterminedResult = onShowDeterminedResult,
             onResultSelected = onResultSelected,
-            onPrevious = onPrevious,
-            onHostTools = onHostTools,
-            onNext = onNext,
         )
     }
 }
@@ -98,17 +96,18 @@ internal fun ClocktowerChambermaidSquareTableDialog(
 private fun ClocktowerChambermaidCenterControls(
     wakeInstruction: String?,
     selectedSeats: List<Int>,
+    recommendedResultOptions: List<ClocktowerDisplayOption>,
     resultOptions: List<ClocktowerDisplayOption>,
     language: String,
-    canGoPrevious: Boolean,
     onShowDeterminedResult: () -> Unit,
     onResultSelected: (ClocktowerDisplayOption) -> Unit,
-    onPrevious: () -> Unit,
-    onHostTools: () -> Unit,
-    onNext: () -> Unit,
 ) {
     val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
-    val orderedOptions = resultOptions.sortedBy { option -> if (option.isDefaultRecommendation) 0 else 1 }
+    fun optionId(option: ClocktowerDisplayOption): String = clocktowerInformationCandidateId(option)
+    val recommendations = recommendedResultOptions.distinctBy(::optionId).take(3)
+    val recommendationIds = recommendations.mapTo(linkedSetOf(), ::optionId)
+    val manualOptions = resultOptions.distinctBy(::optionId)
+        .filterNot { option -> optionId(option) in recommendationIds }
 
     Column(
         modifier = Modifier
@@ -152,7 +151,7 @@ private fun ClocktowerChambermaidCenterControls(
             )
             Spacer(Modifier.height(6.dp))
 
-            if (orderedOptions.isEmpty()) {
+            if (recommendations.isEmpty() && manualOptions.isEmpty()) {
                 Button(
                     onClick = onShowDeterminedResult,
                     modifier = Modifier.fillMaxWidth(),
@@ -160,21 +159,42 @@ private fun ClocktowerChambermaidCenterControls(
                     Text(if (language == "en") "Check and show" else "查询并展示")
                 }
             } else {
-                Text(
-                    text = if (language == "en") "Choose the result to show" else "选择最终展示结果",
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                )
-                orderedOptions.forEach { option ->
-                    Spacer(Modifier.height(4.dp))
-                    if (option.isDefaultRecommendation) {
-                        Button(
-                            onClick = { onResultSelected(option) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(option.label)
+                if (recommendations.isNotEmpty()) {
+                    Text(
+                        text = if (language == "en") "Recommended information" else "推荐信息",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                    )
+                    recommendations.forEachIndexed { index, option ->
+                        Spacer(Modifier.height(4.dp))
+                        if (index == 0) {
+                            Button(
+                                onClick = { onResultSelected(option) },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(option.label)
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = { onResultSelected(option) },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(option.label)
+                            }
                         }
-                    } else {
+                    }
+                }
+                if (manualOptions.isNotEmpty()) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = if (language == "en") "Manual selection" else "手动选择",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                    )
+                    manualOptions.forEach { option ->
+                        Spacer(Modifier.height(4.dp))
                         OutlinedButton(
                             onClick = { onResultSelected(option) },
                             modifier = Modifier.fillMaxWidth(),

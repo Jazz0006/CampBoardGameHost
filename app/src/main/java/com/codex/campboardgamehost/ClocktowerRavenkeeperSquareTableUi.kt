@@ -14,6 +14,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -75,6 +76,7 @@ internal fun clocktowerRavenkeeperResultChoices(
     automaticStorytellerInfo: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
+    recommendedOptionIds: Set<String> = emptySet(),
 ): List<ClocktowerRavenkeeperResultChoice> {
     if (step.action != ClocktowerNightAction.Ravenkeeper || step.roleEnName != "Ravenkeeper") {
         return emptyList()
@@ -103,7 +105,8 @@ internal fun clocktowerRavenkeeperResultChoices(
                 displayLabel = projected.displayLabel,
                 sourceKind = sourceKind,
                 displayOption = option,
-                recommended = option.isDefaultRecommendation,
+                recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds ||
+                    (recommendedOptionIds.isEmpty() && option.isDefaultRecommendation),
             )
         }.distinctBy { it.key }
     }
@@ -196,6 +199,12 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
         return
     }
 
+    val recommendations = choices.filter { it.recommended }.take(3)
+    val manualChoices = choices.filterNot { it in recommendations }
+    var manualSelection by remember(choices.map { it.key }, recommendations.map { it.key }) {
+        mutableStateOf(recommendations.isEmpty() && choices.isNotEmpty())
+    }
+
     ClocktowerNightActionSquareTableDialog(
         seats = seats,
         enabled = enabled,
@@ -243,9 +252,23 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                     )
                 }
 
-                if (choices.size > 1 && selectedChoice != null) {
+                if (!manualSelection && recommendations.isNotEmpty()) {
+                    ClocktowerExperiencedRecommendationButtons(
+                        recommendations = recommendations,
+                        language = language,
+                        labelOf = { choice ->
+                            if (language == "en") "Show: ${choice.displayLabel}" else "展示：${choice.displayLabel}"
+                        },
+                        onConfirm = onConfirm,
+                        onManualSelection = if (manualChoices.isNotEmpty()) {
+                            { manualSelection = true }
+                        } else {
+                            null
+                        },
+                    )
+                } else if (selectedChoice != null) {
                     Text(
-                        text = if (language == "en") "Choose the character to show" else "选择要展示的角色",
+                        text = if (language == "en") "Manual selection" else "手动选择",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -273,17 +296,16 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                         }
                     }
                     Spacer(Modifier.height(6.dp))
-                }
-
-                selectedChoice?.let { choice ->
                     Button(
-                        onClick = { onConfirm(choice) },
+                        onClick = { onConfirm(selectedChoice) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(
-                            if (language == "en") "Show to player" else "展示给玩家",
-                            maxLines = 1,
-                        )
+                        Text(if (language == "en") "Show to player" else "展示给玩家", maxLines = 1)
+                    }
+                    if (recommendations.isNotEmpty()) {
+                        TextButton(onClick = { manualSelection = false }) {
+                            Text(if (language == "en") "Use recommendations" else "返回推荐")
+                        }
                     }
                 }
             }

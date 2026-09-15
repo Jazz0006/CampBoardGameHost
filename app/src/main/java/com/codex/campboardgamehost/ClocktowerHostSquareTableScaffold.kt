@@ -32,7 +32,17 @@ internal fun ClocktowerHostSquareTableScaffold(
         onBack = onBack,
     ) {
         ClocktowerSquareTableSeatSurface(
-            seats = seats.map(seatUiModel),
+            seats = seats.map { seat ->
+                val model = seatUiModel(seat)
+                if (seat.isPoisoned) {
+                    model.copy(
+                        badge = listOfNotNull("☠", model.badge).joinToString(" "),
+                        badgeTone = ClocktowerSquareTableBadgeTone.Warning,
+                    )
+                } else {
+                    model
+                }
+            },
             modifier = Modifier.fillMaxSize(),
             interactionMode = interactionMode,
             onSeatClick = { renderKey ->

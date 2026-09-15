@@ -48,6 +48,7 @@ internal fun PlayerCard.toStorytellerHostSeatPresentation(
     seatNumber: Int,
     language: String,
     ghostVoteAuthority: ClocktowerGhostVoteAuthority? = null,
+    isPoisoned: Boolean = false,
 ): HostSeatPresentation = HostSeatPresentation(
     seatId = ClocktowerSeatId(seatNumber),
     playerName = name,
@@ -57,6 +58,7 @@ internal fun PlayerCard.toStorytellerHostSeatPresentation(
         isAlive = eliminatedRound == null,
         ghostVoteAuthority = ghostVoteAuthority,
     ),
+    isPoisoned = isPoisoned,
     actualRole = clocktowerRole?.toHostRolePresentation(language),
     shownRole = clocktowerShownRole?.toHostRolePresentation(language),
     contentMode = HostSeatContentMode.StorytellerRoleDetail,

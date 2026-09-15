@@ -25,12 +25,14 @@ internal data class HostRolePresentation(
  *
  * Actual role and shown/perceived role remain separate semantic fields. Public claim history will
  * be introduced by its own durable R4D slice rather than being folded into either role field.
+ * Poison is presentation-only here: it must not change target legality or interaction eligibility.
  */
 internal data class HostSeatPresentation(
     val seatId: ClocktowerSeatId,
     val playerName: String,
     val isAlive: Boolean,
     val hasUnspentGhostVote: Boolean = false,
+    val isPoisoned: Boolean = false,
     val actualRole: HostRolePresentation? = null,
     val shownRole: HostRolePresentation? = null,
     val contentMode: HostSeatContentMode = HostSeatContentMode.IdentityOnly,

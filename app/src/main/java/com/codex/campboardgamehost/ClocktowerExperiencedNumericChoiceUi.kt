@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-/** Compact Experienced-only picker: recommended result is always the first one-tap action. */
+/** Compatibility entry point for callers that have not migrated to a ranked recommendation set. */
 @Composable
 internal fun <T> ClocktowerExperiencedNumericChoiceRows(
     choices: List<T>,
@@ -22,33 +22,81 @@ internal fun <T> ClocktowerExperiencedNumericChoiceRows(
     language: String,
     valueOf: (T) -> Int,
     onConfirm: (T) -> Unit,
-) {
-    Text(
-        text = if (language == "en") "Recommended information" else "推荐信息",
-        style = MaterialTheme.typography.bodySmall,
-        fontWeight = FontWeight.SemiBold,
-    )
-    Spacer(Modifier.height(4.dp))
-    Button(
-        onClick = { onConfirm(recommendedChoice) },
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Text(
-            if (language == "en") "Show: ${valueOf(recommendedChoice)}" else "展示：${valueOf(recommendedChoice)}",
-            maxLines = 1,
-        )
-    }
+) = ClocktowerExperiencedNumericChoiceRows(
+    choices = choices,
+    recommendedChoices = listOf(recommendedChoice),
+    language = language,
+    valueOf = valueOf,
+    onConfirm = onConfirm,
+)
 
-    val alternatives = choices.filterNot { it == recommendedChoice }
-    if (alternatives.isNotEmpty()) {
-        Spacer(Modifier.height(8.dp))
+/**
+ * Experienced picker: show up to three real ranked recommendations first, then the remaining legal
+ * domain as manual choices. Recommendations are never padded from the manual domain.
+ */
+@Composable
+internal fun <T> ClocktowerExperiencedNumericChoiceRows(
+    choices: List<T>,
+    recommendedChoices: List<T>,
+    language: String,
+    valueOf: (T) -> Int,
+    onConfirm: (T) -> Unit,
+) {
+    val recommendations = recommendedChoices
+        .filter { recommendation -> recommendation in choices }
+        .distinct()
+        .take(3)
+    if (recommendations.isNotEmpty()) {
         Text(
-            text = if (language == "en") "Alternative information" else "备选信息",
+            text = if (language == "en") "Recommended information" else "推荐信息",
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.SemiBold,
         )
         Spacer(Modifier.height(4.dp))
-        alternatives.chunked(3).forEach { rowChoices ->
+        recommendations.forEachIndexed { index, recommendation ->
+            if (index == 0) {
+                Button(
+                    onClick = { onConfirm(recommendation) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        if (language == "en") {
+                            "Show: ${valueOf(recommendation)}"
+                        } else {
+                            "展示：${valueOf(recommendation)}"
+                        },
+                        maxLines = 1,
+                    )
+                }
+            } else {
+                OutlinedButton(
+                    onClick = { onConfirm(recommendation) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        if (language == "en") {
+                            "Recommendation ${index + 1}: ${valueOf(recommendation)}"
+                        } else {
+                            "推荐 ${index + 1}：${valueOf(recommendation)}"
+                        },
+                        maxLines = 1,
+                    )
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+        }
+    }
+
+    val manualChoices = choices.filterNot { it in recommendations }
+    if (manualChoices.isNotEmpty()) {
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = if (language == "en") "Manual selection" else "手动选择",
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(Modifier.height(4.dp))
+        manualChoices.chunked(3).forEach { rowChoices ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),

@@ -27,6 +27,7 @@ internal fun GameState.toHostSeatPresentations(
             seatId = ClocktowerSeatId(player.seat),
             playerName = player.name,
             isAlive = player.alive,
+            isPoisoned = player.poisoned,
             actualRole = HostRolePresentation(
                 roleId = player.actualRole.value,
                 displayName = roleDisplayName(player.actualRole),

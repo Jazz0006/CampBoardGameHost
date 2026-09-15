@@ -14,6 +14,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +59,7 @@ internal fun clocktowerSageResultChoices(
     seatCount: Int,
     automaticStorytellerInfo: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
+    recommendedOptionIds: Set<String> = emptySet(),
 ): List<ClocktowerSageResultChoice> {
     if (step.roleEnName != "Sage" || step.actor == null || !step.isRealAction || seatCount <= 0) return emptyList()
 
@@ -78,7 +80,8 @@ internal fun clocktowerSageResultChoices(
                     ?: seats.joinToString(" + ") { seat -> "P$seat" },
                 sourceKind = sourceKind,
                 displayOption = option,
-                recommended = option.isDefaultRecommendation,
+                recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds ||
+                    (recommendedOptionIds.isEmpty() && option.isDefaultRecommendation),
             )
         }.distinctBy { it.key }
     }
@@ -159,6 +162,11 @@ internal fun ClocktowerSageSquareTableDialog(
         )
         return
     }
+    val recommendations = choices.filter { it.recommended }.take(3).ifEmpty { listOf(initialChoice) }
+    val manualChoices = choices.filterNot { it in recommendations }
+    var manualSelection by remember(choices.map { it.key }, recommendations.map { it.key }) {
+        mutableStateOf(false)
+    }
     var selectedKey by remember(choices.map { it.key }) { mutableStateOf(initialChoice.key) }
     var menuExpanded by remember(choices.map { it.key }) { mutableStateOf(false) }
     val selectedChoice = choices.firstOrNull { it.key == selectedKey } ?: initialChoice
@@ -211,7 +219,25 @@ internal fun ClocktowerSageSquareTableDialog(
                 )
                 Spacer(Modifier.height(8.dp))
 
-                if (choices.size > 1) {
+                if (!manualSelection) {
+                    ClocktowerExperiencedRecommendationButtons(
+                        recommendations = recommendations,
+                        language = language,
+                        labelOf = { choice -> choice.selectionLabel },
+                        onConfirm = onConfirm,
+                        onManualSelection = if (manualChoices.isNotEmpty()) {
+                            { manualSelection = true }
+                        } else {
+                            null
+                        },
+                    )
+                } else {
+                    Text(
+                        text = if (language == "en") "Manual selection" else "手动选择",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Spacer(Modifier.height(4.dp))
                     Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedButton(
                             onClick = { menuExpanded = true },
@@ -235,20 +261,22 @@ internal fun ClocktowerSageSquareTableDialog(
                         }
                     }
                     Spacer(Modifier.height(6.dp))
-                }
-
-                Text(
-                    text = selectedChoice.subjectSeats.joinToString(" + ") { seat -> "P$seat" },
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(6.dp))
-                Button(
-                    onClick = { onConfirm(selectedChoice) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(if (language == "en") "Show this information" else "展示此信息")
+                    Text(
+                        text = selectedChoice.subjectSeats.joinToString(" + ") { seat -> "P$seat" },
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Button(
+                        onClick = { onConfirm(selectedChoice) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(if (language == "en") "Show this information" else "展示此信息")
+                    }
+                    TextButton(onClick = { manualSelection = false }) {
+                        Text(if (language == "en") "Use recommendations" else "返回推荐")
+                    }
                 }
             }
         }
