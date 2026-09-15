@@ -26,144 +26,312 @@ EXPERIENCED-UI-4 poison + ranked recommendations  COMPLETE / PR #133
 DAY-UI-1 centered daytime domain actions          COMPLETE / PR #134
 
 CURRENT:
-ADB diagnosis of Pair-information display latency / old-device abnormal exit
+EPI-MQ-0.5 — generic epistemic capability / DEFERRED boundary
 
 NEXT:
-Evidence-driven fix of the confirmed Pair-display critical path, followed by real-device verification
+EPI-MQ-1 — neutral hypothetical observation evaluator
+then EPI-MQ-2 / 2.5 / 3 / 4 / 5 under the unified truth+false route
 
-PAUSED / QUEUED:
-EPI-MQ-0.5 dynamic-script extensibility guard
-EPI-MQ-1+ productive-uncertainty work
+PAUSED / DEFERRED:
+Pair-information display latency / old-device ADB diagnosis
 UX-R6 recommendation-provider replacement
 ```
 
-Product-code baseline after PR #133 merge:
+Current product-code baseline after PR #134:
 
-`154e0c7f92a1e4007f4590b1105bfb5bc2b4f897`
+`1cdc35886aea654ad82bf4e2a388095880686ed5`
 
-PR #134 closes the current daytime/UI-polish checkpoint. After it merges, query live `main` and use that merge SHA as the next product baseline.
+The current EPI-MQ route decision is:
+
+`docs/EPI_MQ_ROUTE_REAUDIT_2026-09-15.md`
+
+The earlier foundation audit remains useful historical/architectural evidence:
+
+`docs/EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md`
 
 Completed campaign documents are historical evidence, not current execution authority.
 
-## 2. Immediate priority — diagnose Pair-information display latency with evidence
+## 2. Current priority — EPI-MQ restart
 
-The real-device UI polish checkpoint is complete through PR #134. The next development phase is the deferred Pair-information display latency / old-device abnormal-exit investigation.
+The user has explicitly reprioritized away from the Pair-display ADB investigation and back to consistency / productive-uncertainty work.
 
-Observed symptom:
+The key route correction is now authoritative:
 
-> On Pair-information steps such as Washerwoman, tapping the player-display button can leave the current screen unresponsive for several seconds before the fullscreen player display appears. On an older OPPO device, an abnormal app exit has also been observed around this transition.
+> **EPI-MQ must ultimately decide both whether an impaired ability should tell the truth and, when false information is better, which legal lie to tell.**
 
-This is **not yet root-caused**. Current code inspection suggests the button already owns a resolved display option, while the upper callback applies authoritative state before the fullscreen display state is installed. Heavy synchronous work in that critical path — projection/recommendation recomputation, recovery snapshot construction, serialization/persistence, GC/memory pressure, or another failure — remains a hypothesis, not a conclusion.
+The current fixed truthful-vs-false probability policy is a temporary/fallback mechanism, not the final Storyteller intelligence.
 
-Start with device evidence before changing behavior:
+Truthful and false legal candidates must eventually compete in one epistemic-quality model based on their consequences for the recipient's possible worlds.
+
+Do not permanently preserve a design where a fixed family roll decides truth-versus-false first and EPI-MQ only ranks candidates inside the false family.
+
+## 3. Authoritative EPI-MQ sequence
 
 ```text
-adb devices
-adb logcat -c
-adb logcat -v threadtime > botc_washerwoman.log
+EPI-MQ-0.5  Capability Boundary
+            - generic exact-evaluation capability contract
+            - READY vs DEFERRED / unsupported semantics
+            - DEFERRED != UNSAT
 
-# if the app exits abnormally
-adb logcat -b crash -v threadtime > botc_crash.log
-adb bugreport
+EPI-MQ-1    Neutral Hypothetical Evaluator
+            - exact
+            - mutation-free
+            - recipient-knowledge-safe
+            - BEFORE / AFTER diagnostics
+            - candidate observation applied exactly once
+            - B4 reuses neutral epistemic owner
 
-# before/after reproduction
-adb shell dumpsys meminfo <package>
-adb shell dumpsys gfxinfo <package> reset
-adb shell dumpsys gfxinfo <package> framestats
+EPI-MQ-2    Hard Consistency / Exposure Gates
+            - contradiction
+            - public-fact conflict
+            - temporal inconsistency
+            - impairment-exposure diagnostics
+            - unsupported remains DEFERRED
+
+EPI-MQ-2.5  Truth+False Shadow Integration
+            - evaluate every legal impaired-information candidate
+            - truthful and false in the same shadow model
+            - compare old production choice vs new preferred choice
+            - no production cutover yet
+
+EPI-MQ-3    Unified Productive-Uncertainty Quality Model
+            - truthful and false candidates compete together
+            - world count is diagnostic, not the entire score
+            - include coherence, mistaken-world quality, temporal consistency,
+              explanation diversity, confirmation-lock and exposure risk
+
+EPI-MQ-4    Unified Impaired-Information Production Cutover
+            - EPI-MQ decides whether to tell truth or lie
+            - if lying, EPI-MQ decides which legal lie
+            - current fixed family policy becomes fallback for DEFERRED cases
+
+EPI-MQ-5    Calibration / Fallback Refinement
+            - tune weights/thresholds/diversity only after evidence
+            - refine partially supported dynamic-script behavior
 ```
 
-Look for `FATAL EXCEPTION`, `AndroidRuntime`, `OutOfMemoryError`, ANR, GC pressure, skipped frames/Choreographer, ActivityManager and low-memory/process-kill evidence.
+The former concept `False-family Selection Cutover` is superseded by **Unified Impaired-Information Production Cutover**.
 
-If raw ADB evidence does not identify the critical section, add debug-only timing markers around display click, apply/commit, recovery snapshot/persist, display-state installation and first fullscreen composition. Do not add a loading animation as a substitute for root-cause evidence.
+## 4. Current implementation target — EPI-MQ-0.5
 
-## 3. Stable presentation contracts after the UI-polish checkpoint
+Start by establishing the capability boundary around exact hypothetical epistemic evaluation.
 
-Experienced mode is not a second visual or gameplay system. It reuses the efficient Beginner interaction structure, removes teaching prose, and adds only Storyteller-facing truth/choice assistance.
+Required semantic distinction:
 
-Stable semantics:
+```text
+READY
+  exact hypothetical evaluation is supported
 
-- highlight = player currently waking, acted on or selected;
-- `✓` = Storyteller-facing actual truth / typed registration truth hit;
-- yellow corner badge = persistent special truth/state the Storyteller must remember, e.g. Fortune Teller Red Herring;
-- poison marker = current effective poison state projected for the relevant step; it is visual state only and must not change interaction legality;
-- `RegistrationHint` palette = Spy/Recluse host registration hint, visually closer to evil but distinct from normal good and ordinary evil;
-- Experienced recommendation surfaces show up to three **real ranked recommendations** first, followed by legal manual alternatives; never synthesize padding candidates;
-- Experienced manual alternatives consume the same legal candidate/recommendation authority as Beginner automation.
+DEFERRED / UNSUPPORTED_SEMANTICS
+  required role/script epistemic semantics are not implemented
+```
 
-Recent accepted behavior from #130-#134 includes compact kill/event surfaces, shared wake hierarchy, Minion group highlighting, Pair-information convergence, concise Chef/Empath/Spy/Ravenkeeper/Undertaker surfaces, persistent Fortune Teller Red Herring indication, typed Spy/Recluse truth cues, effective poison marking, Top-3 ranked recommendation presentation, and daytime domain actions kept in the square-table center instead of being mislabeled as bottom-bar “Next” navigation.
+Invariant:
 
-## 4. Daytime action ownership checkpoint
+```text
+DEFERRED != UNSAT
+```
 
-PR #134 establishes a stable UI ownership rule for the current Day workspace:
+EPI-MQ-0.5 must not:
 
-- bottom navigation is for actual navigation/utility actions;
-- nomination-to-vote, vote confirmation and Slayer resolution are domain actions and belong in the square-table center;
-- the daytime nomination hint no longer contains the redundant `自由讨论 / Open discussion` prefix;
-- moving these controls did not change nomination, voting, Slayer, session or rules state machines;
-- the shared bottom action bar exposes visibility as presentation configuration rather than forcing every domain action into its `Next` slot.
+- change production recommendation results;
+- change current truth/false family probability;
+- implement full Pukka/Moonchild semantics;
+- cut ZDD over to production correctness authority;
+- add a new candidate legality model;
+- mix in Pair-display ADB work or UI redesign.
 
-Do not regress these domain actions back into bottom navigation merely for layout convenience.
+The high-level evaluator must be able to defer unsupported/custom script semantics even if lower-level current Trouble Brewing exact classes remain fail-closed internally.
 
-## 5. Architecture constraints that remain in force
+## 5. EPI-MQ architectural ownership
 
-- Beginner and Experienced share one authoritative gameplay/rules/legal-candidate/recommendation/session/persistence pipeline.
-- UI/presentation consumes typed projections and submits intents; it does not recreate legality or registration rules.
-- `ClocktowerNightCheckpoint.nightStepIndex` remains the stored night-navigation position and completed night-flow invariants remain in force.
-- Host/App may coordinate lifecycle and rendering, but complete phase translation, unfinished-night mechanical composition and repeated square-table shell behavior each have one explicit owner.
-- Visual state and interaction eligibility remain separate contracts.
-- Unsupported epistemic semantics must remain explicit (`DEFERRED != UNSAT`) when EPI-MQ resumes.
+Preserve the dependency direction:
 
-## 6. Testing and repository-writing policy
+```text
+rules
+  -> legal information shape / truthful semantics / registration semantics
+
+recommendation
+  -> legal typed candidates
+  -> consume neutral diagnostics
+  -> final selection policy
+
+session
+  -> canonical game state
+  -> GLOBAL semantic timeline
+  -> durable observation identity / commit authority
+
+epistemic
+  -> recipient-visible knowledge
+  -> exact possible worlds
+  -> historical replay
+  -> neutral hypothetical-observation diagnostics
+
+UI
+  -> presentation and explicit user confirmation
+```
+
+Do not wire recommendation directly to `B4DynamicPlayerWorldSetShadow`.
+
+The intended flow is conceptually:
+
+```text
+rules -> legal candidates
+session/composition -> correctly bound hypothetical observation context
+epistemic -> neutral candidate diagnostics
+recommendation -> unified quality / selection
+```
+
+Avoid a dependency cycle such as:
+
+```text
+recommendation -> session -> epistemic -> recommendation
+```
+
+The exact composition seam should be confirmed during the EPI-MQ-1 fan-out audit.
+
+## 6. Existing implementation that must be reused
+
+Do not create parallel semantic authorities.
+
+Reuse:
+
+- `DecisionCandidate` / `DecisionEvaluation` typed legal candidates;
+- `InformationDecisionContext<T>` validated candidate boundary;
+- `EpistemicObservationDraft` as the unbound player-visible observation representation;
+- `ClocktowerGameSession.preflightGlobalEpistemicObservation()` for non-mutating hypothetical binding;
+- `EnumeratedHistoricalExactBaseline` and `EnumeratedHistoricalWorldReplay` as current historical exact correctness machinery;
+- existing B4 historical exact behavior as characterization evidence during neutral evaluator extraction.
+
+Current implementation has two levels:
+
+```text
+1. ImpairedInformationPolicy
+   -> truthful-vs-false family probability
+
+2. MalfunctionPolicy / pressure / history / stable selector
+   -> candidate ranking inside family
+```
+
+This remains valid as a fallback path. It is no longer the intended final READY-path decision architecture.
+
+## 7. Unified truth+false decision principle
+
+The quality model must not reward or punish a candidate merely because it is truthful or false.
+
+A truthful candidate can be the best misleading information when false alternatives expose impairment or contradict public/history evidence.
+
+A false candidate can be best when truthful information strongly confirms the real evil structure while the false clue preserves several coherent mistaken worlds.
+
+The target is not maximum uncertainty. It is **productive uncertainty**: coherent, playable mistaken beliefs that remain logically explainable and do not simply destroy all useful information.
+
+Likely future diagnostics include:
+
+```text
++ coherence
++ productive uncertainty
++ plausible mistaken worlds
++ temporal consistency
++ explanation diversity
+
+- immediate contradiction
+- impairment exposure
+- confirmation lock
+- excessive information destruction
+```
+
+World cardinality alone is insufficient.
+
+## 8. Dynamic/custom-script and exact-engine constraints
+
+The earlier extensibility decision remains in force:
+
+- EPI-MQ depends on a generic capability/evaluation seam, not concrete `TroubleBrewing...` classes;
+- unsupported semantics must return DEFERRED, never fake zero worlds/UNSAT;
+- Trouble Brewing enumerated/historical exact remains current correctness authority;
+- A4/ZDD remains representation/shadow work until separately authorized;
+- ASP/Clingo remains cross-validation evidence;
+- future roles such as Pukka/Moonchild are useful architecture stress tests, not prerequisites for EPI-MQ-0.5.
+
+## 9. Hidden-information boundary
+
+EPI-MQ may reason only from recipient-visible knowledge.
+
+Do not directly constrain candidate quality with Storyteller-only facts such as:
+
+- actual hidden roles beyond recipient knowledge;
+- actual Poisoner/Pukka hidden target;
+- hidden protection/attack target;
+- hidden transition cause before observable;
+- Fortune Teller red-herring identity outside legal FT semantics;
+- demon bluffs unknown to the recipient;
+- recommendation seed, score internals or Storyteller-only metadata.
+
+Historical replay must regenerate hidden mechanics from rules/per-world state rather than copying the actual Storyteller-selected hidden target into all possible worlds.
+
+## 10. Stable presentation contracts
+
+Recent UI work remains stable and is not part of the EPI-MQ restart:
+
+- Beginner and Experienced share one gameplay/rules/legal-candidate/recommendation/session/persistence pipeline;
+- highlight = current waking / acted-on / selected player;
+- `✓` = Storyteller-facing truth / typed registration truth hit;
+- yellow corner badge = persistent host-only special state such as Fortune Teller Red Herring;
+- poison marker = effective poison visual only, never interaction eligibility;
+- Experienced recommendation surfaces show up to three real ranked recommendations followed by legal manual alternatives;
+- bottom navigation is navigation/utility; in-table domain actions remain in the table center.
+
+Do not mix EPI-MQ implementation with presentation redesign.
+
+## 11. Testing and repository-writing policy
 
 Follow:
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
-3. `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` when a file cannot be safely retrieved/replaced in full.
+3. `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` when required.
 
-Use risk-based evidence. Do not manufacture rules tests for presentation-only changes. Prefer typed behavior/integration seams over source-shape assertions. Shared-contract changes require producer/consumer fan-out and Beginner/Experienced plus fresh/restored checks where applicable.
+Durable new semantic seams require focused typed behavior tests. Pure extraction should rely on existing GREEN characterization where it already proves behavior instead of manufacturing ritual RED tests.
 
-For normal Android checkpoints:
-
-```text
-./gradlew :app:testFast --no-daemon --build-cache
-```
-
-For device-test builds, add `:app:assembleDebug` as appropriate.
-
-## 7. Paused programs
-
-EPI-MQ is paused, not cancelled. Its architecture reference remains:
-
-`docs/EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md`
-
-Planned sequence remains:
+Minimum upcoming proof includes:
 
 ```text
-EPI-MQ-0.5  generic/dynamic-script capability boundary
-EPI-MQ-1    neutral hypothetical observation evaluator
-EPI-MQ-2    credibility / contradiction / impairment-exposure gates
-EPI-MQ-3+   productive-uncertainty metrics and ranking
+supported Trouble Brewing -> READY
+unsupported script/role semantics -> DEFERRED
+DEFERRED != UNSAT
+same history + same candidate -> deterministic diagnostics
+hypothetical evaluation does not mutate live session
+candidate observation is applied exactly once
+hidden target changes do not leak into recipient result
+truthful and false candidates are both evaluated in EPI-MQ-2.5 shadow mode
+unified model can prefer truth in one state and falsehood in another
 ```
 
-Do not resume it until the user explicitly reprioritizes away from the current device-stability investigation.
+At logical checkpoints use the epistemic/enumeration escalation defined by `docs/TESTING_STRATEGY.md`.
 
-## 8. Unrelated open diagnostic work
+## 12. Paused issue — Pair-display latency / old-device exit
 
-PR #109 — `Reproduce restored execution preflight crash` — remains unrelated unless its live status has changed. Do not merge or fold it into the Pair-display investigation without a separate decision.
+The Pair-information player-display stall and older-device abnormal exit remain real but are no longer the current priority because the user explicitly reprioritized development.
 
-## 9. Next-conversation reading order
+The previous ADB investigation plan remains available in repository history and can be resumed later. Do not mix it into EPI-MQ commits unless new evidence shows a direct architectural connection.
+
+## 13. Unrelated work
+
+PR #109 (`Reproduce restored execution preflight crash`) remains unrelated unless its live state changes. Re-query before touching it and do not fold it into EPI-MQ without a separate decision.
+
+## 14. Next-conversation reading order
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
 3. this roadmap;
 4. `docs/NEXT_DEVELOPMENT_HANDOFF.md`;
-5. query live `main` and open PR/check state;
-6. begin the Pair-information display latency / old-device abnormal-exit investigation with ADB evidence;
-7. only after evidence identifies a likely critical section, make the smallest diagnostic or corrective code change.
+5. `docs/EPI_MQ_ROUTE_REAUDIT_2026-09-15.md`;
+6. use `docs/EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md` as supporting foundation/history;
+7. query live `main` and relevant open PR/check state;
+8. begin EPI-MQ-0.5 implementation fan-out audit and typed capability contract work.
 
-Historical dated handoffs are archived and are not execution authority.
+Historical dated handoffs are not execution authority.
 
-## 10. Stable rule
+## 15. Stable rule
 
-> **The current UI-polish checkpoint ends with PR #134. Next, diagnose the Pair-display latency/old-device exit with ADB evidence first; do not guess at a performance fix or resume a broad architecture campaign.**
+> **EPI-MQ is now the current program. The exact evaluator must first gain a generic READY/DEFERRED capability boundary; the later unified quality model must evaluate truthful and false legal candidates together so the algorithm itself decides whether to tell the truth or lie, while the current fixed family probability survives only as a fallback for unsupported/deferred semantics.**
