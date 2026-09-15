@@ -237,6 +237,8 @@ After reading the canonical documents and checking live `main`, start directly w
 
 If the user can reproduce on-device, collect the logs/evidence above first. If device evidence has already been supplied, analyze it before proposing code changes.
 
+The first concrete target is Washerwoman/other Pair-information `展示` latency, not a new UI redesign.
+
 ## 14. Stable rule
 
 > **PR #134 closes the current UI-polish checkpoint. The next phase is evidence-first diagnosis of the Pair-information display stall / old-device abnormal exit, followed by the smallest verified fix.**
