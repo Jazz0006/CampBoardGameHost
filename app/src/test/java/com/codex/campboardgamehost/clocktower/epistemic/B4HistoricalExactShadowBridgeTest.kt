@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.catalog.ClocktowerScriptSource
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
@@ -104,6 +105,34 @@ class B4HistoricalExactShadowBridgeTest {
         assertEquals(B4ShadowOutcome.READY, report.outcome)
         assertEquals(exact(expectedWorlds.size), report.queries.single().before)
         assertEquals(exact(expectedAfterWorlds.size), report.queries.single().after)
+    }
+
+    @Test
+    fun `validated B4 shadow defers unsupported exact semantics before baseline evaluation`() {
+        val unsupportedRuleset = validatedRuleset.copy(
+            script = validatedRuleset.script.copy(
+                source = ClocktowerScriptSource.IMPORTED_HOMEBREW,
+            ),
+        )
+
+        val report = B4DynamicPlayerWorldSetShadow(
+            validatedRuleset = unsupportedRuleset,
+        ).evaluate(
+            B4ShadowRequest(
+                initialSnapshot = snapshot,
+                initialPhase = StorytellerPhase.FIRST_NIGHT,
+                initialRound = 1,
+                actionTimeline = timelineOf(emptyList()),
+                perceivedRolesBySeat = perceived,
+                observationLog = EpistemicObservationLog(),
+                hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+                roleDefinitions = roles,
+                candidates = emptyList(),
+            ),
+        )
+
+        assertEquals(B4ShadowOutcome.DEFERRED_B4, report.outcome)
+        assertEquals(emptyList<B4CandidateWorldQuery>(), report.queries)
     }
 
     private fun exact(count: Int): WorldCardinality.Exact =

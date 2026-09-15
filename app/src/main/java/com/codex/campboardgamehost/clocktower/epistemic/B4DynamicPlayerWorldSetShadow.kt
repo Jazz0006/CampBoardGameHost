@@ -86,6 +86,17 @@ class B4DynamicPlayerWorldSetShadow private constructor(
         request: B4ShadowRequest,
         ruleset: ValidatedClocktowerRuleset,
     ): B4ShadowReport {
+        when (
+            EpistemicEvaluationCapabilityBoundary.assess(
+                validatedRuleset = ruleset,
+                requiredCapabilities = EpistemicEvaluationCapabilityBoundary.HISTORICAL_HYPOTHETICAL_REQUIREMENTS,
+            )
+        ) {
+            EpistemicEvaluationAvailability.Ready -> Unit
+            is EpistemicEvaluationAvailability.Deferred ->
+                return B4ShadowReport(B4ShadowOutcome.DEFERRED_B4, emptyList())
+        }
+
         val setupFormal = try {
             FormalGameState.from(
                 snapshot = request.initialSnapshot,
