@@ -31,6 +31,7 @@ internal fun ClocktowerSlayerTableScreen(
     onResetClaimant: () -> Unit,
     onResolve: () -> Unit,
     onBack: () -> Unit,
+    compact: Boolean = false,
     specialContent: @Composable () -> Unit = {},
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
@@ -39,7 +40,7 @@ internal fun ClocktowerSlayerTableScreen(
     ClocktowerDayTableScaffold(
         previousLabel = text("返回白天", "Return to day"),
         hostToolsLabel = text("主持工具", "Host Tools"),
-        nextLabel = text("结算杀手行动", "Resolve Slayer action"),
+        nextLabel = if (compact) text("确认射击", "Confirm shot") else text("结算杀手行动", "Resolve Slayer action"),
         onPrevious = onBack,
         onHostTools = onHostTools,
         onNext = onResolve,
@@ -71,8 +72,12 @@ internal fun ClocktowerSlayerTableScreen(
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Text(
-                        text = text("第 $round 天 · 杀手行动", "Day $round · Slayer action"),
-                        style = MaterialTheme.typography.titleLarge,
+                        text = if (compact) {
+                            text("杀手 · 第 $round 天", "Slayer · Day $round")
+                        } else {
+                            text("第 $round 天 · 杀手行动", "Day $round · Slayer action")
+                        },
+                        style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Black,
                         textAlign = TextAlign.Center,
                     )
@@ -90,20 +95,31 @@ internal fun ClocktowerSlayerTableScreen(
                         }
                         tableState.choosingClaimant -> {
                             Text(
-                                text = text(
-                                    "点选公开声称发动杀手能力的玩家",
-                                    "Tap the player publicly claiming the Slayer ability",
-                                ),
+                                text = if (compact) {
+                                    text("选择杀手声称者", "Select Slayer claimant")
+                                } else {
+                                    text(
+                                        "点选公开声称发动杀手能力的玩家",
+                                        "Tap the player publicly claiming the Slayer ability",
+                                    )
+                                },
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
                             )
                         }
                         tableState.targetSeatId == null -> {
                             Text(
-                                text = text(
-                                    "声称者：${tableState.claimantName} · 现在点选目标",
-                                    "Claimant: ${tableState.claimantName} · now tap the target",
-                                ),
+                                text = if (compact) {
+                                    text(
+                                        "${tableState.claimantName} → 选择目标",
+                                        "${tableState.claimantName} → select target",
+                                    )
+                                } else {
+                                    text(
+                                        "声称者：${tableState.claimantName} · 现在点选目标",
+                                        "Claimant: ${tableState.claimantName} · now tap the target",
+                                    )
+                                },
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center,
@@ -133,7 +149,10 @@ internal fun ClocktowerSlayerTableScreen(
                             enabled = actionsEnabled,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text(text("重新选择声称者", "Choose a different claimant"))
+                            Text(
+                                if (compact) text("重选声称者", "Change claimant")
+                                else text("重新选择声称者", "Choose a different claimant"),
+                            )
                         }
                     }
 
