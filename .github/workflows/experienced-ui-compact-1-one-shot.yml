@@ -1,0 +1,94 @@
+name: Experienced UI compact one-shot
+
+on:
+  push:
+    branches:
+      - codex/experienced-ui-compact-1
+    paths:
+      - .github/workflows/experienced-ui-compact-1-one-shot.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Lock branch and large-file identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='codex/experienced-ui-compact-1'
+          target='app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt'
+          expected_blob='52af2228d26ba55ac1a045cded5af161f86b9cc0'
+
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          remote_sha="$(git ls-remote origin "refs/heads/$branch" | cut -f1)"
+          test "$remote_sha" = "$GITHUB_SHA"
+          actual_blob="$(git hash-object "$target")"
+          test "$actual_blob" = "$expected_blob"
+
+      - name: Apply exact host wiring patch
+        run: python3 .github/scripts/experienced_ui_compact_1_patch.py
+
+      - name: Audit exact production diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt'
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "$target"
+          git diff -- "$target"
+
+      - name: Run Android FAST and debug build
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew :app:testFast :app:assembleDebug --no-daemon --build-cache
+
+      - name: Commit production patch and remove one-shot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='codex/experienced-ui-compact-1'
+          target='app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt'
+          workflow='.github/workflows/experienced-ui-compact-1-one-shot.yml'
+          script='.github/scripts/experienced_ui_compact_1_patch.py'
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          git add "$target"
+          git rm "$workflow" "$script"
+          git diff --cached --check
+
+          printf '%s\n' "$script" "$workflow" "$target" | sort > "$RUNNER_TEMP/expected.txt"
+          git diff --cached --name-only | sort > "$RUNNER_TEMP/actual.txt"
+          diff -u "$RUNNER_TEMP/expected.txt" "$RUNNER_TEMP/actual.txt"
+
+          git commit -m 'Wire compact Experienced UI presentation'
+          git push origin "HEAD:$branch"
