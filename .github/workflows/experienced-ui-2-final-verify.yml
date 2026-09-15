@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "edd6f2ff7dc2cc336536225bf94f2f49cb0d4388"
+          test "$(git rev-parse HEAD^)" = "fa41fc176544da7771dbb9bf732dcca121f2b8fd"
           test "$(git diff-tree --no-commit-id --name-only -r HEAD)" = ".github/workflows/experienced-ui-2-final-verify.yml"
           git diff --check origin/codex/experienced-ui-compact-1...HEAD
 
