@@ -27,7 +27,9 @@ class ClocktowerNightStepExperienceCopyContractTest {
         assertTrue(source.contains("ClocktowerPlainInformationSquareTableDialog("))
         assertTrue(pairSource.contains("allowManualEditing: Boolean"))
         assertTrue(pairSource.contains("if (allowManualEditing &&"))
-        assertTrue(pairSource.contains("Choose manually"))
+        assertTrue(pairSource.contains("onStartEditing()"))
+        assertFalse(pairSource.contains("Choose manually"))
+        assertTrue(pairSource.contains("\"Change\""))
     }
 
     private fun sourceFile(relativeText: String): String {
