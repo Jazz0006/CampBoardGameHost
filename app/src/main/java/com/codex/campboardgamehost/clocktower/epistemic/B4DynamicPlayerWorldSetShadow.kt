@@ -88,7 +88,7 @@ class B4DynamicPlayerWorldSetShadow private constructor(
     ): B4ShadowReport {
         when (
             EpistemicEvaluationCapabilityBoundary.assess(
-                rulesetRef = request.initialSnapshot.rulesetRef,
+                validatedRuleset = ruleset,
                 requiredCapabilities = EpistemicEvaluationCapabilityBoundary.HISTORICAL_HYPOTHETICAL_REQUIREMENTS,
             )
         ) {
