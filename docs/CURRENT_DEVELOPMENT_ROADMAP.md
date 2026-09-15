@@ -24,22 +24,23 @@ EXPERIENCED-UI-2 night information surfaces       COMPLETE / PR #131
 EXPERIENCED-UI-3 device-feedback refinements      COMPLETE / PR #132
 EXPERIENCED-UI-4 poison + ranked recommendations  COMPLETE / PR #133
 DAY-UI-1 centered daytime domain actions          COMPLETE / PR #134
+EPI-MQ-0.5 epistemic capability boundary          COMPLETE / PR #135
 
 CURRENT:
-EPI-MQ-0.5 — generic epistemic capability / DEFERRED boundary
+EPI-MQ-1 — neutral hypothetical observation evaluator
 
 NEXT:
-EPI-MQ-1 — neutral hypothetical observation evaluator
-then EPI-MQ-2 / 2.5 / 3 / 4 / 5 under the unified truth+false route
+EPI-MQ-2 — hard consistency / exposure gates
+then EPI-MQ-2.5 / 3 / 4 / 5 under the unified truth+false route
 
 PAUSED / DEFERRED:
 Pair-information display latency / old-device ADB diagnosis
 UX-R6 recommendation-provider replacement
 ```
 
-Current product-code baseline after PR #134:
+Current product-code baseline after PR #135:
 
-`1cdc35886aea654ad82bf4e2a388095880686ed5`
+`13d0921b3df13c2618a15eb3c4d7840c750eba3a`
 
 The current EPI-MQ route decision is:
 
@@ -51,11 +52,11 @@ The earlier foundation audit remains useful historical/architectural evidence:
 
 Completed campaign documents are historical evidence, not current execution authority.
 
-## 2. Current priority — EPI-MQ restart
+## 2. Current priority — EPI-MQ neutral evaluator
 
 The user has explicitly reprioritized away from the Pair-display ADB investigation and back to consistency / productive-uncertainty work.
 
-The key route correction is now authoritative:
+The key route correction remains authoritative:
 
 > **EPI-MQ must ultimately decide both whether an impaired ability should tell the truth and, when false information is better, which legal lie to tell.**
 
@@ -65,15 +66,19 @@ Truthful and false legal candidates must eventually compete in one epistemic-qua
 
 Do not permanently preserve a design where a fixed family roll decides truth-versus-false first and EPI-MQ only ranks candidates inside the false family.
 
+EPI-MQ-0.5 is complete. PR #135 added an explicit capability-only `READY / DEFERRED` boundary, keeps unsupported semantics distinct from zero-world/UNSAT results, assesses support from the validated ruleset rather than ScriptId alone, and makes B4 historical exact evaluation defer before entering an unsupported exact baseline. The lower-level Trouble Brewing exact baseline remains fail-closed when called directly.
+
+The next implementation target is EPI-MQ-1: extract the already-proven historical hypothetical evaluation out of B4-specific ownership into a neutral epistemic service.
+
 ## 3. Authoritative EPI-MQ sequence
 
 ```text
-EPI-MQ-0.5  Capability Boundary
+EPI-MQ-0.5  Capability Boundary                         COMPLETE / PR #135
             - generic exact-evaluation capability contract
             - READY vs DEFERRED / unsupported semantics
             - DEFERRED != UNSAT
 
-EPI-MQ-1    Neutral Hypothetical Evaluator
+EPI-MQ-1    Neutral Hypothetical Evaluator              CURRENT
             - exact
             - mutation-free
             - recipient-knowledge-safe
@@ -112,19 +117,24 @@ EPI-MQ-5    Calibration / Fallback Refinement
 
 The former concept `False-family Selection Cutover` is superseded by **Unified Impaired-Information Production Cutover**.
 
-## 4. Current implementation target — EPI-MQ-0.5
+## 4. EPI-MQ-0.5 completed contract
 
-Start by establishing the capability boundary around exact hypothetical epistemic evaluation.
-
-Required semantic distinction:
+PR #135 established the capability boundary with these semantics:
 
 ```text
 READY
-  exact hypothetical evaluation is supported
+  requested exact epistemic capabilities are supported by the validated ruleset
 
-DEFERRED / UNSUPPORTED_SEMANTICS
-  required role/script epistemic semantics are not implemented
+DEFERRED
+  one or more required exact epistemic capabilities are unavailable
+  missing capabilities are explicit
 ```
+
+Current capabilities are typed separately for exact historical replay and exact hypothetical-observation evaluation so future scripts may gain partial semantic support without pretending every advanced operation is ready.
+
+Only the validated built-in official Trouble Brewing ruleset is currently READY for the combined historical+hypothetical requirement. Imported/homebrew content cannot inherit support merely by reusing the `trouble_brewing` identifier.
+
+B4 is the first real consumer: unsupported validated semantics return `DEFERRED_B4` with no query result rather than falling through into an exact world count. Direct low-level `EnumeratedHistoricalExactBaseline` unsupported calls remain fail-closed.
 
 Invariant:
 
@@ -132,18 +142,45 @@ Invariant:
 DEFERRED != UNSAT
 ```
 
-EPI-MQ-0.5 must not:
+No recommendation ranking, truth/false family probability, UI behavior, or Trouble Brewing exact semantics changed in EPI-MQ-0.5.
 
-- change production recommendation results;
-- change current truth/false family probability;
-- implement full Pukka/Moonchild semantics;
-- cut ZDD over to production correctness authority;
-- add a new candidate legality model;
-- mix in Pair-display ADB work or UI redesign.
+## 5. Current implementation target — EPI-MQ-1
 
-The high-level evaluator must be able to defer unsupported/custom script semantics even if lower-level current Trouble Brewing exact classes remain fail-closed internally.
+Extract the exact hypothetical historical evaluation mechanics currently embedded in `B4DynamicPlayerWorldSetShadow` into neutral `clocktower/epistemic` ownership.
 
-## 5. EPI-MQ architectural ownership
+The neutral evaluator must own the semantic operation, not recommendation policy and not B4 shadow reporting.
+
+Required input/output shape should remain narrow and typed, conceptually:
+
+```text
+validated ruleset
++ recipient-visible historical context
++ exact hypothesis
++ one hypothetical EpistemicObservation
+        ↓
+READY
+  BEFORE exact world diagnostics
+  AFTER exact world diagnostics
+
+or
+
+DEFERRED
+  missing/unsupported capability
+```
+
+Required properties:
+
+- exact and deterministic;
+- mutation-free;
+- recipient-knowledge-safe;
+- candidate observation is applied exactly once;
+- no actual hidden Storyteller targets become recipient constraints;
+- capability DEFERRED is propagated rather than translated into contradiction;
+- B4 becomes a consumer of this neutral owner instead of implementing the filtering itself.
+
+Do not change production recommendation results in EPI-MQ-1.
+
+## 6. EPI-MQ architectural ownership
 
 Preserve the dependency direction:
 
@@ -188,9 +225,9 @@ Avoid a dependency cycle such as:
 recommendation -> session -> epistemic -> recommendation
 ```
 
-The exact composition seam should be confirmed during the EPI-MQ-1 fan-out audit.
+The exact composition seam between session preflight and neutral evaluator must be confirmed during the current EPI-MQ-1 fan-out audit rather than by moving session authority into epistemic code.
 
-## 6. Existing implementation that must be reused
+## 7. Existing implementation that must be reused
 
 Do not create parallel semantic authorities.
 
@@ -201,9 +238,10 @@ Reuse:
 - `EpistemicObservationDraft` as the unbound player-visible observation representation;
 - `ClocktowerGameSession.preflightGlobalEpistemicObservation()` for non-mutating hypothetical binding;
 - `EnumeratedHistoricalExactBaseline` and `EnumeratedHistoricalWorldReplay` as current historical exact correctness machinery;
-- existing B4 historical exact behavior as characterization evidence during neutral evaluator extraction.
+- existing B4 historical exact behavior as characterization evidence during neutral evaluator extraction;
+- `EpistemicEvaluationCapabilityBoundary` from EPI-MQ-0.5 for READY/DEFERRED semantics.
 
-Current implementation has two levels:
+Current implementation has two recommendation levels:
 
 ```text
 1. ImpairedInformationPolicy
@@ -215,7 +253,7 @@ Current implementation has two levels:
 
 This remains valid as a fallback path. It is no longer the intended final READY-path decision architecture.
 
-## 7. Unified truth+false decision principle
+## 8. Unified truth+false decision principle
 
 The quality model must not reward or punish a candidate merely because it is truthful or false.
 
@@ -242,7 +280,7 @@ Likely future diagnostics include:
 
 World cardinality alone is insufficient.
 
-## 8. Dynamic/custom-script and exact-engine constraints
+## 9. Dynamic/custom-script and exact-engine constraints
 
 The earlier extensibility decision remains in force:
 
@@ -251,9 +289,9 @@ The earlier extensibility decision remains in force:
 - Trouble Brewing enumerated/historical exact remains current correctness authority;
 - A4/ZDD remains representation/shadow work until separately authorized;
 - ASP/Clingo remains cross-validation evidence;
-- future roles such as Pukka/Moonchild are useful architecture stress tests, not prerequisites for EPI-MQ-0.5.
+- future roles such as Pukka/Moonchild are useful architecture stress tests, not prerequisites for EPI-MQ-1.
 
-## 9. Hidden-information boundary
+## 10. Hidden-information boundary
 
 EPI-MQ may reason only from recipient-visible knowledge.
 
@@ -269,7 +307,7 @@ Do not directly constrain candidate quality with Storyteller-only facts such as:
 
 Historical replay must regenerate hidden mechanics from rules/per-world state rather than copying the actual Storyteller-selected hidden target into all possible worlds.
 
-## 10. Stable presentation contracts
+## 11. Stable presentation contracts
 
 Recent UI work remains stable and is not part of the EPI-MQ restart:
 
@@ -283,7 +321,7 @@ Recent UI work remains stable and is not part of the EPI-MQ restart:
 
 Do not mix EPI-MQ implementation with presentation redesign.
 
-## 11. Testing and repository-writing policy
+## 12. Testing and repository-writing policy
 
 Follow:
 
@@ -293,33 +331,39 @@ Follow:
 
 Durable new semantic seams require focused typed behavior tests. Pure extraction should rely on existing GREEN characterization where it already proves behavior instead of manufacturing ritual RED tests.
 
-Minimum upcoming proof includes:
+EPI-MQ-0.5 evidence now includes capability tests plus a B4 consumer test, and PR #135 passed CI and R2 before merge.
+
+Minimum EPI-MQ-1 proof includes:
 
 ```text
-supported Trouble Brewing -> READY
-unsupported script/role semantics -> DEFERRED
-DEFERRED != UNSAT
-same history + same candidate -> deterministic diagnostics
-hypothetical evaluation does not mutate live session
+same history + same candidate -> deterministic BEFORE/AFTER
+neutral evaluator and existing B4 behavior remain equivalent
+hypothetical evaluation does not mutate durable session/input state
 candidate observation is applied exactly once
 hidden target changes do not leak into recipient result
+unsupported semantics remain DEFERRED rather than UNSAT
+```
+
+Later proof must additionally establish:
+
+```text
 truthful and false candidates are both evaluated in EPI-MQ-2.5 shadow mode
 unified model can prefer truth in one state and falsehood in another
 ```
 
 At logical checkpoints use the epistemic/enumeration escalation defined by `docs/TESTING_STRATEGY.md`.
 
-## 12. Paused issue — Pair-display latency / old-device exit
+## 13. Paused issue — Pair-display latency / old-device exit
 
 The Pair-information player-display stall and older-device abnormal exit remain real but are no longer the current priority because the user explicitly reprioritized development.
 
 The previous ADB investigation plan remains available in repository history and can be resumed later. Do not mix it into EPI-MQ commits unless new evidence shows a direct architectural connection.
 
-## 13. Unrelated work
+## 14. Unrelated work
 
-PR #109 (`Reproduce restored execution preflight crash`) remains unrelated unless its live state changes. Re-query before touching it and do not fold it into EPI-MQ without a separate decision.
+PR #109 (`Reproduce restored execution preflight crash`) remains unrelated unless its live status changes. Re-query before touching it and do not fold it into EPI-MQ without a separate decision.
 
-## 14. Next-conversation reading order
+## 15. Next-conversation reading order
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
@@ -328,10 +372,10 @@ PR #109 (`Reproduce restored execution preflight crash`) remains unrelated unles
 5. `docs/EPI_MQ_ROUTE_REAUDIT_2026-09-15.md`;
 6. use `docs/EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md` as supporting foundation/history;
 7. query live `main` and relevant open PR/check state;
-8. begin EPI-MQ-0.5 implementation fan-out audit and typed capability contract work.
+8. continue EPI-MQ-1 fan-out audit and neutral evaluator extraction.
 
 Historical dated handoffs are not execution authority.
 
-## 15. Stable rule
+## 16. Stable rule
 
-> **EPI-MQ is now the current program. The exact evaluator must first gain a generic READY/DEFERRED capability boundary; the later unified quality model must evaluate truthful and false legal candidates together so the algorithm itself decides whether to tell the truth or lie, while the current fixed family probability survives only as a fallback for unsupported/deferred semantics.**
+> **EPI-MQ-0.5 is complete. EPI-MQ-1 now extracts a neutral exact hypothetical evaluator under epistemic ownership; later the unified quality model evaluates truthful and false legal candidates together so the algorithm itself decides whether to tell the truth or lie, while the current fixed family probability survives only as a fallback for unsupported/deferred semantics.**
