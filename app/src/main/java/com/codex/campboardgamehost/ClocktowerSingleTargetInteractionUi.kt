@@ -78,17 +78,32 @@ internal fun ClocktowerNightRulingSection(
     onEvent: (ClocktowerSingleTargetEvent) -> Unit,
 ) {
     val isMayor = presentation.action == ClocktowerNightAction.MayorRedirect
+    val compact = !presentation.automatic
     ClocktowerSingleTargetSquareTableDialog(
         seats = seats,
         selectedSeat = presentation.selection.selectedSeat,
         selectableSeats = presentation.selection.selectableSeats,
         enabled = presentation.selection.enabled,
-        title = if (isMayor) {
-            if (language == "en") "Mayor · Redirect death" else "市长 · 转移死亡"
+        title = if (compact) {
+            if (isMayor) {
+                if (language == "en") "Mayor · Redirect death" else "市长 · 转移死亡"
+            } else {
+                if (language == "en") "Imp · Succession" else "小恶魔 · 传承"
+            }
+        } else if (isMayor) {
+            if (language == "en") "The Demon attacked the Mayor" else "市长被恶魔击杀"
         } else {
-            if (language == "en") "Imp · Succession" else "小恶魔 · 传承"
+            if (language == "en") "Choose the new Imp" else "选择新小恶魔"
         },
-        helper = null,
+        helper = if (compact) {
+            null
+        } else if (isMayor) {
+            if (language == "en") {
+                "Choosing a dead or protected player as the redirect target can result in no death tonight."
+            } else {
+                "选择死亡或受保护的玩家作为转移目标，可能导致今夜无人死亡。"
+            }
+        } else presentation.explanation,
         language = language,
         canGoPrevious = canGoPrevious,
         onSeatSelected = { onEvent(ClocktowerSingleTargetEvent.SelectSeat(it)) },
@@ -96,7 +111,7 @@ internal fun ClocktowerNightRulingSection(
         onHostTools = onHostTools,
         onNext = { onEvent(ClocktowerSingleTargetEvent.Next) },
         nextEnabled = presentation.confirmationEnabled,
-        showSelectionSummary = false,
+        showSelectionSummary = !compact,
         secondaryActionLabel = if (isMayor) {
             if (language == "en") "Mayor dies" else "市长死亡"
         } else null,
