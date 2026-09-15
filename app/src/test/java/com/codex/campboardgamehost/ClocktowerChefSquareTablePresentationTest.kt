@@ -18,6 +18,7 @@ class ClocktowerChefSquareTablePresentationTest {
             seatNumber = 2,
             actorSeat = 1,
             actualEvilSeats = setOf(2, 3),
+            spySeat = null,
             recluseSeat = 4,
             effectivePairSeats = emptySet(),
             language = "zh",
@@ -26,6 +27,7 @@ class ClocktowerChefSquareTablePresentationTest {
             seatNumber = 4,
             actorSeat = 1,
             actualEvilSeats = setOf(2, 3),
+            spySeat = null,
             recluseSeat = 4,
             effectivePairSeats = emptySet(),
             language = "zh",
@@ -34,6 +36,7 @@ class ClocktowerChefSquareTablePresentationTest {
             seatNumber = 1,
             actorSeat = 1,
             actualEvilSeats = setOf(2, 3),
+            spySeat = null,
             recluseSeat = 4,
             effectivePairSeats = emptySet(),
             language = "zh",
@@ -41,7 +44,7 @@ class ClocktowerChefSquareTablePresentationTest {
 
         assertEquals(ClocktowerSquareTableSeatState.HighlightedInformation, visualEvil.state)
         assertEquals(null, visualEvil.badge)
-        assertEquals(ClocktowerSquareTableSeatState.Neutral, visualRecluse.state)
+        assertEquals(ClocktowerSquareTableSeatState.RegistrationHint, visualRecluse.state)
         assertEquals("隐", visualRecluse.badge)
         assertTrue(visualActor.isCurrentActor)
         assertFalse(visualEvil.isCurrentActor)
@@ -57,12 +60,14 @@ class ClocktowerChefSquareTablePresentationTest {
             seatNumber = 4,
             actorSeat = 1,
             actualEvilSeats = clocktowerChefActualEvilSeats(players),
+            spySeat = null,
             recluseSeat = clocktowerChefRecluseSeat(players),
             effectivePairSeats = clocktowerChefEffectivePairSeats(players, option, 2),
             language = "zh",
         )
-        assertEquals(ClocktowerSquareTableSeatState.SelectedHighlighted, recluseVisual.state)
+        assertEquals(ClocktowerSquareTableSeatState.RegistrationHint, recluseVisual.state)
         assertEquals("隐", recluseVisual.badge)
+        assertEquals("★", recluseVisual.marker)
     }
 
     @Test
@@ -111,6 +116,19 @@ class ClocktowerChefSquareTablePresentationTest {
         assertEquals(setOf(2), clocktowerChefEffectiveEvilSeats(players, option))
         assertEquals(emptySet<Int>(), clocktowerChefEffectivePairSeats(players, option, value = 0))
         assertEquals(setOf(2, 3), clocktowerChefActualEvilSeats(players))
+
+        val spyVisual = clocktowerChefSeatVisual(
+            seatNumber = 3,
+            actorSeat = 1,
+            actualEvilSeats = setOf(2, 3),
+            spySeat = 3,
+            recluseSeat = null,
+            effectivePairSeats = emptySet(),
+            language = "zh",
+        )
+        assertEquals(ClocktowerSquareTableSeatState.RegistrationHint, spyVisual.state)
+        assertEquals("间", spyVisual.badge)
+        assertEquals(null, spyVisual.marker)
     }
 
     @Test

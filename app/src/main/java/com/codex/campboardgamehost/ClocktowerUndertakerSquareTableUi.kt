@@ -157,6 +157,32 @@ internal fun clocktowerUndertakerSeatVisual(
     isCurrentActor = seatNumber == actorSeat,
 )
 
+internal fun clocktowerUndertakerPlayerDisplayStep(
+    displayStep: ClocktowerNightStepUi,
+    choice: ClocktowerUndertakerResultChoice,
+    cards: List<PlayerCard>,
+    language: String,
+): ClocktowerNightStepUi {
+    val executedName = cards.getOrNull(choice.executedSeat - 1)?.name.orEmpty()
+    val executedLabel = if (language == "en") {
+        "P${choice.executedSeat} $executedName".trim()
+    } else {
+        "${choice.executedSeat}号 $executedName".trim()
+    }
+    val lead = if (language == "en") {
+        "Yesterday's executed player, $executedLabel, was"
+    } else {
+        "昨天被处决的 $executedLabel，身份是"
+    }
+    return displayStep.copy(
+        displayKind = ClocktowerDisplayKind.RoleReveal,
+        displayTitle = lead,
+        displayPrimary = choice.displayLabel,
+        displaySecondary = null,
+        displayFooter = null,
+    )
+}
+
 @Composable
 internal fun ClocktowerUndertakerSquareTableDialog(
     seats: List<HostSeatPresentation>,

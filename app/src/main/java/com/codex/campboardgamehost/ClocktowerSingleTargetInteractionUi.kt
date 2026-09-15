@@ -102,7 +102,11 @@ internal fun ClocktowerNightRulingSection(
             if (language == "en") "Choose the new Imp" else "选择新小恶魔"
         },
         helper = if (compact) {
-            null
+            if (!isMayor) {
+                if (language == "en") "Choose the Minion who becomes the new Imp" else "选择继任小恶魔的爪牙"
+            } else {
+                null
+            }
         } else if (isMayor) {
             if (language == "en") {
                 "Choosing a dead or protected player as the redirect target can result in no death tonight."

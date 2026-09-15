@@ -51,6 +51,7 @@ internal enum class ClocktowerSquareTableSeatState {
     Selected,
     SelectedHighlighted,
     HighlightedInformation,
+    RegistrationHint,
     Disabled,
 }
 
@@ -680,6 +681,7 @@ private fun ClocktowerSquareTableSeat(
                             ClocktowerSquareTableSeatState.Selected,
                             ClocktowerSquareTableSeatState.SelectedHighlighted,
                             ClocktowerSquareTableSeatState.HighlightedInformation,
+                            ClocktowerSquareTableSeatState.RegistrationHint,
                         )
                     ) {
                         FontWeight.Black
@@ -757,6 +759,12 @@ private fun clocktowerSquareTableSeatPalette(
             border = colors.tertiary,
             borderWidth = 3.dp,
         )
+        ClocktowerSquareTableSeatState.RegistrationHint -> ClocktowerSquareTableSeatPalette(
+            container = colors.errorContainer.copy(alpha = 0.72f),
+            content = colors.onErrorContainer,
+            border = colors.error.copy(alpha = 0.78f),
+            borderWidth = 3.dp,
+        )
         ClocktowerSquareTableSeatState.Disabled -> ClocktowerSquareTableSeatPalette(
             container = colors.surfaceVariant.copy(alpha = 0.55f),
             content = colors.onSurfaceVariant.copy(alpha = 0.72f),
@@ -776,5 +784,6 @@ private fun clocktowerSquareTableStateMarker(
     ClocktowerSquareTableSeatState.Selected -> "✓"
     ClocktowerSquareTableSeatState.SelectedHighlighted -> "✓★"
     ClocktowerSquareTableSeatState.HighlightedInformation -> "★"
+    ClocktowerSquareTableSeatState.RegistrationHint -> null
     ClocktowerSquareTableSeatState.Disabled -> "×"
 }

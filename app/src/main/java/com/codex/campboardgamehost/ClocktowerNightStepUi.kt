@@ -439,7 +439,10 @@ internal fun ClocktowerNightStepCardLocalized(
         ?.firstOrNull { choice -> choice.recommended && choice.value in fortuneTellerLegalResults }
         ?.value
 
-    fun showRecommendedDisplayOption(option: ClocktowerDisplayOption) {
+    fun showRecommendedDisplayOption(
+        option: ClocktowerDisplayOption,
+        transformDisplayStep: (ClocktowerNightStepUi) -> ClocktowerNightStepUi = { it },
+    ) {
         onApplyRecommendedDisplayOption(option)
         selectionAudit?.let { audit ->
             audit.recorder.recordCommittedSelection(
@@ -453,7 +456,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 ),
             )
         }
-        onShowPlayerDisplay(resolveClocktowerPlayerDisplay(step, option))
+        onShowPlayerDisplay(transformDisplayStep(resolveClocktowerPlayerDisplay(step, option)))
     }
 
     fun showChefChoice(choice: ClocktowerChefResultChoice) {
@@ -557,18 +560,23 @@ internal fun ClocktowerNightStepCardLocalized(
     }
 
     fun showUndertakerChoice(choice: ClocktowerUndertakerResultChoice) {
+        fun undertakerDisplay(displayStep: ClocktowerNightStepUi): ClocktowerNightStepUi =
+            clocktowerUndertakerPlayerDisplayStep(displayStep, choice, cards, language)
+
         when (choice.sourceKind) {
             ClocktowerUndertakerResultSourceKind.DisplayOption -> {
-                choice.displayOption?.let(::showRecommendedDisplayOption)
+                choice.displayOption?.let { option ->
+                    showRecommendedDisplayOption(option, ::undertakerDisplay)
+                }
             }
 
             ClocktowerUndertakerResultSourceKind.LegacyUnreliable -> {
                 choice.displayOption?.let { option ->
-                    onShowPlayerDisplay(resolveClocktowerLegacyUnreliablePlayerDisplay(step, option))
+                    onShowPlayerDisplay(undertakerDisplay(resolveClocktowerLegacyUnreliablePlayerDisplay(step, option)))
                 }
             }
 
-            ClocktowerUndertakerResultSourceKind.Direct -> onShowPlayerDisplay(step)
+            ClocktowerUndertakerResultSourceKind.Direct -> onShowPlayerDisplay(undertakerDisplay(step))
         }
     }
 
@@ -1077,6 +1085,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
                     actualEvilSeats = clocktowerChefActualEvilSeats(chefPlayers),
+                    spySeat = clocktowerChefSpySeat(chefPlayers),
                     recluseSeat = clocktowerChefRecluseSeat(chefPlayers),
                     choices = chefResultChoices,
                     language = language,
@@ -1096,6 +1105,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
                     actualEvilSeats = clocktowerEmpathActualEvilSeats(empathPlayers),
+                    spySeat = clocktowerEmpathSpySeat(empathPlayers),
                     recluseSeat = clocktowerEmpathRecluseSeat(empathPlayers),
                     choices = empathResultChoices,
                     language = language,

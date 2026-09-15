@@ -48,6 +48,7 @@ internal data class ClocktowerEmpathResultChoice(
 internal data class ClocktowerEmpathSeatVisual(
     val state: ClocktowerSquareTableSeatState,
     val badge: String?,
+    val marker: String?,
     val isCurrentActor: Boolean,
 )
 
@@ -71,6 +72,10 @@ internal fun clocktowerEmpathScopeSeats(
 internal fun clocktowerEmpathActualEvilSeats(players: List<PlayerState>): Set<Int> = players
     .filter { player -> player.actualAlignment == ClocktowerAlignment.EVIL }
     .mapTo(linkedSetOf()) { player -> player.seat }
+
+internal fun clocktowerEmpathSpySeat(players: List<PlayerState>): Int? = players
+    .firstOrNull { player -> player.actualRole.value == "Spy" }
+    ?.seat
 
 internal fun clocktowerEmpathRecluseSeat(players: List<PlayerState>): Int? = players
     .firstOrNull { player -> player.actualRole.value == "Recluse" }
@@ -119,25 +124,32 @@ internal fun clocktowerEmpathSeatVisual(
     actorSeat: Int?,
     scopeSeats: Set<Int>,
     actualEvilSeats: Set<Int>,
+    spySeat: Int?,
     recluseSeat: Int?,
     contributingSeats: Set<Int>,
     language: String,
 ): ClocktowerEmpathSeatVisual {
     val inScope = seatNumber in scopeSeats
-    val isRecluse = seatNumber == recluseSeat
+    val isSpy = inScope && seatNumber == spySeat
+    val isRecluse = inScope && seatNumber == recluseSeat
+    val isRegistrationRole = isSpy || isRecluse
+    val contributes = seatNumber in contributingSeats
     val badge = when {
-        inScope && isRecluse -> if (language == "en") "N·R" else "邻·隐"
+        isSpy -> if (language == "en") "N·S" else "邻·间"
+        isRecluse -> if (language == "en") "N·R" else "邻·隐"
         inScope -> if (language == "en") "N" else "邻"
-        isRecluse -> if (language == "en") "R" else "隐"
         else -> null
     }
     return ClocktowerEmpathSeatVisual(
         state = when {
-            seatNumber in contributingSeats -> ClocktowerSquareTableSeatState.SelectedHighlighted
+            !inScope -> ClocktowerSquareTableSeatState.Neutral
+            isRegistrationRole -> ClocktowerSquareTableSeatState.RegistrationHint
+            contributes -> ClocktowerSquareTableSeatState.SelectedHighlighted
             seatNumber in actualEvilSeats -> ClocktowerSquareTableSeatState.HighlightedInformation
             else -> ClocktowerSquareTableSeatState.Neutral
         },
         badge = badge,
+        marker = if (isRegistrationRole && contributes) "★" else null,
         isCurrentActor = seatNumber == actorSeat,
     )
 }
@@ -253,6 +265,7 @@ internal fun ClocktowerEmpathSquareTableDialog(
     actorSeat: Int?,
     wakeInstruction: String?,
     actualEvilSeats: Set<Int>,
+    spySeat: Int?,
     recluseSeat: Int?,
     choices: List<ClocktowerEmpathResultChoice>,
     language: String,
@@ -278,9 +291,7 @@ internal fun ClocktowerEmpathSquareTableDialog(
         )
         return
     }
-    var selectedKey by remember(choices.map { it.key }) { mutableStateOf(initialChoice.key) }
-    val selectedChoice = choices.firstOrNull { it.key == selectedKey } ?: initialChoice
-    val displayedContributionSeats = clocktowerEmpathDisplayedContributionSeats(choices, selectedChoice.key)
+    val displayedContributionSeats = clocktowerEmpathDisplayedContributionSeats(choices, initialChoice.key)
 
     ClocktowerHostSquareTableScaffold(
         seats = seats,
@@ -295,8 +306,9 @@ internal fun ClocktowerEmpathSquareTableDialog(
             val visual = clocktowerEmpathSeatVisual(
                 seatNumber = seat.seatId.number,
                 actorSeat = actorSeat,
-                scopeSeats = selectedChoice.scopeSeats,
+                scopeSeats = initialChoice.scopeSeats,
                 actualEvilSeats = actualEvilSeats,
+                spySeat = spySeat,
                 recluseSeat = recluseSeat,
                 contributingSeats = displayedContributionSeats,
                 language = language,
@@ -311,6 +323,7 @@ internal fun ClocktowerEmpathSquareTableDialog(
                 state = visual.state,
                 isCurrentActor = visual.isCurrentActor,
                 badge = visual.badge,
+                stateMarkerOverride = visual.marker,
             )
         },
     ) {
@@ -336,54 +349,13 @@ internal fun ClocktowerEmpathSquareTableDialog(
                     )
                     Spacer(Modifier.height(8.dp))
 
-                    if (choices.size > 1) {
-                        Text(
-                            text = if (language == "en") "Choose the number to show" else "选择要展示的数字",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        choices.chunked(3).forEach { rowChoices ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                rowChoices.forEach { choice ->
-                                    if (choice.key == selectedChoice.key) {
-                                        Button(
-                                            onClick = { selectedKey = choice.key },
-                                            modifier = Modifier.weight(1f),
-                                        ) {
-                                            Text(choice.value.toString(), maxLines = 1)
-                                        }
-                                    } else {
-                                        OutlinedButton(
-                                            onClick = { selectedKey = choice.key },
-                                            modifier = Modifier.weight(1f),
-                                        ) {
-                                            Text(choice.value.toString(), maxLines = 1)
-                                        }
-                                    }
-                                }
-                                repeat(3 - rowChoices.size) { Spacer(Modifier.weight(1f)) }
-                            }
-                            Spacer(Modifier.height(4.dp))
-                        }
-                    }
-
-                    Button(
-                        onClick = { onConfirm(selectedChoice) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            if (language == "en") {
-                                "Show information: ${selectedChoice.value}"
-                            } else {
-                                "展示信息：${selectedChoice.value}"
-                            },
-                            maxLines = 1,
-                        )
-                    }
+                    ClocktowerExperiencedNumericChoiceRows(
+                        choices = choices,
+                        recommendedChoice = initialChoice,
+                        language = language,
+                        valueOf = ClocktowerEmpathResultChoice::value,
+                        onConfirm = onConfirm,
+                    )
                 }
             }
     }
