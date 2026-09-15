@@ -117,6 +117,30 @@ class ClocktowerUndertakerSquareTablePresentationTest {
     }
 
     @Test
+    fun `player reveal leads with executed player and shows role as primary`() {
+        val choice = ClocktowerUndertakerResultChoice(
+            key = "chef",
+            executedSeat = 4,
+            roleId = RoleId("Chef"),
+            displayLabel = "厨师",
+            sourceKind = ClocktowerUndertakerResultSourceKind.Direct,
+        )
+        val cards = List(7) { index ->
+            PlayerCard(
+                name = "P${index + 1}",
+                role = Role.Civilian,
+                word = "",
+            )
+        }
+        val display = clocktowerUndertakerPlayerDisplayStep(undertakerStep(), choice, cards, "zh")
+
+        assertEquals("昨天被处决的 4号 P4，身份是", display.displayTitle)
+        assertEquals("厨师", display.displayPrimary)
+        assertNull(display.displaySecondary)
+        assertNull(display.displayFooter)
+    }
+
+    @Test
     fun `executed context and current actor are independent visual dimensions`() {
         val executed = clocktowerUndertakerSeatVisual(
             seatNumber = 4,

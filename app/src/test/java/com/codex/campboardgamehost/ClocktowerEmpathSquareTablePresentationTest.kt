@@ -50,6 +50,7 @@ class ClocktowerEmpathSquareTablePresentationTest {
             actorSeat = 1,
             scopeSeats = setOf(2, 5),
             actualEvilSeats = setOf(2, 3),
+            spySeat = null,
             recluseSeat = 5,
             contributingSeats = emptySet(),
             language = "zh",
@@ -59,6 +60,7 @@ class ClocktowerEmpathSquareTablePresentationTest {
             actorSeat = 1,
             scopeSeats = setOf(2, 5),
             actualEvilSeats = setOf(2, 3),
+            spySeat = null,
             recluseSeat = 5,
             contributingSeats = emptySet(),
             language = "zh",
@@ -68,6 +70,7 @@ class ClocktowerEmpathSquareTablePresentationTest {
             actorSeat = 1,
             scopeSeats = setOf(2, 5),
             actualEvilSeats = setOf(2, 3),
+            spySeat = null,
             recluseSeat = 5,
             contributingSeats = emptySet(),
             language = "zh",
@@ -75,10 +78,23 @@ class ClocktowerEmpathSquareTablePresentationTest {
 
         assertEquals(ClocktowerSquareTableSeatState.HighlightedInformation, evil.state)
         assertEquals("邻", evil.badge)
-        assertEquals(ClocktowerSquareTableSeatState.Neutral, recluse.state)
+        assertEquals(ClocktowerSquareTableSeatState.RegistrationHint, recluse.state)
         assertEquals("邻·隐", recluse.badge)
         assertTrue(actor.isCurrentActor)
         assertFalse(evil.isCurrentActor)
+
+        val unrelatedEvil = clocktowerEmpathSeatVisual(
+            seatNumber = 3,
+            actorSeat = 1,
+            scopeSeats = setOf(2, 5),
+            actualEvilSeats = setOf(2, 3),
+            spySeat = null,
+            recluseSeat = 5,
+            contributingSeats = emptySet(),
+            language = "zh",
+        )
+        assertEquals(ClocktowerSquareTableSeatState.Neutral, unrelatedEvil.state)
+        assertEquals(null, unrelatedEvil.badge)
     }
 
     @Test
@@ -111,6 +127,20 @@ class ClocktowerEmpathSquareTablePresentationTest {
 
         assertEquals(emptySet<Int>(), clocktowerEmpathContributingSeats(players, option, value = 0))
         assertEquals(setOf(2), clocktowerEmpathActualEvilSeats(players))
+
+        val spyVisual = clocktowerEmpathSeatVisual(
+            seatNumber = 2,
+            actorSeat = 1,
+            scopeSeats = setOf(2, 3),
+            actualEvilSeats = setOf(2),
+            spySeat = 2,
+            recluseSeat = null,
+            contributingSeats = emptySet(),
+            language = "zh",
+        )
+        assertEquals(ClocktowerSquareTableSeatState.RegistrationHint, spyVisual.state)
+        assertEquals("邻·间", spyVisual.badge)
+        assertEquals(null, spyVisual.marker)
     }
 
     @Test

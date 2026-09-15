@@ -119,6 +119,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                     isSelectedCandidate = isSelectedCandidate,
                     selectedRoleId = selection.selectedRoleId,
                     actualRoleId = seat.actualRole?.roleId,
+                    selectedOption = selection.resolvedOption,
                 ),
             )
         },
@@ -151,14 +152,17 @@ internal fun clocktowerPairInformationTruthMarker(
     isSelectedCandidate: Boolean,
     selectedRoleId: String?,
     actualRoleId: String?,
-): String? = if (
-    isSelectedCandidate &&
-    selectedRoleId != null &&
-    actualRoleId == selectedRoleId
-) {
-    "✓"
-} else {
-    null
+    selectedOption: ClocktowerDisplayOption?,
+): String? {
+    if (!isSelectedCandidate || selectedRoleId == null) return null
+    val directTruth = actualRoleId == selectedRoleId
+    val spyRegistrationTruth = actualRoleId == "Spy" &&
+        selectedOption?.spyRegistersGood == true &&
+        selectedOption.spyRegisteredRoleEnName == selectedRoleId
+    val recluseRegistrationTruth = actualRoleId == "Recluse" &&
+        selectedOption?.recluseRegistersEvil == true &&
+        selectedOption.recluseRegisteredRoleEnName == selectedRoleId
+    return if (directTruth || spyRegistrationTruth || recluseRegistrationTruth) "✓" else null
 }
 
 /**
@@ -223,7 +227,7 @@ private fun ClocktowerPairInformationCenterControls(
     onRestoreRecommendation: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
 ) {
-    if (beginnerMode) {
+    if (beginnerMode || !editing) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -238,6 +242,12 @@ private fun ClocktowerPairInformationCenterControls(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(if (language == "en") "Show to player" else "展示给玩家")
+            }
+            if (!beginnerMode && allowManualEditing) {
+                Spacer(Modifier.height(4.dp))
+                TextButton(onClick = onStartEditing) {
+                    Text(if (language == "en") "Change" else "修改信息")
+                }
             }
         }
         return

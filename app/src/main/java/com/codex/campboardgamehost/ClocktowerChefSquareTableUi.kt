@@ -47,6 +47,7 @@ internal data class ClocktowerChefResultChoice(
 internal data class ClocktowerChefSeatVisual(
     val state: ClocktowerSquareTableSeatState,
     val badge: String?,
+    val marker: String?,
     val isCurrentActor: Boolean,
 )
 
@@ -59,26 +60,39 @@ internal fun clocktowerChefSeatVisual(
     seatNumber: Int,
     actorSeat: Int?,
     actualEvilSeats: Set<Int>,
+    spySeat: Int?,
     recluseSeat: Int?,
     effectivePairSeats: Set<Int>,
     language: String,
-): ClocktowerChefSeatVisual = ClocktowerChefSeatVisual(
-    state = when {
-        seatNumber in effectivePairSeats -> ClocktowerSquareTableSeatState.SelectedHighlighted
-        seatNumber in actualEvilSeats -> ClocktowerSquareTableSeatState.HighlightedInformation
-        else -> ClocktowerSquareTableSeatState.Neutral
-    },
-    badge = if (seatNumber == recluseSeat) {
-        if (language == "en") "R" else "隐"
-    } else {
-        null
-    },
-    isCurrentActor = seatNumber == actorSeat,
-)
+): ClocktowerChefSeatVisual {
+    val isSpy = seatNumber == spySeat
+    val isRecluse = seatNumber == recluseSeat
+    val isRegistrationRole = isSpy || isRecluse
+    val participatesInCountedPair = seatNumber in effectivePairSeats
+    return ClocktowerChefSeatVisual(
+        state = when {
+            isRegistrationRole -> ClocktowerSquareTableSeatState.RegistrationHint
+            participatesInCountedPair -> ClocktowerSquareTableSeatState.SelectedHighlighted
+            seatNumber in actualEvilSeats -> ClocktowerSquareTableSeatState.HighlightedInformation
+            else -> ClocktowerSquareTableSeatState.Neutral
+        },
+        badge = when {
+            isSpy -> if (language == "en") "S" else "间"
+            isRecluse -> if (language == "en") "R" else "隐"
+            else -> null
+        },
+        marker = if (isRegistrationRole && participatesInCountedPair) "★" else null,
+        isCurrentActor = seatNumber == actorSeat,
+    )
+}
 
 internal fun clocktowerChefActualEvilSeats(players: List<PlayerState>): Set<Int> = players
     .filter { player -> player.actualAlignment == ClocktowerAlignment.EVIL }
     .mapTo(linkedSetOf()) { player -> player.seat }
+
+internal fun clocktowerChefSpySeat(players: List<PlayerState>): Int? = players
+    .firstOrNull { player -> player.actualRole.value == "Spy" }
+    ?.seat
 
 internal fun clocktowerChefRecluseSeat(players: List<PlayerState>): Int? = players
     .firstOrNull { player -> player.actualRole.value == "Recluse" }
@@ -227,6 +241,7 @@ internal fun ClocktowerChefSquareTableDialog(
     actorSeat: Int?,
     wakeInstruction: String?,
     actualEvilSeats: Set<Int>,
+    spySeat: Int?,
     recluseSeat: Int?,
     choices: List<ClocktowerChefResultChoice>,
     language: String,
@@ -252,9 +267,7 @@ internal fun ClocktowerChefSquareTableDialog(
         )
         return
     }
-    var selectedKey by remember(choices.map { it.key }) { mutableStateOf(initialChoice.key) }
-    val selectedChoice = choices.firstOrNull { it.key == selectedKey } ?: initialChoice
-    val displayedPairSeats = clocktowerChefDisplayedPairSeats(choices, selectedChoice.key)
+    val displayedPairSeats = clocktowerChefDisplayedPairSeats(choices, initialChoice.key)
 
     ClocktowerHostSquareTableScaffold(
         seats = seats,
@@ -270,6 +283,7 @@ internal fun ClocktowerChefSquareTableDialog(
                 seatNumber = seat.seatId.number,
                 actorSeat = actorSeat,
                 actualEvilSeats = actualEvilSeats,
+                spySeat = spySeat,
                 recluseSeat = recluseSeat,
                 effectivePairSeats = displayedPairSeats,
                 language = language,
@@ -284,6 +298,7 @@ internal fun ClocktowerChefSquareTableDialog(
                 state = visual.state,
                 isCurrentActor = visual.isCurrentActor,
                 badge = visual.badge,
+                stateMarkerOverride = visual.marker,
             )
         },
     ) {
@@ -309,67 +324,13 @@ internal fun ClocktowerChefSquareTableDialog(
                     )
                     Spacer(Modifier.height(8.dp))
 
-                    if (choices.size > 1) {
-                        Text(
-                            text = if (language == "en") "Choose the number to show" else "选择要展示的数字",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        choices.chunked(3).forEach { rowChoices ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                rowChoices.forEach { choice ->
-                                    if (choice.key == selectedChoice.key) {
-                                        Button(
-                                            onClick = { selectedKey = choice.key },
-                                            modifier = Modifier.weight(1f),
-                                        ) {
-                                            Text(choice.value.toString(), maxLines = 1)
-                                        }
-                                    } else {
-                                        OutlinedButton(
-                                            onClick = { selectedKey = choice.key },
-                                            modifier = Modifier.weight(1f),
-                                        ) {
-                                            Text(choice.value.toString(), maxLines = 1)
-                                        }
-                                    }
-                                }
-                                repeat(3 - rowChoices.size) { Spacer(Modifier.weight(1f)) }
-                            }
-                            Spacer(Modifier.height(4.dp))
-                        }
-                        Button(
-                            onClick = { onConfirm(selectedChoice) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(
-                                if (language == "en") {
-                                    "Show information: ${selectedChoice.value}"
-                                } else {
-                                    "展示信息：${selectedChoice.value}"
-                                },
-                                maxLines = 1,
-                            )
-                        }
-                    } else {
-                        Button(
-                            onClick = { onConfirm(selectedChoice) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(
-                                if (language == "en") {
-                                    "Show information: ${selectedChoice.value}"
-                                } else {
-                                    "展示信息：${selectedChoice.value}"
-                                },
-                                maxLines = 1,
-                            )
-                        }
-                    }
+                    ClocktowerExperiencedNumericChoiceRows(
+                        choices = choices,
+                        recommendedChoice = initialChoice,
+                        language = language,
+                        valueOf = ClocktowerChefResultChoice::value,
+                        onConfirm = onConfirm,
+                    )
                 }
             }
     }

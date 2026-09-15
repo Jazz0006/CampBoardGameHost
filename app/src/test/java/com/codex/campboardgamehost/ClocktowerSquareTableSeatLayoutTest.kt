@@ -75,6 +75,7 @@ class ClocktowerSquareTableSeatLayoutTest {
                 ClocktowerSquareTableSeatState.Selected,
                 ClocktowerSquareTableSeatState.SelectedHighlighted,
                 ClocktowerSquareTableSeatState.HighlightedInformation,
+                ClocktowerSquareTableSeatState.RegistrationHint,
                 ClocktowerSquareTableSeatState.Disabled,
             ),
             ClocktowerSquareTableSeatState.values().toSet(),
