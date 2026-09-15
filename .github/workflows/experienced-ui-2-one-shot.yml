@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "3d2ddd53f7b1dab423748c88c71bd396436e8d6b"
+          test "$(git rev-parse HEAD^)" = "cc3025f68fddb7fcfa70303b6259c94cdd38af9c"
           test "$(git diff-tree --no-commit-id --name-only -r HEAD)" = ".github/workflows/experienced-ui-2-one-shot.yml"
 
       - name: Set up JDK 17
