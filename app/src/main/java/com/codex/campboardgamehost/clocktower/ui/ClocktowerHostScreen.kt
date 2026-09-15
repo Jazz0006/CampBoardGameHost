@@ -3110,6 +3110,7 @@ internal fun ClocktowerJudgeScreen(
         ClocktowerNewDemonConfirmationScreen(
             newDemonLabel = newDemon?.seatLabel(cards).orEmpty(),
             hasNewDemon = newDemon != null,
+            compact = !automaticStorytellerInfo,
             onHostTools = onHostTools,
             onShowPlayerDisplay = { playerDisplayStep = newDemonStep },
             onConfirm = onConfirmNewDemon,
@@ -3265,6 +3266,7 @@ internal fun ClocktowerJudgeScreen(
         }
         ClocktowerPendingNominationTableScreen(
             round = round,
+            compact = !automaticStorytellerInfo,
             cards = cards,
             tableState = clocktowerDayOverviewTableState(
                 cards.toClocktowerGameState(
@@ -3475,6 +3477,7 @@ internal fun ClocktowerJudgeScreen(
             round = round,
             tableState = slayerTableState,
             actionsEnabled = gameOutcome == null,
+            compact = !automaticStorytellerInfo,
             onHostTools = onHostTools,
             onSeatClick = { seatId ->
                 val selectedName = slayerTableState.playerNameForSeat(seatId)
