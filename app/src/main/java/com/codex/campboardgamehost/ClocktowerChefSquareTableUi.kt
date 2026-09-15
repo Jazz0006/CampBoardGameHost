@@ -158,6 +158,7 @@ internal fun clocktowerChefResultChoices(
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
     structuredNumberUiModel: StructuredNumberInformationUiModel?,
     recommendedOptionIds: Set<String> = emptySet(),
+    recommendedValues: Set<Int> = emptySet(),
 ): List<ClocktowerChefResultChoice> {
     fun numericValue(option: ClocktowerDisplayOption): Int? =
         (option.proposition as? InformationProposition.NumericResult)?.value
@@ -209,7 +210,8 @@ internal fun clocktowerChefResultChoices(
                 value = choice.value,
                 sourceKind = ClocktowerChefResultSourceKind.Structured,
                 structuredCandidateId = choice.candidateId,
-                recommended = choice.recommended,
+                recommended = choice.value in recommendedValues ||
+                    (recommendedValues.isEmpty() && choice.recommended),
                 // An impaired Chef may legally receive an arbitrary value. There is no truthful
                 // seat witness to invent for such a value, so keep only the static information hints.
                 effectivePairSeats = emptySet(),

@@ -149,6 +149,7 @@ internal fun clocktowerEmpathResultChoices(
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
     structuredNumberUiModel: StructuredNumberInformationUiModel?,
     recommendedOptionIds: Set<String> = emptySet(),
+    recommendedValues: Set<Int> = emptySet(),
 ): List<ClocktowerEmpathResultChoice> {
     fun numeric(option: ClocktowerDisplayOption): InformationProposition.NumericResult? =
         (option.proposition as? InformationProposition.NumericResult)
@@ -204,7 +205,8 @@ internal fun clocktowerEmpathResultChoices(
                 value = choice.value,
                 sourceKind = ClocktowerEmpathResultSourceKind.Structured,
                 structuredCandidateId = choice.candidateId,
-                recommended = choice.recommended,
+                recommended = choice.value in recommendedValues ||
+                    (recommendedValues.isEmpty() && choice.recommended),
                 scopeSeats = scope,
                 // An unreliable Empath may legally receive an arbitrary result. No truthful
                 // Spy/Recluse seat witness exists for that arbitrary number, so do not fabricate one.

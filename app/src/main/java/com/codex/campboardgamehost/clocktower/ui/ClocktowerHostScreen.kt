@@ -4085,6 +4085,7 @@ internal fun ClocktowerJudgeScreen(
                 informationDecisionKey = "$recommendationKey:${phase.name}:$round:${currentStep.title}:${currentStep.actor?.name}",
                 cards = cards,
                 ghostVoteAuthority = ghostVoteAuthority,
+                poisonedPlayerName = currentStep.roleEnName?.let(effectivePoisonForRole),
                 aliveCards = publicAliveCards,
                 chambermaidTargetCards = chambermaidTargetCards,
                 mayorRedirectTargetCards = mayorRedirectTargetCards,
