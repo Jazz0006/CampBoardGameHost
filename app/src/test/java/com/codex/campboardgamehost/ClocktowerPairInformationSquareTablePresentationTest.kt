@@ -4,6 +4,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -27,6 +28,39 @@ class ClocktowerPairInformationSquareTablePresentationTest {
         assertEquals(
             ClocktowerSquareTableSeatState.Neutral,
             clocktowerPairInformationSeatState(selection, seatNumber = 2, editing = false),
+        )
+    }
+
+    @Test
+    fun `truth marker is driven only by selected candidate actual-role match`() {
+        assertEquals(
+            "✓",
+            clocktowerPairInformationTruthMarker(
+                isSelectedCandidate = true,
+                selectedRoleId = "Chef",
+                actualRoleId = "Chef",
+            ),
+        )
+        assertNull(
+            clocktowerPairInformationTruthMarker(
+                isSelectedCandidate = true,
+                selectedRoleId = "Chef",
+                actualRoleId = "Empath",
+            ),
+        )
+        assertNull(
+            clocktowerPairInformationTruthMarker(
+                isSelectedCandidate = false,
+                selectedRoleId = "Chef",
+                actualRoleId = "Chef",
+            ),
+        )
+        assertNull(
+            clocktowerPairInformationTruthMarker(
+                isSelectedCandidate = true,
+                selectedRoleId = null,
+                actualRoleId = "Chef",
+            ),
         )
     }
 
