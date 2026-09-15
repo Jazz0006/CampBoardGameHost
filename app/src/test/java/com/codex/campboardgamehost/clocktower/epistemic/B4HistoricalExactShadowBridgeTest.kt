@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.catalog.ClocktowerScriptSource
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
@@ -108,11 +109,9 @@ class B4HistoricalExactShadowBridgeTest {
 
     @Test
     fun `validated B4 shadow defers unsupported exact semantics before baseline evaluation`() {
-        val unsupportedRuleset = catalog.ruleset(ClocktowerScript.NoGreaterJoy)
-        val unsupportedSnapshot = snapshot.copy(
-            rulesetRef = unsupportedRuleset.toRulesetRef(
-                rulesetVersion = "a3-b4-historical-exact-shadow-test",
-                sourceRevision = "official",
+        val unsupportedRuleset = validatedRuleset.copy(
+            script = validatedRuleset.script.copy(
+                source = ClocktowerScriptSource.IMPORTED_HOMEBREW,
             ),
         )
 
@@ -120,7 +119,7 @@ class B4HistoricalExactShadowBridgeTest {
             validatedRuleset = unsupportedRuleset,
         ).evaluate(
             B4ShadowRequest(
-                initialSnapshot = unsupportedSnapshot,
+                initialSnapshot = snapshot,
                 initialPhase = StorytellerPhase.FIRST_NIGHT,
                 initialRound = 1,
                 actionTimeline = timelineOf(emptyList()),
