@@ -106,6 +106,36 @@ class B4HistoricalExactShadowBridgeTest {
         assertEquals(exact(expectedAfterWorlds.size), report.queries.single().after)
     }
 
+    @Test
+    fun `validated B4 shadow defers unsupported exact semantics before baseline evaluation`() {
+        val unsupportedRuleset = catalog.ruleset(ClocktowerScript.NoGreaterJoy)
+        val unsupportedSnapshot = snapshot.copy(
+            rulesetRef = unsupportedRuleset.toRulesetRef(
+                rulesetVersion = "a3-b4-historical-exact-shadow-test",
+                sourceRevision = "official",
+            ),
+        )
+
+        val report = B4DynamicPlayerWorldSetShadow(
+            validatedRuleset = unsupportedRuleset,
+        ).evaluate(
+            B4ShadowRequest(
+                initialSnapshot = unsupportedSnapshot,
+                initialPhase = StorytellerPhase.FIRST_NIGHT,
+                initialRound = 1,
+                actionTimeline = timelineOf(emptyList()),
+                perceivedRolesBySeat = perceived,
+                observationLog = EpistemicObservationLog(),
+                hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+                roleDefinitions = roles,
+                candidates = emptyList(),
+            ),
+        )
+
+        assertEquals(B4ShadowOutcome.DEFERRED_B4, report.outcome)
+        assertEquals(emptyList<B4CandidateWorldQuery>(), report.queries)
+    }
+
     private fun exact(count: Int): WorldCardinality.Exact =
         WorldCardinality.Exact(BigInteger.valueOf(count.toLong()))
 
