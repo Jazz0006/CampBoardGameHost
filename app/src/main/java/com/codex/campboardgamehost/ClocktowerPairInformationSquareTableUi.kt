@@ -311,7 +311,7 @@ private fun ClocktowerPairInformationCenterControls(
                                     },
                                 )
                             }
-                            if (selection.zeroOptions.isNotEmpty()) {
+                            if (selection.hasZeroCase) {
                                 DropdownMenuItem(
                                     text = { Text(if (language == "en") "None" else "没有") },
                                     onClick = {
