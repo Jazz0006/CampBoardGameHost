@@ -3,9 +3,11 @@ package com.codex.campboardgamehost
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,6 +52,7 @@ internal fun ClocktowerVoteTableScreen(
             onHostTools = onHostTools,
             onNext = {},
             nextEnabled = false,
+            nextVisible = false,
         ) {
             Column(
                 modifier = Modifier
@@ -90,6 +93,7 @@ internal fun ClocktowerVoteTableScreen(
         onHostTools = onHostTools,
         onNext = { onConfirm(voteState) },
         nextEnabled = actionsEnabled,
+        nextVisible = false,
     ) {
         HostTableShell(
             seats = voteState.seats,
@@ -158,6 +162,13 @@ internal fun ClocktowerVoteTableScreen(
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center,
                     )
+                    Button(
+                        onClick = { onConfirm(voteState) },
+                        enabled = actionsEnabled,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(text("确认投票", "Confirm vote"))
+                    }
                 }
             },
         )

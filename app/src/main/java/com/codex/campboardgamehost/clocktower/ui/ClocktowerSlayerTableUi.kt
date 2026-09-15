@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,17 +37,24 @@ internal fun ClocktowerSlayerTableScreen(
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
+    val resolveLabel = if (compact) {
+        text("确认射击", "Confirm shot")
+    } else {
+        text("结算杀手行动", "Resolve Slayer action")
+    }
+    val canResolve = actionsEnabled &&
+        tableState.claimantSeatId != null &&
+        tableState.targetSeatId != null
 
     ClocktowerDayTableScaffold(
         previousLabel = text("返回白天", "Return to day"),
         hostToolsLabel = text("主持工具", "Host Tools"),
-        nextLabel = if (compact) text("确认射击", "Confirm shot") else text("结算杀手行动", "Resolve Slayer action"),
+        nextLabel = resolveLabel,
         onPrevious = onBack,
         onHostTools = onHostTools,
         onNext = onResolve,
-        nextEnabled = actionsEnabled &&
-            tableState.claimantSeatId != null &&
-            tableState.targetSeatId != null,
+        nextEnabled = canResolve,
+        nextVisible = false,
     ) {
         HostTableShell(
             seats = tableState.seats,
@@ -158,6 +166,13 @@ internal fun ClocktowerSlayerTableScreen(
 
                     if (tableState.targetSeatId != null) {
                         specialContent()
+                        Button(
+                            onClick = onResolve,
+                            enabled = canResolve,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(resolveLabel)
+                        }
                     }
                 }
             },

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,6 +51,7 @@ internal fun ClocktowerPendingNominationTableScreen(
     } else {
         null
     }
+    val canContinue = actionsEnabled && pendingLink != null
 
     ClocktowerDayTableScaffold(
         previousLabel = text("取消提名", "Cancel nomination"),
@@ -58,7 +60,8 @@ internal fun ClocktowerPendingNominationTableScreen(
         onPrevious = onCancel,
         onHostTools = onHostTools,
         onNext = onContinue,
-        nextEnabled = actionsEnabled && pendingLink != null,
+        nextEnabled = canContinue,
+        nextVisible = false,
     ) {
         HostTableShell(
             seats = tableState.seats,
@@ -142,6 +145,13 @@ internal fun ClocktowerPendingNominationTableScreen(
                                 specialContent()
                             }
                         }
+                    }
+                    Button(
+                        onClick = onContinue,
+                        enabled = canContinue,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(continueLabel)
                     }
                 }
             },
