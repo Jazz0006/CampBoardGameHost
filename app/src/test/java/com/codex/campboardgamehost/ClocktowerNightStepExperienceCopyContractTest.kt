@@ -26,8 +26,9 @@ class ClocktowerNightStepExperienceCopyContractTest {
         assertTrue(source.contains("allowManualEditing = !automaticStorytellerInfo"))
         assertTrue(source.contains("ClocktowerPlainInformationSquareTableDialog("))
         assertTrue(pairSource.contains("allowManualEditing: Boolean"))
-        assertTrue(pairSource.contains("if (allowManualEditing &&"))
-        assertTrue(pairSource.contains("onStartEditing()"))
+        assertTrue(pairSource.contains("mutableStateOf(allowManualEditing && recommendedSelection.resolvedOption == null)"))
+        assertTrue(pairSource.contains("onStartEditing = { if (allowManualEditing) editing = true }"))
+        assertTrue(pairSource.contains("TextButton(onClick = onStartEditing)"))
         assertFalse(pairSource.contains("Choose manually"))
         assertTrue(pairSource.contains("\"Change\""))
     }
