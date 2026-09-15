@@ -145,8 +145,8 @@ private fun ClocktowerDayOverviewCenterContent(
         }
         Text(
             text = text(
-                "自由讨论 · 长按一名玩家并拖向另一名玩家以发起提名",
-                "Open discussion · long-press a player and drag to another player to nominate",
+                "长按一名玩家并拖向另一名玩家以发起提名",
+                "Long-press a player and drag to another player to nominate",
             ),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodySmall,
