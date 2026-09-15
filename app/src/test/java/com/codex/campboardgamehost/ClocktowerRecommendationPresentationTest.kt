@@ -7,7 +7,7 @@ import org.junit.Test
 
 class ClocktowerRecommendationPresentationTest {
     @Test
-    fun `ranked recommendations expose top one and at most two alternatives without reordering`() {
+    fun `ranked recommendations expose first three as recommendations without reordering`() {
         val top = displayOption("top")
         val second = displayOption("second")
         val third = displayOption("third")
@@ -19,10 +19,11 @@ class ClocktowerRecommendationPresentationTest {
 
         assertSame(top, presentation.primary)
         assertEquals(listOf(second, third), presentation.alternatives)
+        assertEquals(listOf(top, second, third), presentation.recommendations)
     }
 
     @Test
-    fun `short recommendation lists are not padded with synthetic alternatives`() {
+    fun `short recommendation lists are not padded with synthetic recommendations`() {
         val only = displayOption("only")
         val second = displayOption("second")
 
@@ -31,13 +32,13 @@ class ClocktowerRecommendationPresentationTest {
         val pair = clocktowerRecommendationPresentation(listOf(only, second))
 
         assertNull(empty.primary)
-        assertEquals(emptyList<ClocktowerDisplayOption>(), empty.alternatives)
+        assertEquals(emptyList<ClocktowerDisplayOption>(), empty.recommendations)
 
         assertSame(only, single.primary)
-        assertEquals(emptyList<ClocktowerDisplayOption>(), single.alternatives)
+        assertEquals(listOf(only), single.recommendations)
 
         assertSame(only, pair.primary)
-        assertEquals(listOf(second), pair.alternatives)
+        assertEquals(listOf(only, second), pair.recommendations)
     }
 
     private fun displayOption(label: String) = ClocktowerDisplayOption(
