@@ -66,6 +66,11 @@ internal enum class ClocktowerSquareTableInteractionMode {
     Selectable,
 }
 
+internal enum class ClocktowerSquareTableBadgeTone {
+    Default,
+    Warning,
+}
+
 internal data class ClocktowerSquareTableSeatUiModel(
     val seatId: String,
     val seatNumber: Int,
@@ -81,7 +86,10 @@ internal data class ClocktowerSquareTableSeatUiModel(
         ClocktowerSquareTableSeatState.SelectedHighlighted,
     ),
     val motionKey: String = seatId,
+    val stateMarkerOverride: String? = null,
+    val suppressDefaultStateMarker: Boolean = false,
     val badge: String? = null,
+    val badgeTone: ClocktowerSquareTableBadgeTone = ClocktowerSquareTableBadgeTone.Default,
     val isAlive: Boolean = true,
     val hasUnspentGhostVote: Boolean = false,
 )
@@ -620,7 +628,9 @@ private fun ClocktowerSquareTableSeat(
                     .padding(start = 4.dp, top = 2.dp),
             )
 
-            clocktowerSquareTableStateMarker(seat.state)?.let { marker ->
+            val stateMarker = seat.stateMarkerOverride
+                ?: if (seat.suppressDefaultStateMarker) null else clocktowerSquareTableStateMarker(seat.state)
+            stateMarker?.let { marker ->
                 Text(
                     text = marker,
                     fontSize = 14.sp,
@@ -634,6 +644,11 @@ private fun ClocktowerSquareTableSeat(
             seat.badge?.let { badge ->
                 Text(
                     text = badge,
+                    color = if (seat.badgeTone == ClocktowerSquareTableBadgeTone.Warning) {
+                        Color(0xFFFFC107)
+                    } else {
+                        palette.content
+                    },
                     fontSize = 10.sp,
                     lineHeight = 12.sp,
                     fontWeight = FontWeight.Black,

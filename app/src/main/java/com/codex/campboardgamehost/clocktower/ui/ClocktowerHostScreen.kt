@@ -4123,6 +4123,7 @@ internal fun ClocktowerJudgeScreen(
                 selectedName = selectedNightName,
                 fortuneTellerFirst = fortuneTellerFirst,
                 fortuneTellerSecond = fortuneTellerSecond,
+                redHerring = redHerring,
                 chambermaidFirst = chambermaidResolution.selection.first,
                 chambermaidSecond = chambermaidResolution.selection.second,
                 onSelectName = { name ->

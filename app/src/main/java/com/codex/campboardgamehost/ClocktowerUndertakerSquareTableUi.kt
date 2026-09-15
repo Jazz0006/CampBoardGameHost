@@ -233,24 +233,6 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                     verticalArrangement = Arrangement.Center,
                 ) {
                     ClocktowerNightActionWakeInstruction(wakeInstruction)
-                    Text(
-                        text = if (language == "en") "Undertaker" else "送葬者",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = if (language == "en") {
-                            "EX marks today's executed player · read-only context"
-                        } else {
-                            "处 标记今天被处决的玩家 · 仅作信息上下文"
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(8.dp))
 
                     if (choices.size > 1) {
                         Text(
@@ -289,11 +271,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(
-                            if (language == "en") {
-                                "Show information: ${selectedChoice.displayLabel}"
-                            } else {
-                                "展示信息：${selectedChoice.displayLabel}"
-                            },
+                            if (language == "en") "Show to player" else "展示给玩家",
                             maxLines = 1,
                         )
                     }

@@ -105,11 +105,21 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                     actorSeat = actorSeat,
                 )
             }
+            val isSelectedCandidate = !beginnerMode &&
+                (seat.seatId.number == selection.selectedFirstSeat ||
+                    seat.seatId.number == selection.selectedSecondSeat)
+            val isActualShownRole = isSelectedCandidate &&
+                selection.selectedRoleId != null &&
+                seat.actualRole?.roleId == selection.selectedRoleId
             clocktowerPairManualSquareTableSeat(
                 seat = seat,
                 language = language,
                 state = seatPresentation.targetState,
-            ).copy(isCurrentActor = seatPresentation.isCurrentActor)
+            ).copy(
+                isCurrentActor = seatPresentation.isCurrentActor,
+                suppressDefaultStateMarker = isSelectedCandidate,
+                stateMarkerOverride = if (isActualShownRole) "✓" else null,
+            )
         },
     ) {
         ClocktowerPairInformationCenterControls(
@@ -141,13 +151,20 @@ internal fun clocktowerPairInformationSeatState(
     editing: Boolean,
 ): ClocktowerSquareTableSeatState {
     if (!editing) {
-        return when (seatNumber) {
-            selection.selectedFirstSeat -> ClocktowerSquareTableSeatState.SelectedFirst
-            selection.selectedSecondSeat -> ClocktowerSquareTableSeatState.SelectedSecond
-            else -> ClocktowerSquareTableSeatState.Neutral
+        return if (
+            seatNumber == selection.selectedFirstSeat ||
+            seatNumber == selection.selectedSecondSeat
+        ) {
+            ClocktowerSquareTableSeatState.SelectedHighlighted
+        } else {
+            ClocktowerSquareTableSeatState.Neutral
         }
     }
-    return clocktowerPairManualSeatState(selection, seatNumber)
+    return when (val state = clocktowerPairManualSeatState(selection, seatNumber)) {
+        ClocktowerSquareTableSeatState.SelectedFirst,
+        ClocktowerSquareTableSeatState.SelectedSecond -> ClocktowerSquareTableSeatState.SelectedHighlighted
+        else -> state
+    }
 }
 
 /**

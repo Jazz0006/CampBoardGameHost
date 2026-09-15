@@ -68,6 +68,7 @@ internal fun ClocktowerNightStepCardLocalized(
     selectedName: String?,
     fortuneTellerFirst: String?,
     fortuneTellerSecond: String?,
+    redHerring: String?,
     chambermaidFirst: String?,
     chambermaidSecond: String?,
     onSelectName: (String) -> Unit,
@@ -680,24 +681,22 @@ internal fun ClocktowerNightStepCardLocalized(
             onNext()
         }
     }
-    val beginnerGuidance = if (automaticStorytellerInfo) {
-        clocktowerBeginnerNightGuidance(
-            action = step.action,
-            actor = step.actor,
-            cards = cards,
-            language = language,
-            groupTeam = step.actor
-                ?.clocktowerRole
-                ?.team
-                ?.takeIf { team ->
-                    step.displayKind == ClocktowerDisplayKind.EvilInfo &&
-                        team in setOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon)
-                },
-        )
-    } else {
-        null
-    }
-    val command = beginnerGuidance?.asWakeInstruction() ?: when {
+    val compactNightGuidance = clocktowerBeginnerNightGuidance(
+        action = step.action,
+        actor = step.actor,
+        cards = cards,
+        language = language,
+        groupTeam = step.actor
+            ?.clocktowerRole
+            ?.team
+            ?.takeIf { team ->
+                step.displayKind == ClocktowerDisplayKind.EvilInfo &&
+                    team in setOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon)
+            },
+    )
+    val command = compactNightGuidance?.asWakeInstruction(
+        experiencedFormat = !automaticStorytellerInfo,
+    ) ?: when {
         step.action == ClocktowerNightAction.FortuneTeller && step.actor != null -> {
             if (language == "en") {
                 "Wake ${step.actor.seatLabel(cards)} and ask them to choose two players to check"
@@ -775,6 +774,31 @@ internal fun ClocktowerNightStepCardLocalized(
             .mapNotNull { candidate -> seatNumberForName(candidate.name) }
             .toSet()
         val actionActorSeat = seatNumberForName(step.actor?.name)
+        val redHerringSeat = seatNumberForName(redHerring)
+        val evilInfoTeam = step.actor
+            ?.clocktowerRole
+            ?.team
+            ?.takeIf { team ->
+                step.displayKind == ClocktowerDisplayKind.EvilInfo &&
+                    team in setOf(ClocktowerTeam.Minion, ClocktowerTeam.Demon)
+            }
+        val evilInfoTeamCards = evilInfoTeam
+            ?.let { team -> cards.filter { card -> card.clocktowerRole?.team == team } }
+            .orEmpty()
+        val evilInfoHighlightedSeats = if (evilInfoTeam == ClocktowerTeam.Minion) {
+            evilInfoTeamCards.mapNotNull { card -> seatNumberForName(card.name) }.toSet()
+        } else {
+            emptySet()
+        }
+        val evilInfoGroupLines = if (evilInfoTeam == ClocktowerTeam.Minion) {
+            evilInfoTeamCards.mapNotNull { card ->
+                seatNumberForName(card.name)?.let { seat ->
+                    if (language == "en") "P$seat ${card.name}" else "${seat}号 ${card.name}"
+                }
+            }
+        } else {
+            emptyList()
+        }
         val pairSquareTablePresentation = if (
             plannedFullScreenSurface == ClocktowerNightFullScreenSurface.PairInformation
         ) {
@@ -790,6 +814,9 @@ internal fun ClocktowerNightStepCardLocalized(
                 actorSeat = actionActorSeat,
                 wakeInstruction = command,
                 beginnerMode = automaticStorytellerInfo,
+                compactTeamWake = evilInfoTeam != null,
+                highlightedSeats = evilInfoHighlightedSeats,
+                groupLines = evilInfoGroupLines,
             )
         } else {
             null
@@ -905,6 +932,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     enabled = step.isRealAction,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
+                    redHerringSeat = redHerringSeat,
                     legalResults = fortuneTellerLegalResults,
                     recommendedResult = fortuneTellerRecommendedResult,
                     automaticStorytellerInfo = automaticStorytellerInfo,

@@ -90,8 +90,15 @@ internal fun ClocktowerNightActionWakeInstruction(instruction: String?) {
         val guidanceLines = value.lines()
             .map(String::trim)
             .filter(String::isNotBlank)
+        val wakeLine = guidanceLines.firstOrNull()
         val isStructuredGuidance = guidanceLines.size in 2..3 &&
-            (guidanceLines.first().startsWith("唤醒 ") || guidanceLines.first().startsWith("Wake "))
+            wakeLine != null &&
+            (
+                wakeLine.startsWith("唤醒 ") ||
+                    wakeLine.startsWith("Wake ") ||
+                    wakeLine.startsWith("唤醒：") ||
+                    wakeLine.startsWith("Wake: ")
+            )
         if (isStructuredGuidance) {
             Text(
                 text = guidanceLines[0],

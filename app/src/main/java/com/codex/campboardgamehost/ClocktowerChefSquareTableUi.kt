@@ -307,17 +307,6 @@ internal fun ClocktowerChefSquareTableDialog(
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                     )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = if (language == "en") {
-                            "★ evil · R Recluse · ✓★ counted in the selected result"
-                        } else {
-                            "★ 邪恶提示 · 隐 隐士 · ✓★ 当前结果计入相邻对"
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
                     Spacer(Modifier.height(8.dp))
 
                     if (choices.size > 1) {
