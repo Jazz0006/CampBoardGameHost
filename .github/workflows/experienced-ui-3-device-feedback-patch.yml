@@ -1,0 +1,142 @@
+name: Experienced UI 3 device feedback patch
+
+on:
+  push:
+    branches:
+      - codex/experienced-ui-device-feedback-3
+    paths:
+      - .github/workflows/experienced-ui-3-device-feedback-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v6
+        with:
+          ref: codex/experienced-ui-device-feedback-3
+          fetch-depth: 0
+
+      - name: Assert seed and blob locks
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "211cbad417daba3c41b1bf66bcaba19aca0a7a29"
+          test "$(git diff-tree --no-commit-id --name-only -r HEAD)" = ".github/workflows/experienced-ui-3-device-feedback-patch.yml"
+
+          check_blob() {
+            path="$1"
+            expected="$2"
+            actual="$(git rev-parse "HEAD:$path")"
+            test "$actual" = "$expected" || {
+              echo "Blob mismatch for $path: expected $expected, got $actual" >&2
+              exit 1
+            }
+          }
+
+          check_blob app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt 75c90195c59793c765b3ca50448eff31d85ec095
+          check_blob app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt 875c2a13bfd9ccdb272fec7199dd49fc119793d9
+          check_blob app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt 1efea4fab45e8faf314efb4bca614c7eaf68c6b2
+          check_blob app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt 6f3319a1a5e6a8291010114c73896fe80568c996
+          check_blob app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt 1f1d7aebb4884c7fcc57253b6009298dde34a876
+          check_blob app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt bd8b08d0ecb6027838f25ed30b502719c9f1f7ee
+          check_blob app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt 4daec2253312207420ba0b4d4c4efb0c91b1920a
+          check_blob app/src/test/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTablePresentationTest.kt 8567c4e2e64e5e023b5146e18c0e5edd4f65868f
+          check_blob app/src/test/java/com/codex/campboardgamehost/ClocktowerChefSquareTablePresentationTest.kt 0dc1804af6292b810156a81a1620d6b34a3dd4e8
+          check_blob app/src/test/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTablePresentationTest.kt 169578fe2061aa309eed88b3602d29e30549d976
+          check_blob app/src/test/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTablePresentationTest.kt cdfe634e0fcdf9381de0918a39b6c2a523cf5396
+          check_blob .github/scripts/experienced_ui_3_device_feedback_patch.py 49188130a085a3f18759fca544439708acfd5365
+          test ! -e app/src/main/java/com/codex/campboardgamehost/ClocktowerExperiencedNumericChoiceUi.kt
+
+      - name: Apply stable-anchor patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/experienced_ui_3_device_feedback_patch.py
+
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('app/src/test/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTablePresentationTest.kt')
+          text = path.read_text(encoding='utf-8')
+          old = 'PlayerCard(name = "P${index + 1}")'
+          new = 'PlayerCard(name = "P${index + 1}", role = Role.Civilian, word = "")'
+          if text.count(old) != 1:
+              raise SystemExit(f'Undertaker PlayerCard fixture anchor count = {text.count(old)}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Audit touched files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -N app/src/main/java/com/codex/campboardgamehost/ClocktowerExperiencedNumericChoiceUi.kt
+          cat > /tmp/expected-files.txt <<'EOF'
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerExperiencedNumericChoiceUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt
+          app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt
+          app/src/test/java/com/codex/campboardgamehost/ClocktowerChefSquareTablePresentationTest.kt
+          app/src/test/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTablePresentationTest.kt
+          app/src/test/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTablePresentationTest.kt
+          app/src/test/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTablePresentationTest.kt
+          EOF
+          git diff --name-only | sort > /tmp/actual-files.txt
+          diff -u /tmp/expected-files.txt /tmp/actual-files.txt
+          git diff --check
+
+          grep -Fq 'selectedOption = selection.resolvedOption' app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt
+          grep -Fq 'spyRegisteredRoleEnName == selectedRoleId' app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt
+          grep -Fq 'recluseRegisteredRoleEnName == selectedRoleId' app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt
+          grep -Fq '推荐信息' app/src/main/java/com/codex/campboardgamehost/ClocktowerExperiencedNumericChoiceUi.kt
+          grep -Fq '备选信息' app/src/main/java/com/codex/campboardgamehost/ClocktowerExperiencedNumericChoiceUi.kt
+          grep -Fq '选择继任小恶魔的爪牙' app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt
+          grep -Fq '昨天被处决的' app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Run Android FAST and debug build
+        run: ./gradlew :app:testFast :app:assembleDebug
+
+      - name: Commit verified production patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerExperiencedNumericChoiceUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt \
+            app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt \
+            app/src/test/java/com/codex/campboardgamehost/ClocktowerChefSquareTablePresentationTest.kt \
+            app/src/test/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTablePresentationTest.kt \
+            app/src/test/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTablePresentationTest.kt \
+            app/src/test/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTablePresentationTest.kt
+          git commit -m "feat: refine Experienced UI from device feedback"
+          git push origin HEAD:codex/experienced-ui-device-feedback-3
+
+      - name: Remove one-shot patch tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm \
+            .github/scripts/experienced_ui_3_device_feedback_patch.py \
+            .github/workflows/experienced-ui-3-device-feedback-patch.yml
+          git commit -m "chore: remove Experienced UI 3 patch tooling"
+          git push origin HEAD:codex/experienced-ui-device-feedback-3
