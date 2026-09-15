@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "211cbad417daba3c41b1bf66bcaba19aca0a7a29"
+          test "$(git rev-parse HEAD^)" = "83dc07dccd435238b84f187fb2b611fce8d795e2"
           test "$(git diff-tree --no-commit-id --name-only -r HEAD)" = ".github/workflows/experienced-ui-3-device-feedback-patch.yml"
 
           check_blob() {
@@ -49,24 +49,32 @@ jobs:
           check_blob app/src/test/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTablePresentationTest.kt 169578fe2061aa309eed88b3602d29e30549d976
           check_blob app/src/test/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTablePresentationTest.kt cdfe634e0fcdf9381de0918a39b6c2a523cf5396
           check_blob .github/scripts/experienced_ui_3_device_feedback_patch.py 49188130a085a3f18759fca544439708acfd5365
+          check_blob .github/scripts/experienced_ui_3_device_feedback_test_patch.py fbdab6383e8d155b1c487706906b5440f1e0ebbc
           test ! -e app/src/main/java/com/codex/campboardgamehost/ClocktowerExperiencedNumericChoiceUi.kt
 
-      - name: Apply stable-anchor patch
+      - name: Apply stable-anchor production and test patches
         shell: bash
         run: |
           set -euo pipefail
-          python3 .github/scripts/experienced_ui_3_device_feedback_patch.py
 
+          # The original one-shot script's production section is authoritative. Its stale test tail
+          # is intentionally excluded here; tests are patched by the independently reviewed script.
           python3 - <<'PY'
           from pathlib import Path
-          path = Path('app/src/test/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTablePresentationTest.kt')
+          path = Path('.github/scripts/experienced_ui_3_device_feedback_patch.py')
           text = path.read_text(encoding='utf-8')
-          old = 'PlayerCard(name = "P${index + 1}")'
-          new = 'PlayerCard(name = "P${index + 1}", role = Role.Civilian, word = "")'
-          if text.count(old) != 1:
-              raise SystemExit(f'Undertaker PlayerCard fixture anchor count = {text.count(old)}')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          marker = '# Pair truth-marker regression tests including typed Spy/Recluse registrations.'
+          if text.count(marker) != 1:
+              raise SystemExit(f'production/test split marker count = {text.count(marker)}')
+          production = text.split(marker, 1)[0]
+          path.write_text(production + "\nprint('Experienced UI 3 production patch applied successfully')\n", encoding='utf-8')
           PY
+
+          python3 .github/scripts/experienced_ui_3_device_feedback_patch.py
+          python3 .github/scripts/experienced_ui_3_device_feedback_test_patch.py
+
+          # Do not let the runner-only script truncation enter the diff.
+          git checkout -- .github/scripts/experienced_ui_3_device_feedback_patch.py
 
       - name: Audit touched files
         shell: bash
@@ -96,6 +104,8 @@ jobs:
           grep -Fq 'recluseRegisteredRoleEnName == selectedRoleId' app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt
           grep -Fq '推荐信息' app/src/main/java/com/codex/campboardgamehost/ClocktowerExperiencedNumericChoiceUi.kt
           grep -Fq '备选信息' app/src/main/java/com/codex/campboardgamehost/ClocktowerExperiencedNumericChoiceUi.kt
+          grep -Fq 'ClocktowerSquareTableSeatState.RegistrationHint' app/src/main/java/com/codex/campboardgamehost/ClocktowerChefSquareTableUi.kt
+          grep -Fq '!inScope -> ClocktowerSquareTableSeatState.Neutral' app/src/main/java/com/codex/campboardgamehost/ClocktowerEmpathSquareTableUi.kt
           grep -Fq '选择继任小恶魔的爪牙' app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt
           grep -Fq '昨天被处决的' app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt
 
@@ -137,6 +147,7 @@ jobs:
           set -euo pipefail
           git rm \
             .github/scripts/experienced_ui_3_device_feedback_patch.py \
+            .github/scripts/experienced_ui_3_device_feedback_test_patch.py \
             .github/workflows/experienced-ui-3-device-feedback-patch.yml
           git commit -m "chore: remove Experienced UI 3 patch tooling"
           git push origin HEAD:codex/experienced-ui-device-feedback-3
