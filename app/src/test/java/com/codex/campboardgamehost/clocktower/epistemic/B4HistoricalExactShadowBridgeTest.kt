@@ -13,6 +13,7 @@ import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import java.io.File
 import java.math.BigInteger
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class B4HistoricalExactShadowBridgeTest {
@@ -31,7 +32,7 @@ class B4HistoricalExactShadowBridgeTest {
     }
 
     @Test
-    fun `validated B4 shadow accepts persisted hidden actions through historical exact baseline`() {
+    fun `validated B4 shadow delegates to deterministic mutation-free neutral exact evaluation`() {
         val facts = listOf(
             ActionFact.Protect("actual-protect", 1L, 1),
             ActionFact.Attack("actual-attack", 2L, 2),
@@ -45,11 +46,12 @@ class B4HistoricalExactShadowBridgeTest {
             ),
         )
         val timeline = timelineOf(facts)
+        val observationLog = EpistemicObservationLog()
         val initialFormal = FormalGameState.from(snapshot, StorytellerPhase.FIRST_NIGHT, 1)
         val setupKnowledge = A4PlayerKnowledgeFactory.createAll(
             formal = initialFormal,
             perceivedRolesBySeat = perceived,
-            observationLog = EpistemicObservationLog(),
+            observationLog = observationLog,
         ).first { it.recipientSeat == 1 }
         val candidate = EpistemicObservation(
             observationId = "public-alive-candidate",
@@ -73,7 +75,7 @@ class B4HistoricalExactShadowBridgeTest {
             initialPhase = StorytellerPhase.FIRST_NIGHT,
             initialRound = 1,
             actionTimeline = timeline,
-            observationLog = EpistemicObservationLog(),
+            observationLog = observationLog,
         ).worldSet
         val expectedWorlds = expected.enumeratedWorlds()
         val rolesById = roles.associateBy(RoleDefinition::id)
@@ -85,6 +87,40 @@ class B4HistoricalExactShadowBridgeTest {
                 hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
             ).matches
         }
+        val neutralContext = ExactHistoricalHypotheticalContext(
+            initialSnapshot = snapshot,
+            initialPhase = StorytellerPhase.FIRST_NIGHT,
+            initialRound = 1,
+            actionTimeline = timeline,
+            perceivedRolesBySeat = perceived,
+            observationLog = observationLog,
+            hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            roleDefinitions = roles,
+        )
+        val neutralQueries = listOf(
+            ExactHypotheticalObservationQuery("alive-seat-2", 1, candidate),
+        )
+        val timelineBefore = timeline.reducerFacts()
+        val observationLogBefore = observationLog.records.toList()
+
+        val neutralFirst = ExactHistoricalHypotheticalObservationEvaluator.evaluate(
+            validatedRuleset = validatedRuleset,
+            context = neutralContext,
+            queries = neutralQueries,
+        )
+        val neutralSecond = ExactHistoricalHypotheticalObservationEvaluator.evaluate(
+            validatedRuleset = validatedRuleset,
+            context = neutralContext,
+            queries = neutralQueries,
+        )
+
+        assertEquals(neutralFirst, neutralSecond)
+        assertTrue(neutralFirst is ExactHypotheticalObservationEvaluation.Ready)
+        val neutralDiagnostic = (neutralFirst as ExactHypotheticalObservationEvaluation.Ready).diagnostics.single()
+        assertEquals(exact(expectedWorlds.size), neutralDiagnostic.before)
+        assertEquals(exact(expectedAfterWorlds.size), neutralDiagnostic.after)
+        assertEquals(timelineBefore, timeline.reducerFacts())
+        assertEquals(observationLogBefore, observationLog.records)
 
         val report = B4DynamicPlayerWorldSetShadow(
             validatedRuleset = validatedRuleset,
@@ -95,7 +131,7 @@ class B4HistoricalExactShadowBridgeTest {
                 initialRound = 1,
                 actionTimeline = timeline,
                 perceivedRolesBySeat = perceived,
-                observationLog = EpistemicObservationLog(),
+                observationLog = observationLog,
                 hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
                 roleDefinitions = roles,
                 candidates = listOf(B4ShadowCandidate("alive-seat-2", 1, candidate)),
@@ -103,16 +139,38 @@ class B4HistoricalExactShadowBridgeTest {
         )
 
         assertEquals(B4ShadowOutcome.READY, report.outcome)
-        assertEquals(exact(expectedWorlds.size), report.queries.single().before)
-        assertEquals(exact(expectedAfterWorlds.size), report.queries.single().after)
+        assertEquals(neutralDiagnostic.before, report.queries.single().before)
+        assertEquals(neutralDiagnostic.after, report.queries.single().after)
     }
 
     @Test
-    fun `validated B4 shadow defers unsupported exact semantics before baseline evaluation`() {
+    fun `neutral exact evaluation and B4 both defer unsupported semantics before baseline evaluation`() {
         val unsupportedRuleset = validatedRuleset.copy(
             script = validatedRuleset.script.copy(
                 source = ClocktowerScriptSource.IMPORTED_HOMEBREW,
             ),
+        )
+        val context = ExactHistoricalHypotheticalContext(
+            initialSnapshot = snapshot,
+            initialPhase = StorytellerPhase.FIRST_NIGHT,
+            initialRound = 1,
+            actionTimeline = timelineOf(emptyList()),
+            perceivedRolesBySeat = perceived,
+            observationLog = EpistemicObservationLog(),
+            hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            roleDefinitions = roles,
+        )
+
+        val neutral = ExactHistoricalHypotheticalObservationEvaluator.evaluate(
+            validatedRuleset = unsupportedRuleset,
+            context = context,
+            queries = emptyList(),
+        )
+
+        assertTrue(neutral is ExactHypotheticalObservationEvaluation.Deferred)
+        assertEquals(
+            EpistemicEvaluationCapabilityBoundary.HISTORICAL_HYPOTHETICAL_REQUIREMENTS,
+            (neutral as ExactHypotheticalObservationEvaluation.Deferred).missingCapabilities,
         )
 
         val report = B4DynamicPlayerWorldSetShadow(
@@ -122,10 +180,10 @@ class B4HistoricalExactShadowBridgeTest {
                 initialSnapshot = snapshot,
                 initialPhase = StorytellerPhase.FIRST_NIGHT,
                 initialRound = 1,
-                actionTimeline = timelineOf(emptyList()),
+                actionTimeline = context.actionTimeline,
                 perceivedRolesBySeat = perceived,
-                observationLog = EpistemicObservationLog(),
-                hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+                observationLog = context.observationLog,
+                hypothesis = context.hypothesis,
                 roleDefinitions = roles,
                 candidates = emptyList(),
             ),
