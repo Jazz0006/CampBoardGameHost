@@ -46,20 +46,20 @@ replace_once(
 
 replace_once(
     night,
-    """            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n            structuredNumberUiModel = structuredNumberUiModel,\n        )\n""",
-    """            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n            structuredNumberUiModel = structuredNumberUiModel,\n            recommendedOptionIds = recommendedOptionIds,\n            recommendedValues = recommendedNumericValues,\n        )\n""",
-)
-# The identical Chef/Empath tail appears twice; patching once above must leave exactly one.
-replace_once(
-    night,
-    """            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n            structuredNumberUiModel = structuredNumberUiModel,\n        )\n""",
-    """            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n            structuredNumberUiModel = structuredNumberUiModel,\n            recommendedOptionIds = recommendedOptionIds,\n            recommendedValues = recommendedNumericValues,\n        )\n""",
+    """        clocktowerChefResultChoices(\n            step = step,\n            players = chefPlayers,\n            automaticStorytellerInfo = automaticStorytellerInfo,\n            automaticDisplayOption = automaticDisplayOption,\n            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n            structuredNumberUiModel = structuredNumberUiModel,\n        )\n""",
+    """        clocktowerChefResultChoices(\n            step = step,\n            players = chefPlayers,\n            automaticStorytellerInfo = automaticStorytellerInfo,\n            automaticDisplayOption = automaticDisplayOption,\n            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n            structuredNumberUiModel = structuredNumberUiModel,\n            recommendedOptionIds = recommendedOptionIds,\n            recommendedValues = recommendedNumericValues,\n        )\n""",
 )
 
 replace_once(
     night,
-    """            automaticDisplayOption = automaticDisplayOption,\n            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n        )\n    } else {\n        emptyList()\n    }\n    val usesUndertakerSquareTable""",
-    """            automaticDisplayOption = automaticDisplayOption,\n            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n            recommendedOptionIds = recommendedOptionIds,\n        )\n    } else {\n        emptyList()\n    }\n    val usesUndertakerSquareTable""",
+    """        clocktowerEmpathResultChoices(\n            step = step,\n            players = empathPlayers,\n            automaticStorytellerInfo = automaticStorytellerInfo,\n            automaticDisplayOption = automaticDisplayOption,\n            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n            structuredNumberUiModel = structuredNumberUiModel,\n        )\n""",
+    """        clocktowerEmpathResultChoices(\n            step = step,\n            players = empathPlayers,\n            automaticStorytellerInfo = automaticStorytellerInfo,\n            automaticDisplayOption = automaticDisplayOption,\n            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n            structuredNumberUiModel = structuredNumberUiModel,\n            recommendedOptionIds = recommendedOptionIds,\n            recommendedValues = recommendedNumericValues,\n        )\n""",
+)
+
+replace_once(
+    night,
+    """        clocktowerUndertakerResultChoices(\n            step = step,\n            seatCount = cards.size,\n            automaticStorytellerInfo = automaticStorytellerInfo,\n            automaticDisplayOption = automaticDisplayOption,\n            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n        )\n""",
+    """        clocktowerUndertakerResultChoices(\n            step = step,\n            seatCount = cards.size,\n            automaticStorytellerInfo = automaticStorytellerInfo,\n            automaticDisplayOption = automaticDisplayOption,\n            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n            recommendedOptionIds = recommendedOptionIds,\n        )\n""",
 )
 
 replace_once(
@@ -76,8 +76,8 @@ replace_once(
 
 replace_once(
     night,
-    """            automaticDisplayOption = automaticDisplayOption,\n            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n        )\n    } else {\n        emptyList()\n    }\n    val fortuneTellerSelectedSeats""",
-    """            automaticDisplayOption = automaticDisplayOption,\n            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n            recommendedOptionIds = recommendedOptionIds,\n        )\n    } else {\n        emptyList()\n    }\n    val fortuneTellerSelectedSeats""",
+    """        clocktowerRavenkeeperResultChoices(\n            step = step,\n            selectedSeat = ravenkeeperSelectedSeat,\n            seatCount = cards.size,\n            automaticStorytellerInfo = automaticStorytellerInfo,\n            automaticDisplayOption = automaticDisplayOption,\n            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n        )\n""",
+    """        clocktowerRavenkeeperResultChoices(\n            step = step,\n            selectedSeat = ravenkeeperSelectedSeat,\n            seatCount = cards.size,\n            automaticStorytellerInfo = automaticStorytellerInfo,\n            automaticDisplayOption = automaticDisplayOption,\n            resultFirstRegistrationCandidates = resultFirstRegistrationCandidates,\n            recommendedOptionIds = recommendedOptionIds,\n        )\n""",
 )
 
 replace_once(
