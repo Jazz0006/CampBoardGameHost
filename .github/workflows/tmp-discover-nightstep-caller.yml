@@ -11,4 +11,4 @@ jobs:
       - name: Find Judge and NightStep call sites
         run: |
           set -euxo pipefail
-          rg -n "fun ClocktowerJudgeScreen|ClocktowerNightStepCardLocalized" app/src/main/java app/src/test || true
+          grep -RInE "fun ClocktowerJudgeScreen|ClocktowerNightStepCardLocalized" app/src/main/java app/src/test || true
