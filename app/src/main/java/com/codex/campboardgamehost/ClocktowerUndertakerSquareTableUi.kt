@@ -14,6 +14,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,7 +23,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
@@ -72,6 +72,7 @@ internal fun clocktowerUndertakerResultChoices(
     automaticStorytellerInfo: Boolean,
     automaticDisplayOption: ClocktowerDisplayOption?,
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
+    recommendedOptionIds: Set<String> = emptySet(),
 ): List<ClocktowerUndertakerResultChoice> {
     if (step.roleEnName != "Undertaker") return emptyList()
     val anchor = clocktowerRoleRevealAnchor(
@@ -98,7 +99,8 @@ internal fun clocktowerUndertakerResultChoices(
                 displayLabel = projected.displayLabel,
                 sourceKind = sourceKind,
                 displayOption = option,
-                recommended = option.isDefaultRecommendation,
+                recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds ||
+                    (recommendedOptionIds.isEmpty() && option.isDefaultRecommendation),
             )
         }.distinctBy { it.key }
     }
@@ -212,6 +214,11 @@ internal fun ClocktowerUndertakerSquareTableDialog(
         )
         return
     }
+    val recommendations = choices.filter { it.recommended }.take(3).ifEmpty { listOf(initialChoice) }
+    val manualChoices = choices.filterNot { it in recommendations }
+    var manualSelection by remember(choices.map { it.key }, recommendations.map { it.key }) {
+        mutableStateOf(false)
+    }
     var selectedKey by remember(choices.map { it.key }) { mutableStateOf(initialChoice.key) }
     var roleMenuExpanded by remember(choices.map { it.key }) { mutableStateOf(false) }
     val selectedChoice = choices.firstOrNull { it.key == selectedKey } ?: initialChoice
@@ -245,63 +252,80 @@ internal fun ClocktowerUndertakerSquareTableDialog(
             )
         },
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(6.dp),
+                    .fillMaxWidth()
+                    .weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    ClocktowerNightActionWakeInstruction(wakeInstruction)
+                ClocktowerNightActionWakeInstruction(wakeInstruction)
 
-                    if (choices.size > 1) {
-                        Text(
-                            text = if (language == "en") "Choose the character to show" else "选择要展示的角色",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            OutlinedButton(
-                                onClick = { roleMenuExpanded = true },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text(selectedChoice.displayLabel, maxLines = 1)
+                if (!manualSelection) {
+                    ClocktowerExperiencedRecommendationButtons(
+                        recommendations = recommendations,
+                        language = language,
+                        labelOf = { choice ->
+                            if (language == "en") {
+                                "Show: ${choice.displayLabel}"
+                            } else {
+                                "展示：${choice.displayLabel}"
                             }
-                            DropdownMenu(
-                                expanded = roleMenuExpanded,
-                                onDismissRequest = { roleMenuExpanded = false },
-                            ) {
-                                choices.forEach { choice ->
-                                    DropdownMenuItem(
-                                        text = { Text(choice.displayLabel) },
-                                        onClick = {
-                                            selectedKey = choice.key
-                                            roleMenuExpanded = false
-                                        },
-                                    )
-                                }
+                        },
+                        onConfirm = onConfirm,
+                        onManualSelection = if (manualChoices.isNotEmpty()) {
+                            { manualSelection = true }
+                        } else {
+                            null
+                        },
+                    )
+                } else {
+                    Text(
+                        text = if (language == "en") "Manual selection" else "手动选择",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(
+                            onClick = { roleMenuExpanded = true },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(selectedChoice.displayLabel, maxLines = 1)
+                        }
+                        DropdownMenu(
+                            expanded = roleMenuExpanded,
+                            onDismissRequest = { roleMenuExpanded = false },
+                        ) {
+                            choices.forEach { choice ->
+                                DropdownMenuItem(
+                                    text = { Text(choice.displayLabel) },
+                                    onClick = {
+                                        selectedKey = choice.key
+                                        roleMenuExpanded = false
+                                    },
+                                )
                             }
                         }
-                        Spacer(Modifier.height(6.dp))
                     }
-
+                    Spacer(Modifier.height(6.dp))
                     Button(
                         onClick = { onConfirm(selectedChoice) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(
-                            if (language == "en") "Show to player" else "展示给玩家",
-                            maxLines = 1,
-                        )
+                        Text(if (language == "en") "Show to player" else "展示给玩家", maxLines = 1)
+                    }
+                    TextButton(onClick = { manualSelection = false }) {
+                        Text(if (language == "en") "Use recommendations" else "返回推荐")
                     }
                 }
             }
+        }
     }
 }
