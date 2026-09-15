@@ -157,6 +157,7 @@ internal fun clocktowerChefResultChoices(
     automaticDisplayOption: ClocktowerDisplayOption?,
     resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
     structuredNumberUiModel: StructuredNumberInformationUiModel?,
+    recommendedOptionIds: Set<String> = emptySet(),
 ): List<ClocktowerChefResultChoice> {
     fun numericValue(option: ClocktowerDisplayOption): Int? =
         (option.proposition as? InformationProposition.NumericResult)?.value
@@ -185,7 +186,8 @@ internal fun clocktowerChefResultChoices(
                 value = value,
                 sourceKind = ClocktowerChefResultSourceKind.DisplayOption,
                 displayOption = option,
-                recommended = option.isDefaultRecommendation,
+                recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds ||
+                    (recommendedOptionIds.isEmpty() && option.isDefaultRecommendation),
                 effectivePairSeats = clocktowerChefEffectivePairSeats(players, option, value),
             )
         }
@@ -268,6 +270,8 @@ internal fun ClocktowerChefSquareTableDialog(
         return
     }
     val displayedPairSeats = clocktowerChefDisplayedPairSeats(choices, initialChoice.key)
+    val recommendedChoices = choices.filter { it.recommended }.take(3)
+        .ifEmpty { listOf(initialChoice) }
 
     ClocktowerHostSquareTableScaffold(
         seats = seats,
@@ -302,36 +306,36 @@ internal fun ClocktowerChefSquareTableDialog(
             )
         },
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(6.dp),
+                    .fillMaxWidth()
+                    .weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    ClocktowerNightActionWakeInstruction(wakeInstruction)
-                    Text(
-                        text = if (language == "en") "Chef" else "厨师",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(8.dp))
+                ClocktowerNightActionWakeInstruction(wakeInstruction)
+                Text(
+                    text = if (language == "en") "Chef" else "厨师",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(8.dp))
 
-                    ClocktowerExperiencedNumericChoiceRows(
-                        choices = choices,
-                        recommendedChoice = initialChoice,
-                        language = language,
-                        valueOf = ClocktowerChefResultChoice::value,
-                        onConfirm = onConfirm,
-                    )
-                }
+                ClocktowerExperiencedNumericChoiceRows(
+                    choices = choices,
+                    recommendedChoices = recommendedChoices,
+                    language = language,
+                    valueOf = ClocktowerChefResultChoice::value,
+                    onConfirm = onConfirm,
+                )
             }
+        }
     }
 }
