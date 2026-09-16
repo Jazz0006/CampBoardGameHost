@@ -95,6 +95,7 @@ internal sealed interface FirstNightHealthyBundleHarnessEvaluation {
         val publicFactorCombinationCount: BigInteger,
         val distinctProjectedSignatureCount: Int,
         val exactEvaluatedSignatureCount: Int,
+        val excludedCounterworldRoles: Set<RoleId>,
         val signatureGroups: List<FirstNightProjectedSignatureGroup>,
         val samplingApplied: Boolean,
     ) : FirstNightHealthyBundleHarnessEvaluation
@@ -118,10 +119,21 @@ internal sealed interface FirstNightHealthyBundleHarnessEvaluation {
  * [TroubleBrewingFirstNightBundleCandidateSpaceAuditor]. This harness only materializes those
  * producer choices, quotients complete bundles by their PUBLIC_GOOD_INFO semantics, and asks the
  * epistemic exact evaluator for descriptive consequences. It deliberately contains no Badness gate.
+ *
+ * The first experiment's counterworld domain deliberately excludes the uncertainty sources reserved
+ * for later staged validation: Drunk, Spy/Recluse registration, and Poisoner impairment. Candidate
+ * legality still uses the complete official role catalog. Later experiments widen only this explicit
+ * diagnostic domain; they do not replace or weaken the rules engine.
  */
 internal object TroubleBrewingFirstNightHealthyBundleHarness {
     private val pairRoles = setOf(RoleId("Washerwoman"), RoleId("Librarian"), RoleId("Investigator"))
     private val numericRoles = setOf(RoleId("Chef"), RoleId("Empath"))
+    private val stagedCounterworldRoles = setOf(
+        RoleId("Drunk"),
+        RoleId("Spy"),
+        RoleId("Recluse"),
+        RoleId("Poisoner"),
+    )
 
     fun evaluate(
         validatedRuleset: ValidatedClocktowerRuleset,
@@ -150,6 +162,12 @@ internal object TroubleBrewingFirstNightHealthyBundleHarness {
         }
         requireNotNull(audit.legalCompleteBundleCount) {
             "Healthy candidate-space audit must know the complete legal bundle count."
+        }
+
+        val exactCounterworldRoles = roles.filterNot { it.id in stagedCounterworldRoles }
+        val exactRoleIds = exactCounterworldRoles.mapTo(linkedSetOf(), RoleDefinition::id)
+        require(game.players.all { it.actualRole in exactRoleIds }) {
+            "Healthy FN-BUNDLE-2 must defer a setup containing a staged counterworld role."
         }
 
         val formal = FormalGameState.from(
@@ -239,7 +257,7 @@ internal object TroubleBrewingFirstNightHealthyBundleHarness {
 
         val exact = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
             validatedRuleset = validatedRuleset,
-            context = context,
+            context = context.copy(roleDefinitions = exactCounterworldRoles),
             queries = queries,
         )
         if (exact is ExactHypotheticalObservationBundleEvaluation.Deferred) {
@@ -287,6 +305,7 @@ internal object TroubleBrewingFirstNightHealthyBundleHarness {
             publicFactorCombinationCount = audit.representedPublicProjectionUpperBound,
             distinctProjectedSignatureCount = completedGroups.size,
             exactEvaluatedSignatureCount = completedGroups.size,
+            excludedCounterworldRoles = stagedCounterworldRoles,
             signatureGroups = completedGroups,
             samplingApplied = false,
         )
