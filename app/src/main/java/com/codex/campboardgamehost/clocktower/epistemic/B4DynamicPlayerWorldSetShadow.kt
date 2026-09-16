@@ -7,7 +7,6 @@ import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import java.math.BigInteger
 
 /**
  * B4's deliberately isolated multi-night adapter.  It is a shadow query service: callers receive
@@ -86,83 +85,48 @@ class B4DynamicPlayerWorldSetShadow private constructor(
         request: B4ShadowRequest,
         ruleset: ValidatedClocktowerRuleset,
     ): B4ShadowReport {
-        when (
-            EpistemicEvaluationCapabilityBoundary.assess(
+        val evaluation = try {
+            ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
                 validatedRuleset = ruleset,
-                requiredCapabilities = EpistemicEvaluationCapabilityBoundary.HISTORICAL_HYPOTHETICAL_REQUIREMENTS,
-            )
-        ) {
-            EpistemicEvaluationAvailability.Ready -> Unit
-            is EpistemicEvaluationAvailability.Deferred ->
-                return B4ShadowReport(B4ShadowOutcome.DEFERRED_B4, emptyList())
-        }
-
-        val setupFormal = try {
-            FormalGameState.from(
-                snapshot = request.initialSnapshot,
-                phase = request.initialPhase,
-                round = request.initialRound,
-            )
-        } catch (_: IllegalArgumentException) {
-            return B4ShadowReport(B4ShadowOutcome.DEFERRED_B4, emptyList())
-        }
-        val knowledgeBySeat = try {
-            A4PlayerKnowledgeFactory.createAll(
-                formal = setupFormal,
-                perceivedRolesBySeat = request.perceivedRolesBySeat,
-                observationLog = request.observationLog,
-            ).associateBy(PlayerKnowledgeSnapshot::recipientSeat)
-        } catch (_: IllegalArgumentException) {
-            return B4ShadowReport(B4ShadowOutcome.DEFERRED_B4, emptyList())
-        }
-        val rolesById = request.roleDefinitions.associateBy(RoleDefinition::id)
-        if (rolesById.isEmpty()) return B4ShadowReport(B4ShadowOutcome.DEFERRED_B4, emptyList())
-
-        val queries = request.candidates.map { candidate ->
-            val knowledge = knowledgeBySeat[candidate.recipientSeat]
-                ?: return B4ShadowReport(B4ShadowOutcome.DEFERRED_B4, emptyList())
-            if (candidate.observation.snapshotId != setupFormal.snapshotId ||
-                (candidate.observation.visibility == ObservationVisibility.PRIVATE &&
-                    candidate.recipientSeat !in candidate.observation.recipientSeats)
-            ) {
-                return B4ShadowReport(B4ShadowOutcome.DEFERRED_B4, emptyList())
-            }
-            val historical = try {
-                EnumeratedHistoricalExactBaseline.build(
-                    validatedRuleset = ruleset,
-                    rulesetRef = request.initialSnapshot.rulesetRef,
-                    setupKnowledge = knowledge,
-                    hypothesis = request.hypothesis,
-                    roleDefinitions = request.roleDefinitions,
+                context = ExactHistoricalHypotheticalContext(
+                    initialSnapshot = request.initialSnapshot,
                     initialPhase = request.initialPhase,
                     initialRound = request.initialRound,
                     actionTimeline = request.actionTimeline,
+                    perceivedRolesBySeat = request.perceivedRolesBySeat,
                     observationLog = request.observationLog,
-                )
-            } catch (_: IllegalArgumentException) {
-                return B4ShadowReport(B4ShadowOutcome.DEFERRED_B4, emptyList())
-            }
-            val beforeWorlds = historical.worldSet.enumeratedWorlds()
-            val afterCount = beforeWorlds.count { world ->
-                TroubleBrewingWorldObservationEvaluator.evaluate(
-                    world = world,
-                    roles = rolesById,
-                    observation = candidate.observation,
                     hypothesis = request.hypothesis,
-                ).matches
-            }
-            B4CandidateWorldQuery(
-                candidateId = candidate.candidateId,
-                recipientSeat = candidate.recipientSeat,
-                before = exactCardinality(beforeWorlds.size),
-                after = exactCardinality(afterCount),
+                    roleDefinitions = request.roleDefinitions,
+                ),
+                queries = request.candidates.map { candidate ->
+                    ExactHypotheticalObservationBundleQuery(
+                        bundleId = candidate.candidateId,
+                        recipientSeat = candidate.recipientSeat,
+                        observations = listOf(candidate.observation),
+                    )
+                },
             )
+        } catch (_: IllegalArgumentException) {
+            return B4ShadowReport(B4ShadowOutcome.DEFERRED_B4, emptyList())
         }
-        return B4ShadowReport(B4ShadowOutcome.READY, queries)
-    }
 
-    private fun exactCardinality(count: Int): WorldCardinality.Exact =
-        WorldCardinality.Exact(BigInteger.valueOf(count.toLong()))
+        return when (evaluation) {
+            is ExactHypotheticalObservationBundleEvaluation.Deferred ->
+                B4ShadowReport(B4ShadowOutcome.DEFERRED_B4, emptyList())
+            is ExactHypotheticalObservationBundleEvaluation.Ready ->
+                B4ShadowReport(
+                    outcome = B4ShadowOutcome.READY,
+                    queries = evaluation.diagnostics.map { diagnostic ->
+                        B4CandidateWorldQuery(
+                            candidateId = diagnostic.bundleId,
+                            recipientSeat = diagnostic.recipientSeat,
+                            before = diagnostic.before,
+                            after = diagnostic.after,
+                        )
+                    },
+                )
+        }
+    }
 }
 
 /** Preserves the request's already-validated global action identity when B4 materializes formal state. */
