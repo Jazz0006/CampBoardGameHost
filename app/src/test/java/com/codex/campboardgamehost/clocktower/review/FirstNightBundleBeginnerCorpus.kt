@@ -38,6 +38,7 @@ enum class FirstNightBeginnerSelectionReason {
     LARGEST_LEAVE_ONE_OUT_RECOVERY,
     LOWER_QUARTILE_AFTER,
     UPPER_QUARTILE_AFTER,
+    BOUNDED_LOW_INFORMATION_SAMPLE,
 }
 
 data class FirstNightBeginnerDiagnostics(
@@ -86,19 +87,15 @@ data class FirstNightBeginnerCorpus(
 }
 
 /**
- * FN-BUNDLE-3 pilot corpus builder.
+ * FN-BUNDLE-3 calibration corpus infrastructure.
  *
- * This is review infrastructure, not a Badness classifier. Every item starts UNREVIEWED. The pilot
- * deliberately uses one explicit good-player anchor perspective per setup+seating scenario so the
- * first human-review loop remains cheap and interpretable. Perspective robustness is a later
- * experiment, not an assumption silently folded into the first corpus.
- *
- * Calibration/holdout separation is by whole scenario, preventing near-duplicate signatures from a
- * single setup+seating layout from leaking across the validation boundary. Holdout diagnostics are
- * computed by the deterministic acceptance harness but are deliberately omitted from review output
- * until calibration rules are frozen.
+ * Calibration and holdout are intentionally different execution phases. Calibration generation must
+ * not evaluate the sealed holdout at all; a fresh holdout is evaluated only after candidate gates are
+ * frozen. This prevents both information leakage and needless exact-evaluator cost.
  */
 object FirstNightBundleBeginnerCorpusBuilder {
+    const val SEALED_HOLDOUT_SCENARIO_COUNT: Int = 1
+
     private val catalog = BuiltInClocktowerRulesetCatalog { assetPath ->
         File("src/main/assets/$assetPath").readText(Charsets.UTF_8)
     }
@@ -108,15 +105,13 @@ object FirstNightBundleBeginnerCorpusBuilder {
 
     private data class ScenarioDefinition(
         val id: String,
-        val partition: FirstNightBeginnerCorpusPartition,
         val roleNamesBySeat: List<String>,
         val anchorRecipientSeat: Int,
     )
 
-    private val scenarioDefinitions = listOf(
+    private val exhaustiveCalibrationDefinitions = listOf(
         ScenarioDefinition(
             id = "cal-pair-rich-adjacent-evil",
-            partition = FirstNightBeginnerCorpusPartition.CALIBRATION,
             roleNamesBySeat = listOf(
                 "Washerwoman",
                 "Chef",
@@ -128,52 +123,32 @@ object FirstNightBundleBeginnerCorpusBuilder {
             ),
             anchorRecipientSeat = 1,
         ),
-        ScenarioDefinition(
-            id = "cal-single-pair-light-info",
-            partition = FirstNightBeginnerCorpusPartition.CALIBRATION,
-            roleNamesBySeat = listOf(
-                "Washerwoman",
-                "Chef",
-                "Monk",
-                "Soldier",
-                "Virgin",
-                "Scarlet Woman",
-                "Imp",
-            ),
-            anchorRecipientSeat = 1,
-        ),
-        ScenarioDefinition(
-            id = "holdout-pair-rich-zero-outsider",
-            partition = FirstNightBeginnerCorpusPartition.HOLDOUT,
-            roleNamesBySeat = listOf(
-                "Washerwoman",
-                "Librarian",
-                "Chef",
-                "Monk",
-                "Investigator",
-                "Scarlet Woman",
-                "Imp",
-            ),
-            anchorRecipientSeat = 1,
-        ),
     )
 
-    fun build(): FirstNightBeginnerCorpus = FirstNightBeginnerCorpus(
-        scenarios = scenarioDefinitions.map(::buildScenario),
+    /** Exhaustive calibration currently contains only the interaction-rich scenario. */
+    fun buildCalibration(): FirstNightBeginnerCorpus = FirstNightBeginnerCorpus(
+        scenarios = exhaustiveCalibrationDefinitions.map(::buildScenario),
     )
 
-    /** Human-review export deliberately reveals calibration only. */
-    fun renderMarkdown(corpus: FirstNightBeginnerCorpus): String = buildString {
-        val calibration = corpus.scenarios.filter { it.partition == FirstNightBeginnerCorpusPartition.CALIBRATION }
-        val holdoutCount = corpus.scenarios.count { it.partition == FirstNightBeginnerCorpusPartition.HOLDOUT }
+    fun renderMarkdown(
+        corpus: FirstNightBeginnerCorpus,
+        sealedHoldoutScenarioCount: Int = SEALED_HOLDOUT_SCENARIO_COUNT,
+    ): String = buildString {
+        require(corpus.scenarios.all { it.partition == FirstNightBeginnerCorpusPartition.CALIBRATION }) {
+            "Calibration review export must not contain holdout scenarios."
+        }
+        require(sealedHoldoutScenarioCount >= 0)
 
         appendLine("FN_BUNDLE_3_CORPUS_START")
         appendLine("# FN-BUNDLE-3 BEGINNER calibration review corpus")
         appendLine()
         appendLine("All labels are UNREVIEWED. Diagnostics are evidence for human review, not thresholds.")
-        appendLine("Sealed holdout scenarios: $holdoutCount. Their diagnostics are intentionally omitted.")
+        appendLine(
+            "Sealed holdout scenarios: $sealedHoldoutScenarioCount. " +
+                "Holdout diagnostics are not evaluated during calibration.",
+        )
         appendLine()
-        calibration.forEach { scenario ->
+        corpus.scenarios.forEach { scenario ->
             appendLine("## ${scenario.scenarioId} — ${scenario.partition}")
             appendLine()
             appendLine("Anchor recipient: seat ${scenario.anchorRecipientSeat}")
@@ -195,16 +170,18 @@ object FirstNightBundleBeginnerCorpusBuilder {
                         "forcedGood=${d.forcedGoodSeats.sorted()}, forcedEvil=${d.forcedEvilSeats.sorted()}, " +
                         "evilCover=${d.evilCoverSize}",
                 )
-                appendLine()
-                appendLine("Anchor leave-one-out evidence:")
-                item.anchorLeaveOneOut.forEach { loo ->
-                    val ld = loo.diagnostics
-                    appendLine(
-                        "- omit `${loo.omittedObservation}` -> AFTER ${ld.afterWorldCount}, " +
-                            "demonCover=${ld.demonCoverSize}, evilConfigs=${ld.distinctEvilTeamConfigurationCount}, " +
-                            "forcedGood=${ld.forcedGoodSeats.sorted()}, forcedEvil=${ld.forcedEvilSeats.sorted()}, " +
-                            "evilCover=${ld.evilCoverSize}",
-                    )
+                if (item.anchorLeaveOneOut.isNotEmpty()) {
+                    appendLine()
+                    appendLine("Anchor leave-one-out evidence:")
+                    item.anchorLeaveOneOut.forEach { loo ->
+                        val ld = loo.diagnostics
+                        appendLine(
+                            "- omit `${loo.omittedObservation}` -> AFTER ${ld.afterWorldCount}, " +
+                                "demonCover=${ld.demonCoverSize}, evilConfigs=${ld.distinctEvilTeamConfigurationCount}, " +
+                                "forcedGood=${ld.forcedGoodSeats.sorted()}, forcedEvil=${ld.forcedEvilSeats.sorted()}, " +
+                                "evilCover=${ld.evilCoverSize}",
+                        )
+                    }
                 }
                 appendLine()
             }
@@ -223,13 +200,13 @@ object FirstNightBundleBeginnerCorpusBuilder {
             evaluationRecipientSeats = setOf(definition.anchorRecipientSeat),
         )
         require(evaluation is FirstNightHealthyBundleHarnessEvaluation.Ready) {
-            "FN-BUNDLE-3 pilot scenario ${definition.id} must be supported by the healthy harness."
+            "FN-BUNDLE-3 calibration scenario ${definition.id} must be supported by the healthy harness."
         }
         val selected = selectReviewGroups(evaluation.signatureGroups)
 
         return FirstNightBeginnerCorpusScenario(
             scenarioId = definition.id,
-            partition = definition.partition,
+            partition = FirstNightBeginnerCorpusPartition.CALIBRATION,
             anchorRecipientSeat = definition.anchorRecipientSeat,
             seating = game.players.map { it.seat to it.actualRole },
             rawCompleteBundleCount = evaluation.rawCompleteBundleCount,
@@ -239,7 +216,7 @@ object FirstNightBundleBeginnerCorpusBuilder {
                 FirstNightBeginnerCorpusItem(
                     itemId = "${definition.id}:${group.signatureId}",
                     scenarioId = definition.id,
-                    partition = definition.partition,
+                    partition = FirstNightBeginnerCorpusPartition.CALIBRATION,
                     label = FirstNightBeginnerCorpusLabel.UNREVIEWED,
                     signatureId = group.signatureId,
                     multiplicity = group.multiplicity,
