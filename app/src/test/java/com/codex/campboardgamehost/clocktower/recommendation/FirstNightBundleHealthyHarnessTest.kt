@@ -68,7 +68,10 @@ class FirstNightBundleHealthyHarnessTest {
         val first = ready.signatureGroups.first()
         val family = first.provenanceFamilies.single()
         assertEquals(BigInteger.valueOf(1_100L), family.multiplicity)
-        assertEquals(setOf("red-herring", "demon-bluffs"), family.latentOptionIdsByFactor.keys)
+        assertEquals(
+            setOf("setup.red-herring", "setup.demon-bluffs"),
+            family.latentOptionIdsByFactor.keys,
+        )
         assertEquals(1_100, family.completeBundleIds().count())
         assertEquals(1_100, family.completeBundleIds().toSet().size)
     }
