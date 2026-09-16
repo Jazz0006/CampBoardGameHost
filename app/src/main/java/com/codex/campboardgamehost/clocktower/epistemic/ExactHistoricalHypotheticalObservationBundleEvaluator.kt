@@ -7,6 +7,7 @@ import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import java.math.BigInteger
 
 /**
  * Knowledge-safe historical input for exact hypothetical bundle evaluation.
@@ -119,7 +120,7 @@ internal sealed interface ExactHypotheticalObservationBundleEvaluation {
  * A pristine Night-1 context has no historical replay to perform, so it may use the already-proven
  * direct ZDD representation internally. This is an experiment/evaluator representation choice, not
  * a change to the production A4 rollout policy. Historical contexts continue to use the enumerated
- * replay baseline until historical symbolic replay itself is validated.
+ * replay snapshot until historical symbolic replay itself is validated.
  */
 internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
     fun evaluate(
@@ -188,22 +189,24 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
                 )
             }
         val baselineStructureBySeat = baselineWorldSetsBySeat.mapValues { (_, worlds) ->
-            summarizeWorldStructure(exactWorlds(worlds), rolesById)
+            summarizeWorldStructure(worlds.exactWorlds(), rolesById)
         }
 
         return ExactHypotheticalObservationBundleEvaluation.Ready(
             diagnostics = stableQueries.map { query ->
                 val before = baselineWorldSetsBySeat.getValue(query.recipientSeat)
-                val after = exactFilterOrder(query.observations).fold(before) { current, observation ->
-                    current.require(observation)
-                }
+                val after = before.filter(
+                    observations = exactFilterOrder(query.observations),
+                    roles = rolesById,
+                    hypothesis = context.hypothesis,
+                )
                 ExactHypotheticalObservationBundleDiagnostics(
                     bundleId = query.bundleId,
                     recipientSeat = query.recipientSeat,
-                    before = exactCardinality(before),
-                    after = exactCardinality(after),
+                    before = before.cardinality(),
+                    after = after.cardinality(),
                     beforeStructure = baselineStructureBySeat.getValue(query.recipientSeat),
-                    afterStructure = summarizeWorldStructure(exactWorlds(after), rolesById),
+                    afterStructure = summarizeWorldStructure(after.exactWorlds(), rolesById),
                 )
             },
         )
@@ -215,31 +218,35 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
         knowledge: PlayerKnowledgeSnapshot,
         roles: List<RoleDefinition>,
         context: ExactHistoricalHypotheticalContext,
-    ): PlayerWorldSet {
+    ): ExactWorldFamily {
         val pristineInitialNight =
             context.initialPhase == StorytellerPhase.FIRST_NIGHT &&
                 context.initialRound == 1 &&
                 context.actionTimeline.entries.isEmpty() &&
                 context.observationLog.records.isEmpty()
         if (pristineInitialNight) {
-            return ZddPlayerWorldSet.enumerateDirect(
-                rulesetRef = snapshot.rulesetRef,
-                knowledge = knowledge,
-                hypothesis = context.hypothesis,
-                roleDefinitions = roles,
+            return ZddExactWorldFamily(
+                ZddPlayerWorldSet.enumerateDirect(
+                    rulesetRef = snapshot.rulesetRef,
+                    knowledge = knowledge,
+                    hypothesis = context.hypothesis,
+                    roleDefinitions = roles,
+                ),
             )
         }
-        return EnumeratedHistoricalExactBaseline.build(
-            validatedRuleset = validatedRuleset,
-            rulesetRef = snapshot.rulesetRef,
-            setupKnowledge = knowledge,
-            hypothesis = context.hypothesis,
-            roleDefinitions = roles,
-            initialPhase = context.initialPhase,
-            initialRound = context.initialRound,
-            actionTimeline = context.actionTimeline,
-            observationLog = context.observationLog,
-        ).worldSet
+        return EnumeratedExactWorldFamily(
+            EnumeratedHistoricalExactBaseline.build(
+                validatedRuleset = validatedRuleset,
+                rulesetRef = snapshot.rulesetRef,
+                setupKnowledge = knowledge,
+                hypothesis = context.hypothesis,
+                roleDefinitions = roles,
+                initialPhase = context.initialPhase,
+                initialRound = context.initialRound,
+                actionTimeline = context.actionTimeline,
+                observationLog = context.observationLog,
+            ).worldSet.enumeratedWorlds(),
+        )
     }
 
     /**
@@ -261,12 +268,6 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
                 EpistemicObservation::observationId,
             ),
         )
-
-    private fun exactWorlds(worldSet: PlayerWorldSet): Sequence<EnumeratedWorld> = when (worldSet) {
-        is EnumeratedWorldSet -> worldSet.enumeratedWorlds().asSequence()
-        is ZddPlayerWorldSet -> worldSet.exactWorlds()
-        else -> error("Exact hypothetical evaluator received unsupported world-set representation ${worldSet::class.simpleName}.")
-    }
 
     private fun summarizeWorldStructure(
         worlds: Sequence<EnumeratedWorld>,
@@ -318,7 +319,59 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
         )
     }
 
-    private fun exactCardinality(worldSet: PlayerWorldSet): WorldCardinality.Exact =
-        worldSet.cardinality() as? WorldCardinality.Exact
-            ?: error("Exact hypothetical evaluator requires exact world-set cardinality.")
+    private sealed interface ExactWorldFamily {
+        fun cardinality(): WorldCardinality.Exact
+        fun exactWorlds(): Sequence<EnumeratedWorld>
+        fun filter(
+            observations: List<EpistemicObservation>,
+            roles: Map<RoleId, RoleDefinition>,
+            hypothesis: EpistemicHypothesis,
+        ): ExactWorldFamily
+    }
+
+    private data class ZddExactWorldFamily(
+        val worldSet: ZddPlayerWorldSet,
+    ) : ExactWorldFamily {
+        override fun cardinality(): WorldCardinality.Exact =
+            worldSet.cardinality() as WorldCardinality.Exact
+
+        override fun exactWorlds(): Sequence<EnumeratedWorld> = worldSet.exactWorlds()
+
+        override fun filter(
+            observations: List<EpistemicObservation>,
+            roles: Map<RoleId, RoleDefinition>,
+            hypothesis: EpistemicHypothesis,
+        ): ExactWorldFamily {
+            val filtered = observations.fold(worldSet) { current, observation ->
+                current.require(observation)
+            }
+            return ZddExactWorldFamily(filtered)
+        }
+    }
+
+    private data class EnumeratedExactWorldFamily(
+        val worlds: List<EnumeratedWorld>,
+    ) : ExactWorldFamily {
+        override fun cardinality(): WorldCardinality.Exact =
+            WorldCardinality.Exact(BigInteger.valueOf(worlds.size.toLong()))
+
+        override fun exactWorlds(): Sequence<EnumeratedWorld> = worlds.asSequence()
+
+        override fun filter(
+            observations: List<EpistemicObservation>,
+            roles: Map<RoleId, RoleDefinition>,
+            hypothesis: EpistemicHypothesis,
+        ): ExactWorldFamily = EnumeratedExactWorldFamily(
+            worlds.filter { world ->
+                observations.all { observation ->
+                    TroubleBrewingWorldObservationEvaluator.evaluate(
+                        world = world,
+                        roles = roles,
+                        observation = observation,
+                        hypothesis = hypothesis,
+                    ).matches
+                }
+            },
+        )
+    }
 }
