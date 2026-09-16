@@ -1,6 +1,8 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
+import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
@@ -48,11 +50,42 @@ internal data class ExactHypotheticalObservationBundleQuery(
     }
 }
 
+/**
+ * Explainable strategic structure of one exact possible-world set.
+ *
+ * This is deliberately descriptive rather than evaluative: no Badness thresholds, probabilities,
+ * or preference score belong here. Cover sizes are set-union sizes: the number of seats needed to
+ * cover every surviving demon placement or every surviving evil-team placement respectively.
+ */
+internal data class ExactWorldStructureDiagnostics(
+    val possibleDemonSeats: Set<Int>,
+    val evilTeamSeatConfigurations: Set<Set<Int>>,
+    val forcedGoodSeats: Set<Int>,
+    val forcedEvilSeats: Set<Int>,
+    val evilCoverSeats: Set<Int>,
+) {
+    val demonCoverSize: Int get() = possibleDemonSeats.size
+    val evilCoverSize: Int get() = evilCoverSeats.size
+    val distinctEvilTeamConfigurationCount: Int get() = evilTeamSeatConfigurations.size
+
+    companion object {
+        val EMPTY = ExactWorldStructureDiagnostics(
+            possibleDemonSeats = emptySet(),
+            evilTeamSeatConfigurations = emptySet(),
+            forcedGoodSeats = emptySet(),
+            forcedEvilSeats = emptySet(),
+            evilCoverSeats = emptySet(),
+        )
+    }
+}
+
 internal data class ExactHypotheticalObservationBundleDiagnostics(
     val bundleId: String,
     val recipientSeat: Int,
     val before: WorldCardinality.Exact,
     val after: WorldCardinality.Exact,
+    val beforeStructure: ExactWorldStructureDiagnostics,
+    val afterStructure: ExactWorldStructureDiagnostics,
 )
 
 /**
@@ -155,11 +188,14 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
                     observationLog = context.observationLog,
                 ).worldSet.enumeratedWorlds()
             }
+        val baselineStructureBySeat = baselineWorldsBySeat.mapValues { (_, worlds) ->
+            summarizeWorldStructure(worlds, rolesById)
+        }
 
         return ExactHypotheticalObservationBundleEvaluation.Ready(
             diagnostics = stableQueries.map { query ->
                 val beforeWorlds = baselineWorldsBySeat.getValue(query.recipientSeat)
-                val afterCount = beforeWorlds.count { world ->
+                val afterWorlds = beforeWorlds.filter { world ->
                     query.observations.all { observation ->
                         TroubleBrewingWorldObservationEvaluator.evaluate(
                             world = world,
@@ -173,9 +209,63 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
                     bundleId = query.bundleId,
                     recipientSeat = query.recipientSeat,
                     before = exactCardinality(beforeWorlds.size),
-                    after = exactCardinality(afterCount),
+                    after = exactCardinality(afterWorlds.size),
+                    beforeStructure = baselineStructureBySeat.getValue(query.recipientSeat),
+                    afterStructure = summarizeWorldStructure(afterWorlds, rolesById),
                 )
             },
+        )
+    }
+
+    private fun summarizeWorldStructure(
+        worlds: List<EnumeratedWorld>,
+        roles: Map<RoleId, RoleDefinition>,
+    ): ExactWorldStructureDiagnostics {
+        if (worlds.isEmpty()) return ExactWorldStructureDiagnostics.EMPTY
+
+        val possibleDemonSeats = worlds
+            .asSequence()
+            .flatMap { world ->
+                world.currentRolesBySeat.asSequence()
+                    .filter { (seat, role) ->
+                        seat in world.aliveSeats && roles.getValue(role).type == CharacterType.DEMON
+                    }
+                    .map { it.key }
+            }
+            .toSortedSet()
+
+        val evilConfigurations = worlds
+            .asSequence()
+            .map { world ->
+                world.currentRolesBySeat
+                    .filterValues { role -> roles.getValue(role).alignment == Alignment.EVIL }
+                    .keys
+                    .toSortedSet()
+                    .toSet()
+            }
+            .distinct()
+            .sortedWith(compareBy<Set<Int>>({ it.size }, { it.joinToString(",") }))
+            .toCollection(linkedSetOf())
+
+        val seats = worlds.first().currentRolesBySeat.keys.sorted()
+        val forcedGoodSeats = seats.filterTo(sortedSetOf()) { seat ->
+            worlds.all { world ->
+                roles.getValue(world.currentRolesBySeat.getValue(seat)).alignment == Alignment.GOOD
+            }
+        }
+        val forcedEvilSeats = seats.filterTo(sortedSetOf()) { seat ->
+            worlds.all { world ->
+                roles.getValue(world.currentRolesBySeat.getValue(seat)).alignment == Alignment.EVIL
+            }
+        }
+        val evilCoverSeats = evilConfigurations.flatten().toSortedSet()
+
+        return ExactWorldStructureDiagnostics(
+            possibleDemonSeats = possibleDemonSeats,
+            evilTeamSeatConfigurations = evilConfigurations,
+            forcedGoodSeats = forcedGoodSeats,
+            forcedEvilSeats = forcedEvilSeats,
+            evilCoverSeats = evilCoverSeats,
         )
     }
 
