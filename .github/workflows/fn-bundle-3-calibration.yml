@@ -1,0 +1,50 @@
+name: FN-BUNDLE-3 calibration
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: fn-bundle-3-calibration-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  calibration:
+    name: Generate BEGINNER calibration corpus
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Run FN-BUNDLE-3 calibration experiment
+        run: ./gradlew :app:fnBundle3Calibration --no-daemon --rerun-tasks
+
+      - name: Print calibration-only review corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="app/build/reports/fn-bundle-3-beginner-corpus.md"
+          test -f "$report"
+          cat "$report"
+
+      - name: Upload calibration report
+        uses: actions/upload-artifact@v4
+        with:
+          name: fn-bundle-3-beginner-calibration
+          path: app/build/reports/fn-bundle-3-beginner-corpus.md
+          if-no-files-found: error
