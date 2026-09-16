@@ -52,12 +52,13 @@ internal data class FirstNightBundleCandidateFactorAudit(
 }
 
 /**
- * FN-BUNDLE-0 census of the complete candidate-product shape before epistemic materialization.
+ * FN-BUNDLE-0 census of the candidate-product shape before epistemic materialization.
  *
- * Every option in [factors] comes from an existing legal producer. In the current healthy slice
- * these factors have no cross-factor legality constraint, so [legalCompleteBundleCount] equals the
- * raw Cartesian product. Future Drunk/registration/poison stages may introduce an explicit pruning
- * step and make the two counts differ.
+ * [rawCartesianCount] is always the product of the currently represented canonical producer
+ * factors. [legalCompleteBundleCount] is deliberately nullable: it is exact only when no staged
+ * complexity is present. A Drunk, Spy/Recluse registration source, or Poisoner means the current
+ * healthy-slice producer set is known to be incomplete, so this audit must not pretend its partial
+ * product is the count of complete legal Night 1 bundles.
  *
  * This is deliberately not an evaluator result. [evaluatedCount] remains zero and sampling remains
  * disabled until a later harness actually materializes complete bundles as hypothetical observations.
@@ -65,7 +66,7 @@ internal data class FirstNightBundleCandidateFactorAudit(
 internal data class FirstNightBundleCandidateSpaceAudit(
     val factors: List<FirstNightBundleCandidateFactorAudit>,
     val rawCartesianCount: BigInteger,
-    val legalCompleteBundleCount: BigInteger,
+    val legalCompleteBundleCount: BigInteger?,
     val evaluatedCount: BigInteger = BigInteger.ZERO,
     val samplingApplied: Boolean = false,
     val excludedPlayerControlledElements: Set<String> = emptySet(),
@@ -75,11 +76,19 @@ internal data class FirstNightBundleCandidateSpaceAudit(
         require(factors.map { it.factorId }.distinct().size == factors.size) {
             "First-night candidate factor IDs must be unique."
         }
-        require(rawCartesianCount.signum() >= 0 && legalCompleteBundleCount.signum() >= 0) {
-            "First-night candidate-space counts cannot be negative."
+        require(rawCartesianCount.signum() >= 0) { "First-night raw Cartesian count cannot be negative." }
+        require(legalCompleteBundleCount == null || legalCompleteBundleCount.signum() >= 0) {
+            "First-night legal complete-bundle count cannot be negative."
         }
-        require(evaluatedCount.signum() >= 0 && evaluatedCount <= legalCompleteBundleCount) {
-            "Evaluated bundle count must be between zero and the legal complete-bundle count."
+        require(evaluatedCount.signum() >= 0) { "Evaluated bundle count cannot be negative." }
+        require(legalCompleteBundleCount != null || evaluatedCount == BigInteger.ZERO) {
+            "An incomplete candidate-space audit cannot report evaluated complete bundles."
+        }
+        require(legalCompleteBundleCount == null || evaluatedCount <= legalCompleteBundleCount) {
+            "Evaluated bundle count cannot exceed the legal complete-bundle count."
+        }
+        require((legalCompleteBundleCount == null) == deferredComplexities.isNotEmpty()) {
+            "Complete bundle count is known exactly if and only if no staged complexity is deferred."
         }
         require(excludedPlayerControlledElements.all { it.isNotBlank() }) {
             "Excluded player-controlled element IDs cannot be blank."
@@ -125,23 +134,16 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
         val rawCartesianCount = factors.fold(BigInteger.ONE) { product, factor ->
             product.multiply(BigInteger.valueOf(factor.optionCount.toLong()))
         }
+        val deferredComplexities = deferredComplexities(game)
 
         return FirstNightBundleCandidateSpaceAudit(
             factors = factors,
             rawCartesianCount = rawCartesianCount,
-            legalCompleteBundleCount = rawCartesianCount,
+            legalCompleteBundleCount = rawCartesianCount.takeIf { deferredComplexities.isEmpty() },
             excludedPlayerControlledElements = buildSet {
                 if (game.players.any { it.actualRole == fortuneTeller }) add(FORTUNE_TELLER_TARGET)
             },
-            deferredComplexities = buildSet {
-                if (game.players.any { it.actualRole == drunk }) add(FirstNightBundleDeferredComplexity.DRUNK)
-                if (game.players.any { it.actualRole == spy || it.actualRole == recluse }) {
-                    add(FirstNightBundleDeferredComplexity.SPY_RECLUSE_REGISTRATION)
-                }
-                if (game.players.any { it.actualRole == poisoner }) {
-                    add(FirstNightBundleDeferredComplexity.POISONER_TARGET)
-                }
-            },
+            deferredComplexities = deferredComplexities,
         )
     }
 
@@ -223,6 +225,16 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
             control = FirstNightBundleEntryControl.STORYTELLER_CONTROLLED,
             optionIds = candidates.map { it.candidateId }.sorted(),
         )
+    }
+
+    private fun deferredComplexities(game: GameState): Set<FirstNightBundleDeferredComplexity> = buildSet {
+        if (game.players.any { it.actualRole == drunk }) add(FirstNightBundleDeferredComplexity.DRUNK)
+        if (game.players.any { it.actualRole == spy || it.actualRole == recluse }) {
+            add(FirstNightBundleDeferredComplexity.SPY_RECLUSE_REGISTRATION)
+        }
+        if (game.players.any { it.actualRole == poisoner }) {
+            add(FirstNightBundleDeferredComplexity.POISONER_TARGET)
+        }
     }
 
     private fun pairRoleKey(role: RoleId): String = when (role) {
