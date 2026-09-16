@@ -1,280 +1,72 @@
-# NEXT DEVELOPMENT HANDOFF — FN-BUNDLE-2 Healthy Whole-Bundle Harness
+# NEXT DEVELOPMENT HANDOFF — FN-BUNDLE-3 BEGINNER Corpus
 
 > Updated: 2026-09-16 Australia/Sydney  
-> Status: **CURRENT / FN-BUNDLE-2 T4 acceptance checkpoint**  
-> Current route decision: `docs/EPI_MQ_FIRST_NIGHT_BUNDLE_ROUTE_2026-09-16.md`  
-> Prior `docs/EPI_MQ_ROUTE_REAUDIT_2026-09-15.md`: **superseded as execution authority**
+> Status: **CURRENT / PR #143 public-claim semantic correction + calibration checkpoint**  
+> Route: `docs/EPI_MQ_FIRST_NIGHT_BUNDLE_ROUTE_2026-09-16.md`
 
 ## 0. Start here
 
-Read, in order:
+Read in order:
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. this handoff;
 5. `docs/EPI_MQ_FIRST_NIGHT_BUNDLE_ROUTE_2026-09-16.md`;
-6. query live `main`, PR #142 and current checks before editing.
+6. `docs/FN_BUNDLE_3_BEGINNER_CORPUS_PILOT_2026-09-16.md`;
+7. query live `main`, PR #143 and current checks.
 
-Do not use archived dated handoffs as execution authority.
+Do not use archived dated handoffs as current execution authority.
 
-## 1. Stable completed stages
+## 1. Merged foundation
 
-FN-BUNDLE-0 is complete and merged in PR #139.
+FN-BUNDLE-0: merged #139. Do not repeat candidate census or pair ownership audit.
 
-Do not repeat:
+FN-BUNDLE-1: merged #140. Strict `ShownRoleAt` remains canonical exact semantics when a shown role is mechanically known.
 
-- first-night candidate-space census;
-- setup pair-information ownership audit;
-- pair-route cleanup.
+FN-BUNDLE-2: merged #142 at:
 
-Canonical pair-information ownership remains:
+`690bc93b33b87fd54a911f4b9dbfc770f2a16a51`
+
+FN-BUNDLE-2 stable output:
 
 ```text
-NaturalPairInformationCandidateGenerator
+110,000 complete legal bundle combinations
         ↓
-PairInformationLegalDomain / canonical consumers
+100 distinct PUBLIC_GOOD_INFO projected signatures
+        ↓
+exact structural diagnostics once per signature
+        ↓
+leave-one-out evidence
 ```
 
-FN-BUNDLE-1 is complete and merged in PR #140.
+No bounded sampling and no final Badness threshold.
 
-Live FN-BUNDLE-1 squash-merge baseline:
+Healthy counterworld stage excludes:
 
-`efedf87a7d2434ea7ddb75bfdc8516a27d125666`
+```text
+Drunk / Spy / Recluse / Poisoner
+```
 
-Stable FN-BUNDLE-1 semantics include:
-
-- thin first-night information proposition materialization;
-- strict `InformationProposition.ShownRoleAt(seat, role)`;
-- deterministic deduplicated PUBLIC_GOOD_INFO shown-role claims;
-- no Drunk hidden-identity leakage;
-- healthy confirmation-chain exact fixture;
-- Drunk shown-role exact fixture;
-- full T4 acceptance before merge.
-
-## 2. Current active PR — #142
+## 2. Current PR
 
 PR:
 
-`FN-BUNDLE-2: evaluate complete healthy first-night bundles`
+`#143 FN-BUNDLE-3: build BEGINNER review corpus`
 
 Branch:
 
-`fn-bundle-2-healthy-harness`
+`fn-bundle-3-beginner-corpus`
 
-Executable implementation immediately before this documentation-only T4 checkpoint:
+Goal: create trustworthy human-review calibration evidence before any BEGINNER Badness gate is defined.
 
-```text
-head: 6c6da72dc5c782002a08a16c0cb3cdc2cc0df9f0
-main: efedf87a7d2434ea7ddb75bfdc8516a27d125666
-```
+Do not merge #143 until current-head T4 is green and calibration semantics have been inspected.
 
-This handoff update intentionally uses `[full-ci]` in the commit message so the current PR head must pass the complete T4 route before merge authorization.
+## 3. Pilot corpus design
 
-Do not merge #142 without explicit user authorization.
+Every item begins `UNREVIEWED`.
 
-Do not start FN-BUNDLE-3 implementation before #142 is merged.
-
-## 3. FN-BUNDLE-2 implementation now present
-
-### Complete healthy bundle composition
-
-The harness consumes the canonical candidate producers rather than recreating legality.
-
-Representative 7-player healthy Trouble Brewing factors remain the audited FN-BUNDLE-0 space:
-
-```text
-raw complete bundle product:              110,000
-represented PUBLIC_GOOD_INFO factor product: 100
-latent product per public combination:      1,100
-```
-
-The harness preserves the full complete-bundle space as factorized provenance families rather than allocating all `110,000` bundle objects.
-
-### Lossless quotient-first evaluation
-
-Current flow:
-
-```text
-canonical legal factor producers
-    ↓
-factorized complete-bundle provenance
-    ↓
-PUBLIC_GOOD_INFO projection
-    ↓
-canonical projected observation signature
-    ↓
-lossless grouping by identical signature
-    ↓
-exact evaluation once per distinct signature
-    ↓
-leave-one-out diagnostics
-```
-
-The representative fixture currently produces exactly `100` distinct projected signatures and applies no bounded sampling.
-
-The sum of provenance multiplicities across quotient groups remains exactly `110,000`.
-
-### Exact descriptive diagnostics
-
-`epistemic` owns consequence diagnostics. Recommendation code consumes them and does not implement a second rules engine.
-
-The exact bundle evaluator now exposes:
-
-- exact BEFORE / AFTER world counts;
-- possible demon seats / demon cover size;
-- distinct evil-team seat configurations;
-- forced-good seats;
-- forced-evil seats;
-- evil cover / evil cover size;
-- leave-one-out interaction evidence through the harness.
-
-No final Badness threshold or scalar quality score exists in FN-BUNDLE-2.
-
-### Pristine Night-1 scalability route
-
-The initial implementation exposed a real CI-memory limit when the unconstrained 7-player possible-world family was materialized. The existing prefix-trie ZDD construction also exceeded memory at this scale.
-
-FN-BUNDLE-2 therefore uses a dedicated exact streaming route only for a pristine first night:
-
-1. lazily enumerate and scan the BEFORE family without retaining it;
-2. group queries by strict public `ShownRoleAt` identity claims;
-3. re-enumerate lazily for each small identity group;
-4. filter strict shown-role claims before retaining worlds;
-5. retain only the much smaller identity-constrained family;
-6. evaluate remaining clue conjunctions and leave-one-out variants over that retained family.
-
-Historical multi-night evaluation keeps the existing `EnumeratedHistoricalExactBaseline` replay path.
-
-No production A4/ZDD rollout decision is changed by this experiment harness.
-
-The earlier exploratory ZDD modifications used while investigating the OOM were removed from the PR before this checkpoint.
-
-## 4. Healthy experiment domain
-
-The current experiment intentionally isolates the first staged uncertainty domain.
-
-Candidate legality still uses the complete official Trouble Brewing catalog and canonical producers.
-
-Only the diagnostic counterworld role domain excludes later-stage uncertainty sources:
-
-```text
-Drunk
-Spy
-Recluse
-Poisoner
-```
-
-This means FN-BUNDLE-2 is genuinely a healthy baseline rather than silently mixing in:
-
-- Drunk shown-role / false-information uncertainty;
-- Spy/Recluse registration ambiguity;
-- Poisoner target impairment.
-
-Those are later staged expansions.
-
-A setup that actually contains one of those staged roles is not flattened into the healthy experiment.
-
-## 5. Retained acceptance coverage
-
-Exploratory RED-only fixtures added early in FN-BUNDLE-2 were deliberately removed.
-
-The retained acceptance fixture is:
-
-`FirstNightBundleHealthyHarnessAcceptanceTest`
-
-It exists because the behavior is now a stable merge contract, not to manufacture a RED step.
-
-It proves the representative healthy 7-player harness actually executes and verifies:
-
-```text
-raw complete bundle count == 110,000
-represented public factor combinations == 100
-distinct projected signatures == 100
-exact-evaluated signatures == 100
-sum of quotient multiplicities == 110,000
-excluded counterworld roles == Drunk/Spy/Recluse/Poisoner
-samplingApplied == false
-all evaluated representative signatures retain non-zero exact worlds
-```
-
-Ordinary current-head FAST CI passed with this acceptance fixture before the final documentation/T4 checkpoint.
-
-## 6. Experimental testing rule
-
-Do not add RED tests merely because an experimental/spike change exists.
-
-Use this rule going forward:
-
-```text
-exploration / feasibility / measurement
-    -> implementation-first is allowed
-    -> do not manufacture RED
-
-stable behavior or architecture retained for merge
-    -> add only necessary durable contract/regression coverage
-    -> run affected validation + T4 acceptance
-```
-
-A RED test is useful when it proves a real uncovered stable behavior or reproduces a real defect. It is not a process goal by itself.
-
-## 7. T4 acceptance checkpoint — current task
-
-This current documentation commit intentionally uses `[full-ci]`.
-
-The workflow must select:
-
-```text
-android=true
-android_full=true
-asp=true
-oracle=true
-```
-
-Required current-head acceptance evidence:
-
-- Android `:app:testFull` passes;
-- `:app:assembleDebug` passes in the same full Android job;
-- ASP golden corpus validation passes;
-- ASP harness Python tests pass;
-- Real Clingo frozen-oracle cross-validation passes;
-- R2 main-thread boundary passes;
-- aggregate CI gate passes.
-
-Do not substitute the previous FAST-green run for this T4 checkpoint.
-
-## 8. FN-BUNDLE-2 completion condition
-
-Implementation requirements are satisfied:
-
-```text
-[x] complete healthy 7-player harness
-[x] canonical producers reused; no second legality engine
-[x] complete-bundle factorized provenance retained
-[x] PUBLIC_GOOD_INFO materialized before quotient
-[x] identical projected signatures evaluated once
-[x] representative quotient 110,000 -> 100 proven
-[x] exact structural diagnostics exposed by epistemic owner
-[x] leave-one-out diagnostics produced
-[x] no final Badness threshold / scalar ranking
-[x] no bounded sampling needed for representative healthy slice
-[x] pristine Night-1 exact path no longer materializes unconstrained 7-player baseline
-[x] healthy diagnostic domain explicitly excludes Drunk/Spy/Recluse/Poisoner
-[x] exploratory RED-only tests removed
-[x] one retained stable acceptance fixture FAST-green
-[x] superseded ZDD spike removed from PR diff
-[ ] current #142 `[full-ci]` head has required T4 CI green
-```
-
-When the current-head T4 run is green, FN-BUNDLE-2 is complete and PR #142 is ready for explicit merge authorization.
-
-## 9. Next stage after #142 merge
-
-FN-BUNDLE-3 builds the BEGINNER Badness validation corpus.
-
-Do not immediately invent numeric rejection thresholds.
-
-First produce a human-reviewed corpus with labels such as:
+Available later labels:
 
 ```text
 BAD_TOO_STRONG
@@ -283,46 +75,164 @@ BAD_TOO_WEAK
 UNCERTAIN
 ```
 
-Recommended validation structure:
+Partitioning is by full setup + seating scenario to prevent near-duplicate signature leakage.
 
-- calibration set used to understand diagnostics and derive gates;
-- holdout set not used to choose thresholds;
-- adversarial fixtures where individually plausible clues collapse only in combination;
-- explicit false-accept / false-reject review.
+Pilot currently contains:
 
-Real Storyteller records such as ClockTracker data should be audited and, where sufficiently detailed, used as external calibration/validation evidence. A historical Storyteller choice is not automatically a unique ground-truth label and should not make every unchosen legal bundle negative training data.
+- one CALIBRATION scenario;
+- one sealed replacement HOLDOUT scenario;
+- one explicit good-player anchor perspective per scenario.
 
-## 10. Later staged uncertainty
+Every projected signature in a scenario is evaluated. A small deterministic human-review subset is selected by AFTER-count extremes, demon-cover minimum, evil-configuration minimum, forced-good maximum, largest leave-one-out recovery and quartile representatives.
 
-After the healthy corpus/gates are understood, widen the diagnostic model deliberately:
+These selection reasons are **not labels and not gate rules**.
 
-1. Drunk shown-role / false-information bundle effects;
-2. Spy/Recluse registration ambiguity;
-3. Poisoner target/dynamic impairment;
-4. later skill-profile expansion;
-5. optional soft-preference / ML / LLM research only after the deterministic baseline is validated.
+The review test is T3/full and excluded from `testFast`.
 
-## 11. Stable architecture boundary
+## 4. Critical finding from the first corpus run
 
-```text
-rules          -> legality / registration semantics
-session        -> actual state / timeline / commit
-epistemic      -> exact recipient-visible consequence semantics
-recommendation -> complete-bundle composition / future Badness / survivor selection
-UI             -> presentation / confirmation
-```
+The first exported calibration report was not suitable for labeling.
 
-Target product behavior remains:
+Old PUBLIC_GOOD_INFO projection converted player statements into exact public facts:
 
 ```text
-legal complete bundles
-→ exact/capability-aware diagnostics
-→ BEGINNER Badness rejection
-→ uniform random among acceptable survivors
+ShownRoleAt(speaker, claimedRole)
+AND
+claimedClue
 ```
 
-General-purpose LLM recommendation remains deferred.
+That meant a player saying “I am X” mechanically proved they were X. Sampled signatures consequently collapsed around the true seating, with the same large forced-good block and effectively fixed evil topology.
 
-## 12. Stable rule
+This was a behavioral-modeling error, not a Badness-threshold problem.
 
-> **FN-BUNDLE-0 and FN-BUNDLE-1 are finished and merged; do not repeat them. FN-BUNDLE-2 now has the complete healthy 7-player quotient/exact harness, scalable pristine-Night-1 evaluation, interpretable diagnostics and one retained acceptance contract. Treat the current `[full-ci]` run as the final T4 gate; if green, stop for explicit PR #142 merge authorization and do not start FN-BUNDLE-3 before merge.**
+**The old report is invalid calibration evidence. Do not label it and do not derive gates from it.**
+
+## 5. Current public-claim semantics
+
+For the healthy `BEGINNER / PUBLIC_GOOD_INFO` stage, a shared statement is now modeled as:
+
+```text
+speaker is evil
+OR
+(
+    ShownRoleAt(speaker, claimedRole)
+    AND
+    claimedClue is mechanically true
+)
+```
+
+Meaning:
+
+- healthy good speakers follow the profile and report truthfully;
+- evil speakers may bluff the same role/information statement;
+- public role claims are defeasible speech, not Storyteller-confirmed identity;
+- strict `ShownRoleAt` semantics themselves are unchanged.
+
+This model is deliberately healthy-stage only. Do not generalize it yet to Drunk false information, Poisoner impairment, or Spy/Recluse registration.
+
+When those stages are opened, public-claim sincerity / registration / malfunction semantics must be explicitly revisited rather than inherited accidentally.
+
+## 6. Pristine Night-1 performance route
+
+The new claim form no longer contains a top-level strict shown-role fact, so naïvely retaining the entire 7-player baseline would reintroduce the prior memory problem.
+
+The exact evaluator therefore recognizes a **necessary-only public-claim identity envelope** for prefiltering:
+
+```text
+speaker can satisfy evil branch
+OR
+world shown role matches claimed role
+```
+
+For future registration safety, Recluse is conservatively retained by this prefilter. The complete observation is still evaluated by `TroubleBrewingWorldObservationEvaluator` afterwards.
+
+Therefore:
+
+- the prefilter cannot create truth semantics;
+- it may only keep extra worlds, never remove a world that could satisfy the claim;
+- historical replay is unchanged;
+- no production A4/ZDD rollout decision changes.
+
+## 7. Retained coverage
+
+No RED-only exploratory fixture was added.
+
+Retained contracts now verify:
+
+- projected public speech is one defeasible claim per exposed entry;
+- no bare public `ShownRoleAt` oracle fact is emitted for ordinary speech;
+- an evil speaker can satisfy the same claim without having the claimed shown role;
+- strict `ShownRoleAt` itself still matches shown identity exactly;
+- healthy-stage public claims do not silently make Drunk false information valid;
+- original private observations remain private / unmutated;
+- holdout IDs / diagnostics do not appear in review export.
+
+An ordinary FAST run after aligning the old BUNDLE-1 fixtures is expected to be the immediate pre-checkpoint gate.
+
+## 8. Holdout governance
+
+The first report export exposed the original holdout, so that scenario is retired as validation holdout.
+
+A replacement holdout is present in the deterministic corpus builder.
+
+Human-facing Markdown export intentionally includes:
+
+- calibration details;
+- count of sealed holdout scenarios;
+- **no holdout scenario ID, seating, signature, diagnostics or label**.
+
+Do not inspect replacement holdout diagnostics until candidate BEGINNER gates have been frozen.
+
+## 9. Experimental testing rule
+
+User instruction:
+
+> 非必要的，都不要加 Red.
+
+Operational rule:
+
+```text
+exploration / feasibility / measurement
+    -> implementation-first allowed
+    -> no manufactured RED
+
+stable retained behavior / regression contract
+    -> necessary test coverage before acceptance
+    -> required FAST/T4 validation
+```
+
+## 10. Immediate execution sequence
+
+1. confirm ordinary FAST after fixture alignment is green;
+2. update roadmap / handoff / pilot protocol;
+3. make the final documentation checkpoint commit with `[full-ci]`;
+4. require Android full + APK, ASP, Real Clingo, R2 and aggregate gate green on the same head;
+5. read the generated **CALIBRATION-only** report;
+6. confirm public bluff counterworlds materially survive;
+7. manually review/label calibration items only;
+8. determine whether one calibration scenario provides enough spread;
+9. add calibration scenarios if needed;
+10. only after evidence is adequate, propose simple interpretable BEGINNER gates;
+11. freeze gates before opening holdout.
+
+## 11. What not to do next
+
+Do not:
+
+- use the invalid old calibration report;
+- inspect the replacement holdout;
+- invent a numeric world-count cutoff;
+- optimize a scalar score;
+- connect the production selector;
+- start Drunk / Spy-Recluse / Poisoner uncertainty expansion;
+- train on historical Storyteller choices as if unchosen alternatives were negative labels.
+
+ClockTracker / real Storyteller records remain planned external ecological calibration after the deterministic human-review baseline is trustworthy.
+
+## 12. Acceptance question for current checkpoint
+
+The immediate question is semantic, not threshold-based:
+
+> Under aggressive public sharing, does the exact model treat good truth-telling as informative while still preserving coherent worlds where evil players bluff their claimed roles/information?
+
+If the answer is yes under current-head T4 and the new calibration report, proceed to manual calibration labels. If not, repair the behavioral model before touching Badness gates.
