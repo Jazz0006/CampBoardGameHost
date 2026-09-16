@@ -95,10 +95,11 @@ internal sealed interface ExactHypotheticalObservationBundleEvaluation {
  * Exact, mutation-free historical evaluator for composed hypothetical observations.
  *
  * A pristine first-night experiment uses constant-memory source enumeration. BEFORE is scanned once
- * per recipient. Queries are then grouped by cheap necessary identity envelopes before retaining any
- * worlds. The envelope supports both strict shown-role facts and the current healthy public-claim
- * form: an evil speaker may lie, while a truthful-good branch requires the claimed shown role. The
- * complete observations are still evaluated afterwards, so the prefilter cannot decide semantics.
+ * per recipient. Queries are grouped by cheap necessary identity envelopes and evaluated in
+ * streaming passes without retaining world lists. The envelope supports both strict shown-role facts
+ * and the current healthy public-claim form: an evil speaker may lie, while a truthful-good branch
+ * requires the claimed shown role. The complete observations are still evaluated afterwards, so the
+ * prefilter cannot decide semantics.
  *
  * Historical replay keeps the existing enumerated historical baseline. No production A4/ZDD rollout
  * decision is changed by this experiment evaluator.
@@ -200,9 +201,16 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
                         val strictShownObservations = representative.observations
                             .filter(::isStrictShownRoleClaim)
                             .distinctBy { observation -> observation.proposition }
+                        val remainingByQuery = groupedQueries.map { query ->
+                            query.observations.filterNot(::isStrictShownRoleClaim)
+                        }
+                        val afterCounts = LongArray(groupedQueries.size)
+                        val afterStructureAccumulators = List(groupedQueries.size) {
+                            WorldStructureAccumulator(rolesById)
+                        }
 
-                        val identityRetained = worldSequence()
-                            .filter { world ->
+                        worldSequence().forEach { world ->
+                            val passesIdentityEnvelope =
                                 strictShownObservations.all { observation ->
                                     TroubleBrewingWorldObservationEvaluator.evaluate(
                                         world = world,
@@ -214,28 +222,32 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
                                     prefilterKey.publicClaimShownRoles.all { claim ->
                                         publicClaimIdentityEnvelopeMatches(world, rolesById, claim)
                                     }
-                            }
-                            .toList()
-
-                        groupedQueries.forEach { query ->
-                            val remaining = query.observations.filterNot(::isStrictShownRoleClaim)
-                            val afterWorlds = identityRetained.filter { world ->
-                                remaining.all { observation ->
-                                    TroubleBrewingWorldObservationEvaluator.evaluate(
-                                        world = world,
-                                        roles = rolesById,
-                                        observation = observation,
-                                        hypothesis = hypothesis,
-                                    ).matches
+                            if (passesIdentityEnvelope) {
+                                groupedQueries.indices.forEach { queryIndex ->
+                                    val matchesQuery = remainingByQuery[queryIndex].all { observation ->
+                                        TroubleBrewingWorldObservationEvaluator.evaluate(
+                                            world = world,
+                                            roles = rolesById,
+                                            observation = observation,
+                                            hypothesis = hypothesis,
+                                        ).matches
+                                    }
+                                    if (matchesQuery) {
+                                        afterCounts[queryIndex] += 1L
+                                        afterStructureAccumulators[queryIndex].accept(world)
+                                    }
                                 }
                             }
+                        }
+
+                        groupedQueries.forEachIndexed { queryIndex, query ->
                             diagnostics += ExactHypotheticalObservationBundleDiagnostics(
                                 bundleId = query.bundleId,
                                 recipientSeat = query.recipientSeat,
                                 before = beforeScan.cardinality,
-                                after = exactCardinality(afterWorlds.size.toLong()),
+                                after = exactCardinality(afterCounts[queryIndex]),
                                 beforeStructure = beforeScan.structure,
-                                afterStructure = summarizeWorldStructure(afterWorlds.asSequence(), rolesById),
+                                afterStructure = afterStructureAccumulators[queryIndex].finish(),
                             )
                         }
                     }
