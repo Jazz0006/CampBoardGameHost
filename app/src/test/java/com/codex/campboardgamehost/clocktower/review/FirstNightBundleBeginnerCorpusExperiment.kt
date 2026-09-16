@@ -8,11 +8,11 @@ import org.junit.Test
 /**
  * Explicit FN-BUNDLE-3 calibration workload.
  *
- * Real production 7-player presets are the calibration authority for Stage 7A. The first real-preset
- * pilot evaluates one deterministic seating topology and at most three deterministic legal public
- * bundle points per healthy-compatible preset. The older interaction-rich and weak-information
- * fixtures remain synthetic stress probes. Every selected point uses exact possible-world evaluation;
- * neither real-preset calibration nor stress probes evaluate holdout.
+ * Real production 7-player presets are the calibration authority for Stage 7A. The real-preset
+ * pilot evaluates two deterministic seating topologies and at most three deterministic legal public
+ * bundle points per preset/profile. The older interaction-rich and weak-information fixtures remain
+ * synthetic stress probes. Every selected point uses exact possible-world evaluation; neither
+ * real-preset calibration nor stress probes evaluate holdout.
  */
 class FirstNightBundleBeginnerCorpusExperiment {
     @Test
@@ -23,12 +23,18 @@ class FirstNightBundleBeginnerCorpusExperiment {
 
         assertTrue(realPresets.totalSevenPlayerPresetCount > 0)
         assertTrue(realPresets.eligibleHealthyPresetCount > 0)
-        assertEquals(realPresets.eligibleHealthyPresetCount, realPresets.scenarios.size)
+        assertEquals(2, realPresets.seatingProfiles.size)
+        assertEquals(
+            realPresets.eligibleHealthyPresetCount * realPresets.seatingProfiles.size,
+            realPresets.scenarios.size,
+        )
         assertEquals(
             realPresets.totalSevenPlayerPresetCount,
             realPresets.eligibleHealthyPresetCount + realPresets.excludedStagedPresetCount,
         )
-        assertTrue(realPresets.scenarios.map { it.presetId }.distinct().size == realPresets.scenarios.size)
+        assertTrue(realPresets.scenarios.groupBy { it.presetId }.values.all { scenarios ->
+            scenarios.map { it.seatingProfile }.toSet() == realPresets.seatingProfiles.toSet()
+        })
         assertTrue(realPresets.scenarios.all { scenario ->
             scenario.seating.size == 7 &&
                 scenario.points.size in 1..3 &&
