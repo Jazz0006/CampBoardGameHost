@@ -1,9 +1,9 @@
-# NEXT DEVELOPMENT HANDOFF — EPI-MQ Neutral Hypothetical Evaluator
+# NEXT DEVELOPMENT HANDOFF — First-Night Bundle Badness Experiment
 
-> Updated: 2026-09-15 Australia/Sydney  
+> Updated: 2026-09-16 Australia/Sydney  
 > Status: **CURRENT / canonical active handoff**  
-> Product-code baseline after merged PR #135: `13d0921b3df13c2618a15eb3c4d7840c750eba3a`  
-> Current route decision: `docs/EPI_MQ_ROUTE_REAUDIT_2026-09-15.md`
+> Current route decision: `docs/EPI_MQ_FIRST_NIGHT_BUNDLE_ROUTE_2026-09-16.md`  
+> Prior `docs/EPI_MQ_ROUTE_REAUDIT_2026-09-15.md`: **superseded as execution authority**
 
 ## 0. Start here
 
@@ -13,307 +13,403 @@ Read, in order:
 2. `docs/TESTING_STRATEGY.md`;
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. this handoff;
-5. `docs/EPI_MQ_ROUTE_REAUDIT_2026-09-15.md`;
-6. `docs/EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md` as supporting architecture/history;
-7. query live `main`, relevant open PRs and checks.
+5. `docs/EPI_MQ_FIRST_NIGHT_BUNDLE_ROUTE_2026-09-16.md`;
+6. `docs/EPI_MQ_ROUTE_REAUDIT_2026-09-15.md` only as historical reasoning;
+7. `docs/EPI_MQ_0_AUDIT_AND_DYNAMIC_SCRIPT_EXTENSIBILITY_2026-09-11.md` as supporting architecture/history;
+8. query live `main`, relevant open PRs/checks and current source before editing.
 
 Do not use dated handoffs in `docs/archive/` as execution authority.
 
 ## 1. Immediate goal
 
-EPI-MQ-0.5 is complete and merged via PR #135.
+The immediate target is:
 
-The immediate implementation target is:
+**FN-BUNDLE-0 — live seam audit + experiment contract.**
 
-**EPI-MQ-1 — neutral hypothetical observation evaluator.**
+Do not begin by tuning scores/thresholds, integrating an LLM, or selecting an “optimal” Investigator clue.
 
-Extract the already-proven exact historical BEFORE/AFTER evaluation currently embedded in B4-specific ownership into neutral `clocktower/epistemic` ownership. B4 should become a consumer of that owner.
+The next work must establish how the current code can represent and evaluate a **complete first-night information bundle** for a fixed Trouble Brewing setup and seating arrangement.
 
-Do not resume ADB debugging unless explicitly requested later.
+## 2. Current product decision
 
-## 2. Completed EPI-MQ-0.5 contract
-
-PR #135 added:
+The recommendation engine should behave conceptually as:
 
 ```text
-EpistemicEvaluationCapability
-  EXACT_HISTORICAL_REPLAY
-  EXACT_HYPOTHETICAL_OBSERVATION
-
-EpistemicEvaluationAvailability
-  Ready
-  Deferred(missingCapabilities)
+all legal first-night bundles
+        ↓
+exact / capability-aware epistemic diagnostics
+        ↓
+BEGINNER Badness Gates
+        ↓
+acceptable bundles
+        ↓
+uniform random selection
 ```
 
-`EpistemicEvaluationCapabilityBoundary` currently marks only the validated built-in official Trouble Brewing ruleset as READY for the combined historical+hypothetical requirement.
+The product does **not** currently aim to rank every candidate into a total order or maximize one scalar score.
 
-Important properties:
+The first supported skill profile is **BEGINNER** only.
 
-- support is assessed from the validated ruleset, not only `ScriptId`;
-- imported/homebrew content cannot inherit Trouble Brewing exact support by reusing `trouble_brewing`;
-- unsupported high-level evaluation is DEFERRED and carries explicit missing capabilities;
-- availability carries no world cardinality, so unsupported semantics cannot masquerade as zero worlds / UNSAT;
-- `B4DynamicPlayerWorldSetShadow` now checks the boundary before its historical exact path and returns `DEFERRED_B4` for unsupported semantics;
-- direct `EnumeratedHistoricalExactBaseline` behavior remains fail-closed for unsupported scripts.
+General-purpose LLM recommendation is deferred until this deterministic algorithm can be benchmarked.
 
-Invariant:
+## 3. Experiment unit is the whole Night 1 information ecology
+
+Do not treat Investigator as the main independent experiment.
+
+The bundle must include both:
+
+### Rule/state-determined observations
+
+Examples:
+
+- healthy Empath result determined by neighbours;
+- healthy Chef count;
+- any other first-night information whose truthful result is fixed by the actual setup and legal registration semantics.
+
+These values are constraints on the bundle and **must not be changed for balance**.
+
+### Storyteller-controlled legal choices
+
+Where present/applicable:
+
+- Investigator pair / shown Minion;
+- Washerwoman pair / shown Townsfolk;
+- Librarian pair / shown Outsider or legal zero result;
+- Fortune Teller Red Herring;
+- Drunk shown role / false information in the Drunk stage;
+- demon bluffs;
+- legal registration decisions where Storyteller discretion exists.
+
+Fortune Teller target selection itself is player-controlled and must not be planned as a Storyteller choice.
+
+## 4. Why isolated clue scoring is insufficient
+
+The target failure mode is cross-information collapse.
+
+Example pattern:
 
 ```text
+Washerwoman supports Empath
+        +
+Empath receives 0
+        +
+another clue clears one of the remaining suspect regions
+        ↓
+large trusted-good block / tiny evil cover
+```
+
+Every clue may look reasonable alone while the combined first-night structure makes the true world too easy to reconstruct.
+
+Therefore:
+
+> **Final Badness is a property of the composed bundle, not the sum of independent role scores.**
+
+Role-level fixtures exist only to prove the evaluator is calculating observations correctly.
+
+## 5. First evaluation profile
+
+Use a deliberate stress profile:
+
+```text
+BEGINNER + PUBLIC_GOOD_INFO
+```
+
+Meaning:
+
+> Assume healthy-good players publicly reveal their first-night information on Day 1.
+
+This is not a rules assumption. It is the first behavioral test profile chosen to expose over-convergent opening information.
+
+Do not implement multiple table-behavior profiles yet.
+
+## 6. Diagnostics required before thresholds
+
+FN-BUNDLE-0/1 should ensure the experiment can eventually expose at least:
+
+- exact BEFORE / AFTER world counts;
+- current demon-seat diversity / `demonCoverSize`;
+- distinct evil-team seat configurations;
+- evil topology retention;
+- `evilCoverSize`;
+- `forcedGoodSeats`;
+- `forcedEvilSeats` where meaningful;
+- leave-one-out or pairwise interaction evidence for confirmation chains;
+- evidence that information is not nearly vacuous;
+- structurally distinct alternative/counterworld evidence where tractable.
+
+Raw world count alone is insufficient.
+
+Do not call simple fractions of unweighted exact worlds Bayesian/posterior probabilities.
+
+## 7. Current Badness hypotheses
+
+Treat these as **hypotheses to test**, not final gates:
+
+1. too few distinct evil/demon placements remain;
+2. too many seats become logically forced good;
+3. evil/demon cover becomes too small;
+4. clues jointly form a confirmation cascade;
+5. bundle is too weak to provide useful information;
+6. surviving alternatives are cosmetic rather than coherent counterworlds.
+
+The desired region is:
+
+```text
+too weak  -> bad
+acceptable
+ too strong -> bad
+```
+
+Do not guess numeric cutoffs before the corpus exists.
+
+## 8. Staged experiment plan
+
+### FN-BUNDLE-0 — CURRENT
+
+Audit current live source and define the experiment contract.
+
+Required questions:
+
+- Which current components generate legal Washerwoman/Librarian/Investigator/etc. choices?
+- Which Night 1 observations are deterministic from setup/seating?
+- Where are Red Herring, demon bluffs, Drunk, Spy/Recluse registration and poison represented?
+- What exact epistemic seam can evaluate several composed observations without mutation or double application?
+- Is the old neutral evaluator extraction required first, or can current exact machinery support the experiment safely with a narrower adapter?
+- How should `DEFERRED` propagate for unsupported exact semantics?
+- How large is the complete bundle Cartesian product for representative 7-player setups?
+- Where exact enumeration is too large, what deterministic bounded sampling/pruning preserves complete-bundle semantics?
+
+Output a concrete typed experiment design before broad production cutover.
+
+### FN-BUNDLE-1 — Experiment 0 correctness
+
+Add the smallest durable fixtures needed for representative:
+
+- Investigator;
+- Washerwoman;
+- Librarian;
+- Empath;
+- Chef;
+- representative Drunk false observation.
+
+Prove calculation/composition only.
+
+### FN-BUNDLE-2 — Experiment 1 complete healthy Night 1
+
+Use fixed 7-player Trouble Brewing setup/seating fixtures.
+
+For each fixture:
+
+1. include all fixed healthy first-night information;
+2. generate complete legal Storyteller-controlled bundles;
+3. evaluate the whole public-share bundle;
+4. emit diagnostics;
+5. inspect extreme and representative outputs.
+
+The ten known 7-player real-Investigator/no-Recluse presets are useful stress cases, but do not reduce the experiment to Investigator-only candidate pairs.
+
+### FN-BUNDLE-3 — BEGINNER labels and gate derivation
+
+Build a manually reviewed corpus:
+
+```text
+BAD_TOO_STRONG
+ACCEPTABLE
+BAD_TOO_WEAK
+UNCERTAIN
+```
+
+Use it to determine which diagnostics actually identify poor beginner bundles and only then define BEGINNER thresholds/gates.
+
+### FN-BUNDLE-4 — shadow selection
+
+After gates are validated:
+
+```text
+legal bundle pool
+→ Badness rejection
+→ uniform random survivor
+```
+
+Run in shadow against current production behavior before cutover.
+
+### FN-BUNDLE-5 — uncertainty expansion
+
+Add sequentially:
+
+1. Drunk shown-role/false-information effects;
+2. Spy/Recluse registration ambiguity;
+3. Poisoner first-night target/dynamic impairment.
+
+Do not assume healthy-only gates transfer unchanged.
+
+## 9. Existing EPI-MQ foundation to preserve
+
+EPI-MQ-0.5 remains complete and authoritative foundation:
+
+```text
+READY
+DEFERRED(missing capabilities)
 DEFERRED != UNSAT
 ```
 
-No recommendation result, truth/false family probability, UI behavior, or Trouble Brewing exact semantics changed.
+Preserve/reuse:
 
-## 3. Corrected product decision remains authoritative
+- `EpistemicEvaluationCapabilityBoundary`;
+- exact recipient-visible world semantics;
+- historical replay;
+- `EpistemicObservationDraft` / observation contracts;
+- non-mutating preflight where appropriate;
+- candidate applied exactly once;
+- hidden-information boundaries;
+- existing typed legal candidate ownership.
 
-The current fixed truthful-vs-false family probability is a temporary/fallback mechanism, not the final Storyteller decision model.
+The old EPI-MQ-1 neutral evaluator extraction is now an **enabling option**, not automatically the next product milestone. During FN-BUNDLE-0, decide whether it is necessary to support complete-bundle evaluation cleanly.
 
-The final READY-path EPI-MQ behavior must evaluate truthful and false legal candidates together and decide:
+## 10. Explicitly superseded immediate route
 
-```text
-- should this impaired ability tell the truth?
-- if not, which legal false result should it present?
-```
-
-A truthful candidate may be the best misleading choice if false alternatives expose impairment or contradict current recipient knowledge. A false candidate may be best if truth would strongly confirm the real world while a false clue preserves coherent mistaken worlds.
-
-Truthfulness is typed candidate metadata, not the primary quality objective.
-
-## 4. Authoritative EPI-MQ sequence
+Do not continue mechanically with the old sequence:
 
 ```text
-EPI-MQ-0.5  Capability Boundary                         COMPLETE / PR #135
-EPI-MQ-1    Neutral Hypothetical Evaluator              CURRENT
-EPI-MQ-2    Hard Consistency / Exposure Gates
-EPI-MQ-2.5  Truth+False Shadow Integration
-EPI-MQ-3    Unified Productive-Uncertainty Quality Model
-EPI-MQ-4    Unified Impaired-Information Production Cutover
-EPI-MQ-5    Calibration / Fallback Refinement
+EPI-MQ-1 neutral evaluator
+→ EPI-MQ-2 hard gates
+→ EPI-MQ-2.5 truth+false shadow
+→ EPI-MQ-3 unified scalar productive uncertainty
+→ EPI-MQ-4 impaired truth/false cutover
 ```
 
-The previous `False-family Selection Cutover` concept is obsolete.
+Useful infrastructure/concepts may be reused later, but the current execution route is FN-BUNDLE-*.
 
-## 5. EPI-MQ-1 required behavior
+The important product correction is:
 
-The new neutral evaluator must own the semantic operation:
+> **evaluate complete first-night bundles, reject poor ones, then randomize among acceptable survivors.**
+
+## 11. Beginner / experienced design boundary
+
+Long-term, clue difficulty should adapt to the player receiving it and/or table composition.
+
+A clue appropriate for a beginner can be over-revealing for an experienced player.
+
+The architecture should avoid hardcoding Beginner forever, but the current experiment must not add multiple profiles before the metrics are validated.
+
+Current scope:
 
 ```text
-recipient-visible setup/history
-+ validated ruleset/capability
-+ exact hypothesis
-+ one hypothetical EpistemicObservation
-        ↓
-exact BEFORE world state
-        ↓
-apply hypothetical observation exactly once
-        ↓
-exact AFTER diagnostics
+BEGINNER only
 ```
 
-It must be:
+Future scope may introduce per-recipient experience and table skill imbalance after FN-BUNDLE-3/4 succeeds.
 
-- exact;
-- deterministic;
-- mutation-free;
-- recipient-knowledge-safe;
-- capability-aware;
-- explicit about READY vs DEFERRED;
-- independent of recommendation policy;
-- independent of B4 reporting vocabulary;
-- extensible beyond cardinality diagnostics later.
+## 12. LLM boundary
 
-B4 must reuse the neutral evaluator rather than retain a second implementation of the same exact hypothetical filtering operation.
+Do not integrate a generic LLM in the current route.
 
-## 6. Critical apply-once rule
+Future LLM use may be evaluated as a **soft critic** only after deterministic legality and Badness filtering.
 
-The existing session preflight can calculate a correctly bound hypothetical global observation without mutating the live session.
+It must not own:
 
-Preserve this ordering:
+- legality;
+- exact rules;
+- possible-world consequences;
+- initial Badness thresholds;
+- hidden Storyteller state;
+- automatic authoritative selection.
 
-```text
-current durable observation log
-  -> build BEFORE world state
+## 13. External-data direction
 
-preflight(candidate)
-  -> obtain correctly bound hypothetical observation
+ClockTracker and expert Storyteller records are promising future calibration sources.
 
-neutral evaluator
-  -> apply that hypothetical observation exactly once
-  -> produce AFTER
-```
+They should be used to validate questions like:
 
-Do not build BEFORE from a preflight result that already contains the candidate in its next observation log and then apply the candidate again.
+- whether expert Storytellers avoid our rejected regions;
+- whether BEGINNER gates are too strict;
+- whether acceptable choices show useful diversity.
 
-This is a semantic correctness issue, not merely an optimization detail.
+Do not treat recorded games as automatically correct labels.
 
-## 7. Ownership constraints
+## 14. Ownership constraints
 
 Preserve:
 
 ```text
 rules
-  -> legal candidate semantics
-
-recommendation
-  -> consume legal candidates + neutral diagnostics
-  -> final selection policy
+  -> legal information / registration semantics
 
 session
-  -> canonical state / timeline / durable observation identity
-  -> non-mutating preflight binding
+  -> canonical actual state / timeline / durable authority
 
 epistemic
-  -> recipient knowledge / exact worlds / historical replay
-  -> neutral hypothetical observation consequences
+  -> recipient/public-profile hypotheses and consequence diagnostics
+
+recommendation
+  -> compose legal bundles
+  -> Badness policy
+  -> random survivor selection
 
 UI
-  -> presentation / confirmation
+  -> presentation / confirmation / future experience settings
 ```
 
-Do not wire recommendation directly to `B4DynamicPlayerWorldSetShadow`.
+Do not create a recommendation-owned parallel rules engine or leak hidden actual targets into recipient inference.
 
-Avoid a dependency cycle:
-
-```text
-recommendation -> session -> epistemic -> recommendation
-```
-
-Do not move session mutation/identity authority into the neutral evaluator. The evaluator should consume already-correct semantic input and remain mutation-free.
-
-## 8. Existing seams to reuse
-
-Reuse rather than duplicate:
-
-- `EpistemicEvaluationCapabilityBoundary` from EPI-MQ-0.5;
-- `DecisionCandidate` / `DecisionEvaluation`;
-- `InformationDecisionContext<T>`;
-- `EpistemicObservationDraft`;
-- `ClocktowerGameSession.preflightGlobalEpistemicObservation()`;
-- `EnumeratedHistoricalExactBaseline`;
-- `EnumeratedHistoricalWorldReplay`;
-- current exact Trouble Brewing observation matching semantics;
-- existing `B4HistoricalExactShadowBridgeTest` characterization.
-
-Do not introduce a second candidate legality model or a recommendation-owned world engine.
-
-## 9. EPI-MQ-1 fan-out audit before extraction
-
-Inspect live current code around at least:
-
-```text
-EpistemicEvaluationCapability.kt
-Epistemic contracts / world-set interfaces
-EnumeratedHistoricalExactBaseline
-EnumeratedHistoricalWorldReplay
-current Trouble Brewing world-observation evaluator implementation
-B4DynamicPlayerWorldSetShadow
-B4HistoricalExactShadowBridgeTest
-session preflight / observation binding
-EpistemicObservation / EpistemicObservationDraft
-```
-
-Map:
-
-- exact input needed to build BEFORE;
-- exact current filtering needed to derive AFTER;
-- whether evaluator should return cardinality only or a neutral diagnostic object carrying exact world-set evidence internally;
-- how B4 converts neutral diagnostics into its existing `B4CandidateWorldQuery`;
-- how capability DEFERRED propagates without becoming an empty exact result;
-- how later EPI-MQ-2 diagnostics can extend the result without redesigning the API.
-
-Prefer a narrow neutral semantic result over exposing storyteller-hidden world contents to recommendation callers.
-
-## 10. Test direction
+## 15. Test direction
 
 Follow root `AGENTS.md` and `docs/TESTING_STRATEGY.md`.
 
-The extraction itself is behavior-preserving, so existing GREEN B4 exact characterization should be reused rather than inventing a ritual RED solely for moving code.
+Durable semantic behavior should be tested at the true owner seam.
 
-Add focused typed tests only where the neutral public/internal contract adds a new durable guarantee not already characterized.
-
-Minimum EPI-MQ-1 proof:
+Minimum route proof eventually includes:
 
 ```text
-same history + same candidate -> deterministic BEFORE/AFTER
-B4 result remains equivalent after delegating to neutral evaluator
-unsupported capability -> DEFERRED, not zero worlds / UNSAT
-hypothetical observation is applied exactly once
-input/session/history is not mutated
-hidden Storyteller target changes do not leak into recipient result
+same setup/profile/bundle -> deterministic diagnostics
+fixed truthful observations cannot be altered for balance
+bundle composition contains only legal candidates
+hypothetical bundle evaluation does not mutate durable state
+candidate observations are applied exactly once
+hidden actual state does not shortcut recipient/public inference
+DEFERRED != UNSAT
+seat changes that alter Empath/Chef information change bundle diagnostics appropriately
+combined-clue collapse can be detected even when each isolated clue looks acceptable
 ```
 
-At a logical checkpoint run the epistemic/enumeration escalation required by `docs/TESTING_STRATEGY.md`; do not rely on `UP-TO-DATE` alone as execution evidence.
+Epistemic/enumeration changes trigger the affected T2/T3/T4 validation from `docs/TESTING_STRATEGY.md`.
 
-## 11. Hidden-information boundary
+Documentation-only planning changes do not require Android regression execution.
 
-EPI-MQ must reason only from recipient-available knowledge.
+## 16. Stable UI contracts
 
-Do not directly constrain worlds using Storyteller-only facts such as:
-
-- actual hidden roles beyond recipient knowledge;
-- actual Poisoner/Pukka target;
-- hidden protection/attack target;
-- hidden transition cause before observable;
-- Fortune Teller red-herring identity outside legal FT semantics;
-- unknown demon bluffs;
-- recommendation seeds / internal scores / Storyteller-only metadata.
-
-Historical replay must regenerate hidden mechanics from rules and per-world state rather than copying actual hidden selections into all worlds.
-
-## 12. What EPI-MQ-1 must not do
-
-Do not:
-
-- change current truth/false family probability;
-- change candidate ranking or selection;
-- integrate recommendation with B4;
-- implement productive-uncertainty scoring yet;
-- implement Pukka/Moonchild exact semantics;
-- cut ZDD over to correctness authority;
-- redesign UI;
-- resume Pair-display ADB work.
-
-EPI-MQ-1 is the neutral semantic foundation for those later decisions, not the cutover itself.
-
-## 13. Stable UI and gameplay contracts
-
-Do not mix UI redesign into this work.
+Do not mix this route with current UI redesign.
 
 Preserve:
 
-- Beginner and Experienced share one gameplay/rules/legal-candidate/recommendation/session/persistence pipeline;
-- highlight = current waking / acted-on / selected;
-- `✓` = Storyteller-facing truth / typed registration truth hit;
-- yellow badge = persistent host-only special state such as Fortune Teller Red Herring;
-- poison marker = visual effective poison state only;
-- Experienced recommendation surfaces show real ranked recommendations followed by legal manual alternatives;
-- bottom navigation remains navigation/utility; daytime domain actions stay in the square-table center.
+- Beginner/Experienced share gameplay/rules/legal-candidate/recommendation/session/persistence pipeline;
+- highlight semantics;
+- `✓` truth/registration marker semantics;
+- persistent yellow Red Herring badge;
+- poison visual marker separate from eligibility;
+- current recommendation/manual-alternative presentation;
+- current bottom-navigation/domain-action separation.
 
-## 14. Paused Pair-display device issue
+## 17. Paused / unrelated
 
-The Pair-information display stall / old-device abnormal exit remains unresolved but is intentionally paused by user priority.
+Pair-information display latency / old-device abnormal exit is paused.
 
-Do not spend the current phase collecting ADB evidence or changing display timing unless the user explicitly resumes that issue.
+PR #109 remains unrelated unless live status changes; query before touching.
 
-## 15. Unrelated work
-
-PR #109 (`Reproduce restored execution preflight crash`) remains unrelated unless live status has changed. Re-query before touching it and do not fold it into EPI-MQ without a separate decision.
-
-## 16. First concrete action in the next conversation
+## 18. First concrete action in the new conversation
 
 After reading the canonical documents and querying live `main`:
 
-1. perform the EPI-MQ-1 live fan-out audit;
-2. identify the exact B4-owned BEFORE/AFTER logic to extract;
-3. define the smallest neutral evaluator input/output contract;
-4. preserve the 0.5 READY/DEFERRED boundary;
-5. make B4 delegate to the neutral evaluator;
-6. prove behavior equivalence and apply-once/non-mutation semantics;
-7. run the required focused and broader tests;
-8. do not alter production recommendation behavior.
+1. audit the live source for every first-night information producer and candidate owner;
+2. classify each first-night element as fixed observation, Storyteller-controlled legal choice, player-controlled choice, or deferred-complexity source;
+3. map how complete candidate bundles can be composed without duplicating legality logic;
+4. map the exact epistemic evaluation path for applying several observations once each under `BEGINNER + PUBLIC_GOOD_INFO`;
+5. estimate candidate-space size for representative 7-player setups;
+6. define the smallest typed `FirstNightInformationBundle` / diagnostics experiment contract;
+7. identify whether any neutral evaluator extraction is a prerequisite;
+8. propose the exact FN-BUNDLE-1/2 tests and harness;
+9. **stop before inventing final Badness thresholds** and review the experimental design/evidence first.
 
-Then proceed to EPI-MQ-2 hard consistency/exposure gates.
+## 19. Stable rule
 
-## 17. Stable rule
-
-> **EPI-MQ-0.5 is complete. EPI-MQ-1 now extracts the exact hypothetical observation consequence into neutral epistemic ownership, preserving capability DEFERRED semantics and applying each candidate exactly once. The later unified truth+false model—not a fixed family roll—will ultimately decide whether to tell truth or lie.**
+> **The new active route evaluates the complete first-night information ecology. It rejects clearly poor legal bundles using interpretable, experimentally calibrated BEGINNER Badness criteria and then selects randomly from acceptable survivors. Investigator-only analysis is a lower-level correctness tool, skill adaptation comes after the beginner baseline, and general-purpose LLM recommendation is deferred.**
