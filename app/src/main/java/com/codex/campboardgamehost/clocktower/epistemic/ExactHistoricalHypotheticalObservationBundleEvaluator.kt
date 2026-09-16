@@ -7,7 +7,6 @@ import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import java.math.BigInteger
 
 /**
  * Knowledge-safe historical input for exact hypothetical bundle evaluation.
@@ -116,6 +115,11 @@ internal sealed interface ExactHypotheticalObservationBundleEvaluation {
  * semantics are logical conjunction rather than a sum or merge of independently scored clues.
  * Trouble Brewing observation truth/registration/malfunction semantics remain owned by
  * [TroubleBrewingWorldObservationEvaluator].
+ *
+ * A pristine Night-1 context has no historical replay to perform, so it may use the already-proven
+ * direct ZDD representation internally. This is an experiment/evaluator representation choice, not
+ * a change to the production A4 rollout policy. Historical contexts continue to use the enumerated
+ * replay baseline until historical symbolic replay itself is validated.
  */
 internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
     fun evaluate(
@@ -171,104 +175,150 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
             }
         }
 
-        val baselineWorldsBySeat = stableQueries
+        val baselineWorldSetsBySeat = stableQueries
             .map(ExactHypotheticalObservationBundleQuery::recipientSeat)
             .distinct()
             .associateWith { recipientSeat ->
-                val knowledge = knowledgeBySeat.getValue(recipientSeat)
-                EnumeratedHistoricalExactBaseline.build(
+                buildExactBaseline(
                     validatedRuleset = validatedRuleset,
-                    rulesetRef = snapshot.rulesetRef,
-                    setupKnowledge = knowledge,
-                    hypothesis = context.hypothesis,
-                    roleDefinitions = roles,
-                    initialPhase = context.initialPhase,
-                    initialRound = context.initialRound,
-                    actionTimeline = context.actionTimeline,
-                    observationLog = context.observationLog,
-                ).worldSet.enumeratedWorlds()
+                    snapshot = snapshot,
+                    knowledge = knowledgeBySeat.getValue(recipientSeat),
+                    roles = roles,
+                    context = context,
+                )
             }
-        val baselineStructureBySeat = baselineWorldsBySeat.mapValues { (_, worlds) ->
-            summarizeWorldStructure(worlds, rolesById)
+        val baselineStructureBySeat = baselineWorldSetsBySeat.mapValues { (_, worlds) ->
+            summarizeWorldStructure(exactWorlds(worlds), rolesById)
         }
 
         return ExactHypotheticalObservationBundleEvaluation.Ready(
             diagnostics = stableQueries.map { query ->
-                val beforeWorlds = baselineWorldsBySeat.getValue(query.recipientSeat)
-                val afterWorlds = beforeWorlds.filter { world ->
-                    query.observations.all { observation ->
-                        TroubleBrewingWorldObservationEvaluator.evaluate(
-                            world = world,
-                            roles = rolesById,
-                            observation = observation,
-                            hypothesis = context.hypothesis,
-                        ).matches
-                    }
+                val before = baselineWorldSetsBySeat.getValue(query.recipientSeat)
+                val after = exactFilterOrder(query.observations).fold(before) { current, observation ->
+                    current.require(observation)
                 }
                 ExactHypotheticalObservationBundleDiagnostics(
                     bundleId = query.bundleId,
                     recipientSeat = query.recipientSeat,
-                    before = exactCardinality(beforeWorlds.size),
-                    after = exactCardinality(afterWorlds.size),
+                    before = exactCardinality(before),
+                    after = exactCardinality(after),
                     beforeStructure = baselineStructureBySeat.getValue(query.recipientSeat),
-                    afterStructure = summarizeWorldStructure(afterWorlds, rolesById),
+                    afterStructure = summarizeWorldStructure(exactWorlds(after), rolesById),
                 )
             },
         )
     }
 
+    private fun buildExactBaseline(
+        validatedRuleset: ValidatedClocktowerRuleset,
+        snapshot: GameSnapshot,
+        knowledge: PlayerKnowledgeSnapshot,
+        roles: List<RoleDefinition>,
+        context: ExactHistoricalHypotheticalContext,
+    ): PlayerWorldSet {
+        val pristineInitialNight =
+            context.initialPhase == StorytellerPhase.FIRST_NIGHT &&
+                context.initialRound == 1 &&
+                context.actionTimeline.entries.isEmpty() &&
+                context.observationLog.records.isEmpty()
+        if (pristineInitialNight) {
+            return ZddPlayerWorldSet.enumerateDirect(
+                rulesetRef = snapshot.rulesetRef,
+                knowledge = knowledge,
+                hypothesis = context.hypothesis,
+                roleDefinitions = roles,
+            )
+        }
+        return EnumeratedHistoricalExactBaseline.build(
+            validatedRuleset = validatedRuleset,
+            rulesetRef = snapshot.rulesetRef,
+            setupKnowledge = knowledge,
+            hypothesis = context.hypothesis,
+            roleDefinitions = roles,
+            initialPhase = context.initialPhase,
+            initialRound = context.initialRound,
+            actionTimeline = context.actionTimeline,
+            observationLog = context.observationLog,
+        ).worldSet
+    }
+
+    /**
+     * Conjunction is order-independent. Apply cheap exact symbolic identity facts first so fallback
+     * semantic filters decode only the already-narrowed family instead of the whole Night-1 space.
+     */
+    private fun exactFilterOrder(observations: List<EpistemicObservation>): List<EpistemicObservation> =
+        observations.sortedWith(
+            compareBy<EpistemicObservation>(
+                { observation ->
+                    when {
+                        observation.reliability == ObservationReliability.NOT_ABILITY_INFORMATION &&
+                            observation.proposition is InformationProposition.ShownRoleAt -> 0
+                        observation.reliability == ObservationReliability.NOT_ABILITY_INFORMATION -> 1
+                        else -> 2
+                    }
+                },
+                EpistemicObservation::sequence,
+                EpistemicObservation::observationId,
+            ),
+        )
+
+    private fun exactWorlds(worldSet: PlayerWorldSet): Sequence<EnumeratedWorld> = when (worldSet) {
+        is EnumeratedWorldSet -> worldSet.enumeratedWorlds().asSequence()
+        is ZddPlayerWorldSet -> worldSet.exactWorlds()
+        else -> error("Exact hypothetical evaluator received unsupported world-set representation ${worldSet::class.simpleName}.")
+    }
+
     private fun summarizeWorldStructure(
-        worlds: List<EnumeratedWorld>,
+        worlds: Sequence<EnumeratedWorld>,
         roles: Map<RoleId, RoleDefinition>,
     ): ExactWorldStructureDiagnostics {
-        if (worlds.isEmpty()) return ExactWorldStructureDiagnostics.EMPTY
+        val possibleDemonSeats = sortedSetOf<Int>()
+        val evilConfigurations = linkedSetOf<Set<Int>>()
+        val evilCoverSeats = sortedSetOf<Int>()
+        var forcedGoodSeats: MutableSet<Int>? = null
+        var forcedEvilSeats: MutableSet<Int>? = null
+        var seenWorld = false
 
-        val possibleDemonSeats = worlds
-            .asSequence()
-            .flatMap { world ->
-                world.currentRolesBySeat.asSequence()
-                    .filter { (seat, role) ->
-                        seat in world.aliveSeats && roles.getValue(role).type == CharacterType.DEMON
-                    }
-                    .map { it.key }
+        worlds.forEach { world ->
+            seenWorld = true
+            val current = world.currentRolesBySeat
+            current.forEach { (seat, role) ->
+                if (seat in world.aliveSeats && roles.getValue(role).type == CharacterType.DEMON) {
+                    possibleDemonSeats += seat
+                }
             }
-            .toSortedSet()
+            val evilSeats = current
+                .filterValues { role -> roles.getValue(role).alignment == Alignment.EVIL }
+                .keys
+                .toSortedSet()
+            val goodSeats = current.keys.filterTo(sortedSetOf()) { seat ->
+                roles.getValue(current.getValue(seat)).alignment == Alignment.GOOD
+            }
+            evilConfigurations += evilSeats.toSet()
+            evilCoverSeats += evilSeats
+            if (forcedGoodSeats == null) {
+                forcedGoodSeats = goodSeats
+                forcedEvilSeats = evilSeats
+            } else {
+                forcedGoodSeats!!.retainAll(goodSeats)
+                forcedEvilSeats!!.retainAll(evilSeats)
+            }
+        }
 
-        val evilConfigurations = worlds
-            .asSequence()
-            .map { world ->
-                world.currentRolesBySeat
-                    .filterValues { role -> roles.getValue(role).alignment == Alignment.EVIL }
-                    .keys
-                    .toSortedSet()
-                    .toSet()
-            }
-            .distinct()
+        if (!seenWorld) return ExactWorldStructureDiagnostics.EMPTY
+        val canonicalConfigurations = evilConfigurations
             .sortedWith(compareBy<Set<Int>>({ it.size }, { it.joinToString(",") }))
             .toCollection(linkedSetOf())
-
-        val seats = worlds.first().currentRolesBySeat.keys.sorted()
-        val forcedGoodSeats = seats.filterTo(sortedSetOf()) { seat ->
-            worlds.all { world ->
-                roles.getValue(world.currentRolesBySeat.getValue(seat)).alignment == Alignment.GOOD
-            }
-        }
-        val forcedEvilSeats = seats.filterTo(sortedSetOf()) { seat ->
-            worlds.all { world ->
-                roles.getValue(world.currentRolesBySeat.getValue(seat)).alignment == Alignment.EVIL
-            }
-        }
-        val evilCoverSeats = evilConfigurations.flatten().toSortedSet()
-
         return ExactWorldStructureDiagnostics(
             possibleDemonSeats = possibleDemonSeats,
-            evilTeamSeatConfigurations = evilConfigurations,
-            forcedGoodSeats = forcedGoodSeats,
-            forcedEvilSeats = forcedEvilSeats,
+            evilTeamSeatConfigurations = canonicalConfigurations,
+            forcedGoodSeats = forcedGoodSeats.orEmpty().toSortedSet(),
+            forcedEvilSeats = forcedEvilSeats.orEmpty().toSortedSet(),
             evilCoverSeats = evilCoverSeats,
         )
     }
 
-    private fun exactCardinality(count: Int): WorldCardinality.Exact =
-        WorldCardinality.Exact(BigInteger.valueOf(count.toLong()))
+    private fun exactCardinality(worldSet: PlayerWorldSet): WorldCardinality.Exact =
+        worldSet.cardinality() as? WorldCardinality.Exact
+            ?: error("Exact hypothetical evaluator requires exact world-set cardinality.")
 }
