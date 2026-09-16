@@ -6,18 +6,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Explicit FN-BUNDLE-3 calibration workload.
+ * Explicit FN-BUNDLE-3 exhaustive calibration workload.
  *
- * This is an experiment runner, not part of FAST or FULL regression. Run it through the dedicated
- * Gradle task `fnBundle3Calibration` when calibration evidence is intentionally being regenerated.
+ * This is an experiment runner, not part of FAST or FULL regression. It evaluates calibration only;
+ * sealed holdout scenarios are not evaluated until candidate gates are frozen.
  */
 class FirstNightBundleBeginnerCorpusExperiment {
     @Test
-    fun `generate calibration review corpus`() {
-        val corpus = FirstNightBundleBeginnerCorpusBuilder.build()
+    fun `generate exhaustive interaction-rich calibration review corpus`() {
+        val corpus = FirstNightBundleBeginnerCorpusBuilder.buildCalibration()
 
-        assertEquals(2, corpus.scenarios.count { it.partition == FirstNightBeginnerCorpusPartition.CALIBRATION })
-        assertEquals(1, corpus.scenarios.count { it.partition == FirstNightBeginnerCorpusPartition.HOLDOUT })
+        assertEquals(1, corpus.scenarios.size)
+        assertTrue(corpus.scenarios.all { it.partition == FirstNightBeginnerCorpusPartition.CALIBRATION })
         assertTrue(corpus.items.isNotEmpty())
         assertTrue(corpus.items.all { it.label == FirstNightBeginnerCorpusLabel.UNREVIEWED })
         assertTrue(corpus.items.all { it.selectionReasons.isNotEmpty() })
