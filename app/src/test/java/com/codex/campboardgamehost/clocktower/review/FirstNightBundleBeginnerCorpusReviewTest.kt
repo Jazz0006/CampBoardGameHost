@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.review
 
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -43,6 +44,9 @@ class FirstNightBundleBeginnerCorpusReviewTest {
             item.selectionReasons.isEmpty() || item.signatureId.isBlank() || item.itemId.isBlank()
         })
 
-        println(FirstNightBundleBeginnerCorpusBuilder.renderMarkdown(corpus))
+        val report = FirstNightBundleBeginnerCorpusBuilder.renderMarkdown(corpus)
+        val reportFile = File("build/reports/fn-bundle-3-beginner-corpus.md")
+        reportFile.parentFile.mkdirs()
+        reportFile.writeText(report, Charsets.UTF_8)
     }
 }
