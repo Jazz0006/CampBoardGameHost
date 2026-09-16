@@ -2,9 +2,14 @@ name: FN-BUNDLE-3 calibration
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - docs/FN_BUNDLE_3_CALIBRATION_TRIGGER.md
 
 concurrency:
-  group: fn-bundle-3-calibration-${{ github.ref }}
+  group: fn-bundle-3-calibration-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 permissions:
