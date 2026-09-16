@@ -27,7 +27,6 @@ import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableC
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableCategoricalRecommendation
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberContext
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.UnreliableNumberRecommendation
-import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupRecommendationService
 
 internal class SetupRecommendationModule {
@@ -42,8 +41,6 @@ internal class SetupRecommendationModule {
         lockedDecisions = lockedDecisions,
         history = history,
     )
-
-    fun naturalPairCandidates(game: GameState) = SetupCandidateGenerator.generatePairInformationCandidates(game)
 }
 
 internal class NightRecommendationModule {

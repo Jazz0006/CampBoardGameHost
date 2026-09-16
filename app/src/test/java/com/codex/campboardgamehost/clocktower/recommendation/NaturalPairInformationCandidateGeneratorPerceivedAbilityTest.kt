@@ -1,4 +1,4 @@
-package com.codex.campboardgamehost.clocktower.session
+package com.codex.campboardgamehost.clocktower.recommendation
 
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
@@ -13,9 +13,9 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class SetupRecommendationModulePerceivedAbilityTest {
+class NaturalPairInformationCandidateGeneratorPerceivedAbilityTest {
     @Test
-    fun `first night natural pair precompute includes Drunk perceived Investigator registration truth`() {
+    fun `first night aggregation includes Drunk perceived Investigator registration truth`() {
         val investigator = RoleId("Investigator")
         val poisoner = RoleId("Poisoner")
         val game = GameState(
@@ -30,7 +30,8 @@ class SetupRecommendationModulePerceivedAbilityTest {
             seed = 20260901L,
         )
 
-        val candidates = SetupRecommendationModule().naturalPairCandidates(game)
+        val candidates = NaturalPairInformationCandidateGenerator
+            .generatePerceivedFirstNightInformationSpace(game)
         val perceivedInvestigatorCandidates = candidates.filter { candidate ->
             candidate.effects
                 .filterIsInstance<EffectDraft.PlayerInformation>()
@@ -41,7 +42,7 @@ class SetupRecommendationModulePerceivedAbilityTest {
         }
 
         assertTrue(
-            "The production first-night precompute must expose Investigator semantics for a Drunk shown Investigator",
+            "The canonical first-night pair generator must expose Investigator semantics for a Drunk shown Investigator",
             perceivedInvestigatorCandidates.isNotEmpty(),
         )
         assertNotNull(

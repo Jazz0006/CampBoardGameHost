@@ -1,16 +1,10 @@
 package com.codex.campboardgamehost.clocktower.recommendation.setup
 
 import com.codex.campboardgamehost.clocktower.config.RecommendationProfiles
-import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CandidatePlan
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
-import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
-import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.ScriptId
-import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.assertEquals
@@ -73,31 +67,6 @@ class SetupMigrationTest {
     }
 
     @Test
-    fun `librarian and investigator natural clues enter the setup candidate pipeline`() {
-        val librarianGame = game(
-            player(1, "Librarian", CharacterType.TOWNSFOLK),
-            player(2, "Chef", CharacterType.TOWNSFOLK),
-            player(3, "Recluse", CharacterType.OUTSIDER),
-            player(4, "Poisoner", CharacterType.MINION),
-            player(5, "Imp", CharacterType.DEMON),
-        )
-        val investigatorGame = game(
-            player(1, "Investigator", CharacterType.TOWNSFOLK),
-            player(2, "Chef", CharacterType.TOWNSFOLK),
-            player(3, "Spy", CharacterType.MINION),
-            player(4, "Saint", CharacterType.OUTSIDER),
-            player(5, "Imp", CharacterType.DEMON),
-        )
-
-        val librarian = SetupCandidateGenerator.generatePairInformationCandidates(librarianGame)
-        val investigator = SetupCandidateGenerator.generatePairInformationCandidates(investigatorGame)
-
-        assertTrue(librarian.all { (it.outcome as SetupClueOutcome.PairInformation).information.shownRole == RoleId("Recluse") })
-        assertTrue(investigator.all { (it.outcome as SetupClueOutcome.PairInformation).information.shownRole == RoleId("Spy") })
-        assertTrue((librarian + investigator).all { it.candidateFamilyId == "natural-truth" })
-    }
-
-    @Test
     fun `red herring and demon bluffs have dedicated families and effects`() {
         val game = TroubleBrewingFixtures.eightPlayerExample()
         val redHerrings = SetupCandidateGenerator.generateRedHerringCandidates(game)
@@ -132,19 +101,4 @@ class SetupMigrationTest {
                 plan.decisions.filterIsInstance<StorytellerDecision.DrunkInvestigatorInfo>().single() == committedInformation
         })
     }
-
-    private fun game(vararg players: PlayerState) = GameState(
-        script = ScriptId("trouble_brewing"),
-        players = players.toList(),
-        seed = 42,
-    )
-
-    private fun player(seat: Int, role: String, type: CharacterType) = PlayerState(
-        seat = seat,
-        name = "Player $seat",
-        actualRole = RoleId(role),
-        actualAlignment = if (type == CharacterType.MINION || type == CharacterType.DEMON) Alignment.EVIL else Alignment.GOOD,
-        actualType = type,
-        shownRole = RoleId(role),
-    )
 }

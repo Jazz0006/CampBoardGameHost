@@ -9,11 +9,14 @@ import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.InformationValue
 import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
+import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RegistrationQuestion
 import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StableCandidateIdFactory
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
+import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
+import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationCandidate
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationDomain
 import com.codex.campboardgamehost.clocktower.rules.TroubleBrewingRegistrationSubject
@@ -24,6 +27,7 @@ internal object NaturalPairInformationCandidateGenerator {
     private val washerwoman = RoleId("Washerwoman")
     private val librarian = RoleId("Librarian")
     private val investigator = RoleId("Investigator")
+    private val pairInformationRoles = setOf(washerwoman, librarian, investigator)
     private val spy = RoleId("Spy")
     private val recluse = RoleId("Recluse")
 
@@ -36,6 +40,34 @@ internal object NaturalPairInformationCandidateGenerator {
         if (source.poisoned || source.actualRole != abilityRole) return emptyList()
         return generateHealthyInformationSpace(game, sourceSeat, abilityRole)
     }
+
+    /**
+     * Enumerates the natural truthful first-night pair-information space for every player whose
+     * perceived ability is Washerwoman, Librarian, or Investigator.
+     *
+     * This is intentionally owned beside the pair-information truth generator rather than setup:
+     * setup recommendation does not own these observations. A Drunk shown one of these roles still
+     * receives the perceived ability's truthful semantic space here; downstream reliability policy
+     * decides what may actually be shown.
+     */
+    fun generatePerceivedFirstNightInformationSpace(
+        game: GameState,
+        roleDefinitions: List<RoleDefinition> = emptyList(),
+    ): List<DecisionCandidate<PairInformationOutcome>> = game.players
+        .asSequence()
+        .mapNotNull { source ->
+            source.perceivedPairInformationRole()?.let { abilityRole -> source to abilityRole }
+        }
+        .flatMap { (source, abilityRole) ->
+            generateHealthyInformationSpace(
+                game = game,
+                sourceSeat = source.seat,
+                abilityRole = abilityRole,
+                roleDefinitions = roleDefinitions,
+            ).asSequence()
+        }
+        .sortedBy { it.candidateId }
+        .toList()
 
     /**
      * Enumerates the truthful information space defined by the perceived ability itself.
@@ -324,4 +356,16 @@ internal object NaturalPairInformationCandidateGenerator {
         decisionType = "${abilityRole.value.lowercase().replace(' ', '-')}-pair-information",
         tags = setOf("natural-truth") + extraTags,
     )
+
+    private fun PlayerState.perceivedPairInformationRole(): RoleId? {
+        val perceivedRole = AbilityFunctioningSemantics.perceivedRole(
+            AbilitySubject(
+                actualRole = actualRole.value,
+                shownRole = shownRole?.value,
+                isPoisoned = poisoned,
+                isAlive = alive,
+            ),
+        )?.let(::RoleId)
+        return perceivedRole?.takeIf { it in pairInformationRoles }
+    }
 }
