@@ -316,6 +316,7 @@ internal object TroubleBrewingWorldObservationEvaluator {
         proposition: InformationProposition,
     ): Boolean = when (proposition) {
         is InformationProposition.RoleAt -> world.rolesBySeat[proposition.seat] == proposition.role
+        is InformationProposition.ShownRoleAt -> world.shownRolesBySeat[proposition.seat] == proposition.role
         is InformationProposition.AlignmentAt -> world.rolesBySeat[proposition.seat]?.let(roles::get)?.alignment == proposition.alignment
         is InformationProposition.CharacterTypeAt -> world.rolesBySeat[proposition.seat]?.let(roles::get)?.type == proposition.characterType
         is InformationProposition.AliveAt -> (proposition.seat in world.aliveSeats) == proposition.alive

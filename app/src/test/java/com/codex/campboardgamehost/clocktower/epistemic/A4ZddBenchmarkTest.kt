@@ -93,7 +93,10 @@ class A4ZddBenchmarkTest {
         val retainedZddHeapEstimate = estimateRetainedZddBytes(enumerated)
 
         assertTrue(nodeCount > 0)
-        assertTrue(nodeCount < enumerated.cardinality().valueOrLowerBound.toInt())
+        // Shown-role identity is now explicit exact-world state. That adds correlated ZDD atoms and can
+        // legitimately move node count above raw world count, so retain the established structural
+        // ceiling used by ZddPlayerWorldSetTest instead of the obsolete one-node-per-world guard.
+        assertTrue(nodeCount < enumerated.cardinality().valueOrLowerBound.toInt() * 12)
         println("A4_ZDD_BENCHMARK worlds=${enumerated.cardinality().valueOrLowerBound} nodes=$nodeCount " +
             "buildColdUs=${buildTimes.first()} buildWarmP50Us=${p50(warm(buildTimes))} " +
             "buildWarmP95Us=${p95(warm(buildTimes))} " +

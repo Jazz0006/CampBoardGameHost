@@ -42,16 +42,26 @@ class FirstNightBundleExperimentContractTest {
     }
 
     @Test
-    fun `public good projection is ephemeral and excludes latent choices`() {
+    fun `public good projection is ephemeral excludes latent choices and deduplicates shown role claims`() {
         val original = privateObservation(
             id = "private-clue",
             proposition = InformationProposition.RoleAt(4, RoleId("Poisoner")),
+        )
+        val secondClue = privateObservation(
+            id = "private-clue-2",
+            proposition = InformationProposition.AlignmentAt(3, Alignment.GOOD),
         )
         val entries = mutableListOf(
             FirstNightInformationBundleEntry(
                 entryId = "fixed-clue",
                 control = FirstNightBundleEntryControl.RULE_DETERMINED,
                 observation = original,
+                profileExposure = FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
+            ),
+            FirstNightInformationBundleEntry(
+                entryId = "same-player-second-clue",
+                control = FirstNightBundleEntryControl.RULE_DETERMINED,
+                observation = secondClue,
                 profileExposure = FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
             ),
             FirstNightInformationBundleEntry(
@@ -64,16 +74,24 @@ class FirstNightBundleExperimentContractTest {
         entries.clear()
 
         val projected = FirstNightPublicGoodInfoProjection.project(bundle)
+        val shownClaims = projected.filter { it.proposition is InformationProposition.ShownRoleAt }
+        val clueObservations = projected.filterNot { it.proposition is InformationProposition.ShownRoleAt }
 
-        assertEquals(2, bundle.entries.size)
-        assertEquals(1, projected.size)
+        assertEquals(3, bundle.entries.size)
+        assertEquals(3, projected.size)
+        assertEquals(
+            listOf(InformationProposition.ShownRoleAt(1, RoleId("Chef"))),
+            shownClaims.map(EpistemicObservation::proposition),
+        )
+        assertEquals(ObservationReliability.NOT_ABILITY_INFORMATION, shownClaims.single().reliability)
+        assertEquals(null, shownClaims.single().sourceAbility)
+        assertEquals(setOf(original.proposition, secondClue.proposition), clueObservations.map { it.proposition }.toSet())
         assertEquals(ObservationVisibility.PRIVATE, original.visibility)
         assertEquals(setOf(1), original.recipientSeats)
-        assertEquals(ObservationVisibility.PUBLIC, projected.single().visibility)
-        assertTrue(projected.single().recipientSeats.isEmpty())
-        assertEquals(original.proposition, projected.single().proposition)
-        assertEquals(original.timelineBinding, projected.single().timelineBinding)
-        assertNotEquals(original.observationId, projected.single().observationId)
+        assertTrue(projected.all { it.visibility == ObservationVisibility.PUBLIC })
+        assertTrue(projected.all { it.recipientSeats.isEmpty() })
+        assertEquals(original.timelineBinding, clueObservations.first { it.proposition == original.proposition }.timelineBinding)
+        assertNotEquals(original.observationId, clueObservations.first { it.proposition == original.proposition }.observationId)
     }
 
     @Test
@@ -111,7 +129,7 @@ class FirstNightBundleExperimentContractTest {
         assertTrue(evaluation is FirstNightBundleExperimentEvaluation.Ready)
         val ready = evaluation as FirstNightBundleExperimentEvaluation.Ready
         assertEquals(FirstNightExperimentProfile.BEGINNER_PUBLIC_GOOD_INFO, ready.profile)
-        assertEquals(1, ready.publicObservationCount)
+        assertEquals(2, ready.publicObservationCount)
         assertEquals(listOf(1, 2), ready.recipientDiagnostics.map { it.recipientSeat })
         assertTrue(ready.recipientDiagnostics.all { it.after.value <= it.before.value })
         assertEquals(entriesBefore, bundle.entries)
@@ -151,7 +169,7 @@ class FirstNightBundleExperimentContractTest {
         round = 1,
         sequence = 1,
         sourceSeat = 1,
-        sourceAbility = null,
+        sourceAbility = RoleId("Chef"),
         visibility = ObservationVisibility.PRIVATE,
         recipientSeats = setOf(1),
         reliability = ObservationReliability.NOT_ABILITY_INFORMATION,

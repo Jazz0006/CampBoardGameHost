@@ -1,7 +1,7 @@
 # NEXT DEVELOPMENT HANDOFF — FN-BUNDLE-1 Shown-Role Semantics
 
 > Updated: 2026-09-16 Australia/Sydney  
-> Status: **CURRENT / canonical active handoff**  
+> Status: **CURRENT / FN-BUNDLE-1 T4 acceptance checkpoint**  
 > Current route decision: `docs/EPI_MQ_FIRST_NIGHT_BUNDLE_ROUTE_2026-09-16.md`  
 > Prior `docs/EPI_MQ_ROUTE_REAUDIT_2026-09-15.md`: **superseded as execution authority**
 
@@ -31,7 +31,7 @@ That merge includes both:
 - the FN-BUNDLE-0 candidate-space/live-seam audit; and
 - retirement of the obsolete setup-owned pair-information route.
 
-After the merge, documentation-only commits advance `main`; therefore always query live `main` instead of assuming `55da0b8` is the current branch tip. Treat `55da0b8` as the merged FN-BUNDLE-0 **code baseline**, not as a permanently current SHA.
+After the merge, documentation-only commits advanced `main` to `dbfeec7417f42efe6357f8055b84d8a42eff064b` at the start of this FN-BUNDLE-1 continuation. Treat `55da0b8` as the merged FN-BUNDLE-0 **code baseline**, not as a permanently current SHA, and always query live `main` before editing.
 
 ## 2. Pair-information ownership cleanup is complete
 
@@ -55,6 +55,8 @@ PairInformationLegalDomain / canonical consumers
 
 The precompute transport may remain for compatibility/performance purposes, but pair candidates are sourced from the canonical generator. Do not recreate setup-owned pair semantics.
 
+**Do not repeat FN-BUNDLE-0 candidate-space or setup-pair ownership audits.**
+
 ## 3. Current active PR — #140
 
 PR #140:
@@ -65,120 +67,76 @@ Branch:
 
 `fn-bundle-1-evaluator-correctness`
 
-The branch was rebuilt cleanly on the merged FN-BUNDLE-0 code baseline after #139 squash merge.
+The branch was synchronized with live `main` before the ShownRoleAt work continued.
 
-At the time of that rebuild:
-
-```text
-base code: 55da0b8366eae6daa01df9bef668c56b6eecfaec
-head:      edcdbccdf6c8e2110afcae5d04219d347a2f2da7
-files:     3 FN-BUNDLE-1 files only
-```
-
-Subsequent `main` movement is documentation-only. Before continuing, query and sync/rebase as appropriate so #140 is based on current main without reintroducing already-merged FN-BUNDLE-0 changes.
-
-## 4. What #140 already contains
-
-### Production adapter
-
-`FirstNightInformationPropositionMaterializer.kt`
-
-Current responsibilities:
-
-- convert already-legal Washerwoman/Librarian/Investigator pair information to epistemic propositions;
-- convert Librarian zero-Outsider information;
-- convert Chef numeric information;
-- convert Empath numeric information using existing living-neighbour structure;
-- remain a thin adapter, not a legality/truth engine.
-
-### Current tests
-
-`FirstNightInformationPropositionMaterializerTest.kt`
-
-currently proves representative:
-
-- Washerwoman pair satisfied through Spy registration;
-- Investigator pair satisfied through Recluse registration;
-- Librarian zero-Outsider actual-target semantics;
-- Chef/Empath numeric proposition structure;
-- representative actual Drunk shown as Chef receiving false Chef information:
-  - matches under `MECHANICALLY_CREDIBLE`;
-  - does not match under `FUNCTIONING_ONLY`.
-
-`FirstNightBundleExperimentExactFixtureTest.kt`
-
-currently proves a compact healthy public clue bundle has exact AFTER equal to the same-baseline conjunction of its projected clue observations.
-
-These are useful, but they do **not** finish FN-BUNDLE-1.
-
-## 5. The important semantic gap
-
-The `BEGINNER_PUBLIC_GOOD_INFO` experiment means players publicly reveal both:
-
-1. the role identity they believe/show themselves to be; and
-2. their first-night clue information.
-
-Current `FirstNightPublicGoodInfoProjection.project()` only copies the clue observation to PUBLIC visibility.
-
-That under-models confirmation chains.
-
-Example:
+The executable implementation immediately before this documentation-only T4 checkpoint was:
 
 ```text
-Washerwoman publicly claims Washerwoman
-+ Washerwoman clue supports Empath identity
-+ Empath publicly claims Empath
-+ Empath publicly shares 0
+head: 87e3489aab0812e6475357f41632c0ea80a3a293
+main: dbfeec7417f42efe6357f8055b84d8a42eff064b
 ```
 
-Without public role claims, the exact evaluator does not receive the full public information structure the experiment intends to model.
+This handoff update is intentionally a **documentation-only `[full-ci]` checkpoint commit**. It exists to force the repository's T4 acceptance route without changing executable behavior.
 
-## 6. Immediate task — complete `ShownRoleAt` fanout
+Do not merge #140 without explicit user authorization.
 
-Before adding a new proposition type, audit the complete fanout of `InformationProposition`.
+## 4. FN-BUNDLE-1 implementation now present in #140
 
-Map at least:
+### First-night information materializer
 
-- proposition declaration;
-- every exhaustive `when` over propositions;
-- `TroubleBrewingWorldObservationEvaluator`;
-- exact/enumerated filtering paths;
-- canonical/stable-ID or serialization/codec paths if any;
-- ASP/Clingo/symbolic/ZDD representations if they consume proposition syntax;
-- tests/snapshots/fingerprints dependent on proposition variants.
+`FirstNightInformationPropositionMaterializer.kt` remains a thin adapter and now has the intended FN-BUNDLE-1 coverage:
 
-Do not add `ShownRoleAt` until this map is understood.
+- Washerwoman/Librarian/Investigator pair information converts already-legal pair values into epistemic propositions;
+- Librarian zero-Outsider information converts to absence claims over script Outsiders;
+- Chef and Empath numeric information converts without reimplementing truth calculation;
+- Empath subject seats reuse the existing living-neighbour rule owner;
+- Spy/Recluse registration semantics remain owned by the epistemic/rules evaluation path;
+- malfunction semantics remain owned by the epistemic evaluator.
 
-Then introduce:
+### Shown-role proposition
+
+The shared epistemic contract now includes:
 
 ```text
 InformationProposition.ShownRoleAt(seat, role)
 ```
 
-Required exact semantics:
+Its exact semantics are deliberately distinct from actual identity:
 
 ```text
 world.shownRolesBySeat[seat] == role
 ```
 
-Important boundaries:
+Boundaries now enforced:
 
-- this is a claim about the role the player is shown/believes they are;
-- it is not `RoleAt(seat, role)`;
+- `ShownRoleAt` is not `RoleAt`;
 - it does not use Spy/Recluse registration;
 - it is not loosened merely because the player's ability is malfunctioning;
-- it must not reveal actual hidden identity.
+- it does not expose hidden actual identity;
+- an actual Drunk shown Chef can satisfy `ShownRoleAt(seat, Chef)` without emitting `RoleAt(seat, Drunk)`.
 
-For an actual Drunk shown Chef:
+### InformationProposition fanout audit
 
-```text
-ShownRoleAt(seat, Chef)   // valid public role claim
-RoleAt(seat, Drunk)       // must NOT be emitted by PUBLIC_GOOD_INFO
-```
+The ShownRoleAt change was audited through the shared proposition fanout before completion. The affected paths include:
 
-## 7. PUBLIC_GOOD_INFO projection change
+- proposition declaration and seat-reference validation;
+- every compiler-exposed exhaustive `when` consumer;
+- exact/enumerated world observation evaluation;
+- knowledge-construction boundary validation;
+- recovery semantic-history validation;
+- canonical semantic JSON encode/decode;
+- existing shown-role exact-world representation and ZDD/exact fallback path;
+- workflow-selected exact/oracle validation.
 
-After `ShownRoleAt` exists, `FirstNightPublicGoodInfoProjection` must project both:
+The initial CI compile exposed two missed exhaustive consumers (`KnowledgeConstructionInput` and `RecoveryRestorePlanner`); both were fixed rather than hidden behind catch-all branches.
+
+### Exact world shown-role state
+
+Trouble Brewing exact enumeration now records shown-role identity explicitly for ordinary non-Drunk players. A Drunk's shown Townsfolk identity is recorded only where the recipient-visible knowledge actually provides it. This keeps `ShownRoleAt` as a direct world-state query rather than silently falling back to actual identity.
+
+### PUBLIC_GOOD_INFO projection
+
+`FirstNightPublicGoodInfoProjection` now projects, for each sharing source:
 
 ```text
 public shown-role claim
@@ -186,85 +144,115 @@ public shown-role claim
 public clue observation
 ```
 
-for each PUBLIC_GOOD_INFO sharing source.
+with these constraints:
 
-Requirements:
-
-- derive the claim from the player's shown/perceived ability represented by the observation, not hidden actual identity;
-- create at most one identical shown-role claim per `(sourceSeat, shownRole)` within one projected bundle;
-- deterministic ordering;
-- deterministic stable IDs;
-- no durable mutation;
+- shown identity is derived from the observation's represented shown/perceived ability, not hidden actual identity;
+- duplicate `(sourceSeat, shownRole)` claims are emitted at most once per projected bundle;
+- ordering and observation IDs are deterministic;
+- identity claims are `NOT_ABILITY_INFORMATION` and have no `sourceAbility` malfunction coupling;
 - clue observations remain separate observations;
-- latent Red Herring/demon-bluff entries remain non-shared in this profile.
+- latent Red Herring/demon-bluff entries remain outside this public-sharing profile.
 
-If multiple first-night entries from the same sharing player occur later, deduplication must prevent repeated identical identity claims.
+## 5. Required fixtures now present
 
-## 8. Required new fixtures
+### Healthy confirmation chain
 
-### Healthy confirmation-chain fixture
-
-Add a fixture that proves role claims materially participate in the conjunction, not merely clue contents.
-
-A representative pattern should include identity confirmation, for example:
+The exact fixture now covers a representative public conjunction containing:
 
 ```text
 Washerwoman claims Washerwoman
-Washerwoman supports Empath among two seats
-Empath claims Empath
-Empath shares 0
++ Washerwoman clue supports Empath among two seats
++ Empath claims Empath
++ Empath shares 0
 ```
 
-The fixture should prove the projection actually contains the expected shown-role claims plus clue observations and that exact AFTER is computed from the whole conjunction.
+It proves:
 
-### Drunk shown-role fixture
+- the projection contains both shown-role claims and clue observations;
+- exact AFTER is the conjunction over the complete projected bundle;
+- shown-role claims materially tighten the surviving world set compared with clue-only filtering.
 
-Use an actual Drunk shown as a Townsfolk role such as Chef.
+### Drunk shown-role semantics
 
-Prove:
+A separate fixture covers an actual Drunk shown Chef and proves:
 
 - PUBLIC_GOOD_INFO emits `ShownRoleAt(drunkSeat, Chef)`;
-- that claim matches a world whose `shownRolesBySeat[drunkSeat] == Chef`;
+- the claim matches a world whose `shownRolesBySeat[drunkSeat] == Chef`;
 - no public identity proposition exposes actual `Drunk`;
-- the false Chef clue can still be handled under the existing malfunction hypothesis rules independently of the shown-role claim.
+- shown-role identity still matches under `FUNCTIONING_ONLY` because it is not ability information;
+- the false Chef clue remains independently accepted only by the existing malfunction-aware hypothesis path;
+- an incorrect shown-role claim is rejected.
 
-This is distinct from the existing Drunk false-information fixture.
+The fixture was deliberately kept local to the exact semantic contract instead of constructing an unnecessary complete six-player exact baseline, after CI demonstrated that the broader construction added memory cost without stronger evidence.
 
-## 9. CI state
+### Canonical JSON
 
-Important: after #140 was rebuilt/retargeted onto merged main, its current head had **no workflow run yet**.
+A dedicated semantic contract test proves ShownRoleAt canonical encode/decode round-trip and structural JSON fields without depending on brittle textual object-key ordering.
 
-Do not report #140 as CI-green based on old stacked-branch runs or #139 CI.
+## 6. Validation history before this T4 checkpoint
 
-After the `ShownRoleAt` work is complete:
+Useful intermediate CI evidence:
 
-1. run/observe the normal PR CI on the actual current head;
-2. verify Android FAST/full tasks required by the workflow;
-3. because proposition semantics change, follow `docs/TESTING_STRATEGY.md` escalation for exact/symbolic/ASP/Clingo validation where applicable;
-4. inspect failures rather than weakening tests/contracts;
-5. only call FN-BUNDLE-1 complete when current-head required checks are green.
+- R2 main-thread boundary: green;
+- Android compile fanout failures were found and fixed;
+- subsequent FAST run reached 1364 tests and exposed only the two new-test issues described above;
+- those test issues were corrected without weakening production contracts;
+- Real Clingo frozen-oracle cross-validation was green on the executable ShownRoleAt implementation before the final test-only fixes;
+- normal PR CI on `87e3489` is green and FAST passes.
 
-Do not merge #140 without explicit user authorization.
+However, under `docs/TESTING_STRATEGY.md`, ordinary synchronize-event FAST CI is **not** sufficient for this logical acceptance checkpoint.
 
-## 10. FN-BUNDLE-1 completion condition
+## 7. T4 acceptance checkpoint — current task
 
-FN-BUNDLE-1 is complete only when all are true:
+This documentation-only commit intentionally uses `[full-ci]` in its commit message.
+
+The workflow must therefore select the full checkpoint:
 
 ```text
-[ ] InformationProposition fanout audited
-[ ] ShownRoleAt implemented at the correct semantic owner
-[ ] exact evaluator matches shownRolesBySeat
-[ ] no registration/malfunction leakage into shown-role identity semantics
-[ ] PUBLIC_GOOD_INFO adds deterministic deduplicated shown-role claims
-[ ] healthy confirmation-chain fixture passes
-[ ] Drunk shown-role fixture passes
-[ ] existing materializer/registration/numeric fixtures still pass
-[ ] current #140 head has required CI green
+android=true
+android_full=true
+asp=true
+oracle=true
 ```
+
+Required acceptance evidence on the **current PR head**:
+
+- Android `:app:testFull` passes;
+- `:app:assembleDebug` passes in the same full Android job;
+- ASP golden corpus validation passes;
+- ASP harness Python tests pass;
+- Real Clingo cross-validation passes;
+- aggregate CI gate passes;
+- R2 main-thread boundary passes.
+
+Do not substitute a previous FAST-only green run for this T4 checkpoint.
+
+## 8. FN-BUNDLE-1 completion condition
+
+Implementation requirements are now satisfied:
+
+```text
+[x] InformationProposition fanout audited
+[x] ShownRoleAt implemented at the correct semantic owner
+[x] exact evaluator matches shownRolesBySeat directly
+[x] no registration/malfunction leakage into shown-role identity semantics
+[x] PUBLIC_GOOD_INFO adds deterministic deduplicated shown-role claims
+[x] healthy confirmation-chain fixture implemented and FAST-green
+[x] Drunk shown-role fixture implemented and FAST-green
+[x] existing materializer/registration/numeric fixtures remain FAST-green
+```
+
+Final acceptance requirement:
+
+```text
+[ ] current #140 `[full-ci]` head has required T4 CI green
+```
+
+**When that live current-head T4 run is green, FN-BUNDLE-1 is complete and #140 is ready for explicit merge authorization.**
 
 Until then, do not begin FN-BUNDLE-2 whole-7-player harness as the main implementation task.
 
-## 11. Next stage after #140
+## 9. Next stage after #140
 
 FN-BUNDLE-2 builds the complete healthy 7-player first-night harness.
 
@@ -286,7 +274,7 @@ Strategy:
 
 Do not retreat to independent per-role scoring.
 
-## 12. Product/architecture rules that remain stable
+## 10. Product/architecture rules that remain stable
 
 Target product behavior remains:
 
@@ -311,19 +299,6 @@ General-purpose LLM recommendation remains deferred.
 
 Do not introduce final Badness thresholds before the human-reviewed corpus exists.
 
-## 13. First concrete action in the new conversation
+## 11. Stable rule
 
-After reading the required documents and querying live source:
-
-1. inspect live `main` and PR #140;
-2. sync #140 with documentation-only main movement without reintroducing FN-BUNDLE-0 diff;
-3. perform full `InformationProposition` fanout audit;
-4. implement `ShownRoleAt` at the common epistemic owner;
-5. extend PUBLIC_GOOD_INFO with deterministic deduplicated shown-role claims;
-6. add healthy confirmation-chain and Drunk shown-role fixtures;
-7. run required current-head CI;
-8. stop for review/merge authorization before merging #140.
-
-## 14. Stable rule
-
-> **FN-BUNDLE-0 is finished and merged. The next conversation should not repeat candidate-space or setup-pair audits. Resume directly at FN-BUNDLE-1: make PUBLIC_GOOD_INFO include public shown-role identity claims as well as clue contents, prove healthy confirmation chains and Drunk shown-role semantics, then obtain current-head CI before considering FN-BUNDLE-1 complete.**
+> **FN-BUNDLE-0 is finished and merged; do not repeat its candidate-space or setup-pair ownership audits. FN-BUNDLE-1 code is implemented through ShownRoleAt/public identity projection and its required fixtures. Treat the current `[full-ci]` run as the final T4 acceptance gate; if it is green, stop for explicit #140 merge authorization before beginning FN-BUNDLE-2.**

@@ -104,6 +104,7 @@ object EpistemicSemanticJson {
 
     private fun proposition(value: InformationProposition): Map<String, Any?> = when (value) {
         is InformationProposition.RoleAt -> mapOf("kind" to "role-at", "role" to value.role.value, "seat" to value.seat)
+        is InformationProposition.ShownRoleAt -> mapOf("kind" to "shown-role-at", "role" to value.role.value, "seat" to value.seat)
         is InformationProposition.AlignmentAt -> mapOf("alignment" to value.alignment.name, "kind" to "alignment-at", "seat" to value.seat)
         is InformationProposition.CharacterTypeAt -> mapOf("characterType" to value.characterType.name, "kind" to "character-type-at", "seat" to value.seat)
         is InformationProposition.AliveAt -> mapOf("alive" to value.alive, "kind" to "alive-at", "seat" to value.seat)
@@ -312,6 +313,7 @@ object EpistemicSemanticJson {
 
     private fun proposition(json: JSONObject): InformationProposition = when (json.getString("kind")) {
         "role-at" -> InformationProposition.RoleAt(json.getInt("seat"), RoleId(json.getString("role")))
+        "shown-role-at" -> InformationProposition.ShownRoleAt(json.getInt("seat"), RoleId(json.getString("role")))
         "alignment-at" -> InformationProposition.AlignmentAt(json.getInt("seat"), Alignment.valueOf(json.getString("alignment")))
         "character-type-at" -> InformationProposition.CharacterTypeAt(json.getInt("seat"), CharacterType.valueOf(json.getString("characterType")))
         "alive-at" -> InformationProposition.AliveAt(json.getInt("seat"), json.getBoolean("alive"))

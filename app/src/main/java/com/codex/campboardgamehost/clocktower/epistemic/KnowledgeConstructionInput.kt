@@ -33,6 +33,7 @@ fun FormalGameState.toKnowledgeConstructionInput(): KnowledgeConstructionInput =
 /** Mirrors FormalGameState's proposition-seat validation at the safe direct-input boundary. */
 private fun InformationProposition.knowledgeBoundaryReferencedSeats(): Set<Int> = when (this) {
     is InformationProposition.RoleAt -> setOf(seat)
+    is InformationProposition.ShownRoleAt -> setOf(seat)
     is InformationProposition.AlignmentAt -> setOf(seat)
     is InformationProposition.CharacterTypeAt -> setOf(seat)
     is InformationProposition.AliveAt -> setOf(seat)

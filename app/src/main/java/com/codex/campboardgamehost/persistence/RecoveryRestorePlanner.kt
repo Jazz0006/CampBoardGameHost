@@ -390,6 +390,7 @@ internal object RecoveryRestorePlanner {
 
     private fun InformationProposition.recoveryReferencedSeats(): Set<Int> = when (this) {
         is InformationProposition.RoleAt -> setOf(seat)
+        is InformationProposition.ShownRoleAt -> setOf(seat)
         is InformationProposition.AlignmentAt -> setOf(seat)
         is InformationProposition.CharacterTypeAt -> setOf(seat)
         is InformationProposition.AliveAt -> setOf(seat)
