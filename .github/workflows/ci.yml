@@ -226,17 +226,6 @@ jobs:
         if: needs.changes.outputs.android_full == 'true'
         run: ./gradlew :app:testFull :app:assembleDebug --no-daemon --rerun-tasks
 
-      - name: Print FN-BUNDLE-3 review corpus
-        if: needs.changes.outputs.android_full == 'true'
-        shell: bash
-        run: |
-          report="app/build/reports/fn-bundle-3-beginner-corpus.md"
-          if [[ -f "$report" ]]; then
-            cat "$report"
-          else
-            echo "FN-BUNDLE-3 corpus report not produced by this full run."
-          fi
-
   asp-contract-tests:
     name: ASP contract tests
     needs: changes
