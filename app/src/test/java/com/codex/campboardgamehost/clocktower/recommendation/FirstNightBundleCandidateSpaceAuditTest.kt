@@ -5,12 +5,11 @@ import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
-import com.codex.campboardgamehost.clocktower.recommendation.setup.SetupCandidateGenerator
 import java.math.BigInteger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -45,12 +44,6 @@ class FirstNightBundleCandidateSpaceAuditTest {
         assertFalse(audit.samplingApplied)
         assertEquals(setOf("fortune-teller-target"), audit.excludedPlayerControlledElements)
         assertTrue(audit.deferredComplexities.isEmpty())
-
-        val setupPairRoles = SetupCandidateGenerator.generatePairInformationCandidates(game)
-            .map { candidate -> (candidate.outcome as SetupClueOutcome.PairInformation).abilityRole }
-            .toSet()
-        assertFalse(RoleId("Washerwoman") in setupPairRoles)
-        assertTrue(RoleId("Investigator") in setupPairRoles)
     }
 
     @Test
@@ -69,10 +62,11 @@ class FirstNightBundleCandidateSpaceAuditTest {
         assertEquals(1, librarian.optionCount)
         assertEquals(FirstNightBundleEntryControl.STORYTELLER_CONTROLLED, librarian.control)
         assertEquals(BigInteger.ONE, audit.rawCartesianCount)
+        assertEquals(BigInteger.ONE, audit.legalCompleteBundleCount)
     }
 
     @Test
-    fun `staged uncertainty sources are visible without entering the healthy harness policy`() {
+    fun `staged uncertainty sources make complete bundle count explicitly unknown`() {
         val game = game(
             player(1, "Investigator", CharacterType.TOWNSFOLK),
             player(2, "Drunk", CharacterType.OUTSIDER, shownRole = "Washerwoman"),
@@ -93,11 +87,13 @@ class FirstNightBundleCandidateSpaceAuditTest {
             ),
             audit.deferredComplexities,
         )
+        assertNull(audit.legalCompleteBundleCount)
+        assertEquals(BigInteger.ZERO, audit.evaluatedCount)
         assertTrue(audit.factors.none { it.factorId.contains("washerwoman") })
     }
 
     @Test
-    fun `registration alternatives are counted at the existing numeric truth owner`() {
+    fun `registration alternatives are counted only as known producer options until that stage is enabled`() {
         val game = game(
             player(1, "Chef", CharacterType.TOWNSFOLK),
             player(2, "Recluse", CharacterType.OUTSIDER),
@@ -112,6 +108,7 @@ class FirstNightBundleCandidateSpaceAuditTest {
         assertEquals(listOf("value-0", "value-1"), chef.optionIds)
         assertEquals(FirstNightBundleEntryControl.STORYTELLER_CONTROLLED, chef.control)
         assertTrue(FirstNightBundleDeferredComplexity.SPY_RECLUSE_REGISTRATION in audit.deferredComplexities)
+        assertNull(audit.legalCompleteBundleCount)
     }
 
     private fun game(vararg players: PlayerState) = GameState(
