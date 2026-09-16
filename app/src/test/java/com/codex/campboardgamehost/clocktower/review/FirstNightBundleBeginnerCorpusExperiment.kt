@@ -6,27 +6,39 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Explicit FN-BUNDLE-3 exhaustive calibration workload.
+ * Explicit FN-BUNDLE-3 calibration workload.
  *
- * This is an experiment runner, not part of FAST or FULL regression. It evaluates calibration only;
- * sealed holdout scenarios are not evaluated until candidate gates are frozen.
+ * The interaction-rich scenario is scanned exhaustively. The weak-information probe evaluates a
+ * bounded deterministic sample of legal public signatures exactly. Neither path evaluates holdout.
  */
 class FirstNightBundleBeginnerCorpusExperiment {
     @Test
-    fun `generate exhaustive interaction-rich calibration review corpus`() {
-        val corpus = FirstNightBundleBeginnerCorpusBuilder.buildCalibration()
+    fun `generate beginner calibration review corpus`() {
+        val richCorpus = FirstNightBundleBeginnerCorpusBuilder.buildCalibration()
+        val lowInformation = FirstNightBundleBeginnerLowInformationCalibrationBuilder.build()
 
-        assertEquals(1, corpus.scenarios.size)
-        assertTrue(corpus.scenarios.all { it.partition == FirstNightBeginnerCorpusPartition.CALIBRATION })
-        assertTrue(corpus.items.isNotEmpty())
-        assertTrue(corpus.items.all { it.label == FirstNightBeginnerCorpusLabel.UNREVIEWED })
-        assertTrue(corpus.items.all { it.selectionReasons.isNotEmpty() })
-        assertTrue(corpus.items.all { it.anchorDiagnostics.afterWorldCount.signum() > 0 })
-        assertTrue(corpus.items.all {
+        assertEquals(1, richCorpus.scenarios.size)
+        assertTrue(richCorpus.scenarios.all { it.partition == FirstNightBeginnerCorpusPartition.CALIBRATION })
+        assertTrue(richCorpus.items.isNotEmpty())
+        assertTrue(richCorpus.items.all { it.label == FirstNightBeginnerCorpusLabel.UNREVIEWED })
+        assertTrue(richCorpus.items.all { it.selectionReasons.isNotEmpty() })
+        assertTrue(richCorpus.items.all { it.anchorDiagnostics.afterWorldCount.signum() > 0 })
+        assertTrue(richCorpus.items.all {
             it.anchorDiagnostics.afterWorldCount <= it.anchorDiagnostics.beforeWorldCount
         })
+        assertTrue(lowInformation.legalWasherwomanCandidateCount >= lowInformation.selectedPointCount)
+        assertTrue(lowInformation.selectedPointCount in 1..3)
+        assertTrue(lowInformation.points.all { point ->
+            point.diagnostics.afterWorldCount.signum() > 0 &&
+                point.diagnostics.afterWorldCount <= point.diagnostics.beforeWorldCount
+        })
 
-        val report = FirstNightBundleBeginnerCorpusBuilder.renderMarkdown(corpus)
+        val report = buildString {
+            append(FirstNightBundleBeginnerCorpusBuilder.renderMarkdown(richCorpus).removeSuffix("FN_BUNDLE_3_CORPUS_END\n"))
+            appendLine()
+            append(FirstNightBundleBeginnerLowInformationCalibrationBuilder.renderMarkdown(lowInformation))
+            appendLine("FN_BUNDLE_3_CORPUS_END")
+        }
         val reportFile = File("build/reports/fn-bundle-3-beginner-corpus.md")
         requireNotNull(reportFile.parentFile).mkdirs()
         reportFile.writeText(report, Charsets.UTF_8)
