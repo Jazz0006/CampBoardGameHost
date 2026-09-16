@@ -2,7 +2,6 @@ package com.codex.campboardgamehost.clocktower.review
 
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
-import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.PlayerState
@@ -13,10 +12,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalContext
-import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheticalObservationBundleEvaluator
-import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleDiagnostics
-import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleEvaluation
-import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleQuery
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightHealthyBundleHarnessEvaluation
 import com.codex.campboardgamehost.clocktower.recommendation.FirstNightProjectedSignatureGroup
@@ -45,7 +40,7 @@ enum class FirstNightBeginnerSelectionReason {
     UPPER_QUARTILE_AFTER,
 }
 
-data class FirstNightBeginnerPerspectiveDiagnostics(
+data class FirstNightBeginnerDiagnostics(
     val recipientSeat: Int,
     val beforeWorldCount: BigInteger,
     val afterWorldCount: BigInteger,
@@ -58,12 +53,7 @@ data class FirstNightBeginnerPerspectiveDiagnostics(
 
 data class FirstNightBeginnerLeaveOneOutDiagnostics(
     val omittedObservation: String,
-    val afterWorldCount: BigInteger,
-    val demonCoverSize: Int,
-    val distinctEvilTeamConfigurationCount: Int,
-    val forcedGoodSeats: Set<Int>,
-    val forcedEvilSeats: Set<Int>,
-    val evilCoverSize: Int,
+    val diagnostics: FirstNightBeginnerDiagnostics,
 )
 
 data class FirstNightBeginnerCorpusItem(
@@ -75,7 +65,7 @@ data class FirstNightBeginnerCorpusItem(
     val multiplicity: BigInteger,
     val selectionReasons: Set<FirstNightBeginnerSelectionReason>,
     val publicObservations: List<String>,
-    val perspectives: List<FirstNightBeginnerPerspectiveDiagnostics>,
+    val anchorDiagnostics: FirstNightBeginnerDiagnostics,
     val anchorLeaveOneOut: List<FirstNightBeginnerLeaveOneOutDiagnostics>,
 )
 
@@ -98,10 +88,13 @@ data class FirstNightBeginnerCorpus(
 /**
  * FN-BUNDLE-3 pilot corpus builder.
  *
- * This is review infrastructure, not a Badness classifier. It deliberately leaves every item
- * UNREVIEWED and preserves raw interpretable diagnostics. Calibration/holdout separation is by
- * complete setup+seating scenario, so near-duplicate signatures from one scenario cannot leak across
- * the validation boundary.
+ * This is review infrastructure, not a Badness classifier. Every item starts UNREVIEWED. The pilot
+ * deliberately uses one explicit good-player anchor perspective per setup+seating scenario so the
+ * first human-review loop remains cheap and interpretable. Perspective robustness is a later
+ * experiment, not an assumption silently folded into the first corpus.
+ *
+ * Calibration/holdout separation is by whole scenario, preventing near-duplicate signatures from a
+ * single setup+seating layout from leaking across the validation boundary.
  */
 object FirstNightBundleBeginnerCorpusBuilder {
     private val catalog = BuiltInClocktowerRulesetCatalog { assetPath ->
@@ -129,20 +122,6 @@ object FirstNightBundleBeginnerCorpusBuilder {
                 "Fortune Teller",
                 "Investigator",
                 "Scarlet Woman",
-                "Imp",
-            ),
-            anchorRecipientSeat = 1,
-        ),
-        ScenarioDefinition(
-            id = "cal-baron-outsider-chain",
-            partition = FirstNightBeginnerCorpusPartition.CALIBRATION,
-            roleNamesBySeat = listOf(
-                "Librarian",
-                "Empath",
-                "Investigator",
-                "Butler",
-                "Saint",
-                "Baron",
                 "Imp",
             ),
             anchorRecipientSeat = 1,
@@ -176,6 +155,7 @@ object FirstNightBundleBeginnerCorpusBuilder {
         corpus.scenarios.forEach { scenario ->
             appendLine("## ${scenario.scenarioId} — ${scenario.partition}")
             appendLine()
+            appendLine("Anchor recipient: seat ${scenario.anchorRecipientSeat}")
             appendLine("Seating: " + scenario.seating.joinToString(" | ") { (seat, role) -> "$seat=${role.value}" })
             appendLine("Raw bundles: ${scenario.rawCompleteBundleCount}; signatures: ${scenario.distinctProjectedSignatureCount}")
             appendLine()
@@ -187,23 +167,22 @@ object FirstNightBundleBeginnerCorpusBuilder {
                 appendLine("Public observations:")
                 item.publicObservations.forEach { observation -> appendLine("- $observation") }
                 appendLine()
-                appendLine("| Recipient | BEFORE | AFTER | Demon cover | Evil configs | Forced good | Forced evil | Evil cover |")
-                appendLine("|---:|---:|---:|---:|---:|---|---|---:|")
-                item.perspectives.forEach { perspective ->
-                    appendLine(
-                        "| ${perspective.recipientSeat} | ${perspective.beforeWorldCount} | ${perspective.afterWorldCount} | " +
-                            "${perspective.demonCoverSize} | ${perspective.distinctEvilTeamConfigurationCount} | " +
-                            "${perspective.forcedGoodSeats.sorted()} | ${perspective.forcedEvilSeats.sorted()} | ${perspective.evilCoverSize} |",
-                    )
-                }
+                val d = item.anchorDiagnostics
+                appendLine(
+                    "Anchor diagnostics: BEFORE=${d.beforeWorldCount}, AFTER=${d.afterWorldCount}, " +
+                        "demonCover=${d.demonCoverSize}, evilConfigs=${d.distinctEvilTeamConfigurationCount}, " +
+                        "forcedGood=${d.forcedGoodSeats.sorted()}, forcedEvil=${d.forcedEvilSeats.sorted()}, " +
+                        "evilCover=${d.evilCoverSize}",
+                )
                 appendLine()
                 appendLine("Anchor leave-one-out evidence:")
                 item.anchorLeaveOneOut.forEach { loo ->
+                    val ld = loo.diagnostics
                     appendLine(
-                        "- omit `${loo.omittedObservation}` -> AFTER ${loo.afterWorldCount}, " +
-                            "demonCover=${loo.demonCoverSize}, evilConfigs=${loo.distinctEvilTeamConfigurationCount}, " +
-                            "forcedGood=${loo.forcedGoodSeats.sorted()}, forcedEvil=${loo.forcedEvilSeats.sorted()}, " +
-                            "evilCover=${loo.evilCoverSize}",
+                        "- omit `${loo.omittedObservation}` -> AFTER ${ld.afterWorldCount}, " +
+                            "demonCover=${ld.demonCoverSize}, evilConfigs=${ld.distinctEvilTeamConfigurationCount}, " +
+                            "forcedGood=${ld.forcedGoodSeats.sorted()}, forcedEvil=${ld.forcedEvilSeats.sorted()}, " +
+                            "evilCover=${ld.evilCoverSize}",
                     )
                 }
                 appendLine()
@@ -214,77 +193,28 @@ object FirstNightBundleBeginnerCorpusBuilder {
 
     private fun buildScenario(definition: ScenarioDefinition): FirstNightBeginnerCorpusScenario {
         val game = game(definition)
-        val context = context(definition.id, game)
-        val anchorEvaluation = TroubleBrewingFirstNightHealthyBundleHarness.evaluate(
-            validatedRuleset = validatedRuleset,
-            context = context,
-            evaluationRecipientSeats = setOf(definition.anchorRecipientSeat),
-        )
-        require(anchorEvaluation is FirstNightHealthyBundleHarnessEvaluation.Ready) {
-            "FN-BUNDLE-3 pilot scenario ${definition.id} must be supported by the healthy harness."
-        }
-        val ready = anchorEvaluation
-        val selected = selectReviewGroups(ready.signatureGroups)
-        val goodSeats = game.players
-            .filter { it.actualAlignment == Alignment.GOOD }
-            .map(PlayerState::seat)
-            .sorted()
-        require(definition.anchorRecipientSeat in goodSeats) {
+        require(game.playerAt(definition.anchorRecipientSeat)?.actualAlignment?.name == "GOOD") {
             "Corpus anchor must be a good recipient in ${definition.id}."
         }
-
-        val additionalSeats = goodSeats - definition.anchorRecipientSeat
-        val healthyRoleDefinitions = roleDefinitions.filterNot { it.id in ready.excludedCounterworldRoles }
-        val additionalQueries = selected.flatMap { (group, _) ->
-            additionalSeats.map { recipientSeat ->
-                ExactHypotheticalObservationBundleQuery(
-                    bundleId = perspectiveQueryId(definition.id, group.signatureId, recipientSeat),
-                    recipientSeat = recipientSeat,
-                    observations = group.publicObservations,
-                )
-            }
+        val evaluation = TroubleBrewingFirstNightHealthyBundleHarness.evaluate(
+            validatedRuleset = validatedRuleset,
+            context = context(definition.id, game),
+            evaluationRecipientSeats = setOf(definition.anchorRecipientSeat),
+        )
+        require(evaluation is FirstNightHealthyBundleHarnessEvaluation.Ready) {
+            "FN-BUNDLE-3 pilot scenario ${definition.id} must be supported by the healthy harness."
         }
-        val additionalById = if (additionalQueries.isEmpty()) {
-            emptyMap()
-        } else {
-            val evaluation = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
-                validatedRuleset = validatedRuleset,
-                context = context.copy(roleDefinitions = healthyRoleDefinitions),
-                queries = additionalQueries,
-            )
-            require(evaluation is ExactHypotheticalObservationBundleEvaluation.Ready) {
-                "FN-BUNDLE-3 perspective expansion unexpectedly deferred for ${definition.id}."
-            }
-            evaluation.diagnostics.associateBy { it.bundleId to it.recipientSeat }
-        }
+        val selected = selectReviewGroups(evaluation.signatureGroups)
 
         return FirstNightBeginnerCorpusScenario(
             scenarioId = definition.id,
             partition = definition.partition,
             anchorRecipientSeat = definition.anchorRecipientSeat,
             seating = game.players.map { it.seat to it.actualRole },
-            rawCompleteBundleCount = ready.rawCompleteBundleCount,
-            distinctProjectedSignatureCount = ready.distinctProjectedSignatureCount,
+            rawCompleteBundleCount = evaluation.rawCompleteBundleCount,
+            distinctProjectedSignatureCount = evaluation.distinctProjectedSignatureCount,
             items = selected.map { (group, reasons) ->
                 val anchor = group.recipientDiagnostics.single()
-                val perspectives = goodSeats.map { recipientSeat ->
-                    if (recipientSeat == definition.anchorRecipientSeat) {
-                        FirstNightBeginnerPerspectiveDiagnostics(
-                            recipientSeat = recipientSeat,
-                            beforeWorldCount = anchor.before.value,
-                            afterWorldCount = anchor.after.value,
-                            demonCoverSize = anchor.afterStructure.demonCoverSize,
-                            distinctEvilTeamConfigurationCount = anchor.afterStructure.distinctEvilTeamConfigurationCount,
-                            forcedGoodSeats = anchor.afterStructure.forcedGoodSeats,
-                            forcedEvilSeats = anchor.afterStructure.forcedEvilSeats,
-                            evilCoverSize = anchor.afterStructure.evilCoverSize,
-                        )
-                    } else {
-                        additionalById.getValue(
-                            perspectiveQueryId(definition.id, group.signatureId, recipientSeat) to recipientSeat,
-                        ).toPerspective()
-                    }
-                }
                 FirstNightBeginnerCorpusItem(
                     itemId = "${definition.id}:${group.signatureId}",
                     scenarioId = definition.id,
@@ -294,17 +224,30 @@ object FirstNightBundleBeginnerCorpusBuilder {
                     multiplicity = group.multiplicity,
                     selectionReasons = reasons,
                     publicObservations = group.publicObservations.map(::reviewObservation),
-                    perspectives = perspectives,
+                    anchorDiagnostics = FirstNightBeginnerDiagnostics(
+                        recipientSeat = definition.anchorRecipientSeat,
+                        beforeWorldCount = anchor.before.value,
+                        afterWorldCount = anchor.after.value,
+                        demonCoverSize = anchor.afterStructure.demonCoverSize,
+                        distinctEvilTeamConfigurationCount = anchor.afterStructure.distinctEvilTeamConfigurationCount,
+                        forcedGoodSeats = anchor.afterStructure.forcedGoodSeats,
+                        forcedEvilSeats = anchor.afterStructure.forcedEvilSeats,
+                        evilCoverSize = anchor.afterStructure.evilCoverSize,
+                    ),
                     anchorLeaveOneOut = group.leaveOneOutDiagnostics.mapIndexed { index, loo ->
                         val diagnostics = loo.recipientDiagnostics.single()
                         FirstNightBeginnerLeaveOneOutDiagnostics(
                             omittedObservation = reviewObservation(group.publicObservations[index]),
-                            afterWorldCount = diagnostics.after.value,
-                            demonCoverSize = diagnostics.afterStructure.demonCoverSize,
-                            distinctEvilTeamConfigurationCount = diagnostics.afterStructure.distinctEvilTeamConfigurationCount,
-                            forcedGoodSeats = diagnostics.afterStructure.forcedGoodSeats,
-                            forcedEvilSeats = diagnostics.afterStructure.forcedEvilSeats,
-                            evilCoverSize = diagnostics.afterStructure.evilCoverSize,
+                            diagnostics = FirstNightBeginnerDiagnostics(
+                                recipientSeat = definition.anchorRecipientSeat,
+                                beforeWorldCount = diagnostics.before.value,
+                                afterWorldCount = diagnostics.after.value,
+                                demonCoverSize = diagnostics.afterStructure.demonCoverSize,
+                                distinctEvilTeamConfigurationCount = diagnostics.afterStructure.distinctEvilTeamConfigurationCount,
+                                forcedGoodSeats = diagnostics.afterStructure.forcedGoodSeats,
+                                forcedEvilSeats = diagnostics.afterStructure.forcedEvilSeats,
+                                evilCoverSize = diagnostics.afterStructure.evilCoverSize,
+                            ),
                         )
                     },
                 )
@@ -360,14 +303,8 @@ object FirstNightBundleBeginnerCorpusBuilder {
             ).first(),
             FirstNightBeginnerSelectionReason.LARGEST_LEAVE_ONE_OUT_RECOVERY,
         )
-        add(
-            byAfter[((byAfter.size - 1) * 1) / 4],
-            FirstNightBeginnerSelectionReason.LOWER_QUARTILE_AFTER,
-        )
-        add(
-            byAfter[((byAfter.size - 1) * 3) / 4],
-            FirstNightBeginnerSelectionReason.UPPER_QUARTILE_AFTER,
-        )
+        add(byAfter[((byAfter.size - 1) * 1) / 4], FirstNightBeginnerSelectionReason.LOWER_QUARTILE_AFTER)
+        add(byAfter[((byAfter.size - 1) * 3) / 4], FirstNightBeginnerSelectionReason.UPPER_QUARTILE_AFTER)
 
         return selected.values
             .map { (group, reasons) -> group to reasons.toSet() }
@@ -383,26 +320,11 @@ object FirstNightBundleBeginnerCorpusBuilder {
 
     private fun anchor(group: FirstNightProjectedSignatureGroup) = group.recipientDiagnostics.single()
 
-    private fun ExactHypotheticalObservationBundleDiagnostics.toPerspective() =
-        FirstNightBeginnerPerspectiveDiagnostics(
-            recipientSeat = recipientSeat,
-            beforeWorldCount = before.value,
-            afterWorldCount = after.value,
-            demonCoverSize = afterStructure.demonCoverSize,
-            distinctEvilTeamConfigurationCount = afterStructure.distinctEvilTeamConfigurationCount,
-            forcedGoodSeats = afterStructure.forcedGoodSeats,
-            forcedEvilSeats = afterStructure.forcedEvilSeats,
-            evilCoverSize = afterStructure.evilCoverSize,
-        )
-
     private fun reviewObservation(observation: EpistemicObservation): String {
         val source = observation.sourceSeat?.let { "seat-$it" } ?: "public"
         val ability = observation.sourceAbility?.value ?: "identity"
         return "$source/$ability: ${observation.proposition}"
     }
-
-    private fun perspectiveQueryId(scenarioId: String, signatureId: String, recipientSeat: Int) =
-        "fn3:$scenarioId:$signatureId:r$recipientSeat"
 
     private fun game(definition: ScenarioDefinition): GameState {
         val players = definition.roleNamesBySeat.mapIndexed { index, roleName ->
