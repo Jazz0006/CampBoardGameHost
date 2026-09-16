@@ -94,7 +94,9 @@ data class FirstNightBeginnerCorpus(
  * experiment, not an assumption silently folded into the first corpus.
  *
  * Calibration/holdout separation is by whole scenario, preventing near-duplicate signatures from a
- * single setup+seating layout from leaking across the validation boundary.
+ * single setup+seating layout from leaking across the validation boundary. Holdout diagnostics are
+ * computed by the deterministic acceptance harness but are deliberately omitted from review output
+ * until calibration rules are frozen.
  */
 object FirstNightBundleBeginnerCorpusBuilder {
     private val catalog = BuiltInClocktowerRulesetCatalog { assetPath ->
@@ -127,12 +129,12 @@ object FirstNightBundleBeginnerCorpusBuilder {
             anchorRecipientSeat = 1,
         ),
         ScenarioDefinition(
-            id = "holdout-zero-outsider-librarian",
+            id = "holdout-pair-rich-zero-outsider",
             partition = FirstNightBeginnerCorpusPartition.HOLDOUT,
             roleNamesBySeat = listOf(
+                "Washerwoman",
                 "Librarian",
                 "Chef",
-                "Empath",
                 "Monk",
                 "Investigator",
                 "Scarlet Woman",
@@ -146,13 +148,18 @@ object FirstNightBundleBeginnerCorpusBuilder {
         scenarios = scenarioDefinitions.map(::buildScenario),
     )
 
+    /** Human-review export deliberately reveals calibration only. */
     fun renderMarkdown(corpus: FirstNightBeginnerCorpus): String = buildString {
+        val calibration = corpus.scenarios.filter { it.partition == FirstNightBeginnerCorpusPartition.CALIBRATION }
+        val holdoutCount = corpus.scenarios.count { it.partition == FirstNightBeginnerCorpusPartition.HOLDOUT }
+
         appendLine("FN_BUNDLE_3_CORPUS_START")
-        appendLine("# FN-BUNDLE-3 BEGINNER pilot review corpus")
+        appendLine("# FN-BUNDLE-3 BEGINNER calibration review corpus")
         appendLine()
         appendLine("All labels are UNREVIEWED. Diagnostics are evidence for human review, not thresholds.")
+        appendLine("Sealed holdout scenarios: $holdoutCount. Their diagnostics are intentionally omitted.")
         appendLine()
-        corpus.scenarios.forEach { scenario ->
+        calibration.forEach { scenario ->
             appendLine("## ${scenario.scenarioId} — ${scenario.partition}")
             appendLine()
             appendLine("Anchor recipient: seat ${scenario.anchorRecipientSeat}")
@@ -164,7 +171,7 @@ object FirstNightBundleBeginnerCorpusBuilder {
                 appendLine()
                 appendLine("Reasons: ${item.selectionReasons.joinToString()}; label: ${item.label}; multiplicity: ${item.multiplicity}")
                 appendLine()
-                appendLine("Public observations:")
+                appendLine("Public claims:")
                 item.publicObservations.forEach { observation -> appendLine("- $observation") }
                 appendLine()
                 val d = item.anchorDiagnostics
@@ -322,8 +329,8 @@ object FirstNightBundleBeginnerCorpusBuilder {
 
     private fun reviewObservation(observation: EpistemicObservation): String {
         val source = observation.sourceSeat?.let { "seat-$it" } ?: "public"
-        val ability = observation.sourceAbility?.value ?: "identity"
-        return "$source/$ability: ${observation.proposition}"
+        val kind = observation.sourceAbility?.value ?: "public-claim"
+        return "$source/$kind: ${observation.proposition}"
     }
 
     private fun game(definition: ScenarioDefinition): GameState {
