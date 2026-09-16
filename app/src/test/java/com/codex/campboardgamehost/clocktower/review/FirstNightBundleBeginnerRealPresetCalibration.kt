@@ -2,6 +2,7 @@ package com.codex.campboardgamehost.clocktower.review
 
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
@@ -64,6 +65,7 @@ data class FirstNightBeginnerRealPresetCalibration(
     val totalSevenPlayerPresetCount: Int,
     val eligibleHealthyPresetCount: Int,
     val excludedStagedPresetCount: Int,
+    val seatingProfiles: List<String>,
     val scenarios: List<FirstNightBeginnerRealPresetScenario>,
 )
 
@@ -76,19 +78,32 @@ data class FirstNightBeginnerRealPresetCalibration(
  * scenarios sent to the exact evaluator is bounded.
  *
  * Stage 7A excludes Drunk, Spy, Recluse and Poisoner because the current healthy epistemic slice
- * deliberately stages their false-information/registration/impairment semantics. The first pilot
- * uses one explicit seating topology (evil adjacent) per eligible real 7-player preset. A second
- * topology is added only after this workload establishes runtime and diagnostic spread.
+ * deliberately stages their false-information/registration/impairment semantics. Two explicit
+ * seating topologies cover adjacent and separated evil seats while keeping the anchor recipient good.
  */
 object FirstNightBundleBeginnerRealPresetCalibrationBuilder {
     private const val PLAYER_COUNT = 7
-    private const val SEATING_PROFILE = "EVIL_ADJACENT"
     private const val MAX_POINT_COUNT = 3
 
     private val stagedExternalRoleIds = setOf("drunk", "spy", "recluse", "poisoner")
     private val pairRoles = setOf(RoleId("Washerwoman"), RoleId("Librarian"), RoleId("Investigator"))
     private val numericRoles = setOf(RoleId("Chef"), RoleId("Empath"))
     private val preferredAnchorRoles = pairRoles + numericRoles
+
+    private val seatingProfiles = listOf(
+        SeatingProfile(
+            id = "EVIL_ADJACENT",
+            goodSeats = listOf(1, 2, 3, 4, 5),
+            minionSeat = 6,
+            demonSeat = 7,
+        ),
+        SeatingProfile(
+            id = "EVIL_SEPARATED",
+            goodSeats = listOf(1, 2, 3, 5, 6),
+            minionSeat = 4,
+            demonSeat = 7,
+        ),
+    )
 
     private val catalog = BuiltInClocktowerRulesetCatalog { assetPath ->
         File("src/main/assets/$assetPath").readText(Charsets.UTF_8)
@@ -114,7 +129,10 @@ object FirstNightBundleBeginnerRealPresetCalibrationBuilder {
             totalSevenPlayerPresetCount = sevenPlayerPool.size,
             eligibleHealthyPresetCount = eligible.size,
             excludedStagedPresetCount = sevenPlayerPool.size - eligible.size,
-            scenarios = eligible.map(::buildScenario),
+            seatingProfiles = seatingProfiles.map(SeatingProfile::id),
+            scenarios = eligible.flatMap { preset ->
+                seatingProfiles.map { profile -> buildScenario(preset, profile) }
+            },
         )
     }
 
@@ -128,9 +146,10 @@ object FirstNightBundleBeginnerRealPresetCalibrationBuilder {
                 "staged-out: ${calibration.excludedStagedPresetCount}",
         )
         appendLine("Staged-out roles: Drunk / Spy / Recluse / Poisoner.")
+        appendLine("Seating profiles: ${calibration.seatingProfiles.joinToString(" / ")}.")
         appendLine(
-            "Pilot topology: $SEATING_PROFILE. Up to $MAX_POINT_COUNT deterministic canonical public-bundle points " +
-                "per preset; possible-world evaluation remains exact.",
+            "Up to $MAX_POINT_COUNT deterministic canonical public-bundle points per preset/profile; " +
+                "possible-world evaluation remains exact.",
         )
         appendLine("No Badness threshold or label is inferred from these diagnostics.")
         appendLine()
@@ -174,13 +193,17 @@ object FirstNightBundleBeginnerRealPresetCalibrationBuilder {
         }
     }
 
-    private fun buildScenario(preset: TroubleBrewingSetupPreset): FirstNightBeginnerRealPresetScenario {
-        val game = gameFor(preset)
+    private fun buildScenario(
+        preset: TroubleBrewingSetupPreset,
+        seatingProfile: SeatingProfile,
+    ): FirstNightBeginnerRealPresetScenario {
+        val game = gameFor(preset, seatingProfile)
         val anchorSeat = 1
-        require(game.playerAt(anchorSeat)?.actualAlignment?.name == "GOOD") {
-            "Real-preset calibration anchor must be good for ${preset.id}."
+        require(game.playerAt(anchorSeat)?.actualAlignment == Alignment.GOOD) {
+            "Real-preset calibration anchor must be good for ${preset.id}/${seatingProfile.id}."
         }
-        val context = context(preset.id, game)
+        val scenarioId = "${preset.id}-${seatingProfile.id}"
+        val context = context(scenarioId, game)
         val formal = FormalGameState.from(
             context.initialSnapshot,
             context.initialPhase,
@@ -188,7 +211,8 @@ object FirstNightBundleBeginnerRealPresetCalibrationBuilder {
         )
         val audit = TroubleBrewingFirstNightBundleCandidateSpaceAuditor.inspect(game, roleDefinitions)
         require(audit.deferredComplexities.isEmpty()) {
-            "Stage 7A preset ${preset.id} unexpectedly contains deferred complexity ${audit.deferredComplexities}."
+            "Stage 7A preset ${preset.id}/${seatingProfile.id} unexpectedly contains deferred complexity " +
+                "${audit.deferredComplexities}."
         }
         val legalCompleteBundleCount = requireNotNull(audit.legalCompleteBundleCount)
         val materialized = audit.factors.mapIndexed { index, factor ->
@@ -214,7 +238,8 @@ object FirstNightBundleBeginnerRealPresetCalibrationBuilder {
                 selectedPublic.forEach { (_, option) -> add(option.entry) }
                 latentFactors.forEach { factor -> add(factor.options.first().entry) }
             }
-            val bundleId = "fn3-real-${stableIdPart(preset.id)}-${label.lowercase()}"
+            val bundleId =
+                "fn3-real-${stableIdPart(preset.id)}-${stableIdPart(seatingProfile.id)}-${label.lowercase()}"
             val bundle = FirstNightInformationBundle(bundleId = bundleId, entries = entries)
             val projected = FirstNightPublicGoodInfoProjection.project(bundle)
             RealPresetPointDraft(
@@ -245,13 +270,13 @@ object FirstNightBundleBeginnerRealPresetCalibrationBuilder {
             },
         )
         require(exact is ExactHypotheticalObservationBundleEvaluation.Ready) {
-            "Real-preset Stage 7A exact evaluation deferred for ${preset.id}."
+            "Real-preset Stage 7A exact evaluation deferred for ${preset.id}/${seatingProfile.id}."
         }
         val diagnosticsById = exact.diagnostics.associateBy { it.bundleId }
 
         return FirstNightBeginnerRealPresetScenario(
             presetId = preset.id,
-            seatingProfile = SEATING_PROFILE,
+            seatingProfile = seatingProfile.id,
             seating = game.players.map { it.seat to it.actualRole },
             anchorRecipientSeat = anchorSeat,
             legalCompleteBundleCount = legalCompleteBundleCount,
@@ -398,13 +423,15 @@ object FirstNightBundleBeginnerRealPresetCalibrationBuilder {
         )
     }
 
-    private fun gameFor(preset: TroubleBrewingSetupPreset): GameState {
-        val goodRoleIds = (preset.townsfolk + preset.outsiders)
-            .map(::canonicalRoleId)
-        val minionRoleIds = preset.minions.map(::canonicalRoleId)
-        val demonRoleIds = preset.demons.map(::canonicalRoleId)
-        require(goodRoleIds.size == 5 && minionRoleIds.size == 1 && demonRoleIds.size == 1) {
-            "Validated 7-player Trouble Brewing preset ${preset.id} must resolve to 5 good / 1 minion / 1 demon."
+    private fun gameFor(
+        preset: TroubleBrewingSetupPreset,
+        seatingProfile: SeatingProfile,
+    ): GameState {
+        val goodRoleIds = (preset.townsfolk + preset.outsiders).map(::canonicalRoleId)
+        val minionRoleId = preset.minions.map(::canonicalRoleId).single()
+        val demonRoleId = preset.demons.map(::canonicalRoleId).single()
+        require(goodRoleIds.size == 5) {
+            "Validated 7-player Trouble Brewing preset ${preset.id} must resolve to five good roles."
         }
 
         val anchorRole = goodRoleIds
@@ -413,15 +440,23 @@ object FirstNightBundleBeginnerRealPresetCalibrationBuilder {
             ?: goodRoleIds.minBy(RoleId::value)
         val orderedGoodRoles = listOf(anchorRole) +
             goodRoleIds.filterNot { it == anchorRole }.sortedBy(RoleId::value)
-        val rolesBySeat = orderedGoodRoles + minionRoleIds.single() + demonRoleIds.single()
+        val rolesBySeat = buildMap {
+            seatingProfile.goodSeats.zip(orderedGoodRoles).forEach { (seat, roleId) -> put(seat, roleId) }
+            put(seatingProfile.minionSeat, minionRoleId)
+            put(seatingProfile.demonSeat, demonRoleId)
+        }
+        require(rolesBySeat.keys == (1..PLAYER_COUNT).toSet()) {
+            "Seating profile ${seatingProfile.id} must own every 7-player seat exactly once."
+        }
 
-        val players = rolesBySeat.mapIndexed { index, roleId ->
+        val players = (1..PLAYER_COUNT).map { seat ->
+            val roleId = rolesBySeat.getValue(seat)
             val role = requireNotNull(definitionsById[roleId]) {
                 "Fixture role definitions are missing canonical role ${roleId.value}."
             }
             PlayerState(
-                seat = index + 1,
-                name = "P${index + 1}",
+                seat = seat,
+                name = "P$seat",
                 actualRole = role.id,
                 actualAlignment = role.alignment,
                 actualType = role.type,
@@ -431,12 +466,12 @@ object FirstNightBundleBeginnerRealPresetCalibrationBuilder {
         return GameState(
             script = TroubleBrewingFixtures.scriptId,
             players = players,
-            seed = 20260917L + preset.id.hashCode(),
+            seed = 20260917L + 31L * preset.id.hashCode() + seatingProfile.id.hashCode(),
         )
     }
 
     private fun context(
-        presetId: String,
+        scenarioId: String,
         game: GameState,
     ): ExactHistoricalHypotheticalContext {
         val rulesetRef = validatedRuleset.toRulesetRef(
@@ -444,7 +479,7 @@ object FirstNightBundleBeginnerRealPresetCalibrationBuilder {
             sourceRevision = "official",
         )
         val snapshot = GameSnapshot(
-            gameId = "fn-bundle-3-real-${stableIdPart(presetId)}",
+            gameId = "fn-bundle-3-real-${stableIdPart(scenarioId)}",
             gameStateRevision = 0,
             playerInputRevision = 0,
             gameSeed = game.seed,
@@ -491,6 +526,13 @@ object FirstNightBundleBeginnerRealPresetCalibrationBuilder {
         .replace(Regex("[^a-z0-9]+"), "-")
         .trim('-')
         .ifBlank { "id" }
+
+    private data class SeatingProfile(
+        val id: String,
+        val goodSeats: List<Int>,
+        val minionSeat: Int,
+        val demonSeat: Int,
+    )
 
     private data class MaterializedFactor(
         val audit: FirstNightBundleCandidateFactorAudit,
