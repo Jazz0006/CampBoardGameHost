@@ -29,15 +29,17 @@ class ExactHypotheticalWorldStructureDiagnosticsTest {
 
     @Test
     fun `exact bundle diagnostics expose strategic world structure before and after`() {
+        // ShownRoleAt is deliberately strict identity state. RoleAt would correctly allow
+        // interaction-scoped Spy/Recluse registration and therefore cannot pin this fixture.
         val poisoner = observation(
-            id = "poisoner-at-4",
+            id = "shown-poisoner-at-4",
             sequence = 1,
-            proposition = InformationProposition.RoleAt(4, RoleId("Poisoner")),
+            proposition = InformationProposition.ShownRoleAt(4, RoleId("Poisoner")),
         )
         val imp = observation(
-            id = "imp-at-5",
+            id = "shown-imp-at-5",
             sequence = 2,
-            proposition = InformationProposition.RoleAt(5, RoleId("Imp")),
+            proposition = InformationProposition.ShownRoleAt(5, RoleId("Imp")),
         )
 
         val evaluation = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
@@ -68,7 +70,7 @@ class ExactHypotheticalWorldStructureDiagnosticsTest {
 
     @Test
     fun `unsat bundle reports empty structure rather than vacuous forced seats`() {
-        val roleAtFour = InformationProposition.RoleAt(4, RoleId("Poisoner"))
+        val shownAtFour = InformationProposition.ShownRoleAt(4, RoleId("Poisoner"))
         val evaluation = ExactHistoricalHypotheticalObservationBundleEvaluator.evaluate(
             validatedRuleset = validatedRuleset,
             context = context(),
@@ -77,8 +79,8 @@ class ExactHypotheticalWorldStructureDiagnosticsTest {
                     bundleId = "contradiction",
                     recipientSeat = 1,
                     observations = listOf(
-                        observation("positive", 1, roleAtFour),
-                        observation("negative", 2, InformationProposition.Not(roleAtFour)),
+                        observation("positive", 1, shownAtFour),
+                        observation("negative", 2, InformationProposition.Not(shownAtFour)),
                     ),
                 ),
             ),
