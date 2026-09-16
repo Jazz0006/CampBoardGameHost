@@ -8,6 +8,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheti
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleEvaluation
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleQuery
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.SemanticStableId
 import com.codex.campboardgamehost.clocktower.epistemic.WorldCardinality
@@ -106,14 +107,44 @@ internal enum class FirstNightExperimentProfile {
 
 /**
  * Ephemeral PUBLIC_GOOD_INFO projection. No durable observation, timeline, or bundle entry is
- * mutated. Latent/non-shared choices remain part of bundle identity but contribute no Day-1 public
- * observation until a later experiment profile gives them an epistemic consequence.
+ * mutated. Every sharing player contributes one deterministic shown-role identity claim plus their
+ * clue observations. Repeated entries from the same player/role are deduplicated. Shown-role claims
+ * are not ability information, so Drunk/poison malfunction semantics apply only to the clue itself.
+ * Latent/non-shared choices remain part of bundle identity but contribute no Day-1 public observation
+ * until a later experiment profile gives them an epistemic consequence.
  */
 internal object FirstNightPublicGoodInfoProjection {
-    fun project(bundle: FirstNightInformationBundle): List<EpistemicObservation> = bundle.entries
-        .asSequence()
-        .filter { it.profileExposure == FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO }
-        .map { entry ->
+    fun project(bundle: FirstNightInformationBundle): List<EpistemicObservation> {
+        val exposedEntries = bundle.entries.filter {
+            it.profileExposure == FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO
+        }
+        val shownRoleClaims = exposedEntries
+            .map { entry ->
+                val original = requireNotNull(entry.observation)
+                val seat = requireNotNull(original.sourceSeat) {
+                    "PUBLIC_GOOD_INFO first-night observations require a source seat for shown-role projection."
+                }
+                val role = requireNotNull(original.sourceAbility) {
+                    "PUBLIC_GOOD_INFO first-night observations require a source ability for shown-role projection."
+                }
+                Triple(seat, role, original)
+            }
+            .distinctBy { (seat, role, _) -> seat to role }
+            .sortedWith(compareBy({ it.first }, { it.second.value }))
+            .map { (seat, role, original) ->
+                original.copy(
+                    observationId = SemanticStableId.create(
+                        prefix = "fn-share-role",
+                        canonicalPayload = listOf(bundle.bundleId, seat.toString(), role.value).joinToString("|"),
+                    ),
+                    sourceAbility = null,
+                    visibility = ObservationVisibility.PUBLIC,
+                    recipientSeats = emptySet(),
+                    reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
+                    proposition = InformationProposition.ShownRoleAt(seat, role),
+                )
+            }
+        val clueObservations = exposedEntries.map { entry ->
             val original = requireNotNull(entry.observation)
             original.copy(
                 observationId = SemanticStableId.create(
@@ -125,7 +156,8 @@ internal object FirstNightPublicGoodInfoProjection {
                 recipientSeats = emptySet(),
             )
         }
-        .toList()
+        return shownRoleClaims + clueObservations
+    }
 }
 
 internal data class FirstNightBundleRecipientExactDiagnostics(
