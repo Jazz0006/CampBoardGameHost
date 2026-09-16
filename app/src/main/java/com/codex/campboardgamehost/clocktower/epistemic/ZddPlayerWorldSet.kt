@@ -9,8 +9,8 @@ import java.math.BigInteger
 
 /**
  * A4 prototype backed by a canonical zero-suppressed decision diagram of exact mechanical worlds.
- * Filtering currently decodes matching paths and rebuilds the diagram when no exact symbolic
- * restriction is available; native identity/state restrictions stay inside the diagram.
+ * Filtering currently decodes matching paths and rebuilds the diagram; this keeps correctness simple
+ * while A4 measures whether a native symbolic observation compiler is worth implementing.
  */
 class ZddPlayerWorldSet private constructor(
     override val recipientSeat: Int,
@@ -50,14 +50,6 @@ class ZddPlayerWorldSet private constructor(
 
     /** Prototype instrumentation used by A4 representation and device benchmarks. */
     fun nodeCount(): Int = diagram.nodeCount
-
-    /**
-     * Internal exact-world stream for representation-neutral diagnostics.
-     *
-     * The sequence decodes one ZDD path at a time and does not materialize the retained family.
-     * Recommendation code must consume descriptive diagnostics instead of depending on this seam.
-     */
-    internal fun exactWorlds(): Sequence<EnumeratedWorld> = worlds()
 
     fun boundRegistrationFacts(observation: EpistemicObservation): Set<RegistrationFact> {
         require(observation.visibility == ObservationVisibility.PUBLIC || recipientSeat in observation.recipientSeats) {
@@ -103,10 +95,6 @@ class ZddPlayerWorldSet private constructor(
                 proposition.seat,
                 setOf(proposition.role),
                 retainMatches,
-            )
-            is InformationProposition.ShownRoleAt -> diagram.restrict(
-                WorldVariable.shown(proposition.seat, proposition.role),
-                present = retainMatches,
             )
             is InformationProposition.CharacterTypeAt -> directSeatRestriction(
                 proposition.seat,
