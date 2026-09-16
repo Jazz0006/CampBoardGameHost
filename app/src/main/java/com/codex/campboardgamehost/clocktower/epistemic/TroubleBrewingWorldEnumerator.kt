@@ -134,9 +134,14 @@ object TroubleBrewingWorldEnumerator {
     private fun recipientShownRoles(
         rolesBySeat: Map<Int, RoleId>,
         knowledge: PlayerKnowledgeSnapshot,
-    ): Map<Int, RoleId> = if (rolesBySeat[knowledge.recipientSeat]?.value.equals("Drunk", true)) {
-        mapOf(knowledge.recipientSeat to knowledge.perceivedRole)
-    } else emptyMap()
+    ): Map<Int, RoleId> = buildMap {
+        rolesBySeat.forEach { (seat, role) ->
+            if (!role.value.equals("Drunk", true)) put(seat, role)
+        }
+        if (rolesBySeat[knowledge.recipientSeat]?.value.equals("Drunk", true)) {
+            put(knowledge.recipientSeat, knowledge.perceivedRole)
+        }
+    }.toSortedMap()
 
     private fun mechanicalVariants(
         rolesBySeat: Map<Int, RoleId>,
