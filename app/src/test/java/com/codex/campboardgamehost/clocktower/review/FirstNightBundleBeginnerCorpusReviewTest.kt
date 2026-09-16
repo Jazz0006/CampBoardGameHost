@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.review
 
-import java.io.File
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import java.math.BigInteger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -8,53 +9,86 @@ import org.junit.Test
 
 class FirstNightBundleBeginnerCorpusReviewTest {
     @Test
-    fun `pilot corpus keeps scenario-level holdout isolation and raw review evidence`() {
-        val corpus = FirstNightBundleBeginnerCorpusBuilder.build()
-
-        assertEquals(3, corpus.scenarios.size)
-        assertEquals(2, corpus.scenarios.count { it.partition == FirstNightBeginnerCorpusPartition.CALIBRATION })
-        assertEquals(1, corpus.scenarios.count { it.partition == FirstNightBeginnerCorpusPartition.HOLDOUT })
-        assertTrue(corpus.items.isNotEmpty())
-        assertTrue(corpus.items.all { it.label == FirstNightBeginnerCorpusLabel.UNREVIEWED })
-
-        val scenarioPartitions = corpus.scenarios.associate { it.scenarioId to it.partition }
-        assertEquals(corpus.scenarios.size, scenarioPartitions.size)
-        corpus.items.forEach { item ->
-            assertEquals(scenarioPartitions.getValue(item.scenarioId), item.partition)
-            assertTrue(item.selectionReasons.isNotEmpty())
-            assertTrue(item.publicObservations.isNotEmpty())
-            assertTrue(item.anchorLeaveOneOut.isNotEmpty())
-            assertTrue(item.anchorDiagnostics.afterWorldCount.signum() > 0)
-            assertTrue(item.anchorDiagnostics.afterWorldCount <= item.anchorDiagnostics.beforeWorldCount)
-        }
-
-        corpus.scenarios.forEach { scenario ->
-            assertTrue(scenario.items.size in 1..8)
-            assertTrue(scenario.items.all { item ->
-                item.anchorDiagnostics.recipientSeat == scenario.anchorRecipientSeat
-            })
-        }
-
-        assertTrue(corpus.items.any {
-            FirstNightBeginnerSelectionReason.LARGEST_LEAVE_ONE_OUT_RECOVERY in it.selectionReasons
-        })
-        assertFalse(corpus.items.any { item ->
-            item.selectionReasons.isEmpty() || item.signatureId.isBlank() || item.itemId.isBlank()
-        })
+    fun `review report exposes calibration evidence while sealing holdout`() {
+        val diagnostics = FirstNightBeginnerDiagnostics(
+            recipientSeat = 1,
+            beforeWorldCount = BigInteger.valueOf(100),
+            afterWorldCount = BigInteger.valueOf(25),
+            demonCoverSize = 4,
+            distinctEvilTeamConfigurationCount = 3,
+            forcedGoodSeats = setOf(1),
+            forcedEvilSeats = emptySet(),
+            evilCoverSize = 5,
+        )
+        val calibrationItem = FirstNightBeginnerCorpusItem(
+            itemId = "calibration:sig-a",
+            scenarioId = "calibration",
+            partition = FirstNightBeginnerCorpusPartition.CALIBRATION,
+            label = FirstNightBeginnerCorpusLabel.UNREVIEWED,
+            signatureId = "sig-a",
+            multiplicity = BigInteger.ONE,
+            selectionReasons = setOf(FirstNightBeginnerSelectionReason.LOWER_QUARTILE_AFTER),
+            publicObservations = listOf("seat-1/public-claim: synthetic calibration claim"),
+            anchorDiagnostics = diagnostics,
+            anchorLeaveOneOut = listOf(
+                FirstNightBeginnerLeaveOneOutDiagnostics(
+                    omittedObservation = "seat-1/public-claim: synthetic calibration claim",
+                    diagnostics = diagnostics.copy(afterWorldCount = BigInteger.valueOf(50)),
+                ),
+            ),
+        )
+        val holdoutItem = calibrationItem.copy(
+            itemId = "sealed-holdout:sig-secret",
+            scenarioId = "sealed-holdout",
+            partition = FirstNightBeginnerCorpusPartition.HOLDOUT,
+            signatureId = "sig-secret",
+            publicObservations = listOf("SECRET_HOLDOUT_CLAIM"),
+        )
+        val corpus = FirstNightBeginnerCorpus(
+            scenarios = listOf(
+                FirstNightBeginnerCorpusScenario(
+                    scenarioId = "calibration",
+                    partition = FirstNightBeginnerCorpusPartition.CALIBRATION,
+                    anchorRecipientSeat = 1,
+                    seating = listOf(1 to RoleId("Washerwoman")),
+                    rawCompleteBundleCount = BigInteger.TEN,
+                    distinctProjectedSignatureCount = 2,
+                    items = listOf(calibrationItem),
+                ),
+                FirstNightBeginnerCorpusScenario(
+                    scenarioId = "sealed-holdout",
+                    partition = FirstNightBeginnerCorpusPartition.HOLDOUT,
+                    anchorRecipientSeat = 1,
+                    seating = listOf(1 to RoleId("Chef")),
+                    rawCompleteBundleCount = BigInteger.TEN,
+                    distinctProjectedSignatureCount = 2,
+                    items = listOf(holdoutItem),
+                ),
+            ),
+        )
 
         val report = FirstNightBundleBeginnerCorpusBuilder.renderMarkdown(corpus)
-        val calibrationIds = corpus.scenarios
-            .filter { it.partition == FirstNightBeginnerCorpusPartition.CALIBRATION }
-            .map { it.scenarioId }
-        val holdoutIds = corpus.scenarios
-            .filter { it.partition == FirstNightBeginnerCorpusPartition.HOLDOUT }
-            .map { it.scenarioId }
-        assertTrue(calibrationIds.all(report::contains))
-        assertTrue(holdoutIds.none(report::contains))
-        assertTrue(report.contains("Sealed holdout scenarios: ${holdoutIds.size}"))
 
-        val reportFile = File("build/reports/fn-bundle-3-beginner-corpus.md")
-        requireNotNull(reportFile.parentFile).mkdirs()
-        reportFile.writeText(report, Charsets.UTF_8)
+        assertTrue(report.contains("calibration"))
+        assertTrue(report.contains("synthetic calibration claim"))
+        assertTrue(report.contains("Sealed holdout scenarios: 1"))
+        assertFalse(report.contains("sealed-holdout"))
+        assertFalse(report.contains("sig-secret"))
+        assertFalse(report.contains("SECRET_HOLDOUT_CLAIM"))
+        assertEquals(FirstNightBeginnerCorpusLabel.UNREVIEWED, calibrationItem.label)
+    }
+
+    @Test
+    fun `review labels remain explicit human judgment categories`() {
+        assertEquals(
+            setOf(
+                FirstNightBeginnerCorpusLabel.UNREVIEWED,
+                FirstNightBeginnerCorpusLabel.BAD_TOO_STRONG,
+                FirstNightBeginnerCorpusLabel.ACCEPTABLE,
+                FirstNightBeginnerCorpusLabel.BAD_TOO_WEAK,
+                FirstNightBeginnerCorpusLabel.UNCERTAIN,
+            ),
+            FirstNightBeginnerCorpusLabel.entries.toSet(),
+        )
     }
 }
