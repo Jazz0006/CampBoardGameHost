@@ -51,7 +51,7 @@ class FirstNightBundleExperimentExactFixtureTest {
     private val rolesById = roles.associateBy { it.id }
 
     @Test
-    fun `healthy public bundle shown-role confirmation chain materially participates in exact conjunction`() {
+    fun `healthy public claims constrain truthful good speakers while preserving evil bluff worlds`() {
         val game = game(
             player(1, "Washerwoman", CharacterType.TOWNSFOLK),
             player(2, "Empath", CharacterType.TOWNSFOLK),
@@ -119,7 +119,7 @@ class FirstNightBundleExperimentExactFixtureTest {
 
         assertTrue(evaluation is FirstNightBundleExperimentEvaluation.Ready)
         val ready = evaluation as FirstNightBundleExperimentEvaluation.Ready
-        assertEquals(4, ready.publicObservationCount)
+        assertEquals(2, ready.publicObservationCount)
         val diagnostic = ready.recipientDiagnostics.single()
         val baseline = baselineWorlds(
             validatedRuleset = validatedRuleset,
@@ -129,28 +129,46 @@ class FirstNightBundleExperimentExactFixtureTest {
             observationLog = observationLog,
         )
         val projected = FirstNightPublicGoodInfoProjection.project(bundle)
-        val shownClaims = projected.filter { it.proposition is InformationProposition.ShownRoleAt }
-        val clueOnly = projected.filterNot { it.proposition is InformationProposition.ShownRoleAt }
-        assertEquals(
-            listOf(
-                InformationProposition.ShownRoleAt(1, RoleId("Washerwoman")),
-                InformationProposition.ShownRoleAt(2, RoleId("Empath")),
-            ),
-            shownClaims.map(EpistemicObservation::proposition),
-        )
-        assertTrue(shownClaims.all { it.reliability == ObservationReliability.NOT_ABILITY_INFORMATION })
+        assertTrue(projected.all { it.proposition is InformationProposition.AnyOf })
+        assertTrue(projected.none { it.proposition is InformationProposition.ShownRoleAt })
+        assertTrue(projected.all { it.reliability == ObservationReliability.NOT_ABILITY_INFORMATION })
 
         val expectedAfter = matchingWorldCount(baseline, projected)
-        val clueOnlyAfter = matchingWorldCount(baseline, clueOnly)
         assertEquals(exact(baseline.size), diagnostic.before)
         assertEquals(exact(expectedAfter), diagnostic.after)
         assertTrue(diagnostic.after.value > BigInteger.ZERO)
         assertTrue(diagnostic.after.value < diagnostic.before.value)
-        assertTrue("Shown-role claims must materially tighten the healthy confirmation chain.", expectedAfter < clueOnlyAfter)
+
+        val empathClaim = projected.single { it.sourceSeat == 2 }
+        val evilLiarWorld = EnumeratedWorld(
+            rolesBySeat = linkedMapOf(
+                1 to RoleId("Washerwoman"),
+                2 to RoleId("Poisoner"),
+                3 to RoleId("Chef"),
+                4 to RoleId("Empath"),
+                5 to RoleId("Imp"),
+            ),
+            shownRolesBySeat = linkedMapOf(
+                1 to RoleId("Washerwoman"),
+                2 to RoleId("Poisoner"),
+                3 to RoleId("Chef"),
+                4 to RoleId("Empath"),
+                5 to RoleId("Imp"),
+            ),
+        )
+        assertTrue(
+            "An evil speaker must be able to make the same public claim without the claimed identity being oracle truth.",
+            TroubleBrewingWorldObservationEvaluator.evaluate(
+                world = evilLiarWorld,
+                roles = rolesById,
+                observation = empathClaim,
+                hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            ).matches,
+        )
     }
 
     @Test
-    fun `Drunk public shown-role claim preserves shown identity without leaking actual role or loosening clue semantics`() {
+    fun `healthy public claim model does not silently treat Drunk false information as truthful exact evidence`() {
         val game = game(
             player(1, "Drunk", CharacterType.OUTSIDER, shownRole = "Chef"),
             player(2, "Washerwoman", CharacterType.TOWNSFOLK),
@@ -190,12 +208,11 @@ class FirstNightBundleExperimentExactFixtureTest {
             ),
         )
         val projected = FirstNightPublicGoodInfoProjection.project(bundle)
-        assertEquals(2, projected.size)
-        val shownClaim = projected.single { it.proposition is InformationProposition.ShownRoleAt }
-        val clueObservation = projected.single { it.proposition is InformationProposition.NumericResult }
-        assertEquals(InformationProposition.ShownRoleAt(1, RoleId("Chef")), shownClaim.proposition)
-        assertEquals(ObservationReliability.NOT_ABILITY_INFORMATION, shownClaim.reliability)
-        assertEquals(null, shownClaim.sourceAbility)
+        assertEquals(1, projected.size)
+        val publicClaim = projected.single()
+        assertTrue(publicClaim.proposition is InformationProposition.AnyOf)
+        assertEquals(ObservationReliability.NOT_ABILITY_INFORMATION, publicClaim.reliability)
+        assertEquals(null, publicClaim.sourceAbility)
         assertFalse(projected.any { it.proposition == InformationProposition.RoleAt(1, RoleId("Drunk")) })
 
         val drunkWorld = EnumeratedWorld(
@@ -219,28 +236,12 @@ class FirstNightBundleExperimentExactFixtureTest {
         )
         assertEquals(AbilityState.MALFUNCTIONING_DRUNK, drunkWorld.abilityStatesBySeat[1])
 
-        val shownCredible = TroubleBrewingWorldObservationEvaluator.evaluate(
-            world = drunkWorld,
-            roles = rolesById,
-            observation = shownClaim,
-            hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-        )
-        val shownFunctioningOnly = TroubleBrewingWorldObservationEvaluator.evaluate(
-            world = drunkWorld,
-            roles = rolesById,
-            observation = shownClaim,
-            hypothesis = EpistemicHypothesis.FUNCTIONING_ONLY,
-        )
-        assertTrue(shownCredible.matches)
-        assertTrue(shownFunctioningOnly.matches)
-        assertTrue(shownCredible.registrationFacts.isEmpty())
-        assertTrue(shownFunctioningOnly.registrationFacts.isEmpty())
-
-        assertTrue(
+        assertFalse(
+            "Drunk false-info public claims are a later staged model, not healthy-stage truthful evidence.",
             TroubleBrewingWorldObservationEvaluator.evaluate(
                 world = drunkWorld,
                 roles = rolesById,
-                observation = clueObservation,
+                observation = publicClaim,
                 hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
             ).matches,
         )
@@ -248,7 +249,29 @@ class FirstNightBundleExperimentExactFixtureTest {
             TroubleBrewingWorldObservationEvaluator.evaluate(
                 world = drunkWorld,
                 roles = rolesById,
-                observation = clueObservation,
+                observation = publicClaim,
+                hypothesis = EpistemicHypothesis.FUNCTIONING_ONLY,
+            ).matches,
+        )
+
+        val strictShownObservation = publicClaim.copy(
+            observationId = "strict-shown-chef",
+            sourceSeat = null,
+            proposition = InformationProposition.ShownRoleAt(1, RoleId("Chef")),
+        )
+        assertTrue(
+            TroubleBrewingWorldObservationEvaluator.evaluate(
+                world = drunkWorld,
+                roles = rolesById,
+                observation = strictShownObservation,
+                hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            ).matches,
+        )
+        assertTrue(
+            TroubleBrewingWorldObservationEvaluator.evaluate(
+                world = drunkWorld,
+                roles = rolesById,
+                observation = strictShownObservation,
                 hypothesis = EpistemicHypothesis.FUNCTIONING_ONLY,
             ).matches,
         )
@@ -260,7 +283,7 @@ class FirstNightBundleExperimentExactFixtureTest {
             TroubleBrewingWorldObservationEvaluator.evaluate(
                 world = wrongShownWorld,
                 roles = rolesById,
-                observation = shownClaim,
+                observation = strictShownObservation,
                 hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
             ).matches,
         )
