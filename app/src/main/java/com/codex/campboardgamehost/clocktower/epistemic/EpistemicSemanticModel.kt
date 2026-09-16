@@ -222,6 +222,7 @@ enum class GrimoireTruthBinding {
 
 sealed interface InformationProposition {
     data class RoleAt(val seat: Int, val role: RoleId) : InformationProposition { init { require(seat > 0) } }
+    data class ShownRoleAt(val seat: Int, val role: RoleId) : InformationProposition { init { require(seat > 0) } }
     data class AlignmentAt(val seat: Int, val alignment: Alignment) : InformationProposition { init { require(seat > 0) } }
     data class CharacterTypeAt(val seat: Int, val characterType: CharacterType) : InformationProposition { init { require(seat > 0) } }
     data class AliveAt(val seat: Int, val alive: Boolean) : InformationProposition { init { require(seat > 0) } }
@@ -468,6 +469,7 @@ internal fun requireSchemaVersion(version: Int) {
 
 private fun InformationProposition.referencedSeats(): Set<Int> = when (this) {
     is InformationProposition.RoleAt -> setOf(seat)
+    is InformationProposition.ShownRoleAt -> setOf(seat)
     is InformationProposition.AlignmentAt -> setOf(seat)
     is InformationProposition.CharacterTypeAt -> setOf(seat)
     is InformationProposition.AliveAt -> setOf(seat)
