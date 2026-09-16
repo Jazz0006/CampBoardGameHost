@@ -28,13 +28,14 @@ EPI-MQ-0.5 epistemic capability boundary          COMPLETE / PR #135
 Exact historical hypothetical bundle seam         COMPLETE / PR #137
 First-night experiment contract                   COMPLETE / PR #138
 FN-BUNDLE-0 candidate-space audit + pair cleanup  COMPLETE / PR #139
+FN-BUNDLE-1 evaluator/shown-role semantics        COMPLETE / merged PR #140
 
 CURRENT:
-FN-BUNDLE-1 — evaluator correctness and PUBLIC_GOOD_INFO identity semantics
+FN-BUNDLE-2 — complete healthy 7-player first-night harness / PR #142
 
 NEXT:
-FN-BUNDLE-2 — complete healthy 7-player first-night harness
 FN-BUNDLE-3 — BEGINNER Badness corpus / manual labels / gate derivation
+External calibration against real Storyteller data where usable
 then Drunk -> Spy/Recluse registration -> Poisoner staged expansion
 
 DEFERRED:
@@ -44,122 +45,179 @@ Pair-information display latency / old-device ADB diagnosis
 UX-R6 recommendation-provider replacement
 ```
 
-Merged FN-BUNDLE-0 code baseline:
+Live FN-BUNDLE-1 squash-merge baseline:
 
-`55da0b8366eae6daa01df9bef668c56b6eecfaec`
+`efedf87a7d2434ea7ddb75bfdc8516a27d125666`
 
-This is the squash merge of PR #139:
-
-`FN-BUNDLE-0: audit first-night candidate space and retire setup pair route`
-
-Documentation-only handoff commits may move `main` beyond this SHA. Always query live `main` before editing; use `55da0b8` as the merged FN-BUNDLE-0 code baseline, not as a permanently current branch tip.
+Always query live `main` before editing; documentation-only movement may advance it.
 
 The current route decision remains:
 
 `docs/EPI_MQ_FIRST_NIGHT_BUNDLE_ROUTE_2026-09-16.md`
 
-The prior route:
+The prior route `docs/EPI_MQ_ROUTE_REAUDIT_2026-09-15.md` is historical design evidence only.
 
-`docs/EPI_MQ_ROUTE_REAUDIT_2026-09-15.md`
+## 2. Stable completed foundation
 
-is historical design evidence only and is superseded as execution authority.
-
-## 2. FN-BUNDLE-0 completion evidence
-
-FN-BUNDLE-0 is complete and merged.
+### FN-BUNDLE-0 — merged #139
 
 Delivered:
 
-- candidate-space census for complete healthy Night 1 producer factors;
-- exact known-product versus incomplete-complete-count distinction;
-- representative 7-player census showing raw `110,000` combinations;
-- `BEGINNER_PUBLIC_GOOD_INFO` represented projection upper bound of `100` before materialization/deduplication;
+- canonical complete healthy Night-1 candidate-space census;
+- representative 7-player raw product of `110,000` complete combinations;
+- represented `PUBLIC_GOOD_INFO` factor-product upper bound of `100`;
 - explicit exclusion of player-controlled Fortune Teller target selection;
-- explicit deferred complexity flags for Drunk, Spy/Recluse registration and Poisoner target effects;
-- documented lossless quotient-first plan before any bounded sampling;
-- retirement of obsolete setup-owned pair-information generation.
+- explicit deferred complexity for Drunk, Spy/Recluse registration and Poisoner target effects;
+- retirement of the duplicated setup-owned pair-information rules path.
 
-Pair-information ownership is now:
+Pair-information semantic ownership remains:
 
 ```text
 NaturalPairInformationCandidateGenerator
         ↓
-PairInformationLegalDomain / canonical pair consumers
-        ↓
-runtime/manual/recommendation/FN-BUNDLE consumers
+PairInformationLegalDomain / canonical consumers
 ```
 
-`SetupCandidateGenerator` no longer owns Washerwoman/Librarian/Investigator pair generation. It remains responsible only for setup-domain choices that actually belong there, such as Red Herring and demon bluffs.
+Do not repeat the FN-BUNDLE-0 candidate-space or setup pair ownership audit.
 
-The surviving first-night precompute transport may cache compatibility data, but its pair candidates are sourced from the canonical pair generator rather than a second setup-owned pair rules path.
+### FN-BUNDLE-1 — merged #140
 
-## 3. Current open PR — #140
+Delivered:
 
-PR #140:
+- thin first-night information -> epistemic proposition materialization;
+- `InformationProposition.ShownRoleAt(seat, role)` with strict shown-role semantics;
+- deterministic deduplicated `PUBLIC_GOOD_INFO` shown-role claims;
+- no hidden Drunk identity leakage through public shown-role claims;
+- healthy confirmation-chain exact fixture;
+- Drunk shown-role exact fixture;
+- complete proposition fanout / JSON / exact ownership audit;
+- full T4 acceptance before merge.
 
-`FN-BUNDLE-1: materialize first-night information for exact evaluation`
+`ShownRoleAt` remains distinct from `RoleAt`: no Spy/Recluse registration and no malfunction weakening.
 
-is open. It was rebuilt cleanly on the merged FN-BUNDLE-0 code baseline and contains only FN-BUNDLE-1 code/test changes. Documentation-only commits may subsequently make the branch appear behind live `main`; sync those without reintroducing already-merged FN-BUNDLE-0 diff.
+## 3. FN-BUNDLE-2 — current PR #142
 
-Rebuilt branch/head snapshot:
+PR:
+
+`FN-BUNDLE-2: evaluate complete healthy first-night bundles`
+
+Branch:
+
+`fn-bundle-2-healthy-harness`
+
+The phase remains **experimental harness only**. It does not define BEGINNER Badness thresholds and does not replace the production recommendation selector.
+
+### Implemented harness behavior
+
+For the representative healthy 7-player Trouble Brewing first night:
 
 ```text
-branch: fn-bundle-1-evaluator-correctness
-head:   edcdbccdf6c8e2110afcae5d04219d347a2f2da7
-base code baseline: 55da0b8366eae6daa01df9bef668c56b6eecfaec
+canonical legal factor producers
+    ↓
+complete-bundle factorized provenance
+    ↓
+PUBLIC_GOOD_INFO materialization
+    ↓
+canonical projected signature
+    ↓
+lossless quotient by identical signature
+    ↓
+exact epistemic diagnostics once per distinct signature
+    ↓
+leave-one-out diagnostics
 ```
 
-The #140 code diff at that snapshot contains only:
-
-- `FirstNightInformationPropositionMaterializer.kt`;
-- `FirstNightInformationPropositionMaterializerTest.kt`;
-- `FirstNightBundleExperimentExactFixtureTest.kt`.
-
-Already implemented in #140:
-
-- thin `EffectDraft.PlayerInformation -> InformationProposition` materialization;
-- Washerwoman/Librarian/Investigator pair proposition materialization without taking ownership of legality;
-- Librarian zero-Outsider materialization;
-- Chef and Empath numeric proposition materialization using existing rule structure;
-- exact fixtures for Spy/Recluse registration-aware pair semantics;
-- representative Drunk false Chef information under `MECHANICALLY_CREDIBLE` versus `FUNCTIONING_ONLY`;
-- compact healthy public-bundle exact conjunction fixture.
-
-## 4. FN-BUNDLE-1 semantic gap still open
-
-FN-BUNDLE-1 is **not complete**.
-
-The first experiment assumes healthy-good players publicly reveal both their role identity and first-night information. The current projection only republishes clue observations. It therefore under-models confirmation chains such as:
+Current representative contract:
 
 ```text
-Washerwoman publicly claims Washerwoman
-+ Washerwoman information supports Empath identity
-+ Empath publicly claims Empath
-+ Empath publicly shares 0
+raw complete bundle count:              110,000
+represented public factor combinations:     100
+distinct projected signatures:              100
+latent multiplicity per public combination: 1,100
+sampling:                                    none
 ```
 
-Current missing work:
+The harness preserves complete bundle identity/provenance without materializing all `110,000` bundle objects.
 
-1. complete the `InformationProposition` fanout audit before adding a new proposition type;
-2. add `InformationProposition.ShownRoleAt(seat, role)`;
-3. exact evaluator semantics must compare against `EnumeratedWorld.shownRolesBySeat`;
-4. `ShownRoleAt` must not use Spy/Recluse registration semantics;
-5. `ShownRoleAt` must not be weakened merely because an ability is malfunctioning;
-6. PUBLIC_GOOD_INFO projection must generate one public shown-role claim per sharing source, deduplicated deterministically;
-7. a Drunk who believes/shares a shown role such as Chef must contribute `ShownRoleAt(seat, Chef)`, never `RoleAt(seat, Drunk)` and never leak the actual Drunk identity;
-8. add healthy confirmation-chain fixtures;
-9. add explicit Drunk shown-role fixtures;
-10. run the full required CI after #140 contains these semantics.
+### Exact diagnostic owner
 
-As of this handoff, `ShownRoleAt` does not exist in #140 and PUBLIC_GOOD_INFO still only republishes clue observations.
+Structural consequence diagnostics belong to `epistemic`, not recommendation policy.
 
-As of the clean rebuild snapshot, the retargeted #140 head had **no workflow run**. Do not claim #140 CI is green until a run for the actual current head completes successfully.
+Current descriptive outputs include:
 
-## 5. Main product decision
+- exact BEFORE / AFTER world counts;
+- possible demon seats / `demonCoverSize`;
+- distinct evil-team seat configurations;
+- forced-good seats;
+- forced-evil seats;
+- evil cover / `evilCoverSize`;
+- leave-one-out information interaction evidence.
+
+No scalar quality score or rejection threshold is embedded in the evaluator.
+
+### 7-player scalability fix
+
+The first implementation exposed a real memory problem: materializing the unconstrained seven-player exact baseline, and then the existing prefix-trie ZDD construction, could exhaust CI memory.
+
+The accepted experiment path does not hide this by shrinking the fixture. For pristine Night 1 it instead uses constant-memory source enumeration:
+
+1. scan BEFORE lazily;
+2. group queries by strict public `ShownRoleAt` claims;
+3. re-enumerate lazily for each small identity group;
+4. apply cheap shown-role filtering before retaining worlds;
+5. materialize only the much smaller retained family for clue conjunction / leave-one-out analysis.
+
+Historical multi-night replay remains on the existing historical exact path. This experiment does not change the production A4/ZDD rollout decision.
+
+### Healthy counterworld domain
+
+FN-BUNDLE-2 deliberately validates the first staged domain only. Candidate legality still uses the complete official Trouble Brewing rules/catalog, but the diagnostic counterworld domain excludes the uncertainty sources reserved for later stages:
+
+```text
+Drunk
+Spy
+Recluse
+Poisoner
+```
+
+This prevents the supposedly healthy experiment from silently mixing in Drunk shown-role uncertainty, Spy/Recluse registration ambiguity, or Poisoner impairment before those stages are intentionally validated.
+
+### Current validation
+
+A retained acceptance fixture now proves the representative healthy 7-player harness actually executes and verifies:
+
+- `110,000` raw complete bundles;
+- `100` represented/distinct public signatures;
+- lossless multiplicity totaling `110,000`;
+- explicit staged counterworld-role exclusion;
+- no bounded sampling;
+- non-empty exact survivors for every evaluated representative signature.
+
+Current-head FAST acceptance is green. FN-BUNDLE-2 still requires an explicit `[full-ci]` T4 checkpoint before merge authorization.
+
+## 4. Experimental testing rule
+
+Do not manufacture RED tests merely to satisfy process for exploratory experiment/spike work.
+
+Use this distinction:
+
+```text
+exploratory spike / measurement / feasibility work
+    -> implementation-first is allowed
+    -> use compile, experiment output and existing regression evidence while exploring
+
+behavior or architecture retained for merge
+    -> add only the necessary stable contract / regression tests before acceptance
+    -> run the affected validation and T4 checkpoint required by TESTING_STRATEGY.md
+```
+
+A failing test is evidence when it demonstrates a real missing stable behavior. It is not a goal by itself.
+
+## 5. Product decision
 
 The Storyteller recommendation algorithm does not target one globally optimal clue or one opaque maximum score.
 
-Target behavior:
+Target behavior remains:
 
 > **Generate rules-legal complete first-night information bundles, reject bundles that are clearly poor for the intended skill profile, then select randomly from the remaining acceptable bundle pool.**
 
@@ -169,7 +227,7 @@ Initial profile:
 BEGINNER / PUBLIC_GOOD_INFO
 ```
 
-Initial validated selection semantics:
+Target selection semantics:
 
 ```text
 Hard legality
@@ -179,29 +237,11 @@ Badness filtering
 uniform random among acceptable survivors
 ```
 
-Do not add LLM ranking or a unified scalar score before the deterministic baseline is validated.
+Do not add an LLM ranker or unified scalar quality score before the deterministic baseline is validated.
 
-## 6. Evaluation unit — complete first-night bundle
+## 6. Diagnostics before Badness thresholds
 
-The semantic unit is the complete first-night information ecology, not Investigator in isolation.
-
-A bundle conceptually contains:
-
-```text
-rule-determined Night 1 observations
-+ Storyteller-controlled legal choices
-+ relevant impairment / registration semantics
-```
-
-Rule-determined examples include healthy Chef/Empath information.
-
-Storyteller-controlled examples include legal Washerwoman/Librarian/Investigator pair information, Red Herring, demon bluffs and later staged Drunk/registration choices.
-
-Fortune Teller nightly target choice is player-controlled and must not be optimized by the Storyteller planner.
-
-## 7. Required diagnostics before Badness thresholds
-
-Before defining rejection gates, expose interpretable evidence including at least:
+Before defining rejection gates, use interpretable evidence including:
 
 ```text
 BEFORE / AFTER exact world counts
@@ -211,68 +251,27 @@ evil topology retention
 evilCoverSize
 forcedGoodSeats / count
 forcedEvilSeats / count where meaningful
-leave-one-out / pair interaction evidence
+leave-one-out / interaction evidence
 minimum information-value evidence
 structurally distinct counterworld evidence where tractable
 ```
 
 Raw world count alone is insufficient. Do not label unweighted possible-world fractions as posterior probabilities without an explicit prior/weighting model.
 
-Working Badness categories remain hypotheses, not calibrated gates:
+Working Badness categories remain hypotheses only:
 
 - evil topology collapse;
-- large forced-good/trusted block;
+- large forced-good / trusted block;
 - tiny evil/demon cover;
 - confirmation-chain interaction collapse;
 - too little information value;
 - weak counterworld viability.
 
-The acceptable region remains:
+No final thresholds are allowed before a human-reviewed corpus.
 
-```text
-too weak  -> reject
-acceptable
- too strong -> reject
-```
+## 7. FN-BUNDLE-3 — next after #142 merge
 
-## 8. Experiment sequence
-
-### FN-BUNDLE-0 — COMPLETE / merged #139
-
-Candidate ownership/census/experiment seam audit and pair-route cleanup complete.
-
-### FN-BUNDLE-1 — CURRENT
-
-Finish evaluator correctness before building the 7-player whole-bundle harness.
-
-Required completion condition:
-
-```text
-materializer semantics proven
-+ ShownRoleAt fanout complete
-+ PUBLIC_GOOD_INFO shown-role claims deduplicated
-+ healthy confirmation-chain fixture
-+ Drunk shown-role fixture
-+ current-head CI green
-```
-
-No production selector or Badness threshold in this phase.
-
-### FN-BUNDLE-2 — NEXT
-
-Build the complete healthy 7-player Night 1 harness:
-
-1. compose all fixed healthy first-night observations;
-2. compose complete legal Storyteller-controlled choices;
-3. canonicalize PUBLIC_GOOD_INFO projected signatures;
-4. group complete bundles by identical projected signature while retaining bundle provenance/multiplicity;
-5. exact-evaluate each distinct signature once;
-6. add deterministic bounded sampling only if the quotient remains too large and measured cost justifies it;
-7. emit diagnostics without final rejection thresholds.
-
-### FN-BUNDLE-3 — BEGINNER corpus / gates
-
-Build a human-reviewed corpus:
+Build a human-reviewed corpus with labels such as:
 
 ```text
 BAD_TOO_STRONG
@@ -281,11 +280,15 @@ BAD_TOO_WEAK
 UNCERTAIN
 ```
 
-Derive gates only from evidence.
+Use a calibration set and holdout set. Add adversarial examples where individually plausible clues collapse only in combination.
 
-### FN-BUNDLE-4+
+Where ClockTracker or another real Storyteller source exposes enough first-night decision detail, use it as external calibration/validation evidence rather than treating every historical Storyteller choice as a unique ground-truth label.
 
-Shadow random survivor selection, then staged uncertainty expansion:
+Do not start FN-BUNDLE-3 before FN-BUNDLE-2 is accepted and merged.
+
+## 8. Later staged uncertainty
+
+After the healthy corpus/gates are understood, widen the exact diagnostic domain deliberately:
 
 1. Drunk shown-role / false-information bundle effects;
 2. Spy/Recluse registration ambiguity;
@@ -308,20 +311,20 @@ epistemic
   -> recipient-visible hypotheses / exact consequence diagnostics
 
 recommendation
-  -> compose legal first-night bundles
+  -> compose legal complete first-night bundles
   -> consume epistemic diagnostics
-  -> apply Badness policy
-  -> random selection among acceptable bundles
+  -> apply future Badness policy
+  -> random selection among acceptable survivors
 
 UI
   -> presentation / confirmation / future experience settings
 ```
 
-Do not build a second rules engine inside Badness or projection code.
+Do not build a second rules engine inside bundle composition, Badness, or projection code.
 
 ## 10. Exact foundation to preserve
 
-The merged EPI-MQ foundation remains authoritative:
+The EPI-MQ foundation remains authoritative:
 
 - `EpistemicEvaluationCapabilityBoundary`;
 - `READY / DEFERRED` and `DEFERRED != UNSAT`;
@@ -332,39 +335,39 @@ The merged EPI-MQ foundation remains authoritative:
 - hidden-information boundary;
 - `ExactHistoricalHypotheticalObservationBundleEvaluator` for exact bundle conjunctions.
 
-## 11. Testing policy
+## 11. Acceptance / merge boundary
 
-Follow:
+FN-BUNDLE-2 is complete only when the current PR head has:
 
-1. root `AGENTS.md`;
-2. `docs/TESTING_STRATEGY.md`.
+```text
+[x] complete healthy seven-player harness
+[x] quotient-first exact evaluation
+[x] lossless complete-bundle provenance/multiplicity
+[x] interpretable exact structure diagnostics
+[x] leave-one-out diagnostics
+[x] constant-memory pristine Night-1 baseline path
+[x] explicit staged healthy counterworld domain
+[x] retained representative acceptance fixture
+[x] ordinary FAST CI green
+[ ] current-head [full-ci] T4 green
+```
 
-For `ShownRoleAt`, first map every producer/consumer/exhaustive `when`/codec/symbolic representation before editing. Then fix the common semantic owner and re-search fanout.
+Do not merge PR #142 without explicit user authorization.
 
-Because `ShownRoleAt` changes epistemic proposition semantics, run the escalation required by `TESTING_STRATEGY.md`, including any relevant ASP/Clingo/exact cross-validation triggered by the changed files/contracts.
+Do not begin FN-BUNDLE-3 implementation before #142 is merged.
 
-Do not treat cached/up-to-date results as execution proof.
-
-## 12. Stable UI and paused work
-
-Do not mix FN-BUNDLE semantic work with UI redesign.
-
-Pair-information display latency / old-device abnormal exit remains paused.
-
-PR #109 remains unrelated unless live status changes; query before touching.
-
-## 13. Next-conversation reading order
+## 12. Next-conversation reading order
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
 3. this roadmap;
 4. `docs/NEXT_DEVELOPMENT_HANDOFF.md`;
 5. `docs/EPI_MQ_FIRST_NIGHT_BUNDLE_ROUTE_2026-09-16.md`;
-6. query live `main`, PR #140 and current checks;
-7. continue FN-BUNDLE-1 from the `ShownRoleAt` fanout audit.
+6. query live `main`, PR #142 and current checks;
+7. continue only from the remaining FN-BUNDLE-2 acceptance state.
 
 Historical dated handoffs are not execution authority.
 
-## 14. Stable rule
+## 13. Stable rule
 
-> **The current algorithm route evaluates the complete first-night information ecology, not isolated clues. FN-BUNDLE-0 is merged. FN-BUNDLE-1 must now make PUBLIC_GOOD_INFO semantically complete by representing public shown-role claims as well as clue contents, prove healthy and Drunk identity semantics, and obtain current-head CI before moving to the complete 7-player harness.**
+> **FN-BUNDLE-0 and FN-BUNDLE-1 are complete and merged. FN-BUNDLE-2 evaluates the complete healthy 7-player first-night ecology by quotienting legal complete bundles before exact reasoning, preserving full provenance while emitting interpretable epistemic diagnostics. Do not add Badness thresholds, production selector cutover, or later uncertainty stages until this harness passes current-head T4 and is explicitly authorized for merge.**
