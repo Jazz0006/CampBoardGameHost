@@ -2,23 +2,106 @@
 
 > Date: 2026-09-16 Australia/Sydney  
 > Base: FN-BUNDLE-2 merged at `690bc93b33b87fd54a911f4b9dbfc770f2a16a51`  
-> Status: pilot corpus / human review preparation; **no Badness gates yet**
+> Status: **pilot calibration / public-claim semantic correction; no Badness gates yet**
 
 ## Purpose
 
-FN-BUNDLE-3 validates whether the exact diagnostics exposed by FN-BUNDLE-2 correspond to human judgments about first-night information quality for the initial `BEGINNER / PUBLIC_GOOD_INFO` profile.
+FN-BUNDLE-3 tests whether FN-BUNDLE-2 exact diagnostics correspond to human judgments about first-night information quality for the initial:
 
-This stage does **not** train a scalar score and does **not** invent rejection thresholds before review evidence exists.
+```text
+BEGINNER / PUBLIC_GOOD_INFO
+```
 
-## Pilot partitions
+This stage does not train a scalar score and does not invent rejection thresholds before review evidence exists.
 
-Partitioning is by complete setup + seating scenario, not by individual projected signature.
+## 1. Public-share behavioral model
 
-This prevents highly related signatures from one position from appearing in both calibration and holdout data.
+The profile assumes healthy good players aggressively share their first-night role/information claims on Day 1.
 
-Initial pilot:
+This is a behavioral stress model, not a rule that public speech is trustworthy.
 
-### CALIBRATION — `cal-pair-rich-adjacent-evil`
+### Invalid first projection
+
+The first implementation projected a statement such as:
+
+```text
+"I am Empath and my result is 0"
+```
+
+as two exact public facts:
+
+```text
+ShownRoleAt(speaker, Empath)
+AND
+NumericResult(0)
+```
+
+That accidentally made a public role claim equivalent to Storyteller confirmation. The first generated corpus consequently over-collapsed the world space around the actual seating.
+
+That first corpus run is **invalid calibration evidence**:
+
+- do not label it;
+- do not derive Badness gates from it;
+- do not use its world counts as reference thresholds.
+
+### Correct current healthy-stage projection
+
+One public statement is now modeled as:
+
+```text
+speaker is evil
+OR
+(
+    speaker really has the claimed shown role
+    AND
+    the claimed clue is mechanically true
+)
+```
+
+This encodes the intended first-stage behavior:
+
+- healthy good speaker -> truthful public share;
+- evil speaker -> may bluff the same claim;
+- ordinary speech -> no oracle identity confirmation.
+
+Strict `InformationProposition.ShownRoleAt` itself remains unchanged and exact when a shown role is genuinely known through an appropriate mechanical source.
+
+Drunk false information, Poisoner impairment and Spy/Recluse registration remain later staged models. Do not infer their future public-claim semantics from this healthy-only formulation.
+
+## 2. Exact-evaluator performance boundary
+
+A public claim no longer exposes a top-level strict identity fact. Without a prefilter, pristine 7-player evaluation would retain too much of the source world family and reintroduce the earlier memory problem.
+
+The pristine evaluator therefore uses a necessary-only identity envelope:
+
+```text
+speaker can satisfy evil branch
+OR
+shown role matches claimed role
+```
+
+The complete claim is still exact-evaluated afterwards.
+
+The prefilter is therefore performance-only:
+
+- it must never decide the final truth of the claim;
+- it may conservatively retain extra worlds;
+- historical replay remains unchanged;
+- no A4/ZDD production rollout decision changes.
+
+Recluse is conservatively retained by the prefilter for future registration safety, although the current healthy diagnostic domain excludes Recluse.
+
+## 3. Pilot partitions
+
+Partitioning is by complete setup + seating scenario, not by individual signature.
+
+This prevents highly related signatures from the same position leaking between calibration and holdout.
+
+### CALIBRATION
+
+Scenario:
+
+`cal-pair-rich-adjacent-evil`
 
 ```text
 1 Washerwoman
@@ -32,29 +115,33 @@ Initial pilot:
 
 Anchor perspective: seat 1.
 
-This is the existing pair-rich FN-BUNDLE stress setup and retains the adjacent evil topology.
+Every projected signature is evaluated. Only a small deterministic review subset is exported.
 
-### HOLDOUT — `holdout-zero-outsider-librarian`
+### HOLDOUT
+
+The original holdout was exposed in the first CI report and is therefore retired as a validation holdout.
+
+A replacement holdout exists in the corpus builder but is now **sealed** for human review.
+
+Before gates are frozen, exported review material must reveal only:
 
 ```text
-1 Librarian
-2 Chef
-3 Empath
-4 Monk
-5 Investigator
-6 Scarlet Woman
-7 Imp
+sealed holdout scenario count
 ```
 
-Anchor perspective: seat 1.
+It must not reveal:
 
-This deliberately introduces the legal zero-Outsider Librarian information path while keeping later staged Drunk / Spy / Recluse / Poisoner uncertainty out of the healthy experiment.
+- holdout scenario ID;
+- seating/setup;
+- selected signatures;
+- diagnostics;
+- labels.
 
-## Review-item selection
+## 4. Review-item selection
 
-Every legal projected signature is still evaluated by the FN-BUNDLE-2 harness for the scenario anchor.
+Every legal projected signature is still evaluated for the scenario anchor.
 
-The pilot selects only a small deterministic review set, deduplicating overlaps among these reasons:
+The calibration export selects a small deterministic set, deduplicating overlaps among:
 
 ```text
 LOWEST_AFTER_WORLD_COUNT
@@ -67,19 +154,17 @@ LOWER_QUARTILE_AFTER
 UPPER_QUARTILE_AFTER
 ```
 
-These are **sampling reasons**, not labels and not candidate-ranking rules.
+These are review-sampling reasons, not quality labels and not candidate-ranking rules.
 
-The intent is to show the human reviewer both extremes and representative middle cases while explicitly including combination-collapse stress cases.
+## 5. Labels
 
-## Labels
-
-Every generated item starts as:
+Every generated item begins:
 
 ```text
 UNREVIEWED
 ```
 
-Human review may later assign exactly one of:
+Manual review may assign:
 
 ```text
 BAD_TOO_STRONG
@@ -88,53 +173,88 @@ BAD_TOO_WEAK
 UNCERTAIN
 ```
 
-The label must be a judgment about the whole public first-night information ecology for a beginner table, not a mechanical translation of one metric.
+The judgment concerns the whole public first-night information ecology for a beginner table. No single metric maps mechanically to a label.
 
-## Evidence preserved per item
+## 6. Evidence preserved
 
-The review record retains:
+Each internal corpus item retains:
 
-- stable scenario and projected-signature identity;
-- complete-bundle multiplicity represented by the signature;
-- public observations;
+- stable scenario/signature identity;
+- represented complete-bundle multiplicity;
+- public claims;
 - exact BEFORE / AFTER world counts;
 - demon cover;
-- distinct evil-team seat configurations;
+- distinct evil-team configurations;
 - forced-good / forced-evil seats;
 - evil cover;
-- leave-one-out evidence for every public observation.
+- leave-one-out evidence.
 
-No posterior-probability language is used for unweighted exact-world counts.
+Do not describe unweighted exact-world fractions as posterior probabilities.
 
-## Cost boundary
+## 7. Cost boundary
 
-The first exploratory implementation expanded every selected item to all good-player recipient perspectives across three scenarios. That was unnecessarily expensive for the first human-review loop.
+An exploratory implementation evaluated three scenarios and expanded selected items across every good-player perspective. That was unnecessarily expensive for the first human-review loop.
 
-The retained pilot therefore uses one explicit anchor perspective per scenario. Cross-recipient robustness remains a later validation question and should be added only if the first labels show that perspective dependence materially affects the Badness decision.
+The retained pilot uses one explicit anchor perspective per scenario.
 
-`FirstNightBundleBeginnerCorpusReviewTest` is a T3 review experiment and is excluded from `testFast`; it remains covered by full/T4 validation.
+Cross-recipient robustness remains a later experiment and should be added only if the first calibration evidence shows perspective dependence matters materially.
 
-## Calibration / holdout discipline
+`FirstNightBundleBeginnerCorpusReviewTest` is T3/full coverage and is excluded from `testFast`.
 
-Calibration data may be used to propose simple interpretable gates.
+## 8. Testing rule
 
-Holdout labels must not be used to choose those gates. After a candidate gate set is frozen, evaluate it against holdout and report at least:
+Do not manufacture RED for experiment ceremony.
 
 ```text
-false accept: human-bad bundle passes the gates
-false reject: human-acceptable bundle is rejected
-uncertain cases: reported separately, not forced into either class
+exploratory spike / measurement
+    -> implementation-first allowed
+
+stable retained contract
+    -> only necessary regression/contract coverage
+    -> required FAST/T4 acceptance
 ```
 
-Do not silently move holdout cases into calibration because they are inconvenient.
+The public-claim correction updated retained contracts; it did not add a RED-only test stage.
 
-## Next step
+## 9. Current acceptance criteria
 
-1. run the pilot corpus generator under full validation;
-2. inspect and manually label the CALIBRATION review items;
-3. inspect diagnostic separation without defining a scalar score;
-4. expand calibration scenarios if the pilot is too narrow;
-5. only after the calibration rule is frozen, inspect HOLDOUT performance;
-6. derive BEGINNER gates only if the evidence is coherent enough to justify them.
+Before manual labels resume:
 
-Real Storyteller data such as ClockTracker remains an external calibration layer after the deterministic human-review baseline exists; historical choices are evidence, not unique ground-truth labels.
+1. ordinary FAST must pass after the public-claim fixture updates;
+2. one current-head `[full-ci]` checkpoint must pass Android full + APK, ASP, Real Clingo, R2 and aggregate gate;
+3. the generated report must contain calibration details only;
+4. replacement holdout details must remain sealed;
+5. calibration diagnostics must demonstrate that public role claims no longer mechanically confirm all claimed good identities;
+6. coherent evil-bluff counterworlds must survive where logically possible.
+
+No numeric Badness threshold is part of this acceptance checkpoint.
+
+## 10. Calibration / holdout discipline
+
+Calibration evidence may be used to propose simple interpretable gate hypotheses.
+
+Holdout must not be used to choose those gates.
+
+After candidate gates are frozen, evaluate against holdout and report at least:
+
+```text
+false accept: human-bad bundle passes
+false reject: human-acceptable bundle is rejected
+uncertain: reported separately
+```
+
+Do not move inconvenient holdout cases into calibration.
+
+## 11. Next step
+
+After current-head T4:
+
+1. inspect the calibration-only report;
+2. manually label calibration items;
+3. inspect whether diagnostics meaningfully separate labels;
+4. add calibration scenarios if the one pilot setup is too narrow;
+5. propose simple gates only when evidence is sufficient;
+6. freeze those gates;
+7. only then open sealed holdout evaluation.
+
+Real Storyteller records such as ClockTracker remain an external ecological calibration layer after this deterministic baseline is trustworthy. Historical Storyteller choices are evidence, not unique ground-truth labels, and unchosen alternatives must not automatically become negative training examples.
