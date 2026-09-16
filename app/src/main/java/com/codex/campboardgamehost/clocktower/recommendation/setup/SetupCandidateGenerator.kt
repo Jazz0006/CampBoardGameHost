@@ -15,6 +15,7 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.domain.TruthRelation
+import com.codex.campboardgamehost.clocktower.domain.kind
 
 internal object SetupCandidateGenerator {
     private const val candidateSchemaVersion = "setup-v1"
