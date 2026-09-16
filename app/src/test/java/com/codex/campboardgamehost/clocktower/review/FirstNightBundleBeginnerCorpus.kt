@@ -129,6 +129,20 @@ object FirstNightBundleBeginnerCorpusBuilder {
             anchorRecipientSeat = 1,
         ),
         ScenarioDefinition(
+            id = "cal-single-pair-light-info",
+            partition = FirstNightBeginnerCorpusPartition.CALIBRATION,
+            roleNamesBySeat = listOf(
+                "Washerwoman",
+                "Chef",
+                "Monk",
+                "Soldier",
+                "Virgin",
+                "Scarlet Woman",
+                "Imp",
+            ),
+            anchorRecipientSeat = 1,
+        ),
+        ScenarioDefinition(
             id = "holdout-pair-rich-zero-outsider",
             partition = FirstNightBeginnerCorpusPartition.HOLDOUT,
             roleNamesBySeat = listOf(
