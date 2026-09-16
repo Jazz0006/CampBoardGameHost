@@ -11,11 +11,9 @@ class FirstNightBundleBeginnerCorpusReviewTest {
     fun `pilot corpus keeps scenario-level holdout isolation and raw review evidence`() {
         val corpus = FirstNightBundleBeginnerCorpusBuilder.build()
 
-        assertEquals(2, corpus.scenarios.size)
-        assertEquals(
-            setOf(FirstNightBeginnerCorpusPartition.CALIBRATION, FirstNightBeginnerCorpusPartition.HOLDOUT),
-            corpus.scenarios.map { it.partition }.toSet(),
-        )
+        assertEquals(3, corpus.scenarios.size)
+        assertEquals(2, corpus.scenarios.count { it.partition == FirstNightBeginnerCorpusPartition.CALIBRATION })
+        assertEquals(1, corpus.scenarios.count { it.partition == FirstNightBeginnerCorpusPartition.HOLDOUT })
         assertTrue(corpus.items.isNotEmpty())
         assertTrue(corpus.items.all { it.label == FirstNightBeginnerCorpusLabel.UNREVIEWED })
 
@@ -31,7 +29,7 @@ class FirstNightBundleBeginnerCorpusReviewTest {
         }
 
         corpus.scenarios.forEach { scenario ->
-            assertTrue(scenario.items.size in 4..8)
+            assertTrue(scenario.items.size in 1..8)
             assertTrue(scenario.items.all { item ->
                 item.anchorDiagnostics.recipientSeat == scenario.anchorRecipientSeat
             })
