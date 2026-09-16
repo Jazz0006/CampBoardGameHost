@@ -1,9 +1,13 @@
 # EPI-MQ Route Re-audit — Unified Impaired-Information Selection
 
+> **SUPERSEDED AS EXECUTION AUTHORITY — 2026-09-16**  
+> Current route: `docs/EPI_MQ_FIRST_NIGHT_BUNDLE_ROUTE_2026-09-16.md`  
+> This document is retained as historical reasoning only. Its former immediate execution sequence (`EPI-MQ-1 -> 2 -> 2.5 -> 3 -> 4 -> 5`) must not be resumed mechanically. The current product route evaluates complete first-night information bundles, derives BEGINNER Badness Gates from experiments, and selects randomly among acceptable survivors.
+
 > Date: 2026-09-15 Australia/Sydney  
 > Repository baseline: `main` at `1cdc35886aea654ad82bf4e2a388095880686ed5`  
 > Program: Epistemic Misinformation Quality / Productive Uncertainty  
-> Decision: **MODIFY — EPI-MQ must evaluate truthful and false legal information in one quality model and ultimately decide both whether to lie and which lie to tell.**
+> Historical decision: **MODIFY — EPI-MQ must evaluate truthful and false legal information in one quality model and ultimately decide both whether to lie and which lie to tell.**
 
 ## 1. Why this re-audit exists
 
@@ -135,6 +139,8 @@ EPI-MQ DEFERRED / unsupported semantics
 Thus existing policy code remains valuable as a compatibility and capability-degradation path.
 
 ## 6. Corrected implementation sequence
+
+> **Historical sequence only. See the superseding 2026-09-16 route before implementing any phase below.**
 
 ### EPI-MQ-0.5 — Capability boundary
 
@@ -321,7 +327,7 @@ It must not directly constrain worlds with Storyteller-only facts such as:
 - demon bluffs unknown to the recipient;
 - recommendation seed or internal score metadata.
 
-Historical replay must regenerate hidden mechanics from rules/per-world state rather than copying actual hidden Storyteller choices into every possible world.
+Historical replay must regenerate hidden mechanics from rules/per-world state rather than copying actual Storyteller choices into every possible world.
 
 ## 10. Test strategy
 
@@ -359,7 +365,9 @@ Do not mix the EPI-MQ restart with:
 
 ## 12. Current execution order
 
-The authoritative route is now:
+> **Historical only — superseded on 2026-09-16.**
+
+The route recorded by this audit was:
 
 ```text
 EPI-MQ-0.5  Capability Boundary
@@ -371,8 +379,8 @@ EPI-MQ-4    Unified Impaired-Information Production Cutover
 EPI-MQ-5    Calibration / Fallback Refinement
 ```
 
-The immediate implementation target is **EPI-MQ-0.5**.
+For current execution order, read `docs/CURRENT_DEVELOPMENT_ROADMAP.md` and `docs/EPI_MQ_FIRST_NIGHT_BUNDLE_ROUTE_2026-09-16.md`.
 
-## 13. Stable decision
+## 13. Historical stable decision
 
-> **The fixed truthful-vs-false probability policy is a temporary/fallback mechanism, not the final Storyteller intelligence. When exact EPI-MQ evaluation is READY, truthful and false legal candidates must be evaluated together so that the algorithm itself decides whether to tell the truth and, when lying is better, which lie to tell.**
+> **Historical reasoning retained:** the fixed truthful-vs-false probability policy should not be the final Storyteller intelligence. This remains useful background, but the current route first validates complete first-night bundle Badness filtering and random selection among acceptable bundles.
