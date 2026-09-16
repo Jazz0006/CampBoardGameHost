@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -13,8 +14,12 @@ class ShownRoleAtSemanticContractTest {
         )
 
         val encoded = EpistemicSemanticJson.encode(proposition)
+        val json = JSONObject(encoded)
 
-        assertEquals("{\"kind\":\"shown-role-at\",\"role\":\"Chef\",\"seat\":3}", encoded)
+        assertEquals("shown-role-at", json.getString("kind"))
+        assertEquals("Chef", json.getString("role"))
+        assertEquals(3, json.getInt("seat"))
+        assertEquals(encoded, EpistemicSemanticJson.encode(proposition))
         assertEquals(proposition, EpistemicSemanticJson.decodeInformationProposition(encoded))
     }
 }
