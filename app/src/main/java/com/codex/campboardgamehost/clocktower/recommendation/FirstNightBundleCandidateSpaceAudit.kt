@@ -28,11 +28,14 @@ internal enum class FirstNightBundleDeferredComplexity {
  *
  * [optionIds] are identities emitted by the existing legality owner (or canonical numeric truth
  * values for fixed Chef/Empath information). This type never regenerates candidate legality.
+ * [profileExposure] records whether changing this factor can change the first experiment's
+ * PUBLIC_GOOD_INFO projection; it is not durable observation visibility.
  */
 internal data class FirstNightBundleCandidateFactorAudit(
     val factorId: String,
     val kind: FirstNightBundleCandidateFactorKind,
     val control: FirstNightBundleEntryControl,
+    val profileExposure: FirstNightBundleProfileExposure,
     val sourceSeat: Int? = null,
     val optionIds: List<String>,
 ) {
@@ -60,12 +63,18 @@ internal data class FirstNightBundleCandidateFactorAudit(
  * healthy-slice producer set is known to be incomplete, so this audit must not pretend its partial
  * product is the count of complete legal Night 1 bundles.
  *
+ * [representedPublicProjectionUpperBound] is the Cartesian product after removing factors that are
+ * known to have no immediate BEGINNER_PUBLIC_GOOD_INFO exposure. It is an upper bound rather than a
+ * claim about distinct epistemic observations: FN-BUNDLE-1/2 must materialize observations and
+ * deduplicate by canonical projected-observation signature before exact evaluation.
+ *
  * This is deliberately not an evaluator result. [evaluatedCount] remains zero and sampling remains
  * disabled until a later harness actually materializes complete bundles as hypothetical observations.
  */
 internal data class FirstNightBundleCandidateSpaceAudit(
     val factors: List<FirstNightBundleCandidateFactorAudit>,
     val rawCartesianCount: BigInteger,
+    val representedPublicProjectionUpperBound: BigInteger,
     val legalCompleteBundleCount: BigInteger?,
     val evaluatedCount: BigInteger = BigInteger.ZERO,
     val samplingApplied: Boolean = false,
@@ -77,6 +86,12 @@ internal data class FirstNightBundleCandidateSpaceAudit(
             "First-night candidate factor IDs must be unique."
         }
         require(rawCartesianCount.signum() >= 0) { "First-night raw Cartesian count cannot be negative." }
+        require(representedPublicProjectionUpperBound.signum() >= 0) {
+            "First-night public projection upper bound cannot be negative."
+        }
+        require(representedPublicProjectionUpperBound <= rawCartesianCount) {
+            "First-night public projection upper bound cannot exceed the represented raw Cartesian count."
+        }
         require(legalCompleteBundleCount == null || legalCompleteBundleCount.signum() >= 0) {
             "First-night legal complete-bundle count cannot be negative."
         }
@@ -131,14 +146,18 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
             demonBluffsFactor(game, roleDefinitions)?.let(::add)
         }.sortedBy(FirstNightBundleCandidateFactorAudit::factorId)
 
-        val rawCartesianCount = factors.fold(BigInteger.ONE) { product, factor ->
-            product.multiply(BigInteger.valueOf(factor.optionCount.toLong()))
-        }
+        val rawCartesianCount = productOfOptionCounts(factors)
+        val representedPublicProjectionUpperBound = productOfOptionCounts(
+            factors.filter { factor ->
+                factor.profileExposure == FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO
+            },
+        )
         val deferredComplexities = deferredComplexities(game)
 
         return FirstNightBundleCandidateSpaceAudit(
             factors = factors,
             rawCartesianCount = rawCartesianCount,
+            representedPublicProjectionUpperBound = representedPublicProjectionUpperBound,
             legalCompleteBundleCount = rawCartesianCount.takeIf { deferredComplexities.isEmpty() },
             excludedPlayerControlledElements = buildSet {
                 if (game.players.any { it.actualRole == fortuneTeller }) add(FORTUNE_TELLER_TARGET)
@@ -168,6 +187,7 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
                 factorId = "pair.$roleKey.seat-${source.seat}",
                 kind = FirstNightBundleCandidateFactorKind.PAIR_INFORMATION,
                 control = FirstNightBundleEntryControl.STORYTELLER_CONTROLLED,
+                profileExposure = FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
                 sourceSeat = source.seat,
                 optionIds = candidates.map { it.candidateId }.sorted(),
             )
@@ -194,6 +214,7 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
                     // Multiple healthy truths are produced only by legal registration alternatives.
                     FirstNightBundleEntryControl.STORYTELLER_CONTROLLED
                 },
+                profileExposure = FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
                 sourceSeat = source.seat,
                 optionIds = truthValues.map { value -> "value-$value" },
             )
@@ -207,6 +228,7 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
             factorId = "setup.red-herring",
             kind = FirstNightBundleCandidateFactorKind.RED_HERRING,
             control = FirstNightBundleEntryControl.STORYTELLER_CONTROLLED,
+            profileExposure = FirstNightBundleProfileExposure.NOT_SHARED,
             optionIds = candidates.map { it.candidateId }.sorted(),
         )
     }
@@ -223,6 +245,7 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
             factorId = "setup.demon-bluffs",
             kind = FirstNightBundleCandidateFactorKind.DEMON_BLUFFS,
             control = FirstNightBundleEntryControl.STORYTELLER_CONTROLLED,
+            profileExposure = FirstNightBundleProfileExposure.NOT_SHARED,
             optionIds = candidates.map { it.candidateId }.sorted(),
         )
     }
@@ -236,6 +259,11 @@ internal object TroubleBrewingFirstNightBundleCandidateSpaceAuditor {
             add(FirstNightBundleDeferredComplexity.POISONER_TARGET)
         }
     }
+
+    private fun productOfOptionCounts(factors: List<FirstNightBundleCandidateFactorAudit>): BigInteger =
+        factors.fold(BigInteger.ONE) { product, factor ->
+            product.multiply(BigInteger.valueOf(factor.optionCount.toLong()))
+        }
 
     private fun pairRoleKey(role: RoleId): String = when (role) {
         washerwoman -> "washerwoman"
