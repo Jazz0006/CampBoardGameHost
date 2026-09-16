@@ -10,11 +10,13 @@ class FirstNightBundleBeginnerCorpusReviewTest {
     fun `pilot corpus keeps scenario-level holdout isolation and raw review evidence`() {
         val corpus = FirstNightBundleBeginnerCorpusBuilder.build()
 
-        assertEquals(3, corpus.scenarios.size)
+        assertEquals(2, corpus.scenarios.size)
+        assertEquals(
+            setOf(FirstNightBeginnerCorpusPartition.CALIBRATION, FirstNightBeginnerCorpusPartition.HOLDOUT),
+            corpus.scenarios.map { it.partition }.toSet(),
+        )
         assertTrue(corpus.items.isNotEmpty())
         assertTrue(corpus.items.all { it.label == FirstNightBeginnerCorpusLabel.UNREVIEWED })
-        assertTrue(corpus.items.any { it.partition == FirstNightBeginnerCorpusPartition.CALIBRATION })
-        assertTrue(corpus.items.any { it.partition == FirstNightBeginnerCorpusPartition.HOLDOUT })
 
         val scenarioPartitions = corpus.scenarios.associate { it.scenarioId to it.partition }
         assertEquals(corpus.scenarios.size, scenarioPartitions.size)
@@ -22,23 +24,16 @@ class FirstNightBundleBeginnerCorpusReviewTest {
             assertEquals(scenarioPartitions.getValue(item.scenarioId), item.partition)
             assertTrue(item.selectionReasons.isNotEmpty())
             assertTrue(item.publicObservations.isNotEmpty())
-            assertTrue(item.perspectives.isNotEmpty())
             assertTrue(item.anchorLeaveOneOut.isNotEmpty())
-            assertTrue(item.perspectives.all { perspective ->
-                perspective.afterWorldCount.signum() > 0 &&
-                    perspective.afterWorldCount <= perspective.beforeWorldCount
-            })
+            assertTrue(item.anchorDiagnostics.afterWorldCount.signum() > 0)
+            assertTrue(item.anchorDiagnostics.afterWorldCount <= item.anchorDiagnostics.beforeWorldCount)
         }
 
         corpus.scenarios.forEach { scenario ->
-            val expectedGoodSeats = scenario.seating
-                .filterNot { (_, role) -> role.value in setOf("Scarlet Woman", "Baron", "Imp") }
-                .map { it.first }
-                .sorted()
             assertTrue(scenario.items.size in 4..8)
-            scenario.items.forEach { item ->
-                assertEquals(expectedGoodSeats, item.perspectives.map { it.recipientSeat }.sorted())
-            }
+            assertTrue(scenario.items.all { item ->
+                item.anchorDiagnostics.recipientSeat == scenario.anchorRecipientSeat
+            })
         }
 
         assertTrue(corpus.items.any {
