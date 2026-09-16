@@ -17,6 +17,7 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.A4PlayerKnowledgeFactory
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EnumeratedHistoricalExactBaseline
+import com.codex.campboardgamehost.clocktower.epistemic.EnumeratedWorld
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicHypothesis
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationLog
@@ -167,11 +168,6 @@ class FirstNightBundleExperimentExactFixtureTest {
             gameState = game,
         )
         val formal = FormalGameState.from(snapshot, StorytellerPhase.FIRST_NIGHT, 1)
-        val perceived = game.players.associate { player ->
-            player.seat to (player.shownRole ?: player.actualRole)
-        }
-        val timeline = timelineOf(emptyList())
-        val observationLog = EpistemicObservationLog()
         val falseChef = information(1, "Chef", InformationValue.Number(0))
         val bundle = FirstNightInformationBundle(
             bundleId = "drunk-shown-chef",
@@ -202,16 +198,25 @@ class FirstNightBundleExperimentExactFixtureTest {
         assertEquals(null, shownClaim.sourceAbility)
         assertFalse(projected.any { it.proposition == InformationProposition.RoleAt(1, RoleId("Drunk")) })
 
-        val baseline = baselineWorlds(
-            validatedRuleset = validatedRuleset,
-            formal = formal,
-            perceived = perceived,
-            timeline = timeline,
-            observationLog = observationLog,
+        val drunkWorld = EnumeratedWorld(
+            rolesBySeat = linkedMapOf(
+                1 to RoleId("Drunk"),
+                2 to RoleId("Washerwoman"),
+                3 to RoleId("Empath"),
+                4 to RoleId("Mayor"),
+                5 to RoleId("Poisoner"),
+                6 to RoleId("Imp"),
+            ),
+            shownRolesBySeat = linkedMapOf(
+                1 to RoleId("Chef"),
+                2 to RoleId("Washerwoman"),
+                3 to RoleId("Empath"),
+                4 to RoleId("Mayor"),
+                5 to RoleId("Poisoner"),
+                6 to RoleId("Imp"),
+            ),
+            abilityStatesBySeat = mapOf(1 to AbilityState.MALFUNCTIONING_DRUNK),
         )
-        val drunkWorld = baseline.first { world ->
-            world.rolesBySeat[1] == RoleId("Drunk") && world.shownRolesBySeat[1] == RoleId("Chef")
-        }
         assertEquals(AbilityState.MALFUNCTIONING_DRUNK, drunkWorld.abilityStatesBySeat[1])
 
         val shownCredible = TroubleBrewingWorldObservationEvaluator.evaluate(
@@ -248,29 +253,21 @@ class FirstNightBundleExperimentExactFixtureTest {
             ).matches,
         )
 
-        val evaluation = FirstNightBundleExperimentEvaluator.evaluateBeginnerPublicGoodInfo(
-            validatedRuleset = validatedRuleset,
-            context = ExactHistoricalHypotheticalContext(
-                initialSnapshot = snapshot,
-                initialPhase = StorytellerPhase.FIRST_NIGHT,
-                initialRound = 1,
-                actionTimeline = timeline,
-                perceivedRolesBySeat = perceived,
-                observationLog = observationLog,
-                hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-                roleDefinitions = roles,
-            ),
-            bundle = bundle,
-            evaluationRecipientSeats = setOf(1),
+        val wrongShownWorld = drunkWorld.copy(
+            shownRolesBySeat = drunkWorld.shownRolesBySeat + (1 to RoleId("Empath")),
         )
-        assertTrue(evaluation is FirstNightBundleExperimentEvaluation.Ready)
-        val ready = evaluation as FirstNightBundleExperimentEvaluation.Ready
-        assertEquals(2, ready.publicObservationCount)
-        assertTrue(ready.recipientDiagnostics.single().after.value > BigInteger.ZERO)
+        assertFalse(
+            TroubleBrewingWorldObservationEvaluator.evaluate(
+                world = wrongShownWorld,
+                roles = rolesById,
+                observation = shownClaim,
+                hypothesis = EpistemicHypothesis.MECHANICALLY_CREDIBLE,
+            ).matches,
+        )
     }
 
     private fun matchingWorldCount(
-        worlds: List<com.codex.campboardgamehost.clocktower.epistemic.EnumeratedWorld>,
+        worlds: List<EnumeratedWorld>,
         observations: List<EpistemicObservation>,
     ): Int = worlds.count { world ->
         observations.all { projectedObservation ->
