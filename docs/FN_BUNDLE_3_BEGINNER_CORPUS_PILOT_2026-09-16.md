@@ -97,7 +97,7 @@ Partitioning is by complete setup + seating scenario, not by individual signatur
 
 This prevents highly related signatures from the same position leaking between calibration and holdout.
 
-### CALIBRATION
+### CALIBRATION A — pair-rich interaction stress
 
 Scenario:
 
@@ -115,7 +115,29 @@ Scenario:
 
 Anchor perspective: seat 1.
 
-Every projected signature is evaluated. Only a small deterministic review subset is exported.
+This scenario deliberately has several mutually interacting public first-night claims and is intended to expose confirmation-chain collapse as well as acceptable middle cases.
+
+### CALIBRATION B — low-information stress
+
+Scenario:
+
+`cal-low-information-two-sources`
+
+```text
+1 Washerwoman
+2 Chef
+3 Monk
+4 Soldier
+5 Virgin
+6 Scarlet Woman
+7 Imp
+```
+
+Anchor perspective: seat 1.
+
+Only Washerwoman and Chef contribute first-night public information in this healthy-stage setup. The scenario exists specifically to give calibration evidence on the weak-information side rather than deriving `BAD_TOO_WEAK` ideas from a clue-rich setup alone.
+
+Every projected signature in both calibration scenarios is evaluated. Only a small deterministic review subset is exported.
 
 ### HOLDOUT
 
@@ -141,7 +163,7 @@ It must not reveal:
 
 Every legal projected signature is still evaluated for the scenario anchor.
 
-The calibration export selects a small deterministic set, deduplicating overlaps among:
+The calibration export selects a small deterministic set per calibration scenario, deduplicating overlaps among:
 
 ```text
 LOWEST_AFTER_WORLD_COUNT
@@ -175,6 +197,8 @@ UNCERTAIN
 
 The judgment concerns the whole public first-night information ecology for a beginner table. No single metric maps mechanically to a label.
 
+Assistant analysis may propose provisional review suggestions, but those suggestions must remain explicitly distinct from final human-reviewed labels.
+
 ## 6. Evidence preserved
 
 Each internal corpus item retains:
@@ -193,13 +217,15 @@ Do not describe unweighted exact-world fractions as posterior probabilities.
 
 ## 7. Cost boundary
 
-An exploratory implementation evaluated three scenarios and expanded selected items across every good-player perspective. That was unnecessarily expensive for the first human-review loop.
+An exploratory implementation evaluated several scenarios and expanded selected items across every good-player perspective. That was unnecessarily expensive for the first human-review loop.
 
 The retained pilot uses one explicit anchor perspective per scenario.
 
 Cross-recipient robustness remains a later experiment and should be added only if the first calibration evidence shows perspective dependence matters materially.
 
 `FirstNightBundleBeginnerCorpusReviewTest` is T3/full coverage and is excluded from `testFast`.
+
+The low-information calibration scenario was added only after the corrected pair-rich report showed that one clue-rich setup did not span the weak-information region well enough for calibration.
 
 ## 8. Testing rule
 
@@ -216,18 +242,27 @@ stable retained contract
 
 The public-claim correction updated retained contracts; it did not add a RED-only test stage.
 
-## 9. Current acceptance criteria
+The low-information calibration expansion likewise reuses the retained corpus contract instead of adding a ceremonial failing test.
 
-Before manual labels resume:
+## 9. Current acceptance evidence and checkpoint
 
-1. ordinary FAST must pass after the public-claim fixture updates;
-2. one current-head `[full-ci]` checkpoint must pass Android full + APK, ASP, Real Clingo, R2 and aggregate gate;
-3. the generated report must contain calibration details only;
-4. replacement holdout details must remain sealed;
-5. calibration diagnostics must demonstrate that public role claims no longer mechanically confirm all claimed good identities;
-6. coherent evil-bluff counterworlds must survive where logically possible.
+The corrected public-claim model already passed one complete T4 checkpoint at head `130a109349d8bbec8fbdd920227581298b8dac2b`:
 
-No numeric Badness threshold is part of this acceptance checkpoint.
+- Android full + debug APK: green;
+- ASP contract/golden validation: green;
+- Real Clingo cross-validation: green;
+- R2 main-thread boundary: green;
+- aggregate CI gate: green;
+- calibration-only report export: green;
+- sealed holdout details omitted.
+
+That report demonstrated that public claims no longer automatically lock the actual evil team: sampled pair-rich signatures ranged from broad evil-bluff counterworlds to genuine combination-collapse cases.
+
+After adding the second low-information calibration scenario, ordinary FAST and R2 are green at `04f43f2609c2b94d5563979e696b78738b544572`.
+
+This documentation commit intentionally uses `[full-ci]` to require one new current-head full/T4 checkpoint that includes the low-information calibration scenario before its diagnostics are used for review.
+
+No numeric Badness threshold is part of this checkpoint.
 
 ## 10. Calibration / holdout discipline
 
@@ -247,14 +282,16 @@ Do not move inconvenient holdout cases into calibration.
 
 ## 11. Next step
 
-After current-head T4:
+After this current-head T4:
 
-1. inspect the calibration-only report;
-2. manually label calibration items;
-3. inspect whether diagnostics meaningfully separate labels;
-4. add calibration scenarios if the one pilot setup is too narrow;
-5. propose simple gates only when evidence is sufficient;
-6. freeze those gates;
-7. only then open sealed holdout evaluation.
+1. inspect the calibration-only report for both calibration scenarios;
+2. compare the pair-rich and low-information diagnostic ranges;
+3. produce provisional review suggestions without pretending they are final human labels;
+4. manually settle calibration labels;
+5. inspect whether diagnostics meaningfully separate those labels;
+6. add more calibration scenarios only if the two-scenario pilot still leaves an important structural gap;
+7. propose simple gates only when evidence is sufficient;
+8. freeze those gates;
+9. only then open sealed holdout evaluation.
 
 Real Storyteller records such as ClockTracker remain an external ecological calibration layer after this deterministic baseline is trustworthy. Historical Storyteller choices are evidence, not unique ground-truth labels, and unchosen alternatives must not automatically become negative training examples.
