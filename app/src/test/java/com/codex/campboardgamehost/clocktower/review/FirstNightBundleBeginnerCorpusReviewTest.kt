@@ -3,13 +3,13 @@ package com.codex.campboardgamehost.clocktower.review
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import java.math.BigInteger
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FirstNightBundleBeginnerCorpusReviewTest {
     @Test
-    fun `review report exposes calibration evidence while sealing holdout`() {
+    fun `review report exposes calibration evidence and only a sealed holdout count`() {
         val diagnostics = FirstNightBeginnerDiagnostics(
             recipientSeat = 1,
             beforeWorldCount = BigInteger.valueOf(100),
@@ -37,45 +37,46 @@ class FirstNightBundleBeginnerCorpusReviewTest {
                 ),
             ),
         )
-        val holdoutItem = calibrationItem.copy(
-            itemId = "sealed-holdout:sig-secret",
-            scenarioId = "sealed-holdout",
-            partition = FirstNightBeginnerCorpusPartition.HOLDOUT,
-            signatureId = "sig-secret",
-            publicObservations = listOf("SECRET_HOLDOUT_CLAIM"),
+        val calibrationScenario = FirstNightBeginnerCorpusScenario(
+            scenarioId = "calibration",
+            partition = FirstNightBeginnerCorpusPartition.CALIBRATION,
+            anchorRecipientSeat = 1,
+            seating = listOf(1 to RoleId("Washerwoman")),
+            rawCompleteBundleCount = BigInteger.TEN,
+            distinctProjectedSignatureCount = 2,
+            items = listOf(calibrationItem),
         )
-        val corpus = FirstNightBeginnerCorpus(
-            scenarios = listOf(
-                FirstNightBeginnerCorpusScenario(
-                    scenarioId = "calibration",
-                    partition = FirstNightBeginnerCorpusPartition.CALIBRATION,
-                    anchorRecipientSeat = 1,
-                    seating = listOf(1 to RoleId("Washerwoman")),
-                    rawCompleteBundleCount = BigInteger.TEN,
-                    distinctProjectedSignatureCount = 2,
-                    items = listOf(calibrationItem),
-                ),
-                FirstNightBeginnerCorpusScenario(
-                    scenarioId = "sealed-holdout",
-                    partition = FirstNightBeginnerCorpusPartition.HOLDOUT,
-                    anchorRecipientSeat = 1,
-                    seating = listOf(1 to RoleId("Chef")),
-                    rawCompleteBundleCount = BigInteger.TEN,
-                    distinctProjectedSignatureCount = 2,
-                    items = listOf(holdoutItem),
-                ),
-            ),
-        )
+        val corpus = FirstNightBeginnerCorpus(listOf(calibrationScenario))
 
-        val report = FirstNightBundleBeginnerCorpusBuilder.renderMarkdown(corpus)
+        val report = FirstNightBundleBeginnerCorpusBuilder.renderMarkdown(
+            corpus = corpus,
+            sealedHoldoutScenarioCount = 1,
+        )
 
         assertTrue(report.contains("calibration"))
         assertTrue(report.contains("synthetic calibration claim"))
         assertTrue(report.contains("Sealed holdout scenarios: 1"))
-        assertFalse(report.contains("sealed-holdout"))
-        assertFalse(report.contains("sig-secret"))
-        assertFalse(report.contains("SECRET_HOLDOUT_CLAIM"))
+        assertTrue(report.contains("Holdout diagnostics are not evaluated during calibration."))
         assertEquals(FirstNightBeginnerCorpusLabel.UNREVIEWED, calibrationItem.label)
+    }
+
+    @Test
+    fun `review export rejects an evaluated holdout scenario`() {
+        val holdoutScenario = FirstNightBeginnerCorpusScenario(
+            scenarioId = "holdout-should-not-be-evaluated",
+            partition = FirstNightBeginnerCorpusPartition.HOLDOUT,
+            anchorRecipientSeat = 1,
+            seating = listOf(1 to RoleId("Chef")),
+            rawCompleteBundleCount = BigInteger.ONE,
+            distinctProjectedSignatureCount = 1,
+            items = emptyList(),
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            FirstNightBundleBeginnerCorpusBuilder.renderMarkdown(
+                FirstNightBeginnerCorpus(listOf(holdoutScenario)),
+            )
+        }
     }
 
     @Test
