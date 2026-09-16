@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.clocktower.domain.DecisionCandidate
 import com.codex.campboardgamehost.clocktower.domain.DecisionCorrectionEvent
 import com.codex.campboardgamehost.clocktower.domain.DecisionEventStatus
 import com.codex.campboardgamehost.clocktower.domain.DecisionEvaluation
@@ -7,7 +8,9 @@ import com.codex.campboardgamehost.clocktower.domain.DecisionExplanation
 import com.codex.campboardgamehost.clocktower.domain.DecisionHistoryArchive
 import com.codex.campboardgamehost.clocktower.domain.DynamicDecisionRecommendation
 import com.codex.campboardgamehost.clocktower.domain.DynamicInformationOutcome
+import com.codex.campboardgamehost.clocktower.domain.EffectDraft
 import com.codex.campboardgamehost.clocktower.domain.RecommendationPlan
+import com.codex.campboardgamehost.clocktower.domain.SetupClueOutcome
 import com.codex.campboardgamehost.clocktower.domain.StorytellerDecisionEvent
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RecommendationStyle
@@ -16,6 +19,7 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerDecision
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.history.CrossGameHistory
 import com.codex.campboardgamehost.clocktower.history.HistoricalClueSignature
+import com.codex.campboardgamehost.clocktower.recommendation.NaturalPairInformationCandidateGenerator
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.ImpairedTruthfulException
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
 import com.codex.campboardgamehost.clocktower.recommendation.dynamic.PairInformationCandidate
@@ -131,7 +135,28 @@ internal class ClocktowerRecommendationCoordinator(
 
     fun recommendPair(candidates: List<PairInformationCandidate>) = nightModule.recommendPair(candidates)
 
-    fun naturalPairCandidates(game: GameState) = setupModule.naturalPairCandidates(game)
+    /**
+     * Compatibility shape for the existing first-night precompute cache.
+     * Pair-information truth ownership is canonical in [NaturalPairInformationCandidateGenerator];
+     * this method only wraps those candidates in the historical SetupClueOutcome transport type.
+     */
+    fun naturalPairCandidates(game: GameState): List<DecisionCandidate<SetupClueOutcome>> =
+        NaturalPairInformationCandidateGenerator.generatePerceivedFirstNightInformationSpace(game).map { candidate ->
+            val sourceAbility = candidate.effects
+                .filterIsInstance<EffectDraft.PlayerInformation>()
+                .single()
+                .sourceAbility
+            DecisionCandidate(
+                candidateId = candidate.candidateId,
+                candidateFamilyId = candidate.candidateFamilyId,
+                outcome = SetupClueOutcome.PairInformation(sourceAbility, candidate.outcome),
+                abilityState = candidate.abilityState,
+                truthRelation = candidate.truthRelation,
+                registrations = candidate.registrations,
+                effects = candidate.effects,
+                metadata = candidate.metadata,
+            )
+        }
 
     /**
      * Selects a recommendation suggestion only. Durable information must still pass through
