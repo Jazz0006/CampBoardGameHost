@@ -32,13 +32,6 @@ internal data class ExactHistoricalHypotheticalContext(
     }
 }
 
-/**
- * A complete set of hypothetical observations that must hold together in the same exact world.
- *
- * The evaluator deliberately accepts already-bound [EpistemicObservation] values. Draft-to-public
- * projection belongs to the bundle-composition/profile layer; exact epistemic evaluation must not
- * silently reinterpret observation visibility or timeline identity.
- */
 internal data class ExactHypotheticalObservationBundleQuery(
     val bundleId: String,
     val recipientSeat: Int,
@@ -50,13 +43,7 @@ internal data class ExactHypotheticalObservationBundleQuery(
     }
 }
 
-/**
- * Explainable strategic structure of one exact possible-world set.
- *
- * This is deliberately descriptive rather than evaluative: no Badness thresholds, probabilities,
- * or preference score belong here. Cover sizes are set-union sizes: the number of seats needed to
- * cover every surviving demon placement or every surviving evil-team placement respectively.
- */
+/** Descriptive strategic structure only. Badness policy does not belong in the exact evaluator. */
 internal data class ExactWorldStructureDiagnostics(
     val possibleDemonSeats: Set<Int>,
     val evilTeamSeatConfigurations: Set<Set<Int>>,
@@ -88,10 +75,6 @@ internal data class ExactHypotheticalObservationBundleDiagnostics(
     val afterStructure: ExactWorldStructureDiagnostics,
 )
 
-/**
- * Unsupported exact semantics are represented only as [Deferred]. A supported bundle which leaves
- * zero worlds is still [Ready] with an exact zero AFTER cardinality; DEFERRED must never mean UNSAT.
- */
 internal sealed interface ExactHypotheticalObservationBundleEvaluation {
     data class Ready(
         val diagnostics: List<ExactHypotheticalObservationBundleDiagnostics>,
@@ -111,16 +94,14 @@ internal sealed interface ExactHypotheticalObservationBundleEvaluation {
 /**
  * Exact, mutation-free historical evaluator for composed hypothetical observations.
  *
- * One historical BEFORE baseline is built per recipient and shared by every bundle for that
- * recipient. Every observation in a bundle is evaluated against the same candidate world, so bundle
- * semantics are logical conjunction rather than a sum or merge of independently scored clues.
- * Trouble Brewing observation truth/registration/malfunction semantics remain owned by
- * [TroubleBrewingWorldObservationEvaluator].
+ * A pristine first-night experiment uses constant-memory source enumeration. BEFORE is scanned once
+ * per recipient. Queries are then grouped by their strict public shown-role claims; each such group
+ * re-enumerates lazily, filters those cheap identity claims before retaining any worlds, and only
+ * materializes the much smaller retained family for clue conjunction / leave-one-out diagnostics.
+ * This avoids constructing the enormous unconstrained 7-player world family in memory.
  *
- * A pristine Night-1 context has no historical replay to perform, so it may use the already-proven
- * direct ZDD representation internally. This is an experiment/evaluator representation choice, not
- * a change to the production A4 rollout policy. Historical contexts continue to use the enumerated
- * replay snapshot until historical symbolic replay itself is validated.
+ * Historical replay keeps the existing enumerated historical baseline. No production A4/ZDD rollout
+ * decision is changed by this experiment evaluator.
  */
 internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
     fun evaluate(
@@ -142,11 +123,7 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
         }
 
         val snapshot = context.initialSnapshot
-        val formal = FormalGameState.from(
-            snapshot = snapshot,
-            phase = context.initialPhase,
-            round = context.initialRound,
-        )
+        val formal = FormalGameState.from(snapshot, context.initialPhase, context.initialRound)
         val knowledgeBySeat = A4PlayerKnowledgeFactory.createAll(
             formal = formal,
             perceivedRolesBySeat = context.perceivedRolesBySeat.toMap(),
@@ -156,15 +133,190 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
         val rolesById = roles.associateBy(RoleDefinition::id)
         require(rolesById.isNotEmpty()) { "Exact hypothetical bundle evaluation requires role definitions." }
 
-        val stableQueries = queries.map { query ->
-            query.copy(observations = query.observations.toList())
+        val stableQueries = queries.map { query -> query.copy(observations = query.observations.toList()) }
+        validateQueries(stableQueries, knowledgeBySeat, formal.snapshotId)
+
+        val pristineInitialNight =
+            context.initialPhase == StorytellerPhase.FIRST_NIGHT &&
+                context.initialRound == 1 &&
+                context.actionTimeline.entries.isEmpty() &&
+                context.observationLog.records.isEmpty()
+
+        return if (pristineInitialNight) {
+            evaluatePristineInitialNight(
+                snapshot = snapshot,
+                knowledgeBySeat = knowledgeBySeat,
+                roles = roles,
+                rolesById = rolesById,
+                hypothesis = context.hypothesis,
+                queries = stableQueries,
+            )
+        } else {
+            evaluateHistorical(
+                validatedRuleset = validatedRuleset,
+                snapshot = snapshot,
+                knowledgeBySeat = knowledgeBySeat,
+                roles = roles,
+                rolesById = rolesById,
+                context = context,
+                queries = stableQueries,
+            )
         }
-        stableQueries.forEach { query ->
+    }
+
+    private fun evaluatePristineInitialNight(
+        snapshot: GameSnapshot,
+        knowledgeBySeat: Map<Int, PlayerKnowledgeSnapshot>,
+        roles: List<RoleDefinition>,
+        rolesById: Map<RoleId, RoleDefinition>,
+        hypothesis: EpistemicHypothesis,
+        queries: List<ExactHypotheticalObservationBundleQuery>,
+    ): ExactHypotheticalObservationBundleEvaluation.Ready {
+        val diagnostics = mutableListOf<ExactHypotheticalObservationBundleDiagnostics>()
+
+        queries.groupBy(ExactHypotheticalObservationBundleQuery::recipientSeat)
+            .toSortedMap()
+            .forEach { (recipientSeat, recipientQueries) ->
+                val knowledge = knowledgeBySeat.getValue(recipientSeat)
+                val worldSequence: () -> Sequence<EnumeratedWorld> = {
+                    exactInitialNightWorldSequence(
+                        snapshot = snapshot,
+                        knowledge = knowledge,
+                        roles = roles,
+                        rolesById = rolesById,
+                    )
+                }
+                val beforeScan = scanWorlds(worldSequence(), rolesById)
+
+                recipientQueries
+                    .groupBy(::strictShownRoleKey)
+                    .toSortedMap(compareBy { key -> key.joinToString("|") { "${it.seat}:${it.role.value}" } })
+                    .forEach { (shownKey, groupedQueries) ->
+                        val shownObservations = groupedQueries.first().observations.filter(::isStrictShownRoleClaim)
+                            .distinctBy { observation -> observation.proposition }
+                        require(shownObservations.map { it.proposition as InformationProposition.ShownRoleAt }
+                            .sortedWith(compareBy({ it.seat }, { it.role.value })) == shownKey) {
+                            "Strict shown-role grouping drifted from the query semantics."
+                        }
+
+                        val identityRetained = worldSequence()
+                            .filter { world ->
+                                shownObservations.all { observation ->
+                                    TroubleBrewingWorldObservationEvaluator.evaluate(
+                                        world = world,
+                                        roles = rolesById,
+                                        observation = observation,
+                                        hypothesis = hypothesis,
+                                    ).matches
+                                }
+                            }
+                            .toList()
+
+                        groupedQueries.forEach { query ->
+                            val remaining = query.observations.filterNot(::isStrictShownRoleClaim)
+                            val afterWorlds = identityRetained.filter { world ->
+                                remaining.all { observation ->
+                                    TroubleBrewingWorldObservationEvaluator.evaluate(
+                                        world = world,
+                                        roles = rolesById,
+                                        observation = observation,
+                                        hypothesis = hypothesis,
+                                    ).matches
+                                }
+                            }
+                            diagnostics += ExactHypotheticalObservationBundleDiagnostics(
+                                bundleId = query.bundleId,
+                                recipientSeat = query.recipientSeat,
+                                before = beforeScan.cardinality,
+                                after = exactCardinality(afterWorlds.size.toLong()),
+                                beforeStructure = beforeScan.structure,
+                                afterStructure = summarizeWorldStructure(afterWorlds.asSequence(), rolesById),
+                            )
+                        }
+                    }
+            }
+
+        val byId = diagnostics.associateBy { it.bundleId to it.recipientSeat }
+        return ExactHypotheticalObservationBundleEvaluation.Ready(
+            diagnostics = queries.map { query -> byId.getValue(query.bundleId to query.recipientSeat) },
+        )
+    }
+
+    private fun evaluateHistorical(
+        validatedRuleset: ValidatedClocktowerRuleset,
+        snapshot: GameSnapshot,
+        knowledgeBySeat: Map<Int, PlayerKnowledgeSnapshot>,
+        roles: List<RoleDefinition>,
+        rolesById: Map<RoleId, RoleDefinition>,
+        context: ExactHistoricalHypotheticalContext,
+        queries: List<ExactHypotheticalObservationBundleQuery>,
+    ): ExactHypotheticalObservationBundleEvaluation.Ready {
+        val baselineBySeat = queries.map { it.recipientSeat }.distinct().associateWith { recipientSeat ->
+            EnumeratedHistoricalExactBaseline.build(
+                validatedRuleset = validatedRuleset,
+                rulesetRef = snapshot.rulesetRef,
+                setupKnowledge = knowledgeBySeat.getValue(recipientSeat),
+                hypothesis = context.hypothesis,
+                roleDefinitions = roles,
+                initialPhase = context.initialPhase,
+                initialRound = context.initialRound,
+                actionTimeline = context.actionTimeline,
+                observationLog = context.observationLog,
+            ).worldSet.enumeratedWorlds()
+        }
+        val beforeBySeat = baselineBySeat.mapValues { (_, worlds) -> scanWorlds(worlds.asSequence(), rolesById) }
+
+        return ExactHypotheticalObservationBundleEvaluation.Ready(
+            diagnostics = queries.map { query ->
+                val beforeWorlds = baselineBySeat.getValue(query.recipientSeat)
+                val afterWorlds = beforeWorlds.filter { world ->
+                    query.observations.all { observation ->
+                        TroubleBrewingWorldObservationEvaluator.evaluate(
+                            world = world,
+                            roles = rolesById,
+                            observation = observation,
+                            hypothesis = context.hypothesis,
+                        ).matches
+                    }
+                }
+                val before = beforeBySeat.getValue(query.recipientSeat)
+                ExactHypotheticalObservationBundleDiagnostics(
+                    bundleId = query.bundleId,
+                    recipientSeat = query.recipientSeat,
+                    before = before.cardinality,
+                    after = exactCardinality(afterWorlds.size.toLong()),
+                    beforeStructure = before.structure,
+                    afterStructure = summarizeWorldStructure(afterWorlds.asSequence(), rolesById),
+                )
+            },
+        )
+    }
+
+    private fun exactInitialNightWorldSequence(
+        snapshot: GameSnapshot,
+        knowledge: PlayerKnowledgeSnapshot,
+        roles: List<RoleDefinition>,
+        rolesById: Map<RoleId, RoleDefinition>,
+    ): Sequence<EnumeratedWorld> {
+        val stream = TroubleBrewingWorldEnumerator.stream(snapshot.rulesetRef, knowledge, roles)
+        return stream.worlds.filter { world ->
+            knowledge.setupKnowledge.all { proposition ->
+                TroubleBrewingWorldObservationEvaluator.evaluateKnownFact(world, rolesById, proposition)
+            }
+        }
+    }
+
+    private fun validateQueries(
+        queries: List<ExactHypotheticalObservationBundleQuery>,
+        knowledgeBySeat: Map<Int, PlayerKnowledgeSnapshot>,
+        snapshotId: String,
+    ) {
+        queries.forEach { query ->
             require(query.recipientSeat in knowledgeBySeat) {
                 "Hypothetical observation bundle ${query.bundleId} references unknown recipient seat ${query.recipientSeat}."
             }
             query.observations.forEach { observation ->
-                require(observation.snapshotId == formal.snapshotId) {
+                require(observation.snapshotId == snapshotId) {
                     "Hypothetical observation ${observation.observationId} in bundle ${query.bundleId} is bound to a different formal snapshot."
                 }
                 require(
@@ -175,112 +327,61 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
                 }
             }
         }
-
-        val baselineWorldSetsBySeat = stableQueries
-            .map(ExactHypotheticalObservationBundleQuery::recipientSeat)
-            .distinct()
-            .associateWith { recipientSeat ->
-                buildExactBaseline(
-                    validatedRuleset = validatedRuleset,
-                    snapshot = snapshot,
-                    knowledge = knowledgeBySeat.getValue(recipientSeat),
-                    roles = roles,
-                    context = context,
-                )
-            }
-        val baselineStructureBySeat = baselineWorldSetsBySeat.mapValues { (_, worlds) ->
-            summarizeWorldStructure(worlds.exactWorlds(), rolesById)
-        }
-
-        return ExactHypotheticalObservationBundleEvaluation.Ready(
-            diagnostics = stableQueries.map { query ->
-                val before = baselineWorldSetsBySeat.getValue(query.recipientSeat)
-                val after = before.filter(
-                    observations = exactFilterOrder(query.observations),
-                    roles = rolesById,
-                    hypothesis = context.hypothesis,
-                )
-                ExactHypotheticalObservationBundleDiagnostics(
-                    bundleId = query.bundleId,
-                    recipientSeat = query.recipientSeat,
-                    before = before.cardinality(),
-                    after = after.cardinality(),
-                    beforeStructure = baselineStructureBySeat.getValue(query.recipientSeat),
-                    afterStructure = summarizeWorldStructure(after.exactWorlds(), rolesById),
-                )
-            },
-        )
     }
 
-    private fun buildExactBaseline(
-        validatedRuleset: ValidatedClocktowerRuleset,
-        snapshot: GameSnapshot,
-        knowledge: PlayerKnowledgeSnapshot,
-        roles: List<RoleDefinition>,
-        context: ExactHistoricalHypotheticalContext,
-    ): ExactWorldFamily {
-        val pristineInitialNight =
-            context.initialPhase == StorytellerPhase.FIRST_NIGHT &&
-                context.initialRound == 1 &&
-                context.actionTimeline.entries.isEmpty() &&
-                context.observationLog.records.isEmpty()
-        if (pristineInitialNight) {
-            return ZddExactWorldFamily(
-                ZddPlayerWorldSet.enumerateDirect(
-                    rulesetRef = snapshot.rulesetRef,
-                    knowledge = knowledge,
-                    hypothesis = context.hypothesis,
-                    roleDefinitions = roles,
-                ),
-            )
+    private fun isStrictShownRoleClaim(observation: EpistemicObservation): Boolean =
+        observation.reliability == ObservationReliability.NOT_ABILITY_INFORMATION &&
+            observation.proposition is InformationProposition.ShownRoleAt
+
+    private fun strictShownRoleKey(
+        query: ExactHypotheticalObservationBundleQuery,
+    ): List<InformationProposition.ShownRoleAt> = query.observations
+        .filter(::isStrictShownRoleClaim)
+        .map { it.proposition as InformationProposition.ShownRoleAt }
+        .distinct()
+        .sortedWith(compareBy({ it.seat }, { it.role.value }))
+
+    private data class ExactWorldScan(
+        val cardinality: WorldCardinality.Exact,
+        val structure: ExactWorldStructureDiagnostics,
+    )
+
+    private fun scanWorlds(
+        worlds: Sequence<EnumeratedWorld>,
+        roles: Map<RoleId, RoleDefinition>,
+    ): ExactWorldScan {
+        var count = 0L
+        val accumulator = WorldStructureAccumulator(roles)
+        worlds.forEach { world ->
+            count += 1
+            accumulator.accept(world)
         }
-        return EnumeratedExactWorldFamily(
-            EnumeratedHistoricalExactBaseline.build(
-                validatedRuleset = validatedRuleset,
-                rulesetRef = snapshot.rulesetRef,
-                setupKnowledge = knowledge,
-                hypothesis = context.hypothesis,
-                roleDefinitions = roles,
-                initialPhase = context.initialPhase,
-                initialRound = context.initialRound,
-                actionTimeline = context.actionTimeline,
-                observationLog = context.observationLog,
-            ).worldSet.enumeratedWorlds(),
+        return ExactWorldScan(
+            cardinality = exactCardinality(count),
+            structure = accumulator.finish(),
         )
     }
-
-    /**
-     * Conjunction is order-independent. Apply cheap exact symbolic identity facts first so fallback
-     * semantic filters decode only the already-narrowed family instead of the whole Night-1 space.
-     */
-    private fun exactFilterOrder(observations: List<EpistemicObservation>): List<EpistemicObservation> =
-        observations.sortedWith(
-            compareBy<EpistemicObservation>(
-                { observation ->
-                    when {
-                        observation.reliability == ObservationReliability.NOT_ABILITY_INFORMATION &&
-                            observation.proposition is InformationProposition.ShownRoleAt -> 0
-                        observation.reliability == ObservationReliability.NOT_ABILITY_INFORMATION -> 1
-                        else -> 2
-                    }
-                },
-                EpistemicObservation::sequence,
-                EpistemicObservation::observationId,
-            ),
-        )
 
     private fun summarizeWorldStructure(
         worlds: Sequence<EnumeratedWorld>,
         roles: Map<RoleId, RoleDefinition>,
     ): ExactWorldStructureDiagnostics {
-        val possibleDemonSeats = sortedSetOf<Int>()
-        val evilConfigurations = linkedSetOf<Set<Int>>()
-        val evilCoverSeats = sortedSetOf<Int>()
-        var forcedGoodSeats: MutableSet<Int>? = null
-        var forcedEvilSeats: MutableSet<Int>? = null
-        var seenWorld = false
+        val accumulator = WorldStructureAccumulator(roles)
+        worlds.forEach(accumulator::accept)
+        return accumulator.finish()
+    }
 
-        worlds.forEach { world ->
+    private class WorldStructureAccumulator(
+        private val roles: Map<RoleId, RoleDefinition>,
+    ) {
+        private val possibleDemonSeats = sortedSetOf<Int>()
+        private val evilConfigurations = linkedSetOf<Set<Int>>()
+        private val evilCoverSeats = sortedSetOf<Int>()
+        private var forcedGoodSeats: MutableSet<Int>? = null
+        private var forcedEvilSeats: MutableSet<Int>? = null
+        private var seenWorld = false
+
+        fun accept(world: EnumeratedWorld) {
             seenWorld = true
             val current = world.currentRolesBySeat
             current.forEach { (seat, role) ->
@@ -306,72 +407,21 @@ internal object ExactHistoricalHypotheticalObservationBundleEvaluator {
             }
         }
 
-        if (!seenWorld) return ExactWorldStructureDiagnostics.EMPTY
-        val canonicalConfigurations = evilConfigurations
-            .sortedWith(compareBy<Set<Int>>({ it.size }, { it.joinToString(",") }))
-            .toCollection(linkedSetOf())
-        return ExactWorldStructureDiagnostics(
-            possibleDemonSeats = possibleDemonSeats,
-            evilTeamSeatConfigurations = canonicalConfigurations,
-            forcedGoodSeats = forcedGoodSeats.orEmpty().toSortedSet(),
-            forcedEvilSeats = forcedEvilSeats.orEmpty().toSortedSet(),
-            evilCoverSeats = evilCoverSeats,
-        )
-    }
-
-    private sealed interface ExactWorldFamily {
-        fun cardinality(): WorldCardinality.Exact
-        fun exactWorlds(): Sequence<EnumeratedWorld>
-        fun filter(
-            observations: List<EpistemicObservation>,
-            roles: Map<RoleId, RoleDefinition>,
-            hypothesis: EpistemicHypothesis,
-        ): ExactWorldFamily
-    }
-
-    private data class ZddExactWorldFamily(
-        val worldSet: ZddPlayerWorldSet,
-    ) : ExactWorldFamily {
-        override fun cardinality(): WorldCardinality.Exact =
-            worldSet.cardinality() as WorldCardinality.Exact
-
-        override fun exactWorlds(): Sequence<EnumeratedWorld> = worldSet.exactWorlds()
-
-        override fun filter(
-            observations: List<EpistemicObservation>,
-            roles: Map<RoleId, RoleDefinition>,
-            hypothesis: EpistemicHypothesis,
-        ): ExactWorldFamily {
-            val filtered = observations.fold(worldSet) { current, observation ->
-                current.require(observation)
-            }
-            return ZddExactWorldFamily(filtered)
+        fun finish(): ExactWorldStructureDiagnostics {
+            if (!seenWorld) return ExactWorldStructureDiagnostics.EMPTY
+            val canonicalConfigurations = evilConfigurations
+                .sortedWith(compareBy<Set<Int>>({ it.size }, { it.joinToString(",") }))
+                .toCollection(linkedSetOf())
+            return ExactWorldStructureDiagnostics(
+                possibleDemonSeats = possibleDemonSeats,
+                evilTeamSeatConfigurations = canonicalConfigurations,
+                forcedGoodSeats = forcedGoodSeats.orEmpty().toSortedSet(),
+                forcedEvilSeats = forcedEvilSeats.orEmpty().toSortedSet(),
+                evilCoverSeats = evilCoverSeats,
+            )
         }
     }
 
-    private data class EnumeratedExactWorldFamily(
-        val worlds: List<EnumeratedWorld>,
-    ) : ExactWorldFamily {
-        override fun cardinality(): WorldCardinality.Exact =
-            WorldCardinality.Exact(BigInteger.valueOf(worlds.size.toLong()))
-
-        override fun exactWorlds(): Sequence<EnumeratedWorld> = worlds.asSequence()
-
-        override fun filter(
-            observations: List<EpistemicObservation>,
-            roles: Map<RoleId, RoleDefinition>,
-            hypothesis: EpistemicHypothesis,
-        ): ExactWorldFamily = EnumeratedExactWorldFamily(
-            worlds.filter { world ->
-                observations.all { observation ->
-                    TroubleBrewingWorldObservationEvaluator.evaluate(
-                        world = world,
-                        roles = roles,
-                        observation = observation,
-                        hypothesis = hypothesis,
-                    ).matches
-                }
-            },
-        )
-    }
+    private fun exactCardinality(count: Long): WorldCardinality.Exact =
+        WorldCardinality.Exact(BigInteger.valueOf(count))
 }
