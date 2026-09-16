@@ -44,13 +44,15 @@ Pair-information display latency / old-device ADB diagnosis
 UX-R6 recommendation-provider replacement
 ```
 
-Current live `main` is:
+Merged FN-BUNDLE-0 code baseline:
 
 `55da0b8366eae6daa01df9bef668c56b6eecfaec`
 
 This is the squash merge of PR #139:
 
 `FN-BUNDLE-0: audit first-night candidate space and retire setup pair route`
+
+Documentation-only handoff commits may move `main` beyond this SHA. Always query live `main` before editing; use `55da0b8` as the merged FN-BUNDLE-0 code baseline, not as a permanently current branch tip.
 
 The current route decision remains:
 
@@ -97,18 +99,17 @@ PR #140:
 
 `FN-BUNDLE-1: materialize first-night information for exact evaluation`
 
-is open and now cleanly based directly on merged `main`.
+is open. It was rebuilt cleanly on the merged FN-BUNDLE-0 code baseline and contains only FN-BUNDLE-1 code/test changes. Documentation-only commits may subsequently make the branch appear behind live `main`; sync those without reintroducing already-merged FN-BUNDLE-0 diff.
 
-Current branch/head:
+Rebuilt branch/head snapshot:
 
 ```text
 branch: fn-bundle-1-evaluator-correctness
 head:   edcdbccdf6c8e2110afcae5d04219d347a2f2da7
-base:   main @ 55da0b8366eae6daa01df9bef668c56b6eecfaec
-status: ahead 3 / behind 0
+base code baseline: 55da0b8366eae6daa01df9bef668c56b6eecfaec
 ```
 
-Current #140 diff contains only:
+The #140 code diff at that snapshot contains only:
 
 - `FirstNightInformationPropositionMaterializer.kt`;
 - `FirstNightInformationPropositionMaterializerTest.kt`;
@@ -150,9 +151,9 @@ Current missing work:
 9. add explicit Drunk shown-role fixtures;
 10. run the full required CI after #140 contains these semantics.
 
-As of this documentation update, `ShownRoleAt` does not exist in the branch and PUBLIC_GOOD_INFO still only republishes the clue observation.
+As of this handoff, `ShownRoleAt` does not exist in #140 and PUBLIC_GOOD_INFO still only republishes clue observations.
 
-As of this documentation update, the retargeted #140 head has **no workflow run yet**. Do not claim #140 CI is green until a run for its current head completes successfully.
+As of the clean rebuild snapshot, the retargeted #140 head had **no workflow run**. Do not claim #140 CI is green until a run for the actual current head completes successfully.
 
 ## 5. Main product decision
 
