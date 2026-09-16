@@ -38,7 +38,20 @@ class FirstNightBundleCandidateSpaceAuditTest {
         assertEquals(1, factors.getValue("numeric.empath.seat-3").optionCount)
         assertEquals(5, factors.getValue("setup.red-herring").optionCount)
         assertEquals(220, factors.getValue("setup.demon-bluffs").optionCount)
+        assertEquals(
+            FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
+            factors.getValue("pair.washerwoman.seat-1").profileExposure,
+        )
+        assertEquals(
+            FirstNightBundleProfileExposure.NOT_SHARED,
+            factors.getValue("setup.red-herring").profileExposure,
+        )
+        assertEquals(
+            FirstNightBundleProfileExposure.NOT_SHARED,
+            factors.getValue("setup.demon-bluffs").profileExposure,
+        )
         assertEquals(BigInteger.valueOf(110_000L), audit.rawCartesianCount)
+        assertEquals(BigInteger.valueOf(100L), audit.representedPublicProjectionUpperBound)
         assertEquals(audit.rawCartesianCount, audit.legalCompleteBundleCount)
         assertEquals(BigInteger.ZERO, audit.evaluatedCount)
         assertFalse(audit.samplingApplied)
@@ -61,7 +74,9 @@ class FirstNightBundleCandidateSpaceAuditTest {
 
         assertEquals(1, librarian.optionCount)
         assertEquals(FirstNightBundleEntryControl.STORYTELLER_CONTROLLED, librarian.control)
+        assertEquals(FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO, librarian.profileExposure)
         assertEquals(BigInteger.ONE, audit.rawCartesianCount)
+        assertEquals(BigInteger.ONE, audit.representedPublicProjectionUpperBound)
         assertEquals(BigInteger.ONE, audit.legalCompleteBundleCount)
     }
 
