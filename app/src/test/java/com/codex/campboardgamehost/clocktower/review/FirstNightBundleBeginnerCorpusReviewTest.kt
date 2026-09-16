@@ -45,8 +45,18 @@ class FirstNightBundleBeginnerCorpusReviewTest {
         })
 
         val report = FirstNightBundleBeginnerCorpusBuilder.renderMarkdown(corpus)
+        val calibrationIds = corpus.scenarios
+            .filter { it.partition == FirstNightBeginnerCorpusPartition.CALIBRATION }
+            .map { it.scenarioId }
+        val holdoutIds = corpus.scenarios
+            .filter { it.partition == FirstNightBeginnerCorpusPartition.HOLDOUT }
+            .map { it.scenarioId }
+        assertTrue(calibrationIds.all(report::contains))
+        assertTrue(holdoutIds.none(report::contains))
+        assertTrue(report.contains("Sealed holdout scenarios: ${holdoutIds.size}"))
+
         val reportFile = File("build/reports/fn-bundle-3-beginner-corpus.md")
-        reportFile.parentFile.mkdirs()
+        requireNotNull(reportFile.parentFile).mkdirs()
         reportFile.writeText(report, Charsets.UTF_8)
     }
 }
