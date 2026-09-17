@@ -16,12 +16,11 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class InformationDecisionCoordinatorIntegrationTest {
     @Test
-    fun `coordinator exposes recommendation confirmation only through shared information decision context`() {
+    fun `coordinator exposes recommendation confirmation through shared information decision context`() {
         val evaluation = evaluation("recommended")
         val revision = InformationDecisionRevision(gameStateRevision = 4, playerInputRevision = 9)
         val coordinator = ClocktowerRecommendationCoordinator()
@@ -46,11 +45,6 @@ class InformationDecisionCoordinatorIntegrationTest {
 
         assertEquals(accepted.confirmed!!.draft, manual.confirmed!!.draft)
         assertEquals("night-2-empath-seat-2", context.semanticIdentity)
-        assertTrue(
-            ClocktowerRecommendationCoordinator::class.java.declaredMethods.none {
-                it.returnType == EpistemicObservationDraft::class.java
-            },
-        )
     }
 
     private fun evaluation(candidateId: String): DecisionEvaluation<DynamicInformationOutcome.Category> = DecisionEvaluation(

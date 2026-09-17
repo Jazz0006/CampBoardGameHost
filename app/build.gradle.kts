@@ -59,10 +59,20 @@ dependencies {
 
 afterEvaluate {
     val debugUnitTest = tasks.named<Test>("testDebugUnitTest")
+    val fnBundle3CalibrationExperiment =
+        "com.codex.campboardgamehost.clocktower.review.FirstNightBundleBeginnerCorpusExperiment"
+
+    // Calibration corpus generation is an explicit experiment, not a regression test. Keep it out
+    // of the default Android unit-test task so both FAST and FULL validation stay bounded.
+    debugUnitTest.configure {
+        filter {
+            excludeTestsMatching(fnBundle3CalibrationExperiment)
+        }
+    }
 
     tasks.register("testFull") {
         group = "verification"
-        description = "Runs the complete Android debug JVM unit-test suite."
+        description = "Runs the complete bounded Android debug JVM regression suite."
         dependsOn(debugUnitTest)
     }
 
@@ -80,5 +90,19 @@ afterEvaluate {
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.simulation.StorytellerV4BaselineSimulationTest")
             excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.A4ZddBenchmarkTest")
         }
+    }
+
+    tasks.register<Test>("fnBundle3Calibration") {
+        group = "verification"
+        description = "Runs the explicit FN-BUNDLE-3 calibration corpus experiment."
+        val sourceTask = debugUnitTest.get()
+        testClassesDirs = sourceTask.testClassesDirs
+        classpath = sourceTask.classpath
+
+        filter {
+            includeTestsMatching(fnBundle3CalibrationExperiment)
+        }
+
+        outputs.upToDateWhen { false }
     }
 }

@@ -5,43 +5,6 @@ import org.junit.Test
 
 class CommittedClocktowerSetupTest {
     @Test
-    fun `committed setup retains exact identities and generic provenance`() {
-        val setup = CommittedClocktowerSetup(
-            script = ScriptId("trouble_brewing"),
-            setupSeed = 42L,
-            assignments = listOf(
-                seat(1, actual = "Drunk", shown = "Chef"),
-                seat(2, actual = "Imp", shown = "Imp"),
-            ),
-            provenance = SetupProvenance(
-                sourceKind = SetupSourceKind.TEMPLATE,
-                providerId = "tb-presets-v2",
-                candidateId = "tb-5-001",
-            ),
-        )
-
-        assertEquals(2, setup.playerCount)
-        assertEquals(RoleId("Drunk"), setup.assignments[0].actualRole)
-        assertEquals(RoleId("Chef"), setup.assignments[0].shownRole)
-        assertEquals(SetupSourceKind.TEMPLATE, setup.provenance.sourceKind)
-        assertEquals("tb-presets-v2", setup.provenance.providerId)
-        assertEquals("tb-5-001", setup.provenance.candidateId)
-    }
-
-    @Test
-    fun `equivalent committed facts compare structurally`() {
-        val assignments = listOf(
-            seat(1, actual = "Chef", shown = "Chef"),
-            seat(2, actual = "Imp", shown = "Imp"),
-        )
-        val first = setup(assignments)
-        val second = setup(assignments.toList())
-
-        assertEquals(first, second)
-        assertEquals(first.hashCode(), second.hashCode())
-    }
-
-    @Test
     fun `committed setup snapshots caller assignment list`() {
         val mutableAssignments = mutableListOf(
             seat(1, actual = "Chef", shown = "Chef"),

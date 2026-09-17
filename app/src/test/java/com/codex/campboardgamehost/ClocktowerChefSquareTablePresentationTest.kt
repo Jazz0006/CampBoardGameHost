@@ -139,6 +139,32 @@ class ClocktowerChefSquareTablePresentationTest {
         assertEquals(emptySet<Int>(), clocktowerChefEffectivePairSeats(players, option, value = 1))
     }
 
+    @Test
+    fun `automatic Chef keeps direct square-table result when automatic preview is unavailable`() {
+        val proposition = InformationProposition.NumericResult(
+            metric = NumericMetric.ADJACENT_EVIL_PAIRS,
+            sourceSeat = 1,
+            subjectSeats = listOf(1, 2, 3),
+            value = 1,
+        )
+        val choices = clocktowerChefResultChoices(
+            step = numericStep("Chef", proposition, "1"),
+            players = listOf(
+                player(1, "Chef", Alignment.GOOD, CharacterType.TOWNSFOLK),
+                player(2, "Imp", Alignment.EVIL, CharacterType.DEMON),
+                player(3, "Poisoner", Alignment.EVIL, CharacterType.MINION),
+            ),
+            automaticStorytellerInfo = true,
+            automaticDisplayOption = null,
+            resultFirstRegistrationCandidates = emptyList(),
+            structuredNumberUiModel = null,
+        )
+
+        assertEquals(1, choices.size)
+        assertEquals(ClocktowerChefResultSourceKind.Direct, choices.single().sourceKind)
+        assertEquals(1, choices.single().value)
+    }
+
     private fun players() = listOf(
         player(1, "Chef", Alignment.GOOD, CharacterType.TOWNSFOLK),
         player(2, "Imp", Alignment.EVIL, CharacterType.DEMON),
@@ -179,5 +205,23 @@ class ClocktowerChefSquareTablePresentationTest {
         ),
         spyRegistersGood = spyRegistersGood,
         recluseRegistersEvil = recluseRegistersEvil,
+    )
+
+    private fun numericStep(
+        role: String,
+        proposition: InformationProposition.NumericResult,
+        shown: String,
+    ) = ClocktowerNightStepUi(
+        title = role,
+        actor = null,
+        isRealAction = true,
+        reason = "",
+        storytellerAction = "",
+        tellPlayer = shown,
+        explanation = "",
+        displayKind = ClocktowerDisplayKind.Number,
+        displayPrimary = shown,
+        displayProposition = proposition,
+        roleEnName = role,
     )
 }

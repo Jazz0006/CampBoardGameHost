@@ -42,7 +42,7 @@ class FirstNightBundleExperimentContractTest {
     }
 
     @Test
-    fun `public good projection is ephemeral excludes latent choices and deduplicates shown role claims`() {
+    fun `public good projection is ephemeral excludes latent choices and models defeasible public claims`() {
         val original = privateObservation(
             id = "private-clue",
             proposition = InformationProposition.RoleAt(4, RoleId("Poisoner")),
@@ -74,24 +74,23 @@ class FirstNightBundleExperimentContractTest {
         entries.clear()
 
         val projected = FirstNightPublicGoodInfoProjection.project(bundle)
-        val shownClaims = projected.filter { it.proposition is InformationProposition.ShownRoleAt }
-        val clueObservations = projected.filterNot { it.proposition is InformationProposition.ShownRoleAt }
+        val expectedClaims = setOf(
+            healthyPublicClaim(original.proposition),
+            healthyPublicClaim(secondClue.proposition),
+        )
 
         assertEquals(3, bundle.entries.size)
-        assertEquals(3, projected.size)
-        assertEquals(
-            listOf(InformationProposition.ShownRoleAt(1, RoleId("Chef"))),
-            shownClaims.map(EpistemicObservation::proposition),
-        )
-        assertEquals(ObservationReliability.NOT_ABILITY_INFORMATION, shownClaims.single().reliability)
-        assertEquals(null, shownClaims.single().sourceAbility)
-        assertEquals(setOf(original.proposition, secondClue.proposition), clueObservations.map { it.proposition }.toSet())
+        assertEquals(2, projected.size)
+        assertEquals(expectedClaims, projected.map(EpistemicObservation::proposition).toSet())
+        assertTrue(projected.all { it.reliability == ObservationReliability.NOT_ABILITY_INFORMATION })
+        assertTrue(projected.all { it.sourceAbility == null })
+        assertTrue(projected.all { it.sourceSeat == 1 })
         assertEquals(ObservationVisibility.PRIVATE, original.visibility)
         assertEquals(setOf(1), original.recipientSeats)
         assertTrue(projected.all { it.visibility == ObservationVisibility.PUBLIC })
         assertTrue(projected.all { it.recipientSeats.isEmpty() })
-        assertEquals(original.timelineBinding, clueObservations.first { it.proposition == original.proposition }.timelineBinding)
-        assertNotEquals(original.observationId, clueObservations.first { it.proposition == original.proposition }.observationId)
+        assertTrue(projected.all { it.timelineBinding == original.timelineBinding })
+        assertNotEquals(original.observationId, projected.first { it.proposition == healthyPublicClaim(original.proposition) }.observationId)
     }
 
     @Test
@@ -129,7 +128,7 @@ class FirstNightBundleExperimentContractTest {
         assertTrue(evaluation is FirstNightBundleExperimentEvaluation.Ready)
         val ready = evaluation as FirstNightBundleExperimentEvaluation.Ready
         assertEquals(FirstNightExperimentProfile.BEGINNER_PUBLIC_GOOD_INFO, ready.profile)
-        assertEquals(2, ready.publicObservationCount)
+        assertEquals(1, ready.publicObservationCount)
         assertEquals(listOf(1, 2), ready.recipientDiagnostics.map { it.recipientSeat })
         assertTrue(ready.recipientDiagnostics.all { it.after.value <= it.before.value })
         assertEquals(entriesBefore, bundle.entries)
@@ -147,6 +146,19 @@ class FirstNightBundleExperimentContractTest {
             profileExposure = FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
         )
     }
+
+    private fun healthyPublicClaim(clue: InformationProposition): InformationProposition =
+        InformationProposition.AnyOf(
+            listOf(
+                InformationProposition.AlignmentAt(1, Alignment.EVIL),
+                InformationProposition.AllOf(
+                    listOf(
+                        InformationProposition.ShownRoleAt(1, RoleId("Chef")),
+                        clue,
+                    ),
+                ),
+            ),
+        )
 
     private fun context(): ExactHistoricalHypotheticalContext = ExactHistoricalHypotheticalContext(
         initialSnapshot = snapshot,

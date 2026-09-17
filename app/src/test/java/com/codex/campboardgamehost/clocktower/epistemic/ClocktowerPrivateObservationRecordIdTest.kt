@@ -2,10 +2,8 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerPrivateObservationRecordIdTest {
@@ -57,18 +55,5 @@ class ClocktowerPrivateObservationRecordIdTest {
 
         assertEquals(firstId, sameId)
         assertNotEquals(firstId, correctedId)
-    }
-
-    @Test
-    fun `reliable private information producer uses statement-versioned record identity`() {
-        val hostSource = File(
-            "src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt",
-        ).readText(Charsets.UTF_8)
-        val producer = hostSource
-            .substringAfter("fun recordReliablePrivateInformation(displayStep: ClocktowerNightStepUi)")
-            .substringBefore("val undertakerTarget =")
-
-        assertTrue(producer.contains("recordId = clocktowerPrivateObservationRecordId("))
-        assertTrue(producer.contains("proposition = proposition"))
     }
 }

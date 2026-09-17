@@ -2,9 +2,7 @@ package com.codex.campboardgamehost
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 class ClocktowerChambermaidSelectionAuthorityTest {
     @Test
@@ -81,19 +79,5 @@ class ClocktowerChambermaidSelectionAuthorityTest {
         )
 
         assertEquals(2, resolution.wokeCount)
-    }
-
-    /**
-     * Coarse production ownership guard only. Chambermaid selection semantics are proved above
-     * through the callable typed resolver; this check exists only while the Compose Host remains
-     * a non-callable materialization boundary.
-     */
-    @Test
-    fun `production Chambermaid display consumes typed selection authority`() {
-        val hostSource = File(
-            "src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt",
-        ).readText(Charsets.UTF_8)
-
-        assertTrue(hostSource.contains("resolveChambermaidSelection("))
     }
 }

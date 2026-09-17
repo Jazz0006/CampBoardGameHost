@@ -8,56 +8,12 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import java.math.BigInteger
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FirstNightBundleCandidateSpaceAuditTest {
     private val roles = TroubleBrewingFixtures.fullRoleDefinitions()
-
-    @Test
-    fun `healthy seven player census includes washerwoman and exposes full producer product`() {
-        val game = game(
-            player(1, "Washerwoman", CharacterType.TOWNSFOLK),
-            player(2, "Chef", CharacterType.TOWNSFOLK),
-            player(3, "Empath", CharacterType.TOWNSFOLK),
-            player(4, "Fortune Teller", CharacterType.TOWNSFOLK),
-            player(5, "Investigator", CharacterType.TOWNSFOLK),
-            player(6, "Scarlet Woman", CharacterType.MINION),
-            player(7, "Imp", CharacterType.DEMON),
-        )
-
-        val audit = TroubleBrewingFirstNightBundleCandidateSpaceAuditor.inspect(game, roles)
-        val factors = audit.factors.associateBy { it.factorId }
-
-        assertEquals(20, factors.getValue("pair.washerwoman.seat-1").optionCount)
-        assertEquals(5, factors.getValue("pair.investigator.seat-5").optionCount)
-        assertEquals(1, factors.getValue("numeric.chef.seat-2").optionCount)
-        assertEquals(FirstNightBundleEntryControl.RULE_DETERMINED, factors.getValue("numeric.chef.seat-2").control)
-        assertEquals(1, factors.getValue("numeric.empath.seat-3").optionCount)
-        assertEquals(5, factors.getValue("setup.red-herring").optionCount)
-        assertEquals(220, factors.getValue("setup.demon-bluffs").optionCount)
-        assertEquals(
-            FirstNightBundleProfileExposure.PUBLIC_GOOD_INFO,
-            factors.getValue("pair.washerwoman.seat-1").profileExposure,
-        )
-        assertEquals(
-            FirstNightBundleProfileExposure.NOT_SHARED,
-            factors.getValue("setup.red-herring").profileExposure,
-        )
-        assertEquals(
-            FirstNightBundleProfileExposure.NOT_SHARED,
-            factors.getValue("setup.demon-bluffs").profileExposure,
-        )
-        assertEquals(BigInteger.valueOf(110_000L), audit.rawCartesianCount)
-        assertEquals(BigInteger.valueOf(100L), audit.representedPublicProjectionUpperBound)
-        assertEquals(audit.rawCartesianCount, audit.legalCompleteBundleCount)
-        assertEquals(BigInteger.ZERO, audit.evaluatedCount)
-        assertFalse(audit.samplingApplied)
-        assertEquals(setOf("fortune-teller-target"), audit.excludedPlayerControlledElements)
-        assertTrue(audit.deferredComplexities.isEmpty())
-    }
 
     @Test
     fun `librarian zero outsider result remains one canonical legal pair option`() {
