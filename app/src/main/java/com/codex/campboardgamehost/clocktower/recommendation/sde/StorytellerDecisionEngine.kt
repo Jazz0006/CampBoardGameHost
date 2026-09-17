@@ -8,6 +8,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.ExactHistoricalHypotheti
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleDiagnostics
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleEvaluation
 import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObservationBundleQuery
+import com.codex.campboardgamehost.clocktower.session.InformationDecisionRevision
 
 /**
  * Read-only bounded context for the first exact-consequence SDE seam.
@@ -15,13 +16,22 @@ import com.codex.campboardgamehost.clocktower.epistemic.ExactHypotheticalObserva
  * This intentionally does not reuse the legacy domain StorytellerDecisionRequest because that model
  * embeds DynamicGameState. Canonical state, revisions and semantic history remain owned by the
  * session/epistemic inputs referenced here.
+ *
+ * [sourceRevision] is deliberately separate from [ExactHistoricalHypotheticalContext.initialSnapshot]:
+ * historical replay starts from its setup/baseline snapshot, while a planned structured decision must
+ * be freshness-bound to the current production session revision. Tests and callers that evaluate the
+ * baseline itself may rely on the default; historical production callers must pass the current revision.
  */
 internal data class ExactConsequenceContext(
     val validatedRuleset: ValidatedClocktowerRuleset,
     val exactContext: ExactHistoricalHypotheticalContext,
+    val sourceRevision: InformationDecisionRevision = InformationDecisionRevision(
+        gameStateRevision = exactContext.initialSnapshot.gameStateRevision,
+        playerInputRevision = exactContext.initialSnapshot.playerInputRevision,
+    ),
 ) {
-    val gameStateRevision: Long get() = exactContext.initialSnapshot.gameStateRevision
-    val playerInputRevision: Long get() = exactContext.initialSnapshot.playerInputRevision
+    val gameStateRevision: Long get() = sourceRevision.gameStateRevision
+    val playerInputRevision: Long get() = sourceRevision.playerInputRevision
 }
 
 /** One already-legal, already-materialized hypothetical observation-bundle candidate. */
