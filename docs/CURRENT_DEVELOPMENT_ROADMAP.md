@@ -6,381 +6,399 @@
 
 ## 1. Current state
 
+Completed foundation relevant to the current program:
+
 ```text
-Persistence / D6 ownership decomposition                 COMPLETE
-UI-R5 through DAY-UI-1                                  COMPLETE / merged
-EPI-MQ capability + exact historical hypothetical seam   COMPLETE / merged
-FN-BUNDLE-0 candidate-space audit + pair cleanup         COMPLETE / PR #139
-FN-BUNDLE-1 proposition / shown-role semantics           COMPLETE / PR #140
-FN-BUNDLE-2 healthy whole-bundle exact harness           COMPLETE / PR #142
-
-CURRENT:
-FN-BUNDLE-3 — BEGINNER human-review corpus / PR #143
-  Stage 7A — real 7-player template robustness calibration
-    -> Storyteller-controlled whole-bundle candidates
-    -> Fortune Teller Red Herring included as a Storyteller-controlled factor
-    -> every legal Fortune Teller target pair treated as a player-controlled robustness axis
-    -> exact diagnostics; no scalar rank / no gate yet
-
-NEXT:
-finish one Fortune-Teller-containing real-template Stage 7A pilot
-expand Stage 7A to all 11 healthy-compatible 7-player templates if pilot cost is viable
-manual calibration labels
-interpretable diagnostic separation
-BEGINNER gate proposal only if calibration evidence supports it
-sealed holdout evaluation only after gates are frozen
-external Storyteller-data calibration where usable
-then Drunk -> Spy/Recluse -> Poisoner staged expansion
-
-DEFERRED:
-production recommendation-provider cutover
-unified scalar ranking
-LLM / ML soft critic
-later skill profiles
+D6 decomposition / ownership cleanup                  COMPLETE
+Beginner / Experienced host modes                     COMPLETE
+Same-night effective-state / transaction foundation   COMPLETE
+EPI-MQ capability boundary                            COMPLETE / PR #135
+Exact historical hypothetical bundle seam             COMPLETE / PR #137
+First-night experiment contract                       COMPLETE / PR #138
+FN-BUNDLE-0 candidate-space + pair ownership           COMPLETE / PR #139
+FN-BUNDLE-1 proposition / ShownRoleAt semantics        COMPLETE / PR #140
+FN-BUNDLE-2 healthy whole-bundle exact harness         COMPLETE / PR #142
 ```
 
-Live merged FN-BUNDLE-2 baseline:
+Current product-code baseline after FN-BUNDLE-2 merge:
 
 `690bc93b33b87fd54a911f4b9dbfc770f2a16a51`
 
-Current route decision:
+Documentation-only architecture commits have advanced `main` beyond that product baseline. Always query live `main` before editing.
 
-`docs/EPI_MQ_FIRST_NIGHT_BUNDLE_ROUTE_2026-09-16.md`
+### CURRENT
 
-Current active PR:
+**SDE-0 — BEGINNER strategic-robustness corpus + policy contract**
 
-`#143 FN-BUNDLE-3: build BEGINNER review corpus`
+Active implementation is already underway in:
 
-Branch:
+- PR #143 — `FN-BUNDLE-3: build BEGINNER review corpus`;
+- branch `fn-bundle-3-beginner-corpus`;
+- legacy FN-BUNDLE-3 naming maps directly to **SDE-0** and must not be restarted from zero.
 
-`fn-bundle-3-beginner-corpus`
+Before additional implementation, synchronize PR #143 with current `main` if behind, then continue from its existing corpus / PUBLIC_GOOD_INFO work.
 
-Always query live `main`, PR head and CI before editing.
-
-## 2. Stable completed bundle foundation
-
-### FN-BUNDLE-0 — merged #139
-
-Stable results:
-
-- complete healthy Night-1 candidate-space census;
-- representative 7-player raw Cartesian product `110,000`;
-- represented public factor-product upper bound `100`;
-- Fortune Teller **target selection** excluded because it is player-controlled;
-- Fortune Teller **Red Herring designation** remains a Storyteller-controlled setup choice and is therefore part of the complete Storyteller candidate bundle when Fortune Teller is present;
-- Drunk / Spy-Recluse / Poisoner explicitly staged for later;
-- duplicate setup-owned pair-information semantics retired.
-
-Canonical pair-information ownership remains:
+### NEXT
 
 ```text
-NaturalPairInformationCandidateGenerator
+SDE-1 — unified StorytellerDecisionEngine orchestration seam
+SDE-2 — Drunk -> Spy/Recluse -> Poisoner first-night uncertainty
+SDE-3 — cross-night impaired / registration decisions
+SDE-4 — production cutover + legacy heuristic retirement
+```
+
+### DEFERRED / UNFROZEN
+
+```text
+NORMAL / EXPERT numeric thresholds
+Narrative-complexity formula
+Information-pacing curve
+Exact Demon / evil-topology Badness thresholds
+Exhaustive vs beam search for larger candidate products
+Optional bounded soft preference / LLM critic
+Pair-information display latency / old-device ADB diagnosis
+```
+
+Current architecture / product route:
+
+`docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
+
+Older first-night-only EPI-MQ and productive-uncertainty scoring plans are superseded and are not execution authority.
+
+## 2. Product direction
+
+The recommendation system is no longer a collection of independent per-role clue scorers.
+
+The long-term target is a persistent automatic Storyteller decision engine:
+
+```text
+canonical GameState / interaction-time effective state
         ↓
-PairInformationLegalDomain / canonical consumers
+rules-owned legal candidate outcomes
+        ↓
+InformationProposition / EpistemicObservation
+        ↓
+exact hypothetical epistemic consequence evaluation
+        ↓
+strategic world-structure diagnostics
+        ↓
+profile / phase Storyteller policy
+        ↓
+reject clearly bad candidates / bundles
+        ↓
+select among acceptable survivors
+        ↓
+commit through canonical session / flow ownership
 ```
 
-Canonical Red Herring legality remains owned by the existing setup candidate producer. Stage 7A must consume that producer; it must not implement a second Red Herring rules engine.
+The first target profile is BEGINNER / ordinary players, with ordinary / inexperienced evil players and a conservative `PUBLIC_GOOD_INFO` stress model.
 
-Do not repeat the FN-BUNDLE-0 census or pair-ownership audit.
-
-### FN-BUNDLE-1 — merged #140
-
-Stable results:
-
-- thin first-night information -> epistemic proposition materialization;
-- strict `InformationProposition.ShownRoleAt(seat, role)` semantics;
-- JSON / exact / knowledge-boundary fanout complete;
-- no hidden Drunk actual-role leakage through `ShownRoleAt`;
-- exact healthy and Drunk semantic fixtures;
-- T4 green before merge.
-
-Important: strict `ShownRoleAt` remains a valid mechanical proposition. What changed in FN-BUNDLE-3 is **whether ordinary Day-1 player speech should be projected as that mechanically verified proposition**.
-
-### FN-BUNDLE-2 — merged #142
-
-Squash-merge baseline:
-
-`690bc93b33b87fd54a911f4b9dbfc770f2a16a51`
-
-Delivered:
+## 3. Ownership boundaries
 
 ```text
-canonical legal factor producers
-    ↓
-complete-bundle factorized provenance
-    ↓
-PUBLIC_GOOD_INFO projection
-    ↓
-canonical projected signature
-    ↓
-lossless quotient
-    ↓
-exact diagnostics once per distinct signature
-    ↓
-leave-one-out diagnostics
+rules
+  -> legal ability outcomes
+  -> registration legality
+  -> role semantics
+
+session
+  -> canonical actual state
+  -> persistent / committed history
+  -> authoritative mutation
+
+flow
+  -> interaction ordering / projection
+  -> consumes resolved facts
+
+epistemic
+  -> recipient-visible knowledge
+  -> exact hypothetical consequences
+  -> strategic structural diagnostics
+  -> historical replay
+
+recommendation / StorytellerDecisionEngine
+  -> compose legal options
+  -> consume exact diagnostics
+  -> apply skill-profile / game-phase policy
+  -> select acceptable outcomes
+
+UI
+  -> presentation / confirmation / manual Experienced-mode override
 ```
 
-Representative healthy 7-player contract:
+Do not create a second rules engine or a second possible-world solver in recommendation.
 
-```text
-raw complete bundles                110,000
-represented public combinations         100
-distinct projected signatures           100
-latent multiplicity / public signature 1,100
-sampling                                none
-```
+## 4. Exact consequence model
 
-Structural diagnostics are owned by `epistemic`, not Badness policy:
+`epistemic` remains the sole world-consequence authority.
+
+Existing exact diagnostics already provide the important structure:
 
 - exact BEFORE / AFTER world counts;
-- possible demon seats / demon cover;
+- possible Demon seats / Demon cover;
 - distinct evil-team seat configurations;
 - forced-good seats;
 - forced-evil seats;
 - evil cover;
 - leave-one-out interaction evidence.
 
-No final scalar score or rejection threshold exists.
+Raw full-role world count is descriptive only. Strategic evil topology is the primary product-level structure because cosmetic good-role permutations do not provide the same gameplay ambiguity as alternative Demon / Minion placements.
 
-The pristine Night-1 exact path uses lazy source enumeration so the unconstrained 7-player world family is not materialized in full. Historical replay remains on the existing historical exact path.
+## 5. BEGINNER robustness goal
 
-The healthy diagnostic counterworld domain deliberately excludes:
+The target is not maximum information and not maximum uncertainty.
 
-```text
-Drunk
-Spy
-Recluse
-Poisoner
-```
-
-Candidate legality still uses the canonical official Trouble Brewing producers.
-
-## 3. FN-BUNDLE-3 — current PR #143
-
-Purpose: establish a human-reviewed BEGINNER corpus before defining Badness gates.
-
-Labels remain:
+The policy must distinguish:
 
 ```text
-UNREVIEWED
-BAD_TOO_STRONG
-ACCEPTABLE
 BAD_TOO_WEAK
+ACCEPTABLE
+BAD_TOO_STRONG
 UNCERTAIN
 ```
 
-No label is derived mechanically from one diagnostic.
+An acceptable result should simultaneously provide useful good information and preserve several understandable strategic worlds for an ordinary evil team.
 
-### 3.1 Stage 7A ownership correction — Fortune Teller
-
-Stage 7A evaluates the complete first-night **Storyteller decision surface**, not merely exposed Day-1 clue rows.
-
-For Fortune Teller, two different decisions must not be conflated:
+Initial product semantics remain conceptually:
 
 ```text
-Red Herring designation
-    = Storyteller-controlled
-    = candidate-bundle factor
-    = algorithm output target
-
-Fortune Teller chooses two players to inspect
-    = player-controlled
-    = NOT a Storyteller candidate factor
-    = robustness / environment axis
+hard legality
+→ exact structural diagnostics
+→ interpretable profile Badness gates
+→ random selection among acceptable survivors
 ```
 
-Therefore a real-template Stage 7A candidate is conceptually:
+Do not reintroduce one opaque scalar whose maximum becomes the authoritative Storyteller choice.
+
+## 6. Whole-bundle / whole-history interaction is mandatory
+
+Local clue scoring is insufficient.
+
+Retained adversarial design lessons include:
+
+- Pair information + Fortune Teller can create strong confirmation chains;
+- Red Herring placement can break or create those chains;
+- Investigator + Chef + Empath can jointly collapse the evil topology even when every clue is individually normal;
+- legal Recluse registration can restore large amounts of legitimate ambiguity;
+- later poisoned/drunk Empath, Fortune Teller, Undertaker and Ravenkeeper information must be evaluated against the same accumulated history.
+
+These must be discovered through exact consequences rather than hard-coded role-combination exceptions.
+
+## 7. Registration and impairment
+
+Spy / Recluse registration is **per interaction**, not a persistent global `good/evil` flag.
+
+Rules own legal registration candidates. Storyteller policy chooses among legal registrations using whole-state exact consequences.
+
+Poison / drunkenness is interaction-time effective state. If impairment disables a registration ability or changes information legality, that change must come from rules/effective-state semantics rather than recommendation hacks.
+
+## 8. First-night decision lifecycle
+
+Do not freeze one complete final Night-1 bundle before all player-controlled actions occur.
+
+Use:
 
 ```text
-all Storyteller-controlled legal first-night choices
-including Red Herring where Fortune Teller is in play
+PERSISTENT
+    roles / seating / setup-level commitments
+    Demon bluffs
+    Fortune Teller Red Herring
+    Drunk identity / shown-role commitments where required
+
+COMMITTED
+    already shown / executed; immutable
+
+PLANNED / UNCOMMITTED
+    not yet shown; may be invalidated and re-evaluated
 ```
 
-and its robustness evidence is:
+After a Poisoner target becomes known:
 
 ```text
-for each legal Fortune Teller target pair:
-    derive the mechanically correct result under the chosen Red Herring
-    add the resulting Fortune Teller public claim to the same complete information ecology
-    exact-evaluate consequences
+apply poison to effective state
+→ keep PERSISTENT decisions
+→ keep COMMITTED decisions
+→ invalidate affected uncommitted planning
+→ regenerate / re-evaluate the remaining relevant decision ecology
 ```
 
-The Red Herring choice must come from canonical production legality. The Fortune Teller result must come from canonical production rules/semantics. Review code must not duplicate either rule.
+Do not only replace the poisoned role's one clue. Poisoning Spy / Recluse can alter other information semantics as well.
 
-A single unusually strong player-selected pair can be normal game variance. A Storyteller bundle is more concerning when **many legal Fortune Teller target pairs** repeatedly produce destructive confirmation-chain or evil-topology collapse. Stage 7A must preserve the per-query evidence needed to distinguish those cases.
+Correct broad re-evaluation is preferred over premature incremental optimization.
 
-### 3.2 Stage 7A enumeration policy
+## 9. Cross-night engine scope
 
-The old real-template pilot selected correlated `FIRST / MIDDLE / LAST` options from each public factor. That was useful only as a feasibility probe. It is **not production-calibration evidence** and must not be used to infer clue-quality gates.
+The same architecture continues beyond Night 1.
 
-Reworked Stage 7A policy:
+Initial Trouble Brewing later-interaction targets include:
 
-1. start with one healthy real 7-player preset containing Fortune Teller;
-2. enumerate the complete Storyteller-controlled candidate product for that fixed setup/seating, including every legal Red Herring;
-3. for each candidate, enumerate every legal Fortune Teller target pair;
-4. exact-evaluate every resulting public-information ecology;
-5. retain interpretable per-query diagnostics plus a non-scalar robustness envelope;
-6. measure execution cost and eliminate only redundant projected signatures, never approximate possible worlds;
-7. if viable, expand the same method to all 11 healthy-compatible 7-player presets and the retained seating profiles.
+- poisoned/drunk Empath numeric results;
+- poisoned/drunk Fortune Teller YES/NO;
+- poisoned/drunk Undertaker shown role;
+- poisoned/drunk Ravenkeeper shown role;
+- later Spy/Recluse registrations;
+- other supported Storyteller-discretion decisions such as Mayor redirect / succession.
 
-Exactness is not weakened for performance. If experiment cost becomes excessive, bound the number of **real setup/seating scenarios** or split the experiment workload; do not sample possible worlds and do not silently return to FIRST/MIDDLE/LAST candidate sampling.
+Per-role modules answer **what is legal**. Shared policy answers **which legal outcome is appropriate now**.
 
-### 3.3 Calibration / holdout discipline
+Historical exact replay is the consequence basis after Night 1.
 
-Partition by complete setup + seating scenario, never random signature rows from the same scenario.
+## 10. Information pacing
 
-The existing calibration corpus and bounded experiments remain useful historical evidence, but Stage 7A real-template robustness is now the production-relevant calibration path before gates.
+A Day-1 robustness target cannot remain fixed throughout the game.
 
-Selection/display reasons are review aids only. They are not Badness rules.
+Early game should resist premature topology collapse; later game must allow legitimate convergence and eventual solving.
 
-The sealed holdout must remain unevaluated during calibration. Do not inspect, label or tune against holdout diagnostics until a candidate BEGINNER gate set has been frozen from calibration evidence.
+`information pacing` is therefore a required future policy dimension based on phase / round / alive count and possibly other durable state.
 
-## 4. Critical PUBLIC_GOOD_INFO semantic correction
+No numeric pacing curve is frozen yet.
 
-The first FN-BUNDLE-3 corpus run exposed a modeling error in the earlier projection.
+## 11. ConsequenceEvaluator retirement
 
-The old projection turned a Day-1 statement such as:
+`recommendation/dynamic/ConsequenceEvaluator` is explicitly **legacy and targeted for removal**.
 
-```text
-"I am Investigator; my information is X"
-```
+Do not add new product policy to it.
 
-into mechanically verified public facts equivalent to:
+Its current repeated-target / one-shot / high-impact misinformation / final-day / `evilAdvantage` heuristics estimate consequences that the new architecture should measure directly using exact strategic diagnostics plus profile/phase policy.
 
-```text
-ShownRoleAt(speaker, Investigator)
-AND
-X
-```
+Keeping both as independent authorities would recreate dual ownership.
 
-That incorrectly made public bluff claims act like Storyteller-confirmed identity. The first pilot report therefore collapsed all sampled worlds around the actual good/evil seating and is **invalid for Badness calibration**. It must not be labeled or used to derive gates.
+Retirement route:
 
-Current healthy-stage behavioral semantics are instead:
+1. audit all callers and fanout;
+2. identify useful context signals that are truly inputs rather than heuristic conclusions;
+3. move those inputs into the unified DecisionContext / StorytellerPolicy boundary;
+4. cut callers over to exact strategic robustness policy;
+5. delete `ConsequenceEvaluator` once no unique contract depends on it;
+6. audit `evilAdvantage`, `PublicBalanceHint`, information-pressure and related heuristic-only state for deletion or narrower non-authoritative use.
 
-```text
-speaker is evil
-OR
-(
-    speaker really has the claimed shown role
-    AND
-    the claimed clue is mechanically true
-)
-```
+Do not delete it before safe cutover; the target state is removal, not permanent secondary scoring.
 
-Interpretation for this stage:
+## 12. SDE-0 — current implementation program
 
-- healthy good speakers are assumed to share truthfully under the stress profile;
-- evil speakers may make the same public statement as a bluff;
-- public speech is not an oracle identity fact;
-- `ShownRoleAt` itself remains a strict exact proposition when genuinely known through an appropriate mechanical source.
+PR #143 already provides valid SDE-0 groundwork. Do not repeat it.
 
-This public-claim model is explicitly scoped to the current healthy stage. Drunk false information, Poisoner impairment and Spy/Recluse registration are not silently folded into it.
+Current retained contracts include:
 
-The pristine exact evaluator uses a **necessary-only identity prefilter** for this claim form so the 7-player experiment remains memory-safe. The complete claim is still evaluated exactly afterwards; the prefilter is not a second semantics engine.
+- healthy `PUBLIC_GOOD_INFO` public claims do **not** equal Storyteller confirmation;
+- an evil speaker may lie;
+- a healthy good speaker's public claim must match shown role plus mechanically true clue;
+- strict mechanically known `ShownRoleAt` remains exact;
+- calibration and sealed holdout scenarios are separated by whole setup + seating scenario;
+- corpus items start `UNREVIEWED`;
+- deterministic review sampling preserves exact structural diagnostics and leave-one-out evidence;
+- expensive calibration generation is an explicit experiment, not ordinary regression workload;
+- no scalar quality score or automatic labels are introduced.
 
-## 5. Holdout discipline
+SDE-0 must now ensure deliberate adversarial coverage, especially:
 
-The first pilot CI report printed both calibration and holdout details. That original holdout is contaminated and retired.
+1. Pair-information + Fortune Teller confirmation chains;
+2. Red Herring choices that cut/create those chains;
+3. Investigator + Chef + Empath evil-topology collapse;
+4. the same structures with Recluse registration alternatives;
+5. too-weak bundles;
+6. representative healthy acceptable bundles.
 
-A replacement holdout is sealed. Calibration work must not evaluate its diagnostics at all; human-facing output may report only the sealed holdout scenario count.
+Then:
 
-Do not inspect, label or tune against replacement holdout diagnostics until a candidate BEGINNER gate set has been frozen from calibration evidence.
+1. human-review calibration items;
+2. label `BAD_TOO_STRONG / ACCEPTABLE / BAD_TOO_WEAK / UNCERTAIN`;
+3. determine which exact diagnostics actually separate labels;
+4. define the smallest durable policy input/output seam;
+5. derive first interpretable BEGINNER Badness gates;
+6. keep the holdout sealed until gates are frozen enough to validate;
+7. do not cut over production selection during SDE-0.
 
-## 6. Experimental testing rule
+## 13. SDE-1 — unified orchestration seam
 
-Do not manufacture RED tests merely to satisfy process for exploratory experiment/spike work.
+After SDE-0 evidence is credible:
 
-```text
-exploration / feasibility / measurement
-    -> implementation-first allowed
-    -> do not manufacture RED
+- formalize a thin `StorytellerDecisionEngine` orchestration owner;
+- reuse canonical candidate generators;
+- reuse the existing exact epistemic evaluator;
+- define DecisionContext and persistent / committed / planned lifecycle;
+- preserve session mutation and flow ordering ownership;
+- avoid a parallel state model.
 
-stable retained behavior / architecture
-    -> add only necessary durable contract or regression coverage
-    -> run affected validation and required T4 checkpoint
-```
+## 14. SDE-2 — staged first-night uncertainty
 
-Heavy Stage 7A enumeration belongs to the explicit/on-demand FN-BUNDLE calibration experiment, not routine `testFast` / `testFull`. Stable bounded contracts may verify report shape, ownership assumptions and deterministic enumeration boundaries without executing the full corpus on every ordinary CI run.
+Expand deliberately and separately:
 
-## 7. Product decision remains unchanged
+1. Drunk;
+2. Spy / Recluse per-interaction registration;
+3. Poisoner target / effective-state invalidation and re-planning.
 
-Target behavior:
+Each stage must be corpus-backed and preserve hidden-information boundaries.
 
-```text
-rules-legal complete first-night bundles
-    ↓
-exact / capability-aware consequence diagnostics
-    ↓
-BEGINNER Badness rejection
-    ↓
-acceptable bundle pool
-    ↓
-uniform random selection
-```
+## 15. SDE-3 — cross-night decisions
 
-Do not introduce one opaque maximized scalar score.
+Route later impaired / registration decisions through the same engine using historical exact replay.
 
-Do not call unweighted world fractions posterior probabilities without an explicit prior / weighting model.
+Add information-pacing behavior only from measured scenarios, not guessed thresholds.
 
-Before gates, continue to inspect at least:
+## 16. SDE-4 — production cutover / cleanup
 
-- BEFORE / AFTER world counts;
-- demon-seat diversity;
-- distinct evil-team configurations;
-- forced-good / forced-evil structure;
-- evil and demon cover;
-- leave-one-out / interaction recovery where applicable;
-- Fortune Teller per-target-pair robustness where Fortune Teller is present;
-- minimum useful information;
-- structurally meaningful alternative worlds where tractable.
+- cut production callers to the unified engine / policy;
+- preserve Experienced-mode manual override UX;
+- migrate only useful legacy context inputs;
+- retire `ConsequenceEvaluator` and stale heuristic state after fanout audit;
+- retire superseded recommendation paths/tests when stronger typed coverage exists.
 
-## 8. Current acceptance checkpoint
+## 17. Frozen vs unfrozen
 
-Stage 7A is currently an **experiment implementation checkpoint**, not a gate-tuning checkpoint.
+### Frozen architecture/product decisions
 
-Acceptance for the first Fortune-Teller-containing pilot requires:
+- rules own legality;
+- exact epistemic evaluator owns world consequences;
+- strategic evil topology matters more than raw full-role world count;
+- whole-bundle / whole-history interactions matter;
+- Spy/Recluse registration is per interaction;
+- Poisoner can invalidate uncommitted recommendations;
+- one engine continues after Night 1;
+- BEGINNER / ordinary-player profile is first;
+- `ConsequenceEvaluator` is targeted for removal;
+- no second rules engine;
+- no second world solver;
+- no opaque global-optimum scalar.
 
-```text
-canonical Red Herring candidates are all represented
-Storyteller-controlled candidate combinations are complete for the fixed scenario
-Fortune Teller target pairs are all represented as player-controlled robustness cases
-Fortune Teller results use canonical semantics
-PUBLIC_GOOD_INFO projection remains defeasible speech
-possible-world evaluation remains exact
-per-query structural diagnostics are retained
-no scalar score / Badness threshold is introduced
-holdout remains unopened
-```
+### Deliberately unfrozen
 
-Only after pilot correctness and cost are demonstrated should Stage 7A expand to all healthy real 7-player templates.
+- exact Demon-candidate thresholds;
+- exact evil-team-configuration thresholds;
+- forced-good / forced-evil limits;
+- narrative-complexity formula;
+- information-pacing curve;
+- NORMAL / EXPERT numeric profiles;
+- exhaustive vs beam search;
+- optional bounded soft-preference formula;
+- production cutover timing.
 
-## 9. Next execution order
+## 18. Testing / acceptance
 
-1. replace the old real-preset FIRST/MIDDLE/LAST Stage 7A experiment contract with the Fortune Teller-aware ownership model;
-2. locate/reuse canonical Red Herring candidate generation and canonical Fortune Teller result semantics;
-3. implement one real Fortune-Teller-containing 7-player preset pilot;
-4. enumerate complete Storyteller-controlled candidates for the pilot, including every legal Red Herring;
-5. enumerate every legal Fortune Teller target pair for each candidate and exact-evaluate the resulting information ecology;
-6. emit interpretable per-query diagnostics and robustness ranges/counts, with no scalar ranking;
-7. run the dedicated calibration experiment and inspect cost/output;
-8. expand to all 11 healthy-compatible 7-player presets if the pilot is viable;
-9. then resume human calibration labeling;
-10. derive simple interpretable gate hypotheses only when evidence supports them;
-11. freeze candidate gates;
-12. only then evaluate sealed holdout;
-13. audit external Storyteller data such as ClockTracker as ecological calibration evidence;
-14. later widen Drunk -> Spy/Recluse -> Poisoner.
+`AGENTS.md` and `docs/TESTING_STRATEGY.md` remain authoritative.
 
-## 10. Stable architecture boundary
+For SDE work:
 
-```text
-rules          -> legality / registration / Fortune Teller result semantics
-session        -> canonical actual state / timeline / commit
-epistemic      -> exact recipient-visible consequence semantics
-recommendation -> complete Storyteller bundle composition / future Badness / survivor selection
-UI             -> presentation / confirmation
-```
+- test stable contracts at their true typed ownership seam;
+- exact consequence changes trigger appropriate epistemic/oracle validation;
+- experimental corpus measurement does not require manufactured RED tests;
+- stable corpus/gate contracts require durable regression evidence;
+- central orchestration / shared semantic cutovers require broader T2/T4 validation;
+- documentation-only main updates use the lightweight docs-only route.
 
-Badness must never become a second rules engine.
+## 19. New-conversation reading order
 
-Fortune Teller target choice remains player-owned gameplay input even though Stage 7A enumerates it as an experiment robustness dimension. Red Herring remains Storyteller-owned and therefore belongs in the algorithm's candidate output surface.
+1. root `AGENTS.md`;
+2. `docs/TESTING_STRATEGY.md`;
+3. this roadmap;
+4. `docs/NEXT_DEVELOPMENT_HANDOFF.md`;
+5. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`;
+6. query live `main`, PR #143 and current CI;
+7. synchronize #143 with latest `main` if necessary;
+8. continue SDE-0 from existing PR #143 work.
+
+Do not reopen FN-BUNDLE-0/1/2 audits without a concrete regression. Do not reload superseded EPI-MQ execution plans as authority.
+
+## 20. Stable rule
+
+> **The current program is SDE: a persistent Storyteller decision engine using canonical legal candidates plus the existing exact epistemic evaluator to measure strategically meaningful evil-world consequences. PR #143 is the active SDE-0 implementation, not disposable legacy work. SDE-0 calibrates BEGINNER strategic robustness before production cutover. `ConsequenceEvaluator` is a migration-era heuristic layer targeted for removal after unified-policy cutover.**

@@ -1,238 +1,336 @@
-# NEXT DEVELOPMENT HANDOFF — FN-BUNDLE-3 BEGINNER Corpus
+# NEXT DEVELOPMENT HANDOFF — SDE-0 Strategic-Robustness Calibration
 
-> Updated: 2026-09-16 Australia/Sydney  
-> Status: **CURRENT / PR #143 public-claim semantic correction + calibration checkpoint**  
-> Route: `docs/EPI_MQ_FIRST_NIGHT_BUNDLE_ROUTE_2026-09-16.md`
+> Updated: 2026-09-17 Australia/Sydney  
+> Status: **CURRENT / continue PR #143 as SDE-0**  
+> Current architecture route: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
 
 ## 0. Start here
 
-Read in order:
+Read, in order:
 
 1. root `AGENTS.md`;
 2. `docs/TESTING_STRATEGY.md`;
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. this handoff;
-5. `docs/EPI_MQ_FIRST_NIGHT_BUNDLE_ROUTE_2026-09-16.md`;
-6. `docs/FN_BUNDLE_3_BEGINNER_CORPUS_PILOT_2026-09-16.md`;
-7. query live `main`, PR #143 and current checks.
+5. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`;
+6. query live `main`, PR #143 and current checks before editing.
 
-Do not use archived dated handoffs as current execution authority.
+Do not use removed/superseded EPI-MQ / first-night-only route documents as execution authority. Their history remains available in Git.
 
-## 1. Merged foundation
+## 1. Live continuation point
 
-FN-BUNDLE-0: merged #139. Do not repeat candidate census or pair ownership audit.
-
-FN-BUNDLE-1: merged #140. Strict `ShownRoleAt` remains canonical exact semantics when a shown role is mechanically known.
-
-FN-BUNDLE-2: merged #142 at:
-
-`690bc93b33b87fd54a911f4b9dbfc770f2a16a51`
-
-FN-BUNDLE-2 stable output:
+Relevant completed foundation:
 
 ```text
-110,000 complete legal bundle combinations
-        ↓
-100 distinct PUBLIC_GOOD_INFO projected signatures
-        ↓
-exact structural diagnostics once per signature
-        ↓
-leave-one-out evidence
+FN-BUNDLE-0   COMPLETE / PR #139
+FN-BUNDLE-1   COMPLETE / PR #140
+FN-BUNDLE-2   COMPLETE / PR #142
 ```
 
-No bounded sampling and no final Badness threshold.
+Current active implementation:
 
-Healthy counterworld stage excludes:
+- PR #143;
+- branch `fn-bundle-3-beginner-corpus`;
+- legacy title began as `FN-BUNDLE-3: build BEGINNER review corpus`;
+- program mapping: **PR #143 is the active SDE-0 implementation**;
+- latest observed PR head before this documentation closeout: `b41547660645114b0178b6ac365f5e6278872f18`;
+- current documentation `main` has advanced beyond the PR base.
 
-```text
-Drunk / Spy / Recluse / Poisoner
-```
+**First action in the next development conversation:** query live refs and synchronize PR #143 with latest `main` before additional executable edits if it is still behind.
 
-## 2. Current PR
+Do not discard or restart PR #143. Do not merge it without explicit user authorization.
 
-PR:
+## 2. What PR #143 already establishes
 
-`#143 FN-BUNDLE-3: build BEGINNER review corpus`
+Do not repeat these parts without a concrete defect.
 
-Branch:
+### Healthy PUBLIC_GOOD_INFO claim semantics
 
-`fn-bundle-3-beginner-corpus`
+Public speech is not Storyteller confirmation.
 
-Goal: create trustworthy human-review calibration evidence before any BEGINNER Badness gate is defined.
-
-Do not merge #143 until current-head T4 is green and calibration semantics have been inspected.
-
-## 3. Pilot corpus design
-
-Every item begins `UNREVIEWED`.
-
-Available later labels:
-
-```text
-BAD_TOO_STRONG
-ACCEPTABLE
-BAD_TOO_WEAK
-UNCERTAIN
-```
-
-Partitioning is by full setup + seating scenario to prevent near-duplicate signature leakage.
-
-Pilot currently contains:
-
-- one CALIBRATION scenario;
-- one sealed replacement HOLDOUT scenario;
-- one explicit good-player anchor perspective per scenario.
-
-Every projected signature in a scenario is evaluated. A small deterministic human-review subset is selected by AFTER-count extremes, demon-cover minimum, evil-configuration minimum, forced-good maximum, largest leave-one-out recovery and quartile representatives.
-
-These selection reasons are **not labels and not gate rules**.
-
-The review test is T3/full and excluded from `testFast`.
-
-## 4. Critical finding from the first corpus run
-
-The first exported calibration report was not suitable for labeling.
-
-Old PUBLIC_GOOD_INFO projection converted player statements into exact public facts:
-
-```text
-ShownRoleAt(speaker, claimedRole)
-AND
-claimedClue
-```
-
-That meant a player saying “I am X” mechanically proved they were X. Sampled signatures consequently collapsed around the true seating, with the same large forced-good block and effectively fixed evil topology.
-
-This was a behavioral-modeling error, not a Badness-threshold problem.
-
-**The old report is invalid calibration evidence. Do not label it and do not derive gates from it.**
-
-## 5. Current public-claim semantics
-
-For the healthy `BEGINNER / PUBLIC_GOOD_INFO` stage, a shared statement is now modeled as:
+Healthy-stage public claims are modeled conceptually as:
 
 ```text
 speaker is evil
 OR
-(
-    ShownRoleAt(speaker, claimedRole)
-    AND
-    claimedClue is mechanically true
-)
+(shown role matches claim AND claimed clue is mechanically true)
 ```
 
-Meaning:
+Consequences:
 
-- healthy good speakers follow the profile and report truthfully;
-- evil speakers may bluff the same role/information statement;
-- public role claims are defeasible speech, not Storyteller-confirmed identity;
-- strict `ShownRoleAt` semantics themselves are unchanged.
+- evil speakers retain bluff worlds;
+- healthy good speakers are truthful under this stress model;
+- strict mechanically known `ShownRoleAt` remains exact;
+- public-claim permissiveness must not weaken actual Storyteller-shown facts.
 
-This model is deliberately healthy-stage only. Do not generalize it yet to Drunk false information, Poisoner impairment, or Spy/Recluse registration.
+### Corpus / holdout contract
 
-When those stages are opened, public-claim sincerity / registration / malfunction semantics must be explicitly revisited rather than inherited accidentally.
+PR #143 already contains:
 
-## 6. Pristine Night-1 performance route
+- CALIBRATION scenarios;
+- a sealed replacement HOLDOUT scenario;
+- partitioning by whole setup + seating scenario, not sibling signatures;
+- `UNREVIEWED` initial labels;
+- deterministic sampling across structural extremes / quartiles;
+- retained raw public claims, provenance multiplicity, exact diagnostics and leave-one-out evidence;
+- no scalar quality score;
+- no automatic labels.
 
-The new claim form no longer contains a top-level strict shown-role fact, so naïvely retaining the entire 7-player baseline would reintroduce the prior memory problem.
+The holdout must remain sealed while deriving gates.
 
-The exact evaluator therefore recognizes a **necessary-only public-claim identity envelope** for prefiltering:
+### Experiment / regression boundary
+
+The expensive calibration generator is an explicit experiment, not an ordinary regression test.
+
+Keep the intended split:
+
+- lightweight typed tests protect durable corpus contracts;
+- exact corpus generation runs through the dedicated calibration task/workflow;
+- ordinary FAST / bounded FULL regression must not regenerate the expensive calibration corpus by default.
+
+Do not reverse this separation.
+
+## 3. Latest observed PR #143 validation
+
+At head `b41547660645114b0178b6ac365f5e6278872f18`, the latest observed runs were green:
+
+- R2 main-thread boundary — success;
+- CI — success;
+- FN-BUNDLE-3 calibration workflow — success.
+
+PR history also contains a prior full validation checkpoint with Android full + assemble, ASP and Real Clingo green.
+
+After syncing with current `main`, use the actual diff and `TESTING_STRATEGY.md` to determine required validation. Old-head evidence does not automatically validate a new executable head.
+
+## 4. Architectural route now governing the work
+
+The long-term target is no longer a first-night-only clue recommender.
+
+Conceptual owner:
 
 ```text
-speaker can satisfy evil branch
-OR
-world shown role matches claimed role
+StorytellerDecisionEngine
 ```
 
-For future registration safety, Recluse is conservatively retained by this prefilter. The complete observation is still evaluated by `TroubleBrewingWorldObservationEvaluator` afterwards.
-
-Therefore:
-
-- the prefilter cannot create truth semantics;
-- it may only keep extra worlds, never remove a world that could satisfy the claim;
-- historical replay is unchanged;
-- no production A4/ZDD rollout decision changes.
-
-## 7. Retained coverage
-
-No RED-only exploratory fixture was added.
-
-Retained contracts now verify:
-
-- projected public speech is one defeasible claim per exposed entry;
-- no bare public `ShownRoleAt` oracle fact is emitted for ordinary speech;
-- an evil speaker can satisfy the same claim without having the claimed shown role;
-- strict `ShownRoleAt` itself still matches shown identity exactly;
-- healthy-stage public claims do not silently make Drunk false information valid;
-- original private observations remain private / unmutated;
-- holdout IDs / diagnostics do not appear in review export.
-
-An ordinary FAST run after aligning the old BUNDLE-1 fixtures is expected to be the immediate pre-checkpoint gate.
-
-## 8. Holdout governance
-
-The first report export exposed the original holdout, so that scenario is retired as validation holdout.
-
-A replacement holdout is present in the deterministic corpus builder.
-
-Human-facing Markdown export intentionally includes:
-
-- calibration details;
-- count of sealed holdout scenarios;
-- **no holdout scenario ID, seating, signature, diagnostics or label**.
-
-Do not inspect replacement holdout diagnostics until candidate BEGINNER gates have been frozen.
-
-## 9. Experimental testing rule
-
-User instruction:
-
-> 非必要的，都不要加 Red.
-
-Operational rule:
+Authority split:
 
 ```text
-exploration / feasibility / measurement
-    -> implementation-first allowed
-    -> no manufactured RED
+rules
+  -> legal outcomes / registration legality
 
-stable retained behavior / regression contract
-    -> necessary test coverage before acceptance
-    -> required FAST/T4 validation
+session
+  -> canonical actual state / timeline / commit
+
+flow
+  -> interaction ordering / projection
+
+epistemic
+  -> recipient-visible exact hypothetical consequences
+  -> strategic structural diagnostics
+  -> historical replay
+
+recommendation / StorytellerDecisionEngine
+  -> compose legal candidates
+  -> consume exact diagnostics
+  -> apply profile / phase policy
+  -> choose among acceptable outcomes
+
+UI
+  -> display / confirmation / manual Experienced-mode override
 ```
 
-## 10. Immediate execution sequence
+Do not create a second rules engine, a second state authority, or a second possible-world solver.
 
-1. confirm ordinary FAST after fixture alignment is green;
-2. update roadmap / handoff / pilot protocol;
-3. make the final documentation checkpoint commit with `[full-ci]`;
-4. require Android full + APK, ASP, Real Clingo, R2 and aggregate gate green on the same head;
-5. read the generated **CALIBRATION-only** report;
-6. confirm public bluff counterworlds materially survive;
-7. manually review/label calibration items only;
-8. determine whether one calibration scenario provides enough spread;
-9. add calibration scenarios if needed;
-10. only after evidence is adequate, propose simple interpretable BEGINNER gates;
-11. freeze gates before opening holdout.
+## 5. Strategic robustness model
 
-## 11. What not to do next
+Raw exact world count is not the product objective.
 
-Do not:
+Primary structure includes:
 
-- use the invalid old calibration report;
-- inspect the replacement holdout;
-- invent a numeric world-count cutoff;
-- optimize a scalar score;
-- connect the production selector;
-- start Drunk / Spy-Recluse / Poisoner uncertainty expansion;
-- train on historical Storyteller choices as if unchosen alternatives were negative labels.
+- possible Demon seats;
+- distinct Demon/Minion seat configurations;
+- evil cover;
+- forced-good seats;
+- forced-evil seats;
+- leave-one-out / interaction recovery.
 
-ClockTracker / real Storyteller records remain planned external ecological calibration after the deterministic human-review baseline is trustworthy.
+Worlds that differ only by cosmetic healthy-good role permutations should not dominate quality assessment.
 
-## 12. Acceptance question for current checkpoint
+Target categories remain:
 
-The immediate question is semantic, not threshold-based:
+```text
+BAD_TOO_WEAK
+ACCEPTABLE
+BAD_TOO_STRONG
+UNCERTAIN
+```
 
-> Under aggressive public sharing, does the exact model treat good truth-telling as informative while still preserving coherent worlds where evil players bluff their claimed roles/information?
+The first profile assumes ordinary / inexperienced evil players plus aggressive healthy-good public sharing.
 
-If the answer is yes under current-head T4 and the new calibration report, proceed to manual calibration labels. If not, repair the behavioral model before touching Badness gates.
+Do not maximize uncertainty and do not search for one opaque scalar optimum.
+
+## 6. Required SDE-0 adversarial evidence
+
+PR #143 must be extended so calibration deliberately includes interaction-collapse cases, not only representative/random bundles.
+
+Required benchmark families:
+
+1. Pair-information + Fortune Teller confirmation chain.
+2. Red Herring placements that create/cut those confirmation paths.
+3. Investigator + Chef + Empath combinations where individually normal clues jointly collapse evil topology.
+4. Equivalent structures where legal Recluse registration restores meaningful ambiguity.
+5. Too-weak bundles that preserve uncertainty but give little strategic value.
+6. Clearly acceptable healthy examples for contrast.
+
+The evaluator should detect these from exact consequences. Do not implement hard-coded rules such as `if Investigator + Chef + Empath then penalty`.
+
+## 7. Registration decision frozen architecture
+
+Spy / Recluse registration is **per interaction**.
+
+Do not model persistent globals such as:
+
+```text
+Recluse = evil
+Spy = good
+```
+
+Rules generate legal registration candidates for each observing interaction. Future Storyteller policy chooses among them using exact global consequences.
+
+If poison/drunkenness disables special registration at that interaction, effective-state legality removes the candidate.
+
+## 8. Poisoner / first-night lifecycle frozen architecture
+
+Do not freeze all first-night information before player-controlled state changes.
+
+Use:
+
+```text
+PERSISTENT
+    actual roles / seating / setup commitments
+    Demon bluffs
+    Fortune Teller Red Herring
+    other persistent decisions
+
+COMMITTED
+    already shown / executed; immutable
+
+PLANNED / UNCOMMITTED
+    may be invalidated and re-evaluated
+```
+
+After Poisoner chooses a target:
+
+```text
+apply effective poison
+→ preserve PERSISTENT
+→ preserve COMMITTED
+→ invalidate affected uncommitted planning
+→ re-evaluate remaining relevant decision ecology
+```
+
+Do not only replace the poisoned player's single clue. Poisoning Spy / Recluse can change other information semantics too.
+
+Broad correct re-evaluation is preferred before incremental optimization.
+
+## 9. Cross-night scope frozen architecture
+
+The same engine later handles legal discretionary outcomes for:
+
+- poisoned/drunk Empath;
+- poisoned/drunk Fortune Teller;
+- poisoned/drunk Undertaker;
+- poisoned/drunk Ravenkeeper;
+- later Spy/Recluse registration;
+- supported Mayor redirect / succession and similar Storyteller choices.
+
+Per-role code owns legal outcomes. Shared policy owns selection among legal outcomes.
+
+Historical exact replay is the consequence baseline after Night 1.
+
+## 10. Information pacing
+
+Early game must resist premature collapse; late game must permit legitimate convergence.
+
+`information pacing` is a required future policy dimension.
+
+Do not invent a numeric phase curve during SDE-0.
+
+## 11. ConsequenceEvaluator retirement decision
+
+`recommendation/dynamic/ConsequenceEvaluator` is legacy and **targeted for deletion** after unified-policy cutover.
+
+Do not add new policy to it.
+
+Future route:
+
+1. audit its callers/fanout;
+2. preserve only context signals that are genuine inputs;
+3. migrate those inputs to DecisionContext / StorytellerPolicy;
+4. cut callers to exact strategic robustness policy;
+5. delete `ConsequenceEvaluator` when no unique contract remains;
+6. audit `evilAdvantage`, `PublicBalanceHint`, information-pressure and related heuristic-only state for deletion/narrower use.
+
+The target is removal, not a permanent secondary scoring layer.
+
+## 12. What is deliberately not frozen
+
+Do not decide these from intuition alone:
+
+- exact Demon-candidate thresholds;
+- exact evil-team configuration thresholds;
+- forced-good / forced-evil limits;
+- narrative-complexity formula;
+- information-pacing curve;
+- NORMAL / EXPERT numeric profiles;
+- exhaustive vs beam search for larger products;
+- optional soft-preference formula;
+- production cutover timing.
+
+These require corpus evidence.
+
+## 13. Immediate SDE-0 execution order
+
+After syncing PR #143 with current `main`:
+
+1. audit current PR #143 diff and retain all valid existing corpus/public-claim work;
+2. add the missing adversarial benchmark scenarios above at the true corpus/evaluator ownership seams;
+3. run the dedicated calibration experiment and inspect exact structural outputs;
+4. construct a manageable human-review calibration set;
+5. label calibration items `BAD_TOO_STRONG / ACCEPTABLE / BAD_TOO_WEAK / UNCERTAIN`;
+6. identify which existing exact diagnostics separate labels and where diagnostics are insufficient;
+7. define the smallest durable BEGINNER policy input/output contract;
+8. derive interpretable candidate Badness gates only after review;
+9. keep HOLDOUT sealed until the gates are sufficiently fixed;
+10. validate on holdout and review false accepts / false rejects;
+11. do **not** perform production selector cutover during SDE-0.
+
+## 14. Testing rules
+
+Follow `AGENTS.md` and `docs/TESTING_STRATEGY.md`.
+
+Especially:
+
+- exploratory measurement does not need manufactured RED tests;
+- durable new policy contracts do need typed regression evidence at the true owner;
+- exact epistemic semantic changes trigger relevant oracle / broader validation;
+- central orchestration/shared semantic cutovers require broader T2/T4 evidence;
+- do not bring the expensive calibration experiment back into normal regression execution.
+
+## 15. Cleanup state
+
+Current active docs are now centered on:
+
+- `CURRENT_DEVELOPMENT_ROADMAP.md`;
+- `NEXT_DEVELOPMENT_HANDOFF.md`;
+- `STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`;
+- `TESTING_STRATEGY.md`;
+- `AGENTS.md`.
+
+Superseded first-night-only EPI-MQ / productive-uncertainty / old dynamic-engine execution plans were removed from active `docs/`; Git history preserves them for archaeology.
+
+Audits and rule/ownership documents that retain independent factual value remain available as on-demand references.
+
+## 16. Stable handoff
+
+> **Start the next development conversation by reading the five current authority documents, query live `main` and PR #143, synchronize #143 with `main` if behind, then continue SDE-0 from the existing PR rather than recreating FN-BUNDLE work. The immediate engineering objective is corpus-backed BEGINNER strategic-robustness policy evidence. Exact epistemic consequences remain authoritative; Spy/Recluse registration is per-interaction; Poisoner may invalidate uncommitted plans; the same engine extends across nights; and `ConsequenceEvaluator` is targeted for retirement rather than preservation.**
