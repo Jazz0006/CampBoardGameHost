@@ -1,6 +1,6 @@
 # CampBoardGameHost — Current Development Roadmap
 
-> Updated: 2026-09-16 Australia/Sydney  
+> Updated: 2026-09-17 Australia/Sydney  
 > Repository: `Jazz0006/CampBoardGameHost`  
 > **Single current project-status and execution-priority authority.**
 
@@ -11,13 +11,20 @@ Persistence / D6 ownership decomposition                 COMPLETE
 UI-R5 through DAY-UI-1                                  COMPLETE / merged
 EPI-MQ capability + exact historical hypothetical seam   COMPLETE / merged
 FN-BUNDLE-0 candidate-space audit + pair cleanup         COMPLETE / PR #139
-FN-BUNDLE-1 proposition / shown-role semantics            COMPLETE / PR #140
-FN-BUNDLE-2 healthy whole-bundle exact harness             COMPLETE / PR #142
+FN-BUNDLE-1 proposition / shown-role semantics           COMPLETE / PR #140
+FN-BUNDLE-2 healthy whole-bundle exact harness           COMPLETE / PR #142
 
 CURRENT:
 FN-BUNDLE-3 — BEGINNER human-review corpus / PR #143
+  Stage 7A — real 7-player template robustness calibration
+    -> Storyteller-controlled whole-bundle candidates
+    -> Fortune Teller Red Herring included as a Storyteller-controlled factor
+    -> every legal Fortune Teller target pair treated as a player-controlled robustness axis
+    -> exact diagnostics; no scalar rank / no gate yet
 
 NEXT:
+finish one Fortune-Teller-containing real-template Stage 7A pilot
+expand Stage 7A to all 11 healthy-compatible 7-player templates if pilot cost is viable
 manual calibration labels
 interpretable diagnostic separation
 BEGINNER gate proposal only if calibration evidence supports it
@@ -59,7 +66,8 @@ Stable results:
 - complete healthy Night-1 candidate-space census;
 - representative 7-player raw Cartesian product `110,000`;
 - represented public factor-product upper bound `100`;
-- Fortune Teller target selection excluded because it is player-controlled;
+- Fortune Teller **target selection** excluded because it is player-controlled;
+- Fortune Teller **Red Herring designation** remains a Storyteller-controlled setup choice and is therefore part of the complete Storyteller candidate bundle when Fortune Teller is present;
 - Drunk / Spy-Recluse / Poisoner explicitly staged for later;
 - duplicate setup-owned pair-information semantics retired.
 
@@ -70,6 +78,8 @@ NaturalPairInformationCandidateGenerator
         ↓
 PairInformationLegalDomain / canonical consumers
 ```
+
+Canonical Red Herring legality remains owned by the existing setup candidate producer. Stage 7A must consume that producer; it must not implement a second Red Herring rules engine.
 
 Do not repeat the FN-BUNDLE-0 census or pair-ownership audit.
 
@@ -161,21 +171,69 @@ UNCERTAIN
 
 No label is derived mechanically from one diagnostic.
 
-### Pilot split
+### 3.1 Stage 7A ownership correction — Fortune Teller
+
+Stage 7A evaluates the complete first-night **Storyteller decision surface**, not merely exposed Day-1 clue rows.
+
+For Fortune Teller, two different decisions must not be conflated:
+
+```text
+Red Herring designation
+    = Storyteller-controlled
+    = candidate-bundle factor
+    = algorithm output target
+
+Fortune Teller chooses two players to inspect
+    = player-controlled
+    = NOT a Storyteller candidate factor
+    = robustness / environment axis
+```
+
+Therefore a real-template Stage 7A candidate is conceptually:
+
+```text
+all Storyteller-controlled legal first-night choices
+including Red Herring where Fortune Teller is in play
+```
+
+and its robustness evidence is:
+
+```text
+for each legal Fortune Teller target pair:
+    derive the mechanically correct result under the chosen Red Herring
+    add the resulting Fortune Teller public claim to the same complete information ecology
+    exact-evaluate consequences
+```
+
+The Red Herring choice must come from canonical production legality. The Fortune Teller result must come from canonical production rules/semantics. Review code must not duplicate either rule.
+
+A single unusually strong player-selected pair can be normal game variance. A Storyteller bundle is more concerning when **many legal Fortune Teller target pairs** repeatedly produce destructive confirmation-chain or evil-topology collapse. Stage 7A must preserve the per-query evidence needed to distinguish those cases.
+
+### 3.2 Stage 7A enumeration policy
+
+The old real-template pilot selected correlated `FIRST / MIDDLE / LAST` options from each public factor. That was useful only as a feasibility probe. It is **not production-calibration evidence** and must not be used to infer clue-quality gates.
+
+Reworked Stage 7A policy:
+
+1. start with one healthy real 7-player preset containing Fortune Teller;
+2. enumerate the complete Storyteller-controlled candidate product for that fixed setup/seating, including every legal Red Herring;
+3. for each candidate, enumerate every legal Fortune Teller target pair;
+4. exact-evaluate every resulting public-information ecology;
+5. retain interpretable per-query diagnostics plus a non-scalar robustness envelope;
+6. measure execution cost and eliminate only redundant projected signatures, never approximate possible worlds;
+7. if viable, expand the same method to all 11 healthy-compatible 7-player presets and the retained seating profiles.
+
+Exactness is not weakened for performance. If experiment cost becomes excessive, bound the number of **real setup/seating scenarios** or split the experiment workload; do not sample possible worlds and do not silently return to FIRST/MIDDLE/LAST candidate sampling.
+
+### 3.3 Calibration / holdout discipline
 
 Partition by complete setup + seating scenario, never random signature rows from the same scenario.
 
-Current pilot:
+The existing calibration corpus and bounded experiments remain useful historical evidence, but Stage 7A real-template robustness is now the production-relevant calibration path before gates.
 
-- one CALIBRATION scenario;
-- one sealed HOLDOUT scenario;
-- one explicit good-player anchor perspective per scenario;
-- all projected signatures evaluated for selection;
-- only a small deterministic set of extreme / representative signatures exposed for review.
+Selection/display reasons are review aids only. They are not Badness rules.
 
-Selection reasons include AFTER-count extremes, demon-cover minimum, evil-topology minimum, forced-good maximum, leave-one-out interaction maximum, and quartile representatives. These are review-sampling reasons, **not Badness rules**.
-
-`FirstNightBundleBeginnerCorpusReviewTest` is T3/full coverage and is intentionally excluded from `testFast`.
+The sealed holdout must remain unevaluated during calibration. Do not inspect, label or tune against holdout diagnostics until a candidate BEGINNER gate set has been frozen from calibration evidence.
 
 ## 4. Critical PUBLIC_GOOD_INFO semantic correction
 
@@ -218,13 +276,13 @@ Interpretation for this stage:
 
 This public-claim model is explicitly scoped to the current healthy stage. Drunk false information, Poisoner impairment and Spy/Recluse registration are not silently folded into it.
 
-The pristine exact evaluator now uses a **necessary-only identity prefilter** for this claim form so the 7-player experiment remains memory-safe. The complete claim is still evaluated exactly afterwards; the prefilter is not a second semantics engine.
+The pristine exact evaluator uses a **necessary-only identity prefilter** for this claim form so the 7-player experiment remains memory-safe. The complete claim is still evaluated exactly afterwards; the prefilter is not a second semantics engine.
 
 ## 5. Holdout discipline
 
-The first pilot CI report printed both calibration and holdout details. That original holdout is therefore contaminated and retired.
+The first pilot CI report printed both calibration and holdout details. That original holdout is contaminated and retired.
 
-A replacement holdout has been created. Human-review export now prints **CALIBRATION only** and reports only the number of sealed holdout scenarios.
+A replacement holdout is sealed. Calibration work must not evaluate its diagnostics at all; human-facing output may report only the sealed holdout scenario count.
 
 Do not inspect, label or tune against replacement holdout diagnostics until a candidate BEGINNER gate set has been frozen from calibration evidence.
 
@@ -242,7 +300,7 @@ stable retained behavior / architecture
     -> run affected validation and required T4 checkpoint
 ```
 
-The current public-claim change reused and updated retained contracts; no RED-only fixture was added.
+Heavy Stage 7A enumeration belongs to the explicit/on-demand FN-BUNDLE calibration experiment, not routine `testFast` / `testFull`. Stable bounded contracts may verify report shape, ownership assumptions and deterministic enumeration boundaries without executing the full corpus on every ordinary CI run.
 
 ## 7. Product decision remains unchanged
 
@@ -271,55 +329,58 @@ Before gates, continue to inspect at least:
 - distinct evil-team configurations;
 - forced-good / forced-evil structure;
 - evil and demon cover;
-- leave-one-out / interaction recovery;
+- leave-one-out / interaction recovery where applicable;
+- Fortune Teller per-target-pair robustness where Fortune Teller is present;
 - minimum useful information;
 - structurally meaningful alternative worlds where tractable.
 
 ## 8. Current acceptance checkpoint
 
-Current ordinary FAST validation after the public-claim correction must be green before the final checkpoint.
+Stage 7A is currently an **experiment implementation checkpoint**, not a gate-tuning checkpoint.
 
-Then the current PR head must receive an explicit `[full-ci]` checkpoint covering:
+Acceptance for the first Fortune-Teller-containing pilot requires:
 
 ```text
-Android :app:testFull + :app:assembleDebug
-ASP corpus + harness
-Real Clingo cross-validation
-R2 main-thread boundary
-aggregate CI gate
+canonical Red Herring candidates are all represented
+Storyteller-controlled candidate combinations are complete for the fixed scenario
+Fortune Teller target pairs are all represented as player-controlled robustness cases
+Fortune Teller results use canonical semantics
+PUBLIC_GOOD_INFO projection remains defeasible speech
+possible-world evaluation remains exact
+per-query structural diagnostics are retained
+no scalar score / Badness threshold is introduced
+holdout remains unopened
 ```
 
-After T4 is green, inspect **only the CALIBRATION report**.
-
-The first empirical acceptance question is not a numeric Badness threshold. It is:
-
-> Does defeasible public-claim modeling preserve plausible evil bluff worlds instead of automatically treating every claimed good role as mechanically confirmed?
-
-Only after that is demonstrated should manual calibration labeling resume.
+Only after pilot correctness and cost are demonstrated should Stage 7A expand to all healthy real 7-player templates.
 
 ## 9. Next execution order
 
-1. finish current FAST convergence;
-2. update/checkpoint this documentation with `[full-ci]`;
-3. require current-head T4 green;
-4. read calibration-only report;
-5. verify that forced-good/forced-evil and evil topology are no longer trivially fixed by role claims;
-6. manually label calibration items;
-7. add more calibration scenarios if one scenario is too narrow;
-8. derive simple interpretable gate hypotheses only when evidence supports them;
-9. freeze candidate gates;
-10. only then evaluate sealed holdout;
-11. audit external Storyteller data such as ClockTracker as ecological calibration evidence;
-12. later widen Drunk -> Spy/Recluse -> Poisoner.
+1. replace the old real-preset FIRST/MIDDLE/LAST Stage 7A experiment contract with the Fortune Teller-aware ownership model;
+2. locate/reuse canonical Red Herring candidate generation and canonical Fortune Teller result semantics;
+3. implement one real Fortune-Teller-containing 7-player preset pilot;
+4. enumerate complete Storyteller-controlled candidates for the pilot, including every legal Red Herring;
+5. enumerate every legal Fortune Teller target pair for each candidate and exact-evaluate the resulting information ecology;
+6. emit interpretable per-query diagnostics and robustness ranges/counts, with no scalar ranking;
+7. run the dedicated calibration experiment and inspect cost/output;
+8. expand to all 11 healthy-compatible 7-player presets if the pilot is viable;
+9. then resume human calibration labeling;
+10. derive simple interpretable gate hypotheses only when evidence supports them;
+11. freeze candidate gates;
+12. only then evaluate sealed holdout;
+13. audit external Storyteller data such as ClockTracker as ecological calibration evidence;
+14. later widen Drunk -> Spy/Recluse -> Poisoner.
 
 ## 10. Stable architecture boundary
 
 ```text
-rules          -> legality / registration semantics
+rules          -> legality / registration / Fortune Teller result semantics
 session        -> canonical actual state / timeline / commit
 epistemic      -> exact recipient-visible consequence semantics
-recommendation -> bundle composition / future Badness / survivor selection
+recommendation -> complete Storyteller bundle composition / future Badness / survivor selection
 UI             -> presentation / confirmation
 ```
 
 Badness must never become a second rules engine.
+
+Fortune Teller target choice remains player-owned gameplay input even though Stage 7A enumerates it as an experiment robustness dimension. Red Herring remains Storyteller-owned and therefore belongs in the algorithm's candidate output surface.
