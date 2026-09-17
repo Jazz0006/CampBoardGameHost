@@ -17,7 +17,7 @@ internal object FortuneTellerInformationSemantics {
 
     fun legalTargetPairs(game: GameState): List<Pair<Int, Int>> {
         if (game.players.none { it.alive && it.actualRole == fortuneTeller }) return emptyList()
-        val seats = game.players.filter { it.alive }.map { it.seat }.sorted()
+        val seats = game.players.map { it.seat }.sorted()
         return buildList {
             for (firstIndex in 0 until seats.lastIndex) {
                 for (secondIndex in firstIndex + 1 until seats.size) {
@@ -39,14 +39,14 @@ internal object FortuneTellerInformationSemantics {
         require(canonicalTargets.size == 2) {
             "Fortune Teller must inspect exactly two distinct players."
         }
-        require(canonicalTargets.all { game.playerAt(it)?.alive == true }) {
-            "Fortune Teller targets must be living players in the current game state."
+        require(canonicalTargets.all { game.playerAt(it) != null }) {
+            "Fortune Teller targets must reference players in the current game state."
         }
         val redHerring = requireNotNull(game.playerAt(redHerringSeat)) {
             "Fortune Teller red herring must reference a player in the current game state."
         }
-        require(redHerring.alive && redHerring.actualAlignment == Alignment.GOOD) {
-            "Healthy Fortune Teller red herring must be a living actual-good player."
+        require(redHerring.actualAlignment == Alignment.GOOD) {
+            "Healthy Fortune Teller red herring must be an actual-good player."
         }
 
         return canonicalTargets.any { seat ->
