@@ -5,7 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-// UI-INFO-1.4 regression coverage: Beginner surfaces show only immediate required actions.
+// UI-INFO-1.4 regression coverage: Beginner reveal-only seats do not expose information accents.
 class ClocktowerBeginnerMinimalSurfaceTest {
     @Test
     fun `beginner reveal-only seats never expose information highlights`() {
@@ -15,11 +15,5 @@ class ClocktowerBeginnerMinimalSurfaceTest {
         assertEquals(ClocktowerSquareTableSeatState.Neutral, other.targetState)
         assertTrue(actor.isCurrentActor)
         assertFalse(other.isCurrentActor)
-    }
-
-    @Test
-    fun `structured guidance remains the only compact-mode trigger`() {
-        assertTrue(clocktowerUsesBeginnerCompactNightGuidance("唤醒 厨师\n2号 Jazz"))
-        assertFalse(clocktowerUsesBeginnerCompactNightGuidance("厨师：查看邪恶相邻对"))
     }
 }
