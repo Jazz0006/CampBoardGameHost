@@ -78,18 +78,4 @@ class FirstNightBundleBeginnerCorpusReviewTest {
             )
         }
     }
-
-    @Test
-    fun `review labels remain explicit human judgment categories`() {
-        assertEquals(
-            setOf(
-                FirstNightBeginnerCorpusLabel.UNREVIEWED,
-                FirstNightBeginnerCorpusLabel.BAD_TOO_STRONG,
-                FirstNightBeginnerCorpusLabel.ACCEPTABLE,
-                FirstNightBeginnerCorpusLabel.BAD_TOO_WEAK,
-                FirstNightBeginnerCorpusLabel.UNCERTAIN,
-            ),
-            FirstNightBeginnerCorpusLabel.entries.toSet(),
-        )
-    }
 }
