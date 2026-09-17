@@ -8,40 +8,40 @@ import org.junit.Test
 /**
  * Explicit FN-BUNDLE-3 calibration workload.
  *
- * Real production 7-player presets are the calibration authority for Stage 7A. The real-preset
- * pilot evaluates two deterministic seating topologies and at most three deterministic legal public
- * bundle points per preset/profile. The older interaction-rich and weak-information fixtures remain
- * synthetic stress probes. Every selected point uses exact possible-world evaluation; neither
- * real-preset calibration nor stress probes evaluate holdout.
+ * Production-relevant Stage 7A now runs the complete Fortune Teller-aware pilot for one real
+ * seven-player preset. Every Storyteller diagnostic candidate includes its Red Herring choice and
+ * is evaluated against every legal player-selected Fortune Teller target pair. Latent choices that
+ * cannot change the current PUBLIC_GOOD_INFO consequence retain exact multiplicity instead of
+ * generating duplicate epistemic queries. Older rich/weak fixtures remain synthetic stress probes.
+ * Holdout is never evaluated here.
  */
 class FirstNightBundleBeginnerCorpusExperiment {
     @Test
     fun `generate beginner calibration review corpus`() {
-        val realPresets = FirstNightBundleBeginnerRealPresetCalibrationBuilder.build()
+        val fortuneTellerPilot = FirstNightBundleBeginnerFortuneTellerPilotBuilder.build()
         val richCorpus = FirstNightBundleBeginnerCorpusBuilder.buildCalibration()
         val lowInformation = FirstNightBundleBeginnerLowInformationCalibrationBuilder.build()
 
-        assertTrue(realPresets.totalSevenPlayerPresetCount > 0)
-        assertTrue(realPresets.eligibleHealthyPresetCount > 0)
-        assertEquals(2, realPresets.seatingProfiles.size)
+        assertEquals("TB2_7_003", fortuneTellerPilot.presetId)
+        assertEquals(7, fortuneTellerPilot.seating.size)
+        assertTrue(fortuneTellerPilot.legalCompleteBundleCount.signum() > 0)
+        assertTrue(fortuneTellerPilot.publicInformationCombinationCount > 0)
+        assertTrue(fortuneTellerPilot.redHerringCandidateCount > 0)
+        assertEquals(21, fortuneTellerPilot.targetPairCount)
         assertEquals(
-            realPresets.eligibleHealthyPresetCount * realPresets.seatingProfiles.size,
-            realPresets.scenarios.size,
+            fortuneTellerPilot.publicInformationCombinationCount * fortuneTellerPilot.redHerringCandidateCount,
+            fortuneTellerPilot.diagnosticStorytellerCandidateCount,
         )
         assertEquals(
-            realPresets.totalSevenPlayerPresetCount,
-            realPresets.eligibleHealthyPresetCount + realPresets.excludedStagedPresetCount,
+            fortuneTellerPilot.legalCompleteBundleCount,
+            java.math.BigInteger.valueOf(fortuneTellerPilot.diagnosticStorytellerCandidateCount.toLong())
+                .multiply(fortuneTellerPilot.latentMultiplicityPerDiagnosticCandidate),
         )
-        assertTrue(realPresets.scenarios.groupBy { it.presetId }.values.all { scenarios ->
-            scenarios.map { it.seatingProfile }.toSet() == realPresets.seatingProfiles.toSet()
-        })
-        assertTrue(realPresets.scenarios.all { scenario ->
-            scenario.seating.size == 7 &&
-                scenario.points.size in 1..3 &&
-                scenario.legalCompleteBundleCount.signum() > 0 &&
-                scenario.points.all { point ->
-                    point.diagnostics.afterWorldCount.signum() > 0 &&
-                        point.diagnostics.afterWorldCount <= point.diagnostics.beforeWorldCount
+        assertTrue(fortuneTellerPilot.candidates.all { candidate ->
+            candidate.robustnessCases.size == fortuneTellerPilot.targetPairCount &&
+                candidate.robustnessCases.all { case ->
+                    case.diagnostics.afterWorldCount.signum() > 0 &&
+                        case.diagnostics.afterWorldCount <= case.diagnostics.beforeWorldCount
                 }
         })
 
@@ -64,7 +64,7 @@ class FirstNightBundleBeginnerCorpusExperiment {
         val report = buildString {
             append(FirstNightBundleBeginnerCorpusBuilder.renderMarkdown(richCorpus).removeSuffix("FN_BUNDLE_3_CORPUS_END\n"))
             appendLine()
-            append(FirstNightBundleBeginnerRealPresetCalibrationBuilder.renderMarkdown(realPresets))
+            append(FirstNightBundleBeginnerFortuneTellerPilotBuilder.renderMarkdown(fortuneTellerPilot))
             appendLine()
             appendLine("## Synthetic weak-information stress probe")
             appendLine()
